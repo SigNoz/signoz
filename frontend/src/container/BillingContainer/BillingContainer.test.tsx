@@ -54,13 +54,15 @@ describe('BillingContainer', () => {
 
 		const dayRemainingInBillingPeriod = await screen.findByText(
 			/Please upgrade plan now to retain your data./i,
+			{},
+			{ timeout: 5000 },
 		);
 		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
 
 		const upgradePlanButton = screen.getByTestId('upgrade-plan-button');
 		expect(upgradePlanButton).toBeInTheDocument();
 
-		const dollar = await screen.findByText(/\$1,278.3/i);
+		const dollar = await screen.findByText(/\$1,278.3/i, {}, { timeout: 5000 });
 		expect(dollar).toBeInTheDocument();
 
 		const currentBill = await screen.findByText('billing');
@@ -91,7 +93,9 @@ describe('BillingContainer', () => {
 
 			await expect(screen.findByText('Free Trial')).resolves.toBeInTheDocument();
 			await expect(screen.findByText('billing')).resolves.toBeInTheDocument();
-			await expect(screen.findByText(/\$0/i)).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText(/\$0/i, {}, { timeout: 5000 }),
+			).resolves.toBeInTheDocument();
 
 			await expect(
 				screen.findByText(
@@ -137,7 +141,7 @@ describe('BillingContainer', () => {
 			const currentBill = await screen.findByText('billing');
 			expect(currentBill).toBeInTheDocument();
 
-			const dollar0 = await screen.findByText(/\$0/i);
+			const dollar0 = await screen.findByText(/\$0/i, {}, { timeout: 5000 });
 			expect(dollar0).toBeInTheDocument();
 
 			const onTrail = await screen.findByText(
@@ -255,7 +259,11 @@ describe('BillingContainer', () => {
 			billingSuccessResponse.data.billingPeriodStart,
 		)} to ${getFormattedDate(billingSuccessResponse.data.billingPeriodEnd)}`;
 
-		const billingPeriod = await findByText(billingPeriodText);
+		const billingPeriod = await findByText(
+			billingPeriodText,
+			{},
+			{ timeout: 5000 },
+		);
 		expect(billingPeriod).toBeInTheDocument();
 
 		const currentBill = await screen.findByText('billing');

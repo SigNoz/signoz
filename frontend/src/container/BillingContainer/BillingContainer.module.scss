@@ -4,7 +4,7 @@
 	margin: 0 auto var(--spacing-20);
 
 	.pageHeader {
-		margin-bottom: var(--spacing-8);
+		margin-bottom: var(--spacing-4);
 
 		.pageHeaderTitle {
 			font-weight: var(--label-medium-500-font-weight);
@@ -41,6 +41,8 @@
 	}
 
 	.pageInfo {
+		margin-bottom: var(--spacing-4);
+
 		:global(.ant-card) {
 			padding: var(--padding-3);
 		}
@@ -59,7 +61,7 @@
 	}
 
 	.billingDetails {
-		margin: var(--spacing-12) 0;
+		margin: var(--spacing-4) 0;
 		border: 1px solid var(--l1-border);
 		border-radius: 2px;
 		overflow: hidden;
@@ -176,7 +178,7 @@
 	}
 
 	.billingUpdateNote {
-		margin-top: var(--spacing-8);
+		margin-top: var(--spacing-4);
 		font-family: var(--font-family-inter);
 		font-size: var(--font-size-sm);
 		font-style: normal;
