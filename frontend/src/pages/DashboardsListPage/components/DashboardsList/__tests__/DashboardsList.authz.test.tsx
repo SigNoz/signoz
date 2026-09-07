@@ -156,6 +156,31 @@ describe('DashboardsList - AuthZ', () => {
 				screen.queryByText(/is not authorized to perform/),
 			).not.toBeInTheDocument();
 		});
+
+		// Saved-view CRUD is gated on `dashboard:list` server-side, so firing this
+		// without the grant only 403s.
+		it('never fetches saved views when list is denied', async () => {
+			const onViews = jest.fn();
+			server.use(
+				setupAuthzAllow(DashboardCreatePermission),
+				rest.get(VIEWS_URL, (_req, res, ctx) => {
+					onViews();
+					return res(
+						ctx.status(200),
+						ctx.json({ status: 'success', data: { views: [] } }),
+					);
+				}),
+			);
+
+			renderList();
+
+			await waitFor(() => {
+				expect(
+					screen.getByText(/is not authorized to perform/),
+				).toBeInTheDocument();
+			});
+			expect(onViews).not.toHaveBeenCalled();
+		});
 	});
 
 	describe('check failure', () => {

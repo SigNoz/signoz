@@ -24,6 +24,7 @@ import SearchBar from '../SearchBar/SearchBar';
 import FilterChips, { type CreatorOption } from './FilterChips';
 
 import styles from './FilterZone.module.scss';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 
 interface Props {
 	// The last-run query (source of truth for fetching + the dirty baseline).
@@ -134,32 +135,41 @@ function FilterZone({
 				</div>
 				{rightSlot}
 			</div>
-			<div className={styles.filtersRow}>
-				<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
-				<FilterChips
-					createdBy={reflected.createdBy}
-					updated={reflected.updated}
-					creatorOptions={creatorOptions}
-					onCreatedByChange={handleCreatedByChange}
-					onUpdatedChange={handleUpdatedChange}
-					onApply={run}
-					onClearCreatedBy={handleClearCreatedBy}
-					disabled={disabled}
-				/>
-				{!isEmpty && (
-					<Button
-						variant="outlined"
-						color="primary"
-						size="sm"
-						prefix={<X size={12} />}
-						onClick={handleClear}
+			{/* The chips are antd Selects, which give no reason of their own when
+			    disabled — one tooltip over the row explains the whole thing. */}
+			<DisabledReasonTooltip
+				reason={disabledReason}
+				kind="denied"
+				side="bottom"
+				asChild
+			>
+				<div className={styles.filtersRow}>
+					<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
+					<FilterChips
+						createdBy={reflected.createdBy}
+						updated={reflected.updated}
+						creatorOptions={creatorOptions}
+						onCreatedByChange={handleCreatedByChange}
+						onUpdatedChange={handleUpdatedChange}
+						onApply={run}
+						onClearCreatedBy={handleClearCreatedBy}
 						disabled={disabled}
-						testId="dashboards-filter-clear"
-					>
-						Clear
-					</Button>
-				)}
-			</div>
+					/>
+					{!isEmpty && (
+						<Button
+							variant="outlined"
+							color="primary"
+							size="sm"
+							prefix={<X size={12} />}
+							onClick={handleClear}
+							disabled={disabled}
+							testId="dashboards-filter-clear"
+						>
+							Clear
+						</Button>
+					)}
+				</div>
+			</DisabledReasonTooltip>
 		</div>
 	);
 }

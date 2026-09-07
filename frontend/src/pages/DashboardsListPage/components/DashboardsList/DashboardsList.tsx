@@ -83,6 +83,7 @@ function DashboardsList(): JSX.Element {
 		sortOrder,
 		setSortColumn,
 		setSortOrder,
+		canListDashboards: canList,
 	});
 
 	const railCollapsed = useDashboardViewsStore((s) => s.railCollapsed);
