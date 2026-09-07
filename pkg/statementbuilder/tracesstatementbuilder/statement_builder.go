@@ -353,7 +353,6 @@ func lookupIntrinsicOrCalculatedField(name string) (telemetrytypes.TelemetryFiel
 }
 
 // buildListQuery builds a query for list panel type.
-
 func (b *traceQueryStatementBuilder) buildListQuery(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -393,18 +392,9 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	}
 
 	if isSelectFieldsEmpty {
-		// The attributes bag is read whole: every physical home is selected
-		// unconditionally — a row's attributes live in exactly one home (or both,
-		// agreeing, during dual-write), and consume.go merges them per row with the
-		// JSON column winning. No evolution lookup is needed for the bag (unlike
-		// per-key reads, which pick typed homes per window for index/cost), and the
-		// read stays correct for rows written by a maps-only exporter past the
-		// rollout. The attributes JSON column exists since migration 1012, the same
-		// assumption getColumn already makes for the resource/scope JSON columns.
 		for _, col := range tracestelemetryschema.ContextualSpanColumns {
 			sb.SelectMore(col)
 		}
-		sb.SelectMore(tracestelemetryschema.SpanAttributesColumn)
 	}
 
 	// From table

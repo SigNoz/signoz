@@ -331,7 +331,7 @@ class Traces(ABC):
         flags: np.uint32 = 0,
         scope: dict[str, Any] = {},
         resource_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
-        attribute_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
+        attribute_write_mode: Literal["legacy_only", "dual_write", "json_only"] = "dual_write",
     ) -> None:
         if timestamp is None:
             timestamp = datetime.datetime.now()
@@ -514,8 +514,11 @@ class Traces(ABC):
 
         # Spans before the attribute JSON-evolution time populate only the legacy
         # attributes_{string,number,bool} maps; spans at or after it dual-write the
-        # native-typed `attributes` JSON column too.
+        # native-typed `attributes` JSON column too, and spans past the map-write
+        # cutoff populate only the JSON column (metadata rows are still written).
         self.attributes_json = {} if attribute_write_mode == "legacy_only" else dict(attributes)
+        if attribute_write_mode == "json_only":
+            self.attribute_string, self.attributes_number, self.attributes_bool = {}, {}, {}
 
         # Process events and derive error events. self.events holds the parsed
         # response shape; np_arr() encodes back to the DB format on insert.

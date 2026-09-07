@@ -5,11 +5,15 @@ from http import HTTPStatus
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
+    BuilderQuery,
+    OrderBy,
     RequestType,
+    TelemetryFieldKey,
     assert_grouped_series,
     build_aggregation,
     build_group_by_field,
     build_traces_scalar_query,
+    get_rows,
     index_series_by_label,
     make_query_request,
 )
@@ -329,3 +333,84 @@ def test_traces_attributes_json_collision_and_map_parity(
         aggregations = (response.json()["data"]["data"]["results"][0].get("aggregations")) or []
         series = index_series_by_label(aggregations[0]["series"], "http.route") if aggregations else {}
         assert set(series.keys()) == expected, label
+
+
+def test_traces_attributes_json_list_view(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    seed_attribute_evolution: Callable[[str, datetime], None],
+) -> None:
+    """The empty-selectFields list view reads every attribute home per row: the span before
+    the evolution carries attributes only in the legacy maps, the span past the map-write
+    cutoff carries them only in the `attributes` JSON column, and the dual-written span
+    carries both. One straddling raw query must surface each row's bag from its own home,
+    flattened to the legacy dotted-key shape with native types."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
+    seed_attribute_evolution("traces", evolution_time)
+
+    service = "list-homes-service"
+    spans = [
+        Traces(
+            timestamp=evolution_time - timedelta(minutes=10),
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            name="map only",
+            resources={"service.name": service},
+            attributes={"http.route": "/map", "http.retry.count": 1, "http.cache.hit": True},
+            attribute_write_mode="legacy_only",
+        ),
+        Traces(
+            timestamp=evolution_time + timedelta(minutes=5),
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            name="json only",
+            resources={"service.name": service},
+            attributes={"http.route": "/json", "http.retry.count": 2, "http.cache.hit": False},
+            attribute_write_mode="json_only",
+        ),
+        Traces(
+            timestamp=evolution_time + timedelta(minutes=10),
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            name="dual written",
+            resources={"service.name": service},
+            attributes={"http.route": "/dual", "http.retry.count": 3, "http.cache.hit": True},
+            attribute_write_mode="dual_write",
+        ),
+    ]
+    insert_traces(spans)
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((evolution_time - timedelta(minutes=15)).timestamp() * 1000),
+        end_ms=int((evolution_time + timedelta(minutes=15)).timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[
+            BuilderQuery(
+                signal="traces",
+                name="A",
+                limit=10,
+                filter_expression=f"resource.service.name = '{service}'",
+                order=[OrderBy(TelemetryFieldKey("timestamp"), "asc")],
+            ).to_dict()
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK
+
+    rows = get_rows(response)
+    assert len(rows) == 3
+    expected = [
+        ("map only", {"http.route": "/map", "http.retry.count": 1, "http.cache.hit": True}),
+        ("json only", {"http.route": "/json", "http.retry.count": 2, "http.cache.hit": False}),
+        ("dual written", {"http.route": "/dual", "http.retry.count": 3, "http.cache.hit": True}),
+    ]
+    for row, (name, attributes) in zip(rows, expected, strict=True):
+        assert row["data"]["name"] == name
+        # int/float compare equal in Python, so the map-sourced float64 and the
+        # JSON-sourced number both match the inserted values here.
+        assert row["data"]["attributes"] == attributes, name

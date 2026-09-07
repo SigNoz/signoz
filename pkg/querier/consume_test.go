@@ -239,4 +239,79 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 			assert.False(t, present, "%s should be removed", removed)
 		}
 	})
+
+	t.Run("map only row with empty json doc keeps every map value", func(t *testing.T) {
+		data := map[string]any{
+			"attributes_string": map[string]string{"http.route": "/map"},
+			"attributes_number": map[string]float64{"http.status": 200},
+			"attributes_bool":   map[string]bool{"cache.hit": true},
+			"attributes":        telemetrystoretypes.JSONValue{},
+			"resources_string":  map[string]string{"service.name": "api"},
+		}
+
+		mergeSpanAttributeColumns(data)
+
+		attrs := data["attributes"].(map[string]any)
+		assert.Equal(t, map[string]any{"http.route": "/map", "http.status": float64(200), "cache.hit": true}, attrs)
+	})
+
+	t.Run("map only row with nil json value behaves as absent", func(t *testing.T) {
+		data := map[string]any{
+			"attributes_string": map[string]string{"http.route": "/map"},
+			"attributes":        telemetrystoretypes.JSONValue(nil),
+			"resources_string":  map[string]string{"service.name": "api"},
+		}
+
+		mergeSpanAttributeColumns(data)
+
+		attrs := data["attributes"].(map[string]any)
+		assert.Equal(t, map[string]any{"http.route": "/map"}, attrs)
+	})
+
+	t.Run("arrays stay leaf values", func(t *testing.T) {
+		data := map[string]any{
+			"attributes":       telemetrystoretypes.JSONValue{"http": map[string]any{"tags": []any{"a", "b"}, "codes": []any{float64(1), float64(2)}}},
+			"resources_string": map[string]string{"service.name": "api"},
+		}
+
+		mergeSpanAttributeColumns(data)
+
+		attrs := data["attributes"].(map[string]any)
+		assert.Equal(t, []any{"a", "b"}, attrs["http.tags"])
+		assert.Equal(t, []any{float64(1), float64(2)}, attrs["http.codes"])
+	})
+
+	t.Run("json null is kept as a nil value (never emitted by ClickHouse JSON; defensive pin)", func(t *testing.T) {
+		data := map[string]any{
+			"attributes":       telemetrystoretypes.JSONValue{"k": nil},
+			"resources_string": map[string]string{"service.name": "api"},
+		}
+
+		mergeSpanAttributeColumns(data)
+
+		attrs := data["attributes"].(map[string]any)
+		v, present := attrs["k"]
+		assert.True(t, present)
+		assert.Nil(t, v)
+	})
+
+	t.Run("same key is a leaf in one row and a parent in another", func(t *testing.T) {
+		leafRow := map[string]any{
+			"attributes":       telemetrystoretypes.JSONValue{"http": "plaintext"},
+			"resources_string": map[string]string{"service.name": "api"},
+		}
+		parentRow := map[string]any{
+			"attributes":       telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/a"}},
+			"resources_string": map[string]string{"service.name": "api"},
+		}
+
+		mergeSpanAttributeColumns(leafRow)
+		mergeSpanAttributeColumns(parentRow)
+
+		assert.Equal(t, "plaintext", leafRow["attributes"].(map[string]any)["http"])
+		parentAttrs := parentRow["attributes"].(map[string]any)
+		assert.Equal(t, "/a", parentAttrs["http.route"])
+		_, collapsed := parentAttrs["http"]
+		assert.False(t, collapsed, "the parent key must flatten away, not shadow the dotted leaf")
+	})
 }
