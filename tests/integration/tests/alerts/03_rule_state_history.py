@@ -38,6 +38,7 @@ def test_logs_rule_history_related_links(
 
     assert labels_to_map(item["labels"]).get("service.name") == "payment-service"
     assert item.get("relatedTracesLink", "") == ""
+    assert item.get("relatedAITracesLink", "") == ""
     assert item.get("relatedLogsLink", "") != ""
 
     # logs explorer links carry the time range in milliseconds, anchored to the
@@ -52,6 +53,7 @@ def test_logs_rule_history_related_links(
     assert len(contributors) == 1
     assert contributors[0]["count"] >= 1
     assert contributors[0].get("relatedTracesLink", "") == ""
+    assert contributors[0].get("relatedAITracesLink", "") == ""
     assert contributors[0].get("relatedLogsLink", "") != ""
 
     # contributor counts aggregate the whole queried range, so their links span it
@@ -80,6 +82,7 @@ def test_traces_rule_history_related_links(
 
     assert labels_to_map(item["labels"]).get("service.name") == "order-service"
     assert item.get("relatedLogsLink", "") == ""
+    assert item.get("relatedAITracesLink", "") == ""
     assert item.get("relatedTracesLink", "") != ""
 
     # traces explorer links carry the time range in nanoseconds, anchored to the
@@ -94,6 +97,7 @@ def test_traces_rule_history_related_links(
     assert len(contributors) == 1
     assert contributors[0]["count"] >= 1
     assert contributors[0].get("relatedLogsLink", "") == ""
+    assert contributors[0].get("relatedAITracesLink", "") == ""
     assert contributors[0].get("relatedTracesLink", "") != ""
 
     # contributor counts aggregate the whole queried range, so their links span it
@@ -122,11 +126,12 @@ def test_ai_traces_rule_history_related_links(
 
     assert labels_to_map(item["labels"]).get("service.name") == "llm-gateway"
     assert item.get("relatedLogsLink", "") == ""
-    assert item.get("relatedTracesLink", "") != ""
+    assert item.get("relatedTracesLink", "") == ""
+    assert item.get("relatedAITracesLink", "") != ""
 
     # AI alert links follow the traces explorer shape: a nanosecond range
     # anchored to the second-truncated entry timestamp
-    link = parse_related_link(item["relatedTracesLink"])
+    link = parse_related_link(item["relatedAITracesLink"])
     assert link["end"] == (item["unixMilli"] // 1000) * 1_000_000_000
     assert link["end"] - link["start"] == RELATED_LINK_WINDOW_SECONDS * 1_000_000_000
     assert_related_link_query(link, "traces", ["trace.input_tokens", "100", "service.name", "llm-gateway"])
@@ -138,9 +143,10 @@ def test_ai_traces_rule_history_related_links(
     assert len(contributors) == 1
     assert contributors[0]["count"] >= 1
     assert contributors[0].get("relatedLogsLink", "") == ""
-    assert contributors[0].get("relatedTracesLink", "") != ""
+    assert contributors[0].get("relatedTracesLink", "") == ""
+    assert contributors[0].get("relatedAITracesLink", "") != ""
 
-    contributor_link = parse_related_link(contributors[0]["relatedTracesLink"])
+    contributor_link = parse_related_link(contributors[0]["relatedAITracesLink"])
     assert contributor_link["start"] == query_start_ms * 1_000_000
     assert contributor_link["end"] == query_end_ms * 1_000_000
     assert_related_link_query(contributor_link, "traces", ["trace.input_tokens", "100", "service.name", "llm-gateway"])

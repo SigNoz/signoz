@@ -34,7 +34,8 @@ func (m *module) GetHistoryTimeline(ctx context.Context, orgID valuer.UUID, rule
 	if builder := m.relatedLinkBuilderForRule(ctx, orgID, ruleID); builder != nil {
 		for idx := range items {
 			start, end := builder.queryWindow(items[idx].UnixMilli)
-			items[idx].RelatedLogsLink, items[idx].RelatedTracesLink = builder.links(items[idx].Labels, start, end)
+			links := builder.links(items[idx].Labels, start, end)
+			items[idx].RelatedLogsLink, items[idx].RelatedTracesLink, items[idx].RelatedAITracesLink = links.logs, links.traces, links.aiTraces
 		}
 	}
 
@@ -60,7 +61,8 @@ func (m *module) GetHistoryContributors(ctx context.Context, orgID valuer.UUID, 
 		// span it too instead of a single evaluation window
 		start, end := time.UnixMilli(query.Start), time.UnixMilli(query.End)
 		for idx := range contributors {
-			contributors[idx].RelatedLogsLink, contributors[idx].RelatedTracesLink = builder.links(contributors[idx].Labels, start, end)
+			links := builder.links(contributors[idx].Labels, start, end)
+			contributors[idx].RelatedLogsLink, contributors[idx].RelatedTracesLink, contributors[idx].RelatedAITracesLink = links.logs, links.traces, links.aiTraces
 		}
 	}
 

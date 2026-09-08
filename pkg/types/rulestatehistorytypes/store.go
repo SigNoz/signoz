@@ -77,16 +77,18 @@ type RuleStateHistory struct {
 	Fingerprint  uint64               `ch:"fingerprint"`
 	Value        float64              `ch:"value"`
 
-	RelatedTracesLink string
-	RelatedLogsLink   string
+	RelatedTracesLink   string
+	RelatedAITracesLink string
+	RelatedLogsLink     string
 }
 
 type RuleStateHistoryContributor struct {
-	Fingerprint       uint64       `ch:"fingerprint"`
-	Labels            LabelsString `ch:"labels"`
-	Count             uint64       `ch:"count"`
-	RelatedTracesLink string
-	RelatedLogsLink   string
+	Fingerprint         uint64       `ch:"fingerprint"`
+	Labels              LabelsString `ch:"labels"`
+	Count               uint64       `ch:"count"`
+	RelatedTracesLink   string
+	RelatedAITracesLink string
+	RelatedLogsLink     string
 }
 
 type Store interface {

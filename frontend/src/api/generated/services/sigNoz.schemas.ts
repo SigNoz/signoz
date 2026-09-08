@@ -9101,6 +9101,10 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type string
 	 */
+	relatedAITracesLink?: string;
+	/**
+	 * @type string
+	 */
 	relatedLogsLink?: string;
 	/**
 	 * @type string
@@ -9146,6 +9150,10 @@ export interface RulestatehistorytypesGettableRuleStateHistoryContributorDTO {
 	 * @type array,null
 	 */
 	labels: Querybuildertypesv5LabelDTO[] | null;
+	/**
+	 * @type string
+	 */
+	relatedAITracesLink?: string;
 	/**
 	 * @type string
 	 */
