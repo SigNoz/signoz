@@ -518,6 +518,7 @@ def test_error_contract(
         ({"query": "alert_type = 'bogus'"}, "rule_list_filter_invalid", "METRIC_BASED_ALERT"),
         ({"query": "name REGEXP 'x.*'"}, "rule_list_filter_invalid", "operator REGEXP is not allowed"),
         ({"query": "created_at >= 'yesterday'"}, "rule_list_filter_invalid", "invalid RFC3339 timestamp"),
+        ({"query": "name LIKE 'prod\\\\'"}, "rule_list_filter_invalid", "must not end with an unescaped backslash"),
         ({"states": ["bogus"]}, "rule_list_invalid", 'invalid state "bogus"'),
         ({"sort": "bogus"}, "rule_list_invalid", "invalid sort"),
         ({"order": "bogus"}, "rule_list_invalid", "invalid order"),

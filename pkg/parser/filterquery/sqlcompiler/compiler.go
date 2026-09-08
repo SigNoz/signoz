@@ -1,6 +1,4 @@
-// Package sqlcompiler compiles list-page filter queries to WHERE clauses for
-// the bun-managed relational store (sqlite/postgres); telemetry queries stay
-// on querybuilder's ClickHouse visitor.
+// Package sqlcompiler compiles list-page filter queries to relational-store WHERE clauses; telemetry queries stay on querybuilder's ClickHouse visitor.
 package sqlcompiler
 
 import (
@@ -16,23 +14,33 @@ import (
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
-// bunPlaceholderFlavor is any flavor that renders `?` placeholders, which bun
-// re-binds to the actual backend at query time.
+// bunPlaceholderFlavor is any flavor that renders the `?` placeholders bun expects.
 const bunPlaceholderFlavor = sqlbuilder.SQLite
 
-// FieldResolver is the per-feature policy of a filter query compiler: which
-// keys exist, what each maps to, and how a bare token is searched.
+// FieldResolver is the per-feature policy: which keys exist and what each maps to.
 type FieldResolver interface {
-	// ResolveComparison builds the predicate for one `key OP value` term; key
-	// keeps the user's casing. Unresolvable input is reported via b.AddError.
+	// ResolveComparison builds the predicate for one `key OP value` term; key keeps the user's casing.
 	ResolveComparison(b *Builder, key string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string
 	// FreeText builds the predicate for a bare token.
 	FreeText(b *Builder, value string) string
 }
 
-// Compile parses query and compiles it to `?`-placeholder WHERE SQL + args
-// for bun, delegating key resolution to resolver.
-func Compile(query string, formatter sqlstore.SQLFormatter, resolver FieldResolver) (string, []any, []string) {
+// Compiled is a `?`-placeholder WHERE clause with its bun bind args.
+type Compiled struct {
+	SQL  string
+	Args []any
+}
+
+func (c Compiled) IsEmpty() bool {
+	return c.SQL == ""
+}
+
+// Compile on success returns a non-nil *Compiled, empty for an empty query; callers gate on IsEmpty, not nil.
+func Compile(query string, formatter sqlstore.SQLFormatter, resolver FieldResolver) (*Compiled, []string) {
+	if len(strings.TrimSpace(query)) == 0 {
+		return &Compiled{}, nil
+	}
+
 	v := &visitor{
 		builder: &Builder{
 			selectBuilder: sqlbuilder.NewSelectBuilder(),
@@ -43,21 +51,20 @@ func Compile(query string, formatter sqlstore.SQLFormatter, resolver FieldResolv
 
 	tree, _, collector := filterquery.Parse(query)
 	if len(collector.Errors) > 0 {
-		return "", nil, collector.Errors
+		return nil, collector.Errors
 	}
 	condition, _ := v.visit(tree).(string)
 	if len(v.builder.errors) > 0 {
-		return "", nil, v.builder.errors
+		return nil, v.builder.errors
 	}
 	if condition == "" {
-		return "", nil, nil
+		return &Compiled{}, nil
 	}
 	sql, arguments := v.builder.selectBuilder.Args.CompileWithFlavor(condition, bunPlaceholderFlavor)
-	return sql, arguments, nil
+	return &Compiled{SQL: sql, Args: arguments}, nil
 }
 
-// Builder is the per-compile toolbox handed to a FieldResolver: the shared
-// operator machinery, value extraction and error collection.
+// Builder is the per-compile toolbox handed to a FieldResolver.
 type Builder struct {
 	selectBuilder *sqlbuilder.SelectBuilder
 	formatter     sqlstore.SQLFormatter
@@ -76,9 +83,7 @@ func (b *Builder) AddError(format string, arguments ...any) {
 	b.errors = append(b.errors, fmt.Sprintf(format, arguments...))
 }
 
-// StringOperation covers the operators allowed on text-shaped keys.
-// Placeholders are interned into sb so nested subquery arguments thread
-// correctly; pass SelectBuilder() for a top-level predicate.
+// StringOperation interns placeholders into sb so nested subquery arguments thread correctly.
 func (b *Builder) StringOperation(sb *sqlbuilder.SelectBuilder, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, columnExpression, keyForError string) string {
 	switch operation {
 	case qbtypesv5.FilterOperatorEqual:
@@ -98,20 +103,26 @@ func (b *Builder) StringOperation(sb *sqlbuilder.SelectBuilder, ctx *grammar.Com
 		if !ok {
 			return ""
 		}
+		if endsWithDanglingEscape(val) {
+			b.AddError("LIKE pattern for %q must not end with an unescaped backslash, use \\\\ to match a literal backslash", keyForError)
+			return ""
+		}
 		like := "LIKE"
 		if operation == qbtypesv5.FilterOperatorNotLike {
 			like = "NOT LIKE"
 		}
-		// The user's % and _ stay as wildcards; ESCAPE pins backslash as the
-		// escape char (the Postgres default; SQLite has none).
+		// ESCAPE pins backslash as the escape char (the Postgres default, SQLite has none).
 		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, sb.Var(val))
 	case qbtypesv5.FilterOperatorILike, qbtypesv5.FilterOperatorNotILike:
 		val, ok := b.ExtractSingleStringValue(ctx, keyForError)
 		if !ok {
 			return ""
 		}
-		// SQLite has no ILIKE keyword and Postgres LIKE is case-sensitive, so
-		// LOWER both sides.
+		if endsWithDanglingEscape(val) {
+			b.AddError("ILIKE pattern for %q must not end with an unescaped backslash, use \\\\ to match a literal backslash", keyForError)
+			return ""
+		}
+		// SQLite has no ILIKE and Postgres LIKE is case-sensitive, so LOWER both sides.
 		lowerColumn := string(b.formatter.LowerExpression(columnExpression))
 		like := "LIKE"
 		if operation == qbtypesv5.FilterOperatorNotILike {
@@ -199,16 +210,18 @@ func (b *Builder) BoolComparison(ctx *grammar.ComparisonContext, operation qbtyp
 	return b.selectBuilder.Equal(columnExpression, value)
 }
 
-// FreeTextContains emits a case-insensitive contains. COALESCE keeps a NULL
-// column false rather than NULL, otherwise `NOT (...)` goes NULL and drops
-// every row where the column is absent.
+// A pattern ending in an unescaped backslash never matches on sqlite and errors on Postgres.
+func endsWithDanglingEscape(value string) bool {
+	trailing := len(value) - len(strings.TrimRight(value, `\`))
+	return trailing%2 == 1
+}
+
+// FreeTextContains COALESCEs the column so NOT (...) does not go NULL and drop rows where it is absent.
 func (b *Builder) FreeTextContains(sb *sqlbuilder.SelectBuilder, columnExpression, value string) string {
 	lowerColumn := string(b.formatter.LowerExpression("COALESCE(" + columnExpression + ", '')"))
 	pattern := "%" + b.formatter.EscapeLikePattern(value) + "%"
 	return fmt.Sprintf("%s LIKE LOWER(%s) ESCAPE '\\'", lowerColumn, sb.Var(pattern))
 }
-
-// ─── value extraction ─────────────────────────────────────────────────────────
 
 func (b *Builder) ExtractSingleStringValue(ctx *grammar.ComparisonContext, keyForError string) (string, bool) {
 	values := ctx.AllValue()
@@ -320,8 +333,6 @@ func (b *Builder) extractTimestampValue(ctx grammar.IValueContext) (time.Time, b
 	return t, true
 }
 
-// ─── grammar walk ─────────────────────────────────────────────────────────────
-
 type visitor struct {
 	grammar.BaseFilterQueryVisitor
 	builder  *Builder
@@ -397,8 +408,7 @@ func (v *visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.Comparison() != nil {
 		return v.visit(ctx.Comparison())
 	}
-	// A lone token is a free-text term; a quoted token matches its contents
-	// literally: the escape hatch for a phrase or a term that looks like DSL.
+	// A quoted lone token matches its contents literally, the escape hatch for a phrase that looks like DSL.
 	return v.resolver.FreeText(v.builder, trimQuotes(ctx.GetText()))
 }
 

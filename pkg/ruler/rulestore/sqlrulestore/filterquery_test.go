@@ -48,9 +48,7 @@ func runCompileCases(t *testing.T, cases []compileCase) {
 			if c.expectedArgs != nil {
 				require.Len(t, out.Args, len(c.expectedArgs))
 				for i, want := range c.expectedArgs {
-					// time.Time values can carry semantically-equal instants
-					// in different *Location representations (UTC vs Local vs
-					// FixedZone). Compare via .Equal() instead of DeepEqual.
+					// Equal instants can differ in *Location, so compare via .Equal() instead of DeepEqual.
 					if wantT, ok := want.(time.Time); ok {
 						gotT, ok := out.Args[i].(time.Time)
 						require.True(t, ok, "arg[%d]: want time.Time, got %T", i, out.Args[i])
@@ -343,11 +341,36 @@ func TestCompileErrors(t *testing.T) {
 			dslQueryToCompile:        "created_by ==== (((",
 			expectedErrShouldContain: "syntax error",
 		},
+		{
+			subtestName:              "like pattern with dangling escape rejected",
+			dslQueryToCompile:        `name LIKE 'prod\\'`,
+			expectedErrShouldContain: "must not end with an unescaped backslash",
+		},
+		{
+			subtestName:              "ilike pattern with dangling escape rejected",
+			dslQueryToCompile:        `name ILIKE '%\\'`,
+			expectedErrShouldContain: "must not end with an unescaped backslash",
+		},
+		{
+			subtestName:              "label like pattern with dangling escape rejected",
+			dslQueryToCompile:        `labels.team NOT LIKE 'infra\\'`,
+			expectedErrShouldContain: "must not end with an unescaped backslash",
+		},
 	})
 }
 
-// TestCompileReservedKeysAllHandled guards that every key in
-// ruletypes.ReservedOps has a case in resolveReservedKey.
+func TestCompileTrailingLiteralBackslash(t *testing.T) {
+	runCompileCases(t, []compileCase{
+		{
+			subtestName:       "escaped trailing backslash compiles",
+			dslQueryToCompile: `name LIKE '%\\\\'`,
+			expectedSQL:       `json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\'`,
+			expectedArgs:      []any{`%\\`},
+		},
+	})
+}
+
+// Guards that every ruletypes.ReservedOps key has a case in resolveReservedKey.
 func TestCompileReservedKeysAllHandled(t *testing.T) {
 	sampleQueries := map[ruletypes.DSLKey]string{
 		ruletypes.DSLKeyName:      "name = 'x'",
