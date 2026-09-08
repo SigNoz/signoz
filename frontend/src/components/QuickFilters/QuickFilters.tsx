@@ -15,28 +15,30 @@ import {
 	ComboboxTrigger,
 } from '@signozhq/ui/combobox';
 import { Skeleton, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
-import getLocalStorageKey from 'api/browser/localstorage/get';
-import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isFunction, isNull } from 'lodash-es';
-import { useAppContext } from 'providers/App/App';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import {
+	QuickFilterManagePermissions,
+	QuickFilterReadPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/quick-filter.permissions';
+import { isFunction } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { USER_ROLES } from 'types/roles';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import CheckboxV2 from './FilterRenderers/Checkbox/v2/CheckboxFilterV2';
 import Duration from './FilterRenderers/Duration/Duration';
 import Slider from './FilterRenderers/Slider/Slider';
 import useFilterConfig from './hooks/useFilterConfig';
-import AnnouncementTooltip from './QuickFiltersSettings/AnnouncementTooltip';
 import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
 import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
@@ -55,9 +57,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		showQueryName = true,
 		useFieldApis,
 	} = props;
-	const { user } = useAppContext();
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const [params, setParams] = useApiMonitoringParams();
 	const showIP = params.showIP ?? true;
 
@@ -68,6 +68,12 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		refetchCustomFilters,
 		isCustomFiltersLoading,
 	} = useFilterConfig({ signal, config });
+	const {
+		deniedPermissions: deniedSettingsPermissions,
+		isLoading: isSettingsChecking,
+	} = useAuthZ(QuickFilterManagePermissions, { enabled: isDynamicFilters });
+	const isSettingsDisabled =
+		isSettingsChecking || deniedSettingsPermissions.length > 0;
 
 	const {
 		currentQuery,
@@ -106,16 +112,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	// Show dropdown in ListView only for TRACES_EXPLORER source
 	const shouldShowDropdownInListView =
 		isListView && source === QuickFiltersSource.TRACES_EXPLORER;
-
-	const showAnnouncementTooltip = useMemo(() => {
-		const localStorageValue = getLocalStorageKey(
-			LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT,
-		);
-		if (!isNull(localStorageValue)) {
-			return !(localStorageValue === 'false');
-		}
-		return true;
-	}, []);
 
 	const activeQueryIndex = useMemo(() => {
 		if (isListView) {
@@ -232,49 +228,50 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const renderRightActions = (): JSX.Element => (
 		<section className="right-actions">
 			<Tooltip title="Reset All">
-				<div className="right-action-icon-container">
-					<RefreshCw className="sync-icon" size="md" onClick={handleReset} />
-				</div>
+				<Button
+					variant="link"
+					color="secondary"
+					aria-label="Reset All"
+					className="right-action-icon-container"
+					onClick={handleReset}
+					prefix={<RefreshCw className="sync-icon" size="md" />}
+				/>
 			</Tooltip>
 			{showFilterCollapse && (
 				<Tooltip title="Collapse Filters">
-					<div className="right-action-icon-container">
-						<ArrowUpToLine
-							style={{ rotate: '270deg', cursor: 'pointer' }}
-							size="md"
-							onClick={handleFilterVisibilityChange}
-						/>
-					</div>
+					<Button
+						variant="link"
+						color="secondary"
+						aria-label="Collapse Filters"
+						className="right-action-icon-container"
+						onClick={handleFilterVisibilityChange}
+						prefix={<ArrowUpToLine style={{ rotate: '270deg' }} size="md" />}
+					/>
 				</Tooltip>
 			)}
-			{isDynamicFilters && isAdmin && (
-				<Tooltip title="Settings">
-					<div
+			{isDynamicFilters && (
+				<AuthZTooltip checks={QuickFilterManagePermissions}>
+					<Button
+						variant="link"
+						color="secondary"
+						aria-label="Settings"
 						className={classNames('right-action-icon-container', {
 							active: isSettingsOpen,
 						})}
-					>
-						<SettingsIcon
-							className="settings-icon"
-							data-testid="settings-icon"
-							width={14}
-							height={14}
-							onClick={(): void => setIsSettingsOpen(true)}
-						/>
-						<AnnouncementTooltip
-							show={showAnnouncementTooltip}
-							position={{ top: -5, left: 15 }}
-							title="Edit your quick filters"
-							message="You can now customize and re-arrange your quick filters panel. Select the quick filters you’d need and hide away the rest for faster exploration."
-							onClose={(): void => {
-								setLocalStorageKey(
-									LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT,
-									'false',
-								);
-							}}
-						/>
-					</div>
-				</Tooltip>
+						onClick={(): void => setIsSettingsOpen(true)}
+						testId="settings-icon-container"
+						prefix={
+							<Tooltip title="Settings" open={isSettingsDisabled ? false : undefined}>
+								<SettingsIcon
+									className="settings-icon"
+									data-testid="settings-icon"
+									width={14}
+									height={14}
+								/>
+							</Tooltip>
+						}
+					/>
+				</AuthZTooltip>
 			)}
 		</section>
 	);
@@ -361,6 +358,21 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		</>
 	);
 
+	const filtersSkeleton = (
+		<div className="quick-filters-skeleton">
+			{Array.from({ length: 5 }).map((_, index) => (
+				// eslint-disable-next-line react/no-array-index-key
+				<Skeleton.Input active size="small" key={index} />
+			))}
+		</div>
+	);
+
+	const filtersContent = isCustomFiltersLoading ? (
+		filtersSkeleton
+	) : (
+		<OverlayScrollbar>{renderContent()}</OverlayScrollbar>
+	);
+
 	return (
 		<div className="quick-filters-container">
 			<div className="quick-filters">
@@ -371,15 +383,15 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					</section>
 				)}
 
-				{isCustomFiltersLoading ? (
-					<div className="quick-filters-skeleton">
-						{Array.from({ length: 5 }).map((_, index) => (
-							// eslint-disable-next-line react/no-array-index-key
-							<Skeleton.Input active size="small" key={index} />
-						))}
-					</div>
+				{signal ? (
+					<AuthZGuardContent
+						checks={[QuickFilterReadPermission]}
+						fallbackOnLoading={filtersSkeleton}
+					>
+						{filtersContent}
+					</AuthZGuardContent>
 				) : (
-					<OverlayScrollbar>{renderContent()}</OverlayScrollbar>
+					filtersContent
 				)}
 			</div>
 			<div className="quick-filters-settings-container">
