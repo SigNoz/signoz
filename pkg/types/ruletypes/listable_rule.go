@@ -91,7 +91,7 @@ var severityDisplayRank = map[string]int{
 }
 
 // SortListableRules sorts in place. Ties break on name then id, always
-// ascending — order applies to the primary key only — so pages stay stable
+// ascending (order applies to the primary key only) so pages stay stable
 // across requests.
 func SortListableRules(rules []*ListableRule, sortBy ListSort, order ListOrder) {
 	direction := 1

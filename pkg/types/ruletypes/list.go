@@ -71,28 +71,28 @@ func (p *ListRulesParams) Validate() error {
 		p.Sort = ListSortUpdatedAt
 	} else if !p.Sort.IsValid() {
 		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
-			"invalid sort %q — expected one of: `updated_at`, `created_at`, `name`, `state`, `severity`", p.Sort)
+			"invalid sort %q, expected one of: `updated_at`, `created_at`, `name`, `state`, `severity`", p.Sort)
 	}
 
 	if p.Order.IsZero() {
 		p.Order = ListOrderDesc
 	} else if !p.Order.IsValid() {
 		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
-			"invalid order %q — expected `asc` or `desc`", p.Order)
+			"invalid order %q, expected `asc` or `desc`", p.Order)
 	}
 
 	if p.Limit == 0 {
 		p.Limit = DefaultListLimit
 	} else if p.Limit < 0 {
 		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
-			"invalid limit %d — must be a positive integer", p.Limit)
+			"invalid limit %d, must be a positive integer", p.Limit)
 	} else if p.Limit > MaxListLimit {
 		p.Limit = MaxListLimit
 	}
 
 	if p.Offset < 0 {
 		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
-			"invalid offset %d — must be a non-negative integer", p.Offset)
+			"invalid offset %d, must be a non-negative integer", p.Offset)
 	}
 
 	if _, err := p.AlertStates(); err != nil {
@@ -124,7 +124,7 @@ func parseAlertState(raw string) (AlertState, error) {
 	state := AlertState{valuer.NewString(raw)}
 	if !slices.Contains(state.Enum(), any(state)) {
 		return AlertState{}, errors.NewInvalidInputf(ErrCodeRuleListInvalid,
-			"invalid state %q — expected one of: `firing`, `pending`, `recovering`, `inactive`, `nodata`, `disabled`", raw)
+			"invalid state %q, expected one of: `firing`, `pending`, `recovering`, `inactive`, `nodata`, `disabled`", raw)
 	}
 	return state, nil
 }

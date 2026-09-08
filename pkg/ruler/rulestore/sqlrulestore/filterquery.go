@@ -18,7 +18,7 @@ func (c Compiled) IsEmpty() bool {
 }
 
 // Compile on success returns a non-nil *Compiled; an empty query (or one
-// producing no SQL) yields an empty SQL — callers gate on IsEmpty, not nil.
+// producing no SQL) yields an empty SQL; callers gate on IsEmpty, not nil.
 func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
 	if len(strings.TrimSpace(query)) == 0 {
 		return &Compiled{}, nil

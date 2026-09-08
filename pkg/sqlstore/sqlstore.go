@@ -116,7 +116,7 @@ type SQLFormatter interface {
 
 	// JSONExtractMapValue extracts one key's value from a JSON object field
 	// (e.g. mapField "labels", key "team"). Unlike a JSONExtractString path,
-	// the key is a single map entry — dots inside it are not path nesting.
+	// the key is a single map entry: dots inside it are not path nesting.
 	JSONExtractMapValue(column, mapField, key string) []byte
 
 	// TextToJsonColumn converts a text column to JSON type

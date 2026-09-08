@@ -49,7 +49,7 @@ func ReservedFilterKeys() []DSLKey {
 var ReservedOps = map[DSLKey]map[qbtypesv5.FilterOperator]struct{}{
 	DSLKeyName: stringSearchOps(),
 	// severity is an alias for labels.severity, so it takes the labels
-	// operator set — including EXISTS/NOT EXISTS.
+	// operator set, including EXISTS/NOT EXISTS.
 	DSLKeySeverity:  LabelsKeyOps,
 	DSLKeyCreatedBy: stringSearchOps(),
 	DSLKeyUpdatedBy: stringSearchOps(),
@@ -59,7 +59,7 @@ var ReservedOps = map[DSLKey]map[qbtypesv5.FilterOperator]struct{}{
 	DSLKeyRuleType:  enumOps(),
 }
 
-// LabelsKeyOps applies to every `labels.<key>` term — the operator targets the
+// LabelsKeyOps applies to every `labels.<key>` term: the operator targets the
 // label's value; EXISTS/NOT EXISTS test the label's presence.
 var LabelsKeyOps = opsSet(
 	qbtypesv5.FilterOperatorEqual, qbtypesv5.FilterOperatorNotEqual,

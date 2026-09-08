@@ -317,7 +317,7 @@ func TestCompileReservedKeysAllHandled(t *testing.T) {
 
 	for key := range ruletypes.ReservedOps {
 		query, ok := sampleQueries[key]
-		require.True(t, ok, "no sample query for reserved key %q — add one", key)
+		require.True(t, ok, "no sample query for reserved key %q, add one", key)
 
 		out, err := Compile(query, formatter(t))
 		require.NoError(t, err, "reserved key %q failed to compile", key)

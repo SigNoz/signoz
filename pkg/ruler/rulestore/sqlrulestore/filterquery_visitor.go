@@ -133,7 +133,7 @@ func (v *visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 		return v.visit(ctx.Comparison())
 	}
 	// A lone token is a free-text term; a quoted token matches its contents
-	// literally — the escape hatch for a phrase or a term that looks like DSL.
+	// literally: the escape hatch for a phrase or a term that looks like DSL.
 	return v.buildFreeTextTerm(trimQuotes(ctx.GetText()))
 }
 
@@ -156,13 +156,13 @@ func (v *visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	if strings.HasPrefix(key, ruletypes.DSLLabelsKeyPrefix) {
 		labelKey := rawKey[len(ruletypes.DSLLabelsKeyPrefix):]
 		if labelKey == "" {
-			v.addError("labels filter is missing a key — use labels.<key>")
+			v.addError("labels filter is missing a key, use labels.<key>")
 			return ""
 		}
 		return v.visitComparisonForLabels(ctx, operation, labelKey)
 	}
 
-	v.addError("unknown filter key %q — use one of the reserved keys or labels.<key>", rawKey)
+	v.addError("unknown filter key %q, use one of the reserved keys or labels.<key>", rawKey)
 	return ""
 }
 
@@ -198,7 +198,7 @@ func (v *visitor) visitComparisonForReservedKeys(ctx *grammar.ComparisonContext,
 
 // visitComparisonForLabels builds a predicate on one label's value. A missing
 // label uniformly evaluates as the empty string (COALESCE) for every value
-// operator — so `!= 'x'` matches label-less rules, `!= ''` does not, and
+// operator, so `!= 'x'` matches label-less rules, `!= ''` does not, and
 // `= ''` does. Presence itself is expressed with EXISTS/NOT EXISTS, which test
 // the raw extraction.
 func (v *visitor) visitComparisonForLabels(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, labelKey string) string {
@@ -248,7 +248,7 @@ func (v *visitor) buildEnumComparison(ctx *grammar.ComparisonContext, operation 
 
 	for _, value := range values {
 		if !slices.Contains(allowedValues, value) {
-			v.addError("invalid value %q for %q — expected one of: %s", value, key, strings.Join(allowedValues, ", "))
+			v.addError("invalid value %q for %q, expected one of: %s", value, key, strings.Join(allowedValues, ", "))
 			return ""
 		}
 	}
@@ -350,7 +350,7 @@ func (v *visitor) buildStringOperation(builder *sqlbuilder.SelectBuilder, ctx *g
 			like = "NOT LIKE"
 		}
 		// The user's % and _ stay as wildcards; ESCAPE pins backslash as the
-		// escape char (the Postgres default — SQLite has none).
+		// escape char (the Postgres default; SQLite has none).
 		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, builder.Var(val))
 	case qbtypesv5.FilterOperatorILike, qbtypesv5.FilterOperatorNotILike:
 		val, ok := v.extractSingleStringValue(ctx, keyForError)
@@ -453,8 +453,8 @@ func (v *visitor) buildFreeTextTerm(value string) string {
 }
 
 // buildFreeTextContains emits a case-insensitive contains. COALESCE keeps a
-// NULL column (an absent description) false rather than NULL — otherwise
-// `NOT (…)` goes NULL and drops every description-less rule.
+// NULL column (an absent description) false rather than NULL, otherwise
+// `NOT (...)` goes NULL and drops every description-less rule.
 func (v *visitor) buildFreeTextContains(columnExpression, value string) string {
 	lowerColumn := string(v.formatter.LowerExpression("COALESCE(" + columnExpression + ", '')"))
 	pattern := "%" + v.formatter.EscapeLikePattern(value) + "%"

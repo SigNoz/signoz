@@ -318,7 +318,7 @@ def test_states_param(
         create_alert_rule(rule)
 
     # No telemetry is seeded, so enabled rules sit at inactive and the one
-    # disabled rule reads disabled — deterministic without waiting on evals.
+    # disabled rule reads disabled, deterministic without waiting on evals.
     cases = [
         ({"states": ["disabled"]}, {"checkout conversion drop"}),
         ({"states": ["inactive"]}, {"payment latency high", "payment gateway errors", "infra cpu saturation", "prom uptime probe"}),
