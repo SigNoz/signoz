@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { fetchFieldKeysForQuery } from 'components/QueryBuilderV2/QueryV2/QuerySearch/fieldSuggestions';
+import { fetchFieldKeysForQuery } from 'api/querySuggestions/fieldSuggestions';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import {

@@ -5,7 +5,7 @@ import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNo
 import {
 	fetchFieldKeysForQuery,
 	SuggestedFieldKey,
-} from 'components/QueryBuilderV2/QueryV2/QuerySearch/fieldSuggestions';
+} from 'api/querySuggestions/fieldSuggestions';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -76,7 +76,6 @@ function ListViewOrderBy({
 		[],
 	);
 
-	// A signature, not the array: an inline literal would loop the effect below.
 	const staticKeysSignature = staticOptionKeys.join(',');
 
 	// Update options when API data changes
@@ -84,7 +83,6 @@ function ListViewOrderBy({
 		const rawKeys: SuggestedFieldKey[] = data ? Object.values(data).flat() : [];
 
 		const keyNames = rawKeys.map((key) => key.name);
-		// Static keys survive a search; the endpoint never reports them.
 		const search = searchInput.trim().toLowerCase();
 		const staticMatches = staticKeysSignature
 			.split(',')
@@ -136,11 +134,5 @@ function ListViewOrderBy({
 		/>
 	);
 }
-
-ListViewOrderBy.defaultProps = {
-	builderQueryType: undefined,
-	fieldContext: undefined,
-	staticOptionKeys: DEFAULT_STATIC_OPTION_KEYS,
-};
 
 export default ListViewOrderBy;
