@@ -198,7 +198,6 @@ function DashboardRow({
 						link={link}
 						dashboardId={id}
 						dashboardName={name}
-						createdBy={createdBy}
 						source={dashboard.source}
 						isLocked={isLocked}
 						tags={tags}

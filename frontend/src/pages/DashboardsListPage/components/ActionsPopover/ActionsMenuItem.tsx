@@ -8,7 +8,7 @@ interface Props {
 	label: ReactNode;
 	icon: ReactElement;
 	testId: string;
-	onClick: () => void;
+	onClick: (event: MouseEvent<HTMLButtonElement>) => void;
 	/** Permissions the row needs; the standard denial wording explains a refusal. */
 	checks: BrandedPermission[];
 	/** A non-permission block, which outranks the checks (see AuthZTooltip). */
@@ -45,7 +45,7 @@ function ActionsMenuItem({
 			onClick={(e: MouseEvent<HTMLButtonElement>): void => {
 				e.preventDefault();
 				e.stopPropagation();
-				onClick();
+				onClick(e);
 			}}
 			testId={testId}
 		>

@@ -12,7 +12,6 @@ interface Props {
 	link: string;
 	dashboardId: string;
 	dashboardName: string;
-	createdBy: string;
 	source: DashboardtypesSourceDTO;
 	isLocked: boolean;
 	// Current tags as `key:value` strings, for the inline tag editor.
@@ -28,7 +27,6 @@ function ActionsPopover({
 	link,
 	dashboardId,
 	dashboardName,
-	createdBy,
 	source,
 	isLocked,
 	tags,
@@ -52,7 +50,6 @@ function ActionsPopover({
 						link={link}
 						dashboardId={dashboardId}
 						dashboardName={dashboardName}
-						createdBy={createdBy}
 						source={source}
 						isLocked={isLocked}
 						tags={tags}

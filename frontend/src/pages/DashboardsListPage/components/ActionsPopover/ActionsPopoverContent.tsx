@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Button } from '@signozhq/ui/button';
 import {
 	Copy,
 	Expand,
@@ -14,6 +13,7 @@ import logEvent from 'api/common/logEvent';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import { DashboardCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { openInNewTab } from 'utils/navigation';
@@ -30,7 +30,6 @@ interface Props {
 	link: string;
 	dashboardId: string;
 	dashboardName: string;
-	createdBy: string;
 	source: DashboardtypesSourceDTO;
 	isLocked: boolean;
 	tags: string[];
@@ -42,11 +41,13 @@ interface Props {
 
 // The popover body. Mounted only while the popover is open, so a page of rows
 // doesn't pay for 20 copies of the menu, its mutations or its permission checks.
+// These rows need no permission at all; the component still owns the styling.
+const NO_CHECKS: BrandedPermission[] = [];
+
 function ActionsPopoverContent({
 	link,
 	dashboardId,
 	dashboardName,
-	createdBy,
 	source,
 	isLocked,
 	tags,
@@ -63,7 +64,6 @@ function ActionsPopoverContent({
 	// A non-empty reason is exactly "cannot toggle", so the flag is redundant here.
 	const { disabledTooltip: lockDisabledTooltip } = useDashboardLockPermission({
 		dashboardId,
-		createdBy,
 		source,
 	});
 
@@ -93,49 +93,39 @@ function ActionsPopoverContent({
 		<div className={styles.content} onClick={(e): void => e.stopPropagation()}>
 			{!isLegacy && (
 				<>
-					<Button
-						color="secondary"
-						className={styles.menuItem}
-						prefix={<Expand size={14} />}
-						onClick={onView}
+					<ActionsMenuItem
+						label="View"
+						icon={<Expand size={14} />}
 						testId="dashboard-action-view"
-					>
-						View
-					</Button>
-					<Button
-						color="secondary"
-						className={styles.menuItem}
-						prefix={<SquareArrowOutUpRight size={14} />}
-						onClick={(e): void => {
-							e.stopPropagation();
-							e.preventDefault();
+						checks={NO_CHECKS}
+						onClick={onView}
+					/>
+					<ActionsMenuItem
+						label="Open in New Tab"
+						icon={<SquareArrowOutUpRight size={14} />}
+						testId="dashboard-action-open-new-tab"
+						checks={NO_CHECKS}
+						onClick={(): void => {
 							openInNewTab(link);
 							void logEvent(DashboardListEvents.RowAction, {
 								action: 'openNewTab',
 								dashboardId,
 							});
 						}}
-						testId="dashboard-action-open-new-tab"
-					>
-						Open in New Tab
-					</Button>
-					<Button
-						color="secondary"
-						className={styles.menuItem}
-						prefix={<Link2 size={14} />}
-						onClick={(e): void => {
-							e.stopPropagation();
-							e.preventDefault();
+					/>
+					<ActionsMenuItem
+						label="Copy Link"
+						icon={<Link2 size={14} />}
+						testId="dashboard-action-copy-link"
+						checks={NO_CHECKS}
+						onClick={(): void => {
 							setCopy(getAbsoluteUrl(link));
 							void logEvent(DashboardListEvents.RowAction, {
 								action: 'copyLink',
 								dashboardId,
 							});
 						}}
-						testId="dashboard-action-copy-link"
-					>
-						Copy Link
-					</Button>
+					/>
 					<ActionsMenuItem
 						label="Rename"
 						icon={<PenLine size={14} />}

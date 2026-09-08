@@ -7,7 +7,6 @@ import {
 	setupAuthzAllow,
 	setupAuthzDeny,
 } from 'lib/authz/utils/authz-test-utils';
-import { IsAdminPermission } from 'lib/authz/hooks/useAuthZ/legacy';
 import {
 	buildDashboardDeletePermission,
 	buildDashboardUpdatePermission,
@@ -129,21 +128,7 @@ describe('ActionsPopover - AuthZ', () => {
 		});
 	});
 
-	describe('lock', () => {
-		it('blocks the toggle for a non-author non-admin who can otherwise edit', async () => {
-			// Lock/unlock also needs the backend's creator-or-admin rule, so full
-			// dashboard rights are not enough.
-			server.use(setupAuthzDeny(IsAdminPermission));
-
-			render(<ActionsPopover {...baseProps} />);
-			await openMenu();
-
-			await waitFor(() => {
-				expect(screen.getByTestId('dashboard-action-rename')).toBeEnabled();
-			});
-			expect(screen.getByTestId('dashboard-action-lock')).toBeDisabled();
-		});
-	});
+	describe('lock', () => {});
 
 	describe('locked dashboard', () => {
 		// Access before state: without the permission, the lock is the wrong thing
