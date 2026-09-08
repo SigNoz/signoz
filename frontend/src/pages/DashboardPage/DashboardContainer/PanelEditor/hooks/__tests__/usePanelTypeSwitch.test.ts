@@ -239,6 +239,81 @@ describe('usePanelTypeSwitch', () => {
 		});
 	});
 
+	it('swaps sum back for a percentile when a histogram leaves a Heatmap panel', () => {
+		const setSpec = jest.fn();
+		mockUseQueryBuilder.mockReturnValue(
+			builderState({ id: 'heatmap-current', queryType: 'builder' } as Query),
+		);
+		mockHandleQueryChange.mockReturnValue({
+			id: 'transformed',
+			queryType: 'builder',
+			builder: {
+				queryData: [
+					{
+						queryName: 'A',
+						aggregateAttribute: { key: 'signoz_latency', type: 'Histogram' },
+						spaceAggregation: 'sum',
+						aggregations: [{ metricName: 'signoz_latency', spaceAggregation: 'sum' }],
+					},
+				],
+				queryFormulas: [],
+			},
+		} as unknown as Query);
+
+		const { result } = renderHook(() =>
+			usePanelTypeSwitch({
+				spec: makeSpec('signoz/HeatmapPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.HEATMAP,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/TimeSeriesPanel'));
+
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		const [queryData] = persisted.builder.queryData;
+		expect(queryData.spaceAggregation).toBe('p90');
+		expect(queryData.aggregations?.[0]).toStrictEqual({
+			metricName: 'signoz_latency',
+			spaceAggregation: 'p90',
+		});
+	});
+
+	it('leaves a non-histogram metric on sum when it leaves a Heatmap panel', () => {
+		const setSpec = jest.fn();
+		mockUseQueryBuilder.mockReturnValue(
+			builderState({ id: 'heatmap-current', queryType: 'builder' } as Query),
+		);
+		mockHandleQueryChange.mockReturnValue({
+			id: 'transformed',
+			queryType: 'builder',
+			builder: {
+				queryData: [
+					{
+						queryName: 'A',
+						aggregateAttribute: { key: 'signoz_calls_total', type: 'Sum' },
+						spaceAggregation: 'sum',
+						aggregations: [
+							{ metricName: 'signoz_calls_total', spaceAggregation: 'sum' },
+						],
+					},
+				],
+				queryFormulas: [],
+			},
+		} as unknown as Query);
+
+		const { result } = renderHook(() =>
+			usePanelTypeSwitch({
+				spec: makeSpec('signoz/HeatmapPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.HEATMAP,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/TimeSeriesPanel'));
+
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		expect(persisted.builder.queryData[0].spaceAggregation).toBe('sum');
+	});
+
 	it('coerces the query type when the new kind disallows it (promql → List)', () => {
 		const setSpec = jest.fn();
 		const promQuery = { id: 'prom', queryType: 'promql' } as Query;

@@ -6,7 +6,7 @@ import type {
 	DashboardtypesQueryDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import { ATTRIBUTE_TYPES, type PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	handleQueryChange,
 	type PartialPanelTypes,
@@ -50,6 +50,13 @@ const PERCENTILE_SPACE_AGGREGATIONS = new Set<SpaceAggregation>([
 	'p95',
 	'p99',
 ]);
+
+const HISTOGRAM_ATTRIBUTE_TYPES = new Set<string>([
+	ATTRIBUTE_TYPES.HISTOGRAM,
+	ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
+]);
+
+const DEFAULT_HISTOGRAM_SPACE_AGGREGATION = 'p90';
 
 function withDefaultListOrder(query: Query): Query {
 	return {
@@ -108,6 +115,46 @@ function withoutPercentile<T extends string | undefined>(
 	return (
 		PERCENTILE_SPACE_AGGREGATIONS.has(spaceAggregation as SpaceAggregation)
 			? 'sum'
+			: spaceAggregation
+	) as T;
+}
+
+/**
+ * Undoes the sum above: every other kind offers a histogram metric percentiles alone, so
+ * a sum carried out of a heatmap would sit in the selector with no option behind it.
+ * Other metric types are left alone — sum is a real choice for a sum or a gauge.
+ */
+function withPercentileHistogramAggregation(query: Query): Query {
+	return {
+		...query,
+		builder: {
+			...query.builder,
+			queryData: query.builder.queryData.map((queryData) => {
+				if (
+					!HISTOGRAM_ATTRIBUTE_TYPES.has(queryData.aggregateAttribute?.type ?? '')
+				) {
+					return queryData;
+				}
+
+				return {
+					...queryData,
+					spaceAggregation: withoutSum(queryData.spaceAggregation),
+					aggregations: queryData.aggregations?.map((aggregation) => ({
+						...aggregation,
+						spaceAggregation: withoutSum(
+							(aggregation as MetricAggregation).spaceAggregation,
+						),
+					})) as IBuilderQuery['aggregations'],
+				};
+			}),
+		},
+	};
+}
+
+function withoutSum<T extends string | undefined>(spaceAggregation: T): T {
+	return (
+		spaceAggregation === 'sum'
+			? DEFAULT_HISTOGRAM_SPACE_AGGREGATION
 			: spaceAggregation
 	) as T;
 }
@@ -226,9 +273,10 @@ export function usePanelTypeSwitch({
 				newKind === 'signoz/ListPanel'
 					? withDefaultListOrder(transformed)
 					: transformed;
-			if (newKind === 'signoz/HeatmapPanel') {
-				nextQuery = withSingleHeatmapQuery(nextQuery);
-			}
+			nextQuery =
+				newKind === 'signoz/HeatmapPanel'
+					? withSingleHeatmapQuery(nextQuery)
+					: withPercentileHistogramAggregation(nextQuery);
 			const signal = getBuilderQueries(currentSpec.queries)[0]
 				?.signal as TelemetrytypesSignalDTO;
 
