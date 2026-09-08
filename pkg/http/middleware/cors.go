@@ -15,7 +15,7 @@ func NewCors() *Cors {
 		cors: cors.New(cors.Options{
 			AllowedOrigins: []string{"*"},
 			AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
-			AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
+			AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control"},
 		}),
 	}
 }
