@@ -21,8 +21,9 @@ pnpm storybook:build    # static build into storybook-static/
 | `navigation/`     | Keeping a story on its page, and reporting what it tried to leave for   |
 | `msw/`            | The default handler set and the shell's endpoints                       |
 | `mocks/`          | Modules aliased in place of the app's own                               |
-| `decorators/`     | `withProviders`, the global decorator                                   |
+| `decorators/`     | `withProviders` (global) and `withCanvas` (opt-in per component)        |
 | `docs/`           | The `Docs/*` pages, the docs page template, and the sidebar order       |
+| `foundations/`    | Cross-cutting stories with no single owning component, and their fixtures |
 
 A page's own mocks live with the page, not here. See [Adding a page
 story](#adding-a-page-story).
@@ -47,6 +48,11 @@ UI on permission checks through `lib/authz`), `role-gated` (it still branches on
 the legacy role), `beta`, `legacy` (superseded but still routed) and `play` (a
 state the story reaches by interacting). `autodocs` comes from `preview.tsx` and
 is never written on a meta.
+
+`Components/<Component>` and `Foundations/<Concern>` sit beside `Pages`, for the
+shared pieces a page is assembled from and for the cross-cutting behaviour no
+single page owns (feedback, layering, tooltips). Neither is in the
+`storySort.order` literal, so both land after `Pages`, in file order.
 
 ## Docs pages
 
@@ -104,6 +110,12 @@ Storybook fills the seams with:
 - A fresh react-query client and redux store per story: no cache or state bleed.
 - `nuqs` on its testing adapter, so query-param state lives in memory and never
   touches the iframe URL.
+- A clock frozen at the instant `.storybook/preview-head.html` names, so chart
+  windows, `4 mins ago` labels and trial countdowns are the same in two builds
+  of the same code. `new Date()` is that instant; `Date.now()` runs on from it,
+  because elapsed-time code reads it — `lodash.debounce` compares two readings
+  to decide its trailing call is due, and a frozen one leaves every debounced
+  input in the app filtering nothing. `?storyClock=live` opts out.
 - Theme from the toolbar (dark/light). `applyThemeBodyClass` puts `<body>` in the
   state the app gets from `index.html` plus `AppLayout`: `data-theme="default"`
   (every `@signozhq/design-tokens` semantic token is scoped to it, and without it
@@ -340,6 +352,7 @@ rather than a story that fails at render:
 | `store`               | `mocks/store.mock.ts`              | the singleton answers from the story's store |
 | `api/common/logEvent` | `mocks/logEvent.mock.ts`           | analytics never leave the iframe           |
 | `constants/env`       | `mocks/env.mock.ts`                | pins the API origin the handlers answer on |
+| `@signozhq/ui/tooltip` | `mocks/tooltip.mock.tsx`          | the Tooltips control, see below             |
 
 `store` is the redux singleton, not the provider. A story mounts its own store,
 but around a dozen modules read `store.getState()` directly, and one of them,
@@ -356,6 +369,45 @@ play: async () => {
 	await expect(logEvent).toHaveBeenCalledWith('Homepage: Visited', {});
 },
 ```
+
+## Tooltips
+
+**Hold tooltips open** is a project-level control, so every story has it. Turning
+it on opens every tooltip the page renders and keeps it open, which is what makes
+a page's tooltips one screenshot rather than one hover each.
+
+Hovering cannot do this. Radix dispatches a `tooltip.open` event on `document`
+when a tooltip opens, and every mounted tooltip closes itself on it, so exactly
+one is open at a time no matter how many providers the tree has. A tooltip whose
+`open` is controlled ignores the event, which is what the alias passes:
+`mocks/tooltip.mock.tsx` wraps `TooltipSimple` and `TooltipRoot` and hands them
+`open` while the control is on.
+
+Two cases keep their own state. A tooltip the page already drives, such as
+`SpanHoverCard`, is left alone: only the page knows what its popup is anchored
+to. A tooltip whose title is empty is left alone too, because there is nothing to
+show but the padding of a popup.
+
+What the control cannot reach is a tooltip that is not mounted: one inside a
+closed drawer or modal, one in a row that renders its actions on hover, and
+`TanStackHoverTooltip`, which renders its children bare until the row is
+hovered. Those need a `play` that reaches the state first; the control then holds
+open whatever it uncovered.
+
+Every page whose tooltips are worth reviewing has a `Tooltips` story, so the
+state can be linked to and snapshotted rather than reproduced by hand:
+
+```tsx
+/** Every tooltip on the page, held open. */
+export const Tooltips: Story = {
+	args: { tooltipsOpen: true },
+};
+```
+
+A page whose interesting tooltips only exist in a drawer, a modal or a hovered
+row gets the `play` that opens that surface first, and `tags: ['play']` on the
+meta. Where the page's own fixture is too tame to show a tooltip growing, the
+story turns the control that lengthens it rather than a story-only prop.
 
 ## Navigation
 
@@ -390,6 +442,30 @@ the query string, seeded from the story's `route`. A page that writes params
 through both `useQueryState` and `history.push({ search })` sees the two diverge
 inside a story; a page that stays on one mechanism does not.
 
+## Adding a component story
+
+A component story covers a piece several pages share, or a concern that no single
+page owns. It differs from a page story in three ways:
+
+1. **Bound the canvas.** `preview.tsx` lays every story out `fullscreen`, which
+   is what a page wants and what leaves a select stretched across 1440px. Give
+   the meta `decorators: [withCanvas({ maxWidth: 400 })]`
+   (`storybook/decorators/withCanvas`) with the slot the app actually gives the
+   component: `QuickFilters` gets the explorers' 260px rail, a table gets the
+   height it scrolls in. A component that portals out of the canvas, such as
+   `FieldsSelector`, needs no decorator.
+2. **Drive the component, not a route.** Props come from `args`, not from
+   `storyMocks`; a component that still calls an endpoint declares
+   `parameters.msw` handlers of its own. `layout: 'app'` is for pages only.
+3. **Fix the first-run state.** A component that reads localStorage shows its
+   announcement or its onboarding tooltip in every story, on top of the thing the
+   story is about. Set the key from a `beforeEach` on the meta and keep one story
+   that clears it.
+
+A concern rather than a component — how feedback stacks, what sits above what,
+every tooltip a surface renders — goes under `storybook/foundations/` as a
+fixture plus its story file, since there is no single app component to point at.
+
 ## Adding a page story
 
 The `signoz-page-story` skill in `.claude/skills/` carries this as a workflow:
@@ -415,12 +491,14 @@ mapping the page, deriving its controls, and the checks a story has to pass.
    worth linking to; anything else is a control someone can turn.
 
 A page that is a tab strip over several routes, such as
-`src/pages/LogsModulePage`, gets one story file per tab, each in its own folder
-under the module page (`LogsModulePage/Pipelines/stories/Pipelines.stories.tsx`) with its
-own mocks and `__story_mockdata__/`. All of them render the module page, so the
-tab strip is there; the `route` its mocks return is what decides which tab is
-open. Builders more than one tab needs stay in the module page's own
-`__story_mockdata__/`.
+`src/pages/LogsModulePage`, gets one story file per tab, each in its own
+`stories/` folder under the module page
+(`LogsModulePage/Pipelines/stories/Pipelines.stories.tsx`) with its own mocks and
+`__story_mockdata__/`. All of them render the module page, so the tab strip is
+there; the `route` its mocks return is what decides which tab is open. Builders
+more than one tab needs stay in the module page's own
+`stories/__story_mockdata__/`, which a tab reaches as
+`../../stories/__story_mockdata__/<page>`.
 
 A state that only a click reaches, such as a drawer or a modal a page holds in
 component state, is a story with a `play` function rather than a control. Use
