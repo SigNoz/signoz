@@ -399,7 +399,6 @@ identn:
     # headers to use for tokenizer identN resolver
     headers:
       - Authorization
-      - Sec-WebSocket-Protocol
   apikey:
     # toggle apikey identN
     enabled: true

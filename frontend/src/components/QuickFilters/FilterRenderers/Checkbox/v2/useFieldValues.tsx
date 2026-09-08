@@ -22,7 +22,10 @@ interface UseFieldValuesReturn {
 	isFetching: boolean;
 }
 
-const DATA_SOURCE_TO_SIGNAL: Record<DataSource, TelemetrytypesSignalDTO> = {
+export const DATA_SOURCE_TO_SIGNAL: Record<
+	DataSource,
+	TelemetrytypesSignalDTO
+> = {
 	[DataSource.METRICS]: TelemetrytypesSignalDTO.metrics,
 	[DataSource.TRACES]: TelemetrytypesSignalDTO.traces,
 	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
