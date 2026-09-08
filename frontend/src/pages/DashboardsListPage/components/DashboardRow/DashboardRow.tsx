@@ -199,6 +199,7 @@ function DashboardRow({
 						dashboardId={id}
 						dashboardName={name}
 						createdBy={createdBy}
+						source={dashboard.source}
 						isLocked={isLocked}
 						tags={tags}
 						onView={onClickHandler}

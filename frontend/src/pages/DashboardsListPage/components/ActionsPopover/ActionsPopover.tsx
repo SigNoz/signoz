@@ -6,12 +6,14 @@ import { EllipsisVertical } from '@signozhq/icons';
 import ActionsPopoverContent from './ActionsPopoverContent';
 import EditTagsModal from './EditTagsModal';
 import RenameDashboardModal from './RenameDashboardModal';
+import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 interface Props {
 	link: string;
 	dashboardId: string;
 	dashboardName: string;
 	createdBy: string;
+	source: DashboardtypesSourceDTO;
 	isLocked: boolean;
 	// Current tags as `key:value` strings, for the inline tag editor.
 	tags: string[];
@@ -27,6 +29,7 @@ function ActionsPopover({
 	dashboardId,
 	dashboardName,
 	createdBy,
+	source,
 	isLocked,
 	tags,
 	onView,
@@ -50,6 +53,7 @@ function ActionsPopover({
 						dashboardId={dashboardId}
 						dashboardName={dashboardName}
 						createdBy={createdBy}
+						source={source}
 						isLocked={isLocked}
 						tags={tags}
 						isLegacy={isLegacy}

@@ -24,12 +24,14 @@ import { useCloneDashboardAction } from './useCloneDashboardAction';
 import { useLockToggleAction } from './useLockToggleAction';
 import styles from './ActionsPopover.module.scss';
 import { useTranslation } from 'react-i18next';
+import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 interface Props {
 	link: string;
 	dashboardId: string;
 	dashboardName: string;
 	createdBy: string;
+	source: DashboardtypesSourceDTO;
 	isLocked: boolean;
 	tags: string[];
 	isLegacy: boolean;
@@ -45,6 +47,7 @@ function ActionsPopoverContent({
 	dashboardId,
 	dashboardName,
 	createdBy,
+	source,
 	isLocked,
 	tags,
 	isLegacy,
@@ -61,6 +64,7 @@ function ActionsPopoverContent({
 	const { disabledTooltip: lockDisabledTooltip } = useDashboardLockPermission({
 		dashboardId,
 		createdBy,
+		source,
 	});
 
 	const { clone, isCloning } = useCloneDashboardAction({

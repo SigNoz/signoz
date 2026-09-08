@@ -15,6 +15,7 @@ import {
 } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 
 import ActionsPopover from './ActionsPopover';
+import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 const DASHBOARD_ID = 'abc';
 
@@ -23,6 +24,7 @@ const baseProps = {
 	dashboardId: DASHBOARD_ID,
 	dashboardName: 'My Dashboard',
 	createdBy: 'someone-else@signoz.io',
+	source: DashboardtypesSourceDTO.user,
 	isLocked: false,
 	tags: [],
 	onView: jest.fn(),

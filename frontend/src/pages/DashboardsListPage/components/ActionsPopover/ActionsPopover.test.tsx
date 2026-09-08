@@ -1,12 +1,14 @@
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import ActionsPopover from './ActionsPopover';
+import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 const baseProps = {
 	link: '/dashboard/abc',
 	dashboardId: 'abc',
 	dashboardName: 'My Dashboard',
 	createdBy: 'someone-else@signoz.io',
+	source: DashboardtypesSourceDTO.user,
 	isLocked: false,
 	tags: [],
 	canEdit: true,
