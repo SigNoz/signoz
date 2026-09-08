@@ -23,14 +23,6 @@ type relatedLinkBuilder struct {
 	groupBy    []qbtypes.GroupByKey
 }
 
-// relatedLinks holds the encoded explorer query params for one history entry;
-// at most one field is non-empty.
-type relatedLinks struct {
-	logs     string
-	traces   string
-	aiTraces string
-}
-
 // relatedLinkBuilderForRule returns nil when the rule cannot be loaded or is
 // not a logs/traces rule; callers then leave the links empty.
 func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUID, ruleID string) *relatedLinkBuilder {
@@ -91,23 +83,23 @@ func (b *relatedLinkBuilder) queryWindow(unixMilli int64) (time.Time, time.Time)
 
 // links returns the explorer query params for the given entry labels and time
 // range.
-func (b *relatedLinkBuilder) links(labels rulestatehistorytypes.LabelsString, start, end time.Time) relatedLinks {
+func (b *relatedLinkBuilder) links(labels rulestatehistorytypes.LabelsString, start, end time.Time) rulestatehistorytypes.RelatedLinks {
 	lbls := map[string]string{}
 	if err := json.Unmarshal([]byte(labels), &lbls); err != nil {
-		return relatedLinks{}
+		return rulestatehistorytypes.RelatedLinks{}
 	}
 
 	whereClause := contextlinks.PrepareFilterExpression(lbls, b.filterExpr, b.groupBy)
 
 	switch b.alertType {
 	case ruletypes.AlertTypeLogs:
-		return relatedLinks{logs: contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()}
+		return rulestatehistorytypes.RelatedLinks{RelatedLogsLink: contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()}
 	case ruletypes.AlertTypeTraces:
-		return relatedLinks{traces: contextlinks.PrepareParamsForTracesV5(start, end, whereClause, qbtypes.QueryTypeBuilder).Encode()}
+		return rulestatehistorytypes.RelatedLinks{RelatedTracesLink: contextlinks.PrepareParamsForTracesV5(start, end, whereClause, qbtypes.QueryTypeBuilder).Encode()}
 	case ruletypes.AlertTypeAITraces:
-		return relatedLinks{aiTraces: contextlinks.PrepareParamsForTracesV5(start, end, whereClause, qbtypes.QueryTypeBuilderAI).Encode()}
+		return rulestatehistorytypes.RelatedLinks{RelatedAITracesLink: contextlinks.PrepareParamsForTracesV5(start, end, whereClause, qbtypes.QueryTypeBuilderAI).Encode()}
 	}
-	return relatedLinks{}
+	return rulestatehistorytypes.RelatedLinks{}
 }
 
 // relatedLinkSignal returns the explorer signal that related links open for
