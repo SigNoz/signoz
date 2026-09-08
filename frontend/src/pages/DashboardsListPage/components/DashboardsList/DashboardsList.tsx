@@ -284,8 +284,6 @@ function DashboardsList(): JSX.Element {
 	return (
 		<div className={styles.layout}>
 			<ViewsRail
-				disabledChecks={LIST_CHECKS}
-				disabled={!canList}
 				activeViewId={activeViewId}
 				builtinViews={builtinViews}
 				customViews={customViews}
@@ -317,8 +315,6 @@ function DashboardsList(): JSX.Element {
 									query={query}
 									creatorOptions={creatorOptions}
 									source={source}
-									disabledChecks={LIST_CHECKS}
-									disabled={!canList}
 									onQueryChange={handleQueryChange}
 								/>
 							</div>

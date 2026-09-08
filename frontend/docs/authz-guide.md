@@ -51,7 +51,12 @@ These hold for every page. The per-pattern sections below only add to them.
 Without `list`, but with any of `read` / `create` / `update`, only the table is blocked:
 
 - Title, description, search filters and action buttons stay visible.
-- Filters and any control that drives the table are non-interactive.
+- Leave them interactive. Search, filters and saved views only rewrite what the
+  table would request, and that request is already gated, so disabling them
+  prevents nothing and reads as a second, quieter denial. State it once, where
+  the table would be.
+- Gate a control here only when it reaches the API on its own — saving a view,
+  say, rather than selecting one.
 - The create button stays enabled if the user holds `create`.
 
 ### Edit page

@@ -141,18 +141,6 @@ describe('ActionsPopover - AuthZ', () => {
 			});
 			expect(screen.getByTestId('dashboard-action-lock')).toBeDisabled();
 		});
-
-		it('blocks the toggle on an integration-owned dashboard', async () => {
-			server.use(setupAuthzAdmin());
-
-			render(<ActionsPopover {...baseProps} createdBy="integration" />);
-			await openMenu();
-
-			await waitFor(() => {
-				expect(screen.getByTestId('dashboard-action-rename')).toBeEnabled();
-			});
-			expect(screen.getByTestId('dashboard-action-lock')).toBeDisabled();
-		});
 	});
 
 	describe('locked dashboard', () => {

@@ -115,11 +115,11 @@ describe('DashboardsList - AuthZ', () => {
 			const cta = screen.getByTestId('new-dashboard-cta');
 			expect(cta).not.toBeDisabled();
 
-			// The chrome stays visible but inert — a live search box or views rail
-			// over a blocked table would only drive filters the caller cannot see the
-			// results of.
-			expect(screen.getByLabelText('Run search')).toBeDisabled();
-			expect(screen.getByTestId('dashboards-view-search')).toBeDisabled();
+			// The chrome stays live: search and the views rail only rewrite filters,
+			// and the request behind them is gated, so there is nothing to prevent —
+			// the denial is stated once, where the table would be.
+			expect(screen.getByLabelText('Run search')).toBeEnabled();
+			expect(screen.getByTestId('dashboards-view-search')).toBeEnabled();
 		});
 
 		it('renders the table when list is granted', async () => {
