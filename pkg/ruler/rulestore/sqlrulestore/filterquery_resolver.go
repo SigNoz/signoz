@@ -69,9 +69,9 @@ func (r ruleFieldResolver) resolveReservedKey(b *sqlcompiler.Builder, ctx *gramm
 	case ruletypes.DSLKeyUpdatedAt:
 		return b.TimestampComparison(ctx, operation, "rule.updated_at")
 	case ruletypes.DSLKeyAlertType:
-		return r.enumComparison(b, ctx, operation, key, alertTypePath, alertTypeValues())
+		return r.enumComparison(b, ctx, operation, key, alertTypePath, alertTypeValues)
 	case ruletypes.DSLKeyRuleType:
-		return r.enumComparison(b, ctx, operation, key, ruleTypePath, ruleTypeValues())
+		return r.enumComparison(b, ctx, operation, key, ruleTypePath, ruleTypeValues)
 	}
 	b.AddError("no handler for reserved key %q", key)
 	return ""
@@ -151,18 +151,18 @@ func (ruleFieldResolver) FreeText(b *sqlcompiler.Builder, value string) string {
 	)
 }
 
-func alertTypeValues() []string {
+var alertTypeValues = func() []string {
 	values := make([]string, 0, 4)
 	for _, value := range (ruletypes.AlertType("")).Enum() {
 		values = append(values, string(value.(ruletypes.AlertType)))
 	}
 	return values
-}
+}()
 
-func ruleTypeValues() []string {
+var ruleTypeValues = func() []string {
 	values := make([]string, 0, 3)
 	for _, value := range (ruletypes.RuleType{}).Enum() {
 		values = append(values, value.(ruletypes.RuleType).StringValue())
 	}
 	return values
-}
+}()

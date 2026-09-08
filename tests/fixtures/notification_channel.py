@@ -36,7 +36,7 @@ EMAIL_TRANSPORT_KEYS = [
 
 
 def ensure_notification_channel(signoz: types.SigNoz, token: str, channel_config: dict) -> None:
-    """Creates the channel if a channel with that name doesn't already exist."""
+    # Deliberately no teardown: the stock channel fixture's teardown is broken, so channels are reused idempotently.
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/channels"),
         headers={"Authorization": f"Bearer {token}"},

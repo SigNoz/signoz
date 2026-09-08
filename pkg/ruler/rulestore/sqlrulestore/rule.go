@@ -3,6 +3,7 @@ package sqlrulestore
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"slices"
 
@@ -119,7 +120,7 @@ func (r *rule) GetStoredRuleLabels(ctx context.Context, orgID string) ([]string,
 		BunDB().
 		NewSelect().
 		Model((*ruletypes.StorableRule)(nil)).
-		ColumnExpr("COALESCE("+labelsExpression+", '')").
+		ColumnExpr(fmt.Sprintf("COALESCE(%s, '')", labelsExpression)).
 		Where("org_id = ?", orgID).
 		Scan(ctx, &labels)
 	if err != nil {

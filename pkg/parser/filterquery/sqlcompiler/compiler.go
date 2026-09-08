@@ -140,7 +140,7 @@ func (b *Builder) StringOperation(sb *sqlbuilder.SelectBuilder, ctx *grammar.Com
 		}
 		// Escape the user's % and _ so they match literally, then wrap in wildcards.
 		escaped := b.formatter.EscapeLikePattern(val)
-		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, sb.Var("%"+escaped+"%"))
+		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, sb.Var(fmt.Sprintf("%%%s%%", escaped)))
 	case qbtypesv5.FilterOperatorRegexp, qbtypesv5.FilterOperatorNotRegexp:
 		b.AddError("REGEXP filtering on %q is not supported", keyForError)
 		return ""
@@ -218,8 +218,8 @@ func endsWithDanglingEscape(value string) bool {
 
 // FreeTextContains COALESCEs the column so NOT (...) does not go NULL and drop rows where it is absent.
 func (b *Builder) FreeTextContains(sb *sqlbuilder.SelectBuilder, columnExpression, value string) string {
-	lowerColumn := string(b.formatter.LowerExpression("COALESCE(" + columnExpression + ", '')"))
-	pattern := "%" + b.formatter.EscapeLikePattern(value) + "%"
+	lowerColumn := string(b.formatter.LowerExpression(fmt.Sprintf("COALESCE(%s, '')", columnExpression)))
+	pattern := fmt.Sprintf("%%%s%%", b.formatter.EscapeLikePattern(value))
 	return fmt.Sprintf("%s LIKE LOWER(%s) ESCAPE '\\'", lowerColumn, sb.Var(pattern))
 }
 

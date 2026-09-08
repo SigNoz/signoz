@@ -3,12 +3,12 @@ from http import HTTPStatus
 
 import requests
 
-from fixtures.alerts import delete_all_rules
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.notification_channel import ensure_notification_channel
 from fixtures.types import Operation, SigNoz
 
 BASE_URL = "/api/v3/rules"
+
+SEED_CHANNEL = {"name": "list-rules-v3-channel", "email_configs": [{"to": "list-rules-v3@integration.test"}]}
 
 EVALUATION = {"kind": "rolling", "spec": {"evalWindow": "5m0s", "frequency": "1m"}}
 
@@ -162,13 +162,10 @@ def test_envelope_and_slim_rows(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_alert_rule: Callable[[dict], str],
+    seed_alert_rules: Callable[[dict, list[dict]], None],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    delete_all_rules(signoz, token)
-    ensure_notification_channel(signoz, token, {"name": "list-rules-v3-channel", "email_configs": [{"to": "list-rules-v3@integration.test"}]})
-    for rule in SEED_RULES:
-        create_alert_rule(rule)
+    seed_alert_rules(SEED_CHANNEL, SEED_RULES)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
@@ -220,13 +217,10 @@ def test_query_filters(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_alert_rule: Callable[[dict], str],
+    seed_alert_rules: Callable[[dict, list[dict]], None],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    delete_all_rules(signoz, token)
-    ensure_notification_channel(signoz, token, {"name": "list-rules-v3-channel", "email_configs": [{"to": "list-rules-v3@integration.test"}]})
-    for rule in SEED_RULES:
-        create_alert_rule(rule)
+    seed_alert_rules(SEED_CHANNEL, SEED_RULES)
 
     cases = [
         ("name = 'payment latency high'", {"payment latency high"}),
@@ -269,13 +263,10 @@ def test_label_missing_semantics(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_alert_rule: Callable[[dict], str],
+    seed_alert_rules: Callable[[dict, list[dict]], None],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    delete_all_rules(signoz, token)
-    ensure_notification_channel(signoz, token, {"name": "list-rules-v3-channel", "email_configs": [{"to": "list-rules-v3@integration.test"}]})
-    for rule in SEED_RULES:
-        create_alert_rule(rule)
+    seed_alert_rules(SEED_CHANNEL, SEED_RULES)
 
     # A missing label uniformly evaluates as the empty string for value
     # operators; presence is expressed with EXISTS / NOT EXISTS.
@@ -309,13 +300,10 @@ def test_states_param(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_alert_rule: Callable[[dict], str],
+    seed_alert_rules: Callable[[dict, list[dict]], None],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    delete_all_rules(signoz, token)
-    ensure_notification_channel(signoz, token, {"name": "list-rules-v3-channel", "email_configs": [{"to": "list-rules-v3@integration.test"}]})
-    for rule in SEED_RULES:
-        create_alert_rule(rule)
+    seed_alert_rules(SEED_CHANNEL, SEED_RULES)
 
     # No telemetry is seeded, so enabled rules sit at inactive and the one
     # disabled rule reads disabled, deterministic without waiting on evals.
@@ -345,13 +333,10 @@ def test_sorting(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_alert_rule: Callable[[dict], str],
+    seed_alert_rules: Callable[[dict, list[dict]], None],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    delete_all_rules(signoz, token)
-    ensure_notification_channel(signoz, token, {"name": "list-rules-v3-channel", "email_configs": [{"to": "list-rules-v3@integration.test"}]})
-    for rule in SEED_RULES:
-        create_alert_rule(rule)
+    seed_alert_rules(SEED_CHANNEL, SEED_RULES)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
@@ -434,13 +419,10 @@ def test_pagination(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_alert_rule: Callable[[dict], str],
+    seed_alert_rules: Callable[[dict, list[dict]], None],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    delete_all_rules(signoz, token)
-    ensure_notification_channel(signoz, token, {"name": "list-rules-v3-channel", "email_configs": [{"to": "list-rules-v3@integration.test"}]})
-    for rule in SEED_RULES:
-        create_alert_rule(rule)
+    seed_alert_rules(SEED_CHANNEL, SEED_RULES)
 
     pages = []
     for offset in (0, 2, 4):
@@ -543,13 +525,10 @@ def test_v2_list_still_serves_bare_array(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_alert_rule: Callable[[dict], str],
+    seed_alert_rules: Callable[[dict, list[dict]], None],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    delete_all_rules(signoz, token)
-    ensure_notification_channel(signoz, token, {"name": "list-rules-v3-channel", "email_configs": [{"to": "list-rules-v3@integration.test"}]})
-    for rule in SEED_RULES:
-        create_alert_rule(rule)
+    seed_alert_rules(SEED_CHANNEL, SEED_RULES)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/rules"),

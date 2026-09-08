@@ -1,6 +1,7 @@
 package sqlstoretest
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -27,7 +28,7 @@ func (f *formatter) JSONExtractString(column, path string) []byte {
 
 func (f *formatter) JSONExtractMapValue(column, mapField, key string) []byte {
 	escapedKey := strings.NewReplacer(`\`, `\\`).Replace(key)
-	return f.JSONExtractString(column, `$.`+mapField+`."`+escapedKey+`"`)
+	return f.JSONExtractString(column, fmt.Sprintf(`$.%s."%s"`, mapField, escapedKey))
 }
 
 func (f *formatter) JSONType(column, path string) []byte {
