@@ -30,7 +30,9 @@ describe('useDashboardPermissions - AuthZ', () => {
 				wrapper: AllTheProviders,
 			});
 
-			await waitFor(() => expect(result.current.isLoading).toBe(false));
+			await waitFor(() =>
+				expect(result.current.isReadPermissionLoading).toBe(false),
+			);
 			expect(result.current.canRead).toBe(true);
 			expect(result.current.canUpdate).toBe(true);
 			expect(result.current.canDelete).toBe(true);
@@ -46,7 +48,9 @@ describe('useDashboardPermissions - AuthZ', () => {
 				wrapper: AllTheProviders,
 			});
 
-			await waitFor(() => expect(result.current.isLoading).toBe(false));
+			await waitFor(() =>
+				expect(result.current.isReadPermissionLoading).toBe(false),
+			);
 			expect(result.current.canRead).toBe(false);
 			expect(result.current.canUpdate).toBe(false);
 			expect(result.current.canDelete).toBe(false);
@@ -63,7 +67,9 @@ describe('useDashboardPermissions - AuthZ', () => {
 				wrapper: AllTheProviders,
 			});
 
-			await waitFor(() => expect(result.current.isLoading).toBe(false));
+			await waitFor(() =>
+				expect(result.current.isReadPermissionLoading).toBe(false),
+			);
 			expect(result.current.canUpdate).toBe(true);
 			expect(result.current.canRead).toBe(false);
 			expect(result.current.canEdit).toBe(false);
@@ -76,7 +82,9 @@ describe('useDashboardPermissions - AuthZ', () => {
 				wrapper: AllTheProviders,
 			});
 
-			await waitFor(() => expect(result.current.isLoading).toBe(false));
+			await waitFor(() =>
+				expect(result.current.isReadPermissionLoading).toBe(false),
+			);
 			expect(result.current.canRead).toBe(true);
 			expect(result.current.canUpdate).toBe(false);
 			expect(result.current.canEdit).toBe(false);
@@ -95,7 +103,10 @@ describe('useDashboardPermissions - AuthZ', () => {
 				wrapper: AllTheProviders,
 			});
 
-			await waitFor(() => expect(result.current.hasError).toBe(true));
+			// A check that cannot answer is not a grant.
+			await waitFor(() =>
+				expect(result.current.isReadPermissionLoading).toBe(false),
+			);
 			expect(result.current.canRead).toBe(false);
 			expect(result.current.canEdit).toBe(false);
 		});

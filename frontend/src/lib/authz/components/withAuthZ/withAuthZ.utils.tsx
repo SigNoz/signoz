@@ -45,6 +45,18 @@ export type WithAuthZOptions<P> = {
 	checks:
 		| BrandedPermission[]
 		| ((props: P, router: RouterContext) => BrandedPermission[]);
+	/**
+	 * Extra permissions to fetch in the same batch as `checks`, without gating on
+	 * them. `useAuthZ` coalesces everything requested in the same tick into one
+	 * request and caches per permission, so a component below the guard that
+	 * needs these resolves from cache instead of firing a second round trip and
+	 * flipping its controls once it lands.
+	 *
+	 * Never affects whether the content renders — a denial here is ignored.
+	 */
+	preloadChecks?:
+		| BrandedPermission[]
+		| ((props: P, router: RouterContext) => BrandedPermission[]);
 	fallback?: AuthZGuardProps['fallback'];
 	fallbackOnLoading?: AuthZGuardProps['fallbackOnLoading'];
 	failOpenOnError?: AuthZGuardProps['onFailRenderContent'];
@@ -86,15 +98,23 @@ export function createAuthZHOC<P extends object>(
 	Component: ComponentType<P>,
 	opts: WithAuthZOptions<P>,
 ): ComponentType<P> {
-	const { checks, ...guardProps } = opts;
+	const { checks, preloadChecks, ...guardProps } = opts;
 
 	function Wrapped(props: P): ReactElement | null {
 		const router = useRouterContext();
 		const resolvedChecks =
 			typeof checks === 'function' ? checks(props, router) : checks;
+		const resolvedPreload =
+			typeof preloadChecks === 'function'
+				? preloadChecks(props, router)
+				: preloadChecks;
 
 		return (
-			<Guard checks={resolvedChecks} {...guardProps}>
+			<Guard
+				checks={resolvedChecks}
+				preloadChecks={resolvedPreload}
+				{...guardProps}
+			>
 				{createElement(Component, props)}
 			</Guard>
 		);

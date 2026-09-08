@@ -13,12 +13,16 @@ export interface DashboardPermissions {
 	canDelete: boolean;
 	/** Per the authz guide, an edit affordance needs `read` as well as `update`. */
 	canEdit: boolean;
-	isLoading: boolean;
 	/**
-	 * The check itself failed. Callers should fall open rather than treat an
-	 * authz outage as a denial.
+	 * `read` is required to render the dashboard at all, so a page gates its mount
+	 * on this one alone.
 	 */
-	hasError: boolean;
+	isReadPermissionLoading: boolean;
+	/**
+	 * `update` and `delete` only gate individual controls, which stay disabled
+	 * without a reason until these land rather than holding up the whole page.
+	 */
+	areOtherPermissionsLoading: boolean;
 	readPermission: BrandedPermission;
 	updatePermission: BrandedPermission;
 	deletePermission: BrandedPermission;
@@ -50,7 +54,7 @@ export function useDashboardPermissions(
 		[readPermission, updatePermission, deletePermission],
 	);
 
-	const { isGranted, isLoading, error } = useAuthZ(checks, { enabled });
+	const { isGranted, isLoading } = useAuthZ(checks, { enabled });
 
 	const canRead = isGranted(readPermission);
 	const canUpdate = isGranted(updatePermission);
@@ -66,8 +70,10 @@ export function useDashboardPermissions(
 		canUpdate,
 		canDelete,
 		canEdit: canRead && canUpdate,
-		isLoading,
-		hasError: !!error,
+		// One request covers all three, so the two flags only differ when a page
+		// preloads `read` ahead of the rest — see `preloadChecks`.
+		isReadPermissionLoading: isLoading,
+		areOtherPermissionsLoading: isLoading,
 		readPermission,
 		updatePermission,
 		deletePermission,

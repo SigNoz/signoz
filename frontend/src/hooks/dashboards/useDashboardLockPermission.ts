@@ -4,21 +4,19 @@ import { useAppContext } from 'providers/App/App';
 import {
 	DASHBOARD_LOCK_INTEGRATION_REASON,
 	DASHBOARD_LOCK_NOT_OWNER_REASON,
-	DASHBOARD_NO_EDIT_PERMISSION_REASON,
 } from './dashboardPermissionReasons';
 import { useDashboardPermissions } from './useDashboardPermissions';
 
 export interface DashboardLockPermission {
 	canToggleLock: boolean;
 	isLoading: boolean;
-	/** '' while loading or when the toggle is allowed. */
-	disabledReason: string;
 	/**
-	 * Whether the reason is an access problem or a state of the dashboard.
-	 * Access is checked first, so a missing permission is reported as such even
-	 * on an integration-owned dashboard.
+	 * The non-permission obstacle only — not the creator or an org admin, or an
+	 * integration-owned dashboard. Empty when the toggle is allowed, still
+	 * resolving, or blocked by a missing permission: `update` outranks both of
+	 * these, and the authz component reports it in the standard wording.
 	 */
-	disabledKind: 'denied' | 'blocked';
+	disabledTooltip: string;
 }
 
 /**
@@ -35,34 +33,29 @@ export function useDashboardLockPermission({
 	enabled?: boolean;
 }): DashboardLockPermission {
 	const { user } = useAppContext();
-	const { canEdit, isLoading: isEditLoading } = useDashboardPermissions(
+	const { canEdit, areOtherPermissionsLoading } = useDashboardPermissions(
 		dashboardId,
 		{ enabled },
 	);
 	const { isOrgAdmin, isLoading: isAdminLoading } = useIsOrgAdmin({ enabled });
 
-	const isLoading = isEditLoading || isAdminLoading;
+	const isLoading = areOtherPermissionsLoading || isAdminLoading;
 	const isAuthor = !!createdBy && user?.email === createdBy;
 	const isIntegrationOwned = createdBy === 'integration';
 
 	const canToggleLock =
 		!isLoading && !isIntegrationOwned && canEdit && (isAuthor || isOrgAdmin);
 
-	// Access first: if the caller can't edit, or isn't the creator or an org
-	// admin, that's what they need to hear - saying the dashboard is
-	// integration-owned would point them at the wrong thing.
-	let disabledReason = '';
-	let disabledKind: 'denied' | 'blocked' = 'denied';
-	if (!isLoading && !canToggleLock) {
-		if (!canEdit) {
-			disabledReason = DASHBOARD_NO_EDIT_PERMISSION_REASON;
-		} else if (!isAuthor && !isOrgAdmin) {
-			disabledReason = DASHBOARD_LOCK_NOT_OWNER_REASON;
-		} else {
-			disabledReason = DASHBOARD_LOCK_INTEGRATION_REASON;
-			disabledKind = 'blocked';
-		}
+	// Left empty when `canEdit` is false so the missing permission surfaces
+	// instead: telling someone the dashboard is integration-owned points them at
+	// the wrong thing when what they lack is access.
+	let disabledTooltip = '';
+	if (!isLoading && canEdit && !canToggleLock) {
+		disabledTooltip =
+			!isAuthor && !isOrgAdmin
+				? DASHBOARD_LOCK_NOT_OWNER_REASON
+				: DASHBOARD_LOCK_INTEGRATION_REASON;
 	}
 
-	return { canToggleLock, isLoading, disabledReason, disabledKind };
+	return { canToggleLock, isLoading, disabledTooltip };
 }
