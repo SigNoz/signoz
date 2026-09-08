@@ -504,7 +504,7 @@ jest.mock('hooks/useHandleExplorerTabChange', () => ({
 let capturedPayload: QueryRangePayloadV5;
 
 describe('TracesExplorer -', () => {
-	const quickFiltersListURL = `${BASE_URL}/api/v1/orgs/me/filters/traces`;
+	const quickFiltersListURL = `${BASE_URL}/api/v2/quick_filters/traces`;
 
 	const setupServer = (): void => {
 		server.use(
