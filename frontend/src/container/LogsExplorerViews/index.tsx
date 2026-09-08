@@ -108,7 +108,6 @@ function LogsExplorerViewsContainer({
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
-	const [queryId, setQueryId] = useState<string>(v4());
 	const [listChartQuery, setListChartQuery] = useState<Query | null>(null);
 
 	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
@@ -180,12 +179,7 @@ function LogsExplorerViewsContainer({
 			},
 			undefined,
 			listQueryKeyRef,
-			{
-				...(!isEmpty(queryId) &&
-					selectedPanelType !== PANEL_TYPES.LIST && {
-						'X-SIGNOZ-QUERY-ID': queryId,
-					}),
-			},
+			undefined,
 			// custom selected time interval to prevent recalculating the start and end timestamps before fetching next pages
 			'custom',
 		);
@@ -249,10 +243,6 @@ function LogsExplorerViewsContainer({
 
 		setRequestData(newRequestData);
 	}, [isLimit, logs, listQuery, pageSize, stagedQuery, getRequestData, page]);
-
-	useEffect(() => {
-		setQueryId(v4());
-	}, [data]);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
