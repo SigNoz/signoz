@@ -388,13 +388,23 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	t.Run("not equal number after -> NULL folded to 0", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, float64(200))
-		assert.Contains(t, sql, "ifNull(toFloat64(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)), 0) <> ?")
+		assert.Contains(t, sql, "toFloat64(ifNull(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), 0)) <> ?")
 	})
 
 	t.Run("not equal bool after -> NULL folded to false", func(t *testing.T) {
 		key := attrKey("http.cache.hit", telemetrytypes.FieldDataTypeBool, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, true)
 		assert.Contains(t, sql, "ifNull(if(dynamicType(attributes.`http.cache.hit`) = 'Bool', accurateCastOrNull(attributes.`http.cache.hit`, 'Bool'), NULL), false) <> ?")
+	})
+
+	// A numeric key compared to a non-numeric string is string-cast; the fold runs on the raw
+	// read (before the cast), so the string cast wraps a non-nullable value -> toString(ifNull(..)),
+	// never ifNull(toString(..), 0), which raises a String vs UInt8 type mismatch in ClickHouse.
+	t.Run("not equal number after, string value -> string cast over folded read, no type mismatch", func(t *testing.T) {
+		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, "teapot")
+		assert.Contains(t, sql, "toString(ifNull(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), 0)) <> ?")
+		assert.NotContains(t, sql, "ifNull(toString(")
 	})
 
 	t.Run("equal number after -> not folded, exists guard excludes absent", func(t *testing.T) {
@@ -407,19 +417,19 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	t.Run("not in number after -> each operand folded to 0", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotIn, []any{float64(200), float64(404)})
-		assert.Contains(t, sql, "(ifNull(toFloat64(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)), 0) <> ? AND ifNull(toFloat64(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)), 0) <> ?)")
+		assert.Contains(t, sql, "(toFloat64(ifNull(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), 0)) <> ? AND toFloat64(ifNull(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), 0)) <> ?)")
 	})
 
 	t.Run("not equal number straddle -> whole multiIf folded", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowStraddle, qbtypes.FilterOperatorNotEqual, float64(200))
-		assert.Contains(t, sql, "ifNull(toFloat64(multiIf(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL)), 0) <> ?")
+		assert.Contains(t, sql, "toFloat64(ifNull(multiIf(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL), 0)) <> ?")
 	})
 
 	t.Run("not equal number before -> harmless fold over the map read", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowBefore, qbtypes.FilterOperatorNotEqual, float64(200))
-		assert.Contains(t, sql, "ifNull(toFloat64(attributes_number['http.status_code']), 0) <> ?")
+		assert.Contains(t, sql, "toFloat64(ifNull(attributes_number['http.status_code'], 0)) <> ?")
 	})
 
 	t.Run("not equal number without rollout -> byte-identical to today", func(t *testing.T) {

@@ -69,11 +69,15 @@ func (c *conditionBuilder) conditionFor(
 		}
 	}
 
+	// Fold the absent read to the Map's type default on the raw numeric/bool read, before the
+	// collision cast: the read is then non-nullable (like a Map column), so a downstream string
+	// cast (numeric member vs a string value) can't pair a Nullable(String) with the numeric
+	// default and raise a type mismatch.
+	fieldExpression = foldAbsentJSONReadToTypeDefault(logical.Single(), operator, fieldExpression)
+
 	// Coercion switches only on the data type, which every member shares, so
 	// the first member stands in for the field.
 	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(logical.Single(), value, fieldExpression, operator)
-
-	fieldExpression = foldAbsentJSONReadToTypeDefault(logical.Single(), operator, fieldExpression)
 
 	// regular operators
 	switch operator {
