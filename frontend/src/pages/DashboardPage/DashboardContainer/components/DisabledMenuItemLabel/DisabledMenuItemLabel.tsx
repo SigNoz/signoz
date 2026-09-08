@@ -34,13 +34,11 @@ function DisabledMenuItemLabel({
 
 	return (
 		<>
-			<AuthZTooltip
-				checks={checks}
-				disabledTooltip={disabledTooltip}
-				side="left"
-				asChild
-			>
-				<span className={styles.rowAnchor} />
+			<AuthZTooltip checks={checks} disabledTooltip={disabledTooltip} side="left">
+				{/* A button so the tooltip can disable it the way it disables any other
+				    control — a span has no disabled state. Invisible and hidden from
+				    assistive tech: the row it covers carries the label and the state. */}
+				<button type="button" className={styles.rowAnchor} aria-hidden />
 			</AuthZTooltip>
 			{children}
 		</>

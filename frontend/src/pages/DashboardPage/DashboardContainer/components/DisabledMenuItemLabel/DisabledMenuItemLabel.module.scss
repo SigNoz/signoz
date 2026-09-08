@@ -1,4 +1,10 @@
 .rowAnchor {
+	/* Invisible: it is a hover target, not a control of its own. */
+	appearance: none;
+	border: 0;
+	padding: 0;
+	background: none;
+	opacity: 0;
 	/* The dropdown row is the positioned ancestor, so this covers it exactly. */
 	position: absolute;
 	inset: 0;
