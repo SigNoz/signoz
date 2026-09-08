@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Button, Skeleton } from 'antd';
+import { useGetAIObservabilityFieldsKeys } from 'api/generated/services/ai-observability';
 import { useGetFieldsKeys } from 'api/generated/services/fields';
 import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -41,8 +42,9 @@ function OtherFilters({
 	setAddedFilters: React.Dispatch<React.SetStateAction<TelemetryFieldKey[]>>;
 }): JSX.Element {
 	const isMeterDataSource = signal === SignalType.METER_EXPLORER;
+	const isAIObservability = signal === SignalType.AI_OBSERVABILITY;
 
-	const { data, isFetching } = useGetFieldsKeys(
+	const fieldsKeys = useGetFieldsKeys(
 		{
 			searchText: inputValue,
 			signal: signal
@@ -50,8 +52,18 @@ function OtherFilters({
 				: undefined,
 			source: isMeterDataSource ? TelemetrytypesSourceDTO.meter : undefined,
 		},
-		{ query: { enabled: !!signal } },
+		{ query: { enabled: !!signal && !isAIObservability } },
 	);
+
+	// Signal-wide fields API has no gen_ai gating and no per-trace aggregates.
+	const aiObservabilityKeys = useGetAIObservabilityFieldsKeys(
+		{ searchText: inputValue },
+		{ query: { enabled: isAIObservability } },
+	);
+
+	const { data, isFetching } = isAIObservability
+		? aiObservabilityKeys
+		: fieldsKeys;
 
 	const otherFilters = useMemo<TelemetryFieldKey[]>(() => {
 		const rawSuggestions = Object.values(data?.data?.keys ?? {}).flat();

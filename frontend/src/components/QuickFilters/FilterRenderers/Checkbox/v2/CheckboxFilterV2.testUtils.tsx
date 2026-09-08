@@ -54,6 +54,57 @@ export function mockFieldsValuesAPI(response: {
 	);
 }
 
+/**
+ * Records every request the AI observability values endpoint receives, so a test
+ * can assert both the routing and the query params it was called with.
+ */
+export function mockAIObservabilityFieldsValuesAPI(response: {
+	relatedValues?: (string | null)[];
+	stringValues?: (string | null)[];
+	numberValues?: (number | null)[];
+}): { requests: URLSearchParams[] } {
+	const requests: URLSearchParams[] = [];
+
+	server.use(
+		rest.get(
+			'http://localhost/api/v1/ai_observability/fields/values',
+			(req, res, ctx) => {
+				requests.push(req.url.searchParams);
+
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							values: {
+								relatedValues: response.relatedValues ?? [],
+								stringValues: response.stringValues ?? [],
+								numberValues: response.numberValues ?? [],
+							},
+						},
+					}),
+				);
+			},
+		),
+	);
+
+	return { requests };
+}
+
+/** Fails the test if the signal-wide values endpoint is hit at all. */
+export function forbidFieldsValuesAPI(): { called: boolean } {
+	const state = { called: false };
+
+	server.use(
+		rest.get('http://localhost/api/v1/fields/values', (_, res, ctx) => {
+			state.called = true;
+			return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+		}),
+	);
+
+	return state;
+}
+
 export function mockFieldsValuesAPILoading(): void {
 	server.use(
 		rest.get('http://localhost/api/v1/fields/values', (_, res, ctx) =>

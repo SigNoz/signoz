@@ -15,7 +15,7 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { NON_SELECTED_OPERATORS } from '../checkboxFilterQuery';
-import useActiveQueryIndex from '../useActiveQueryIndex';
+import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryIndex';
 import useCheckboxDisclosure from '../useCheckboxDisclosure';
 import useCheckboxFilterActions from '../useCheckboxFilterActions';
 import useCheckboxFilterState from '../useCheckboxFilterState';
@@ -71,6 +71,7 @@ export default function CheckboxFilterV2(
 
 	const { relatedValues, allValues, isLoading, isFetching } = useFieldValues({
 		filter,
+		source,
 		searchText,
 		existingQuery,
 		metricNamespace: useFieldApis.metricNamespace,
