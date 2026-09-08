@@ -28,7 +28,8 @@ func (f *formatter) JSONExtractString(column, path string) []byte {
 func (f *formatter) JSONExtractMapValue(column, mapField, key string) []byte {
 	// The key becomes one quoted path segment so dots inside it are not
 	// treated as nesting: $.labels."k8s.cluster".
-	escapedKey := strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(key)
+	// A `"` in the key is inexpressible in sqlite JSON paths; the filter grammar cannot produce one.
+	escapedKey := strings.NewReplacer(`\`, `\\`).Replace(key)
 	return f.JSONExtractString(column, `$.`+mapField+`."`+escapedKey+`"`)
 }
 
