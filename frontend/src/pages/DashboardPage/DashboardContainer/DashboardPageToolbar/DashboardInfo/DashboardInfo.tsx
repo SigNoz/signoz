@@ -45,7 +45,7 @@ interface DashboardInfoProps {
 	/** When provided, the lock icon toggles lock/unlock (author/admin only). */
 	onToggleLock?: () => void;
 	/** Why the toggle is unavailable, when onToggleLock is absent. */
-	lockDisabledReason?: string;
+	lockDisabledTooltip?: string;
 	isEditing: boolean;
 	draft: string;
 	onDraftChange: (value: string) => void;
@@ -64,7 +64,7 @@ function DashboardInfo({
 	isDashboardLocked,
 	showLockToggle,
 	onToggleLock,
-	lockDisabledReason,
+	lockDisabledTooltip,
 	isEditing,
 	draft,
 	onDraftChange,
@@ -88,8 +88,8 @@ function DashboardInfo({
 		lockTooltip = isDashboardLocked
 			? 'Locked — click to unlock'
 			: 'Unlocked — click to lock';
-	} else if (lockDisabledReason) {
-		lockTooltip = lockDisabledReason;
+	} else if (lockDisabledTooltip) {
+		lockTooltip = lockDisabledTooltip;
 	} else {
 		lockTooltip = isDashboardLocked
 			? 'This dashboard is locked'

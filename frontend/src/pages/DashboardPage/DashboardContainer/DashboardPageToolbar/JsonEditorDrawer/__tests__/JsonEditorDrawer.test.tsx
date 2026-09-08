@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from 'tests/test-utils';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -10,8 +10,21 @@ jest.mock('../useJsonEditor', () => ({ useJsonEditor: jest.fn() }));
 // Editable by default so the drawer renders in its editable (non-read-only) mode.
 jest.mock('../../../store/useDashboardStore', () => ({
 	useDashboardStore: (
-		selector: (s: { isEditable: boolean; editDisabledReason: string }) => unknown,
-	): unknown => selector({ isEditable: true, editDisabledReason: '' }),
+		selector: (s: {
+			isEditable: boolean;
+			editChecks: unknown[];
+			deleteChecks: unknown[];
+			areOtherPermissionsLoading: boolean;
+			editDisabledTooltip: string;
+		}) => unknown,
+	): unknown =>
+		selector({
+			isEditable: true,
+			editChecks: [],
+			areOtherPermissionsLoading: false,
+			deleteChecks: [],
+			editDisabledTooltip: '',
+		}),
 }));
 
 jest.mock('@monaco-editor/react', () => ({
@@ -69,11 +82,14 @@ function hookValue(
 // about what the UI does with a given edit context, so control it directly.
 const mockEditContext = {
 	isEditable: true,
+	editChecks: [],
+	deleteChecks: [],
+	areOtherPermissionsLoading: false,
 	isLocked: false,
 	canEditDashboard: true,
 	canDeleteDashboard: true,
-	editDisabledReason: '',
-	deleteDisabledReason: '',
+	editDisabledTooltip: '',
+	deleteDisabledTooltip: '',
 };
 jest.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext',
@@ -112,7 +128,7 @@ describe('JsonEditorDrawer', () => {
 		mockUseJsonEditor.mockReturnValue(
 			hookValue({ danglingPanelIds: ['p1', 'p2'] }),
 		);
-		const { rerender } = render(
+		const { unmount } = render(
 			<TooltipProvider>
 				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />
 			</TooltipProvider>,
@@ -121,8 +137,11 @@ describe('JsonEditorDrawer', () => {
 			'2 panels not present in layout',
 		);
 
+		// Mounted fresh rather than re-rendered: the provider wrapper holds the
+		// first tree, so a rerender does not pick up the new hook value.
+		unmount();
 		mockUseJsonEditor.mockReturnValue(hookValue({ danglingPanelIds: [] }));
-		rerender(
+		render(
 			<TooltipProvider>
 				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />
 			</TooltipProvider>,

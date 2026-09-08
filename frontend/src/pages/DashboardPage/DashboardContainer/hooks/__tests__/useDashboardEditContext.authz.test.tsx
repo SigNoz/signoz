@@ -11,11 +11,7 @@ import {
 	buildDashboardUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 
-import {
-	DASHBOARD_LOCKED_REASON,
-	DASHBOARD_NO_DELETE_PERMISSION_REASON,
-	DASHBOARD_NO_EDIT_PERMISSION_REASON,
-} from 'hooks/dashboards/dashboardPermissionReasons';
+import { DASHBOARD_LOCKED_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
 
 import { useDashboardEditContext } from '../useDashboardEditContext';
 
@@ -56,8 +52,8 @@ describe('useDashboardEditContext - AuthZ', () => {
 			const { result } = renderGuard();
 
 			await waitFor(() => expect(result.current.isEditable).toBe(true));
-			expect(result.current.editDisabledReason).toBe('');
-			expect(result.current.deleteDisabledReason).toBe('');
+			expect(result.current.editDisabledTooltip).toBe('');
+			expect(result.current.deleteDisabledTooltip).toBe('');
 		});
 
 		// An edit-capable user gets the lock: it's the thing they can act on.
@@ -70,8 +66,8 @@ describe('useDashboardEditContext - AuthZ', () => {
 			// a non-empty reason is not enough to know the check has landed.
 			await waitFor(() => expect(result.current.canEditDashboard).toBe(true));
 			expect(result.current.isEditable).toBe(false);
-			expect(result.current.editDisabledReason).toBe(DASHBOARD_LOCKED_REASON);
-			expect(result.current.deleteDisabledReason).toBe(DASHBOARD_LOCKED_REASON);
+			expect(result.current.editDisabledTooltip).toBe(DASHBOARD_LOCKED_REASON);
+			expect(result.current.deleteDisabledTooltip).toBe(DASHBOARD_LOCKED_REASON);
 		});
 	});
 
@@ -82,15 +78,9 @@ describe('useDashboardEditContext - AuthZ', () => {
 
 			const { result } = renderGuard(true);
 
-			await waitFor(() =>
-				expect(result.current.editDisabledReason).toBe(
-					DASHBOARD_NO_EDIT_PERMISSION_REASON,
-				),
-			);
-			expect(result.current.deleteDisabledReason).toBe(
-				DASHBOARD_NO_DELETE_PERMISSION_REASON,
-			);
-			expect(result.current.editDisabledKind).toBe('denied');
+			await waitFor(() => expect(result.current.editDisabledTooltip).toBe(''));
+			expect(result.current.deleteDisabledTooltip).toBe('');
+			expect(result.current.editDisabledTooltip).toBe('');
 		});
 
 		it('reports the permission when unlocked', async () => {
@@ -98,14 +88,10 @@ describe('useDashboardEditContext - AuthZ', () => {
 
 			const { result } = renderGuard();
 
-			await waitFor(() => expect(result.current.editDisabledReason).not.toBe(''));
+			await waitFor(() => expect(result.current.canEditDashboard).toBe(false));
 			expect(result.current.canEditDashboard).toBe(false);
-			expect(result.current.editDisabledReason).toBe(
-				DASHBOARD_NO_EDIT_PERMISSION_REASON,
-			);
-			expect(result.current.deleteDisabledReason).toBe(
-				DASHBOARD_NO_DELETE_PERMISSION_REASON,
-			);
+			expect(result.current.editDisabledTooltip).toBe('');
+			expect(result.current.deleteDisabledTooltip).toBe('');
 		});
 
 		// Authz guide rule 2 — update alone is not enough to offer an edit affordance.
@@ -114,11 +100,9 @@ describe('useDashboardEditContext - AuthZ', () => {
 
 			const { result } = renderGuard();
 
-			await waitFor(() => expect(result.current.editDisabledReason).not.toBe(''));
+			await waitFor(() => expect(result.current.canEditDashboard).toBe(false));
 			expect(result.current.canEditDashboard).toBe(false);
-			expect(result.current.editDisabledReason).toBe(
-				DASHBOARD_NO_EDIT_PERMISSION_REASON,
-			);
+			expect(result.current.editDisabledTooltip).toBe('');
 		});
 
 		// Authz guide rule 3 — delete stands on its own.
@@ -128,7 +112,7 @@ describe('useDashboardEditContext - AuthZ', () => {
 			const { result } = renderGuard();
 
 			await waitFor(() => expect(result.current.canDeleteDashboard).toBe(true));
-			expect(result.current.deleteDisabledReason).toBe('');
+			expect(result.current.deleteDisabledTooltip).toBe('');
 			expect(result.current.canEditDashboard).toBe(false);
 		});
 

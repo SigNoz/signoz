@@ -4,14 +4,16 @@ import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 
-import type { DisabledState } from 'lib/authz/components/DisabledReasonTooltip/disabledState.types';
 import DisabledMenuItemLabel from '../../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
 import styles from './SectionActionsMenu.module.scss';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 interface SectionActionsMenuProps {
 	sectionId: string;
 	/** Present when edits are unavailable — items render disabled with its reason. */
-	disabled?: DisabledState;
+	disabledChecks?: BrandedPermission[];
+	disabledTooltip?: string;
+	disabled?: boolean;
 	onAddPanel?: () => void;
 	onRename?: () => void;
 	onCloneSection?: () => void;
@@ -20,17 +22,23 @@ interface SectionActionsMenuProps {
 
 function SectionActionsMenu({
 	sectionId,
-	disabled,
+	disabledChecks = [],
+	disabledTooltip,
+	disabled = false,
 	onAddPanel,
 	onRename,
 	onCloneSection,
 	onDeleteSection,
 }: SectionActionsMenuProps): JSX.Element {
 	const items = useMemo<MenuItem[]>(() => {
-		const isDisabled = !!disabled;
+		const isDisabled = disabled;
 		const label = (text: string): ReactNode =>
 			disabled ? (
-				<DisabledMenuItemLabel reason={disabled.reason} kind={disabled.kind}>
+				<DisabledMenuItemLabel
+					disabled
+					checks={disabledChecks}
+					disabledTooltip={disabledTooltip}
+				>
 					{text}
 				</DisabledMenuItemLabel>
 			) : (
@@ -78,7 +86,15 @@ function SectionActionsMenu({
 			);
 		}
 		return result;
-	}, [disabled, onAddPanel, onRename, onCloneSection, onDeleteSection]);
+	}, [
+		disabled,
+		disabledChecks,
+		disabledTooltip,
+		onAddPanel,
+		onRename,
+		onCloneSection,
+		onDeleteSection,
+	]);
 
 	return (
 		<DropdownMenuSimple menu={{ items }}>

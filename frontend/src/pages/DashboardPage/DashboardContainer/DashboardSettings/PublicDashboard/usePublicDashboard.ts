@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import {
@@ -23,6 +24,8 @@ export interface UsePublicDashboardReturn {
 	isPublic: boolean;
 	/** read + update on this dashboard — publishing is a dashboard update. */
 	canManage: boolean;
+	/** `[read, update]` — publishing changes the dashboard. */
+	publishChecks: BrandedPermission[];
 	isLoading: boolean;
 	isPublishing: boolean;
 	isUpdating: boolean;
@@ -51,7 +54,8 @@ export function usePublicDashboard(
 	const { showErrorModal } = useErrorModal();
 	// The backend gates the public-config writes on dashboard:update, not on the
 	// admin role, so a licensed editor can publish.
-	const { canEdit: canManage } = useDashboardPermissions(dashboardId);
+	const { canEdit: canManage, editChecks: publishChecks } =
+		useDashboardPermissions(dashboardId);
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const [timeRangeEnabled, setTimeRangeEnabled] = useState<boolean>(true);
@@ -198,6 +202,7 @@ export function usePublicDashboard(
 	return {
 		isPublic,
 		canManage,
+		publishChecks,
 		isLoading,
 		isPublishing,
 		isUpdating,

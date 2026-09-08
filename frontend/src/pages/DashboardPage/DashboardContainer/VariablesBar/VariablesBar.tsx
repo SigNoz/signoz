@@ -33,7 +33,7 @@ interface VariablesBarProps {
  */
 function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	const dashboardId = dashboard.id ?? '';
-	const { isEditable, editDisabledReason, editDisabledKind } =
+	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
 	const { variables, selection, setSelection, autoSelect } =
 		useVariableSelection(dashboard);
@@ -135,8 +135,9 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 				    mounted so measuring never toggles it. */}
 				<span className={styles.addSlot}>
 					<AddVariableIcon
-						disabledReason={editDisabledReason}
-						disabledKind={editDisabledKind}
+						checks={editChecks}
+						disabledTooltip={editDisabledTooltip}
+						isEditable={isEditable}
 					/>
 				</span>
 			</div>

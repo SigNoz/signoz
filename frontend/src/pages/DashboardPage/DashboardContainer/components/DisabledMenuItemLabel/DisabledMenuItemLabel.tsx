@@ -1,40 +1,47 @@
 import type { ReactNode } from 'react';
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 import styles from './DisabledMenuItemLabel.module.scss';
 
 interface DisabledMenuItemLabelProps {
-	reason: string;
+	/** The menu item's own `disabled` flag — nothing renders when it is available. */
+	disabled: boolean;
+	/** Permissions the row needs, reported in the standard wording when denied. */
+	checks: BrandedPermission[];
+	/** A non-permission block, which outranks the checks (see AuthZTooltip). */
+	disabledTooltip?: string;
 	children: ReactNode;
-	/**
-	 * Required so a caller can never fall back to a default that mis-styles an
-	 * access problem as a state the user could resolve themselves.
-	 */
-	kind: 'denied' | 'blocked';
 }
 
 /**
- * Label for a disabled dropdown row.
+ * Label for a dropdown row, with the reason it is unavailable.
  *
  * The hover target is an overlay covering the whole row rather than the label
- * text, so the tooltip anchors to the row and lands clear of the menu instead
- * of over the row's own icon — matching the dashboards list. Anchoring to the
- * text would put it inside the menu, since the icon sits to the text's left.
+ * text: the row is the positioning context, so the tooltip anchors to it and
+ * lands clear of the menu instead of over the row's own icon. The row stops
+ * pointer events when disabled, so the overlay takes the hover instead.
  */
 function DisabledMenuItemLabel({
-	reason,
+	disabled,
+	checks,
+	disabledTooltip,
 	children,
-	kind,
 }: DisabledMenuItemLabelProps): JSX.Element {
-	if (!reason) {
+	if (!disabled) {
 		return <>{children}</>;
 	}
 
 	return (
 		<>
-			<DisabledReasonTooltip reason={reason} kind={kind} side="left" asChild>
+			<AuthZTooltip
+				checks={checks}
+				disabledTooltip={disabledTooltip}
+				side="left"
+				asChild
+			>
 				<span className={styles.rowAnchor} />
-			</DisabledReasonTooltip>
+			</AuthZTooltip>
 			{children}
 		</>
 	);

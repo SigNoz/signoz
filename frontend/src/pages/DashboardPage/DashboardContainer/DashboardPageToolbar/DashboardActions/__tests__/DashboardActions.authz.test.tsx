@@ -28,11 +28,14 @@ const dashboard = {
 // Composition is what's under test here; the derivation has its own suite.
 const mockEditContext = {
 	isEditable: true,
+	editChecks: [],
+	areOtherPermissionsLoading: false,
+	deleteChecks: [],
 	isLocked: false,
 	canEditDashboard: true,
 	canDeleteDashboard: true,
-	editDisabledReason: '',
-	deleteDisabledReason: '',
+	editDisabledTooltip: '',
+	deleteDisabledTooltip: '',
 };
 function setEditContextMock(next: Partial<typeof mockEditContext>): void {
 	Object.assign(mockEditContext, {
@@ -40,8 +43,8 @@ function setEditContextMock(next: Partial<typeof mockEditContext>): void {
 		isLocked: false,
 		canEditDashboard: true,
 		canDeleteDashboard: true,
-		editDisabledReason: '',
-		deleteDisabledReason: '',
+		editDisabledTooltip: '',
+		deleteDisabledTooltip: '',
 		...next,
 	});
 }
@@ -91,7 +94,7 @@ describe('DashboardActions - AuthZ', () => {
 			setEditContextMock({
 				isEditable: false,
 				canEditDashboard: false,
-				editDisabledReason: 'no permission',
+				editDisabledTooltip: 'no permission',
 			});
 
 			renderActions();
@@ -110,8 +113,8 @@ describe('DashboardActions - AuthZ', () => {
 				isEditable: false,
 				canEditDashboard: false,
 				canDeleteDashboard: false,
-				editDisabledReason: 'no permission',
-				deleteDisabledReason: 'no permission',
+				editDisabledTooltip: 'no permission',
+				deleteDisabledTooltip: 'no permission',
 			});
 
 			renderActions();
@@ -133,7 +136,7 @@ describe('DashboardActions - AuthZ', () => {
 			setEditContextMock({
 				isEditable: false,
 				canEditDashboard: false,
-				editDisabledReason: 'no permission',
+				editDisabledTooltip: 'no permission',
 			});
 
 			renderActions();

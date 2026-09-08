@@ -64,7 +64,7 @@ export function usePanelActionItems({
 	panelActions,
 }: UsePanelActionItemsArgs): PanelActionItems {
 	const panelKind = panel.spec.plugin.kind;
-	const { isEditable, editDisabledReason, editDisabledKind } =
+	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
 	const openPanelEditor = useOpenPanelEditor();
 	const createAlert = useCreateAlertFromPanel();
@@ -101,8 +101,12 @@ export function usePanelActionItems({
 
 	const items = useMemo<MenuItem[]>(() => {
 		const label = (text: string): ReactNode =>
-			editDisabledReason ? (
-				<DisabledMenuItemLabel reason={editDisabledReason} kind={editDisabledKind}>
+			editDisabledTooltip ? (
+				<DisabledMenuItemLabel
+					disabled
+					checks={editChecks}
+					disabledTooltip={editDisabledTooltip}
+				>
 					{text}
 				</DisabledMenuItemLabel>
 			) : (
@@ -196,7 +200,8 @@ export function usePanelActionItems({
 			);
 	}, [
 		isEditable,
-		editDisabledReason,
+		editChecks,
+		editDisabledTooltip,
 		panelCapabilities,
 		panel,
 		panelActions,

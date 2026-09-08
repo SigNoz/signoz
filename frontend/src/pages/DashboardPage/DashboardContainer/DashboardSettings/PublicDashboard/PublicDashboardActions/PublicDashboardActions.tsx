@@ -1,8 +1,9 @@
 import { Globe, RefreshCw, Trash } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import styles from './PublicDashboardActions.module.scss';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 interface PublicDashboardActionsProps {
 	isPublic: boolean;
@@ -10,7 +11,7 @@ interface PublicDashboardActionsProps {
 	 * Why publishing is unavailable. Non-empty both disables the buttons and
 	 * explains them, so they cannot be disabled silently.
 	 */
-	disabledReason?: string;
+	checks: BrandedPermission[];
 	/** In-flight config read — transient, and a spinner explains itself. */
 	isLoading?: boolean;
 	isPublishing: boolean;
@@ -23,7 +24,7 @@ interface PublicDashboardActionsProps {
 
 function PublicDashboardActions({
 	isPublic,
-	disabledReason = '',
+	checks,
 	isLoading = false,
 	isPublishing,
 	isUpdating,
@@ -32,13 +33,13 @@ function PublicDashboardActions({
 	onUpdate,
 	onUnpublish,
 }: PublicDashboardActionsProps): JSX.Element {
-	const disabled = isLoading || !!disabledReason;
+	const disabled = isLoading;
 
 	return (
 		<div className={styles.footer}>
 			{isPublic ? (
 				<>
-					<DisabledReasonTooltip reason={disabledReason} kind="denied">
+					<AuthZTooltip checks={checks}>
 						<Button
 							variant="outlined"
 							color="destructive"
@@ -50,8 +51,8 @@ function PublicDashboardActions({
 						>
 							Unpublish Dashboard
 						</Button>
-					</DisabledReasonTooltip>
-					<DisabledReasonTooltip reason={disabledReason} kind="denied">
+					</AuthZTooltip>
+					<AuthZTooltip checks={checks}>
 						<Button
 							variant="solid"
 							color="primary"
@@ -63,10 +64,10 @@ function PublicDashboardActions({
 						>
 							Update Dashboard
 						</Button>
-					</DisabledReasonTooltip>
+					</AuthZTooltip>
 				</>
 			) : (
-				<DisabledReasonTooltip reason={disabledReason} kind="denied">
+				<AuthZTooltip checks={checks}>
 					<Button
 						variant="solid"
 						color="primary"
@@ -78,7 +79,7 @@ function PublicDashboardActions({
 					>
 						Publish Dashboard
 					</Button>
-				</DisabledReasonTooltip>
+				</AuthZTooltip>
 			)}
 		</div>
 	);

@@ -16,7 +16,7 @@ import { defineJsonEditorTheme, JSON_EDITOR_THEME } from './editorTheme';
 import styles from './JsonEditorDrawer.module.scss';
 import JsonEditorToolbar from './JsonEditorToolbar';
 import { useJsonEditor } from './useJsonEditor';
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
 
 interface JsonEditorDrawerProps {
@@ -32,8 +32,8 @@ function JsonEditorDrawer({
 }: JsonEditorDrawerProps): JSX.Element {
 	const {
 		isEditable,
-		editDisabledReason: readOnlyReason,
-		editDisabledKind: readOnlyKind,
+		editDisabledTooltip: readOnlyTooltip,
+		editChecks: readOnlyChecks,
 	} = useDashboardEditContext();
 	const [, copyToClipboard] = useCopyToClipboard();
 
@@ -178,9 +178,9 @@ function JsonEditorDrawer({
 						>
 							Cancel
 						</Button>
-						<DisabledReasonTooltip
-							reason={readOnly ? readOnlyReason : ''}
-							kind={readOnlyKind}
+						<AuthZTooltip
+							checks={readOnlyChecks}
+							disabledTooltip={readOnly ? readOnlyTooltip : undefined}
 						>
 							<Button
 								variant="solid"
@@ -192,7 +192,7 @@ function JsonEditorDrawer({
 							>
 								Apply changes
 							</Button>
-						</DisabledReasonTooltip>
+						</AuthZTooltip>
 					</div>
 				</div>
 			}

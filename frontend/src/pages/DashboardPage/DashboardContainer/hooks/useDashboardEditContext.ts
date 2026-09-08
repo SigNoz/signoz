@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 
 import { useDashboardStore } from '../store/useDashboardStore';
@@ -19,15 +20,26 @@ import { useDashboardFetchRequired } from './useDashboardFetchRequired';
  */
 export function useDashboardEditContext(): DashboardEditContext {
 	const { dashboard } = useDashboardFetchRequired();
-	const { canEdit, canDelete } = useDashboardPermissions(dashboard.id);
+	const {
+		canEdit,
+		canDelete,
+		editChecks,
+		deletePermission,
+		areOtherPermissionsLoading,
+	} = useDashboardPermissions(dashboard.id);
 	const readOnlyOverride = useDashboardStore(
 		(s) => s.canEditDashboardOverride === false,
 	);
+
+	const deleteChecks = useMemo(() => [deletePermission], [deletePermission]);
 
 	return deriveEditContext({
 		isLocked: !!dashboard.locked,
 		canEdit,
 		canDelete,
+		editChecks,
+		deleteChecks,
+		areOtherPermissionsLoading,
 		readOnlyOverride,
 	});
 }

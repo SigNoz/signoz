@@ -13,7 +13,7 @@ import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/ty
 import type { EQueryType } from 'types/common/dashboard';
 
 import styles from './ViewPanelModal.module.scss';
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 interface ViewPanelModalHeaderProps {
@@ -65,8 +65,8 @@ function ViewPanelModalHeader({
 }: ViewPanelModalHeaderProps): JSX.Element {
 	const {
 		isEditable: canSwitchToEdit,
-		editDisabledReason,
-		editDisabledKind,
+		editChecks,
+		editDisabledTooltip,
 	} = useDashboardEditContext();
 	// Same capabilities-guarded options as the editor's PanelTypeSwitcher, so the two
 	// selectors disable the same kinds (e.g. List under PromQL, metrics-only kinds).
@@ -82,7 +82,7 @@ function ViewPanelModalHeader({
 					onChange={onChangePanelKind}
 				/>
 			</div>
-			<DisabledReasonTooltip reason={editDisabledReason} kind={editDisabledKind}>
+			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 				<Button
 					variant="outlined"
 					color="secondary"
@@ -93,7 +93,7 @@ function ViewPanelModalHeader({
 				>
 					Switch to Edit Mode
 				</Button>
-			</DisabledReasonTooltip>
+			</AuthZTooltip>
 			<Button
 				variant="link"
 				color="primary"

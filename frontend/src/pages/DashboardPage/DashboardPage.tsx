@@ -5,12 +5,15 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
-import { buildDashboardReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+import {
+	buildDashboardDeletePermission,
+	buildDashboardReadPermission,
+	buildDashboardUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import DashboardContainer from './DashboardContainer';
 import { useDashboardFetch } from './DashboardContainer/hooks/useDashboardFetch';
-import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import styles from './DashboardPage.module.scss';
 
 function DashboardPage(): JSX.Element {
@@ -18,11 +21,6 @@ function DashboardPage(): JSX.Element {
 
 	const { dashboard, isLoading, isError, error, refetch } =
 		useDashboardFetch(dashboardId);
-	// `read` is already resolved by the page guard; this resolves `update` and
-	// `delete` so the subtree mounts once with every permission known, instead of
-	// rendering controls enabled and flipping them.
-	const { isLoading: isPermissionLoading } =
-		useDashboardPermissions(dashboardId);
 
 	// Fire once per dashboard load (re-fires on navigating to a different id).
 	const openedRef = useRef<string | null>(null);
@@ -41,7 +39,7 @@ function DashboardPage(): JSX.Element {
 		});
 	}, [dashboard]);
 
-	if (isLoading || isPermissionLoading) {
+	if (isLoading) {
 		return <Spinner tip="Loading dashboard..." />;
 	}
 
@@ -62,6 +60,12 @@ function DashboardPage(): JSX.Element {
 export default withAuthZPage<Record<string, unknown>>(DashboardPage, {
 	checks: (_props, router) => [
 		buildDashboardReadPermission(router.params.dashboardId ?? ''),
+	],
+	// Fetched in the same batch so the controls below resolve from cache instead
+	// of firing a second round trip once the page has mounted.
+	preloadChecks: (_props, router) => [
+		buildDashboardUpdatePermission(router.params.dashboardId ?? ''),
+		buildDashboardDeletePermission(router.params.dashboardId ?? ''),
 	],
 	fallbackOnLoading: <Spinner tip="Loading dashboard..." />,
 });

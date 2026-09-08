@@ -1,82 +1,78 @@
 import {
 	DASHBOARD_LOCKED_REASON,
 	DASHBOARD_READ_ONLY_VIEW_REASON,
-	DASHBOARD_NO_DELETE_PERMISSION_REASON,
-	DASHBOARD_NO_EDIT_PERMISSION_REASON,
 } from 'hooks/dashboards/dashboardPermissionReasons';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 export interface DashboardEditContext {
 	isEditable: boolean;
 	isLocked: boolean;
 	canEditDashboard: boolean;
 	canDeleteDashboard: boolean;
-	/** '' when the action is available. */
-	editDisabledReason: string;
-	deleteDisabledReason: string;
+	/** `[read, update]` — hand to an authz component as its `checks`. */
+	editChecks: BrandedPermission[];
+	deleteChecks: BrandedPermission[];
 	/**
-	 * Whether each reason is an access problem or a state the user can act on.
-	 * Drives how it is presented; meaningless when the reason is ''. Delete has
-	 * its own, since it is gated independently of edit.
+	 * The non-permission obstacle, for `disabledTooltip`. Empty when a missing
+	 * permission is the obstacle: `update` outranks the lock, so the authz
+	 * component reports it in the standard wording instead.
 	 */
-	editDisabledKind: 'denied' | 'blocked';
-	deleteDisabledKind: 'denied' | 'blocked';
+	editDisabledTooltip: string;
+	deleteDisabledTooltip: string;
+	/** `update`/`delete` are still resolving; `read` gates the page itself. */
+	areOtherPermissionsLoading: boolean;
 }
 
 /**
- * Lock wins over permission: an edit-capable user looking at a locked dashboard
- * should be told about the lock, which is the thing they can act on.
+ * Precedence is `update` → lock → `read`: a caller who lacks the permission
+ * hears that, since telling them the dashboard is locked would send them asking
+ * for an unlock when what they need is access. A caller who holds it hears about
+ * the lock, which is the thing they can act on.
+ *
+ * A forced read-only mount outranks both — it is not a permission problem and no
+ * check can lift it.
  */
 export function deriveEditContext({
 	isLocked,
 	canEdit,
 	canDelete,
+	editChecks,
+	deleteChecks,
+	areOtherPermissionsLoading,
 	readOnlyOverride = false,
 }: {
 	isLocked: boolean;
 	canEdit: boolean;
 	canDelete: boolean;
+	editChecks: BrandedPermission[];
+	deleteChecks: BrandedPermission[];
+	areOtherPermissionsLoading: boolean;
 	/** Mount forced view-only regardless of permissions (see pulse-pod#283). */
 	readOnlyOverride?: boolean;
 }): DashboardEditContext {
-	let editDisabledReason = '';
-	let deleteDisabledReason = '';
 	if (readOnlyOverride) {
 		return {
-			editDisabledKind: 'blocked',
-			deleteDisabledKind: 'blocked',
 			isEditable: false,
 			isLocked,
 			canEditDashboard: false,
 			canDeleteDashboard: false,
-			editDisabledReason: DASHBOARD_READ_ONLY_VIEW_REASON,
-			deleteDisabledReason: DASHBOARD_READ_ONLY_VIEW_REASON,
+			editChecks,
+			deleteChecks,
+			editDisabledTooltip: DASHBOARD_READ_ONLY_VIEW_REASON,
+			deleteDisabledTooltip: DASHBOARD_READ_ONLY_VIEW_REASON,
+			areOtherPermissionsLoading: false,
 		};
-	}
-	// Access before state: someone who lacks the permission needs to hear that,
-	// not that the dashboard is locked - otherwise they go asking for an unlock
-	// when what they need is access. An edit-capable user still gets the lock,
-	// which is the thing they can act on.
-	if (!canEdit) {
-		editDisabledReason = DASHBOARD_NO_EDIT_PERMISSION_REASON;
-	} else if (isLocked) {
-		editDisabledReason = DASHBOARD_LOCKED_REASON;
-	}
-	if (!canDelete) {
-		deleteDisabledReason = DASHBOARD_NO_DELETE_PERMISSION_REASON;
-	} else if (isLocked) {
-		deleteDisabledReason = DASHBOARD_LOCKED_REASON;
 	}
 
 	return {
-		// Each reason above is a permission message unless access was fine and the
-		// lock is the only obstacle.
-		editDisabledKind: canEdit && isLocked ? 'blocked' : 'denied',
-		deleteDisabledKind: canDelete && isLocked ? 'blocked' : 'denied',
 		isEditable: canEdit && !isLocked,
 		isLocked,
 		canEditDashboard: canEdit,
 		canDeleteDashboard: canDelete,
-		editDisabledReason,
-		deleteDisabledReason,
+		editChecks,
+		deleteChecks,
+		editDisabledTooltip: canEdit && isLocked ? DASHBOARD_LOCKED_REASON : '',
+		deleteDisabledTooltip: canDelete && isLocked ? DASHBOARD_LOCKED_REASON : '',
+		areOtherPermissionsLoading,
 	};
 }

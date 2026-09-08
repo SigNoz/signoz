@@ -9,10 +9,13 @@ import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
-import { buildDashboardReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+import {
+	buildDashboardDeletePermission,
+	buildDashboardReadPermission,
+	buildDashboardUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 
 import { useDashboardFetch } from '../DashboardContainer/hooks/useDashboardFetch';
 import { useResolvedVariables } from '../DashboardContainer/hooks/useResolvedVariables';
@@ -49,10 +52,6 @@ function PanelEditorPage(): JSX.Element {
 
 	const { dashboard, isLoading, isError, error, refetch } =
 		useDashboardFetch(dashboardId);
-	// `read` is resolved by the page guard; this resolves `update` and `delete` so
-	// the editor mounts with every permission known.
-	const { isLoading: isPermissionLoading } =
-		useDashboardPermissions(dashboardId);
 	// On a refresh/direct URL this route is the only mount, so seed the edit
 	// context the way DashboardContainer does — during render, so the subtree's
 	// first render already sees the id (useDashboardFetchRequired throws without it).
@@ -109,7 +108,7 @@ function PanelEditorPage(): JSX.Element {
 		safeNavigate(timeSearch ? `${path}?${timeSearch}` : path);
 	}, [safeNavigate, dashboardId, timeSearch]);
 
-	if (isLoading || isPermissionLoading) {
+	if (isLoading) {
 		return <Spinner tip="Loading dashboard..." />;
 	}
 
@@ -150,6 +149,12 @@ function PanelEditorPage(): JSX.Element {
 export default withAuthZPage<Record<string, unknown>>(PanelEditorPage, {
 	checks: (_props, router) => [
 		buildDashboardReadPermission(router.params.dashboardId ?? ''),
+	],
+	// Fetched in the same batch so the controls below resolve from cache instead
+	// of firing a second round trip once the page has mounted.
+	preloadChecks: (_props, router) => [
+		buildDashboardUpdatePermission(router.params.dashboardId ?? ''),
+		buildDashboardDeletePermission(router.params.dashboardId ?? ''),
 	],
 	fallbackOnLoading: <Spinner tip="Loading dashboard..." />,
 });

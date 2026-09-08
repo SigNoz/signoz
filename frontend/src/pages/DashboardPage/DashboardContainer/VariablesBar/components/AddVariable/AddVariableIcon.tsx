@@ -1,19 +1,19 @@
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import styles from './AddVariable.module.scss';
 
-/**
- * `disabledReason` is the only input: a non-empty reason both disables the
- * trigger and explains it, so a dead control with no explanation cannot be
- * expressed.
- */
 interface AddVariableIconProps {
-	disabledReason?: string;
-	disabledKind: 'denied' | 'blocked';
+	/** Permissions the control needs; reported in the standard wording when denied. */
+	checks: BrandedPermission[];
+	/** A non-permission block, which outranks the checks. */
+	disabledTooltip?: string;
+	/** Whether editing is available at all, so the label is shown instead. */
+	isEditable: boolean;
 }
 
 /**
@@ -22,42 +22,49 @@ interface AddVariableIconProps {
  * primed.
  */
 function AddVariableIcon({
-	disabledReason = '',
-	disabledKind,
+	checks,
+	disabledTooltip,
+	isEditable,
 }: AddVariableIconProps): JSX.Element {
 	const requestSettings = useDashboardStore((s) => s.requestSettings);
 
-	const trigger = (
-		<Button
+	const onClick = (): void =>
+		requestSettings({ tab: 'Variables', addVariable: true });
+
+	// An available trigger shows its label; an unavailable one is disabled and
+	// explained by the authz button itself.
+	if (isEditable) {
+		return (
+			<TooltipSimple side="top" title="Add variable">
+				<Button
+					variant="outlined"
+					color="secondary"
+					size="icon"
+					className={styles.addVariableIcon}
+					aria-label="Add variable"
+					testId="dashboard-variables-add"
+					onClick={onClick}
+				>
+					<Plus size={14} />
+				</Button>
+			</TooltipSimple>
+		);
+	}
+
+	return (
+		<AuthZButton
+			checks={checks}
+			disabledTooltip={disabledTooltip}
 			variant="outlined"
 			color="secondary"
 			size="icon"
 			className={styles.addVariableIcon}
 			aria-label="Add variable"
 			testId="dashboard-variables-add"
-			disabled={!!disabledReason}
-			onClick={(): void =>
-				requestSettings({ tab: 'Variables', addVariable: true })
-			}
+			onClick={onClick}
 		>
 			<Plus size={14} />
-		</Button>
-	);
-
-	// A disabled trigger explains itself through the shared reason tooltip; an
-	// enabled one just gets its label.
-	if (disabledReason) {
-		return (
-			<DisabledReasonTooltip reason={disabledReason} kind={disabledKind}>
-				{trigger}
-			</DisabledReasonTooltip>
-		);
-	}
-
-	return (
-		<TooltipSimple side="top" title="Add variable">
-			{trigger}
-		</TooltipSimple>
+		</AuthZButton>
 	);
 }
 

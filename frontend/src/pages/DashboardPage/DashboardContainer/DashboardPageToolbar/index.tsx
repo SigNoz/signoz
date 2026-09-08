@@ -68,7 +68,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 
 	// dashboard:update plus the backend's creator-or-admin rule; integration-owned
 	// dashboards are never toggleable.
-	const { canToggleLock, disabledReason: lockDisabledReason } =
+	const { canToggleLock, disabledTooltip: lockDisabledTooltip } =
 		useDashboardLockPermission({
 			dashboardId: id,
 			createdBy: dashboard.createdBy,
@@ -171,7 +171,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 							? (): void => handleLockDashboardToggle('header')
 							: undefined
 					}
-					lockDisabledReason={lockDisabledReason}
+					lockDisabledTooltip={lockDisabledTooltip}
 					isEditing={isEditing}
 					draft={draft}
 					onDraftChange={setDraft}

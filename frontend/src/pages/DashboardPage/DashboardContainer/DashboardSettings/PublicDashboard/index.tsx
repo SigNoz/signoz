@@ -5,7 +5,6 @@ import PublicDashboardHint from './PublicDashboardHint/PublicDashboardHint';
 import PublicDashboardSettingsForm from './PublicDashboardSettingsForm/PublicDashboardSettingsForm';
 import PublicDashboardStatus from './PublicDashboardStatus/PublicDashboardStatus';
 import PublicDashboardUrl from './PublicDashboardUrl/PublicDashboardUrl';
-import { DASHBOARD_NO_PUBLISH_PERMISSION_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
 
 import { usePublicDashboard } from './usePublicDashboard';
 import styles from './PublicDashboard.module.scss';
@@ -20,6 +19,7 @@ function PublicDashboardSettings({
 	const {
 		isPublic,
 		canManage,
+		publishChecks,
 		isLoading,
 		isPublishing,
 		isUpdating,
@@ -36,7 +36,6 @@ function PublicDashboardSettings({
 		onOpenUrl,
 	} = usePublicDashboard(dashboard.id);
 
-	const denialReason = canManage ? '' : DASHBOARD_NO_PUBLISH_PERMISSION_REASON;
 	const controlsDisabled = isLoading || !canManage;
 
 	return (
@@ -64,7 +63,7 @@ function PublicDashboardSettings({
 
 			<PublicDashboardActions
 				isPublic={isPublic}
-				disabledReason={denialReason}
+				checks={publishChecks}
 				isLoading={isLoading}
 				isPublishing={isPublishing}
 				isUpdating={isUpdating}

@@ -11,13 +11,14 @@ import PanelEditorContainer from '../index';
 // these composition cases don't stand up; the derivation has its own suite.
 const mockEditContext = {
 	isEditable: true,
+	editChecks: [],
+	areOtherPermissionsLoading: false,
+	deleteChecks: [],
 	isLocked: false,
 	canEditDashboard: true,
 	canDeleteDashboard: true,
-	editDisabledReason: '',
-	deleteDisabledReason: '',
-	editDisabledKind: 'denied' as const,
-	deleteDisabledKind: 'denied' as const,
+	editDisabledTooltip: '',
+	deleteDisabledTooltip: '',
 };
 jest.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext',

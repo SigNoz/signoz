@@ -29,16 +29,14 @@ import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/service
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import {
-	DASHBOARD_CLONE_DENIED_REASON,
-	DASHBOARD_NO_CREATE_PERMISSION_REASON,
-} from 'hooks/dashboards/dashboardPermissionReasons';
 import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { DashboardCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import DisabledMenuItemLabel from '../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
 import DashboardSettings from '../../DashboardSettings';
 import { useAddSection } from '../../PanelsAndSectionsLayout/Section/hooks/useAddSection';
@@ -72,10 +70,10 @@ function DashboardActions({
 	const {
 		isLocked,
 		isEditable,
-		editDisabledReason,
-		editDisabledKind,
-		deleteDisabledReason,
-		deleteDisabledKind,
+		editChecks,
+		editDisabledTooltip,
+		deleteChecks,
+		deleteDisabledTooltip,
 		canDeleteDashboard,
 		canEditDashboard: canReadDashboard,
 	} = useDashboardEditContext();
@@ -84,21 +82,19 @@ function DashboardActions({
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
 	const { canCreate } = useDashboardCollectionPermissions();
-	const {
-		canToggleLock,
-		disabledReason: lockDisabledReason,
-		disabledKind: lockDisabledKind,
-	} = useDashboardLockPermission({
-		dashboardId: dashboard.id,
-		createdBy: dashboard.createdBy,
-	});
+	const { canToggleLock, disabledTooltip: lockDisabledTooltip } =
+		useDashboardLockPermission({
+			dashboardId: dashboard.id,
+			createdBy: dashboard.createdBy,
+		});
 
 	// Cloning creates a new dashboard from this one, so it needs create as well as
 	// the read this page already proves; it is not lock-gated.
-	const cloneDisabledReason = canCreate
-		? ''
-		: (canReadDashboard && DASHBOARD_NO_CREATE_PERMISSION_REASON) ||
-			DASHBOARD_CLONE_DENIED_REASON;
+	const cloneChecks = useMemo(
+		() => [...editChecks.slice(0, 1), DashboardCreatePermission],
+		[editChecks],
+	);
+	const cloneDenied = !canCreate || !canReadDashboard;
 
 	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] =
 		useState<boolean>(false);
@@ -184,14 +180,20 @@ function DashboardActions({
 	// Items stay in the menu when they aren't available, carrying the reason —
 	// lock or missing permission — instead of disappearing.
 	const disabledLabel = useCallback(
-		(text: string, reason: string, kind: 'denied' | 'blocked'): ReactNode =>
-			reason ? (
-				<DisabledMenuItemLabel reason={reason} kind={kind}>
-					{text}
-				</DisabledMenuItemLabel>
-			) : (
-				text
-			),
+		(
+			text: string,
+			disabled: boolean,
+			checks: BrandedPermission[],
+			disabledTooltip?: string,
+		): ReactNode => (
+			<DisabledMenuItemLabel
+				disabled={disabled}
+				checks={checks}
+				disabledTooltip={disabledTooltip}
+			>
+				{text}
+			</DisabledMenuItemLabel>
+		),
 		[],
 	);
 
@@ -199,7 +201,12 @@ function DashboardActions({
 		const dashboardGroup: MenuItem[] = [
 			{
 				key: 'rename',
-				label: disabledLabel('Rename', editDisabledReason, editDisabledKind),
+				label: disabledLabel(
+					'Rename',
+					!isEditable,
+					editChecks,
+					editDisabledTooltip,
+				),
 				icon: <PenLine size={14} />,
 				disabled: !isEditable,
 				onClick: onOpenRename,
@@ -207,17 +214,18 @@ function DashboardActions({
 			// Clone creates a new dashboard, so it's not lock-gated.
 			{
 				key: 'clone',
-				label: disabledLabel('Clone dashboard', cloneDisabledReason, 'denied'),
+				label: disabledLabel('Clone dashboard', cloneDenied, cloneChecks),
 				icon: <Copy size={14} />,
-				disabled: isCloning || !!cloneDisabledReason,
+				disabled: isCloning || cloneDenied,
 				onClick: (): void => void handleClone(),
 			},
 			{
 				key: 'lock',
 				label: disabledLabel(
 					isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard',
-					lockDisabledReason,
-					lockDisabledKind,
+					!canToggleLock,
+					editChecks,
+					lockDisabledTooltip,
 				),
 				icon: <LockKeyhole size={14} />,
 				disabled: !canToggleLock,
@@ -245,7 +253,12 @@ function DashboardActions({
 				children: [
 					{
 						key: 'new-section',
-						label: disabledLabel('New section', editDisabledReason, editDisabledKind),
+						label: disabledLabel(
+							'New section',
+							!isEditable,
+							editChecks,
+							editDisabledTooltip,
+						),
 						icon: <SquareStack size={14} />,
 						disabled: !isEditable,
 						onClick: (): void => setIsNewSectionOpen(true),
@@ -257,8 +270,9 @@ function DashboardActions({
 				key: 'delete',
 				label: disabledLabel(
 					'Delete dashboard',
-					deleteDisabledReason,
-					deleteDisabledKind,
+					isLocked || !canDeleteDashboard,
+					deleteChecks,
+					deleteDisabledTooltip,
 				),
 				icon: <Trash2 size={14} />,
 				danger: true,
@@ -272,15 +286,13 @@ function DashboardActions({
 		disabledLabel,
 		isEditable,
 		isLocked,
-		editDisabledReason,
-		editDisabledKind,
-		deleteDisabledReason,
-		deleteDisabledKind,
+		editChecks,
+		editDisabledTooltip,
+		deleteChecks,
+		deleteDisabledTooltip,
 		canDeleteDashboard,
-		cloneDisabledReason,
 		isCloning,
 		canToggleLock,
-		lockDisabledReason,
 		isDashboardLocked,
 		onOpenRename,
 		handleClone,
@@ -303,7 +315,7 @@ function DashboardActions({
 					Actions
 				</Button>
 			</DropdownMenuSimple>
-			<DisabledReasonTooltip reason={editDisabledReason} kind={editDisabledKind}>
+			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 				<Button
 					variant="solid"
 					color="secondary"
@@ -316,7 +328,7 @@ function DashboardActions({
 				>
 					Configure
 				</Button>
-			</DisabledReasonTooltip>
+			</AuthZTooltip>
 			<SettingsDrawer
 				drawerTitle="Dashboard Configuration"
 				isOpen={isSettingsDrawerOpen}
@@ -339,7 +351,7 @@ function DashboardActions({
 			>
 				JSON
 			</Button>
-			<DisabledReasonTooltip reason={editDisabledReason} kind={editDisabledKind}>
+			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 				<Button
 					variant="solid"
 					color="primary"
@@ -351,7 +363,7 @@ function DashboardActions({
 				>
 					New Panel
 				</Button>
-			</DisabledReasonTooltip>
+			</AuthZTooltip>
 			<JsonEditorDrawer
 				dashboard={dashboard}
 				isOpen={isJsonEditorOpen}

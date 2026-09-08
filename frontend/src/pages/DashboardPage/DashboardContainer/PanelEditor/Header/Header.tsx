@@ -8,11 +8,12 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
-import type { DisabledState } from 'lib/authz/components/DisabledReasonTooltip/disabledState.types';
+
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import styles from './Header.module.scss';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 interface HeaderProps {
 	/** Unsaved edits exist — shows the "Unsaved Changes" badge and gates the discard confirmation on close (not the Save button). */
@@ -22,7 +23,8 @@ interface HeaderProps {
 	/** Locked/no-permission dashboard — Save is disabled with a reason. */
 	readOnly?: boolean;
 	/** Present when saving is unavailable — the Save button explains itself with it. */
-	readOnlyDisabled?: DisabledState;
+	readOnlyChecks?: BrandedPermission[];
+	readOnlyTooltip?: string;
 	onSave: () => void;
 	onSwitchToView?: () => void;
 	onClose: () => void;
@@ -33,7 +35,8 @@ function Header({
 	isSaving,
 	showSwitchToView = false,
 	readOnly = false,
-	readOnlyDisabled,
+	readOnlyChecks = [],
+	readOnlyTooltip,
 	onSave,
 	onSwitchToView,
 	onClose,
@@ -92,9 +95,9 @@ function Header({
 						Switch to View Mode
 					</Button>
 				)}
-				<DisabledReasonTooltip
-					reason={readOnly ? (readOnlyDisabled?.reason ?? '') : ''}
-					kind={readOnlyDisabled?.kind ?? 'denied'}
+				<AuthZTooltip
+					checks={readOnlyChecks}
+					disabledTooltip={readOnly ? readOnlyTooltip : undefined}
 				>
 					<Button
 						variant="solid"
@@ -106,7 +109,7 @@ function Header({
 					>
 						Save changes
 					</Button>
-				</DisabledReasonTooltip>
+				</AuthZTooltip>
 			</div>
 
 			<DialogWrapper

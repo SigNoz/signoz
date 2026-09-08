@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { useCreatePanel } from '../../../hooks/useCreatePanel';
 import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
@@ -29,15 +29,8 @@ interface SectionProps {
 }
 
 function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
-	const { isEditable, editDisabledReason, editDisabledKind } =
+	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
-	const sectionDisabled = useMemo(
-		() =>
-			editDisabledReason
-				? { reason: editDisabledReason, kind: editDisabledKind }
-				: undefined,
-		[editDisabledReason, editDisabledKind],
-	);
 	const {
 		isPickerOpen,
 		openPicker,
@@ -110,7 +103,9 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				onToggle={toggle}
 				repeatVariable={section.repeatVariable}
 				dragHandle={dragHandle}
-				disabled={sectionDisabled}
+				disabled={!isEditable}
+				disabledChecks={editChecks}
+				disabledTooltip={editDisabledTooltip}
 				actions={{
 					onRename: (): void => setIsRenaming(true),
 					onAddPanel: (): void => openPicker(section.layoutIndex),
@@ -123,10 +118,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 					grid
 				) : (
 					<div className={styles.emptySection}>
-						<DisabledReasonTooltip
-							reason={editDisabledReason}
-							kind={editDisabledKind}
-						>
+						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 							<Button
 								type="button"
 								variant="dashed"
@@ -140,7 +132,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 							>
 								New Panel
 							</Button>
-						</DisabledReasonTooltip>
+						</AuthZTooltip>
 					</div>
 				))}
 			<SectionTitleModal

@@ -6,7 +6,7 @@ import dashboardEmojiUrl from '@/assets/Icons/dashboard_emoji.svg';
 import landscapeUrl from '@/assets/Icons/landscape.svg';
 
 import { useCreatePanel } from '../../hooks/useCreatePanel';
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import PanelTypeSelectionModal from '../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import styles from './DashboardEmptyState.module.scss';
@@ -19,7 +19,7 @@ interface DashboardEmptyStateProps {
 function DashboardEmptyState({
 	canAddPanel,
 }: DashboardEmptyStateProps): JSX.Element {
-	const { isEditable, editDisabledReason, editDisabledKind } =
+	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
 	const { isPickerOpen, openPicker, closePicker, createPanel } =
 		useCreatePanel();
@@ -51,10 +51,7 @@ function DashboardEmptyState({
 								</Typography.Text>
 							</div>
 						</div>
-						<DisabledReasonTooltip
-							reason={editDisabledReason}
-							kind={editDisabledKind}
-						>
+						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 							<Button
 								variant="solid"
 								color="secondary"
@@ -65,7 +62,7 @@ function DashboardEmptyState({
 							>
 								Configure
 							</Button>
-						</DisabledReasonTooltip>
+						</AuthZTooltip>
 					</div>
 
 					<div className={styles.step}>
@@ -80,10 +77,7 @@ function DashboardEmptyState({
 								</Typography.Text>
 							</div>
 						</div>
-						<DisabledReasonTooltip
-							reason={editDisabledReason}
-							kind={editDisabledKind}
-						>
+						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 							<Button
 								color="primary"
 								prefix={<Plus size="md" />}
@@ -93,7 +87,7 @@ function DashboardEmptyState({
 							>
 								New Panel
 							</Button>
-						</DisabledReasonTooltip>
+						</AuthZTooltip>
 					</div>
 				</div>
 			</div>

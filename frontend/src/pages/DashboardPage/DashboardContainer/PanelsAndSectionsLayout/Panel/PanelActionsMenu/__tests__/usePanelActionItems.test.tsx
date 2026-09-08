@@ -10,11 +10,14 @@ import { usePanelActionItems } from '../usePanelActionItems';
 // about what the UI does with a given edit context, so control it directly.
 const mockEditContext = {
 	isEditable: true,
+	editChecks: [],
+	areOtherPermissionsLoading: false,
+	deleteChecks: [],
 	isLocked: false,
 	canEditDashboard: true,
 	canDeleteDashboard: true,
-	editDisabledReason: '',
-	deleteDisabledReason: '',
+	editDisabledTooltip: '',
+	deleteDisabledTooltip: '',
 };
 function setEditContextMock(next: Partial<typeof mockEditContext>): void {
 	Object.assign(mockEditContext, {
@@ -22,8 +25,8 @@ function setEditContextMock(next: Partial<typeof mockEditContext>): void {
 		isLocked: false,
 		canEditDashboard: true,
 		canDeleteDashboard: true,
-		editDisabledReason: '',
-		deleteDisabledReason: '',
+		editDisabledTooltip: '',
+		deleteDisabledTooltip: '',
 		...next,
 	});
 }
@@ -176,7 +179,7 @@ describe('usePanelActionItems', () => {
 		setEditContextMock({
 			isEditable: false,
 			canEditDashboard: false,
-			editDisabledReason: 'no permission',
+			editDisabledTooltip: 'no permission',
 		});
 		const { result } = renderHook(() =>
 			usePanelActionItems({ ...baseArgs, panelActions: undefined }),
@@ -205,7 +208,7 @@ describe('usePanelActionItems', () => {
 		setEditContextMock({
 			isEditable: false,
 			isLocked: true,
-			editDisabledReason: 'locked',
+			editDisabledTooltip: 'locked',
 		});
 		// A locked dashboard mounts panels without layout context (no panelActions).
 		const { result } = renderHook(() =>

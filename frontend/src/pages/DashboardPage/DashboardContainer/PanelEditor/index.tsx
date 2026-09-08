@@ -87,15 +87,8 @@ function PanelEditorContainer({
 }: PanelEditorContainerProps): JSX.Element {
 	// Read here rather than taken as props: this renders inside a loaded dashboard
 	// subtree, so it resolves the same context every other consumer does.
-	const { isEditable, editDisabledReason, editDisabledKind } =
+	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
-	const editDisabled = useMemo(
-		() =>
-			editDisabledReason
-				? { reason: editDisabledReason, kind: editDisabledKind }
-				: undefined,
-		[editDisabledReason, editDisabledKind],
-	);
 
 	// Shared editing pipeline (draft + query + staged-query sync + kind switch). A new
 	// panel always serializes its seed query and seeds the builder's default signal.
@@ -287,7 +280,8 @@ function PanelEditorContainer({
 				isSaving={isSaving}
 				showSwitchToView={!isNew}
 				readOnly={!isEditable}
-				readOnlyDisabled={editDisabled}
+				readOnlyChecks={editChecks}
+				readOnlyTooltip={editDisabledTooltip}
 				onSave={onSave}
 				onSwitchToView={switchToViewMode}
 				onClose={onCloseEditor}
