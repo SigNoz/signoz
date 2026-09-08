@@ -13,5 +13,4 @@ export const sections: SectionConfig[] = [
 	// Position only: a group's swatch colour comes off the grid's own ramp.
 	{ kind: SectionKind.Legend, controls: { position: true } },
 	{ kind: SectionKind.ChartAppearance, controls: { colors: true } },
-	{ kind: SectionKind.ContextLinks },
 ];
