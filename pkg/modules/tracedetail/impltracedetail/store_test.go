@@ -91,9 +91,39 @@ func TestGetSpanCountByField(t *testing.T) {
 	}
 }
 
+// attrHomeSQL pins the per-row home-suppression fragment shared by the span reads: each
+// legacy map is emptied when the row's JSON document is non-empty, and the JSON column is
+// always selected.
+const attrHomeSQL = `if\(notEmpty\(attributes\), map\(\), attributes_string\) AS attributes_string, ` +
+	`if\(notEmpty\(attributes\), map\(\), attributes_number\) AS attributes_number, ` +
+	`if\(notEmpty\(attributes\), map\(\), attributes_bool\) AS attributes_bool, ` +
+	`attributes, resources_string`
+
+func TestGetTraceSpans(t *testing.T) {
+	s := newTestStore(sqlmock.QueryMatcherRegexp)
+	s.Mock().ExpectSelect(`(?s)SELECT\s+DISTINCT ON \(span_id\).*?` + attrHomeSQL + `.*?FROM signoz_traces\.distributed_signoz_index_v3`).
+		WillReturnRows(cmock.NewRows(nil, nil))
+	_, _ = s.Store().GetTraceSpans(context.Background(), testTraceID, testSummary)
+	assert.NoError(t, s.Mock().ExpectationsWereMet())
+}
+
+func TestGetTraceSpansByIDs(t *testing.T) {
+	s := newTestStore(sqlmock.QueryMatcherRegexp)
+	s.Mock().ExpectSelect(`SELECT DISTINCT ON \(span_id\) timestamp.*?` + attrHomeSQL + `.*?FROM signoz_traces\.distributed_signoz_index_v3 WHERE trace_id = \? AND span_id IN \(\?, \?\)`).
+		WillReturnRows(cmock.NewRows(nil, nil))
+	_, _ = s.Store().GetTraceSpansByIDs(context.Background(), testTraceID, testStart, testEnd, []string{"span-1", "span-2"})
+	assert.NoError(t, s.Mock().ExpectationsWereMet())
+}
+
 func TestGetFlamegraphSpans(t *testing.T) {
-	baseSQL := "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(attributes_string) AS attributes_string, any(attributes_number) AS attributes_number, any(attributes_bool) AS attributes_bool, any(resources_string) AS resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY span_id ORDER BY timestamp ASC, name ASC"
-	withSpanIDsSQL := "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(attributes_string) AS attributes_string, any(attributes_number) AS attributes_number, any(attributes_bool) AS attributes_bool, any(resources_string) AS resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND span_id IN (?, ?) GROUP BY span_id ORDER BY timestamp ASC, name ASC"
+	// The map columns are wrapped in per-row home suppression (emptied when the JSON
+	// document is non-empty) and the JSON column is aggregated alongside.
+	anyAttrSQL := "any(if(notEmpty(attributes), map(), attributes_string)) AS attributes_string, " +
+		"any(if(notEmpty(attributes), map(), attributes_number)) AS attributes_number, " +
+		"any(if(notEmpty(attributes), map(), attributes_bool)) AS attributes_bool, " +
+		"any(attributes) AS attributes"
+	baseSQL := "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, " + anyAttrSQL + ", any(resources_string) AS resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY span_id ORDER BY timestamp ASC, name ASC"
+	withSpanIDsSQL := "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, " + anyAttrSQL + ", any(resources_string) AS resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND span_id IN (?, ?) GROUP BY span_id ORDER BY timestamp ASC, name ASC"
 
 	tests := []struct {
 		name    string
