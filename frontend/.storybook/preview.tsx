@@ -11,6 +11,7 @@ import {
 	resolveStory,
 	type StoryRuntimeContext,
 } from '../src/storybook/runtime/resolveStory';
+import { allModes } from './modes';
 
 import '../src/ReactI18';
 
@@ -66,6 +67,12 @@ const preview: Preview = {
 	parameters: {
 		layout: 'fullscreen',
 		controls: { expanded: true },
+		// One cloud snapshot per theme, for every story. A mode carries Storybook
+		// globals, so `theme` here is the same toolbar global the app reads out of
+		// localStorage. Widths are Chromatic's only real dimension, as they are
+		// locally: the app shell sizes itself to the viewport, so the height is the
+		// one it is given.
+		chromatic: { modes: allModes },
 	},
 	globalTypes: {
 		theme: {
