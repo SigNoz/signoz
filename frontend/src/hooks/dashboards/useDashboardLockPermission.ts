@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useIsOrgAdmin } from 'lib/authz/hooks/useIsOrgAdmin';
-import { useAppContext } from 'providers/App/App';
+import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { useDashboardPermissions } from './useDashboardPermissions';
 
@@ -8,46 +7,46 @@ export interface DashboardLockPermission {
 	canToggleLock: boolean;
 	isLoading: boolean;
 	/**
-	 * The non-permission obstacle only — not the creator or an org admin. Empty
-	 * when the toggle is allowed, still
-	 * resolving, or blocked by a missing permission: `update` outranks both of
-	 * these, and the authz component reports it in the standard wording.
+	 * The non-permission obstacle only: an integration dashboard. Empty while
+	 * resolving, when the toggle is allowed, or when a missing permission is the
+	 * obstacle — `update` outranks it, and the authz component words that itself.
 	 */
 	disabledTooltip: string;
 }
 
 /**
- * Lock/unlock needs `dashboard:update` plus a handler-side creator-or-admin check.
+ * Lock/unlock needs `dashboard:update`, and the handler then rejects integration
+ * dashboards. Who created the dashboard does not come into it: access is decided
+ * by the caller's role, not by ownership.
+ *
+ * The handler also rejects system dashboards, which is not checked here — the
+ * list query filters them out, so none reaches the UI.
  */
 export function useDashboardLockPermission({
 	dashboardId,
-	createdBy,
+	source,
 	enabled = true,
 }: {
 	dashboardId: string;
-	createdBy: string | undefined;
+	/** An integration dashboard can never be locked or unlocked. */
+	source: DashboardtypesSourceDTO;
 	enabled?: boolean;
 }): DashboardLockPermission {
 	const { t } = useTranslation('dashboard');
-	const { user } = useAppContext();
 	const { canEdit, areOtherPermissionsLoading } = useDashboardPermissions(
 		dashboardId,
 		{ enabled },
 	);
-	const { isOrgAdmin, isLoading: isAdminLoading } = useIsOrgAdmin({ enabled });
 
-	const isLoading = areOtherPermissionsLoading || isAdminLoading;
-	const isAuthor = !!createdBy && user?.email === createdBy;
+	const isLockable = source !== DashboardtypesSourceDTO.integration;
 
-	const canToggleLock = !isLoading && canEdit && (isAuthor || isOrgAdmin);
-
-	// Left empty when `canEdit` is false so the missing permission surfaces
-	// instead: telling someone the dashboard is integration-owned points them at
-	// the wrong thing when what they lack is access.
-	let disabledTooltip = '';
-	if (!isLoading && canEdit && !canToggleLock) {
-		disabledTooltip = t('lock_not_owner');
-	}
-
-	return { canToggleLock, isLoading, disabledTooltip };
+	return {
+		canToggleLock: !areOtherPermissionsLoading && isLockable && canEdit,
+		isLoading: areOtherPermissionsLoading,
+		// Left empty when `canEdit` is false so the missing permission surfaces
+		// instead: naming the source points the caller at the wrong thing when
+		// what they lack is access.
+		disabledTooltip:
+			canEdit && !isLockable ? t('lock_integration_dashboard') : '',
+	};
 }

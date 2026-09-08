@@ -32,6 +32,6 @@
 	"dashboard_ok_confirm": "query will be saved. Press OK to confirm.",
 	"variable_name_already_exists": "Variable \"{{name}}\" already exists",
 	"dashboard_locked": "This dashboard is locked",
-	"lock_not_owner": "Only the dashboard creator or an org admin can lock or unlock this dashboard",
-	"dashboard_read_only_here": "This dashboard is read-only here"
+	"dashboard_read_only_here": "This dashboard is read-only here",
+	"lock_integration_dashboard": "An integration dashboard cannot be locked or unlocked"
 }

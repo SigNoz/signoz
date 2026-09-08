@@ -8,13 +8,11 @@ export type AuthZButtonProps = ButtonProps & {
 	 */
 	checks: BrandedPermission[];
 	/**
-	 * Override the default denial tooltip message.
-	 */
-	tooltipMessage?: string;
-	/**
 	 * Gate the permission check itself. When false, renders a plain button.
 	 */
 	authZEnabled?: boolean;
+	/** Replace the standard denial wording; prefer the default. */
+	tooltipMessage?: string;
 	/**
 	 * A non-permission block the consumer already knows about — a lock, an
 	 * immutable resource. Takes precedence over `checks`, which are then skipped.
@@ -31,8 +29,8 @@ export type AuthZButtonProps = ButtonProps & {
 
 function AuthZButton({
 	checks,
-	tooltipMessage,
 	authZEnabled = true,
+	tooltipMessage,
 	disabledTooltip,
 	side,
 	withPortal,

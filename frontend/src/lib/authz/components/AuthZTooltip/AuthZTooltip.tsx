@@ -32,6 +32,10 @@ interface AuthZTooltipProps {
 	checks: BrandedPermission[];
 	children: ReactElement;
 	enabled?: boolean;
+	/**
+	 * Replace the standard denial wording. Prefer the default — it names the exact
+	 * scopes — and reach for this only when a surface genuinely needs its own.
+	 */
 	tooltipMessage?: string;
 	/**
 	 * A block the consumer already knows about that is not a permission — a lock,
