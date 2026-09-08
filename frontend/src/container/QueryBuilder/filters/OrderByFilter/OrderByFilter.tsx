@@ -12,7 +12,7 @@ import { useOrderByFilter } from './useOrderByFilter';
 export function OrderByFilter({
 	query,
 	onChange,
-	isListViewPanel = false,
+	isRawQuery = false,
 	entityVersion,
 	isNewQueryV2 = false,
 }: OrderByFilterProps): JSX.Element {
@@ -35,7 +35,7 @@ export function OrderByFilter({
 			searchText: debouncedSearchText,
 		},
 		{
-			enabled: !!query.aggregateAttribute?.key || isListViewPanel,
+			enabled: !!query.aggregateAttribute?.key || isRawQuery,
 			keepPreviousData: true,
 		},
 	);
