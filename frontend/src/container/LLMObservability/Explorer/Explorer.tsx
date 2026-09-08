@@ -10,7 +10,6 @@ import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import { useOptionsMenu } from 'container/OptionsMenu';
@@ -65,8 +64,8 @@ function Explorer(): JSX.Element {
 
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
+	// Shares traces list prefs until useOptionsMenu supports a dedicated storage key.
 	useOptionsMenu({
-		storageKey: LOCALSTORAGE.AI_OBSERVABILITY_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
 		aggregateOperator: 'noop',
 		initialOptions: {

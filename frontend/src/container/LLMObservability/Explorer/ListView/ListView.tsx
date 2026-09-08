@@ -73,8 +73,8 @@ function ListView({
 		loading: timeRangeUpdateLoading,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
+	// Shares traces list prefs until useOptionsMenu supports a dedicated storage key.
 	const { options, config } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.AI_OBSERVABILITY_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
 		aggregateOperator: 'count',
 		initialOptions: {
