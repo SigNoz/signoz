@@ -86,6 +86,7 @@ function DashboardActions({
 		useDashboardLockPermission({
 			dashboardId: dashboard.id,
 			createdBy: dashboard.createdBy,
+			source: dashboard.source,
 		});
 
 	// Cloning creates a new dashboard from this one, so it needs create as well as

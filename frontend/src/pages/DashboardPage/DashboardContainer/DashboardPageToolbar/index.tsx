@@ -66,12 +66,12 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		targetLayoutIndex,
 	} = useCreatePanel();
 
-	// dashboard:update plus the backend's creator-or-admin rule; integration-owned
-	// dashboards are never toggleable.
+	// dashboard:update, then the backend's source and creator-or-admin rules.
 	const { canToggleLock, disabledTooltip: lockDisabledTooltip } =
 		useDashboardLockPermission({
 			dashboardId: id,
 			createdBy: dashboard.createdBy,
+			source: dashboard.source,
 		});
 
 	// Public-sharing meta (deduped react-query read); drives the header globe.
