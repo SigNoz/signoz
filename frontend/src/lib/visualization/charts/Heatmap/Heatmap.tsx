@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
 import ColorBar from 'lib/uPlotV2/components/ColorBar/ColorBar';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
@@ -32,6 +32,15 @@ import { buildHeatmapConfig, prepareHeatmapChartData } from './utils';
 
 /** Vertical space the colour bar takes out of the container. */
 const COLOR_BAR_HEIGHT = 28;
+
+/** Row, column and count together: a refetch changes what the cell under a
+ *  stationary cursor means, while the row and column stay put. */
+function isSameCell(a: HeatmapCell | null, b: HeatmapCell | null): boolean {
+	if (a === null || b === null) {
+		return a === b;
+	}
+	return a.row === b.row && a.column === b.column && a.count === b.count;
+}
 
 /**
  * Columns are time slices, rows are bucket ranges, cell colour is the observation
@@ -72,6 +81,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 
 	const [hoveredCell, setHoveredCell] = useState<HeatmapCell | null>(null);
 	const hoveredCellRef = useRef<HeatmapCell | null>(null);
+	const hoverFrameRef = useRef<number | null>(null);
 	const onCellClickRef = useRef(onCellClick);
 	onCellClickRef.current = onCellClick;
 
@@ -138,10 +148,36 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 
 	// Stable: the renderer captures it at config-build time, so a new identity would
 	// recreate the plot on every hover.
+	//
+	// The plot reports the cell from inside its own render path, which React can be
+	// driving — a resize or a data swap runs the plot's hooks during a commit, and a
+	// rebuilt plot re-reports the cell the cursor is still sitting on. Committing to
+	// state there nests an update inside the commit that caused it, so the two feed
+	// each other until React gives up at its depth limit. The frame takes the update
+	// out of that chain; the equality check drops a report that carries nothing new.
 	const handleHoverChange = useCallback((cell: HeatmapCell | null): void => {
 		hoveredCellRef.current = cell;
-		setHoveredCell(cell);
+		if (hoverFrameRef.current !== null) {
+			return;
+		}
+		hoverFrameRef.current = requestAnimationFrame(() => {
+			hoverFrameRef.current = null;
+			setHoveredCell((previous) =>
+				isSameCell(previous, hoveredCellRef.current)
+					? previous
+					: hoveredCellRef.current,
+			);
+		});
 	}, []);
+
+	useEffect(
+		() => (): void => {
+			if (hoverFrameRef.current !== null) {
+				cancelAnimationFrame(hoverFrameRef.current);
+			}
+		},
+		[],
+	);
 
 	const config = useMemo(
 		() =>
