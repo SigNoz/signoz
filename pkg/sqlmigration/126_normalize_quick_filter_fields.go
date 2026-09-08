@@ -116,8 +116,9 @@ func (migration *normalizeQuickFilterFields) Down(context.Context, *bun.DB) erro
 
 // normalizeQuickFilterEntries rewrites the static fields of a stored filter
 // list to the name, context and data type the fields API serves them with:
-// span fields for the trace-based sources, log fields for logs. Attribute and
-// resource keys are left as they are; ok=false means unparseable.
+// span fields for the trace-based sources, log fields for logs, whatever
+// context the legacy seeds gave them. Other keys are left as they are;
+// ok=false means unparseable.
 func normalizeQuickFilterEntries(source string, filter string) (normalized string, changed bool, ok bool) {
 	var staticFields map[string]quickFilterStaticField
 	switch source {
@@ -137,9 +138,6 @@ func normalizeQuickFilterEntries(source string, filter string) (normalized strin
 	for i, entry := range entries {
 		field, static := staticFields[entry.Name]
 		if !static {
-			continue
-		}
-		if entry.FieldContext == "resource" {
 			continue
 		}
 		if entry.Name == field.name && entry.FieldContext == field.fieldContext && entry.FieldDataType == field.fieldDataType {
