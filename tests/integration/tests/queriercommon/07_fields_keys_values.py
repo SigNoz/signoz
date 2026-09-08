@@ -18,7 +18,7 @@ from fixtures.traces import Traces
         pytest.param("logs", "scope", {"scope_name": "scope", "scope_version": "scope"}, ["severity_text", "body", "code.file"], id="scope_context_lists_scope_intrinsics_for_logs"),
         pytest.param("logs", "attribute", {"code.file": "attribute"}, ["body", "scope_name"], id="attribute_context_excludes_log_intrinsics"),
         pytest.param("traces", "span", {"name": "span", "has_error": "span", "isRoot": "span", "http.method": "attribute"}, ["scope.name"], id="span_context_lists_span_intrinsics_and_attributes"),
-        pytest.param("traces", "scope", {"scope.name": "scope", "scope.version": "scope"}, ["name", "has_error", "isRoot"], id="scope_context_lists_scope_intrinsics_for_traces"),
+        pytest.param("traces", "scope", {"scope.name": "scope", "scope.version": "scope"}, ["name", "has_error", "isRoot", "http.method", "host.name"], id="scope_context_lists_scope_intrinsics_for_traces"),
         pytest.param("traces", "resource", {"host.name": "resource"}, ["name", "has_error", "isRoot", "http.method"], id="resource_context_excludes_span_intrinsics"),
         pytest.param("traces", "attribute", {"http.method": "attribute"}, ["name", "has_error", "isRoot", "host.name"], id="attribute_context_excludes_span_intrinsics"),
     ],
@@ -141,8 +141,10 @@ def test_fields_keys_search_matches_intrinsics_case_insensitively(
         pytest.param("traces", {"name": "has_error"}, [True, False], id="calculated_bool_span_field"),
         pytest.param("traces", {"name": "has_error", "fieldContext": "span"}, [True, False], id="calculated_bool_span_field_with_context"),
         pytest.param("traces", {"name": "has_error", "searchText": "tr"}, [True], id="search_text_narrows_bool_values"),
+        pytest.param("traces", {"name": "isRoot"}, [True], id="span_scope_field_is_true_only"),
         pytest.param("logs", {"name": "retry"}, [True, False], id="bool_attribute_from_tag_rows"),
         pytest.param("logs", {"name": "retry", "fieldContext": "attribute"}, [True, False], id="bool_attribute_with_context"),
+        pytest.param("logs", {"name": "retry", "searchText": "tr"}, [True], id="search_text_narrows_stored_bool_values"),
         pytest.param("logs", {"name": "never_seen", "fieldDataType": "bool"}, [True, False], id="declared_bool_type_needs_no_rows"),
     ],
 )
@@ -161,7 +163,9 @@ def test_fields_values_bool_fields(
 
     Tests:
     1. Values for a bool field are true and false (narrowed by the search text): for the calculated span
-       field, for a stored bool attribute whose tag rows carry no value, and for a key the caller declares bool.
+       field, for a stored bool attribute whose tag rows carry no value, and for a key the caller
+       declares bool.
+    2. A span scope selector (isRoot) only takes true.
     """
     insert_logs([Logs(timestamp=datetime.now(tz=UTC), attributes={"retry": True}, body="retrying")])
 

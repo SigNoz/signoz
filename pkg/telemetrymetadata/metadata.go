@@ -209,10 +209,9 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		// now look at the field context
 		// we don't write most of intrinsic fields to keys table
 		// for this reason we don't want to apply tagType if the field context
-		// is not attribute or resource attribute
-		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified &&
-			(fieldKeySelector.FieldContext == telemetrytypes.FieldContextAttribute ||
-				fieldKeySelector.FieldContext == telemetrytypes.FieldContextResource) {
+		// is not attribute, resource attribute or scope
+		switch fieldKeySelector.FieldContext {
+		case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope:
 			fieldKeyConds = append(fieldKeyConds, sb.E("tagType", fieldKeySelector.FieldContext.TagType()))
 		}
 
@@ -287,10 +286,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 
 	// Add the matching static fields: the span scope selectors, the intrinsic
 	// columns and the calculated columns. These don't count towards the limit
-	staticFields := []telemetrytypes.TelemetryFieldKey{
-		{Name: "isRoot", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: telemetrytypes.FieldDataTypeBool},
-		{Name: "isEntryPoint", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: telemetrytypes.FieldDataTypeBool},
-	}
+	staticFields := maps.Values(tracestelemetryschema.SpanScopeFields)
 	staticFields = append(staticFields, maps.Values(tracestelemetryschema.IntrinsicFields)...)
 	staticFields = append(staticFields, maps.Values(tracestelemetryschema.CalculatedFields)...)
 
@@ -759,10 +755,6 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 		allArgs = append(allArgs, args...)
 	}
 
-	if len(queries) == 0 {
-		return []*telemetrytypes.TelemetryFieldKey{}, true, nil
-	}
-
 	var limit int
 	for _, fieldKeySelector := range fieldKeySelectors {
 		limit += fieldKeySelector.Limit
@@ -771,7 +763,13 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 		limit = 1000
 	}
 
-	mainQuery := fmt.Sprintf(`
+	keys := []*telemetrytypes.TelemetryFieldKey{}
+	rowCount := 0
+
+	// the log and scope contexts have no keys table; they are served by the
+	// static fields appended below
+	if len(queries) > 0 {
+		mainQuery := fmt.Sprintf(`
 		SELECT tag_key, tag_type, tag_data_type, max(priority) as priority
 		FROM (
 			%s
@@ -781,46 +779,44 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 		LIMIT %d
 	`, strings.Join(queries, " UNION ALL "), limit+1)
 
-	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, mainQuery, allArgs...)
-	if err != nil {
-		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
-	}
-	defer rows.Close()
-
-	keys := []*telemetrytypes.TelemetryFieldKey{}
-	rowCount := 0
-
-	for rows.Next() {
-		rowCount++
-		if rowCount > limit {
-			break
-		}
-
-		var name string
-		var fieldContext telemetrytypes.FieldContext
-		var fieldDataType telemetrytypes.FieldDataType
-		var priority uint8
-		err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
+		rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, mainQuery, allArgs...)
 		if err != nil {
 			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
 		}
-		key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
+		defer rows.Close()
 
-		if !ok {
-			key = &telemetrytypes.TelemetryFieldKey{
-				Name:          name,
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  fieldContext,
-				FieldDataType: fieldDataType,
+		for rows.Next() {
+			rowCount++
+			if rowCount > limit {
+				break
 			}
+
+			var name string
+			var fieldContext telemetrytypes.FieldContext
+			var fieldDataType telemetrytypes.FieldDataType
+			var priority uint8
+			err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
+			if err != nil {
+				return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
+			}
+			key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
+
+			if !ok {
+				key = &telemetrytypes.TelemetryFieldKey{
+					Name:          name,
+					Signal:        telemetrytypes.SignalLogs,
+					FieldContext:  fieldContext,
+					FieldDataType: fieldDataType,
+				}
+			}
+
+			keys = append(keys, key)
+			mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()] = key
 		}
 
-		keys = append(keys, key)
-		mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()] = key
-	}
-
-	if rows.Err() != nil {
-		return nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
+		if rows.Err() != nil {
+			return nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
+		}
 	}
 
 	complete := rowCount <= limit
@@ -1442,124 +1438,19 @@ func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, orgID valuer.
 	return t.getRelatedValues(ctx, orgID, fieldValueSelector)
 }
 
-// tagTableDayStart floors a millisecond timestamp to the UTC day, the
-// partition and deduplication unit of the tag tables.
-func tagTableDayStart(unixMilli int64) int64 {
-	const dayMilli = int64(24 * 60 * 60 * 1000)
-	return unixMilli - unixMilli%dayMilli
-}
-
 func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
 		instrumentationtypes.CodeFunctionName: "getSpanFieldValues",
 	})
-	// build the query to get the keys from the spans that match the field selection criteria
-	limit := fieldValueSelector.Limit
-	if limit == 0 {
-		limit = 50
+
+	if values, ok := spanScopeFieldValues(fieldValueSelector.Name, fieldValueSelector.Value); ok {
+		return values, true, nil
 	}
-
-	// bool rows in the tag table carry no value; the two possible values are
-	// known without a query
-	if isKnownBoolField(fieldValueSelector, tracestelemetryschema.IntrinsicFields, tracestelemetryschema.CalculatedFields) {
-		return boolFieldValues(fieldValueSelector.Value), true, nil
-	}
-
-	sb := sqlbuilder.Select("DISTINCT string_value, number_value, tag_data_type").From(t.tracesDBName + "." + t.tracesFieldsTblName)
-
-	if fieldValueSelector.Name != "" {
-		sb.Where(sb.E("tag_key", fieldValueSelector.Name))
-	}
-
-	// rows are deduplicated per day and the surviving row carries whichever
-	// hour was inserted last, so the start is floored to the day; unix_milli
-	// is the hour of the span start
-	if fieldValueSelector.StartUnixMilli != 0 {
-		sb.Where(sb.GE("unix_milli", tagTableDayStart(fieldValueSelector.StartUnixMilli)))
-	}
-
-	// now look at the field context
-	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
-		sb.Where(sb.E("tag_type", fieldValueSelector.FieldContext.TagType()))
-	}
-
-	// now look at the field data type
-	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-		sb.Where(sb.E("tag_data_type", fieldValueSelector.FieldDataType.TagDataType()))
-	}
-
-	if fieldValueSelector.Value != "" {
-		switch fieldValueSelector.FieldDataType {
-		case telemetrytypes.FieldDataTypeString:
-			sb.Where(sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
-		case telemetrytypes.FieldDataTypeNumber:
-			sb.Where(sb.IsNotNull("number_value"))
-			sb.Where(sb.ILike("toString(number_value)", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
-		case telemetrytypes.FieldDataTypeUnspecified:
-			// or b/w string and number
-			sb.Where(sb.Or(
-				sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"),
-				sb.ILike("toString(number_value)", "%"+escapeForLike(fieldValueSelector.Value)+"%"),
-			))
-		}
-	}
-
-	// query one extra to check if we hit the limit
-	sb.Limit(limit + 1)
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
-	if err != nil {
-		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
-	}
-	defer rows.Close()
-
-	values := &telemetrytypes.TelemetryFieldValues{}
-	seen := make(map[string]bool)
-	rowCount := 0
-	totalCount := 0 // Track total unique values
-
-	for rows.Next() {
-		rowCount++
-
-		var stringValue string
-		var numberValue float64
-		var tagDataType string
-		if err := rows.Scan(&stringValue, &numberValue, &tagDataType); err != nil {
-			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
-		}
-
-		// bool rows carry no value; the key's presence is enough to know the
-		// two values it can take
-		if tagDataType == telemetrytypes.FieldDataTypeBool.TagDataType() {
-			if len(values.BoolValues) == 0 {
-				values.BoolValues = boolFieldValues(fieldValueSelector.Value).BoolValues
-			}
-			continue
-		}
-
-		// Only add values if we haven't hit the limit yet
-		if totalCount < limit {
-			if _, ok := seen[stringValue]; !ok && stringValue != "" {
-				values.StringValues = append(values.StringValues, stringValue)
-				seen[stringValue] = true
-				totalCount++
-			}
-			if _, ok := seen[fmt.Sprintf("%f", numberValue)]; !ok && numberValue != 0 && totalCount < limit {
-				values.NumberValues = append(values.NumberValues, numberValue)
-				seen[fmt.Sprintf("%f", numberValue)] = true
-				totalCount++
-			}
-		}
-	}
-
-	// hit the limit?
-	complete := rowCount <= limit
-
-	return values, complete, nil
+	knownBool := isKnownBoolField(fieldValueSelector, tracestelemetryschema.IntrinsicFields, tracestelemetryschema.CalculatedFields)
+	// unix_milli is the hour of the span start
+	return t.getTagTableValues(ctx, t.tracesDBName+"."+t.tracesFieldsTblName, fieldValueSelector, knownBool)
 }
 
 func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
@@ -1568,30 +1459,77 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 		instrumentationtypes.CodeNamespace:    "metadata",
 		instrumentationtypes.CodeFunctionName: "getLogFieldValues",
 	})
-	// build the query to get the keys from the spans that match the field selection criteria
+
+	knownBool := isKnownBoolField(fieldValueSelector, logstelemetryschema.IntrinsicFields)
+	// unix_milli is the hour the log was ingested, not the log's own timestamp
+	return t.getTagTableValues(ctx, t.logsDBName+"."+t.logsFieldsTblName, fieldValueSelector, knownBool)
+}
+
+// tagTableSinceDay restricts rows to the tag table's day partitions from the
+// start's day on. Partitions are toDate(unix_milli / 1000) in the server's
+// timezone, and a value's surviving row within a day carries whichever hour
+// was inserted last, so the day is the finest safe unit.
+func tagTableSinceDay(sb *sqlbuilder.SelectBuilder, startUnixMilli int64) {
+	if startUnixMilli != 0 {
+		sb.Where(fmt.Sprintf("toDate(unix_milli / 1000) >= toDate(%d)", startUnixMilli/1000))
+	}
+}
+
+// tagTableHasBoolRows reports whether the tag table holds a bool row for the
+// key. Bool rows carry no value, so one row is enough to know the key takes
+// the values true and false.
+func (t *telemetryMetaStore) tagTableHasBoolRows(ctx context.Context, table string, selector *telemetrytypes.FieldValueSelector) (bool, error) {
+	sb := sqlbuilder.Select("1").From(table)
+	sb.Where(sb.E("tag_key", selector.Name))
+	sb.Where(sb.E("tag_data_type", telemetrytypes.FieldDataTypeBool.TagDataType()))
+	if selector.FieldContext != telemetrytypes.FieldContextUnspecified {
+		sb.Where(sb.E("tag_type", selector.FieldContext.TagType()))
+	}
+	tagTableSinceDay(sb, selector.StartUnixMilli)
+	sb.Limit(1)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
+	}
+	defer rows.Close()
+	return rows.Next(), rows.Err()
+}
+
+// getTagTableValues returns the string and number values of the key from a
+// tag table, and true and false when the key is a known bool field or the
+// table holds bool rows for it. Bool rows do not count towards the limit.
+func (t *telemetryMetaStore) getTagTableValues(ctx context.Context, table string, fieldValueSelector *telemetrytypes.FieldValueSelector, knownBool bool) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	limit := fieldValueSelector.Limit
 	if limit == 0 {
 		limit = 50
 	}
 
-	// bool rows in the tag table carry no value; the two possible values are
-	// known without a query
-	if isKnownBoolField(fieldValueSelector, logstelemetryschema.IntrinsicFields) {
-		return boolFieldValues(fieldValueSelector.Value), true, nil
+	values := &telemetrytypes.TelemetryFieldValues{}
+	if knownBool {
+		values.BoolValues = boolFieldValues(fieldValueSelector.Value).BoolValues
+		if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeBool {
+			return values, true, nil
+		}
+	} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
+		hasBoolRows, err := t.tagTableHasBoolRows(ctx, table, fieldValueSelector)
+		if err != nil {
+			return nil, false, err
+		}
+		if hasBoolRows {
+			values.BoolValues = boolFieldValues(fieldValueSelector.Value).BoolValues
+		}
 	}
 
-	sb := sqlbuilder.Select("DISTINCT string_value, number_value, tag_data_type").From(t.logsDBName + "." + t.logsFieldsTblName)
+	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(table)
 
 	if fieldValueSelector.Name != "" {
 		sb.Where(sb.E("tag_key", fieldValueSelector.Name))
 	}
+	sb.Where(sb.NE("tag_data_type", telemetrytypes.FieldDataTypeBool.TagDataType()))
 
-	// rows are deduplicated per day and the surviving row carries whichever
-	// hour was inserted last, so the start is floored to the day; unix_milli
-	// is the hour the log was ingested, not the log's own timestamp
-	if fieldValueSelector.StartUnixMilli != 0 {
-		sb.Where(sb.GE("unix_milli", tagTableDayStart(fieldValueSelector.StartUnixMilli)))
-	}
+	tagTableSinceDay(sb, fieldValueSelector.StartUnixMilli)
 
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
 		sb.Where(sb.E("tag_type", fieldValueSelector.FieldContext.TagType()))
@@ -1628,7 +1566,6 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 	}
 	defer rows.Close()
 
-	values := &telemetrytypes.TelemetryFieldValues{}
 	seen := make(map[string]bool)
 	rowCount := 0
 	totalCount := 0 // Track total unique values
@@ -1638,18 +1575,8 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 
 		var stringValue string
 		var numberValue float64
-		var tagDataType string
-		if err := rows.Scan(&stringValue, &numberValue, &tagDataType); err != nil {
+		if err := rows.Scan(&stringValue, &numberValue); err != nil {
 			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
-		}
-
-		// bool rows carry no value; the key's presence is enough to know the
-		// two values it can take
-		if tagDataType == telemetrytypes.FieldDataTypeBool.TagDataType() {
-			if len(values.BoolValues) == 0 {
-				values.BoolValues = boolFieldValues(fieldValueSelector.Value).BoolValues
-			}
-			continue
 		}
 
 		// Only add values if we haven't hit the limit yet

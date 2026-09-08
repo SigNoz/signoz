@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -18,6 +19,23 @@ func boolFieldValues(searchText string) *telemetrytypes.TelemetryFieldValues {
 		}
 	}
 	return values
+}
+
+// spanScopeFieldValues is the suggestion set for a span scope selector
+// (isRoot, isEntryPoint), which only filters with true. ok is false for any
+// other name.
+func spanScopeFieldValues(name, searchText string) (*telemetrytypes.TelemetryFieldValues, bool) {
+	for scopeName := range tracestelemetryschema.SpanScopeFields {
+		if !strings.EqualFold(scopeName, name) {
+			continue
+		}
+		values := &telemetrytypes.TelemetryFieldValues{}
+		if needle := strings.ToLower(searchText); needle == "" || strings.Contains("true", needle) {
+			values.BoolValues = []bool{true}
+		}
+		return values, true
+	}
+	return nil, false
 }
 
 // isKnownBoolField is true when the caller asked for the bool data type, or
