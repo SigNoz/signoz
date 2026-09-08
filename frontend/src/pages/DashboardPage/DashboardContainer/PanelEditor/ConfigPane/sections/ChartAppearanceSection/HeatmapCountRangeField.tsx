@@ -1,5 +1,6 @@
-import { InputNumber } from '@signozhq/ui/input-number';
+import type { ChangeEvent } from 'react';
 import { Typography } from '@signozhq/ui/typography';
+import { Input } from 'antd';
 import type { DashboardtypesHeatmapColorsDTO } from 'api/generated/services/sigNoz.schemas';
 
 import styles from './HeatmapColorsField.module.scss';
@@ -20,25 +21,37 @@ function HeatmapCountRangeField({
 	value,
 	onChange,
 }: HeatmapCountRangeFieldProps): JSX.Element {
+	// An empty field derives the bound (null), as does transient non-numeric input
+	// (a lone "-"), which pinning would read as a bound the user never typed.
+	const handleBound =
+		(bound: keyof CountBound) =>
+		(event: ChangeEvent<HTMLInputElement>): void => {
+			const raw = event.target.value;
+			const next = raw === '' || Number.isNaN(Number(raw)) ? null : Number(raw);
+			onChange({ ...value, [bound]: next });
+		};
+
 	return (
 		<div className={styles.field}>
 			<div className={styles.bounds}>
 				<div className={styles.field}>
 					<Typography.Text>Min count</Typography.Text>
-					<InputNumber
-						testId="panel-editor-v2-heatmap-min-count"
+					<Input
+						data-testid="panel-editor-v2-heatmap-min-count"
+						type="number"
 						placeholder="Auto"
-						value={value.minCount ?? null}
-						onChange={(minCount): void => onChange({ ...value, minCount })}
+						value={value.minCount ?? ''}
+						onChange={handleBound('minCount')}
 					/>
 				</div>
 				<div className={styles.field}>
 					<Typography.Text>Max count</Typography.Text>
-					<InputNumber
-						testId="panel-editor-v2-heatmap-max-count"
+					<Input
+						data-testid="panel-editor-v2-heatmap-max-count"
+						type="number"
 						placeholder="Auto"
-						value={value.maxCount ?? null}
-						onChange={(maxCount): void => onChange({ ...value, maxCount })}
+						value={value.maxCount ?? ''}
+						onChange={handleBound('maxCount')}
 					/>
 				</div>
 			</div>

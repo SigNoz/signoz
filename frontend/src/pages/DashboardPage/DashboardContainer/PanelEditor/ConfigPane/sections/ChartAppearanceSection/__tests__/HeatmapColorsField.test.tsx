@@ -173,12 +173,21 @@ describe('HeatmapColorsField', () => {
 		const onChange = jest.fn();
 		render(<HeatmapColorsField value={undefined} onChange={onChange} />);
 
-		await user.type(
-			screen.getByTestId('panel-editor-v2-heatmap-max-count'),
-			'500',
-		);
+		await user.type(screen.getByTestId('panel-editor-v2-heatmap-max-count'), '5');
 
-		expect(onChange).toHaveBeenLastCalledWith({ maxCount: 500 });
+		expect(onChange).toHaveBeenLastCalledWith({ maxCount: 5 });
+	});
+
+	it('takes no letters, which would silently read as no bound at all', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(<HeatmapColorsField value={undefined} onChange={onChange} />);
+
+		const field = screen.getByTestId('panel-editor-v2-heatmap-min-count');
+		await user.type(field, 'dsd');
+
+		expect(field).toHaveValue(null);
+		expect(onChange).not.toHaveBeenCalled();
 	});
 
 	it('clears a count bound to null, which asks for the derived one', async () => {
