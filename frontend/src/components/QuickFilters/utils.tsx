@@ -1,5 +1,7 @@
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
-import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { fieldDataTypeToDataType } from 'utils/fieldDataType';
 
 import { FiltersType, IQuickFiltersConfig, SignalType } from './types';
 
@@ -11,6 +13,19 @@ const FILTER_TITLE_MAP: Record<string, string> = {
 const FILTER_TYPE_MAP: Record<string, FiltersType> = {
 	duration_nano: FiltersType.DURATION,
 };
+
+// The map below exists only for the old v3 attribute-values fetch
+// (useCheckboxFilterValues), the sole reader of attributeKey.dataType/type.
+// Once the values fetch moves to fields/values, remove this and reduce
+// attributeKey to { id, key }.
+
+const FIELD_CONTEXT_TO_ATTRIBUTE_TYPE: Record<string, string> = {
+	[TelemetrytypesFieldContextDTO.attribute]: 'tag',
+	[TelemetrytypesFieldContextDTO.resource]: 'resource',
+};
+
+const mapFieldContext = (fieldContext?: string): string =>
+	(fieldContext && FIELD_CONTEXT_TO_ATTRIBUTE_TYPE[fieldContext]) || '';
 
 const getFilterName = (str: string): string => {
 	if (FILTER_TITLE_MAP[str]) {
@@ -26,16 +41,16 @@ const getFilterName = (str: string): string => {
 		.join(' ');
 };
 
-const getFilterType = (att: FilterType): FiltersType => {
-	if (FILTER_TYPE_MAP[att.key]) {
-		return FILTER_TYPE_MAP[att.key];
+const getFilterType = (att: TelemetryFieldKey): FiltersType => {
+	if (FILTER_TYPE_MAP[att.name]) {
+		return FILTER_TYPE_MAP[att.name];
 	}
 	return FiltersType.CHECKBOX;
 };
 
 export const getFilterConfig = (
 	signal?: SignalType,
-	customFilters?: FilterType[],
+	customFilters?: TelemetryFieldKey[],
 	config?: IQuickFiltersConfig[],
 ): IQuickFiltersConfig[] => {
 	if (!customFilters?.length || !signal) {
@@ -46,13 +61,13 @@ export const getFilterConfig = (
 		(att, index) =>
 			({
 				type: getFilterType(att),
-				title: getFilterName(att.key),
+				title: getFilterName(att.name),
 				dataSource: SIGNAL_DATA_SOURCE_MAP[signal],
 				attributeKey: {
-					id: att.key,
-					key: att.key,
-					dataType: att.dataType,
-					type: att.type,
+					id: att.name,
+					key: att.name,
+					dataType: fieldDataTypeToDataType(att.fieldDataType),
+					type: mapFieldContext(att.fieldContext),
 				},
 				defaultOpen: index < 2,
 			}) as IQuickFiltersConfig,

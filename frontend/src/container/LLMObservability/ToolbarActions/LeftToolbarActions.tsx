@@ -5,7 +5,7 @@ import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
 import { TOOLBAR_VIEW_CONFIG } from './toolbarViewsConfig';
 
-import 'container/QueryBuilder/components/ToolbarActions/ToolbarActions.styles.scss';
+import './ToolbarActions.styles.scss';
 
 interface ToolbarViewItem {
 	name: string;
