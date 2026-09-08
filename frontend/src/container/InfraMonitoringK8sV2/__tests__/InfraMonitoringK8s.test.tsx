@@ -69,6 +69,36 @@ function renderPage(
 }
 
 describe('InfraMonitoringK8s', () => {
+	describe('category rail', () => {
+		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
+
+		beforeEach(async () => {
+			onUrlUpdateMock.mockClear();
+			renderPage({ category: K8sCategories.PODS }, onUrlUpdateMock);
+			await screen.findByTestId(`category-${K8sCategories.PODS}`);
+		});
+
+		// Events lives in its own rail section; a category reachable only by URL
+		// is invisible to anyone who has not been handed the link.
+		it('should offer Events alongside the resource categories', () => {
+			expect(
+				screen.getByTestId(`category-${K8sCategories.EVENTS}`),
+			).toBeInTheDocument();
+		});
+
+		it('should select Events on click', async () => {
+			fireEvent.click(screen.getByTestId(`category-${K8sCategories.EVENTS}`));
+
+			await waitFor(() => {
+				const categorySwitch = onUrlUpdateMock.mock.calls.find(
+					(call) => call[0].searchParams.get('category') === K8sCategories.EVENTS,
+				);
+
+				expect(categorySwitch).toBeDefined();
+			});
+		});
+	});
+
 	describe('when the category changes from a page other than the first', () => {
 		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
 
