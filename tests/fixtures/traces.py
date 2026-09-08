@@ -963,6 +963,26 @@ def seed_attribute_evolution(
     clickhouse.conn.query(f"ALTER TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' DELETE WHERE column_name = 'attributes' AND field_context = 'attribute' AND field_name = '__all__' SETTINGS mutations_sync = 1")
 
 
+# A rollout far before any test's query window, so seeding it makes the querier read span
+# attributes entirely from the native JSON column rather than straddling into the legacy Map.
+ATTRIBUTE_JSON_ROLLOUT_TIME = datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC)
+
+
+@pytest.fixture(name="attribute_backend", params=["map", "json"])
+def attribute_backend(
+    request: pytest.FixtureRequest,
+    seed_attribute_evolution: Callable[[str, datetime.datetime], None],
+) -> str:
+    """Runs a traces test against both physical attribute layouts. "map" leaves the querier on the
+    legacy attributes_{string,number,bool} maps; "json" seeds the column-evolution row so it reads
+    the native `attributes` JSON column instead. Relies on insert_traces dual-writing both, so the
+    same seeded spans back either read — a test that passes under both has strict Map/JSON parity."""
+    backend = request.param
+    if backend == "json":
+        seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
+    return backend
+
+
 @pytest.fixture(name="insert_top_level_operations", scope="function")
 def insert_top_level_operations(
     clickhouse: types.TestContainerClickhouse,
