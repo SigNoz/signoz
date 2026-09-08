@@ -11,13 +11,6 @@ export type AuthZGuardProps = {
 	 * Permissions required to render `children` (AND semantics).
 	 */
 	checks: BrandedPermission[];
-	/**
-	 * Fetched alongside `checks` and never gated on. `useAuthZ` batches everything
-	 * requested in the same tick into one request, so children that need these
-	 * resolve from cache rather than firing a second round trip after the guard
-	 * has already resolved.
-	 */
-	preloadChecks?: BrandedPermission[];
 	children: ReactElement;
 	/**
 	 * Rendered when denied. A function receives the denied permissions.
@@ -46,18 +39,12 @@ function resolveFallback(
 
 export function AuthZGuard({
 	checks,
-	preloadChecks,
 	children,
 	fallback,
 	fallbackOnLoading,
 	onFailRenderContent = true,
 }: AuthZGuardProps): JSX.Element | null {
-	// One request for both: only `checks` decides whether the content renders.
-	const allChecks = useMemo(
-		() => (preloadChecks?.length ? [...checks, ...preloadChecks] : checks),
-		[checks, preloadChecks],
-	);
-	const { isLoading, error, permissions } = useAuthZ(allChecks);
+	const { isLoading, error, permissions } = useAuthZ(checks);
 
 	// TODO(authz): Use allowed/deniedPermissions from useAuthZ after devtools PR merges
 	const { allowed, deniedPermissions } = useMemo(() => {
@@ -65,15 +52,15 @@ export function AuthZGuard({
 			return { allowed: false, deniedPermissions: [] as BrandedPermission[] };
 		}
 
-		// Scoped to `checks`: a denied `preloadChecks` entry must not block the
-		// content, it was only fetched to warm the cache.
-		const denied = checks.filter((p) => permissions[p]?.isGranted === false);
+		const denied = Object.entries(permissions)
+			.filter(([, { isGranted }]) => !isGranted)
+			.map(([perm]) => perm as BrandedPermission);
 
 		return {
 			allowed: denied.length === 0,
 			deniedPermissions: denied,
 		};
-	}, [checks, permissions]);
+	}, [permissions]);
 
 	if (isLoading) {
 		return <>{fallbackOnLoading ?? null}</>;

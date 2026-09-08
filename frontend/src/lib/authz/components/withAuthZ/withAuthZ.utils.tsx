@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 import type { AuthZGuardProps } from 'lib/authz/components/AuthZGuard/AuthZGuard';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 export type RouterContext = {
 	/**
@@ -109,12 +110,13 @@ export function createAuthZHOC<P extends object>(
 				? preloadChecks(props, router)
 				: preloadChecks;
 
+		// Requested here rather than through the guard: `useAuthZ` coalesces
+		// everything asked for in the same tick into one request, so this rides
+		// along with the guard's own checks without being able to gate rendering.
+		useAuthZ(resolvedPreload ?? [], { enabled: !!resolvedPreload?.length });
+
 		return (
-			<Guard
-				checks={resolvedChecks}
-				preloadChecks={resolvedPreload}
-				{...guardProps}
-			>
+			<Guard checks={resolvedChecks} {...guardProps}>
 				{createElement(Component, props)}
 			</Guard>
 		);
