@@ -2,6 +2,7 @@ import type { Preview } from '@storybook/react-vite';
 import type { SetupWorker } from 'msw';
 import { setupWorker } from 'msw';
 
+import { settleForCapture } from '../src/storybook/visual/settleForCapture';
 import { withProviders } from '../src/storybook/decorators/withProviders';
 import { globalMocks } from '../src/storybook/globals';
 import { resetStoryHistory } from '../src/storybook/navigation/containment';
@@ -79,8 +80,21 @@ const preview: Preview = {
 				dynamicTitle: true,
 			},
 		},
+		motion: {
+			description:
+				'Park every animation on its last frame once the story has settled. Still is what both capture stacks shoot; Live is for watching a transition.',
+			toolbar: {
+				title: 'Motion',
+				icon: 'play',
+				items: [
+					{ value: 'still', title: 'Still' },
+					{ value: 'live', title: 'Live' },
+				],
+				dynamicTitle: true,
+			},
+		},
 	},
-	initialGlobals: { theme: 'dark' },
+	initialGlobals: { theme: 'dark', motion: 'still' },
 	// Controls every story carries: permissions, banners, and whether the page's
 	// own endpoints answer, hang or fail.
 	args: globalMocks.args,
@@ -105,6 +119,8 @@ const preview: Preview = {
 		clearBlockedNavigations();
 		resetStoryHistory();
 	},
+	// After `play`, which is the moment both capture stacks shoot at.
+	afterEach: settleForCapture,
 };
 
 export default preview;
