@@ -23,8 +23,7 @@ export const DataSourceDropdown = memo(function DataSourceDropdown(
 		isListViewPanel = false,
 	} = props;
 
-	// An explicit list wins: it says what the caller can visualize, where
-	// `isListViewPanel` only says which panel is asking.
+	// An explicit list wins; `isListViewPanel` only says which panel is asking.
 	const sources =
 		supportedDataSources && supportedDataSources.length > 0
 			? supportedDataSources

@@ -25,10 +25,7 @@ export function getTimeSeriesResults(
 		[]) as Querybuildertypesv5TimeSeriesDataDTO[];
 }
 
-/**
- * Heatmap results: the same time-series tree, with the shared bucket bounds on each
- * aggregation's `meta` and one count per bucket on every point.
- */
+/** The time-series tree with bucket bounds on each aggregation's `meta`. */
 export function getHeatmapResults(
 	response: QueryRangeV5200 | undefined,
 ): Querybuildertypesv5TimeSeriesDataDTO[] {

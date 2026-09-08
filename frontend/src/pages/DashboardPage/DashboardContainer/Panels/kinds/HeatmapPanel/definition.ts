@@ -18,26 +18,20 @@ export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	// A cell is a count per bucket, which only a metric carries a bucket axis for;
-	// the heatmap request rejects the logs and traces signals outright.
+	// Only metrics carry a bucket axis; the request rejects the other signals.
 	supportedSignals: [TelemetrytypesSignalDTO.metrics],
 	supportedQueryTypes: [
 		EQueryType.QUERY_BUILDER,
 		EQueryType.CLICKHOUSE,
 		EQueryType.PROM,
 	],
-	// A heatmap point is a count per bucket rather than a single value, so a
-	// function has nothing to transform and a having clause would filter individual
-	// cells out of a distribution that has to stay whole. The request rejects both.
+	// The request rejects both: a point is a count per bucket, not a single value.
 	queryBuilderFields: {
 		default: {
 			functions: { isHidden: true, isDisabled: true },
 			having: { isHidden: true, isDisabled: true },
 		},
 	},
-	// The one kind asking for `heatmap`: the response carries one count per bucket at
-	// each timestamp, with the shared bucket bounds on the aggregation's meta. The
-	// bucket axis is the server's — unlike Histogram, the panel never re-bins.
 	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.heatmap,
 		formatTableResultForUI: false,
@@ -50,8 +44,7 @@ export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 		edit: true,
 		clone: true,
 		download: { csv: false, png: true, svg: true },
-		// An alert compares a series against a threshold; a distribution per timestamp
-		// has no single value to compare.
+		// A distribution per timestamp has no single value to threshold.
 		createAlert: false,
 		search: false,
 		drilldown: false,

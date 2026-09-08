@@ -31,7 +31,7 @@ export const getComponentForPanelType = (
 		[PANEL_TYPES.BAR]: Uplot,
 		[PANEL_TYPES.PIE]: null,
 		[PANEL_TYPES.HISTOGRAM]: Uplot,
-		// V2-only kind: it renders through the V2 panel registry, never this map.
+		// V2-only kind; it renders through the V2 panel registry.
 		[PANEL_TYPES.HEATMAP]: null,
 		[PANEL_TYPES.EMPTY_WIDGET]: null,
 	};

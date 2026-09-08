@@ -12,9 +12,8 @@ async function openDropdown(): Promise<void> {
 }
 
 describe('DataSourceDropdown', () => {
-	// antd's virtual list only renders the first couple of options into jsdom, so
-	// each case asserts on what the restriction admits and excludes rather than on
-	// the whole option list.
+	// antd's virtual list renders only the first couple of options into jsdom, so
+	// each case asserts what the restriction admits and excludes, not the full list.
 	it('offers the signals beyond the current one when nothing restricts it', async () => {
 		render(
 			<DataSourceDropdown

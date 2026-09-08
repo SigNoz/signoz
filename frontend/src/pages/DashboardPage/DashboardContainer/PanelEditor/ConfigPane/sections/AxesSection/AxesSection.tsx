@@ -19,8 +19,7 @@ const SCALE_OPTIONS = [
 	{ value: 'log', label: 'Log', icon: 'scale-log' as const },
 ];
 
-// How the bucket axis distributes its row heights. Auto is the only one that reads
-// the boundaries; the other three state what to do with them.
+// Auto is the only one that reads the boundaries rather than overriding them.
 const Y_SCALE_OPTIONS = [
 	{
 		value: DashboardtypesHeatmapYScaleDTO.auto,

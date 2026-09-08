@@ -14,10 +14,7 @@ export type FilterConfigsPartial = NonNullable<
 	QueryBuilderProps['filterConfigs']
 >;
 
-/**
- * A signal as the query builder's legacy `DataSource`. The empty signal names no
- * data source, so it maps to nothing — the one signal a kind never declares.
- */
+/** A signal as the builder's legacy `DataSource`; the empty signal names none. */
 export const SIGNAL_TO_DATA_SOURCE: Record<
 	TelemetrytypesSignalDTO,
 	DataSource | undefined

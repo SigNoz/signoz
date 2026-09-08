@@ -62,9 +62,8 @@ export function getSupportedSignals(
 }
 
 /**
- * The kind's signals as the query builder's `DataSource` list — what its signal
- * dropdown offers. A kind that visualizes one signal offers one, so the builder
- * can't be pointed at data the panel would then refuse to render.
+ * The kind's signals as the query builder's `DataSource` list, so the builder
+ * can't be pointed at data the panel would refuse to render.
  */
 export function getSupportedDataSources(kind: PanelKind): DataSource[] {
 	return getSupportedSignals(kind).flatMap((signal) => {

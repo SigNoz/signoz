@@ -11,15 +11,13 @@ import type {
 
 const MS_PER_SECOND = 1000;
 
-/** Used when neither the response nor the data says how wide a column is. */
 export const FALLBACK_STEP_SECONDS = 60;
 
 export interface HeatmapPanelData {
 	/** Ascending bucket upper bounds shared by every group; empty means no grid. */
 	buckets: number[];
-	/** One entry per group; an ungrouped query yields a single unlabelled entry. */
 	series: HeatmapSeries[];
-	/** Query the grid came from — the key its step interval is reported under. */
+	/** The key the grid's step interval is reported under. */
 	queryName: string;
 }
 
@@ -30,20 +28,17 @@ const EMPTY_DATA: HeatmapPanelData = {
 };
 
 /**
- * V5 heatmap results → the chart's `buckets` + `series`. The counts are already
- * bucketed server-side: each point carries one per bucket bound plus the trailing
- * open-above overflow, in the order of the aggregation's `meta.buckets`.
+ * V5 heatmap results → the chart's `buckets` + `series`. Each point carries one
+ * count per bucket bound plus the trailing open-above overflow.
  *
- * Only the first aggregation carrying bounds is read. Each aggregation comes back
- * with its own bucket axis and a grid has exactly one y axis — which is why the
- * request admits a single enabled query in the first place.
+ * Only the first aggregation carrying bounds is read: each comes back with its own
+ * bucket axis, and a grid has one y axis.
  */
 export function prepareHeatmapData({
 	results,
 	legendMap,
 }: {
 	results: Querybuildertypesv5TimeSeriesDataDTO[];
-	/** queryName → user legend, applied as the group label's template. */
 	legendMap: Record<string, string>;
 }): HeatmapPanelData {
 	for (const result of results) {
@@ -67,9 +62,9 @@ export function prepareHeatmapData({
 }
 
 /**
- * Column width in seconds. The server's effective step is authoritative — the last
- * column has no successor to infer a width from — so the timestamp delta is only a
- * fallback for a response that reports no step.
+ * Column width in seconds. The server's effective step is authoritative — the
+ * last column has no successor to infer a width from — so the timestamp delta is
+ * only a fallback for a response that reports no step.
  */
 export function resolveHeatmapStep({
 	series,
@@ -104,14 +99,12 @@ function toHeatmapSeries(
 	);
 
 	return {
-		// An ungrouped query is one group with nothing to name it — the legend hides
-		// itself for a single group, and the tooltip breaks down buckets instead.
+		// An ungrouped query is one group with nothing to name it.
 		label: labels.length > 0 ? resolveGroupLabel(labels, queryName, legend) : '',
 		labels,
 		points: (series.values ?? []).map<HeatmapSeriesPoint>((point) => ({
 			timestamp: (point.timestamp ?? 0) / MS_PER_SECOND,
-			// `null` is "no data", which a non-finite count is; `0` is an observed
-			// absence and stays a number.
+			// `null` is "no data"; `0` is an observed absence and stays a number.
 			counts: (point.values ?? []).map((count) =>
 				Number.isFinite(count) ? count : null,
 			),

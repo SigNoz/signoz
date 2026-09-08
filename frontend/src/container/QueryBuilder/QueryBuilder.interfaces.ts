@@ -30,10 +30,7 @@ export type QueryBuilderProps = {
 	panelType: PANEL_TYPES;
 	actions?: ReactNode;
 	filterConfigs?: Partial<FilterConfigs>;
-	/**
-	 * Signals the query's data-source dropdown may offer. Defaults to every one the
-	 * builder knows; a panel kind that visualizes only some of them passes those.
-	 */
+	/** Signals the data-source dropdown may offer; defaults to all of them. */
 	supportedDataSources?: DataSource[];
 	queryComponents?: { renderOrderBy?: (props: OrderByFilterProps) => ReactNode };
 	isListViewPanel?: boolean;

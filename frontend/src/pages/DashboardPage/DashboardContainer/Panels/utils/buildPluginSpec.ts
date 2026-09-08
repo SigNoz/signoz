@@ -150,8 +150,7 @@ const SECTION_SEEDS: SectionSeeds = {
 					typeof old.softMax === 'number' && { softMax: old.softMax }),
 				...(controls.logScale &&
 					old.isLogScale !== undefined && { isLogScale: old.isLogScale }),
-				// Seeded, unlike the bounds above: the scale is a choice between four
-				// named axes, and the control should open on the one being drawn.
+				// Seeded so the control opens on the axis being drawn.
 				...(controls.yScale && {
 					yScale: old.yScale ?? DashboardtypesHeatmapYScaleDTO.auto,
 				}),
@@ -199,9 +198,8 @@ const SECTION_SEEDS: SectionSeeds = {
 			if (controls.spanGaps && spanGaps !== undefined) {
 				appearance.spanGaps = spanGaps;
 			}
-			// Seeded rather than left to the server's defaults so the colour controls
-			// open on the ramp the grid is actually drawn with. The count bounds and the
-			// step count stay unset — those read as "derived from the data".
+			// Seeded so the controls open on the ramp the grid is drawn with; the
+			// count bounds and step count stay unset, which reads as derived.
 			if (controls.colors) {
 				appearance.colors = {
 					...colors,

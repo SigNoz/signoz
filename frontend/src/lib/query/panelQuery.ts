@@ -307,10 +307,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 			},
 		},
 	},
-	// A heatmap point is a count per bucket, so `functions` and `having` are dropped
-	// rather than carried: the request rejects both, and switching to a heatmap has to
-	// leave a query it accepts. Only metrics carry a bucket axis, but the map is keyed
-	// by the query's own signal, which a switch can still be holding.
+	// `functions` and `having` are dropped rather than carried: the heatmap request
+	// rejects both. Every signal is listed because the map is keyed by the query's
+	// own, which a switch can still be holding.
 	[PANEL_TYPES.HEATMAP]: {
 		[DataSource.LOGS]: {
 			builder: {

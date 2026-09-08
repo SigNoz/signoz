@@ -60,15 +60,14 @@ function HeatmapPanelRenderer({
 		[series, queryName, data.response],
 	);
 
-	// X-scale clamps come from the request that produced the data, so the grid keeps
-	// the window it fetched even while a newly zoomed one is in flight.
+	// From the request that produced the data, so the grid keeps the window it
+	// fetched while a newly zoomed one is in flight.
 	const { minTimeScale, maxTimeScale } = useMemo(() => {
 		const { startTime, endTime } = getPanelTimeRange(data.requestPayload);
 		return { minTimeScale: startTime, maxTimeScale: endTime };
 	}, [data.requestPayload]);
 
-	// Stable identity: the chart rebuilds its config (and so the plot) when `colors`
-	// changes, so a fresh object per render would recreate it on every render.
+	// The chart rebuilds its plot when `colors` changes identity.
 	const colors = useMemo(
 		() => resolveHeatmapColors(spec.chartAppearance?.colors),
 		[spec.chartAppearance?.colors],

@@ -81,8 +81,7 @@ export function resolveLegendPosition(
 
 /**
  * Row-height distribution of a heatmap's bucket axis. Missing/unknown resolves to
- * `auto`, which is the one option that reads the bucket bounds rather than
- * overriding them (chart default).
+ * `auto`, the one option that reads the bucket bounds rather than overriding them.
  */
 export function resolveHeatmapAxisScale(
 	yScale: DashboardtypesHeatmapYScaleDTO | undefined,
@@ -96,8 +95,8 @@ export function resolveHeatmapAxisScale(
 /**
  * `chartAppearance.colors` → the chart's colour options. Only fields the spec sets
  * are returned: the chart spreads this over its own defaults, so an explicit
- * `undefined` would erase one. `minCount`/`maxCount` are passed through as `null`,
- * which is the spec's own way of asking for a derived bound.
+ * `undefined` would erase one. `null` bounds pass through — that is the spec's own
+ * way of asking for a derived one.
  */
 export function resolveHeatmapColors(
 	colors: DashboardtypesHeatmapColorsDTO | undefined,

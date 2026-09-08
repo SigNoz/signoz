@@ -83,13 +83,11 @@ export type AnyThreshold =
 export type PanelFormattingSlice = DashboardtypesPanelFormattingDTO &
 	Pick<DashboardtypesTableFormattingDTO, 'columnUnits'>;
 
-// Superset of every kind's axes DTO: the value axis with soft bounds the charts
-// share, plus the heatmap's bucket-axis scale. Gated by the `controls` bag.
+// Superset of every kind's axes DTO, gated by the `controls` bag.
 export type PanelAxesSlice = DashboardtypesAxesDTO &
 	DashboardtypesHeatmapAxesDTO;
 
-// Superset of every kind's chart-appearance DTO (line/fill styling for the
-// time-axis charts, the colour ramp for the heatmap). Gated by `controls`.
+// Superset of every kind's chart-appearance DTO, gated by `controls`.
 export type PanelChartAppearanceSlice =
 	DashboardtypesTimeSeriesChartAppearanceDTO &
 		DashboardtypesHeatmapChartAppearanceDTO;
@@ -119,7 +117,7 @@ export interface SectionControls {
 		columnUnits?: boolean;
 	};
 	// minMax → softMin/softMax; yScale → the heatmap's bucket-axis distribution,
-	// whose domain is the response's boundaries and so takes no soft bounds.
+	// whose domain comes from the response and so takes no soft bounds.
 	[SectionKind.Axes]: {
 		minMax?: boolean;
 		logScale?: boolean;
@@ -137,8 +135,7 @@ export interface SectionControls {
 		fillMode?: boolean;
 		showPoints?: boolean;
 		spanGaps?: boolean;
-		// colors → the heatmap's cell colour ramp, the encoding that makes a cell
-		// mean a count. Nothing else in this section applies to a grid.
+		// colors → the heatmap's cell colour ramp; nothing else here applies to a grid.
 		colors?: boolean;
 	};
 	[SectionKind.Buckets]: {
