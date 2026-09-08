@@ -14,7 +14,7 @@ import { rampGradient } from './heatmapColorOptions';
 import styles from './HeatmapColorsField.module.scss';
 
 /** The ramp is domain-independent; the preview shows colours, not positions. */
-const NOMINAL_DOMAIN = { min: 0, max: 1 };
+const NOMINAL_DOMAIN = { min: 0, max: 1, logFloor: 1 };
 
 interface HeatmapRampPreviewProps {
 	colors: DashboardtypesHeatmapColorsDTO | undefined;
