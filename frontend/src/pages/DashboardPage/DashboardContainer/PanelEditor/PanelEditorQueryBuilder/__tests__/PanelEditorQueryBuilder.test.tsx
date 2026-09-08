@@ -60,6 +60,7 @@ function renderBuilder(
 function lastQueryBuilderProps(): {
 	panelType: string;
 	isListViewPanel: boolean;
+	showTraceOperator: boolean;
 	filterConfigs: unknown;
 } {
 	const calls = mockQueryBuilderV2.mock.calls;
@@ -115,6 +116,9 @@ describe('PanelEditorQueryBuilder field visibility (driven by the capabilities g
 		const props = lastQueryBuilderProps();
 		expect(props.panelType).toBe('graph');
 		expect(props.isListViewPanel).toBe(false);
+		// The trace operator combines aggregated trace queries, so it rides along with
+		// the aggregation controls.
+		expect(props.showTraceOperator).toBe(true);
 		expect(props.filterConfigs).toStrictEqual({});
 	});
 
@@ -124,6 +128,7 @@ describe('PanelEditorQueryBuilder field visibility (driven by the capabilities g
 		const props = lastQueryBuilderProps();
 		expect(props.panelType).toBe('list');
 		expect(props.isListViewPanel).toBe(true);
+		expect(props.showTraceOperator).toBe(false);
 		expect(props.filterConfigs).toStrictEqual({
 			stepInterval: { isHidden: true, isDisabled: true },
 			having: { isHidden: true, isDisabled: true },

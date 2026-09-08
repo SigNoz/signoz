@@ -16,9 +16,9 @@ import type {
 
 /**
  * Backend sentinel for "every value selected" on a multi-select dynamic variable.
- * V1 parity (`getDashboardVariables`): only dynamic vars collapse to `__all__`;
- * query/custom multi-selects send the full value array instead. Lowercase — the
- * URL/store `__ALL__` sentinel is a separate serialization concern.
+ * Only dynamic vars collapse to `__all__`; query/custom multi-selects send the full
+ * value array instead. Lowercase — the URL/store `__ALL__` sentinel is a separate
+ * serialization concern.
  */
 const ALL_VALUES_SENTINEL = '__all__';
 
@@ -68,8 +68,8 @@ function resolveValue(
 /**
  * Builds the V5 `variables` map from the dashboard's variable definitions and the
  * runtime selection, so a panel query substitutes the values the user picked in
- * the variable bar (V1 parity with `getDashboardVariables` + the V5 prep). The
- * definition list supplies the wire `type` (the selection map carries only values).
+ * the variable bar. The definition list supplies the wire `type` (the selection map
+ * carries only values).
  */
 export function buildVariablesPayload(
 	definitions: VariableFormModel[],

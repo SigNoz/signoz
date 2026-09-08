@@ -1,8 +1,8 @@
 import type { DashboardtypesHistogramPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { PanelMode } from 'lib/visualization/panels/types';
-import { buildBaseConfig } from 'pages/DashboardPage/DashboardContainer/Panels/utils/baseConfigBuilder';
+import {
+	buildBaseConfig,
+	type PanelChromeArgs,
+} from 'pages/DashboardPage/DashboardContainer/Panels/utils/baseConfigBuilder';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import type { PanelSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import getLabelName from 'lib/getLabelName';
@@ -16,16 +16,12 @@ const BAR_WIDTH_FACTOR = 1;
 const MERGED_SERIES_LINE_COLOR = '#3f5ecc';
 const MERGED_SERIES_FILL_COLOR = '#4E74F8';
 
-export interface BuildHistogramConfigArgs {
-	panelId: string;
+export interface BuildHistogramConfigArgs extends PanelChromeArgs {
 	spec: DashboardtypesHistogramPanelSpecDTO;
 	/** Builder queries on this panel — used to resolve per-series labels. */
 	builderQueries: BuilderQuery[];
 	/** Flattened V5 series (see `flattenTimeSeries`). */
 	series: PanelSeries[];
-	isDarkMode: boolean;
-	timezone: Timezone;
-	panelMode: PanelMode;
 }
 
 /**
@@ -44,7 +40,7 @@ export function buildHistogramConfig({
 }: BuildHistogramConfigArgs): UPlotConfigBuilder {
 	const builder = buildBaseConfig({
 		panelId,
-		panelType: PANEL_TYPES.HISTOGRAM,
+		isTimeAxis: false,
 		isDarkMode,
 		timezone,
 		panelMode,

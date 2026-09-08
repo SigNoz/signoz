@@ -5,7 +5,10 @@ import type { EQueryType } from 'types/common/dashboard';
 import type { SectionConfig } from './sections';
 import type { AnyPanelInteractionProps } from './interactions';
 import type { PanelKind } from './panelKind';
-import type { QueryBuilderFieldRule } from './panelCapabilities';
+import type {
+	PanelQueryCapabilities,
+	QueryBuilderFieldRule,
+} from './panelCapabilities';
 import type { BaseRendererProps, PanelRendererProps } from './rendererProps';
 
 /** Export formats offered under the single "Download" action. */
@@ -39,6 +42,24 @@ export interface PanelActionCapabilities {
 	drilldown: boolean;
 }
 
+/**
+ * No actions at all — for a kind this build can't render, where every action would act on
+ * a panel body that isn't there. See `UNSUPPORTED_PANEL`.
+ */
+export const NO_PANEL_ACTIONS: PanelActionCapabilities = {
+	view: false,
+	edit: false,
+	clone: false,
+	download: {
+		[DownloadFormat.CSV]: false,
+		[DownloadFormat.PNG]: false,
+		[DownloadFormat.SVG]: false,
+	},
+	createAlert: false,
+	search: false,
+	drilldown: false,
+};
+
 export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	kind: K;
 	displayName: string;
@@ -50,6 +71,8 @@ export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	supportedQueryTypes: EQueryType[];
 	/** Query-builder fields this kind hides/disables, optionally per signal (`{}` hides none). */
 	queryBuilderFields: QueryBuilderFieldRule;
+	/** How this kind's query-range request is shaped (request type, paging, result formatting). */
+	queryCapabilities: PanelQueryCapabilities;
 	actions: PanelActionCapabilities;
 }
 

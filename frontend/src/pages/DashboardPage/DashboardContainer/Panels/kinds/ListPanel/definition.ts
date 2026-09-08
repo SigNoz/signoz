@@ -1,7 +1,10 @@
 import type { PanelDefinition } from '../../types/panelDefinition';
 import Renderer from './Renderer';
 import { sections } from './sections';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5RequestTypeDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -30,6 +33,15 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 		},
 	},
 	sections,
+	// The only kind reading raw rows: they page server-side, and the sort needs a
+	// tiebreaker so a duplicated sort key can't repeat or skip a row across pages.
+	queryCapabilities: {
+		requestType: Querybuildertypesv5RequestTypeDTO.raw,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: true,
+		serverPaginated: true,
+	},
 	actions: {
 		view: true,
 		edit: true,

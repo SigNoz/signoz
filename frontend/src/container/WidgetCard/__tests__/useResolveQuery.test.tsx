@@ -26,8 +26,8 @@ jest.mock(
 	}),
 );
 
-jest.mock('hooks/dashboard/useDashboardVariablesByType', () => ({
-	useDashboardVariablesByType: (): unknown[] => mockDynamicVariables,
+jest.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
+	useDynamicVariableSuggestions: (): unknown[] => mockDynamicVariables,
 }));
 
 jest.mock('react-redux', () => ({
@@ -64,11 +64,12 @@ describe('useResolveQuery', () => {
 		expect(resolved).toBe(QUERY);
 	});
 
-	it('resolves through substitute_vars when the dashboard has variables', async () => {
+	it('resolves through substitute_vars when the dashboard has dynamic variables', async () => {
 		mockGetSubstituteVars.mockResolvedValue({
 			httpStatusCode: 200,
 			data: { compositeQuery: {} },
 		});
+		mockDynamicVariables.push({ name: 'env', attribute: 'deployment.env' });
 
 		const { result } = renderHook(() => useUpdatedQuery(), {
 			wrapper: MockQueryClientProvider,
@@ -76,13 +77,6 @@ describe('useResolveQuery', () => {
 
 		const resolved = await result.current.getUpdatedQuery({
 			widgetConfig: WIDGET_CONFIG,
-			dashboardData: {
-				data: {
-					variables: {
-						env: { name: 'env', selectedValue: 'prod' },
-					},
-				},
-			},
 		});
 
 		expect(mockGetSubstituteVars).toHaveBeenCalledTimes(1);

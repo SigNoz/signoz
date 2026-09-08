@@ -28,13 +28,11 @@ import { populateMultipleResults } from 'lib/query/populateMultipleResults';
 import { timeItems, timePreferance } from 'constants/timePreference';
 import PanelWrapper from 'container/WidgetCard/Panels/PanelWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useChartMutable } from 'hooks/useChartMutable';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import GetMinMax from 'lib/getMinMax';
 import { isEmpty } from 'lodash-es';
 import { AppState } from 'store/reducers';
@@ -82,8 +80,6 @@ function FullView({
 		setCurrentGraphRef(fullViewRef);
 	}, [setCurrentGraphRef]);
 
-	const { dashboardVariables } = useDashboardVariables();
-
 	const getSelectedTime = useCallback(
 		() =>
 			timeItems.find((e) => e.enum === (widget?.timePreferance || 'GLOBAL_TIME')),
@@ -115,7 +111,6 @@ function FullView({
 				graphType: getGraphType(selectedPanelType),
 				query: updatedQuery,
 				globalSelectedInterval: globalSelectedTime,
-				variables: getDashboardVariables(dashboardVariables),
 				fillGaps: widget.fillSpans,
 				formatForWeb: selectedPanelType === PANEL_TYPES.TABLE,
 				originalGraphType: selectedPanelType,
@@ -126,7 +121,6 @@ function FullView({
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: widget?.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
-			variables: getDashboardVariables(dashboardVariables),
 			tableParams: {
 				pagination: {
 					offset: 0,

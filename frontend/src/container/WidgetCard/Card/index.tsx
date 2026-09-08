@@ -8,12 +8,9 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useScrollWidgetIntoView } from 'lib/visualization/hooks/useScrollWidgetIntoView';
 import { populateMultipleResults } from 'lib/query/populateMultipleResults';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
-import { useIsPanelWaitingOnVariable } from 'hooks/dashboard/useVariableFetchState';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
-import { getVariableReferencesInQuery } from 'lib/dashboardVariables/variableReference';
 import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
@@ -45,7 +42,6 @@ function GridCardGraph({
 	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
 	threshold,
-	variables,
 	version,
 	onClickHandler,
 	onDragSelect,
@@ -113,25 +109,10 @@ function GridCardGraph({
 
 	const updatedQuery = widget?.query;
 
-	const referencedVariableNames = useMemo(() => {
-		if (!variables || !updatedQuery) {
-			return [];
-		}
-		const allNames = Object.values(variables)
-			.map((v) => v.name)
-			.filter((name): name is string => !!name);
-		return getVariableReferencesInQuery(updatedQuery, allNames);
-	}, [updatedQuery, variables]);
-
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
-	const isPanelWaitingOnAnyVariable = useIsPanelWaitingOnVariable(
-		referencedVariableNames,
-	);
-
-	const queryEnabledCondition =
-		isVisible && !isEmptyWidget && isQueryEnabled && !isPanelWaitingOnAnyVariable;
+	const queryEnabledCondition = isVisible && !isEmptyWidget && isQueryEnabled;
 
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		if (widget.panelTypes !== PANEL_TYPES.LIST) {
@@ -140,7 +121,6 @@ function GridCardGraph({
 				graphType: getGraphType(widget.panelTypes),
 				query: updatedQuery,
 				globalSelectedInterval,
-				variables: getDashboardVariables(variables),
 				fillGaps: widget.fillSpans,
 				formatForWeb: widget.panelTypes === PANEL_TYPES.TABLE,
 				start: customTimeRange?.startTime || start,
@@ -191,7 +171,6 @@ function GridCardGraph({
 	const queryResponse = useGetQueryRange(
 		{
 			...requestData,
-			variables: getDashboardVariables(variables),
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval:
 				widget?.panelTypes === PANEL_TYPES.LIST && isLogsQuery
@@ -214,14 +193,6 @@ function GridCardGraph({
 				widget.timePreferance,
 				widget.fillSpans,
 				requestData,
-				variables
-					? Object.entries(variables).reduce((acc, [id, variable]) => {
-							if (variable.name && referencedVariableNames.includes(variable.name)) {
-								return { ...acc, [id]: variable.selectedValue };
-							}
-							return acc;
-						}, {})
-					: {},
 				...(customTimeRange && customTimeRange.startTime && customTimeRange.endTime
 					? [customTimeRange.startTime, customTimeRange.endTime]
 					: []),
@@ -303,9 +274,7 @@ function GridCardGraph({
 					version={version}
 					threshold={threshold}
 					headerMenuList={menuList}
-					isFetchingResponse={
-						queryResponse.isFetching || isPanelWaitingOnAnyVariable
-					}
+					isFetchingResponse={queryResponse.isFetching}
 					setRequestData={setRequestData}
 					onClickHandler={onClickHandler}
 					onDragSelect={onDragSelect}

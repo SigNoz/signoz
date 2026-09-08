@@ -4,7 +4,6 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { Widgets } from 'types/api/widgets/widget';
 import {
 	MetricQueryRangeSuccessResponse,
@@ -52,7 +51,6 @@ export interface GridCardGraphProps {
 	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	isQueryEnabled: boolean;
-	variables?: IDashboardVariables;
 	version?: string;
 	onDragSelect: (start: number, end: number) => void;
 	customOnDragSelect?: (start: number, end: number) => void;

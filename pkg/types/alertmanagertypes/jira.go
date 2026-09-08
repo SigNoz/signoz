@@ -80,12 +80,18 @@ func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 		c.Description = DefaultJiraDescriptionTemplate
 	}
 
-	site := strings.TrimRight(strings.TrimSpace(c.Site), "/")
-	u, err := url.Parse(site)
-	if site == "" || err != nil || u.Scheme != "https" || !strings.HasSuffix(strings.ToLower(u.Hostname()), jiraCloudHostSuffix) {
+	// Values are stored and sent exactly as configured, so anything that is
+	// not already canonical is rejected rather than rewritten.
+	if c.Site != strings.TrimSpace(c.Site) {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira site must not have leading or trailing whitespace")
+	}
+	u, err := url.Parse(c.Site)
+	if c.Site == "" || err != nil || u.Scheme != "https" || !strings.HasSuffix(strings.ToLower(u.Hostname()), jiraCloudHostSuffix) {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("jira site must be a Jira Cloud URL (https://<site>%s)", jiraCloudHostSuffix))
 	}
-	c.Site = site
+	if strings.HasSuffix(c.Site, "/") {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira site must not end with a trailing slash")
+	}
 
 	if c.Project == "" {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira project is required")
@@ -115,5 +121,5 @@ func (c *JiraReceiverConfig) APIBaseURL(cloudID string) string {
 	if cloudID != "" {
 		return fmt.Sprintf("%s%s/rest/api/3", jiraGatewayBaseURL, cloudID)
 	}
-	return fmt.Sprintf("%s/rest/api/3", strings.TrimRight(c.Site, "/"))
+	return fmt.Sprintf("%s/rest/api/3", c.Site)
 }

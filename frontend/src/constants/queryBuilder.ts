@@ -348,6 +348,19 @@ export const initialQueryMeterWithType: Query = {
 	},
 };
 
+export const initialQueryAIWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [
+			{
+				...initialQueryBuilderFormValuesMap.traces,
+				builderQueryType: 'builder_ai_query',
+			},
+		],
+	},
+};
+
 export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	string: Object.values(StringOperators),
 	number: Object.values(NumberOperators),

@@ -15,6 +15,7 @@ import { buildQueryRangeRequest } from 'pages/DashboardPage/DashboardContainer/q
 import { envelopesToQuery } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import { selectResolvedVariables } from 'pages/DashboardPage/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
+import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -47,11 +48,15 @@ export function useCreateAlertFromPanel(): (
 
 	return useCallback(
 		(panel: DashboardtypesPanelDTO, panelId: string): void => {
-			const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
+			const panelKind = panel.spec.plugin.kind;
+			// Alerts are a V1 surface: the query pivots through the V1 `Query` shape and the
+			// URL carries a legacy panel type, so this flow keeps translating.
+			const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
 
 			void logEvent(DashboardDetailEvents.PanelAction, {
 				action: 'createAlerts',
 				panelType,
+				panelKind,
 				...eventMeta,
 				widgetId: panelId,
 				queryType: getPanelQueryType(panel),
@@ -65,7 +70,7 @@ export function useCreateAlertFromPanel(): (
 			// Redux global time is nanoseconds; the request DTO takes epoch ms.
 			const request = buildQueryRangeRequest({
 				queries: panel.spec.queries,
-				panelType,
+				queryCapabilities: getPanelDefinition(panelKind).queryCapabilities,
 				startMs: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
 				endMs: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 				variables,

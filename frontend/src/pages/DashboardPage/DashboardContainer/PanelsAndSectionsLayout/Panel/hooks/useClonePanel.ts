@@ -83,6 +83,7 @@ export function useClonePanel({
 				void logEvent(DashboardDetailEvents.PanelAction, {
 					action: 'clone',
 					panelType: PANEL_KIND_TO_PANEL_TYPE[source.panel.spec.plugin.kind],
+					panelKind: source.panel.spec.plugin.kind,
 					panelId,
 					...eventMeta,
 				});

@@ -1,10 +1,8 @@
 import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { PanelMode } from 'lib/visualization/panels/types';
 import {
 	buildBaseConfig,
 	minStepInterval,
+	type TimeAxisChromeArgs,
 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/baseConfigBuilder';
 import {
 	FILL_MODE_MAP,
@@ -19,7 +17,6 @@ import {
 	toClickPluginPayload,
 } from 'pages/DashboardPage/DashboardContainer/queryV5/uplotData';
 import getLabelName from 'lib/getLabelName';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import {
 	DrawStyle,
 	FillMode,
@@ -31,22 +28,12 @@ import type { BuilderQuery } from 'types/api/v5/queryRange';
 
 const DEFAULT_POINT_SIZE = 5;
 
-export interface BuildTimeSeriesConfigArgs {
-	panelId: string;
+export interface BuildTimeSeriesConfigArgs extends TimeAxisChromeArgs {
 	spec: DashboardtypesTimeSeriesPanelSpecDTO;
 	/** Flat list of builder queries (see `getBuilderQueries`); powers per-query legend resolution. */
 	builderQueries: BuilderQuery[];
 	/** Flattened V5 series (see `flattenTimeSeries`). */
 	series: PanelSeries[];
-	/** Per-query step intervals from the response exec stats. */
-	stepIntervals?: Record<string, number>;
-	isDarkMode: boolean;
-	timezone: Timezone;
-	panelMode: PanelMode;
-	onDragSelect?: (start: number, end: number) => void;
-	onClick?: OnClickPluginOpts['onClick'];
-	minTimeScale?: number;
-	maxTimeScale?: number;
 }
 
 /** Builds a `UPlotConfigBuilder` for a TimeSeries panel: shared scaffolding plus one series per result. */
@@ -66,7 +53,7 @@ export function buildTimeSeriesConfig({
 }: BuildTimeSeriesConfigArgs): UPlotConfigBuilder {
 	const builder = buildBaseConfig({
 		panelId,
-		panelType: PANEL_TYPES.TIME_SERIES,
+		isTimeAxis: true,
 		isDarkMode,
 		timezone,
 		panelMode,

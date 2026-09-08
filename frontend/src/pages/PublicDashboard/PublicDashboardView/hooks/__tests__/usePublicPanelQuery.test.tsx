@@ -1,6 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { getPublicDashboardPanelQueryRangeV2 } from 'api/generated/services/dashboard';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	type DashboardtypesPanelDTO,
+	Querybuildertypesv5RequestTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
@@ -42,6 +45,15 @@ const panel = {
 
 const args = {
 	panel,
+	// What TimeSeries declares; passed in rather than resolved from the registry, which
+	// would pull every panel renderer into this suite.
+	queryCapabilities: {
+		requestType: Querybuildertypesv5RequestTypeDTO.time_series,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
 	panelKey: 'panel-1',
 	publicDashboardId: 'pub-1',
 	startMs: 1000,
