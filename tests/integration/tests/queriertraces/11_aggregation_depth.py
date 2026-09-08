@@ -26,16 +26,20 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # intrinsic column.
 
 
-# No attribute_backend factor: the collision variant unions a same-named attribute with the
-# intrinsic column, and that resolution is not guaranteed to agree between the map and JSON
-# layouts, so this stays on the map.
-@pytest.mark.parametrize("noise", ["clean", "corrupt", "collision"])
+# Only the collision variant carries a span attribute (a duration_nano attribute colliding with
+# the intrinsic column), so it is the variant also crossed into json.
+@pytest.mark.parametrize(
+    "noise,attribute_backend",
+    [("clean", "map"), ("corrupt", "map"), ("collision", "map"), ("collision", "json")],
+    indirect=["attribute_backend"],
+)
 def test_traces_aggregate_percentiles(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
     noise: str,
+    attribute_backend: str,  # pylint: disable=unused-argument
 ) -> None:
     """
     Setup:
@@ -263,8 +267,6 @@ def test_traces_aggregate_having_breadth(
     assert {row[0] for row in data} == expected_services
 
 
-# No attribute_backend factor: same-named-attribute vs intrinsic-column resolution is not
-# guaranteed to agree between the map and JSON layouts, so this stays on the map.
 @pytest.mark.parametrize(
     "duration_filter",
     [
@@ -277,6 +279,7 @@ def test_traces_duration_nano_qol_filter_with_collision(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    attribute_backend: str,  # pylint: disable=unused-argument
     duration_filter: str,
 ) -> None:
     """
