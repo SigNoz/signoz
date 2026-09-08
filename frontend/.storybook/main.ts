@@ -33,6 +33,11 @@ const mockAliases = [
 		find: /^(?:src\/)?constants\/env$/,
 		replacement: `${srcPath}/storybook/mocks/env.mock.ts`,
 	},
+	{
+		// jest: not replaced, a test opens the one tooltip it is about.
+		find: /^@signozhq\/ui\/tooltip$/,
+		replacement: `${srcPath}/storybook/mocks/tooltip.mock.tsx`,
+	},
 ];
 
 /**
