@@ -1,30 +1,138 @@
 .colors {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: var(--spacing-8);
 }
 
 .field {
 	display: flex;
 	flex: 1;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--spacing-4);
+	min-width: 0;
+}
+
+.fieldHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+}
+
+// The track is inset by half a thumb at each end by default, which reads as an
+// indent against the label and help text either side of it. Radix keeps the thumb
+// in bounds on its own, so the track can run the full width of the field.
+.slider {
+	--slider-track-margin-x: 0;
+}
+
+.help {
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
+}
+
+.mono {
+	font-family: var(--periscope-font-family-mono);
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
 }
 
 .bounds {
 	display: flex;
-	gap: 8px;
+	gap: var(--spacing-4);
 }
 
-.fill {
+.fillGrid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: var(--spacing-4);
+}
+
+.customFill {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+	padding: var(--spacing-4) var(--spacing-6);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-1);
+	background: var(--l2-background-60);
+	cursor: pointer;
+
+	&:hover {
+		border-color: var(--l2-foreground);
+	}
+
+	&.isSelected {
+		border-color: var(--accent-primary);
+	}
 }
 
-.swatch {
-	width: 28px;
-	height: 12px;
-	flex: none;
-	border-radius: 2px;
+.customFillValue {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.customFillSwatch {
+	width: var(--spacing-12);
+	height: var(--spacing-8);
+	border-radius: var(--radius-1);
+	border: 1px solid var(--l2-border);
+}
+
+.preview {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+}
+
+.previewHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+}
+
+.previewRamp {
+	height: var(--spacing-8);
+	border-radius: var(--radius-1);
+	border: 1px solid var(--l2-border);
+}
+
+.previewBounds {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+}
+
+.paletteGrid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--spacing-4);
+}
+
+.paletteCard {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+	padding: var(--spacing-4);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-1);
+	background: var(--l2-background-60);
+	cursor: pointer;
+	text-align: left;
+
+	&:hover {
+		border-color: var(--l2-foreground);
+	}
+
+	&.isSelected {
+		border-color: var(--accent-primary);
+	}
+}
+
+.paletteRamp {
+	height: var(--spacing-6);
+	border-radius: var(--radius-1);
 }
