@@ -718,8 +718,8 @@ func (m *Manager) Rules() []Rule {
 
 // TriggeredAlerts returns the list of the manager's rules.
 func (m *Manager) TriggeredAlerts() []*ruletypes.NamedAlert {
-	// m.mtx.RLock()
-	// defer m.mtx.RUnlock()
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
 
 	namedAlerts := []*ruletypes.NamedAlert{}
 
