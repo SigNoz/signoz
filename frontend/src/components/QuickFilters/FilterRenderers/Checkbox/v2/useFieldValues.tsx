@@ -92,8 +92,12 @@ export function useFieldValues({
 			values.numberValues
 				?.filter((value): value is number => value !== null && value !== undefined)
 				.map((value) => value.toString()) || [];
+		const boolValues =
+			values.boolValues
+				?.filter((value): value is boolean => value !== null && value !== undefined)
+				.map((value) => value.toString()) || [];
 
-		return [...stringValues, ...numberValues];
+		return [...stringValues, ...numberValues, ...boolValues];
 	}, [data]);
 
 	return { relatedValues, allValues, isLoading, isFetching };
