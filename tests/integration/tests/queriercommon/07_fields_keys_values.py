@@ -178,30 +178,26 @@ def test_fields_values_bool_fields(
     assert response.json()["data"]["complete"] is True
 
 
-@pytest.mark.parametrize("signal", [pytest.param("logs", id="logs"), pytest.param("traces", id="traces")])
-def test_fields_values_start_excludes_values_not_seen_since(
+def test_fields_values_start_excludes_span_values_not_seen_since_the_day(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
     insert_traces: Callable[[list[Traces]], None],
-    signal: str,
 ) -> None:
     """
     Setup:
-    Insert a log and a span three days old and a log and a span now, with different service names.
+    Insert a span three days old and a span now, with different service names.
 
     Tests:
-    1. Values with startUnixMilli an hour ago contain only the service seen now.
+    1. Values with startUnixMilli an hour ago contain only the service seen today: the start is
+       floored to the day, the tag table's deduplication unit.
     2. Values without a start contain both services.
+
+    Logs are not covered: the logs collector stamps tag rows with the ingestion hour, not the
+    log's timestamp, and the fixture writes the log's timestamp.
     """
+    signal = "traces"
     now = datetime.now(tz=UTC)
-    insert_logs(
-        [
-            Logs(timestamp=now - timedelta(days=3), resources={"service.name": "archived-service"}, body="old"),
-            Logs(timestamp=now, resources={"service.name": "live-service"}, body="new"),
-        ]
-    )
     insert_traces(
         [
             Traces(timestamp=now - timedelta(days=3), resources={"service.name": "archived-service"}),

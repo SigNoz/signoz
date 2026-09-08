@@ -1442,6 +1442,13 @@ func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, orgID valuer.
 	return t.getRelatedValues(ctx, orgID, fieldValueSelector)
 }
 
+// tagTableDayStart floors a millisecond timestamp to the UTC day, the
+// partition and deduplication unit of the tag tables.
+func tagTableDayStart(unixMilli int64) int64 {
+	const dayMilli = int64(24 * 60 * 60 * 1000)
+	return unixMilli - unixMilli%dayMilli
+}
+
 func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
@@ -1466,10 +1473,11 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 		sb.Where(sb.E("tag_key", fieldValueSelector.Name))
 	}
 
-	// unix_milli is the hour bucket a value was written in and rows are
-	// deduplicated per day, so this is a day-granular "seen since" filter
+	// rows are deduplicated per day and the surviving row carries whichever
+	// hour was inserted last, so the start is floored to the day; unix_milli
+	// is the hour of the span start
 	if fieldValueSelector.StartUnixMilli != 0 {
-		sb.Where(sb.GE("unix_milli", fieldValueSelector.StartUnixMilli))
+		sb.Where(sb.GE("unix_milli", tagTableDayStart(fieldValueSelector.StartUnixMilli)))
 	}
 
 	// now look at the field context
@@ -1578,10 +1586,11 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 		sb.Where(sb.E("tag_key", fieldValueSelector.Name))
 	}
 
-	// unix_milli is the hour bucket a value was written in and rows are
-	// deduplicated per day, so this is a day-granular "seen since" filter
+	// rows are deduplicated per day and the surviving row carries whichever
+	// hour was inserted last, so the start is floored to the day; unix_milli
+	// is the hour the log was ingested, not the log's own timestamp
 	if fieldValueSelector.StartUnixMilli != 0 {
-		sb.Where(sb.GE("unix_milli", fieldValueSelector.StartUnixMilli))
+		sb.Where(sb.GE("unix_milli", tagTableDayStart(fieldValueSelector.StartUnixMilli)))
 	}
 
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
