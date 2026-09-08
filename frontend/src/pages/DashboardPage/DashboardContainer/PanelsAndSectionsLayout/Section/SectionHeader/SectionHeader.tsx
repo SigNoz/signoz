@@ -37,7 +37,6 @@ interface SectionHeaderProps {
 	/** Present when edits are unavailable — actions render disabled with its reason. */
 	disabledChecks?: BrandedPermission[];
 	disabledTooltip?: string;
-	disabled?: boolean;
 }
 
 function SectionHeader({
@@ -50,7 +49,6 @@ function SectionHeader({
 	actions,
 	disabledChecks = [],
 	disabledTooltip,
-	disabled = false,
 }: SectionHeaderProps): JSX.Element {
 	return (
 		<div className={cx(styles.header, { [styles.headerOpen]: open })}>
@@ -89,7 +87,6 @@ function SectionHeader({
 			{actions ? (
 				<SectionActionsMenu
 					sectionId={sectionId}
-					disabled={disabled}
 					disabledChecks={disabledChecks}
 					disabledTooltip={disabledTooltip}
 					onAddPanel={actions.onAddPanel}

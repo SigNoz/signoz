@@ -22,6 +22,7 @@ import { useDashboardFetchRequired } from './useDashboardFetchRequired';
 export function useDashboardEditContext(): DashboardEditContext {
 	const { dashboard } = useDashboardFetchRequired();
 	const {
+		canRead,
 		canEdit,
 		canDelete,
 		editChecks,
@@ -37,6 +38,7 @@ export function useDashboardEditContext(): DashboardEditContext {
 
 	return deriveEditContext({
 		isLocked: !!dashboard.locked,
+		canRead,
 		canEdit,
 		canDelete,
 		editChecks,

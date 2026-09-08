@@ -12,6 +12,7 @@ export interface EditContextReasons {
 export interface DashboardEditContext {
 	isEditable: boolean;
 	isLocked: boolean;
+	canReadDashboard: boolean;
 	canEditDashboard: boolean;
 	canDeleteDashboard: boolean;
 	/** `[read, update]` — hand to an authz component as its `checks`. */
@@ -39,6 +40,7 @@ export interface DashboardEditContext {
  */
 export function deriveEditContext({
 	isLocked,
+	canRead,
 	canEdit,
 	canDelete,
 	editChecks,
@@ -48,6 +50,7 @@ export function deriveEditContext({
 	readOnlyOverride = false,
 }: {
 	isLocked: boolean;
+	canRead: boolean;
 	canEdit: boolean;
 	canDelete: boolean;
 	editChecks: BrandedPermission[];
@@ -61,6 +64,7 @@ export function deriveEditContext({
 		return {
 			isEditable: false,
 			isLocked,
+			canReadDashboard: canRead,
 			canEditDashboard: false,
 			canDeleteDashboard: false,
 			editChecks,
@@ -74,6 +78,7 @@ export function deriveEditContext({
 	return {
 		isEditable: canEdit && !isLocked,
 		isLocked,
+		canReadDashboard: canRead,
 		canEditDashboard: canEdit,
 		canDeleteDashboard: canDelete,
 		editChecks,

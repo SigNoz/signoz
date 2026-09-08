@@ -1,0 +1,6 @@
+.menuActionItem {
+	/* Fills the row so the tooltip anchors to it, and so the row's own padding
+	   is the only padding — the dropdown item supplies none of its own here. */
+	width: 100%;
+	justify-content: flex-start;
+}

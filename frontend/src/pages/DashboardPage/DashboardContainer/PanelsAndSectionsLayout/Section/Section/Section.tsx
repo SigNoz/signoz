@@ -103,7 +103,6 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				onToggle={toggle}
 				repeatVariable={section.repeatVariable}
 				dragHandle={dragHandle}
-				disabled={!isEditable}
 				disabledChecks={editChecks}
 				disabledTooltip={editDisabledTooltip}
 				actions={{
@@ -124,7 +123,6 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 								variant="dashed"
 								color="secondary"
 								prefix={<Plus size="md" />}
-								disabled={!isEditable}
 								onClick={
 									isEditable ? (): void => openPicker(section.layoutIndex) : undefined
 								}

@@ -70,7 +70,6 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	const { canToggleLock, disabledTooltip: lockDisabledTooltip } =
 		useDashboardLockPermission({
 			dashboardId: id,
-			createdBy: dashboard.createdBy,
 			source: dashboard.source,
 		});
 

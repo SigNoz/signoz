@@ -1,10 +1,10 @@
-import { type ReactNode, useMemo } from 'react';
+import { type ReactElement, type ReactNode, useMemo } from 'react';
 import { Copy, EllipsisVertical, PenLine, Plus, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 
-import DisabledMenuItemLabel from '../../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
+import MenuActionItem from '../../../components/MenuActionItem/MenuActionItem';
 import styles from './SectionActionsMenu.module.scss';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
@@ -31,44 +31,43 @@ function SectionActionsMenu({
 	onDeleteSection,
 }: SectionActionsMenuProps): JSX.Element {
 	const items = useMemo<MenuItem[]>(() => {
-		const isDisabled = disabled;
-		const label = (text: string): ReactNode =>
-			disabled ? (
-				<DisabledMenuItemLabel
-					disabled
-					checks={disabledChecks}
-					disabledTooltip={disabledTooltip}
-				>
-					{text}
-				</DisabledMenuItemLabel>
-			) : (
-				text
-			);
+		// The row is a button, so it carries its own icon, disabled state and
+		// reason — the dropdown item just hosts it.
+		const row = (
+			text: string,
+			icon: ReactElement,
+			destructive = false,
+		): ReactNode => (
+			<MenuActionItem
+				label={text}
+				icon={icon}
+				checks={disabledChecks}
+				disabledTooltip={disabledTooltip}
+				destructive={destructive}
+			/>
+		);
 		const result: MenuItem[] = [];
 		if (onAddPanel) {
 			result.push({
 				key: 'add-panel',
-				icon: <Plus size={14} />,
-				label: label('Add panel'),
-				disabled: isDisabled,
+				label: row('Add panel', <Plus size={14} />),
+				disabled,
 				onClick: onAddPanel,
 			});
 		}
 		if (onRename) {
 			result.push({
 				key: 'rename',
-				icon: <PenLine size={14} />,
-				label: label('Rename section'),
-				disabled: isDisabled,
+				label: row('Rename section', <PenLine size={14} />),
+				disabled,
 				onClick: onRename,
 			});
 		}
 		if (onCloneSection) {
 			result.push({
 				key: 'clone-section',
-				icon: <Copy size={14} />,
-				label: label('Clone section'),
-				disabled: isDisabled,
+				label: row('Clone section', <Copy size={14} />),
+				disabled,
 				onClick: onCloneSection,
 			});
 		}
@@ -77,10 +76,8 @@ function SectionActionsMenu({
 				{ type: 'divider' },
 				{
 					key: 'delete-section',
-					danger: true,
-					icon: <Trash2 size={14} />,
-					label: label('Delete section'),
-					disabled: isDisabled,
+					label: row('Delete section', <Trash2 size={14} />, true),
+					disabled,
 					onClick: onDeleteSection,
 				},
 			);

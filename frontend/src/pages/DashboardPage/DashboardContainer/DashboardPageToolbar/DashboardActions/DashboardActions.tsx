@@ -1,4 +1,5 @@
 import {
+	type ReactElement,
 	type ReactNode,
 	useCallback,
 	useEffect,
@@ -37,7 +38,7 @@ import APIError from 'types/api/error';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { DashboardCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
-import DisabledMenuItemLabel from '../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
+import MenuActionItem from '../../components/MenuActionItem/MenuActionItem';
 import DashboardSettings from '../../DashboardSettings';
 import { useAddSection } from '../../PanelsAndSectionsLayout/Section/hooks/useAddSection';
 import SectionTitleModal from '../../PanelsAndSectionsLayout/Section/SectionTitleModal';
@@ -75,7 +76,7 @@ function DashboardActions({
 		deleteChecks,
 		deleteDisabledTooltip,
 		canDeleteDashboard,
-		canEditDashboard: canReadDashboard,
+		canReadDashboard,
 	} = useDashboardEditContext();
 	const settingsRequest = useDashboardStore((s) => s.settingsRequest);
 	const clearSettingsRequest = useDashboardStore((s) => s.clearSettingsRequest);
@@ -85,7 +86,6 @@ function DashboardActions({
 	const { canToggleLock, disabledTooltip: lockDisabledTooltip } =
 		useDashboardLockPermission({
 			dashboardId: dashboard.id,
-			createdBy: dashboard.createdBy,
 			source: dashboard.source,
 		});
 
@@ -180,20 +180,22 @@ function DashboardActions({
 
 	// Items stay in the menu when they aren't available, carrying the reason —
 	// lock or missing permission — instead of disappearing.
-	const disabledLabel = useCallback(
+	// The row carries its icon, label and reason; the dropdown item keeps its own
+	// `disabled` and `onClick`, so the menu still knows which rows are dead.
+	const row = useCallback(
 		(
 			text: string,
-			disabled: boolean,
+			icon: ReactElement,
 			checks: BrandedPermission[],
-			disabledTooltip?: string,
+			opts: { disabledTooltip?: string; destructive?: boolean } = {},
 		): ReactNode => (
-			<DisabledMenuItemLabel
-				disabled={disabled}
+			<MenuActionItem
+				label={text}
+				icon={icon}
 				checks={checks}
-				disabledTooltip={disabledTooltip}
-			>
-				{text}
-			</DisabledMenuItemLabel>
+				disabledTooltip={opts.disabledTooltip}
+				destructive={opts.destructive}
+			/>
 		),
 		[],
 	);
@@ -202,40 +204,33 @@ function DashboardActions({
 		const dashboardGroup: MenuItem[] = [
 			{
 				key: 'rename',
-				label: disabledLabel(
-					'Rename',
-					!isEditable,
-					editChecks,
-					editDisabledTooltip,
-				),
-				icon: <PenLine size={14} />,
+				label: row('Rename', <PenLine size={14} />, editChecks, {
+					disabledTooltip: editDisabledTooltip,
+				}),
 				disabled: !isEditable,
 				onClick: onOpenRename,
 			},
 			// Clone creates a new dashboard, so it's not lock-gated.
 			{
 				key: 'clone',
-				label: disabledLabel('Clone dashboard', cloneDenied, cloneChecks),
-				icon: <Copy size={14} />,
+				label: row('Clone dashboard', <Copy size={14} />, cloneChecks),
 				disabled: isCloning || cloneDenied,
 				onClick: (): void => void handleClone(),
 			},
 			{
 				key: 'lock',
-				label: disabledLabel(
+				label: row(
 					isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard',
-					!canToggleLock,
+					<LockKeyhole size={14} />,
 					editChecks,
-					lockDisabledTooltip,
+					{ disabledTooltip: lockDisabledTooltip },
 				),
-				icon: <LockKeyhole size={14} />,
 				disabled: !canToggleLock,
 				onClick: onLockToggle,
 			},
 			{
 				key: 'fullscreen',
-				label: 'Full screen',
-				icon: <Fullscreen size={14} />,
+				label: row('Full screen', <Fullscreen size={14} />, []),
 				onClick: handleEnterFullScreen,
 			},
 		];
@@ -254,13 +249,9 @@ function DashboardActions({
 				children: [
 					{
 						key: 'new-section',
-						label: disabledLabel(
-							'New section',
-							!isEditable,
-							editChecks,
-							editDisabledTooltip,
-						),
-						icon: <SquareStack size={14} />,
+						label: row('New section', <SquareStack size={14} />, editChecks, {
+							disabledTooltip: editDisabledTooltip,
+						}),
 						disabled: !isEditable,
 						onClick: (): void => setIsNewSectionOpen(true),
 					},
@@ -269,14 +260,10 @@ function DashboardActions({
 			{ type: 'divider', key: 'divider-danger' },
 			{
 				key: 'delete',
-				label: disabledLabel(
-					'Delete dashboard',
-					isLocked || !canDeleteDashboard,
-					deleteChecks,
-					deleteDisabledTooltip,
-				),
-				icon: <Trash2 size={14} />,
-				danger: true,
+				label: row('Delete dashboard', <Trash2 size={14} />, deleteChecks, {
+					disabledTooltip: deleteDisabledTooltip,
+					destructive: true,
+				}),
 				// Delete is independent of read/update, but a locked dashboard still
 				// can't be removed.
 				disabled: isLocked || !canDeleteDashboard,
@@ -284,7 +271,7 @@ function DashboardActions({
 			},
 		];
 	}, [
-		disabledLabel,
+		row,
 		isEditable,
 		isLocked,
 		editChecks,

@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo } from 'react';
+import { type ReactElement, type ReactNode, useCallback, useMemo } from 'react';
 import {
 	Bell,
 	Copy,
@@ -26,7 +26,8 @@ import { useDownloadPanelMenuItem } from '../hooks/useDownloadPanelMenuItem';
 import { useMovePanelToSection } from '../hooks/useMovePanelToSection';
 import { useViewPanel } from '../hooks/useViewPanel';
 import { buildMoveItems } from '../utils/buildMoveItems';
-import DisabledMenuItemLabel from '../../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
+import MenuActionItem from '../../../components/MenuActionItem/MenuActionItem';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 // Stable fallback so renders without layout context don't churn the mutation
@@ -100,33 +101,34 @@ export function usePanelActionItems({
 	const { request: requestDelete } = deleteConfirm;
 
 	const items = useMemo<MenuItem[]>(() => {
-		const label = (text: string): ReactNode =>
-			editDisabledTooltip ? (
-				<DisabledMenuItemLabel
-					disabled
-					checks={editChecks}
-					disabledTooltip={editDisabledTooltip}
-				>
-					{text}
-				</DisabledMenuItemLabel>
-			) : (
-				text
-			);
+		// The row is a button, so it carries its own icon, disabled state and
+		// reason — the dropdown item just hosts it.
+		const row = (
+			text: string,
+			icon: ReactElement,
+			opts: { checks?: BrandedPermission[]; destructive?: boolean } = {},
+		): ReactNode => (
+			<MenuActionItem
+				label={text}
+				icon={icon}
+				checks={opts.checks ?? editChecks}
+				disabledTooltip={editDisabledTooltip}
+				destructive={opts.destructive}
+			/>
+		);
 
 		const panelGroup: MenuItem[] = [];
 		if (panelCapabilities.view) {
 			panelGroup.push({
 				key: 'view-panel',
-				label: 'View',
-				icon: <Fullscreen size={14} />,
+				label: row('View', <Fullscreen size={14} />, { checks: [] }),
 				onClick: (): void => openView(panelId, panel),
 			});
 		}
 		if (panelCapabilities.edit) {
 			panelGroup.push({
 				key: 'edit-panel',
-				label: label('Edit panel'),
-				icon: <PenLine size={14} />,
+				label: row('Edit panel', <PenLine size={14} />),
 				disabled: !isEditable,
 				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
@@ -135,8 +137,7 @@ export function usePanelActionItems({
 			// Needs section context to place the copy; disabled without it.
 			panelGroup.push({
 				key: 'clone-panel',
-				label: label('Clone'),
-				icon: <Copy size={14} />,
+				label: row('Clone', <Copy size={14} />),
 				disabled: !isEditable || !panelActions,
 				onClick: (): void => {
 					if (panelActions) {
@@ -159,8 +160,7 @@ export function usePanelActionItems({
 		if (panelCapabilities.createAlert) {
 			dataGroup.push({
 				key: 'create-alert',
-				label: 'Create Alerts',
-				icon: <Bell size={14} />,
+				label: row('Create Alerts', <Bell size={14} />, { checks: [] }),
 				onClick: (): void => createAlert(panel, panelId),
 			});
 		}
@@ -176,8 +176,7 @@ export function usePanelActionItems({
 				: [
 						{
 							key: 'move',
-							label: label('Move to section'),
-							icon: <FolderInput size={14} />,
+							label: row('Move to section', <FolderInput size={14} />),
 							disabled: true,
 						},
 					];
@@ -185,9 +184,7 @@ export function usePanelActionItems({
 		const deleteGroup: MenuItem[] = [
 			{
 				key: 'delete-panel',
-				danger: true,
-				icon: <Trash2 size={14} />,
-				label: label('Delete panel'),
+				label: row('Delete panel', <Trash2 size={14} />, { destructive: true }),
 				disabled: !isEditable || !panelActions,
 				onClick: (): void => requestDelete(),
 			},
