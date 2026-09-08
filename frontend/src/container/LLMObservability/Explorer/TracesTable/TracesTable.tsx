@@ -8,7 +8,7 @@ import type {
 } from 'components/TanStackTableView/types';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
-import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
+import { TracesLoading } from '../TraceLoading/TraceLoading';
 import APIError from 'types/api/error';
 import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
 import { getAbsoluteUrl } from 'utils/basePath';

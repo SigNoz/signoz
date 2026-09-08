@@ -3,7 +3,7 @@ import type { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import type { TracesTableRow } from '../TracesTable/getFieldColumn';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
