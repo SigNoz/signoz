@@ -21,7 +21,9 @@ export const getTraceLink = (record: Record<string, unknown>): string => {
 	})}`;
 };
 
-// `id` mirrors span_id so TanStack sees real row changes on orderBy toggles.
+// Reshapes the query-range list payload into table rows. `id` mirrors span_id so
+// TanStack sees genuine row changes on orderBy toggles instead of falling back to
+// positional ids; `timestamp` is lifted from the wrapping ListItem.
 export const transformSpanRows = (data: QueryDataV3[]): TracesTableRow[] => {
 	const list = data[0]?.list;
 	if (!list) {

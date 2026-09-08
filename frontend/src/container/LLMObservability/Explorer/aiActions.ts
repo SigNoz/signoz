@@ -1,4 +1,14 @@
-// Each factory closes over live page state so execute() sees the current query.
+/**
+ * AI Assistant page-action factories for the Traces Explorer.
+ *
+ * Mirrors the logs equivalents — each factory closes over live page
+ * state/callbacks so `execute()` always operates on the current query, and
+ * the page component instantiates them via `useMemo` + `usePageActions`.
+ *
+ * See `pages/LogsExplorer/aiActions.ts` for the rationale behind writing
+ * BOTH `filters.items` and `filter.expression` and then re-using the same
+ * URL parser shape via `redirectWithQueryBuilderData`.
+ */
 
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import {
@@ -43,7 +53,10 @@ interface SaveViewParams {
 	name: string;
 }
 
-/** Replaces every span filter and navigates, which re-runs the query. */
+/**
+ * Replace all active span filters and navigate to the updated query URL
+ * (which makes the WHERE clause reflect the new filters and triggers a re-run).
+ */
 export function tracesRunQueryAction(
 	deps: FilterDeps,
 ): PageAction<RunQueryParams> {
@@ -115,7 +128,10 @@ export function tracesRunQueryAction(
 	};
 }
 
-/** Appends one filter to the trace query and navigates to the updated URL. */
+/**
+ * Append a single filter to the existing trace query and navigate to the
+ * updated URL.
+ */
 export function tracesAddFilterAction(
 	deps: FilterDeps,
 ): PageAction<AddFilterParams> {
@@ -166,7 +182,9 @@ export function tracesAddFilterAction(
 	};
 }
 
-/** Switches between the list / timeseries / table / trace views. */
+/**
+ * Switch the traces explorer between list / timeseries / table / trace views.
+ */
 export function tracesChangeViewAction(deps: {
 	onChangeView: (view: TracesView) => void;
 }): PageAction<ChangeViewParams> {
@@ -192,7 +210,10 @@ export function tracesChangeViewAction(deps: {
 	};
 }
 
-/** Saves the current query as a named view (stub until the API lands). */
+/**
+ * Save the current trace query as a named view (stub — wires to real API
+ * when available).
+ */
 export function tracesSaveViewAction(deps: {
 	onSaveView: (name: string) => Promise<void>;
 }): PageAction<SaveViewParams> {
