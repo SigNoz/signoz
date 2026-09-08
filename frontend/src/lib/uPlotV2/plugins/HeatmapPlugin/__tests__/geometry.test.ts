@@ -2,6 +2,7 @@ import {
 	canUseLogAxis,
 	decimateAxisSplits,
 	formatRowLabel,
+	resolveColumnAlignedSplits,
 	resolveColumnIndex,
 	resolveHeatmapYAxis,
 	resolveRowIndex,
@@ -440,5 +441,194 @@ describe('resolveHeatmapYAxis — an explicitly chosen scale', () => {
 		const { splits } = resolveHeatmapYAxis([0], HeatmapAxisScale.Symlog);
 
 		expect(splits).toStrictEqual([0]);
+	});
+});
+
+describe('resolveColumnAlignedSplits', () => {
+	const MINUTE = 60;
+	const HOUR = 3600;
+	const DAY = 86400;
+
+	/** uPlot's `tzDate` for a fixed-offset zone: the returned date's local fields
+	 *  read as that zone's wall clock, whatever the machine's own zone is. */
+	const zoneAt =
+		(offsetSeconds: number) =>
+		(timestamp: number): Date => {
+			const browserOffset =
+				-new Date(timestamp * 1e3).getTimezoneOffset() * MINUTE;
+			return new Date((timestamp + offsetSeconds - browserOffset) * 1e3);
+		};
+
+	const UTC = zoneAt(0);
+	/** IST, whose half-hour offset is what pulls ticks off round local times. */
+	const IST = zoneAt(5.5 * HOUR);
+	/** 2024-03-11T00:00:00Z, a Monday. */
+	const MIDNIGHT_UTC = 1_710_115_200;
+
+	it('lands every tick on a column edge', () => {
+		const step = 90;
+		const anchor = 1_700_000_010;
+
+		const splits = resolveColumnAlignedSplits({
+			anchor,
+			step,
+			incr: 5 * MINUTE,
+			min: anchor,
+			max: anchor + 40 * step,
+		});
+
+		expect(splits.length).toBeGreaterThan(1);
+		splits.forEach((split) => {
+			expect((split - anchor) % step).toBe(0);
+		});
+	});
+
+	it('rounds the increment up to a whole number of columns', () => {
+		const splits = resolveColumnAlignedSplits({
+			anchor: 0,
+			step: 90,
+			incr: 5 * MINUTE,
+			min: 0,
+			max: HOUR,
+			toDate: UTC,
+		});
+
+		// 300s asked for, 360s is the next multiple of the 90s column.
+		expect(splits[1] - splits[0]).toBe(360);
+	});
+
+	it('covers the visible range without overshooting it', () => {
+		const splits = resolveColumnAlignedSplits({
+			anchor: 1000,
+			step: 100,
+			incr: 200,
+			min: 1050,
+			max: 1650,
+			toDate: UTC,
+		});
+
+		expect(splits[0]).toBeGreaterThanOrEqual(1050);
+		expect(splits[splits.length - 1]).toBeLessThanOrEqual(1650);
+		expect(splits[0] - 200).toBeLessThan(1050);
+	});
+
+	it("starts hourly ticks on the timezone's own hour, not the epoch's", () => {
+		const args = {
+			anchor: MIDNIGHT_UTC,
+			step: 5 * MINUTE,
+			incr: HOUR,
+			min: MIDNIGHT_UTC,
+			max: MIDNIGHT_UTC + 3 * HOUR,
+		};
+
+		// 05:30 IST is midnight UTC, so the two disagree by the half hour.
+		expect(resolveColumnAlignedSplits({ ...args, toDate: UTC })).toStrictEqual([
+			MIDNIGHT_UTC,
+			MIDNIGHT_UTC + HOUR,
+			MIDNIGHT_UTC + 2 * HOUR,
+			MIDNIGHT_UTC + 3 * HOUR,
+		]);
+		expect(resolveColumnAlignedSplits({ ...args, toDate: IST })).toStrictEqual([
+			MIDNIGHT_UTC + 0.5 * HOUR,
+			MIDNIGHT_UTC + 1.5 * HOUR,
+			MIDNIGHT_UTC + 2.5 * HOUR,
+		]);
+	});
+
+	it('gives up the round local time when no column edge carries one', () => {
+		// Hour-wide columns start on the UTC hour, so 00:00 IST is mid-cell and
+		// the nearest edge — 00:30 IST — is as close as the grid gets.
+		const splits = resolveColumnAlignedSplits({
+			anchor: MIDNIGHT_UTC,
+			step: HOUR,
+			incr: HOUR,
+			min: MIDNIGHT_UTC,
+			max: MIDNIGHT_UTC + 2 * HOUR,
+			toDate: IST,
+		});
+
+		expect(splits).toStrictEqual([
+			MIDNIGHT_UTC,
+			MIDNIGHT_UTC + HOUR,
+			MIDNIGHT_UTC + 2 * HOUR,
+		]);
+	});
+
+	it('puts a daily tick on the local day boundary', () => {
+		const splits = resolveColumnAlignedSplits({
+			anchor: MIDNIGHT_UTC,
+			step: 15 * MINUTE,
+			incr: DAY,
+			min: MIDNIGHT_UTC,
+			max: MIDNIGHT_UTC + 3 * DAY,
+			toDate: IST,
+		});
+
+		// 18:30 UTC the previous day is IST midnight, and 15m columns carry it.
+		expect(splits).toHaveLength(3);
+		splits.forEach((split) => {
+			expect(IST(split).getHours()).toBe(0);
+			expect(IST(split).getMinutes()).toBe(0);
+		});
+	});
+
+	it('walks month ticks as calendar dates, snapped to column edges', () => {
+		const splits = resolveColumnAlignedSplits({
+			anchor: MIDNIGHT_UTC,
+			step: DAY,
+			incr: 28 * DAY,
+			min: MIDNIGHT_UTC,
+			max: MIDNIGHT_UTC + 120 * DAY,
+			toDate: UTC,
+		});
+
+		// Month starts, not a drifting 28-day cadence that repeats a month name.
+		expect(
+			splits.map((split) => new Date(split * 1e3).toISOString()),
+		).toStrictEqual([
+			'2024-04-01T00:00:00.000Z',
+			'2024-05-01T00:00:00.000Z',
+			'2024-06-01T00:00:00.000Z',
+			'2024-07-01T00:00:00.000Z',
+		]);
+	});
+
+	it("falls back to uPlot's own increment without a column width", () => {
+		expect(
+			resolveColumnAlignedSplits({
+				anchor: MIDNIGHT_UTC,
+				step: 0,
+				incr: 5 * MINUTE,
+				min: MIDNIGHT_UTC,
+				max: MIDNIGHT_UTC + 15 * MINUTE,
+				toDate: UTC,
+			}),
+		).toStrictEqual([
+			MIDNIGHT_UTC,
+			MIDNIGHT_UTC + 5 * MINUTE,
+			MIDNIGHT_UTC + 10 * MINUTE,
+			MIDNIGHT_UTC + 15 * MINUTE,
+		]);
+	});
+
+	it('has nothing to place on an empty or inverted range', () => {
+		expect(
+			resolveColumnAlignedSplits({
+				anchor: 0,
+				step: MINUTE,
+				incr: MINUTE,
+				min: 10,
+				max: 10,
+			}),
+		).toStrictEqual([]);
+		expect(
+			resolveColumnAlignedSplits({
+				anchor: 0,
+				step: MINUTE,
+				incr: 0,
+				min: 0,
+				max: 100,
+			}),
+		).toStrictEqual([]);
 	});
 });

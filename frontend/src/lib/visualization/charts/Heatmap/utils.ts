@@ -7,6 +7,7 @@ import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import {
 	decimateAxisSplits,
 	formatRowLabel,
+	resolveColumnAlignedSplits,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import {
 	createHeatmapHooks,
@@ -114,6 +115,16 @@ export function buildHeatmapConfig({
 		side: 2,
 		isDarkMode,
 		values: uPlotXAxisValuesFormat as uPlot.Axis.Values,
+		// Grid lines are drawn on the ticks, so the ticks go on the cell edges.
+		splits: (_self, _axisIdx, scaleMin, scaleMax, foundIncr): number[] =>
+			resolveColumnAlignedSplits({
+				anchor: grid.timestamps[0] ?? 0,
+				step: grid.step,
+				incr: foundIncr,
+				min: scaleMin,
+				max: scaleMax,
+				toDate: tzDate,
+			}),
 	});
 
 	// Ticks sit on row edges, so the overflow row is the band between the last
