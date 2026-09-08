@@ -117,6 +117,16 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[allowedDataSources, isRawQuery],
 	);
 
+	// What the editor renders. A single-query builder edits the first query alone, so
+	// the query list beside it must not advertise ones there is no way to reach.
+	const renderedQueries = useMemo(
+		() =>
+			isMultiQueryAllowed
+				? currentQuery.builder.queryData
+				: currentQuery.builder.queryData.slice(0, 1),
+		[isMultiQueryAllowed, currentQuery.builder.queryData],
+	);
+
 	const traceOperator = useMemo((): IBuilderTraceOperator | undefined => {
 		if (
 			currentQuery.builder.queryTraceOperator &&
@@ -141,13 +151,6 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
 	);
 
-	const shouldShowFooter = useMemo(
-		() =>
-			(!showOnlyWhereClause && !isRawQuery) ||
-			(currentDataSource === DataSource.TRACES && showTraceOperator),
-		[isRawQuery, showTraceOperator, showOnlyWhereClause, currentDataSource],
-	);
-
 	const showQueryList = useMemo(
 		() => (!showOnlyWhereClause && !isRawQuery) || showTraceOperator,
 		[isRawQuery, showOnlyWhereClause, showTraceOperator],
@@ -168,6 +171,24 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	const showAddTraceOperator = useMemo(
 		() => showTraceOperator && !traceOperator && hasAtLeastOneTraceQuery,
 		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
+	);
+
+	// Nothing left to add means no footer at all, rather than an empty bar under the
+	// last query.
+	const shouldShowFooter = useMemo(
+		() =>
+			(!additionalQueries.hidden || showFormula || showAddTraceOperator) &&
+			((!showOnlyWhereClause && !isRawQuery) ||
+				(currentDataSource === DataSource.TRACES && showTraceOperator)),
+		[
+			additionalQueries.hidden,
+			showFormula,
+			showAddTraceOperator,
+			isRawQuery,
+			showTraceOperator,
+			showOnlyWhereClause,
+			currentDataSource,
+		],
 	);
 
 	const handleKeyDown = useCallback(
@@ -216,7 +237,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							savePreviousQuery={savePreviousQuery}
 						/>
 					) : (
-						currentQuery.builder.queryData.map((query, index) => (
+						renderedQueries.map((query, index) => (
 							<QueryV2
 								ref={containerRef}
 								key={query.queryName}
@@ -260,6 +281,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 
 					{shouldShowFooter && (
 						<QueryFooter
+							showAddQuery={!additionalQueries.hidden}
 							showAddFormula={showFormula}
 							addFormulaDisabled={formula.disabled}
 							addFormulaDisabledReason={formula.reason}
@@ -283,7 +305,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 
 				{showQueryList && (
 					<div className="query-names-section">
-						{currentQuery.builder.queryData.map((query) => (
+						{renderedQueries.map((query) => (
 							<div key={query.queryName} className="query-name">
 								{query.queryName}
 							</div>

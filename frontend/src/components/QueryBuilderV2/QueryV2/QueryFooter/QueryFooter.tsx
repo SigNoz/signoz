@@ -77,6 +77,7 @@ export default function QueryFooter({
 	addNewBuilderQuery,
 	addNewFormula,
 	addTraceOperator,
+	showAddQuery = true,
 	showAddFormula = true,
 	showAddTraceOperator = false,
 	addQueryDisabled = false,
@@ -88,6 +89,7 @@ export default function QueryFooter({
 	addNewFormula: () => void;
 	addTraceOperator?: () => void;
 	showAddTraceOperator: boolean;
+	showAddQuery?: boolean;
 	showAddFormula?: boolean;
 	addQueryDisabled?: boolean;
 	addQueryDisabledReason?: string;
@@ -97,22 +99,25 @@ export default function QueryFooter({
 	return (
 		<div className="qb-footer">
 			<div className="qb-footer-container">
-				<div className="qb-add-new-query">
-					<Tooltip
-						title={
-							addQueryDisabledReason ?? (
-								<div style={{ textAlign: 'center' }}>Add New Query</div>
-							)
-						}
-					>
-						<Button
-							className="add-new-query-button periscope-btn "
-							icon={<Plus size={16} />}
-							onClick={addNewBuilderQuery}
-							disabled={addQueryDisabled}
-						/>
-					</Tooltip>
-				</div>
+				{showAddQuery && (
+					<div className="qb-add-new-query">
+						<Tooltip
+							title={
+								addQueryDisabledReason ?? (
+									<div style={{ textAlign: 'center' }}>Add New Query</div>
+								)
+							}
+						>
+							<Button
+								className="add-new-query-button periscope-btn "
+								data-testid="add-new-query-button"
+								icon={<Plus size={16} />}
+								onClick={addNewBuilderQuery}
+								disabled={addQueryDisabled}
+							/>
+						</Tooltip>
+					</div>
+				)}
 
 				{showAddFormula && (
 					<div className="qb-add-formula">
@@ -136,6 +141,7 @@ export default function QueryFooter({
 						>
 							<Button
 								className="add-formula-button periscope-btn "
+								data-testid="add-formula-button"
 								icon={<Sigma size={16} />}
 								onClick={addNewFormula}
 								disabled={addFormulaDisabled}
