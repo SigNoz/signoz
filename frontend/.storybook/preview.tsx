@@ -15,7 +15,7 @@ import {
 } from '../src/storybook/runtime/resolveStory';
 import { allModes } from './modes';
 
-import '../src/ReactI18';
+import i18n from '../src/ReactI18';
 
 // `src/index.tsx` does this at boot: without it `@monaco-editor/react` falls back
 // to its loader default and pulls Monaco from cdn.jsdelivr.net, which msw does
@@ -69,6 +69,19 @@ const { worker, ready } = (holder.__signozStorybookWorker ??=
 			}),
 		};
 	})());
+
+/**
+ * `t()` answers with the key until the namespace's JSON has landed, and a `play`
+ * that clicks as soon as the story renders is quick enough to catch it: the
+ * channel form's "Channel name is mandatory" arrives as `channel_name_required`.
+ * Every namespace under `public/locales/en` is loaded once, ahead of the first
+ * story.
+ */
+const translationsReady = i18n.loadNamespaces(
+	Object.keys(import.meta.glob('../public/locales/en/*.json')).map((path) =>
+		path.slice(path.lastIndexOf('/') + 1, -'.json'.length),
+	),
+);
 
 const preview: Preview = {
 	parameters: {
@@ -240,7 +253,7 @@ const preview: Preview = {
 			world.apply();
 			world.install(worker);
 
-			await ready;
+			await Promise.all([ready, translationsReady]);
 		},
 	],
 	beforeEach: () => {
