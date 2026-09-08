@@ -31,10 +31,7 @@ interface UseSelectableFields {
 	isFetched: boolean;
 }
 
-/**
- * The fields the selector can offer. Without a source this is the keys endpoint,
- * narrowed on searchText; a named source reads the whole pool once instead.
- */
+/** No source reads the keys endpoint; a named source reads its pool once. */
 export function useSelectableFields({
 	signal,
 	searchText,

@@ -149,9 +149,7 @@ export const getListColumns = (
 	return [...initialColumns, ...columns];
 };
 
-// Reshapes the query-range list payload into table rows. `id` mirrors span_id so
-// TanStack sees genuine row changes on orderBy toggles instead of falling back to
-// positional ids; `timestamp` is lifted from the wrapping ListItem.
+// `id` mirrors span_id so TanStack sees real row changes on orderBy toggles.
 export const transformSpanRows = (data: QueryDataV3[]): TracesTableRow[] => {
 	const list = data[0]?.list;
 	if (!list) {
