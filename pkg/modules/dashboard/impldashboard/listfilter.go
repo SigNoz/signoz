@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/parser/filterquery/sqlcompiler"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 )
@@ -31,7 +32,7 @@ func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
 		return &Compiled{}, nil
 	}
 
-	sql, args, errs := newVisitor(formatter).compile(query)
+	sql, args, errs := sqlcompiler.Compile(query, formatter, dashboardFieldResolver{})
 	if len(errs) > 0 {
 		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardListFilterInvalid,
 			"invalid filter query: %s", strings.Join(errs, "; "))

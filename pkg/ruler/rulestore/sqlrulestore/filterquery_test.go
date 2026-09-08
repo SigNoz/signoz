@@ -347,7 +347,7 @@ func TestCompileErrors(t *testing.T) {
 }
 
 // TestCompileReservedKeysAllHandled guards that every key in
-// ruletypes.ReservedOps has a case in visitComparisonForReservedKeys.
+// ruletypes.ReservedOps has a case in resolveReservedKey.
 func TestCompileReservedKeysAllHandled(t *testing.T) {
 	sampleQueries := map[ruletypes.DSLKey]string{
 		ruletypes.DSLKeyName:      "name = 'x'",
