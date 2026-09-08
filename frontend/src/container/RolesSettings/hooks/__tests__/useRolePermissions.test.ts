@@ -329,13 +329,14 @@ describe('transformTransactionGroupsToResourcePermissions', () => {
 	it('returns all resources from RESOURCE_ORDER even with empty transaction groups', () => {
 		const result = transformTransactionGroupsToResourcePermissions([]);
 
-		expect(result).toHaveLength(9);
+		expect(result).toHaveLength(10);
 		expect(result.map((r) => r.resourceKind)).toStrictEqual([
 			'factor-api-key',
 			'license',
 			'logs',
 			'meter-metrics',
 			'metrics',
+			'quick-filter',
 			'role',
 			'serviceaccount',
 			'subscription',
@@ -420,13 +421,14 @@ describe('createEmptyRolePermissions', () => {
 	it('creates permissions for all resources in RESOURCE_ORDER', () => {
 		const result = createEmptyRolePermissions();
 
-		expect(result).toHaveLength(9);
+		expect(result).toHaveLength(10);
 		expect(result.map((r) => r.resourceKind)).toStrictEqual([
 			'factor-api-key',
 			'license',
 			'logs',
 			'meter-metrics',
 			'metrics',
+			'quick-filter',
 			'role',
 			'serviceaccount',
 			'subscription',
