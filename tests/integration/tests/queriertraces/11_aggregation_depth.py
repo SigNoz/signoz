@@ -26,6 +26,9 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # intrinsic column.
 
 
+# No attribute_backend factor: the collision variant unions a same-named attribute with the
+# intrinsic column, and that resolution is not guaranteed to agree between the map and JSON
+# layouts, so this stays on the map.
 @pytest.mark.parametrize("noise", ["clean", "corrupt", "collision"])
 def test_traces_aggregate_percentiles(
     signoz: types.SigNoz,
@@ -89,13 +92,18 @@ def test_traces_aggregate_percentiles(
         pytest.param("endpoint", {"/a": 2, "/b": 1}, id="string_span_attr"),
     ],
 )
-@pytest.mark.parametrize("noise", ["clean", "corrupt"])
+@pytest.mark.parametrize(
+    "noise,attribute_backend",
+    [("clean", "map"), ("corrupt", "map"), ("clean", "json")],
+    indirect=["attribute_backend"],
+)
 def test_traces_aggregate_group_by_non_resource(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
     noise: str,
+    attribute_backend: str,  # pylint: disable=unused-argument
     group_key: str,
     expected: dict[str, int],
 ) -> None:
@@ -255,6 +263,8 @@ def test_traces_aggregate_having_breadth(
     assert {row[0] for row in data} == expected_services
 
 
+# No attribute_backend factor: same-named-attribute vs intrinsic-column resolution is not
+# guaranteed to agree between the map and JSON layouts, so this stays on the map.
 @pytest.mark.parametrize(
     "duration_filter",
     [
