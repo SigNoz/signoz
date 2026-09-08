@@ -158,6 +158,7 @@ export default function CheckboxFilterV2(
 		isSomeFilterPresentForCurrentAttribute,
 		isNotInOperator,
 		hasExistingQuery,
+		isRelatedValuesSupported: useFieldApis.existingQuery !== null,
 		visibleItemsCount,
 		relatedExclusions,
 	});

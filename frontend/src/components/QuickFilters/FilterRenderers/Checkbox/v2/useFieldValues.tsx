@@ -5,7 +5,6 @@ import {
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { IQuickFiltersConfig } from 'components/QuickFilters/types';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 
@@ -85,12 +84,6 @@ export function useFieldValues({
 	}, [data]);
 
 	const allValues: string[] = useMemo(() => {
-		// Bool fields should always offer true/false.
-		// The values api returns nothing for them.
-		if (filter.attributeKey.dataType === DataTypes.bool) {
-			return ['true', 'false'];
-		}
-
 		const values = data?.data?.values;
 		if (!values) {
 			return [];
@@ -111,7 +104,7 @@ export function useFieldValues({
 				.map((value) => value.toString()) || [];
 
 		return [...stringValues, ...numberValues, ...boolValues];
-	}, [data, filter.attributeKey.dataType]);
+	}, [data]);
 
 	return { relatedValues, allValues, isLoading, isFetching };
 }

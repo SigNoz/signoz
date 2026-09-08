@@ -1,17 +1,16 @@
 import { useMemo } from 'react';
-import {
-	NANO_SECOND_MULTIPLIER,
-	useLastComputedMinMax,
-} from 'store/globalTime';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { QuickFilterCheckboxUseFieldApis } from '../types';
 
-/**
- * Builds the `useFieldApis` config for a signal quick-filter page.
- * if existingQuery is sent null, related values are not fetched
- */
 export function useSignalFieldApis(): QuickFilterCheckboxUseFieldApis {
-	const { minTime, maxTime } = useLastComputedMinMax();
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	return useMemo(
 		() => ({
