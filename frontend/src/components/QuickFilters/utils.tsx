@@ -6,6 +6,7 @@ import { FiltersType, IQuickFiltersConfig, SignalType } from './types';
 const FILTER_TITLE_MAP: Record<string, string> = {
 	duration_nano: 'Duration',
 	hasError: 'Has Error (Status)',
+	has_error: 'Has Error (Status)',
 };
 
 const FILTER_TYPE_MAP: Record<string, FiltersType> = {
