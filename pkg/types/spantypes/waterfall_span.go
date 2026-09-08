@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -103,7 +104,11 @@ type StorableSpan struct {
 	AttributesString   map[string]string  `ch:"attributes_string"`
 	AttributesNumber   map[string]float64 `ch:"attributes_number"`
 	AttributesBool     map[string]bool    `ch:"attributes_bool"`
-	ResourcesString    map[string]string  `ch:"resources_string"`
+	// AttributesJSON is the `attributes` JSON column: post-rollout rows carry their attributes
+	// here instead of the maps above. The trace span reads suppress whichever home is empty per
+	// row, so at most one of (maps, AttributesJSON) holds data for a span.
+	AttributesJSON    telemetrystoretypes.JSONValue `ch:"attributes"`
+	ResourcesString   map[string]string             `ch:"resources_string"`
 	Events             []string           `ch:"events"`
 	StatusMessage      string             `ch:"status_message"`
 	StatusCodeString   string             `ch:"status_code_string"`
@@ -264,21 +269,13 @@ func (ws *WaterfallSpan) getPathToSelectedSpanID(selectedSpanID string) ([]strin
 	return nil, false
 }
 
-func (item *StorableSpan) AttributeValue(name string) any {
-	if v, ok := item.AttributesString[name]; ok {
-		return v
-	}
-	if v, ok := item.AttributesNumber[name]; ok {
-		return v
-	}
-	if v, ok := item.AttributesBool[name]; ok {
-		return v
-	}
-	return nil
-}
-
 func (item *StorableSpan) Attributes() map[string]any {
-	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool))
+	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool)+len(item.AttributesJSON))
+	// The JSON document is flattened in first and the legacy maps laid over it, so a map entry
+	// wins a same-named JSON path — same precedence as the querier's list-view bag.
+	if len(item.AttributesJSON) > 0 {
+		telemetrystoretypes.FlattenJSONPaths("", item.AttributesJSON, attributes)
+	}
 	for k, v := range item.AttributesString {
 		attributes[k] = v
 	}
