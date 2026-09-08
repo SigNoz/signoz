@@ -1,7 +1,5 @@
 import type { MouseEvent, ReactElement, ReactNode } from 'react';
-import { Button } from '@signozhq/ui/button';
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
-import type { DisabledState } from 'lib/authz/components/DisabledReasonTooltip/disabledState.types';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 import styles from './ActionsPopover.module.scss';
@@ -11,68 +9,48 @@ interface Props {
 	icon: ReactElement;
 	testId: string;
 	onClick: () => void;
-	/**
-	 * Present when the item is unavailable: it both disables the item and
-	 * explains it, so it cannot be disabled silently or explained in the wrong
-	 * register.
-	 */
-	disabled?: DisabledState;
-	/** Exact denied scopes, surfaced on the DOM for support and tests. */
-	deniedPermissions?: BrandedPermission[];
+	/** Permissions the row needs; the standard denial wording explains a refusal. */
+	checks: BrandedPermission[];
+	/** A non-permission block, which outranks the checks (see AuthZTooltip). */
+	disabledTooltip?: string;
 	loading?: boolean;
 	destructive?: boolean;
 }
 
-// A row in the actions menu. A disabled button swallows hover, so the wrapping
-// span carries the tooltip.
+/**
+ * A row in the actions menu. The button fills the row, so the tooltip anchors to
+ * the whole row and lands clear of the menu rather than over the row's own icon.
+ */
 function ActionsMenuItem({
 	label,
 	icon,
 	testId,
 	onClick,
-	disabled: disabledState,
-	deniedPermissions,
+	checks,
+	disabledTooltip,
 	loading = false,
 	destructive = false,
 }: Props): JSX.Element {
-	// A spinner explains itself, so an in-flight action needs no reason.
-	const disabled = loading || !!disabledState;
-
 	return (
-		// Anchored to the full-width row, so the tooltip lands clear of the menu
-		// rather than over the row's own icon.
-		<DisabledReasonTooltip
-			reason={disabledState?.reason ?? ''}
+		<AuthZButton
+			checks={checks}
+			disabledTooltip={disabledTooltip}
 			side="left"
-			kind={disabledState?.kind ?? 'denied'}
-			asChild
+			variant="ghost"
+			color={destructive ? 'destructive' : 'secondary'}
+			className={styles.menuItem}
+			prefix={icon}
+			disabled={loading}
+			loading={loading}
+			onClick={(e: MouseEvent<HTMLButtonElement>): void => {
+				e.preventDefault();
+				e.stopPropagation();
+				onClick();
+			}}
+			testId={testId}
 		>
-			{/* The Button drops unknown data-* props, so the denied scopes ride on the
-			    wrapper — which is also the hover target for the tooltip. */}
-			<span
-				className={styles.menuItemWrap}
-				data-denied-permissions={deniedPermissions?.join(',') || undefined}
-			>
-				<Button
-					variant="ghost"
-					color={destructive ? 'destructive' : 'secondary'}
-					className={styles.menuItem}
-					prefix={icon}
-					disabled={disabled}
-					loading={loading}
-					onClick={(e: MouseEvent<HTMLButtonElement>): void => {
-						e.preventDefault();
-						e.stopPropagation();
-						if (!disabled) {
-							onClick();
-						}
-					}}
-					testId={testId}
-				>
-					{label}
-				</Button>
-			</span>
-		</DisabledReasonTooltip>
+			{label}
+		</AuthZButton>
 	);
 }
 

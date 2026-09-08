@@ -24,7 +24,12 @@ import SearchBar from '../SearchBar/SearchBar';
 import FilterChips, { type CreatorOption } from './FilterChips';
 
 import styles from './FilterZone.module.scss';
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+
+// SearchBar renders its own tooltip from a string, and the row-level AuthZ
+// tooltip cannot reach inside CodeMirror.
+const DASHBOARD_NO_LIST_ACCESS = 'You are not authorized to list dashboards';
 
 interface Props {
 	// The last-run query (source of truth for fetching + the dirty baseline).
@@ -39,7 +44,9 @@ interface Props {
 	 * Why filtering is unavailable. Non-empty makes the chrome non-interactive and
 	 * explains it, rather than leaving a dead search box.
 	 */
-	disabledReason?: string;
+	/** Permissions the table is gated on; the chrome goes inert without them. */
+	disabledChecks?: BrandedPermission[];
+	disabled?: boolean;
 }
 
 // The filter command zone. The query box is a DRAFT: typing and the Created-by /
@@ -53,9 +60,9 @@ function FilterZone({
 	source,
 	onQueryChange,
 	rightSlot,
-	disabledReason = '',
+	disabledChecks = [],
+	disabled = false,
 }: Props): JSX.Element {
-	const disabled = !!disabledReason;
 	const [draft, setDraft] = useState(query);
 
 	useEffect(() => {
@@ -125,7 +132,7 @@ function FilterZone({
 				<div className={styles.searchInput}>
 					<SearchBar
 						value={draft}
-						disabledReason={disabledReason}
+						disabledReason={disabled ? DASHBOARD_NO_LIST_ACCESS : ''}
 						placeholder="DSL Filter — e.g. name CONTAINS 'api' AND env IN ['prod','staging']"
 						source={source}
 						dirty={dirty}
@@ -137,12 +144,7 @@ function FilterZone({
 			</div>
 			{/* The chips are antd Selects, which give no reason of their own when
 			    disabled — one tooltip over the row explains the whole thing. */}
-			<DisabledReasonTooltip
-				reason={disabledReason}
-				kind="denied"
-				side="bottom"
-				asChild
-			>
+			<AuthZTooltip checks={disabledChecks} side="bottom" asChild>
 				<div className={styles.filtersRow}>
 					<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
 					<FilterChips
@@ -169,7 +171,7 @@ function FilterZone({
 						</Button>
 					)}
 				</div>
-			</DisabledReasonTooltip>
+			</AuthZTooltip>
 		</div>
 	);
 }

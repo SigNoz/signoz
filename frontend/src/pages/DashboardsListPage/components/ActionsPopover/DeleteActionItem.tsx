@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from 'react-query';
 import { Trash2 } from '@signozhq/icons';
@@ -13,7 +13,6 @@ import {
 	invalidateListDashboardsForUserV2,
 } from 'api/generated/services/dashboard';
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
-import { DASHBOARD_NO_DELETE_PERMISSION_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -44,7 +43,7 @@ function DeleteActionItem({
 	// Delete is independent of read/update per the authz guide, so it stays usable
 	// for someone who holds only `delete`.
 	const { canDelete, deletePermission } = useDashboardPermissions(dashboardId);
-	const isDenied = !canDelete;
+	const deleteChecks = useMemo(() => [deletePermission], [deletePermission]);
 
 	const { mutate: runDelete } = useMutation({
 		mutationFn: () => deleteDashboardV2({ id: dashboardId }),
@@ -83,14 +82,12 @@ function DeleteActionItem({
 
 	// Access before state: the lock only matters to someone who could otherwise
 	// delete it.
-	const tooltip = ((): string => {
-		if (!canDelete) {
-			return DASHBOARD_NO_DELETE_PERMISSION_REASON;
-		}
-		return isLocked
+	// Only the lock: a missing `delete` grant is reported by the authz component
+	// in the standard wording.
+	const lockTooltip =
+		canDelete && isLocked
 			? t('dashboard:locked_dashboard_delete_tooltip_admin_author')
 			: '';
-	})();
 
 	return (
 		<>
@@ -100,12 +97,8 @@ function DeleteActionItem({
 				icon={<Trash2 size={14} />}
 				testId="dashboard-action-delete"
 				destructive
-				disabled={
-					tooltip
-						? { reason: tooltip, kind: canDelete && isLocked ? 'blocked' : 'denied' }
-						: undefined
-				}
-				deniedPermissions={isDenied ? [deletePermission] : undefined}
+				checks={deleteChecks}
+				disabledTooltip={lockTooltip}
 				onClick={openConfirm}
 			/>
 			{contextHolder}

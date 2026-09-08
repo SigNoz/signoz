@@ -6,7 +6,6 @@ import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
-import { DASHBOARD_NO_EDIT_PERMISSION_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
@@ -99,7 +98,6 @@ function LegacyDashboardDialog({
 					</Button>
 					<AuthZButton
 						checks={editChecks}
-						tooltipMessage={DASHBOARD_NO_EDIT_PERMISSION_REASON}
 						withPortal={false}
 						variant="solid"
 						color="primary"

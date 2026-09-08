@@ -5,7 +5,6 @@ import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { DASHBOARD_NO_LIST_PERMISSION_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
 import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
@@ -54,7 +53,6 @@ function DashboardsList(): JSX.Element {
 	const { user } = useAppContext();
 	// `list` also authorizes pinning and saved views, so it gates the table only.
 	const { canList } = useDashboardCollectionPermissions();
-	const listDisabledReason = canList ? '' : DASHBOARD_NO_LIST_PERMISSION_REASON;
 
 	const { query, isEmpty: filtersEmpty, setQuery } = useDashboardFilters();
 	const [sortColumn, setSortColumn] = useSortColumn();
@@ -286,7 +284,8 @@ function DashboardsList(): JSX.Element {
 	return (
 		<div className={styles.layout}>
 			<ViewsRail
-				disabledReason={listDisabledReason}
+				disabledChecks={LIST_CHECKS}
+				disabled={!canList}
 				activeViewId={activeViewId}
 				builtinViews={builtinViews}
 				customViews={customViews}
@@ -318,7 +317,8 @@ function DashboardsList(): JSX.Element {
 									query={query}
 									creatorOptions={creatorOptions}
 									source={source}
-									disabledReason={listDisabledReason}
+									disabledChecks={LIST_CHECKS}
+									disabled={!canList}
 									onQueryChange={handleQueryChange}
 								/>
 							</div>

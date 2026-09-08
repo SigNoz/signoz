@@ -14,7 +14,8 @@ import { type BuiltinView } from '../../utils/views';
 import ViewNamePopover from './ViewNamePopover';
 
 import styles from './ViewsRail.module.scss';
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 interface Props {
 	activeViewId: string;
@@ -35,7 +36,9 @@ interface Props {
 	 * the rail goes inert with the reason rather than rewriting filters for a
 	 * table that cannot render.
 	 */
-	disabledReason?: string;
+	/** Permissions the table is gated on; the chrome goes inert without them. */
+	disabledChecks?: BrandedPermission[];
+	disabled?: boolean;
 }
 
 interface ViewRow {
@@ -61,9 +64,9 @@ function ViewsRail({
 	onReset,
 	onDelete,
 	onRename,
-	disabledReason = '',
+	disabledChecks = [],
+	disabled = false,
 }: Props): JSX.Element {
-	const disabled = !!disabledReason;
 	const [saveOpen, setSaveOpen] = useState(false);
 	const [renamingId, setRenamingId] = useState<string | null>(null);
 	const [query, setQuery] = useState('');
@@ -186,12 +189,7 @@ function ViewsRail({
 	return (
 		// One explanation for the rail rather than one per control: every control in
 		// it is blocked by the same missing permission.
-		<DisabledReasonTooltip
-			reason={disabledReason}
-			kind="denied"
-			side="right"
-			asChild
-		>
+		<AuthZTooltip checks={disabledChecks} side="right" asChild>
 			<aside className={cx(styles.rail, { [styles.collapsed]: collapsed })}>
 				<div className={styles.header}>
 					<h4 className={styles.headerTitle}>Views</h4>
@@ -345,7 +343,7 @@ function ViewsRail({
 				)}
 				{contextHolder}
 			</aside>
-		</DisabledReasonTooltip>
+		</AuthZTooltip>
 	);
 }
 

@@ -33,14 +33,9 @@ async function openMenu(): Promise<void> {
 	await screen.findByTestId('dashboard-action-rename');
 }
 
-// The menu body only mounts once the checks resolve, so an item's state is never
-// ambiguous between "in flight" and "denied".
+// The authz component puts the denied scopes on the control it disables.
 function deniedScopes(testId: string): string | null {
-	return (
-		screen
-			.getByTestId(testId)
-			.parentElement?.getAttribute('data-denied-permissions') ?? null
-	);
+	return screen.getByTestId(testId).getAttribute('data-denied-permissions');
 }
 
 describe('ActionsPopover - AuthZ', () => {
