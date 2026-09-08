@@ -32,10 +32,13 @@ export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 			having: { isHidden: true, isDisabled: true },
 		},
 	},
+	// Every timestamp is a full column of cells, so the request asks for a step interval
+	// wide enough to keep the grid legible: at raw resolution a multi-day range is tens of
+	// thousands of cells, each of them sub-pixel.
 	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.heatmap,
 		formatTableResultForUI: false,
-		bucketedStepInterval: false,
+		bucketedStepInterval: true,
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},

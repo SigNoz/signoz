@@ -54,8 +54,9 @@ export interface PanelQueryCapabilities {
 	/** Server transposes the scalar result into UI table rows (`formatOptions.formatTableResultForUI`). */
 	formatTableResultForUI: boolean;
 	/**
-	 * Widen the step interval to cap how many buckets come back — kinds that bin
-	 * client-side from a raw time series rather than plotting every point.
+	 * Widen the step interval to cap how many points a range comes back as — kinds that
+	 * draw one mark per point (a bar, a column of cells) rather than a line through it,
+	 * where a raw-resolution series is both unreadable and more than the canvas can carry.
 	 */
 	bucketedStepInterval: boolean;
 	/**

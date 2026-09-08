@@ -76,11 +76,12 @@ const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
-	// Only Heatmap asks for `heatmap`: server-bucketed counts, one set per timestamp.
+	// Only Heatmap asks for `heatmap`: server-bucketed counts, one set per timestamp. Like
+	// Bar it draws one mark per point, so it asks for a widened step interval too.
 	'signoz/HeatmapPanel': {
 		requestType: heatmap,
 		formatTableResultForUI: false,
-		bucketedStepInterval: false,
+		bucketedStepInterval: true,
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},

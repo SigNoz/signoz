@@ -6,7 +6,7 @@ import {
 import {
 	buildQueryRangeRequest,
 	extractLegendMap,
-	getBarStepIntervalSeconds,
+	getBucketedStepIntervalSeconds,
 	hasRunnableQueries,
 	toQueryEnvelopes,
 } from '../buildQueryRangeRequest';
@@ -51,7 +51,7 @@ const TIME_SERIES_CAPABILITIES = {
 	orderTiebreaker: false,
 	serverPaginated: false,
 };
-const BAR_CAPABILITIES = {
+const BUCKETED_CAPABILITIES = {
 	...TIME_SERIES_CAPABILITIES,
 	bucketedStepInterval: true,
 };
@@ -289,10 +289,10 @@ describe('buildQueryRangeRequest', () => {
 		expect(spec.order).toStrictEqual(order);
 	});
 
-	it('injects the range-derived stepInterval into BAR builder queries without one', () => {
+	it('injects the range-derived stepInterval into builder queries without one', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'metrics' }),
-			queryCapabilities: BAR_CAPABILITIES,
+			queryCapabilities: BUCKETED_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -300,14 +300,14 @@ describe('buildQueryRangeRequest', () => {
 			stepInterval?: number;
 		};
 		expect(spec.stepInterval).toBe(
-			getBarStepIntervalSeconds(START_MS, START_MS + HOUR_MS),
+			getBucketedStepIntervalSeconds(START_MS, START_MS + HOUR_MS),
 		);
 	});
 
-	it('preserves a user-set stepInterval on BAR builder queries', () => {
+	it('preserves a user-set stepInterval', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', stepInterval: 300 }),
-			queryCapabilities: BAR_CAPABILITIES,
+			queryCapabilities: BUCKETED_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -317,7 +317,7 @@ describe('buildQueryRangeRequest', () => {
 		expect(spec.stepInterval).toBe(300);
 	});
 
-	it('does not touch stepInterval for non-BAR panels', () => {
+	it('does not touch stepInterval for kinds that plot every point', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A' }),
 			queryCapabilities: TIME_SERIES_CAPABILITIES,
@@ -331,7 +331,7 @@ describe('buildQueryRangeRequest', () => {
 	});
 });
 
-describe('getBarStepIntervalSeconds', () => {
+describe('getBucketedStepIntervalSeconds', () => {
 	// V1 parity: getBarStepIntervalPoints in container/GridCardLayout/utils.ts
 	it.each([
 		[30, 60],
@@ -340,12 +340,12 @@ describe('getBarStepIntervalSeconds', () => {
 		[180, 120],
 		[300, 180],
 	])('%s min range → %s s step', (minutes, step) => {
-		expect(getBarStepIntervalSeconds(0, minutes * 60 * 1000)).toBe(step);
+		expect(getBucketedStepIntervalSeconds(0, minutes * 60 * 1000)).toBe(step);
 	});
 
-	it('caps long ranges at ~80 bars, rounded to 5-minute steps', () => {
+	it('caps long ranges at ~80 points, rounded to 5-minute steps', () => {
 		// 24h = 1440 min → 1440/80 = 18 → rounded up to 20 min → 1200 s
-		expect(getBarStepIntervalSeconds(0, 24 * HOUR_MS)).toBe(1200);
+		expect(getBucketedStepIntervalSeconds(0, 24 * HOUR_MS)).toBe(1200);
 	});
 });
 
