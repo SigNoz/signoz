@@ -222,6 +222,31 @@ describe('useGetYAxisUnit', () => {
 		expect(result.current.isError).toBe(false);
 	});
 
+	it('resolves the unit on the first render, without a settling pass', () => {
+		// The real `useGetMetrics` rebuilds its array on every render; a hook that
+		// stored the unit would need an extra render to settle, and would schedule one
+		// after every render of the panel editor.
+		mockUseGetMetrics.mockImplementation(() => ({
+			isLoading: false,
+			isError: false,
+			metrics: [MOCK_METRIC_1],
+		}));
+
+		let renderCount = 0;
+		const { result, rerender } = renderHook(() => {
+			renderCount += 1;
+			return useGetYAxisUnit();
+		});
+
+		expect(result.current.yAxisUnit).toBe(UniversalYAxisUnit.BYTES);
+		expect(renderCount).toBe(1);
+
+		rerender();
+
+		expect(result.current.yAxisUnit).toBe(UniversalYAxisUnit.BYTES);
+		expect(renderCount).toBe(2);
+	});
+
 	it('should return undefined when metrics have different units', async () => {
 		mockUseGetMetrics.mockReturnValueOnce({
 			isLoading: false,
