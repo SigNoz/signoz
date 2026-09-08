@@ -286,7 +286,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 
 	// Add the matching static fields: the span scope selectors, the intrinsic
 	// columns and the calculated columns. These don't count towards the limit
-	staticFields := maps.Values(tracestelemetryschema.SpanScopeFields)
+	staticFields := maps.Values(tracestelemetryschema.SpanSearchScopeFields)
 	staticFields = append(staticFields, maps.Values(tracestelemetryschema.IntrinsicFields)...)
 	staticFields = append(staticFields, maps.Values(tracestelemetryschema.CalculatedFields)...)
 
@@ -1445,7 +1445,7 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 		instrumentationtypes.CodeFunctionName: "getSpanFieldValues",
 	})
 
-	if values, ok := spanScopeFieldValues(fieldValueSelector.Name, fieldValueSelector.Value); ok {
+	if values, ok := spanSearchScopeFieldValues(fieldValueSelector.Name, fieldValueSelector.Value); ok {
 		return values, true, nil
 	}
 	knownBool := isKnownBoolField(fieldValueSelector, tracestelemetryschema.IntrinsicFields, tracestelemetryschema.CalculatedFields)

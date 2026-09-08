@@ -21,11 +21,11 @@ func boolFieldValues(searchText string) *telemetrytypes.TelemetryFieldValues {
 	return values
 }
 
-// spanScopeFieldValues is the suggestion set for a span scope selector
+// spanSearchScopeFieldValues is the suggestion set for a search-scope selector
 // (isRoot, isEntryPoint), which only filters with true. ok is false for any
 // other name.
-func spanScopeFieldValues(name, searchText string) (*telemetrytypes.TelemetryFieldValues, bool) {
-	for scopeName := range tracestelemetryschema.SpanScopeFields {
+func spanSearchScopeFieldValues(name, searchText string) (*telemetrytypes.TelemetryFieldValues, bool) {
+	for scopeName := range tracestelemetryschema.SpanSearchScopeFields {
 		if !strings.EqualFold(scopeName, name) {
 			continue
 		}

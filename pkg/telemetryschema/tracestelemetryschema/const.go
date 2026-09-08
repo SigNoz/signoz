@@ -392,9 +392,10 @@ var (
 	SpanSearchScopeRoot       = "isroot"
 	SpanSearchScopeEntryPoint = "isentrypoint"
 
-	// SpanScopeFields are the span selectors that are not columns: they only
-	// filter with the value true.
-	SpanScopeFields = map[string]telemetrytypes.TelemetryFieldKey{
+	// SpanSearchScopeFields are the search-scope selectors (isRoot, isEntryPoint),
+	// not columns and unrelated to the instrumentation scope: they only filter
+	// with the value true.
+	SpanSearchScopeFields = map[string]telemetrytypes.TelemetryFieldKey{
 		"isRoot": {
 			Name:          "isRoot",
 			Signal:        telemetrytypes.SignalTraces,
