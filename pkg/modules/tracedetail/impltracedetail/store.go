@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -16,6 +17,26 @@ import (
 )
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
+
+// attrAnyMapNonEmpty probes whether any legacy attribute map holds data for the row: pre-rollout
+// and dual-written rows populate the maps, json-only rows leave all three empty. Probing the
+// maps (not the JSON column) is what tells dual-written rows apart from json-only ones.
+const attrAnyMapNonEmpty = `notEmpty(attributes_string) OR notEmpty(attributes_number) OR notEmpty(attributes_bool)`
+
+// attrJSONIfMapsEmpty suppresses the `attributes` JSON document to an empty object when any
+// legacy map carries the row's attributes, so the result set carries one attribute home per
+// span instead of both (the Go merge flattens JSON first and lays the maps over it, so the
+// maps win on collision, matching the querier's list view).
+var attrJSONIfMapsEmpty = fmt.Sprintf("if(%s, CAST('{}', 'JSON'), attributes)", attrAnyMapNonEmpty)
+
+// spanAttributeHomeSelection is the SELECT fragment for the span attribute homes: the three
+// legacy maps plus the conditionally suppressed JSON column.
+var spanAttributeHomeSelection = strings.Join([]string{
+	"attributes_string",
+	"attributes_number",
+	"attributes_bool",
+	attrJSONIfMapsEmpty + " AS attributes",
+}, ", ")
 
 func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
 	switch fieldKey.FieldContext {
@@ -67,11 +88,15 @@ func (s *traceStore) GetTraceSummary(ctx context.Context, traceID string) (*span
 
 func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary *spantypes.TraceSummary) ([]spantypes.StorableSpan, error) {
 	// DISTINCT ON (span_id) is ClickHouse-specific syntax not supported by sqlbuilder
+	//
+	// %s carries the span-attribute home selection: rows hold their attributes either in the
+	// legacy maps or in the `attributes` JSON column (never only partially), so per row the
+	// empty home is suppressed to keep the result set at one home per span.
 	query := fmt.Sprintf(`
 		SELECT DISTINCT ON (span_id)
 			timestamp, duration_nano, span_id, has_error, kind,
 			resource_string_service$$name, name,
-			attributes_string, attributes_number, attributes_bool, resources_string,
+			%s, resources_string,
 			events, status_message, status_code_string, kind_string, parent_span_id,
 			flags, is_remote, trace_state, status_code,
 			db_name, db_operation, http_method, http_url, http_host,
@@ -79,7 +104,7 @@ func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary 
 		FROM %s.%s
 		WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
 		ORDER BY timestamp ASC, name ASC`,
-		spantypes.TraceDB, spantypes.TraceTable,
+		spanAttributeHomeSelection, spantypes.TraceDB, spantypes.TraceTable,
 	)
 	var spanItems []spantypes.StorableSpan
 	err := s.telemetryStore.ClickhouseDB().Select(
@@ -127,7 +152,7 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 		"DISTINCT ON (span_id) timestamp",
 		"duration_nano", "span_id", "has_error", "kind",
 		colServiceName, "name",
-		"attributes_string", "attributes_number", "attributes_bool", "resources_string",
+		spanAttributeHomeSelection, "resources_string",
 		"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
 		"flags", "is_remote", "trace_state", "status_code",
 		"db_name", "db_operation", "http_method", "http_url", "http_host",
@@ -168,6 +193,7 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 		"any(attributes_string) AS attributes_string",
 		"any(attributes_number) AS attributes_number",
 		"any(attributes_bool) AS attributes_bool",
+		fmt.Sprintf("any(%s) AS attributes", attrJSONIfMapsEmpty),
 		"any(resources_string) AS resources_string",
 	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
