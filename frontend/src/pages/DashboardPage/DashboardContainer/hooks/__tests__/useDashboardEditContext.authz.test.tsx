@@ -11,11 +11,12 @@ import {
 	buildDashboardUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 
-import { DASHBOARD_LOCKED_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
-
 import { useDashboardEditContext } from '../useDashboardEditContext';
 
 const DASHBOARD_ID = 'dash-1';
+// The copy lives in the dashboard i18n bundle, which the test env does not load,
+// so `t` yields the key — which is the part worth asserting anyway.
+const LOCKED_COPY = 'dashboard_locked';
 
 let lockedDashboard = false;
 
@@ -66,8 +67,8 @@ describe('useDashboardEditContext - AuthZ', () => {
 			// a non-empty reason is not enough to know the check has landed.
 			await waitFor(() => expect(result.current.canEditDashboard).toBe(true));
 			expect(result.current.isEditable).toBe(false);
-			expect(result.current.editDisabledTooltip).toBe(DASHBOARD_LOCKED_REASON);
-			expect(result.current.deleteDisabledTooltip).toBe(DASHBOARD_LOCKED_REASON);
+			expect(result.current.editDisabledTooltip).toBe(LOCKED_COPY);
+			expect(result.current.deleteDisabledTooltip).toBe(LOCKED_COPY);
 		});
 	});
 

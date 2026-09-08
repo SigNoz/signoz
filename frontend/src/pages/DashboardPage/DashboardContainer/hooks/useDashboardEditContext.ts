@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 
 import { useDashboardStore } from '../store/useDashboardStore';
@@ -27,6 +28,7 @@ export function useDashboardEditContext(): DashboardEditContext {
 		deletePermission,
 		areOtherPermissionsLoading,
 	} = useDashboardPermissions(dashboard.id);
+	const { t } = useTranslation('dashboard');
 	const readOnlyOverride = useDashboardStore(
 		(s) => s.canEditDashboardOverride === false,
 	);
@@ -40,6 +42,10 @@ export function useDashboardEditContext(): DashboardEditContext {
 		editChecks,
 		deleteChecks,
 		areOtherPermissionsLoading,
+		reasons: {
+			locked: t('dashboard_locked'),
+			readOnly: t('dashboard_read_only_here'),
+		},
 		readOnlyOverride,
 	});
 }

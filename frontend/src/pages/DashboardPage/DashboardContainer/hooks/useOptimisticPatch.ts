@@ -12,8 +12,8 @@ import type {
 import APIError from 'types/api/error';
 
 import { applyJsonPatch } from '../optimistic/applyJsonPatch';
-import { DASHBOARD_LOCKED_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
 import { useDashboardStore } from '../store/useDashboardStore';
+import { useTranslation } from 'react-i18next';
 
 /** Cached dashboard snapshot, kept for rollback on error. */
 interface OptimisticPatchContext {
@@ -38,6 +38,7 @@ export function useOptimisticPatch(
 ): UseOptimisticPatch {
 	const storeDashboardId = useDashboardStore((s) => s.dashboardId);
 	const dashboardId = dashboardIdOverride ?? storeDashboardId;
+	const { t } = useTranslation('dashboard');
 	const queryClient = useQueryClient();
 	const queryKey = getGetDashboardV2QueryKey({ id: dashboardId });
 
@@ -82,7 +83,7 @@ export function useOptimisticPatch(
 			// backend — checking it here would drag authz into every mutation.
 			const cached = queryClient.getQueryData<GetDashboardV2200>(queryKey);
 			if (cached?.data?.locked) {
-				return Promise.reject(new Error(DASHBOARD_LOCKED_REASON));
+				return Promise.reject(new Error(t('dashboard_locked')));
 			}
 			return mutateAsync(ops);
 		},

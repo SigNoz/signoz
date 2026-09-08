@@ -1,8 +1,13 @@
-import {
-	DASHBOARD_LOCKED_REASON,
-	DASHBOARD_READ_ONLY_VIEW_REASON,
-} from 'hooks/dashboards/dashboardPermissionReasons';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+
+/**
+ * Copy for the two non-permission blocks, resolved by the caller so this stays a
+ * pure function. Permission denials are worded by the authz components.
+ */
+export interface EditContextReasons {
+	locked: string;
+	readOnly: string;
+}
 
 export interface DashboardEditContext {
 	isEditable: boolean;
@@ -39,6 +44,7 @@ export function deriveEditContext({
 	editChecks,
 	deleteChecks,
 	areOtherPermissionsLoading,
+	reasons,
 	readOnlyOverride = false,
 }: {
 	isLocked: boolean;
@@ -47,6 +53,7 @@ export function deriveEditContext({
 	editChecks: BrandedPermission[];
 	deleteChecks: BrandedPermission[];
 	areOtherPermissionsLoading: boolean;
+	reasons: EditContextReasons;
 	/** Mount forced view-only regardless of permissions (see pulse-pod#283). */
 	readOnlyOverride?: boolean;
 }): DashboardEditContext {
@@ -58,8 +65,8 @@ export function deriveEditContext({
 			canDeleteDashboard: false,
 			editChecks,
 			deleteChecks,
-			editDisabledTooltip: DASHBOARD_READ_ONLY_VIEW_REASON,
-			deleteDisabledTooltip: DASHBOARD_READ_ONLY_VIEW_REASON,
+			editDisabledTooltip: reasons.readOnly,
+			deleteDisabledTooltip: reasons.readOnly,
 			areOtherPermissionsLoading: false,
 		};
 	}
@@ -71,8 +78,8 @@ export function deriveEditContext({
 		canDeleteDashboard: canDelete,
 		editChecks,
 		deleteChecks,
-		editDisabledTooltip: canEdit && isLocked ? DASHBOARD_LOCKED_REASON : '',
-		deleteDisabledTooltip: canDelete && isLocked ? DASHBOARD_LOCKED_REASON : '',
+		editDisabledTooltip: canEdit && isLocked ? reasons.locked : '',
+		deleteDisabledTooltip: canDelete && isLocked ? reasons.locked : '',
 		areOtherPermissionsLoading,
 	};
 }
