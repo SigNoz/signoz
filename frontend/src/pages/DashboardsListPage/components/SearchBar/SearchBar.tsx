@@ -105,28 +105,35 @@ function SearchBar({
 			editorTheme,
 			// Wrap a long query onto the next line instead of scrolling horizontally.
 			EditorView.lineWrapping,
-			autocompletion({
-				override: [dslCompletionSource(() => sourceRef.current)],
-				closeOnBlur: true,
-				activateOnTyping: true,
-				maxRenderedOptions: 100,
-				icons: false,
-			}),
-			// Open the suggestions on focus/click (not only while typing), so a click
-			// into the box immediately shows the key list.
-			EditorView.domEventHandlers({
-				focus: (_event, view): boolean => {
-					startCompletion(view);
-					return false;
-				},
-				click: (_event, view): boolean => {
-					startCompletion(view);
-					return false;
-				},
-			}),
+			// Read-only is not enough on its own: these open the suggestion list on
+			// click and accepting an option writes to the document, so a disabled box
+			// must not carry them at all.
+			...(disabled
+				? []
+				: [
+						autocompletion({
+							override: [dslCompletionSource(() => sourceRef.current)],
+							closeOnBlur: true,
+							activateOnTyping: true,
+							maxRenderedOptions: 100,
+							icons: false,
+						}),
+						// Open the suggestions on focus/click (not only while typing), so a
+						// click into the box immediately shows the key list.
+						EditorView.domEventHandlers({
+							focus: (_event, view): boolean => {
+								startCompletion(view);
+								return false;
+							},
+							click: (_event, view): boolean => {
+								startCompletion(view);
+								return false;
+							},
+						}),
+					]),
 			Prec.highest(
 				keymap.of([
-					...completionKeymap,
+					...(disabled ? [] : completionKeymap),
 					{ key: 'Escape', run: closeCompletion },
 					// Enter accepts an open suggestion (via completionKeymap above); with
 					// none open it is a no-op — it never runs the query or inserts a newline.
@@ -143,7 +150,7 @@ function SearchBar({
 				]),
 			),
 		],
-		[],
+		[disabled],
 	);
 
 	return (
