@@ -11,7 +11,6 @@ import {
 } from '@signozhq/icons';
 import { useCopyToClipboard } from 'react-use';
 import logEvent from 'api/common/logEvent';
-import { DASHBOARD_LOCKED_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import { DashboardCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
@@ -24,6 +23,7 @@ import DeleteActionItem from './DeleteActionItem';
 import { useCloneDashboardAction } from './useCloneDashboardAction';
 import { useLockToggleAction } from './useLockToggleAction';
 import styles from './ActionsPopover.module.scss';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
 	link: string;
@@ -52,6 +52,7 @@ function ActionsPopoverContent({
 	onOpenRename,
 	onOpenEditTags,
 }: Props): JSX.Element {
+	const { t } = useTranslation('dashboard');
 	const [, setCopy] = useCopyToClipboard();
 
 	const { canEdit, editChecks, readPermission } =
@@ -73,7 +74,7 @@ function ActionsPopoverContent({
 
 	// Only the lock: a missing `update` is reported by the authz component in the
 	// standard wording, and it outranks the lock.
-	const editLockTooltip = canEdit && isLocked ? DASHBOARD_LOCKED_REASON : '';
+	const editLockTooltip = canEdit && isLocked ? t('dashboard_locked') : '';
 	// Cloning reads this dashboard and creates a new one, so the denial names
 	// whichever of the two is missing.
 	const cloneChecks = useMemo(
