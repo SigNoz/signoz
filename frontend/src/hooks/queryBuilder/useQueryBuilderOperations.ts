@@ -304,7 +304,12 @@ export const useQueryOperations: UseQueryOperations = ({
 									timeAggregation: '',
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: MetricAggregateOperator.P90,
+									// A heatmap draws the `le` counts themselves and offers sum alone, so
+									// a percentile default would sit in the selector with no option behind it.
+									spaceAggregation:
+										panelType === PANEL_TYPES.HEATMAP
+											? MetricAggregateOperator.SUM
+											: MetricAggregateOperator.P90,
 									reduceTo: ReduceOperators.AVG,
 								},
 							];
@@ -394,6 +399,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			index,
 			handleMetricAggregateAtributeTypes,
 			previousMetricInfo,
+			panelType,
 		],
 	);
 

@@ -367,4 +367,50 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 			).toStrictEqual([MetricAggregateOperator.SUM]);
 		});
 	});
+
+	describe('picking a histogram metric', () => {
+		const histogramAttribute: BaseAutocompleteData = {
+			key: 'http.client.duration.bucket',
+			dataType: DataTypes.Float64,
+			type: ATTRIBUTE_TYPES.HISTOGRAM,
+		};
+
+		it('defaults the spatial aggregation to p90 on a time series panel', () => {
+			const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(histogramAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenLastCalledWith(
+				0,
+				expect.objectContaining({
+					aggregations: [
+						expect.objectContaining({
+							spaceAggregation: MetricAggregateOperator.P90,
+						}),
+					],
+				}),
+			);
+		});
+
+		it('defaults it to sum on a heatmap panel, which offers nothing else', () => {
+			setupMockQueryBuilder('heatmap');
+
+			const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+			act(() => {
+				result.current.handleChangeAggregatorAttribute(histogramAttribute);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenLastCalledWith(
+				0,
+				expect.objectContaining({
+					aggregations: [
+						expect.objectContaining({
+							spaceAggregation: MetricAggregateOperator.SUM,
+						}),
+					],
+				}),
+			);
+		});
+	});
 });
