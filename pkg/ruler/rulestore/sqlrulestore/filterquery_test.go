@@ -281,6 +281,51 @@ func TestCompileComposition(t *testing.T) {
 	})
 }
 
+func TestCompileComplexExamples(t *testing.T) {
+	runCompileCases(t, []compileCase{
+		{
+			subtestName: "name CONTAINS + label = + severity IN + created_by !=",
+			dslQueryToCompile: `name CONTAINS 'latency' AND labels.team = 'payments' ` +
+				`AND severity IN ['critical', 'error'] AND created_by != 'ops@signoz.io'`,
+			expectedSQL: `(json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' ` +
+				`AND COALESCE(json_extract("rule"."data", '$.labels."team"'), '') = ? ` +
+				`AND COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') IN (?, ?) ` +
+				`AND rule.created_by <> ?)`,
+			expectedArgs: []any{"%latency%", "payments", "critical", "error", "ops@signoz.io"},
+		},
+		{
+			subtestName: "nested OR / AND with parens",
+			dslQueryToCompile: `(labels.env IN ['prod', 'staging'] OR name LIKE '%prod%') ` +
+				`AND (severity = 'critical' OR labels.team EXISTS)`,
+			expectedSQL: `((COALESCE(json_extract("rule"."data", '$.labels."env"'), '') IN (?, ?) ` +
+				`OR json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\') ` +
+				`AND (COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ? ` +
+				`OR json_extract("rule"."data", '$.labels."team"') IS NOT NULL))`,
+			expectedArgs: []any{"prod", "staging", "%prod%", "critical"},
+		},
+		{
+			subtestName:       "NOT over a group ANDed with an enum",
+			dslQueryToCompile: `NOT (labels.team = 'infra' OR name CONTAINS 'cpu') AND alert_type = 'METRIC_BASED_ALERT'`,
+			expectedSQL: `(NOT ((COALESCE(json_extract("rule"."data", '$.labels."team"'), '') = ? ` +
+				`OR json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\')) ` +
+				`AND json_extract("rule"."data", '$.alertType') = ?)`,
+			expectedArgs: []any{"infra", "%cpu%", "METRIC_BASED_ALERT"},
+		},
+		{
+			subtestName: "free text with three-level nesting and a timestamp",
+			dslQueryToCompile: `prod AND (name ILIKE '%pay%' ` +
+				`OR (labels.team != 'infra' AND updated_at > '2026-01-02T15:04:05Z'))`,
+			expectedSQL: `((lower(COALESCE(json_extract("rule"."data", '$.alert'), '')) LIKE LOWER(?) ESCAPE '\' ` +
+				`OR lower(COALESCE(json_extract("rule"."data", '$.description'), '')) LIKE LOWER(?) ESCAPE '\' ` +
+				`OR lower(COALESCE(json_extract("rule"."data", '$.labels'), '')) LIKE LOWER(?) ESCAPE '\') ` +
+				`AND (lower(json_extract("rule"."data", '$.alert')) LIKE LOWER(?) ESCAPE '\' ` +
+				`OR (COALESCE(json_extract("rule"."data", '$.labels."team"'), '') <> ? AND rule.updated_at > ?)))`,
+			expectedArgs: []any{"%prod%", "%prod%", "%prod%", "%pay%", "infra",
+				time.Date(2026, 1, 2, 15, 4, 5, 0, time.UTC)},
+		},
+	})
+}
+
 func TestCompileErrors(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
