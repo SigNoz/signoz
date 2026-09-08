@@ -2,11 +2,16 @@ import { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
+import timezonePlugin from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 import { formatRowLabel } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import {
 	HeatmapSeries,
 	HeatmapYAxis,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+
+dayjs.extend(utc);
+dayjs.extend(timezonePlugin);
 
 /** Rows shown either side of the hovered one. */
 const NEIGHBOUR_SPAN = 2;
@@ -50,7 +55,8 @@ export function resolveTooltipBody(visibleCount: number): HeatmapTooltipBody {
 }
 
 /** A cell is an interval, so a single instant would misreport which observations
- *  it contains. The date is left to the x axis directly below. */
+ *  it contains. Both ends carry the date: the x axis prints one only where the day
+ *  turns over, so on a wide window a bare time does not say which day it is in. */
 export function formatColumnRange({
 	start,
 	step,
@@ -62,10 +68,11 @@ export function formatColumnRange({
 	step: number;
 	timezone: string;
 }): string {
-	const format =
+	const time =
 		step < SUB_MINUTE_STEP
 			? DATE_TIME_FORMATS.TIME_SECONDS
 			: DATE_TIME_FORMATS.TIME;
+	const format = `${DATE_TIME_FORMATS.DATE_SHORT} ${time}`;
 	const from = dayjs(start * 1000).tz(timezone);
 	const to = dayjs((start + step) * 1000).tz(timezone);
 	return `${from.format(format)} → ${to.format(format)}`;
