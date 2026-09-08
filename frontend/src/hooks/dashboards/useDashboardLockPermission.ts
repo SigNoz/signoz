@@ -1,10 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { useIsOrgAdmin } from 'lib/authz/hooks/useIsOrgAdmin';
 import { useAppContext } from 'providers/App/App';
 
-import {
-	DASHBOARD_LOCK_INTEGRATION_REASON,
-	DASHBOARD_LOCK_NOT_OWNER_REASON,
-} from './dashboardPermissionReasons';
 import { useDashboardPermissions } from './useDashboardPermissions';
 
 export interface DashboardLockPermission {
@@ -32,6 +29,7 @@ export function useDashboardLockPermission({
 	createdBy: string | undefined;
 	enabled?: boolean;
 }): DashboardLockPermission {
+	const { t } = useTranslation('dashboard');
 	const { user } = useAppContext();
 	const { canEdit, areOtherPermissionsLoading } = useDashboardPermissions(
 		dashboardId,
@@ -53,8 +51,8 @@ export function useDashboardLockPermission({
 	if (!isLoading && canEdit && !canToggleLock) {
 		disabledTooltip =
 			!isAuthor && !isOrgAdmin
-				? DASHBOARD_LOCK_NOT_OWNER_REASON
-				: DASHBOARD_LOCK_INTEGRATION_REASON;
+				? t('lock_not_owner')
+				: t('lock_integration_dashboard');
 	}
 
 	return { canToggleLock, isLoading, disabledTooltip };
