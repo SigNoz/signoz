@@ -31,6 +31,11 @@ export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 	queryBuilderFields: {
 		[QueryBuilderField.Functions]: { state: 'hidden' },
 		[QueryBuilderField.Having]: { state: 'hidden' },
+		// A heatmap draws against one bucket axis, so the request takes exactly one
+		// enabled query. A formula over it could only rescale the axis or the counts,
+		// which the unit and the decimal precision already cover.
+		[QueryBuilderField.AdditionalQueries]: { state: 'hidden' },
+		[QueryBuilderField.Formula]: { state: 'hidden' },
 	},
 	// Every timestamp is a full column of cells, so the request asks for a step interval
 	// wide enough to keep the grid legible: at raw resolution a multi-day range is tens of

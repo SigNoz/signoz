@@ -62,14 +62,14 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 		legend: '',
 	};
 
-	const setupMockQueryBuilder = (): void => {
+	const setupMockQueryBuilder = (panelType = 'time_series'): void => {
 		(useQueryBuilder as jest.Mock).mockReturnValue({
 			handleSetQueryData: mockHandleSetQueryData,
 			handleSetFormulaData: mockHandleSetFormulaData,
 			removeQueryBuilderEntityByIndex: mockRemoveQueryBuilderEntityByIndex,
 			setLastUsedQuery: mockSetLastUsedQuery,
 			redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
-			panelType: 'time_series',
+			panelType,
 			currentQuery: {
 				builder: {
 					queryData: [defaultMockQuery, defaultMockQuery],
@@ -330,6 +330,41 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 					],
 				}),
 			);
+		});
+	});
+
+	describe('spaceAggregationOptions for a histogram metric', () => {
+		const histogramQuery: IBuilderQuery = {
+			...defaultMockQuery,
+			aggregateAttribute: {
+				key: 'signoz_latency',
+				dataType: DataTypes.Float64,
+				type: ATTRIBUTE_TYPES.HISTOGRAM,
+			} as BaseAutocompleteData,
+		};
+
+		it('offers the percentiles on a time series panel', () => {
+			const result = renderHookWithProps({ query: histogramQuery });
+
+			expect(
+				result.current.spaceAggregationOptions.map((o) => o.value),
+			).toStrictEqual([
+				MetricAggregateOperator.P50,
+				MetricAggregateOperator.P75,
+				MetricAggregateOperator.P90,
+				MetricAggregateOperator.P95,
+				MetricAggregateOperator.P99,
+			]);
+		});
+
+		it('offers sum alone on a heatmap panel, whose Y axis is the `le` labels', () => {
+			setupMockQueryBuilder('heatmap');
+
+			const result = renderHookWithProps({ query: histogramQuery });
+
+			expect(
+				result.current.spaceAggregationOptions.map((o) => o.value),
+			).toStrictEqual([MetricAggregateOperator.SUM]);
 		});
 	});
 });

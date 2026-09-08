@@ -126,6 +126,8 @@ describe('PanelEditorQueryBuilder field visibility (driven by the capabilities g
 		expect(lastQueryBuilderProps().fieldsConfig).toStrictEqual({
 			functions: { state: 'hidden' },
 			having: { state: 'hidden' },
+			additional_queries: { state: 'hidden' },
+			formula: { state: 'hidden' },
 		});
 	});
 
@@ -152,9 +154,7 @@ describe('PanelEditorQueryBuilder signal dropdown (driven by the capabilities gu
 	it('offers metrics alone for the Heatmap kind — the only signal with a bucket axis', () => {
 		renderBuilder('signoz/HeatmapPanel');
 
-		expect(lastQueryBuilderProps().allowedDataSources).toStrictEqual([
-			'metrics',
-		]);
+		expect(lastQueryBuilderProps().allowedDataSources).toStrictEqual(['metrics']);
 	});
 
 	it('offers logs and traces for the List kind, which reads raw rows', () => {

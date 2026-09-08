@@ -206,7 +206,6 @@ describe('panel capabilities guard', () => {
 			expect(getSupportedSignals(kind)).toStrictEqual(EXPECTED_SIGNALS[kind]);
 		});
 
-
 		it('List excludes metrics', () => {
 			expect(isSignalSupported('signoz/ListPanel', metrics)).toBe(false);
 			expect(isSignalSupported('signoz/ListPanel', logs)).toBe(true);
@@ -288,10 +287,13 @@ describe('panel capabilities guard', () => {
 
 		it('hides the fields a Heatmap has nothing to apply them to', () => {
 			// A point is a count per bucket: there is no single value for a function or
-			// a having clause to act on, and the request rejects both.
+			// a having clause to act on, and the request rejects both. It also draws
+			// against one bucket axis, so the request takes exactly one enabled query.
 			expect(getQueryBuilderFields('signoz/HeatmapPanel')).toStrictEqual({
 				[QueryBuilderField.Functions]: { state: 'hidden' },
 				[QueryBuilderField.Having]: { state: 'hidden' },
+				[QueryBuilderField.AdditionalQueries]: { state: 'hidden' },
+				[QueryBuilderField.Formula]: { state: 'hidden' },
 			});
 		});
 	});
