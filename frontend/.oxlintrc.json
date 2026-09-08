@@ -576,6 +576,17 @@
       "rules": {
         "signoz/no-dashboard-fetch-outside-root": "off"
       }
+    },
+    {
+      // Dev-tooling CLIs: stdout is their output, and they carry ported pixel/heap
+      // algorithms that read worse when split up.
+      "files": [
+        "scripts/**"
+      ],
+      "rules": {
+        "no-console": "off",
+        "sonarjs/cognitive-complexity": "off"
+      }
     }
   ]
 }
