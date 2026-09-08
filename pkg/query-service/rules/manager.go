@@ -881,8 +881,7 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 	return &ruletypes.GettableRules{Rules: resp}, nil
 }
 
-// ListRules serves the rules list endpoint. Total counts what is actually
-// pageable: corrupt rows are dropped and the states filter is applied first.
+// ListRules' total counts what is pageable after corrupt-row drops and the states filter.
 func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesParams) (*ruletypes.ListableRules, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {

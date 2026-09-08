@@ -114,9 +114,7 @@ type SQLFormatter interface {
 	// JSONKeys return extracted key from json as well as alias to be used for select and where clause
 	JSONKeys(column, path, alias string) ([]byte, []byte)
 
-	// JSONExtractMapValue extracts one key's value from a JSON object field
-	// (e.g. mapField "labels", key "team"). Unlike a JSONExtractString path,
-	// the key is a single map entry: dots inside it are not path nesting.
+	// JSONExtractMapValue extracts one key's value from a JSON object field; dots in the key are not path nesting.
 	JSONExtractMapValue(column, mapField, key string) []byte
 
 	// TextToJsonColumn converts a text column to JSON type

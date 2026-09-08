@@ -26,8 +26,7 @@ func (f *formatter) JSONExtractString(column, path string) []byte {
 }
 
 func (f *formatter) JSONExtractMapValue(column, mapField, key string) []byte {
-	// Quote the key as one path segment so dots inside it are not nesting. A `"`
-	// in the key is inexpressible in sqlite JSON paths; the filter grammar cannot produce one.
+	// Quote the key as one path segment; a double quote in it is inexpressible in sqlite JSON paths.
 	escapedKey := strings.NewReplacer(`\`, `\\`).Replace(key)
 	return f.JSONExtractString(column, `$.`+mapField+`."`+escapedKey+`"`)
 }

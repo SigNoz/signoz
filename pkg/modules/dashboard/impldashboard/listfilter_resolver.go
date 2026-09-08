@@ -10,10 +10,7 @@ import (
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
-// dashboardFieldResolver is the dashboards-list policy for the shared filter
-// query compiler. A key that matches a reserved DSL key becomes a column-level
-// predicate; any other identifier is treated as a tag key, with a
-// case-insensitive match on the tag's key.
+// dashboardFieldResolver maps dashboard list DSL keys; a non-reserved key is a tag key matched case-insensitively.
 type dashboardFieldResolver struct{}
 
 func (r dashboardFieldResolver) ResolveComparison(b *sqlcompiler.Builder, rawKey string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string {
@@ -61,8 +58,7 @@ func (dashboardFieldResolver) tagComparison(b *sqlcompiler.Builder, ctx *grammar
 	if operation == qbtypesv5.FilterOperatorExists || operation == qbtypesv5.FilterOperatorNotExists {
 		buildSubqueryForTagKey(subqueryBuilder, tagKey)
 	} else {
-		// All other tag operators take the positive form of the value predicate
-		// and toggle the EXISTS wrapper for negation. Inverse() flips Not<X> to <X>.
+		// Value predicates take the positive operator; negation toggles the EXISTS wrapper.
 		positiveOperation := operation
 		if operation.IsNegativeOperator() {
 			positiveOperation = operation.Inverse()
@@ -98,8 +94,7 @@ func buildSubqueryForTagKeyAndValue(subqueryBuilder *sqlbuilder.SelectBuilder, t
 	return buildSubqueryForTagKey(subqueryBuilder, tagKey).Where(valuePredicate)
 }
 
-// FreeText matches value as a case-insensitive substring of the dashboard
-// name, description, or any tag key/value.
+// FreeText searches name, description and tag keys/values.
 func (dashboardFieldResolver) FreeText(b *sqlcompiler.Builder, value string) string {
 	nameColumn := string(b.Formatter().JSONExtractString("dashboard.data", "$.spec.display.name"))
 	descriptionColumn := string(b.Formatter().JSONExtractString("dashboard.data", "$.spec.display.description"))

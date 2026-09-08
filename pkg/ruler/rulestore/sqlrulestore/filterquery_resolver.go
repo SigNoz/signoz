@@ -21,9 +21,7 @@ const (
 	ruleTypePath    = "$.ruleType"
 )
 
-// ruleFieldResolver is the rules-list policy for the shared filter query
-// compiler. Label keys are matched case-sensitively; an unknown key is
-// rejected rather than silently matching nothing.
+// ruleFieldResolver maps rule list DSL keys; label keys are case-sensitive and unknown keys are rejected.
 type ruleFieldResolver struct{}
 
 func (r ruleFieldResolver) ResolveComparison(b *sqlcompiler.Builder, rawKey string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string {
@@ -60,8 +58,7 @@ func (r ruleFieldResolver) resolveReservedKey(b *sqlcompiler.Builder, ctx *gramm
 		columnExpression := string(b.Formatter().JSONExtractString(ruleDataColumn, nameJSONPath))
 		return b.StringOperation(b.SelectBuilder(), ctx, operation, columnExpression, string(key))
 	case ruletypes.DSLKeySeverity:
-		// severity is an alias for labels.severity and shares its semantics,
-		// including negations matching rules that carry no severity at all.
+		// severity is an alias for labels.severity, sharing its missing-label semantics.
 		return r.labelComparison(b, ctx, operation, "severity")
 	case ruletypes.DSLKeyCreatedBy:
 		return b.StringOperation(b.SelectBuilder(), ctx, operation, "rule.created_by", string(key))
@@ -80,10 +77,7 @@ func (r ruleFieldResolver) resolveReservedKey(b *sqlcompiler.Builder, ctx *gramm
 	return ""
 }
 
-// labelComparison builds a predicate on one label's value. A missing label
-// uniformly evaluates as the empty string (COALESCE) for every value operator,
-// so `!= 'x'` matches label-less rules, `!= ''` does not, and `= ''` does.
-// Presence itself is expressed with EXISTS/NOT EXISTS on the raw extraction.
+// A missing label evaluates as the empty string for every value operator; EXISTS/NOT EXISTS test the raw extraction.
 func (ruleFieldResolver) labelComparison(b *sqlcompiler.Builder, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, labelKey string) string {
 	columnExpression := string(b.Formatter().JSONExtractMapValue(ruleDataColumn, ruleLabelsField, labelKey))
 
@@ -144,9 +138,7 @@ func (ruleFieldResolver) enumComparison(b *sqlcompiler.Builder, ctx *grammar.Com
 	}
 }
 
-// FreeText matches value as a case-insensitive substring of the rule name,
-// description, or any label key/value (the labels JSON is matched as raw
-// text, which also matches keys).
+// FreeText searches name, description and the raw labels JSON (which also matches label keys).
 func (ruleFieldResolver) FreeText(b *sqlcompiler.Builder, value string) string {
 	nameColumn := string(b.Formatter().JSONExtractString(ruleDataColumn, nameJSONPath))
 	descriptionColumn := string(b.Formatter().JSONExtractString(ruleDataColumn, descriptionPath))

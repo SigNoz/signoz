@@ -11,8 +11,7 @@ import (
 )
 
 type StorableRule struct {
-	// The alias matches the `rule.<col>` references the list filter compiler
-	// emits (bun's default alias would be storable_rule).
+	// The alias must stay rule: the list filter compiler emits rule.<col> refs.
 	bun.BaseModel `bun:"table:rule,alias:rule"`
 	types.Identifiable
 	types.TimeAuditable
@@ -60,11 +59,9 @@ type RuleStore interface {
 	EditRule(context.Context, *StorableRule, func(context.Context) error) error
 	DeleteRule(context.Context, valuer.UUID, valuer.UUID, func(context.Context) error) error
 	GetStoredRules(context.Context, string) ([]*StorableRule, error)
-	// GetStoredRulesMatching returns the org's rules matching a list filter
-	// DSL query; an empty query matches every rule.
+	// GetStoredRulesMatching returns the org's rules matching a list filter query; an empty query matches all.
 	GetStoredRulesMatching(context.Context, string, string) ([]*StorableRule, error)
-	// GetStoredRuleLabels returns each rule's labels object as raw JSON text
-	// (empty string for rules without labels).
+	// GetStoredRuleLabels returns each rule's labels as raw JSON text, empty string when absent.
 	GetStoredRuleLabels(context.Context, string) ([]string, error)
 	GetStoredRule(context.Context, valuer.UUID, valuer.UUID) (*StorableRule, error)
 	GetStoredRulesByMetricName(context.Context, string, string) ([]RuleAlert, error)

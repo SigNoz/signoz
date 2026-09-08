@@ -11,8 +11,7 @@ import (
 
 const MaxListLabelPairs = 1000
 
-// ListableRule is the slim per-row shape of the rule list endpoint; the full
-// rule stays behind the get-by-id endpoint.
+// ListableRule is the slim per-row shape of the list endpoint; the full rule stays behind get-by-id.
 type ListableRule struct {
 	Id          string            `json:"id" required:"true"`
 	State       AlertState        `json:"state" required:"true"`
@@ -72,8 +71,7 @@ func NewListableRules(rules []*ListableRule, total int64, labels []LabelPair) *L
 	}
 }
 
-// stateDisplayRank orders states by display priority (worst first on desc);
-// NOT AlertState.Severity(), which ranks disabled/nodata above firing.
+// Display priority, worst first; NOT AlertState.Severity(), which ranks disabled/nodata above firing.
 var stateDisplayRank = map[AlertState]int{
 	StateFiring:     5,
 	StatePending:    4,
@@ -90,9 +88,7 @@ var severityDisplayRank = map[string]int{
 	"info":     1,
 }
 
-// SortListableRules sorts in place. Ties break on name then id, always
-// ascending (order applies to the primary key only) so pages stay stable
-// across requests.
+// Ties break on name then id ascending (order applies to the primary key only) so pages stay stable.
 func SortListableRules(rules []*ListableRule, sortBy ListSort, order ListOrder) {
 	direction := 1
 	if order == ListOrderDesc {
@@ -133,8 +129,7 @@ func compareListableRules(a, b *ListableRule, sortBy ListSort) int {
 	return a.UpdatedAt.Compare(b.UpdatedAt)
 }
 
-// NewLabelPairsFromRawJSON aggregates distinct pairs from raw per-rule labels
-// JSON; blank or malformed entries are skipped, the result is capped at limit.
+// NewLabelPairsFromRawJSON skips blank or malformed entries and caps the result at limit.
 func NewLabelPairsFromRawJSON(raws []string, limit int) []LabelPair {
 	set := make(map[LabelPair]struct{})
 	for _, raw := range raws {

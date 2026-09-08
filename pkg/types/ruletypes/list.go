@@ -51,8 +51,7 @@ func (o ListOrder) IsValid() bool {
 
 type ListRulesParams struct {
 	Query string `query:"query"`
-	// Raw strings because gin's query binding cannot fill a slice of valuer
-	// enums; AlertStates converts them.
+	// gin cannot bind a slice of valuer enums; AlertStates converts these.
 	States []string `query:"states"`
 	Sort   ListSort  `query:"sort"`
 	Order  ListOrder `query:"order"`

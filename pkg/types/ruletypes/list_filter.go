@@ -23,12 +23,10 @@ const (
 	DSLKeyAlertType DSLKey = "alert_type"
 	DSLKeyRuleType  DSLKey = "rule_type"
 
-	// DSLLabelsKeyPrefix namespaces rule-label lookups; label keys are
-	// matched exactly (case-sensitive).
+	// Label keys under this prefix are matched exactly (case-sensitive).
 	DSLLabelsKeyPrefix = "labels."
 
-	// DSLKeyLabelsPlaceholder is the literal advertised in reservedKeywords so
-	// clients know the labels namespace exists; it is not itself a filterable key.
+	// Advertised in reservedKeywords; not itself a filterable key.
 	DSLKeyLabelsPlaceholder DSLKey = "labels.<key>"
 )
 
@@ -44,12 +42,10 @@ func ReservedFilterKeys() []DSLKey {
 	return keys
 }
 
-// ReservedOps lists the operators each reserved DSL key accepts; `labels.<key>`
-// terms use LabelsKeyOps.
+// ReservedOps lists the operators each reserved DSL key accepts; `labels.<key>` terms use LabelsKeyOps.
 var ReservedOps = map[DSLKey]map[qbtypesv5.FilterOperator]struct{}{
 	DSLKeyName: stringSearchOps(),
-	// severity is an alias for labels.severity, so it takes the labels
-	// operator set, including EXISTS/NOT EXISTS.
+	// severity aliases labels.severity, so it takes the labels operator set.
 	DSLKeySeverity:  LabelsKeyOps,
 	DSLKeyCreatedBy: stringSearchOps(),
 	DSLKeyUpdatedBy: stringSearchOps(),
@@ -59,8 +55,7 @@ var ReservedOps = map[DSLKey]map[qbtypesv5.FilterOperator]struct{}{
 	DSLKeyRuleType:  enumOps(),
 }
 
-// LabelsKeyOps applies to every `labels.<key>` term: the operator targets the
-// label's value; EXISTS/NOT EXISTS test the label's presence.
+// LabelsKeyOps operators target the label's value; EXISTS/NOT EXISTS test its presence.
 var LabelsKeyOps = opsSet(
 	qbtypesv5.FilterOperatorEqual, qbtypesv5.FilterOperatorNotEqual,
 	qbtypesv5.FilterOperatorLike, qbtypesv5.FilterOperatorNotLike,
