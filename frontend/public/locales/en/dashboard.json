@@ -33,6 +33,5 @@
 	"variable_name_already_exists": "Variable \"{{name}}\" already exists",
 	"dashboard_locked": "This dashboard is locked",
 	"lock_not_owner": "Only the dashboard creator or an org admin can lock or unlock this dashboard",
-	"lock_integration_dashboard": "Dashboards created by integrations cannot be locked or unlocked",
 	"dashboard_read_only_here": "This dashboard is read-only here"
 }

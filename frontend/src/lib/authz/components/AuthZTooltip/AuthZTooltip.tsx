@@ -46,14 +46,6 @@ interface AuthZTooltipProps {
 	/** Which side of the control to render against. Defaults to the top. */
 	side?: 'top' | 'bottom' | 'left' | 'right';
 	/**
-	 * Use the child as the hover target as-is, instead of disabling it. For
-	 * elements with no disabled state of their own — a container that must stay
-	 * visible but inert, or a dropdown row whose `disabled` lives on the menu's
-	 * item data. The caller owns making the control unavailable; this only
-	 * explains why.
-	 */
-	asChild?: boolean;
-	/**
 	 * Set this false when this button is used inside a modal/drawer of signozhq/ui,
 	 * otherwise the tooltip will not have the correct z-index
 	 */
@@ -79,7 +71,6 @@ function AuthZTooltip({
 	tooltipMessage,
 	disabledTooltip,
 	side,
-	asChild = false,
 	withPortal,
 }: AuthZTooltipProps): JSX.Element {
 	const { user } = useAppContext();
@@ -114,9 +105,6 @@ function AuthZTooltip({
 	}, []);
 
 	if (shouldCheck && isLoading) {
-		if (asChild) {
-			return children;
-		}
 		return cloneElement(children, {
 			disabled: true,
 			style: DISABLED_STYLE,
@@ -137,15 +125,11 @@ function AuthZTooltip({
 			<TooltipRoot open={isOpen} onOpenChange={handleOpenChange}>
 				<TooltipTrigger asChild testId={childTestId}>
 					{cloneElement(children, {
-						...(asChild
-							? {}
-							: {
-									disabled: true,
-									style: DISABLED_STYLE,
-									onClick: noOp,
-									onMouseDown: noOp,
-									onPointerDown: noOp,
-								}),
+						disabled: true,
+						style: DISABLED_STYLE,
+						onClick: noOp,
+						onMouseDown: noOp,
+						onPointerDown: noOp,
 						onPointerEnter: (): void => {
 							isPointerOverRef.current = true;
 						},
