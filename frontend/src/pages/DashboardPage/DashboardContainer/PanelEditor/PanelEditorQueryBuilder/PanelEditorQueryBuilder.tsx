@@ -9,7 +9,6 @@ import { Atom, Terminal } from '@signozhq/icons';
 import { Tabs } from 'antd';
 import cx from 'classnames';
 import { Typography } from '@signozhq/ui/typography';
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import TextToolTip from 'components/TextToolTip';
@@ -22,8 +21,9 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { EQueryType } from 'types/common/dashboard';
 
 import {
-	getHiddenQueryBuilderFields,
+	getQueryBuilderFields,
 	getSupportedQueryTypes,
+	isRawQueryKind,
 } from '../../Panels/capabilities';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
@@ -35,8 +35,6 @@ import styles from './PanelEditorQueryBuilder.module.scss';
 interface PanelEditorQueryBuilderProps {
 	/** The edited panel's visualization kind — drives supported query types + field visibility via the capabilities guard. */
 	panelKind: PanelKind;
-	/** The panel's current signal; selects per-signal query-builder field rules. */
-	signal: TelemetrytypesSignalDTO;
 	/** Preview fetch in flight — drives the Stage & Run button's loading/cancel state. */
 	isLoadingQueries: boolean;
 	/** Run the current query (Stage & Run button / ⌘↵). Always re-runs. */
@@ -56,7 +54,6 @@ interface PanelEditorQueryBuilderProps {
  */
 function PanelEditorQueryBuilder({
 	panelKind,
-	signal,
 	isLoadingQueries,
 	onStageRunQuery,
 	onCancelQuery,
@@ -68,7 +65,7 @@ function PanelEditorQueryBuilder({
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
 	// Raw rows: the builder drops its aggregation controls, and with them the trace
 	// operator that combines aggregated trace queries (V1 parity).
-	const isListViewPanel = panelKind === 'signoz/ListPanel';
+	const isRawQuery = isRawQueryKind(panelKind);
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
 
@@ -96,11 +93,9 @@ function PanelEditorQueryBuilder({
 		[onStageRunQuery],
 	);
 
-	// Per-kind query-builder field rules from the guard (e.g. List hides step interval
-	// and having), passed to QueryBuilderV2 as its `filterConfigs`.
-	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(
-		() => getHiddenQueryBuilderFields(panelKind, signal),
-		[panelKind, signal],
+	const fieldsConfig: QueryBuilderProps['fieldsConfig'] = useMemo(
+		() => getQueryBuilderFields(panelKind),
+		[panelKind],
 	);
 
 	const items = useMemo(() => {
@@ -114,11 +109,10 @@ function PanelEditorQueryBuilder({
 					<div className="query-builder-v2-container">
 						<QueryBuilderV2
 							panelType={panelType}
-							filterConfigs={filterConfigs}
-							showTraceOperator={!isListViewPanel}
+							fieldsConfig={fieldsConfig}
+							showTraceOperator={!isRawQuery}
 							version="v3"
-							isListViewPanel={isListViewPanel}
-							queryComponents={{}}
+							isRawQuery={isRawQuery}
 							signalSourceChangeEnabled
 							savePreviousQuery
 						/>
@@ -151,7 +145,7 @@ function PanelEditorQueryBuilder({
 			),
 			children: queryTypeComponents[queryType].component,
 		}));
-	}, [panelKind, panelType, filterConfigs, isDarkMode, isListViewPanel]);
+	}, [panelKind, panelType, fieldsConfig, isDarkMode, isRawQuery]);
 
 	return (
 		<div

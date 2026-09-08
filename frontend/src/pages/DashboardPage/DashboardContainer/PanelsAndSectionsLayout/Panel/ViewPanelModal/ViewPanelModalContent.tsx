@@ -154,7 +154,6 @@ function ViewPanelModalContent({
 			<div className={styles.queryBuilder}>
 				<PanelEditorQueryBuilder
 					panelKind={draft.spec.plugin.kind}
-					signal={signal}
 					isLoadingQueries={isFetching}
 					onStageRunQuery={runQuery}
 					onCancelQuery={cancelQuery}

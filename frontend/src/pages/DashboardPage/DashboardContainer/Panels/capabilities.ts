@@ -1,14 +1,17 @@
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5RequestTypeDTO,
+	type TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
 import { getPanelDefinition } from './registry';
-import type { FilterConfigsPartial } from './types/panelCapabilities';
+import type { QueryBuilderFieldsConfig } from './types/panelCapabilities';
 import type { PanelKind } from './types/panelKind';
 
 /**
  * The single deterministic guard for V2 dashboards. Every "what works with what"
- * question — panel kind × query type × signal, and which query-builder fields a kind
- * hides — is answered here by reading each kind's declared capabilities from the panel
+ * question — panel kind × query type × signal, and how a kind narrows the query
+ * builder — is answered here by reading each kind's declared capabilities from the panel
  * registry. Adding a new kind means declaring its capabilities once in its definition;
  * these functions then cover it automatically. Pure and side-effect free.
  */
@@ -76,16 +79,17 @@ export function resolveQueryType(
 	return supported.includes(preferred) ? preferred : supported[0];
 }
 
-/**
- * Query-builder field visibility for a kind + signal: the kind's `default` rule with
- * its per-signal overrides merged over it (signal wins). `{}` when the kind hides
- * nothing, i.e. the builder shows every field.
- */
-export function getHiddenQueryBuilderFields(
+/** How a kind narrows the query builder, on top of the baseline its request type implies. */
+export function getQueryBuilderFields(
 	kind: PanelKind,
-	signal: TelemetrytypesSignalDTO,
-): FilterConfigsPartial {
-	const rule = getPanelDefinition(kind).queryBuilderFields;
-	const perSignal = signal ? rule[signal] : undefined;
-	return { ...rule.default, ...perSignal };
+): QueryBuilderFieldsConfig {
+	return getPanelDefinition(kind).queryBuilderFields;
+}
+
+/** Read from the declared request type, so raw-ness has no second place to drift from. */
+export function isRawQueryKind(kind: PanelKind): boolean {
+	return (
+		getPanelDefinition(kind).queryCapabilities.requestType ===
+		Querybuildertypesv5RequestTypeDTO.raw
+	);
 }
