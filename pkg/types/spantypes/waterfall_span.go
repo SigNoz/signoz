@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -103,7 +104,11 @@ type StorableSpan struct {
 	AttributesString   map[string]string  `ch:"attributes_string"`
 	AttributesNumber   map[string]float64 `ch:"attributes_number"`
 	AttributesBool     map[string]bool    `ch:"attributes_bool"`
-	ResourcesString    map[string]string  `ch:"resources_string"`
+	// AttributesJSON is the `attributes` JSON column: post-rollout rows carry their attributes
+	// here instead of the maps above. The trace span reads suppress whichever home is empty per
+	// row, so at most one of (maps, AttributesJSON) holds data for a span.
+	AttributesJSON    telemetrystoretypes.JSONValue `ch:"attributes"`
+	ResourcesString   map[string]string             `ch:"resources_string"`
 	Events             []string           `ch:"events"`
 	StatusMessage      string             `ch:"status_message"`
 	StatusCodeString   string             `ch:"status_code_string"`
@@ -274,11 +279,19 @@ func (item *StorableSpan) AttributeValue(name string) any {
 	if v, ok := item.AttributesBool[name]; ok {
 		return v
 	}
+	// The JSON document is nested, so a dotted name like "http.route" needs the flattened view.
+	if len(item.AttributesJSON) > 0 {
+		flat := make(map[string]any, len(item.AttributesJSON))
+		telemetrystoretypes.FlattenJSONPaths("", item.AttributesJSON, flat)
+		if v, ok := flat[name]; ok {
+			return v
+		}
+	}
 	return nil
 }
 
 func (item *StorableSpan) Attributes() map[string]any {
-	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool))
+	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool)+len(item.AttributesJSON))
 	for k, v := range item.AttributesString {
 		attributes[k] = v
 	}
@@ -287,6 +300,11 @@ func (item *StorableSpan) Attributes() map[string]any {
 	}
 	for k, v := range item.AttributesBool {
 		attributes[k] = v
+	}
+	// Flattened over the maps, so a JSON path wins a same-named map entry — same precedence
+	// as the querier's list-view bag.
+	if len(item.AttributesJSON) > 0 {
+		telemetrystoretypes.FlattenJSONPaths("", item.AttributesJSON, attributes)
 	}
 	return attributes
 }

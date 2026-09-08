@@ -485,27 +485,6 @@ func jsonAttributeMap(v any) (map[string]any, bool) {
 	}
 }
 
-// flattenJSONPaths flattens a decoded JSON document into dotted keys (a nested {"http":{"route":x}}
-// becomes "http.route": x), matching the legacy map representation so the attributes bag has the
-// same flat shape whether it was read from the maps or the JSON column. Existing keys are
-// overwritten, so a JSON path wins over a same-named map entry.
-func flattenJSONPaths(prefix string, m map[string]any, out map[string]any) {
-	for k, v := range m {
-		key := k
-		if prefix != "" {
-			key = prefix + "." + k
-		}
-		switch child := v.(type) {
-		case map[string]any:
-			flattenJSONPaths(key, child, out)
-		case telemetrystoretypes.JSONValue:
-			flattenJSONPaths(key, child, out)
-		default:
-			out[key] = v
-		}
-	}
-}
-
 // mergeSpanAttributeColumns merges (attributes_string, attributes_number, attributes_bool, resources_string) into
 // unified "attributes" and "resource" keys, and parses the stringified `events`
 // and `links` columns into structured slices. Raw DB columns are removed.
@@ -537,7 +516,7 @@ func mergeSpanAttributeColumns(data map[string]any) {
 			}
 		}
 		if hasJSON {
-			flattenJSONPaths("", attrJSON, attributes)
+			telemetrystoretypes.FlattenJSONPaths("", attrJSON, attributes)
 		}
 		delete(data, "attributes_string")
 		delete(data, "attributes_number")
