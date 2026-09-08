@@ -24,8 +24,6 @@ func (f *formatter) JSONExtractString(column, path string) []byte {
 }
 
 func (f *formatter) JSONExtractMapValue(column, mapField, key string) []byte {
-	// The key is one map entry, appended as a whole ->> segment so dots
-	// inside it are not treated as nesting.
 	sql := f.TextToJsonColumn(column)
 	sql = append(sql, "->"...)
 	sql = schema.Append(f.bunf, sql, mapField)

@@ -16,8 +16,6 @@ const (
 
 var ErrCodeRuleListInvalid = errors.MustNewCode("rule_list_invalid")
 
-// ListSort is the sort field for the rule list endpoint. The value is a
-// stable enum so callers can't ask for arbitrary columns.
 type ListSort struct{ valuer.String }
 
 var (
@@ -51,20 +49,18 @@ func (o ListOrder) IsValid() bool {
 	return slices.ContainsFunc(o.Enum(), func(v any) bool { return v == o })
 }
 
-// ListRulesParams are the query params of the rule list endpoint. States is
-// bound as raw strings (gin's query binding cannot fill a slice of valuer
-// enums); AlertStates converts them to typed states.
 type ListRulesParams struct {
-	Query  string    `query:"query"`
-	States []string  `query:"states"`
+	Query string `query:"query"`
+	// Raw strings because gin's query binding cannot fill a slice of valuer
+	// enums; AlertStates converts them.
+	States []string `query:"states"`
 	Sort   ListSort  `query:"sort"`
 	Order  ListOrder `query:"order"`
 	Limit  int       `query:"limit"`
 	Offset int       `query:"offset"`
 }
 
-// Validate normalizes the params in place: empty sort/order/limit get their
-// defaults, an over-max limit is clamped.
+// Validate normalizes in place; an over-max limit is clamped, not rejected.
 func (p *ListRulesParams) Validate() error {
 	if n := utf8.RuneCountInString(p.Query); n > MaxListQueryLen {
 		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
@@ -106,8 +102,7 @@ func (p *ListRulesParams) Validate() error {
 	return nil
 }
 
-// AlertStates parses the raw States params into typed alert states. Empty
-// means no state filtering.
+// AlertStates parses States; empty means no state filtering.
 func (p *ListRulesParams) AlertStates() ([]AlertState, error) {
 	if len(p.States) == 0 {
 		return nil, nil

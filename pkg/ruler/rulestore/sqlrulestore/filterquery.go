@@ -17,15 +17,8 @@ func (c Compiled) IsEmpty() bool {
 	return c.SQL == ""
 }
 
-// Compile always returns a non-nil *Compiled. An empty query (or one that
-// produces no SQL) yields a Compiled with an empty SQL — callers gate on
-// SQL != "" rather than a nil check.
-//
-// A `key OP value` term compiles to a DSL predicate; a bare word is a
-// case-insensitive substring search over the rule name, description, and
-// labels. They compose through AND/OR/NOT, so `prod payment` matches both
-// words (implicit AND) and `prod OR name = 'x'` mixes free text with a
-// filter. A quoted token matches literally, e.g. `"prod payment"`.
+// Compile on success returns a non-nil *Compiled; an empty query (or one
+// producing no SQL) yields an empty SQL — callers gate on IsEmpty, not nil.
 func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
 	if len(strings.TrimSpace(query)) == 0 {
 		return &Compiled{}, nil

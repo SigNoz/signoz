@@ -11,9 +11,8 @@ import (
 
 const MaxListLabelPairs = 1000
 
-// ListableRule is the slim per-row shape of the rule list endpoint: only the
-// fields the list page renders. The full rule (condition, annotations,
-// notification settings, ...) stays behind the get-by-id endpoint.
+// ListableRule is the slim per-row shape of the rule list endpoint; the full
+// rule stays behind the get-by-id endpoint.
 type ListableRule struct {
 	Id          string            `json:"id" required:"true"`
 	State       AlertState        `json:"state" required:"true"`
@@ -51,8 +50,7 @@ func NewListableRule(rule *GettableRule) *ListableRule {
 	return listable
 }
 
-// LabelPair is one distinct label key/value observed on the org's rules,
-// surfaced for filter autocomplete.
+// LabelPair is one distinct label key/value observed on the org's rules.
 type LabelPair struct {
 	Key   string `json:"key" required:"true"`
 	Value string `json:"value" required:"true"`
@@ -75,8 +73,7 @@ func NewListableRules(rules []*ListableRule, total int64, labels []LabelPair) *L
 }
 
 // stateDisplayRank orders states by display priority (worst first on desc);
-// deliberately NOT AlertState.Severity(), which ranks disabled/nodata above
-// firing.
+// NOT AlertState.Severity(), which ranks disabled/nodata above firing.
 var stateDisplayRank = map[AlertState]int{
 	StateFiring:     5,
 	StatePending:    4,
@@ -93,10 +90,9 @@ var severityDisplayRank = map[string]int{
 	"info":     1,
 }
 
-// SortListableRules sorts in place. Severity ranks the well-known values and
-// falls back to a lexical compare between custom ones; name compares
-// case-insensitively. Ties break on name then id (always ascending, so pages
-// stay stable across requests) with order applied to the primary key only.
+// SortListableRules sorts in place. Ties break on name then id, always
+// ascending — order applies to the primary key only — so pages stay stable
+// across requests.
 func SortListableRules(rules []*ListableRule, sortBy ListSort, order ListOrder) {
 	direction := 1
 	if order == ListOrderDesc {
@@ -137,9 +133,8 @@ func compareListableRules(a, b *ListableRule, sortBy ListSort) int {
 	return a.UpdatedAt.Compare(b.UpdatedAt)
 }
 
-// NewLabelPairsFromRawJSON aggregates distinct label key/value pairs from raw
-// per-rule labels JSON. Blank or malformed entries are skipped; the result is
-// sorted by key then value and capped at limit.
+// NewLabelPairsFromRawJSON aggregates distinct pairs from raw per-rule labels
+// JSON; blank or malformed entries are skipped, the result is capped at limit.
 func NewLabelPairsFromRawJSON(raws []string, limit int) []LabelPair {
 	set := make(map[LabelPair]struct{})
 	for _, raw := range raws {

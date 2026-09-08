@@ -23,8 +23,8 @@ const (
 	DSLKeyAlertType DSLKey = "alert_type"
 	DSLKeyRuleType  DSLKey = "rule_type"
 
-	// DSLLabelsKeyPrefix namespaces rule-label lookups: `labels.team = 'infra'`
-	// targets labels["team"]. Label keys are matched exactly (case-sensitive).
+	// DSLLabelsKeyPrefix namespaces rule-label lookups; label keys are
+	// matched exactly (case-sensitive).
 	DSLLabelsKeyPrefix = "labels."
 
 	// DSLKeyLabelsPlaceholder is the literal advertised in reservedKeywords so
@@ -32,9 +32,6 @@ const (
 	DSLKeyLabelsPlaceholder DSLKey = "labels.<key>"
 )
 
-// ReservedFilterKeys returns the reserved DSL keys the list filter accepts
-// (plus the labels-namespace placeholder), sorted alphabetically. The list API
-// surfaces these so clients can build filter suggestions.
 func ReservedFilterKeys() []DSLKey {
 	keys := make([]DSLKey, 0, len(ReservedOps)+1)
 	for key := range ReservedOps {
@@ -47,8 +44,8 @@ func ReservedFilterKeys() []DSLKey {
 	return keys
 }
 
-// ReservedOps lists the operators each reserved DSL key accepts. Keys under
-// the labels namespace use LabelsKeyOps instead.
+// ReservedOps lists the operators each reserved DSL key accepts; `labels.<key>`
+// terms use LabelsKeyOps.
 var ReservedOps = map[DSLKey]map[qbtypesv5.FilterOperator]struct{}{
 	DSLKeyName: stringSearchOps(),
 	// severity is an alias for labels.severity, so it takes the labels

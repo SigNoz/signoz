@@ -881,10 +881,8 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 	return &ruletypes.GettableRules{Rules: resp}, nil
 }
 
-// ListRules serves the rules list endpoint: the DSL query is pushed down to
-// SQL, then state (memory-only, so unknowable to SQL) is overlaid and the
-// states filter, total, sort and pagination run here — total counts what is
-// actually pageable after corrupt-row drops and state filtering.
+// ListRules serves the rules list endpoint. Total counts what is actually
+// pageable: corrupt rows are dropped and the states filter is applied first.
 func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesParams) (*ruletypes.ListableRules, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -951,8 +949,6 @@ func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesPara
 	return ruletypes.NewListableRules(currentPageRules, total, labelPairs), nil
 }
 
-// snapshotRuleStates copies the live states out under the read lock so the
-// caller never touches m.rules concurrently with task edits.
 func (m *Manager) snapshotRuleStates() map[string]ruletypes.AlertState {
 	m.mtx.RLock()
 	defer m.mtx.RUnlock()

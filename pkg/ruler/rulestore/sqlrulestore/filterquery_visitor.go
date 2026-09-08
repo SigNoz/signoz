@@ -43,10 +43,6 @@ func newVisitor(formatter sqlstore.SQLFormatter) *visitor {
 	}
 }
 
-// compile builds `?`-placeholder WHERE SQL + args for bun. Each term is either a
-// `key OP value` comparison or a bare token that becomes a free-text search; the
-// two compose through the boolean grammar (AND/OR/NOT). Malformed input is
-// returned as errors.
 func (v *visitor) compile(query string) (string, []any, []string) {
 	tree, _, collector := filterquery.Parse(query)
 	if len(collector.Errors) > 0 {
@@ -136,17 +132,14 @@ func (v *visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.Comparison() != nil {
 		return v.visit(ctx.Comparison())
 	}
-	// A lone key/value/full-text token is a free-text term, composed with any
-	// comparisons through the boolean grammar. A quoted token matches its contents
+	// A lone token is a free-text term; a quoted token matches its contents
 	// literally — the escape hatch for a phrase or a term that looks like DSL.
 	return v.buildFreeTextTerm(trimQuotes(ctx.GetText()))
 }
 
-// VisitComparison dispatches a single `key OP value` term. A key that matches
-// a reserved DSL key (name, severity, ...) becomes a column-level predicate; a
-// `labels.<key>` term targets that label's value (the label key is matched
-// exactly, case-sensitively). Any other key is rejected — there is no silent
-// fallback for a typo to match nothing.
+// VisitComparison dispatches a single `key OP value` term. Label keys are
+// matched case-sensitively; an unknown key is rejected rather than silently
+// matching nothing.
 func (v *visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	rawKey := strings.TrimSpace(ctx.Key().GetText())
 	key := strings.ToLower(rawKey)
@@ -199,8 +192,6 @@ func (v *visitor) visitComparisonForReservedKeys(ctx *grammar.ComparisonContext,
 	case ruletypes.DSLKeyRuleType:
 		return v.buildEnumComparison(ctx, operation, key, ruleTypePath, ruleTypeValues())
 	}
-	// Unreachable for real input: every ruletypes.ReservedOps key has a case
-	// above, and TestCompileReservedKeysAllHandled guards that the two stay in sync.
 	v.addError("no handler for reserved key %q", key)
 	return ""
 }
@@ -295,8 +286,6 @@ func ruleTypeValues() []string {
 }
 
 func (v *visitor) extractOperation(ctx *grammar.ComparisonContext) (qbtypesv5.FilterOperator, bool) {
-	// For operators that take an optional leading NOT, Inverse() maps each to
-	// its Not<X> counterpart.
 	maybeNot := func(operation qbtypesv5.FilterOperator) qbtypesv5.FilterOperator {
 		if ctx.NOT() != nil {
 			return operation.Inverse()
@@ -337,8 +326,6 @@ func (v *visitor) extractOperation(ctx *grammar.ComparisonContext) (qbtypesv5.Fi
 	return qbtypesv5.FilterOperatorUnknown, false
 }
 
-// buildStringOperation covers all the operators the spec allows on text-shaped
-// keys (name, created_by, and a label's value).
 func (v *visitor) buildStringOperation(builder *sqlbuilder.SelectBuilder, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, columnExpression, keyForError string) string {
 	switch operation {
 	case qbtypesv5.FilterOperatorEqual:
@@ -362,18 +349,16 @@ func (v *visitor) buildStringOperation(builder *sqlbuilder.SelectBuilder, ctx *g
 		if operation == qbtypesv5.FilterOperatorNotLike {
 			like = "NOT LIKE"
 		}
-		// The user's % and _ stay as wildcards; ESCAPE pins backslash as the escape
-		// char so a literal `\` in the pattern is read the same on both dialects —
-		// Postgres defaults to `\`, SQLite has no default escape.
+		// The user's % and _ stay as wildcards; ESCAPE pins backslash as the
+		// escape char (the Postgres default — SQLite has none).
 		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, builder.Var(val))
 	case qbtypesv5.FilterOperatorILike, qbtypesv5.FilterOperatorNotILike:
 		val, ok := v.extractSingleStringValue(ctx, keyForError)
 		if !ok {
 			return ""
 		}
-		// SQLite has no ILIKE keyword and Postgres LIKE is case-sensitive — emit
-		// LOWER(col) LIKE LOWER(?) so behavior is identical on both dialects. ESCAPE
-		// pins backslash as the escape char (Postgres default; SQLite has none).
+		// SQLite has no ILIKE keyword and Postgres LIKE is case-sensitive, so
+		// LOWER both sides.
 		lowerColumn := string(v.formatter.LowerExpression(columnExpression))
 		like := "LIKE"
 		if operation == qbtypesv5.FilterOperatorNotILike {
@@ -390,8 +375,6 @@ func (v *visitor) buildStringOperation(builder *sqlbuilder.SelectBuilder, ctx *g
 			like = "NOT LIKE"
 		}
 		// Escape the user's % and _ so they match literally, then wrap in wildcards.
-		// ESCAPE declares the backslash the escaper injected as the escape char —
-		// needed on SQLite (no default) and a harmless restatement of the Postgres default.
 		escaped := v.formatter.EscapeLikePattern(val)
 		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, builder.Var("%"+escaped+"%"))
 	case qbtypesv5.FilterOperatorRegexp, qbtypesv5.FilterOperatorNotRegexp:
@@ -469,11 +452,9 @@ func (v *visitor) buildFreeTextTerm(value string) string {
 	)
 }
 
-// buildFreeTextContains emits a case-insensitive contains as
-// LOWER(COALESCE(col, ”)) LIKE LOWER(?), identical on SQLite and Postgres.
-// COALESCE keeps a NULL column (an absent description) false rather than NULL —
-// otherwise `NOT (…)` goes NULL and drops every description-less rule. The
-// value's % and _ are escaped, and ESCAPE pins backslash as the escape char.
+// buildFreeTextContains emits a case-insensitive contains. COALESCE keeps a
+// NULL column (an absent description) false rather than NULL — otherwise
+// `NOT (…)` goes NULL and drops every description-less rule.
 func (v *visitor) buildFreeTextContains(columnExpression, value string) string {
 	lowerColumn := string(v.formatter.LowerExpression("COALESCE(" + columnExpression + ", '')"))
 	pattern := "%" + v.formatter.EscapeLikePattern(value) + "%"
@@ -559,8 +540,6 @@ func (v *visitor) extractStringValue(ctx grammar.IValueContext, keyForError stri
 		return trimQuotes(ctx.QUOTED_TEXT().GetText()), true
 	}
 	if ctx.KEY() != nil {
-		// Bare tokens are accepted as strings, mirroring the FilterQuery lexer's
-		// treatment of unquoted identifiers on the value side.
 		return ctx.KEY().GetText(), true
 	}
 	v.addError("expected a string value for %q, got %q", keyForError, ctx.GetText())
@@ -583,8 +562,7 @@ func (v *visitor) extractTimestampValue(ctx grammar.IValueContext) (time.Time, b
 
 // ─── operator spelling ───────────────────────────────────────────────────────
 
-// operationName returns the user-facing spelling of a FilterOperator, used only in
-// error messages — go-sqlbuilder's Cond helpers emit the SQL keywords.
+// operationName is the user-facing spelling, used only in error messages.
 func operationName(operation qbtypesv5.FilterOperator) string {
 	switch operation {
 	case qbtypesv5.FilterOperatorEqual:
