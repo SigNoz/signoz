@@ -38,6 +38,7 @@ import {
 	tracesRunQueryAction,
 	tracesSaveViewAction,
 } from 'pages/TracesExplorer/aiActions';
+import { NANO_SECOND_MULTIPLIER, useGlobalTime } from 'store/globalTime';
 import { Warning } from 'types/api';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -111,6 +112,17 @@ function Explorer(): JSX.Element {
 
 	const [warning, setWarning] = useState<Warning | undefined>();
 	const [isOpen, setOpen] = useState<boolean>(true);
+
+	const selectedTime = useGlobalTime((state) => state.selectedTime);
+	const getMinMaxTime = useGlobalTime((state) => state.getMinMaxTime);
+	const quickFiltersTimeRange = useMemo(() => {
+		const { minTime, maxTime } = getMinMaxTime();
+		return {
+			startUnixMilli: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+			endUnixMilli: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedTime, getMinMaxTime]);
 
 	const defaultQuery = useMemo(
 		(): Query =>
@@ -260,8 +272,9 @@ function Explorer(): JSX.Element {
 				<Card className="filter" hidden={!isOpen}>
 					<QuickFilters
 						className="qf-traces-explorer"
-						source={QuickFiltersSource.TRACES_EXPLORER}
-						signal={SignalType.TRACES}
+						source={QuickFiltersSource.AI_OBSERVABILITY}
+						signal={SignalType.AI_OBSERVABILITY}
+						useFieldApis={quickFiltersTimeRange}
 						handleFilterVisibilityChange={(): void => {
 							setOpen(!isOpen);
 						}}
