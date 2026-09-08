@@ -131,7 +131,7 @@ function Explorer(): JSX.Element {
 		},
 		[handleExplorerTabChange, handleSetConfig],
 	);
-
+	//TODO: check if we need to enable AI Assistant page actions on LLM o11y
 	// ─── AI Assistant page actions (only when license feature is on) ───────────
 	const aiActions = useMemo(
 		() =>
