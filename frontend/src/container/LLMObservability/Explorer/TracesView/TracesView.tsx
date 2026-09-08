@@ -32,7 +32,7 @@ import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import ExplorerControls from '../Controls';
+import TraceExplorerControls from '../Controls';
 import {
 	TRACE_VIEW_DEFAULT_ORDER_BY,
 	TRACE_VIEW_STATIC_ORDER_BY_KEYS,
@@ -190,7 +190,7 @@ function TracesView({
 						/>
 					</div>
 
-					<ExplorerControls
+					<TraceExplorerControls
 						isLoading={isLoading}
 						totalCount={rows.length}
 						perPageOptions={PER_PAGE_OPTIONS}

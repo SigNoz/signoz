@@ -35,7 +35,7 @@ import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import ExplorerControls from '../Controls';
+import TraceExplorerControls from '../Controls';
 import { getListViewQuery } from '../explorerUtils';
 import {
 	defaultSelectedColumns,
@@ -230,7 +230,7 @@ function ListView({
 					/>
 				</div>
 
-				<ExplorerControls
+				<TraceExplorerControls
 					isLoading={isFetching}
 					totalCount={rows.length}
 					config={config}

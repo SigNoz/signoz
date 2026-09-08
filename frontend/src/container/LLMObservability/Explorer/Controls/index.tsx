@@ -10,14 +10,14 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './Controls.module.scss';
 
-function ExplorerControls({
+function TraceExplorerControls({
 	isLoading,
 	totalCount,
 	perPageOptions,
 	config,
 	addStaticFields,
 	requiredFields,
-}: ExplorerControlsProps): JSX.Element | null {
+}: TraceExplorerControlsProps): JSX.Element | null {
 	const { t } = useTranslation(['trace']);
 	const [isFieldsSelectorOpen, setIsFieldsSelectorOpen] = useState(false);
 
@@ -66,7 +66,7 @@ function ExplorerControls({
 	);
 }
 
-type ExplorerControlsProps = Pick<
+type TraceExplorerControlsProps = Pick<
 	ControlsProps,
 	'isLoading' | 'totalCount' | 'perPageOptions'
 > & {
@@ -75,10 +75,10 @@ type ExplorerControlsProps = Pick<
 	requiredFields?: readonly string[];
 };
 
-ExplorerControls.defaultProps = {
+TraceExplorerControls.defaultProps = {
 	config: null,
 	addStaticFields: undefined,
 	requiredFields: undefined,
 };
 
-export default memo(ExplorerControls);
+export default memo(TraceExplorerControls);
