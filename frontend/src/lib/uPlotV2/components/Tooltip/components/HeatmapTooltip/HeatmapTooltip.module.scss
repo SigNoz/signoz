@@ -1,5 +1,7 @@
 // Surface matches the shared Tooltip exactly — same tokens, same radius, no
-// shadow (the plugin's portal wrapper is transparent and paints nothing).
+// shadow (the plugin's portal wrapper is transparent and paints nothing). Text
+// follows the theme through the popover/muted pair; the fixed vanilla ramp reads
+// as white-on-white in light mode.
 //
 // Padding lives on the sections rather than here, also matching the shared
 // tooltip: TooltipFooter draws its own dashed top border, background and bottom
@@ -42,7 +44,7 @@
 	justify-content: space-between;
 	gap: var(--spacing-6);
 	font-size: 11px;
-	color: var(--text-vanilla-400);
+	color: var(--muted-foreground);
 	font-variant-numeric: tabular-nums;
 }
 
@@ -79,13 +81,13 @@
 .titleBucket {
 	font-size: 13px;
 	font-weight: 600;
-	color: var(--text-vanilla-100);
+	color: var(--popover-foreground);
 }
 
 .titleCount {
 	font-size: 13px;
 	font-weight: 600;
-	color: var(--text-vanilla-100);
+	color: var(--popover-foreground);
 	font-variant-numeric: tabular-nums;
 }
 
@@ -100,7 +102,7 @@
 	font-size: 10px;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	color: var(--text-vanilla-400);
+	color: var(--muted-foreground);
 	padding: 0 var(--spacing-2) var(--spacing-1);
 }
 
@@ -111,14 +113,14 @@
 	padding: var(--spacing-1) var(--spacing-2);
 	border-radius: 3px;
 	font-size: 12px;
-	color: var(--text-vanilla-400);
+	color: var(--muted-foreground);
 	font-variant-numeric: tabular-nums;
 }
 
 // The hovered bucket is the one the cursor is on; lift it out of the neighbours.
 .rowHovered {
 	background: var(--l3-background);
-	color: var(--text-vanilla-100);
+	color: var(--popover-foreground);
 	font-weight: 500;
 }
 
@@ -139,7 +141,7 @@
 	flex: 0 0 auto;
 	min-width: 40px;
 	text-align: right;
-	color: var(--text-vanilla-400);
+	color: var(--muted-foreground);
 	opacity: 0.75;
 }
 

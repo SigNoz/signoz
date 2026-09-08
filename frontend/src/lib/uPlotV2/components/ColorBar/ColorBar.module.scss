@@ -11,7 +11,7 @@
 	flex: 0 0 auto;
 	font-size: 11px;
 	line-height: 16px;
-	color: var(--text-vanilla-400);
+	color: var(--muted-foreground);
 	font-variant-numeric: tabular-nums;
 }
 
@@ -29,7 +29,9 @@
 	bottom: -3px;
 	width: 2px;
 	transform: translateX(-1px);
-	background: var(--text-vanilla-100);
+	// Reads against the panel through the 3px it overhangs the track at either end,
+	// which is what carries it where the ramp happens to match it.
+	background: var(--popover-foreground);
 	border-radius: 1px;
 }
 
@@ -38,7 +40,7 @@
 	font-size: 10px;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	color: var(--text-vanilla-400);
+	color: var(--muted-foreground);
 }
 
 .keys {
@@ -53,7 +55,7 @@
 	gap: 5px;
 	align-items: center;
 	font-size: 11px;
-	color: var(--text-vanilla-400);
+	color: var(--muted-foreground);
 }
 
 .swatch,
@@ -65,11 +67,12 @@
 	box-sizing: border-box;
 }
 
-// Approximates the canvas hatch painted over null cells.
+// Approximates the canvas hatch painted over null cells, which `createHatchPattern`
+// strokes in the theme's own direction — light on dark, dark on light.
 .hatchSwatch {
 	background-image: repeating-linear-gradient(
 		45deg,
 		transparent 0 2px,
-		var(--text-vanilla-400) 2px 3px
+		var(--muted-foreground) 2px 3px
 	);
 }
