@@ -936,10 +936,14 @@ def insert_attribute_evolution_to_clickhouse(conn, signal: str, release_time: da
     """Seed the `attributes` JSON column-evolution row for a signal at release_time. Unlike the
     resource row (seeded by the migrator at install), the attribute JSON rollout is install-specific
     and not migrator-seeded, so tests insert it to gate map-vs-JSON resolution across a window."""
+    # insert_deduplicate=0: successive tests seed a byte-identical row (release_time is
+    # minute-aligned), and ReplicatedMergeTree would drop the re-insert as a duplicate even
+    # after the prior test's teardown deleted it, leaving the querier to fall back to the Map.
     conn.command(
         """
         INSERT INTO signoz_metadata.distributed_column_evolution_metadata
             (signal, column_name, column_type, field_context, field_name, version, release_time)
+        SETTINGS insert_deduplicate = 0
         VALUES (%(signal)s, 'attributes', 'JSON()', 'attribute', '__all__', 1, %(release_time_ns)s)
         """,
         parameters={"signal": signal, "release_time_ns": int(release_time.timestamp() * 1e9)},
@@ -956,11 +960,7 @@ def seed_attribute_evolution(
     yield _seed
 
     cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
-    clickhouse.conn.query(
-        f"ALTER TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' "
-        "DELETE WHERE column_name = 'attributes' AND field_context = 'attribute' AND field_name = '__all__' "
-        "SETTINGS mutations_sync = 1"
-    )
+    clickhouse.conn.query(f"ALTER TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' DELETE WHERE column_name = 'attributes' AND field_context = 'attribute' AND field_name = '__all__' SETTINGS mutations_sync = 1")
 
 
 @pytest.fixture(name="insert_top_level_operations", scope="function")

@@ -90,9 +90,7 @@ def test_traces_attributes_json_evolution(
         ],
     )
     assert response.status_code == HTTPStatus.OK
-    before_series = index_series_by_label(
-        response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route"
-    )
+    before_series = index_series_by_label(response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route")
     assert_grouped_series(
         before_series,
         expected_values_by_group={
@@ -116,9 +114,7 @@ def test_traces_attributes_json_evolution(
         ],
     )
     assert response.status_code == HTTPStatus.OK
-    after_series = index_series_by_label(
-        response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route"
-    )
+    after_series = index_series_by_label(response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route")
     assert_grouped_series(
         after_series,
         expected_values_by_group={
@@ -142,9 +138,7 @@ def test_traces_attributes_json_evolution(
         ],
     )
     assert response.status_code == HTTPStatus.OK
-    spanning_series = index_series_by_label(
-        response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route"
-    )
+    spanning_series = index_series_by_label(response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route")
     assert_grouped_series(
         spanning_series,
         expected_values_by_group={
@@ -219,9 +213,8 @@ def test_traces_attributes_json_typed_filters(
             ],
         )
         assert response.status_code == HTTPStatus.OK, label
-        series = index_series_by_label(
-            response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route"
-        )
+        aggregations = (response.json()["data"]["data"]["results"][0].get("aggregations")) or []
+        series = index_series_by_label(aggregations[0]["series"], "http.route") if aggregations else {}
         assert set(series.keys()) == expected, label
 
 
@@ -299,9 +292,7 @@ def test_traces_attributes_json_collision_and_map_parity(
         ],
     )
     assert response.status_code == HTTPStatus.OK, "collision group-by"
-    series = index_series_by_label(
-        response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "app.status"
-    )
+    series = index_series_by_label(response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "app.status")
     assert set(series.keys()) == {"200", "teapot"}, "collision group-by"
 
     # Filters against the colliding/numeric names, grouped by route.
@@ -333,7 +324,6 @@ def test_traces_attributes_json_collision_and_map_parity(
             ],
         )
         assert response.status_code == HTTPStatus.OK, label
-        series = index_series_by_label(
-            response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route"
-        )
+        aggregations = (response.json()["data"]["data"]["results"][0].get("aggregations")) or []
+        series = index_series_by_label(aggregations[0]["series"], "http.route") if aggregations else {}
         assert set(series.keys()) == expected, label
