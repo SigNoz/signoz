@@ -86,7 +86,6 @@ function EditorRoute(): JSX.Element {
 	return (
 		<PanelEditorQueryBuilder
 			panelDefinition={requireQueryPanelDefinition('signoz/TimeSeriesPanel')}
-			signal={TelemetrytypesSignalDTO.metrics}
 			isLoadingQueries={false}
 			onStageRunQuery={noop}
 			onCancelQuery={noop}

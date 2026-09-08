@@ -19,7 +19,6 @@ function ListEditorPane({
 	return (
 		<PanelEditorQueryBuilder
 			panelDefinition={panelDefinition}
-			signal={signal}
 			isLoadingQueries={isLoadingQueries}
 			onStageRunQuery={onStageRunQuery}
 			onCancelQuery={onCancelQuery}

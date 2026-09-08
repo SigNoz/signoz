@@ -30,7 +30,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
@@ -119,8 +118,6 @@ type APIHandler struct {
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
 
-	LicensingAPI licensing.API
-
 	QueryParserAPI *queryparser.API
 
 	Signoz *signoz.SigNoz
@@ -138,8 +135,6 @@ type APIHandlerOpts struct {
 
 	// Flux Interval
 	FluxInterval time.Duration
-
-	LicensingAPI licensing.API
 
 	QueryParserAPI *queryparser.API
 
@@ -176,7 +171,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
-		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		QueryParserAPI:                opts.QueryParserAPI,
 	}

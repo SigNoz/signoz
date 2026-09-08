@@ -1,3 +1,4 @@
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -30,12 +31,12 @@ describe('DataSourceDropdown', () => {
 		expect(screen.getByRole('option', { name: 'Metrics' })).toBeInTheDocument();
 	});
 
-	it('offers only the sources the caller can visualize', async () => {
+	it('offers only the signals the caller can visualize', async () => {
 		render(
 			<DataSourceDropdown
 				data-testid={TEST_ID}
 				value={DataSource.METRICS}
-				supportedDataSources={[DataSource.METRICS]}
+				allowedDataSources={[TelemetrytypesSignalDTO.metrics]}
 				onChange={jest.fn()}
 			/>,
 		);
@@ -52,32 +53,16 @@ describe('DataSourceDropdown', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('lets an explicit list win over the list-panel default', async () => {
-		render(
-			<DataSourceDropdown
-				data-testid={TEST_ID}
-				value={DataSource.METRICS}
-				supportedDataSources={[DataSource.METRICS]}
-				isListViewPanel
-				onChange={jest.fn()}
-			/>,
-		);
-		await openDropdown();
-
-		await expect(
-			screen.findByRole('option', { name: 'Metrics' }),
-		).resolves.toBeInTheDocument();
-		expect(
-			screen.queryByRole('option', { name: 'Logs' }),
-		).not.toBeInTheDocument();
-	});
-
-	it('falls back to the explorer sources for a list panel', async () => {
+	it('drops a signal that is not a data source a query can be built against', async () => {
 		render(
 			<DataSourceDropdown
 				data-testid={TEST_ID}
 				value={DataSource.LOGS}
-				isListViewPanel
+				allowedDataSources={[
+					TelemetrytypesSignalDTO.logs,
+					TelemetrytypesSignalDTO.traces,
+					TelemetrytypesSignalDTO[''],
+				]}
 				onChange={jest.fn()}
 			/>,
 		);

@@ -1,20 +1,18 @@
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5RequestTypeDTO,
+	type TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
-import type { DataSource } from 'types/common/queryBuilder';
 
 import { getPanelDefinition } from './registry';
-import {
-	mergeQueryBuilderFieldRule,
-	SIGNAL_TO_DATA_SOURCE,
-	type FilterConfigsPartial,
-} from './types/panelCapabilities';
+import type { QueryBuilderFieldsConfig } from './types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from './types/panelDefinition';
 import type { PanelKind } from './types/panelKind';
 
 /**
  * The single deterministic guard for V2 dashboards. Every "what works with what"
- * question — panel kind × query type × signal, and which query-builder fields a kind
- * hides — is answered here by reading each kind's declared capabilities from the panel
+ * question — panel kind × query type × signal, and how a kind narrows the query
+ * builder — is answered here by reading each kind's declared capabilities from the panel
  * registry. Adding a new kind means declaring its capabilities once in its definition;
  * these functions then cover it automatically. Pure and side-effect free.
  */
@@ -59,17 +57,6 @@ export function getSupportedSignals(
 	kind: PanelKind,
 ): TelemetrytypesSignalDTO[] {
 	return getQueryPanelDefinition(kind)?.supportedSignals ?? [];
-}
-
-/**
- * The kind's signals as the query builder's `DataSource` list, so the builder
- * can't be pointed at data the panel would refuse to render.
- */
-export function getSupportedDataSources(kind: PanelKind): DataSource[] {
-	return getSupportedSignals(kind).flatMap((signal) => {
-		const dataSource = SIGNAL_TO_DATA_SOURCE[signal];
-		return dataSource ? [dataSource] : [];
-	});
 }
 
 export function isSignalSupported(
@@ -137,14 +124,19 @@ export function resolveQueryType(
 }
 
 /**
- * Query-builder field visibility for a kind + signal: the kind's `default` rule with
- * its per-signal overrides merged over it (signal wins). `{}` when the kind hides
- * nothing, i.e. the builder shows every field.
+ * How a kind narrows the query builder, on top of the baseline its request type
+ * implies. `{}` for a query-less kind, which has no builder to narrow.
  */
-export function getHiddenQueryBuilderFields(
+export function getQueryBuilderFields(
 	kind: PanelKind,
-	signal: TelemetrytypesSignalDTO,
-): FilterConfigsPartial {
-	const rule = getQueryPanelDefinition(kind)?.queryBuilderFields ?? {};
-	return mergeQueryBuilderFieldRule(rule, signal);
+): QueryBuilderFieldsConfig {
+	return getQueryPanelDefinition(kind)?.queryBuilderFields ?? {};
+}
+
+/** Read from the declared request type, so raw-ness has no second place to drift from. */
+export function isRawQueryKind(kind: PanelKind): boolean {
+	return (
+		getQueryPanelDefinition(kind)?.queryCapabilities.requestType ===
+		Querybuildertypesv5RequestTypeDTO.raw
+	);
 }

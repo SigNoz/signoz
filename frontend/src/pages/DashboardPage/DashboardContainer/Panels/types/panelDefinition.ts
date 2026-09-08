@@ -11,7 +11,7 @@ import type { AnyPanelInteractionProps } from './interactions';
 import type { PanelKind } from './panelKind';
 import type {
 	PanelQueryCapabilities,
-	QueryBuilderFieldRule,
+	QueryBuilderFieldsConfig,
 } from './panelCapabilities';
 import type {
 	BaseRendererProps,
@@ -119,8 +119,7 @@ export interface QueryPanelDefinition<K extends PanelKind = PanelKind>
 	supportedSignals: TelemetrytypesSignalDTO[];
 	/** Query languages this kind supports (Query Builder / ClickHouse / PromQL). */
 	supportedQueryTypes: EQueryType[];
-	/** Query-builder fields this kind hides/disables, optionally per signal (`{}` hides none). */
-	queryBuilderFields: QueryBuilderFieldRule;
+	queryBuilderFields: QueryBuilderFieldsConfig;
 	/** How this kind's query-range request is shaped (request type, paging, result formatting). */
 	queryCapabilities: PanelQueryCapabilities;
 }

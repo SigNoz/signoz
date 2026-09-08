@@ -1,5 +1,7 @@
 import { Grid3X3 } from '@signozhq/icons';
 
+import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
+
 import type { PanelDefinition } from '../../types/panelDefinition';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
@@ -27,10 +29,8 @@ export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 	],
 	// The request rejects both: a point is a count per bucket, not a single value.
 	queryBuilderFields: {
-		default: {
-			functions: { isHidden: true, isDisabled: true },
-			having: { isHidden: true, isDisabled: true },
-		},
+		[QueryBuilderField.Functions]: { state: 'hidden' },
+		[QueryBuilderField.Having]: { state: 'hidden' },
 	},
 	// Every timestamp is a full column of cells, so the request asks for a step interval
 	// wide enough to keep the grid legible: at raw resolution a multi-day range is tens of

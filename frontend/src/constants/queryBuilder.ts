@@ -32,7 +32,6 @@ import {
 	MeterAggregateOperator,
 	MetricAggregateOperator,
 	NumberOperators,
-	QueryAdditionalFilter,
 	QueryBuilderData,
 	ReduceOperators,
 	StringOperators,
@@ -102,43 +101,6 @@ export const metricsSpaceAggregationOperatorsByType = {
 	Gauge: metricsGaugeSpaceAggregateOperatorOptions,
 	Histogram: metricsHistogramSpaceAggregateOperatorOptions,
 	ExponentialHistogram: metricsHistogramSpaceAggregateOperatorOptions,
-};
-
-export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
-	metrics: [
-		{ text: 'Aggregation interval', field: 'stepInterval' },
-		{ text: 'Having', field: 'having' },
-	],
-	logs: [
-		{ text: 'Order by', field: 'orderBy' },
-		{ text: 'Limit', field: 'limit' },
-		{ text: 'Having', field: 'having' },
-		{ text: 'Aggregation interval', field: 'stepInterval' },
-	],
-	traces: [
-		{ text: 'Order by', field: 'orderBy' },
-		{ text: 'Limit', field: 'limit' },
-		{ text: 'Having', field: 'having' },
-		{ text: 'Aggregation interval', field: 'stepInterval' },
-	],
-};
-
-const commonFormulaFilters: QueryAdditionalFilter[] = [
-	{
-		text: 'Having',
-		field: 'having',
-	},
-	{ text: 'Order by', field: 'orderBy' },
-	{ text: 'Limit', field: 'limit' },
-];
-
-export const mapOfFormulaToFilters: Record<
-	DataSource,
-	QueryAdditionalFilter[]
-> = {
-	metrics: commonFormulaFilters,
-	logs: commonFormulaFilters,
-	traces: commonFormulaFilters,
 };
 
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
@@ -343,6 +305,19 @@ export const initialQueryMeterWithType: Query = {
 			{
 				...initialQueryBuilderFormValuesMap.metrics,
 				source: 'meter',
+			},
+		],
+	},
+};
+
+export const initialQueryAIWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [
+			{
+				...initialQueryBuilderFormValuesMap.traces,
+				builderQueryType: 'builder_ai_query',
 			},
 		],
 	},

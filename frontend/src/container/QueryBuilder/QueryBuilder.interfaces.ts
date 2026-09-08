@@ -1,21 +1,8 @@
 import { ReactNode } from 'react';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-
-import { OrderByFilterProps } from './filters/OrderByFilter/OrderByFilter.interfaces';
-
-export type WhereClauseConfig = {
-	customKey: string;
-	customOp: string;
-};
-
-type FilterConfigs = {
-	[Key in keyof Omit<IBuilderQuery, 'filters'>]: {
-		isHidden: boolean;
-		isDisabled: boolean;
-	};
-} & { filters: WhereClauseConfig };
 
 export type QueryBuilderConfig =
 	| {
@@ -29,11 +16,16 @@ export type QueryBuilderProps = {
 	config?: QueryBuilderConfig;
 	panelType: PANEL_TYPES;
 	actions?: ReactNode;
-	filterConfigs?: Partial<FilterConfigs>;
-	/** Signals the data-source dropdown may offer; defaults to all of them. */
-	supportedDataSources?: DataSource[];
-	queryComponents?: { renderOrderBy?: (props: OrderByFilterProps) => ReactNode };
-	isListViewPanel?: boolean;
+	fieldsConfig?: QueryBuilderFieldsConfig;
+	/**
+	 * The builder edits raw rows rather than an aggregation: a single query unless trace
+	 * matching is on, no formulas, data-source switches reset to the raw-query template,
+	 * and order by resolves keys without an aggregate attribute. Supplies the defaults for
+	 * `fieldsConfig` and `allowedDataSources`, which override it per field.
+	 */
+	isRawQuery?: boolean;
+	/** Defaults to every signal. */
+	allowedDataSources?: TelemetrytypesSignalDTO[];
 	showFunctions?: boolean;
 	showOnlyWhereClause?: boolean;
 	showOnlyTraceOperator?: boolean;

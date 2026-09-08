@@ -1,6 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import { OPERATORS } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -45,14 +43,10 @@ jest.mock('assets/Dashboard/PromQl', () => ({
 
 const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
 
-function renderBuilder(
-	panelKind: string,
-	signal: TelemetrytypesSignalDTO = TelemetrytypesSignalDTO.logs,
-): void {
+function renderBuilder(panelKind: string): void {
 	render(
 		<PanelEditorQueryBuilder
 			panelDefinition={requireQueryPanelDefinition(panelKind as PanelKind)}
-			signal={signal}
 			isLoadingQueries={false}
 			onStageRunQuery={jest.fn()}
 			onCancelQuery={jest.fn()}
@@ -62,10 +56,10 @@ function renderBuilder(
 
 function lastQueryBuilderProps(): {
 	panelType: string;
-	isListViewPanel: boolean;
+	isRawQuery: boolean;
 	showTraceOperator: boolean;
-	filterConfigs: unknown;
-	supportedDataSources: string[];
+	fieldsConfig: unknown;
+	allowedDataSources: string[];
 } {
 	const calls = mockQueryBuilderV2.mock.calls;
 	return calls[calls.length - 1][0];
@@ -81,7 +75,7 @@ describe('PanelEditorQueryBuilder query-type tabs (driven by the capabilities gu
 	});
 
 	it('shows only the Query Builder tab for the List kind', () => {
-		renderBuilder('signoz/ListPanel', TelemetrytypesSignalDTO.logs);
+		renderBuilder('signoz/ListPanel');
 
 		expect(screen.getByText('Query Builder')).toBeInTheDocument();
 		expect(screen.queryByText('ClickHouse Query')).not.toBeInTheDocument();
@@ -115,41 +109,34 @@ describe('PanelEditorQueryBuilder field visibility (driven by the capabilities g
 	});
 
 	it('passes empty field config + non-list flag for a non-list kind', () => {
-		renderBuilder('signoz/TimeSeriesPanel', TelemetrytypesSignalDTO.metrics);
+		renderBuilder('signoz/TimeSeriesPanel');
 
 		const props = lastQueryBuilderProps();
 		expect(props.panelType).toBe('graph');
-		expect(props.isListViewPanel).toBe(false);
+		expect(props.isRawQuery).toBe(false);
 		// The trace operator combines aggregated trace queries, so it rides along with
 		// the aggregation controls.
 		expect(props.showTraceOperator).toBe(true);
-		expect(props.filterConfigs).toStrictEqual({});
+		expect(props.fieldsConfig).toStrictEqual({});
 	});
 
-	it('hides step interval / having and sets body-contains for List + logs', () => {
-		renderBuilder('signoz/ListPanel', TelemetrytypesSignalDTO.logs);
+	it('hands the fields the Heatmap hides to the builder', () => {
+		renderBuilder('signoz/HeatmapPanel');
+
+		expect(lastQueryBuilderProps().fieldsConfig).toStrictEqual({
+			functions: { state: 'hidden' },
+			having: { state: 'hidden' },
+		});
+	});
+
+	it('marks List raw and leaves the field surface to the raw baseline', () => {
+		renderBuilder('signoz/ListPanel');
 
 		const props = lastQueryBuilderProps();
 		expect(props.panelType).toBe('list');
-		expect(props.isListViewPanel).toBe(true);
+		expect(props.isRawQuery).toBe(true);
 		expect(props.showTraceOperator).toBe(false);
-		expect(props.filterConfigs).toStrictEqual({
-			stepInterval: { isHidden: true, isDisabled: true },
-			having: { isHidden: true, isDisabled: true },
-			filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
-		});
-	});
-
-	it('additionally hides limit for List + traces', () => {
-		renderBuilder('signoz/ListPanel', TelemetrytypesSignalDTO.traces);
-
-		const props = lastQueryBuilderProps();
-		expect(props.filterConfigs).toStrictEqual({
-			stepInterval: { isHidden: true, isDisabled: true },
-			having: { isHidden: true, isDisabled: true },
-			limit: { isHidden: true, isDisabled: true },
-			filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
-		});
+		expect(props.fieldsConfig).toStrictEqual({});
 	});
 });
 
@@ -163,26 +150,26 @@ describe('PanelEditorQueryBuilder signal dropdown (driven by the capabilities gu
 	});
 
 	it('offers metrics alone for the Heatmap kind — the only signal with a bucket axis', () => {
-		renderBuilder('signoz/HeatmapPanel', TelemetrytypesSignalDTO.metrics);
+		renderBuilder('signoz/HeatmapPanel');
 
-		expect(lastQueryBuilderProps().supportedDataSources).toStrictEqual([
+		expect(lastQueryBuilderProps().allowedDataSources).toStrictEqual([
 			'metrics',
 		]);
 	});
 
 	it('offers logs and traces for the List kind, which reads raw rows', () => {
-		renderBuilder('signoz/ListPanel', TelemetrytypesSignalDTO.logs);
+		renderBuilder('signoz/ListPanel');
 
-		expect(lastQueryBuilderProps().supportedDataSources).toStrictEqual([
+		expect(lastQueryBuilderProps().allowedDataSources).toStrictEqual([
 			'logs',
 			'traces',
 		]);
 	});
 
 	it('offers every signal for a kind that visualizes them all', () => {
-		renderBuilder('signoz/TimeSeriesPanel', TelemetrytypesSignalDTO.metrics);
+		renderBuilder('signoz/TimeSeriesPanel');
 
-		expect(lastQueryBuilderProps().supportedDataSources).toStrictEqual([
+		expect(lastQueryBuilderProps().allowedDataSources).toStrictEqual([
 			'metrics',
 			'logs',
 			'traces',

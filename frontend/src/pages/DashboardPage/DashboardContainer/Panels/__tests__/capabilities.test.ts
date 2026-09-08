@@ -2,7 +2,6 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { OPERATORS } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
 import { UNSUPPORTED_PANEL } from '../kinds/UnsupportedPanel/definition';
@@ -10,9 +9,9 @@ import { getPanelDefinition, isPanelKindSupported } from '../registry';
 import type { PanelQueryCapabilities } from '../types/panelCapabilities';
 import { NO_PANEL_ACTIONS } from '../types/panelDefinition';
 import {
-	getHiddenQueryBuilderFields,
+	getQueryBuilderFields,
 	getQueryPanelDefinition,
-	getSupportedDataSources,
+	isRawQueryKind,
 	requireQueryPanelDefinition,
 	getSupportedQueryTypes,
 	getSupportedSignals,
@@ -21,6 +20,7 @@ import {
 	isSignalSupported,
 	resolveQueryType,
 } from '../capabilities';
+import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import type { PanelKind } from '../types/panelKind';
 
 const { QUERY_BUILDER, CLICKHOUSE, PROM } = EQueryType;
@@ -150,7 +150,7 @@ describe('panel capabilities guard', () => {
 			expect(
 				isPanelCombinationValid({ kind: unknownKind, queryType: QUERY_BUILDER }),
 			).toBe(false);
-			expect(getHiddenQueryBuilderFields(unknownKind, logs)).toStrictEqual({});
+			expect(getQueryBuilderFields(unknownKind)).toStrictEqual({});
 			expect(getPanelDefinition(unknownKind).sections).toStrictEqual([]);
 		});
 
@@ -206,20 +206,6 @@ describe('panel capabilities guard', () => {
 			expect(getSupportedSignals(kind)).toStrictEqual(EXPECTED_SIGNALS[kind]);
 		});
 
-		it.each(ALL_KINDS)(
-			'offers %s the data sources its signals name, and nothing else',
-			(kind) => {
-				expect(getSupportedDataSources(kind)).toStrictEqual(
-					EXPECTED_SIGNALS[kind].map((signal) => signal as string),
-				);
-			},
-		);
-
-		it('offers nothing for a kind this build cannot render', () => {
-			expect(
-				getSupportedDataSources('signoz/SomeFutureKindPanel' as PanelKind),
-			).toStrictEqual([]);
-		});
 
 		it('List excludes metrics', () => {
 			expect(isSignalSupported('signoz/ListPanel', metrics)).toBe(false);
@@ -289,36 +275,33 @@ describe('panel capabilities guard', () => {
 		});
 	});
 
-	describe('getHiddenQueryBuilderFields', () => {
-		it('returns {} for kinds that declare no field rules', () => {
-			expect(
-				getHiddenQueryBuilderFields('signoz/TimeSeriesPanel', logs),
-			).toStrictEqual({});
-			expect(getHiddenQueryBuilderFields('signoz/TablePanel', logs)).toStrictEqual(
-				{},
-			);
+	describe('getQueryBuilderFields', () => {
+		it('returns {} for kinds that narrow nothing', () => {
+			expect(getQueryBuilderFields('signoz/TimeSeriesPanel')).toStrictEqual({});
+			expect(getQueryBuilderFields('signoz/TablePanel')).toStrictEqual({});
+			expect(getQueryBuilderFields('signoz/NumberPanel')).toStrictEqual({});
 		});
 
-		// Mirrors QueryBuilderV2's internal listViewLogFilterConfigs — the guard is the
-		// single source of truth for these values.
-		it('hides step interval / having and sets body-contains for List + logs', () => {
-			expect(getHiddenQueryBuilderFields('signoz/ListPanel', logs)).toStrictEqual({
-				stepInterval: { isHidden: true, isDisabled: true },
-				having: { isHidden: true, isDisabled: true },
-				filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
-			});
+		it('returns {} for List, which relies on the raw baseline', () => {
+			expect(getQueryBuilderFields('signoz/ListPanel')).toStrictEqual({});
 		});
 
-		// Mirrors listViewTracesFilterConfigs — traces additionally hide `limit`.
-		it('additionally hides limit for List + traces', () => {
-			expect(
-				getHiddenQueryBuilderFields('signoz/ListPanel', traces),
-			).toStrictEqual({
-				stepInterval: { isHidden: true, isDisabled: true },
-				having: { isHidden: true, isDisabled: true },
-				limit: { isHidden: true, isDisabled: true },
-				filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
+		it('hides the fields a Heatmap has nothing to apply them to', () => {
+			// A point is a count per bucket: there is no single value for a function or
+			// a having clause to act on, and the request rejects both.
+			expect(getQueryBuilderFields('signoz/HeatmapPanel')).toStrictEqual({
+				[QueryBuilderField.Functions]: { state: 'hidden' },
+				[QueryBuilderField.Having]: { state: 'hidden' },
 			});
+		});
+	});
+
+	describe('isRawQueryKind', () => {
+		it('is true only for the kind whose request type is raw', () => {
+			expect(isRawQueryKind('signoz/ListPanel')).toBe(true);
+			expect(isRawQueryKind('signoz/TimeSeriesPanel')).toBe(false);
+			expect(isRawQueryKind('signoz/TablePanel')).toBe(false);
+			expect(isRawQueryKind('signoz/NumberPanel')).toBe(false);
 		});
 	});
 });

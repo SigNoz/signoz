@@ -16,11 +16,13 @@ import * as Sentry from '@sentry/react';
 import { Toaster } from '@signozhq/ui/sonner';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { Flex } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
 import logEvent from 'api/common/logEvent';
-import manageCreditCardApi from 'api/v1/portal/create';
+import { updateSubscription } from 'api/generated/services/subscriptions';
+import type { UpdateSubscription200 } from 'api/generated/services/sigNoz.schemas';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import getUserVersion from 'api/v1/version/get';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
@@ -30,6 +32,8 @@ import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { SubscriptionManagePermissions } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import { MIN_ACCOUNT_AGE_FOR_CHANGELOG } from 'constants/changelog';
 import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
@@ -63,8 +67,7 @@ import {
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
-import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
-import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	ChangelogSchema,
 	DeploymentType,
@@ -77,7 +80,6 @@ import {
 } from 'types/api/licensesV3/getActive';
 import { UserPreference } from 'types/api/preferences/preference';
 import AppReducer from 'types/reducer/app';
-import { USER_ROLES } from 'types/roles';
 import { getBaseUrl } from 'utils/basePath';
 import { showErrorNotification } from 'utils/error';
 import { eventEmitter } from 'utils/getEventEmitter';
@@ -166,9 +168,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		return Math.abs(currentDate.diff(userCreationDate, 'day'));
 	}, [user.createdAt]);
 
-	const handleBillingOnSuccess = (
-		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
-	): void => {
+	const handleBillingOnSuccess = (data: UpdateSubscription200): void => {
 		if (data?.data?.redirectURL) {
 			const newTab = document.createElement('a');
 			newTab.href = data.data.redirectURL;
@@ -186,7 +186,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	};
 
 	const { mutate: manageCreditCard, isLoading: isLoadingManageBilling } =
-		useMutation(manageCreditCardApi, {
+		useMutation(updateSubscription, {
 			onSuccess: (data) => {
 				handleBillingOnSuccess(data);
 			},
@@ -469,10 +469,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [isLoggedIn]);
 
 	const handleUpgrade = useCallback((): void => {
-		if (user.role === USER_ROLES.ADMIN) {
-			history.push(ROUTES.BILLING);
-		}
-	}, [user.role]);
+		history.push(ROUTES.BILLING);
+	}, []);
 
 	const handleFailedPayment = useCallback((): void => {
 		manageCreditCard({
@@ -586,25 +584,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					<div>
 						Our systems are taking longer than expected for your trial workspace.
 						Please{' '}
-						{user.role === USER_ROLES.ADMIN ? (
-							<span>
-								<a
-									className="upgrade-link"
-									onClick={(): void => {
-										notifications.destroy('slow-api-warning');
+						<span>
+							<a
+								className="upgrade-link"
+								onClick={(): void => {
+									notifications.destroy('slow-api-warning');
 
-										logEvent(`Slow API Banner: Upgrade clicked`, {});
+									logEvent(`Slow API Banner: Upgrade clicked`, {});
 
-										handleUpgrade();
-									}}
-								>
-									upgrade
-								</a>
-								your workspace for a smoother experience.
-							</span>
-						) : (
-							'contact your administrator for upgrading to a paid plan for a smoother experience.'
-						)}
+									handleUpgrade();
+								}}
+							>
+								upgrade
+							</a>
+							your workspace for a smoother experience.
+						</span>
 					</div>
 				),
 				duration: 60000,
@@ -794,22 +788,18 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 							<div className="trial-expiry-banner">
 								You are in free trial period. Your free trial will end on{' '}
 								<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
-								{user.role === USER_ROLES.ADMIN ? (
-									<span>
+								<span>
+									{' '}
+									Please{' '}
+									<a className="upgrade-link" onClick={handleUpgrade}>
+										upgrade
+									</a>
+									to continue using SigNoz features.
+									<span className="refresh-payment-status">
 										{' '}
-										Please{' '}
-										<a className="upgrade-link" onClick={handleUpgrade}>
-											upgrade
-										</a>
-										to continue using SigNoz features.
-										<span className="refresh-payment-status">
-											{' '}
-											| Already upgraded? <RefreshPaymentStatus type="text" />
-										</span>
+										| Already upgraded? <RefreshPaymentStatus type="text" />
 									</span>
-								) : (
-									'Please contact your administrator for upgrading to a paid plan.'
-								)}
+								</span>
 							</div>
 						)}
 
@@ -826,22 +816,25 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 									)}
 									.
 								</span>
-								{user.role === USER_ROLES.ADMIN ? (
-									<span>
-										{' '}
-										Please{' '}
-										<a className="upgrade-link" onClick={handleFailedPayment}>
+								<span>
+									{' '}
+									Please{' '}
+									<AuthZTooltip checks={SubscriptionManagePermissions}>
+										<Button
+											variant="link"
+											color="none"
+											className="upgrade-link"
+											onClick={handleFailedPayment}
+										>
 											pay the bill
-										</a>
-										to continue using SigNoz features.
-										<span className="refresh-payment-status">
-											{' '}
-											| Already paid? <RefreshPaymentStatus type="text" />
-										</span>
+										</Button>
+									</AuthZTooltip>
+									to continue using SigNoz features.
+									<span className="refresh-payment-status">
+										{' '}
+										| Already paid? <RefreshPaymentStatus type="text" />
 									</span>
-								) : (
-									' Please contact your administrator to pay the bill.'
-								)}
+								</span>
 							</div>
 						)}
 					</div>

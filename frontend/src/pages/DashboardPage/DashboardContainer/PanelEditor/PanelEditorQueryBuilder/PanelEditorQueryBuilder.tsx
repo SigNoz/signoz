@@ -9,7 +9,6 @@ import { Atom, Terminal } from '@signozhq/icons';
 import { Tabs } from 'antd';
 import cx from 'classnames';
 import { Typography } from '@signozhq/ui/typography';
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import TextToolTip from 'components/TextToolTip';
@@ -21,18 +20,16 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { EQueryType } from 'types/common/dashboard';
 
-import { getSupportedDataSources } from '../../Panels/capabilities';
-import { mergeQueryBuilderFieldRule } from '../../Panels/types/panelCapabilities';
+import { isRawQueryKind } from '../../Panels/capabilities';
 import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDefinition';
 import { PANEL_KIND_TO_PANEL_TYPE } from '../../Panels/types/panelKind';
 
 import styles from './PanelEditorQueryBuilder.module.scss';
 
 interface PanelEditorQueryBuilderProps {
-	/** The edited kind's definition — drives supported query types + field visibility. */
+	/** The edited kind's definition — drives supported query types, the signals the
+	 *  builder may be pointed at, and how it narrows the builder's fields. */
 	panelDefinition: RenderableQueryPanelDefinition;
-	/** The panel's current signal; selects per-signal query-builder field rules. */
-	signal: TelemetrytypesSignalDTO;
 	/** Preview fetch in flight — drives the Stage & Run button's loading/cancel state. */
 	isLoadingQueries: boolean;
 	/** Run the current query (Stage & Run button / ⌘↵). Always re-runs. */
@@ -52,7 +49,6 @@ interface PanelEditorQueryBuilderProps {
  */
 function PanelEditorQueryBuilder({
 	panelDefinition,
-	signal,
 	isLoadingQueries,
 	onStageRunQuery,
 	onCancelQuery,
@@ -64,7 +60,7 @@ function PanelEditorQueryBuilder({
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelDefinition.kind];
 	// Raw rows: the builder drops its aggregation controls, and with them the trace
 	// operator that combines aggregated trace queries (V1 parity).
-	const isListViewPanel = panelDefinition.kind === 'signoz/ListPanel';
+	const isRawQuery = isRawQueryKind(panelDefinition.kind);
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
 
@@ -92,19 +88,14 @@ function PanelEditorQueryBuilder({
 		[onStageRunQuery],
 	);
 
-	// Per-kind query-builder field rules from the guard (e.g. List hides step interval
-	// and having), passed to QueryBuilderV2 as its `filterConfigs`.
-	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(
-		() => mergeQueryBuilderFieldRule(panelDefinition.queryBuilderFields, signal),
-		[panelDefinition.queryBuilderFields, signal],
-	);
+	// How this kind narrows the builder's fields, on top of the baseline its request
+	// type implies (e.g. a Heatmap hides functions and having).
+	const fieldsConfig: QueryBuilderProps['fieldsConfig'] =
+		panelDefinition.queryBuilderFields;
 
 	// The signal dropdown offers what this kind can visualize, not every signal the
 	// builder knows — a Heatmap reads a bucket axis, which only metrics carry.
-	const supportedDataSources = useMemo(
-		() => getSupportedDataSources(panelDefinition.kind),
-		[panelDefinition.kind],
-	);
+	const allowedDataSources = panelDefinition.supportedSignals;
 
 	const items = useMemo(() => {
 		const { supportedQueryTypes } = panelDefinition;
@@ -117,12 +108,11 @@ function PanelEditorQueryBuilder({
 					<div className="query-builder-v2-container">
 						<QueryBuilderV2
 							panelType={panelType}
-							filterConfigs={filterConfigs}
-							supportedDataSources={supportedDataSources}
-							showTraceOperator={!isListViewPanel}
+							fieldsConfig={fieldsConfig}
+							allowedDataSources={allowedDataSources}
+							showTraceOperator={!isRawQuery}
 							version="v3"
-							isListViewPanel={isListViewPanel}
-							queryComponents={{}}
+							isRawQuery={isRawQuery}
 							signalSourceChangeEnabled
 							savePreviousQuery
 						/>
@@ -158,10 +148,10 @@ function PanelEditorQueryBuilder({
 	}, [
 		panelDefinition,
 		panelType,
-		filterConfigs,
-		supportedDataSources,
+		fieldsConfig,
+		allowedDataSources,
 		isDarkMode,
-		isListViewPanel,
+		isRawQuery,
 	]);
 
 	return (

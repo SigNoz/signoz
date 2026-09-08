@@ -26,7 +26,7 @@ export type QueryProps = {
 	isAvailableToDisable: boolean;
 	query: IBuilderQuery;
 	queryVariant?: 'static' | 'dropdown';
-	isListViewPanel?: boolean;
+	isRawQuery?: boolean;
 	showFunctions?: boolean;
 	version: string;
 	showSpanScopeSelector?: boolean;
@@ -35,7 +35,4 @@ export type QueryProps = {
 	hasTraceOperator?: boolean;
 	signalSource?: string;
 	isMultiQueryAllowed?: boolean;
-} & Pick<
-	QueryBuilderProps,
-	'filterConfigs' | 'queryComponents' | 'supportedDataSources'
->;
+} & Pick<QueryBuilderProps, 'fieldsConfig' | 'allowedDataSources'>;
