@@ -31,6 +31,37 @@ func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionB
 	return &conditionBuilder{fm: fm, fl: fl}
 }
 
+// numberAttributeIndexPredicate returns what an equality on a numeric attribute implies over
+// mapValues(attributes_number), which its bloom filter indexes while the subscript the comparison
+// reads matches nothing. The paired mapContains is what makes membership hold for the zero default.
+// mapExpression gates it to a plain subscript read — a materialized column or a family multiIf
+// carries nothing.
+func numberAttributeIndexPredicate(mapExpression string, value any, sb *sqlbuilder.SelectBuilder) string {
+	if !strings.HasPrefix(mapExpression, SpanAttributesNumberColumn+"['") {
+		return ""
+	}
+	// a non-numeric value means the collision handler compared the column as text, where an
+	// Array(Float64) membership check has no supertype
+	switch value.(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+		return fmt.Sprintf("has(mapValues(%s), %s)", SpanAttributesNumberColumn, sb.Var(value))
+	}
+	return ""
+}
+
+// stringAttributeIndexPredicate returns the raw-value match a case-insensitive one implies when
+// the pattern holds no ASCII letter, LOWER being the identity on those bytes. A letter breaks it:
+// an `a` in the pattern may have come from an `A` in the value.
+func stringAttributeIndexPredicate(mapExpression, pattern string, sb *sqlbuilder.SelectBuilder) string {
+	if !strings.HasPrefix(mapExpression, SpanAttributesStringColumn+"['") {
+		return ""
+	}
+	if strings.ContainsFunc(pattern, func(r rune) bool { return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') }) {
+		return ""
+	}
+	return sb.Like(mapExpression, pattern)
+}
+
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -69,6 +100,9 @@ func (c *conditionBuilder) conditionFor(
 		}
 	}
 
+	// the raw map read, before the collision handler wraps the subscript
+	mapExpression := fieldExpression
+
 	// Coercion switches only on the data type, which every member shares, so
 	// the first member stands in for the field.
 	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(logical.Single(), value, fieldExpression, operator)
@@ -77,6 +111,9 @@ func (c *conditionBuilder) conditionFor(
 	switch operator {
 	// regular operators
 	case qbtypes.FilterOperatorEqual:
+		if predicate := numberAttributeIndexPredicate(mapExpression, value, sb); predicate != "" {
+			return sb.And(sb.E(fieldExpression, value), predicate), nil
+		}
 		return sb.E(fieldExpression, value), nil
 	case qbtypes.FilterOperatorNotEqual:
 		return sb.NE(fieldExpression, value), nil
@@ -95,12 +132,23 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorNotLike:
 		return sb.NotLike(fieldExpression, value), nil
 	case qbtypes.FilterOperatorILike:
+		if pattern, ok := value.(string); ok {
+			if predicate := stringAttributeIndexPredicate(mapExpression, pattern, sb); predicate != "" {
+				return sb.And(sb.ILike(fieldExpression, pattern), predicate), nil
+			}
+		}
 		return sb.ILike(fieldExpression, value), nil
 	case qbtypes.FilterOperatorNotILike:
 		return sb.NotILike(fieldExpression, value), nil
 
 	case qbtypes.FilterOperatorContains:
-		return sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
+		// The map value indexes are over raw mapValues, which a case-insensitive match reaches only
+		// for the patterns stringAttributeIndexPredicate can assert the raw value from.
+		pattern := fmt.Sprintf("%%%s%%", value)
+		if predicate := stringAttributeIndexPredicate(mapExpression, pattern, sb); predicate != "" {
+			return sb.And(sb.ILike(fieldExpression, pattern), predicate), nil
+		}
+		return sb.ILike(fieldExpression, pattern), nil
 	case qbtypes.FilterOperatorNotContains:
 		return sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
 

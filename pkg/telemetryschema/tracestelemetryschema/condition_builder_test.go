@@ -66,6 +66,32 @@ func TestConditionFor(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name: "Equal operator - number attribute carries the mapValues membership",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "resp_code",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			},
+			operator:      qbtypes.FilterOperatorEqual,
+			value:         float64(503),
+			expectedSQL:   "((toFloat64(attributes_number['resp_code']) = ? AND has(mapValues(attributes_number), ?)) AND mapContains(attributes_number, 'resp_code'))",
+			expectedArgs:  []any{float64(503), float64(503)},
+			expectedError: nil,
+		},
+		{
+			name: "Contains operator - letter-free value carries the raw-value match",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "client.ip",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorContains,
+			value:         "192.168.77",
+			expectedSQL:   "((LOWER(attributes_string['client.ip']) LIKE LOWER(?) AND attributes_string['client.ip'] LIKE ?) AND mapContains(attributes_string, 'client.ip'))",
+			expectedArgs:  []any{"%192.168.77%", "%192.168.77%"},
+			expectedError: nil,
+		},
+		{
 			name: "Greater Than Or Equal operator - timestamp",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "timestamp",
