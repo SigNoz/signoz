@@ -3,6 +3,7 @@ package apiserver
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
@@ -55,5 +56,9 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
+	if c.Address == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "apiserver.address is required")
+	}
+
 	return nil
 }

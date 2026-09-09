@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/authz"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
@@ -338,10 +337,6 @@ func newProvider(
 
 			prefixed.ServeHTTP(w, req)
 		})
-	}
-
-	if config.Address == "" {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "apiserver.address is required")
 	}
 
 	httpServer, err := httpserver.New(settings.Logger(), httpserver.Config{Address: config.Address}, httpHandler)
