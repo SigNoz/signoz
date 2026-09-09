@@ -16,6 +16,7 @@ import { getDataLinks } from 'pages/DashboardPage/DashboardContainer/Panels/util
 import { resolvePanelContextLinks } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/resolvePanelContextLinks';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { withBasePath } from 'utils/basePath';
 import { openInNewTab } from 'utils/navigation';
 
 import { useDrilldownContextVariables } from '../hooks/useDrilldownContextVariables';
@@ -173,8 +174,22 @@ function DrilldownAggregateMenu({
 						void logEvent(DashboardDetailEvents.DrilldownAction, {
 							action: 'contextLink',
 						});
-						openInNewTab(link.url);
-						onClose();
+						try {
+							if (link.targetBlank === false) {
+								// Imported links and variable substitutions bypass editor URL validation.
+								const { protocol } = new URL(withBasePath(link.url), document.baseURI);
+								if (protocol !== 'http:' && protocol !== 'https:') {
+									return;
+								}
+								window.open(withBasePath(link.url), '_self');
+							} else {
+								openInNewTab(link.url);
+							}
+						} catch {
+							return;
+						} finally {
+							onClose();
+						}
 					}}
 				>
 					<span data-testid="drilldown-context-link">{link.label}</span>
