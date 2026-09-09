@@ -551,7 +551,20 @@ def test_notification_channel_v2_lifecycle(  # pylint: disable=too-many-statemen
     assert listed["total"] == 3
     assert len(listed["channels"]) == 2
 
-    # ── stage 7: get by id ────────────────────────────────────────────────────
+    # ── stage 7: page past the last match ─────────────────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        params={"query": token_hex, "offset": 10},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    listed = response.json()["data"]
+    assert listed["channels"] == []
+    assert listed["total"] == 3
+
+    # ── stage 8: get by id ────────────────────────────────────────────────────
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{ids['alpha']}"),
         headers={"Authorization": f"Bearer {token}"},
@@ -565,7 +578,7 @@ def test_notification_channel_v2_lifecycle(  # pylint: disable=too-many-statemen
     assert fetched["config"]["spec"]["apiUrl"] == "https://hooks.slack.test/services/T/B/Z"
     assert fetched["config"]["spec"]["channel"] == "#incidents"
 
-    # ── stage 8: update the kind ──────────────────────────────────────────────
+    # ── stage 9: update the kind ──────────────────────────────────────────────
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{ids['beta']}"),
         json={"config": {"kind": "webhook", "spec": {"url": "https://webhook.test/hook"}}},
@@ -575,7 +588,7 @@ def test_notification_channel_v2_lifecycle(  # pylint: disable=too-many-statemen
     assert response.status_code == HTTPStatus.OK, response.text
     assert response.json()["data"]["config"]["kind"] == "webhook"
 
-    # ── stage 9: delete ───────────────────────────────────────────────────────
+    # ── stage 10: delete ──────────────────────────────────────────────────────
     response = requests.delete(
         signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{ids['gamma']}"),
         headers={"Authorization": f"Bearer {token}"},

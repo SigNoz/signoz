@@ -199,11 +199,20 @@ func (store *config) ListChannels(ctx context.Context, orgID string, params *ale
 		return nil, 0, err
 	}
 
-	// COUNT(*) OVER () is computed pre-LIMIT, so any returned row carries the
-	// full filter total. Empty result page => zero matches.
+	// COUNT(*) OVER () is computed pre-LIMIT, so any returned row carries the full
+	// filter total.
 	var total int64
 	if len(rows) > 0 {
 		total = rows[0].Total
+	} else if params.Offset > 0 {
+		// An empty page carries no total. At offset zero that means nothing
+		// matched, but past the last match it hides the rows the offset skipped.
+		matches, err := q.Count(ctx)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		total = int64(matches)
 	}
 
 	channels := make([]*alertmanagertypes.Channel, len(rows))
