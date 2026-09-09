@@ -138,8 +138,12 @@ function ProcessorForm({
 }: ProcessorFormProps): JSX.Element {
 	const { featureFlags } = useAppContext();
 	const isBodyJsonEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
-			?.active || false;
+		featureFlags?.some(
+			(flag) =>
+				(flag.name === FeatureKeys.USE_JSON_BODY ||
+					flag.name === FeatureKeys.JSON_BODY_DUAL_INGESTION) &&
+				flag.active,
+		) || false;
 
 	return (
 		<div className="processor-form-container">

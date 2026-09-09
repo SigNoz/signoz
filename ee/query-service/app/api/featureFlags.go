@@ -80,6 +80,15 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
+	jsonBodyDualIngestion := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureJSONBodyDualIngestion, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureJSONBodyDualIngestion.String()),
+		Active:     jsonBodyDualIngestion,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
 	aiObservability := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, evalCtx)
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureEnableAIObservability.String()),
