@@ -255,13 +255,15 @@ def test_builder_refreshing_a_sliding_time_range(
 
     query = [build_builder_query("A", metric_name, "max", "max")]
 
+    # the 1m step gives one point per seeded minute, and a value no other minute
+    # carries, so a point stitched in from the wrong range reads as the wrong minute
     insert_metrics(
         [
             Metrics(
                 metric_name=metric_name,
                 labels={"service": "api"},
                 timestamp=start_time + timedelta(minutes=minute),
-                value=256 * 2 ** (minute % 3),
+                value=1000 + minute,
                 type_="Gauge",
                 is_monotonic=False,
             )
@@ -277,10 +279,12 @@ def test_builder_refreshing_a_sliding_time_range(
         from_cache = make_query_request(signoz, token, refresh_start_ms, refresh_start_ms + 60 * MINUTE_MS, query, no_cache=False)
         assert from_cache.status_code == HTTPStatus.OK, from_cache.text
 
-        # each refresh is stitched out of overlapping cached ranges, and a point
-        # served from two of them at once shows up here
-        timestamps = [point["timestamp"] for point in get_series_values(from_cache.json(), "A")]
-        assert len(timestamps) == len(set(timestamps)), f"refresh {refresh} repeated a point"
+        # each refresh is stitched out of overlapping cached ranges, so this catches
+        # a point served twice, dropped, or carried over from an earlier refresh
+        points = sorted(get_series_values(from_cache.json(), "A"), key=lambda point: point["timestamp"])
+        returned_points = [(point["timestamp"], point["value"], point.get("partial", False)) for point in points]
+        expected_points = [(start_time_ms + minute * MINUTE_MS, 1000 + minute, False) for minute in range(refresh, refresh + 60)]
+        assert returned_points == expected_points, f"refresh {refresh} did not return the minutes it covers"
 
     last_refresh_start_ms = start_time_ms + 19 * MINUTE_MS
     uncached = make_query_request(signoz, token, last_refresh_start_ms, last_refresh_start_ms + 60 * MINUTE_MS, query, no_cache=True)
