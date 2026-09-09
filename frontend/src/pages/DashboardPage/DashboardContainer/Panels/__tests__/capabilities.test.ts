@@ -287,13 +287,12 @@ describe('panel capabilities guard', () => {
 
 		it('hides the fields a Heatmap has nothing to apply them to', () => {
 			// A point is a count per bucket: there is no single value for a function or
-			// a having clause to act on, and the request rejects both. It also draws
-			// against one bucket axis, so the request takes exactly one enabled query.
+			// a having clause to act on, and the request rejects both. Extra queries and
+			// formulas stay available, since the one enabled query the request takes can
+			// be either of them.
 			expect(getQueryBuilderFields('signoz/HeatmapPanel')).toStrictEqual({
 				[QueryBuilderField.Functions]: { state: 'hidden' },
 				[QueryBuilderField.Having]: { state: 'hidden' },
-				[QueryBuilderField.AdditionalQueries]: { state: 'hidden' },
-				[QueryBuilderField.Formula]: { state: 'hidden' },
 			});
 		});
 	});
