@@ -1,7 +1,11 @@
+import {
+	setupAuthzAdmin,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
 import { licensesSuccessWorkspaceLockedResponse } from 'mocks-server/__mockdata__/licenses';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { act, render, screen } from 'tests/test-utils';
+import { act, render, screen, waitFor } from 'tests/test-utils';
 
 import WorkspaceLocked from '.';
 
@@ -30,40 +34,37 @@ describe('WorkspaceLocked', () => {
 		expect(contactUsBtn).toBeInTheDocument();
 	});
 
-	it('Render for Admin', async () => {
+	it('enables the upgrade action when subscription create is granted', async () => {
 		server.use(
 			rest.get(apiURL, (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(licensesSuccessWorkspaceLockedResponse)),
 			),
+			setupAuthzAdmin(),
 		);
 
 		render(<WorkspaceLocked />);
-		const contactAdminMessage = await screen.queryByText(
-			/contact your admin to proceed with the upgrade./i,
-		);
-		expect(contactAdminMessage).not.toBeInTheDocument();
 		const updateCreditCardBtn = await screen.findByRole('button', {
 			name: /continue my journey/i,
 		});
-		expect(updateCreditCardBtn).toBeInTheDocument();
+		await waitFor(() => {
+			expect(updateCreditCardBtn).toBeEnabled();
+		});
 	});
 
-	it('Render for non Admin', async () => {
+	it('disables the upgrade action when subscription create is denied', async () => {
 		server.use(
 			rest.get(apiURL, (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(licensesSuccessWorkspaceLockedResponse)),
 			),
+			setupAuthzDenyAll(),
 		);
 
 		render(<WorkspaceLocked />, {}, { role: 'VIEWER' });
-		const updateCreditCardBtn = await screen.queryByRole('button', {
-			name: /Continue My Journey/i,
+		const updateCreditCardBtn = await screen.findByRole('button', {
+			name: /continue my journey/i,
 		});
-		expect(updateCreditCardBtn).not.toBeInTheDocument();
-
-		const contactAdminMessage = await screen.findByText(
-			/contact your admin to proceed with the upgrade./i,
-		);
-		expect(contactAdminMessage).toBeInTheDocument();
+		await waitFor(() => {
+			expect(updateCreditCardBtn).toBeDisabled();
+		});
 	});
 });

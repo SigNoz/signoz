@@ -7,14 +7,6 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
-type QueryProgress struct {
-	ReadRows uint64 `json:"read_rows"`
-
-	ReadBytes uint64 `json:"read_bytes"`
-
-	ElapsedMs uint64 `json:"elapsed_ms"`
-}
-
 func GetLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, fields *GetFieldsResponse) map[string]v3.AttributeKey {
 	data := map[string]v3.AttributeKey{}
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
