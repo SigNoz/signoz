@@ -617,7 +617,7 @@ func TestTraceOperatorStatementBuilderAdjustsKeys(t *testing.T) {
 				Limit:      10,
 			},
 			builderFilter: "durationNano = '3s'",
-			wantSQL:       "duration_nano = ?",
+			wantSQL:       "durationNano = ?",
 			wantArgs:      []any{int64(3000000000)},
 		},
 		{
