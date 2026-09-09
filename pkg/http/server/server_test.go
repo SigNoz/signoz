@@ -24,7 +24,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	logger := slog.New(slog.DiscardHandler)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	certFile, keyFile := writeSelfSignedCert(t)
 
@@ -112,7 +112,7 @@ func TestStartWithTLS(t *testing.T) {
 	addr := freeAddr(t)
 
 	server, err := New(
-		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		slog.New(slog.DiscardHandler),
 		Config{Address: addr, TLS: TLS{Enabled: true, CertFile: certFile, KeyFile: keyFile}},
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte("ok")) }),
 	)
@@ -127,19 +127,33 @@ func TestStartWithTLS(t *testing.T) {
 	require.True(t, pool.AppendCertsFromPEM(certPEM))
 	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}}}
 
-	var resp *http.Response
+	var (
+		statusCode int
+		body       []byte
+		tlsVersion uint16
+	)
 	require.Eventually(t, func() bool {
-		resp, err = client.Get("https://" + addr)
-		return err == nil
-	}, 5*time.Second, 25*time.Millisecond)
-	defer func() { _ = resp.Body.Close() }()
+		resp, err := client.Get("https://" + addr)
+		if err != nil {
+			return false
+		}
+		defer func() { _ = resp.Body.Close() }()
 
-	body, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+		body, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return false
+		}
+
+		statusCode = resp.StatusCode
+		if resp.TLS != nil {
+			tlsVersion = resp.TLS.Version
+		}
+		return true
+	}, 5*time.Second, 25*time.Millisecond)
+
+	assert.Equal(t, http.StatusOK, statusCode)
 	assert.Equal(t, "ok", string(body))
-	require.NotNil(t, resp.TLS)
-	assert.GreaterOrEqual(t, resp.TLS.Version, uint16(tls.VersionTLS12))
+	assert.GreaterOrEqual(t, tlsVersion, uint16(tls.VersionTLS12))
 
 	plainResp, err := http.Get("http://" + addr)
 	require.NoError(t, err)
@@ -154,7 +168,7 @@ func TestStartWithoutTLS(t *testing.T) {
 	addr := freeAddr(t)
 
 	server, err := New(
-		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		slog.New(slog.DiscardHandler),
 		Config{Address: addr},
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte("pong")) }),
 	)
@@ -163,16 +177,24 @@ func TestStartWithoutTLS(t *testing.T) {
 	errC := make(chan error, 1)
 	go func() { errC <- server.Start(context.Background()) }()
 
-	var resp *http.Response
+	var (
+		statusCode    int
+		tlsNegotiated bool
+	)
 	require.Eventually(t, func() bool {
-		var err error
-		resp, err = http.Get("http://" + addr)
-		return err == nil
-	}, 5*time.Second, 25*time.Millisecond)
-	defer func() { _ = resp.Body.Close() }()
+		resp, err := http.Get("http://" + addr)
+		if err != nil {
+			return false
+		}
+		defer func() { _ = resp.Body.Close() }()
 
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	assert.Nil(t, resp.TLS)
+		statusCode = resp.StatusCode
+		tlsNegotiated = resp.TLS != nil
+		return true
+	}, 5*time.Second, 25*time.Millisecond)
+
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.False(t, tlsNegotiated)
 
 	require.NoError(t, server.Stop(context.Background()))
 	require.NoError(t, <-errC)
