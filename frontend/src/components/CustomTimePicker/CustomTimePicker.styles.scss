@@ -84,6 +84,45 @@
 			color: rgba($color: var(--l1-foreground), $alpha: 0.4);
 		}
 	}
+
+	&.invalid-flash {
+		animation:
+			timeSelection-input-shake 300ms ease-out,
+			timeSelection-input-invalid-flash 1200ms ease-out;
+
+		input {
+			background-color: transparent;
+		}
+	}
+}
+
+@keyframes timeSelection-input-shake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+
+	25%,
+	75% {
+		transform: translateX(5px);
+	}
+
+	50% {
+		transform: translateX(-5px);
+	}
+}
+
+@keyframes timeSelection-input-invalid-flash {
+	0%,
+	50% {
+		background-color: color-mix(in srgb, var(--bg-cherry-500) 18%, transparent);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.timeSelection-input.invalid-flash {
+		animation: none;
+	}
 }
 
 .valid-format-error {
