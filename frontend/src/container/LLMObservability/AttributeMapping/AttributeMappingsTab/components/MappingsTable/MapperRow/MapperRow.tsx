@@ -49,7 +49,7 @@ function MapperRow({
 		>
 			<td className={cx(styles.cell, styles.targetCell)}>
 				<Typography.Text
-					weight="semibold"
+					weight="medium"
 					truncate={1}
 					title={mapper.name}
 					className={styles.targetName}
@@ -60,7 +60,7 @@ function MapperRow({
 				<Badge
 					color={
 						mapper.fieldContext === SpantypesFieldContextDTO.resource
-							? 'amber'
+							? 'forest'
 							: 'robin'
 					}
 					variant="outline"
@@ -106,6 +106,7 @@ function MapperRow({
 				{canManage && (
 					<div className={styles.rowActions}>
 						<Switch
+							className={styles.rowSwitch}
 							value={mapper.enabled}
 							onChange={(checked): void => onToggle(mapper.localId, checked)}
 							testId={`mapper-enabled-${mapper.localId}`}

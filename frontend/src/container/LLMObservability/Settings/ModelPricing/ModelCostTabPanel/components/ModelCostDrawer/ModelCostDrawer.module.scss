@@ -58,3 +58,7 @@
 	padding: 0;
 	width: 100%;
 }
+
+.drawerLabel {
+	composes: drawerLabel from './shared.module.scss';
+}

@@ -446,7 +446,7 @@ describe('AttributeMappingsTab (integration)', () => {
 			await expect(
 				screen.findByTestId('mapper-form-drawer'),
 			).resolves.toBeInTheDocument();
-			expect(screen.getByText('New custom mapping')).toBeInTheDocument();
+			expect(screen.getByText('New Custom Mapping')).toBeInTheDocument();
 		});
 
 		it('opens the edit drawer prefilled and locks the target attribute', async () => {
@@ -459,7 +459,7 @@ describe('AttributeMappingsTab (integration)', () => {
 			await expect(
 				screen.findByTestId('mapper-form-drawer'),
 			).resolves.toBeInTheDocument();
-			expect(screen.getByText('Edit mapping')).toBeInTheDocument();
+			expect(screen.getByText('Edit Mapping')).toBeInTheDocument();
 			const target = screen.getByTestId('mapper-form-target');
 			expect(target).toHaveValue('gen_ai.request.model');
 			expect(target).toBeDisabled();

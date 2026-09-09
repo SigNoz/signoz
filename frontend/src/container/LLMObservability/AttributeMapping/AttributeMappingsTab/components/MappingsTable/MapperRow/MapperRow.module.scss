@@ -4,11 +4,13 @@
 	}
 }
 
+// Rows sit one level below the group header, so they run at a smaller type
+// scale and tighter vertical rhythm than the header banner above them.
 .cell {
 	padding: var(--spacing-4) var(--spacing-6);
 	vertical-align: middle;
 	color: var(--l1-foreground);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--font-size-xs);
 }
 
 .targetCell {
@@ -21,6 +23,13 @@
 
 .targetName {
 	min-width: 0;
+	--typography-font-size: var(--font-size-xs);
+}
+
+.rowSwitch {
+	--switch-width: 1.5rem;
+	--switch-height: 0.875rem;
+	--switch-thumb-size: 0.625rem;
 }
 
 .targetContextBadge {

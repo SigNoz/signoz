@@ -58,8 +58,8 @@ export const CACHE_MODE_OPTIONS = [
 ];
 
 export const CACHE_BUCKETS: CacheBucketDef[] = [
-	{ key: 'cacheRead', label: 'cache_read', testId: 'cache-read' },
-	{ key: 'cacheWrite', label: 'cache_write', testId: 'cache-write' },
+	{ key: 'cacheRead', label: 'Cache Read', testId: 'cache-read' },
+	{ key: 'cacheWrite', label: 'Cache Write', testId: 'cache-write' },
 ];
 
 export const EMPTY_DRAFT: DrawerDraft = {

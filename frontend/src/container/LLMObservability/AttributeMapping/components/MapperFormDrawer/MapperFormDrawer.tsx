@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import {
 	closestCenter,
@@ -19,7 +20,7 @@ import {
 import { Plus, Trash2 } from '@signozhq/icons';
 import { v4 as uuid } from 'uuid';
 
-import KeySearchInput from '../KeySearchInput/KeySearchInput';
+import FieldLabel from '../FieldLabel/FieldLabel';
 import styles from './MapperFormDrawer.module.scss';
 import SourceAttributeRow from './components/SourceAttributeRow/SourceAttributeRow';
 import {
@@ -120,8 +121,8 @@ function MapperFormDrawer({
 					onClose();
 				}
 			}}
-			title={isEdit ? 'Edit mapping' : 'New custom mapping'}
-			subTitle="Map source attributes onto a canonical target attribute"
+			title={isEdit ? 'Edit Mapping' : 'New Custom Mapping'}
+			subTitle="Map Source Attributes Onto a Canonical Target Attribute"
 			width="wide"
 			testId="mapper-form-drawer"
 			footer={
@@ -163,13 +164,15 @@ function MapperFormDrawer({
 		>
 			<div className={styles.form}>
 				<div className={styles.field}>
-					<span className={styles.label}>Target attribute</span>
-					<KeySearchInput
+					<span className={styles.label}>Target Attribute</span>
+					<Input
 						placeholder="e.g. gen_ai.content.prompt"
 						value={draft.name}
-						fieldContext={draft.fieldContext}
 						disabled={isEdit}
-						onChange={(name): void => setDraft({ ...draft, name })}
+						autoComplete="off"
+						onChange={(event): void =>
+							setDraft({ ...draft, name: event.target.value })
+						}
 						testId="mapper-form-target"
 					/>
 					{isEdit && (
@@ -180,7 +183,12 @@ function MapperFormDrawer({
 				</div>
 
 				<div className={styles.field}>
-					<span className={styles.label}>Write target to</span>
+					<FieldLabel
+						label="Write Target To"
+						hint="Where the standardized attribute is written."
+						className={styles.label}
+						testId="mapper-form-field-context-hint"
+					/>
 					<SelectSimple
 						className={styles.fieldContext}
 						items={FIELD_CONTEXT_OPTIONS}
@@ -191,19 +199,15 @@ function MapperFormDrawer({
 						}
 						testId="mapper-form-field-context"
 					/>
-					<span className={styles.hint}>
-						Where the standardized attribute is written.
-					</span>
 				</div>
 
 				<div className={styles.field}>
-					<span className={styles.label}>
-						Source attributes
-						<span className={styles.labelHint}>
-							{' '}
-							· priority: top → bottom · drag to reorder
-						</span>
-					</span>
+					<FieldLabel
+						label="Source Attributes"
+						hint="Sources are tried top to bottom - drag to reorder."
+						className={styles.label}
+						testId="mapper-form-sources-hint"
+					/>
 
 					<DndContext
 						sensors={sensors}
@@ -235,7 +239,7 @@ function MapperFormDrawer({
 						onClick={addSource}
 						testId="mapper-form-add-source"
 					>
-						Add another source
+						Add Another Source
 					</Button>
 				</div>
 

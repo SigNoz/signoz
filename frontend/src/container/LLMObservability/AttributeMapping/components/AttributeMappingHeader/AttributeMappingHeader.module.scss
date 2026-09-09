@@ -1,7 +1,10 @@
 .pageHeader {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	justify-content: space-between;
+	// Holds the row at button height so mounting the unsaved-changes actions
+	// doesn't push the page down.
+	min-height: 2rem;
 	margin-left: var(--spacing-2);
 	margin-top: var(--spacing-4);
 }
