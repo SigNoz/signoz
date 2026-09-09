@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
+from uuid import uuid4
 
 import pytest
 
@@ -19,6 +20,7 @@ from fixtures.querier import (
 )
 
 HISTOGRAM_FILE = get_testdata_file_path("histogram_data_1h.jsonl")
+MINUTE_MS = 60_000
 
 METRIC_NAME = "test_heatmap_rejections"
 QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
@@ -218,6 +220,45 @@ def test_bucket_options_outside_a_heatmap(
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     assert "bucketOptions are only supported for heatmap requests" in get_error_message(response.json())
+
+
+def test_promql_returning_no_le_is_rejected(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    metric = f"promql_heatmap_gauge_{uuid4().hex[:8]}"
+    end_ms = (int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000) // MINUTE_MS) * MINUTE_MS
+    start_ms = end_ms - MINUTE_MS
+
+    # the metric has to return something, since an empty result is the window
+    # having no data rather than a query that can never draw a heatmap
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric,
+                labels={"service": "api"},
+                timestamp=datetime.fromtimestamp(ts_ms / 1000, tz=UTC),
+                value=42.0,
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for ts_ms in range(start_ms, end_ms + 1, MINUTE_MS)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [{"type": "promql", "spec": {"name": "A", "query": metric, "step": 60}}],
+        request_type=RequestType.HEATMAP,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "none of them carry a `le` label" in get_error_message(response.json())
 
 
 def test_histogram_rejects_bucket_options(

@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from uuid import uuid4
 
 import pytest
 
@@ -27,7 +26,6 @@ from fixtures.querier import (
 HISTOGRAM_FILE = get_testdata_file_path("histogram_data_1h.jsonl")
 HISTOGRAM_COUNTERS_FILE = get_testdata_file_path("heatmap_histogram_3m.jsonl")
 MINUTE_MS = 60_000
-
 
 
 def test_gauge_heatmap(
@@ -498,29 +496,13 @@ def test_promql_heatmap(
     assert [column["values"] for column in get_heatmap_columns(data, "A")] == [[2, 6, 2, 2], [6, 0, 8, 4]]
 
 
-def test_promql_heatmap_without_le(
+def test_promql_heatmap_with_no_data(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    metric = f"promql_heatmap_gauge_{uuid4().hex[:8]}"
     end_ms = (int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000) // MINUTE_MS) * MINUTE_MS
     start_ms = end_ms - MINUTE_MS
-
-    insert_metrics(
-        [
-            Metrics(
-                metric_name=metric,
-                labels={"service": "api"},
-                timestamp=datetime.fromtimestamp(ts_ms / 1000, tz=UTC),
-                value=42.0,
-                type_="Gauge",
-                is_monotonic=False,
-            )
-            for ts_ms in range(start_ms, end_ms + 1, MINUTE_MS)
-        ]
-    )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_query_request(
@@ -528,15 +510,16 @@ def test_promql_heatmap_without_le(
         token,
         start_ms,
         end_ms,
-        [{"type": "promql", "spec": {"name": "A", "query": metric, "step": 60}}],
+        [{"type": "promql", "spec": {"name": "A", "query": "sum by (le) (increase(promql_heatmap_bucket_never_written[2m]))", "step": 60}}],
         request_type=RequestType.HEATMAP,
     )
+    # a window holding nothing is not a query that can never draw a heatmap, so
+    # it comes back empty where the latter is rejected
     assert response.status_code == HTTPStatus.OK, response.text
 
-    # the bucket axis of a promql heatmap comes from `le`, and a series without
-    # it has no bucket to sit in
-    assert get_heatmap_buckets(response.json(), "A") == []
-    assert get_heatmap_columns(response.json(), "A") == []
+    data = response.json()
+    assert get_heatmap_buckets(data, "A") == []
+    assert get_heatmap_columns(data, "A") == []
 
 
 def test_clickhouse_heatmap(

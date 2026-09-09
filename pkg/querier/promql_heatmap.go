@@ -12,6 +12,7 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -34,15 +35,23 @@ type promHeatmapGroup struct {
 
 // foldMatrixAsHeatmap folds a matrix of one cumulative series per (group, `le`)
 // into one series per group whose points hold a count per band.
-func foldMatrixAsHeatmap(matrix promql.Matrix, queryWindow *qbv5.TimeRange, stepMs uint64, queryName string) *qbv5.TimeSeriesData {
+func foldMatrixAsHeatmap(matrix promql.Matrix, queryWindow *qbv5.TimeRange, stepMs uint64, queryName string) (*qbv5.TimeSeriesData, error) {
 	groups, groupOrder := collectCumulativeGroups(matrix)
+
+	// An empty matrix is only ever the window having no data, but series that
+	// all lack `le` say the expression itself cannot draw a heatmap.
+	if len(matrix) > 0 && len(groups) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"the query returned series but none of them carry a `le` label: a heatmap's bucket axis is read off the `le` labels of a classic histogram, so an expression that drops them has nothing to place its counts on").
+			WithAdditional("Keep `le` through the aggregation, for instance sum by (le) (rate(metric_bucket[5m]))")
+	}
 
 	accumulator := newHeatmapAccumulator()
 	for _, labelsKey := range groupOrder {
 		groups[labelsKey].addDifferencedCells(accumulator)
 	}
 
-	return accumulator.foldSeries(queryWindow, stepMs, queryName)
+	return accumulator.foldSeries(queryWindow, stepMs, queryName), nil
 }
 
 // collectCumulativeGroups reads the matrix into one group per label set. A series
