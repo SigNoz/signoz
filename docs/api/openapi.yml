@@ -8676,6 +8676,15 @@ components:
       - alertType
       - ruleType
       type: object
+    RuletypesListableRuleViews:
+      properties:
+        views:
+          items:
+            $ref: '#/components/schemas/RuletypesRuleView'
+          type: array
+      required:
+      - views
+      type: object
     RuletypesListableRules:
       properties:
         labels:
@@ -8772,6 +8781,16 @@ components:
       - alertType
       - ruleType
       - condition
+      type: object
+    RuletypesPostableRuleView:
+      properties:
+        data:
+          $ref: '#/components/schemas/RuletypesRuleViewData'
+        name:
+          type: string
+      required:
+      - name
+      - data
       type: object
     RuletypesQueryType:
       enum:
@@ -8911,6 +8930,46 @@ components:
       - promql_rule
       - anomaly_rule
       type: string
+    RuletypesRuleView:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        data:
+          $ref: '#/components/schemas/RuletypesRuleViewData'
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - data
+      - orgId
+      type: object
+    RuletypesRuleViewData:
+      properties:
+        order:
+          $ref: '#/components/schemas/RuletypesListOrder'
+        query:
+          type: string
+        sort:
+          $ref: '#/components/schemas/RuletypesListSort'
+        states:
+          items:
+            type: string
+          nullable: true
+          type: array
+        version:
+          type: string
+      required:
+      - version
+      type: object
     RuletypesScheduleType:
       enum:
       - hourly
@@ -20397,6 +20456,231 @@ paths:
       summary: Get users by role id
       tags:
       - users
+  /api/v2/rule_views:
+    get:
+      deprecated: false
+      description: Returns every saved view in the calling user's org. Saved views
+        are shared org-wide.
+      operationId: ListRuleViews
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesListableRuleViews'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List rule saved views
+      tags:
+      - rules
+    post:
+      deprecated: false
+      description: Persists the calling user's rule listing state (query, states,
+        sort, order) as a named, reusable view shared across the org.
+      operationId: CreateRuleView
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRuleView'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesRuleView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Create rule saved view
+      tags:
+      - rules
+  /api/v2/rule_views/{id}:
+    delete:
+      deprecated: false
+      description: Removes a saved view. Saved views are shared org-wide. Deleting
+        a non-existent view returns 404.
+      operationId: DeleteRuleView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Delete rule saved view
+      tags:
+      - rules
+    put:
+      deprecated: false
+      description: Replaces a saved view's name and data. Saved views are shared org-wide.
+      operationId: UpdateRuleView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRuleView'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesRuleView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Update rule saved view
+      tags:
+      - rules
   /api/v2/rules:
     get:
       deprecated: true
