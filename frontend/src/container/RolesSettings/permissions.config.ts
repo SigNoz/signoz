@@ -6,6 +6,7 @@ import {
 	Gauge,
 	Key,
 	Logs,
+	Receipt,
 	Shield,
 } from '@signozhq/icons';
 
@@ -69,6 +70,13 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder: 'Type license ID, separate multiple with comma or space',
 		docsAnchor: 'license',
 	},
+	subscription: {
+		label: 'Subscription',
+		description: 'The workspace subscription, its usage and billing details.',
+		icon: Receipt,
+		selectorPlaceholder: 'Type * to cover the workspace subscription',
+		docsAnchor: 'subscription',
+	},
 	logs: {
 		label: 'Logs',
 		description: 'Log data collected across the workspace.',
@@ -107,7 +115,11 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 	},
 };
 
-export const RESOURCE_ORDER = Object.keys(RESOURCE_PANELS) as AuthZResource[];
+export const RESOURCE_ORDER = (
+	Object.keys(RESOURCE_PANELS) as AuthZResource[]
+).sort((left, right) =>
+	RESOURCE_PANELS[left].label.localeCompare(RESOURCE_PANELS[right].label),
+);
 
 export function getResourcePanel(resource: AuthZResource): ResourcePanelConfig {
 	const panel = RESOURCE_PANELS[resource];

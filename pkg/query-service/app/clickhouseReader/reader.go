@@ -44,7 +44,6 @@ import (
 
 	"log/slog"
 
-	queryprogress "github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader/query_progress"
 	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
 	"github.com/SigNoz/signoz/pkg/query-service/app/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/smart"
@@ -145,7 +144,6 @@ type ClickHouseReader struct {
 	logsResourceKeys        string
 	logsTagAttributeTableV2 string
 	logger                  *slog.Logger
-	queryProgressTracker    queryprogress.QueryProgressTracker
 
 	logsTableV2              string
 	logsLocalTableV2         string
@@ -214,7 +212,6 @@ func NewReader(
 		logsTagAttributeTableV2:  options.primary.LogsTagAttributeTableV2,
 		liveTailRefreshSeconds:   options.primary.LiveTailRefreshSeconds,
 		cluster:                  cluster,
-		queryProgressTracker:     queryprogress.NewQueryProgressTracker(logger),
 		logsTableV2:              options.primary.LogsTableV2,
 		logsLocalTableV2:         options.primary.LogsLocalTableV2,
 		logsResourceTableV2:      options.primary.LogsResourceTableV2,
@@ -4024,27 +4021,6 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
 		instrumentationtypes.CodeFunctionName: "GetTimeSeriesResultV3",
 	})
-	// Hook up query progress reporting if requested.
-	queryId := ctx.Value("queryId")
-	if queryId != nil {
-		qid, ok := queryId.(string)
-		if !ok {
-			r.logger.Error("GetTimeSeriesResultV3: queryId in ctx not a string as expected", "queryId", queryId)
-
-		} else {
-			ctx = clickhouse.Context(ctx, clickhouse.WithProgress(
-				func(p *clickhouse.Progress) {
-					go func() {
-						err := r.queryProgressTracker.ReportQueryProgress(qid, p)
-						if err != nil {
-							r.logger.Error("Couldn't report query progress", "queryId", qid, errorsV2.Attr(err))
-						}
-					}()
-				},
-			))
-		}
-	}
-
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
@@ -5003,18 +4979,6 @@ func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, 
 	r.logger.Debug("GetMinAndMaxTimestampForTraceID", "minTime", minTime, "maxTime", maxTime)
 
 	return minTime.UnixNano(), maxTime.UnixNano(), nil
-}
-
-func (r *ClickHouseReader) ReportQueryStartForProgressTracking(
-	queryId string,
-) (func(), *model.ApiError) {
-	return r.queryProgressTracker.ReportQueryStarted(queryId)
-}
-
-func (r *ClickHouseReader) SubscribeToQueryProgress(
-	queryId string,
-) (<-chan model.QueryProgress, func(), *model.ApiError) {
-	return r.queryProgressTracker.SubscribeToQueryProgress(queryId)
 }
 
 func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *model.UpdateMetricsMetadata) *model.ApiError {

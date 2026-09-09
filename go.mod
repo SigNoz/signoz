@@ -31,7 +31,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/huandu/go-sqlbuilder v1.39.1
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12
@@ -134,6 +133,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/huandu/go-clone v1.7.3 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
