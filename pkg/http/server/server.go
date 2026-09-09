@@ -28,12 +28,25 @@ func New(logger *slog.Logger, cfg Config, handler http.Handler) (*Server, error)
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "cannot build http server, logger is required")
 	}
 
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
 	srv := &http.Server{
 		Addr:           cfg.Address,
 		Handler:        handler,
 		ReadTimeout:    cfg.ReadTimeout,
 		WriteTimeout:   cfg.WriteTimeout,
 		MaxHeaderBytes: 1 << 20,
+	}
+
+	if cfg.TLS.Enabled {
+		tlsConfig, err := cfg.TLS.Config()
+		if err != nil {
+			return nil, err
+		}
+
+		srv.TLSConfig = tlsConfig
 	}
 
 	return &Server{
@@ -46,11 +59,17 @@ func New(logger *slog.Logger, cfg Config, handler http.Handler) (*Server, error)
 
 func (server *Server) Start(ctx context.Context) error {
 	server.logger.InfoContext(ctx, "starting http server", slog.String("address", server.srv.Addr))
-	if err := server.srv.ListenAndServe(); err != nil {
-		if err != http.ErrServerClosed {
-			server.logger.ErrorContext(ctx, "failed to start server", errors.Attr(err))
-			return err
-		}
+
+	var err error
+	if server.cfg.TLS.Enabled {
+		err = server.srv.ListenAndServeTLS("", "")
+	} else {
+		err = server.srv.ListenAndServe()
+	}
+
+	if err != nil && err != http.ErrServerClosed {
+		server.logger.ErrorContext(ctx, "failed to start server", errors.Attr(err))
+		return err
 	}
 	return nil
 }
