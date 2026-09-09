@@ -29,21 +29,57 @@ func TestConfigValidate(t *testing.T) {
 		tls  TLS
 		err  bool
 	}{
-		{"disabled", TLS{}, false},
-		{"enabled without cert and key", TLS{Enabled: true}, true},
-		{"enabled without key", TLS{Enabled: true, CertFile: "server.crt"}, true},
-		{"enabled without cert", TLS{Enabled: true, KeyFile: "server.key"}, true},
-		{"enabled with cert and key", TLS{Enabled: true, CertFile: "server.crt", KeyFile: "server.key"}, false},
-		{"enabled with invalid min version", TLS{Enabled: true, CertFile: "server.crt", KeyFile: "server.key", MinVersion: "1.1"}, true},
-		{"enabled with invalid max version", TLS{Enabled: true, CertFile: "server.crt", KeyFile: "server.key", MaxVersion: "tls1.3"}, true},
-		{"enabled with min greater than max", TLS{Enabled: true, CertFile: "server.crt", KeyFile: "server.key", MinVersion: "1.3", MaxVersion: "1.2"}, true},
-		{"enabled with min and max", TLS{Enabled: true, CertFile: "server.crt", KeyFile: "server.key", MinVersion: "1.2", MaxVersion: "1.3"}, false},
+		{
+			name: "TLSDisabled",
+			tls:  TLS{},
+			err:  false,
+		},
+		{
+			name: "TLSEnabled_WithoutCertAndKey",
+			tls:  TLS{Enabled: true},
+			err:  true,
+		},
+		{
+			name: "TLSEnabled_WithoutKey",
+			tls:  TLS{Enabled: true, CertFile: "server.crt"},
+			err:  true,
+		},
+		{
+			name: "TLSEnabled_WithoutCert",
+			tls:  TLS{Enabled: true, KeyFile: "server.key"},
+			err:  true,
+		},
+		{
+			name: "TLSEnabled_WithCertAndKey",
+			tls:  TLS{Enabled: true, CertFile: "tls.crt", KeyFile: "tls.key"},
+			err:  false,
+		},
+		{
+			name: "TLSEnabled_InvalidMinVersion",
+			tls:  TLS{Enabled: true, CertFile: "apiserver.crt", KeyFile: "apiserver.key", MinVersion: "1.1"},
+			err:  true,
+		},
+		{
+			name: "TLSEnabled_InvalidMaxVersion",
+			tls:  TLS{Enabled: true, CertFile: "http.crt", KeyFile: "http.key", MaxVersion: "tls1.3"},
+			err:  true,
+		},
+		{
+			name: "TLSEnabled_MinGreaterThanMax",
+			tls:  TLS{Enabled: true, CertFile: "frontend.crt", KeyFile: "frontend.key", MinVersion: "1.3", MaxVersion: "1.2"},
+			err:  true,
+		},
+		{
+			name: "TLSEnabled_WithMinAndMax",
+			tls:  TLS{Enabled: true, CertFile: "backend.crt", KeyFile: "backend.key", MinVersion: "1.2", MaxVersion: "1.3"},
+			err:  false,
+		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := Config{TLS: tc.tls}.Validate()
-			if tc.err {
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := Config{TLS: testCase.tls}.Validate()
+			if testCase.err {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
@@ -55,31 +91,55 @@ func TestConfigValidate(t *testing.T) {
 func TestNew(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	certFile, keyFile := writeSelfSignedCert(t)
 
-	t.Run("tls disabled", func(t *testing.T) {
-		server, err := New(logger, Config{}, handler)
-		require.NoError(t, err)
-		assert.Nil(t, server.srv.TLSConfig)
-	})
+	testCases := []struct {
+		name       string
+		config     Config
+		err        bool
+		minVersion uint16
+	}{
+		{
+			name:   "TLSDisabled",
+			config: Config{},
+			err:    false,
+		},
+		{
+			name:   "TLSEnabled_WithoutCertAndKey",
+			config: Config{TLS: TLS{Enabled: true}},
+			err:    true,
+		},
+		{
+			name:   "TLSEnabled_MissingFiles",
+			config: Config{TLS: TLS{Enabled: true, CertFile: "missing.crt", KeyFile: "missing.key"}},
+			err:    true,
+		},
+		{
+			name:       "TLSEnabled_ValidCertAndKey",
+			config:     Config{TLS: TLS{Enabled: true, CertFile: certFile, KeyFile: keyFile, MinVersion: "1.3"}},
+			err:        false,
+			minVersion: tls.VersionTLS13,
+		},
+	}
 
-	t.Run("tls enabled without cert and key", func(t *testing.T) {
-		_, err := New(logger, Config{TLS: TLS{Enabled: true}}, handler)
-		assert.Error(t, err)
-	})
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			server, err := New(logger, testCase.config, handler)
+			if testCase.err {
+				assert.Error(t, err)
+				return
+			}
 
-	t.Run("tls enabled with missing files", func(t *testing.T) {
-		_, err := New(logger, Config{TLS: TLS{Enabled: true, CertFile: "missing.crt", KeyFile: "missing.key"}}, handler)
-		assert.Error(t, err)
-	})
-
-	t.Run("tls enabled with valid cert and key", func(t *testing.T) {
-		certFile, keyFile := writeSelfSignedCert(t)
-		server, err := New(logger, Config{TLS: TLS{Enabled: true, CertFile: certFile, KeyFile: keyFile, MinVersion: "1.3"}}, handler)
-		require.NoError(t, err)
-		require.NotNil(t, server.srv.TLSConfig)
-		assert.Len(t, server.srv.TLSConfig.Certificates, 1)
-		assert.Equal(t, uint16(tls.VersionTLS13), server.srv.TLSConfig.MinVersion)
-	})
+			require.NoError(t, err)
+			if testCase.config.TLS.Enabled {
+				require.NotNil(t, server.srv.TLSConfig)
+				assert.Len(t, server.srv.TLSConfig.Certificates, 1)
+				assert.Equal(t, testCase.minVersion, server.srv.TLSConfig.MinVersion)
+			} else {
+				assert.Nil(t, server.srv.TLSConfig)
+			}
+		})
+	}
 }
 
 func TestStartWithTLS(t *testing.T) {
@@ -131,7 +191,7 @@ func TestStartWithoutTLS(t *testing.T) {
 	server, err := New(
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Config{Address: addr},
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte("ok")) }),
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte("pong")) }),
 	)
 	require.NoError(t, err)
 
