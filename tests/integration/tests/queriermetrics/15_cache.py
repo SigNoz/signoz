@@ -59,7 +59,8 @@ def test_builder_shortening_the_time_range_at_the_end(
     base_query = make_query_request(signoz, token, start_time_ms, end_time_ms_base_query, query, no_cache=False)
     assert base_query.status_code == HTTPStatus.OK, base_query.text
     points = sorted(get_series_values(base_query.json(), "A"), key=lambda point: point["timestamp"])
-    assert [(point["value"], point.get("partial", False)) for point in points] == [(16, False), (4096, False)]
+    returned_points = [(point["value"], point.get("partial", False)) for point in points]
+    assert returned_points == [(16, False), (4096, False)]
 
     from_cache = make_query_request(signoz, token, start_time_ms, end_time_ms_shortened_query, query, no_cache=False)
     assert from_cache.status_code == HTTPStatus.OK, from_cache.text
@@ -71,10 +72,10 @@ def test_builder_shortening_the_time_range_at_the_end(
 
     # the shortened end reaches only minutes 5-6 of the second point, so it comes
     # back as 256 and partial, where the cached one spans all five minutes
-    from_cache_points = sorted(get_series_values(from_cache.json(), "A"), key=lambda point: point["timestamp"])
-    uncached_points = sorted(get_series_values(uncached.json(), "A"), key=lambda point: point["timestamp"])
-    assert [(point["value"], point.get("partial", False)) for point in from_cache_points] == [(16, False), (256, True)]
-    assert [(point["value"], point.get("partial", False)) for point in uncached_points] == [(16, False), (256, True)]
+    for label, response in (("from cache", from_cache), ("uncached", uncached)):
+        points = sorted(get_series_values(response.json(), "A"), key=lambda point: point["timestamp"])
+        returned_points = [(point["value"], point.get("partial", False)) for point in points]
+        assert returned_points == [(16, False), (256, True)], label
 
 
 def test_builder_shortening_the_time_range_at_the_start(
@@ -118,7 +119,8 @@ def test_builder_shortening_the_time_range_at_the_start(
     base_query = make_query_request(signoz, token, start_time_ms_base_query, end_time_ms, query, no_cache=False)
     assert base_query.status_code == HTTPStatus.OK, base_query.text
     points = sorted(get_series_values(base_query.json(), "A"), key=lambda point: point["timestamp"])
-    assert [(point["value"], point.get("partial", False)) for point in points] == [(65536, False), (4096, False)]
+    returned_points = [(point["value"], point.get("partial", False)) for point in points]
+    assert returned_points == [(65536, False), (4096, False)]
 
     from_cache = make_query_request(signoz, token, start_time_ms_shortened_query, end_time_ms, query, no_cache=False)
     assert from_cache.status_code == HTTPStatus.OK, from_cache.text
@@ -131,10 +133,10 @@ def test_builder_shortening_the_time_range_at_the_start(
     # starting inside the first point's step flags that point partial without
     # clipping its value, which still covers the whole step and so reaches the
     # 65536 at minute 0
-    from_cache_points = sorted(get_series_values(from_cache.json(), "A"), key=lambda point: point["timestamp"])
-    uncached_points = sorted(get_series_values(uncached.json(), "A"), key=lambda point: point["timestamp"])
-    assert [(point["value"], point.get("partial", False)) for point in from_cache_points] == [(65536, True), (4096, False)]
-    assert [(point["value"], point.get("partial", False)) for point in uncached_points] == [(65536, True), (4096, False)]
+    for label, response in (("from cache", from_cache), ("uncached", uncached)):
+        points = sorted(get_series_values(response.json(), "A"), key=lambda point: point["timestamp"])
+        returned_points = [(point["value"], point.get("partial", False)) for point in points]
+        assert returned_points == [(65536, True), (4096, False)], label
 
 
 def test_promql_running_the_same_query_twice(
@@ -155,14 +157,15 @@ def test_promql_running_the_same_query_twice(
 
     # the counter opens a minute before the query so its first point has something
     # to increase over, and starts far above its own rise across the range, below
-    # which increase clips its back-extrapolation at the counter's zero point
+    # which increase clips its back-extrapolation at the counter's zero point. It
+    # rises by a different amount each minute, so every point is its own number
     insert_metrics(
         [
             Metrics(
                 metric_name=metric_name,
                 labels={"service": "api"},
                 timestamp=start_time + timedelta(minutes=minute),
-                value=1000 + 10 * minute,
+                value=(1000, 1010, 1030, 1060, 1100)[minute + 1],
                 temporality="Cumulative",
                 type_="Sum",
                 is_monotonic=True,
@@ -184,8 +187,14 @@ def test_promql_running_the_same_query_twice(
     # promql reports a point at the instant the range closes, and the second run,
     # answered out of what the first one cached, has to keep it
     for run, response in (("first", first), ("second", second)):
-        timestamps = [point["timestamp"] for point in get_series_values(response.json(), "A")]
-        assert end_time_ms in timestamps, f"{run} run dropped the point at the end of the range: {timestamps}"
+        points = sorted(get_series_values(response.json(), "A"), key=lambda point: point["timestamp"])
+        returned_points = [(point["timestamp"], point["value"]) for point in points]
+        ## at each timestamp t, promql looks at points in (t-2minutes, t].
+        assert returned_points == [
+            (start_time_ms, 20),  # t = 0, points taken 1000, 1010. hence diff over 1m is 10, extrapolated to 20.
+            (start_time_ms + MINUTE_MS, 40),  # t = 1m, points taken 1010, 1030. hence diff over 1m is 20, extrapolated to 40.
+            (end_time_ms, 60),  # t = 2m, points taken 1030, 1060. hence diff over 1m is 30, extrapolated to 60.
+        ], f"{run} run"
 
 
 def test_promql_shifting_the_time_range(
@@ -194,7 +203,7 @@ def test_promql_shifting_the_time_range(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    metric_name = f"cache_shift_total_{uuid4().hex[:8]}"
+    metric_name = f"cache_shift_gauge_{uuid4().hex[:8]}"
 
     # 40 minutes back clears the flux interval, which holds recent data out of
     # the cache. Flooring to a whole minute is what makes the first query aligned
@@ -205,20 +214,21 @@ def test_promql_shifting_the_time_range(
     unaligned_start_time_ms = aligned_start_time_ms + MINUTE_MS // 2
     unaligned_end_time_ms = aligned_end_time_ms + MINUTE_MS // 2
 
-    query = [{"type": "promql", "spec": {"name": "A", "query": f"sum(increase({metric_name}[2m]))", "step": 60}}]
+    query = [{"type": "promql", "spec": {"name": "A", "query": f"max_over_time({metric_name}[2m])", "step": 60}}]
 
+    # a sample every 30s, rising by 100 each time. The two queries report 30s
+    # apart, so they land on different samples and share no value between them
     insert_metrics(
         [
             Metrics(
                 metric_name=metric_name,
                 labels={"service": "api"},
-                timestamp=start_time + timedelta(minutes=minute),
-                value=1000 + 10 * minute,
-                temporality="Cumulative",
-                type_="Sum",
-                is_monotonic=True,
+                timestamp=start_time + timedelta(seconds=30 * half_minute),
+                value=100 * (half_minute + 4),
+                type_="Gauge",
+                is_monotonic=False,
             )
-            for minute in range(-1, 5)
+            for half_minute in range(-3, 8)
         ]
     )
 
@@ -227,17 +237,39 @@ def test_promql_shifting_the_time_range(
     aligned_and_cached = make_query_request(signoz, token, aligned_start_time_ms, aligned_end_time_ms, query, no_cache=False)
     assert aligned_and_cached.status_code == HTTPStatus.OK, aligned_and_cached.text
 
+    # what the cache now holds, and what the unaligned query must not be served
+    points = sorted(get_series_values(aligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
+    returned_points = [(point["timestamp"], point["value"]) for point in points]
+    ## at each timestamp t, promql takes the highest sample in (t-2minutes, t],
+    ## which is the one at t itself since the gauge only rises.
+    assert returned_points == [
+        (aligned_start_time_ms, 400),  # t = 0
+        (aligned_start_time_ms + MINUTE_MS, 600),  # t = 1m
+        (aligned_start_time_ms + 2 * MINUTE_MS, 800),  # t = 2m
+        (aligned_end_time_ms, 1000),  # t = 3m
+    ]
+
     unaligned_and_uncached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=True)
     assert unaligned_and_uncached.status_code == HTTPStatus.OK, unaligned_and_uncached.text
 
-    # promql places its points at the range start plus whole steps, so the
-    # unaligned query reports 30s past every point the aligned one cached. Twice:
-    # the first unaligned run is what the cache stores for this range, the second
-    # is the one it can answer out of the cache
+    # promql reports at the range start plus whole steps, so these points sit 30s
+    # off the cached ones. The first run stores them, the second reads them back
     for run in ("first", "second"):
         unaligned_and_cached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=False)
         assert unaligned_and_cached.status_code == HTTPStatus.OK, unaligned_and_cached.text
         assert_results_equal(unaligned_and_cached.json(), unaligned_and_uncached.json(), "A", f"unaligned query, {run} run")
+
+        points = sorted(get_series_values(unaligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
+        returned_points = [(point["timestamp"], point["value"]) for point in points]
+        ## every point falls on a sample the aligned run never reported, so being
+        ## served the cached run's answer shows up in the values and not only the
+        ## timestamps.
+        assert returned_points == [
+            (unaligned_start_time_ms, 500),  # t = 30s
+            (unaligned_start_time_ms + MINUTE_MS, 700),  # t = 1m30s
+            (unaligned_start_time_ms + 2 * MINUTE_MS, 900),  # t = 2m30s
+            (unaligned_end_time_ms, 1100),  # t = 3m30s
+        ], f"unaligned query, {run} run"
 
 
 def test_builder_refreshing_a_sliding_time_range(
