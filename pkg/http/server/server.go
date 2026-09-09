@@ -31,8 +31,8 @@ func New(logger *slog.Logger, cfg Config, handler http.Handler) (*Server, error)
 	srv := &http.Server{
 		Addr:           cfg.Address,
 		Handler:        handler,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
+		ReadTimeout:    cfg.ReadTimeout,
+		WriteTimeout:   cfg.WriteTimeout,
 		MaxHeaderBytes: 1 << 20,
 	}
 
