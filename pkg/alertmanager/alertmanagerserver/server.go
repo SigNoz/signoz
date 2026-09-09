@@ -59,6 +59,7 @@ type Server struct {
 	dispatcher          *Dispatcher
 	dispatcherMetrics   *DispatcherMetrics
 	inhibitor           *inhibit.Inhibitor
+	inhibitorDone       chan struct{}
 	silencer            *silence.Silencer
 	silences            *silence.Silences
 	timeIntervals       map[string][]timeinterval.TimeInterval
@@ -305,6 +306,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 
 	if server.inhibitor != nil {
 		server.inhibitor.Stop()
+		<-server.inhibitorDone
 	}
 	if server.dispatcher != nil {
 		server.dispatcher.Stop()
@@ -351,7 +353,15 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	// we call Start() and Stop() in quick succession.
 	// Both these goroutines will run indefinitely.
 	go server.dispatcher.Run()
-	go server.inhibitor.Run()
+	server.inhibitorDone = make(chan struct{})
+	go func(inhibitor *inhibit.Inhibitor, done chan struct{}) {
+		defer close(done)
+		inhibitor.Run()
+	}(server.inhibitor, server.inhibitorDone)
+
+	// Stop must not run before the workers install their cancellation functions.
+	<-server.dispatcher.ready
+	server.inhibitor.WaitForLoading()
 
 	server.alertmanagerConfig = resolved
 	return nil
@@ -479,6 +489,7 @@ func (server *Server) Stop(ctx context.Context) error {
 
 	if server.inhibitor != nil {
 		server.inhibitor.Stop()
+		<-server.inhibitorDone
 	}
 
 	// Close the alert provider.
