@@ -7,11 +7,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/gorilla/mux"
 )
@@ -64,10 +67,53 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 }
 
 func (provider *provider) AddToRouter(router *mux.Router) error {
+	// Capture endpoints before the catch-all: mux can lose method mismatches when subrouters fall through.
+	routesByMethod := make(map[string][]*mux.Route)
+	if err := router.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
+		if route.GetHandler() == nil {
+			return nil
+		}
+		methods, err := route.GetMethods()
+		if err != nil {
+			return nil
+		}
+		for _, method := range methods {
+			routesByMethod[method] = append(routesByMethod[method], route)
+		}
+		return nil
+	}); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "unable to walk routes")
+	}
+
+	fallback := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		probe := *req
+		var allowedMethods []string
+		for method, routes := range routesByMethod {
+			probe.Method = method
+			for _, route := range routes {
+				if route.Match(&probe, &mux.RouteMatch{}) {
+					allowedMethods = append(allowedMethods, method)
+					break
+				}
+			}
+		}
+		if len(allowedMethods) > 0 {
+			slices.Sort(allowedMethods)
+			rw.Header().Set("Allow", strings.Join(allowedMethods, ", "))
+			render.Error(rw, errors.NewMethodNotAllowedf(errors.CodeMethodNotAllowed, "method not allowed"))
+			return
+		}
+		if req.URL.Path == "/api" || strings.HasPrefix(req.URL.Path, "/api/") {
+			render.Error(rw, errors.NewNotFoundf(errors.CodeNotFound, "API endpoint not found"))
+			return
+		}
+		provider.ServeHTTP(rw, req)
+	})
+
 	cache := middleware.NewCache(0)
 	err := router.PathPrefix("/").
 		Handler(
-			cache.Wrap(http.HandlerFunc(provider.ServeHTTP)),
+			cache.Wrap(fallback),
 		).GetError()
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "unable to add web to router")

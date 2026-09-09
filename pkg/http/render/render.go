@@ -65,6 +65,8 @@ func ErrorTypeFromStatusCode(statusCode int) string {
 		return errors.TypeInvalidInput.String()
 	case http.StatusNotFound:
 		return errors.TypeNotFound.String()
+	case http.StatusMethodNotAllowed:
+		return errors.TypeMethodNotAllowed.String()
 	case http.StatusConflict:
 		return errors.TypeAlreadyExists.String()
 	case http.StatusUnauthorized:
@@ -96,6 +98,8 @@ func Error(rw http.ResponseWriter, cause error) {
 		httpCode = http.StatusBadRequest
 	case errors.TypeNotFound:
 		httpCode = http.StatusNotFound
+	case errors.TypeMethodNotAllowed:
+		httpCode = http.StatusMethodNotAllowed
 	case errors.TypeAlreadyExists:
 		httpCode = http.StatusConflict
 	case errors.TypeUnauthenticated:
