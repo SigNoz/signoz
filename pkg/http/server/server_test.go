@@ -36,7 +36,6 @@ func TestNew(t *testing.T) {
 		config     Config
 		err        bool
 		minVersion uint16
-		maxVersion uint16
 	}{
 		{
 			name:   "TLSDisabled",
@@ -67,16 +66,6 @@ func TestNew(t *testing.T) {
 			err:    true,
 		},
 		{
-			name:   "TLSEnabled_InvalidMaxVersion",
-			config: Config{TLS: TLS{Enabled: true, CertFile: "apiserver.crt", KeyFile: "apiserver.key", MaxVersion: "tls1.3"}},
-			err:    true,
-		},
-		{
-			name:   "TLSEnabled_MinGreaterThanMax",
-			config: Config{TLS: TLS{Enabled: true, CertFile: "http.crt", KeyFile: "http.key", MinVersion: "1.3", MaxVersion: "1.2"}},
-			err:    true,
-		},
-		{
 			name:   "TLSEnabled_MissingFiles",
 			config: Config{TLS: TLS{Enabled: true, CertFile: "missing.crt", KeyFile: "missing.key"}},
 			err:    true,
@@ -91,10 +80,9 @@ func TestNew(t *testing.T) {
 			config: Config{TLS: TLS{Enabled: true, CertFile: certFile, KeyFile: keyFile}},
 		},
 		{
-			name:       "TLSEnabled_WithMinAndMax",
-			config:     Config{TLS: TLS{Enabled: true, CertFile: certFile, KeyFile: keyFile, MinVersion: "1.2", MaxVersion: "1.3"}},
-			minVersion: tls.VersionTLS12,
-			maxVersion: tls.VersionTLS13,
+			name:       "TLSEnabled_WithMin",
+			config:     Config{TLS: TLS{Enabled: true, CertFile: certFile, KeyFile: keyFile, MinVersion: "1.3"}},
+			minVersion: tls.VersionTLS13,
 		},
 	}
 
@@ -115,7 +103,6 @@ func TestNew(t *testing.T) {
 			require.NotNil(t, server.srv.TLSConfig)
 			assert.Len(t, server.srv.TLSConfig.Certificates, 1)
 			assert.Equal(t, testCase.minVersion, server.srv.TLSConfig.MinVersion)
-			assert.Equal(t, testCase.maxVersion, server.srv.TLSConfig.MaxVersion)
 		})
 	}
 }

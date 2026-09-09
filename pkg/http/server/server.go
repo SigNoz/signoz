@@ -51,7 +51,7 @@ func New(logger *slog.Logger, cfg Config, handler http.Handler) (*Server, error)
 
 	return &Server{
 		srv:     srv,
-		logger:  logger.With(slog.String("pkg", "go.signoz.io/pkg/http/server")),
+		logger:  logger.With(slog.String("pkg", "github.com/SigNoz/signoz/pkg/http/server")),
 		handler: handler,
 		cfg:     cfg,
 	}, nil
@@ -62,6 +62,7 @@ func (server *Server) Start(ctx context.Context) error {
 
 	var err error
 	if server.cfg.TLS.Enabled {
+		// The certificate is already loaded in TLSConfig, so ListenAndServeTLS needs no file paths.
 		err = server.srv.ListenAndServeTLS("", "")
 	} else {
 		err = server.srv.ListenAndServe()
