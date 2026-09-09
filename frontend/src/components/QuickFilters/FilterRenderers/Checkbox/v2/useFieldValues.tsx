@@ -22,7 +22,10 @@ interface UseFieldValuesReturn {
 	isFetching: boolean;
 }
 
-const DATA_SOURCE_TO_SIGNAL: Record<DataSource, TelemetrytypesSignalDTO> = {
+export const DATA_SOURCE_TO_SIGNAL: Record<
+	DataSource,
+	TelemetrytypesSignalDTO
+> = {
 	[DataSource.METRICS]: TelemetrytypesSignalDTO.metrics,
 	[DataSource.TRACES]: TelemetrytypesSignalDTO.traces,
 	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
@@ -89,8 +92,12 @@ export function useFieldValues({
 			values.numberValues
 				?.filter((value): value is number => value !== null && value !== undefined)
 				.map((value) => value.toString()) || [];
+		const boolValues =
+			values.boolValues
+				?.filter((value): value is boolean => value !== null && value !== undefined)
+				.map((value) => value.toString()) || [];
 
-		return [...stringValues, ...numberValues];
+		return [...stringValues, ...numberValues, ...boolValues];
 	}, [data]);
 
 	return { relatedValues, allValues, isLoading, isFetching };
