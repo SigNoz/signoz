@@ -1,6 +1,10 @@
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { getAncestorSpanIds, getVisibleSpans } from '../utils';
+import {
+	getAncestorSpanIds,
+	getTraceWaterfallSidebarContentWidth,
+	getVisibleSpans,
+} from '../utils';
 
 function makeSpan(
 	overrides: Partial<SpanV3> & { span_id: string; level: number },
@@ -267,5 +271,91 @@ describe('getAncestorSpanIds', () => {
 	it('returns empty set for unknown span', () => {
 		const spans = [makeSpan({ span_id: 'root', level: 0 })];
 		expect(getAncestorSpanIds(spans, 'unknown').size).toBe(0);
+	});
+});
+
+describe('getTraceWaterfallSidebarContentWidth', () => {
+	const originalCreateElement = document.createElement.bind(document);
+
+	beforeEach(() => {
+		document.createElement = ((tagName: string): HTMLElement => {
+			const element = originalCreateElement(tagName);
+			if (tagName.toLowerCase() === 'canvas') {
+				(element as HTMLCanvasElement).getContext = (() =>
+					({
+						font: '',
+						measureText: (text: string): TextMetrics =>
+							({ width: text.length * 10 }) as TextMetrics,
+					} as CanvasRenderingContext2D)) as unknown as HTMLCanvasElement['getContext'];
+			}
+			return element;
+		}) as typeof document.createElement;
+	});
+
+	afterEach(() => {
+		document.createElement = originalCreateElement;
+	});
+
+	it('returns the sidebar width when there are no spans', () => {
+		expect(
+			getTraceWaterfallSidebarContentWidth([], 450, {
+				indentWidthPerLevel: 30,
+			}),
+		).toBe(450);
+	});
+
+	it('grows for long labels instead of relying only on nesting depth', () => {
+		const spans = [
+			makeSpan({
+				span_id: 'wide-label',
+				level: 1,
+				name: 'checkout-step-'.repeat(12),
+				'service.name': 'checkout-service',
+			}),
+			makeSpan({
+				span_id: 'deep-but-short',
+				level: 10,
+				name: 'db',
+				'service.name': 'svc',
+			}),
+		];
+
+		const width = getTraceWaterfallSidebarContentWidth(spans, 300, {
+			indentWidthPerLevel: 30,
+		});
+
+		expect(width).toBeGreaterThan(600);
+	});
+
+	it('accounts for service names in the computed row width', () => {
+		const spanWithoutServiceName = makeSpan({
+			span_id: 'without-service',
+			level: 2,
+			name: 'payment-span-name',
+			'service.name': '',
+		});
+		const spanWithServiceName = makeSpan({
+			span_id: 'with-service',
+			level: 2,
+			name: 'payment-span-name',
+			'service.name': 'payments-api-west-region',
+		});
+
+		const widthWithoutServiceName = getTraceWaterfallSidebarContentWidth(
+			[spanWithoutServiceName],
+			240,
+			{
+				indentWidthPerLevel: 30,
+			},
+		);
+		const widthWithServiceName = getTraceWaterfallSidebarContentWidth(
+			[spanWithServiceName],
+			240,
+			{
+				indentWidthPerLevel: 30,
+			},
+		);
+
+		expect(widthWithServiceName).toBeGreaterThan(widthWithoutServiceName);
 	});
 });
