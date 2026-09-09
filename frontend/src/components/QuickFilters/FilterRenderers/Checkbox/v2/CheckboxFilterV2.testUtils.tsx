@@ -34,6 +34,7 @@ export function mockFieldsValuesAPI(response: {
 	relatedValues?: (string | null)[];
 	stringValues?: (string | null)[];
 	numberValues?: (number | null)[];
+	boolValues?: (boolean | null)[];
 }): void {
 	server.use(
 		rest.get('http://localhost/api/v1/fields/values', (_, res, ctx) =>
@@ -46,6 +47,7 @@ export function mockFieldsValuesAPI(response: {
 							relatedValues: response.relatedValues ?? [],
 							stringValues: response.stringValues ?? [],
 							numberValues: response.numberValues ?? [],
+							boolValues: response.boolValues ?? [],
 						},
 					},
 				}),
