@@ -73,14 +73,6 @@ type GettableSpanMapperGroups struct {
 	Items []*GettableSpanMapperGroup `json:"items" required:"true" nullable:"false"`
 }
 
-func NewSpanMapperGroupConditionKeys(values []string, origin SpanMapperOrigin) []SpanMapperGroupConditionKey {
-	out := make([]SpanMapperGroupConditionKey, len(values))
-	for i, v := range values {
-		out[i] = SpanMapperGroupConditionKey{Value: v, Enabled: true, Origin: origin}
-	}
-	return out
-}
-
 // Validate requires at least one substring overall and rejects blank ones.
 // All-off is allowed: a group with every substring disabled simply never runs.
 func (c *SpanMapperGroupCondition) Validate() error {
@@ -241,14 +233,6 @@ func conditionKeysWithOrigin(keys []SpanMapperGroupConditionKey, origin SpanMapp
 	for i, k := range keys {
 		k.Origin = origin
 		out[i] = k
-	}
-	return out
-}
-
-func enabledSystemConditionKeys(keys []SpanMapperGroupConditionKey) []SpanMapperGroupConditionKey {
-	out := conditionKeysWithOrigin(keys, SpanMapperOriginSystem)
-	for i := range out {
-		out[i].Enabled = true
 	}
 	return out
 }

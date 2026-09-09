@@ -219,11 +219,19 @@ func newGroup(name string, attrs, res []string) *SpanMapperGroup {
 	return &SpanMapperGroup{
 		Name: name,
 		Condition: SpanMapperGroupCondition{
-			Attributes: NewSpanMapperGroupConditionKeys(attrs, SpanMapperOriginUser),
-			Resource:   NewSpanMapperGroupConditionKeys(res, SpanMapperOriginUser),
+			Attributes: userConditionKeys(attrs),
+			Resource:   userConditionKeys(res),
 		},
 		Enabled: true,
 	}
+}
+
+func userConditionKeys(values []string) []SpanMapperGroupConditionKey {
+	out := make([]SpanMapperGroupConditionKey, len(values))
+	for i, v := range values {
+		out[i] = SpanMapperGroupConditionKey{Value: v, Enabled: true, Origin: SpanMapperOriginUser}
+	}
+	return out
 }
 
 func newMapper(name string, target FieldContext, sources ...SpanMapperSource) *SpanMapper {

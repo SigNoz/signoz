@@ -15,7 +15,7 @@ func TestSimulateSpanMappersProcessing_EndToEnd(t *testing.T) {
 	groups := []*SpanMapperGroupWithMappers{{
 		Group: &SpanMapperGroup{
 			Name:      "llm",
-			Condition: SpanMapperGroupCondition{Attributes: NewSpanMapperGroupConditionKeys([]string{"model"}, SpanMapperOriginUser)},
+			Condition: SpanMapperGroupCondition{Attributes: userConditionKeys([]string{"model"})},
 			Enabled:   true,
 		},
 		Mappers: []*SpanMapper{{

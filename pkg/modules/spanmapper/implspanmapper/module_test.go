@@ -3,6 +3,7 @@ package implspanmapper
 import (
 	"context"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -60,14 +61,10 @@ func newTestModule(t *testing.T, sqlStore sqlstore.SQLStore, definitions ...span
 func newTestDefinition(t *testing.T, version int, body string) spantypes.SpanMapperGroupDefinition {
 	t.Helper()
 
-	definition, err := spantypes.NewSpanMapperGroupDefinition([]byte(`{"version": ` + itoa(version) + `, "definition": ` + body + `}`))
+	definition, err := spantypes.NewSpanMapperGroupDefinition([]byte(`{"version": ` + strconv.Itoa(version) + `, "definition": ` + body + `}`))
 	require.NoError(t, err)
 
 	return definition
-}
-
-func itoa(i int) string {
-	return string(rune('0' + i))
 }
 
 // llmV1 ships two mappers; llmV2 renames a source, adds a mapper and drops one.

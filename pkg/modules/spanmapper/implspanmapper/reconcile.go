@@ -73,12 +73,12 @@ func (module *module) applyDefinition(ctx context.Context, orgID valuer.UUID, gr
 		mapper, exists := byName[pm.Name]
 		delete(byName, pm.Name)
 		if !exists {
-			if err := module.store.CreateMapper(ctx, newSystemMapper(group.ID, definition, pm)); err != nil {
+			if err := module.store.CreateMapper(ctx, newSystemMapper(group.ID, pm)); err != nil {
 				return err
 			}
 			continue
 		}
-		mapper.Config.Sources = mergeShippedSources(mapper.Config.Sources, definition.SystemSources(pm))
+		mapper.Config.Sources = mergeShippedSources(mapper.Config.Sources, pm.Config.Sources)
 		mapper.FieldContext = pm.FieldContext
 		mapper.Origin = spantypes.SpanMapperOriginSystem
 		mapper.UpdatedAt = now
@@ -108,7 +108,7 @@ func (module *module) applyDefinition(ctx context.Context, orgID valuer.UUID, gr
 		}
 	}
 
-	shipped := definition.SystemCondition()
+	shipped := definition.Definition.Condition
 	group.Condition = spantypes.SpanMapperGroupCondition{
 		Attributes: mergeShippedConditionKeys(group.Condition.Attributes, shipped.Attributes),
 		Resource:   mergeShippedConditionKeys(group.Condition.Resource, shipped.Resource),
@@ -128,15 +128,15 @@ func (module *module) applyDefinition(ctx context.Context, orgID valuer.UUID, gr
 // definition is applied right after the row exists.
 func newSystemGroup(orgID valuer.UUID, definition spantypes.SpanMapperGroupDefinition) *spantypes.SpanMapperGroup {
 	group := spantypes.NewSpanMapperGroup(orgID, spantypes.ProvisionerIdentity, &definition.Definition.PostableSpanMapperGroup)
-	group.Condition = definition.SystemCondition()
+	group.Condition = definition.Definition.Condition
 	group.Enabled = true
 	group.Origin = spantypes.SpanMapperOriginSystem
 	return group
 }
 
-func newSystemMapper(groupID valuer.UUID, definition spantypes.SpanMapperGroupDefinition, pm *spantypes.PostableSpanMapper) *spantypes.SpanMapper {
+func newSystemMapper(groupID valuer.UUID, pm *spantypes.PostableSpanMapper) *spantypes.SpanMapper {
 	mapper := spantypes.NewSpanMapper(groupID, spantypes.ProvisionerIdentity, pm)
-	mapper.Config = spantypes.SpanMapperConfig{Sources: definition.SystemSources(pm)}
+	mapper.Config = pm.Config
 	mapper.Enabled = true
 	mapper.Origin = spantypes.SpanMapperOriginSystem
 	return mapper

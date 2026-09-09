@@ -29,9 +29,7 @@ func (migration *addSpanMapperOrigin) Register(migrations *migrate.Migrations) e
 }
 
 // Up adds the ownership columns that let SigNoz ship default mapping groups
-// alongside user ones. Existing rows are user-owned at version 0; the JSON
-// condition and config columns are not rewritten, their Scan reads the old
-// shape.
+// alongside user ones.
 func (migration *addSpanMapperOrigin) Up(ctx context.Context, db *bun.DB) error {
 	// span_mapper references span_mapper_group and both have foreign keys, so
 	// enforcement must be off for the SQLite recreate-table fallback.

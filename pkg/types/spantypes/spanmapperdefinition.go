@@ -16,7 +16,8 @@ const ProvisionerIdentity = "signoz"
 
 // SpanMapperGroupDefinition is one shipped mapping group. Version is bumped on
 // every content change and drives upgrades; the group name is the stable key
-// and never changes.
+// and never changes. Once parsed, every substring and source carries the
+// system origin and is enabled.
 type SpanMapperGroupDefinition struct {
 	Version    int                         `json:"version"`
 	Definition PostableSpanMapperTestGroup `json:"definition"`
@@ -37,21 +38,21 @@ func NewSpanMapperGroupDefinition(raw []byte) (SpanMapperGroupDefinition, error)
 	if err := d.validate(); err != nil {
 		return SpanMapperGroupDefinition{}, err
 	}
-	return d, nil
-}
 
-// SystemCondition is the shipped condition with every substring stamped as an
-// enabled system item.
-func (d SpanMapperGroupDefinition) SystemCondition() SpanMapperGroupCondition {
-	return SpanMapperGroupCondition{
-		Attributes: enabledSystemConditionKeys(d.Definition.Condition.Attributes),
-		Resource:   enabledSystemConditionKeys(d.Definition.Condition.Resource),
+	for _, keys := range [][]SpanMapperGroupConditionKey{d.Definition.Condition.Attributes, d.Definition.Condition.Resource} {
+		for i := range keys {
+			keys[i].Enabled = true
+			keys[i].Origin = SpanMapperOriginSystem
+		}
 	}
-}
-
-// SystemSources returns a shipped mapper's sources stamped as enabled system items.
-func (d SpanMapperGroupDefinition) SystemSources(m *PostableSpanMapper) []SpanMapperSource {
-	return enabledSystemSources(m.Config.Sources)
+	for i := range d.Definition.Mappers {
+		sources := d.Definition.Mappers[i].Config.Sources
+		for j := range sources {
+			sources[j].Enabled = true
+			sources[j].Origin = SpanMapperOriginSystem
+		}
+	}
+	return d, nil
 }
 
 // SpanMapperGroupRegistry holds every definition embedded in the binary, keyed by name.
@@ -68,11 +69,6 @@ func NewSpanMapperGroupRegistry(definitions []SpanMapperGroupDefinition) (SpanMa
 		byName[d.Name()] = d
 	}
 	return SpanMapperGroupRegistry{definitions: byName}, nil
-}
-
-func (r SpanMapperGroupRegistry) Get(name string) (SpanMapperGroupDefinition, bool) {
-	d, ok := r.definitions[name]
-	return d, ok
 }
 
 func (r SpanMapperGroupRegistry) IsReserved(name string) bool {

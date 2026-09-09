@@ -111,12 +111,6 @@ func (SpanMapperOrigin) Enum() []any {
 	return []any{SpanMapperOriginUser, SpanMapperOriginSystem}
 }
 
-// Matches reports whether two sources read the same attribute the same way;
-// priority and toggles are not part of the identity.
-func (s SpanMapperSource) Matches(other SpanMapperSource) bool {
-	return s.Key == other.Key && s.Context == other.Context && s.Operation == other.Operation
-}
-
 func (p *PostableSpanMapper) Validate() error {
 	if strings.TrimSpace(p.Name) == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeMappingInvalidInput, "mapper name must not be blank")
@@ -286,7 +280,7 @@ func (m *SpanMapper) nextSources(edit []SpanMapperSource) ([]SpanMapperSource, e
 			userSources = append(userSources, s)
 			continue
 		}
-		idx := slices.IndexFunc(systemSources, s.Matches)
+		idx := slices.IndexFunc(systemSources, func(o SpanMapperSource) bool { return o.Key == s.Key && o.Context == s.Context })
 		if idx == -1 {
 			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeMappingInvalidInput, "system source %q does not exist on this mapper; only its enabled flag can change", s.Key)
 		}
@@ -301,14 +295,6 @@ func withOrigin(sources []SpanMapperSource, origin SpanMapperOrigin) []SpanMappe
 	for i, s := range sources {
 		s.Origin = origin
 		out[i] = s
-	}
-	return out
-}
-
-func enabledSystemSources(sources []SpanMapperSource) []SpanMapperSource {
-	out := withOrigin(sources, SpanMapperOriginSystem)
-	for i := range out {
-		out[i].Enabled = true
 	}
 	return out
 }
