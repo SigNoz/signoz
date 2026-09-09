@@ -41,6 +41,10 @@ func NewReceiver(input string) (*Receiver, error) {
 		return nil, err
 	}
 
+	return newDefaultedReceiver(receiver)
+}
+
+func newDefaultedReceiver(receiver *Receiver) (*Receiver, error) {
 	withDefaults, err := defaultedBaseReceiver(receiver.Receiver)
 	if err != nil {
 		return nil, err
