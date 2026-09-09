@@ -23,90 +23,57 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestConfigValidate(t *testing.T) {
-	testCases := []struct {
-		name string
-		tls  TLS
-		err  bool
-	}{
-		{
-			name: "TLSDisabled",
-			tls:  TLS{},
-			err:  false,
-		},
-		{
-			name: "TLSEnabled_WithoutCertAndKey",
-			tls:  TLS{Enabled: true},
-			err:  true,
-		},
-		{
-			name: "TLSEnabled_WithoutKey",
-			tls:  TLS{Enabled: true, CertFile: "server.crt"},
-			err:  true,
-		},
-		{
-			name: "TLSEnabled_WithoutCert",
-			tls:  TLS{Enabled: true, KeyFile: "server.key"},
-			err:  true,
-		},
-		{
-			name: "TLSEnabled_WithCertAndKey",
-			tls:  TLS{Enabled: true, CertFile: "tls.crt", KeyFile: "tls.key"},
-			err:  false,
-		},
-		{
-			name: "TLSEnabled_InvalidMinVersion",
-			tls:  TLS{Enabled: true, CertFile: "apiserver.crt", KeyFile: "apiserver.key", MinVersion: "1.1"},
-			err:  true,
-		},
-		{
-			name: "TLSEnabled_InvalidMaxVersion",
-			tls:  TLS{Enabled: true, CertFile: "http.crt", KeyFile: "http.key", MaxVersion: "tls1.3"},
-			err:  true,
-		},
-		{
-			name: "TLSEnabled_MinGreaterThanMax",
-			tls:  TLS{Enabled: true, CertFile: "frontend.crt", KeyFile: "frontend.key", MinVersion: "1.3", MaxVersion: "1.2"},
-			err:  true,
-		},
-		{
-			name: "TLSEnabled_WithMinAndMax",
-			tls:  TLS{Enabled: true, CertFile: "backend.crt", KeyFile: "backend.key", MinVersion: "1.2", MaxVersion: "1.3"},
-			err:  false,
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			err := Config{TLS: testCase.tls}.Validate()
-			if testCase.err {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
 func TestNew(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	certFile, keyFile := writeSelfSignedCert(t)
+
+	corruptFile := filepath.Join(t.TempDir(), "corrupt.crt")
+	require.NoError(t, os.WriteFile(corruptFile, []byte("not a pem"), 0o644))
 
 	testCases := []struct {
 		name       string
 		config     Config
 		err        bool
 		minVersion uint16
+		maxVersion uint16
 	}{
 		{
 			name:   "TLSDisabled",
 			config: Config{},
-			err:    false,
+		},
+		{
+			name:   "TLSDisabled_WithCertAndKey",
+			config: Config{TLS: TLS{CertFile: "ignored.crt", KeyFile: "ignored.key"}},
 		},
 		{
 			name:   "TLSEnabled_WithoutCertAndKey",
 			config: Config{TLS: TLS{Enabled: true}},
+			err:    true,
+		},
+		{
+			name:   "TLSEnabled_WithoutKey",
+			config: Config{TLS: TLS{Enabled: true, CertFile: "server.crt"}},
+			err:    true,
+		},
+		{
+			name:   "TLSEnabled_WithoutCert",
+			config: Config{TLS: TLS{Enabled: true, KeyFile: "server.key"}},
+			err:    true,
+		},
+		{
+			name:   "TLSEnabled_InvalidMinVersion",
+			config: Config{TLS: TLS{Enabled: true, CertFile: "tls.crt", KeyFile: "tls.key", MinVersion: "1.1"}},
+			err:    true,
+		},
+		{
+			name:   "TLSEnabled_InvalidMaxVersion",
+			config: Config{TLS: TLS{Enabled: true, CertFile: "apiserver.crt", KeyFile: "apiserver.key", MaxVersion: "tls1.3"}},
+			err:    true,
+		},
+		{
+			name:   "TLSEnabled_MinGreaterThanMax",
+			config: Config{TLS: TLS{Enabled: true, CertFile: "http.crt", KeyFile: "http.key", MinVersion: "1.3", MaxVersion: "1.2"}},
 			err:    true,
 		},
 		{
@@ -115,10 +82,19 @@ func TestNew(t *testing.T) {
 			err:    true,
 		},
 		{
-			name:       "TLSEnabled_ValidCertAndKey",
-			config:     Config{TLS: TLS{Enabled: true, CertFile: certFile, KeyFile: keyFile, MinVersion: "1.3"}},
-			err:        false,
-			minVersion: tls.VersionTLS13,
+			name:   "TLSEnabled_CorruptCertFile",
+			config: Config{TLS: TLS{Enabled: true, CertFile: corruptFile, KeyFile: keyFile}},
+			err:    true,
+		},
+		{
+			name:   "TLSEnabled_DefaultVersions",
+			config: Config{TLS: TLS{Enabled: true, CertFile: certFile, KeyFile: keyFile}},
+		},
+		{
+			name:       "TLSEnabled_WithMinAndMax",
+			config:     Config{TLS: TLS{Enabled: true, CertFile: certFile, KeyFile: keyFile, MinVersion: "1.2", MaxVersion: "1.3"}},
+			minVersion: tls.VersionTLS12,
+			maxVersion: tls.VersionTLS13,
 		},
 	}
 
@@ -131,13 +107,15 @@ func TestNew(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			if testCase.config.TLS.Enabled {
-				require.NotNil(t, server.srv.TLSConfig)
-				assert.Len(t, server.srv.TLSConfig.Certificates, 1)
-				assert.Equal(t, testCase.minVersion, server.srv.TLSConfig.MinVersion)
-			} else {
+			if !testCase.config.TLS.Enabled {
 				assert.Nil(t, server.srv.TLSConfig)
+				return
 			}
+
+			require.NotNil(t, server.srv.TLSConfig)
+			assert.Len(t, server.srv.TLSConfig.Certificates, 1)
+			assert.Equal(t, testCase.minVersion, server.srv.TLSConfig.MinVersion)
+			assert.Equal(t, testCase.maxVersion, server.srv.TLSConfig.MaxVersion)
 		})
 	}
 }
