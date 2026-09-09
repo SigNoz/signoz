@@ -472,13 +472,6 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 					spec.Aggregations[i].Type = foundMetricType
 				}
 			}
-			// Only the enabled query is used to render the heatmap, so bucket
-			// options are only applied to the enabled query.
-			if requestType == qbtypes.RequestTypeHeatmap && !spec.Disabled {
-				if err := spec.Aggregations[i].VerifyAndApplyBucketOptions(bucketOptions); err != nil {
-					return nil, nil, err
-				}
-			}
 			if spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
 				missingMetrics = append(missingMetrics, spec.Aggregations[i].MetricName)
 				continue
@@ -486,6 +479,13 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 			// Type is resolved now; validate aggregation compatibility against it.
 			if err := spec.Aggregations[i].ValidateForTypeAndTemporality(); err != nil {
 				return nil, nil, err
+			}
+			// Only the enabled query is used to render the heatmap, so bucket
+			// options are only applied to the enabled query.
+			if requestType == qbtypes.RequestTypeHeatmap && !spec.Disabled {
+				if err := spec.Aggregations[i].VerifyAndApplyBucketOptions(bucketOptions); err != nil {
+					return nil, nil, err
+				}
 			}
 			if reducedMetricsSet[spec.Aggregations[i].MetricName] {
 				spec.Aggregations[i].Reduced = true

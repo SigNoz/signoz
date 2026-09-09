@@ -18,6 +18,7 @@ from fixtures.querier import (
     build_linear_bucket_options,
     build_log_bucket_options,
     get_all_series,
+    get_all_warnings,
     get_error_message,
     get_heatmap_buckets,
     get_heatmap_columns,
@@ -628,6 +629,33 @@ def test_cached_heatmap_matches_uncached(
     # every column holds the one value its minute recorded
     assert len(get_heatmap_buckets(uncached.json(), "A")) == 65
     assert [sum(column["values"]) for column in get_heatmap_columns(uncached.json(), "A")] == [1] * 30
+
+
+def test_metric_with_no_data(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = make_query_request(
+        signoz,
+        token,
+        int((now - timedelta(minutes=30)).timestamp() * 1000),
+        int(now.timestamp() * 1000),
+        [build_builder_query("A", MISSING_METRIC, "max", "max")],
+        request_type=RequestType.HEATMAP,
+        bucket_options=build_log_bucket_options(0),
+    )
+    # a metric with nothing in the window carries no type to choose an axis
+    # from, and that is an empty heatmap rather than a rejected request
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    data = response.json()
+    assert get_heatmap_buckets(data, "A") == []
+    assert get_heatmap_columns(data, "A") == []
+    assert any(MISSING_METRIC in warning["message"] for warning in get_all_warnings(data))
 
 
 def test_histogram_rejects_bucket_options(
