@@ -25,7 +25,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import {
 	QuickFilterManagePermissions,
@@ -250,28 +250,27 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				</Tooltip>
 			)}
 			{isDynamicFilters && (
-				<AuthZTooltip checks={QuickFilterManagePermissions}>
-					<Button
-						variant="link"
-						color="secondary"
-						aria-label="Settings"
-						className={classNames('right-action-icon-container', {
-							active: isSettingsOpen,
-						})}
-						onClick={(): void => setIsSettingsOpen(true)}
-						testId="settings-icon-container"
-						prefix={
-							<Tooltip title="Settings" open={isSettingsDisabled ? false : undefined}>
-								<SettingsIcon
-									className="settings-icon"
-									data-testid="settings-icon"
-									width={14}
-									height={14}
-								/>
-							</Tooltip>
-						}
-					/>
-				</AuthZTooltip>
+				<AuthZButton
+					checks={QuickFilterManagePermissions}
+					variant="link"
+					color="secondary"
+					aria-label="Settings"
+					className={classNames('right-action-icon-container', {
+						active: isSettingsOpen,
+					})}
+					onClick={(): void => setIsSettingsOpen(true)}
+					testId="settings-icon-container"
+					prefix={
+						<Tooltip title="Settings" open={isSettingsDisabled ? false : undefined}>
+							<SettingsIcon
+								className="settings-icon"
+								data-testid="settings-icon"
+								width={14}
+								height={14}
+							/>
+						</Tooltip>
+					}
+				/>
 			)}
 		</section>
 	);
