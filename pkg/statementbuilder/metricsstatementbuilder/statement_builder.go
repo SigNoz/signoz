@@ -940,14 +940,7 @@ func buildValueHeatmapFinalSelect(
 	args []any,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 ) (*qbtypes.Statement, error) {
-	bucketing := query.Aggregations[0].HeatmapBucketing
-	if bucketing == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal,
-			"heatmap over a %s metric reached the statement builder without a resolved bucket axis",
-			query.Aggregations[0].Type.StringValue())
-	}
-
-	upperBound, err := renderHeatmapUpperBoundExpr(*bucketing)
+	upperBound, err := renderHeatmapUpperBoundExpr(*query.Aggregations[0].HeatmapBucketing)
 	if err != nil {
 		return nil, err
 	}
