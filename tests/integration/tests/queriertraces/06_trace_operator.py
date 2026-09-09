@@ -69,6 +69,8 @@ from fixtures.traces import (
 #   ob.select    A=>B order http.method DESC  → POST, POST, GET
 # ============================================================================
 
+pytestmark = pytest.mark.usefixtures("attribute_backend")
+
 
 @pytest.mark.parametrize(
     "case",
@@ -236,7 +238,6 @@ def test_trace_operator(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    attribute_backend: str,  # pylint: disable=unused-argument
     case: dict,
 ) -> None:
     t1_trace_id = TraceIdGenerator.trace_id()

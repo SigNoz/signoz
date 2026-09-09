@@ -2,6 +2,8 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
+import pytest
+
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
@@ -20,12 +22,13 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # Existence is a property of the data, not of metadata, so the query runs against
 # synthesized type-variant columns (filter / group-by / select) instead of failing.
 
+pytestmark = pytest.mark.usefixtures("attribute_backend")
+
 
 def test_traces_filter_unknown_key_synthesizes(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    attribute_backend: str,  # pylint: disable=unused-argument
 ) -> None:
     """An unknown attribute key runs against synthesized columns and returns 200 with a
     "not found" warning so typos still surface."""
@@ -105,7 +108,6 @@ def test_traces_group_by_unknown_key_null_bucket(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    attribute_backend: str,  # pylint: disable=unused-argument
 ) -> None:
     """Grouping by an unknown key runs against synthesized columns: every span lands in
     the NULL bucket instead of the query failing."""

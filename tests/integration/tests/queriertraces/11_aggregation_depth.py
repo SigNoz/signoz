@@ -25,21 +25,16 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # same-named colliding attribute must not divert grouping or aggregation off the real
 # intrinsic column.
 
+pytestmark = pytest.mark.usefixtures("attribute_backend")
 
-# Only the collision variant carries a span attribute (a duration_nano attribute colliding with
-# the intrinsic column), so it is the variant also crossed into json.
-@pytest.mark.parametrize(
-    "noise,attribute_backend",
-    [("clean", "map"), ("corrupt", "map"), ("collision", "map"), ("collision", "json")],
-    indirect=["attribute_backend"],
-)
+
+@pytest.mark.parametrize("noise", ["clean", "corrupt", "collision"])
 def test_traces_aggregate_percentiles(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
     noise: str,
-    attribute_backend: str,  # pylint: disable=unused-argument
 ) -> None:
     """
     Setup:
@@ -96,18 +91,13 @@ def test_traces_aggregate_percentiles(
         pytest.param("endpoint", {"/a": 2, "/b": 1}, id="string_span_attr"),
     ],
 )
-@pytest.mark.parametrize(
-    "noise,attribute_backend",
-    [("clean", "map"), ("corrupt", "map"), ("clean", "json")],
-    indirect=["attribute_backend"],
-)
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_aggregate_group_by_non_resource(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
     noise: str,
-    attribute_backend: str,  # pylint: disable=unused-argument
     group_key: str,
     expected: dict[str, int],
 ) -> None:
@@ -279,7 +269,6 @@ def test_traces_duration_nano_qol_filter_with_collision(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    attribute_backend: str,  # pylint: disable=unused-argument
     duration_filter: str,
 ) -> None:
     """

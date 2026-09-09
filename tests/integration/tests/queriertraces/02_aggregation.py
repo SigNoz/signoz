@@ -33,6 +33,8 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # the real intrinsic/calculated/resource columns even when same-named colliding
 # attributes are present, so the corrupt variant yields identical values.
 
+pytestmark = pytest.mark.usefixtures("attribute_backend")
+
 
 # ============================================================================
 # Order-by referencing an aggregation
@@ -133,21 +135,13 @@ def test_traces_aggregate_order_by_count(
 # ============================================================================
 
 
-# attribute_backend runs the avg(latency_ms) span-attribute aggregation against the legacy
-# maps and the native JSON column; only the clean variant crosses into json, since the corrupt
-# noise is dropped by field-key resolution identically on either layout.
-@pytest.mark.parametrize(
-    "noise,attribute_backend",
-    [("clean", "map"), ("corrupt", "map"), ("clean", "json")],
-    indirect=["attribute_backend"],
-)
+@pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_aggregate_functions(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
     noise: str,
-    attribute_backend: str,  # pylint: disable=unused-argument
 ) -> None:
     """
     Setup:

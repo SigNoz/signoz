@@ -27,6 +27,8 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # single-typed here, so no collision-driven divergence arises and both physical layouts
 # must return identical spans — the parity contract for the JSON attribute rollout.
 
+pytestmark = pytest.mark.usefixtures("attribute_backend")
+
 
 @pytest.mark.parametrize(
     "expression,expected_names",
@@ -69,7 +71,6 @@ def test_traces_filter_operators(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    attribute_backend: str,  # pylint: disable=unused-argument
     expression: str,
     expected_names: set[str],
 ) -> None:
