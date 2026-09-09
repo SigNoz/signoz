@@ -14,6 +14,10 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
 jest.mock('hooks/useDarkMode', () => ({ useIsDarkMode: (): boolean => false }));
+let mockAIObservabilityEnabled = true;
+jest.mock('hooks/useIsAIObservabilityEnabled', () => ({
+	useIsAIObservabilityEnabled: (): boolean => mockAIObservabilityEnabled,
+}));
 jest.mock('components/QueryBuilderV2/QueryBuilderV2', () => ({
 	QueryBuilderV2: (props: unknown): null => {
 		mockQueryBuilderV2(props);
@@ -71,6 +75,7 @@ function lastQueryBuilderProps(): {
 describe('PanelEditorQueryBuilder query-type tabs (driven by the capabilities guard)', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockAIObservabilityEnabled = true;
 		mockUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				queryType: EQueryType.QUERY_BUILDER,
@@ -81,13 +86,43 @@ describe('PanelEditorQueryBuilder query-type tabs (driven by the capabilities gu
 		});
 	});
 
-	it('shows only the Query Builder tabs for the List kind', () => {
+	// List can't carry the AI envelope tag on the wire, so it declares
+	// `supportsAIQuery: false` and never offers the tab.
+	it('shows only the plain Query Builder tab for the List kind', () => {
 		renderBuilder('signoz/ListPanel', TelemetrytypesSignalDTO.logs);
 
 		expect(screen.getByText('Query Builder')).toBeInTheDocument();
-		expect(screen.getByText('AI Query Builder')).toBeInTheDocument();
+		expect(screen.queryByText('AI Query Builder')).not.toBeInTheDocument();
 		expect(screen.queryByText('ClickHouse Query')).not.toBeInTheDocument();
 		expect(screen.queryByText('PromQL')).not.toBeInTheDocument();
+	});
+
+	it('hides the AI tab when the feature flag is off', () => {
+		mockAIObservabilityEnabled = false;
+		renderBuilder('signoz/TimeSeriesPanel');
+
+		expect(screen.getByText('Query Builder')).toBeInTheDocument();
+		expect(screen.queryByText('AI Query Builder')).not.toBeInTheDocument();
+	});
+
+	// The flag gates authoring, not reading: an existing AI panel stays editable, and
+	// its derived active tab always has a tab to point at.
+	it('keeps the AI tab with the flag off when the query already is an AI query', () => {
+		mockAIObservabilityEnabled = false;
+		mockUseQueryBuilder.mockReturnValue({
+			currentQuery: {
+				queryType: EQueryType.QUERY_BUILDER,
+				builder: { queryData: [{ builderQueryType: 'builder_ai_query' }] },
+			},
+			redirectWithQueryBuilderData: jest.fn(),
+			updateAllQueriesOperators: jest.fn(),
+		});
+
+		renderBuilder('signoz/TimeSeriesPanel');
+
+		expect(
+			screen.getByRole('tab', { name: 'AI Query Builder', selected: true }),
+		).toBeInTheDocument();
 	});
 
 	it('shows Query Builder + ClickHouse but not PromQL for the Table kind', () => {

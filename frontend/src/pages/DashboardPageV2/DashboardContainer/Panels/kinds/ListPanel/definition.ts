@@ -19,7 +19,11 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	// hide `limit` (the server paginates raw spans). Mirrors QueryBuilderV2's internal
 	// list configs — the capabilities guard is the single source for both.
 	supportedQueryTypes: [EQueryType.QUERY_BUILDER],
-	supportsAIQuery: true,
+	// Unrepresentable on the wire: List is the one kind the backend accepts only as a
+	// bare `signoz/BuilderQuery` (`allowedQueryKinds[PanelKindList] = {QueryKindBuilder}`),
+	// and that plugin carries no envelope tag — so an AI query saved here would come
+	// back as a plain trace query.
+	supportsAIQuery: false,
 	queryBuilderFields: {
 		default: {
 			stepInterval: { isHidden: true, isDisabled: true },

@@ -410,4 +410,37 @@ describe('usePanelActionItems', () => {
 		(createAlert as { onClick: () => void }).onClick();
 		expect(mockCreateAlert).toHaveBeenCalledWith(mockPanel, 'panel-1');
 	});
+
+	// The alert builder has no AI tab, so seeding it would hand back a plain trace query.
+	it('disables create-alert on a panel holding an AI query', () => {
+		const aiPanel = {
+			kind: 'Panel',
+			spec: {
+				display: { name: 'AI' },
+				plugin: { kind: 'signoz/TimeSeriesPanel', spec: {} },
+				queries: [
+					{
+						spec: {
+							plugin: {
+								kind: 'signoz/CompositeQuery',
+								spec: {
+									queries: [
+										{ type: 'builder_ai_query', spec: { name: 'A', signal: 'traces' } },
+									],
+								},
+							},
+						},
+					},
+				],
+			},
+		} as unknown as DashboardtypesPanelDTO;
+
+		const { result } = renderHook(() =>
+			usePanelActionItems({ ...baseArgs, panel: aiPanel }),
+		);
+		const createAlert = result.current.items.find(
+			(i) => 'key' in i && i.key === 'create-alert',
+		);
+		expect((createAlert as { disabled?: boolean }).disabled).toBe(true);
+	});
 });

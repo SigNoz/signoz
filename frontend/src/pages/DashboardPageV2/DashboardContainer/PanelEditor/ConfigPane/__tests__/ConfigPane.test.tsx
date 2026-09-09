@@ -27,6 +27,7 @@ function renderConfigPane(
 		onChangeSpec: jest.fn(),
 		onChangePanelKind: jest.fn(),
 		queryType: EQueryType.QUERY_BUILDER,
+		isAIQuery: false,
 		legendSeries: [],
 		tableColumns: [],
 		panel: { kind: 'Panel', spec: spec() } as DashboardtypesPanelDTO,

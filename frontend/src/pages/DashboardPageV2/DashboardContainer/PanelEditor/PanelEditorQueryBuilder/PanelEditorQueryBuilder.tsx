@@ -20,6 +20,7 @@ import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryB
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -34,6 +35,7 @@ import {
 } from '../../Panels/types/panelKind';
 import {
 	AI_QUERY_TAB,
+	isAIQuery,
 	type QueryTabKey,
 	resolveActiveQueryTab,
 	toAIQuery,
@@ -77,6 +79,7 @@ function PanelEditorQueryBuilder({
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
+	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
 
 	// The AI tab is not a query type — it stamps `builderQueryType` onto the builder
 	// queries (and pins them to traces, the only signal AI queries support).
@@ -118,9 +121,19 @@ function PanelEditorQueryBuilder({
 		[panelKind, signal],
 	);
 
+	// Derived to a boolean before the memo below: `currentQuery` gets a fresh identity on
+	// every query edit, so depending on it there would rebuild every tab's element tree
+	// (QueryBuilderV2 included) on each keystroke.
+	const hasAIQuery = isAIQuery(currentQuery);
+
 	const items = useMemo(() => {
 		const supportedQueryTypes: QueryTabKey[] = getSupportedQueryTypes(panelKind);
-		const supportedTabs = supportsAIQuery(panelKind)
+		// The flag gates authoring, not reading: a panel that already holds an AI query
+		// keeps its tab when the flag is off, so an existing panel stays editable (and
+		// `activeKey` never points at a tab that isn't rendered) instead of opening blank.
+		const showAITab =
+			supportsAIQuery(panelKind) && (isAIObservabilityEnabled || hasAIQuery);
+		const supportedTabs = showAITab
 			? [...supportedQueryTypes, AI_QUERY_TAB]
 			: supportedQueryTypes;
 
@@ -189,7 +202,14 @@ function PanelEditorQueryBuilder({
 			),
 			children: queryTypeComponents[tabKey].component,
 		}));
-	}, [panelKind, panelType, filterConfigs, isDarkMode]);
+	}, [
+		panelKind,
+		panelType,
+		filterConfigs,
+		isDarkMode,
+		isAIObservabilityEnabled,
+		hasAIQuery,
+	]);
 
 	return (
 		<div

@@ -38,6 +38,8 @@ interface ViewPanelModalHeaderProps {
 	queryType: EQueryType;
 	/** Current builder datasource — greys out kinds that don't support it (e.g. List needs logs/traces, not metrics). */
 	signal: TelemetrytypesSignalDTO;
+	/** Whether the panel holds an AI query — disables kinds that can't carry one. */
+	isAIQuery: boolean;
 	onChangePanelKind: (kind: PanelKind) => void;
 	/** Restore the saved query + kind (drilldown reset). */
 	onResetQuery: () => void;
@@ -59,12 +61,17 @@ function ViewPanelModalHeader({
 	panelKind,
 	queryType,
 	signal,
+	isAIQuery,
 	onChangePanelKind,
 	onResetQuery,
 }: ViewPanelModalHeaderProps): JSX.Element {
 	// Same capabilities-guarded options as the editor's PanelTypeSwitcher, so the two
 	// selectors disable the same kinds (e.g. List under PromQL, metrics-only kinds).
-	const panelTypeItems = usePanelTypeSelectItems({ queryType, signal });
+	const panelTypeItems = usePanelTypeSelectItems({
+		queryType,
+		signal,
+		isAIQuery,
+	});
 	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
 	const isLocked = useDashboardStore((s) => s.isLocked);
 

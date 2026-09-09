@@ -18,6 +18,8 @@ export interface SectionEditorContext {
 	onChangePanelKind?: (kind: PanelKind) => void;
 	yAxisUnit?: string;
 	queryType?: EQueryType;
+	/** Whether the panel holds an AI query — gates the panel-type switcher. */
+	isAIQuery?: boolean;
 	stepInterval?: number;
 	/** Unit the selected metric was sent with; drives the unit selector's mismatch warning. */
 	metricUnit?: string;

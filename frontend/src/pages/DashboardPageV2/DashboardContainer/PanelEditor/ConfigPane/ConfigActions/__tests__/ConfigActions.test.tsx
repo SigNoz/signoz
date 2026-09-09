@@ -29,7 +29,7 @@ describe('ConfigActions', () => {
 	it('offers "Create alert rule" for a create-alert-capable kind and seeds from the panel', async () => {
 		const user = userEvent.setup();
 		const panel = makePanel('signoz/TimeSeriesPanel');
-		render(<ConfigActions panel={panel} panelId="panel-1" />);
+		render(<ConfigActions panel={panel} panelId="panel-1" isAIQuery={false} />);
 
 		const row = screen.getByTestId('panel-editor-v2-create-alert');
 		expect(row).toHaveTextContent('Create alert');
@@ -38,9 +38,28 @@ describe('ConfigActions', () => {
 		expect(mockCreateAlert).toHaveBeenCalledWith(panel, 'panel-1');
 	});
 
+	it('renders nothing for an AI query, even on a create-alert-capable kind', () => {
+		const { container } = render(
+			<ConfigActions
+				panel={makePanel('signoz/TimeSeriesPanel')}
+				panelId="panel-1"
+				isAIQuery
+			/>,
+		);
+
+		expect(
+			screen.queryByTestId('panel-editor-v2-create-alert'),
+		).not.toBeInTheDocument();
+		expect(container).toBeEmptyDOMElement();
+	});
+
 	it('renders nothing for a kind that cannot seed an alert', () => {
 		const { container } = render(
-			<ConfigActions panel={makePanel('signoz/TablePanel')} panelId="panel-1" />,
+			<ConfigActions
+				panel={makePanel('signoz/TablePanel')}
+				panelId="panel-1"
+				isAIQuery={false}
+			/>,
 		);
 
 		expect(

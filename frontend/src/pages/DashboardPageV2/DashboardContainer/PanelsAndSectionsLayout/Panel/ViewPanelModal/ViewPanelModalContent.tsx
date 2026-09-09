@@ -54,6 +54,7 @@ function ViewPanelModalContent({
 		panelDefinition,
 		signal,
 		queryType,
+		isAIQuery,
 		query,
 		runQuery,
 		onChangePanelKind,
@@ -147,6 +148,7 @@ function ViewPanelModalContent({
 				onSwitchToEdit={onSwitchToEdit}
 				panelKind={draft.spec.plugin.kind}
 				queryType={queryType}
+				isAIQuery={isAIQuery}
 				signal={signal}
 				onChangePanelKind={onChangePanelKind}
 				onResetQuery={resetQuery}

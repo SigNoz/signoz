@@ -18,6 +18,8 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
+import { isBuilderEnvelope, withBuilderSpec } from './builderEnvelope';
+
 // Narrow view over the envelope spec variants. Orval erases envelope `spec` to `unknown`, so
 // shared fields are read through this view with a localized cast at the envelope boundary.
 interface QuerySpecView {
@@ -76,7 +78,9 @@ export function toQueryEnvelopes(
 			return (plugin.spec as Querybuildertypesv5CompositeQueryDTO).queries ?? [];
 		case 'signoz/BuilderQuery':
 			// plugin.spec is the (un-narrowed) plugin-spec union, so pick the builder
-			// spec out of it — mirroring the CompositeQuery case above.
+			// spec out of it — mirroring the CompositeQuery case above. The bare plugin
+			// carries no envelope tag, and only List emits one — a kind that declares
+			// `supportsAIQuery: false` — so `builder_query` is the only reachable tag.
 			return [
 				{
 					type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
@@ -150,22 +154,13 @@ function withBarStepInterval(
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	const stepInterval = getBarStepIntervalSeconds(startMs, endMs);
 	return envelopes.map((envelope) => {
-		if (
-			envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
-		) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
 		if (envelope.spec?.stepInterval) {
 			return envelope;
 		}
-		return {
-			...envelope,
-			spec: {
-				...envelope.spec,
-				stepInterval,
-			} as Querybuildertypesv5BuilderQuerySpecDTO,
-		};
+		return withBuilderSpec(envelope, { stepInterval });
 	});
 }
 
@@ -178,10 +173,7 @@ function withListOrderTiebreaker(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	return envelopes.map((envelope) => {
-		if (
-			envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
-		) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
 		const spec = envelope.spec as QuerySpecView;
@@ -198,16 +190,12 @@ function withListOrderTiebreaker(
 							direction: Querybuildertypesv5OrderDirectionDTO.desc,
 						},
 					];
-		return {
-			...envelope,
-			spec: {
-				...envelope.spec,
-				order: [
-					...primary,
-					{ key: { name: 'id' }, direction: primary[0].direction },
-				],
-			} as Querybuildertypesv5BuilderQuerySpecDTO,
-		};
+		return withBuilderSpec(envelope, {
+			order: [
+				...primary,
+				{ key: { name: 'id' }, direction: primary[0].direction },
+			],
+		});
 	});
 }
 
@@ -220,20 +208,10 @@ function withPagination(
 	{ offset, limit }: { offset: number; limit: number },
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	return envelopes.map((envelope) => {
-		if (
-			envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
-		) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
-		return {
-			...envelope,
-			spec: {
-				...envelope.spec,
-				offset,
-				limit,
-			} as Querybuildertypesv5BuilderQuerySpecDTO,
-		};
+		return withBuilderSpec(envelope, { offset, limit });
 	});
 }
 
@@ -315,11 +293,7 @@ export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 	}
 
 	const metricsSpecs = envelopes
-		.filter(
-			(envelope) =>
-				envelope.type ===
-				Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
-		)
+		.filter(isBuilderEnvelope)
 		.map((envelope) => envelope.spec as QuerySpecView)
 		.filter((spec) => spec.signal === 'metrics');
 

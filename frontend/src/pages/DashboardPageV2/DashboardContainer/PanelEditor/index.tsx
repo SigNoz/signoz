@@ -28,6 +28,7 @@ import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
 import layoutStorage from './layoutStorage';
 import PanelEditorQueryBuilder from './PanelEditorQueryBuilder/PanelEditorQueryBuilder';
+import { isAIQuery } from './PanelEditorQueryBuilder/utils';
 import PreviewPane from './PreviewPane/PreviewPane';
 import { useLegendSeries } from './hooks/useLegendSeries';
 import { usePanelEditSession } from './hooks/usePanelEditSession';
@@ -353,6 +354,7 @@ function PanelEditorContainer({
 						onChangeSpec={setSpec}
 						onChangePanelKind={onChangePanelKind}
 						queryType={currentQuery.queryType}
+						isAIQuery={isAIQuery(currentQuery)}
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
 						stepInterval={stepInterval}

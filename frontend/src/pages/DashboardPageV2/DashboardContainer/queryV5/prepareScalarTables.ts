@@ -3,11 +3,9 @@ import type {
 	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5ScalarDataDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import {
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas';
 
+import { isBuilderEnvelope } from './builderEnvelope';
 import type { PanelTable, PanelTableColumn } from './types';
 
 // Narrow view over a builder-query aggregation; envelope spec is `unknown`, so naming reads
@@ -28,10 +26,7 @@ export function extractAggregationsPerQuery(
 ): AggregationsPerQuery {
 	const perQuery: AggregationsPerQuery = {};
 	(requestPayload?.compositeQuery?.queries ?? []).forEach((envelope) => {
-		if (
-			envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
-		) {
+		if (!isBuilderEnvelope(envelope)) {
 			return;
 		}
 		const spec = envelope.spec;

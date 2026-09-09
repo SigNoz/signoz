@@ -24,6 +24,10 @@ const mockOnChangePanelKind = jest.fn();
 const mockSave = jest.fn().mockResolvedValue('panel-1');
 
 const mockUseDraft = jest.fn();
+jest.mock('hooks/useIsAIObservabilityEnabled', () => ({
+	useIsAIObservabilityEnabled: (): boolean => false,
+}));
+
 jest.mock('../hooks/usePanelEditorDraft', () => ({
 	usePanelEditorDraft: (panel: unknown): unknown => mockUseDraft(panel),
 }));
@@ -70,7 +74,9 @@ jest.mock('../hooks/useSeedMetricUnit', () => ({
 	}),
 }));
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: (): unknown => ({ currentQuery: { queryType: 'builder' } }),
+	useQueryBuilder: (): unknown => ({
+		currentQuery: { queryType: 'builder', builder: { queryData: [] } },
+	}),
 }));
 jest.mock(
 	'../../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions',

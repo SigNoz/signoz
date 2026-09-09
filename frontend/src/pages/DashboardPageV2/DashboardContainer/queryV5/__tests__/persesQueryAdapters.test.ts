@@ -192,6 +192,21 @@ describe('persesQueryAdapters', () => {
 			);
 		});
 
+		it('keeps builder_ai_query on a second save with no edits', () => {
+			// The silent-downgrade catcher: an untouched AI panel that reloads and saves
+			// again must not come back as a plain trace query.
+			const saved = toPerses(initialQueryAIWithType, PANEL_TYPES.TIME_SERIES);
+			const resaved = toPerses(
+				fromPerses(saved, PANEL_TYPES.TIME_SERIES),
+				PANEL_TYPES.TIME_SERIES,
+			);
+
+			const { queries } = resaved[0].spec.plugin.spec as {
+				queries: Querybuildertypesv5QueryEnvelopeDTO[];
+			};
+			expect(queries[0].type).toBe('builder_ai_query');
+		});
+
 		it('preserves a List builder query through toPerses → fromPerses', () => {
 			const original: Query = initialQueriesMap[DataSource.LOGS];
 

@@ -15,6 +15,7 @@ import {
 	useConfirmableAction,
 } from 'hooks/useConfirmableAction';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
+import { panelHasAIQuery } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/panelHasAIQuery';
 import { useOpenPanelEditor } from 'pages/DashboardPageV2/DashboardContainer/hooks/useOpenPanelEditor';
 import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import { useDashboardStore } from 'pages/DashboardPageV2/DashboardContainer/store/useDashboardStore';
@@ -32,6 +33,9 @@ import { buildMoveItems } from '../utils/buildMoveItems';
 import { PANEL_ACTION_META } from './panelActionMeta';
 import DisabledMenuItemLabel from '../../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
 import { DASHBOARD_LOCKED_REASON } from '../../../hooks/useDashboardEditGuard';
+
+const ALERT_FROM_AI_PANEL_REASON =
+	'Alerts can\u2019t be created from AI queries yet';
 
 // Stable fallback so renders without layout context don't churn the mutation
 // hooks' deps (a fresh [] each render would re-create their callbacks).
@@ -89,6 +93,7 @@ export function usePanelActionItems({
 	const clonePanel = useClonePanel({ sections });
 
 	const panelCapabilities = getPanelDefinition(panelKind).actions;
+	const isAIPanel = panelHasAIQuery(panel);
 	const downloadItem = useDownloadPanelMenuItem({
 		panelId,
 		panel,
@@ -166,12 +171,21 @@ export function usePanelActionItems({
 		}
 
 		// Create Alerts opens a new tab and never mutates the dashboard, so —
-		// unlike edit/clone — it isn't gated on editability (V1 parity).
+		// unlike edit/clone — it isn't gated on editability (V1 parity). AI queries are
+		// the exception: the alert builder has no AI tab, so seeding it from one would
+		// silently hand back a plain trace query.
 		if (panelCapabilities.createAlert) {
 			dataGroup.push({
 				key: 'create-alert',
-				label: 'Create Alerts',
+				label: isAIPanel ? (
+					<DisabledMenuItemLabel reason={ALERT_FROM_AI_PANEL_REASON}>
+						Create Alerts
+					</DisabledMenuItemLabel>
+				) : (
+					'Create Alerts'
+				),
 				icon: <Bell size={14} />,
+				disabled: isAIPanel,
 				onClick: (): void => createAlert(panel, panelId),
 			});
 		}
@@ -227,6 +241,7 @@ export function usePanelActionItems({
 		sections,
 		panelId,
 		downloadItem,
+		isAIPanel,
 		openView,
 		openPanelEditor,
 		createAlert,

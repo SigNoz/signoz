@@ -18,6 +18,7 @@ import {
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { resolveSignal } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 import { buildViewPanelSpec } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/drilldown/buildViewPanelSpec';
+import { isAIQuery } from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/utils';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 import {
 	type PanelQueryTimeOverride,
@@ -50,6 +51,8 @@ export interface UseViewPanelModeReturn {
 	signal: TelemetrytypesSignalDTO;
 	/** Active query type (selected builder tab) — drives the panel-type selector's disabled rule. */
 	queryType: EQueryType;
+	/** Whether the panel holds an AI query — gates the header's kind selector. */
+	isAIQuery: boolean;
 	/** Query result for the draft over the per-view window. */
 	query: UsePanelQueryResult;
 	/** Stage & run the live builder query into the draft (drilldown; not persisted). */
@@ -176,6 +179,7 @@ export function useViewPanelMode({
 		panelDefinition,
 		signal,
 		queryType: currentQuery.queryType,
+		isAIQuery: isAIQuery(currentQuery),
 		query,
 		runQuery,
 		onChangePanelKind,
