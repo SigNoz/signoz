@@ -2,10 +2,12 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from http import HTTPStatus
 
+import pytest
+
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.metadata import get_field_keys, get_field_values
-from fixtures.querierai import ai_trace
+from fixtures.metadata import AttributesMetadata, get_field_keys, get_field_values
+from fixtures.querierai import ai_trace, ai_trace_mixed_spans
 from fixtures.traces import Traces
 
 AI_KEYS_PATH = "/api/v1/ai_observability/fields/keys"
@@ -106,20 +108,94 @@ def test_ai_field_values_suggests_ingested_attribute_values(
     assert values["stringValues"] == ["gpt-it-values"], values
 
 
-def test_ai_field_values_reject_existing_query(
+@pytest.mark.parametrize(
+    "existing_query,search_text,expected",
+    [
+        pytest.param(None, "", {"ai-rel-a", "ai-rel-b", "ai-rel-c"}, id="no_query_scopes_to_gen_ai_spans"),
+        pytest.param("gen_ai.user.id = 'alice'", "", {"ai-rel-a"}, id="span_filter_narrows_under_the_gate"),
+        pytest.param("llm_call_count > 0", "", {"ai-rel-a", "ai-rel-b", "ai-rel-c"}, id="pure_trace_aggregate_filter_is_stripped"),
+        pytest.param("llm_call_count > 0 AND gen_ai.user.id = 'alice'", "", {"ai-rel-a"}, id="mixed_filter_keeps_only_the_span_part"),
+        pytest.param(
+            "llm_call_count > 0 OR gen_ai.user.id = 'alice'",
+            "",
+            {"ai-rel-a", "ai-rel-b", "ai-rel-c"},
+            id="class_mixing_or_drops_the_filter_not_the_request",
+        ),
+        pytest.param(
+            "gen_ai.user.id = ",
+            "",
+            {"ai-rel-a", "ai-rel-b", "ai-rel-c"},
+            id="unparseable_filter_falls_back_to_the_gate",
+        ),
+        pytest.param(None, "ai-rel-a", {"ai-rel-a"}, id="search_text_narrows_related_values"),
+        # http.request.method lives on the root span's metadata row, gen_ai.* on
+        # the LLM/tool/agent rows; rows are per span-shape, so the gate AND a
+        # cross-span attribute filter can match no single row
+        pytest.param("http.request.method = 'POST'", "", set(), id="cross_span_attribute_filter_matches_no_row"),
+    ],
+)
+def test_ai_field_values_related_values(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    insert_attributes_metadata: Callable[[list[AttributesMetadata]], None],
+    existing_query: str | None,
+    search_text: str,
+    expected: set[str],
 ) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    # existingQuery key resolution reads the trace keys tables, not
+    # attributes_metadata; a mixed trace registers the gate keys (model/tool/
+    # agent) plus gen_ai.user.id and http.request.method
+    insert_traces(ai_trace_mixed_spans(now=now, service="ai-rel-a", user="alice"))
+
+    # related values are served from attributes_metadata; one row per gate key,
+    # the traces row without any gate attribute and the logs row (wrong
+    # data_source, gate attribute present) must never surface
+    insert_attributes_metadata(
+        [
+            AttributesMetadata(
+                data_source="traces",
+                resource_attributes={"service.name": "ai-rel-a"},
+                attributes={"gen_ai.request.model": "gpt-rel", "gen_ai.user.id": "alice"},
+            ),
+            AttributesMetadata(
+                data_source="traces",
+                resource_attributes={"service.name": "ai-rel-b"},
+                attributes={"gen_ai.tool.name": "get_weather", "gen_ai.user.id": "bob"},
+            ),
+            AttributesMetadata(
+                data_source="traces",
+                resource_attributes={"service.name": "ai-rel-c"},
+                attributes={"gen_ai.agent.name": "chat-agent"},
+            ),
+            AttributesMetadata(
+                data_source="traces",
+                resource_attributes={"service.name": "plain-rel"},
+                attributes={"http.request.method": "POST"},
+            ),
+            AttributesMetadata(
+                data_source="logs",
+                resource_attributes={"service.name": "ai-rel-logs"},
+                attributes={"gen_ai.request.model": "gpt-rel"},
+            ),
+        ]
+    )
+
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = get_field_values(
-        signoz,
-        token,
-        {"name": "gen_ai.request.model", "existingQuery": "service.name = 'ai-it-values'"},
-        AI_VALUES_PATH,
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    params = {"name": "service.name", "searchText": search_text}
+    if existing_query is not None:
+        params["existingQuery"] = existing_query
+
+    response = get_field_values(signoz, token, params, AI_VALUES_PATH)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["status"] == "success"
+
+    related = response.json()["data"]["values"].get("relatedValues") or []
+    assert set(related) == expected, related
 
 
 def test_ai_field_values_of_computed_aggregate_are_empty(

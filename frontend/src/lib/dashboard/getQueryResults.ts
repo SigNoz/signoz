@@ -1,6 +1,5 @@
 // @ts-nocheck
 
-import getPublicDashboardWidgetData from 'api/dashboard/public/getPublicDashboardWidgetData';
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import {
@@ -10,7 +9,7 @@ import {
 } from 'api/v5/v5';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import { timePreferenceType } from 'constants/timePreference';
 import {
 	CustomTimeType,
 	Time,
@@ -18,8 +17,8 @@ import {
 import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
+import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 import { SuccessResponseV2, Warning } from 'types/api';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -180,15 +179,9 @@ export const getLegend = (
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
 	version: string,
-	dynamicVariables?: IDashboardVariable[],
+	dynamicVariables: DynamicVariableSuggestion[] = [],
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
-	isInfraMonitoring?: boolean,
-	publicQueryMeta?: {
-		isPublic: boolean;
-		widgetIndex: number;
-		publicDashboardId: string;
-	},
 ): Promise<MetricQueryRangeSuccessResponse> {
 	let legendMap: Record<string, string>;
 	let response:
@@ -233,17 +226,11 @@ export async function GetMetricQueryRange(
 	}
 
 	if (version === ENTITY_VERSION_V5) {
-		const v5Result = prepareQueryRangePayloadV5({
-			...props,
-			dynamicVariables,
-		});
+		const v5Result = prepareQueryRangePayloadV5(props, dynamicVariables);
 		legendMap = v5Result.legendMap;
 
 		// atleast one query should be there to make call to v5 api
-		if (
-			v5Result.queryPayload.compositeQuery.queries.length === 0 &&
-			!publicQueryMeta?.isPublic
-		) {
+		if (v5Result.queryPayload.compositeQuery.queries.length === 0) {
 			return {
 				statusCode: 200,
 				error: null,
@@ -266,51 +253,27 @@ export async function GetMetricQueryRange(
 			};
 		}
 
-		if (publicQueryMeta?.isPublic) {
-			const publicResponse = await getPublicDashboardWidgetData({
-				id: publicQueryMeta?.publicDashboardId,
-				index: publicQueryMeta?.widgetIndex,
-				startTime: props.start * 1000,
-				endTime: props.end * 1000,
-			});
+		const v5Response = await getQueryRangeV5(
+			v5Result.queryPayload,
+			version,
+			signal,
+			headers,
+		);
 
-			rawV5Response = publicResponse.data.data;
+		rawV5Response = v5Response.data.data;
 
-			// Convert V5 response to legacy format for components
-			response = convertV5ResponseToLegacy(
-				{
-					payload: publicResponse.data,
-					params: v5Result.queryPayload,
-				},
-				legendMap,
-				finalFormatForWeb,
-			);
+		// Convert V5 response to legacy format for components
+		response = convertV5ResponseToLegacy(
+			{
+				payload: v5Response.data,
+				params: v5Result.queryPayload,
+			},
+			legendMap,
+			finalFormatForWeb,
+		);
 
-			warning = response.payload.warning || undefined;
-			meta = response.payload.meta || undefined;
-		} else {
-			const v5Response = await getQueryRangeV5(
-				v5Result.queryPayload,
-				version,
-				signal,
-				headers,
-			);
-
-			rawV5Response = v5Response.data.data;
-
-			// Convert V5 response to legacy format for components
-			response = convertV5ResponseToLegacy(
-				{
-					payload: v5Response.data,
-					params: v5Result.queryPayload,
-				},
-				legendMap,
-				finalFormatForWeb,
-			);
-
-			warning = response.payload.warning || undefined;
-			meta = response.payload.meta || undefined;
-		}
+		warning = response.payload.warning || undefined;
+		meta = response.payload.meta || undefined;
 	} else {
 		const legacyResult = prepareQueryRangePayload(props);
 		legendMap = legacyResult.legendMap;
@@ -398,5 +361,4 @@ export interface GetQueryResultsProps {
 	end?: number;
 	step?: number;
 	originalGraphType?: PANEL_TYPES;
-	dynamicVariables?: IDashboardVariable[];
 }

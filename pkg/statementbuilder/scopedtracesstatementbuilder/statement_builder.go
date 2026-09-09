@@ -114,6 +114,9 @@ func (b *scopedTraceStatementBuilder) Build(
 	case qbtypes.RequestTypeTrace:
 		return b.buildTraceListQuery(ctx, orgID, querybuilder.ToNanoSecs(start), querybuilder.ToNanoSecs(end), query, variables)
 	case qbtypes.RequestTypeRaw:
+		if err := b.validateRawOrderKeys(query); err != nil {
+			return nil, err
+		}
 		return b.buildDelegated(ctx, orgID, start, end, requestType, query, variables)
 	case qbtypes.RequestTypeScalar, qbtypes.RequestTypeTimeSeries:
 		return b.buildAggregation(ctx, orgID, start, end, requestType, query, variables)
@@ -122,27 +125,19 @@ func (b *scopedTraceStatementBuilder) Build(
 	}
 }
 
-// buildDelegated ANDs the base gate into the user filter and delegates to the
-// standard trace builder (the span-list / raw path).
-func (b *scopedTraceStatementBuilder) buildDelegated(
-	ctx context.Context,
-	orgID valuer.UUID,
-	start, end uint64,
-	requestType qbtypes.RequestType,
-	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
-	variables map[string]qbtypes.VariableItem,
-) (*qbtypes.Statement, error) {
-	gate := b.scope.FilterExpression
-	expr := gate
-	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
-		expr = fmt.Sprintf("(%s) AND (%s)", gate, query.Filter.Expression)
+// validateRawOrderKeys rejects trace-level order keys — no per-trace value exists on
+// span rows. A bare name may be a span column sharing an alias (duration_nano), so it passes.
+// TODO: move this into the request validation layer (querybuildertypesv5/validation.go).
+func (b *scopedTraceStatementBuilder) validateRawOrderKeys(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) error {
+	for _, o := range query.Order {
+		key := o.Key.TelemetryFieldKey
+		key.Normalize()
+		if key.FieldContext == telemetrytypes.FieldContextTrace {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"ordering the span list by trace-level key %q is not supported; order by span columns instead (e.g. timestamp, duration_nano)", o.Key.Name)
+		}
 	}
-
-	// shallow copy; only Filter is replaced, caller's query untouched
-	gated := query
-	gated.Filter = &qbtypes.Filter{Expression: expr}
-
-	return b.traceStmtBuilder.Build(ctx, orgID, start, end, requestType, gated, variables)
+	return nil
 }
 
 // traceScopedStatementBuilder is the delegate's optional capability of constraining a
@@ -153,10 +148,10 @@ type traceScopedStatementBuilder interface {
 	BuildTraceScoped(ctx context.Context, orgID valuer.UUID, start, end uint64, requestType qbtypes.RequestType, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], variables map[string]qbtypes.VariableItem, traceScope, traceScopeResource *qbtypes.Statement) (*qbtypes.Statement, error)
 }
 
-// buildDelegatedAggregation serves span-level scalar/time-series through the standard
-// trace builder, with the gate ANDed into the span-level filter part; a trace-level
-// part becomes a qualification the delegate constrains trace_id by.
-func (b *scopedTraceStatementBuilder) buildDelegatedAggregation(
+// buildDelegated serves the raw span list and span-level scalar/time-series through
+// the standard trace builder, with the gate ANDed into the span-level filter part; a
+// trace-level part becomes a qualification the delegate constrains trace_id by.
+func (b *scopedTraceStatementBuilder) buildDelegated(
 	ctx context.Context,
 	orgID valuer.UUID,
 	start, end uint64,

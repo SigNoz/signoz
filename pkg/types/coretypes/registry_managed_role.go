@@ -64,22 +64,19 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorPassword}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorPassword}, WildCardSelectorString)},
 		// license — admin only.
-		// Uniform LCRUD shape; actual ee routes are POST /api/v3/licenses (create
-		// = Activate), PUT /api/v3/licenses (update = Refresh), GET
-		// /api/v3/licenses/active (read; currently exposed as ViewAccess on the
-		// route side). delete and list are placeholders for shape parity, no
-		// route serves them today.
+		// Uniform LCRUD shape served by /api/v4/licenses: create = Activate,
+		// update = Refresh, read = Get (includes the key), list, delete (non-cloud
+		// licenses only). GET /api/v4/licenses/active is OpenAccess, so the read
+		// grant is not enforced there.
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		// subscription — admin only.
-		// Uniform LCRUD shape; actual ee routes are POST /api/v1/checkout
-		// (create), POST /api/v1/portal (update — opens Stripe portal), GET
-		// /api/v1/billing (read — current billing state). delete and list are
-		// placeholders for shape parity; cancellation flows through Stripe's
-		// portal, no in-process route serves them.
+		// create = POST /api/v1/subscriptions, list + update = PUT /api/v1/subscriptions,
+		// read = GET /api/v1/subscriptions. delete is a placeholder for shape parity;
+		// no in-process route serves it.
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
@@ -161,6 +158,8 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
+		{Verb: VerbDetach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		// ingestion-limit — editor+admin only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionLimit}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionLimit}, WildCardSelectorString)},
@@ -265,6 +264,8 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
+		{Verb: VerbDetach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		// ingestion-limit — editor+admin only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionLimit}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionLimit}, WildCardSelectorString)},

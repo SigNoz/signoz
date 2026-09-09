@@ -1,4 +1,4 @@
-import { DataFormats } from 'container/NewWidget/RightContainer/types';
+import { DataFormats } from 'constants/formats/types';
 
 import { covertIntoDataFormats } from './utils';
 

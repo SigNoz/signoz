@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -42,37 +41,9 @@ function useContextVariables({
 	// ! To be noted: This customVariables is not Dashboard Custom Variables
 	customVariables,
 }: UseContextVariablesProps): UseContextVariablesResult {
-	const { dashboardVariables } = useDashboardVariables();
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-
-	// Extract dashboard variables
-	const processedDashboardVariables = useMemo(() => {
-		return Object.entries(dashboardVariables)
-			.filter(([, value]) => value.name)
-			.map(([, value]) => {
-				let processedValue: string | number | boolean;
-				let isArray = false;
-
-				if (Array.isArray(value.selectedValue)) {
-					processedValue = value.selectedValue.join(', ');
-					isArray = true;
-				} else if (value.selectedValue != null) {
-					processedValue = value.selectedValue;
-				} else {
-					processedValue = '';
-				}
-
-				return {
-					name: value.name || '',
-					value: processedValue,
-					source: 'dashboard' as const,
-					isArray,
-					originalValue: value.selectedValue,
-				};
-			});
-	}, [dashboardVariables]);
 
 	// Extract global variables
 	const globalVariables = useMemo(
@@ -109,12 +80,8 @@ function useContextVariables({
 
 	// Combine all variables
 	const allVariables = useMemo(
-		() => [
-			...processedDashboardVariables,
-			...globalVariables,
-			...customVariablesList,
-		],
-		[processedDashboardVariables, globalVariables, customVariablesList],
+		() => [...globalVariables, ...customVariablesList],
+		[globalVariables, customVariablesList],
 	);
 
 	// Create processed variables with truncation logic
