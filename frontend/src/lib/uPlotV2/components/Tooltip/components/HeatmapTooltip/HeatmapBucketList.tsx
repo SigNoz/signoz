@@ -13,15 +13,15 @@ export default function HeatmapBucketList({
 }): JSX.Element {
 	return (
 		<div className={Styles.rows} data-testid="heatmap-tooltip-buckets">
-			{rows.map((row) => (
+			{rows.map((bucket) => (
 				<div
-					key={row.label}
-					className={cx(Styles.row, { [Styles.rowHovered]: row.isHovered })}
-					data-hovered={row.isHovered}
+					key={bucket.row}
+					className={cx(Styles.row, { [Styles.rowHovered]: bucket.isHovered })}
+					data-hovered={bucket.isHovered}
 					data-testid="heatmap-tooltip-bucket-row"
 				>
-					<span className={Styles.rowLabel}>{row.label}</span>
-					<span className={Styles.rowValue}>{formatCount(row.count)}</span>
+					<span className={Styles.rowLabel}>{bucket.label}</span>
+					<span className={Styles.rowValue}>{formatCount(bucket.count)}</span>
 				</div>
 			))}
 		</div>

@@ -33,6 +33,9 @@ export enum HeatmapTooltipBody {
 }
 
 export interface HeatmapBucketRow {
+	/** The bucket's row on the y axis. Labels are not unique — two boundaries can
+	 *  round to the same text — so this is what identifies a row. */
+	row: number;
 	label: string;
 	count: number | null;
 	isHovered: boolean;
@@ -163,6 +166,7 @@ export function buildBucketRows({
 			continue;
 		}
 		rows.push({
+			row: index,
 			label: formatRowLabel(bucket, formatBucketValue),
 			count: counts[index]?.[column] ?? null,
 			isHovered: offset === 0,
