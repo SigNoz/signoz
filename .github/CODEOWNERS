@@ -15,6 +15,10 @@
 .github @therealpandey
 go.mod @therealpandey
 
+# Security
+
+/SECURITY.md @therealpandey
+
 # Scaffold Owners
 
 /pkg/config/ @therealpandey

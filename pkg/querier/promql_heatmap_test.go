@@ -50,7 +50,8 @@ func TestFoldMatrixAsHeatmapClampsADecreasingCumulativeCount(t *testing.T) {
 		},
 	}
 
-	data := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
+	data, err := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
+	require.NoError(t, err)
 	require.Len(t, data.Aggregations, 1)
 
 	// a cumulative count that went backwards would difference to -6
@@ -75,7 +76,8 @@ func TestFoldMatrixAsHeatmapWidensTheBandOverAMissingUpperBound(t *testing.T) {
 		},
 	}
 
-	data := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
+	data, err := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
+	require.NoError(t, err)
 	require.Len(t, data.Aggregations, 1)
 
 	aggregation := data.Aggregations[0]

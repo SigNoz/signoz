@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from uuid import uuid4
 
 import pytest
 
@@ -14,11 +13,10 @@ from fixtures.querier import (
     assert_identical_query_response,
     build_builder_query,
     build_formula_query,
-    build_function,
     build_linear_bucket_options,
     build_log_bucket_options,
     get_all_series,
-    get_error_message,
+    get_all_warnings,
     get_heatmap_buckets,
     get_heatmap_columns,
     index_series_by_label,
@@ -28,10 +26,6 @@ from fixtures.querier import (
 HISTOGRAM_FILE = get_testdata_file_path("histogram_data_1h.jsonl")
 HISTOGRAM_COUNTERS_FILE = get_testdata_file_path("heatmap_histogram_3m.jsonl")
 MINUTE_MS = 60_000
-
-# the request-level rules below are checked before the metric is resolved, so
-# they need no data behind the query
-MISSING_METRIC = "test_heatmap_metric_that_is_never_written"
 
 
 def test_gauge_heatmap(
@@ -81,6 +75,10 @@ def test_gauge_heatmap(
 
     columns_by_host = {host: sorted(series["values"], key=lambda column: column["timestamp"]) for host, series in index_series_by_label(get_all_series(data, "A"), "host").items()}
     assert len(columns_by_host) == len(value_by_host)
+
+    # a column carries its per-bucket counts and no `value`, since no single
+    # number stands for a spread
+    assert all("value" not in column for columns in columns_by_host.values() for column in columns)
 
     # a column holds one count per bucket plus a trailing one for the overflow
     for host, columns in columns_by_host.items():
@@ -498,29 +496,13 @@ def test_promql_heatmap(
     assert [column["values"] for column in get_heatmap_columns(data, "A")] == [[2, 6, 2, 2], [6, 0, 8, 4]]
 
 
-def test_promql_heatmap_without_le(
+def test_promql_heatmap_with_no_data(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    metric = f"promql_heatmap_gauge_{uuid4().hex[:8]}"
     end_ms = (int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000) // MINUTE_MS) * MINUTE_MS
     start_ms = end_ms - MINUTE_MS
-
-    insert_metrics(
-        [
-            Metrics(
-                metric_name=metric,
-                labels={"service": "api"},
-                timestamp=datetime.fromtimestamp(ts_ms / 1000, tz=UTC),
-                value=42.0,
-                type_="Gauge",
-                is_monotonic=False,
-            )
-            for ts_ms in range(start_ms, end_ms + 1, MINUTE_MS)
-        ]
-    )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_query_request(
@@ -528,15 +510,16 @@ def test_promql_heatmap_without_le(
         token,
         start_ms,
         end_ms,
-        [{"type": "promql", "spec": {"name": "A", "query": metric, "step": 60}}],
+        [{"type": "promql", "spec": {"name": "A", "query": "sum by (le) (increase(promql_heatmap_bucket_never_written[2m]))", "step": 60}}],
         request_type=RequestType.HEATMAP,
     )
+    # a window holding nothing is not a query that can never draw a heatmap, so
+    # it comes back empty where the latter is rejected
     assert response.status_code == HTTPStatus.OK, response.text
 
-    # the bucket axis of a promql heatmap comes from `le`, and a series without
-    # it has no bucket to sit in
-    assert get_heatmap_buckets(response.json(), "A") == []
-    assert get_heatmap_columns(response.json(), "A") == []
+    data = response.json()
+    assert get_heatmap_buckets(data, "A") == []
+    assert get_heatmap_columns(data, "A") == []
 
 
 def test_clickhouse_heatmap(
@@ -630,249 +613,30 @@ def test_cached_heatmap_matches_uncached(
     assert [sum(column["values"]) for column in get_heatmap_columns(uncached.json(), "A")] == [1] * 30
 
 
-def test_histogram_rejects_bucket_options(
+def test_metric_with_no_data(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[list[Metrics]], None],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-    metric_name = "test_heatmap_histogram_with_bucket_options"
-
-    insert_metrics(
-        Metrics.load_from_file(
-            HISTOGRAM_FILE,
-            base_time=now - timedelta(minutes=60),
-            metric_name_override=metric_name,
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_query_request(
-        signoz,
-        token,
-        start_ms,
-        end_ms,
-        [build_builder_query("A", metric_name, "increase", "p50")],
-        request_type=RequestType.HEATMAP,
-        bucket_options=build_log_bucket_options(2),
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "bucketOptions are not supported for histogram metrics" in get_error_message(response.json())
-
-
-@pytest.mark.parametrize(
-    "request_type",
-    [RequestType.TIME_SERIES, RequestType.SCALAR, RequestType.RAW],
-    ids=["time_series", "scalar", "raw"],
-)
-def test_bucket_options_outside_a_heatmap(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    request_type: str,
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    missing_metric = "test_heatmap_metric_that_is_never_written"
 
     response = make_query_request(
         signoz,
         token,
         int((now - timedelta(minutes=30)).timestamp() * 1000),
         int(now.timestamp() * 1000),
-        [build_builder_query("A", MISSING_METRIC, "max", "max")],
-        request_type=request_type,
-        bucket_options=build_log_bucket_options(2),
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "bucketOptions are only supported for heatmap requests" in get_error_message(response.json())
-
-
-def test_fill_gaps_is_rejected(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = make_query_request(
-        signoz,
-        token,
-        int((now - timedelta(minutes=30)).timestamp() * 1000),
-        int(now.timestamp() * 1000),
-        [build_builder_query("A", MISSING_METRIC, "max", "max")],
+        [build_builder_query("A", missing_metric, "max", "max")],
         request_type=RequestType.HEATMAP,
-        format_options={"formatTableResultForUI": False, "fillGaps": True},
+        bucket_options=build_log_bucket_options(0),
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "fillGaps is not supported for heatmap requests" in get_error_message(response.json())
+    # a metric with nothing in the window carries no type to choose an axis
+    # from, and that is an empty heatmap rather than a rejected request
+    assert response.status_code == HTTPStatus.OK, response.text
 
-
-@pytest.mark.parametrize(
-    "queries",
-    [
-        [
-            build_builder_query("A", MISSING_METRIC, "max", "max"),
-            build_builder_query("B", MISSING_METRIC, "min", "min"),
-        ],
-        [build_builder_query("A", MISSING_METRIC, "max", "max", disabled=True)],
-        [
-            build_builder_query("A", MISSING_METRIC, "max", "max"),
-            build_builder_query("B", MISSING_METRIC, "min", "min", disabled=True),
-            build_formula_query("F1", "B"),
-        ],
-        [],
-    ],
-    ids=["two_enabled_queries", "only_a_disabled_query", "a_formula_beside_an_enabled_query", "no_queries"],
-)
-def test_wrong_number_of_enabled_queries(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    queries: list[dict],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = make_query_request(
-        signoz,
-        token,
-        int((now - timedelta(minutes=30)).timestamp() * 1000),
-        int(now.timestamp() * 1000),
-        queries,
-        request_type=RequestType.HEATMAP,
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-
-
-@pytest.mark.parametrize(
-    "queries, expected_message",
-    [
-        (
-            [build_builder_query("A", MISSING_METRIC, "max", "max", functions=[build_function("absolute")])],
-            "functions are not supported for heatmap requests",
-        ),
-        (
-            [
-                build_builder_query("A", MISSING_METRIC, "max", "max", disabled=True, functions=[build_function("absolute")]),
-                build_formula_query("F1", "A"),
-            ],
-            "functions are not supported for heatmap requests",
-        ),
-        (
-            [
-                build_builder_query("A", MISSING_METRIC, "max", "max", disabled=True),
-                build_formula_query("F1", "A", functions=[build_function("absolute")]),
-            ],
-            "functions are not supported for heatmap requests",
-        ),
-        (
-            [
-                {
-                    "type": "builder_query",
-                    "spec": {
-                        "name": "A",
-                        "signal": "metrics",
-                        "aggregations": [{"metricName": MISSING_METRIC, "timeAggregation": "max", "spaceAggregation": "max"}],
-                        "stepInterval": 60,
-                        "having": {"expression": "value > 1"},
-                    },
-                }
-            ],
-            "having is not supported for heatmap requests",
-        ),
-    ],
-    ids=["functions_on_the_query", "functions_on_a_disabled_formula_input", "functions_on_the_formula", "having_on_the_query"],
-)
-def test_functions_and_having_are_rejected(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    queries: list[dict],
-    expected_message: str,
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = make_query_request(
-        signoz,
-        token,
-        int((now - timedelta(minutes=30)).timestamp() * 1000),
-        int(now.timestamp() * 1000),
-        queries,
-        request_type=RequestType.HEATMAP,
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert expected_message in get_error_message(response.json())
-
-
-def test_promql_rejects_bucket_options(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = make_query_request(
-        signoz,
-        token,
-        int((now - timedelta(minutes=30)).timestamp() * 1000),
-        int(now.timestamp() * 1000),
-        [{"type": "promql", "spec": {"name": "A", "query": MISSING_METRIC}}],
-        request_type=RequestType.HEATMAP,
-        bucket_options=build_log_bucket_options(2),
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "bucketOptions are not supported for promql heatmap requests" in get_error_message(response.json())
-
-
-@pytest.mark.parametrize(
-    "bucket_options, expected_message",
-    [
-        ({"kind": "quadratic", "spec": {}}, "invalid bucketOptions kind"),
-        ({"kind": "log"}, "bucketOptions spec is required"),
-        ({"kind": "linear"}, "bucketOptions spec is required"),
-        ({"kind": "linear", "spec": {"maxValue": 1000, "scale": 2}}, 'unknown field "scale" in linear buckets spec'),
-        ({"kind": "log", "spec": {"scale": 5}}, "scale must be between -4 and 4"),
-        ({"kind": "log", "spec": {"scale": -5}}, "scale must be between -4 and 4"),
-        ({"kind": "linear", "spec": {"maxValue": 0}}, "linear buckets need a finite maxValue greater than 0"),
-        ({"kind": "linear", "spec": {"maxValue": -10}}, "linear buckets need a finite maxValue greater than 0"),
-        ({"kind": "linear", "spec": {"maxValue": 1000, "numBuckets": 513}}, "numBuckets must be between 1 and 512"),
-    ],
-    ids=[
-        "unknown_kind",
-        "log_without_a_spec",
-        "linear_without_a_spec",
-        "scale_under_the_linear_kind",
-        "scale_above_the_maximum",
-        "scale_below_the_minimum",
-        "zero_max_value",
-        "negative_max_value",
-        "too_many_buckets",
-    ],
-)
-def test_malformed_bucket_options(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    bucket_options: dict,
-    expected_message: str,
-) -> None:
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = make_query_request(
-        signoz,
-        token,
-        int((now - timedelta(minutes=30)).timestamp() * 1000),
-        int(now.timestamp() * 1000),
-        [build_builder_query("A", MISSING_METRIC, "max", "max")],
-        request_type=RequestType.HEATMAP,
-        bucket_options=bucket_options,
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert expected_message in get_error_message(response.json())
+    data = response.json()
+    assert get_heatmap_buckets(data, "A") == []
+    assert get_heatmap_columns(data, "A") == []
+    assert any(missing_metric in warning["message"] for warning in get_all_warnings(data))

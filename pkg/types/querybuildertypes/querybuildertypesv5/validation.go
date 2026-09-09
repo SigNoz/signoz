@@ -915,9 +915,23 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 		}
 	}
 
-	if enabled != 1 {
+	// A disabled query is a formula input rather than something to draw, so a
+	// request can carry queries and still have none to render.
+	switch {
+	case len(r.CompositeQuery.Queries) == 0:
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"heatmap requests need exactly one enabled query, got %d", enabled)
+			"at least one query is required")
+	case enabled == 0:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a heatmap needs one enabled query, but every query is disabled").
+			WithAdditional("Enable the query whose distribution you want to plot")
+	case enabled > 1:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a heatmap renders one distribution, but %d queries are enabled", enabled).
+			WithAdditional(
+				"Disable the queries you don't want to plot, keeping only the one whose distribution you want to show",
+				"A formula can stay enabled with the queries it reads disabled",
+			)
 	}
 
 	return nil

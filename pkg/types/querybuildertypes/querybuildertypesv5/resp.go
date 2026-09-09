@@ -301,7 +301,7 @@ type TimeSeriesValue struct {
 	Partial bool `json:"partial,omitempty"`
 
 	// Values holds one count per histogram bucket for heatmap results, in the
-	// order of the aggregation's Meta.Buckets. Value is unused in that case.
+	// order of the aggregation's Meta.Buckets. Value is omitted in that case.
 	Values []float64 `json:"values,omitempty"`
 }
 
@@ -523,13 +523,20 @@ func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	// a heatmap point's counts are spread across Values, so there is no one
+	// number Value could carry
+	var sanitizedValue any
+	if t.Values == nil {
+		sanitizedValue = sanitizeValue(t.Value)
+	}
+
 	return json.Marshal(&struct {
 		*Alias
-		Value  any `json:"value"`
+		Value  any `json:"value,omitempty"`
 		Values any `json:"values,omitempty"`
 	}{
 		Alias:  (*Alias)(&t),
-		Value:  sanitizeValue(t.Value),
+		Value:  sanitizedValue,
 		Values: sanitizedValues,
 	})
 }
