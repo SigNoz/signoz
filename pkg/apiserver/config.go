@@ -5,14 +5,14 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	httpserver "github.com/SigNoz/signoz/pkg/http/server"
 )
 
 // Config holds the configuration for config.
 type Config struct {
-	// Address is the TCP address the API server listens on, in the form "host:port".
-	Address string  `mapstructure:"address"`
-	Timeout Timeout `mapstructure:"timeout"`
-	Logging Logging `mapstructure:"logging"`
+	httpserver.Config `mapstructure:",squash" yaml:",squash"`
+	Timeout           Timeout `mapstructure:"timeout"`
+	Logging           Logging `mapstructure:"logging"`
 }
 
 type Timeout struct {
@@ -20,8 +20,6 @@ type Timeout struct {
 	Default time.Duration `mapstructure:"default"`
 	// The maximum allowed context timeout
 	Max time.Duration `mapstructure:"max"`
-	// RequestRead bounds reading an entire request, including the body, at the socket level.
-	RequestRead time.Duration `mapstructure:"request_read"`
 	// The list of routes that are excluded from the timeout
 	ExcludedRoutes []string `mapstructure:"excluded_routes"`
 }
@@ -37,11 +35,13 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
-		Address: "0.0.0.0:8080",
+		Config: httpserver.Config{
+			Address:     "0.0.0.0:8080",
+			ReadTimeout: 60 * time.Second,
+		},
 		Timeout: Timeout{
-			Default:     60 * time.Second,
-			Max:         600 * time.Second,
-			RequestRead: 60 * time.Second,
+			Default: 60 * time.Second,
+			Max:     600 * time.Second,
 			ExcludedRoutes: []string{
 				"/api/v1/logs/tail",
 				"/api/v3/logs/livetail",

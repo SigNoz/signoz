@@ -8,12 +8,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
 	"github.com/SigNoz/signoz/pkg/factory"
+	httpserver "github.com/SigNoz/signoz/pkg/http/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewWithEnvProvider(t *testing.T) {
 	t.Setenv("SIGNOZ_APISERVER_ADDRESS", "0.0.0.0:9090")
+	t.Setenv("SIGNOZ_APISERVER_READ__TIMEOUT", "80s")
 	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_DEFAULT", "70s")
 	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_MAX", "700s")
 	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_EXCLUDED__ROUTES", "/excluded1,/excluded2")
@@ -39,11 +41,13 @@ func TestNewWithEnvProvider(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := &Config{
-		Address: "0.0.0.0:9090",
+		Config: httpserver.Config{
+			Address:     "0.0.0.0:9090",
+			ReadTimeout: 80 * time.Second,
+		},
 		Timeout: Timeout{
-			Default:     70 * time.Second,
-			Max:         700 * time.Second,
-			RequestRead: 60 * time.Second,
+			Default: 70 * time.Second,
+			Max:     700 * time.Second,
 			ExcludedRoutes: []string{
 				"/excluded1",
 				"/excluded2",

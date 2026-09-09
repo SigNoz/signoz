@@ -140,13 +140,15 @@ sqlstore:
 apiserver:
   # The TCP address the API server listens on, in the form "host:port".
   address: 0.0.0.0:8080
+  # Maximum duration for reading an entire request, including the body.
+  read_timeout: 60s
+  # Keep at 0; any value cuts off streaming endpoints (livetail, SSE, export_raw_data).
+  write_timeout: 0
   timeout:
     # Default request timeout.
     default: 60s
     # Maximum request timeout.
     max: 600s
-    # Maximum duration for reading an entire request, including the body.
-    request_read: 60s
     # List of routes to exclude from request timeout.
     excluded_routes:
       - /api/v1/logs/tail

@@ -339,7 +339,7 @@ func newProvider(
 		})
 	}
 
-	httpServer, err := httpserver.New(settings.Logger(), httpserver.Config{Address: config.Address, ReadTimeout: config.Timeout.RequestRead}, httpHandler)
+	httpServer, err := httpserver.New(settings.Logger(), config.Config, httpHandler)
 	if err != nil {
 		return nil, err
 	}
