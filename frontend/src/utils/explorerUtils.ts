@@ -4,6 +4,22 @@ import ROUTES from 'constants/routes';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+// The list views of the logs and traces explorers hold their order as a
+// `<column>:<direction>` string, the value format of the ListViewOrderBy select.
+export const DEFAULT_LIST_ORDER_BY = 'timestamp:desc';
+
+// Deep links carry the list order inside the compositeQuery param, so the list
+// views are seeded from it instead of always opening newest-first.
+export const getListOrderBy = (query: Query | null): string => {
+	const [orderBy] = query?.builder?.queryData?.[0]?.orderBy ?? [];
+
+	if (!orderBy?.columnName || !orderBy?.order) {
+		return DEFAULT_LIST_ORDER_BY;
+	}
+
+	return `${orderBy.columnName}:${orderBy.order.toLowerCase()}`;
+};
+
 // Mapping between panel types and explorer views
 export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {
 	[PANEL_TYPES.LIST]: ExplorerViews.LIST,
