@@ -27,11 +27,9 @@ export interface SelectableFieldsResponse {
 interface UseSelectableFields {
 	data: SelectableFieldsResponse | undefined;
 	isFetching: boolean;
-	/** True once a response has landed; unlike isFetching it is false before the first fetch. */
 	isFetched: boolean;
 }
 
-/** No source reads the keys endpoint; a named source reads its pool once. */
 export function useSelectableFields({
 	signal,
 	searchText,
@@ -54,7 +52,6 @@ export function useSelectableFields({
 		},
 	);
 
-	// The per-trace aggregates are computed, so only this endpoint names them.
 	const staticPool = useQuery({
 		queryKey: AI_O11Y_SELECTABLE_FIELDS_QUERY_KEY,
 		queryFn: async (): Promise<TelemetryFieldKey[]> => {
@@ -80,7 +77,7 @@ export function useSelectableFields({
 		enabled: isAIObservability,
 	});
 
-	// The pool is fetched whole, so the search narrows it here rather than server-side.
+	// The pool arrives whole, so the search narrows it client-side.
 	const staticResponse = useMemo((): SelectableFieldsResponse | undefined => {
 		if (!staticPool.data) {
 			return undefined;

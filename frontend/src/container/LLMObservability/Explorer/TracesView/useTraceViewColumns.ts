@@ -31,10 +31,8 @@ interface UseTraceViewColumns {
 	isLoading: boolean;
 }
 
-/** Edits column visibility in the table's own store; the request is unaffected. */
 // TODO(ai-explorer): browser-local only, unlike the list views' `?options=` columns.
 export function useTraceViewColumns(): UseTraceViewColumns {
-	// Same pool the fields selector offers, so columns and choices cannot drift apart.
 	const { data, isFetched } = useSelectableFields({
 		signal: DataSource.TRACES,
 		searchText: '',
