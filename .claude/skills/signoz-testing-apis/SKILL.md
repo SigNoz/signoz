@@ -10,8 +10,8 @@ description: Test any SigNoz HTTP API (query_range, dashboards, alerts, fields, 
 - Base URL comes from the `SIGNOZ_ENDPOINT` env var. It may point to a preview deployment; use `http://localhost:8080` when unset.
 - Auth comes from the `SIGNOZ_API_KEY` env var, sent as the `SIGNOZ-API-KEY` header.
 - If `SIGNOZ_API_KEY` is not set:
-  - If the server runs against a local SQLite DB, create a key directly in the database (inserts service account + key + role + authorization tuple; the server must have been started once so the schema exists):
-    `export SIGNOZ_API_KEY=$(.claude/skills/signoz-testing-apis/scripts/create-api-key.sh /path/to/signoz.db)`
+  - If the server runs against a local SQLite DB, create a key directly in the database and set it in the environment (inserts service account + key + role + authorization tuple; the server must have been started once so the schema exists):
+    `eval "$(.claude/skills/signoz-testing-apis/scripts/create-api-key.sh /path/to/signoz.db)"`
     If authorization fails right after, wait a few seconds and retry (checks are cached briefly).
   - Otherwise (remote/preview deployment) STOP and ask the user to provide a key. NEVER try login, register, invite, user/org creation, or token minting flows.
 
@@ -46,12 +46,11 @@ Start from [references/query-range-payload.json](references/query-range-payload.
 
 Skip this section entirely if `SIGNOZ_ENDPOINT` already points at a reachable deployment.
 
-1. **ClickHouse**: the server expects ClickHouse at `tcp://localhost:9000` by default. Reuse an already-running instance (e.g. from an existing SigNoz docker deployment) — check with `nc -z localhost 9000`. Only start one if none is reachable (see `tests/fixtures/clickhouse.py` for how this repo runs one). If it is not on `localhost:9000`, set `SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN`.
-2. **SQLite**: reuse an existing `signoz.db` if one is available, so orgs, users, and API keys persist. Point the server at it with `SIGNOZ_SQLSTORE_SQLITE_PATH=/path/to/signoz.db`; otherwise set it to a fresh local path.
-3. **Start the server** from the repo root:
+1. **ClickHouse**: the Makefile expects ClickHouse at `tcp://127.0.0.1:9000`. Reuse an already-running instance (e.g. from an existing SigNoz docker deployment) — check with `nc -z 127.0.0.1 9000`. Only start one if none is reachable (see `tests/fixtures/clickhouse.py` for how this repo runs one).
+2. **Start the server** from the repo root, in the background:
 
    ```bash
-   SIGNOZ_SQLSTORE_SQLITE_PATH=./signoz.db go run ./cmd/community server
+   make go-run-community &
    ```
 
-   Wait until it listens on `:8080`. If startup fails over missing web assets, add `SIGNOZ_WEB_ENABLED=false`.
+   This uses `./signoz.db` (fresh if absent) and disables the web assets. To reuse an existing SQLite DB (keeping orgs, users, and API keys): `make go-run-community SIGNOZ_SQLSTORE_SQLITE_PATH=/path/to/signoz.db`. Wait until the server listens on `:8080`; stop it later with `make go-stop`.
