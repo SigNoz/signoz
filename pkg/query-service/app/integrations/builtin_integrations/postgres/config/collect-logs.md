@@ -81,7 +81,7 @@ service:
     logs/postgresql:
       receivers: [filelog/postgresql]
       processors: [batch]
-      exporters: [otlp/postgresql-logs]
+      exporters: [otlp/postgres-logs]
 ```
 
 #### Set Environment Variables
