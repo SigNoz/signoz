@@ -2,6 +2,7 @@ package signozalertmanager
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	amConfig "github.com/prometheus/alertmanager/config"
@@ -31,6 +32,7 @@ type provider struct {
 	notificationManager nfmanager.NotificationManager
 	maintenanceStore    alertmanagertypes.MaintenanceStore
 	stopC               chan struct{}
+	stopOnce            sync.Once
 }
 
 func NewFactory(
@@ -99,7 +101,7 @@ func (provider *provider) Start(ctx context.Context) error {
 }
 
 func (provider *provider) Stop(ctx context.Context) error {
-	close(provider.stopC)
+	provider.stopOnce.Do(func() { close(provider.stopC) })
 	return provider.service.Stop(ctx)
 }
 
