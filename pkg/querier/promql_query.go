@@ -170,6 +170,12 @@ func (q *promqlQuery) Fingerprint() string {
 		q.query.Step.String(),
 	}
 
+	// Two windows a fraction of a step apart describe different instants, so
+	// they must not share an entry.
+	if stepMs := uint64(q.query.Step.Milliseconds()); stepMs > 0 && q.tr.From%stepMs != 0 {
+		parts = append(parts, fmt.Sprintf("offset=%d", q.tr.From%stepMs))
+	}
+
 	return strings.Join(parts, "&")
 }
 

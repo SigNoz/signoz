@@ -201,7 +201,7 @@ func BenchmarkBucketCache_FindMissingRangesWithStep(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				missing := bc.findMissingRangesWithStep(buckets, startMs, endMs, stepMs)
+				missing := bc.findMissingRangesWithStep(buckets, startMs, endMs, stepMs, 0)
 				_ = missing
 			}
 		})
@@ -327,7 +327,7 @@ func BenchmarkBucketCache_FilterResultToTimeRange(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				filtered := bc.filterResultToTimeRange(result, startMs, endMs)
+				filtered := bc.filterResultToTimeRange(result, startMs, endMs, 0, true)
 				_ = filtered
 			}
 		})

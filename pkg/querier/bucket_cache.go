@@ -55,6 +55,9 @@ func (bc *bucketCache) GetMissRanges(
 	// Get query window
 	startMs, endMs := q.Window()
 
+	stepMs := uint64(step.Milliseconds())
+	startOffsetMs := calculateStartOffset(q, startMs, stepMs)
+
 	bc.logger.DebugContext(ctx, "getting miss ranges", slog.String("fingerprint", q.Fingerprint()), slog.Uint64("start", startMs), slog.Uint64("end", endMs))
 
 	// Generate cache key
@@ -74,11 +77,8 @@ func (bc *bucketCache) GetMissRanges(
 		return nil, missing
 	}
 
-	// Extract step interval if this is a builder query
-	stepMs := uint64(step.Milliseconds())
-
 	// Find missing ranges with step alignment
-	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs)
+	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs, startOffsetMs)
 	bc.logger.DebugContext(ctx, "missing ranges", slog.Any("missing", missing), slog.Uint64("step", stepMs))
 
 	// If no cached data overlaps with requested range, return empty result
@@ -95,8 +95,8 @@ func (bc *bucketCache) GetMissRanges(
 	// Merge buckets into a single result
 	mergedResult := bc.mergeBuckets(ctx, relevantBuckets, data.Warnings)
 
-	// Filter the merged result to only include values within the requested time range
-	mergedResult = bc.filterResultToTimeRange(mergedResult, startMs, endMs)
+	_, isPromQL := q.(*promqlQuery)
+	mergedResult = bc.filterResultToTimeRange(mergedResult, startMs, endMs, stepMs, isPromQL)
 
 	return mergedResult, missing
 }
@@ -105,6 +105,9 @@ func (bc *bucketCache) GetMissRanges(
 func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result) {
 	// Get query window
 	startMs, endMs := q.Window()
+
+	stepMs := uint64(step.Milliseconds())
+	startOffsetMs := calculateStartOffset(q, startMs, stepMs)
 
 	// Calculate the flux boundary - data after this point should not be cached
 	currentMs := uint64(time.Now().UnixMilli())
@@ -146,19 +149,14 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 
 	// Adjust start and end times to only cache complete intervals
 	cachableStartMs := startMs
-	stepMs := uint64(step.Milliseconds())
 
 	// If we have a step interval, adjust boundaries to only cache complete intervals
 	if stepMs > 0 {
 		// If start is not aligned, round up to next step boundary (first complete interval)
-		if startMs%stepMs != 0 {
-			cachableStartMs = ((startMs / stepMs) + 1) * stepMs
-		}
+		cachableStartMs = alignUpToStep(startMs, stepMs, startOffsetMs)
 
 		// If end is not aligned, round down to previous step boundary (last complete interval)
-		if cachableEndMs%stepMs != 0 {
-			cachableEndMs = (cachableEndMs / stepMs) * stepMs
-		}
+		cachableEndMs = alignDownToStep(cachableEndMs, stepMs, startOffsetMs)
 
 		// If after adjustment we have no complete intervals, don't cache
 		if cachableStartMs >= cachableEndMs {
@@ -206,8 +204,9 @@ func (bc *bucketCache) generateCacheKey(q qbtypes.Query) string {
 	return fmt.Sprintf("v5:query:%s", fingerprint)
 }
 
-// findMissingRangesWithStep identifies time ranges not covered by cached buckets with step alignment.
-func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64) []*qbtypes.TimeRange {
+// findMissingRangesWithStep identifies time ranges not covered by cached buckets
+// with step alignment. Boundaries are whole steps from startOffsetMs.
+func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64, startOffsetMs uint64) []*qbtypes.TimeRange {
 	// When step is 0 or window is too small to be cached, use simple algorithm
 	if stepMs == 0 || (startMs+stepMs) > endMs {
 		return bc.findMissingRangesBasic(buckets, startMs, endMs)
@@ -220,8 +219,7 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 		currentMs := startMs
 
 		// Check if start is not aligned - add partial window
-		if startMs%stepMs != 0 {
-			nextAggStart := startMs - (startMs % stepMs) + stepMs
+		if nextAggStart := alignUpToStep(startMs, stepMs, startOffsetMs); nextAggStart != startMs {
 			missing = append(missing, &qbtypes.TimeRange{
 				From: startMs,
 				To:   min(nextAggStart, endMs),
@@ -267,8 +265,7 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 	currentMs := startMs
 
 	// Check if start is not aligned - add partial window
-	if startMs%stepMs != 0 {
-		nextAggStart := startMs - (startMs % stepMs) + stepMs
+	if nextAggStart := alignUpToStep(startMs, stepMs, startOffsetMs); nextAggStart != startMs {
 		missing = append(missing, &qbtypes.TimeRange{
 			From: startMs,
 			To:   min(nextAggStart, endMs),
@@ -287,11 +284,7 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 		}
 
 		// Align bucket boundaries to step intervals
-		alignedBucketStart := bucket.StartMs
-		if bucket.StartMs%stepMs != 0 {
-			// Round up to next step boundary
-			alignedBucketStart = bucket.StartMs - (bucket.StartMs % stepMs) + stepMs
-		}
+		alignedBucketStart := alignUpToStep(bucket.StartMs, stepMs, startOffsetMs)
 
 		// Add gap before this bucket if needed
 		if currentMs < alignedBucketStart && currentMs < endMs {
@@ -304,9 +297,12 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 		// Update current position to the end of this bucket
 		// But ensure it's aligned to step boundary
 		bucketEnd := min(bucket.EndMs, endMs)
-		if bucketEnd%stepMs != 0 && bucketEnd < endMs {
+		// The step the window ends inside reaches past it, so that stretch is
+		// missing however far the bucket runs.
+		bucketEnd = min(bucketEnd, alignDownToStep(endMs, stepMs, startOffsetMs))
+		if bucketEnd < endMs {
 			// Round down to step boundary
-			bucketEnd = bucketEnd - (bucketEnd % stepMs)
+			bucketEnd = alignDownToStep(bucketEnd, stepMs, startOffsetMs)
 		}
 		currentMs = max(currentMs, bucketEnd)
 	}
@@ -321,6 +317,42 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 
 	// Don't merge ranges - keep partial windows separate for proper handling
 	return missing
+}
+
+// calculateStartOffset returns how far into a step a query's values sit. Only
+// promql reports at the window start and every step after it; the rest report
+// on absolute step boundaries.
+func calculateStartOffset(q qbtypes.Query, startMs, stepMs uint64) uint64 {
+	if _, isPromQL := q.(*promqlQuery); !isPromQL || stepMs == 0 {
+		return 0
+	}
+	return startMs % stepMs
+}
+
+// With a 5m step and no offset the times seen by a query are 10:00, 10:05, 10:10. So 10:07
+// is at an offset of 2m, and 10:05 is at 0.
+//
+// With a 1m step and a 30s offset the times seen are 10:00:30, 10:01:30, 10:02:30. So 10:01:00
+// is at an offset of 30s.
+func calculateOffsetIntoStep(timestampMs, stepMs, startOffsetMs uint64) uint64 {
+	if stepMs == 0 {
+		return 0
+	}
+	return ((timestampMs % stepMs) + stepMs - startOffsetMs%stepMs) % stepMs
+}
+
+// alignUpToStep returns the first time seen by a query at or after timestampMs.
+func alignUpToStep(timestampMs, stepMs, startOffsetMs uint64) uint64 {
+	offset := calculateOffsetIntoStep(timestampMs, stepMs, startOffsetMs)
+	if offset == 0 {
+		return timestampMs
+	}
+	return timestampMs - offset + stepMs
+}
+
+// alignDownToStep returns the last time seen by a query at or before timestampMs.
+func alignDownToStep(timestampMs, stepMs, startOffsetMs uint64) uint64 {
+	return timestampMs - calculateOffsetIntoStep(timestampMs, stepMs, startOffsetMs)
 }
 
 // findMissingRangesBasic is the simple algorithm without step alignment.
@@ -760,9 +792,21 @@ func max(a, b uint64) uint64 {
 }
 
 // filterResultToTimeRange filters the result to only include values within the requested time range.
-func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, endMs uint64) *qbtypes.Result {
+func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, endMs, stepMs uint64, isPromQL bool) *qbtypes.Result {
 	if result == nil || result.Value == nil {
 		return result
+	}
+
+	maxTimestampMs := endMs
+	// A promql value at T is the query evaluated at T, so T == endMs is inside the
+	// requested range. For every other query type the value at T aggregates
+	// [T, T+stepMs), which the requested range contains only when T <= endMs-stepMs.
+	if !isPromQL {
+		if stepMs > 0 {
+			maxTimestampMs = endMs - stepMs
+		} else {
+			maxTimestampMs = endMs - 1
+		}
 	}
 
 	switch result.Type {
@@ -789,7 +833,7 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 					// Filter values to only include those within the requested time range
 					for _, value := range series.Values {
 						timestampMs := uint64(value.Timestamp)
-						if timestampMs >= startMs && timestampMs < endMs {
+						if timestampMs >= startMs && timestampMs <= maxTimestampMs {
 							filteredSeries.Values = append(filteredSeries.Values, value)
 						}
 					}
