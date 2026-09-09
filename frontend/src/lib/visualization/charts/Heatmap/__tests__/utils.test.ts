@@ -6,7 +6,13 @@ import {
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import type uPlot from 'uplot';
 
-import { buildHeatmapConfig, prepareHeatmapChartData } from '../utils';
+import { PrecisionOptionsEnum } from 'components/Graph/types';
+
+import {
+	buildHeatmapConfig,
+	prepareHeatmapChartData,
+	resolveBoundaryPrecision,
+} from '../utils';
 
 const GRID: HeatmapGrid = {
 	bounds: [128, 256, 1024],
@@ -66,6 +72,67 @@ function buildConfig(
 		...overrides,
 	});
 }
+
+/** Two decimals round every one of these to `0.06 ms` or `0.07 ms`. */
+const CLOSE_BOUNDS = [
+	0.05731275270029195, 0.059850205043660856, 0.0625, 0.06526711140171336,
+	0.0681567332915786,
+];
+
+describe('resolveBoundaryPrecision', () => {
+	it('raises the precision until every boundary prints differently', () => {
+		expect(
+			resolveBoundaryPrecision({
+				yAxis: resolveHeatmapYAxis(CLOSE_BOUNDS, HeatmapAxisScale.Log),
+				yAxisUnit: 'ms',
+				decimalPrecision: 2,
+			}),
+		).toBe(3);
+	});
+
+	it('leaves the panel"s precision alone where the boundaries already separate', () => {
+		expect(
+			resolveBoundaryPrecision({
+				yAxis: Y_AXIS,
+				yAxisUnit: 'ms',
+				decimalPrecision: 2,
+			}),
+		).toBe(2);
+	});
+
+	it('never drops below the panel"s precision', () => {
+		expect(
+			resolveBoundaryPrecision({
+				yAxis: Y_AXIS,
+				yAxisUnit: 'ms',
+				decimalPrecision: 4,
+			}),
+		).toBe(4);
+	});
+
+	it('stops at the most precise the panel can express', () => {
+		expect(
+			resolveBoundaryPrecision({
+				yAxis: resolveHeatmapYAxis(
+					[0.062501, 0.062502, 0.062503],
+					HeatmapAxisScale.Log,
+				),
+				yAxisUnit: 'ms',
+				decimalPrecision: 2,
+			}),
+		).toBe(4);
+	});
+
+	it('leaves full precision as it is, having nothing above it to reach for', () => {
+		expect(
+			resolveBoundaryPrecision({
+				yAxis: resolveHeatmapYAxis(CLOSE_BOUNDS, HeatmapAxisScale.Log),
+				yAxisUnit: 'ms',
+				decimalPrecision: PrecisionOptionsEnum.FULL,
+			}),
+		).toBe(PrecisionOptionsEnum.FULL);
+	});
+});
 
 describe('prepareHeatmapChartData', () => {
 	it('puts timestamps first and one series per bucket row', () => {

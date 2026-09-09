@@ -28,7 +28,11 @@ import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 import { HeatmapChartProps } from 'lib/visualization/charts/types';
 import { useHeatmapGroupLegend } from './useHeatmapGroupLegend';
-import { buildHeatmapConfig, prepareHeatmapChartData } from './utils';
+import {
+	buildHeatmapConfig,
+	prepareHeatmapChartData,
+	resolveBoundaryPrecision,
+} from './utils';
 
 /** Vertical space the colour bar takes out of the container. */
 const COLOR_BAR_HEIGHT = 28;
@@ -125,6 +129,13 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 		[grid.bounds, axisScale],
 	);
 
+	// The axis, the series labels and the tooltip all name rows by their boundaries,
+	// so they share one precision.
+	const boundaryPrecision = useMemo(
+		() => resolveBoundaryPrecision({ yAxis, yAxisUnit, decimalPrecision }),
+		[yAxis, yAxisUnit, decimalPrecision],
+	);
+
 	const hasGrid = yAxis.rows.length > 0 && grid.timestamps.length > 0;
 
 	const data = useMemo(
@@ -191,7 +202,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				dimOnHover,
 				onHoverChange: handleHoverChange,
 				yAxisUnit,
-				decimalPrecision,
+				decimalPrecision: boundaryPrecision,
 				timezone,
 				minTimeScale,
 				maxTimeScale,
@@ -207,7 +218,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 			dimOnHover,
 			handleHoverChange,
 			yAxisUnit,
-			decimalPrecision,
+			boundaryPrecision,
 			timezone,
 			minTimeScale,
 			maxTimeScale,
@@ -253,7 +264,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				visibleGroups={visibleGroups}
 				groupColor={extremeColor}
 				yAxisUnit={yAxisUnit}
-				decimalPrecision={decimalPrecision}
+				decimalPrecision={boundaryPrecision}
 				timezone={timezone}
 				canPinTooltip={canPinTooltip}
 				renderTooltipFooter={renderTooltipFooter}
@@ -267,7 +278,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 			visibleGroups,
 			extremeColor,
 			yAxisUnit,
-			decimalPrecision,
+			boundaryPrecision,
 			timezone,
 			canPinTooltip,
 			renderTooltipFooter,

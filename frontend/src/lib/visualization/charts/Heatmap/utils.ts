@@ -1,5 +1,5 @@
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PrecisionOption } from 'components/Graph/types';
+import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
@@ -13,7 +13,10 @@ import {
 	createHeatmapHooks,
 	HeatmapRenderOptions,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/heatmapPlugin';
-import { HeatmapGrid } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import {
+	HeatmapGrid,
+	HeatmapYAxis,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import uPlot from 'uplot';
 
 /** Minimum gap between y tick labels, in CSS pixels. */
@@ -21,6 +24,55 @@ const MIN_Y_TICK_GAP_PX = 18;
 
 /** Label for the edge above the overflow row. */
 const OVERFLOW_AXIS_LABEL = '∞';
+
+const BOUNDARY_PRECISIONS: Array<
+	Exclude<PrecisionOption, PrecisionOptionsEnum.FULL>
+> = [0, 1, 2, 3, 4];
+
+/** What `getYAxisFormattedValue` falls back to, so an unset precision starts
+ *  where the panel renders. */
+const DEFAULT_BOUNDARY_PRECISION = 2;
+
+/**
+ * Lowest precision, at or above the panel's, that prints every boundary
+ * distinctly: `0.0625` and `0.0653` are both `0.06` at two decimals, and the rows
+ * either side then claim the same range. Settles for the most precise candidate
+ * when none separates every pair.
+ */
+export function resolveBoundaryPrecision({
+	yAxis,
+	yAxisUnit,
+	decimalPrecision,
+}: {
+	yAxis: HeatmapYAxis;
+	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
+}): PrecisionOption | undefined {
+	if (decimalPrecision === PrecisionOptionsEnum.FULL) {
+		return decimalPrecision;
+	}
+
+	// The overflow row's upper edge is the synthetic top of the grid, labelled `∞`.
+	const boundaries = yAxis.rows
+		.filter((row) => !row.isOverflow)
+		.map((row) => row.upper);
+
+	const floor = decimalPrecision ?? DEFAULT_BOUNDARY_PRECISION;
+	const candidates = BOUNDARY_PRECISIONS.filter(
+		(candidate) => candidate >= floor,
+	);
+
+	const separates = (candidate: PrecisionOption): boolean => {
+		const labels = boundaries.map((boundary) =>
+			getToolTipValue(String(boundary), yAxisUnit, candidate),
+		);
+		return labels.every(
+			(label, index) => index === 0 || label !== labels[index - 1],
+		);
+	};
+
+	return candidates.find(separates) ?? candidates[candidates.length - 1];
+}
 
 /**
  * Flattens the grid into `[timestamps, ...rows]`, one series per bucket row so
