@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "v1",
+  "start": 1757300000000,
+  "end": 1757303600000,
+  "requestType": "time_series",
+  "compositeQuery": {
+    "queries": [
+      {
+        "type": "builder_query",
+        "spec": {
+          "name": "A",
+          "signal": "traces",
+          "aggregations": [
+            { "expression": "count()" }
+          ],
+          "stepInterval": "60s"
+        }
+      }
+    ]
+  }
+}
