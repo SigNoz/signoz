@@ -47,7 +47,7 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
                 build_builder_query("B", METRIC_NAME, "min", "min"),
             ],
             {},
-            "heatmap requests need exactly one enabled query, got 2",
+            "a heatmap renders one distribution, but 2 queries are enabled",
             id="two_enabled_queries",
         ),
         pytest.param(
@@ -57,21 +57,19 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
                 build_formula_query("F1", "B"),
             ],
             {},
-            "heatmap requests need exactly one enabled query, got 2",
+            "a heatmap renders one distribution, but 2 queries are enabled",
             id="a_formula_beside_an_enabled_query",
         ),
-        # the composite query is turned away before the heatmap rules are reached,
-        # so only the rejection itself is the heatmap's contract here
         pytest.param(
             [build_builder_query("A", METRIC_NAME, "max", "max", disabled=True)],
             {},
-            "",
+            "a heatmap needs one enabled query, but every query is disabled",
             id="only_a_disabled_query",
         ),
         pytest.param(
             [],
             {},
-            "",
+            "at least one query is required",
             id="no_queries",
         ),
         pytest.param(
@@ -258,7 +256,7 @@ def test_promql_returning_no_le_is_rejected(
         request_type=RequestType.HEATMAP,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "none of them carry a `le` label" in get_error_message(response.json())
+    assert "no `le` labels to build a bucket axis from" in get_error_message(response.json())
 
 
 def test_histogram_rejects_bucket_options(
