@@ -1,5 +1,5 @@
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import OnboardingQuestionaire from '../index';
 
@@ -279,11 +279,11 @@ describe('OnboardingQuestionaire Component', () => {
 
 		it('fires PUT to /zeus/profiles and advances to step 4 on success', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			let profilePutCalled = false;
+			let profileRequestBody: Record<string, unknown> | undefined;
 
 			server.use(
-				rest.put(UPDATE_PROFILE_ENDPOINT, (_, res, ctx) => {
-					profilePutCalled = true;
+				rest.put(UPDATE_PROFILE_ENDPOINT, async (req, res, ctx) => {
+					profileRequestBody = await req.json();
 					return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
 				}),
 			);
@@ -303,13 +303,20 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByLabelText(/lowering observability costs/i));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
-			// Click "I'll do this later" on step 3 — triggers PUT /zeus/profiles
-			await user.click(
-				await screen.findByRole('button', { name: /i'll do this later/i }),
-			);
+			const logsSlider = await screen.findByTestId('onboarding-logs-slider');
+			const [, nonZeroLogMark] = within(logsSlider).getAllByRole('button');
+			await user.click(nonZeroLogMark);
+
+			await user.click(screen.getByTestId('onboarding-scale-do-later-button'));
 
 			await waitFor(() => {
-				expect(profilePutCalled).toBe(true);
+				expect(profileRequestBody).toStrictEqual(
+					expect.objectContaining({
+						logs_scale_per_day_in_gb: 0,
+						number_of_hosts: 0,
+						number_of_services: 0,
+					}),
+				);
 				// Step 3 content is gone — successfully advanced to step 4
 				expect(
 					screen.queryByText(/what does your scale approximately look like/i),
