@@ -78,7 +78,9 @@ func NewFactory(
 }
 
 func (provider *provider) Start(ctx context.Context) error {
-	provider.manager.Start(ctx)
+	if err := provider.manager.Start(ctx); err != nil {
+		return err
+	}
 	close(provider.healthyC)
 	<-provider.stopC
 	return nil
