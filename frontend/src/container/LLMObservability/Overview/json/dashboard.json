@@ -292,7 +292,7 @@
                           "stepInterval": 60,
                           "disabled": false,
                           "filter": {
-                            "expression": "gen_ai.system != ''"
+                            "expression": "(gen_ai.system != '' OR gen_ai.provider.name != '')"
                           },
                           "having": {
                             "expression": ""
@@ -343,7 +343,7 @@
                           "stepInterval": 60,
                           "disabled": false,
                           "filter": {
-                            "expression": "gen_ai.system != ''"
+                            "expression": "(gen_ai.system != '' OR gen_ai.provider.name != '')"
                           },
                           "having": {
                             "expression": ""
@@ -596,7 +596,7 @@
                           "stepInterval": 60,
                           "disabled": false,
                           "filter": {
-                            "expression": "gen_ai.system != ''"
+                            "expression": "(gen_ai.system != '' OR gen_ai.provider.name != '')"
                           },
                           "groupBy": [
                             {
@@ -672,7 +672,7 @@
                           "stepInterval": 60,
                           "disabled": false,
                           "filter": {
-                            "expression": "gen_ai.system != ''"
+                            "expression": "(gen_ai.system != '' OR gen_ai.provider.name != '')"
                           },
                           "groupBy": [
                             {
@@ -739,7 +739,7 @@
                           "stepInterval": 60,
                           "disabled": false,
                           "filter": {
-                            "expression": "has_error = true AND gen_ai.system != ''"
+                            "expression": "has_error = true AND (gen_ai.system != '' OR gen_ai.provider.name != '')"
                           },
                           "groupBy": [
                             {
@@ -865,7 +865,7 @@
                           "stepInterval": 60,
                           "disabled": false,
                           "filter": {
-                            "expression": "gen_ai.system != ''"
+                            "expression": "(gen_ai.system != '' OR gen_ai.provider.name != '')"
                           },
                           "groupBy": [
                             {

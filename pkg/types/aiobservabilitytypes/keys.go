@@ -10,6 +10,7 @@ const (
 	GenAIToolName      = "gen_ai.tool.name"
 	GenAIAgentName     = "gen_ai.agent.name"
 	GenAIProviderName  = "gen_ai.provider.name"
+	GenAISystem        = "gen_ai.system" // Legacy OTel draft semconv
 
 	GenAIUsageInputTokens              = "gen_ai.usage.input_tokens"
 	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
