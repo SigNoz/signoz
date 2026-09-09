@@ -333,6 +333,7 @@ describe('AttributeMappingsTab (integration)', () => {
 						context: FieldContext.attribute,
 						operation: MapperOperation.copy,
 						priority,
+						enabled: true,
 					})),
 				},
 			}),

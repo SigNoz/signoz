@@ -15,14 +15,14 @@ func TestSimulateSpanMappersProcessing_EndToEnd(t *testing.T) {
 	groups := []*SpanMapperGroupWithMappers{{
 		Group: &SpanMapperGroup{
 			Name:      "llm",
-			Condition: SpanMapperGroupCondition{Attributes: []string{"model"}},
+			Condition: SpanMapperGroupCondition{Attributes: NewSpanMapperGroupConditionKeys([]string{"model"}, SpanMapperOriginUser)},
 			Enabled:   true,
 		},
 		Mappers: []*SpanMapper{{
 			Name:         "gen_ai.request.model",
 			FieldContext: FieldContextSpanAttribute,
 			Config: SpanMapperConfig{Sources: []SpanMapperSource{
-				{Key: "llm.model", Context: FieldContextSpanAttribute, Operation: SpanMapperOperationCopy, Priority: 1},
+				{Key: "llm.model", Context: FieldContextSpanAttribute, Operation: SpanMapperOperationCopy, Priority: 1, Enabled: true, Origin: SpanMapperOriginUser},
 			}},
 			Enabled: true,
 		}},

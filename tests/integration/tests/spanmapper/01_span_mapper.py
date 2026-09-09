@@ -41,7 +41,7 @@ def test_create_groups_and_simulate_with_backfill(
         },
         json={
             "name": "llm-backfill",
-            "condition": {"attributes": ["model"], "resource": []},
+            "condition": {"attributes": [{"value": "model", "enabled": True}], "resource": []},
             "enabled": True,
         },
     )
@@ -69,6 +69,7 @@ def test_create_groups_and_simulate_with_backfill(
                         "context": "attribute",
                         "operation": "copy",
                         "priority": 1,
+                        "enabled": True,
                     }
                 ]
             },
@@ -126,13 +127,13 @@ def test_create_groups_and_simulate_with_backfill(
                 # No "mappers" key: the server backfills them from the saved group.
                 {
                     "name": "llm-backfill",
-                    "condition": {"attributes": ["model"], "resource": []},
+                    "condition": {"attributes": [{"value": "model", "enabled": True}], "resource": []},
                     "enabled": True,
                 },
                 # Unsaved group; mappers provided inline.
                 {
                     "name": "db-inline",
-                    "condition": {"attributes": ["db"], "resource": []},
+                    "condition": {"attributes": [{"value": "db", "enabled": True}], "resource": []},
                     "enabled": True,
                     "mappers": [
                         {
@@ -145,6 +146,7 @@ def test_create_groups_and_simulate_with_backfill(
                                         "context": "attribute",
                                         "operation": "move",
                                         "priority": 1,
+                                        "enabled": True,
                                     }
                                 ]
                             },

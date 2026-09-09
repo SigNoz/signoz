@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "definition": {
+    "name": "agent",
+    "condition": {
+      "attributes": [
+        {
+          "value": "agent"
+        }
+      ],
+      "resource": []
+    },
+    "enabled": true,
+    "mappers": [
+      {
+        "name": "gen_ai.agent.name",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "agent.name",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "agent_name",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.agent.id",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "agent.id",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.agent.description",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "agent.description",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.output.messages",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "final_result",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

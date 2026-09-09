@@ -145,6 +145,22 @@ func TestBuildAttributeRule(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "disabled_sources_skipped",
+			mapper: newMapper("gen_ai.input.messages", FieldContextSpanAttribute,
+				systemSrc("gen_ai.prompt", SpanMapperOperationCopy, 30, false),
+				systemSrc("input.value", SpanMapperOperationCopy, 20, true),
+				attrSrc("gen_ai.prompt", SpanMapperOperationMove, 40),
+			),
+			want: spanMapperProcessorAttribute{
+				Target:  "gen_ai.input.messages",
+				Context: FieldContextSpanAttribute.StringValue(),
+				Sources: []spanMapperProcessorSource{
+					{Key: "gen_ai.prompt", Action: SpanMapperOperationMove.StringValue()},
+					{Key: "input.value"},
+				},
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -153,6 +169,33 @@ func TestBuildAttributeRule(t *testing.T) {
 			assert.Equal(t, tc.want, buildAttributeRule(tc.mapper))
 		})
 	}
+}
+
+func TestBuildProcessorConfigDropsAllOffItems(t *testing.T) {
+	t.Parallel()
+
+	offGroup := newGroup("all-off", nil, nil)
+	offGroup.Condition.Attributes = []SpanMapperGroupConditionKey{{Value: "model", Enabled: false, Origin: SpanMapperOriginSystem}}
+
+	mixed := newGroup("llm", nil, nil)
+	mixed.Condition.Attributes = []SpanMapperGroupConditionKey{
+		{Value: "model", Enabled: false, Origin: SpanMapperOriginSystem},
+		{Value: "gen_ai.request.model", Enabled: true, Origin: SpanMapperOriginUser},
+	}
+
+	got := buildProcessorConfig([]*SpanMapperGroupWithMappers{
+		{Group: offGroup, Mappers: []*SpanMapper{newMapper("gen_ai.request.model", FieldContextSpanAttribute, attrSrc("llm.model", SpanMapperOperationCopy, 1))}},
+		{Group: mixed, Mappers: []*SpanMapper{
+			newMapper("gen_ai.request.model", FieldContextSpanAttribute, systemSrc("llm.model", SpanMapperOperationCopy, 10, false)),
+			newMapper("gen_ai.provider.name", FieldContextSpanAttribute, systemSrc("llm.vendor", SpanMapperOperationCopy, 10, true)),
+		}},
+	})
+
+	require.Len(t, got.Groups, 1)
+	assert.Equal(t, "llm", got.Groups[0].ID)
+	assert.Equal(t, []string{"gen_ai.request.model"}, got.Groups[0].ExistsAny.Attributes)
+	require.Len(t, got.Groups[0].Attributes, 1)
+	assert.Equal(t, "gen_ai.provider.name", got.Groups[0].Attributes[0].Target)
 }
 
 func loadFixture(t *testing.T, name string) []byte {
@@ -174,9 +217,12 @@ func assertYAMLEqual(t *testing.T, want, got []byte) {
 
 func newGroup(name string, attrs, res []string) *SpanMapperGroup {
 	return &SpanMapperGroup{
-		Name:      name,
-		Condition: SpanMapperGroupCondition{Attributes: attrs, Resource: res},
-		Enabled:   true,
+		Name: name,
+		Condition: SpanMapperGroupCondition{
+			Attributes: NewSpanMapperGroupConditionKeys(attrs, SpanMapperOriginUser),
+			Resource:   NewSpanMapperGroupConditionKeys(res, SpanMapperOriginUser),
+		},
+		Enabled: true,
 	}
 }
 
@@ -190,9 +236,13 @@ func newMapper(name string, target FieldContext, sources ...SpanMapperSource) *S
 }
 
 func attrSrc(key string, op SpanMapperOperation, priority int) SpanMapperSource {
-	return SpanMapperSource{Key: key, Context: FieldContextSpanAttribute, Operation: op, Priority: priority}
+	return SpanMapperSource{Key: key, Context: FieldContextSpanAttribute, Operation: op, Priority: priority, Enabled: true, Origin: SpanMapperOriginUser}
 }
 
 func resSrc(key string, op SpanMapperOperation, priority int) SpanMapperSource {
-	return SpanMapperSource{Key: key, Context: FieldContextResource, Operation: op, Priority: priority}
+	return SpanMapperSource{Key: key, Context: FieldContextResource, Operation: op, Priority: priority, Enabled: true, Origin: SpanMapperOriginUser}
+}
+
+func systemSrc(key string, op SpanMapperOperation, priority int, enabled bool) SpanMapperSource {
+	return SpanMapperSource{Key: key, Context: FieldContextSpanAttribute, Operation: op, Priority: priority, Enabled: enabled, Origin: SpanMapperOriginSystem}
 }

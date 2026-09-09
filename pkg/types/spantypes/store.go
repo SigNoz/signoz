@@ -9,9 +9,14 @@ import (
 )
 
 type SpanMapperStore interface {
+	// RunInTx runs cb in one transaction; every store call made with the
+	// callback's ctx joins it.
+	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error
+
 	// Group operations
 	ListGroups(ctx context.Context, orgID valuer.UUID, q *ListSpanMapperGroupsQuery) ([]*SpanMapperGroup, error)
 	GetGroup(ctx context.Context, orgID, id valuer.UUID) (*SpanMapperGroup, error)
+	GetGroupByName(ctx context.Context, orgID valuer.UUID, name string) (*SpanMapperGroup, error)
 	CreateGroup(ctx context.Context, group *SpanMapperGroup) error
 	UpdateGroup(ctx context.Context, group *SpanMapperGroup) error
 	DeleteGroup(ctx context.Context, orgID, id valuer.UUID) error

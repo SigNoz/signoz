@@ -1,0 +1,347 @@
+{
+  "version": 1,
+  "definition": {
+    "name": "llm",
+    "condition": {
+      "attributes": [
+        {
+          "value": "model"
+        }
+      ],
+      "resource": []
+    },
+    "enabled": true,
+    "mappers": [
+      {
+        "name": "gen_ai.request.model",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "llm.model_name",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 60
+            },
+            {
+              "key": "llm.request.model",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 50
+            },
+            {
+              "key": "ai.model.id",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 40
+            },
+            {
+              "key": "langfuse.observation.model.name",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "embedding.model_name",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "model",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.response.model",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "llm.response.model",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "ai.response.model",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.provider.name",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "gen_ai.system",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 50
+            },
+            {
+              "key": "llm.vendor",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 40
+            },
+            {
+              "key": "llm.provider",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "llm.system",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "ai.model.provider",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.operation.name",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "llm.request.type",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.usage.input_tokens",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "gen_ai.usage.prompt_tokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 50
+            },
+            {
+              "key": "llm.usage.prompt_tokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 40
+            },
+            {
+              "key": "llm.token_count.prompt",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "ai.usage.inputTokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "ai.usage.promptTokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.usage.output_tokens",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "gen_ai.usage.completion_tokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 50
+            },
+            {
+              "key": "llm.usage.completion_tokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 40
+            },
+            {
+              "key": "llm.token_count.completion",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "ai.usage.outputTokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "ai.usage.completionTokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.usage.cache_read.input_tokens",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "gen_ai.usage.cache_read_input_tokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "llm.token_count.prompt_details.cache_read",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "ai.usage.cachedInputTokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.usage.cache_creation.input_tokens",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "gen_ai.usage.cache_write.input_tokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "gen_ai.usage.cache_creation_input_tokens",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "llm.token_count.prompt_details.cache_write",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.input.messages",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "gen_ai.prompt",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "ai.prompt.messages",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "input.value",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.output.messages",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "gen_ai.completion",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "ai.response.text",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "output.value",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.conversation.id",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "session.id",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "langfuse.session.id",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.response.finish_reason",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "ai.response.finishReason",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
