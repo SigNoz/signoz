@@ -74,6 +74,17 @@ describe('RouteTab component', () => {
 		expect(history.location.pathname).toBe('/tab2');
 	});
 
+	it('does not animate tab panels to prevent CSSMotion DOM corruption', () => {
+		const history = createMemoryHistory();
+		const { container } = render(
+			<Router history={history}>
+				<RouteTab history={history} routes={testRoutes} activeKey="Tab1" />
+			</Router>,
+		);
+		const tabContent = container.querySelector('.ant-tabs-content');
+		expect(tabContent).not.toHaveClass('ant-tabs-content-animated');
+	});
+
 	it('calls onChangeHandler on tab change', () => {
 		const onChangeHandler = jest.fn();
 		const history = createMemoryHistory();

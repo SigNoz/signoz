@@ -59,7 +59,7 @@ function RouteTab({
 			destroyInactiveTabPane
 			activeKey={currentRoute?.key || activeKey}
 			defaultActiveKey={currentRoute?.key || activeKey}
-			animated
+			animated={{ inkBar: true, tabPane: false }}
 			items={items}
 			tabBarExtraContent={
 				showRightSection && (
