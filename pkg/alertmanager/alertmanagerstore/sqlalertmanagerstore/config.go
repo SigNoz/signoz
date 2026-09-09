@@ -3,6 +3,7 @@ package sqlalertmanagerstore
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -26,7 +27,7 @@ func (store *config) Get(ctx context.Context, orgID string) (*alertmanagertypes.
 
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(storeableConfig).
 		Where("org_id = ?", orgID).
@@ -50,19 +51,41 @@ func (store *config) Get(ctx context.Context, orgID string) (*alertmanagertypes.
 // Set implements alertmanagertypes.ConfigStore.
 func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config, opts ...alertmanagertypes.StoreOption) error {
 	return store.wrap(ctx, func(ctx context.Context) error {
-		if _, err := store.
-			sqlstore.
-			BunDBCtx(ctx).
-			NewInsert().
-			Model(config.StoreableConfig()).
-			On("CONFLICT (org_id) DO UPDATE").
-			Set("config = ?", config.StoreableConfig().Config).
-			Set("hash = ?", config.StoreableConfig().Hash).
-			Set("updated_at = ?", config.StoreableConfig().UpdatedAt).
-			Exec(ctx); err != nil {
+		stored := *config.StoreableConfig()
+		stored.UpdatedAt = time.Now().UTC().Truncate(time.Microsecond)
+		var result sql.Result
+		var err error
+		if originalHash, persisted := config.OriginalHash(); persisted {
+			originalUpdatedAt := config.OriginalUpdatedAt()
+			// Both dialects persist microseconds. Advance even if content repeats or the clock moves back.
+			if !stored.UpdatedAt.After(originalUpdatedAt) {
+				stored.UpdatedAt = originalUpdatedAt.Truncate(time.Microsecond).Add(time.Microsecond)
+			}
+			result, err = store.sqlstore.BunDBCtx(ctx).NewUpdate().
+				Model(&stored).
+				Column("config", "hash", "updated_at").
+				Where("id = ?", stored.ID.StringValue()).
+				Where("org_id = ?", stored.OrgID).
+				Where("hash = ?", originalHash).
+				Where("updated_at = ?", originalUpdatedAt).
+				Exec(ctx)
+		} else {
+			result, err = store.sqlstore.BunDBCtx(ctx).NewInsert().
+				Model(&stored).
+				On("CONFLICT (org_id) DO NOTHING").
+				Exec(ctx)
+		}
+		if err != nil {
 			return err
 		}
-
+		rows, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rows == 0 {
+			return errors.New(errors.TypeAlreadyExists, alertmanagertypes.ErrCodeAlertmanagerConfigConflict,
+				"alertmanager configuration changed concurrently; reload and retry the operation")
+		}
 		return nil
 	}, opts...)
 }
@@ -87,7 +110,7 @@ func (store *config) GetChannelByID(ctx context.Context, orgID string, id valuer
 
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(channel).
 		Where("org_id = ?", orgID).
@@ -105,16 +128,24 @@ func (store *config) GetChannelByID(ctx context.Context, orgID string, id valuer
 
 func (store *config) UpdateChannel(ctx context.Context, orgID string, channel *alertmanagertypes.Channel, opts ...alertmanagertypes.StoreOption) error {
 	return store.wrap(ctx, func(ctx context.Context) error {
-		if _, err := store.
+		result, err := store.
 			sqlstore.
 			BunDBCtx(ctx).
 			NewUpdate().
 			Model(channel).
 			WherePK().
-			Exec(ctx); err != nil {
+			Where("org_id = ?", orgID).
+			Exec(ctx)
+		if err != nil {
 			return err
 		}
-
+		rows, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rows == 0 {
+			return errors.New(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerChannelNotFound, "notification channel no longer exists")
+		}
 		return nil
 	}, opts...)
 }
@@ -123,17 +154,24 @@ func (store *config) DeleteChannelByID(ctx context.Context, orgID string, id val
 	return store.wrap(ctx, func(ctx context.Context) error {
 		channel := new(alertmanagertypes.Channel)
 
-		if _, err := store.
+		result, err := store.
 			sqlstore.
 			BunDBCtx(ctx).
 			NewDelete().
 			Model(channel).
 			Where("org_id = ?", orgID).
 			Where("id = ?", id.StringValue()).
-			Exec(ctx); err != nil {
+			Exec(ctx)
+		if err != nil {
 			return err
 		}
-
+		rows, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rows == 0 {
+			return errors.New(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerChannelNotFound, "notification channel no longer exists")
+		}
 		return nil
 	}, opts...)
 }
@@ -143,7 +181,7 @@ func (store *config) ListChannels(ctx context.Context, orgID string) ([]*alertma
 
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(&channels).
 		Where("org_id = ?", orgID).
@@ -160,7 +198,7 @@ func (store *config) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.
 
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(&channels).
 		Scan(ctx)
@@ -182,7 +220,7 @@ func (store *config) GetMatchers(ctx context.Context, orgID string) (map[string]
 
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Column("id", "data").
 		Model(&matchers).

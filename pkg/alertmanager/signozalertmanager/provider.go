@@ -153,17 +153,17 @@ func (provider *provider) GetChannelByID(ctx context.Context, orgID string, chan
 }
 
 func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver, id valuer.UUID) error {
+	config, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
 
 	if err := channel.Update(receiver); err != nil {
-		return err
-	}
-
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
 		return err
 	}
 
@@ -181,6 +181,11 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 }
 
 func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID valuer.UUID) error {
+	config, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, channelID)
 	if err != nil {
 		return err
@@ -199,11 +204,6 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"channel %q cannot be deleted because it is used by the following routing policies: %v",
 			channel.DisplayName, names)
-	}
-
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return err
 	}
 
 	if err := config.DeleteReceiver(channel.DisplayName); err != nil {
@@ -291,9 +291,19 @@ func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertma
 }
 
 func (provider *provider) SetDefaultConfig(ctx context.Context, orgID string) error {
+	existing, err := provider.configStore.Get(ctx, orgID)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return err
+	}
+
 	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Global, provider.config.Signoz.Route, orgID)
 	if err != nil {
 		return err
+	}
+
+	if existing != nil {
+		existing.ReplaceWith(config)
+		config = existing
 	}
 
 	return provider.configStore.Set(ctx, config)
