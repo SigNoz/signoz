@@ -304,11 +304,12 @@ export const useQueryOperations: UseQueryOperations = ({
 									timeAggregation: '',
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									// A heatmap draws the `le` counts themselves and offers sum alone, so
-									// a percentile default would sit in the selector with no option behind it.
+									// A heatmap cell holds a count of observations per `le` band, which is
+									// the one option the kind offers — a percentile default would sit in the
+									// selector with nothing behind it.
 									spaceAggregation:
 										panelType === PANEL_TYPES.HEATMAP
-											? MetricAggregateOperator.SUM
+											? MetricAggregateOperator.COUNT
 											: MetricAggregateOperator.P90,
 									reduceTo: ReduceOperators.AVG,
 								},

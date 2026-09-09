@@ -357,14 +357,14 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 			]);
 		});
 
-		it('offers sum alone on a heatmap panel, whose Y axis is the `le` labels', () => {
+		it('offers count alone on a heatmap panel, whose Y axis is the `le` labels', () => {
 			setupMockQueryBuilder('heatmap');
 
 			const result = renderHookWithProps({ query: histogramQuery });
 
 			expect(
 				result.current.spaceAggregationOptions.map((o) => o.value),
-			).toStrictEqual([MetricAggregateOperator.SUM]);
+			).toStrictEqual([MetricAggregateOperator.COUNT]);
 		});
 	});
 
@@ -393,7 +393,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 			);
 		});
 
-		it('defaults it to sum on a heatmap panel, which offers nothing else', () => {
+		it('defaults it to count on a heatmap panel, which offers nothing else', () => {
 			setupMockQueryBuilder('heatmap');
 
 			const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
@@ -406,7 +406,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 				expect.objectContaining({
 					aggregations: [
 						expect.objectContaining({
-							spaceAggregation: MetricAggregateOperator.SUM,
+							spaceAggregation: MetricAggregateOperator.COUNT,
 						}),
 					],
 				}),

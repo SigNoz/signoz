@@ -537,8 +537,8 @@ export const metricsHeatmapHistogramSpaceAggregateOperatorOptions: SelectOption<
 	string
 >[] = [
 	{
-		value: MetricAggregateOperator.SUM,
-		label: 'Sum',
+		value: MetricAggregateOperator.COUNT,
+		label: 'Count',
 	},
 ];
 

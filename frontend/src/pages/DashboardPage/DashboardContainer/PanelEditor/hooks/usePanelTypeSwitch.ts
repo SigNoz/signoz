@@ -58,6 +58,9 @@ const HISTOGRAM_ATTRIBUTE_TYPES = new Set<string>([
 
 const DEFAULT_HISTOGRAM_SPACE_AGGREGATION = 'p90';
 
+/** What a heatmap cell holds, and the one space aggregation the kind offers. */
+const HEATMAP_HISTOGRAM_SPACE_AGGREGATION = 'count';
+
 function withDefaultListOrder(query: Query): Query {
 	return {
 		...query,
@@ -79,7 +82,7 @@ function withDefaultListOrder(query: Query): Query {
  *
  * Percentiles go the same way: a histogram heatmap takes its axis from the `le` labels,
  * so a percentile draws the grid a count already draws, and the statement builder sums
- * either way.
+ * the `le` counts either way.
  */
 function withSingleHeatmapQuery(query: Query): Query {
 	const [first] = query.builder.queryData;
@@ -114,15 +117,15 @@ function withoutPercentile<T extends string | undefined>(
 ): T {
 	return (
 		PERCENTILE_SPACE_AGGREGATIONS.has(spaceAggregation as SpaceAggregation)
-			? 'sum'
+			? HEATMAP_HISTOGRAM_SPACE_AGGREGATION
 			: spaceAggregation
 	) as T;
 }
 
 /**
- * Undoes the sum above: every other kind offers a histogram metric percentiles alone, so
- * a sum carried out of a heatmap would sit in the selector with no option behind it.
- * Other metric types are left alone — sum is a real choice for a sum or a gauge.
+ * Undoes the count above: every other kind offers a histogram metric percentiles alone,
+ * so a count carried out of a heatmap would sit in the selector with no option behind
+ * it. Other metric types are left alone — count is a real choice for a sum or a gauge.
  */
 function withPercentileHistogramAggregation(query: Query): Query {
 	return {
@@ -138,10 +141,10 @@ function withPercentileHistogramAggregation(query: Query): Query {
 
 				return {
 					...queryData,
-					spaceAggregation: withoutSum(queryData.spaceAggregation),
+					spaceAggregation: withoutCount(queryData.spaceAggregation),
 					aggregations: queryData.aggregations?.map((aggregation) => ({
 						...aggregation,
-						spaceAggregation: withoutSum(
+						spaceAggregation: withoutCount(
 							(aggregation as MetricAggregation).spaceAggregation,
 						),
 					})) as IBuilderQuery['aggregations'],
@@ -151,9 +154,9 @@ function withPercentileHistogramAggregation(query: Query): Query {
 	};
 }
 
-function withoutSum<T extends string | undefined>(spaceAggregation: T): T {
+function withoutCount<T extends string | undefined>(spaceAggregation: T): T {
 	return (
-		spaceAggregation === 'sum'
+		spaceAggregation === HEATMAP_HISTOGRAM_SPACE_AGGREGATION
 			? DEFAULT_HISTOGRAM_SPACE_AGGREGATION
 			: spaceAggregation
 	) as T;

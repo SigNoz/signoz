@@ -201,7 +201,7 @@ describe('usePanelTypeSwitch', () => {
 		expect(persisted.builder.queryFormulas).toStrictEqual([]);
 	});
 
-	it('swaps a percentile spatial aggregation for sum when switching to a Heatmap panel', () => {
+	it('swaps a percentile spatial aggregation for count when switching to a Heatmap panel', () => {
 		const setSpec = jest.fn();
 		mockUseQueryBuilder.mockReturnValue(
 			builderState({ id: 'ts-current', queryType: 'builder' } as Query),
@@ -232,14 +232,14 @@ describe('usePanelTypeSwitch', () => {
 
 		const [persisted] = mockToPerses.mock.calls[0] as [Query];
 		const [queryData] = persisted.builder.queryData;
-		expect(queryData.spaceAggregation).toBe('sum');
+		expect(queryData.spaceAggregation).toBe('count');
 		expect(queryData.aggregations?.[0]).toStrictEqual({
 			metricName: 'signoz_latency',
-			spaceAggregation: 'sum',
+			spaceAggregation: 'count',
 		});
 	});
 
-	it('swaps sum back for a percentile when a histogram leaves a Heatmap panel', () => {
+	it('swaps count back for a percentile when a histogram leaves a Heatmap panel', () => {
 		const setSpec = jest.fn();
 		mockUseQueryBuilder.mockReturnValue(
 			builderState({ id: 'heatmap-current', queryType: 'builder' } as Query),
@@ -252,8 +252,10 @@ describe('usePanelTypeSwitch', () => {
 					{
 						queryName: 'A',
 						aggregateAttribute: { key: 'signoz_latency', type: 'Histogram' },
-						spaceAggregation: 'sum',
-						aggregations: [{ metricName: 'signoz_latency', spaceAggregation: 'sum' }],
+						spaceAggregation: 'count',
+						aggregations: [
+							{ metricName: 'signoz_latency', spaceAggregation: 'count' },
+						],
 					},
 				],
 				queryFormulas: [],

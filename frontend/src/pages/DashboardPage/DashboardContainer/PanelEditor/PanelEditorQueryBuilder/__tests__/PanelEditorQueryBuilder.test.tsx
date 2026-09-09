@@ -126,8 +126,6 @@ describe('PanelEditorQueryBuilder field visibility (driven by the capabilities g
 		expect(lastQueryBuilderProps().fieldsConfig).toStrictEqual({
 			functions: { state: 'hidden' },
 			having: { state: 'hidden' },
-			additional_queries: { state: 'hidden' },
-			formula: { state: 'hidden' },
 		});
 	});
 
