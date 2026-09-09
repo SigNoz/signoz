@@ -328,6 +328,16 @@ func NewInvalidInputf(code Code, format string, args ...any) *base {
 	return Newf(TypeInvalidInput, code, format, args...)
 }
 
+// WrapUnprocessableEntityf is a wrapper around Wrapf with TypeUnprocessableEntity.
+func WrapUnprocessableEntityf(cause error, code Code, format string, args ...any) *base {
+	return Wrapf(cause, TypeUnprocessableEntity, code, format, args...)
+}
+
+// NewUnprocessableEntityf is a wrapper around Newf with TypeUnprocessableEntity.
+func NewUnprocessableEntityf(code Code, format string, args ...any) *base {
+	return Newf(TypeUnprocessableEntity, code, format, args...)
+}
+
 // NewMethodNotAllowedf is a wrapper around Newf with TypeMethodNotAllowed.
 func NewMethodNotAllowedf(code Code, format string, args ...any) *base {
 	return Newf(TypeMethodNotAllowed, code, format, args...)

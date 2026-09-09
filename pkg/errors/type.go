@@ -1,19 +1,20 @@
 package errors
 
 var (
-	TypeInvalidInput       typ = typ{"invalid-input"}
-	TypeInternal               = typ{"internal"}
-	TypeUnsupported            = typ{"unsupported"}
-	TypeNotFound               = typ{"not-found"}
-	TypeMethodNotAllowed       = typ{"method-not-allowed"}
-	TypeAlreadyExists          = typ{"already-exists"}
-	TypeUnauthenticated        = typ{"unauthenticated"}
-	TypeForbidden              = typ{"forbidden"}
-	TypeCanceled               = typ{"canceled"}
-	TypeTimeout                = typ{"timeout"}
-	TypeFatal                  = typ{"fatal"} // Unrecoverable failure (e.g. panic)
-	TypeLicenseUnavailable     = typ{"license-unavailable"}
-	TypeTooManyRequests        = typ{"too-many-requests"}
+	TypeInvalidInput        typ = typ{"invalid-input"}
+	TypeUnprocessableEntity     = typ{"unprocessable-entity"}
+	TypeInternal                = typ{"internal"}
+	TypeUnsupported             = typ{"unsupported"}
+	TypeNotFound                = typ{"not-found"}
+	TypeMethodNotAllowed        = typ{"method-not-allowed"}
+	TypeAlreadyExists           = typ{"already-exists"}
+	TypeUnauthenticated         = typ{"unauthenticated"}
+	TypeForbidden               = typ{"forbidden"}
+	TypeCanceled                = typ{"canceled"}
+	TypeTimeout                 = typ{"timeout"}
+	TypeFatal                   = typ{"fatal"} // Unrecoverable failure (e.g. panic)
+	TypeLicenseUnavailable      = typ{"license-unavailable"}
+	TypeTooManyRequests         = typ{"too-many-requests"}
 )
 
 // Defines custom error types.
