@@ -89,6 +89,11 @@ func SimulatePipelinesProcessing(ctx context.Context, pipelines []pipelinetypes.
 		if log == "" || strings.Contains(log, "featuregate.go") {
 			continue
 		}
+		// each line of a stack trace arrives as its own entry: a symbol (no spaces)
+		// followed by a tab indented file:line
+		if strings.HasPrefix(log, "\t") || !strings.Contains(log, " ") {
+			continue
+		}
 		collectorWarnAndErrorLogs = append(collectorWarnAndErrorLogs, log)
 	}
 

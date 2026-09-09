@@ -9,6 +9,9 @@ export interface PipelineSimulationRequest {
 
 export interface PipelineSimulationResponse {
 	logs: ILog[];
+	// what the collector itself logged while simulating, e.g. an operator that
+	// could not parse a log
+	collectorLogs: string[];
 }
 
 const simulatePipelineProcessing = async (

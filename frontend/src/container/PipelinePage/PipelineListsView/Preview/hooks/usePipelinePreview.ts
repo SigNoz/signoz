@@ -15,6 +15,7 @@ export interface PipelinePreviewRequest {
 export interface PipelinePreviewResponse {
 	isLoading: boolean;
 	outputLogs: ILog[];
+	collectorLogs: string[];
 	isError: boolean;
 	errorMsg: string;
 }
@@ -52,6 +53,7 @@ const usePipelinePreview = ({
 	return {
 		isLoading: isFetching,
 		outputLogs,
+		collectorLogs: data?.collectorLogs || [],
 		isError,
 		errorMsg: error?.message || '',
 	};

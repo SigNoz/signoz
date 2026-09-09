@@ -1,3 +1,24 @@
 .pipeline-simulation-error {
 	text-align: center;
 }
+
+.pipeline-simulation-collector-logs {
+	margin-top: 12px;
+
+	.pipeline-simulation-collector-logs-title {
+		font-weight: 500;
+		margin-bottom: 4px;
+	}
+
+	.pipeline-simulation-collector-log {
+		margin: 0 0 4px;
+		padding: 8px;
+		max-height: 120px;
+		overflow: auto;
+		font-size: 11px;
+		white-space: pre-wrap;
+		word-break: break-word;
+		border-radius: 3px;
+		background: var(--bg-ink-400);
+	}
+}
