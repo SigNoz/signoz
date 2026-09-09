@@ -560,6 +560,11 @@ func TestCompile_Rejections(t *testing.T) {
 			expectedErrShouldContain: "RFC3339",
 		},
 		{
+			subtestName:              "rejects LIKE pattern ending in an unescaped backslash",
+			dslQueryToCompile:        `name LIKE 'prod\\'`,
+			expectedErrShouldContain: "must not end with an unescaped backslash",
+		},
+		{
 			subtestName:              "rejects REGEXP — not yet supported",
 			dslQueryToCompile:        `name REGEXP '.*'`,
 			expectedErrShouldContain: "REGEXP",

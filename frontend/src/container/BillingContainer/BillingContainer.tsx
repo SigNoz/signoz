@@ -37,6 +37,7 @@ import { isEmpty, pick } from 'lodash-es';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import {
 	SubscriptionCreatePermission,
 	SubscriptionManagePermissions,
@@ -509,7 +510,15 @@ export default function BillingContainer(): JSX.Element {
 					))}
 			</Card>
 
-			<AuthZGuardContent checks={[SubscriptionReadPermission]}>
+			<AuthZGuardContent
+				checks={[SubscriptionReadPermission]}
+				fallback={({ deniedPermissions }): JSX.Element => (
+					<PermissionDeniedCallout
+						deniedPermissions={deniedPermissions}
+						className={styles.usageDenied}
+					/>
+				)}
+			>
 				<>
 					<div className={styles.billingGraphSection}>
 						{!isLoading && !isFetchingBillingData ? (
