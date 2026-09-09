@@ -166,6 +166,11 @@ querier:
   # range with padding to include slightly delayed log exports. Logs only; set
   # to 0 to disable.
   log_trace_id_window_padding: 5m
+  # When resolving a trace_id filter against trace_summary, first scan only
+  # the selected window plus this padding (partition prune on toDate(end)).
+  # Falls back to a full scan if the bounded lookup is incomplete. Raise this
+  # if traces commonly last longer than 6h or spans arrive with large delay.
+  trace_id_window_padding: 6h
 
 ##################### TelemetryStore #####################
 telemetrystore:
