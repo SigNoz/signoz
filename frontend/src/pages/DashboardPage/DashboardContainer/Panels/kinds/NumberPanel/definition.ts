@@ -22,6 +22,7 @@ export const definition: PanelDefinition<'signoz/NumberPanel'> = {
 		EQueryType.CLICKHOUSE,
 		EQueryType.PROM,
 	],
+	supportsAIQuery: true,
 	queryBuilderFields: {},
 	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.scalar,

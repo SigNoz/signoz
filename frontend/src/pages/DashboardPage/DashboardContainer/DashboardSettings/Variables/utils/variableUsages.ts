@@ -11,6 +11,7 @@ import {
 	textContainsVariableReference,
 } from 'lib/dashboardVariables/variableReference';
 
+import { isBuilderEnvelope } from '../../../queryV5/builderEnvelope';
 import { toQueryEnvelopes } from '../../../queryV5/buildQueryRangeRequest';
 import { dtoToFormModel } from '../variableAdapters';
 
@@ -52,7 +53,7 @@ function envelopeReferenceText(
 	const spec = envelope.spec as
 		| { query?: string; filter?: { expression?: string } }
 		| undefined;
-	if (envelope.type === 'builder_query') {
+	if (isBuilderEnvelope(envelope)) {
 		const text = spec?.filter?.expression;
 		return typeof text === 'string' ? { kind: 'builder', text } : null;
 	}
@@ -205,7 +206,7 @@ export function findApplyUsages(
 				});
 			};
 
-			if (envelope.type === 'builder_query') {
+			if (isBuilderEnvelope(envelope)) {
 				const spec = envelope.spec as
 					| { filter?: { expression?: string } }
 					| undefined;
@@ -267,7 +268,7 @@ export function isVariableAppliedToAllPanels(
 			return true;
 		}
 		return toQueryEnvelopes(queries).every((envelope) => {
-			if (envelope.type === 'builder_query') {
+			if (isBuilderEnvelope(envelope)) {
 				const spec = envelope.spec as
 					| { filter?: { expression?: string } }
 					| undefined;

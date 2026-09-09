@@ -69,6 +69,8 @@ export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	supportedSignals: TelemetrytypesSignalDTO[];
 	/** Query languages this kind supports (Query Builder / ClickHouse / PromQL). */
 	supportedQueryTypes: EQueryType[];
+	/** Kind offers the AI query builder — a traces-only builder variant, not its own query language. */
+	supportsAIQuery?: boolean;
 	/** Query-builder fields this kind hides/disables, optionally per signal (`{}` hides none). */
 	queryBuilderFields: QueryBuilderFieldRule;
 	/** How this kind's query-range request is shaped (request type, paging, result formatting). */

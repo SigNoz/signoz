@@ -34,6 +34,32 @@ function builderPanel(name: string, expression: string): unknown {
 	};
 }
 
+/** An AI panel: a CompositeQuery whose one envelope is tagged `builder_ai_query`. */
+function aiPanel(name: string, expression: string): unknown {
+	return {
+		spec: {
+			display: { name },
+			queries: [
+				{
+					spec: {
+						plugin: {
+							kind: 'signoz/CompositeQuery',
+							spec: {
+								queries: [
+									{
+										type: 'builder_ai_query',
+										spec: { name: 'A', signal: 'traces', filter: { expression } },
+									},
+								],
+							},
+						},
+					},
+				},
+			],
+		},
+	};
+}
+
 function promqlPanel(name: string, query: string): unknown {
 	return {
 		spec: {
@@ -60,6 +86,7 @@ describe('findVariableUsages', () => {
 			p1: builderPanel('Panel One', "service IN $svc AND env = 'prod'"),
 			p2: promqlPanel('Panel Two', 'up{s="$svc"}'),
 			p3: builderPanel('Unrelated', "env = 'prod'"),
+			p4: aiPanel('AI Panel', "service IN $svc AND kind = 'llm'"),
 		},
 		[
 			variable({ name: 'svc', type: 'QUERY' }),
@@ -75,7 +102,12 @@ describe('findVariableUsages', () => {
 	it('finds panel (builder + promql) and variable usages, skipping unrelated ones', () => {
 		const usages = findVariableUsages(dash, 'svc', 'rename', 'zone');
 		const ids = usages.map((u) => u.id).sort();
-		expect(ids).toStrictEqual(['panel:p1:0', 'panel:p2:0', 'variable:other:0']);
+		expect(ids).toStrictEqual([
+			'panel:p1:0',
+			'panel:p2:0',
+			'panel:p4:0',
+			'variable:other:0',
+		]);
 	});
 
 	it('rewrites references for a rename across all kinds', () => {
@@ -83,6 +115,7 @@ describe('findVariableUsages', () => {
 		const byId = Object.fromEntries(usages.map((u) => [u.id, u.resultingText]));
 		expect(byId['panel:p1:0']).toBe("service IN $zone AND env = 'prod'");
 		expect(byId['panel:p2:0']).toBe('up{s="$zone"}');
+		expect(byId['panel:p4:0']).toBe("service IN $zone AND kind = 'llm'");
 		expect(byId['variable:other:0']).toBe('SELECT x WHERE s = $zone');
 	});
 
@@ -91,6 +124,8 @@ describe('findVariableUsages', () => {
 		const byId = Object.fromEntries(usages.map((u) => [u.id, u.resultingText]));
 		// Builder: the clause referencing $svc is dropped.
 		expect(byId['panel:p1:0']).toBe("env = 'prod'");
+		// The AI variant is a builder query too, so its clause is dropped the same way.
+		expect(byId['panel:p4:0']).toBe("kind = 'llm'");
 		// Raw PromQL + variable query: unchanged (user edits).
 		expect(byId['panel:p2:0']).toBe('up{s="$svc"}');
 		expect(byId['variable:other:0']).toBe('SELECT x WHERE s = $svc');
@@ -109,6 +144,7 @@ describe('findApplyUsages', () => {
 			has: builderPanel('Has it', 'k8s.pod.name IN $pod'),
 			prom: promqlPanel('Prom', 'up'),
 			promRef: promqlPanel('Prom Ref', 'up{pod="$pod"}'),
+			ai: aiPanel('AI', ''),
 		},
 		[],
 	);
@@ -123,6 +159,13 @@ describe('findApplyUsages', () => {
 		expect(byId['panel:ored:0']).toBe(
 			"(a = 'x' OR b = 'y') AND k8s.pod.name IN $pod",
 		);
+	});
+
+	it('appends the clause to a selected AI panel', () => {
+		const usages = findApplyUsages(dash, 'k8s.pod.name', 'pod', 'pod', ['ai']);
+		const ai = usages.find((u) => u.id === 'panel:ai:0');
+		expect(ai?.kind).toBe('builder');
+		expect(ai?.resultingText).toBe('k8s.pod.name IN $pod');
 	});
 
 	it('skips a selected panel that already carries the clause (idempotent)', () => {
@@ -179,6 +222,19 @@ describe('isVariableAppliedToAllPanels', () => {
 		);
 		expect(isVariableAppliedToAllPanels(covered, 'k8s.pod.name', 'pod')).toBe(
 			true,
+		);
+	});
+
+	it('is false when an AI panel is missing the reference', () => {
+		const missing = dashboard(
+			{
+				b: builderPanel('B', 'k8s.pod.name IN $pod'),
+				ai: aiPanel('AI', "kind = 'llm'"),
+			},
+			[],
+		);
+		expect(isVariableAppliedToAllPanels(missing, 'k8s.pod.name', 'pod')).toBe(
+			false,
 		);
 	});
 

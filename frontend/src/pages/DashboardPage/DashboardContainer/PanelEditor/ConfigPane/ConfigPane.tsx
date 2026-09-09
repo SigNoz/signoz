@@ -29,6 +29,12 @@ interface ConfigPaneProps {
 	 * spec, because a new panel's spec has no query until staged.
 	 */
 	queryType: EQueryType;
+	/**
+	 * Whether the builder holds an AI query. Read from the provider alongside `queryType`
+	 * for the same reason, and separate from it because AI-ness is a per-query tag rather
+	 * than a query type of its own.
+	 */
+	isAIQuery: boolean;
 	/** Panel's resolved series, provided to sections that need them (legend colors). */
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */
@@ -56,6 +62,7 @@ function ConfigPane({
 	onChangeSpec,
 	onChangePanelKind,
 	queryType,
+	isAIQuery,
 	legendSeries,
 	tableColumns,
 	stepInterval,
@@ -124,6 +131,7 @@ function ConfigPane({
 									panelKind={panelKind}
 									onChangePanelKind={onChangePanelKind}
 									queryType={queryType}
+									isAIQuery={isAIQuery}
 									stepInterval={stepInterval}
 									metricUnit={metricUnit}
 								/>
@@ -133,7 +141,7 @@ function ConfigPane({
 				</>
 			)}
 
-			<ConfigActions panel={panel} panelId={panelId} />
+			<ConfigActions panel={panel} panelId={panelId} isAIQuery={isAIQuery} />
 		</div>
 	);
 }

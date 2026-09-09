@@ -37,11 +37,13 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 
 	compositeQuery.queries?.forEach((q) => {
 		const spec = q.spec as BuilderQuery | PromQuery | ClickHouseQuery;
-		if (q.type === 'builder_query') {
+		if (q.type === 'builder_query' || q.type === 'builder_ai_query') {
 			if (spec.name) {
-				builderQueries[spec.name] = convertBuilderQueryToIBuilderQuery(
-					spec as BuilderQuery,
-				);
+				builderQueries[spec.name] = {
+					...convertBuilderQueryToIBuilderQuery(spec as BuilderQuery),
+					builderQueryType: q.type,
+				};
+				// Both share the builder bucket; the AI variant rides on the query itself.
 				builderQueryTypes[spec.name] = 'builder_query';
 			}
 		} else if (q.type === 'builder_formula') {

@@ -13,6 +13,8 @@ interface UsePanelTypeSelectItemsArgs {
 	queryType: EQueryType;
 	/** Current datasource — also gates the disabled rule (List needs logs/traces, not metrics). */
 	signal?: TelemetrytypesSignalDTO;
+	/** Whether the panel holds an AI query — kinds that can't carry one are disabled. */
+	isAIQuery?: boolean;
 }
 
 /**
@@ -24,6 +26,7 @@ interface UsePanelTypeSelectItemsArgs {
 export function usePanelTypeSelectItems({
 	queryType,
 	signal,
+	isAIQuery = false,
 }: UsePanelTypeSelectItemsArgs): ConfigSelectItem<PanelKind>[] {
 	return useMemo(
 		() =>
@@ -34,6 +37,7 @@ export function usePanelTypeSelectItems({
 					queryType,
 					signal,
 					label,
+					isAIQuery,
 				});
 				return {
 					value: panelKind,
@@ -43,6 +47,6 @@ export function usePanelTypeSelectItems({
 					tooltip: disabledReason,
 				};
 			}),
-		[queryType, signal],
+		[queryType, signal, isAIQuery],
 	);
 }

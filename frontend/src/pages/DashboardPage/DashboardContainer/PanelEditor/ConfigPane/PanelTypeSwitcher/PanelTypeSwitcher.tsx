@@ -15,6 +15,8 @@ interface PanelTypeSwitcherProps {
 	queryType: EQueryType;
 	/** Panel's current signal — also gates the disabled rule (List needs logs/traces, not metrics). */
 	signal?: TelemetrytypesSignalDTO;
+	/** Whether the panel holds an AI query — disables kinds that can't carry one (List). */
+	isAIQuery?: boolean;
 	onChange: (kind: PanelKind) => void;
 }
 
@@ -28,9 +30,10 @@ function PanelTypeSwitcher({
 	panelKind,
 	queryType,
 	signal,
+	isAIQuery,
 	onChange,
 }: PanelTypeSwitcherProps): JSX.Element {
-	const items = usePanelTypeSelectItems({ queryType, signal });
+	const items = usePanelTypeSelectItems({ queryType, signal, isAIQuery });
 
 	return (
 		<div className={styles.field}>

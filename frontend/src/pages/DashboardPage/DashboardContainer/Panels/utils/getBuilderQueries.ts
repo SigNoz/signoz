@@ -4,9 +4,11 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
+import { isBuilderEnvelope } from '../../queryV5/builderEnvelope';
+
 /**
- * Flattens a panel's queries into its builder queries, unwrapping
- * `CompositeQuery` envelopes. Non-builder kinds (PromQL, ClickHouseSQL, Formula,
+ * Flattens a panel's queries into its builder queries (`builder_query` and its AI
+ * variant), unwrapping `CompositeQuery` envelopes. Non-builder kinds (PromQL, ClickHouseSQL, Formula,
  * TraceOperator) are dropped — they lack the legend/groupBy/aggregation context
  * downstream code needs. Returns the generated v5 `BuilderQuery` shape directly.
  */
@@ -22,7 +24,7 @@ export function getBuilderQueries(
 		}
 		if (plugin.kind === 'signoz/CompositeQuery') {
 			(plugin.spec.queries || []).forEach((sub) => {
-				if (sub.type === 'builder_query') {
+				if (isBuilderEnvelope(sub)) {
 					flattened.push(sub.spec as BuilderQuery);
 				}
 			});

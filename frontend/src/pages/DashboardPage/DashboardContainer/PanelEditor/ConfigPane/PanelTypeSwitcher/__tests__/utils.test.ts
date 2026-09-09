@@ -4,7 +4,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { getPanelTypeDisabledReason } from '../utils';
 
 const { QUERY_BUILDER, CLICKHOUSE, PROM } = EQueryType;
-const { logs, metrics } = TelemetrytypesSignalDTO;
+const { logs, metrics, traces } = TelemetrytypesSignalDTO;
 
 describe('getPanelTypeDisabledReason', () => {
 	it('returns undefined for a supported combination', () => {
@@ -69,5 +69,56 @@ describe('getPanelTypeDisabledReason', () => {
 				label: 'List',
 			}),
 		).toBe("List isn't available for PromQL queries");
+	});
+
+	describe('AI queries', () => {
+		it('explains a kind that cannot carry an AI query', () => {
+			expect(
+				getPanelTypeDisabledReason({
+					kind: 'signoz/ListPanel',
+					queryType: QUERY_BUILDER,
+					signal: traces,
+					label: 'List',
+					isAIQuery: true,
+				}),
+			).toBe("List isn't available for AI queries");
+		});
+
+		it('allows a kind that supports AI queries', () => {
+			expect(
+				getPanelTypeDisabledReason({
+					kind: 'signoz/TimeSeriesPanel',
+					queryType: QUERY_BUILDER,
+					signal: traces,
+					label: 'Time Series',
+					isAIQuery: true,
+				}),
+			).toBeUndefined();
+		});
+
+		it('takes precedence over the query-type and signal reasons', () => {
+			// List is otherwise valid for builder+traces, so only the AI gate can disable it.
+			expect(
+				getPanelTypeDisabledReason({
+					kind: 'signoz/ListPanel',
+					queryType: PROM,
+					signal: metrics,
+					label: 'List',
+					isAIQuery: true,
+				}),
+			).toBe("List isn't available for AI queries");
+		});
+
+		it('leaves the existing reasons untouched when not an AI query', () => {
+			expect(
+				getPanelTypeDisabledReason({
+					kind: 'signoz/ListPanel',
+					queryType: QUERY_BUILDER,
+					signal: traces,
+					label: 'List',
+					isAIQuery: false,
+				}),
+			).toBeUndefined();
+		});
 	});
 });

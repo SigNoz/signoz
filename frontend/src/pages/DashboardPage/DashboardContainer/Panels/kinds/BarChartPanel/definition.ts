@@ -22,6 +22,7 @@ export const definition: PanelDefinition<'signoz/BarChartPanel'> = {
 		EQueryType.CLICKHOUSE,
 		EQueryType.PROM,
 	],
+	supportsAIQuery: true,
 	queryBuilderFields: {},
 	// Bars are binned client-side from a raw time series, so the request asks for a
 	// step interval wide enough to keep the bar count readable (V1 parity).

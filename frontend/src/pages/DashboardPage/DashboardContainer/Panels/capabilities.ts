@@ -40,6 +40,15 @@ export function isQueryTypeSupportedByPanelKind(
 }
 
 /**
+ * Whether a kind offers the AI query builder. Separate from `supportedQueryTypes`
+ * because an AI query is a builder query carrying `builderQueryType`, not its own
+ * `EQueryType` — the tab is UI state, the wire type stays `builder`.
+ */
+export function supportsAIQuery(kind: PanelKind): boolean {
+	return getPanelDefinition(kind).supportsAIQuery === true;
+}
+
+/**
  * Master guard: is this panel kind renderable with this query type (and, in builder
  * mode, this signal)? ClickHouse/PromQL queries carry no signal, so the signal is
  * validated only when one is given.

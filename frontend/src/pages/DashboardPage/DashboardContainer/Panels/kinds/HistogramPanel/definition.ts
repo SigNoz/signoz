@@ -22,6 +22,7 @@ export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
 		EQueryType.CLICKHOUSE,
 		EQueryType.PROM,
 	],
+	supportsAIQuery: true,
 	queryBuilderFields: {},
 	// Buckets are computed client-side from the raw series, so the request is a plain
 	// time series — the bucket count is a display concern, not a query one.

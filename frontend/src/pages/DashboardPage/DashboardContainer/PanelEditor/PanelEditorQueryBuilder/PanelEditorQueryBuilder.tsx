@@ -5,7 +5,7 @@ import {
 	useMemo,
 } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Atom, Terminal } from '@signozhq/icons';
+import { Atom, Sparkles, Terminal } from '@signozhq/icons';
 import { Tabs } from 'antd';
 import cx from 'classnames';
 import { Typography } from '@signozhq/ui/typography';
@@ -19,16 +19,27 @@ import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryB
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	getHiddenQueryBuilderFields,
 	getSupportedQueryTypes,
+	supportsAIQuery,
 } from '../../Panels/capabilities';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
 } from '../../Panels/types/panelKind';
+import {
+	AI_QUERY_TAB,
+	isAIQuery,
+	type QueryTabKey,
+	resolveActiveQueryTab,
+	toAIQuery,
+	withAIQueryType,
+} from './utils';
 
 import styles from './PanelEditorQueryBuilder.module.scss';
 
@@ -71,12 +82,22 @@ function PanelEditorQueryBuilder({
 	const isListViewPanel = panelKind === 'signoz/ListPanel';
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
+	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
 
+	// The AI tab is not a query type — it stamps `builderQueryType` onto the builder
+	// queries (and pins them to traces, the only signal AI queries support).
 	const handleQueryCategoryChange = useCallback(
-		(queryType: string): void => {
+		(nextTab: string): void => {
+			if (nextTab === AI_QUERY_TAB) {
+				redirectWithQueryBuilderData({
+					...toAIQuery(currentQuery),
+					queryType: EQueryType.QUERY_BUILDER,
+				});
+				return;
+			}
 			redirectWithQueryBuilderData({
-				...currentQuery,
-				queryType: queryType as EQueryType,
+				...withAIQueryType(currentQuery, false),
+				queryType: nextTab as EQueryType,
 			});
 		},
 		[currentQuery, redirectWithQueryBuilderData],
@@ -103,10 +124,43 @@ function PanelEditorQueryBuilder({
 		[panelKind, signal],
 	);
 
+	// Derived to a boolean before the memo below: `currentQuery` gets a fresh identity on
+	// every query edit, so depending on it there would rebuild every tab's element tree
+	// (QueryBuilderV2 included) on each keystroke.
+	const hasAIQuery = isAIQuery(currentQuery);
+
 	const items = useMemo(() => {
-		const supportedQueryTypes = getSupportedQueryTypes(panelKind);
+		const supportedQueryTypes: QueryTabKey[] = getSupportedQueryTypes(panelKind);
+		// The flag gates authoring, not reading: a panel that already holds an AI query
+		// keeps its tab when the flag is off, so an existing panel stays editable (and
+		// `activeKey` never points at a tab that isn't rendered) instead of opening blank.
+		const showAITab =
+			supportsAIQuery(panelKind) && (isAIObservabilityEnabled || hasAIQuery);
+		const supportedTabs = showAITab
+			? [...supportedQueryTypes, AI_QUERY_TAB]
+			: supportedQueryTypes;
 
 		const queryTypeComponents = {
+			[AI_QUERY_TAB]: {
+				icon: <Sparkles size={14} />,
+				label: 'AI Query Builder',
+				component: (
+					<div className="query-builder-v2-container">
+						<QueryBuilderV2
+							panelType={panelType}
+							filterConfigs={filterConfigs}
+							config={{
+								initialDataSource: DataSource.TRACES,
+								queryVariant: 'static',
+							}}
+							version="v3"
+							isListViewPanel={isListViewPanel}
+							queryComponents={{}}
+							savePreviousQuery
+						/>
+					</div>
+				),
+			},
 			[EQueryType.QUERY_BUILDER]: {
 				icon: <Atom size={14} />,
 				label: 'Query Builder',
@@ -141,17 +195,25 @@ function PanelEditorQueryBuilder({
 			},
 		};
 
-		return supportedQueryTypes.map((queryType) => ({
-			key: queryType,
+		return supportedTabs.map((tabKey) => ({
+			key: tabKey,
 			label: (
 				<div className={styles.queryTypeTab}>
-					{queryTypeComponents[queryType].icon}
-					<Typography>{queryTypeComponents[queryType].label}</Typography>
+					{queryTypeComponents[tabKey].icon}
+					<Typography>{queryTypeComponents[tabKey].label}</Typography>
 				</div>
 			),
-			children: queryTypeComponents[queryType].component,
+			children: queryTypeComponents[tabKey].component,
 		}));
-	}, [panelKind, panelType, filterConfigs, isDarkMode, isListViewPanel]);
+	}, [
+		panelKind,
+		panelType,
+		filterConfigs,
+		isDarkMode,
+		isListViewPanel,
+		isAIObservabilityEnabled,
+		hasAIQuery,
+	]);
 
 	return (
 		<div
@@ -166,7 +228,7 @@ function PanelEditorQueryBuilder({
 					className={cx(styles.tabsContainer, {
 						[styles.stickyNav]: stickyHeader,
 					})}
-					activeKey={currentQuery.queryType}
+					activeKey={resolveActiveQueryTab(currentQuery)}
 					onChange={handleQueryCategoryChange}
 					tabBarExtraContent={
 						<span className={styles.runQueryBtnContainer}>

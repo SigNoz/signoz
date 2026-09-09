@@ -304,6 +304,23 @@ describe('buildQueryRangeRequest', () => {
 		);
 	});
 
+	it('injects the BAR stepInterval into builder_ai_query envelopes too', () => {
+		const request = buildQueryRangeRequest({
+			queries: compositeQuery([
+				{ type: 'builder_ai_query', spec: { name: 'A', signal: 'traces' } },
+			]),
+			queryCapabilities: BAR_CAPABILITIES,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+		});
+		const envelope = request.compositeQuery?.queries?.[0];
+		const spec = (envelope?.spec ?? {}) as { stepInterval?: number };
+		expect(spec.stepInterval).toBe(
+			getBarStepIntervalSeconds(START_MS, START_MS + HOUR_MS),
+		);
+		expect(envelope?.type).toBe('builder_ai_query');
+	});
+
 	it('preserves a user-set stepInterval on BAR builder queries', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', stepInterval: 300 }),

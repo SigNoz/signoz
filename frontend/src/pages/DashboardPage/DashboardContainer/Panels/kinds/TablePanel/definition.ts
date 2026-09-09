@@ -18,6 +18,7 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 		TelemetrytypesSignalDTO.traces,
 	],
 	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	supportsAIQuery: true,
 	queryBuilderFields: {},
 	// The only kind that asks the server to transpose its scalar result into UI rows.
 	queryCapabilities: {
