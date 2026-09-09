@@ -118,6 +118,16 @@ describe('QuickFilters - AuthZ', () => {
 
 			expect(screen.queryByText(FILTER_SERVICE_NAME)).not.toBeInTheDocument();
 			expect(screen.getByText('Filters for')).toBeInTheDocument();
+
+			const settingsTrigger = await screen.findByTestId(
+				SETTINGS_CONTAINER_TEST_ID,
+			);
+			await waitFor(() =>
+				expect(settingsTrigger).toHaveAttribute(
+					'data-denied-permissions',
+					expect.stringContaining('read'),
+				),
+			);
 		});
 	});
 

@@ -54,6 +54,7 @@ export interface IQuickFiltersProps {
 	source: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
 	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
+	/** Pass to fetch quick filters for this signal; omit to use `config` as-is */
 	signal?: SignalType;
 	className?: string;
 	showFilterCollapse?: boolean;
