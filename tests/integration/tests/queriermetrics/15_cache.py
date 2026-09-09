@@ -198,12 +198,12 @@ def test_promql_shifting_the_time_range(
 
     # 40 minutes back clears the flux interval, which holds recent data out of
     # the cache. Flooring to a whole minute is what makes the first query aligned
-    # to its 1m step, and the shifted one half a step off it
+    # to its 1m step, and the unaligned one half a step off it
     start_time = datetime.fromtimestamp(int((datetime.now(tz=UTC) - timedelta(minutes=40)).timestamp()) // 60 * 60, tz=UTC)
-    start_time_ms = int(start_time.timestamp() * 1000)
-    end_time_ms = start_time_ms + 3 * MINUTE_MS
-    shifted_start_time_ms = start_time_ms + MINUTE_MS // 2
-    shifted_end_time_ms = end_time_ms + MINUTE_MS // 2
+    aligned_start_time_ms = int(start_time.timestamp() * 1000)
+    aligned_end_time_ms = aligned_start_time_ms + 3 * MINUTE_MS
+    unaligned_start_time_ms = aligned_start_time_ms + MINUTE_MS // 2
+    unaligned_end_time_ms = aligned_end_time_ms + MINUTE_MS // 2
 
     query = [{"type": "promql", "spec": {"name": "A", "query": f"sum(increase({metric_name}[2m]))", "step": 60}}]
 
@@ -224,20 +224,20 @@ def test_promql_shifting_the_time_range(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    aligned = make_query_request(signoz, token, start_time_ms, end_time_ms, query, no_cache=False)
-    assert aligned.status_code == HTTPStatus.OK, aligned.text
+    aligned_and_cached = make_query_request(signoz, token, aligned_start_time_ms, aligned_end_time_ms, query, no_cache=False)
+    assert aligned_and_cached.status_code == HTTPStatus.OK, aligned_and_cached.text
 
-    uncached = make_query_request(signoz, token, shifted_start_time_ms, shifted_end_time_ms, query, no_cache=True)
-    assert uncached.status_code == HTTPStatus.OK, uncached.text
+    unaligned_and_uncached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=True)
+    assert unaligned_and_uncached.status_code == HTTPStatus.OK, unaligned_and_uncached.text
 
-    # promql places its points at the range start plus whole steps, so the shifted
-    # query reports 30s past every point the aligned one cached. Twice: the first
-    # shifted run is what the cache stores for this range, the second is the one
-    # it can answer out of the cache
+    # promql places its points at the range start plus whole steps, so the
+    # unaligned query reports 30s past every point the aligned one cached. Twice:
+    # the first unaligned run is what the cache stores for this range, the second
+    # is the one it can answer out of the cache
     for run in ("first", "second"):
-        from_cache = make_query_request(signoz, token, shifted_start_time_ms, shifted_end_time_ms, query, no_cache=False)
-        assert from_cache.status_code == HTTPStatus.OK, from_cache.text
-        assert_results_equal(from_cache.json(), uncached.json(), "A", f"shifted query, {run} run")
+        unaligned_and_cached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=False)
+        assert unaligned_and_cached.status_code == HTTPStatus.OK, unaligned_and_cached.text
+        assert_results_equal(unaligned_and_cached.json(), unaligned_and_uncached.json(), "A", f"unaligned query, {run} run")
 
 
 def test_builder_refreshing_a_sliding_time_range(
