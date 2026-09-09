@@ -737,8 +737,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key-operator-value boundary",
 			query:                 "greater>than",
 			shouldPass:            true,
-			expectedQuery:         `WHERE ((attributes_string['greater'] > ? AND mapContains(attributes_string, 'greater')) OR (JSON_VALUE(body, '$."greater"') > ? AND JSON_EXISTS(body, '$."greater"')))`,
-			expectedArgs:          []any{"than", "than"},
+			expectedQuery:         `WHERE ((attributes_string['greater'] > ? AND mapContains(attributes_string, 'greater')) OR (JSON_VALUE(body, '$."greater"') > ? AND (JSON_EXISTS(body, '$."greater"') AND LOWER(body) LIKE LOWER(?))))`,
+			expectedArgs:          []any{"than", "than", "%\"greater\"%"},
 			expectedErrorContains: "",
 		},
 		{
@@ -753,8 +753,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key-operator-value boundary",
 			query:                 "less<than",
 			shouldPass:            true,
-			expectedQuery:         `WHERE ((attributes_string['less'] < ? AND mapContains(attributes_string, 'less')) OR (JSON_VALUE(body, '$."less"') < ? AND JSON_EXISTS(body, '$."less"')))`,
-			expectedArgs:          []any{"than", "than"},
+			expectedQuery:         `WHERE ((attributes_string['less'] < ? AND mapContains(attributes_string, 'less')) OR (JSON_VALUE(body, '$."less"') < ? AND (JSON_EXISTS(body, '$."less"') AND LOWER(body) LIKE LOWER(?))))`,
+			expectedArgs:          []any{"than", "than", "%\"less\"%"},
 			expectedErrorContains: "",
 		},
 		{
@@ -809,8 +809,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Key-operator-value boundary",
 			query:                 "user=admin",
 			shouldPass:            true,
-			expectedQuery:         `WHERE ((attributes_string['user'] = ? AND mapContains(attributes_string, 'user')) OR (JSON_VALUE(body, '$."user"') = ? AND JSON_EXISTS(body, '$."user"')))`,
-			expectedArgs:          []any{"admin", "admin"},
+			expectedQuery:         `WHERE ((attributes_string['user'] = ? AND mapContains(attributes_string, 'user')) OR ((JSON_VALUE(body, '$."user"') = ? AND LOWER(body) LIKE LOWER(?)) AND (JSON_EXISTS(body, '$."user"') AND LOWER(body) LIKE LOWER(?))))`,
+			expectedArgs:          []any{"admin", "admin", "%admin%", "%\"user\"%"},
 			expectedErrorContains: "",
 		},
 		{
@@ -2052,8 +2052,8 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Nested object paths",
 			query:                 "response.body.data.items[].id=123",
 			shouldPass:            true,
-			expectedQuery:         `WHERE ((toFloat64(attributes_number['response.body.data.items[].id']) = ? AND mapContains(attributes_number, 'response.body.data.items[].id')) OR (JSONExtract(JSON_VALUE(body, '$."response"."body"."data"."items"[*]."id"'), 'Float64') = ? AND JSON_EXISTS(body, '$."response"."body"."data"."items"[*]."id"')))`,
-			expectedArgs:          []any{float64(123), float64(123)},
+			expectedQuery:         `WHERE ((toFloat64(attributes_number['response.body.data.items[].id']) = ? AND mapContains(attributes_number, 'response.body.data.items[].id')) OR (JSONExtract(JSON_VALUE(body, '$."response"."body"."data"."items"[*]."id"'), 'Float64') = ? AND (JSON_EXISTS(body, '$."response"."body"."data"."items"[*]."id"') AND LOWER(body) LIKE LOWER(?))))`,
+			expectedArgs:          []any{float64(123), float64(123), "%\"response\"%\"body\"%\"data\"%\"items\"%\"id\"%"},
 			expectedErrorContains: "",
 		},
 		{
@@ -2521,7 +2521,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 			query:      "body NOT LIKE 'done'",
 			shouldPass: true,
 			// lower index search on body even for LIKE
-			expectedQuery:         "WHERE (LOWER(body) NOT LIKE LOWER(?) AND attributes_string['body'] NOT LIKE ?)",
+			expectedQuery:         "WHERE (body NOT LIKE ? AND attributes_string['body'] NOT LIKE ?)",
 			expectedArgs:          []any{"done", "done"},
 			expectedErrorContains: "",
 		},

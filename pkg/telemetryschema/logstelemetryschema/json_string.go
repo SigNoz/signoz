@@ -7,8 +7,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+
+	"github.com/huandu/go-sqlbuilder"
 )
 
 func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetrytypes.FieldDataType, any) {
@@ -90,6 +93,42 @@ func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 
 	// calculate the data type of the value
 	return closure(value, key)
+}
+
+// bodyPathLiterals returns one literal per component of key's JSON path, taking the quoting from
+// getBodyJSONPath so it matches however the path is written. A component holding a byte an encoder
+// may rewrite is dropped; JSON writes a parent first, so the order carries.
+func bodyPathLiterals(key *telemetrytypes.TelemetryFieldKey) []string {
+	var literals []string
+	for _, part := range strings.Split(getBodyJSONPath(key), ".") {
+		literal := strings.TrimSuffix(part, "[*]")
+		if !strings.ContainsFunc(strings.Trim(literal, `"`), querybuilder.JSONEscapable) {
+			literals = append(literals, literal)
+		}
+	}
+	return literals
+}
+
+// bodyIndexPredicate asserts the raw body text holds the literals in order ("" for none). ILike
+// renders as LOWER(body) LIKE LOWER(?) on the ClickHouse flavor — the expression both bloom
+// filters index.
+func bodyIndexPredicate(literals []string, sb *sqlbuilder.SelectBuilder) string {
+	if len(literals) == 0 {
+		return ""
+	}
+	escaped := make([]string, 0, len(literals))
+	for _, literal := range literals {
+		escaped = append(escaped, querybuilder.ClickHouseLikePatternLiteral(literal))
+	}
+	return sb.ILike(LogsV2BodyColumn, "%"+strings.Join(escaped, "%")+"%")
+}
+
+// withBodyIndexPredicate ANDs the literals' predicate onto cond; with none, cond is returned as is.
+func withBodyIndexPredicate(cond string, literals []string, sb *sqlbuilder.SelectBuilder) string {
+	if predicate := bodyIndexPredicate(literals, sb); predicate != "" {
+		return sb.And(cond, predicate)
+	}
+	return cond
 }
 
 func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
@@ -216,8 +255,8 @@ func getBodyJSONArrayKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytype
 
 // getBodyJSONScalarKey builds the single-element-set fallback for a scalar body value: the leaf
 // extracted as a scalar of type dt, plus a guard restricting it to a genuinely scalar body. The
-// guard is required because JSON_VALUE returns '' for an array/object/missing value, which would
-// otherwise zero-value match (has(x,0) / has(x,false) / has(x,'') on any array). ok=false when
+// guard is required because JSON_VALUE returns ” for an array/object/missing value, which would
+// otherwise zero-value match (has(x,0) / has(x,false) / has(x,”) on any array). ok=false when
 // the path still traverses an array ([*]/[]).
 func getBodyJSONScalarKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) (expr string, guard string, ok bool) {
 	name := strings.TrimSuffix(strings.TrimSuffix(key.Name, "[*]"), "[]")
