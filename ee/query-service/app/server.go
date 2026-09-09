@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/app/api"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/signoz"
 
@@ -130,13 +129,10 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 // Start starts the opamp websocket server. The HTTP API server is started by
 // the signoz registry.
 func (s *Server) Start(ctx context.Context) error {
-	go func() {
-		slog.Info("Starting OpAmp Websocket server", "addr", baseconst.OpAmpWsEndpoint)
-		err := s.opampServer.Start(baseconst.OpAmpWsEndpoint)
-		if err != nil {
-			slog.Error("opamp ws server failed to start", errors.Attr(err))
-		}
-	}()
+	slog.Info("Starting OpAmp Websocket server", "addr", baseconst.OpAmpWsEndpoint)
+	if err := s.opampServer.Start(baseconst.OpAmpWsEndpoint); err != nil {
+		return err
+	}
 
 	return nil
 }
