@@ -184,6 +184,11 @@
 		text-decoration-thickness: 2px;
 		text-underline-offset: 2px;
 	}
+
+	&[disabled] {
+		opacity: 0.6;
+		text-decoration: none;
+	}
 }
 
 .workspace-restricted-banner,
