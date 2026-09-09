@@ -10,7 +10,6 @@ from fixtures import types
 from fixtures.auth import (
     USER_ADMIN_EMAIL,
     USER_ADMIN_PASSWORD,
-    create_active_user,
 )
 
 TIMEOUT = 10

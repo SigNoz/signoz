@@ -90,7 +90,7 @@ func (d SpanMapperGroupDefinition) validate() error {
 	if d.Version < 1 {
 		return errors.NewInvalidInputf(ErrCodeMappingDefinitionInvalid, "version must be at least 1, got %d", d.Version)
 	}
-	if err := d.Definition.PostableSpanMapperGroup.Validate(); err != nil {
+	if err := d.Definition.Validate(); err != nil {
 		return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeMappingDefinitionInvalid, "%s", d.Name())
 	}
 	if len(d.Definition.Mappers) == 0 {
