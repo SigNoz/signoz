@@ -632,7 +632,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(filter?.value).toBe('valueA');
 		});
 
-		it('converts NOT IN to IN when toggling unchecked (other) item', async () => {
+		it('adds to NOT IN when unchecking a non-excluded (other) item', async () => {
 			const user = userEvent.setup();
 			const onFilterChange = jest.fn();
 
@@ -641,18 +641,19 @@ describe('CheckboxFilterV2 - interactions', () => {
 				stringValues: ['valueB'],
 			});
 
-			// Clicking unchecked "Other" item with NOT IN filter should convert to IN [B]
+			// valueB is not excluded, so under NOT IN [valueA] it is still included
+			// and renders checked. Unchecking it excludes it too → NOT IN [A, B].
 			renderWithFilter(onFilterChange, { op: 'not in', value: ['valueA'] });
 
 			const rowB = await screen.findByTestId('checkbox-value-row-valueB');
-			expect(rowB).toHaveAttribute('data-state', 'unchecked');
+			expect(rowB).toHaveAttribute('data-state', 'checked');
 
 			await user.click(within(rowB).getByRole('checkbox'));
 
 			expect(onFilterChange).toHaveBeenCalledTimes(1);
 			const filter = getFilterFromCall(onFilterChange);
-			expect(filter?.op).toBe('in');
-			expect(filter?.value).toBe('valueB');
+			expect(filter?.op).toBe('not in');
+			expect(filter?.value).toStrictEqual(['valueA', 'valueB']);
 		});
 
 		it('adds to NOT IN when unchecking a non-excluded item without related values', async () => {

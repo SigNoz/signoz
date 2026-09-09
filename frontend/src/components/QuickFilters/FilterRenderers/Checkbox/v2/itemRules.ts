@@ -74,6 +74,16 @@ const RELATED_SUPPORTED_RULES: ItemRule[] = [
 			checkedState: 'checked',
 		},
 	},
+	// filterKey present in query with NOT IN and value not in the list → checked
+	{
+		condition: (ctx): boolean =>
+			ctx.hasFilterForThisKey && ctx.isNotInOperator && !ctx.isSelectedOnFilter,
+		config: {
+			section: SectionType.ALL_VALUES,
+			badge: null,
+			checkedState: 'checked',
+		},
+	},
 	// All values (has existing query but not related) → unchecked
 	{
 		condition: (ctx): boolean => ctx.hasExistingQuery,

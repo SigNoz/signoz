@@ -51,7 +51,7 @@ describe('itemRules', () => {
 			expect(result.checkedState).toBe('unchecked');
 		});
 
-		it('NOT IN filter, value not excluded, not related → all_values, unchecked', () => {
+		it('NOT IN filter, value not excluded, not related → all_values, checked', () => {
 			const ctx: ItemContext = {
 				isSelectedOnFilter: false,
 				isInRelatedValues: false,
@@ -65,7 +65,7 @@ describe('itemRules', () => {
 
 			expect(result.section).toBe(SectionType.ALL_VALUES);
 			expect(result.badge).toBeNull();
-			expect(result.checkedState).toBe('unchecked');
+			expect(result.checkedState).toBe('checked');
 		});
 
 		it('NOT IN filter, value not excluded but related → related wins, checked', () => {
