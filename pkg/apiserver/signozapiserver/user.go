@@ -96,11 +96,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 				ID:       coretypes.ResponseJSONPath("data.id"),
 				Selector: coretypes.WildcardSelector,
 			},
-			// roles sent along in the request are attached to the new user, so the
-			// actor needs attach on the user (collection-level, the instance does
-			// not exist yet) and on every role in the payload. userRoles is
-			// optional; when none are sent the attach is vacuous and the def is
-			// skipped entirely.
 			handler.AttachDetachSiblingResourceDef{
 				Verb:            coretypes.VerbAttach,
 				Category:        coretypes.ActionCategoryAccessControl,
@@ -229,14 +224,13 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusNotFound},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorPassword.Scope(coretypes.VerbRead)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorPassword.Scope(coretypes.VerbList)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceFactorPassword,
-			Verb:     coretypes.VerbRead,
+			Verb:     coretypes.VerbList,
 			Category: coretypes.ActionCategoryAccessControl,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
+			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -256,15 +250,26 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorPassword.Scope(coretypes.VerbCreate)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorPassword.Scope(coretypes.VerbCreate), coretypes.ResourceUser.Scope(coretypes.VerbAttach)}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceFactorPassword,
-			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryAccessControl,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceFactorPassword,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryAccessControl,
+				ID:       coretypes.PathParam("id"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.AttachDetachParentChildResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryAccessControl,
+				ParentResource: coretypes.ResourceUser,
+				ParentID:       coretypes.PathParam("id"),
+				ParentSelector: coretypes.IDSelector,
+				ChildResource:  coretypes.ResourceMetaResourceFactorPassword,
+				ChildIDs:       coretypes.OneID(coretypes.PathParam("id")),
+			},
+		),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}

@@ -53,18 +53,14 @@ type AttachDetachSiblingResourceDef struct {
 	TargetResource coretypes.Resource
 	TargetIDs      coretypes.ResourceIDsExtractor
 	TargetSelector coretypes.SelectorFunc
-	// OptionalTargets declares that a zero-length target list is a legitimate
-	// payload rather than an extraction failure (e.g. roles optionally sent at
-	// user creation): the attach is vacuous, so the def resolves to nothing and
-	// neither side is checked. Leave unset on routes where a missing target is a
-	// client error — the default empty-id contract then fails closed.
+	// OptionalTargets drops the def when no target ids resolve, for routes where
+	// the target list is legitimately optional in the payload.
 	OptionalTargets bool
 }
 
 func (def AttachDetachSiblingResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
 	if def.OptionalTargets && def.TargetIDs.IsPhase(coretypes.PhaseRequest) {
-		// On error, fall through and let fill record it, preserving the default
-		// behavior. Extractors are pure, so the double run is cheap.
+		// extractors are pure; on error fall through and let fill record it
 		ids, err := def.TargetIDs.Fn(ec)
 		if err == nil && len(ids) == 0 {
 			return nil

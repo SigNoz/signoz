@@ -25322,9 +25322,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - factor-password:read
+        - factor-password:list
       - tokenizer:
-        - factor-password:read
+        - factor-password:list
       summary: Get reset password token for a user
       tags:
       - users
@@ -25388,8 +25388,10 @@ paths:
       security:
       - api_key:
         - factor-password:create
+        - user:attach
       - tokenizer:
         - factor-password:create
+        - user:attach
       summary: Create or regenerate reset password token for a user
       tags:
       - users
