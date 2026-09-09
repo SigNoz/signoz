@@ -55,7 +55,7 @@ describe('prepareHeatmapData', () => {
 		]);
 	});
 
-	it('leaves an ungrouped series unlabelled, so the legend stays hidden', () => {
+	it('names an ungrouped series after its query, so the legend can name it', () => {
 		const { series } = prepareHeatmapData({
 			results: [
 				result({ series: [{ values: [{ timestamp: 0, values: [1, 0, 0, 0] }] }] }),
@@ -64,7 +64,7 @@ describe('prepareHeatmapData', () => {
 		});
 
 		expect(series).toHaveLength(1);
-		expect(series[0].label).toBe('');
+		expect(series[0].label).toBe('A');
 	});
 
 	it('applies the query legend as the group label template', () => {

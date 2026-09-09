@@ -15,14 +15,10 @@ import {
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
 import { resolveHeatmapYAxis } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
-import {
-	resolveGroupPeaks,
-	resolveHeatmapGrid,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/grid';
+import { resolveHeatmapGrid } from 'lib/uPlotV2/plugins/HeatmapPlugin/grid';
 import {
 	HeatmapAxisScale,
 	HeatmapCell,
-	HeatmapColorMode,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
@@ -90,9 +86,6 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 	onCellClickRef.current = onCellClick;
 
 	const groups = useMemo(() => series.map((entry) => entry.label), [series]);
-
-	// One series has nothing to choose between.
-	const hasGroupLegend = showLegend && groups.length > 1;
 
 	const colors = useMemo(
 		() => ({ ...DEFAULT_HEATMAP_COLORS, ...props.colors }),
@@ -226,11 +219,6 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 		],
 	);
 
-	// Each marker takes the ramp colour for where that group's densest cell falls on
-	// the colour bar, so a swatch reads against the same scale as the grid.
-	const groupPeaks = useMemo(() => resolveGroupPeaks(series), [series]);
-	const isPaletteMode = colors.mode === HeatmapColorMode.Palette;
-
 	const legendItems = useMemo<LegendItem[]>(
 		() =>
 			groups.map((group, index) => ({
@@ -238,19 +226,12 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				// handling is identical across charts.
 				seriesIndex: index + 1,
 				label: group,
-				color: isPaletteMode
-					? (colorResolver.colorFor(groupPeaks.get(group) ?? 0) ?? extremeColor)
-					: extremeColor,
+				// Colour means count here, so a marker names its group rather than keying
+				// a colour — every one of them takes the top of the ramp.
+				color: extremeColor,
 				show: visibleGroups.includes(group),
 			})),
-		[
-			groups,
-			visibleGroups,
-			isPaletteMode,
-			colorResolver,
-			groupPeaks,
-			extremeColor,
-		],
+		[groups, visibleGroups, extremeColor],
 	);
 
 	const renderTooltip = useCallback(
@@ -337,7 +318,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				showVisualMap && hasGrid ? Math.max(0, height - COLOR_BAR_HEIGHT) : height
 			}
 			legendConfig={{ position: legendPosition }}
-			showLegend={hasGroupLegend}
+			showLegend={showLegend}
 			customLegend={groupLegend}
 			legendLabels={groups}
 			showTooltip={showTooltip}

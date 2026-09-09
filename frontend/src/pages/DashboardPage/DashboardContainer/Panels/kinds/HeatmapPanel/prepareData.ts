@@ -99,8 +99,7 @@ function toHeatmapSeries(
 	);
 
 	return {
-		// An ungrouped query is one group with nothing to name it.
-		label: labels.length > 0 ? resolveGroupLabel(labels, queryName, legend) : '',
+		label: resolveGroupLabel(labels, queryName, legend),
 		labels,
 		points: (series.values ?? []).map<HeatmapSeriesPoint>((point) => ({
 			timestamp: (point.timestamp ?? 0) / MS_PER_SECOND,
