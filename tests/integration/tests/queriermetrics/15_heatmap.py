@@ -83,6 +83,10 @@ def test_gauge_heatmap(
     columns_by_host = {host: sorted(series["values"], key=lambda column: column["timestamp"]) for host, series in index_series_by_label(get_all_series(data, "A"), "host").items()}
     assert len(columns_by_host) == len(value_by_host)
 
+    # a column carries its per-bucket counts and no `value`, since no single
+    # number stands for a spread
+    assert all("value" not in column for columns in columns_by_host.values() for column in columns)
+
     # a column holds one count per bucket plus a trailing one for the overflow
     for host, columns in columns_by_host.items():
         occupied = int(host.removeprefix("host-")) // 8
