@@ -24,7 +24,7 @@ func NewFactory() factory.ProviderFactory[pprof.PProf, pprof.Config] {
 func New(_ context.Context, settings factory.ProviderSettings, config pprof.Config) (pprof.PProf, error) {
 	server, err := httpserver.New(
 		settings.Logger.With(slog.String("pkg", "github.com/SigNoz/signoz/pkg/pprof/httppprof")),
-		httpserver.Config{Address: config.Address, Timeout: 10 * time.Second},
+		httpserver.Config{Address: config.Address, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second},
 		newHandler(),
 	)
 	if err != nil {

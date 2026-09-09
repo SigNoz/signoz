@@ -9,6 +9,10 @@ type Config struct {
 	// See net.Dial for details of the address format.
 	Address string `mapstructure:"address"`
 
-	// Timeout bounds both reading the request and writing the response. Zero means no timeout.
-	Timeout time.Duration `mapstructure:"timeout"`
+	// ReadTimeout bounds reading an entire request, including the body. Zero means no timeout.
+	ReadTimeout time.Duration `mapstructure:"read_timeout"`
+
+	// WriteTimeout bounds writing the response. Zero means no timeout, required for
+	// streaming endpoints that hold the connection open.
+	WriteTimeout time.Duration `mapstructure:"write_timeout"`
 }

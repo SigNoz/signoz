@@ -20,6 +20,8 @@ type Timeout struct {
 	Default time.Duration `mapstructure:"default"`
 	// The maximum allowed context timeout
 	Max time.Duration `mapstructure:"max"`
+	// RequestRead bounds reading an entire request, including the body, at the socket level.
+	RequestRead time.Duration `mapstructure:"request_read"`
 	// The list of routes that are excluded from the timeout
 	ExcludedRoutes []string `mapstructure:"excluded_routes"`
 }
@@ -37,8 +39,9 @@ func newConfig() factory.Config {
 	return &Config{
 		Address: "0.0.0.0:8080",
 		Timeout: Timeout{
-			Default: 60 * time.Second,
-			Max:     600 * time.Second,
+			Default:     60 * time.Second,
+			Max:         600 * time.Second,
+			RequestRead: 60 * time.Second,
 			ExcludedRoutes: []string{
 				"/api/v1/logs/tail",
 				"/api/v3/logs/livetail",

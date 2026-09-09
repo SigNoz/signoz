@@ -41,8 +41,9 @@ func TestNewWithEnvProvider(t *testing.T) {
 	expected := &Config{
 		Address: "0.0.0.0:9090",
 		Timeout: Timeout{
-			Default: 70 * time.Second,
-			Max:     700 * time.Second,
+			Default:     70 * time.Second,
+			Max:         700 * time.Second,
+			RequestRead: 60 * time.Second,
 			ExcludedRoutes: []string{
 				"/excluded1",
 				"/excluded2",

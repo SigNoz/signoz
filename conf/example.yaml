@@ -145,6 +145,8 @@ apiserver:
     default: 60s
     # Maximum request timeout.
     max: 600s
+    # Maximum duration for reading an entire request, including the body.
+    request_read: 60s
     # List of routes to exclude from request timeout.
     excluded_routes:
       - /api/v1/logs/tail
