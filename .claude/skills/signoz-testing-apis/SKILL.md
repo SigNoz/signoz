@@ -10,8 +10,8 @@ description: Test any SigNoz HTTP API (query_range, dashboards, alerts, fields, 
 - Base URL comes from the `SIGNOZ_ENDPOINT` env var. It may point to a preview deployment; use `http://localhost:8080` when unset.
 - Auth comes from the `SIGNOZ_API_KEY` env var, sent as the `SIGNOZ-API-KEY` header.
 - If `SIGNOZ_API_KEY` is not set:
-  - If the server runs against a local SQLite DB, create a key directly in the database and set it in the environment (inserts service account + key + role + authorization tuple; the server must have been started once so the schema exists):
-    `eval "$(.claude/skills/signoz-testing-apis/scripts/create-api-key.sh /path/to/signoz.db)"`
+  - If the server runs against a local SQLite DB, create a key directly in the database and set it in the current shell (inserts service account + key + role + authorization tuple; the server must have been started once so the schema exists):
+    `source .claude/skills/signoz-testing-apis/scripts/create-api-key.sh /path/to/signoz.db`
     If authorization fails right after, wait a few seconds and retry (checks are cached briefly).
   - Otherwise (remote/preview deployment) STOP and ask the user to provide a key. NEVER try login, register, invite, user/org creation, or token minting flows.
 

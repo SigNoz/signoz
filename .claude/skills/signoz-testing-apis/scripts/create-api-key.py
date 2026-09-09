@@ -12,8 +12,9 @@ so the schema and the openfga store row exist. Safe to run while the server
 is up; if you got a 403 right before creating the key, retry after a few
 seconds (authorization checks are cached briefly).
 
-Prints an export statement to stdout, so callers can set the env var directly:
-  eval "$(create-api-key.sh /path/to/signoz.db)"
+Prints only the token to stdout (all messages go to stderr), so callers can
+capture it or export it via the create-api-key.sh wrapper:
+  source create-api-key.sh /path/to/signoz.db
 """
 
 import secrets
@@ -103,7 +104,7 @@ def main():
     )
 
     conn.commit()
-    print(f"export SIGNOZ_API_KEY='{key}'")
+    print(key)
 
 
 if __name__ == "__main__":
