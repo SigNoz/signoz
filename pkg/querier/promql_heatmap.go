@@ -42,8 +42,8 @@ func foldMatrixAsHeatmap(matrix promql.Matrix, queryWindow *qbv5.TimeRange, step
 	// all lack `le` say the expression itself cannot draw a heatmap.
 	if len(matrix) > 0 && len(groups) == 0 {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"the query returned series but none of them carry a `le` label: a heatmap's bucket axis is read off the `le` labels of a classic histogram, so an expression that drops them has nothing to place its counts on").
-			WithAdditional("Keep `le` through the aggregation, for instance sum by (le) (rate(metric_bucket[5m]))")
+			"the query returned no `le` labels to build a bucket axis from").
+			WithAdditional("Keep `le` through the aggregation, e.g. sum by (le) (rate(metric_bucket[5m]))")
 	}
 
 	accumulator := newHeatmapAccumulator()
