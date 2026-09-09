@@ -9,11 +9,13 @@ description: Test any SigNoz HTTP API (query_range, dashboards, alerts, fields, 
 
 - Base URL comes from the `SIGNOZ_ENDPOINT` env var. It may point to a preview deployment; use `http://localhost:8080` when unset.
 - Auth comes from the `SIGNOZ_API_KEY` env var, sent as the `SIGNOZ-API-KEY` header.
-- If `SIGNOZ_API_KEY` is not set, STOP and ask the user to provide it. NEVER try to authenticate yourself: no login, register, invite, user/org creation, or token minting flows.
+- If `SIGNOZ_API_KEY` is not set:
+  - If the server runs against a **reused** local SQLite DB, extract an existing key (keys are stored in plaintext):
+    `export SIGNOZ_API_KEY=$(.claude/skills/signoz-testing-apis/scripts/get-api-key.sh /path/to/signoz.db)`
+  - Otherwise (fresh DB, or a remote deployment) STOP and ask the user to provide a key. Fabricating a key on a fresh DB is not simple SQL (it needs an org, service account, role, and authorization tuples), and you must NEVER try login, register, invite, user/org creation, or token minting flows.
 
 ## 2. Calling an API
 
-- Find the method, path, and payload schema for any endpoint by following [references/finding-endpoints.md](references/finding-endpoints.md). Short version: the checked-in OpenAPI spec at `docs/api/openapi.yml`.
 - Build the call with the helper script (reads the env vars above, prints the curl it runs):
 
   ```bash
@@ -21,9 +23,25 @@ description: Test any SigNoz HTTP API (query_range, dashboards, alerts, fields, 
   .claude/skills/signoz-testing-apis/scripts/api-call.sh POST /api/v5/query_range payload.json
   ```
 
-- For `/api/v5/query_range`, start from the minimal working payload [references/query-range-payload.json](references/query-range-payload.json) and adjust `start`/`end` to the current time range in epoch milliseconds.
+- If you need the payload schema of an unfamiliar endpoint, look it up in the checked-in OpenAPI spec at `docs/api/openapi.yml`.
 
-## 3. Running a local server (only when no endpoint is available)
+## 3. Testing query builder changes
+
+Prefer the dry-run preview endpoint — it accepts the same payload as `/api/v5/query_range` but does not execute the queries:
+
+```bash
+.claude/skills/signoz-testing-apis/scripts/api-call.sh POST '/api/v5/query_range/preview' payload.json
+```
+
+- Per query it returns `valid`, `error`, `warnings`, and the **rendered ClickHouse statement(s)** at `compositeQuery.<name>.statements[].db.statement.query` — exactly what you need to verify query builder changes without any data in ClickHouse.
+- Default `verbose=true` also attaches EXPLAIN ESTIMATE and granule index analysis per statement. Use `?verbose=false` for a lightweight valid/error verdict with no ClickHouse round trips.
+- Per-query errors are reported inside the response instead of failing the whole request — check each query's `valid`/`error` fields.
+
+## 4. Query range payload
+
+Start from [references/query-range-payload.json](references/query-range-payload.json): a full builder-query template (aggregations, filter, groupBy, selectFields, order, having, limit, legend). Adjust `start`/`end` to the current time range in epoch milliseconds and drop fields you don't need. `selectFields` only matters for `raw`/`scalar` request types; it is ignored for `time_series`.
+
+## 5. Running a local server (only when no endpoint is available)
 
 Skip this section entirely if `SIGNOZ_ENDPOINT` already points at a reachable deployment.
 

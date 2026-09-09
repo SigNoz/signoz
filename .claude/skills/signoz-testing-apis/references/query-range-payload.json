@@ -10,10 +10,27 @@
         "spec": {
           "name": "A",
           "signal": "traces",
+          "stepInterval": "60s",
+          "disabled": false,
           "aggregations": [
-            { "expression": "count()" }
+            { "expression": "count()", "alias": "span_count" },
+            { "expression": "avg(duration_nano)", "alias": "avg_duration" }
           ],
-          "stepInterval": "60s"
+          "filter": { "expression": "service.name = 'frontend' AND http.status_code >= 500" },
+          "groupBy": [
+            { "name": "service.name", "fieldContext": "resource" },
+            { "name": "http.status_code", "fieldContext": "span", "fieldDataType": "int64" }
+          ],
+          "selectFields": [
+            { "name": "service.name", "fieldContext": "resource" },
+            { "name": "http.route", "fieldContext": "span", "fieldDataType": "string" }
+          ],
+          "order": [
+            { "key": { "name": "span_count" }, "direction": "desc" }
+          ],
+          "having": { "expression": "span_count > 10" },
+          "limit": 10,
+          "legend": "{{service.name}}"
         }
       }
     ]

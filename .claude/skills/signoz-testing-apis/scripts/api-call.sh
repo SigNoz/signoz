@@ -16,6 +16,8 @@ fi
 
 if [[ -z "${SIGNOZ_API_KEY:-}" ]]; then
   echo "SIGNOZ_API_KEY is not set. Ask the user for an API key; do not attempt to authenticate yourself." >&2
+  echo "If the server runs against a reused local SQLite DB, extract an existing key instead:" >&2
+  echo "  export SIGNOZ_API_KEY=\$(${BASH_SOURCE[0]%/*}/get-api-key.sh /path/to/signoz.db)" >&2
   exit 1
 fi
 
