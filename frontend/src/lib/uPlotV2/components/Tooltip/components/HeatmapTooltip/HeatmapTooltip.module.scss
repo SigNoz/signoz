@@ -1,3 +1,5 @@
+@use '../../../../../../styles/scrollbar' as *;
+
 // Surface matches the shared Tooltip exactly — same tokens, same radius, no
 // shadow (the plugin's portal wrapper is transparent and paints nothing). Text
 // follows the theme through the popover/muted pair; the fixed vanilla ramp reads
@@ -96,6 +98,10 @@
 	flex-direction: column;
 	gap: var(--spacing-1);
 	padding: var(--spacing-3) var(--spacing-4);
+	max-height: 320px;
+	overflow-y: auto;
+
+	@include custom-scrollbar;
 }
 
 .section {
