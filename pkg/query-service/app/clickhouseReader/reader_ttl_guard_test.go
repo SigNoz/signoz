@@ -39,6 +39,23 @@ func TestColdStorageTTLQueriesGuardZeroRetention(t *testing.T) {
 	assert.NotContains(t, resourceQ, "toIntervalDay(_retention_days) DELETE")
 }
 
+func TestValidateTTLConditionsAcceptsPositiveRuleTTL(t *testing.T) {
+	// Companion to the rejection test: a well-formed positive-TTL rule must
+	// pass validation unchanged - the guard exists to stop zero-day values,
+	// not to narrow the operator's valid configuration space.
+	r := &ClickHouseReader{}
+	for _, days := range []int{1, 30, 90} {
+		require.NoError(t, r.validateTTLConditions(context.Background(), []retentiontypes.CustomRetentionRule{
+			{
+				TTLDays: days,
+				Filters: []retentiontypes.FilterCondition{
+					{Key: "service.name", Values: []string{"web"}},
+				},
+			},
+		}), "valid rule with TTL of %d days should validate", days)
+	}
+}
+
 func TestValidateTTLConditionsRejectsNonPositiveRuleTTL(t *testing.T) {
 	r := &ClickHouseReader{}
 
