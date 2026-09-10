@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import { AlignedData } from 'uplot';
 
@@ -69,7 +70,9 @@ describe('GraphView', () => {
 	it('renders graph view by default', () => {
 		render(
 			<Provider store={store}>
-				<GraphView {...defaultProps} />
+				<TimezoneProvider>
+					<GraphView {...defaultProps} />
+				</TimezoneProvider>
 			</Provider>,
 		);
 		expect(screen.getByRole('switch')).toBeInTheDocument();
@@ -79,7 +82,9 @@ describe('GraphView', () => {
 	it('switches between graph and table view', async () => {
 		render(
 			<Provider store={store}>
-				<GraphView {...defaultProps} />
+				<TimezoneProvider>
+					<GraphView {...defaultProps} />
+				</TimezoneProvider>
 			</Provider>,
 		);
 
@@ -93,7 +98,9 @@ describe('GraphView', () => {
 	it('renders metric name and number of series', () => {
 		render(
 			<Provider store={store}>
-				<GraphView {...defaultProps} />
+				<TimezoneProvider>
+					<GraphView {...defaultProps} />
+				</TimezoneProvider>
 			</Provider>,
 		);
 		expect(screen.getByText('test_metric')).toBeInTheDocument();
