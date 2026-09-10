@@ -44,7 +44,9 @@ function LegendRow({
 	const { seriesIndex, show } = item;
 	const label = item.label ?? '';
 	const canAdd = !show;
-	const onlyActionLabel = isSoleShown ? 'Show all series' : `Show only ${label}`;
+	const onlyActionLabel = isSoleShown
+		? 'Show all series'
+		: `Show only current series`;
 	// `color` is uPlot's stroke union (string | fn | gradient); only a string is
 	// a usable CSS colour for the marker.
 	const seriesColor = typeof item.color === 'string' ? item.color : undefined;
