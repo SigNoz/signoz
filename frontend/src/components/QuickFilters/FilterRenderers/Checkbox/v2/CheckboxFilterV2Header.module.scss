@@ -46,11 +46,46 @@
 	width: 0;
 	overflow: hidden;
 	opacity: 0;
+	transform: translateX(4px);
 	pointer-events: none;
+	// Same reveal as the value-row actions: fade + slide. Width is not
+	// animatable, so it collapses only after the fade-out finishes.
+	transition:
+		opacity 0.16s ease,
+		transform 0.16s ease,
+		width 0s linear 0.16s;
 }
 
 :global(.qf-filter-category:hover) .rightAction {
 	width: auto;
 	opacity: 1;
+	transform: translateX(0);
+	pointer-events: auto;
+	transition:
+		opacity 0.16s ease,
+		transform 0.16s ease;
+}
+
+// While the search input is open the actions stay visible so the search
+// toggle remains anchored; only reset stays hover-gated.
+.rightAction.searchActive {
+	width: auto;
+	opacity: 1;
+	transform: translateX(0);
+	pointer-events: auto;
+}
+
+.rightAction.searchActive .hoverOnly {
+	opacity: 0;
+	transform: translateX(4px);
+	pointer-events: none;
+	transition:
+		opacity 0.16s ease,
+		transform 0.16s ease;
+}
+
+:global(.qf-filter-category:hover) .rightAction.searchActive .hoverOnly {
+	opacity: 1;
+	transform: translateX(0);
 	pointer-events: auto;
 }

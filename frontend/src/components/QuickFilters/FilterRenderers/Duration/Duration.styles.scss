@@ -13,11 +13,16 @@
 
 	.duration-reset {
 		opacity: 0;
+		transform: translateX(4px);
 		pointer-events: none;
+		transition:
+			opacity 0.16s ease,
+			transform 0.16s ease;
 	}
 
 	&:hover .duration-reset {
 		opacity: 1;
+		transform: translateX(0);
 		pointer-events: auto;
 	}
 

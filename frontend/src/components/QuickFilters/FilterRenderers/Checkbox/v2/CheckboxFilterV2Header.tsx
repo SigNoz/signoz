@@ -5,11 +5,14 @@ import { ChevronDown, ChevronRight, Search, Undo2 } from '@signozhq/icons';
 
 import { SectionActionButton } from '../../shared/SectionActionButton/SectionActionButton';
 
+import classNames from 'classnames';
+
 import styles from './CheckboxFilterV2Header.module.scss';
 
 interface CheckboxFilterHeaderProps {
 	title: string;
 	isOpen: boolean;
+	isSearchOpen?: boolean;
 	onToggleOpen: () => void;
 	onToggleSearch: () => void;
 	onClear: () => void;
@@ -18,6 +21,7 @@ interface CheckboxFilterHeaderProps {
 export function CheckboxFilterV2Header({
 	title,
 	isOpen,
+	isSearchOpen = false,
 	onToggleOpen,
 	onToggleSearch,
 	onClear,
@@ -65,18 +69,23 @@ export function CheckboxFilterV2Header({
 				)}
 			</section>
 			{isOpen && (
-				<section className={styles.rightAction}>
+				<section
+					className={classNames(styles.rightAction, {
+						[styles.searchActive]: isSearchOpen,
+					})}
+				>
+					<SectionActionButton
+						icon={<Undo2 size={14} />}
+						className={isSearchOpen ? styles.hoverOnly : undefined}
+						tooltip="Reset"
+						onClick={onClear}
+						testId="checkbox-filter-clear-all"
+					/>
 					<SectionActionButton
 						icon={<Search size={14} />}
 						tooltip="Search"
 						onClick={onToggleSearch}
 						testId="checkbox-filter-search-toggle"
-					/>
-					<SectionActionButton
-						icon={<Undo2 size={14} />}
-						tooltip="Reset"
-						onClick={onClear}
-						testId="checkbox-filter-clear-all"
 					/>
 				</section>
 			)}

@@ -2,6 +2,8 @@ import { ReactNode } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from 'antd';
 
+import classNames from 'classnames';
+
 import styles from './SectionActionButton.module.scss';
 
 interface SectionActionButtonProps {
@@ -9,6 +11,7 @@ interface SectionActionButtonProps {
 	tooltip: string;
 	onClick: () => void;
 	testId: string;
+	className?: string;
 }
 
 export function SectionActionButton({
@@ -16,6 +19,7 @@ export function SectionActionButton({
 	tooltip,
 	onClick,
 	testId,
+	className,
 }: SectionActionButtonProps): JSX.Element {
 	return (
 		<Tooltip title={tooltip}>
@@ -23,7 +27,7 @@ export function SectionActionButton({
 				variant="link"
 				color="secondary"
 				size="sm"
-				className={styles.iconBtn}
+				className={classNames(styles.iconBtn, className)}
 				onMouseDown={(e): void => e.preventDefault()}
 				onClick={(e): void => {
 					e.stopPropagation();

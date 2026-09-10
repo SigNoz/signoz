@@ -173,6 +173,7 @@ export default function CheckboxFilterV2(
 			<CheckboxFilterV2Header
 				title={filter.title}
 				isOpen={isOpen}
+				isSearchOpen={isSearchOpen}
 				onToggleOpen={onToggleOpen}
 				onToggleSearch={handleToggleSearch}
 				onClear={onClear}
