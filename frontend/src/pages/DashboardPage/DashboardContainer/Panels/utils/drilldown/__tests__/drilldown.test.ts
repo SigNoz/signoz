@@ -426,6 +426,30 @@ describe('resolvePanelContextLinks', () => {
 
 		expect(resolved[0].url).toBe('https://wiki/{{_service.name}}');
 	});
+
+	it('carries targetBlank through, defaulting to true when unset', () => {
+		const resolved = resolvePanelContextLinks(
+			[
+				{ name: 'Same tab', url: 'https://wiki/a', targetBlank: false },
+				{ name: 'New tab', url: 'https://wiki/b', targetBlank: true },
+				{ name: 'Unset', url: 'https://wiki/c' },
+				{
+					name: 'Literal',
+					url: 'https://wiki/d',
+					targetBlank: false,
+					renderVariables: false,
+				},
+			],
+			{},
+		);
+
+		expect(resolved.map((link) => link.targetBlank)).toStrictEqual([
+			false,
+			true,
+			true,
+			false,
+		]);
+	});
 });
 
 describe('stepClickTimeRange', () => {
