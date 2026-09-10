@@ -1,32 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { rest } from 'msw';
 import { screen, userEvent } from 'storybook/test';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSelector from './FieldsSelector';
-
-const fieldSuggestions = {
-	status: 'success',
-	data: {
-		complete: true,
-		keys: {
-			attributeKeys: [
-				{
-					fieldContext: 'resource',
-					fieldDataType: 'string',
-					name: 'service.name',
-					signal: 'logs',
-				},
-				{
-					fieldContext: 'log',
-					fieldDataType: 'string',
-					name: 'body',
-					signal: 'logs',
-				},
-			],
-		},
-	},
-};
+import {
+	fieldSuggestionsHandlers,
+	noFieldSuggestionsHandlers,
+} from './FieldsSelector.stories.mocks';
 
 const meta = {
 	title: 'Components/Fields Selector',
@@ -53,11 +33,7 @@ const meta = {
 	},
 	parameters: {
 		msw: {
-			handlers: [
-				rest.get('http://localhost/api/v1/fields/keys', (_req, res, ctx) =>
-					res(ctx.status(200), ctx.json(fieldSuggestions)),
-				),
-			],
+			handlers: fieldSuggestionsHandlers,
 		},
 	},
 } satisfies Meta<typeof FieldsSelector>;
@@ -84,17 +60,7 @@ export const UnsavedChanges: Story = {
 export const NoResults: Story = {
 	parameters: {
 		msw: {
-			handlers: [
-				rest.get('http://localhost/api/v1/fields/keys', (_req, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({
-							status: 'success',
-							data: { complete: true, keys: { attributeKeys: [] } },
-						}),
-					),
-				),
-			],
+			handlers: noFieldSuggestionsHandlers,
 		},
 	},
 };
