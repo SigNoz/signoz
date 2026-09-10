@@ -12,9 +12,16 @@ import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import {
 	MAPPING_GROUP_MAX,
 	spanMapperGroupsResponse,
+	wideConditionGroupsResponse,
 } from './__story_mockdata__/attributeMapping';
 
 const GROUPS = 'Attribute mapping · groups';
+
+export const wideConditionGroup = rest.get(
+	'http://localhost/api/v1/span_mapper_groups',
+	(_req, res, ctx) =>
+		res(ctx.status(200), ctx.json(wideConditionGroupsResponse())),
+);
 
 export const attributeMappingMocks = defineStoryMocks({
 	controls: {

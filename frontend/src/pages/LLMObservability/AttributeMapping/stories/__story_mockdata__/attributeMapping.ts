@@ -62,3 +62,42 @@ export const spanMapperGroupsResponse = (
 	status: 'success',
 	data: { items: GROUPS.slice(0, count).map(group) },
 });
+
+const MANY_ATTRIBUTES = [
+	'langchain.model',
+	'langchain.prompt_tokens',
+	'langchain.completion_tokens',
+	'langchain.chain.name',
+	'langchain.chain.run_id',
+	'langchain.retriever.source',
+	'langchain.tool.invocation',
+	'langchain.callbacks.handler_name',
+];
+
+const MANY_RESOURCE_KEYS = [
+	'service.namespace',
+	'deployment.environment.name',
+	'telemetry.sdk.language',
+];
+
+/** The first group's condition widened to far more keys than its own fixture. */
+export const wideConditionGroupsResponse = (): ListSpanMapperGroups200 => {
+	const list = spanMapperGroupsResponse(MAPPING_GROUP_MAX);
+
+	return {
+		...list,
+		data: {
+			items: list.data.items?.map((item, index) =>
+				index === 0
+					? {
+							...item,
+							condition: {
+								attributes: MANY_ATTRIBUTES,
+								resource: MANY_RESOURCE_KEYS,
+							},
+						}
+					: item,
+			),
+		},
+	};
+};
