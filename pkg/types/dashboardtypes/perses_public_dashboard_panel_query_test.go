@@ -160,6 +160,11 @@ func TestDashboardV2GetPanelQuery(t *testing.T) {
 			expectedType qb.QueryType
 		}{
 			{
+				description:  "AI builder query",
+				plugin:       QueryPlugin{Kind: QueryKindAIBuilder, Spec: &AIBuilderQuerySpec{Name: "A"}},
+				expectedType: qb.QueryTypeBuilderAI,
+			},
+			{
 				description:  "promql",
 				plugin:       QueryPlugin{Kind: QueryKindPromQL, Spec: &qb.PromQuery{Name: "A", Query: "up"}},
 				expectedType: qb.QueryTypePromQL,
