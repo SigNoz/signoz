@@ -36,46 +36,16 @@ type RuleView struct {
 
 // RuleViewData holds the rule listing state (ListRulesParams minus pagination) a view replays.
 type RuleViewData struct {
-	Version string    `json:"version" required:"true"`
-	Query   string    `json:"query"`
-	States  []string  `json:"states"`
-	Sort    ListSort  `json:"sort"`
-	Order   ListOrder `json:"order"`
+	Version string `json:"version" required:"true"`
+	ListFilter
 }
 
-// Validate normalizes in place; zero sort/order get the list defaults.
 func (d *RuleViewData) Validate() error {
 	if d.Version != RuleViewSchemaVersion {
 		return errors.NewInvalidInputf(ErrCodeRuleViewInvalidInput,
 			"version must be %q, got %q", RuleViewSchemaVersion, d.Version)
 	}
-
-	if n := utf8.RuneCountInString(d.Query); n > MaxListQueryLen {
-		return errors.NewInvalidInputf(ErrCodeRuleViewInvalidInput,
-			"query cannot be longer than %d characters, got %d", MaxListQueryLen, n)
-	}
-
-	for _, raw := range d.States {
-		if _, err := parseAlertState(raw); err != nil {
-			return errors.WrapInvalidInputf(err, ErrCodeRuleViewInvalidInput, "invalid states")
-		}
-	}
-
-	if d.Sort.IsZero() {
-		d.Sort = ListSortUpdatedAt
-	} else if !d.Sort.IsValid() {
-		return errors.NewInvalidInputf(ErrCodeRuleViewInvalidInput,
-			"invalid sort %q, expected one of: `updated_at`, `created_at`, `name`, `state`, `severity`", d.Sort)
-	}
-
-	if d.Order.IsZero() {
-		d.Order = ListOrderDesc
-	} else if !d.Order.IsValid() {
-		return errors.NewInvalidInputf(ErrCodeRuleViewInvalidInput,
-			"invalid order %q, expected `asc` or `desc`", d.Order)
-	}
-
-	return nil
+	return d.ListFilter.Validate()
 }
 
 type PostableRuleView struct {

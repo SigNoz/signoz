@@ -18,7 +18,7 @@ func TestRuleViewDataValidate(t *testing.T) {
 	}{
 		{
 			description: "valid with all fields set",
-			data:        RuleViewData{Version: RuleViewSchemaVersion, Query: "name CONTAINS 'prod'", States: []string{"firing", "pending"}, Sort: ListSortName, Order: ListOrderAsc},
+			data:        RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{Query: "name CONTAINS 'prod'", States: []string{"firing", "pending"}, Sort: ListSortName, Order: ListOrderAsc}},
 			expectError: false,
 		},
 		{
@@ -28,7 +28,7 @@ func TestRuleViewDataValidate(t *testing.T) {
 		},
 		{
 			description: "query over the cap is rejected",
-			data:        RuleViewData{Version: RuleViewSchemaVersion, Query: strings.Repeat("x", MaxListQueryLen+1)},
+			data:        RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{Query: strings.Repeat("x", MaxListQueryLen+1)}},
 			expectError: true,
 		},
 		{
@@ -43,17 +43,17 @@ func TestRuleViewDataValidate(t *testing.T) {
 		},
 		{
 			description: "unknown state is rejected",
-			data:        RuleViewData{Version: RuleViewSchemaVersion, States: []string{"exploding"}},
+			data:        RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{States: []string{"exploding"}}},
 			expectError: true,
 		},
 		{
 			description: "unknown sort is rejected",
-			data:        RuleViewData{Version: RuleViewSchemaVersion, Sort: ListSort{valuer.NewString("bogus")}},
+			data:        RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{Sort: ListSort{valuer.NewString("bogus")}}},
 			expectError: true,
 		},
 		{
 			description: "unknown order is rejected",
-			data:        RuleViewData{Version: RuleViewSchemaVersion, Order: ListOrder{valuer.NewString("sideways")}},
+			data:        RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{Order: ListOrder{valuer.NewString("sideways")}}},
 			expectError: true,
 		},
 	}
@@ -148,7 +148,7 @@ func TestPostableRuleViewNewRuleView(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 	postable := PostableRuleView{
 		Name: "my view",
-		Data: RuleViewData{Version: RuleViewSchemaVersion, States: []string{"firing"}, Sort: ListSortName, Order: ListOrderAsc},
+		Data: RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{States: []string{"firing"}, Sort: ListSortName, Order: ListOrderAsc}},
 	}
 
 	view := postable.NewRuleView(orgID)
@@ -165,13 +165,13 @@ func TestRuleViewUpdate(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 	view := PostableRuleView{
 		Name: "original",
-		Data: RuleViewData{Version: RuleViewSchemaVersion, Sort: ListSortName, Order: ListOrderAsc},
+		Data: RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{Sort: ListSortName, Order: ListOrderAsc}},
 	}.NewRuleView(orgID)
 	createdAt := view.CreatedAt
 
 	view.Update(UpdatableRuleView{
 		Name: "renamed",
-		Data: RuleViewData{Version: RuleViewSchemaVersion, States: []string{"disabled"}, Sort: ListSortCreatedAt, Order: ListOrderDesc},
+		Data: RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{States: []string{"disabled"}, Sort: ListSortCreatedAt, Order: ListOrderDesc}},
 	})
 
 	assert.Equal(t, "renamed", view.Name)

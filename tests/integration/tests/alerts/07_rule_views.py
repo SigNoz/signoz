@@ -12,44 +12,53 @@ BASE_URL = "/api/v2/rule_views"
 
 
 @pytest.mark.parametrize(
-    ("body", "expected_message"),
+    ("body", "expected_code", "expected_message"),
     [
-        ({"data": {"version": "v1"}}, "name is required"),
-        ({"name": "   ", "data": {"version": "v1"}}, "name is required"),
+        ({"data": {"version": "v1"}}, "rule_view_invalid_input", "name is required"),
+        ({"name": "   ", "data": {"version": "v1"}}, "rule_view_invalid_input", "name is required"),
         (
             {"name": "  Storage  ", "data": {"version": "v1"}},
+            "rule_view_invalid_input",
             "name must not have leading or trailing whitespace",
         ),
         (
             {"name": "x" * 65, "data": {"version": "v1"}},
+            "rule_view_invalid_input",
             "name must be at most 64 characters, got 65",
         ),
         (
             {"name": "wrong-version", "data": {"version": "v2"}},
+            "rule_view_invalid_input",
             'version must be "v1", got "v2"',
         ),
         (
             {"name": "missing-version", "data": {}},
+            "rule_view_invalid_input",
             'version must be "v1", got ""',
         ),
         (
             {"name": "bad-state", "data": {"version": "v1", "states": ["exploding"]}},
-            "invalid states",
+            "rule_list_invalid",
+            'invalid state "exploding"',
         ),
         (
             {"name": "bad-sort", "data": {"version": "v1", "sort": "bogus"}},
+            "rule_list_invalid",
             "invalid sort",
         ),
         (
             {"name": "bad-order", "data": {"version": "v1", "order": "bogus"}},
+            "rule_list_invalid",
             "invalid order",
         ),
         (
             {"name": "long-query", "data": {"version": "v1", "query": "x" * 1025}},
+            "rule_list_invalid",
             "query cannot be longer than 1024 characters",
         ),
         (
             {"name": "rejects-unknown", "data": {"version": "v1"}, "unknownfield": "boom"},
+            "rule_view_invalid_input",
             "invalid saved view request body",
         ),
     ],
@@ -72,6 +81,7 @@ def test_create_rejects_invalid_body(
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     body: dict,
+    expected_code: str,
     expected_message: str,
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -84,7 +94,7 @@ def test_create_rejects_invalid_body(
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert response.json()["error"]["code"] == "rule_view_invalid_input"
+    assert response.json()["error"]["code"] == expected_code
     assert expected_message in response.json()["error"]["message"]
 
 
