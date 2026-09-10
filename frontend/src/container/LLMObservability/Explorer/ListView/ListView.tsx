@@ -154,15 +154,13 @@ function ListView({
 	);
 
 	// TODO(ai-explorer): static columns until the preferences framework lands.
-	const columns = useMemo<TableColumnDef<TracesTableRow>[]>(() => {
-		const fields = [
-			TIMESTAMP_FIELD,
-			...defaultSelectedColumns.filter(
-				(field) => field.name !== TIMESTAMP_FIELD.name,
+	const columns = useMemo<TableColumnDef<TracesTableRow>[]>(
+		() =>
+			[TIMESTAMP_FIELD, ...defaultSelectedColumns].map((field) =>
+				getFieldColumn(field),
 			),
-		];
-		return fields.map((field) => getFieldColumn(field));
-	}, []);
+		[],
+	);
 
 	const rows = useMemo(
 		() => transformSpanRows(queryTableData),

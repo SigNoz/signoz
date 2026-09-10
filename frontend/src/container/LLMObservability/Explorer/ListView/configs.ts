@@ -2,6 +2,7 @@ import type { TelemetryFieldKey } from 'api/v5/v5';
 import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
 
 // Pinned timestamp column
+// The list query returns timestamp, trace_id and span_id whether or not they are selected.
 export const TIMESTAMP_FIELD = {
 	name: 'timestamp',
 	fieldContext: 'span',
@@ -35,7 +36,6 @@ export const defaultSelectedColumns: TelemetryFieldKey[] = [
 		signal: 'traces',
 		fieldContext: 'span',
 	},
-	TIMESTAMP_FIELD,
 ];
 
 export const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
