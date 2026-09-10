@@ -135,6 +135,7 @@ function LegendRow({
 				side="top"
 				delayDuration={LEGEND_TOOLTIP_DELAY_MS}
 				disableHoverableContent
+				tooltipContentProps={{ className: styles.labelTooltip }}
 			>
 				<span className={styles.label}>{label}</span>
 			</TooltipSimple>
