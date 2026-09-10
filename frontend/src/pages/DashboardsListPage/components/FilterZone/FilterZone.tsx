@@ -25,8 +25,6 @@ import FilterChips, { type CreatorOption } from './FilterChips';
 
 import styles from './FilterZone.module.scss';
 
-// SearchBar renders its own tooltip from a string, and the row-level AuthZ
-// tooltip cannot reach inside CodeMirror.
 interface Props {
 	// The last-run query (source of truth for fetching + the dirty baseline).
 	query: string;
@@ -36,10 +34,8 @@ interface Props {
 	onQueryChange: (value: string) => void;
 	// Rendered at the end of the search row (e.g. the New Dashboard action).
 	rightSlot?: ReactNode;
-	/**
-	 * Why filtering is unavailable. Non-empty makes the chrome non-interactive and
-	 * explains it, rather than leaving a dead search box.
-	 */
+	/** Filtering needs `list`: the box and chips edit a query that cannot be run. */
+	disabled?: boolean;
 }
 
 // The filter command zone. The query box is a DRAFT: typing and the Created-by /
@@ -53,6 +49,7 @@ function FilterZone({
 	source,
 	onQueryChange,
 	rightSlot,
+	disabled = false,
 }: Props): JSX.Element {
 	const [draft, setDraft] = useState(query);
 
@@ -126,6 +123,7 @@ function FilterZone({
 						placeholder="DSL Filter — e.g. name CONTAINS 'api' AND env IN ['prod','staging']"
 						source={source}
 						dirty={dirty}
+						disabled={disabled}
 						onChange={setDraft}
 						onSubmit={run}
 					/>
@@ -142,6 +140,7 @@ function FilterZone({
 					onUpdatedChange={handleUpdatedChange}
 					onApply={run}
 					onClearCreatedBy={handleClearCreatedBy}
+					disabled={disabled}
 				/>
 				{!isEmpty && (
 					<Button
@@ -149,6 +148,7 @@ function FilterZone({
 						color="primary"
 						size="sm"
 						prefix={<X size={12} />}
+						disabled={disabled}
 						onClick={handleClear}
 						testId="dashboards-filter-clear"
 					>

@@ -1,7 +1,7 @@
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor, within } from 'tests/test-utils';
 import {
 	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
@@ -115,9 +115,17 @@ describe('DashboardsList - AuthZ', () => {
 			const cta = screen.getByTestId('new-dashboard-cta');
 			expect(cta).not.toBeDisabled();
 
-			// Search stays live — it only rewrites what the gated request would ask
-			// for. The views rail is a section of its own and carries its own denial.
-			expect(screen.getByLabelText('Run search')).toBeEnabled();
+			// The search box and filters edit a query that can never be run, so they
+			// are inert; the views rail carries its own denial.
+			expect(
+				within(screen.getByTestId('dashboards-filter-created-by')).getByRole(
+					'combobox',
+				),
+			).toBeDisabled();
+			expect(screen.getByLabelText('Run search')).toBeDisabled();
+			expect(
+				screen.getByTestId('dashboards-list-search').querySelector('.cm-content'),
+			).toHaveAttribute('contenteditable', 'false');
 			expect(screen.getByTestId('views-rail-denied')).toBeInTheDocument();
 		});
 

@@ -315,6 +315,7 @@ function DashboardsList(): JSX.Element {
 									query={query}
 									creatorOptions={creatorOptions}
 									source={source}
+									disabled={!canList}
 									onQueryChange={handleQueryChange}
 								/>
 							</div>

@@ -5,8 +5,8 @@ import {
 	completionKeymap,
 	startCompletion,
 } from '@codemirror/autocomplete';
+import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Color } from '@signozhq/design-tokens';
 import { ChevronUp, Command, CornerDownLeft, Search } from '@signozhq/icons';
 import CodeMirror, {
@@ -33,8 +33,8 @@ interface Props {
 	source?: SuggestionSource;
 	// The draft differs from the last-run query — shows a "run to apply" hint.
 	dirty?: boolean;
-	/** Why the box is unavailable; non-empty disables it and explains it. */
-	disabledReason?: string;
+	/** Filtering needs `list`: the draft edits a query that cannot be run. */
+	disabled?: boolean;
 }
 
 const EMPTY_SOURCE: SuggestionSource = {
@@ -81,9 +81,8 @@ function SearchBar({
 	placeholder = "Filter with DSL (e.g. name CONTAINS 'foo')",
 	source = EMPTY_SOURCE,
 	dirty = false,
-	disabledReason = '',
+	disabled = false,
 }: Props): JSX.Element {
-	const disabled = !!disabledReason;
 	const isMac = getUserOperatingSystem() === UserOperatingSystem.MACOS;
 	const editorRef = useRef<ReactCodeMirrorRef>(null);
 
@@ -154,58 +153,56 @@ function SearchBar({
 	);
 
 	return (
-		<TooltipSimple side="bottom" title={disabledReason}>
-			<div className={styles.wrapper}>
-				<div className={styles.field}>
-					<Search
-						size={12}
-						color={Color.BG_VANILLA_400}
-						className={styles.leadIcon}
-					/>
-					<CodeMirror
-						ref={editorRef}
-						className={styles.editor}
-						value={value}
-						placeholder={placeholder}
-						extensions={extensions}
-						basicSetup={BASIC_SETUP}
-						indentWithTab={false}
-						editable={!disabled}
-						data-testid="dashboards-list-search"
-						onChange={(next): void => onChange(next.replace(/\n/g, ' '))}
-					/>
-					<Button
-						variant="ghost"
-						color="secondary"
-						size="sm"
-						className={styles.submit}
-						aria-label="Run search"
-						disabled={disabled}
-						testId="dashboards-list-search-submit"
-						onMouseDown={(e: MouseEvent<HTMLButtonElement>): void => {
-							e.preventDefault();
-						}}
-						onClick={handleSubmit}
-					>
-						{dirty && (
-							<span
-								className={styles.dirtyDot}
-								data-testid="dashboards-list-search-dirty"
-							/>
+		<div className={styles.wrapper}>
+			<div className={cx(styles.field, { [styles.disabled]: disabled })}>
+				<Search
+					size={12}
+					color={Color.BG_VANILLA_400}
+					className={styles.leadIcon}
+				/>
+				<CodeMirror
+					ref={editorRef}
+					className={styles.editor}
+					value={value}
+					placeholder={placeholder}
+					extensions={extensions}
+					basicSetup={BASIC_SETUP}
+					indentWithTab={false}
+					editable={!disabled}
+					data-testid="dashboards-list-search"
+					onChange={(next): void => onChange(next.replace(/\n/g, ' '))}
+				/>
+				<Button
+					variant="ghost"
+					color="secondary"
+					size="sm"
+					className={styles.submit}
+					aria-label="Run search"
+					disabled={disabled}
+					testId="dashboards-list-search-submit"
+					onMouseDown={(e: MouseEvent<HTMLButtonElement>): void => {
+						e.preventDefault();
+					}}
+					onClick={handleSubmit}
+				>
+					{dirty && (
+						<span
+							className={styles.dirtyDot}
+							data-testid="dashboards-list-search-dirty"
+						/>
+					)}
+					Run query
+					<span className={styles.cmdHint}>
+						{isMac ? (
+							<Command size={12} color={Color.BG_VANILLA_400} />
+						) : (
+							<ChevronUp size={12} color={Color.BG_VANILLA_400} />
 						)}
-						Run query
-						<span className={styles.cmdHint}>
-							{isMac ? (
-								<Command size={12} color={Color.BG_VANILLA_400} />
-							) : (
-								<ChevronUp size={12} color={Color.BG_VANILLA_400} />
-							)}
-							<CornerDownLeft size={12} color={Color.BG_VANILLA_400} />
-						</span>
-					</Button>
-				</div>
+						<CornerDownLeft size={12} color={Color.BG_VANILLA_400} />
+					</span>
+				</Button>
 			</div>
-		</TooltipSimple>
+		</div>
 	);
 }
 
