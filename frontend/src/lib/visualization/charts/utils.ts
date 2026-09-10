@@ -1,4 +1,4 @@
-import { MAX_LEGEND_WIDTH } from 'lib/uPlotV2/components/Legend/Legend';
+import { MAX_LEGEND_WIDTH } from 'lib/uPlotV2/components/Legend/constants';
 import { LegendConfig, LegendPosition } from 'lib/uPlotV2/components/types';
 export interface ChartDimensions {
 	width: number;

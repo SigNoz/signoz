@@ -1,117 +1,54 @@
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useRef,
-} from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 
-export function useLegendActions({
-	setFocusedSeriesIndex,
-	focusedSeriesIndex,
-}: {
-	setFocusedSeriesIndex: Dispatch<SetStateAction<number | null>>;
-	focusedSeriesIndex: number | null;
-}): {
-	onLegendClick: (e: React.MouseEvent<HTMLDivElement>) => void;
-	onFocusSeries: (seriesIndex: number | null) => void;
-	onLegendMouseMove: (e: React.MouseEvent<HTMLDivElement>) => void;
-	onLegendMouseLeave: () => void;
-} {
+export interface UseLegendActionsResult {
+	onToggleSeries: (seriesIndex: number) => void;
+	/** Show this series alone, or show all when it is already alone. */
+	onShowOnlySeries: (seriesIndex: number) => void;
+	/** Show this series alongside the ones already shown. */
+	onShowSeries: (seriesIndex: number) => void;
+	/** null clears the highlight. */
+	onHoverSeries: (seriesIndex: number | null) => void;
+}
+
+/**
+ * Legend interactions, bound to the plot through PlotContext. Hover is coalesced
+ * to one chart redraw per frame.
+ */
+export function useLegendActions(): UseLegendActionsResult {
 	const {
-		onFocusSeries: onFocusSeriesPlot,
 		onToggleSeriesOnOff,
-		onToggleSeriesVisibility,
+		onShowOnlySeries,
+		onShowSeries,
+		onHighlightSeries,
 	} = usePlotContext();
 
-	const rafId = useRef<number | null>(null); // requestAnimationFrame id
+	const rafIdRef = useRef<number | null>(null);
 
-	const getLegendItemIdFromEvent = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>): string | undefined => {
-			const target = e.target as HTMLElement | null;
-			if (!target) {
-				return undefined;
-			}
+	const cancelPendingHighlight = useCallback((): void => {
+		if (rafIdRef.current != null) {
+			cancelAnimationFrame(rafIdRef.current);
+			rafIdRef.current = null;
+		}
+	}, []);
 
-			const legendItemElement = target.closest<HTMLElement>(
-				'[data-legend-item-id]',
-			);
-
-			return legendItemElement?.dataset.legendItemId;
-		},
-		[],
-	);
-
-	const onLegendClick = useCallback(
-		(e: React.MouseEvent<HTMLDivElement>): void => {
-			const legendItemId = getLegendItemIdFromEvent(e);
-			if (!legendItemId) {
-				return;
-			}
-			const isLegendMarker = (e.target as HTMLElement).dataset.isLegendMarker;
-			const seriesIndex = Number(legendItemId);
-
-			if (isLegendMarker) {
-				onToggleSeriesOnOff(seriesIndex);
-				return;
-			}
-
-			onToggleSeriesVisibility(seriesIndex);
-		},
-		[onToggleSeriesVisibility, onToggleSeriesOnOff, getLegendItemIdFromEvent],
-	);
-
-	const onFocusSeries = useCallback(
+	const onHoverSeries = useCallback(
 		(seriesIndex: number | null): void => {
-			if (rafId.current != null) {
-				cancelAnimationFrame(rafId.current);
-			}
-			rafId.current = requestAnimationFrame(() => {
-				setFocusedSeriesIndex(seriesIndex);
-				onFocusSeriesPlot(seriesIndex);
+			cancelPendingHighlight();
+			rafIdRef.current = requestAnimationFrame(() => {
+				rafIdRef.current = null;
+				onHighlightSeries(seriesIndex);
 			});
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[onFocusSeriesPlot],
+		[cancelPendingHighlight, onHighlightSeries],
 	);
 
-	const onLegendMouseMove = (e: React.MouseEvent<HTMLDivElement>): void => {
-		const legendItemId = getLegendItemIdFromEvent(e);
-		const seriesIndex = legendItemId ? Number(legendItemId) : null;
-		if (seriesIndex === focusedSeriesIndex) {
-			return;
-		}
-		onFocusSeries(seriesIndex);
-	};
+	useEffect(() => cancelPendingHighlight, [cancelPendingHighlight]);
 
-	const onLegendMouseLeave = useCallback(
-		(): void => {
-			// Cancel any pending RAF from handleFocusSeries to prevent race condition
-			if (rafId.current != null) {
-				cancelAnimationFrame(rafId.current);
-				rafId.current = null;
-			}
-			setFocusedSeriesIndex(null);
-			onFocusSeries(null);
-		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[onFocusSeries],
-	);
-
-	// Cleanup pending animation frames on unmount
-	useEffect(
-		() => (): void => {
-			if (rafId.current != null) {
-				cancelAnimationFrame(rafId.current);
-			}
-		},
-		[],
-	);
 	return {
-		onLegendClick,
-		onFocusSeries,
-		onLegendMouseMove,
-		onLegendMouseLeave,
+		onToggleSeries: onToggleSeriesOnOff,
+		onShowOnlySeries,
+		onShowSeries,
+		onHoverSeries,
 	};
 }

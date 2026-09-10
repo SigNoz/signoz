@@ -1,4 +1,4 @@
-import { MouseEventHandler, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PrecisionOption } from 'components/Graph/types';
 import uPlot from 'uplot';
@@ -118,23 +118,23 @@ export interface LegendConfig {
 /**
  * Presentational legend props. Source-agnostic: it renders whatever `items`
  * it's given and delegates interaction to the container handlers, so it serves
- * both uPlot charts (via UPlotLegend) and non-uPlot charts (Pie). The search
- * box is intrinsic to the RIGHT position (derived from `position`, not a flag).
+ * both uPlot charts (via UPlotLegend) and non-uPlot charts (Pie).
  */
 export interface LegendProps {
 	items: LegendItem[];
 	/** Legend placement; always supplied by the container. */
 	position: LegendPosition;
 	averageLegendWidth?: number;
-	/** Series index to highlight (hovered/focused). */
+	/** Series index highlighted by the chart cursor. */
 	focusedSeriesIndex: number | null;
-	/**
-	 * Container-delegated handlers. Items carry `data-legend-item-id`, so the
-	 * handler reads the target's id rather than binding per item.
-	 */
-	onClick: MouseEventHandler<HTMLDivElement>;
-	onMouseMove: MouseEventHandler<HTMLDivElement>;
-	onMouseLeave: () => void;
+	/** Row click / Space / Enter: hide or show that one series. */
+	onToggleSeries: (seriesIndex: number) => void;
+	/** "Only": show that series alone, or show all when it is already alone. */
+	onShowOnlySeries: (seriesIndex: number) => void;
+	/** "Add": show that series alongside the one already shown. */
+	onShowSeries: (seriesIndex: number) => void;
+	/** Row hover, for the chart-side highlight; null on leave. */
+	onHoverSeries: (seriesIndex: number | null) => void;
 	/** Show the per-item copy button. Default true. */
 	showCopy?: boolean;
 }
