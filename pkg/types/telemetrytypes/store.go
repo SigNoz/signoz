@@ -37,11 +37,13 @@ type MetadataStore interface {
 	// ListLogsJSONIndexes lists the JSON indexes for the logs table.
 	ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
 
-	// ListPromotedPaths lists the promoted paths.
-	GetPromotedPaths(ctx context.Context, paths ...string) (map[string]bool, error)
+	// GetPromotedPaths lists the promoted paths recorded in the column
+	// evolution table for the given signal, promoted column and field context.
+	GetPromotedPaths(ctx context.Context, signal Signal, columnName string, fieldContext FieldContext, paths ...string) (map[string]bool, error)
 
-	// PromotePaths promotes the paths.
-	PromotePaths(ctx context.Context, paths ...string) error
+	// PromotePaths records promoted paths in the column evolution table for
+	// the given signal, promoted column and field context.
+	PromotePaths(ctx context.Context, signal Signal, columnName string, fieldContext FieldContext, paths ...string) error
 
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)
