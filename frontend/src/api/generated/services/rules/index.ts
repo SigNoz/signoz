@@ -19,7 +19,9 @@ import type {
 
 import type {
 	CreateRule201,
+	CreateRuleView201,
 	DeleteRuleByIDPathParameters,
+	DeleteRuleViewPathParameters,
 	GetRuleByID200,
 	GetRuleByIDPathParameters,
 	GetRuleHistoryFilterKeys200,
@@ -40,6 +42,7 @@ import type {
 	GetRuleHistoryTopContributors200,
 	GetRuleHistoryTopContributorsParams,
 	GetRuleHistoryTopContributorsPathParameters,
+	ListRuleViews200,
 	ListRules200,
 	ListRulesV3200,
 	ListRulesV3Params,
@@ -47,13 +50,361 @@ import type {
 	PatchRuleByIDPathParameters,
 	RenderErrorResponseDTO,
 	RuletypesPostableRuleDTO,
+	RuletypesPostableRuleViewDTO,
 	TestRule200,
 	UpdateRuleByIDPathParameters,
+	UpdateRuleView200,
+	UpdateRuleViewPathParameters,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
+/**
+ * Returns every saved view in the calling user's org. Saved views are shared org-wide.
+ * @summary List rule saved views
+ */
+export const listRuleViews = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListRuleViews200>({
+		url: `/api/v2/rule_views`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getListRuleViewsQueryKey = () => {
+	return [`/api/v2/rule_views`] as const;
+};
+
+export const getListRuleViewsQueryOptions = <
+	TData = Awaited<ReturnType<typeof listRuleViews>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listRuleViews>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getListRuleViewsQueryKey();
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof listRuleViews>>> = ({
+		signal,
+	}) => listRuleViews(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof listRuleViews>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListRuleViewsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listRuleViews>>
+>;
+export type ListRuleViewsQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List rule saved views
+ */
+
+export function useListRuleViews<
+	TData = Awaited<ReturnType<typeof listRuleViews>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listRuleViews>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListRuleViewsQueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List rule saved views
+ */
+export const invalidateListRuleViews = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListRuleViewsQueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Persists the calling user's rule listing state (query, states, sort, order) as a named, reusable view shared across the org.
+ * @summary Create rule saved view
+ */
+export const createRuleView = (
+	ruletypesPostableRuleViewDTO?: BodyType<RuletypesPostableRuleViewDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateRuleView201>({
+		url: `/api/v2/rule_views`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: ruletypesPostableRuleViewDTO,
+		signal,
+	});
+};
+
+export const getCreateRuleViewMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createRuleView>>,
+		TError,
+		{ data?: BodyType<RuletypesPostableRuleViewDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createRuleView>>,
+	TError,
+	{ data?: BodyType<RuletypesPostableRuleViewDTO> },
+	TContext
+> => {
+	const mutationKey = ['createRuleView'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createRuleView>>,
+		{ data?: BodyType<RuletypesPostableRuleViewDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createRuleView(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateRuleViewMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createRuleView>>
+>;
+export type CreateRuleViewMutationBody =
+	| BodyType<RuletypesPostableRuleViewDTO>
+	| undefined;
+export type CreateRuleViewMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create rule saved view
+ */
+export const useCreateRuleView = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createRuleView>>,
+		TError,
+		{ data?: BodyType<RuletypesPostableRuleViewDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createRuleView>>,
+	TError,
+	{ data?: BodyType<RuletypesPostableRuleViewDTO> },
+	TContext
+> => {
+	return useMutation(getCreateRuleViewMutationOptions(options));
+};
+/**
+ * Removes a saved view. Saved views are shared org-wide. Deleting a non-existent view returns 404.
+ * @summary Delete rule saved view
+ */
+export const deleteRuleView = (
+	{ id }: DeleteRuleViewPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/rule_views/${id}`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getDeleteRuleViewMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteRuleView>>,
+		TError,
+		{ pathParams: DeleteRuleViewPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteRuleView>>,
+	TError,
+	{ pathParams: DeleteRuleViewPathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteRuleView'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteRuleView>>,
+		{ pathParams: DeleteRuleViewPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteRuleView(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteRuleViewMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteRuleView>>
+>;
+
+export type DeleteRuleViewMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete rule saved view
+ */
+export const useDeleteRuleView = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteRuleView>>,
+		TError,
+		{ pathParams: DeleteRuleViewPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteRuleView>>,
+	TError,
+	{ pathParams: DeleteRuleViewPathParameters },
+	TContext
+> => {
+	return useMutation(getDeleteRuleViewMutationOptions(options));
+};
+/**
+ * Replaces a saved view's name and data. Saved views are shared org-wide.
+ * @summary Update rule saved view
+ */
+export const updateRuleView = (
+	{ id }: UpdateRuleViewPathParameters,
+	ruletypesPostableRuleViewDTO?: BodyType<RuletypesPostableRuleViewDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<UpdateRuleView200>({
+		url: `/api/v2/rule_views/${id}`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: ruletypesPostableRuleViewDTO,
+		signal,
+	});
+};
+
+export const getUpdateRuleViewMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateRuleView>>,
+		TError,
+		{
+			pathParams: UpdateRuleViewPathParameters;
+			data?: BodyType<RuletypesPostableRuleViewDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateRuleView>>,
+	TError,
+	{
+		pathParams: UpdateRuleViewPathParameters;
+		data?: BodyType<RuletypesPostableRuleViewDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['updateRuleView'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateRuleView>>,
+		{
+			pathParams: UpdateRuleViewPathParameters;
+			data?: BodyType<RuletypesPostableRuleViewDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return updateRuleView(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateRuleViewMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateRuleView>>
+>;
+export type UpdateRuleViewMutationBody =
+	| BodyType<RuletypesPostableRuleViewDTO>
+	| undefined;
+export type UpdateRuleViewMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update rule saved view
+ */
+export const useUpdateRuleView = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateRuleView>>,
+		TError,
+		{
+			pathParams: UpdateRuleViewPathParameters;
+			data?: BodyType<RuletypesPostableRuleViewDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateRuleView>>,
+	TError,
+	{
+		pathParams: UpdateRuleViewPathParameters;
+		data?: BodyType<RuletypesPostableRuleViewDTO>;
+	},
+	TContext
+> => {
+	return useMutation(getUpdateRuleViewMutationOptions(options));
+};
 /**
  * This endpoint lists all alert rules with their current evaluation state. Deprecated: use ListRulesV3, which supports filtering, sorting and pagination.
  * @deprecated

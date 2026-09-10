@@ -49,66 +49,55 @@ func (o ListOrder) IsValid() bool {
 	return slices.ContainsFunc(o.Enum(), func(v any) bool { return v == o })
 }
 
-type ListRulesParams struct {
-	Query string `query:"query"`
+// ListFilter is the rule listing state shared by the v3 list params and saved views.
+type ListFilter struct {
+	Query string `query:"query" json:"query"`
 	// gin cannot bind a slice of valuer enums; AlertStates converts these.
-	States []string `query:"states"`
-	Sort   ListSort  `query:"sort"`
-	Order  ListOrder `query:"order"`
-	Limit  int       `query:"limit"`
-	Offset int       `query:"offset"`
+	States []string  `query:"states" json:"states" nullable:"false"`
+	Sort   ListSort  `query:"sort" json:"sort"`
+	Order  ListOrder `query:"order" json:"order"`
 }
 
-// Validate normalizes in place; an over-max limit is clamped, not rejected.
-func (p *ListRulesParams) Validate() error {
-	if n := utf8.RuneCountInString(p.Query); n > MaxListQueryLen {
+// Validate normalizes in place; zero sort/order get the defaults, nil states an empty slice.
+func (f *ListFilter) Validate() error {
+	if f.States == nil {
+		f.States = []string{}
+	}
+
+	if n := utf8.RuneCountInString(f.Query); n > MaxListQueryLen {
 		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
 			"query cannot be longer than %d characters, got %d", MaxListQueryLen, n)
 	}
 
-	if p.Sort.IsZero() {
-		p.Sort = ListSortUpdatedAt
-	} else if !p.Sort.IsValid() {
-		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
-			"invalid sort %q, expected one of: `updated_at`, `created_at`, `name`, `state`, `severity`", p.Sort)
-	}
-
-	if p.Order.IsZero() {
-		p.Order = ListOrderDesc
-	} else if !p.Order.IsValid() {
-		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
-			"invalid order %q, expected `asc` or `desc`", p.Order)
-	}
-
-	if p.Limit == 0 {
-		p.Limit = DefaultListLimit
-	} else if p.Limit < 0 {
-		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
-			"invalid limit %d, must be a positive integer", p.Limit)
-	} else if p.Limit > MaxListLimit {
-		p.Limit = MaxListLimit
-	}
-
-	if p.Offset < 0 {
-		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
-			"invalid offset %d, must be a non-negative integer", p.Offset)
-	}
-
-	if _, err := p.AlertStates(); err != nil {
+	if _, err := f.AlertStates(); err != nil {
 		return err
+	}
+
+	if f.Sort.IsZero() {
+		f.Sort = ListSortUpdatedAt
+	} else if !f.Sort.IsValid() {
+		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
+			"invalid sort %q, expected one of: `updated_at`, `created_at`, `name`, `state`, `severity`", f.Sort)
+	}
+
+	if f.Order.IsZero() {
+		f.Order = ListOrderDesc
+	} else if !f.Order.IsValid() {
+		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
+			"invalid order %q, expected `asc` or `desc`", f.Order)
 	}
 
 	return nil
 }
 
 // AlertStates parses States; empty means no state filtering.
-func (p *ListRulesParams) AlertStates() ([]AlertState, error) {
-	if len(p.States) == 0 {
+func (f *ListFilter) AlertStates() ([]AlertState, error) {
+	if len(f.States) == 0 {
 		return nil, nil
 	}
 
-	states := make([]AlertState, 0, len(p.States))
-	for _, raw := range p.States {
+	states := make([]AlertState, 0, len(f.States))
+	for _, raw := range f.States {
 		state, err := parseAlertState(raw)
 		if err != nil {
 			return nil, err
@@ -126,4 +115,33 @@ func parseAlertState(raw string) (AlertState, error) {
 			"invalid state %q, expected one of: `firing`, `pending`, `recovering`, `inactive`, `nodata`, `disabled`", raw)
 	}
 	return state, nil
+}
+
+type ListRulesParams struct {
+	ListFilter
+	Limit  int `query:"limit"`
+	Offset int `query:"offset"`
+}
+
+// Validate normalizes in place; an over-max limit is clamped, not rejected.
+func (p *ListRulesParams) Validate() error {
+	if err := p.ListFilter.Validate(); err != nil {
+		return err
+	}
+
+	if p.Limit == 0 {
+		p.Limit = DefaultListLimit
+	} else if p.Limit < 0 {
+		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
+			"invalid limit %d, must be a positive integer", p.Limit)
+	} else if p.Limit > MaxListLimit {
+		p.Limit = MaxListLimit
+	}
+
+	if p.Offset < 0 {
+		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
+			"invalid offset %d, must be a non-negative integer", p.Offset)
+	}
+
+	return nil
 }
