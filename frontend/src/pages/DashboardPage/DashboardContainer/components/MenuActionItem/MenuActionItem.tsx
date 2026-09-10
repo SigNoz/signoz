@@ -11,7 +11,6 @@ interface MenuActionItemProps {
 	checks: BrandedPermission[];
 	/** A non-permission block, which outranks the checks (see AuthZTooltip). */
 	disabledTooltip?: string;
-	destructive?: boolean;
 }
 
 /**
@@ -20,15 +19,15 @@ interface MenuActionItemProps {
  *
  * The button fills the row, so the tooltip anchors to the whole row and lands
  * clear of the menu rather than over the icon. It deliberately takes no
- * `onClick` — the dropdown item keeps that, along with its own `disabled`, so
- * the menu still knows which rows are dead for keyboard navigation.
+ * `onClick` — the dropdown item keeps that, along with its own `disabled` and
+ * `danger`, so the menu still knows which rows are dead and which are
+ * destructive, and the button inherits the colour it settles on.
  */
 function MenuActionItem({
 	label,
 	icon,
 	checks,
 	disabledTooltip,
-	destructive = false,
 }: MenuActionItemProps): JSX.Element {
 	return (
 		<AuthZButton
@@ -36,7 +35,7 @@ function MenuActionItem({
 			disabledTooltip={disabledTooltip}
 			side="left"
 			variant="ghost"
-			color={destructive ? 'destructive' : 'secondary'}
+			color="secondary"
 			className={styles.menuActionItem}
 			prefix={icon}
 		>

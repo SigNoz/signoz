@@ -1,6 +1,43 @@
 .menuActionItem {
-	/* Fills the row so the tooltip anchors to it, and so the row's own padding
-	   is the only padding — the dropdown item supplies none of its own here. */
+	/* The dropdown item owns the whole row — padding, height, font, gap, colour,
+	   hover and the disabled dimming. The button only has to fill that box so the
+	   tooltip anchors to the row, so every property the button would size, paint
+	   or dim for itself is handed back. Without this the two compound: padding on
+	   padding, a second highlight inset in the row, a different foreground token,
+	   and 0.6 opacity on top of 0.5.
+
+	   The colours restate the item's own tokens rather than using `inherit`: a
+	   CSS-wide keyword inside a custom property is invalid once substituted. */
+	--button-padding: 0;
+	--button-height: auto;
+	--button-font-size: inherit;
+	--button-line-height: inherit;
+	--button-gap: var(--spacing-4, 8px);
+	--button-variant-ghost-background-color: transparent;
+	--button-variant-ghost-hover-background-color: transparent;
+	--button-internal-hover-state-background-color: transparent;
+	--button-variant-ghost-color: var(
+		--dropdown-menu-item-foreground,
+		var(--l1-foreground)
+	);
+	--button-variant-ghost-hover-color: var(
+		--dropdown-menu-item-foreground,
+		var(--l1-foreground)
+	);
+	--button-disabled-opacity: 1;
+
 	width: 100%;
 	justify-content: flex-start;
+}
+
+/* A destructive row is marked on the item, so the row reads its colour from there. */
+:global([data-destructive]) .menuActionItem {
+	--button-variant-ghost-color: var(
+		--dropdown-menu-item-destructive-foreground,
+		var(--danger-background)
+	);
+	--button-variant-ghost-hover-color: var(
+		--dropdown-menu-item-destructive-hover-foreground,
+		var(--danger-background-hover)
+	);
 }

@@ -187,14 +187,13 @@ function DashboardActions({
 			text: string,
 			icon: ReactElement,
 			checks: BrandedPermission[],
-			opts: { disabledTooltip?: string; destructive?: boolean } = {},
+			opts: { disabledTooltip?: string } = {},
 		): ReactNode => (
 			<MenuActionItem
 				label={text}
 				icon={icon}
 				checks={checks}
 				disabledTooltip={opts.disabledTooltip}
-				destructive={opts.destructive}
 			/>
 		),
 		[],
@@ -262,8 +261,8 @@ function DashboardActions({
 				key: 'delete',
 				label: row('Delete dashboard', <Trash2 size={14} />, deleteChecks, {
 					disabledTooltip: deleteDisabledTooltip,
-					destructive: true,
 				}),
+				danger: true,
 				// Delete is independent of read/update, but a locked dashboard still
 				// can't be removed.
 				disabled: isLocked || !canDeleteDashboard,

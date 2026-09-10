@@ -33,17 +33,12 @@ function SectionActionsMenu({
 	const items = useMemo<MenuItem[]>(() => {
 		// The row is a button, so it carries its own icon, disabled state and
 		// reason — the dropdown item just hosts it.
-		const row = (
-			text: string,
-			icon: ReactElement,
-			destructive = false,
-		): ReactNode => (
+		const row = (text: string, icon: ReactElement): ReactNode => (
 			<MenuActionItem
 				label={text}
 				icon={icon}
 				checks={disabledChecks}
 				disabledTooltip={disabledTooltip}
-				destructive={destructive}
 			/>
 		);
 		const result: MenuItem[] = [];
@@ -76,7 +71,8 @@ function SectionActionsMenu({
 				{ type: 'divider' },
 				{
 					key: 'delete-section',
-					label: row('Delete section', <Trash2 size={14} />, true),
+					danger: true,
+					label: row('Delete section', <Trash2 size={14} />),
 					disabled,
 					onClick: onDeleteSection,
 				},
