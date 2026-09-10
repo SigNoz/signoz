@@ -71,8 +71,7 @@ type ListChannelsParams struct {
 
 func (p *ListChannelsParams) Validate() error {
 	if n := utf8.RuneCountInString(p.Query); n > MaxChannelListQueryLen {
-		return errors.NewInvalidInputf(ErrCodeChannelListInvalid,
-			"query cannot be longer than %d characters, got %d", MaxChannelListQueryLen, n)
+		return errors.NewInvalidInputf(ErrCodeChannelListInvalid, "query cannot be longer than %d characters, got %d", MaxChannelListQueryLen, n)
 	}
 
 	if !p.Kind.IsZero() && !p.Kind.IsValid() {
@@ -80,13 +79,11 @@ func (p *ListChannelsParams) Validate() error {
 	}
 
 	if !p.Sort.IsZero() && !p.Sort.IsValid() {
-		return errors.NewInvalidInputf(ErrCodeChannelListInvalid,
-			"invalid sort %q — expected one of: %s", p.Sort, formatAllowedValues(ChannelListSort{}.Enum()))
+		return errors.NewInvalidInputf(ErrCodeChannelListInvalid, "invalid sort %q — expected one of: %s", p.Sort, formatAllowedValues(ChannelListSort{}.Enum()))
 	}
 
 	if !p.Order.IsZero() && !p.Order.IsValid() {
-		return errors.NewInvalidInputf(ErrCodeChannelListInvalid,
-			"invalid order %q — expected one of: %s", p.Order, formatAllowedValues(ChannelListOrder{}.Enum()))
+		return errors.NewInvalidInputf(ErrCodeChannelListInvalid, "invalid order %q — expected one of: %s", p.Order, formatAllowedValues(ChannelListOrder{}.Enum()))
 	}
 
 	if p.Sort.IsZero() {
@@ -100,15 +97,13 @@ func (p *ListChannelsParams) Validate() error {
 	if p.Limit == 0 {
 		p.Limit = DefaultChannelListLimit
 	} else if p.Limit < 0 {
-		return errors.NewInvalidInputf(ErrCodeChannelListInvalid,
-			"invalid limit %d — must be a positive integer", p.Limit)
+		return errors.NewInvalidInputf(ErrCodeChannelListInvalid, "invalid limit %d — must be a positive integer", p.Limit)
 	} else if p.Limit > MaxChannelListLimit {
 		p.Limit = MaxChannelListLimit
 	}
 
 	if p.Offset < 0 {
-		return errors.NewInvalidInputf(ErrCodeChannelListInvalid,
-			"invalid offset %d — must be a non-negative integer", p.Offset)
+		return errors.NewInvalidInputf(ErrCodeChannelListInvalid, "invalid offset %d — must be a non-negative integer", p.Offset)
 	}
 
 	return nil
