@@ -53,7 +53,7 @@ import {
 	SUGGESTION_FETCH_DEBOUNCE_MS,
 	SUGGESTIONS_SECTION,
 } from './constants';
-import { fetchFieldValuesForQuery } from 'api/querySuggestions/fieldSuggestions';
+import { fetchFieldValuesForQuery } from './fieldSuggestions';
 import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { fetchFieldKeys } from 'hooks/querySuggestions/fieldKeys';
 import {
