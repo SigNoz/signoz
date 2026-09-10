@@ -42,11 +42,11 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/traces/promote_paths", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.HandlePromoteAttributes), handler.OpenAPIDef{
-		ID:                  "HandlePromoteAttributes",
-		Tags:                []string{"traces"},
-		Summary:             "Promote attributes",
-		Description:         "This endpoint promotes attributes from the spans attributes JSON column to attributes_promoted",
+	if err := router.Handle("/api/v1/promote_paths/{signal}/{context}", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.HandlePromotePaths), handler.OpenAPIDef{
+		ID:                  "HandlePromotePaths",
+		Tags:                []string{"promote"},
+		Summary:             "Promote paths",
+		Description:         "This endpoint promotes paths of a JSON column to its promoted column. The promotion domain is identified by the signal and field context path variables, e.g. traces/attribute.",
 		Request:             new([]*promotetypes.PromotePath),
 		RequestContentType:  "application/json",
 		Response:            nil,
@@ -58,11 +58,11 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/traces/promote_paths", handler.New(provider.authzMiddleware.ViewAccess(provider.promoteHandler.ListPromotedAttributes), handler.OpenAPIDef{
-		ID:                  "ListPromotedAttributes",
-		Tags:                []string{"traces"},
-		Summary:             "List promoted attributes",
-		Description:         "This endpoint lists the promoted attributes of the spans attributes JSON column",
+	if err := router.Handle("/api/v1/promote_paths/{signal}/{context}", handler.New(provider.authzMiddleware.ViewAccess(provider.promoteHandler.ListPromotedPaths), handler.OpenAPIDef{
+		ID:                  "ListPromotedPaths",
+		Tags:                []string{"promote"},
+		Summary:             "List promoted paths",
+		Description:         "This endpoint lists the promoted paths of a JSON column. The promotion domain is identified by the signal and field context path variables, e.g. traces/attribute.",
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            new([]*promotetypes.PromotePath),
