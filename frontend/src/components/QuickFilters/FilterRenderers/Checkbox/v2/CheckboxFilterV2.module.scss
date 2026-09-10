@@ -6,6 +6,44 @@
 	border-bottom: 1px solid var(--l1-border);
 }
 
+.sectionActions {
+	width: 0;
+	overflow: hidden;
+	opacity: 0;
+	transform: translateX(4px);
+	pointer-events: none;
+	transition:
+		opacity 0.16s ease,
+		transform 0.16s ease,
+		width 0s linear 0.16s;
+}
+
+.checkboxFilter:hover .sectionActions,
+.sectionActions.sectionActionsPinned {
+	width: auto;
+	opacity: 1;
+	transform: translateX(0);
+	pointer-events: auto;
+	transition:
+		opacity 0.16s ease,
+		transform 0.16s ease;
+}
+
+.sectionActionsPinned .sectionActionHoverOnly {
+	opacity: 0;
+	transform: translateX(4px);
+	pointer-events: none;
+	transition:
+		opacity 0.16s ease,
+		transform 0.16s ease;
+}
+
+.checkboxFilter:hover .sectionActionsPinned .sectionActionHoverOnly {
+	opacity: 1;
+	transform: translateX(0);
+	pointer-events: auto;
+}
+
 .search {
 	--input-background: var(--l2-background);
 	--input-hover-background: var(--l2-background);

@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"log/slog"
@@ -961,7 +961,7 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	querybuilder.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
+	clickhousesql.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
 
 	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
@@ -4070,20 +4070,20 @@ func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middlew
 		Methods(http.MethodPut)
 
 	// Analytics endpoints
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", aH.handleValidateTraces).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", aH.handleFunnelAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", aH.handleStepAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps/overview", aH.handleFunnelStepAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", aH.handleFunnelSlowTraces).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", aH.handleFunnelErrorTraces).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", am.ViewAccess(aH.handleValidateTraces)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", am.ViewAccess(aH.handleFunnelAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", am.ViewAccess(aH.handleStepAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps/overview", am.ViewAccess(aH.handleFunnelStepAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", am.ViewAccess(aH.handleFunnelSlowTraces)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", am.ViewAccess(aH.handleFunnelErrorTraces)).Methods("POST")
 
 	// Analytics endpoints
-	traceFunnelsRouter.HandleFunc("/analytics/validate", aH.handleValidateTracesWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/overview", aH.handleFunnelAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/steps", aH.handleStepAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/steps/overview", aH.handleFunnelStepAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/slow-traces", aH.handleFunnelSlowTracesWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/error-traces", aH.handleFunnelErrorTracesWithPayload).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/validate", am.ViewAccess(aH.handleValidateTracesWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/overview", am.ViewAccess(aH.handleFunnelAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/steps", am.ViewAccess(aH.handleStepAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/steps/overview", am.ViewAccess(aH.handleFunnelStepAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/slow-traces", am.ViewAccess(aH.handleFunnelSlowTracesWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/error-traces", am.ViewAccess(aH.handleFunnelErrorTracesWithPayload)).Methods("POST")
 }
 
 func (aH *APIHandler) handleValidateTraces(w http.ResponseWriter, r *http.Request) {
