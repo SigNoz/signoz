@@ -361,7 +361,7 @@ func (m *MockMetadataStore) SetTemporality(metricName string, temporality metric
 }
 
 // PromotePaths promotes the paths.
-func (m *MockMetadataStore) PromotePaths(_ context.Context, _ telemetrytypes.Signal, _ string, _ telemetrytypes.FieldContext, paths ...string) error {
+func (m *MockMetadataStore) PromotePaths(_ context.Context, _ telemetrytypes.EvolutionEntry, paths ...string) error {
 	for _, path := range paths {
 		m.PromotedPathsMap[path] = true
 	}
@@ -369,7 +369,7 @@ func (m *MockMetadataStore) PromotePaths(_ context.Context, _ telemetrytypes.Sig
 }
 
 // GetPromotedPaths returns the promoted paths.
-func (m *MockMetadataStore) GetPromotedPaths(_ context.Context, _ telemetrytypes.Signal, _ string, _ telemetrytypes.FieldContext, _ ...string) (map[string]bool, error) {
+func (m *MockMetadataStore) GetPromotedPaths(_ context.Context, _ telemetrytypes.EvolutionEntry, _ ...string) (map[string]bool, error) {
 	return m.PromotedPathsMap, nil
 }
 
