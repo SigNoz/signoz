@@ -968,19 +968,22 @@ def seed_attribute_evolution(
 ATTRIBUTE_JSON_ROLLOUT_TIME = datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC)
 
 
-@pytest.fixture(name="attribute_backend", params=["map", "json"])
-def attribute_backend(
-    request: pytest.FixtureRequest,
+@pytest.fixture(name="use_attribute_backend")
+def use_attribute_backend(
     seed_attribute_evolution: Callable[[str, datetime.datetime], None],
-) -> str:
-    """Runs a traces test against both physical attribute layouts. "map" leaves the querier on the
+) -> Callable[[str], None]:
+    """Applies the physical attribute layout a test runs under. "map" leaves the querier on the
     legacy attributes_{string,number,bool} maps; "json" seeds the column-evolution row so it reads
-    the native `attributes` JSON column instead. Relies on insert_traces dual-writing both, so the
-    same seeded spans back either read — a test that passes under both has strict Map/JSON parity."""
-    backend = request.param
-    if backend == "json":
-        seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
-    return backend
+    the native `attributes` JSON column instead. Pair with
+    @pytest.mark.parametrize("attribute_backend", ["map", "json"]) and call it once in the body;
+    insert_traces dual-writes both layouts, so a test that passes under both has strict Map/JSON
+    parity."""
+
+    def _apply(backend: str) -> None:
+        if backend == "json":
+            seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
+
+    return _apply
 
 
 @pytest.fixture(name="insert_top_level_operations", scope="function")

@@ -69,8 +69,6 @@ from fixtures.traces import (
 #   ob.select    A=>B order http.method DESC  → POST, POST, GET
 # ============================================================================
 
-pytestmark = pytest.mark.usefixtures("attribute_backend")
-
 
 @pytest.mark.parametrize(
     "case",
@@ -233,13 +231,18 @@ pytestmark = pytest.mark.usefixtures("attribute_backend")
         ),
     ],
 )
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_trace_operator(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
     case: dict,
 ) -> None:
+    use_attribute_backend(attribute_backend)
+
     t1_trace_id = TraceIdGenerator.trace_id()
     t1_checkout_span_id = TraceIdGenerator.span_id()  # POST /checkout — structural root of T1
     t1_child_span_id = TraceIdGenerator.span_id()  # lookup-cart
@@ -571,11 +574,14 @@ def test_trace_operator(
         ),
     ],
 )
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_trace_operator_with_adjusted_keys(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
     payload_factory: Callable[[list[Traces]], list[dict[str, Any]]],
     request_type: str,
     assert_result: Callable[[requests.Response, list[Traces]], None],
@@ -586,6 +592,8 @@ def test_trace_operator_with_adjusted_keys(
     queries, otherwise deprecated keys and context-prefixed aliases don't
     resolve.
     """
+    use_attribute_backend(attribute_backend)
+
     traces = generate_traces_with_corrupt_metadata()
     insert_traces(traces)
     payload = payload_factory(traces)
@@ -628,11 +636,14 @@ TRACE_OPERATOR_CORE_FIELDS = [
         ),
     ],
 )
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_trace_operator_select_fields(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
     select_fields: list[dict[str, Any]],
     expansion: str,
 ) -> None:
@@ -656,6 +667,8 @@ def test_trace_operator_select_fields(
     - pkg/telemetrytraces/trace_operator_cte_builder.go::buildListQuery for
       the per-row SELECT.
     """
+    use_attribute_backend(attribute_backend)
+
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     trace_id = TraceIdGenerator.trace_id()
