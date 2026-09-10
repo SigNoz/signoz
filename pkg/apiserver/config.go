@@ -3,13 +3,16 @@ package apiserver
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	httpserver "github.com/SigNoz/signoz/pkg/http/server"
 )
 
 // Config holds the configuration for config.
 type Config struct {
-	Timeout Timeout `mapstructure:"timeout"`
-	Logging Logging `mapstructure:"logging"`
+	httpserver.Config `mapstructure:",squash" yaml:",squash"`
+	Timeout           Timeout `mapstructure:"timeout"`
+	Logging           Logging `mapstructure:"logging"`
 }
 
 type Timeout struct {
@@ -32,6 +35,10 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
+		Config: httpserver.Config{
+			Address:     "0.0.0.0:8080",
+			ReadTimeout: 60 * time.Second,
+		},
 		Timeout: Timeout{
 			Default: 60 * time.Second,
 			Max:     600 * time.Second,
@@ -52,5 +59,13 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
+	if err := c.Config.Validate(); err != nil {
+		return err
+	}
+
+	if c.Address == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "apiserver.address is required")
+	}
+
 	return nil
 }
