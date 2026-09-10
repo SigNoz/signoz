@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
+	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 )
@@ -35,12 +36,7 @@ var (
 
 // logsBodyPromotedEntry templates the column evolution rows recorded for
 // logs body promotions.
-var logsBodyPromotedEntry = telemetrytypes.EvolutionEntry{
-	Signal:       telemetrytypes.SignalLogs,
-	ColumnName:   logstelemetryschema.LogsV2BodyPromotedColumn,
-	ColumnType:   "JSON()",
-	FieldContext: telemetrytypes.FieldContextBody,
-}
+var logsBodyPromotedEntry = promotetypes.NewLogsBodyTarget().Entry
 
 // enrichJSONKeys enriches body-context keys with promoted path info, indexes,
 // and JSON access plans. parentTypeCache contains parent array types (ArrayJSON/ArrayDynamic)
