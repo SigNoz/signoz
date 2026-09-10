@@ -180,7 +180,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 											hasQueryFunctions ||
 											false)
 									}
-									functionsDisabled={functions.disabled}
+									areFunctionsDisabled={functions.disabled}
 									functionsDisabledReason={functions.reason}
 									isCollapsed={isCollapsed}
 									showTraceOperator={showTraceOperator}

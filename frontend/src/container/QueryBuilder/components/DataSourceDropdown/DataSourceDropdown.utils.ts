@@ -1,14 +1,17 @@
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { DataSource } from 'types/common/queryBuilder';
 
-// Partial because the signal enum also carries an empty "unset" member, which is not a
-// data source a query can be built against.
-const SIGNAL_TO_DATA_SOURCE: Partial<
-	Record<TelemetrytypesSignalDTO, DataSource>
+// Total, not Partial, so a signal added to the generated enum has to be mapped here
+// before it compiles.
+const SIGNAL_TO_DATA_SOURCE: Record<
+	TelemetrytypesSignalDTO,
+	DataSource | undefined
 > = {
 	[TelemetrytypesSignalDTO.logs]: DataSource.LOGS,
 	[TelemetrytypesSignalDTO.metrics]: DataSource.METRICS,
 	[TelemetrytypesSignalDTO.traces]: DataSource.TRACES,
+	// The "unset" member: not a data source a query can be built against.
+	[TelemetrytypesSignalDTO['']]: undefined,
 };
 
 export function signalsToDataSources(

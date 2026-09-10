@@ -80,9 +80,9 @@ export default function QueryFooter({
 	showAddQuery = true,
 	showAddFormula = true,
 	showAddTraceOperator = false,
-	addQueryDisabled = false,
+	isAddQueryDisabled = false,
 	addQueryDisabledReason,
-	addFormulaDisabled = false,
+	isAddFormulaDisabled = false,
 	addFormulaDisabledReason,
 }: {
 	addNewBuilderQuery: () => void;
@@ -91,9 +91,9 @@ export default function QueryFooter({
 	showAddTraceOperator: boolean;
 	showAddQuery?: boolean;
 	showAddFormula?: boolean;
-	addQueryDisabled?: boolean;
+	isAddQueryDisabled?: boolean;
 	addQueryDisabledReason?: string;
-	addFormulaDisabled?: boolean;
+	isAddFormulaDisabled?: boolean;
 	addFormulaDisabledReason?: string;
 }): JSX.Element {
 	return (
@@ -113,7 +113,7 @@ export default function QueryFooter({
 								data-testid="add-new-query-button"
 								icon={<Plus size={16} />}
 								onClick={addNewBuilderQuery}
-								disabled={addQueryDisabled}
+								disabled={isAddQueryDisabled}
 							/>
 						</Tooltip>
 					</div>
@@ -144,7 +144,7 @@ export default function QueryFooter({
 								data-testid="add-formula-button"
 								icon={<Sigma size={16} />}
 								onClick={addNewFormula}
-								disabled={addFormulaDisabled}
+								disabled={isAddFormulaDisabled}
 							>
 								Add Formula
 							</Button>

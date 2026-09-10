@@ -27,7 +27,7 @@ interface QBEntityOptionsProps {
 	query?: IBuilderQuery;
 	isMetricsDataSource?: boolean;
 	showFunctions?: boolean;
-	functionsDisabled?: boolean;
+	areFunctionsDisabled?: boolean;
 	functionsDisabledReason?: string;
 	isCollapsed: boolean;
 	entityType: string;
@@ -54,7 +54,7 @@ export default function QBEntityOptions({
 	isMetricsDataSource,
 	isCollapsed,
 	showFunctions,
-	functionsDisabled,
+	areFunctionsDisabled,
 	functionsDisabledReason,
 	entityType,
 	entityData,
@@ -159,9 +159,9 @@ export default function QBEntityOptions({
 									<Tooltip title={functionsDisabledReason}>
 										<div
 											className={cx('query-functions-container', {
-												'query-functions-container--disabled': functionsDisabled,
+												'query-functions-container--disabled': areFunctionsDisabled,
 											})}
-											aria-disabled={functionsDisabled}
+											aria-disabled={areFunctionsDisabled}
 										>
 											<QueryFunctions
 												query={query}
@@ -201,7 +201,7 @@ QBEntityOptions.defaultProps = {
 	isMetricsDataSource: false,
 	onQueryFunctionsUpdates: undefined,
 	showFunctions: false,
-	functionsDisabled: false,
+	areFunctionsDisabled: false,
 	functionsDisabledReason: undefined,
 	onCloneQuery: noop,
 	index: 0,

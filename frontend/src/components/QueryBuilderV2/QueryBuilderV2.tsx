@@ -283,10 +283,10 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 						<QueryFooter
 							showAddQuery={!additionalQueries.hidden}
 							showAddFormula={showFormula}
-							addFormulaDisabled={formula.disabled}
+							isAddFormulaDisabled={formula.disabled}
 							addFormulaDisabledReason={formula.reason}
 							addNewBuilderQuery={addNewBuilderQuery}
-							addQueryDisabled={additionalQueries.disabled}
+							isAddQueryDisabled={additionalQueries.disabled}
 							addQueryDisabledReason={additionalQueries.reason}
 							addNewFormula={addNewFormula}
 							addTraceOperator={addTraceOperator}
