@@ -60,6 +60,7 @@ jobs:
           - rawexportdata
           - promqlconformance
           - promapiconformance
+          - promqlbudget
           - querierauthz
           - role
           - rootuser
