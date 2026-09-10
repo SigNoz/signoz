@@ -90,8 +90,7 @@ function DashboardActions({
 			source: dashboard.source,
 		});
 
-	// Cloning creates a new dashboard from this one, so it needs create as well as
-	// the read this page already proves; it is not lock-gated.
+	// Cloning creates a new dashboard, so it needs `create` too, and no lock gate.
 	const cloneChecks = useMemo(
 		() => [...editChecks.slice(0, 1), DashboardCreatePermission],
 		[editChecks],
@@ -179,10 +178,8 @@ function DashboardActions({
 		void handle.enter();
 	}, [dashboard.id, handle]);
 
-	// Items stay in the menu when they aren't available, carrying the reason —
-	// lock or missing permission — instead of disappearing.
-	// The row carries its icon, label and reason; the dropdown item keeps its own
-	// `disabled` and `onClick`, so the menu still knows which rows are dead.
+	// Unavailable items stay in the menu, carrying the reason.
+	// The row carries icon, label and reason; the item keeps `disabled`/`onClick`.
 	const row = useCallback(
 		(
 			text: string,
@@ -265,8 +262,7 @@ function DashboardActions({
 					disabledTooltip: deleteDisabledTooltip,
 					destructive: true,
 				}),
-				// Delete is independent of read/update, but a locked dashboard still
-				// can't be removed.
+				// Independent of read/update, but a locked dashboard can't be removed.
 				disabled: isLocked || !canDeleteDashboard,
 				onClick: confirmDeleteDashboard,
 			},

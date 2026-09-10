@@ -1,9 +1,6 @@
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
-/**
- * Copy for the two non-permission blocks, resolved by the caller so this stays a
- * pure function. Permission denials are worded by the authz components.
- */
+/** Copy for the two non-permission blocks, resolved by the caller so this stays pure. */
 export interface EditContextReasons {
 	locked: string;
 	readOnly: string;
@@ -15,14 +12,10 @@ export interface DashboardEditContext {
 	canReadDashboard: boolean;
 	canEditDashboard: boolean;
 	canDeleteDashboard: boolean;
-	/** `[read, update]` — hand to an authz component as its `checks`. */
+	/** `[read, update]`, for an authz component's `checks`. */
 	editChecks: BrandedPermission[];
 	deleteChecks: BrandedPermission[];
-	/**
-	 * The non-permission obstacle, for `disabledTooltip`. Empty when a missing
-	 * permission is the obstacle: `update` outranks the lock, so the authz
-	 * component reports it in the standard wording instead.
-	 */
+	/** Non-permission obstacle for `disabledTooltip`; empty when a permission is what's missing. */
 	editDisabledTooltip: string;
 	deleteDisabledTooltip: string;
 	/** `update`/`delete` are still resolving; `read` gates the page itself. */
@@ -30,13 +23,9 @@ export interface DashboardEditContext {
 }
 
 /**
- * Precedence is `update` → lock → `read`: a caller who lacks the permission
- * hears that, since telling them the dashboard is locked would send them asking
- * for an unlock when what they need is access. A caller who holds it hears about
- * the lock, which is the thing they can act on.
- *
- * A forced read-only mount outranks both — it is not a permission problem and no
- * check can lift it.
+ * Precedence is `update` → lock → `read`: the lock is only reported to a caller
+ * who holds `update` and can act on it. A forced read-only mount outranks both,
+ * since no check can lift it.
  */
 export function deriveEditContext({
 	isLocked,

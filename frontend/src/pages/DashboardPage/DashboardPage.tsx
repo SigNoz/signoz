@@ -55,14 +55,12 @@ function DashboardPage(): JSX.Element {
 	return <DashboardContainer dashboard={dashboard} refetch={refetch} />;
 }
 
-// Typed explicitly because the route lazy-loads this module, and Loadable needs
-// an indexable props type.
+// Typed explicitly: the route lazy-loads this, and Loadable needs indexable props.
 export default withAuthZPage<Record<string, unknown>>(DashboardPage, {
 	checks: (_props, router) => [
 		buildDashboardReadPermission(router.params.dashboardId ?? ''),
 	],
-	// Fetched in the same batch so the controls below resolve from cache instead
-	// of firing a second round trip once the page has mounted.
+	// Same batch as `checks`, so the controls below resolve from cache.
 	preloadChecks: (_props, router) => [
 		buildDashboardUpdatePermission(router.params.dashboardId ?? ''),
 		buildDashboardDeletePermission(router.params.dashboardId ?? ''),

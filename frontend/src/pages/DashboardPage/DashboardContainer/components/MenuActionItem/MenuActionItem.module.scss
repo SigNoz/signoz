@@ -1,9 +1,8 @@
 .menuActionItem {
-	/* The dropdown item owns the row's height, font, gap, hover and disabled
-	   dimming, so every property the button would size, paint or dim for itself is
-	   handed back to it. Without this the two compound: a second highlight inset
-	   in the row and 0.6 opacity on top of 0.5. Colour is the button's own, from
-	   `color` — the same as the dashboards list rows. */
+	/* The item owns the row's height, font, gap, hover and dimming, so anything
+	   the button would size, paint or dim for itself is handed back. Without this
+	   the two compound: a highlight inset in the row, 0.6 opacity on top of 0.5.
+	   Colour stays the button's, from `color`, as on the list rows. */
 	--button-padding: var(--spacing-5, 10px) var(--spacing-6, 12px);
 	--button-height: auto;
 	--button-font-size: inherit;
@@ -14,15 +13,15 @@
 	--button-internal-hover-state-background-color: transparent;
 	--button-disabled-opacity: 1;
 
-	/* Padding is the exception: the row's belongs to the button, since the button
-	   is what the tooltip anchors to. Left on the item, the anchor would be a box
-	   inset from the menu's edge and the tooltip would open under the panel. */
+	/* Padding is the exception: it belongs to the button, which is what the
+	   tooltip anchors to. Left on the item, the anchor is inset from the menu's
+	   edge and the tooltip opens under the panel. */
 	width: 100%;
 	justify-content: flex-start;
 }
 
-/* The other half of that: the menu hands its padding to the rows, so a row's box
-   reaches the panel edge — the same geometry as the dashboards list popover. */
+/* The other half: the menu hands its padding to the rows, so a row's box reaches
+   the panel edge, as the list popover's rows do. */
 .menuContent {
 	--dropdown-menu-content-padding: 0;
 	--dropdown-menu-item-padding: 0;

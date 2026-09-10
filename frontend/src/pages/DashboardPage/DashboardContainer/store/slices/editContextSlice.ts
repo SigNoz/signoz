@@ -4,10 +4,8 @@ import type { DashboardStore } from '../useDashboardStore';
 
 /**
  * The one piece of page context the subtree can't derive for itself: which
- * dashboard is open, and how to refetch it.
- *
- * Editability is deliberately absent — it is derived from the react-query caches
- * by `useDashboardEditContext`, so there is no second copy to keep in step.
+ * dashboard is open, and how to refetch it. Editability is deliberately absent —
+ * `useDashboardEditContext` derives it from the caches.
  */
 export interface EditContextSlice {
 	dashboardId: string;

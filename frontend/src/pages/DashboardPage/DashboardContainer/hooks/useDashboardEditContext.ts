@@ -11,13 +11,9 @@ import {
 import { useDashboardFetchRequired } from './useDashboardFetchRequired';
 
 /**
- * Edit context for components inside a loaded dashboard subtree.
- *
- * Mirrors `useDashboardFetchRequired`: the dashboard comes from the shared
- * react-query cache and the permissions from the shared authz cache, both keyed
- * off the store's `dashboardId`. Nothing derived is stored — react-query already
- * dedupes, so a copy in zustand would only be a second source of truth to keep
- * in step.
+ * Edit context for components inside a loaded dashboard subtree. The dashboard
+ * and the permissions come from their shared caches, keyed off the store's
+ * `dashboardId`; nothing derived is stored, to avoid a second source of truth.
  */
 export function useDashboardEditContext(): DashboardEditContext {
 	const { dashboard } = useDashboardFetchRequired();

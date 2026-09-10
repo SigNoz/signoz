@@ -51,12 +51,10 @@ export interface PanelActionItems {
 }
 
 /**
- * Resolves the panel actions menu items. Panels are part of the dashboard spec
- * and have no authz kind of their own, so every mutating action maps to the
- * dashboard's edit rights; the kind gate (PanelDefinition.actions) still decides
- * which actions make sense at all. Actions the user can't take stay in the menu,
- * disabled with the reason. View, Download and Create Alerts never mutate the
- * dashboard and are always available.
+ * Resolves the panel actions menu items. Panels live in the dashboard spec and
+ * have no authz kind, so every mutating action maps to the dashboard's edit
+ * rights, while PanelDefinition.actions still decides which make sense at all.
+ * View, Download and Create Alerts never mutate, so they are always available.
  */
 export function usePanelActionItems({
 	panelId,
@@ -101,8 +99,7 @@ export function usePanelActionItems({
 	const { request: requestDelete } = deleteConfirm;
 
 	const items = useMemo<MenuItem[]>(() => {
-		// The row is a button, so it carries its own icon, disabled state and
-		// reason — the dropdown item just hosts it.
+		// The row is a button carrying its own icon and reason; the item hosts it.
 		const row = (
 			text: string,
 			icon: ReactElement,

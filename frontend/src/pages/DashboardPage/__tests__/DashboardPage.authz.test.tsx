@@ -27,8 +27,7 @@ describe('DashboardPage - AuthZ', () => {
 		server.resetHandlers();
 	});
 
-	// The list is collection-scoped, so a row the caller cannot read is expected —
-	// opening it should explain itself, not read as a failure.
+	// The list is collection-scoped, so an unreadable row is expected, not a failure.
 	it('blocks the page when the read check is denied', async () => {
 		server.use(setupAuthzDenyAll());
 
@@ -45,8 +44,7 @@ describe('DashboardPage - AuthZ', () => {
 		).not.toBeInTheDocument();
 	});
 
-	// The check is the only authority on permission. A 403 from the dashboard GET
-	// is an API failure like any other and reads as one.
+	// The check is the only authority; a 403 from the GET is an API failure.
 	it('shows the generic load error for a 403 from the dashboard request', async () => {
 		server.use(
 			rest.get(DASHBOARD_URL, (_req, res, ctx) =>

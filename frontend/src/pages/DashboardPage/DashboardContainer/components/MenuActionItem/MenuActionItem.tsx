@@ -15,14 +15,12 @@ interface MenuActionItemProps {
 }
 
 /**
- * A row in a dashboard dropdown: its icon, its label, and the reason it is
- * unavailable. The button fills the row, so the tooltip anchors to the whole row
- * and lands clear of the menu rather than over the icon.
+ * A row in a dashboard dropdown. The button fills the row, so the tooltip
+ * anchors to the whole row and lands clear of the menu.
  *
- * It deliberately takes no `onClick` or `disabled` — the dropdown item keeps
- * both. Radix reads `disabled` off the item to skip it in keyboard navigation,
- * and the menu only marks a row `clickable` (the pointer cursor) when the item
- * itself carries the handler.
+ * Takes no `onClick` or `disabled`: the item keeps both, because Radix reads
+ * `disabled` off it for keyboard navigation and only marks a row `clickable` —
+ * the pointer cursor — when the item carries the handler.
  */
 function MenuActionItem({
 	label,
