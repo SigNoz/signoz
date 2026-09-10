@@ -295,6 +295,8 @@
     // Prevents bracket access on CSS modules (styles['kebab-case']) which fails with camelCaseOnly config
     "signoz/no-dashboard-fetch-outside-root": "error",
     // Forces useDashboardFetchRequired() outside the root V2 pages (allowlisted in overrides below)
+    "signoz/no-msw-in-story-file": "error",
+    // Bans msw imports in *.stories.tsx; handlers/mock data belong in the sibling .stories.mocks.tsx
     "no-restricted-globals": [
       "error",
       {
