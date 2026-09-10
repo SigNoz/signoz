@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/stretchr/testify/assert"
@@ -612,6 +613,59 @@ func TestHeatmapPanelQueryKinds(t *testing.T) {
 			assert.Contains(t, err.Error(), "is not supported by panel kind")
 		})
 	}
+}
+
+func TestValidateHeatmapDashboard(t *testing.T) {
+	data, err := os.ReadFile("testdata/perses_heatmap_panel.json")
+	require.NoError(t, err, "reading example file")
+
+	spec, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &HeatmapPanelSpec{}, spec.Panels["p1"].Spec.Plugin.Spec)
+	panelSpec := spec.Panels["p1"].Spec.Plugin.Spec.(*HeatmapPanelSpec)
+	assert.Equal(t, "log", panelSpec.Axes.YScale.ValueOrDefault())
+	assert.Equal(t, "ember", panelSpec.ChartAppearance.Colors.Palette.ValueOrDefault())
+	assert.Equal(t, "sqrt", panelSpec.ChartAppearance.Colors.Scale.ValueOrDefault())
+	assert.Equal(t, 8, panelSpec.ChartAppearance.Colors.Steps)
+
+	dashboard := &DashboardV2{Spec: *spec}
+	request, err := dashboard.GetPanelQuery(1, 2, "p1")
+	require.NoError(t, err, "building the panel's query failed")
+	assert.Equal(t, qb.RequestTypeHeatmap, request.RequestType)
+
+	require.Len(t, request.CompositeQuery.Queries, 3)
+	numerator, ok := request.CompositeQuery.Queries[0].Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "expected a metrics builder query")
+	assert.True(t, numerator.Disabled)
+	require.NotNil(t, numerator.BucketOptions)
+	require.IsType(t, qb.LogBucketsSpec{}, numerator.BucketOptions.Spec)
+	assert.Equal(t, 4, *numerator.BucketOptions.Spec.(qb.LogBucketsSpec).Scale)
+
+	denominator, ok := request.CompositeQuery.Queries[1].Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "expected a metrics builder query")
+	assert.True(t, denominator.Disabled)
+	require.NotNil(t, denominator.BucketOptions)
+	require.IsType(t, qb.LinearBucketsSpec{}, denominator.BucketOptions.Spec)
+	assert.Equal(t, float64(1000), denominator.BucketOptions.Spec.(qb.LinearBucketsSpec).MaxValue)
+
+	formula, ok := request.CompositeQuery.Queries[2].Spec.(qb.QueryBuilderFormula)
+	require.True(t, ok, "expected a formula")
+	require.NotNil(t, formula.BucketOptions)
+	assert.Equal(t, qb.BucketsKindLog, formula.BucketOptions.Kind)
+	require.IsType(t, qb.LogBucketsSpec{}, formula.BucketOptions.Spec)
+	assert.Equal(t, 2, *formula.BucketOptions.Spec.(qb.LogBucketsSpec).Scale)
+
+	require.NoError(t, request.Validate(), "the request built from the panel is not a valid heatmap request")
+
+	// the panel read back out of storage draws the same heatmap
+	stored, err := json.Marshal(spec)
+	require.NoError(t, err, "marshal dashboard failed")
+	reread, err := unmarshalDashboard(stored)
+	require.NoError(t, err, "the stored dashboard does not validate")
+	rereadRequest, err := (&DashboardV2{Spec: *reread}).GetPanelQuery(1, 2, "p1")
+	require.NoError(t, err, "building the stored panel's query failed")
+	assert.Equal(t, request, rereadRequest)
 }
 
 func TestInvalidateOneInvalidPanel(t *testing.T) {

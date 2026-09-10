@@ -174,7 +174,6 @@ def make_query_request(
     request_type: str = RequestType.TIME_SERIES,
     format_options: dict | None = None,
     variables: dict | None = None,
-    bucket_options: dict | None = None,
     no_cache: bool = True,
     timeout: int = QUERY_TIMEOUT,
     headers: dict | None = None,
@@ -193,8 +192,6 @@ def make_query_request(
     }
     if variables:
         payload["variables"] = variables
-    if bucket_options is not None:
-        payload["bucketOptions"] = bucket_options
 
     return requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -302,6 +299,7 @@ def build_builder_query(
     group_by: list[str] | None = None,
     filter_expression: str | None = None,
     functions: list[dict] | None = None,
+    bucket_options: dict | None = None,
     disabled: bool = False,
 ) -> dict:
     spec: dict[str, Any] = {
@@ -323,6 +321,8 @@ def build_builder_query(
         spec["aggregations"][0]["temporality"] = temporality
     if comparisonSpaceAggregationParam:
         spec["aggregations"][0]["comparisonSpaceAggregationParam"] = comparisonSpaceAggregationParam
+    if bucket_options is not None:
+        spec["bucketOptions"] = bucket_options
     if group_by:
         spec["groupBy"] = [
             {
@@ -345,6 +345,7 @@ def build_formula_query(
     expression: str,
     *,
     functions: list[dict] | None = None,
+    bucket_options: dict | None = None,
     disabled: bool = False,
     order: list[dict] | None = None,
     limit: int | None = None,
@@ -356,6 +357,8 @@ def build_formula_query(
     }
     if functions:
         spec["functions"] = functions
+    if bucket_options is not None:
+        spec["bucketOptions"] = bucket_options
     if order:
         spec["order"] = order
     if limit is not None:

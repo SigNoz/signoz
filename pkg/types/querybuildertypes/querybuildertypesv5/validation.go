@@ -851,12 +851,14 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 
 func (r *QueryRangeRequest) validateHeatmap() error {
 	if r.RequestType != RequestTypeHeatmap {
-		if r.BucketOptions != nil {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"bucketOptions are only supported for heatmap requests, got %s",
-				r.RequestType,
-			)
+		for _, envelope := range r.CompositeQuery.Queries {
+			if extractEnabledBucketOptions(envelope) != nil {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"bucketOptions are only supported for heatmap requests, got %s",
+					r.RequestType,
+				)
+			}
 		}
 		return nil
 	}
@@ -866,12 +868,12 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 			"fillGaps is not supported for heatmap requests: an absent column means collection stopped, which a zero-filled column would hide")
 	}
 
-	if err := r.BucketOptions.validateBucketOptions(); err != nil {
-		return err
-	}
-
 	enabled := 0
 	for _, envelope := range r.CompositeQuery.Queries {
+		if err := extractEnabledBucketOptions(envelope).validateBucketOptions(); err != nil {
+			return err
+		}
+
 		switch spec := envelope.Spec.(type) {
 		case QueryBuilderQuery[MetricAggregation]:
 			if err := validateHeatmapQuery(spec.Functions, spec.Having); err != nil {
@@ -895,10 +897,6 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 			}
 			enabled++
 		case PromQuery:
-			if r.BucketOptions != nil {
-				return errors.NewInvalidInputf(errors.CodeInvalidInput,
-					"bucketOptions are not supported for promql heatmap requests: the bucket axis comes from the `le` labels the query returns, so nothing in the spec would be applied")
-			}
 			if spec.Disabled {
 				continue
 			}
@@ -935,6 +933,31 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 	}
 
 	return nil
+}
+
+// extractEnabledBucketOptions returns the bucket axis a query asks for, nil for
+// a disabled one: a heatmap draws the enabled query alone, so what the rest
+// carry is never read. A promql or clickhouse query has no say in its axis and
+// so has nowhere to state one.
+func extractEnabledBucketOptions(envelope QueryEnvelope) *BucketOptions {
+	var disabled bool
+	var bucketOptions *BucketOptions
+
+	switch spec := envelope.Spec.(type) {
+	case QueryBuilderQuery[MetricAggregation]:
+		disabled, bucketOptions = spec.Disabled, spec.BucketOptions
+	case QueryBuilderQuery[LogAggregation]:
+		disabled, bucketOptions = spec.Disabled, spec.BucketOptions
+	case QueryBuilderQuery[TraceAggregation]:
+		disabled, bucketOptions = spec.Disabled, spec.BucketOptions
+	case QueryBuilderFormula:
+		disabled, bucketOptions = spec.Disabled, spec.BucketOptions
+	}
+
+	if disabled {
+		return nil
+	}
+	return bucketOptions
 }
 
 func (b *BucketOptions) validateBucketOptions() error {

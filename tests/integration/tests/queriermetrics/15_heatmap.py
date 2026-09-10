@@ -62,9 +62,8 @@ def test_gauge_heatmap(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max", group_by=["host"])],
+        [build_builder_query("A", metric_name, "max", "max", group_by=["host"], bucket_options=build_log_bucket_options(0))],
         request_type=RequestType.HEATMAP,
-        bucket_options=build_log_bucket_options(0),
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
@@ -131,9 +130,8 @@ def test_sum_heatmap(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max", temporality="cumulative", group_by=["endpoint"])],
+        [build_builder_query("A", metric_name, "max", "max", temporality="cumulative", group_by=["endpoint"], bucket_options=build_log_bucket_options(0))],
         request_type=RequestType.HEATMAP,
-        bucket_options=build_log_bucket_options(0),
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
@@ -234,9 +232,8 @@ def test_linear_buckets(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max")],
+        [build_builder_query("A", metric_name, "max", "max", bucket_options=build_linear_bucket_options(1000, 10))],
         request_type=RequestType.HEATMAP,
-        bucket_options=build_linear_bucket_options(1000, 10),
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
@@ -285,9 +282,8 @@ def test_zero_bucket(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max")],
+        [build_builder_query("A", metric_name, "max", "max", bucket_options=build_log_bucket_options(0))],
         request_type=RequestType.HEATMAP,
-        bucket_options=build_log_bucket_options(0),
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
@@ -403,9 +399,8 @@ def test_bucket_option_limits(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max")],
+        [build_builder_query("A", metric_name, "max", "max", bucket_options=bucket_options)],
         request_type=RequestType.HEATMAP,
-        bucket_options=bucket_options,
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
@@ -417,6 +412,56 @@ def test_bucket_option_limits(
     for column in columns:
         assert len(column["values"]) == len(expected_buckets) + 1
         assert sum(column["values"]) == 1
+
+
+def test_bucket_options_come_from_the_enabled_query(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(minutes=30)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = "test_heatmap_bucket_options_on_two_queries"
+
+    values = [256, 512]
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=now - timedelta(minutes=len(values) - minute),
+                value=value,
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for minute, value in enumerate(values)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [
+            build_builder_query("A", metric_name, "max", "max", disabled=True, bucket_options=build_linear_bucket_options(1024, 512)),
+            build_builder_query("B", metric_name, "max", "max", bucket_options=build_log_bucket_options(-4)),
+        ],
+        request_type=RequestType.HEATMAP,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    data = response.json()
+    # B's axis, one bucket per 16x. A's 512 linear buckets to 1024 would have
+    # put 130 of them between 256 and 512 alone
+    assert get_heatmap_buckets(data, "B") == pytest.approx([1, 2**16])
+    assert [column["values"] for column in get_heatmap_columns(data, "B")] == [
+        [0, 1, 0],
+        [0, 1, 0],
+    ]
 
 
 def test_formula_heatmap(
@@ -451,20 +496,22 @@ def test_formula_heatmap(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max")],
+        [build_builder_query("A", metric_name, "max", "max", bucket_options=build_log_bucket_options(2))],
         request_type=RequestType.HEATMAP,
     )
     assert from_metric.status_code == HTTPStatus.OK, from_metric.text
 
-    # a formula over the same query has to land its counts on the same axis
+    # a formula over the same query has to land its counts on the same axis. the
+    # scale on the disabled input is out of range: only the query the heatmap
+    # draws states an axis, so nothing reads that one
     from_formula = make_query_request(
         signoz,
         token,
         start_ms,
         end_ms,
         [
-            build_builder_query("A", metric_name, "max", "max", disabled=True),
-            build_formula_query("F1", "A"),
+            build_builder_query("A", metric_name, "max", "max", disabled=True, bucket_options={"kind": "log", "spec": {"scale": 5}}),
+            build_formula_query("F1", "A", bucket_options=build_log_bucket_options(2)),
         ],
         request_type=RequestType.HEATMAP,
     )
@@ -720,9 +767,8 @@ def test_metric_with_no_data(
         token,
         int((now - timedelta(minutes=30)).timestamp() * 1000),
         int(now.timestamp() * 1000),
-        [build_builder_query("A", missing_metric, "max", "max")],
+        [build_builder_query("A", missing_metric, "max", "max", bucket_options=build_log_bucket_options(0))],
         request_type=RequestType.HEATMAP,
-        bucket_options=build_log_bucket_options(0),
     )
     # a metric with nothing in the window carries no type to choose an axis
     # from, and that is an empty heatmap rather than a rejected request
