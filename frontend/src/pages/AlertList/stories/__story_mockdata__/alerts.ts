@@ -22,6 +22,7 @@ import {
 	type GetAlerts200,
 	type GetRuleByID200,
 	type ListRules200,
+	type RenderErrorResponseDTO,
 	type RuletypesAlertCompositeQueryDTO,
 	type RuletypesRuleConditionDTO,
 	type RuletypesRuleDTO,
@@ -725,3 +726,19 @@ export const channelResponse = (
 		data: { ...buildChannel(Math.max(index, 0)), id },
 	};
 };
+
+export const CHANNEL_ACTION_OUTCOMES = ['succeeds', 'fails'] as const;
+
+export type ChannelActionOutcome = (typeof CHANNEL_ACTION_OUTCOMES)[number];
+
+export const channelActionError = (): RenderErrorResponseDTO => ({
+	status: 'error',
+	error: {
+		code: 'STORYBOOK_FAILURE',
+		type: 'internal',
+		message: 'Storybook forced channel failure',
+		url: '',
+		errors: [],
+		suggestions: [],
+	},
+});
