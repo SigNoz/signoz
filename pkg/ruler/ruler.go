@@ -50,15 +50,8 @@ type Ruler interface {
 	// store interface. The handler should not call store methods directly.
 	MaintenanceStore() alertmanagertypes.MaintenanceStore
 
-	// CreateRuleView persists the given rule listing state as a named view shared org-wide.
 	CreateRuleView(ctx context.Context, orgID valuer.UUID, postable ruletypes.PostableRuleView) (*ruletypes.RuleView, error)
-
-	// ListRuleViews returns all of the org's saved rule views.
 	ListRuleViews(ctx context.Context, orgID valuer.UUID) (*ruletypes.ListableRuleViews, error)
-
-	// UpdateRuleView replaces the view's name and data.
 	UpdateRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable ruletypes.UpdatableRuleView) (*ruletypes.RuleView, error)
-
-	// DeleteRuleView removes the view identified by id.
 	DeleteRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }

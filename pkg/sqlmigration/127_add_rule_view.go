@@ -61,7 +61,6 @@ func (migration *addRuleView) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	// Neither Postgres nor SQLite indexes an FK's referencing column; every read is org-scoped.
 	if _, err := tx.NewCreateIndex().
 		Table("rule_view").
 		Column("org_id").

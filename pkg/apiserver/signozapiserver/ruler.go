@@ -132,8 +132,6 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	// Saved views hold rule listing state (query, states, sort, order) rather than any
-	// one rule, so all four routes are open to every role including viewer.
 	if err := router.Handle("/api/v2/rule_views", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.ListRuleViews), handler.OpenAPIDef{
 		ID:                  "ListRuleViews",
 		Tags:                []string{"rules"},
