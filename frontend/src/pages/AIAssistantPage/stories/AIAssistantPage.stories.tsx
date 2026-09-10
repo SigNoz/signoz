@@ -1,19 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
-import { AI_API_PATH } from 'api/AIAPIInstance';
 import ROUTES from 'constants/routes';
-import { rest } from 'msw';
 import { screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import AIAssistantPage from '../AIAssistantPage';
-import { aiAssistantMocks } from './AIAssistantPage.stories.mocks';
 import {
-	threadDetailResponse,
-	type ThreadPart,
-} from './__story_mockdata__/aiAssistant';
+	aiAssistantMocks,
+	longActionTooltipHandlers,
+} from './AIAssistantPage.stories.mocks';
+import type { ThreadPart } from './__story_mockdata__/aiAssistant';
 
 type AIAssistantArgs = PageStoryArgs<typeof aiAssistantMocks>;
 
@@ -225,39 +223,6 @@ export const AddContext: Story = {
 	},
 };
 
-const LONG_ACTION_TOOLTIP =
-	'Opens the logs explorer on payment.svc.cluster.local:8080, filtered to the 429s it answered between 14:00 and 15:00, with the retry attempt and the upstream quota window already on the table.';
-
-/**
- * An action chip's tooltip is the one text on the page the backend writes, and
- * the thread fixture keeps it to a line. This answers with the same turns and a
- * chip whose tooltip runs long, so the Thread contents, Interactive blocks
- * answered and Agent controls do not reach the story that uses it. Both bases
- * are covered because the assistant's host is empty while the global config
- * query is in flight, as the page's mocks module explains.
- */
-const longActionTooltip = [
-	`http://localhost${AI_API_PATH}/threads/:threadId`,
-	'/threads/:threadId',
-].map((path) =>
-	rest.get(path, (_req, res, ctx) => {
-		const thread = threadDetailResponse(aiAssistantMocks.args.contents, 'idle');
-
-		return res(
-			ctx.status(200),
-			ctx.json({
-				...thread,
-				messages: thread.messages?.map((message) => ({
-					...message,
-					actions: message.actions?.map((action) =>
-						action.tooltip ? { ...action, tooltip: LONG_ACTION_TOOLTIP } : action,
-					),
-				})),
-			}),
-		);
-	}),
-);
-
 /**
  * Every tooltip the thread carries, held open at once: the composer's voice and
  * send buttons, the sidebar's new conversation, the copy chip under each user
@@ -266,7 +231,7 @@ const longActionTooltip = [
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
-	parameters: { msw: { handlers: longActionTooltip } },
+	parameters: { msw: { handlers: longActionTooltipHandlers } },
 };
 
 /**

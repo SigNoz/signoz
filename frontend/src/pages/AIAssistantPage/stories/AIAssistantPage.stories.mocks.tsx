@@ -238,3 +238,35 @@ export const aiAssistantMocks = defineStoryMocks({
 		});
 	},
 });
+
+/**
+ * An action chip's tooltip is the one text on the page the backend writes, and
+ * the thread fixture keeps it to a line. This answers with the same turns and a
+ * chip whose tooltip runs long, so the Thread contents, Interactive blocks
+ * answered and Agent controls do not reach the story that uses it. Both bases
+ * are covered because the assistant's host is empty while the global config
+ * query is in flight, as `onBothBases` above explains.
+ */
+const LONG_ACTION_TOOLTIP =
+	'Opens the logs explorer on payment.svc.cluster.local:8080, filtered to the 429s it answered between 14:00 and 15:00, with the retry attempt and the upstream quota window already on the table.';
+
+export const longActionTooltipHandlers: RequestHandler[] = onBothBases(
+	'get',
+	'/threads/:threadId',
+	(_req, res, ctx) => {
+		const thread = threadDetailResponse(aiAssistantMocks.args.contents, 'idle');
+
+		return res(
+			ctx.status(200),
+			ctx.json({
+				...thread,
+				messages: thread.messages?.map((message) => ({
+					...message,
+					actions: message.actions?.map((action) =>
+						action.tooltip ? { ...action, tooltip: LONG_ACTION_TOOLTIP } : action,
+					),
+				})),
+			}),
+		);
+	},
+);
