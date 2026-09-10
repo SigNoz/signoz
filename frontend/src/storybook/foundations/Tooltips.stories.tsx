@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ComponentProps } from 'react';
-import { rest } from 'msw';
 
-import { globalConfigResponse } from '@/storybook/msw/__story_mockdata__/appShell';
+import { nozGlobalConfigHandler } from '@/storybook/msw/appShellHandlers';
 
 import type { GlobalMockArgs } from '../globals';
 import TooltipsFixture from './TooltipsFixture';
@@ -58,20 +57,7 @@ export const NozEntryPoint: Story = {
 	args: { site: 'noz' },
 	parameters: {
 		msw: {
-			handlers: [
-				rest.get('http://localhost/api/v1/global/config', (_req, res, ctx) =>
-					res(
-						ctx.status(200),
-						ctx.json({
-							...globalConfigResponse,
-							data: {
-								...globalConfigResponse.data,
-								ai_assistant_url: 'https://ai.storybook.signoz.local',
-							},
-						}),
-					),
-				),
-			],
+			handlers: [nozGlobalConfigHandler],
 		},
 	},
 };
