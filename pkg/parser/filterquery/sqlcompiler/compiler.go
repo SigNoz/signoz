@@ -21,8 +21,8 @@ const bunPlaceholderFlavor = sqlbuilder.SQLite
 type FieldResolver interface {
 	// ResolveComparison builds the predicate for one `key OP value` term; key keeps the user's casing.
 	ResolveComparison(v *Visitor, key string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string
-	// FreeText builds the predicate for a bare token.
-	FreeText(v *Visitor, value string) string
+	// ResolveFreeText builds the predicate for a bare token.
+	ResolveFreeText(v *Visitor, value string) string
 }
 
 // Compiled is a `?`-placeholder WHERE clause with its bun bind args.
@@ -42,9 +42,9 @@ func Compile(query string, formatter sqlstore.SQLFormatter, resolver FieldResolv
 	}
 
 	v := &Visitor{
-		sb:       sqlbuilder.NewSelectBuilder(),
-		fmter:    formatter,
-		resolver: resolver,
+		Sb:        sqlbuilder.NewSelectBuilder(),
+		Formatter: formatter,
+		resolver:  resolver,
 	}
 
 	tree, _, collector := filterquery.Parse(query)
@@ -58,7 +58,7 @@ func Compile(query string, formatter sqlstore.SQLFormatter, resolver FieldResolv
 	if condition == "" {
 		return &Compiled{}, nil
 	}
-	sql, arguments := v.sb.Args.CompileWithFlavor(condition, bunPlaceholderFlavor)
+	sql, arguments := v.Sb.Args.CompileWithFlavor(condition, bunPlaceholderFlavor)
 	return &Compiled{SQL: sql, Args: arguments}, nil
 }
 
@@ -66,26 +66,139 @@ func Compile(query string, formatter sqlstore.SQLFormatter, resolver FieldResolv
 // FieldResolver calls its helpers back to build each predicate.
 type Visitor struct {
 	grammar.BaseFilterQueryVisitor
-	sb       *sqlbuilder.SelectBuilder
-	fmter    sqlstore.SQLFormatter
-	errors   []string
-	resolver FieldResolver
+	Sb        *sqlbuilder.SelectBuilder
+	Formatter sqlstore.SQLFormatter
+	errors    []string
+	resolver  FieldResolver
 }
 
-func (v *Visitor) SelectBuilder() *sqlbuilder.SelectBuilder {
-	return v.sb
+func (v *Visitor) visit(tree antlr.ParseTree) any {
+	if tree == nil {
+		return nil
+	}
+	return tree.Accept(v)
 }
 
-func (v *Visitor) Formatter() sqlstore.SQLFormatter {
-	return v.fmter
+func (v *Visitor) VisitQuery(ctx *grammar.QueryContext) any {
+	return v.visit(ctx.Expression())
 }
 
-func (v *Visitor) AddError(format string, arguments ...any) {
-	v.errors = append(v.errors, fmt.Sprintf(format, arguments...))
+func (v *Visitor) VisitExpression(ctx *grammar.ExpressionContext) any {
+	return v.visit(ctx.OrExpression())
 }
 
-// StringOperation interns placeholders into sb so nested subquery arguments thread correctly.
-func (v *Visitor) StringOperation(sb *sqlbuilder.SelectBuilder, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, columnExpression, keyForError string) string {
+func (v *Visitor) VisitOrExpression(ctx *grammar.OrExpressionContext) any {
+	parts := ctx.AllAndExpression()
+	conditions := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if condition, ok := v.visit(part).(string); ok && condition != "" {
+			conditions = append(conditions, condition)
+		}
+	}
+	switch len(conditions) {
+	case 0:
+		return ""
+	case 1:
+		return conditions[0]
+	default:
+		return v.Sb.Or(conditions...)
+	}
+}
+
+func (v *Visitor) VisitAndExpression(ctx *grammar.AndExpressionContext) any {
+	parts := ctx.AllUnaryExpression()
+	conditions := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if condition, ok := v.visit(part).(string); ok && condition != "" {
+			conditions = append(conditions, condition)
+		}
+	}
+	switch len(conditions) {
+	case 0:
+		return ""
+	case 1:
+		return conditions[0]
+	default:
+		return v.Sb.And(conditions...)
+	}
+}
+
+func (v *Visitor) VisitUnaryExpression(ctx *grammar.UnaryExpressionContext) any {
+	condition, _ := v.visit(ctx.Primary()).(string)
+	if condition == "" {
+		return ""
+	}
+	if ctx.NOT() != nil {
+		return fmt.Sprintf("NOT (%s)", condition)
+	}
+	return condition
+}
+
+func (v *Visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
+	if ctx.OrExpression() != nil {
+		return v.visit(ctx.OrExpression())
+	}
+	if ctx.Comparison() != nil {
+		return v.visit(ctx.Comparison())
+	}
+	// A quoted lone token matches its contents literally, the escape hatch for a phrase that looks like DSL.
+	return v.resolver.ResolveFreeText(v, trimQuotes(ctx.GetText()))
+}
+
+func (v *Visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
+	key := strings.TrimSpace(ctx.Key().GetText())
+	operation, ok := v.extractOperation(ctx)
+	if !ok {
+		return ""
+	}
+	return v.resolver.ResolveComparison(v, key, operation, ctx)
+}
+
+func (v *Visitor) extractOperation(ctx *grammar.ComparisonContext) (qbtypesv5.FilterOperator, bool) {
+	maybeNot := func(operation qbtypesv5.FilterOperator) qbtypesv5.FilterOperator {
+		if ctx.NOT() != nil {
+			return operation.Inverse()
+		}
+		return operation
+	}
+	switch {
+	case ctx.EQUALS() != nil:
+		return qbtypesv5.FilterOperatorEqual, true
+	case ctx.NOT_EQUALS() != nil, ctx.NEQ() != nil:
+		return qbtypesv5.FilterOperatorNotEqual, true
+	case ctx.LT() != nil:
+		return qbtypesv5.FilterOperatorLessThan, true
+	case ctx.LE() != nil:
+		return qbtypesv5.FilterOperatorLessThanOrEq, true
+	case ctx.GT() != nil:
+		return qbtypesv5.FilterOperatorGreaterThan, true
+	case ctx.GE() != nil:
+		return qbtypesv5.FilterOperatorGreaterThanOrEq, true
+	case ctx.BETWEEN() != nil:
+		return maybeNot(qbtypesv5.FilterOperatorBetween), true
+	case ctx.LIKE() != nil:
+		return maybeNot(qbtypesv5.FilterOperatorLike), true
+	case ctx.ILIKE() != nil:
+		return maybeNot(qbtypesv5.FilterOperatorILike), true
+	case ctx.CONTAINS() != nil:
+		return maybeNot(qbtypesv5.FilterOperatorContains), true
+	case ctx.REGEXP() != nil:
+		return maybeNot(qbtypesv5.FilterOperatorRegexp), true
+	case ctx.InClause() != nil:
+		return qbtypesv5.FilterOperatorIn, true
+	case ctx.NotInClause() != nil:
+		return qbtypesv5.FilterOperatorNotIn, true
+	case ctx.EXISTS() != nil:
+		return maybeNot(qbtypesv5.FilterOperatorExists), true
+	}
+	v.AddError("could not determine operator in expression %q", ctx.GetText())
+	return qbtypesv5.FilterOperatorUnknown, false
+}
+
+// ─── predicate builders ──────────────────────────────────────────────────────
+
+// BuildStringOperation interns placeholders into sb so nested subquery arguments thread correctly.
+func (v *Visitor) BuildStringOperation(sb *sqlbuilder.SelectBuilder, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, columnExpression, keyForError string) string {
 	switch operation {
 	case qbtypesv5.FilterOperatorEqual:
 		val, ok := v.ExtractSingleStringValue(ctx, keyForError)
@@ -124,7 +237,7 @@ func (v *Visitor) StringOperation(sb *sqlbuilder.SelectBuilder, ctx *grammar.Com
 			return ""
 		}
 		// SQLite has no ILIKE and Postgres LIKE is case-sensitive, so LOWER both sides.
-		lowerColumn := string(v.fmter.LowerExpression(columnExpression))
+		lowerColumn := string(v.Formatter.LowerExpression(columnExpression))
 		like := "LIKE"
 		if operation == qbtypesv5.FilterOperatorNotILike {
 			like = "NOT LIKE"
@@ -140,7 +253,7 @@ func (v *Visitor) StringOperation(sb *sqlbuilder.SelectBuilder, ctx *grammar.Com
 			like = "NOT LIKE"
 		}
 		// Escape the user's % and _ so they match literally, then wrap in wildcards.
-		escaped := v.fmter.EscapeLikePattern(val)
+		escaped := v.Formatter.EscapeLikePattern(val)
 		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, sb.Var(fmt.Sprintf("%%%s%%", escaped)))
 	case qbtypesv5.FilterOperatorRegexp, qbtypesv5.FilterOperatorNotRegexp:
 		v.AddError("REGEXP filtering on %q is not supported", keyForError)
@@ -163,7 +276,7 @@ func (v *Visitor) StringOperation(sb *sqlbuilder.SelectBuilder, ctx *grammar.Com
 	return ""
 }
 
-func (v *Visitor) TimestampComparison(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, columnExpression string) string {
+func (v *Visitor) BuildTimestampComparison(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, columnExpression string) string {
 	switch operation {
 	case qbtypesv5.FilterOperatorEqual, qbtypesv5.FilterOperatorNotEqual,
 		qbtypesv5.FilterOperatorLessThan, qbtypesv5.FilterOperatorLessThanOrEq,
@@ -174,17 +287,17 @@ func (v *Visitor) TimestampComparison(ctx *grammar.ComparisonContext, operation 
 		}
 		switch operation {
 		case qbtypesv5.FilterOperatorEqual:
-			return v.sb.Equal(columnExpression, t)
+			return v.Sb.Equal(columnExpression, t)
 		case qbtypesv5.FilterOperatorNotEqual:
-			return v.sb.NotEqual(columnExpression, t)
+			return v.Sb.NotEqual(columnExpression, t)
 		case qbtypesv5.FilterOperatorLessThan:
-			return v.sb.LessThan(columnExpression, t)
+			return v.Sb.LessThan(columnExpression, t)
 		case qbtypesv5.FilterOperatorLessThanOrEq:
-			return v.sb.LessEqualThan(columnExpression, t)
+			return v.Sb.LessEqualThan(columnExpression, t)
 		case qbtypesv5.FilterOperatorGreaterThan:
-			return v.sb.GreaterThan(columnExpression, t)
+			return v.Sb.GreaterThan(columnExpression, t)
 		case qbtypesv5.FilterOperatorGreaterThanOrEq:
-			return v.sb.GreaterEqualThan(columnExpression, t)
+			return v.Sb.GreaterEqualThan(columnExpression, t)
 		}
 	case qbtypesv5.FilterOperatorBetween, qbtypesv5.FilterOperatorNotBetween:
 		timestamps, ok := v.extractTwoTimestampValues(ctx)
@@ -192,23 +305,30 @@ func (v *Visitor) TimestampComparison(ctx *grammar.ComparisonContext, operation 
 			return ""
 		}
 		if operation == qbtypesv5.FilterOperatorNotBetween {
-			return v.sb.NotBetween(columnExpression, timestamps[0], timestamps[1])
+			return v.Sb.NotBetween(columnExpression, timestamps[0], timestamps[1])
 		}
-		return v.sb.Between(columnExpression, timestamps[0], timestamps[1])
+		return v.Sb.Between(columnExpression, timestamps[0], timestamps[1])
 	}
 	v.AddError("operator %s on timestamp is not implemented", OperationName(operation))
 	return ""
 }
 
-func (v *Visitor) BoolComparison(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, columnExpression string) string {
+func (v *Visitor) BuildBoolComparison(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, columnExpression string) string {
 	value, ok := v.extractSingleBoolValue(ctx)
 	if !ok {
 		return ""
 	}
 	if operation == qbtypesv5.FilterOperatorNotEqual {
-		return v.sb.NotEqual(columnExpression, value)
+		return v.Sb.NotEqual(columnExpression, value)
 	}
-	return v.sb.Equal(columnExpression, value)
+	return v.Sb.Equal(columnExpression, value)
+}
+
+// BuildFreeTextContains COALESCEs the column so NOT (...) does not go NULL and drop rows where it is absent.
+func (v *Visitor) BuildFreeTextContains(sb *sqlbuilder.SelectBuilder, columnExpression, value string) string {
+	lowerColumn := string(v.Formatter.LowerExpression(fmt.Sprintf("COALESCE(%s, '')", columnExpression)))
+	pattern := fmt.Sprintf("%%%s%%", v.Formatter.EscapeLikePattern(value))
+	return fmt.Sprintf("%s LIKE LOWER(%s) ESCAPE '\\'", lowerColumn, sb.Var(pattern))
 }
 
 // A pattern ending in an unescaped backslash never matches on sqlite and errors on Postgres.
@@ -217,11 +337,10 @@ func endsWithDanglingEscape(value string) bool {
 	return trailing%2 == 1
 }
 
-// FreeTextContains COALESCEs the column so NOT (...) does not go NULL and drop rows where it is absent.
-func (v *Visitor) FreeTextContains(sb *sqlbuilder.SelectBuilder, columnExpression, value string) string {
-	lowerColumn := string(v.fmter.LowerExpression(fmt.Sprintf("COALESCE(%s, '')", columnExpression)))
-	pattern := fmt.Sprintf("%%%s%%", v.fmter.EscapeLikePattern(value))
-	return fmt.Sprintf("%s LIKE LOWER(%s) ESCAPE '\\'", lowerColumn, sb.Var(pattern))
+// ─── value extraction helpers ────────────────────────────────────────────────
+
+func (v *Visitor) AddError(format string, arguments ...any) {
+	v.errors = append(v.errors, fmt.Sprintf(format, arguments...))
 }
 
 func (v *Visitor) ExtractSingleStringValue(ctx *grammar.ComparisonContext, keyForError string) (string, bool) {
@@ -334,128 +453,7 @@ func (v *Visitor) extractTimestampValue(ctx grammar.IValueContext) (time.Time, b
 	return t, true
 }
 
-func (v *Visitor) visit(tree antlr.ParseTree) any {
-	if tree == nil {
-		return nil
-	}
-	return tree.Accept(v)
-}
-
-func (v *Visitor) VisitQuery(ctx *grammar.QueryContext) any {
-	return v.visit(ctx.Expression())
-}
-
-func (v *Visitor) VisitExpression(ctx *grammar.ExpressionContext) any {
-	return v.visit(ctx.OrExpression())
-}
-
-func (v *Visitor) VisitOrExpression(ctx *grammar.OrExpressionContext) any {
-	parts := ctx.AllAndExpression()
-	conditions := make([]string, 0, len(parts))
-	for _, part := range parts {
-		if condition, ok := v.visit(part).(string); ok && condition != "" {
-			conditions = append(conditions, condition)
-		}
-	}
-	switch len(conditions) {
-	case 0:
-		return ""
-	case 1:
-		return conditions[0]
-	default:
-		return v.sb.Or(conditions...)
-	}
-}
-
-func (v *Visitor) VisitAndExpression(ctx *grammar.AndExpressionContext) any {
-	parts := ctx.AllUnaryExpression()
-	conditions := make([]string, 0, len(parts))
-	for _, part := range parts {
-		if condition, ok := v.visit(part).(string); ok && condition != "" {
-			conditions = append(conditions, condition)
-		}
-	}
-	switch len(conditions) {
-	case 0:
-		return ""
-	case 1:
-		return conditions[0]
-	default:
-		return v.sb.And(conditions...)
-	}
-}
-
-func (v *Visitor) VisitUnaryExpression(ctx *grammar.UnaryExpressionContext) any {
-	condition, _ := v.visit(ctx.Primary()).(string)
-	if condition == "" {
-		return ""
-	}
-	if ctx.NOT() != nil {
-		return fmt.Sprintf("NOT (%s)", condition)
-	}
-	return condition
-}
-
-func (v *Visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
-	if ctx.OrExpression() != nil {
-		return v.visit(ctx.OrExpression())
-	}
-	if ctx.Comparison() != nil {
-		return v.visit(ctx.Comparison())
-	}
-	// A quoted lone token matches its contents literally, the escape hatch for a phrase that looks like DSL.
-	return v.resolver.FreeText(v, trimQuotes(ctx.GetText()))
-}
-
-func (v *Visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
-	key := strings.TrimSpace(ctx.Key().GetText())
-	operation, ok := v.extractOperation(ctx)
-	if !ok {
-		return ""
-	}
-	return v.resolver.ResolveComparison(v, key, operation, ctx)
-}
-
-func (v *Visitor) extractOperation(ctx *grammar.ComparisonContext) (qbtypesv5.FilterOperator, bool) {
-	maybeNot := func(operation qbtypesv5.FilterOperator) qbtypesv5.FilterOperator {
-		if ctx.NOT() != nil {
-			return operation.Inverse()
-		}
-		return operation
-	}
-	switch {
-	case ctx.EQUALS() != nil:
-		return qbtypesv5.FilterOperatorEqual, true
-	case ctx.NOT_EQUALS() != nil, ctx.NEQ() != nil:
-		return qbtypesv5.FilterOperatorNotEqual, true
-	case ctx.LT() != nil:
-		return qbtypesv5.FilterOperatorLessThan, true
-	case ctx.LE() != nil:
-		return qbtypesv5.FilterOperatorLessThanOrEq, true
-	case ctx.GT() != nil:
-		return qbtypesv5.FilterOperatorGreaterThan, true
-	case ctx.GE() != nil:
-		return qbtypesv5.FilterOperatorGreaterThanOrEq, true
-	case ctx.BETWEEN() != nil:
-		return maybeNot(qbtypesv5.FilterOperatorBetween), true
-	case ctx.LIKE() != nil:
-		return maybeNot(qbtypesv5.FilterOperatorLike), true
-	case ctx.ILIKE() != nil:
-		return maybeNot(qbtypesv5.FilterOperatorILike), true
-	case ctx.CONTAINS() != nil:
-		return maybeNot(qbtypesv5.FilterOperatorContains), true
-	case ctx.REGEXP() != nil:
-		return maybeNot(qbtypesv5.FilterOperatorRegexp), true
-	case ctx.InClause() != nil:
-		return qbtypesv5.FilterOperatorIn, true
-	case ctx.NotInClause() != nil:
-		return qbtypesv5.FilterOperatorNotIn, true
-	case ctx.EXISTS() != nil:
-		return maybeNot(qbtypesv5.FilterOperatorExists), true
-	}
-	v.AddError("could not determine operator in expression %q", ctx.GetText())
-	return qbtypesv5.FilterOperatorUnknown, false
-}
+// ─── operator spelling ───────────────────────────────────────────────────────
 
 // OperationName is the user-facing spelling, used only in error messages.
 func OperationName(operation qbtypesv5.FilterOperator) string {

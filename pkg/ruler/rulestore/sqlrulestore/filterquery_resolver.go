@@ -55,19 +55,19 @@ func (r ruleFieldResolver) resolveReservedKey(v *sqlcompiler.Visitor, ctx *gramm
 	}
 	switch key {
 	case ruletypes.DSLKeyName:
-		columnExpression := string(v.Formatter().JSONExtractString(ruleDataColumn, nameJSONPath))
-		return v.StringOperation(v.SelectBuilder(), ctx, operation, columnExpression, string(key))
+		columnExpression := string(v.Formatter.JSONExtractString(ruleDataColumn, nameJSONPath))
+		return v.BuildStringOperation(v.Sb, ctx, operation, columnExpression, string(key))
 	case ruletypes.DSLKeySeverity:
 		// severity is an alias for labels.severity, sharing its missing-label semantics.
 		return r.labelComparison(v, ctx, operation, "severity")
 	case ruletypes.DSLKeyCreatedBy:
-		return v.StringOperation(v.SelectBuilder(), ctx, operation, "rule.created_by", string(key))
+		return v.BuildStringOperation(v.Sb, ctx, operation, "rule.created_by", string(key))
 	case ruletypes.DSLKeyUpdatedBy:
-		return v.StringOperation(v.SelectBuilder(), ctx, operation, "rule.updated_by", string(key))
+		return v.BuildStringOperation(v.Sb, ctx, operation, "rule.updated_by", string(key))
 	case ruletypes.DSLKeyCreatedAt:
-		return v.TimestampComparison(ctx, operation, "rule.created_at")
+		return v.BuildTimestampComparison(ctx, operation, "rule.created_at")
 	case ruletypes.DSLKeyUpdatedAt:
-		return v.TimestampComparison(ctx, operation, "rule.updated_at")
+		return v.BuildTimestampComparison(ctx, operation, "rule.updated_at")
 	case ruletypes.DSLKeyAlertType:
 		return r.enumComparison(v, ctx, operation, key, alertTypePath, alertTypeValues)
 	case ruletypes.DSLKeyRuleType:
@@ -79,7 +79,7 @@ func (r ruleFieldResolver) resolveReservedKey(v *sqlcompiler.Visitor, ctx *gramm
 
 // A missing label evaluates as the empty string for every value operator; EXISTS/NOT EXISTS test the raw extraction.
 func (ruleFieldResolver) labelComparison(v *sqlcompiler.Visitor, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, labelKey string) string {
-	columnExpression := string(v.Formatter().JSONExtractMapValue(ruleDataColumn, ruleLabelsField, labelKey))
+	columnExpression := string(v.Formatter.JSONExtractMapValue(ruleDataColumn, ruleLabelsField, labelKey))
 
 	switch operation {
 	case qbtypesv5.FilterOperatorExists:
@@ -90,11 +90,11 @@ func (ruleFieldResolver) labelComparison(v *sqlcompiler.Visitor, ctx *grammar.Co
 
 	keyForError := ruletypes.DSLLabelsKeyPrefix + labelKey
 	columnExpression = fmt.Sprintf("COALESCE(%s, '')", columnExpression)
-	return v.StringOperation(v.SelectBuilder(), ctx, operation, columnExpression, keyForError)
+	return v.BuildStringOperation(v.Sb, ctx, operation, columnExpression, keyForError)
 }
 
 func (ruleFieldResolver) enumComparison(v *sqlcompiler.Visitor, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, key ruletypes.DSLKey, jsonPath string, allowedValues []string) string {
-	columnExpression := string(v.Formatter().JSONExtractString(ruleDataColumn, jsonPath))
+	columnExpression := string(v.Formatter.JSONExtractString(ruleDataColumn, jsonPath))
 
 	var values []string
 	switch operation {
@@ -128,26 +128,26 @@ func (ruleFieldResolver) enumComparison(v *sqlcompiler.Visitor, ctx *grammar.Com
 	}
 	switch operation {
 	case qbtypesv5.FilterOperatorEqual:
-		return v.SelectBuilder().Equal(columnExpression, arguments[0])
+		return v.Sb.Equal(columnExpression, arguments[0])
 	case qbtypesv5.FilterOperatorNotEqual:
-		return v.SelectBuilder().NotEqual(columnExpression, arguments[0])
+		return v.Sb.NotEqual(columnExpression, arguments[0])
 	case qbtypesv5.FilterOperatorNotIn:
-		return v.SelectBuilder().NotIn(columnExpression, arguments...)
+		return v.Sb.NotIn(columnExpression, arguments...)
 	default:
-		return v.SelectBuilder().In(columnExpression, arguments...)
+		return v.Sb.In(columnExpression, arguments...)
 	}
 }
 
-// FreeText searches name, description and the raw labels JSON (which also matches label keys).
-func (ruleFieldResolver) FreeText(v *sqlcompiler.Visitor, value string) string {
-	nameColumn := string(v.Formatter().JSONExtractString(ruleDataColumn, nameJSONPath))
-	descriptionColumn := string(v.Formatter().JSONExtractString(ruleDataColumn, descriptionPath))
-	labelsColumn := string(v.Formatter().JSONExtractString(ruleDataColumn, labelsJSONPath))
+// ResolveFreeText searches name, description and the raw labels JSON (which also matches label keys).
+func (ruleFieldResolver) ResolveFreeText(v *sqlcompiler.Visitor, value string) string {
+	nameColumn := string(v.Formatter.JSONExtractString(ruleDataColumn, nameJSONPath))
+	descriptionColumn := string(v.Formatter.JSONExtractString(ruleDataColumn, descriptionPath))
+	labelsColumn := string(v.Formatter.JSONExtractString(ruleDataColumn, labelsJSONPath))
 
-	return v.SelectBuilder().Or(
-		v.FreeTextContains(v.SelectBuilder(), nameColumn, value),
-		v.FreeTextContains(v.SelectBuilder(), descriptionColumn, value),
-		v.FreeTextContains(v.SelectBuilder(), labelsColumn, value),
+	return v.Sb.Or(
+		v.BuildFreeTextContains(v.Sb, nameColumn, value),
+		v.BuildFreeTextContains(v.Sb, descriptionColumn, value),
+		v.BuildFreeTextContains(v.Sb, labelsColumn, value),
 	)
 }
 
