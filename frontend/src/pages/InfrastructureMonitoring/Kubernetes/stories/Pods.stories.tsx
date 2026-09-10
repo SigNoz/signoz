@@ -1,17 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { rest } from 'msw';
 import { screen, userEvent, within } from 'storybook/test';
-import {
-	INFRA_MONITORING_ATTR_KEYS,
-	InfraMonitoringEntity,
-	VIEWS,
-} from 'container/InfraMonitoringK8sV2/constants';
+import { VIEWS } from 'container/InfraMonitoringK8sV2/constants';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { podsMocks } from '../Kubernetes.stories.mocks';
-import { infraListResponse } from '../../stories/__story_mockdata__/infraMonitoring';
+import { podLongNodeName, podsMocks } from '../Kubernetes.stories.mocks';
 
 import InfrastructureMonitoringPage from '../../InfrastructureMonitoringPage';
 
@@ -60,43 +54,6 @@ export const Tooltips: StoryObj<PodsArgs> = {
 };
 
 /**
- * A node name long enough that the pod's metadata tooltip has to wrap, which the
- * page's own fixture is too short to show. The Rows, Query warning and Empty
- * state controls do not reach this story.
- */
-const longNodeName = rest.post(
-	'http://localhost/api/v2/infra_monitoring/pods',
-	async (req, res, ctx) => {
-		const body = (await req.json()) as { offset?: number; limit?: number };
-
-		const list = infraListResponse({
-			entity: InfraMonitoringEntity.PODS,
-			count: 20,
-			offset: body.offset ?? 0,
-			limit: body.limit ?? 10,
-		});
-
-		return res(
-			ctx.status(200),
-			ctx.json({
-				...list,
-				data: {
-					...list.data,
-					records: list.data.records.map((record) => ({
-						...record,
-						meta: {
-							...record.meta,
-							[INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME]:
-								'ip-10-0-3-17.eu-central-1.compute.internal (spot, gpu-a10g, capacity-reservation cr-0f21a8b7)',
-						},
-					})),
-				},
-			}),
-		);
-	},
-);
-
-/**
  * The tooltips of the pod's details drawer on its logs tab: the namespace,
  * cluster and node metadata values, the node one long enough to wrap, and the
  * Go to Logs Explorer button beside the tab strip, with the list's own header
@@ -104,7 +61,7 @@ const longNodeName = rest.post(
  */
 export const TooltipsInDetailsDrawer: StoryObj<PodsArgs> = {
 	args: { tooltipsOpen: true, drawer: true, drawerTab: VIEWS.LOGS },
-	parameters: { msw: { handlers: [longNodeName] } },
+	parameters: { msw: { handlers: [podLongNodeName] } },
 };
 
 /**
