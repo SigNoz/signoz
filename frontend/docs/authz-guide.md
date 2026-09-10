@@ -48,16 +48,20 @@ These hold for every page. The per-pattern sections below only add to them.
 
 ![Visual rules for structuring a list page](./assets/list-example.svg)
 
-Without `list`, but with any of `read` / `create` / `update`, only the table is blocked:
+Without `list`, but with any of `read` / `create` / `update`, the table and
+everything that only feeds it are blocked:
 
-- Title, description, search filters and action buttons stay visible.
-- Leave them interactive. Search, filters and saved views only rewrite what the
-  table would request, and that request is already gated, so disabling them
-  prevents nothing and reads as a second, quieter denial. State it once, where
-  the table would be.
-- Gate a control here only when it reaches the API on its own — saving a view,
-  say, rather than selecting one.
-- The create button stays enabled if the user holds `create`.
+- Title, description, search, filters and action buttons stay visible. Nothing is
+  hidden for lack of permission.
+- Disable what only shapes the blocked request — the search box, the filter chips,
+  a Clear button — and give it the same denial. It edits a query that has nowhere
+  to run, so leaving it live invites the user to compose a filter and watch
+  nothing happen.
+- Gate a region as one section when several of its controls are dead. A saved
+  views rail is a block with a single callout, not a column of identical
+  tooltips; a row of filters is one tooltip zone, not one per control.
+- The create button stays enabled if the user holds `create`. It is independent
+  of `list`.
 
 ### Edit page
 
