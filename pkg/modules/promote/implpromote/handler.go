@@ -1,6 +1,7 @@
 package implpromote
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -20,6 +21,22 @@ func NewHandler(module promote.Module) promote.Handler {
 }
 
 func (h *handler) HandlePromoteAndIndexPaths(w http.ResponseWriter, r *http.Request) {
+	h.promote(w, r, h.module.PromoteAndIndexPaths)
+}
+
+func (h *handler) HandlePromoteAttributes(w http.ResponseWriter, r *http.Request) {
+	h.promote(w, r, h.module.PromoteAttributes)
+}
+
+func (h *handler) ListPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Request) {
+	h.list(w, r, h.module.ListPromotedAndIndexedPaths)
+}
+
+func (h *handler) ListPromotedAttributes(w http.ResponseWriter, r *http.Request) {
+	h.list(w, r, h.module.ListPromotedAttributes)
+}
+
+func (h *handler) promote(w http.ResponseWriter, r *http.Request, promoteFn func(context.Context, ...*promotetypes.PromotePath) error) {
 	// TODO(Nitya): Use in multi tenant setup
 	_, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
@@ -33,7 +50,7 @@ func (h *handler) HandlePromoteAndIndexPaths(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = h.module.PromoteAndIndexPaths(r.Context(), req...)
+	err = promoteFn(r.Context(), req...)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -42,7 +59,7 @@ func (h *handler) HandlePromoteAndIndexPaths(w http.ResponseWriter, r *http.Requ
 	render.Success(w, http.StatusCreated, nil)
 }
 
-func (h *handler) ListPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Request) {
+func (h *handler) list(w http.ResponseWriter, r *http.Request, listFn func(context.Context) ([]promotetypes.PromotePath, error)) {
 	// TODO(Nitya): Use in multi tenant setup
 	_, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
@@ -50,7 +67,7 @@ func (h *handler) ListPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	paths, err := h.module.ListPromotedAndIndexedPaths(r.Context())
+	paths, err := listFn(r.Context())
 	if err != nil {
 		render.Error(w, err)
 		return
