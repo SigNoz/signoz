@@ -133,6 +133,19 @@ func TestRedactQueryPluginWrappers(t *testing.T) {
 		assert.Equal(t, "A", builder.Name)
 	})
 
+	t.Run("AI builder plugin pointer is redacted and stays a pointer", func(t *testing.T) {
+		plugin := &AIBuilderQuerySpec{
+			Name:   "A",
+			Filter: &qb.Filter{Expression: "body contains 'secret'"},
+		}
+
+		result, ok := redactQuery(plugin).(*AIBuilderQuerySpec)
+		require.True(t, ok)
+
+		assert.Nil(t, result.Filter)
+		assert.Equal(t, "A", result.Name)
+	})
+
 	t.Run("composite plugin redacts every sub-query envelope", func(t *testing.T) {
 		composite := &qb.CompositeQuery{Queries: []qb.QueryEnvelope{
 			{Type: qb.QueryTypeBuilder, Spec: qb.QueryBuilderQuery[qb.MetricAggregation]{Name: "A", Filter: &qb.Filter{Expression: "x = 1"}}},

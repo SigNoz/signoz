@@ -141,6 +141,7 @@ func (d *DashboardSpec) validateQuery(qi int, q Query, panelKind PanelPluginKind
 func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
 	compositeSubQueryTypeToPluginKind := map[qb.QueryType]QueryPluginKind{
 		qb.QueryTypeBuilder:       QueryKindBuilder,
+		qb.QueryTypeBuilderAI:     QueryKindAIBuilder,
 		qb.QueryTypeFormula:       QueryKindFormula,
 		qb.QueryTypeTraceOperator: QueryKindTraceOperator,
 		qb.QueryTypePromQL:        QueryKindPromQL,

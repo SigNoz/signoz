@@ -93,6 +93,7 @@ type QueryPluginKind string
 
 const (
 	QueryKindBuilder       QueryPluginKind = "signoz/BuilderQuery"
+	QueryKindAIBuilder     QueryPluginKind = "signoz/AIBuilderQuery"
 	QueryKindComposite     QueryPluginKind = "signoz/CompositeQuery"
 	QueryKindFormula       QueryPluginKind = "signoz/Formula"
 	QueryKindPromQL        QueryPluginKind = "signoz/PromQLQuery"
@@ -101,7 +102,7 @@ const (
 )
 
 func (QueryPluginKind) Enum() []any {
-	return []any{QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL, QueryKindTraceOperator}
+	return []any{QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL, QueryKindTraceOperator}
 }
 
 type (
@@ -157,6 +158,26 @@ func (BuilderQuerySpec) JSONSchemaOneOf() []any {
 		qb.QueryBuilderQuery[qb.MetricAggregation]{},
 		qb.QueryBuilderQuery[qb.TraceAggregation]{},
 	}
+}
+
+// AIBuilderQuerySpec is the spec of a signoz/AIBuilderQuery plugin: a gen_ai-scoped
+// (AI observability) traces builder query, executed as qb.QueryTypeBuilderAI. The
+// signal is implied by the kind and pinned to traces, mirroring the builder_ai_query
+// QueryEnvelope decode.
+type AIBuilderQuerySpec qb.QueryBuilderQuery[qb.TraceAggregation]
+
+func (b *AIBuilderQuerySpec) UnmarshalJSON(data []byte) error {
+	var spec qb.QueryBuilderQuery[qb.TraceAggregation]
+	if err := json.Unmarshal(data, &spec); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid AI builder query spec")
+	}
+	spec.Signal = telemetrytypes.SignalTraces
+	*b = AIBuilderQuerySpec(spec)
+	return nil
+}
+
+func (AIBuilderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return (qb.QueryBuilderQuery[qb.TraceAggregation]{}).PrepareJSONSchema(s)
 }
 
 // ══════════════════════════════════════════════
