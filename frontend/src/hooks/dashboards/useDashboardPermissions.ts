@@ -13,26 +13,20 @@ export interface DashboardPermissions {
 	canDelete: boolean;
 	/** Per the authz guide, an edit affordance needs `read` as well as `update`. */
 	canEdit: boolean;
-	/**
-	 * `read` is required to render the dashboard at all, so a page gates its mount
-	 * on this one alone.
-	 */
+	/** `read` renders the dashboard, so a page gates its mount on this alone. */
 	isReadPermissionLoading: boolean;
-	/**
-	 * `update` and `delete` only gate individual controls, which stay disabled
-	 * without a reason until these land rather than holding up the whole page.
-	 */
+	/** `update`/`delete` gate controls only; the page does not wait on them. */
 	areOtherPermissionsLoading: boolean;
 	readPermission: BrandedPermission;
 	updatePermission: BrandedPermission;
 	deletePermission: BrandedPermission;
-	/** `[read, update]` — pass to AuthZTooltip so both are named when both are denied. */
+	/** `[read, update]`, so a denial names both. */
 	editChecks: BrandedPermission[];
 }
 
 /**
  * Resource-level dashboard permissions. Pass `enabled: false` while the id is
- * unknown, so no check is fired against an empty selector.
+ * unknown, so no check fires against an empty selector.
  */
 export function useDashboardPermissions(
 	dashboardId: string,

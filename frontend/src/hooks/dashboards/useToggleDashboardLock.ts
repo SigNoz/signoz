@@ -23,16 +23,9 @@ export interface ToggleDashboardLock {
 }
 
 /**
- * Toggles a dashboard's lock and keeps the detail-page cache honest.
- *
- * That cache uses `staleTime: Infinity` + `refetchOnMount: false`, so without
- * patching `locked` here a return to the dashboard would still show the stale
- * state. Only the flag is patched — a refetch would reload every panel's chart
- * data for a metadata-only change.
- *
- * Callers own what is specific to them (which event to log, whether to
- * invalidate a list, whether they hold optimistic local state) via the
- * callbacks, so the shared part stays free of either surface's concerns.
+ * Toggles a dashboard's lock and patches the detail-page cache, which runs
+ * `staleTime: Infinity` + `refetchOnMount: false` and would otherwise show the
+ * stale state. Only the flag is patched: a refetch would reload every panel.
  */
 export function useToggleDashboardLock({
 	dashboardId,
