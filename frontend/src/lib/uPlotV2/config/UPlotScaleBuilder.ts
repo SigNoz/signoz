@@ -25,10 +25,8 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 
 	constructor(props: ScaleProps) {
 		super(props);
-		// By default while creating a widget we set the softMin and softMax to 0, so we need to handle this case separately
-		const isDefaultSoftMinMax = props.softMin === 0 && props.softMax === 0;
-		this.softMin = isDefaultSoftMinMax ? null : (props.softMin ?? null);
-		this.softMax = isDefaultSoftMinMax ? null : (props.softMax ?? null);
+		this.softMin = props.softMin ?? null;
+		this.softMax = props.softMax ?? null;
 		this.min = props.min ?? null;
 		this.max = props.max ?? null;
 	}
