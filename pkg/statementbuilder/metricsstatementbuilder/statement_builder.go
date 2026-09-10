@@ -898,9 +898,10 @@ func buildHeatmapFinalSelect(
 }
 
 // buildHistogramHeatmapFinalSelect differences the cumulative per-`le` counts in
-// __spatial_aggregation_cte into a count per band. The upper bound reported is the
-// `le` itself, so the `le=+Inf` row reaches the reader as an infinite upper bound
-// for it to fold into the overflow band.
+// __spatial_aggregation_cte into a count per bucket. A bucket runs from the `le`
+// below it up to its own, so the `le=+Inf` row reaches the reader as the
+// overflow and the lowest `le` as a bucket open below, which is where a
+// negative observation would have been counted.
 func buildHistogramHeatmapFinalSelect(
 	combined string,
 	args []any,
@@ -912,7 +913,11 @@ func buildHistogramHeatmapFinalSelect(
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("ts")
 	sb.SelectMore(groupAliases...)
-	sb.SelectMore(fmt.Sprintf("toFloat64(%s) AS %s", histogramBucketKey, qbtypes.HeatmapBucketColumn))
+	sb.SelectMore(fmt.Sprintf(
+		"lagInFrame(toFloat64(%s), 1, toFloat64('-Inf')) OVER %s AS %s",
+		histogramBucketKey, heatmapWindow, qbtypes.HeatmapBucketMinColumn,
+	))
+	sb.SelectMore(fmt.Sprintf("toFloat64(%s) AS %s", histogramBucketKey, qbtypes.HeatmapBucketMaxColumn))
 	// a partial scrape can break monotonicity across `le`, and a negative cell
 	// count has no meaning
 	sb.SelectMore(fmt.Sprintf(
@@ -932,15 +937,15 @@ func buildHistogramHeatmapFinalSelect(
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
 }
 
-// buildValueHeatmapFinalSelect places each spatially aggregated value in a band
-// of the requested axis. __spatial_aggregation_cte holds one row per (group,
-// timestamp), so every cell counts exactly one.
+// buildValueHeatmapFinalSelect places each spatially aggregated value in a
+// bucket of the requested axis. __spatial_aggregation_cte holds one row per
+// (group, timestamp), so every cell counts exactly one.
 func buildValueHeatmapFinalSelect(
 	combined string,
 	args []any,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 ) (*qbtypes.Statement, error) {
-	upperBound, err := renderHeatmapUpperBoundExpr(*query.Aggregations[0].HeatmapBucketing)
+	bucketMin, bucketMax, err := renderHeatmapBucketExprs(*query.Aggregations[0].HeatmapBucketing)
 	if err != nil {
 		return nil, err
 	}
@@ -950,48 +955,64 @@ func buildValueHeatmapFinalSelect(
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("ts")
 	sb.SelectMore(groupAliases...)
-	sb.SelectMore(fmt.Sprintf("%s AS %s", upperBound, qbtypes.HeatmapBucketColumn))
+	sb.SelectMore(fmt.Sprintf("%s AS %s", bucketMin, qbtypes.HeatmapBucketMinColumn))
+	sb.SelectMore(fmt.Sprintf("%s AS %s", bucketMax, qbtypes.HeatmapBucketMaxColumn))
 	sb.SelectMore(fmt.Sprintf("toFloat64(1) AS %s", heatmapValueAlias))
 	sb.From("__spatial_aggregation_cte")
 	sb.OrderBy(groupAliases...)
-	sb.OrderBy("ts", qbtypes.HeatmapBucketColumn)
+	sb.OrderBy("ts", qbtypes.HeatmapBucketMaxColumn)
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
 }
 
-// renderHeatmapUpperBoundExpr renders the upper bound of the band `value` falls in.
-func renderHeatmapUpperBoundExpr(bucketing qbtypes.HeatmapBucketing) (string, error) {
+// renderHeatmapBucketExprs renders the bucket (min, max] that `value` falls in.
+// Only the bucket under everything the axis covers is open below, and only the
+// one over it is open above.
+func renderHeatmapBucketExprs(bucketing qbtypes.HeatmapBucketing) (minExpr, maxExpr string, err error) {
 	switch bucketing.Kind {
 	case qbtypes.BucketsKindLinear:
-		return renderLinearUpperBoundExpr(bucketing), nil
+		return renderLinearBucketExprs(bucketing)
 	case qbtypes.BucketsKindLog:
-		return renderLogUpperBoundExpr(), nil
+		return renderLogBucketExprs()
 	default:
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
+		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"unsupported bucketsScaling %q for heatmap requests", bucketing.Kind.StringValue())
 	}
 }
 
-func renderLinearUpperBoundExpr(bucketing qbtypes.HeatmapBucketing) string {
+func renderLinearBucketExprs(bucketing qbtypes.HeatmapBucketing) (string, string, error) {
 	maxValue := formatFloat(bucketing.MaxValue)
 	numBuckets := strconv.Itoa(bucketing.NumBuckets)
-	return fmt.Sprintf(
-		"multiIf(value > %s, toFloat64('+Inf'), least(greatest(ceil(value * %s / %s), 1), %s) * %s / %s)",
-		maxValue, numBuckets, maxValue, numBuckets, maxValue, numBuckets,
+	index := fmt.Sprintf("least(greatest(ceil(value * %s / %s), 1), %s)", numBuckets, maxValue, numBuckets)
+
+	minExpr := fmt.Sprintf(
+		"multiIf(value <= 0, toFloat64('-Inf'), value > %s, toFloat64(%s), (%s - 1) * %s / %s)",
+		maxValue, maxValue, index, maxValue, numBuckets,
 	)
+	maxExpr := fmt.Sprintf(
+		"multiIf(value <= 0, toFloat64(0), value > %s, toFloat64('+Inf'), %s * %s / %s)",
+		maxValue, index, maxValue, numBuckets,
+	)
+	return minExpr, maxExpr, nil
 }
 
 // ClickHouse buckets at MaxLogScale whatever HeatmapBucketing.LogScale asks for;
 // postprocessing folds the axis down afterwards.
-func renderLogUpperBoundExpr() string {
-	bandsPerDoubling := formatFloat(math.Exp2(qbtypes.MaxLogScale))
+func renderLogBucketExprs() (string, string, error) {
+	bucketsPerDoubling := formatFloat(math.Exp2(qbtypes.MaxLogScale))
 	lowest := formatFloat(qbtypes.MinLogUpperBound)
 	highest := formatFloat(qbtypes.MaxLogUpperBound)
-	return fmt.Sprintf(
-		"multiIf(value <= 0, toFloat64(0), value <= %s, %s, value > %s, toFloat64('+Inf'), pow(2, ceil(log2(value) * %s) / %s))",
-		lowest, lowest, highest, bandsPerDoubling, bandsPerDoubling,
+
+	minExpr := fmt.Sprintf(
+		"multiIf(value <= 0, toFloat64('-Inf'), value <= %s, toFloat64(0), value > %s, toFloat64(%s), pow(2, (ceil(log2(value) * %s) - 1) / %s))",
+		lowest, highest, highest, bucketsPerDoubling, bucketsPerDoubling,
 	)
+	maxExpr := fmt.Sprintf(
+		"multiIf(value <= 0, toFloat64(0), value <= %s, %s, value > %s, toFloat64('+Inf'), pow(2, ceil(log2(value) * %s) / %s))",
+		lowest, lowest, highest, bucketsPerDoubling, bucketsPerDoubling,
+	)
+	return minExpr, maxExpr, nil
 }
 
 // formatFloat renders a float64 as the shortest literal that reads back as the

@@ -220,6 +220,67 @@ def test_bucket_options_outside_a_heatmap(
     assert "bucketOptions are only supported for heatmap requests" in get_error_message(response.json())
 
 
+@pytest.mark.parametrize(
+    "columns, expected_message",
+    [
+        pytest.param(
+            [
+                "toFloat64(10) AS `__bucket_min`, toFloat64(20) AS `__bucket_max`, toFloat64(3) AS `__result_0`",
+                "toFloat64(12) AS `__bucket_min`, toFloat64(20) AS `__bucket_max`, toFloat64(7) AS `__result_0`",
+            ],
+            # which of the two lower bounds is named first follows the row order
+            # the union happens to return
+            "the bucket ending at 20 is reported as starting at both",
+            id="one_bucket_cut_two_ways",
+        ),
+        pytest.param(
+            [
+                "toFloat64(20) AS `__bucket_max`, toFloat64(3) AS `__result_0`",
+                "toFloat64(30) AS `__bucket_max`, toFloat64(7) AS `__result_0`",
+            ],
+            'a heatmap needs a "__bucket_min" and a "__bucket_max" column',
+            id="upper_bound_without_a_lower_one",
+        ),
+        pytest.param(
+            ["toFloat64(3) AS `__result_0`"],
+            'a heatmap needs a "__bucket_min" and a "__bucket_max" column',
+            id="neither_bound",
+        ),
+    ],
+)
+def test_clickhouse_bucketing_is_rejected(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    columns: list[str],
+    expected_message: str,
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    start = now - timedelta(minutes=2)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    ts = f"toDateTime({int(start.timestamp())}) AS ts"
+    response = make_query_request(
+        signoz,
+        token,
+        int(start.timestamp() * 1000),
+        int(now.timestamp() * 1000),
+        [
+            {
+                "type": "clickhouse_sql",
+                "spec": {
+                    "name": "A",
+                    "query": " UNION ALL ".join(f"SELECT {ts}, {row}" for row in columns),
+                    "disabled": False,
+                },
+            }
+        ],
+        request_type=RequestType.HEATMAP,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert expected_message in get_error_message(response.json())
+
+
 def test_promql_returning_no_le_is_rejected(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument

@@ -48,10 +48,12 @@ func foldMatrixAsHeatmap(matrix promql.Matrix, queryWindow *qbv5.TimeRange, step
 
 	accumulator := newHeatmapAccumulator()
 	for _, labelsKey := range groupOrder {
-		groups[labelsKey].addDifferencedCells(accumulator)
+		if err := groups[labelsKey].addDifferencedCells(accumulator); err != nil {
+			return nil, err
+		}
 	}
 
-	return accumulator.foldSeries(queryWindow, stepMs, queryName), nil
+	return accumulator.foldSeries(queryWindow, stepMs, queryName)
 }
 
 // collectCumulativeGroups reads the matrix into one group per label set. A series
@@ -75,8 +77,6 @@ func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatm
 		}
 
 		for _, point := range promSeries.Floats {
-			// skipping widens the band above onto the next upper bound that has
-			// a count, which is what lagInFrame does with an absent row
 			if math.IsNaN(point.F) || math.IsInf(point.F, 0) {
 				continue
 			}
@@ -96,7 +96,7 @@ func extractBucketUpperBound(metric labels.Labels) (float64, bool) {
 		return 0, false
 	}
 	upperBound, err := strconv.ParseFloat(raw, 64)
-	if err != nil || !isValidBucketUpperBound(upperBound) {
+	if err != nil || math.IsNaN(upperBound) || math.IsInf(upperBound, -1) {
 		return 0, false
 	}
 	return upperBound, true
@@ -122,8 +122,10 @@ func extractHeatmapGroup(metric labels.Labels) ([]*qbv5.Label, string) {
 	return lbls, strings.Join(pairs, ",")
 }
 
-// each cell is its upper bound's cumulative count minus the one below it.
-func (g *promHeatmapGroup) addDifferencedCells(accumulator *heatmapAccumulator) {
+// each cell is its upper bound's cumulative count minus the one below it, and
+// runs from that lower `le` up to its own. Nothing bounds the lowest one below:
+// a classic histogram counts negative observations in it too.
+func (g *promHeatmapGroup) addDifferencedCells(accumulator *heatmapAccumulator) error {
 	for ts, cumulative := range g.cumulative {
 		upperBounds := make([]float64, 0, len(cumulative))
 		for upperBound := range cumulative {
@@ -131,10 +133,17 @@ func (g *promHeatmapGroup) addDifferencedCells(accumulator *heatmapAccumulator) 
 		}
 		slices.Sort(upperBounds)
 
-		previous := float64(0)
+		previousCount := float64(0)
+		previousBound := math.Inf(-1)
 		for _, upperBound := range upperBounds {
-			accumulator.addCell(g.labelsKey, g.labels, ts, upperBound, math.Max(cumulative[upperBound]-previous, 0))
-			previous = cumulative[upperBound]
+			bounds := bucketBounds{Lower: previousBound, Upper: upperBound}
+			if err := accumulator.addCell(g.labelsKey, g.labels, ts, bounds, math.Max(cumulative[upperBound]-previousCount, 0)); err != nil {
+				return err
+			}
+			previousCount = cumulative[upperBound]
+			previousBound = upperBound
 		}
 	}
+
+	return nil
 }
