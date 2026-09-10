@@ -6,6 +6,11 @@ export const DEFAULT_HOVER_PROXIMITY_VALUE = 30; // only snap if within 30px hor
 export const DEFAULT_FOCUS_PROXIMITY_VALUE = 1e6;
 export const STEP_INTERVAL_MULTIPLIER = 3; // multiply the width computed by STEP_INTERVAL_MULTIPLIER to get the hover prox value
 
+/** Opacity applied to the series that are NOT highlighted while a legend row is hovered. */
+export const LEGEND_HIGHLIGHT_DIM_ALPHA = 0.16;
+/** Stroke-width multiplier applied to the series highlighted from the legend. */
+export const LEGEND_HIGHLIGHT_WIDTH_RATIO = 1.6;
+
 export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
 	focus: {
 		alpha: 0.3,

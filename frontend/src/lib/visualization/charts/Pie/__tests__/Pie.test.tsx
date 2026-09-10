@@ -100,17 +100,29 @@ describe('Pie', () => {
 		expect(screen.getByTestId('pie')).toHaveStyle({ flexDirection: 'column' });
 	});
 
-	it('hides a slice when its legend marker is clicked', () => {
+	it('isolates a slice when its legend row is clicked with everything showing', () => {
 		renderPie();
 		const svg = screen.getByTestId('pie').querySelector('svg') as SVGElement;
 		expect(svg.querySelectorAll('path')).toHaveLength(3);
 
-		const marker = document.querySelector(
-			'[data-legend-item-id="1"] [data-is-legend-marker="true"]',
-		) as HTMLElement;
-		fireEvent.click(marker);
+		fireEvent.click(screen.getByTestId('legend-item-1'));
+
+		// Nothing visible to exclude, so the click isolates: one arc left.
+		expect(svg.querySelectorAll('path')).toHaveLength(1);
+	});
+
+	it('excludes a slice when its legend row is clicked with others already hidden', () => {
+		renderPie();
+		const svg = screen.getByTestId('pie').querySelector('svg') as SVGElement;
+
+		// Isolate, then add a second slice back, so nothing is isolated any more.
+		fireEvent.click(screen.getByTestId('legend-item-1'));
+		fireEvent.click(screen.getByTestId('legend-add-0'));
+		expect(svg.querySelectorAll('path')).toHaveLength(2);
+
+		fireEvent.click(screen.getByTestId('legend-item-0'));
 
 		// One slice hidden → one fewer arc drawn.
-		expect(svg.querySelectorAll('path')).toHaveLength(2);
+		expect(svg.querySelectorAll('path')).toHaveLength(1);
 	});
 });
