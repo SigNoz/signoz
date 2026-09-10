@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse, isCancel } from 'axios';
 import { ErrorResponse } from 'types/api';
 import { ErrorStatusCode } from 'types/common';
 
@@ -42,6 +42,19 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 		};
 	}
 	if (request) {
+		// A canceled request is not a failure: react-query and the app's own
+		// AbortControllers cancel in-flight work on unmount or refetch, and an
+		// aborted request has no response either. Logging it as one is noise on a
+		// normal event, so only a request that really never got a response is.
+		if (isCancel(error)) {
+			return {
+				statusCode: 500,
+				payload: null,
+				error: 'Something went wrong',
+				message: null,
+			};
+		}
+
 		// client never received a response, or request never left
 		console.error('client never received a response, or request never left');
 
