@@ -170,27 +170,15 @@ def test_rule_view_lifecycle(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    create_rule_view: Callable[[dict], dict],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # The DB is reused across runs, so wipe every view first; this test then
-    # owns the whole view space and asserts on global counts.
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(BASE_URL),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    for view in response.json()["data"]["views"]:
-        requests.delete(
-            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view['id']}"),
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=5,
-        )
+    # List assertions filter on this test's names so foreign views never interfere.
+    owned_names = {"Critical Prod", "Critical Staging", "Disabled"}
 
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(BASE_URL),
-        json={
+    created = create_rule_view(
+        {
             "name": "Critical Prod",
             "data": {
                 "version": "v1",
@@ -199,29 +187,18 @@ def test_rule_view_lifecycle(
                 "sort": "name",
                 "order": "asc",
             },
-        },
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
+        }
     )
-    assert response.status_code == HTTPStatus.CREATED, response.text
-    created = response.json()["data"]
     view_id = created["id"]
     assert created["name"] == "Critical Prod"
     assert created["data"]["version"] == "v1"
     assert created["data"]["query"] == "name CONTAINS 'prod' AND severity = 'critical'"
     assert created["data"]["states"] == ["firing", "pending"]
 
-    # Zero sort and order are normalized to the list defaults on save.
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(BASE_URL),
-        json={"name": "Disabled", "data": {"version": "v1", "states": ["disabled"]}},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.CREATED, response.text
-    disabled = response.json()["data"]
+    # Omitted states, sort and order are normalized on save: [] and the list defaults, never null.
+    disabled = create_rule_view({"name": "Disabled", "data": {"version": "v1"}})
     assert disabled["name"] == "Disabled"
-    assert disabled["data"]["states"] == ["disabled"]
+    assert disabled["data"]["states"] == []
     assert disabled["data"]["sort"] == "updated_at"
     assert disabled["data"]["order"] == "desc"
 
@@ -231,8 +208,7 @@ def test_rule_view_lifecycle(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    views = response.json()["data"]["views"]
-    assert len(views) == 2
+    views = [v for v in response.json()["data"]["views"] if v["name"] in owned_names]
     assert {v["name"] for v in views} == {"Critical Prod", "Disabled"}
 
     response = requests.put(
@@ -264,7 +240,7 @@ def test_rule_view_lifecycle(
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    listed = {v["name"]: v for v in response.json()["data"]["views"]}
+    listed = {v["name"]: v for v in response.json()["data"]["views"] if v["name"] in owned_names}
     assert set(listed) == {"Critical Staging", "Disabled"}
     assert listed["Critical Staging"]["data"]["query"] == "name CONTAINS 'staging'"
 
@@ -281,7 +257,7 @@ def test_rule_view_lifecycle(
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert {v["name"] for v in response.json()["data"]["views"]} == {"Disabled"}
+    assert {v["name"] for v in response.json()["data"]["views"] if v["name"] in owned_names} == {"Disabled"}
 
     assert (
         requests.delete(

@@ -123,6 +123,36 @@ def seed_alert_rules(
     return _seed_alert_rules
 
 
+@pytest.fixture(name="create_rule_view", scope="function")
+def create_rule_view(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> Callable[[dict], dict]:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    view_ids = []
+
+    def _create_rule_view(view: dict) -> dict:
+        response = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v2/rule_views"),
+            json=view,
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.CREATED, f"Failed to create rule view, api returned {response.status_code} with response: {response.text}"
+        created = response.json()["data"]
+        view_ids.append(created["id"])
+        return created
+
+    yield _create_rule_view
+    # A view the test already deleted returns 404; only real failures are logged.
+    for view_id in view_ids:
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v2/rule_views/{view_id}"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        if response.status_code not in (HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND):
+            logger.error("Error deleting rule view: %s", {"view_id": view_id, "response": response.text})
+
+
 def labels_to_map(labels: list[dict]) -> dict[str, str]:
     """Converts the label list shape of the v2 rule history APIs to a plain map."""
     return {label["key"]["name"]: label["value"] for label in labels or []}
