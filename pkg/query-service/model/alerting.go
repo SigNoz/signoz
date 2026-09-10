@@ -3,9 +3,7 @@ package model
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/pkg/errors"
 )
 
@@ -122,12 +120,6 @@ func (l LabelsString) String() string {
 	return string(l)
 }
 
-type RuleStateTimeline struct {
-	Items  []RuleStateHistory  `json:"items"`
-	Total  uint64              `json:"total"`
-	Labels map[string][]string `json:"labels"`
-}
-
 type RuleStateHistory struct {
 	RuleID   string `json:"ruleID" ch:"rule_id"`
 	RuleName string `json:"ruleName" ch:"rule_name"`
@@ -144,59 +136,4 @@ type RuleStateHistory struct {
 
 	RelatedTracesLink string `json:"relatedTracesLink"`
 	RelatedLogsLink   string `json:"relatedLogsLink"`
-}
-
-type QueryRuleStateHistory struct {
-	Start   int64         `json:"start"`
-	End     int64         `json:"end"`
-	State   string        `json:"state"`
-	Filters *v3.FilterSet `json:"filters"`
-	Offset  int64         `json:"offset"`
-	Limit   int64         `json:"limit"`
-	Order   string        `json:"order"`
-}
-
-func (r *QueryRuleStateHistory) Validate() error {
-	if r.Start == 0 || r.End == 0 {
-		return fmt.Errorf("start and end are required")
-	}
-	if r.Offset < 0 || r.Limit < 0 {
-		return fmt.Errorf("offset and limit must be greater than 0")
-	}
-	if r.Order != "asc" && r.Order != "desc" {
-		return fmt.Errorf("order must be asc or desc")
-	}
-	return nil
-}
-
-type RuleStateHistoryContributor struct {
-	Fingerprint       uint64       `json:"fingerprint" ch:"fingerprint"`
-	Labels            LabelsString `json:"labels" ch:"labels"`
-	Count             uint64       `json:"count" ch:"count"`
-	RelatedTracesLink string       `json:"relatedTracesLink"`
-	RelatedLogsLink   string       `json:"relatedLogsLink"`
-}
-
-type RuleStateTransition struct {
-	RuleID         string     `json:"ruleID" ch:"rule_id"`
-	State          AlertState `json:"state" ch:"state"`
-	FiringTime     int64      `json:"firingTime" ch:"firing_time"`
-	ResolutionTime int64      `json:"resolutionTime" ch:"resolution_time"`
-}
-
-type ReleStateItem struct {
-	State AlertState `json:"state"`
-	Start int64      `json:"start"`
-	End   int64      `json:"end"`
-}
-
-type Stats struct {
-	TotalCurrentTriggers           uint64     `json:"totalCurrentTriggers"`
-	TotalPastTriggers              uint64     `json:"totalPastTriggers"`
-	CurrentTriggersSeries          *v3.Series `json:"currentTriggersSeries"`
-	PastTriggersSeries             *v3.Series `json:"pastTriggersSeries"`
-	CurrentAvgResolutionTime       string     `json:"currentAvgResolutionTime"`
-	PastAvgResolutionTime          string     `json:"pastAvgResolutionTime"`
-	CurrentAvgResolutionTimeSeries *v3.Series `json:"currentAvgResolutionTimeSeries"`
-	PastAvgResolutionTimeSeries    *v3.Series `json:"pastAvgResolutionTimeSeries"`
 }
