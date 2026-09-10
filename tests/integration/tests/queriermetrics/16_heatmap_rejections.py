@@ -141,10 +141,12 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
             "bucketOptions spec is required",
             id="linear_without_a_spec",
         ),
+        # the query spec is strict-decoded, so it names itself rather than the
+        # buckets spec the field is actually wrong in
         pytest.param(
             [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options={"kind": "linear", "spec": {"maxValue": 1000, "scale": 2}})],
             {},
-            'unknown field "scale" in linear buckets spec',
+            'unknown field "scale" in query spec',
             id="scale_under_the_linear_kind",
         ),
         pytest.param(
