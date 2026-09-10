@@ -10,23 +10,29 @@ import (
 
 var (
 	testLogsBodyTarget = Target{
-		Signal:             telemetrytypes.SignalLogs,
-		FieldContext:       telemetrytypes.FieldContextBody,
+		Entry: telemetrytypes.EvolutionEntry{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "body_promoted",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextBody,
+		},
 		DBName:             "signoz_logs",
 		LocalTableName:     "logs_v2",
 		BaseColumn:         "body_v2",
-		PromotedColumn:     "body_promoted",
 		RequiredPathPrefix: telemetrytypes.BodyJSONStringSearchPrefix,
 		IndexesSupported:   true,
 	}
 
 	testTracesAttributesTarget = Target{
-		Signal:             telemetrytypes.SignalTraces,
-		FieldContext:       telemetrytypes.FieldContextAttribute,
+		Entry: telemetrytypes.EvolutionEntry{
+			Signal:       telemetrytypes.SignalTraces,
+			ColumnName:   "attributes_promoted",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextAttribute,
+		},
 		DBName:             "signoz_traces",
 		LocalTableName:     "signoz_index_v3",
 		BaseColumn:         "attributes",
-		PromotedColumn:     "attributes_promoted",
 		RequiredPathPrefix: "",
 		IndexesSupported:   false,
 	}
