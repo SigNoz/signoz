@@ -540,6 +540,42 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(screen.getByTestId('checkbox-filter-clear-all')).toBeInTheDocument();
 		});
 
+		it('does not dispatch on clear when the key has no filter', async () => {
+			const user = userEvent.setup();
+			const onFilterChange = jest.fn();
+
+			mockFieldsValuesAPI({
+				stringValues: ['production'],
+			});
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+					onFilterChange={onFilterChange}
+				/>,
+				undefined,
+				{
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: { items: [], op: 'AND' },
+									filter: { expression: '' },
+								},
+							],
+						},
+					}),
+				},
+			);
+
+			await screen.findByTestId('checkbox-value-row-production');
+			await user.click(screen.getByTestId('checkbox-filter-clear-all'));
+
+			expect(onFilterChange).not.toHaveBeenCalled();
+		});
+
 		it('calls onFilterChange when clear clicked', async () => {
 			const user = userEvent.setup();
 			const onFilterChange = jest.fn();
