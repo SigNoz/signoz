@@ -9,33 +9,8 @@ import (
 )
 
 var (
-	testLogsBodyTarget = Target{
-		Entry: telemetrytypes.EvolutionEntry{
-			Signal:       telemetrytypes.SignalLogs,
-			ColumnName:   "body_promoted",
-			ColumnType:   "JSON()",
-			FieldContext: telemetrytypes.FieldContextBody,
-		},
-		DBName:             "signoz_logs",
-		LocalTableName:     "logs_v2",
-		BaseColumn:         "body_v2",
-		RequiredPathPrefix: telemetrytypes.BodyJSONStringSearchPrefix,
-		IndexesSupported:   true,
-	}
-
-	testTracesAttributesTarget = Target{
-		Entry: telemetrytypes.EvolutionEntry{
-			Signal:       telemetrytypes.SignalTraces,
-			ColumnName:   "attributes_promoted",
-			ColumnType:   "JSON()",
-			FieldContext: telemetrytypes.FieldContextAttribute,
-		},
-		DBName:             "signoz_traces",
-		LocalTableName:     "signoz_index_v3",
-		BaseColumn:         "attributes",
-		RequiredPathPrefix: "",
-		IndexesSupported:   false,
-	}
+	testLogsBodyTarget         = NewLogsBodyTarget()
+	testTracesAttributesTarget = NewTracesAttributesTarget()
 )
 
 func TestValidateAndSetDefaultsLogsBody(t *testing.T) {

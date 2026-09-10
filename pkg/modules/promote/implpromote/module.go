@@ -7,8 +7,6 @@ import (
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -19,40 +17,6 @@ import (
 var (
 	CodeFailedToCreateIndex        = errors.MustNewCode("failed_to_create_index_promoted_paths")
 	CodeFailedToQueryPromotedPaths = errors.MustNewCode("failed_to_query_promoted_paths")
-
-	// logsBodyTarget is the promotion domain for the logs body JSON column
-	// (body_v2 -> body_promoted), with per-path skip index support.
-	logsBodyTarget = promotetypes.Target{
-		Entry: telemetrytypes.EvolutionEntry{
-			Signal:       telemetrytypes.SignalLogs,
-			ColumnName:   logstelemetryschema.LogsV2BodyPromotedColumn,
-			ColumnType:   "JSON()",
-			FieldContext: telemetrytypes.FieldContextBody,
-		},
-		DBName:             logstelemetryschema.DBName,
-		LocalTableName:     logstelemetryschema.LogsV2LocalTableName,
-		BaseColumn:         logstelemetryschema.LogsV2BodyV2Column,
-		RequiredPathPrefix: telemetrytypes.BodyJSONStringSearchPrefix,
-		IndexesSupported:   true,
-	}
-
-	// tracesAttributesTarget is the promotion domain for the spans attributes
-	// JSON column (attributes -> attributes_promoted). Per-path skip indexes
-	// are not wired into the traces query builder yet, so only promotion is
-	// supported for now.
-	tracesAttributesTarget = promotetypes.Target{
-		Entry: telemetrytypes.EvolutionEntry{
-			Signal:       telemetrytypes.SignalTraces,
-			ColumnName:   tracestelemetryschema.SpanAttributesPromotedColumn,
-			ColumnType:   "JSON()",
-			FieldContext: telemetrytypes.FieldContextAttribute,
-		},
-		DBName:             tracestelemetryschema.DBName,
-		LocalTableName:     tracestelemetryschema.SpanIndexV3LocalTableName,
-		BaseColumn:         tracestelemetryschema.SpanAttributesColumn,
-		RequiredPathPrefix: "",
-		IndexesSupported:   false,
-	}
 )
 
 type module struct {
