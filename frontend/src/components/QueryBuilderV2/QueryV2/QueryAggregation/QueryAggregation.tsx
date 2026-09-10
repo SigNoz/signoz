@@ -8,6 +8,12 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import {
+	QueryBuilderField,
+	QueryBuilderFieldsConfig,
+} from '../../queryBuilderFields.types';
+import { resolveQueryBuilderField } from '../../queryBuilderFields.utils';
+
 import QueryAggregationSelect from './QueryAggregationSelect';
 
 import './QueryAggregation.styles.scss';
@@ -18,24 +24,32 @@ function QueryAggregationOptions({
 	onAggregationIntervalChange,
 	onChange,
 	queryData,
+	fieldsConfig,
 }: {
 	dataSource: DataSource;
 	panelType?: string;
 	onAggregationIntervalChange: (value: number) => void;
 	onChange?: (value: string) => void;
 	queryData: IBuilderQuery | IBuilderTraceOperator;
+	fieldsConfig?: QueryBuilderFieldsConfig;
 }): JSX.Element {
-	const showAggregationInterval = useMemo(() => {
+	const stepInterval = useMemo(() => {
 		if (panelType === PANEL_TYPES.VALUE) {
-			return false;
+			return { hidden: true, disabled: false, reason: undefined };
 		}
 
-		if (dataSource === DataSource.TRACES || dataSource === DataSource.LOGS) {
-			return !(panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.PIE);
+		const isNonMetricSource =
+			dataSource === DataSource.TRACES || dataSource === DataSource.LOGS;
+
+		if (
+			isNonMetricSource &&
+			(panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.PIE)
+		) {
+			return { hidden: true, disabled: false, reason: undefined };
 		}
 
-		return true;
-	}, [dataSource, panelType]);
+		return resolveQueryBuilderField(QueryBuilderField.StepInterval, fieldsConfig);
+	}, [dataSource, panelType, fieldsConfig]);
 
 	const handleAggregationIntervalChange = (value: string): void => {
 		onAggregationIntervalChange(Number(value));
@@ -57,22 +71,24 @@ function QueryAggregationOptions({
 					}
 				/>
 
-				{showAggregationInterval && (
+				{!stepInterval.hidden && (
 					<div className="query-aggregation-interval">
 						<Tooltip
 							title={
-								<div>
-									Set the time interval for aggregation
-									<br />
-									<a
-										href="https://signoz.io/docs/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series"
-										target="_blank"
-										rel="noopener noreferrer"
-										style={{ color: '#1890ff', textDecoration: 'underline' }}
-									>
-										Learn about step intervals
-									</a>
-								</div>
+								stepInterval.reason ?? (
+									<div>
+										Set the time interval for aggregation
+										<br />
+										<a
+											href="https://signoz.io/docs/userguide/query-builder-v5/#temporal-aggregation-within-each-time-series"
+											target="_blank"
+											rel="noopener noreferrer"
+											style={{ color: '#1890ff', textDecoration: 'underline' }}
+										>
+											Learn about step intervals
+										</a>
+									</div>
+								)
 							}
 							placement="top"
 						>
@@ -92,6 +108,7 @@ function QueryAggregationOptions({
 								placeholder="Auto"
 								type="number"
 								onChange={handleAggregationIntervalChange}
+								disabled={stepInterval.disabled}
 								labelAfter
 							/>
 						</div>
@@ -105,6 +122,7 @@ function QueryAggregationOptions({
 QueryAggregationOptions.defaultProps = {
 	panelType: null,
 	onChange: undefined,
+	fieldsConfig: undefined,
 };
 
 export default QueryAggregationOptions;

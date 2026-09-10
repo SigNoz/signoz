@@ -11,6 +11,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { QueryBuilderFieldsConfig } from '../../queryBuilderFields.types';
 import QueryAddOns from '../QueryAddOns/QueryAddOns';
 import QueryAggregation from '../QueryAggregation/QueryAggregation';
 import TraceOperatorEditor from './TraceOperatorEditor';
@@ -19,10 +20,12 @@ import './TraceOperator.styles.scss';
 
 export default function TraceOperator({
 	traceOperator,
-	isListViewPanel = false,
+	isRawQuery = false,
+	fieldsConfig,
 }: {
 	traceOperator: IBuilderTraceOperator;
-	isListViewPanel?: boolean;
+	isRawQuery?: boolean;
+	fieldsConfig?: QueryBuilderFieldsConfig;
 }): JSX.Element {
 	const { panelType, removeTraceOperator } = useQueryBuilder();
 	const { handleChangeQueryData } = useQueryOperations({
@@ -58,12 +61,12 @@ export default function TraceOperator({
 	);
 
 	return (
-		<div className={cx('qb-trace-operator', !isListViewPanel && 'non-list-view')}>
+		<div className={cx('qb-trace-operator', !isRawQuery && 'non-list-view')}>
 			<div className="qb-trace-operator-container">
 				<div
 					className={cx(
 						'qb-trace-operator-label-with-input',
-						!isListViewPanel && 'qb-trace-operator-arrow',
+						!isRawQuery && 'qb-trace-operator-arrow',
 					)}
 				>
 					<Typography.Text className="label">Trace Operator</Typography.Text>
@@ -76,9 +79,9 @@ export default function TraceOperator({
 					</div>
 				</div>
 
-				{!isListViewPanel && (
+				{!isRawQuery && (
 					<div className="qb-trace-operator-aggregation-container">
-						<div className={cx(!isListViewPanel && 'qb-trace-operator-arrow')}>
+						<div className={cx(!isRawQuery && 'qb-trace-operator-arrow')}>
 							<QueryAggregation
 								dataSource={DataSource.TRACES}
 								key={`query-search-${traceOperator.queryName}`}
@@ -86,12 +89,13 @@ export default function TraceOperator({
 								onAggregationIntervalChange={handleChangeAggregateEvery}
 								onChange={handleChangeAggregation}
 								queryData={traceOperator}
+								fieldsConfig={fieldsConfig}
 							/>
 						</div>
 						<div
 							className={cx(
 								'qb-trace-operator-add-ons-container',
-								!isListViewPanel && 'qb-trace-operator-arrow',
+								!isRawQuery && 'qb-trace-operator-arrow',
 							)}
 						>
 							<QueryAddOns
@@ -99,9 +103,10 @@ export default function TraceOperator({
 								query={traceOperator}
 								version="v3"
 								isForTraceOperator
-								isListViewPanel={false}
+								isRawQuery={false}
 								showReduceTo={false}
 								panelType={panelType}
+								fieldsConfig={fieldsConfig}
 							/>
 						</div>
 					</div>

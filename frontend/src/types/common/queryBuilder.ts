@@ -304,11 +304,6 @@ export type QueryBuilderContextType = {
 	isDefaultQuery: (props: IsDefaultQueryProps) => boolean;
 };
 
-export type QueryAdditionalFilter = {
-	field: keyof IBuilderQuery;
-	text: string;
-};
-
 export type IsDefaultQueryProps = {
 	currentQuery: Query;
 	sourcePage: DataSource;

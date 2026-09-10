@@ -320,7 +320,6 @@ function PanelEditorContainer({
 								<ConfigProvider getPopupContainer={getBodyPopupContainer}>
 									<PanelEditorQueryBuilder
 										panelKind={panelKind}
-										signal={listSignal}
 										isLoadingQueries={isFetching}
 										onStageRunQuery={runQuery}
 										onCancelQuery={cancelQuery}

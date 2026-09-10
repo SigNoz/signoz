@@ -19,7 +19,6 @@ import {
 	QUERY_BUILDER_SEARCH_VALUES,
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
-import type { WhereClauseConfig } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
@@ -88,7 +87,6 @@ interface CustomTagProps {
 interface QueryBuilderSearchV2Props {
 	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
-	whereClauseConfig?: WhereClauseConfig;
 	placeholder?: string;
 	className?: string;
 	suffixIcon?: React.ReactNode;
@@ -145,7 +143,6 @@ function QueryBuilderSearchV2(
 		placeholder,
 		className,
 		suffixIcon,
-		whereClauseConfig,
 		hardcodedAttributeKeys,
 		hasPopupContainer,
 		rootClassName,
@@ -477,31 +474,7 @@ function QueryBuilderSearchV2(
 		if (searchValue) {
 			const operatorType =
 				operatorTypeMapper[currentFilterItem?.op || ''] || 'NOT_VALID';
-			// if key is added and operator is not present then convert to body CONTAINS key
 			if (
-				currentFilterItem?.key &&
-				isEmpty(currentFilterItem?.op) &&
-				whereClauseConfig?.customKey === 'body' &&
-				whereClauseConfig?.customOp === OPERATORS.CONTAINS
-			) {
-				// eslint-disable-next-line sonarjs/no-identical-functions
-				setTags((prev) => [
-					...prev,
-					{
-						key: {
-							key: 'body',
-							dataType: DataTypes.String,
-							type: '',
-							id: 'body--string----true',
-						},
-						op: OPERATORS.CONTAINS,
-						value: currentFilterItem?.key?.key,
-					},
-				]);
-				setCurrentFilterItem(undefined);
-				setSearchValue('');
-				setCurrentState(DropdownState.ATTRIBUTE_KEY);
-			} else if (
 				currentFilterItem?.op === OPERATORS.EXISTS ||
 				currentFilterItem?.op === OPERATORS.NOT_EXISTS
 			) {
@@ -543,8 +516,6 @@ function QueryBuilderSearchV2(
 		currentFilterItem?.op,
 		currentFilterItem?.value,
 		searchValue,
-		whereClauseConfig?.customKey,
-		whereClauseConfig?.customOp,
 	]);
 
 	// this useEffect takes care of tokenisation based on the search state
@@ -1085,7 +1056,6 @@ QueryBuilderSearchV2.defaultProps = {
 	placeholder: PLACEHOLDER,
 	className: '',
 	suffixIcon: null,
-	whereClauseConfig: {},
 	hasPopupContainer: true,
 	rootClassName: '',
 	hardcodedAttributeKeys: undefined,
