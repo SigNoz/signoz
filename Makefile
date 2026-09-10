@@ -81,10 +81,13 @@ devenv-clickhouse-clean: ## Clean all ClickHouse data from filesystem
 ##############################################################
 # go commands
 ##############################################################
+SIGNOZ_SQLSTORE_SQLITE_PATH ?= signoz.db
+SIGNOZ_APISERVER_ADDRESS    ?= 0.0.0.0:8080
+
 .PHONY: go-run-enterprise
 go-run-enterprise: ## Runs the enterprise go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
-	SIGNOZ_SQLSTORE_SQLITE_PATH=signoz.db \
+	SIGNOZ_SQLSTORE_SQLITE_PATH=$(SIGNOZ_SQLSTORE_SQLITE_PATH) \
 	SIGNOZ_WEB_ENABLED=false \
 	SIGNOZ_TOKENIZER_JWT_SECRET=secret \
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
@@ -101,7 +104,7 @@ go-test: ## Runs go unit tests
 .PHONY: go-run-community
 go-run-community: ## Runs the community go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
-	SIGNOZ_SQLSTORE_SQLITE_PATH=signoz.db \
+	SIGNOZ_SQLSTORE_SQLITE_PATH=$(SIGNOZ_SQLSTORE_SQLITE_PATH) \
 	SIGNOZ_WEB_ENABLED=false \
 	SIGNOZ_TOKENIZER_JWT_SECRET=secret \
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
@@ -110,6 +113,28 @@ go-run-community: ## Runs the community go backend server
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
 	go run -race \
 		$(GO_BUILD_CONTEXT_COMMUNITY)/*.go server
+
+.PHONY: go-stop
+go-stop: ## Stops the go backend server listening on SIGNOZ_APISERVER_ADDRESS, waiting for it to release every port it holds
+	@PORT=$(lastword $(subst :, ,$(SIGNOZ_APISERVER_ADDRESS))); \
+	PIDS=$$(lsof -ti tcp:$$PORT); \
+	if [ -z "$$PIDS" ]; then \
+		echo "No signoz server running on port $$PORT."; \
+		echo "If it's running on a different port, rerun as: make go-stop SIGNOZ_APISERVER_ADDRESS=host:port"; \
+		exit 0; \
+	fi; \
+	kill $$PIDS 2>/dev/null; \
+	for i in $$(seq 1 10); do \
+		alive=$$(for p in $$PIDS; do kill -0 $$p 2>/dev/null && echo $$p; done); \
+		[ -z "$$alive" ] && break; \
+		sleep 1; \
+	done; \
+	alive=$$(for p in $$PIDS; do kill -0 $$p 2>/dev/null && echo $$p; done); \
+	if [ -n "$$alive" ]; then \
+		echo "Graceful shutdown did not finish in 10s, sending SIGKILL to $$alive"; \
+		kill -9 $$alive 2>/dev/null; \
+	fi; \
+	echo "Stopped signoz server on port $$PORT (pid $$PIDS)"
 
 .PHONY: go-build-community $(GO_BUILD_ARCHS_COMMUNITY)
 go-build-community: ## Builds the go backend server for community
@@ -241,3 +266,8 @@ semconv-generate: ## Regenerate semantic-convention families for Go and TypeScri
 gen-mocks:
 	@echo ">> Generating mocks"
 	@mockery --config .mockery.yml
+
+.PHONY: gen-openapi-specs
+gen-openapi-specs:
+	@go run cmd/enterprise/*.go generate openapi
+	cd frontend && pnpm generate:api && cd -
