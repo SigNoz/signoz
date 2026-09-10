@@ -21,9 +21,7 @@ import ViewNamePopover from './ViewNamePopover';
 import styles from './ViewsRail.module.scss';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
-import { DashboardListPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
-
-const LIST_CHECKS = [DashboardListPermission];
+import { LIST_CHECKS } from 'pages/DashboardsListPage/constants/permissions';
 
 interface Props {
 	activeViewId: string;
@@ -39,12 +37,6 @@ interface Props {
 	onReset: () => void;
 	onDelete: (id: string) => Promise<void>;
 	onRename: (id: string, name: string) => void;
-	/**
-	 * Non-empty when the caller cannot list dashboards. Views drive the table, so
-	 * the rail goes inert with the reason rather than rewriting filters for a
-	 * table that cannot render.
-	 */
-	/** Permissions the table is gated on; the chrome goes inert without them. */
 }
 
 interface ViewRow {

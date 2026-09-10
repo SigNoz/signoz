@@ -8,7 +8,7 @@ import {
 import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
-import { DashboardListPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+import { LIST_CHECKS } from 'pages/DashboardsListPage/constants/permissions';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { toAPIError } from 'utils/errorUtils';
@@ -45,7 +45,6 @@ const PAGE_SIZE = 20;
 // Favorites / recently-viewed are filtered client-side (no server id filter), so
 // we pull a single large page and constrain it in-memory.
 const CLIENT_VIEW_LIMIT = 200;
-const LIST_CHECKS = [DashboardListPermission];
 
 function DashboardsList(): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();

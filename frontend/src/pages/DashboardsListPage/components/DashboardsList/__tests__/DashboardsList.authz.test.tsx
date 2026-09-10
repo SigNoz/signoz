@@ -1,4 +1,5 @@
 import { server } from 'mocks-server/server';
+import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, waitFor, within } from 'tests/test-utils';
@@ -8,7 +9,10 @@ import {
 	setupAuthzAllow,
 	setupAuthzDeny,
 } from 'lib/authz/utils/authz-test-utils';
-import { DashboardCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+import {
+	DashboardCreatePermission,
+	DashboardListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 
 import DashboardsList from '../DashboardsList';
 
@@ -115,8 +119,9 @@ describe('DashboardsList - AuthZ', () => {
 			const cta = screen.getByTestId('new-dashboard-cta');
 			expect(cta).not.toBeDisabled();
 
-			// The search box and filters edit a query that can never be run, so they
-			// are inert; the views rail carries its own denial.
+			// The search box and filters edit a query that can only be run through
+			// the list API, so they are inert and say why; the views rail carries
+			// its own denial.
 			expect(
 				within(screen.getByTestId('dashboards-filter-created-by')).getByRole(
 					'combobox',
@@ -127,6 +132,22 @@ describe('DashboardsList - AuthZ', () => {
 				screen.getByTestId('dashboards-list-search').querySelector('.cm-content'),
 			).toHaveAttribute('contenteditable', 'false');
 			expect(screen.getByTestId('views-rail-denied')).toBeInTheDocument();
+
+			expect(screen.getByTestId('dashboards-search-zone')).toHaveAttribute(
+				'data-denied-permissions',
+				DashboardListPermission,
+			);
+			expect(screen.getByTestId('dashboards-filter-zone')).toHaveAttribute(
+				'data-denied-permissions',
+				DashboardListPermission,
+			);
+
+			// Radix renders the content with no testid of its own, so the reason is
+			// read off the tooltip role — the table's callout carries the same words.
+			await userEvent.hover(screen.getByTestId('dashboards-search-zone'));
+			await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
+				'is not authorized to perform list:dashboard:*',
+			);
 		});
 
 		it('renders the table when list is granted', async () => {
