@@ -7,10 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -800,6 +803,31 @@ func TestBaseRule_GeneratorURL(t *testing.T) {
 			require.Equal(t, tc.want, r.GeneratorURL())
 		})
 	}
+}
+
+func TestBaseRule_SendAlerts_UsesRuleOrgID(t *testing.T) {
+	p := createPostableRule(&ruletypes.AlertCompositeQuery{})
+	ruleOrgID := valuer.GenerateUUID()
+	otherOrgID := valuer.GenerateUUID()
+
+	// Simulate a multi-org deployment where some other org happens to be
+	// the "first" row in the organizations table.
+	sqlStore := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherRegexp)
+	orgRows := sqlStore.Mock().NewRows([]string{"id"}).AddRow(otherOrgID.StringValue())
+	sqlStore.Mock().ExpectQuery("SELECT (.+) FROM (.+)organizations(.+) LIMIT (.+)").WillReturnRows(orgRows)
+
+	r, err := NewBaseRule("rule-id", ruleOrgID, &p, mustParseURL(t, "http://localhost:8080"), WithSQLStore(sqlStore))
+	require.NoError(t, err)
+
+	r.Active[1] = &ruletypes.Alert{State: ruletypes.StateFiring}
+
+	var gotOrgID string
+	r.SendAlerts(context.Background(), time.Now(), time.Minute, time.Minute, func(_ context.Context, orgID string, _ ...*ruletypes.Alert) {
+		gotOrgID = orgID
+	})
+
+	require.Equal(t, ruleOrgID.StringValue(), gotOrgID)
+	require.NotEqual(t, otherOrgID.StringValue(), gotOrgID)
 }
 
 // labelsKey creates a deterministic string key from a labels map
