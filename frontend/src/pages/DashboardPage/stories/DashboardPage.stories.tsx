@@ -1,26 +1,20 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { rest } from 'msw';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { screen, userEvent, within } from 'storybook/test';
-import {
-	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind as TimeSeriesKind,
-	DashboardtypesTimePreferenceDTO as TimePreference,
-	type DashboardtypesDashboardSpecDTOPanels,
-	type DashboardtypesGettableDashboardV2DTO,
-} from 'api/generated/services/sigNoz.schemas';
-import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { dashboardMocks, dashboardRoute } from './DashboardPage.stories.mocks';
 import {
-	dashboardResponse,
-	PANEL_IDS,
-	VARIABLE_KINDS,
-} from './__story_mockdata__/dashboard';
+	dashboardMocks,
+	desyncedDashboardHandler,
+	metricsListHandler,
+	tooltipDashboardHandler,
+	tooltipRoute,
+	warnedPanelQueryHandler,
+} from './DashboardPage.stories.mocks';
+import { TOOLTIP_PANEL_NAME } from './__story_mockdata__/tooltipDashboard';
 
 import DashboardPage from '../DashboardPage';
 
@@ -106,149 +100,6 @@ export const NotFound: Story = {
 	args: { notFound: true },
 };
 
-const DASHBOARD_NAME =
-	'Checkout service overview across every production region, by service and owner';
-
-const DASHBOARD_DESCRIPTION =
-	'Traffic, errors and latency for the checkout path, broken down by service, region and deployment channel. Owned by the platform observability team; the runbook is at https://signoz.io/docs/dashboards/ and the rotation is in PagerDuty.';
-
-// Two fit beside the title; the rest fall behind the `+N` badge.
-const DASHBOARD_TAGS = [
-	{ key: 'env', value: 'production-eu-central-1' },
-	{ key: 'team', value: 'platform-observability' },
-	{ key: 'component', value: 'otel-collector' },
-	{ key: 'owner', value: 'sre-oncall-primary' },
-	{ key: 'tier', value: 'tier-0-revenue-critical' },
-	{ key: 'compliance', value: 'soc2-in-scope' },
-];
-
-const PANEL_NAME =
-	'Request rate by service, region and deployment channel, excluding synthetic traffic';
-
-const PANEL_DESCRIPTIONS: Record<string, string> = {
-	'request-rate':
-		'Requests per second per service, taken from `signoz_calls_total` and filtered to the selected environment. Synthetic and health-check traffic is excluded, so this reads lower than the load balancer count.',
-	'error-rate':
-		'Share of 5xx responses over the selected window, rated against the error budget for the quarter.',
-};
-
-const SELECTED_SERVICES = [
-	'checkout',
-	'payments',
-	'inventory',
-	'notifications',
-	'checkout-2',
-	'payments-2',
-	'inventory-2',
-	'notifications-2',
-];
-
-const tooltipRoute = `${dashboardRoute()}?variables=${encodeURIComponent(
-	JSON.stringify({ service: SELECTED_SERVICES }),
-)}`;
-
-const WARNED_METRIC = 'signoz_apdex';
-
-/**
- * One panel's query answered with a warning beside its value, so its header
- * carries the status indicator while the rest of the dashboard is untouched.
- * Every other query falls through to the page's own handler.
- */
-const warnedPanelQuery = rest.post(
-	'http://localhost/api/v5/query_range',
-	async (req, res, ctx) => {
-		const body = (await req.json()) as QueryRangeRequestV5;
-		const spec = body.compositeQuery?.queries?.[0]?.spec as
-			| { aggregations?: { metricName?: string }[] }
-			| undefined;
-
-		if (spec?.aggregations?.[0]?.metricName !== WARNED_METRIC) {
-			return undefined;
-		}
-
-		return res(
-			ctx.status(200),
-			ctx.json(
-				queryRangeV5ScalarResponse(0.94, 'A', {
-					warning: {
-						code: 'partial_data',
-						message: `Some series for ${WARNED_METRIC} were dropped: the metric changed temporality partway through the selected window.`,
-						url: 'https://signoz.io/docs/metrics-management/types-and-aggregation/',
-						warnings: [
-							{
-								message:
-									'Narrow the window to a period with one temporality, or re-record the metric as a delta.',
-							},
-						],
-					},
-				}),
-			),
-		);
-	},
-);
-
-/**
- * The page's own document, rewritten to the lengths the fixture is too tame to
- * show: a title and a description that overflow, six tags, panel descriptions
- * that run past a line, and a panel on its own time preference.
- */
-const tooltipDocument = (): DashboardtypesGettableDashboardV2DTO => {
-	const document = dashboardResponse({
-		panels: PANEL_IDS.length,
-		sectioned: true,
-		variables: [...VARIABLE_KINDS],
-		locked: false,
-	}).data;
-
-	const panels = Object.fromEntries(
-		Object.entries(document.spec.panels ?? {}).map(([id, panel]) => [
-			id,
-			{
-				...panel,
-				spec: {
-					...panel.spec,
-					display: {
-						...panel.spec.display,
-						name: id === 'request-rate' ? PANEL_NAME : panel.spec.display.name,
-						description: PANEL_DESCRIPTIONS[id] ?? panel.spec.display.description,
-					},
-					plugin:
-						id === 'error-rate' &&
-						panel.spec.plugin.kind === TimeSeriesKind['signoz/TimeSeriesPanel']
-							? {
-									...panel.spec.plugin,
-									spec: {
-										...panel.spec.plugin.spec,
-										visualization: { timePreference: TimePreference.last_1_month },
-									},
-								}
-							: panel.spec.plugin,
-				},
-			},
-		]),
-	) as DashboardtypesDashboardSpecDTOPanels;
-
-	return {
-		...document,
-		name: DASHBOARD_NAME,
-		tags: DASHBOARD_TAGS,
-		spec: {
-			...document.spec,
-			display: { name: DASHBOARD_NAME, description: DASHBOARD_DESCRIPTION },
-			panels,
-		},
-	};
-};
-
-const tooltipDashboard = rest.get(
-	'http://localhost/api/v2/dashboards/:id',
-	(_req, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({ status: 'success', data: tooltipDocument() }),
-		),
-);
-
 /**
  * Every tooltip the dashboard itself carries, held open at once: the title, the
  * description with its link, the public-page globe, the `+N` of tags that did
@@ -264,8 +115,8 @@ const tooltipDashboard = rest.get(
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true, variableValues: 12 },
 	parameters: {
-		signoz: { route: tooltipRoute },
-		msw: { handlers: [tooltipDashboard, warnedPanelQuery] },
+		signoz: { route: tooltipRoute() },
+		msw: { handlers: [tooltipDashboardHandler, warnedPanelQueryHandler] },
 	},
 };
 
@@ -287,56 +138,6 @@ export const TooltipsWhenLocked: Story = {
 	},
 };
 
-const desyncedDashboard = rest.get(
-	'http://localhost/api/v2/dashboards/:id',
-	(_req, res, ctx) => {
-		const document = tooltipDocument();
-		const [firstGrid, ...rest] = document.spec.layouts ?? [];
-
-		return res(
-			ctx.status(200),
-			ctx.json({
-				status: 'success',
-				data: {
-					...document,
-					spec: {
-						...document.spec,
-						// The second grid goes, orphaning the panels it placed, and the
-						// first gains slots for panels that are not in the spec: the two
-						// ways a hand-edited document desyncs panels and layouts.
-						layouts: [
-							{
-								...firstGrid,
-								spec: {
-									...firstGrid.spec,
-									items: [
-										...(firstGrid.spec?.items ?? []),
-										{
-											x: 0,
-											y: 24,
-											width: 6,
-											height: 6,
-											content: { $ref: '#/spec/panels/checkout-saturation' },
-										},
-										{
-											x: 6,
-											y: 24,
-											width: 6,
-											height: 6,
-											content: { $ref: '#/spec/panels/payment-gateway-latency' },
-										},
-									],
-								},
-							},
-							...rest.slice(1),
-						],
-					},
-				},
-			}),
-		);
-	},
-);
-
 /**
  * The JSON editor's two warnings, held open: the panels the layout places
  * nowhere and the layout slots pointing at panels the spec no longer has, each
@@ -347,7 +148,7 @@ const desyncedDashboard = rest.get(
  */
 export const TooltipsInJsonDrawer: Story = {
 	args: { tooltipsOpen: true },
-	parameters: { msw: { handlers: [desyncedDashboard] } },
+	parameters: { msw: { handlers: [desyncedDashboardHandler] } },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 
@@ -405,13 +206,6 @@ export const TooltipsInVariableSettings: Story = {
 	},
 };
 
-// The view modal mounts a query builder, which lists metrics before it renders.
-const metricsList = rest.get(
-	'http://localhost/api/v2/metrics',
-	(_req, res, ctx) =>
-		res(ctx.status(200), ctx.json({ status: 'success', data: { metrics: [] } })),
-);
-
 /**
  * A panel expanded into view mode, whose header carries the full panel name its
  * title truncates, over the dashboard's own tooltips behind the dialog.
@@ -421,7 +215,9 @@ const metricsList = rest.get(
  */
 export const TooltipsInViewPanelModal: Story = {
 	args: { tooltipsOpen: true },
-	parameters: { msw: { handlers: [tooltipDashboard, metricsList] } },
+	parameters: {
+		msw: { handlers: [tooltipDashboardHandler, metricsListHandler] },
+	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 
@@ -433,6 +229,6 @@ export const TooltipsInViewPanelModal: Story = {
 			),
 		);
 		await userEvent.click(await screen.findByText('View'));
-		await screen.findByText(`${PANEL_NAME} - (View mode)`);
+		await screen.findByText(`${TOOLTIP_PANEL_NAME} - (View mode)`);
 	},
 };

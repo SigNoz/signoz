@@ -16,6 +16,7 @@ import {
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
+import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 import {
 	currentDashboardDocument,
@@ -33,6 +34,12 @@ import {
 	panelResponse,
 	serviceVariableValues,
 } from './__story_mockdata__/panelData';
+import {
+	desyncedDashboardResponse,
+	TOOLTIP_SELECTED_SERVICES,
+	TOOLTIP_WARNED_METRIC,
+	tooltipDashboardResponse,
+} from './__story_mockdata__/tooltipDashboard';
 
 const LAYOUT = 'Dashboard · layout';
 const DATA = 'Dashboard · panels';
@@ -40,6 +47,11 @@ const SHARING = 'Dashboard · sharing';
 
 export const dashboardRoute = (): string =>
 	generatePath(ROUTES.DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
+
+export const tooltipRoute = (): string =>
+	`${dashboardRoute()}?variables=${encodeURIComponent(
+		JSON.stringify({ service: TOOLTIP_SELECTED_SERVICES }),
+	)}`;
 
 const NOT_FOUND = {
 	status: 'error',
@@ -259,3 +271,59 @@ export const dashboardMocks = defineStoryMocks({
 		});
 	},
 });
+
+/**
+ * One panel's query answered with a warning beside its value, so its header
+ * carries the status indicator while the rest of the dashboard is untouched.
+ * Every other query falls through to the page's own handler.
+ */
+export const warnedPanelQueryHandler = rest.post(
+	'http://localhost/api/v5/query_range',
+	async (req, res, ctx) => {
+		const body = (await req.json()) as QueryRangeRequestV5;
+		const spec = body.compositeQuery?.queries?.[0]?.spec as
+			| { aggregations?: { metricName?: string }[] }
+			| undefined;
+
+		if (spec?.aggregations?.[0]?.metricName !== TOOLTIP_WARNED_METRIC) {
+			return undefined;
+		}
+
+		return res(
+			ctx.status(200),
+			ctx.json(
+				queryRangeV5ScalarResponse(0.94, 'A', {
+					warning: {
+						code: 'partial_data',
+						message: `Some series for ${TOOLTIP_WARNED_METRIC} were dropped: the metric changed temporality partway through the selected window.`,
+						url: 'https://signoz.io/docs/metrics-management/types-and-aggregation/',
+						warnings: [
+							{
+								message:
+									'Narrow the window to a period with one temporality, or re-record the metric as a delta.',
+							},
+						],
+					},
+				}),
+			),
+		);
+	},
+);
+
+export const tooltipDashboardHandler = rest.get(
+	'http://localhost/api/v2/dashboards/:id',
+	(_req, res, ctx) => res(ctx.status(200), ctx.json(tooltipDashboardResponse())),
+);
+
+export const desyncedDashboardHandler = rest.get(
+	'http://localhost/api/v2/dashboards/:id',
+	(_req, res, ctx) =>
+		res(ctx.status(200), ctx.json(desyncedDashboardResponse())),
+);
+
+// The view modal mounts a query builder, which lists metrics before it renders.
+export const metricsListHandler = rest.get(
+	'http://localhost/api/v2/metrics',
+	(_req, res, ctx) =>
+		res(ctx.status(200), ctx.json({ status: 'success', data: { metrics: [] } })),
+);
