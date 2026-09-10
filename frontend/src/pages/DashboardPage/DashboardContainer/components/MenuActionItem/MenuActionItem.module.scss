@@ -1,14 +1,13 @@
 .menuActionItem {
-	/* The dropdown item owns the whole row — padding, height, font, gap, colour,
-	   hover and the disabled dimming. The button only has to fill that box so the
-	   tooltip anchors to the row, so every property the button would size, paint
-	   or dim for itself is handed back. Without this the two compound: padding on
-	   padding, a second highlight inset in the row, a different foreground token,
-	   and 0.6 opacity on top of 0.5.
+	/* The dropdown item owns the whole row — height, font, gap, colour, hover and
+	   the disabled dimming — so every property the button would size, paint or dim
+	   for itself is handed back to it. Without this the two compound: a second
+	   highlight inset in the row, a different foreground token, and 0.6 opacity on
+	   top of 0.5.
 
 	   The colours restate the item's own tokens rather than using `inherit`: a
 	   CSS-wide keyword inside a custom property is invalid once substituted. */
-	--button-padding: 0;
+	--button-padding: var(--spacing-5, 10px) var(--spacing-6, 12px);
 	--button-height: auto;
 	--button-font-size: inherit;
 	--button-line-height: inherit;
@@ -26,8 +25,18 @@
 	);
 	--button-disabled-opacity: 1;
 
+	/* Padding is the exception: the row's belongs to the button, since the button
+	   is what the tooltip anchors to. Left on the item, the anchor would be a box
+	   inset from the menu's edge and the tooltip would open under the panel. */
 	width: 100%;
 	justify-content: flex-start;
+}
+
+/* The other half of that: the menu hands its padding to the rows, so a row's box
+   reaches the panel edge — the same geometry as the dashboards list popover. */
+.menuContent {
+	--dropdown-menu-content-padding: 0;
+	--dropdown-menu-item-padding: 0;
 }
 
 /* A destructive row is marked on the item, so the row reads its colour from there. */

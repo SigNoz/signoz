@@ -44,6 +44,7 @@ import { useAddSection } from '../../PanelsAndSectionsLayout/Section/hooks/useAd
 import SectionTitleModal from '../../PanelsAndSectionsLayout/Section/SectionTitleModal';
 import JsonEditorDrawer from '../JsonEditorDrawer/JsonEditorDrawer';
 import SettingsDrawer from '../SettingsDrawer';
+import menuStyles from '../../components/MenuActionItem/MenuActionItem.module.scss';
 import styles from './DashboardActions.module.scss';
 import { useDeleteDashboardAction } from './useDeleteDashboardAction';
 import { useDashboardStore } from '../../store/useDashboardStore';
@@ -278,8 +279,11 @@ function DashboardActions({
 		deleteChecks,
 		deleteDisabledTooltip,
 		canDeleteDashboard,
+		cloneChecks,
+		cloneDenied,
 		isCloning,
 		canToggleLock,
+		lockDisabledTooltip,
 		isDashboardLocked,
 		onOpenRename,
 		handleClone,
@@ -290,7 +294,10 @@ function DashboardActions({
 
 	return (
 		<div className={styles.dashboardActionsContainer}>
-			<DropdownMenuSimple menu={{ items: menuItems }}>
+			<DropdownMenuSimple
+				menu={{ items: menuItems }}
+				className={menuStyles.menuContent}
+			>
 				<Button
 					variant="solid"
 					color="secondary"

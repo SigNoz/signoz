@@ -5,6 +5,7 @@ import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 
 import MenuActionItem from '../../../components/MenuActionItem/MenuActionItem';
+import menuStyles from '../../../components/MenuActionItem/MenuActionItem.module.scss';
 import styles from './SectionActionsMenu.module.scss';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
@@ -90,7 +91,7 @@ function SectionActionsMenu({
 	]);
 
 	return (
-		<DropdownMenuSimple menu={{ items }}>
+		<DropdownMenuSimple menu={{ items }} className={menuStyles.menuContent}>
 			<Button
 				type="button"
 				variant="ghost"
