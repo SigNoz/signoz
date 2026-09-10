@@ -376,15 +376,9 @@ func (r *PromRule) String() string {
 }
 
 func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time.Time, interval time.Duration) (promql.Matrix, error) {
-	q, err := r.prometheus.Engine().NewRangeQuery(ctx, r.prometheus.Storage(), nil, qs, start, end, interval)
+	res, err := r.prometheus.QueryRange(ctx, qs, start, end, interval)
 	if err != nil {
 		return nil, err
-	}
-
-	res := q.Exec(ctx)
-
-	if res.Err != nil {
-		return nil, res.Err
 	}
 
 	switch typ := res.Value.(type) {
