@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -43,7 +44,7 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 		if len(evolutionsEntries) > 0 && evolutionsEntries[0] != nil {
 			columnName = evolutionsEntries[0].ColumnName
 		}
-		rawPath := fmt.Sprintf("%s.%s", columnName, ClickHouseIdentifier(key.Name))
+		rawPath := fmt.Sprintf("%s.%s", columnName, clickhousesql.Identifier(key.Name))
 		if exists {
 			return rawPath + " IS NOT NULL", nil
 		}
@@ -88,7 +89,7 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 
 		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
 		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
-			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
+			leftOperand := fmt.Sprintf("mapContains(%s, %s)", column.Name, clickhousesql.StringLiteral(key.Name))
 			if key.Materialized {
 				leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
 			}

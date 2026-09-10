@@ -1,30 +1,38 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import refreshPaymentStatus from 'api/v3/licenses/put';
+import { refreshLicense } from 'api/generated/services/licenses';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { RefreshCcw } from '@signozhq/icons';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { buildLicenseUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
 import { useAppContext } from 'providers/App/App';
 
 function RefreshPaymentStatus({
 	type,
 	className,
+	withPortal,
 }: {
 	type?: 'button' | 'text' | 'tooltip';
 	className?: string;
+	withPortal?: false;
 }): JSX.Element {
 	const { t } = useTranslation(['failedPayment']);
-	const { activeLicenseRefetch } = useAppContext();
+	const { activeLicense, activeLicenseRefetch } = useAppContext();
 
 	const [isLoading, setIsLoading] = useState(false);
 
 	const handleRefreshPaymentStatus = async (): Promise<void> => {
+		if (!activeLicense) {
+			return;
+		}
+
 		setIsLoading(true);
 
 		try {
-			await refreshPaymentStatus();
+			await refreshLicense({ id: activeLicense.id });
 
-			await Promise.all([activeLicenseRefetch()]);
+			activeLicenseRefetch();
 		} catch (e) {
 			console.error(e);
 		}
@@ -32,17 +40,25 @@ function RefreshPaymentStatus({
 	};
 
 	const button = (
-		<Button
-			variant="link"
-			color={type === 'text' ? 'none' : 'secondary'}
-			size="md"
-			className={className}
-			onClick={handleRefreshPaymentStatus}
-			prefix={<RefreshCcw size={14} />}
-			loading={isLoading}
+		<AuthZTooltip
+			checks={
+				activeLicense ? [buildLicenseUpdatePermission(activeLicense.id)] : []
+			}
+			enabled={!!activeLicense}
+			withPortal={withPortal}
 		>
-			{type !== 'tooltip' ? t('refreshPaymentStatus') : ''}
-		</Button>
+			<Button
+				variant="link"
+				color={type === 'text' ? 'none' : 'secondary'}
+				size="md"
+				className={className}
+				onClick={handleRefreshPaymentStatus}
+				prefix={<RefreshCcw size={14} />}
+				loading={isLoading}
+			>
+				{type !== 'tooltip' ? t('refreshPaymentStatus') : ''}
+			</Button>
+		</AuthZTooltip>
 	);
 
 	return (
@@ -58,6 +74,7 @@ function RefreshPaymentStatus({
 RefreshPaymentStatus.defaultProps = {
 	type: 'button',
 	className: undefined,
+	withPortal: undefined,
 };
 
 export default RefreshPaymentStatus;

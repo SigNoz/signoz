@@ -75,7 +75,7 @@ func (store *config) CreateChannel(ctx context.Context, channel *alertmanagertyp
 			NewInsert().
 			Model(channel).
 			Exec(ctx); err != nil {
-			return err
+			return store.sqlstore.WrapAlreadyExistsErrf(err, alertmanagertypes.ErrCodeAlertmanagerChannelAlreadyExists, "channel with name %q already exists", channel.Name)
 		}
 
 		return nil

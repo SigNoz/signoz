@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -64,7 +65,7 @@ func (m *fieldMapper) ExistsFor(ctx context.Context, _ valuer.UUID, tsStart, tsE
 	if err != nil {
 		return "", err
 	}
-	pred := fmt.Sprintf("mapContains(%s, '%s')", columns[0].Name, key.Name)
+	pred := fmt.Sprintf("mapContains(%s, %s)", columns[0].Name, clickhousesql.StringLiteral(key.Name))
 	if exists {
 		return pred, nil
 	}
@@ -82,7 +83,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, startNs, endN
 		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		ValueType: schema.ColumnTypeString,
 	}:
-		return fmt.Sprintf("%s['%s']", columns[0].Name, key.Name), nil
+		return fmt.Sprintf("%s[%s]", columns[0].Name, clickhousesql.StringLiteral(key.Name)), nil
 	}
 	return columns[0].Name, nil
 }
@@ -130,5 +131,5 @@ func (m *fieldMapper) ColumnExpressionFor(
 		}
 	}
 
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
+	return sqlbuilder.Escape(fmt.Sprintf("%s AS %s", fieldExpression, clickhousesql.Identifier(field.Name))), nil
 }

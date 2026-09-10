@@ -394,6 +394,24 @@ var (
 	SpanSearchScopeRoot       = "isroot"
 	SpanSearchScopeEntryPoint = "isentrypoint"
 
+	// SpanSearchScopeFields are the search-scope selectors (isRoot, isEntryPoint),
+	// not columns and unrelated to the instrumentation scope: they only filter
+	// with the value true.
+	SpanSearchScopeFields = map[string]telemetrytypes.TelemetryFieldKey{
+		"isRoot": {
+			Name:          "isRoot",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeBool,
+		},
+		"isEntryPoint": {
+			Name:          "isEntryPoint",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeBool,
+		},
+	}
+
 	// IntrinsicSpanFields lists the intrinsic span columns, in the order they
 	// should appear when a raw query expands its SelectFields.
 	IntrinsicSpanFields = []telemetrytypes.TelemetryFieldKey{

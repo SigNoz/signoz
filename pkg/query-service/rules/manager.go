@@ -333,7 +333,7 @@ func (m *Manager) validateChannels(ctx context.Context, orgID string, rule *rule
 
 	known := make(map[string]struct{}, len(orgChannels))
 	for _, ch := range orgChannels {
-		known[ch.Name] = struct{}{}
+		known[ch.DisplayName] = struct{}{}
 	}
 
 	var unknown []string

@@ -56,6 +56,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/tracesstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
@@ -168,6 +169,7 @@ func New(
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	licenseConfig licensing.Config,
 	licenseProviderFactory func(sqlstore.SQLStore, zeus.Zeus, organization.Getter, analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config],
+	subscriptionCallback func(zeus.Zeus, licensing.Licensing) subscription.Subscription,
 	emailingProviderFactories factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
 	webProviderFactories factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]],
@@ -624,16 +626,25 @@ func New(
 
 	// Initialize all handlers for the modules
 	registryHandler := factory.NewHandler(registry)
-	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, registryHandler, alertmanager, prometheus, rulerInstance, statsAggregator)
+	subscriptionService := subscriptionCallback(zeus, licensing)
+
+	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, subscriptionService, registryHandler, alertmanager, prometheus, rulerInstance, statsAggregator)
 
 	// Initialize the API server (after registry so it can access service health)
 	apiserverInstance, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.APIServer,
-		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers, config.Global),
+		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers, config.Global, gateway, identNResolver, sharder, auditor, web),
 		"signoz",
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Register the API server with the registry so its lifecycle is managed
+	// alongside the other services and it shows up in the health endpoint.
+	err = registry.Add(ctx, factory.NewNamedService(factory.MustNewName("apiserver"), apiserverInstance))
 	if err != nil {
 		return nil, err
 	}

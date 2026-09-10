@@ -6,52 +6,6 @@ import (
 	"strings"
 )
 
-func toStrArrayString(strs ...string) string {
-	return fmt.Sprintf("[%s]", strings.Join(strs, ","))
-}
-
-// formatValue formats the value to be used in clickhouse query.
-func formatValueForCH(v any) string {
-	// if it's pointer convert it to a value
-	v = getPointerValue(v)
-
-	switch x := v.(type) {
-	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
-		return fmt.Sprintf("%d", x)
-	case float32, float64:
-		return fmt.Sprintf("%f", x)
-	case string:
-		return fmt.Sprintf("'%s'", quoteEscapedString(x))
-	case bool:
-		return fmt.Sprintf("%v", x)
-
-	case []any:
-		if len(x) == 0 {
-			return "[]"
-		}
-		switch x[0].(type) {
-		case string:
-			strs := []string{}
-			for _, sVal := range x {
-				strs = append(strs, fmt.Sprintf("'%s'", quoteEscapedString(sVal.(string))))
-			}
-			return toStrArrayString(strs...)
-		case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64, float32, float64, bool:
-			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
-		default:
-			return toStrArrayString()
-		}
-	case []string:
-		strs := []string{}
-		for _, sVal := range x {
-			strs = append(strs, fmt.Sprintf("'%s'", quoteEscapedString(sVal)))
-		}
-		return toStrArrayString(strs...)
-	default:
-		return ""
-	}
-}
-
 func getPointerValue(v any) any {
 
 	// Check if the interface value is nil
@@ -140,13 +94,6 @@ func getPointerValue(v any) any {
 	default:
 		return v
 	}
-}
-
-func quoteEscapedString(str string) string {
-	// https://clickhouse.com/docs/en/sql-reference/syntax#string
-	str = strings.ReplaceAll(str, `\`, `\\`)
-	str = strings.ReplaceAll(str, `'`, `\'`)
-	return str
 }
 
 // formatValueForProm formats the value to be used in promql.

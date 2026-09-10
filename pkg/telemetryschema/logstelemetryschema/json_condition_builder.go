@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -41,7 +42,7 @@ func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperato
 
 	// path index
 	if operator.AddDefaultExistsFilter() {
-		pathIndex := fmt.Sprintf(`has(%s, '%s')`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), c.key.ArrayParentPaths()[0])
+		pathIndex := sqlbuilder.Escape(fmt.Sprintf(`has(%s, %s)`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), clickhousesql.StringLiteral(c.key.ArrayParentPaths()[0])))
 		return sb.And(baseCond, pathIndex), nil
 	}
 
@@ -123,7 +124,7 @@ func (c *jsonConditionBuilder) buildAccessNodeBranches(current *telemetrytypes.J
 		if err != nil {
 			return "", err
 		}
-		branches = append(branches, fmt.Sprintf("arrayExists(%s-> %s, %s)", currAlias, childGroup, c.branchArrayExpr(current, branch)))
+		branches = append(branches, fmt.Sprintf("arrayExists(%s-> %s, %s)", sqlbuilder.Escape(currAlias), childGroup, sqlbuilder.Escape(c.branchArrayExpr(current, branch))))
 	}
 
 	if len(branches) == 1 {
@@ -302,7 +303,7 @@ func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytype
 		return "", err
 	}
 
-	return fmt.Sprintf("arrayExists(%s -> %s, %s)", key, op, arrayExpr), nil
+	return fmt.Sprintf("arrayExists(%s -> %s, %s)", key, op, sqlbuilder.Escape(arrayExpr)), nil
 }
 
 // buildArrayFunctionCondition builds a has/hasAny/hasAll condition over a body JSON path,
@@ -386,7 +387,7 @@ func (c *jsonConditionBuilder) buildArrayExistsChain(node *telemetrytypes.JSONAc
 		if err != nil {
 			return "", err
 		}
-		branches = append(branches, fmt.Sprintf("arrayExists(%s-> %s, %s)", node.Alias(), childCond, c.branchArrayExpr(node, branch)))
+		branches = append(branches, fmt.Sprintf("arrayExists(%s-> %s, %s)", sqlbuilder.Escape(node.Alias()), childCond, sqlbuilder.Escape(c.branchArrayExpr(node, branch))))
 	}
 	if len(branches) == 1 {
 		return branches[0], nil
@@ -456,10 +457,10 @@ func (c *jsonConditionBuilder) tokenLeaf(node *telemetrytypes.JSONAccessNode, ne
 	switch node.TerminalConfig.ElemType {
 	case telemetrytypes.String:
 		fieldExpr := fmt.Sprintf("dynamicElement(%s, 'String')", node.FieldPath())
-		return fmt.Sprintf("ifNull(hasToken(LOWER(%s), LOWER(%s)), false)", fieldExpr, sb.Var(needle)), nil
+		return fmt.Sprintf("ifNull(hasToken(LOWER(%s), LOWER(%s)), false)", sqlbuilder.Escape(fieldExpr), sb.Var(needle)), nil
 	case telemetrytypes.ArrayString:
 		arrayExpr := fmt.Sprintf("dynamicElement(%s, '%s')", node.FieldPath(), node.TerminalConfig.ElemType.StringValue())
-		return fmt.Sprintf("arrayExists(x -> hasToken(LOWER(x), LOWER(%s)), %s)", sb.Var(needle), arrayExpr), nil
+		return fmt.Sprintf("arrayExists(x -> hasToken(LOWER(x), LOWER(%s)), %s)", sb.Var(needle), sqlbuilder.Escape(arrayExpr)), nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "function `hasToken` only supports string fields; field `%s` is `%s`", c.key.Name, node.TerminalConfig.Key.FieldDataType.StringValue())
 	}
@@ -496,9 +497,9 @@ func (c *jsonConditionBuilder) applyOperator(sb *sqlbuilder.SelectBuilder, field
 	case qbtypes.FilterOperatorNotILike:
 		return sb.NotILike(fieldExpr, value), nil
 	case qbtypes.FilterOperatorRegexp:
-		return fmt.Sprintf("match(%s, %s)", fieldExpr, sb.Var(value)), nil
+		return fmt.Sprintf("match(%s, %s)", sqlbuilder.Escape(fieldExpr), sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
-		return fmt.Sprintf("NOT match(%s, %s)", fieldExpr, sb.Var(value)), nil
+		return fmt.Sprintf("NOT match(%s, %s)", sqlbuilder.Escape(fieldExpr), sb.Var(value)), nil
 	case qbtypes.FilterOperatorContains:
 		return sb.ILike(fieldExpr, fmt.Sprintf("%%%v%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:

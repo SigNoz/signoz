@@ -433,7 +433,7 @@ func (n *Notifier) resolveAPIBaseURL(ctx context.Context) (string, bool, error) 
 // resolveCloudID fetches the site's cloud id from its unauthenticated
 // tenant_info endpoint; transport failures are retryable, bad responses are not.
 func (n *Notifier) resolveCloudID(ctx context.Context) (string, bool, error) {
-	url := strings.TrimRight(n.conf.Site, "/") + "/_edge/tenant_info"
+	url := n.conf.Site + "/_edge/tenant_info"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return "", false, err

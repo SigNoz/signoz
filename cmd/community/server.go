@@ -44,6 +44,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/subscription"
+	"github.com/SigNoz/signoz/pkg/subscription/noopsubscription"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -86,6 +88,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		licensing.Config{},
 		func(_ sqlstore.SQLStore, _ zeus.Zeus, _ organization.Getter, _ analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
 			return nooplicensing.NewFactory()
+		},
+		func(_ zeus.Zeus, _ licensing.Licensing) subscription.Subscription {
+			return noopsubscription.New()
 		},
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),

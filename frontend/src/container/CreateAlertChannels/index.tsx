@@ -32,6 +32,9 @@ import {
 	ChannelType,
 	EmailChannel,
 	GoogleChatChannel,
+	IncidentIOChannel,
+	JiraChannel,
+	JsmOpsChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -43,7 +46,13 @@ import { ChannelInitialConfig } from './defaults';
 import {
 	isChannelType,
 	isValidGoogleChatWebhookURL,
+	isValidIncidentIOURL,
+	isValidJiraReopenDuration,
+	isValidJiraSiteURL,
 	prepareGoogleChatRequest,
+	prepareIncidentIORequest,
+	prepareJiraRequest,
+	prepareJsmOpsRequest,
 } from './utils';
 
 import './CreateAlertChannels.styles.scss';
@@ -69,7 +78,10 @@ function CreateAlertChannels({
 				MsTeamsChannel &
 				OpsgenieChannel &
 				EmailChannel &
-				GoogleChatChannel
+				GoogleChatChannel &
+				JiraChannel &
+				JsmOpsChannel &
+				IncidentIOChannel
 		>
 	>(() => ({
 		send_resolved: true,
@@ -434,6 +446,164 @@ function CreateAlertChannels({
 		showErrorModal,
 	]);
 
+	const validateJiraConfig = useCallback((): boolean => {
+		if (
+			!selectedConfig.site ||
+			!selectedConfig.username ||
+			!selectedConfig.password ||
+			!selectedConfig.project ||
+			!selectedConfig.issue_type
+		) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_required_fields'),
+			});
+			return false;
+		}
+
+		if (!isValidJiraSiteURL(selectedConfig.site)) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_site_invalid'),
+			});
+			return false;
+		}
+
+		if (
+			selectedConfig.reopen_duration &&
+			!isValidJiraReopenDuration(selectedConfig.reopen_duration)
+		) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_reopen_duration_invalid'),
+			});
+			return false;
+		}
+
+		return true;
+	}, [selectedConfig, notifications, t]);
+
+	const onJiraHandler = useCallback(async () => {
+		if (!validateJiraConfig()) {
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		}
+
+		setSavingState(true);
+
+		try {
+			await createChannel({ data: prepareJiraRequest(selectedConfig) });
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateJiraConfig,
+		createChannel,
+		selectedConfig,
+		notifications,
+		t,
+		showErrorModal,
+	]);
+
+	const validateJsmOpsConfig = useCallback((): boolean => {
+		if (!selectedConfig.api_key) {
+			notifications.error({
+				message: 'Error',
+				description: t('api_key_required'),
+			});
+			return false;
+		}
+		return true;
+	}, [selectedConfig.api_key, notifications, t]);
+
+	const onJsmOpsHandler = useCallback(async () => {
+		if (!validateJsmOpsConfig()) {
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		}
+
+		setSavingState(true);
+
+		try {
+			await createChannel({ data: prepareJsmOpsRequest(selectedConfig) });
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateJsmOpsConfig,
+		createChannel,
+		selectedConfig,
+		notifications,
+		t,
+		showErrorModal,
+	]);
+
+	const validateIncidentIOConfig = useCallback((): boolean => {
+		if (!selectedConfig.url || !selectedConfig.token) {
+			notifications.error({
+				message: 'Error',
+				description: t('incidentio_required_fields'),
+			});
+			return false;
+		}
+
+		if (!isValidIncidentIOURL(selectedConfig.url)) {
+			notifications.error({
+				message: 'Error',
+				description: t('incidentio_url_invalid'),
+			});
+			return false;
+		}
+
+		return true;
+	}, [selectedConfig.url, selectedConfig.token, notifications, t]);
+
+	const onIncidentIOHandler = useCallback(async () => {
+		if (!validateIncidentIOConfig()) {
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		}
+
+		setSavingState(true);
+
+		try {
+			await createChannel({ data: prepareIncidentIORequest(selectedConfig) });
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateIncidentIOConfig,
+		createChannel,
+		selectedConfig,
+		notifications,
+		t,
+		showErrorModal,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			if (!selectedConfig.name) {
@@ -452,6 +622,9 @@ function CreateAlertChannels({
 				[ChannelType.MsTeams]: onMsTeamsHandler,
 				[ChannelType.Email]: onEmailHandler,
 				[ChannelType.GoogleChat]: onGoogleChatHandler,
+				[ChannelType.Jira]: onJiraHandler,
+				[ChannelType.JsmOps]: onJsmOpsHandler,
+				[ChannelType.IncidentIO]: onIncidentIOHandler,
 			};
 
 			if (isChannelType(value)) {
@@ -484,6 +657,9 @@ function CreateAlertChannels({
 			onMsTeamsHandler,
 			onEmailHandler,
 			onGoogleChatHandler,
+			onJiraHandler,
+			onJsmOpsHandler,
+			onIncidentIOHandler,
 			notifications,
 			t,
 		],
@@ -527,6 +703,27 @@ function CreateAlertChannels({
 							return;
 						}
 						await testChannel({ data: prepareGoogleChatRequest(selectedConfig) });
+						break;
+					case ChannelType.Jira:
+						if (!validateJiraConfig()) {
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareJiraRequest(selectedConfig) });
+						break;
+					case ChannelType.JsmOps:
+						if (!validateJsmOpsConfig()) {
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareJsmOpsRequest(selectedConfig) });
+						break;
+					case ChannelType.IncidentIO:
+						if (!validateIncidentIOConfig()) {
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareIncidentIORequest(selectedConfig) });
 						break;
 					default:
 						notifications.error({
@@ -576,6 +773,9 @@ function CreateAlertChannels({
 			prepareMsTeamsRequest,
 			prepareEmailRequest,
 			validateGoogleChatConfig,
+			validateJiraConfig,
+			validateJsmOpsConfig,
+			validateIncidentIOConfig,
 			testChannel,
 			notifications,
 		],

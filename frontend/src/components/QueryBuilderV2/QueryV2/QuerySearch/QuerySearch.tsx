@@ -16,8 +16,6 @@ import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
 import {
 	negationQueryOperatorSuggestions,
@@ -27,7 +25,7 @@ import {
 	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
 	queryOperatorSuggestions,
 } from 'constants/antlrQueryConstants';
-import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
+import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
@@ -54,6 +52,12 @@ import {
 	SUGGESTION_FETCH_DEBOUNCE_MS,
 	SUGGESTIONS_SECTION,
 } from './constants';
+import {
+	fetchFieldKeysForQuery,
+	fetchFieldValuesForQuery,
+	SuggestedFieldKey,
+	SuggestedFieldKeysByName,
+} from './fieldSuggestions';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
@@ -258,16 +262,11 @@ function QuerySearch({
 	const lastValueRef = useRef<string>('');
 	const isMountedRef = useRef<boolean>(true);
 
-	const dashboardDynamicVariables = useDashboardVariablesByType(
-		'DYNAMIC',
-		'values',
-	);
+	const dashboardDynamicVariables = useDynamicVariableSuggestions();
 
 	// Add back the generateOptions function and useEffect
-	const generateOptions = (keys: {
-		[key: string]: QueryKeyDataSuggestionsProps[];
-	}): any[] =>
-		Object.values(keys).flatMap((items: QueryKeyDataSuggestionsProps[]) =>
+	const generateOptions = (keys: SuggestedFieldKeysByName): any[] =>
+		Object.values(keys).flatMap((items: SuggestedFieldKey[]) =>
 			items.map(({ name, fieldDataType, fieldContext }) => ({
 				label: name,
 				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
@@ -320,8 +319,9 @@ function QuerySearch({
 
 			lastFetchedKeyRef.current = searchText || '';
 
-			const response = await getKeySuggestions({
-				signal: dataSource,
+			const response = await fetchFieldKeysForQuery({
+				builderQueryType: queryData.builderQueryType,
+				dataSource,
 				searchText: searchText || '',
 				metricName: debouncedMetricName ?? undefined,
 				signalSource: signalSource as 'meter' | '',
@@ -363,6 +363,7 @@ function QuerySearch({
 			hardcodedAttributeKeys,
 			showFilterSuggestionsWithoutMetric,
 			metricNamespace,
+			queryData.builderQueryType,
 		],
 	);
 
@@ -496,10 +497,11 @@ function QuerySearch({
 			try {
 				const values = valueSuggestionsOverride
 					? await valueSuggestionsOverride(key, sanitizedSearchText)
-					: await getValueSuggestions({
+					: await fetchFieldValuesForQuery({
+							builderQueryType: queryData.builderQueryType,
+							dataSource,
 							key,
 							searchText: sanitizedSearchText,
-							signal: dataSource,
 							signalSource: signalSource as 'meter' | '',
 							metricName: debouncedMetricName ?? undefined,
 						}).then((response) => {
@@ -604,6 +606,7 @@ function QuerySearch({
 			signalSource,
 			toggleSuggestions,
 			valueSuggestionsOverride,
+			queryData.builderQueryType,
 		],
 	);
 
@@ -1188,8 +1191,8 @@ function QuerySearch({
 			);
 
 			// Add dynamic variables suggestions for the current key
-			const variableName = dashboardDynamicVariables?.find(
-				(variable) => variable?.dynamicVariablesAttribute === keyName,
+			const variableName = dashboardDynamicVariables.find(
+				(variable) => variable.attribute === keyName,
 			)?.name;
 
 			if (variableName) {

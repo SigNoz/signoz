@@ -31,12 +31,6 @@ jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): { dashboardData: undefined } => ({
-		dashboardData: undefined,
-	}),
-}));
-
 jest.mock('api/querySuggestions/getKeySuggestions', () => ({
 	getKeySuggestions: jest.fn().mockResolvedValue({
 		data: { data: { keys: {} } },
