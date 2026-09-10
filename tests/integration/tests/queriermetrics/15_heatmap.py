@@ -62,16 +62,16 @@ def test_gauge_heatmap(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max", group_by=["host"])],
+        [build_builder_query("A", metric_name, "max", "max", group_by=["host"], bucket_options=build_log_bucket_options(0))],
         request_type=RequestType.HEATMAP,
-        bucket_options=build_log_bucket_options(0),
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
     data = response.json()
     # a group by gives one series per host, and all of them are counted against
-    # this one axis
-    assert get_heatmap_buckets(data, "A") == pytest.approx([256.0, 512.0, 1024.0])
+    # this one axis. 128 is on it so the lowest bucket holding anything reads as
+    # (128, 256] rather than as everything at or below 256
+    assert get_heatmap_buckets(data, "A") == pytest.approx([128.0, 256.0, 512.0, 1024.0])
 
     columns_by_host = {host: sorted(series["values"], key=lambda column: column["timestamp"]) for host, series in index_series_by_label(get_all_series(data, "A"), "host").items()}
     assert len(columns_by_host) == len(value_by_host)
@@ -80,14 +80,20 @@ def test_gauge_heatmap(
     # number stands for a spread
     assert all("value" not in column for columns in columns_by_host.values() for column in columns)
 
-    # a column holds one count per bucket plus a trailing one for the overflow
+    # a column holds one count per bucket plus a trailing one for the overflow.
+    # the 200s reach (128, 256], the 400s (256, 512] and the 800s (512, 1024],
+    # and every minute records the same value
+    expected_columns = [
+        [0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 0, 1, 0],
+    ]
     for host, columns in columns_by_host.items():
-        occupied = int(host.removeprefix("host-")) // 8
-        assert [column["values"] for column in columns] == [[1 if slot == occupied else 0 for slot in range(4)]] * minutes
+        assert [column["values"] for column in columns] == [expected_columns[int(host.removeprefix("host-")) // 8]] * minutes
 
     # summed across the hosts, a column is the spread of the 24 of them
     for minute in range(minutes):
-        assert [sum(columns[minute]["values"][slot] for columns in columns_by_host.values()) for slot in range(4)] == [8, 8, 8, 0]
+        assert [sum(columns[minute]["values"][slot] for columns in columns_by_host.values()) for slot in range(5)] == [0, 8, 8, 8, 0]
 
 
 def test_sum_heatmap(
@@ -124,24 +130,28 @@ def test_sum_heatmap(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max", temporality="cumulative", group_by=["endpoint"])],
+        [build_builder_query("A", metric_name, "max", "max", temporality="cumulative", group_by=["endpoint"], bucket_options=build_log_bucket_options(0))],
         request_type=RequestType.HEATMAP,
-        bucket_options=build_log_bucket_options(0),
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
     data = response.json()
-    assert get_heatmap_buckets(data, "A") == pytest.approx([128.0, 256.0, 512.0, 1024.0])
+    assert get_heatmap_buckets(data, "A") == pytest.approx([64.0, 128.0, 256.0, 512.0, 1024.0])
 
     columns_by_endpoint = {endpoint: sorted(series["values"], key=lambda column: column["timestamp"]) for endpoint, series in index_series_by_label(get_all_series(data, "A"), "endpoint").items()}
     assert len(columns_by_endpoint) == len(value_by_endpoint)
 
+    # the 100s reach (64, 128] and the 800s (512, 1024], and every minute
+    # records the same value
+    expected_columns = [
+        [0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0],
+    ]
     for endpoint, columns in columns_by_endpoint.items():
-        occupied = 0 if int(endpoint.removeprefix("/endpoint-")) < 8 else 3
-        assert [column["values"] for column in columns] == [[1 if slot == occupied else 0 for slot in range(5)]] * minutes
+        assert [column["values"] for column in columns] == [expected_columns[int(endpoint.removeprefix("/endpoint-")) // 8]] * minutes
 
     for minute in range(minutes):
-        assert [sum(columns[minute]["values"][slot] for columns in columns_by_endpoint.values()) for slot in range(5)] == [8, 0, 0, 8, 0]
+        assert [sum(columns[minute]["values"][slot] for columns in columns_by_endpoint.values()) for slot in range(6)] == [0, 8, 0, 0, 8, 0]
 
 
 def test_histogram_heatmap(
@@ -222,22 +232,21 @@ def test_linear_buckets(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max")],
+        [build_builder_query("A", metric_name, "max", "max", bucket_options=build_linear_bucket_options(1000, 10))],
         request_type=RequestType.HEATMAP,
-        bucket_options=build_linear_bucket_options(1000, 10),
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
     data = response.json()
     # 200 is on the axis although nothing reached it, so the gap between 100 and
-    # 300 renders as a gap
-    assert get_heatmap_buckets(data, "A") == pytest.approx([100.0, 200.0, 300.0])
+    # 300 renders as a gap, and 0 is on it so the lowest bucket reads as (0, 100]
+    assert get_heatmap_buckets(data, "A") == pytest.approx([0.0, 100.0, 200.0, 300.0])
 
     columns = get_heatmap_columns(data, "A")
     assert [column["values"] for column in columns] == [
-        [1, 0, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1],
+        [0, 1, 0, 0, 0],
+        [0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 1],
     ]
 
 
@@ -273,22 +282,22 @@ def test_zero_bucket(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max")],
+        [build_builder_query("A", metric_name, "max", "max", bucket_options=build_log_bucket_options(0))],
         request_type=RequestType.HEATMAP,
-        bucket_options=build_log_bucket_options(0),
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
     data = response.json()
     # a log axis cannot place a value at or below zero, so those share a bucket
-    # of their own beneath the rest, and 512 is spanned above it
-    assert get_heatmap_buckets(data, "A") == pytest.approx([0.0, 256.0, 512.0, 1024.0])
+    # of their own beneath the rest. 128 separates that bucket from the lowest
+    # one holding anything, and 512 is spanned above it
+    assert get_heatmap_buckets(data, "A") == pytest.approx([0.0, 128.0, 256.0, 512.0, 1024.0])
 
     columns = get_heatmap_columns(data, "A")
     assert [column["values"] for column in columns] == [
-        [1, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0],
-        [0, 0, 0, 1, 0],
+        [1, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0],
     ]
 
 
@@ -329,24 +338,30 @@ def test_single_bucket(
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
-    # a single bucket leaves no gap to span
+    # a single bucket leaves no gap to span, and still gets the rung below it so
+    # its own lower bound is stated
     data = response.json()
-    assert get_heatmap_buckets(data, "A") == [256.0]
-    assert [column["values"] for column in get_heatmap_columns(data, "A")] == [[1, 0], [1, 0], [1, 0]]
+    assert get_heatmap_buckets(data, "A") == pytest.approx([256 * 2 ** (-1 / 16), 256.0])
+    assert [column["values"] for column in get_heatmap_columns(data, "A")] == [
+        [0, 1, 0],
+        [0, 1, 0],
+        [0, 1, 0],
+    ]
 
 
-# the values seeded below are 256 and 512, so each axis here runs from the bucket
-# holding 256 to the one holding 512 at that option's resolution: 16 log buckets
-# to the 2x, one bucket per 16x, or a linear bucket every maxValue/numBuckets
+# the values seeded below are 256 and 512, so each axis here runs from the rung
+# under the bucket holding 256 to the one holding 512 at that option's
+# resolution: 16 log buckets to the 2x, one bucket per 16x, or a linear bucket
+# every maxValue/numBuckets
 @pytest.mark.parametrize(
     "bucket_options, expected_buckets",
     [
-        (None, [256 * 2 ** (step / 16) for step in range(17)]),
-        ({"kind": "log", "spec": {}}, [256 * 2 ** (step / 16) for step in range(17)]),
-        (build_log_bucket_options(4), [256 * 2 ** (step / 16) for step in range(17)]),
-        (build_log_bucket_options(-4), [2**16]),
-        (build_linear_bucket_options(1024), [step * 1024 / 60 for step in range(15, 31)]),
-        (build_linear_bucket_options(1024, 512), [step * 1024 / 512 for step in range(128, 257)]),
+        (None, [256 * 2 ** (step / 16) for step in range(-1, 17)]),
+        ({"kind": "log", "spec": {}}, [256 * 2 ** (step / 16) for step in range(-1, 17)]),
+        (build_log_bucket_options(4), [256 * 2 ** (step / 16) for step in range(-1, 17)]),
+        (build_log_bucket_options(-4), [1, 2**16]),
+        (build_linear_bucket_options(1024), [step * 1024 / 60 for step in range(14, 31)]),
+        (build_linear_bucket_options(1024, 512), [step * 1024 / 512 for step in range(127, 257)]),
     ],
     ids=["absent", "log_defaults", "the_finest_scale", "the_coarsest_scale", "linear_without_num_buckets", "the_most_buckets"],
 )
@@ -384,9 +399,8 @@ def test_bucket_option_limits(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max")],
+        [build_builder_query("A", metric_name, "max", "max", bucket_options=bucket_options)],
         request_type=RequestType.HEATMAP,
-        bucket_options=bucket_options,
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
@@ -398,6 +412,56 @@ def test_bucket_option_limits(
     for column in columns:
         assert len(column["values"]) == len(expected_buckets) + 1
         assert sum(column["values"]) == 1
+
+
+def test_bucket_options_come_from_the_enabled_query(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(minutes=30)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = "test_heatmap_bucket_options_on_two_queries"
+
+    values = [256, 512]
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=now - timedelta(minutes=len(values) - minute),
+                value=value,
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for minute, value in enumerate(values)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [
+            build_builder_query("A", metric_name, "max", "max", disabled=True, bucket_options=build_linear_bucket_options(1024, 512)),
+            build_builder_query("B", metric_name, "max", "max", bucket_options=build_log_bucket_options(-4)),
+        ],
+        request_type=RequestType.HEATMAP,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    data = response.json()
+    # B's axis, one bucket per 16x. A's 512 linear buckets to 1024 would have
+    # put 130 of them between 256 and 512 alone
+    assert get_heatmap_buckets(data, "B") == pytest.approx([1, 2**16])
+    assert [column["values"] for column in get_heatmap_columns(data, "B")] == [
+        [0, 1, 0],
+        [0, 1, 0],
+    ]
 
 
 def test_formula_heatmap(
@@ -432,20 +496,22 @@ def test_formula_heatmap(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "max", "max")],
+        [build_builder_query("A", metric_name, "max", "max", bucket_options=build_log_bucket_options(2))],
         request_type=RequestType.HEATMAP,
     )
     assert from_metric.status_code == HTTPStatus.OK, from_metric.text
 
-    # a formula over the same query has to land its counts on the same axis
+    # a formula over the same query has to land its counts on the same axis. the
+    # scale on the disabled input is out of range: only the query the heatmap
+    # draws states an axis, so nothing reads that one
     from_formula = make_query_request(
         signoz,
         token,
         start_ms,
         end_ms,
         [
-            build_builder_query("A", metric_name, "max", "max", disabled=True),
-            build_formula_query("F1", "A"),
+            build_builder_query("A", metric_name, "max", "max", disabled=True, bucket_options={"kind": "log", "spec": {"scale": 5}}),
+            build_formula_query("F1", "A", bucket_options=build_log_bucket_options(2)),
         ],
         request_type=RequestType.HEATMAP,
     )
@@ -493,7 +559,10 @@ def test_promql_heatmap(
     # count here is its own minus the one below it, and `le=+Inf` has no finite
     # bound to sit on and lands in the trailing slot. increase over a 2m window of
     # minutely samples extrapolates one minute's rise to two, hence the scaling.
-    assert [column["values"] for column in get_heatmap_columns(data, "A")] == [[2, 6, 2, 2], [6, 0, 8, 4]]
+    assert [column["values"] for column in get_heatmap_columns(data, "A")] == [
+        [2, 6, 2, 2],
+        [6, 0, 8, 4],
+    ]
 
 
 def test_promql_heatmap_with_no_data(
@@ -526,12 +595,30 @@ def test_clickhouse_heatmap(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start = now - timedelta(minutes=2)
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    metric_name = "test_heatmap_clickhouse"
 
-    # a clickhouse statement names its bucket upper bound column `bucket`
+    # cut into tens these fill (0, 10], (20, 30] and (80, 90] and leave
+    # (10, 20] and (30, 80] with nothing in them
+    values = [2, 5, 8, 21, 22, 23, 24, 26, 28, 30, 82, 88]
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"host": f"host-{host:02d}"},
+                timestamp=start,
+                value=value,
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for host, value in enumerate(values)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_query_request(
         signoz,
         token,
@@ -542,7 +629,15 @@ def test_clickhouse_heatmap(
                 "type": "clickhouse_sql",
                 "spec": {
                     "name": "A",
-                    "query": (f"SELECT toDateTime({int(start.timestamp())}) AS ts, toFloat64(10) AS bucket, toFloat64(3) AS `__result_0` UNION ALL SELECT toDateTime({int(start.timestamp())}) AS ts, toFloat64(20) AS bucket, toFloat64(7) AS `__result_0`"),
+                    "query": (
+                        "SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) AS ts, "
+                        "ceil(value / 10) * 10 - 10 AS `__bucket_min`, "
+                        "ceil(value / 10) * 10 AS `__bucket_max`, "
+                        "toFloat64(count()) AS `__result_0` "
+                        "FROM signoz_metrics.distributed_samples_v4 "
+                        f"WHERE metric_name = '{metric_name}' "
+                        "GROUP BY ts, `__bucket_min`, `__bucket_max`"
+                    ),
                     "disabled": False,
                 },
             }
@@ -552,10 +647,53 @@ def test_clickhouse_heatmap(
     assert response.status_code == HTTPStatus.OK, response.text
 
     data = response.json()
-    assert get_heatmap_buckets(data, "A") == [10, 20]
+    # 20 and 80 are on the axis although no row ended there, so the two ranges
+    # the query skipped hold a count of their own rather than widening the
+    # buckets above them
+    assert get_heatmap_buckets(data, "A") == [10, 20, 30, 80, 90]
     # a clickhouse heatmap takes no bucketOptions, so the counts land exactly
-    # where the statement put them, plus the overflow slot
-    assert [column["values"] for column in get_heatmap_columns(data, "A")] == [[3, 7, 0]]
+    # where the query put them, plus the overflow slot
+    assert [column["values"] for column in get_heatmap_columns(data, "A")] == [
+        [3, 0, 7, 0, 2, 0],
+    ]
+
+
+def test_clickhouse_heatmap_with_no_rows(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = make_query_request(
+        signoz,
+        token,
+        int((now - timedelta(minutes=2)).timestamp() * 1000),
+        int(now.timestamp() * 1000),
+        [
+            {
+                "type": "clickhouse_sql",
+                "spec": {
+                    "name": "A",
+                    "query": (
+                        "SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL 60 SECOND) AS ts, "
+                        "toFloat64(0) AS `__bucket_min`, toFloat64(10) AS `__bucket_max`, toFloat64(count()) AS `__result_0` "
+                        "FROM signoz_metrics.distributed_samples_v4 "
+                        "WHERE metric_name = 'test_heatmap_clickhouse_never_written' "
+                        "GROUP BY ts"
+                    ),
+                    "disabled": False,
+                },
+            }
+        ],
+        request_type=RequestType.HEATMAP,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    data = response.json()
+    assert get_heatmap_buckets(data, "A") == []
+    assert get_heatmap_columns(data, "A") == []
 
 
 def test_cached_heatmap_matches_uncached(
@@ -607,9 +745,10 @@ def test_cached_heatmap_matches_uncached(
 
     assert_identical_query_response(from_cache, uncached)
 
-    # 256 and 4096 are 16x apart, which the axis covers at 16 buckets per 2x, and
-    # every column holds the one value its minute recorded
-    assert len(get_heatmap_buckets(uncached.json(), "A")) == 65
+    # 256 and 4096 are 16x apart, which the axis covers at 16 buckets per 2x plus
+    # the rung under the lowest, and every column holds the one value its minute
+    # recorded
+    assert len(get_heatmap_buckets(uncached.json(), "A")) == 66
     assert [sum(column["values"]) for column in get_heatmap_columns(uncached.json(), "A")] == [1] * 30
 
 
@@ -628,9 +767,8 @@ def test_metric_with_no_data(
         token,
         int((now - timedelta(minutes=30)).timestamp() * 1000),
         int(now.timestamp() * 1000),
-        [build_builder_query("A", missing_metric, "max", "max")],
+        [build_builder_query("A", missing_metric, "max", "max", bucket_options=build_log_bucket_options(0))],
         request_type=RequestType.HEATMAP,
-        bucket_options=build_log_bucket_options(0),
     )
     # a metric with nothing in the window carries no type to choose an axis
     # from, and that is an empty heatmap rather than a rejected request

@@ -14,6 +14,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
@@ -31,11 +32,6 @@ var (
 	// written clickhouse query. The column alias indcate which value is
 	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
-
-	// userHeatmapBucketColumn is the alias a user written clickhouse query can
-	// give its bucket upper bound column, alongside the HeatmapBucketColumn the
-	// statement builder emits.
-	userHeatmapBucketColumn = "bucket"
 )
 
 // stripKeyAlias removes the __SELECT_KEY_<n>_ / __GROUP_BY_KEY_<n>_ prefix from a result
@@ -293,20 +289,28 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	}, nil
 }
 
-func isHeatmapBucketColumn(colName string) bool {
-	name := stripKeyAlias(colName)
-	return name == qbtypes.HeatmapBucketColumn || name == userHeatmapBucketColumn
+func hasHeatmapBucketBounds(colNames []string) bool {
+	var hasMin, hasMax bool
+	for _, colName := range colNames {
+		switch stripKeyAlias(colName) {
+		case qbtypes.HeatmapBucketMinColumn:
+			hasMin = true
+		case qbtypes.HeatmapBucketMaxColumn:
+			hasMax = true
+		}
+	}
+	return hasMin && hasMax
 }
 
-// readAsHeatmap folds one row per cell — (timestamp, group labels, bucket upper
-// bound, count) — into one series per group.
+// readAsHeatmap folds one row per cell — (timestamp, group labels, bucket bounds, count) — into one series per group.
 func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
 
-	if !slices.ContainsFunc(colNames, isHeatmapBucketColumn) {
-		// there is no heatmap bucket column so empty response is returned.
-		return &qbtypes.TimeSeriesData{QueryName: queryName}, nil
+	if !hasHeatmapBucketBounds(colNames) {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a heatmap needs a %q and a %q column to know the extent of each bucket",
+			qbtypes.HeatmapBucketMinColumn, qbtypes.HeatmapBucketMaxColumn)
 	}
 
 	slots := make([]any, len(colTypes))
@@ -324,11 +328,11 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 		}
 
 		var (
-			ts         int64
-			upperBound float64
-			count      float64
-			lblVals    []string
-			lblObjs    []*qbtypes.Label
+			ts      int64
+			bounds  bucketBounds
+			count   float64
+			lblVals []string
+			lblObjs []*qbtypes.Label
 		)
 
 		for idx, ptr := range slots {
@@ -341,8 +345,10 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 			}
 
 			switch name {
-			case qbtypes.HeatmapBucketColumn, userHeatmapBucketColumn:
-				upperBound = numericAsFloat(value)
+			case qbtypes.HeatmapBucketMinColumn:
+				bounds.Lower = numericAsFloat(value)
+			case qbtypes.HeatmapBucketMaxColumn:
+				bounds.Upper = numericAsFloat(value)
 			default:
 				if aggRe.MatchString(name) || slices.Contains(legacyReservedColumnTargetAliases, name) {
 					count = numericAsFloat(value)
@@ -361,19 +367,21 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 			}
 		}
 
-		if ts == 0 || !isValidBucketUpperBound(upperBound) || math.IsNaN(count) || math.IsInf(count, 0) {
+		if ts == 0 || !isValidBucketBounds(bounds) || math.IsNaN(count) || math.IsInf(count, 0) {
 			continue
 		}
 		sort.Strings(lblVals)
 		labelsKey := strings.Join(lblVals, ",")
 
-		accumulator.addCell(labelsKey, lblObjs, ts, upperBound, count)
+		if err := accumulator.addCell(labelsKey, lblObjs, ts, bounds, count); err != nil {
+			return nil, err
+		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return accumulator.foldSeries(queryWindow, stepMs, queryName), nil
+	return accumulator.foldSeries(queryWindow, stepMs, queryName)
 }
 
 // isPartialValue reports whether the step interval starting at timestamp is only

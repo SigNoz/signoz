@@ -397,8 +397,6 @@ type QueryRangeRequest struct {
 	PromQLProvider string `json:"-"`
 
 	FormatOptions *FormatOptions `json:"formatOptions,omitempty"`
-
-	BucketOptions *BucketOptions `json:"bucketOptions,omitempty"`
 }
 
 // PrepareJSONSchema adds description to the QueryRangeRequest schema.

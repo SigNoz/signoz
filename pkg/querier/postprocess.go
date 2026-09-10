@@ -364,7 +364,7 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 			result := q.processTimeSeriesFormula(ctx, results, formula, req)
 			if result != nil {
 				if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
-					bucketing := req.BucketOptions.ToHeatmapBucketing()
+					bucketing := formula.BucketOptions.ToHeatmapBucketing()
 					bucketFormulaOutputAsHeatmap(tsData, bucketing)
 					resolveHeatmapBucketAxis(tsData, bucketing)
 				}

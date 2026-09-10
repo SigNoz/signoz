@@ -29,11 +29,19 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
 @pytest.mark.parametrize(
     "queries, request_options, expected_message",
     [
+        # a promql or clickhouse query cuts its own buckets, so neither spec has
+        # anywhere to state an axis
         pytest.param(
-            [{"type": "promql", "spec": {"name": "A", "query": METRIC_NAME}}],
-            {"bucket_options": build_log_bucket_options(2)},
-            "bucketOptions are not supported for promql heatmap requests",
+            [{"type": "promql", "spec": {"name": "A", "query": METRIC_NAME, "bucketOptions": build_log_bucket_options(2)}}],
+            {},
+            'unknown field "bucketOptions" in PromQL spec',
             id="bucket_options_on_a_promql_query",
+        ),
+        pytest.param(
+            [{"type": "clickhouse_sql", "spec": {"name": "A", "query": "SELECT 1", "bucketOptions": build_log_bucket_options(2)}}],
+            {},
+            'unknown field "bucketOptions" in ClickHouse SQL spec',
+            id="bucket_options_on_a_clickhouse_query",
         ),
         pytest.param(
             QUERY,
@@ -66,10 +74,12 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
             "a heatmap needs one enabled query, but every query is disabled",
             id="only_a_disabled_query",
         ),
+        # an empty body is refused while resources are extracted from it, before
+        # anything heatmap specific runs, so match either wording of that message
         pytest.param(
             [],
             {},
-            "at least one query is required",
+            "one query is required",
             id="no_queries",
         ),
         pytest.param(
@@ -114,58 +124,69 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
             id="having_on_the_query",
         ),
         pytest.param(
-            QUERY,
-            {"bucket_options": {"kind": "quadratic", "spec": {}}},
+            [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options={"kind": "quadratic", "spec": {}})],
+            {},
             "invalid bucketOptions kind",
             id="unknown_bucket_kind",
         ),
         pytest.param(
-            QUERY,
-            {"bucket_options": {"kind": "log"}},
+            [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options={"kind": "log"})],
+            {},
             "bucketOptions spec is required",
             id="log_without_a_spec",
         ),
         pytest.param(
-            QUERY,
-            {"bucket_options": {"kind": "linear"}},
+            [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options={"kind": "linear"})],
+            {},
             "bucketOptions spec is required",
             id="linear_without_a_spec",
         ),
+        # the query spec is strict-decoded, so it names itself rather than the
+        # buckets spec the field is actually wrong in
         pytest.param(
-            QUERY,
-            {"bucket_options": {"kind": "linear", "spec": {"maxValue": 1000, "scale": 2}}},
-            'unknown field "scale" in linear buckets spec',
+            [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options={"kind": "linear", "spec": {"maxValue": 1000, "scale": 2}})],
+            {},
+            'unknown field "scale" in query spec',
             id="scale_under_the_linear_kind",
         ),
         pytest.param(
-            QUERY,
-            {"bucket_options": {"kind": "log", "spec": {"scale": 5}}},
+            [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options={"kind": "log", "spec": {"scale": 5}})],
+            {},
             "scale must be between -4 and 4",
             id="scale_above_the_maximum",
         ),
         pytest.param(
-            QUERY,
-            {"bucket_options": {"kind": "log", "spec": {"scale": -5}}},
+            [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options={"kind": "log", "spec": {"scale": -5}})],
+            {},
             "scale must be between -4 and 4",
             id="scale_below_the_minimum",
         ),
         pytest.param(
-            QUERY,
-            {"bucket_options": {"kind": "linear", "spec": {"maxValue": 0}}},
+            [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options={"kind": "linear", "spec": {"maxValue": 0}})],
+            {},
             "linear buckets need a finite maxValue greater than 0",
             id="zero_max_value",
         ),
         pytest.param(
-            QUERY,
-            {"bucket_options": {"kind": "linear", "spec": {"maxValue": -10}}},
+            [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options={"kind": "linear", "spec": {"maxValue": -10}})],
+            {},
             "linear buckets need a finite maxValue greater than 0",
             id="negative_max_value",
         ),
         pytest.param(
-            QUERY,
-            {"bucket_options": {"kind": "linear", "spec": {"maxValue": 1000, "numBuckets": 513}}},
+            [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options={"kind": "linear", "spec": {"maxValue": 1000, "numBuckets": 513}})],
+            {},
             "numBuckets must be between 1 and 512",
             id="too_many_buckets",
+        ),
+        pytest.param(
+            [
+                build_builder_query("A", METRIC_NAME, "max", "max", disabled=True),
+                build_formula_query("F1", "A", bucket_options={"kind": "log", "spec": {"scale": 5}}),
+            ],
+            {},
+            "scale must be between -4 and 4",
+            id="scale_on_the_formula",
         ),
     ],
 )
@@ -212,12 +233,72 @@ def test_bucket_options_outside_a_heatmap(
         token,
         int((now - timedelta(minutes=30)).timestamp() * 1000),
         int(now.timestamp() * 1000),
-        QUERY,
+        [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options=build_log_bucket_options(2))],
         request_type=request_type,
-        bucket_options=build_log_bucket_options(2),
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     assert "bucketOptions are only supported for heatmap requests" in get_error_message(response.json())
+
+
+@pytest.mark.parametrize(
+    "columns, expected_message",
+    [
+        pytest.param(
+            [
+                "toFloat64(10) AS `__bucket_min`, toFloat64(20) AS `__bucket_max`, toFloat64(3) AS `__result_0`",
+                "toFloat64(12) AS `__bucket_min`, toFloat64(20) AS `__bucket_max`, toFloat64(7) AS `__result_0`",
+            ],
+            # which of the two lower bounds is named first follows the row order
+            # the union happens to return
+            "the bucket ending at 20 is reported as starting at both",
+            id="one_bucket_cut_two_ways",
+        ),
+        pytest.param(
+            [
+                "toFloat64(20) AS `__bucket_max`, toFloat64(3) AS `__result_0`",
+                "toFloat64(30) AS `__bucket_max`, toFloat64(7) AS `__result_0`",
+            ],
+            'a heatmap needs a "__bucket_min" and a "__bucket_max" column',
+            id="upper_bound_without_a_lower_one",
+        ),
+        pytest.param(
+            ["toFloat64(3) AS `__result_0`"],
+            'a heatmap needs a "__bucket_min" and a "__bucket_max" column',
+            id="neither_bound",
+        ),
+    ],
+)
+def test_clickhouse_bucketing_is_rejected(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    columns: list[str],
+    expected_message: str,
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    start = now - timedelta(minutes=2)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    ts = f"toDateTime({int(start.timestamp())}) AS ts"
+    response = make_query_request(
+        signoz,
+        token,
+        int(start.timestamp() * 1000),
+        int(now.timestamp() * 1000),
+        [
+            {
+                "type": "clickhouse_sql",
+                "spec": {
+                    "name": "A",
+                    "query": " UNION ALL ".join(f"SELECT {ts}, {row}" for row in columns),
+                    "disabled": False,
+                },
+            }
+        ],
+        request_type=RequestType.HEATMAP,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert expected_message in get_error_message(response.json())
 
 
 def test_promql_returning_no_le_is_rejected(
@@ -284,9 +365,8 @@ def test_histogram_rejects_bucket_options(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "increase", "p50")],
+        [build_builder_query("A", metric_name, "increase", "p50", bucket_options=build_log_bucket_options(2))],
         request_type=RequestType.HEATMAP,
-        bucket_options=build_log_bucket_options(2),
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     assert "bucketOptions are not supported for histogram metrics" in get_error_message(response.json())

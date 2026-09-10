@@ -7826,6 +7826,8 @@ components:
       type: object
     Querybuildertypesv5QueryBuilderFormula:
       properties:
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         disabled:
           type: boolean
         expression:
@@ -7856,6 +7858,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -7917,6 +7921,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -7978,6 +7984,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -8204,8 +8212,6 @@ components:
         queries (traces, logs, metrics), formulas, joins, trace operators, PromQL,
         and ClickHouse SQL queries.
       properties:
-        bucketOptions:
-          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         compositeQuery:
           $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
         end:

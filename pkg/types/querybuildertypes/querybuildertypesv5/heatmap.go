@@ -9,10 +9,12 @@ import (
 )
 
 const (
-	// HeatmapBucketColumn is the alias a heatmap statement gives the column holding
-	// a row's bucket upper bound. Every other aggregation returns a single numeric
-	// column the reader treats as the value; this name tells the two apart.
-	HeatmapBucketColumn = "__bucket"
+	// A heatmap statement reports a row's bucket as (min, max] under these two
+	// aliases, telling them apart from the single value column every other
+	// aggregation returns. Only the upper bounds reach the response; the lower
+	// ones are what says whether two rows bucketed the same way.
+	HeatmapBucketMinColumn = "__bucket_min"
+	HeatmapBucketMaxColumn = "__bucket_max"
 
 	DefaultNumBuckets = 60
 
@@ -197,9 +199,10 @@ func coarsenUpperBound(upperBound float64, toScale, factor int) float64 {
 	return math.Exp2(float64(merged) / math.Exp2(float64(toScale)))
 }
 
-// AddHeatmapBucketsWithNoCounts spans the range from the lowest upper bound some
-// series reached to the highest. Meta.Buckets leaves the ones in between out
-// entirely, so without this a gap renders with its two sides touching.
+// AddHeatmapBucketsWithNoCounts spans the range from the rung below the lowest
+// upper bound some series reached to the highest. Meta.Buckets leaves the ones
+// in between out entirely, so without this a gap renders with its two sides
+// touching and the lowest bucket reaches the floor of the axis.
 //
 // Only a value-derived axis can be spanned: its upper bounds come from an index
 // that is a pure function of the value, so the ones in between are known without
@@ -241,8 +244,17 @@ func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, b
 	}
 	lowest, highest := slices.Min(indexes), slices.Max(indexes)
 
+	// The lowest bucket reached needs the rung under it on the axis, or its own
+	// lower bound goes unstated and it reads as holding everything below. That
+	// one rung is enough: everything under it merges into the single leading
+	// bucket, which no series reached.
+	from := lowest - 1
+	if offset == 1 && bucketing.calculateUpperBoundAtIndex(from) <= aggBucket.Meta.Buckets[0] {
+		from = lowest
+	}
+
 	denseUpperBounds := append([]float64{}, aggBucket.Meta.Buckets[:offset]...)
-	for index := lowest; index <= highest; index++ {
+	for index := from; index <= highest; index++ {
 		denseUpperBounds = append(denseUpperBounds, bucketing.calculateUpperBoundAtIndex(index))
 	}
 	if len(denseUpperBounds) == len(aggBucket.Meta.Buckets) {
@@ -254,7 +266,7 @@ func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, b
 	// lands where it came from.
 	shiftedTo := make([]int, len(aggBucket.Meta.Buckets))
 	for i, index := range indexes {
-		shiftedTo[i+offset] = index - lowest + offset
+		shiftedTo[i+offset] = index - from + offset
 	}
 
 	overflowIndex := len(denseUpperBounds)
