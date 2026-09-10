@@ -3,86 +3,22 @@ import type { ComponentProps, ComponentType } from 'react';
 import removeLocalStorageKey from 'api/browser/localstorage/remove';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { rest, type RequestHandler } from 'msw';
 import { screen, userEvent } from 'storybook/test';
 
 import { withCanvas } from '@/storybook/decorators/withCanvas';
 import type { GlobalMockArgs } from '@/storybook/globals';
-import { fieldKeysResponse } from '@/storybook/msw/__story_mockdata__/fields';
 
 import QuickFilters from './QuickFilters';
-import { FiltersType, QuickFiltersSource, SignalType } from './types';
-
-const customFilters = [
-	{ name: 'service.name', fieldDataType: 'string', fieldContext: 'resource' },
-	{
-		name: 'deployment.environment',
-		fieldDataType: 'string',
-		fieldContext: 'resource',
-	},
-];
-
-const queryBuilder = {
-	currentQuery: {
-		builder: {
-			queryData: [
-				{
-					filter: { expression: '' },
-					filters: { items: [], op: 'AND' },
-					queryName: 'Logs query',
-				},
-			],
-		},
-	},
-	lastUsedQuery: 0,
-	panelType: 'graph',
-	redirectWithQueryBuilderData: (): void => undefined,
-	setLastUsedQuery: (): void => undefined,
-};
-
-const checkboxConfig = [
-	{
-		attributeKey: {
-			dataType: DataTypes.String,
-			key: 'service.name',
-			type: 'resource',
-		},
-		defaultOpen: true,
-		title: 'Service name',
-		type: FiltersType.CHECKBOX,
-	},
-];
-
-const attributeValuesHandler = (values: string[]): RequestHandler =>
-	rest.get(
-		'http://localhost/api/v3/autocomplete/attribute_values',
-		(_req, res, ctx) =>
-			res(
-				ctx.status(200),
-				ctx.json({
-					status: 'success',
-					data: {
-						boolAttributeValues: null,
-						numberAttributeValues: null,
-						stringAttributeValues: values,
-					},
-				}),
-			),
-	);
-
-const handlers = [
-	rest.get('http://localhost/api/v2/quick_filters/logs', (_req, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({ status: 'success', data: { filters: customFilters } }),
-		),
-	),
-	rest.get('http://localhost/api/v1/fields/keys', (_req, res, ctx) =>
-		res(ctx.status(200), ctx.json(fieldKeysResponse(['k8s.namespace.name']))),
-	),
-	attributeValuesHandler(['checkout', 'frontend', 'payments']),
-];
+import {
+	attributeValuesHandler,
+	checkboxConfig,
+	handlers,
+	LONG_FILTER_VALUES,
+	loadingFiltersHandlers,
+	queryBuilder,
+	selectedServiceQueryBuilder,
+} from './QuickFilters.stories.mocks';
+import { QuickFiltersSource, SignalType } from './types';
 
 const meta = {
 	title: 'Components/Quick Filters',
@@ -150,11 +86,7 @@ export const SettingsAnnouncement: Story = {
 export const LoadingFilters: Story = {
 	parameters: {
 		msw: {
-			handlers: [
-				rest.get('http://localhost/api/v2/quick_filters/logs', (_req, res, ctx) =>
-					res(ctx.delay('infinite')),
-				),
-			],
+			handlers: loadingFiltersHandlers,
 		},
 	},
 };
@@ -169,42 +101,10 @@ export const SelectedExpandedCheckbox: Story = {
 	args: { signal: undefined },
 	parameters: {
 		signoz: {
-			queryBuilder: {
-				...queryBuilder,
-				currentQuery: {
-					builder: {
-						queryData: [
-							{
-								filter: { expression: '' },
-								filters: {
-									items: [
-										{
-											key: {
-												dataType: DataTypes.String,
-												key: 'service.name',
-												type: 'resource',
-											},
-											op: 'in',
-											value: ['checkout', 'payments'],
-										},
-									],
-									op: 'AND',
-								},
-								queryName: 'Logs query',
-							},
-						],
-					},
-				},
-			},
+			queryBuilder: selectedServiceQueryBuilder,
 		},
 	},
 };
-
-const LONG_FILTER_VALUES = [
-	'checkout-service.production-eu-central-1.svc.cluster.local',
-	'payments-authorisation-worker.production-us-east-2.svc.cluster.local',
-	'catalog-availability-projector.staging-ap-south-1.svc.cluster.local',
-];
 
 /**
  * Every tooltip the panel renders, held open: the reveal on each truncated
