@@ -38,12 +38,12 @@ type MetadataStore interface {
 	ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
 
 	// GetPromotedPaths lists the promoted paths recorded in the column
-	// evolution table for the given signal, promoted column and field context.
-	GetPromotedPaths(ctx context.Context, signal Signal, columnName string, fieldContext FieldContext, paths ...string) (map[string]bool, error)
+	// evolution table for the entry's signal, column and field context.
+	GetPromotedPaths(ctx context.Context, entry EvolutionEntry, paths ...string) (map[string]bool, error)
 
-	// PromotePaths records promoted paths in the column evolution table for
-	// the given signal, promoted column and field context.
-	PromotePaths(ctx context.Context, signal Signal, columnName string, fieldContext FieldContext, paths ...string) error
+	// PromotePaths records promoted paths in the column evolution table as
+	// rows templated by entry; FieldName and ReleaseTime are set per path.
+	PromotePaths(ctx context.Context, entry EvolutionEntry, paths ...string) error
 
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)

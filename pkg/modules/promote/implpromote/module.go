@@ -23,12 +23,15 @@ var (
 	// logsBodyTarget is the promotion domain for the logs body JSON column
 	// (body_v2 -> body_promoted), with per-path skip index support.
 	logsBodyTarget = promotetypes.Target{
-		Signal:             telemetrytypes.SignalLogs,
-		FieldContext:       telemetrytypes.FieldContextBody,
+		Entry: telemetrytypes.EvolutionEntry{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   logstelemetryschema.LogsV2BodyPromotedColumn,
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextBody,
+		},
 		DBName:             logstelemetryschema.DBName,
 		LocalTableName:     logstelemetryschema.LogsV2LocalTableName,
 		BaseColumn:         logstelemetryschema.LogsV2BodyV2Column,
-		PromotedColumn:     logstelemetryschema.LogsV2BodyPromotedColumn,
 		RequiredPathPrefix: telemetrytypes.BodyJSONStringSearchPrefix,
 		IndexesSupported:   true,
 	}
@@ -38,12 +41,15 @@ var (
 	// are not wired into the traces query builder yet, so only promotion is
 	// supported for now.
 	tracesAttributesTarget = promotetypes.Target{
-		Signal:             telemetrytypes.SignalTraces,
-		FieldContext:       telemetrytypes.FieldContextAttribute,
+		Entry: telemetrytypes.EvolutionEntry{
+			Signal:       telemetrytypes.SignalTraces,
+			ColumnName:   tracestelemetryschema.SpanAttributesPromotedColumn,
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextAttribute,
+		},
 		DBName:             tracestelemetryschema.DBName,
 		LocalTableName:     tracestelemetryschema.SpanIndexV3LocalTableName,
 		BaseColumn:         tracestelemetryschema.SpanAttributesColumn,
-		PromotedColumn:     tracestelemetryschema.SpanAttributesPromotedColumn,
 		RequiredPathPrefix: "",
 		IndexesSupported:   false,
 	}
@@ -61,7 +67,7 @@ func NewModule(metadataStore telemetrytypes.MetadataStore, telemetrystore teleme
 // ListPromotedPaths lists the promoted paths of the target JSON column,
 // merged with per-path index metadata where the target supports indexes.
 func (m *module) ListPromotedPaths(ctx context.Context, target promotetypes.Target) ([]promotetypes.PromotePath, error) {
-	promotedPaths, err := m.metadataStore.GetPromotedPaths(ctx, target.Signal, target.PromotedColumn, target.FieldContext)
+	promotedPaths, err := m.metadataStore.GetPromotedPaths(ctx, target.Entry)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +140,7 @@ func (m *module) PromotePaths(ctx context.Context, target promotetypes.Target, p
 		pathsStr = append(pathsStr, path.Path)
 	}
 
-	existingPromotedPaths, err := m.metadataStore.GetPromotedPaths(ctx, target.Signal, target.PromotedColumn, target.FieldContext, pathsStr...)
+	existingPromotedPaths, err := m.metadataStore.GetPromotedPaths(ctx, target.Entry, pathsStr...)
 	if err != nil {
 		return err
 	}
@@ -151,7 +157,7 @@ func (m *module) PromotePaths(ctx context.Context, target promotetypes.Target, p
 			parentColumn := target.BaseColumn
 			// if the path is already promoted or is being promoted, add it to the promoted column
 			if _, promoted := existingPromotedPaths[it.Path]; promoted || it.Promote {
-				parentColumn = target.PromotedColumn
+				parentColumn = target.PromotedColumn()
 			}
 
 			for _, index := range it.Indexes {
@@ -177,7 +183,7 @@ func (m *module) PromotePaths(ctx context.Context, target promotetypes.Target, p
 	}
 
 	if len(toInsert) > 0 {
-		err := m.metadataStore.PromotePaths(ctx, target.Signal, target.PromotedColumn, target.FieldContext, toInsert...)
+		err := m.metadataStore.PromotePaths(ctx, target.Entry, toInsert...)
 		if err != nil {
 			return err
 		}
@@ -195,7 +201,7 @@ func (m *module) PromotePaths(ctx context.Context, target promotetypes.Target, p
 // createIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
 func (m *module) createIndexes(ctx context.Context, target promotetypes.Target, indexes []schemamigrator.Index) error {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.TelemetrySignal:  target.Signal.StringValue(),
+		instrumentationtypes.TelemetrySignal:  target.Entry.Signal.StringValue(),
 		instrumentationtypes.CodeNamespace:    "promote",
 		instrumentationtypes.CodeFunctionName: "createIndexes",
 	})
