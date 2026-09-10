@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { rest } from 'msw';
 import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -75,24 +74,7 @@ export const InvalidRequiredFields: Story = {
 
 /** Mutation: a failed test request opens the application's error feedback. */
 export const TestChannelFailure: Story = {
-	parameters: {
-		msw: [
-			rest.post('http://localhost/api/v1/testChannel', (_req, res, ctx) =>
-				res(
-					ctx.status(500),
-					ctx.json({
-						status: 'error',
-						error: {
-							code: 'STORYBOOK_FAILURE',
-							message: 'Storybook forced channel failure',
-							url: '',
-							errors: [],
-						},
-					}),
-				),
-			),
-		],
-	},
+	args: { testOutcome: 'fails' },
 	play: async ({ canvasElement }): Promise<void> => {
 		await userEvent.click(
 			await within(canvasElement).findByTestId('test-channel-button'),
@@ -103,24 +85,7 @@ export const TestChannelFailure: Story = {
 
 /** Mutation: a failed create request leaves the form visible with error feedback. */
 export const SaveFailure: Story = {
-	parameters: {
-		msw: [
-			rest.post('http://localhost/api/v1/channels', (_req, res, ctx) =>
-				res(
-					ctx.status(500),
-					ctx.json({
-						status: 'error',
-						error: {
-							code: 'STORYBOOK_FAILURE',
-							message: 'Storybook forced channel failure',
-							url: '',
-							errors: [],
-						},
-					}),
-				),
-			),
-		],
-	},
+	args: { saveOutcome: 'fails' },
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
 
