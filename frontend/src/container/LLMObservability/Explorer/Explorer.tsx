@@ -12,7 +12,6 @@ import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
-import { useOptionsMenu } from 'container/OptionsMenu';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
@@ -43,7 +42,6 @@ import {
 import LeftToolbarActions from '../ToolbarActions/LeftToolbarActions';
 import { DEFAULT_PANEL_TYPE, TOOLBAR_VIEWS } from './constants';
 import ListView from './ListView/ListView';
-import { defaultSelectedColumns } from './ListView/configs';
 import QuerySection from './QuerySection/QuerySection';
 import TableView from './TableView/TableView';
 import TimeSeriesView from './TimeSeriesView/TimeSeriesView';
@@ -63,15 +61,6 @@ function Explorer(): JSX.Element {
 	} = useQueryBuilder();
 
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
-
-	// Shares traces list prefs until useOptionsMenu supports a dedicated storage key.
-	useOptionsMenu({
-		dataSource: DataSource.TRACES,
-		aggregateOperator: 'noop',
-		initialOptions: {
-			selectColumns: defaultSelectedColumns,
-		},
-	});
 
 	const [searchParams] = useSearchParams();
 	const queryClient = useQueryClient();
