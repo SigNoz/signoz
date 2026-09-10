@@ -8963,7 +8963,6 @@ components:
         states:
           items:
             type: string
-          nullable: true
           type: array
         version:
           type: string

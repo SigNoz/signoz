@@ -75,6 +75,7 @@ func TestRuleViewDataValidateDefaults(t *testing.T) {
 	require.NoError(t, data.Validate())
 	assert.Equal(t, ListSortUpdatedAt, data.Sort)
 	assert.Equal(t, ListOrderDesc, data.Order)
+	assert.Equal(t, []string{}, data.States)
 }
 
 func TestPostableRuleViewUnmarshalJSON(t *testing.T) {

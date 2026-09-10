@@ -53,13 +53,17 @@ func (o ListOrder) IsValid() bool {
 type ListFilter struct {
 	Query string `query:"query" json:"query"`
 	// gin cannot bind a slice of valuer enums; AlertStates converts these.
-	States []string  `query:"states" json:"states"`
+	States []string  `query:"states" json:"states" nullable:"false"`
 	Sort   ListSort  `query:"sort" json:"sort"`
 	Order  ListOrder `query:"order" json:"order"`
 }
 
-// Validate normalizes in place; zero sort/order get the defaults.
+// Validate normalizes in place; zero sort/order get the defaults, nil states an empty slice.
 func (f *ListFilter) Validate() error {
+	if f.States == nil {
+		f.States = []string{}
+	}
+
 	if n := utf8.RuneCountInString(f.Query); n > MaxListQueryLen {
 		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
 			"query cannot be longer than %d characters, got %d", MaxListQueryLen, n)
