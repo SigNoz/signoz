@@ -23,7 +23,12 @@ export const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in', 'nin'];
 // The operators this algebra emits, and so the only ones it may rewrite out of an
 // expression. A hand-written clause on the same key (CONTAINS, EXISTS, a range) is
 // none of its business and has to survive a toggle.
-const MANAGED_OPERATORS = [OPERATORS['='], OPERATORS['!='], 'in', 'not in'];
+export const MANAGED_OPERATORS = [
+	OPERATORS['='],
+	OPERATORS['!='],
+	'in',
+	'not in',
+];
 
 /**
  * Drops this filter's own clauses for `key` from `expression`, leaving every other

@@ -1,20 +1,24 @@
+import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { removeManagedClauses } from '../Checkbox/checkboxFilterQuery';
-import { isKeyMatch } from '../Checkbox/utils';
+import { getKeySpellings, isKeyMatch } from '../Checkbox/utils';
 
 /**
  * Returns a new query with this filter's clauses for the attribute key removed from
  * the active query, both from the structured filter items and the raw expression.
+ * `operators` limits which expression clauses are removed; omit to remove every
+ * clause on the key (e.g. duration's >= / <=).
  */
 export function clearFilterFromQuery({
 	currentQuery,
 	filterKey,
 	activeQueryIndex,
+	operators,
 }: {
 	currentQuery: Query;
 	filterKey: string;
 	activeQueryIndex: number;
+	operators?: string[];
 }): Query {
 	return {
 		...currentQuery,
@@ -27,9 +31,11 @@ export function clearFilterFromQuery({
 				return {
 					...item,
 					filter: {
-						expression: removeManagedClauses(
+						expression: removeKeysFromExpression(
 							item.filter?.expression ?? '',
-							filterKey,
+							getKeySpellings(filterKey),
+							false,
+							operators,
 						),
 					},
 					filters: {

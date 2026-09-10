@@ -7,7 +7,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { applyCheckboxToggle } from './checkboxFilterQuery';
+import { applyCheckboxToggle, MANAGED_OPERATORS } from './checkboxFilterQuery';
 import { clearFilterFromQuery } from '../shared/filterQuery';
 import { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
@@ -97,6 +97,7 @@ function useCheckboxFilterActions({
 				currentQuery,
 				filterKey: filter.attributeKey.key,
 				activeQueryIndex,
+				operators: MANAGED_OPERATORS,
 			}),
 		);
 	};
