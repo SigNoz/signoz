@@ -187,7 +187,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 	}
 
 	// Check if channel is referenced by any route policy (rule-based or policy-based)
-	policies, err := provider.notificationManager.GetRoutePoliciesByChannel(ctx, orgID, channel.Name)
+	policies, err := provider.notificationManager.GetRoutePoliciesByChannel(ctx, orgID, channel.DisplayName)
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 		}
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"channel %q cannot be deleted because it is used by the following routing policies: %v",
-			channel.Name, names)
+			channel.DisplayName, names)
 	}
 
 	config, err := provider.configStore.Get(ctx, orgID)
@@ -206,7 +206,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 		return err
 	}
 
-	if err := config.DeleteReceiver(channel.Name); err != nil {
+	if err := config.DeleteReceiver(channel.DisplayName); err != nil {
 		return err
 	}
 
@@ -230,6 +230,40 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	}
 
 	channel, err := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		return provider.configStore.Set(ctx, config)
+	}))
+	if err != nil {
+		return nil, err
+	}
+
+	return channel, nil
+}
+
+func (provider *provider) CreateNotificationChannel(ctx context.Context, orgID string, postable *alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error) {
+	receiver, err := postable.ToReceiver()
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+		return nil, err
+	}
+
+	if err := config.CreateReceiverV2(receiver); err != nil {
+		return nil, err
+	}
+
+	channel, err := alertmanagertypes.NewChannelFromReceiverWithName(receiver, postable.Name, orgID)
 	if err != nil {
 		return nil, err
 	}

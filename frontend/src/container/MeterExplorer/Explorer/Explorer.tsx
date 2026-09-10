@@ -6,6 +6,7 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -14,6 +15,7 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
+import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -21,7 +23,6 @@ import { Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 as uuid } from 'uuid';
 
 import { MeterExplorerEventKeys, MeterExplorerEvents } from '../events';
@@ -31,6 +32,7 @@ import { splitQueryIntoOneChartPerQuery } from './utils';
 import './Explorer.styles.scss';
 
 function Explorer(): JSX.Element {
+	const quickFilterFieldApis = useSignalFieldApis();
 	const {
 		handleRunQuery,
 		stagedQuery,
@@ -38,6 +40,7 @@ function Explorer(): JSX.Element {
 		currentQuery,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const getExportToDashboardLink = useGetExportToDashboardLink();
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
 	const [isCancelled, setIsCancelled] = useState(false);
@@ -91,16 +94,18 @@ function Explorer(): JSX.Element {
 
 			const widgetId = uuid();
 
-			const dashboardEditView = generateExportToDashboardLink({
+			const dashboardEditView = getExportToDashboardLink({
 				query: queryToExport || exportDefaultQuery,
 				panelType: PANEL_TYPES.BAR,
 				dashboardId: dashboard.id,
 				widgetId,
 			});
 
-			safeNavigate(dashboardEditView);
+			if (dashboardEditView) {
+				safeNavigate(dashboardEditView);
+			}
 		},
-		[exportDefaultQuery, safeNavigate],
+		[exportDefaultQuery, safeNavigate, getExportToDashboardLink],
 	);
 
 	const splitedQueries = useMemo(
@@ -141,6 +146,7 @@ function Explorer(): JSX.Element {
 						handleFilterVisibilityChange={(): void => {
 							setShowQuickFilters(!showQuickFilters);
 						}}
+						useFieldApis={quickFilterFieldApis}
 					/>
 				</div>
 

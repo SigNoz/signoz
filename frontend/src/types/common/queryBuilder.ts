@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { Format } from 'container/NewWidget/RightContainer/types';
+import { Format } from 'constants/formats/types';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import {
 	IBuilderFormula,
@@ -211,13 +211,11 @@ export enum QueryFunctionsTypes {
 	FILL_ZERO = 'fillZero',
 }
 
-export type PanelTypeKeys =
-	| 'TIME_SERIES'
-	| 'VALUE'
-	| 'TABLE'
-	| 'LIST'
-	| 'TRACE'
-	| 'EMPTY_WIDGET';
+/**
+ * Key names of {@link PANEL_TYPES}. Derived rather than listed: the hand-written
+ * version had fallen behind the enum by three members (`BAR`, `PIE`, `HISTOGRAM`).
+ */
+export type PanelTypeKeys = keyof typeof PANEL_TYPES;
 
 export enum ReduceOperators {
 	LAST = 'last',

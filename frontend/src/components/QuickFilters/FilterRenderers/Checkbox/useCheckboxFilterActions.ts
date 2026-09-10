@@ -4,13 +4,11 @@ import {
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isFunction } from 'lodash-es';
+import { isEqual, isFunction } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import {
-	applyCheckboxToggle,
-	clearFilterFromQuery,
-} from './checkboxFilterQuery';
+import { applyCheckboxToggle, MANAGED_OPERATORS } from './checkboxFilterQuery';
+import { clearFilterFromQuery } from '../shared/filterQuery';
 import { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
 
@@ -94,7 +92,17 @@ function useCheckboxFilterActions({
 	};
 
 	const onClear = (): void => {
-		dispatch(clearFilterFromQuery({ currentQuery, filter, activeQueryIndex }));
+		const clearedQuery = clearFilterFromQuery({
+			currentQuery,
+			filterKey: filter.attributeKey.key,
+			activeQueryIndex,
+			operators: MANAGED_OPERATORS,
+		});
+		// Nothing to clear; no dispatch
+		if (isEqual(clearedQuery, currentQuery)) {
+			return;
+		}
+		dispatch(clearedQuery);
 	};
 
 	return { onChange, onClear };

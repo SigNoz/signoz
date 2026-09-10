@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -52,7 +52,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, _, _ uint64, 
 		return "", err
 	}
 	if col.Name == "labels" && key.Name != "labels" {
-		return fmt.Sprintf("JSONExtractString(labels, %s)", querybuilder.ClickHouseStringLiteral(key.Name)), nil
+		return fmt.Sprintf("JSONExtractString(labels, %s)", clickhousesql.StringLiteral(key.Name)), nil
 	}
 	return col.Name, nil
 }
@@ -74,7 +74,7 @@ func (m *fieldMapper) ExistsFor(ctx context.Context, _ valuer.UUID, _, _ uint64,
 		return "", err
 	}
 	if col.Name == "labels" && key.Name != "labels" {
-		pred := fmt.Sprintf("JSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(key.Name))
+		pred := fmt.Sprintf("JSONHas(labels, %s)", clickhousesql.StringLiteral(key.Name))
 		if exists {
 			return pred, nil
 		}
@@ -88,5 +88,5 @@ func (m *fieldMapper) ColumnExpressionFor(ctx context.Context, orgID valuer.UUID
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colName), field.Name), nil
+	return sqlbuilder.Escape(fmt.Sprintf("%s AS %s", colName, clickhousesql.Identifier(field.Name))), nil
 }

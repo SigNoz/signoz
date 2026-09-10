@@ -1,8 +1,6 @@
 package aistatementbuilder
 
 import (
-	"strings"
-
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
@@ -27,11 +25,8 @@ func NewFactory(
 // Scope describes gen_ai for the scoped trace builder: an AI trace has >=1 gen_ai
 // LLM, tool, or agent span, and its list adds AI/LLM per-trace metrics.
 func Scope() scopedtraces.TraceScope {
-	gateKeyNames := []string{aiobservabilitytypes.GenAIRequestModel, aiobservabilitytypes.GenAIToolName, aiobservabilitytypes.GenAIAgentName}
-	gateExprs := make([]string, 0, len(gateKeyNames))
-	gateKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(gateKeyNames))
-	for _, name := range gateKeyNames {
-		gateExprs = append(gateExprs, name+" EXISTS")
+	gateKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(aiobservabilitytypes.GenAISpanGateKeys))
+	for _, name := range aiobservabilitytypes.GenAISpanGateKeys {
 		gateKeys = append(gateKeys, &telemetrytypes.TelemetryFieldKey{
 			Name:         name,
 			Signal:       telemetrytypes.SignalTraces,
@@ -79,7 +74,7 @@ func Scope() scopedtraces.TraceScope {
 	}
 
 	return scopedtraces.TraceScope{
-		FilterExpression:  strings.Join(gateExprs, " OR "),
+		FilterExpression:  aiobservabilitytypes.GenAISpanFilterExpression(),
 		FieldKeys:         gateKeys,
 		Columns:           columns,
 		DefaultOrderAlias: "last_activity_time",

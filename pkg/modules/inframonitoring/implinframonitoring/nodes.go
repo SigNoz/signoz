@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
@@ -304,7 +305,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 	}
 	for _, key := range groupBy {
 		timeSeriesFPsSelectCols = append(timeSeriesFPsSelectCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", timeSeriesFPs.Var(key.Name), quoteIdentifier(key.Name)),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", timeSeriesFPs.Var(key.Name), sqlbuilder.Escape(clickhousesql.Identifier(key.Name))),
 		)
 	}
 	timeSeriesFPs.Select(timeSeriesFPsSelectCols...)
@@ -325,7 +326,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 	}
 	timeSeriesFPsGroupBy := []string{"fingerprint", "node_name"}
 	for _, key := range groupBy {
-		timeSeriesFPsGroupBy = append(timeSeriesFPsGroupBy, quoteIdentifier(key.Name))
+		timeSeriesFPsGroupBy = append(timeSeriesFPsGroupBy, sqlbuilder.Escape(clickhousesql.Identifier(key.Name)))
 	}
 	timeSeriesFPs.GroupBy(timeSeriesFPsGroupBy...)
 	timeSeriesFPsSQL, timeSeriesFPsArgs := timeSeriesFPs.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -335,7 +336,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 	latestConditionPerNodeSelectCols := []string{"tsfp.node_name AS node_name"}
 	latestConditionPerNodeGroupBy := []string{"node_name"}
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := sqlbuilder.Escape(clickhousesql.Identifier(key.Name))
 		latestConditionPerNodeSelectCols = append(latestConditionPerNodeSelectCols, fmt.Sprintf("tsfp.%s AS %s", col, col))
 		latestConditionPerNodeGroupBy = append(latestConditionPerNodeGroupBy, col)
 	}
@@ -360,7 +361,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 	countNodesPerConditionSelectCols := make([]string, 0, len(groupBy)+2)
 	countNodesPerConditionGroupBy := make([]string, 0, len(groupBy))
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := sqlbuilder.Escape(clickhousesql.Identifier(key.Name))
 		countNodesPerConditionSelectCols = append(countNodesPerConditionSelectCols, col)
 		countNodesPerConditionGroupBy = append(countNodesPerConditionGroupBy, col)
 	}

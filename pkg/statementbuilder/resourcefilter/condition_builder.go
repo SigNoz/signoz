@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -96,7 +97,7 @@ func valueIndexCondition(
 func memberPresenceCondition(sb *sqlbuilder.SelectBuilder, column string, members []*telemetrytypes.TelemetryFieldKey, exists bool) string {
 	conditions := make([]string, 0, len(members))
 	for _, member := range members {
-		field := fmt.Sprintf("simpleJSONHas(%s, '%s')", column, member.Name)
+		field := fmt.Sprintf("simpleJSONHas(%s, %s)", column, clickhousesql.StringLiteral(member.Name))
 		if exists {
 			conditions = append(conditions, sb.E(field, true))
 		} else {

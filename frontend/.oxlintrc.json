@@ -323,9 +323,10 @@
             "name": "react",
             "importNames": [
               "createContext",
-              "useContext"
+              "useContext",
+              "useSyncExternalStore"
             ],
-            "message": "[State mgmt] React Context is deprecated. Migrate shared state to Zustand."
+            "message": "[State mgmt] React Context and hand-rolled external stores are deprecated. Migrate shared state to Zustand."
           },
           {
             "name": "immer",
@@ -565,15 +566,26 @@
       }
     },
     {
-      // Root V2 pages own the dashboard fetch lifecycle; useDashboardFetchRequired wraps it.
+      // Root dashboard pages own the fetch lifecycle; useDashboardFetchRequired wraps it.
       // Everywhere else must use useDashboardFetchRequired().
       "files": [
-        "src/pages/DashboardPageV2/DashboardPageV2.tsx",
-        "src/pages/DashboardPageV2/PanelEditorPage/PanelEditorPage.tsx",
-        "src/pages/DashboardPageV2/DashboardContainer/hooks/useDashboardFetchRequired.ts"
+        "src/pages/DashboardPage/DashboardPage.tsx",
+        "src/pages/DashboardPage/PanelEditorPage/PanelEditorPage.tsx",
+        "src/pages/DashboardPage/DashboardContainer/hooks/useDashboardFetchRequired.ts"
       ],
       "rules": {
         "signoz/no-dashboard-fetch-outside-root": "off"
+      }
+    },
+    {
+      // Dev-tooling CLIs: stdout is their output, and they carry ported pixel/heap
+      // algorithms that read worse when split up.
+      "files": [
+        "scripts/**"
+      ],
+      "rules": {
+        "no-console": "off",
+        "sonarjs/cognitive-complexity": "off"
       }
     }
   ]

@@ -1,4 +1,4 @@
-import DashboardContainer from 'pages/DashboardPageV2/DashboardContainer';
+import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
 
 import { useSeededDashboardV2 } from './hooks/useSeededDashboardV2';
 import styles from './Overview.module.scss';

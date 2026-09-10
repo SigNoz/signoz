@@ -101,6 +101,11 @@ func TestNewProviderFactories(t *testing.T) {
 			Modules{},
 			Handlers{},
 			global.Config{},
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
 		)
 	})
 }

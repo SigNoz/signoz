@@ -1,4 +1,4 @@
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { v4 } from 'uuid';
 
 import { GetWidgetQueryBuilderProps } from './types';

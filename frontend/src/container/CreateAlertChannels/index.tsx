@@ -32,6 +32,7 @@ import {
 	ChannelType,
 	EmailChannel,
 	GoogleChatChannel,
+	IncidentIOChannel,
 	JiraChannel,
 	JsmOpsChannel,
 	MsTeamsChannel,
@@ -45,9 +46,11 @@ import { ChannelInitialConfig } from './defaults';
 import {
 	isChannelType,
 	isValidGoogleChatWebhookURL,
+	isValidIncidentIOURL,
 	isValidJiraReopenDuration,
 	isValidJiraSiteURL,
 	prepareGoogleChatRequest,
+	prepareIncidentIORequest,
 	prepareJiraRequest,
 	prepareJsmOpsRequest,
 } from './utils';
@@ -77,7 +80,8 @@ function CreateAlertChannels({
 				EmailChannel &
 				GoogleChatChannel &
 				JiraChannel &
-				JsmOpsChannel
+				JsmOpsChannel &
+				IncidentIOChannel
 		>
 	>(() => ({
 		send_resolved: true,
@@ -550,6 +554,56 @@ function CreateAlertChannels({
 		showErrorModal,
 	]);
 
+	const validateIncidentIOConfig = useCallback((): boolean => {
+		if (!selectedConfig.url || !selectedConfig.token) {
+			notifications.error({
+				message: 'Error',
+				description: t('incidentio_required_fields'),
+			});
+			return false;
+		}
+
+		if (!isValidIncidentIOURL(selectedConfig.url)) {
+			notifications.error({
+				message: 'Error',
+				description: t('incidentio_url_invalid'),
+			});
+			return false;
+		}
+
+		return true;
+	}, [selectedConfig.url, selectedConfig.token, notifications, t]);
+
+	const onIncidentIOHandler = useCallback(async () => {
+		if (!validateIncidentIOConfig()) {
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		}
+
+		setSavingState(true);
+
+		try {
+			await createChannel({ data: prepareIncidentIORequest(selectedConfig) });
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateIncidentIOConfig,
+		createChannel,
+		selectedConfig,
+		notifications,
+		t,
+		showErrorModal,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			if (!selectedConfig.name) {
@@ -570,6 +624,7 @@ function CreateAlertChannels({
 				[ChannelType.GoogleChat]: onGoogleChatHandler,
 				[ChannelType.Jira]: onJiraHandler,
 				[ChannelType.JsmOps]: onJsmOpsHandler,
+				[ChannelType.IncidentIO]: onIncidentIOHandler,
 			};
 
 			if (isChannelType(value)) {
@@ -604,6 +659,7 @@ function CreateAlertChannels({
 			onGoogleChatHandler,
 			onJiraHandler,
 			onJsmOpsHandler,
+			onIncidentIOHandler,
 			notifications,
 			t,
 		],
@@ -662,6 +718,13 @@ function CreateAlertChannels({
 						}
 						await testChannel({ data: prepareJsmOpsRequest(selectedConfig) });
 						break;
+					case ChannelType.IncidentIO:
+						if (!validateIncidentIOConfig()) {
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareIncidentIORequest(selectedConfig) });
+						break;
 					default:
 						notifications.error({
 							message: 'Error',
@@ -712,6 +775,7 @@ function CreateAlertChannels({
 			validateGoogleChatConfig,
 			validateJiraConfig,
 			validateJsmOpsConfig,
+			validateIncidentIOConfig,
 			testChannel,
 			notifications,
 		],

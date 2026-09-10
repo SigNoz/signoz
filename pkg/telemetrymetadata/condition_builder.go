@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -131,9 +132,9 @@ func (c *conditionBuilder) conditionForKey(
 		cond = sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value))
 
 	case qbtypes.FilterOperatorRegexp:
-		cond = fmt.Sprintf(`match(%s, %s)`, fieldExpression, sb.Var(value))
+		cond = fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value))
 	case qbtypes.FilterOperatorNotRegexp:
-		cond = fmt.Sprintf(`NOT match(%s, %s)`, fieldExpression, sb.Var(value))
+		cond = fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value))
 
 	// in and not in
 	case qbtypes.FilterOperatorIn:
@@ -168,7 +169,7 @@ func (c *conditionBuilder) conditionForKey(
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}:
-			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", columns[0].Name, key.Name)
+			leftOperand := fmt.Sprintf("mapContains(%s, %s)", columns[0].Name, clickhousesql.StringLiteral(key.Name))
 			if operator == qbtypes.FilterOperatorExists {
 				cond = sb.E(leftOperand, true)
 			} else {

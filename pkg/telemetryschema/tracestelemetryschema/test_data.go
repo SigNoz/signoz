@@ -154,6 +154,34 @@ func BuildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytype
 	return keysMap
 }
 
+// MockAttributeEvolutionData returns the attribute-context evolution timeline: only the JSON
+// `attributes` migration released at releaseTime, field_name "__all__". The legacy map columns
+// are the epoch-0 base and are not stored as evolution rows; SelectEvolutionsForColumns
+// synthesizes the base entry for whichever typed map getColumn resolves the key to.
+func MockAttributeEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
+	return []*telemetrytypes.EvolutionEntry{
+		{
+			Signal:       telemetrytypes.SignalTraces,
+			ColumnName:   "attributes",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextAttribute,
+			FieldName:    "__all__",
+			ReleaseTime:  releaseTime,
+		},
+	}
+}
+
+// MockPromotedAttributeEvolutionData returns a promoted attribute's evolution timeline: the JSON
+// `attributes` column at jsonRelease (field_name "__all__") and the per-path `attributes_promoted`
+// column at promoteRelease (field_name = path). The legacy map is the synthesized epoch-0 base and
+// is not stored as an evolution row.
+func MockPromotedAttributeEvolutionData(path string, jsonRelease, promoteRelease time.Time) []*telemetrytypes.EvolutionEntry {
+	return []*telemetrytypes.EvolutionEntry{
+		{Signal: telemetrytypes.SignalTraces, ColumnName: "attributes", ColumnType: "JSON()", FieldContext: telemetrytypes.FieldContextAttribute, FieldName: "__all__", ReleaseTime: jsonRelease},
+		{Signal: telemetrytypes.SignalTraces, ColumnName: "attributes_promoted", ColumnType: "JSON()", FieldContext: telemetrytypes.FieldContextAttribute, FieldName: path, ReleaseTime: promoteRelease},
+	}
+}
+
 // MockEvolutionData returns the canonical resource-column evolution timeline used in tests:
 // the legacy resources_string map at epoch 0 and the JSON resource column released at releaseTime.
 func MockEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
@@ -45,7 +46,7 @@ func (b *scopedTraceStatementBuilder) buildAggregation(
 		return nil, err
 	}
 	if len(traceAggs) == 0 {
-		return b.buildDelegatedAggregation(ctx, orgID, start, end, requestType, query, variables)
+		return b.buildDelegated(ctx, orgID, start, end, requestType, query, variables)
 	}
 	return b.buildTraceAggregationQuery(ctx, orgID, querybuilder.ToNanoSecs(start), querybuilder.ToNanoSecs(end), requestType, query, variables, traceAggs)
 }
@@ -377,7 +378,7 @@ type groupColumn struct {
 // groupByColumnAlias prefixes the i-th group-by dimension so the alias cannot shadow the
 // span column its expression reads; the querier (stripKeyAlias) strips it back off.
 func groupByColumnAlias(i int, name string) string {
-	return fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name)
+	return clickhousesql.Identifier(fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name))
 }
 
 // orderColumn is the SQL identifier a non-aggregation order key sorts by: the
@@ -388,7 +389,7 @@ func orderColumn(orderKey string, groupBy []qbtypes.GroupByKey) string {
 			return groupByColumnAlias(i, groupBy[i].Name)
 		}
 	}
-	return orderKey
+	return clickhousesql.Identifier(orderKey)
 }
 
 // perTraceScanOpts parametrize one windowed, mask-pruned GROUP BY trace_id scan.
@@ -413,13 +414,13 @@ func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBui
 		selects = append(selects, fmt.Sprintf("toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts", o.stepSeconds))
 	}
 	for _, gc := range o.groupCols {
-		selects = append(selects, fmt.Sprintf("toString(%s) AS `%s`", gc.expr, gc.alias))
+		selects = append(selects, fmt.Sprintf("toString(%s) AS %s", gc.expr, sqlbuilder.Escape(gc.alias)))
 	}
 	for _, rc := range resolved {
 		if _, ok := o.needed[rc.alias]; !ok {
 			continue
 		}
-		selects = append(selects, rc.expr+" AS "+quoteAlias(rc.alias))
+		selects = append(selects, rc.expr+" AS "+sqlbuilder.Escape(quoteAlias(rc.alias)))
 	}
 	sb.Select(selects...)
 	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
@@ -450,7 +451,7 @@ func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBui
 		groupBy = append(groupBy, "ts")
 	}
 	for _, gc := range o.groupCols {
-		groupBy = append(groupBy, "`"+gc.alias+"`")
+		groupBy = append(groupBy, sqlbuilder.Escape(gc.alias))
 	}
 	sb.GroupBy(groupBy...)
 	if strings.TrimSpace(o.havingPred) != "" {
@@ -602,7 +603,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 	}
 	groupNames := make([]string, 0, len(groupCols))
 	for _, gc := range groupCols {
-		groupNames = append(groupNames, "`"+gc.alias+"`")
+		groupNames = append(groupNames, sqlbuilder.Escape(gc.alias))
 	}
 
 	needed := make(map[string]struct{})
@@ -701,7 +702,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		if len(query.Order) != 0 {
 			for _, orderBy := range query.Order {
 				if _, ok := traceAggOrderIndex(orderBy, query); !ok {
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderColumn(orderBy.Key.Name, query.GroupBy), orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderColumn(orderBy.Key.Name, query.GroupBy)), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -711,7 +712,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 			if idx, ok := traceAggOrderIndex(orderBy, query); ok {
 				sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 			} else {
-				sb.OrderBy(fmt.Sprintf("`%s` %s", orderColumn(orderBy.Key.Name, query.GroupBy), orderBy.Direction.StringValue()))
+				sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderColumn(orderBy.Key.Name, query.GroupBy)), orderBy.Direction.StringValue()))
 			}
 		}
 		if len(query.Order) == 0 {
@@ -759,7 +760,7 @@ func outerLimitSQL(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], tr
 		if idx, ok := traceAggOrderIndex(orderBy, query); ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderColumn(orderBy.Key.Name, query.GroupBy), orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderColumn(orderBy.Key.Name, query.GroupBy)), orderBy.Direction.StringValue()))
 		}
 	}
 	if len(query.Order) == 0 {

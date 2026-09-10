@@ -73,6 +73,20 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 			</Form.Item>
 
 			<Form.Item
+				name="wont_fix_resolution"
+				label={t('field_jira_wont_fix_resolution')}
+				help={t('help_jira_wont_fix_resolution')}
+			>
+				<Input
+					placeholder={t('placeholder_jira_wont_fix_resolution')}
+					onChange={(event): void =>
+						update({ wont_fix_resolution: event.target.value })
+					}
+					data-testid="jira-wont-fix-resolution-textbox"
+				/>
+			</Form.Item>
+
+			<Form.Item
 				name="reopen_duration"
 				label={t('field_jira_reopen_duration')}
 				extra={t('help_jira_reopen_duration')}

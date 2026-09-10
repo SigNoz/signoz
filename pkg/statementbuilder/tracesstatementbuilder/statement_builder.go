@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -377,12 +378,17 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
+	if scopeFrags, scopeArgs := b.attachTraceScope(sb, frag != ""); len(scopeFrags) > 0 {
+		cteFragments = append(cteFragments, scopeFrags...)
+		cteArgs = append(cteArgs, scopeArgs...)
+	}
+
 	for i, field := range query.SelectFields {
 		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(expr), selectColumnAlias(i, field.Name)))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", expr, selectColumnAlias(i, field.Name))))
 	}
 
 	if isSelectFieldsEmpty {
@@ -596,8 +602,8 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			return nil, err
 		}
 		fieldAlias := groupByColumnAlias(i, gb.Name)
-		sb.SelectMore(fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), fieldAlias))
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", fieldAlias))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
+		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
 	}
 
 	// Aggregations
@@ -655,11 +661,11 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					orderCol := orderBy.Key.Name
+					orderCol := clickhousesql.Identifier(orderBy.Key.Name)
 					if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
 						orderCol = alias
 					}
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderCol), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -688,11 +694,11 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					orderCol := orderBy.Key.Name
+					orderCol := clickhousesql.Identifier(orderBy.Key.Name)
 					if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
 						orderCol = alias
 					}
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderCol), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -759,8 +765,8 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 			return nil, err
 		}
 		fieldAlias := groupByColumnAlias(i, gb.Name)
-		sb.SelectMore(fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), fieldAlias))
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", fieldAlias))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
+		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
 	}
 
 	// for scalar queries, the rate would be end-start
@@ -811,11 +817,11 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		if ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			orderCol := orderBy.Key.Name
+			orderCol := clickhousesql.Identifier(orderBy.Key.Name)
 			if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
 				orderCol = alias
 			}
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderCol), orderBy.Direction.StringValue()))
 		}
 	}
 
@@ -909,13 +915,13 @@ func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.TraceAggr
 // groupByColumnAlias returns the positional SQL alias for the i-th group-by dimension;
 // the querier (consume.go stripKeyAlias) strips the prefix to recover the field name.
 func groupByColumnAlias(i int, name string) string {
-	return fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name)
+	return clickhousesql.Identifier(fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name))
 }
 
 // selectColumnAlias returns the positional SQL alias for the i-th raw select field. Like
 // groupByColumnAlias, the prefix is stripped by the querier.
 func selectColumnAlias(i int, name string) string {
-	return fmt.Sprintf("__SELECT_KEY_%d_%s", i, name)
+	return clickhousesql.Identifier(fmt.Sprintf("__SELECT_KEY_%d_%s", i, name))
 }
 
 // groupByOrderAlias returns the group-by column alias to order by when orderKey names a
