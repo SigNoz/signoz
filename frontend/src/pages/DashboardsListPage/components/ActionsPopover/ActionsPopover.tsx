@@ -42,9 +42,8 @@ function ActionsPopover({
 			<Popover
 				open={isOpen}
 				onOpenChange={setIsOpen}
-				// A render function, so the menu's mutations and permission checks are
-				// paid for only by the row whose menu is actually open. Paired with
-				// destroyTooltipOnHide, they are released again on close.
+				// A render function, so only the open row pays for the menu's mutations
+				// and checks; destroyTooltipOnHide releases them on close.
 				content={(): JSX.Element => (
 					<ActionsPopoverContent
 						link={link}

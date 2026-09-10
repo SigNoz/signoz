@@ -104,9 +104,8 @@ function SearchBar({
 			editorTheme,
 			// Wrap a long query onto the next line instead of scrolling horizontally.
 			EditorView.lineWrapping,
-			// Read-only is not enough on its own: these open the suggestion list on
-			// click and accepting an option writes to the document, so a disabled box
-			// must not carry them at all.
+			// Read-only is not enough: these open the list on click and accepting an
+			// option writes to the document, so a disabled box must not carry them.
 			...(disabled
 				? []
 				: [

@@ -119,9 +119,8 @@ describe('DashboardsList - AuthZ', () => {
 			const cta = screen.getByTestId('new-dashboard-cta');
 			expect(cta).not.toBeDisabled();
 
-			// The search box and filters edit a query that can only be run through
-			// the list API, so they are inert and say why; the views rail carries
-			// its own denial.
+			// The box and filters edit a query only the list API can run, so they are
+			// inert and say why; the rail carries its own denial.
 			expect(
 				within(screen.getByTestId('dashboards-filter-created-by')).getByRole(
 					'combobox',
@@ -142,8 +141,8 @@ describe('DashboardsList - AuthZ', () => {
 				DashboardListPermission,
 			);
 
-			// Radix renders the content with no testid of its own, so the reason is
-			// read off the tooltip role — the table's callout carries the same words.
+			// Radix's content has no testid, and the table's callout carries the same
+			// words, so the reason is read off the tooltip role.
 			await userEvent.hover(screen.getByTestId('dashboards-search-zone'));
 			await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
 				'is not authorized to perform list:dashboard:*',
@@ -185,8 +184,7 @@ describe('DashboardsList - AuthZ', () => {
 			).not.toBeInTheDocument();
 		});
 
-		// Saved-view CRUD is gated on `dashboard:list` server-side, so firing this
-		// without the grant only 403s.
+		// Saved-view CRUD is gated on `dashboard:list`, so firing this only 403s.
 		it('never fetches saved views when list is denied', async () => {
 			const onViews = jest.fn();
 			server.use(
@@ -212,9 +210,8 @@ describe('DashboardsList - AuthZ', () => {
 	});
 
 	describe('check failure', () => {
-		// The check is the only authority on permission, so an unanswered check is
-		// not a grant. The table is gated on the same signal as the request, so it
-		// explains itself instead of rendering empty.
+		// An unanswered check is not a grant, and the table is gated on the same
+		// signal as the request, so it explains itself instead of rendering empty.
 		it('blocks the table when the permission check fails', async () => {
 			const onList = jest.fn();
 			server.use(

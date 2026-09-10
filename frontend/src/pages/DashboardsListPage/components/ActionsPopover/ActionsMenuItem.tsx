@@ -9,7 +9,7 @@ interface Props {
 	icon: ReactElement;
 	testId: string;
 	onClick: (event: MouseEvent<HTMLButtonElement>) => void;
-	/** Permissions the row needs; the standard denial wording explains a refusal. */
+	/** Permissions the row needs; the component words a refusal. */
 	checks: BrandedPermission[];
 	/** A non-permission block, which outranks the checks (see AuthZTooltip). */
 	disabledTooltip?: string;
@@ -19,7 +19,7 @@ interface Props {
 
 /**
  * A row in the actions menu. The button fills the row, so the tooltip anchors to
- * the whole row and lands clear of the menu rather than over the row's own icon.
+ * it and lands clear of the menu rather than over the row's icon.
  */
 function ActionsMenuItem({
 	label,

@@ -9,9 +9,8 @@ import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 
 /**
- * The row menu's lock toggle. The call, toast and detail-cache patch are shared
- * with the dashboard toolbar; what belongs to the list is refreshing the rows
- * and logging a row action.
+ * The row menu's lock toggle. The call, toast and cache patch are shared with the
+ * toolbar; the list adds refreshing the rows and logging a row action.
  */
 export function useLockToggleAction({
 	dashboardId,

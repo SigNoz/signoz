@@ -39,9 +39,9 @@ interface Props {
 	onOpenEditTags: () => void;
 }
 
-// The popover body. Mounted only while the popover is open, so a page of rows
-// doesn't pay for 20 copies of the menu, its mutations or its permission checks.
-// These rows need no permission at all; the component still owns the styling.
+// Mounted only while the popover is open, so a page of rows doesn't pay for 20
+// copies of the menu, its mutations or its permission checks.
+// These rows need no permission; the component still owns the styling.
 const NO_CHECKS: BrandedPermission[] = [];
 
 function ActionsPopoverContent({
@@ -61,7 +61,7 @@ function ActionsPopoverContent({
 
 	const { canEdit, editChecks, readPermission } =
 		useDashboardPermissions(dashboardId);
-	// A non-empty reason is exactly "cannot toggle", so the flag is redundant here.
+	// A non-empty reason already means "cannot toggle".
 	const { disabledTooltip: lockDisabledTooltip } = useDashboardLockPermission({
 		dashboardId,
 		source,
@@ -76,11 +76,9 @@ function ActionsPopoverContent({
 		isLocked,
 	});
 
-	// Only the lock: a missing `update` is reported by the authz component in the
-	// standard wording, and it outranks the lock.
+	// The lock only: a missing `update` outranks it and is reported by the component.
 	const editLockTooltip = canEdit && isLocked ? t('dashboard_locked') : '';
-	// Cloning reads this dashboard and creates a new one, so the denial names
-	// whichever of the two is missing.
+	// Cloning reads this dashboard and creates another, so both are named.
 	const cloneChecks = useMemo(
 		() => [readPermission, DashboardCreatePermission],
 		[readPermission],

@@ -50,11 +50,8 @@ export interface UseSavedViewsResult {
 }
 
 /**
- * Org-shared saved views, backed by the Views API. Exposes the list plus
- * create/update/delete that invalidate the list on success.
- *
- * `enabled` is the caller's `list` grant: the backend gates view CRUD on
- * `dashboard:list`, so without it the request only 403s.
+ * Org-shared saved views, backed by the Views API. `enabled` is the caller's
+ * `list` grant: the backend gates view CRUD on `dashboard:list`.
  */
 export function useSavedViews({
 	enabled = true,

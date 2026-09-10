@@ -9,8 +9,7 @@ import styles from './DashboardsListPage.module.scss';
 import { BreadcrumbLink } from '@signozhq/ui/breadcrumb';
 
 function DashboardsListPage(): JSX.Element {
-	// Permissions resolve before the list mounts, so every control below can read
-	// them synchronously and never renders enabled-then-disabled.
+	// Resolved before the list mounts, so no control renders enabled-then-disabled.
 	const { isLoading } = useDashboardCollectionPermissions();
 
 	return (

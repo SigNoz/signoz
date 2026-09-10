@@ -48,16 +48,14 @@ describe('ViewsRail - AuthZ', () => {
 		server.resetHandlers();
 	});
 
-	// The backend gates saved-view CRUD on dashboard:list, not on edit rights, so a
-	// viewer must be able to manage their own views. This guards the regression
-	// where the rail was hidden behind edit_dashboard.
+	// View CRUD is gated on dashboard:list, not edit rights, so a viewer can
+	// manage views. Guards the regression where the rail sat behind edit_dashboard.
 	it('lets a user holding only list manage saved views', async () => {
 		server.use(setupAuthzAllow(DashboardListPermission));
 
 		renderRail();
 
-		// The popover trigger's testId is swallowed by Radix's asChild clone, so
-		// it is matched by its title.
+		// Radix's asChild clone swallows the trigger's testId, so match its title.
 		await expect(
 			screen.findByTitle('Save current filters as a view'),
 		).resolves.toBeEnabled();

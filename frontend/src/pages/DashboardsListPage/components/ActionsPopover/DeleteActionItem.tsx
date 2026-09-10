@@ -40,8 +40,7 @@ function DeleteActionItem({
 	const queryClient = useQueryClient();
 	const { contextHolder, confirmDelete } = useDeleteConfirm();
 
-	// Delete is independent of read/update per the authz guide, so it stays usable
-	// for someone who holds only `delete`.
+	// Guide rule 3: independent of read/update, so `delete` alone is enough.
 	const { canDelete, deletePermission } = useDashboardPermissions(dashboardId);
 	const deleteChecks = useMemo(() => [deletePermission], [deletePermission]);
 
@@ -80,10 +79,8 @@ function DeleteActionItem({
 		});
 	}, [confirmDelete, dashboardName, runDelete]);
 
-	// Access before state: the lock only matters to someone who could otherwise
-	// delete it.
-	// Only the lock: a missing `delete` grant is reported by the authz component
-	// in the standard wording.
+	// Access before state: the lock only matters to someone who could delete.
+	// The lock only; a missing `delete` is reported by the component.
 	const lockTooltip =
 		canDelete && isLocked
 			? t('dashboard:locked_dashboard_delete_tooltip_admin_author')
