@@ -1,13 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
-import { handleInternalServerError } from 'mocks-server/utils';
-import { rest } from 'msw';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { serviceAccountsMocks } from './ServiceAccounts.stories.mocks';
+import {
+	accountsLoadError,
+	keysLoadingForever,
+	serviceAccountsMocks,
+} from './ServiceAccounts.stories.mocks';
 
 import SettingsPage from '../../Settings';
 
@@ -94,16 +96,7 @@ export const SearchNoResults: Story = {
 
 /** Error: the list request failed while the rest of the settings shell stays usable. */
 export const LoadError: Story = {
-	parameters: {
-		msw: {
-			handlers: [
-				rest.get(
-					'http://localhost/api/v1/service_accounts',
-					handleInternalServerError,
-				),
-			],
-		},
-	},
+	parameters: { msw: { handlers: [accountsLoadError] } },
 };
 
 /** An account opened up: the name and the roles it acts under. */
@@ -170,17 +163,7 @@ export const AccountKeys: Story = {
 
 /** Loading: account details remain available while only the keys list is pending. */
 export const KeysLoading: Story = {
-	parameters: {
-		...at(KEYS_TAB),
-		msw: {
-			handlers: [
-				rest.get(
-					'http://localhost/api/v1/service_accounts/:id/keys',
-					(_req, res, ctx) => res(ctx.delay('infinite')),
-				),
-			],
-		},
-	},
+	parameters: { ...at(KEYS_TAB), msw: { handlers: [keysLoadingForever] } },
 };
 
 /** An account with nothing issued against it yet. */

@@ -4,6 +4,7 @@
  */
 
 import ROUTES from 'constants/routes';
+import { handleInternalServerError } from 'mocks-server/utils';
 import { rest } from 'msw';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
@@ -35,6 +36,16 @@ const DRAWER = 'Service accounts · drawer';
 
 const rejectSave: MockResolver = (_req, res, ctx) =>
 	res(ctx.status(500), ctx.json(serviceAccountSaveError()));
+
+export const accountsLoadError = rest.get(
+	'http://localhost/api/v1/service_accounts',
+	handleInternalServerError,
+);
+
+export const keysLoadingForever = rest.get(
+	'http://localhost/api/v1/service_accounts/:id/keys',
+	(_req, res, ctx) => res(ctx.delay('infinite')),
+);
 
 export const serviceAccountsMocks = defineStoryMocks({
 	controls: {
