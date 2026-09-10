@@ -12,7 +12,8 @@ import styles from './CheckboxFilterV2Header.module.scss';
 interface CheckboxFilterHeaderProps {
 	title: string;
 	isOpen: boolean;
-	isSearchOpen?: boolean;
+	actionsClassName?: string;
+	resetActionClassName?: string;
 	onToggleOpen: () => void;
 	onToggleSearch: () => void;
 	onClear: () => void;
@@ -21,7 +22,8 @@ interface CheckboxFilterHeaderProps {
 export function CheckboxFilterV2Header({
 	title,
 	isOpen,
-	isSearchOpen = false,
+	actionsClassName,
+	resetActionClassName,
 	onToggleOpen,
 	onToggleSearch,
 	onClear,
@@ -69,14 +71,10 @@ export function CheckboxFilterV2Header({
 				)}
 			</section>
 			{isOpen && (
-				<section
-					className={classNames(styles.rightAction, {
-						[styles.searchActive]: isSearchOpen,
-					})}
-				>
+				<section className={classNames(styles.rightAction, actionsClassName)}>
 					<SectionActionButton
 						icon={<Undo2 size={14} />}
-						className={isSearchOpen ? styles.hoverOnly : undefined}
+						className={resetActionClassName}
 						tooltip="Reset"
 						onClick={onClear}
 						testId="checkbox-filter-clear-all"

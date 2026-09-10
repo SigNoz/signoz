@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Skeleton } from 'antd';
+import classNames from 'classnames';
 import { Typography } from '@signozhq/ui/typography';
 import { LoaderCircle } from '@signozhq/icons';
 import {
@@ -166,14 +167,16 @@ export default function CheckboxFilterV2(
 	});
 
 	return (
-		<div
-			className={`${styles.checkboxFilter} qf-filter-category`}
-			data-testid="checkbox-filter-v2"
-		>
+		<div className={styles.checkboxFilter} data-testid="checkbox-filter-v2">
 			<CheckboxFilterV2Header
 				title={filter.title}
 				isOpen={isOpen}
-				isSearchOpen={isSearchOpen}
+				actionsClassName={classNames(styles.sectionActions, {
+					[styles.sectionActionsPinned]: isSearchOpen,
+				})}
+				resetActionClassName={
+					isSearchOpen ? styles.sectionActionHoverOnly : undefined
+				}
 				onToggleOpen={onToggleOpen}
 				onToggleSearch={handleToggleSearch}
 				onClear={onClear}
