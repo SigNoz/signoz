@@ -22,12 +22,12 @@ func TestPromoteAttributes(t *testing.T) {
 			{Path: "http.method", Promote: true},
 			{Path: "span.operation", Promote: true},
 		}
-		require.NoError(t, m.PromotePaths(ctx, tracesAttributesTarget, paths...))
+		require.NoError(t, m.PromotePaths(ctx, promotetypes.NewTracesAttributesTarget(), paths...))
 		assert.True(t, store.PromotedPathsMap["http.method"])
 		assert.True(t, store.PromotedPathsMap["span.operation"])
 
 		// promoting again must not fail
-		require.NoError(t, m.PromotePaths(ctx, tracesAttributesTarget, paths...))
+		require.NoError(t, m.PromotePaths(ctx, promotetypes.NewTracesAttributesTarget(), paths...))
 		assert.Len(t, store.PromotedPathsMap, 2)
 	})
 
@@ -35,7 +35,7 @@ func TestPromoteAttributes(t *testing.T) {
 		store := telemetrytypestest.NewMockMetadataStore()
 		m := NewModule(store, nil)
 
-		require.NoError(t, m.PromotePaths(ctx, tracesAttributesTarget, &promotetypes.PromotePath{Path: "http.method"}))
+		require.NoError(t, m.PromotePaths(ctx, promotetypes.NewTracesAttributesTarget(), &promotetypes.PromotePath{Path: "http.method"}))
 		assert.Empty(t, store.PromotedPathsMap)
 	})
 
@@ -43,7 +43,7 @@ func TestPromoteAttributes(t *testing.T) {
 		store := telemetrytypestest.NewMockMetadataStore()
 		m := NewModule(store, nil)
 
-		err := m.PromotePaths(ctx, tracesAttributesTarget, &promotetypes.PromotePath{
+		err := m.PromotePaths(ctx, promotetypes.NewTracesAttributesTarget(), &promotetypes.PromotePath{
 			Path:    "http.method",
 			Promote: true,
 			Indexes: []promotetypes.WrappedIndex{
@@ -58,8 +58,8 @@ func TestPromoteAttributes(t *testing.T) {
 		store := telemetrytypestest.NewMockMetadataStore()
 		m := NewModule(store, nil)
 
-		require.Error(t, m.PromotePaths(ctx, tracesAttributesTarget, &promotetypes.PromotePath{Path: "attributes.http.method", Promote: true}))
-		require.Error(t, m.PromotePaths(ctx, tracesAttributesTarget, &promotetypes.PromotePath{Path: "", Promote: true}))
+		require.Error(t, m.PromotePaths(ctx, promotetypes.NewTracesAttributesTarget(), &promotetypes.PromotePath{Path: "attributes.http.method", Promote: true}))
+		require.Error(t, m.PromotePaths(ctx, promotetypes.NewTracesAttributesTarget(), &promotetypes.PromotePath{Path: "", Promote: true}))
 		assert.Empty(t, store.PromotedPathsMap)
 	})
 
@@ -67,7 +67,7 @@ func TestPromoteAttributes(t *testing.T) {
 		store := telemetrytypestest.NewMockMetadataStore()
 		m := NewModule(store, nil)
 
-		require.Error(t, m.PromotePaths(ctx, tracesAttributesTarget))
+		require.Error(t, m.PromotePaths(ctx, promotetypes.NewTracesAttributesTarget()))
 	})
 }
 
@@ -77,7 +77,7 @@ func TestListPromotedAttributes(t *testing.T) {
 	store.PromotedPathsMap["http.method"] = true
 	m := NewModule(store, nil)
 
-	paths, err := m.ListPromotedPaths(ctx, tracesAttributesTarget)
+	paths, err := m.ListPromotedPaths(ctx, promotetypes.NewTracesAttributesTarget())
 	require.NoError(t, err)
 	require.Len(t, paths, 1)
 	assert.Equal(t, "http.method", paths[0].Path)
@@ -92,7 +92,7 @@ func TestPromoteAndIndexPaths(t *testing.T) {
 		store := telemetrytypestest.NewMockMetadataStore()
 		m := NewModule(store, nil)
 
-		require.NoError(t, m.PromotePaths(ctx, logsBodyTarget, &promotetypes.PromotePath{Path: "body.user.name", Promote: true}))
+		require.NoError(t, m.PromotePaths(ctx, promotetypes.NewLogsBodyTarget(), &promotetypes.PromotePath{Path: "body.user.name", Promote: true}))
 		assert.True(t, store.PromotedPathsMap["user.name"])
 	})
 }
@@ -121,7 +121,7 @@ func TestListPromotedAndIndexedPaths(t *testing.T) {
 	}
 	m := NewModule(store, nil)
 
-	paths, err := m.ListPromotedPaths(ctx, logsBodyTarget)
+	paths, err := m.ListPromotedPaths(ctx, promotetypes.NewLogsBodyTarget())
 	require.NoError(t, err)
 	require.Len(t, paths, 2)
 
