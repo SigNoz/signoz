@@ -7,6 +7,7 @@ import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -73,6 +74,8 @@ function LogsExplorer(): JSX.Element {
 	} = useQueryBuilder();
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+
+	const quickFilterFieldApis = useSignalFieldApis();
 
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
@@ -232,6 +235,7 @@ function LogsExplorer(): JSX.Element {
 								signal={SignalType.LOGS}
 								source={QuickFiltersSource.LOGS_EXPLORER}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								useFieldApis={quickFilterFieldApis}
 							/>
 						</section>
 					)}
