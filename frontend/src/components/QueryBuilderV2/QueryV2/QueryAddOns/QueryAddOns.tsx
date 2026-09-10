@@ -38,7 +38,19 @@ interface AddOn {
 	docLink?: string;
 }
 
-const ADD_ONS_KEYS_TO_QUERY_PATH: Partial<Record<QueryBuilderField, string>> = {
+/** Fields the add-on bar does not own: each has its own control elsewhere in the query. */
+type NonAddOnField =
+	| QueryBuilderField.Aggregation
+	| QueryBuilderField.StepInterval
+	| QueryBuilderField.Functions
+	| QueryBuilderField.Formula
+	| QueryBuilderField.AdditionalQueries;
+
+// Omit rather than Partial, so a field added to the enum has to be placed on one side.
+const ADD_ONS_KEYS_TO_QUERY_PATH: Omit<
+	Record<QueryBuilderField, string>,
+	NonAddOnField
+> = {
 	[QueryBuilderField.GroupBy]: 'groupBy',
 	[QueryBuilderField.Having]: 'having.expression',
 	[QueryBuilderField.OrderBy]: 'orderBy',
