@@ -110,6 +110,27 @@ describe('fieldKeys', () => {
 		]);
 	});
 
+	it('reuses the cached keys response for a second empty search', async () => {
+		const seen: URLSearchParams[] = [];
+		mockKeys(
+			'/api/v1/ai_observability/fields/keys',
+			['total_tokens'],
+			(params) => {
+				seen.push(params);
+			},
+		);
+
+		const config = {
+			builderQueryType: 'builder_ai_query' as const,
+			fieldContext: TelemetrytypesFieldContextDTO.trace,
+		};
+
+		await fetchFieldKeys(queryClient, config, DataSource.TRACES, '');
+		await fetchFieldKeys(queryClient, config, DataSource.TRACES, '');
+
+		expect(seen).toHaveLength(1);
+	});
+
 	it('drops fetched keys that share a name with a static field', () => {
 		expect(
 			mergeStatics(

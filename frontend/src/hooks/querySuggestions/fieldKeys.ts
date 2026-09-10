@@ -71,11 +71,17 @@ export const getFieldKeysQueryOptions = (
 ): FieldKeysQueryOptions => {
 	const select = (res: FieldKeysResponse): TelemetryFieldKey[] =>
 		mergeStatics(staticFields, toFieldKeys(res), searchText);
+	const query = {
+		select,
+		staleTime: 1000 * 60 * 60 * 24, // 24 hours
+		refetchOnMount: false,
+		refetchOnWindowFocus: false,
+	} as const;
 
 	if (builderQueryType === 'builder_ai_query') {
 		return getGetAIObservabilityFieldsKeysQueryOptions<TelemetryFieldKey[]>(
 			{ searchText, fieldContext },
-			{ query: { select } },
+			{ query },
 		) as FieldKeysQueryOptions;
 	}
 
@@ -88,7 +94,7 @@ export const getFieldKeysQueryOptions = (
 			metricNamespace,
 			source: signalSource as TelemetrytypesSourceDTO | undefined,
 		},
-		{ query: { select } },
+		{ query },
 	) as FieldKeysQueryOptions;
 };
 
