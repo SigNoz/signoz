@@ -42,14 +42,16 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 }
 
 // ListUnmappedModels discovers the models present in the last hour of trace data
-// (gen_ai.request.model) and returns the ones that no pricing rule pattern matches.
+// (gen_ai.request.model) and returns the ones that no enabled pricing rule matches.
+// Disabled rules are excluded because they are not deployed to the collector, so
+// they produce no estimated cost.
 func (module *module) ListUnmappedModels(ctx context.Context, orgID valuer.UUID) ([]*llmpricingruletypes.UnmappedModel, error) {
 	models, err := module.discoverModels(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	rules, err := module.listAllRules(ctx, orgID)
+	rules, err := module.getEnabledRules(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
