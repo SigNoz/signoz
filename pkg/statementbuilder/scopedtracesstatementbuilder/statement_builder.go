@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -522,7 +524,7 @@ func (b *scopedTraceStatementBuilder) buildMatchedCTE(sb *sqlbuilder.SelectBuild
 		if _, ok := needed[rc.alias]; !ok {
 			continue
 		}
-		selects = append(selects, rc.expr+" AS "+quoteAlias(rc.alias))
+		selects = append(selects, rc.expr+" AS "+sqlbuilder.Escape(quoteAlias(rc.alias)))
 	}
 	sb.Select(selects...)
 	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
@@ -595,7 +597,7 @@ func (b *scopedTraceStatementBuilder) buildRankedCTE(start, end uint64) (string,
 func (b *scopedTraceStatementBuilder) buildEnrichmentSelect(sb *sqlbuilder.SelectBuilder, resolved []resolvedColumn, orders []listOrder) (string, []any) {
 	selects := []string{"trace_id"}
 	for _, rc := range resolved {
-		selects = append(selects, rc.expr+" AS "+quoteAlias(rc.alias))
+		selects = append(selects, rc.expr+" AS "+sqlbuilder.Escape(quoteAlias(rc.alias)))
 	}
 	sb.Select(selects...)
 	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
@@ -660,7 +662,7 @@ func validateAggregateFilter(havingExpr string, filterableSet map[string]struct{
 func orderClause(orders []listOrder) []string {
 	out := make([]string, 0, len(orders)+1)
 	for _, o := range orders {
-		out = append(out, fmt.Sprintf("%s %s", quoteAlias(o.alias), o.direction))
+		out = append(out, fmt.Sprintf("%s %s", sqlbuilder.Escape(quoteAlias(o.alias)), o.direction))
 	}
 	return append(out, "trace_id DESC")
 }
@@ -678,10 +680,12 @@ func spanFilterSelectors(expr string) []*telemetrytypes.FieldKeySelector {
 	return selectors
 }
 
-// quoteAlias backticks an alias containing characters special to the SQL builder.
+var bareIdentifier = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+
+// quoteAlias leaves an alias bare when ClickHouse accepts it unquoted.
 func quoteAlias(alias string) string {
-	if strings.ContainsAny(alias, ".$`") {
-		return "`" + alias + "`"
+	if bareIdentifier.MatchString(alias) {
+		return alias
 	}
-	return alias
+	return clickhousesql.Identifier(alias)
 }

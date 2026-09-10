@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -346,9 +347,9 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), gb.Name)
+		colExpr := sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, clickhousesql.Identifier(gb.Name)))
 		sb.SelectMore(colExpr)
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.Name))
+		fieldNames = append(fieldNames, sqlbuilder.Escape(clickhousesql.Identifier(gb.Name)))
 	}
 
 	allAggChArgs := make([]any, 0)
@@ -399,7 +400,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(clickhousesql.Identifier(orderBy.Key.Name)), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -426,7 +427,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(clickhousesql.Identifier(orderBy.Key.Name)), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -481,7 +482,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), gb.Name)
+		colExpr := sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, clickhousesql.Identifier(gb.Name)))
 		sb.SelectMore(colExpr)
 	}
 
@@ -522,7 +523,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 		if ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(clickhousesql.Identifier(orderBy.Key.Name)), orderBy.Direction.StringValue()))
 		}
 	}
 

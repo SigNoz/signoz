@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -297,8 +298,8 @@ func (m *fieldMapper) resolveColumnExprs(
 			// once clickHouse dependency is updated, we need to check if we can remove it.
 			switch key.FieldContext {
 			case telemetrytypes.FieldContextResource:
-				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
-				existExprs = append(existExprs, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
+				exprs = append(exprs, fmt.Sprintf("%s.%s::String", columnName, clickhousesql.Identifier(key.Name)))
+				existExprs = append(existExprs, fmt.Sprintf("%s.%s IS NOT NULL", columnName, clickhousesql.Identifier(key.Name)))
 			case telemetrytypes.FieldContextScope:
 				if f, ok := IntrinsicFields[key.Name]; ok && f.FieldContext == telemetrytypes.FieldContextScope {
 					// declared String paths on the scope column read '' for the missing case
@@ -306,8 +307,8 @@ func (m *fieldMapper) resolveColumnExprs(
 					existExprs = append(existExprs, fmt.Sprintf("%s <> ''", key.Name))
 				} else {
 					attributeName := strings.TrimPrefix(key.Name, "attribute.") // literal "attribute" prefix in attribute keys needs double prefix
-					exprs = append(exprs, fmt.Sprintf("%s.attributes.%s::String", columnName, querybuilder.ClickHouseIdentifier(attributeName)))
-					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.%s IS NOT NULL", columnName, querybuilder.ClickHouseIdentifier(attributeName)))
+					exprs = append(exprs, fmt.Sprintf("%s.attributes.%s::String", columnName, clickhousesql.Identifier(attributeName)))
+					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.%s IS NOT NULL", columnName, clickhousesql.Identifier(attributeName)))
 				}
 			default:
 				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource and scope context fields are supported for json columns, got %s", key.FieldContext.String)
@@ -341,8 +342,8 @@ func (m *fieldMapper) resolveColumnExprs(
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
 					existExprs = append(existExprs, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
 				} else {
-					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
-					existExprs = append(existExprs, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
+					exprs = append(exprs, fmt.Sprintf("%s[%s]", columnName, clickhousesql.StringLiteral(key.Name)))
+					existExprs = append(existExprs, fmt.Sprintf("mapContains(%s, %s)", columnName, clickhousesql.StringLiteral(key.Name)))
 				}
 			default:
 				return nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type)
