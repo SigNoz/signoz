@@ -180,5 +180,5 @@ func TestRuleViewUpdate(t *testing.T) {
 	assert.Equal(t, ListSortCreatedAt, view.Data.Sort)
 	assert.Equal(t, ListOrderDesc, view.Data.Order)
 	assert.Equal(t, createdAt, view.CreatedAt)
-	assert.True(t, view.UpdatedAt.After(createdAt) || view.UpdatedAt.Equal(createdAt))
+	assert.True(t, view.UpdatedAt.After(createdAt))
 }
