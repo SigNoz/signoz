@@ -11,23 +11,25 @@ interface MenuActionItemProps {
 	checks: BrandedPermission[];
 	/** A non-permission block, which outranks the checks (see AuthZTooltip). */
 	disabledTooltip?: string;
+	destructive?: boolean;
 }
 
 /**
- * The contents of a dashboard dropdown row: its icon, its label, and the reason
- * it is unavailable.
+ * A row in a dashboard dropdown: its icon, its label, and the reason it is
+ * unavailable. The button fills the row, so the tooltip anchors to the whole row
+ * and lands clear of the menu rather than over the icon.
  *
- * The button fills the row, so the tooltip anchors to the whole row and lands
- * clear of the menu rather than over the icon. It deliberately takes no
- * `onClick` — the dropdown item keeps that, along with its own `disabled` and
- * `danger`, so the menu still knows which rows are dead and which are
- * destructive, and the button inherits the colour it settles on.
+ * It deliberately takes no `onClick` or `disabled` — the dropdown item keeps
+ * both. Radix reads `disabled` off the item to skip it in keyboard navigation,
+ * and the menu only marks a row `clickable` (the pointer cursor) when the item
+ * itself carries the handler.
  */
 function MenuActionItem({
 	label,
 	icon,
 	checks,
 	disabledTooltip,
+	destructive = false,
 }: MenuActionItemProps): JSX.Element {
 	return (
 		<AuthZButton
@@ -35,7 +37,7 @@ function MenuActionItem({
 			disabledTooltip={disabledTooltip}
 			side="left"
 			variant="ghost"
-			color="secondary"
+			color={destructive ? 'destructive' : 'secondary'}
 			className={styles.menuActionItem}
 			prefix={icon}
 		>

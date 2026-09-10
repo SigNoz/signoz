@@ -106,13 +106,14 @@ export function usePanelActionItems({
 		const row = (
 			text: string,
 			icon: ReactElement,
-			opts: { checks?: BrandedPermission[] } = {},
+			opts: { checks?: BrandedPermission[]; destructive?: boolean } = {},
 		): ReactNode => (
 			<MenuActionItem
 				label={text}
 				icon={icon}
 				checks={opts.checks ?? editChecks}
 				disabledTooltip={editDisabledTooltip}
+				destructive={opts.destructive}
 			/>
 		);
 
@@ -183,8 +184,7 @@ export function usePanelActionItems({
 		const deleteGroup: MenuItem[] = [
 			{
 				key: 'delete-panel',
-				danger: true,
-				label: row('Delete panel', <Trash2 size={14} />),
+				label: row('Delete panel', <Trash2 size={14} />, { destructive: true }),
 				disabled: !isEditable || !panelActions,
 				onClick: (): void => requestDelete(),
 			},
