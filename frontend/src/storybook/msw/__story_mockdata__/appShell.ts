@@ -98,6 +98,18 @@ export const globalConfigResponse = {
 };
 
 /**
+ * The Noz entry point in the top nav is off until the backend ships a URL for
+ * it, so this variant answers with one.
+ */
+export const nozGlobalConfigResponse = {
+	...globalConfigResponse,
+	data: {
+		...globalConfigResponse.data,
+		ai_assistant_url: 'https://ai.storybook.signoz.local',
+	},
+};
+
+/**
  * `ChangelogSchema` for the current version. Kept non-empty because
  * `getChangelogByVersion` treats an empty list as a failure, and media is left
  * null so no story reaches out for an image.

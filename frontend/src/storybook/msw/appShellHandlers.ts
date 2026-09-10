@@ -5,6 +5,7 @@ import {
 	globalConfigResponse,
 	latestGithubReleaseResponse,
 	licenseWithKeyResponse,
+	nozGlobalConfigResponse,
 	userPreferencesResponse,
 	versionResponse,
 	zeusHostsResponse,
@@ -68,3 +69,14 @@ export const appShellHandlers = [
 		res(ctx.status(200), ctx.text('')),
 	),
 ];
+
+/**
+ * A story's own `parameters.msw.handlers` are resolved ahead of
+ * `appShellHandlers`, so the `Foundations/Tooltips` Noz story wires this in to
+ * override the global config's `ai_assistant_url` without the default set
+ * doing so for every other story.
+ */
+export const nozGlobalConfigHandler = rest.get(
+	'http://localhost/api/v1/global/config',
+	(_req, res, ctx) => res(ctx.status(200), ctx.json(nozGlobalConfigResponse)),
+);
