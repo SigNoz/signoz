@@ -74,10 +74,12 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
             "a heatmap needs one enabled query, but every query is disabled",
             id="only_a_disabled_query",
         ),
+        # an empty body is refused while resources are extracted from it, before
+        # anything heatmap specific runs, so match either wording of that message
         pytest.param(
             [],
             {},
-            "at least one query is required",
+            "one query is required",
             id="no_queries",
         ),
         pytest.param(
