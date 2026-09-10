@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { ChevronDown, ChevronRight, Search, Undo2 } from '@signozhq/icons';
 
@@ -20,6 +22,20 @@ export function CheckboxFilterV2Header({
 	onToggleSearch,
 	onClear,
 }: CheckboxFilterHeaderProps): JSX.Element {
+	const [isTitleTruncated, setIsTitleTruncated] = useState(false);
+
+	const measureTitle = (el: HTMLElement | null): void => {
+		if (el) {
+			setIsTitleTruncated(el.scrollWidth > el.clientWidth);
+		}
+	};
+
+	const titleText = (
+		<Typography.Text ref={measureTitle} className={styles.title}>
+			{title}
+		</Typography.Text>
+	);
+
 	return (
 		<section
 			role="button"
@@ -40,7 +56,13 @@ export function CheckboxFilterV2Header({
 				) : (
 					<ChevronRight size={13} cursor="pointer" />
 				)}
-				<Typography.Text className={styles.title}>{title}</Typography.Text>
+				{isTitleTruncated ? (
+					<TooltipSimple title={title} delayDuration={400}>
+						{titleText}
+					</TooltipSimple>
+				) : (
+					titleText
+				)}
 			</section>
 			{isOpen && (
 				<section className={styles.rightAction}>
