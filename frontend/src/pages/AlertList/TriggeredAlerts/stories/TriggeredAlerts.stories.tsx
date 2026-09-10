@@ -1,14 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { rest } from 'msw';
 import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { triggeredAlertsMocks } from './TriggeredAlerts.stories.mocks';
+import {
+	overflowingLabels,
+	triggeredAlertsMocks,
+} from './TriggeredAlerts.stories.mocks';
 
 import AlertList from '../../index';
-import { triggeredAlertsResponse } from '../../stories/__story_mockdata__/alerts';
 import { AlertListTabs } from '../../types';
 
 type TriggeredAlertsArgs = PageStoryArgs<typeof triggeredAlertsMocks>;
@@ -132,40 +133,6 @@ export const ManyFilterPills: Story = {
 		},
 	},
 };
-
-/**
- * Long enough that the column can only fit the first badge, so the rest land in
- * the overflow tooltip as one joined line.
- */
-const OVERFLOW_LABELS: Record<string, string> = {
-	environment: 'production-eu-central-1',
-	team: 'platform-observability-oncall',
-	owner: 'sre-primary@signoz.io',
-	runbook: 'runbooks.internal.example.com/checkout/latency-budget',
-	tier: 'tier-0-revenue-critical',
-	compliance: 'soc2-type-2-in-scope',
-};
-
-const overflowingLabels = rest.get(
-	'http://localhost/api/v1/alerts',
-	(_req, res, ctx) => {
-		const list = triggeredAlertsResponse(3, {
-			severity: 'mixed',
-			state: 'mixed',
-		});
-
-		return res(
-			ctx.status(200),
-			ctx.json({
-				...list,
-				data: list.data.map((alert) => ({
-					...alert,
-					labels: { ...alert.labels, ...OVERFLOW_LABELS },
-				})),
-			}),
-		);
-	},
-);
 
 /**
  * Both tooltips the Labels column has, held open: the badge that fits, which

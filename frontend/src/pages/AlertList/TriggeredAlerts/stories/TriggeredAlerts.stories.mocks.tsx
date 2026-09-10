@@ -54,3 +54,37 @@ export const triggeredAlertsMocks = defineStoryMocks({
 	],
 	config: () => ({ route: `/alerts?tab=${AlertListTabs.TRIGGERED_ALERTS}` }),
 });
+
+/**
+ * Long enough that the column can only fit the first badge, so the rest land in
+ * the overflow tooltip as one joined line.
+ */
+const OVERFLOW_LABELS: Record<string, string> = {
+	environment: 'production-eu-central-1',
+	team: 'platform-observability-oncall',
+	owner: 'sre-primary@signoz.io',
+	runbook: 'runbooks.internal.example.com/checkout/latency-budget',
+	tier: 'tier-0-revenue-critical',
+	compliance: 'soc2-type-2-in-scope',
+};
+
+export const overflowingLabels = rest.get(
+	'http://localhost/api/v1/alerts',
+	(_req, res, ctx) => {
+		const list = triggeredAlertsResponse(3, {
+			severity: 'mixed',
+			state: 'mixed',
+		});
+
+		return res(
+			ctx.status(200),
+			ctx.json({
+				...list,
+				data: list.data.map((alert) => ({
+					...alert,
+					labels: { ...alert.labels, ...OVERFLOW_LABELS },
+				})),
+			}),
+		);
+	},
+);
