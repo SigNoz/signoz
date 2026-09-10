@@ -8,6 +8,7 @@ import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
@@ -38,7 +39,6 @@ import {
 	tracesRunQueryAction,
 	tracesSaveViewAction,
 } from 'pages/TracesExplorer/aiActions';
-import { NANO_SECOND_MULTIPLIER, useGlobalTime } from 'store/globalTime';
 import { Warning } from 'types/api';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -113,16 +113,12 @@ function Explorer(): JSX.Element {
 	const [warning, setWarning] = useState<Warning | undefined>();
 	const [isOpen, setOpen] = useState<boolean>(true);
 
-	const selectedTime = useGlobalTime((state) => state.selectedTime);
-	const getMinMaxTime = useGlobalTime((state) => state.getMinMaxTime);
-	const quickFiltersTimeRange = useMemo(() => {
-		const { minTime, maxTime } = getMinMaxTime();
-		return {
-			startUnixMilli: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
-			endUnixMilli: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedTime, getMinMaxTime]);
+	const { startUnixMilli, endUnixMilli } = useSignalFieldApis();
+	// existingQuery is left unset so related values auto-extract from the current query
+	const quickFiltersFieldApis = useMemo(
+		() => ({ startUnixMilli, endUnixMilli }),
+		[startUnixMilli, endUnixMilli],
+	);
 
 	const defaultQuery = useMemo(
 		(): Query =>
@@ -274,7 +270,7 @@ function Explorer(): JSX.Element {
 						className="qf-traces-explorer"
 						source={QuickFiltersSource.AI_OBSERVABILITY}
 						signal={SignalType.AI_OBSERVABILITY}
-						useFieldApis={quickFiltersTimeRange}
+						useFieldApis={quickFiltersFieldApis}
 						handleFilterVisibilityChange={(): void => {
 							setOpen(!isOpen);
 						}}
