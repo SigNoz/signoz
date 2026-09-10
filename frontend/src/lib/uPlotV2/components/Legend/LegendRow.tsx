@@ -135,7 +135,7 @@ function LegendRow({
 				side="top"
 				delayDuration={LEGEND_TOOLTIP_DELAY_MS}
 				disableHoverableContent
-				tooltipContentProps={{ className: styles.labelTooltip }}
+				tooltipContentProps={{ className: styles.rowTooltip }}
 			>
 				<span className={styles.label}>{label}</span>
 			</TooltipSimple>
@@ -147,6 +147,7 @@ function LegendRow({
 						side="top"
 						delayDuration={LEGEND_TOOLTIP_DELAY_MS}
 						disableHoverableContent
+						tooltipContentProps={{ className: styles.rowTooltip }}
 					>
 						{/* Radix's asChild merge strips the button's own data-testid. */}
 						<span className={styles.actionTrigger}>
@@ -170,6 +171,7 @@ function LegendRow({
 					side="top"
 					delayDuration={LEGEND_TOOLTIP_DELAY_MS}
 					disableHoverableContent
+					tooltipContentProps={{ className: styles.rowTooltip }}
 				>
 					<span className={styles.actionTrigger}>
 						<Button
