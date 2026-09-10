@@ -166,7 +166,7 @@
 
 // Series names run long and have no spaces to break on, so they need both a
 // cap and a break rule or the tooltip becomes one panel-wide line.
-.labelTooltip {
+.rowTooltip {
 	max-width: 420px;
 	white-space: normal;
 	overflow-wrap: anywhere;
