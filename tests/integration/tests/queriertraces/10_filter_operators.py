@@ -27,8 +27,6 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # single-typed here, so no collision-driven divergence arises and both physical layouts
 # must return identical spans — the parity contract for the JSON attribute rollout.
 
-pytestmark = pytest.mark.usefixtures("attribute_backend")
-
 
 @pytest.mark.parametrize(
     "expression,expected_names",
@@ -66,11 +64,14 @@ pytestmark = pytest.mark.usefixtures("attribute_backend")
         pytest.param("responseStatusCode >= 400", {"cart-handler", "payment-processor"}, id="deprecated_responseStatusCode"),
     ],
 )
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_filter_operators(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
     expression: str,
     expected_names: set[str],
 ) -> None:
@@ -82,6 +83,8 @@ def test_traces_filter_operators(
     Tests:
     Each production-shaped filter operator selects exactly the expected spans.
     """
+    use_attribute_backend(attribute_backend)
+
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     # (name, service, deployment.environment, http.request.method, http.response.status_code, latency_ms, has_error_type)
     specs = [
