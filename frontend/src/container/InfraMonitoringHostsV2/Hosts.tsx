@@ -1,3 +1,4 @@
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -243,10 +244,11 @@ function Hosts(): JSX.Element {
 										</Tooltip>
 									</div>
 									<QuickFilters
-										source={QuickFiltersSource.INFRA_MONITORING}
+										pageSource={QuickFiltersSource.INFRA_MONITORING}
 										config={getHostsQuickFiltersConfig()}
 										handleFilterVisibilityChange={handleFilterVisibilityChange}
 										useFieldApis={{
+											signal: TelemetrytypesSignalDTO.metrics,
 											metricNamespace:
 												METRIC_NAMESPACE_BY_ENTITY[InfraMonitoringEntity.HOSTS],
 											startUnixMilli,

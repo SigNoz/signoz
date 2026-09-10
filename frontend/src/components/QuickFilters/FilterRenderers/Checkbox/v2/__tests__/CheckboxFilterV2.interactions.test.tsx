@@ -52,7 +52,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -118,7 +118,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: 'service.name = "api"',
@@ -182,7 +182,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: 'service.name = "api"',
@@ -229,7 +229,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -271,7 +271,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: 'service.name = "api"',
@@ -333,7 +333,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: 'service.name = "api"',
@@ -379,7 +379,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -407,7 +407,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={{ ...DEFAULT_FILTER, defaultOpen: false }}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -433,7 +433,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -459,7 +459,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -484,7 +484,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 				undefined,
@@ -523,7 +523,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -546,7 +546,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 					onFilterChange={onFilterChange}
 				/>,
@@ -593,7 +593,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 					onFilterChange={onFilterChange}
 				/>,
@@ -669,7 +669,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 					onFilterChange={onFilterChange}
 				/>,
@@ -803,7 +803,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={{ ...DEFAULT_FILTER, customRendererForValue: customRenderer }}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);

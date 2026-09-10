@@ -1,4 +1,5 @@
 import { render, RenderResult } from 'tests/test-utils';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { server, rest } from 'mocks-server/server';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
@@ -25,6 +26,7 @@ export const DEFAULT_FILTER: IQuickFiltersConfig = {
 };
 
 export const DEFAULT_USE_FIELD_APIS: QuickFilterCheckboxUseFieldApis = {
+	signal: TelemetrytypesSignalDTO.traces,
 	startUnixMilli: 1700000000000,
 	endUnixMilli: 1700003600000,
 	existingQuery: null,
@@ -99,7 +101,7 @@ export function renderWithFilter(
 	return render(
 		<CheckboxFilterV2
 			filter={DEFAULT_FILTER}
-			source={QuickFiltersSource.TRACES_EXPLORER}
+			pageSource={QuickFiltersSource.TRACES_EXPLORER}
 			useFieldApis={{
 				...DEFAULT_USE_FIELD_APIS,
 				existingQuery: 'service.name = "api"',

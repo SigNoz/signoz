@@ -7,6 +7,7 @@ import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -75,7 +76,7 @@ function LogsExplorer(): JSX.Element {
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
-	const quickFilterFieldApis = useSignalFieldApis();
+	const quickFilterFieldApis = useSignalFieldApis(TelemetrytypesSignalDTO.logs);
 
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
@@ -232,8 +233,8 @@ function LogsExplorer(): JSX.Element {
 						<section className={cx('log-quick-filter-left-section')}>
 							<QuickFilters
 								className="qf-logs-explorer"
-								signal={SignalType.LOGS}
-								source={QuickFiltersSource.LOGS_EXPLORER}
+								quickFilterSignal={SignalType.LOGS}
+								pageSource={QuickFiltersSource.LOGS_EXPLORER}
 								handleFilterVisibilityChange={handleFilterVisibilityChange}
 								useFieldApis={quickFilterFieldApis}
 							/>

@@ -50,7 +50,7 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: 'custom.query = "value"',
@@ -82,7 +82,7 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: null,
@@ -116,7 +116,7 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={USE_FIELD_APIS_AUTO_DERIVE}
 				/>,
 				undefined,
@@ -154,7 +154,7 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={USE_FIELD_APIS_AUTO_DERIVE}
 				/>,
 				undefined,
@@ -185,7 +185,7 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={USE_FIELD_APIS_AUTO_DERIVE}
 				/>,
 				undefined,
@@ -222,7 +222,7 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={USE_FIELD_APIS_AUTO_DERIVE}
 				/>,
 				undefined,
@@ -264,7 +264,7 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					pageSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={USE_FIELD_APIS_AUTO_DERIVE}
 				/>,
 				undefined,

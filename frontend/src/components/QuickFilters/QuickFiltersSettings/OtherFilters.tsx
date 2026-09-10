@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { Button, Skeleton } from 'antd';
 import { useGetFieldsKeys } from 'api/generated/services/fields';
-import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	TelemetrytypesSignalDTO,
+	TelemetrytypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { DATA_SOURCE_TO_SIGNAL } from 'components/QuickFilters/FilterRenderers/Checkbox/v2/useFieldValues';
-import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import {
@@ -12,6 +13,14 @@ import {
 	FieldDataType,
 	TelemetryFieldKey,
 } from 'types/api/v5/queryRange';
+
+const SIGNAL_TYPE_TO_SIGNAL: Record<SignalType, TelemetrytypesSignalDTO> = {
+	[SignalType.LOGS]: TelemetrytypesSignalDTO.logs,
+	[SignalType.TRACES]: TelemetrytypesSignalDTO.traces,
+	[SignalType.EXCEPTIONS]: TelemetrytypesSignalDTO.traces,
+	[SignalType.API_MONITORING]: TelemetrytypesSignalDTO.traces,
+	[SignalType.METER_EXPLORER]: TelemetrytypesSignalDTO.metrics,
+};
 
 function OtherFiltersSkeleton(): JSX.Element {
 	return (
@@ -45,9 +54,7 @@ function OtherFilters({
 	const { data, isFetching } = useGetFieldsKeys(
 		{
 			searchText: inputValue,
-			signal: signal
-				? DATA_SOURCE_TO_SIGNAL[SIGNAL_DATA_SOURCE_MAP[signal]]
-				: undefined,
+			signal: signal ? SIGNAL_TYPE_TO_SIGNAL[signal] : undefined,
 			source: isMeterDataSource ? TelemetrytypesSourceDTO.meter : undefined,
 		},
 		{ query: { enabled: !!signal } },

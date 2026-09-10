@@ -72,46 +72,46 @@ const setupServer = (): void => {
 };
 
 function TestQuickFilters({
-	signal = SignalType.LOGS,
+	quickFilterSignal = SignalType.LOGS,
 	config = QuickFiltersConfig,
 }: {
-	signal?: SignalType;
+	quickFilterSignal?: SignalType;
 	config?: IQuickFiltersConfig[];
 }): JSX.Element {
 	return (
 		<QuickFilters
-			source={QuickFiltersSource.EXCEPTIONS}
+			pageSource={QuickFiltersSource.EXCEPTIONS}
 			config={config}
 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-			signal={signal}
+			quickFilterSignal={quickFilterSignal}
 		/>
 	);
 }
 
 TestQuickFilters.defaultProps = {
-	signal: '',
+	quickFilterSignal: '',
 	config: QuickFiltersConfig,
 };
 
 function TestQuickFiltersApiMonitoring({
-	signal = SignalType.LOGS,
+	quickFilterSignal = SignalType.LOGS,
 	config = QuickFiltersConfig,
 }: {
-	signal?: SignalType;
+	quickFilterSignal?: SignalType;
 	config?: IQuickFiltersConfig[];
 }): JSX.Element {
 	return (
 		<QuickFilters
-			source={QuickFiltersSource.API_MONITORING}
+			pageSource={QuickFiltersSource.API_MONITORING}
 			config={config}
 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-			signal={signal}
+			quickFilterSignal={quickFilterSignal}
 		/>
 	);
 }
 
 TestQuickFiltersApiMonitoring.defaultProps = {
-	signal: '',
+	quickFilterSignal: '',
 	config: QuickFiltersConfig,
 };
 
@@ -310,7 +310,7 @@ describe('Quick Filters with custom filters', () => {
 	it('loads the custom filters correctly', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(<TestQuickFilters quickFilterSignal={SIGNAL} />);
 
 		expect(screen.getByText('Filters for')).toBeInTheDocument();
 		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
@@ -370,7 +370,7 @@ describe('Quick Filters with custom filters', () => {
 			),
 		);
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(<TestQuickFilters quickFilterSignal={SIGNAL} />);
 		await screen.findByText(FILTER_SERVICE_NAME);
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
@@ -398,7 +398,7 @@ describe('Quick Filters with custom filters', () => {
 	it('adds a filter from OTHER FILTERS to ADDED FILTERS when clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(<TestQuickFilters quickFilterSignal={SIGNAL} />);
 		await screen.findByText(FILTER_SERVICE_NAME);
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
@@ -419,7 +419,7 @@ describe('Quick Filters with custom filters', () => {
 	it('removes a filter from ADDED FILTERS and moves it to OTHER FILTERS', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(<TestQuickFilters quickFilterSignal={SIGNAL} />);
 		await screen.findByText(FILTER_SERVICE_NAME);
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
@@ -448,7 +448,7 @@ describe('Quick Filters with custom filters', () => {
 	it('restores original filter state on Discard', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(<TestQuickFilters quickFilterSignal={SIGNAL} />);
 		await screen.findByText(FILTER_SERVICE_NAME);
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
@@ -490,7 +490,7 @@ describe('Quick Filters with custom filters', () => {
 	it('saves the updated filters by calling PUT with correct payload', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(<TestQuickFilters quickFilterSignal={SIGNAL} />);
 		await screen.findByText(FILTER_SERVICE_NAME);
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
@@ -527,7 +527,9 @@ describe('Quick Filters with custom filters', () => {
 			pointerEventsCheck: 0,
 		});
 
-		const { getByTestId } = render(<TestQuickFilters signal={SIGNAL} />);
+		const { getByTestId } = render(
+			<TestQuickFilters quickFilterSignal={SIGNAL} />,
+		);
 		await screen.findByText(FILTER_SERVICE_NAME);
 		expect(screen.getByText('Duration')).toBeInTheDocument();
 
@@ -591,14 +593,14 @@ describe('Quick Filters refetch behavior', () => {
 			}),
 		);
 
-		const { unmount } = render(<TestQuickFilters signal={SIGNAL} />);
+		const { unmount } = render(<TestQuickFilters quickFilterSignal={SIGNAL} />);
 		await expect(
 			screen.findByText(FILTER_SERVICE_NAME),
 		).resolves.toBeInTheDocument();
 
 		unmount();
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(<TestQuickFilters quickFilterSignal={SIGNAL} />);
 		await expect(
 			screen.findByText(FILTER_SERVICE_NAME),
 		).resolves.toBeInTheDocument();
@@ -616,7 +618,7 @@ describe('Quick Filters refetch behavior', () => {
 			}),
 		);
 
-		render(<TestQuickFilters signal={undefined} />);
+		render(<TestQuickFilters quickFilterSignal={undefined} />);
 
 		await waitFor(() => expect(getCalls).toBe(0));
 	});
@@ -637,7 +639,7 @@ describe('Quick Filters refetch behavior', () => {
 		);
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(<TestQuickFilters quickFilterSignal={SIGNAL} />);
 
 		await expect(
 			screen.findByText(FILTER_SERVICE_NAME),
@@ -689,7 +691,7 @@ describe('Quick Filters refetch behavior', () => {
 		);
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(<TestQuickFilters quickFilterSignal={SIGNAL} />);
 
 		await expect(
 			screen.findByText(FILTER_SERVICE_NAME),
@@ -720,7 +722,7 @@ describe('Quick Filters refetch behavior', () => {
 			),
 		);
 
-		render(<TestQuickFilters signal={SIGNAL} config={[]} />);
+		render(<TestQuickFilters quickFilterSignal={SIGNAL} config={[]} />);
 
 		await expect(
 			screen.findByText('No filters found'),

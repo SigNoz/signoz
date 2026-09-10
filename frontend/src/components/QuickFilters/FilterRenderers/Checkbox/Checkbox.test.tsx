@@ -143,7 +143,7 @@ describe('CheckboxFilter - User Flows', () => {
 		render(
 			<CheckboxFilter
 				filter={mockFilter}
-				source={QuickFiltersSource.LOGS_EXPLORER}
+				pageSource={QuickFiltersSource.LOGS_EXPLORER}
 			/>,
 		);
 
@@ -178,7 +178,7 @@ describe('CheckboxFilter - User Flows', () => {
 		render(
 			<CheckboxFilter
 				filter={mockFilter}
-				source={QuickFiltersSource.LOGS_EXPLORER}
+				pageSource={QuickFiltersSource.LOGS_EXPLORER}
 			/>,
 		);
 
@@ -218,7 +218,7 @@ describe('CheckboxFilter - User Flows', () => {
 		render(
 			<CheckboxFilter
 				filter={mockFilter}
-				source={QuickFiltersSource.LOGS_EXPLORER}
+				pageSource={QuickFiltersSource.LOGS_EXPLORER}
 			/>,
 		);
 
@@ -281,7 +281,7 @@ describe('CheckboxFilter - User Flows', () => {
 		render(
 			<CheckboxFilter
 				filter={mockFilter}
-				source={QuickFiltersSource.LOGS_EXPLORER}
+				pageSource={QuickFiltersSource.LOGS_EXPLORER}
 			/>,
 		);
 
@@ -339,7 +339,7 @@ describe('CheckboxFilter - User Flows', () => {
 		render(
 			<CheckboxFilter
 				filter={mockFilter}
-				source={QuickFiltersSource.LOGS_EXPLORER}
+				pageSource={QuickFiltersSource.LOGS_EXPLORER}
 			/>,
 		);
 
@@ -397,7 +397,7 @@ describe('CheckboxFilter - User Flows', () => {
 		render(
 			<CheckboxFilter
 				filter={mockFilter}
-				source={QuickFiltersSource.LOGS_EXPLORER}
+				pageSource={QuickFiltersSource.LOGS_EXPLORER}
 			/>,
 		);
 
@@ -449,7 +449,7 @@ describe('CheckboxFilter - User Flows', () => {
 		render(
 			<CheckboxFilter
 				filter={mockFilter}
-				source={QuickFiltersSource.LOGS_EXPLORER}
+				pageSource={QuickFiltersSource.LOGS_EXPLORER}
 			/>,
 		);
 

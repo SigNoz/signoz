@@ -4,11 +4,7 @@ import {
 	TelemetrytypesSignalDTO,
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import {
-	IQuickFiltersConfig,
-	QuickFiltersSource,
-} from 'components/QuickFilters/types';
-import { DataSource } from 'types/common/queryBuilder';
+import { IQuickFiltersConfig } from 'components/QuickFilters/types';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 
 interface UseFieldValuesProps {
@@ -16,7 +12,8 @@ interface UseFieldValuesProps {
 	searchText: string;
 	existingQuery?: string;
 	metricNamespace?: string;
-	source?: QuickFiltersSource;
+	signal?: TelemetrytypesSignalDTO;
+	source?: TelemetrytypesSourceDTO;
 	startUnixMilli?: number;
 	endUnixMilli?: number;
 	enabled: boolean;
@@ -29,26 +26,12 @@ interface UseFieldValuesReturn {
 	isFetching: boolean;
 }
 
-export const DATA_SOURCE_TO_SIGNAL: Record<
-	DataSource,
-	TelemetrytypesSignalDTO
-> = {
-	[DataSource.METRICS]: TelemetrytypesSignalDTO.metrics,
-	[DataSource.TRACES]: TelemetrytypesSignalDTO.traces,
-	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
-};
-
-const QUICK_FILTERS_SOURCE_TO_SOURCE: Partial<
-	Record<QuickFiltersSource, TelemetrytypesSourceDTO>
-> = {
-	[QuickFiltersSource.METER_EXPLORER]: TelemetrytypesSourceDTO.meter,
-};
-
 export function useFieldValues({
 	filter,
 	searchText,
 	existingQuery,
 	metricNamespace,
+	signal,
 	source,
 	startUnixMilli,
 	endUnixMilli,
@@ -56,14 +39,12 @@ export function useFieldValues({
 }: UseFieldValuesProps): UseFieldValuesReturn {
 	const { data, isLoading, isFetching } = useGetFieldsValues(
 		{
-			signal: filter.dataSource
-				? DATA_SOURCE_TO_SIGNAL[filter.dataSource]
-				: undefined,
+			signal,
 			name: filter.attributeKey.key,
 			searchText,
 			existingQuery,
 			metricNamespace,
-			source: source ? QUICK_FILTERS_SOURCE_TO_SOURCE[source] : undefined,
+			source,
 			startUnixMilli,
 			// This field does not affect the backend but I wanted to keep it here
 			// in case we add the support in the future

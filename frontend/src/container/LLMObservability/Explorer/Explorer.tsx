@@ -260,8 +260,8 @@ function Explorer(): JSX.Element {
 				<Card className="filter" hidden={!isOpen}>
 					<QuickFilters
 						className="qf-traces-explorer"
-						source={QuickFiltersSource.TRACES_EXPLORER}
-						signal={SignalType.TRACES}
+						pageSource={QuickFiltersSource.TRACES_EXPLORER}
+						quickFilterSignal={SignalType.TRACES}
 						handleFilterVisibilityChange={(): void => {
 							setOpen(!isOpen);
 						}}

@@ -1,3 +1,4 @@
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Button } from '@signozhq/ui/button';
@@ -89,6 +90,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	const getUseFieldApis = useCallback(
 		(entity: InfraMonitoringEntity): QuickFilterCheckboxUseFieldApis => ({
+			signal: TelemetrytypesSignalDTO.metrics,
 			metricNamespace: METRIC_NAMESPACE_BY_ENTITY[entity],
 			startUnixMilli,
 			endUnixMilli,
@@ -319,7 +321,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 										</div>
 										{selectedCategoryConfig && (
 											<QuickFilters
-												source={QuickFiltersSource.INFRA_MONITORING}
+												pageSource={QuickFiltersSource.INFRA_MONITORING}
 												config={selectedCategoryConfig}
 												handleFilterVisibilityChange={handleFilterVisibilityChange}
 												useFieldApis={selectedCategoryUseFieldApis}
