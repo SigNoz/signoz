@@ -1023,7 +1023,7 @@ export interface AlertmanagertypesListedNotificationChannelDTO {
 	 * @type string
 	 */
 	id: string;
-	kind?: AlertmanagertypesChannelKindDTO;
+	kind: AlertmanagertypesChannelKindDTO;
 	/**
 	 * @type string
 	 */

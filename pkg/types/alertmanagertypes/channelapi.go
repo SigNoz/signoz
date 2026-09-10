@@ -184,11 +184,9 @@ type ListedNotificationChannel struct {
 	ID          valuer.UUID `json:"id" required:"true"`
 	Name        string      `json:"name" required:"true"`
 	DisplayName string      `json:"displayName" required:"true"`
-	// Kind is absent for a row whose stored type no ChannelKind models, which v1
-	// allowed because it accepted every upstream notifier kind.
-	Kind      *ChannelKind `json:"kind,omitempty"`
-	CreatedAt time.Time    `json:"createdAt" required:"true"`
-	UpdatedAt time.Time    `json:"updatedAt" required:"true"`
+	Kind        ChannelKind `json:"kind" required:"true"`
+	CreatedAt   time.Time   `json:"createdAt" required:"true"`
+	UpdatedAt   time.Time   `json:"updatedAt" required:"true"`
 }
 
 // ListableNotificationChannel is one page of the channel list. Total counts every

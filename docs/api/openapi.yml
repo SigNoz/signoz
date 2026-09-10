@@ -620,6 +620,7 @@ components:
       - id
       - name
       - displayName
+      - kind
       - createdAt
       - updatedAt
       type: object

@@ -656,6 +656,48 @@ def test_get_unknown_id(
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
 
 
+def test_list_and_get_a_v1_channel_of_an_unmodelled_kind(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    cleanup_notification_channels: list[str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    name = f"v1-telegram-{uuid.uuid4().hex[:8]}"
+
+    # telegram is a kind v1 accepts and v2 does not model, so it can only be
+    # written through v1.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/channels"),
+        json={"name": name, "telegram_configs": [{"chat": 12345, "token": "telegram-bot-token"}]},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    channel_id = response.json()["data"]["id"]
+    cleanup_notification_channels.append(channel_id)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        params={"query": name},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    listed = response.json()["data"]
+    assert listed["total"] == 1
+    assert listed["channels"][0]["displayName"] == name
+    assert listed["channels"][0]["kind"] == ""
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{channel_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, response.text
+
+
 @pytest.mark.parametrize(
     "body",
     [

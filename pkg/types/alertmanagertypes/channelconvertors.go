@@ -132,21 +132,18 @@ func (c *Channel) ToGettableNotificationChannel() (*GettableNotificationChannel,
 	}, nil
 }
 
-// ToListedNotificationChannel never fails. A row whose stored type no ChannelKind
-// models is listed without a Kind rather than dropped, so one such row cannot
-// fail the whole page.
+// ToListedNotificationChannel reports an empty Kind for a row whose stored type
+// no ChannelKind models, which v1 allowed because it accepted every upstream
+// notifier kind. One such row must not fail the whole page.
 func (c *Channel) ToListedNotificationChannel() *ListedNotificationChannel {
-	listed := &ListedNotificationChannel{
+	channelKind, _ := parseStoredChannelType(c.Type)
+
+	return &ListedNotificationChannel{
 		ID:          c.ID,
 		Name:        c.Name,
 		DisplayName: c.DisplayName,
+		Kind:        channelKind,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
 	}
-
-	if channelKind, ok := parseStoredChannelType(c.Type); ok {
-		listed.Kind = &channelKind
-	}
-
-	return listed
 }

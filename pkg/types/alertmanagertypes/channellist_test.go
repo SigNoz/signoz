@@ -1,7 +1,6 @@
 package alertmanagertypes
 
 import (
-	"encoding/json"
 	"strings"
 	"testing"
 
@@ -41,8 +40,8 @@ func TestListChannelsParamsValidateRejectsALongQuery(t *testing.T) {
 }
 
 // v1 accepted every upstream notifier kind, so rows this API does not model are
-// possible. One of them must not fail the whole list.
-func TestChannelToListedChannelToleratesUnmodelledKinds(t *testing.T) {
+// possible until they are migrated. One of them must not fail the whole list.
+func TestChannelToListedChannelLeavesUnmodelledKindsEmpty(t *testing.T) {
 	channel := Channel{
 		DisplayName: "tg",
 		Name:        "tg",
@@ -52,11 +51,7 @@ func TestChannelToListedChannelToleratesUnmodelledKinds(t *testing.T) {
 
 	listed := channel.ToListedNotificationChannel()
 	assert.Equal(t, "tg", listed.Name)
-	assert.Nil(t, listed.Kind)
-
-	raw, err := json.Marshal(listed)
-	require.NoError(t, err)
-	assert.NotContains(t, string(raw), "kind")
+	assert.True(t, listed.Kind.IsZero())
 }
 
 // msteams is the only kind whose stored Channel.Type differs from the api kind,
