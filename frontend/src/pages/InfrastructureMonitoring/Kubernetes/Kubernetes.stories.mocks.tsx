@@ -3,9 +3,51 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import { rest } from 'msw';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from 'container/InfraMonitoringK8sV2/constants';
 
 import { infraStoryMocks } from '../stories/InfrastructureMonitoring.stories.mocks';
+import { infraListResponse } from '../stories/__story_mockdata__/infraMonitoring';
+
+/**
+ * A node name long enough that the pod's metadata tooltip has to wrap, which the
+ * page's own fixture is too short to show. The Rows, Query warning and Empty
+ * state controls do not reach the story using this handler.
+ */
+export const podLongNodeName = rest.post(
+	'http://localhost/api/v2/infra_monitoring/pods',
+	async (req, res, ctx) => {
+		const body = (await req.json()) as { offset?: number; limit?: number };
+
+		const list = infraListResponse({
+			entity: InfraMonitoringEntity.PODS,
+			count: 20,
+			offset: body.offset ?? 0,
+			limit: body.limit ?? 10,
+		});
+
+		return res(
+			ctx.status(200),
+			ctx.json({
+				...list,
+				data: {
+					...list.data,
+					records: list.data.records.map((record) => ({
+						...record,
+						meta: {
+							...record.meta,
+							[INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME]:
+								'ip-10-0-3-17.eu-central-1.compute.internal (spot, gpu-a10g, capacity-reservation cr-0f21a8b7)',
+						},
+					})),
+				},
+			}),
+		);
+	},
+);
 
 /**
  * One mocks module per resource the Kubernetes tab lists. They all answer the
