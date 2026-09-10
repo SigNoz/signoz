@@ -1,11 +1,11 @@
 package telemetrytypes
 
 import (
-	"fmt"
 	"maps"
 	"slices"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -65,26 +65,26 @@ func NewRootJSONAccessNode(name string, maxDynamicTypes, maxDynamicPaths int) *J
 	}
 }
 
+// Alias is the bare column name for the root and the quoted logical path otherwise.
 func (n *JSONAccessNode) Alias() string {
 	if n.isRoot {
 		return n.Name
-	} else if n.Parent == nil {
-		return fmt.Sprintf("`%s`", n.Name)
 	}
+	return clickhousesql.Identifier(n.aliasName())
+}
 
-	parentAlias := strings.TrimLeft(n.Parent.Alias(), "`")
-	parentAlias = strings.TrimRight(parentAlias, "`")
-
-	sep := ArraySep
-	if n.Parent.isRoot {
-		sep = "."
+func (n *JSONAccessNode) aliasName() string {
+	if n.Parent == nil || n.Parent.isRoot {
+		if n.Parent == nil {
+			return n.Name
+		}
+		return n.Parent.Name + "." + n.Name
 	}
-	return fmt.Sprintf("`%s%s%s`", parentAlias, sep, n.Name)
+	return n.Parent.aliasName() + ArraySep + n.Name
 }
 
 func (n *JSONAccessNode) FieldPath() string {
-	key := "`" + n.Name + "`"
-	return n.Parent.Alias() + "." + key
+	return n.Parent.Alias() + "." + clickhousesql.Identifier(n.Name)
 }
 
 // Returns true if the current node is a non-nested path.

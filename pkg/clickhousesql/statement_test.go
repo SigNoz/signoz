@@ -1,13 +1,13 @@
-package querybuilder
+package clickhousesql
 
 import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
@@ -107,67 +107,67 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		query        string
 		expectedCode errors.Code
 	}{
-		{"Empty", "", CodeClickHouseSQLNotSingleStatement},
-		{"UnterminatedBlockCommentOnly", "/* x", CodeClickHouseSQLUnparseable},
-		{"Unparseable", "SELECT FROM WHERE", CodeClickHouseSQLUnparseable},
-		{"MultipleStatements", "SELECT 1; DROP TABLE signoz_logs.logs_v2", CodeClickHouseSQLNotSingleStatement},
-		{"Drop", "DROP TABLE signoz_logs.logs_v2", CodeClickHouseSQLNotSelect},
-		{"Insert", "INSERT INTO signoz_logs.logs_v2 SELECT * FROM signoz_logs.logs_v2", CodeClickHouseSQLNotSelect},
-		{"AlterDelete", "ALTER TABLE signoz_logs.logs_v2 DELETE WHERE 1 = 1", CodeClickHouseSQLNotSelect},
-		{"CreateTable", "CREATE TABLE evil (a Int) ENGINE = Memory", CodeClickHouseSQLNotSelect},
-		{"Grant", "GRANT ALL ON *.* TO admin", CodeClickHouseSQLNotSelect},
-		{"Set", "SET readonly = 0", CodeClickHouseSQLNotSelect},
+		{"Empty", "", CodeNotSingleStatement},
+		{"UnterminatedBlockCommentOnly", "/* x", CodeUnparseable},
+		{"Unparseable", "SELECT FROM WHERE", CodeUnparseable},
+		{"MultipleStatements", "SELECT 1; DROP TABLE signoz_logs.logs_v2", CodeNotSingleStatement},
+		{"Drop", "DROP TABLE signoz_logs.logs_v2", CodeNotSelect},
+		{"Insert", "INSERT INTO signoz_logs.logs_v2 SELECT * FROM signoz_logs.logs_v2", CodeNotSelect},
+		{"AlterDelete", "ALTER TABLE signoz_logs.logs_v2 DELETE WHERE 1 = 1", CodeNotSelect},
+		{"CreateTable", "CREATE TABLE evil (a Int) ENGINE = Memory", CodeNotSelect},
+		{"Grant", "GRANT ALL ON *.* TO admin", CodeNotSelect},
+		{"Set", "SET readonly = 0", CodeNotSelect},
 		// Both panicked before v0.5.5. https://github.com/AfterShip/clickhouse-sql-parser/pull/306
-		{"UnparseableDefaultExpression", "CREATE TABLE t (a String DEFAULT foo(b FROM 2)) ENGINE = Memory", CodeClickHouseSQLUnparseable},
-		{"TrailingOperatorInDefaultExpression", "CREATE TABLE t (a String DEFAULT 1 +) ENGINE = Memory", CodeClickHouseSQLUnparseable},
+		{"UnparseableDefaultExpression", "CREATE TABLE t (a String DEFAULT foo(b FROM 2)) ENGINE = Memory", CodeUnparseable},
+		{"TrailingOperatorInDefaultExpression", "CREATE TABLE t (a String DEFAULT 1 +) ENGINE = Memory", CodeUnparseable},
 		// Rejected outright rather than classified.
-		{"ShowGrants", "SHOW GRANTS", CodeClickHouseSQLUnparseable},
-		{"IntoOutfile", "SELECT * FROM t INTO OUTFILE '/tmp/x.csv'", CodeClickHouseSQLUnparseable},
-		{"UrlTableFunction", "SELECT * FROM url('http://attacker.example/x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
+		{"ShowGrants", "SHOW GRANTS", CodeUnparseable},
+		{"IntoOutfile", "SELECT * FROM t INTO OUTFILE '/tmp/x.csv'", CodeUnparseable},
+		{"UrlTableFunction", "SELECT * FROM url('http://attacker.example/x', CSV, 'a String')", CodeTableFunction},
 		// file is also a scalar function, so the reading rule reaches it before the table rule does.
-		{"FileTableFunction", "SELECT * FROM file('/etc/passwd', CSV, 'a String')", CodeClickHouseSQLReadingFunction},
-		{"ExecutableTableFunction", "SELECT * FROM executable('script.sh', CSV, 'a String')", CodeClickHouseSQLTableFunction},
-		{"TableFunctionInJoin", "SELECT * FROM t1 JOIN url('http://x', CSV, 'a String') u ON 1 = 1", CodeClickHouseSQLTableFunction},
-		{"TableFunctionInCommonTableExpression", "WITH c AS (SELECT * FROM url('http://x', CSV, 'a String')) SELECT * FROM c", CodeClickHouseSQLTableFunction},
-		{"TableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT * FROM url('http://x', CSV, 'a String'))", CodeClickHouseSQLTableFunction},
-		{"TableFunctionInUnion", "SELECT * FROM t UNION ALL SELECT * FROM url('http://x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
+		{"FileTableFunction", "SELECT * FROM file('/etc/passwd', CSV, 'a String')", CodeReadingFunction},
+		{"ExecutableTableFunction", "SELECT * FROM executable('script.sh', CSV, 'a String')", CodeTableFunction},
+		{"TableFunctionInJoin", "SELECT * FROM t1 JOIN url('http://x', CSV, 'a String') u ON 1 = 1", CodeTableFunction},
+		{"TableFunctionInCommonTableExpression", "WITH c AS (SELECT * FROM url('http://x', CSV, 'a String')) SELECT * FROM c", CodeTableFunction},
+		{"TableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT * FROM url('http://x', CSV, 'a String'))", CodeTableFunction},
+		{"TableFunctionInUnion", "SELECT * FROM t UNION ALL SELECT * FROM url('http://x', CSV, 'a String')", CodeTableFunction},
 		// Reach an internal database without naming one, so only the table-function rule sees them.
-		{"MergeTableFunction", "SELECT * FROM merge('system', '.*')", CodeClickHouseSQLTableFunction},
-		{"RemoteTableFunction", "SELECT * FROM remote('other-host', 'system.users')", CodeClickHouseSQLTableFunction},
-		{"ClusterTableFunction", "SELECT * FROM cluster('c', 'system.users')", CodeClickHouseSQLTableFunction},
+		{"MergeTableFunction", "SELECT * FROM merge('system', '.*')", CodeTableFunction},
+		{"RemoteTableFunction", "SELECT * FROM remote('other-host', 'system.users')", CodeTableFunction},
+		{"ClusterTableFunction", "SELECT * FROM cluster('c', 'system.users')", CodeTableFunction},
 		// Pure, but excluded: generateRandom is unbounded, and values adds nothing over an array literal.
-		{"GenerateRandomTableFunction", "SELECT * FROM generateRandom('a UInt64')", CodeClickHouseSQLTableFunction},
-		{"ValuesTableFunction", "SELECT * FROM values('a UInt64', 1, 2)", CodeClickHouseSQLTableFunction},
+		{"GenerateRandomTableFunction", "SELECT * FROM generateRandom('a UInt64')", CodeTableFunction},
+		{"ValuesTableFunction", "SELECT * FROM values('a UInt64', 1, 2)", CodeTableFunction},
 		// Arguments are visited first, so an allowed generator is not a wrapper to smuggle a read through.
-		{"InternalDatabaseInsideAllowedTableFunction", "SELECT * FROM numbers((SELECT count() FROM system.users))", CodeClickHouseSQLInternalDatabase},
-		{"InternalDatabaseJoinedOntoAllowedTableFunction", "SELECT * FROM numbers(31) AS n JOIN system.users AS u ON 1 = 1", CodeClickHouseSQLInternalDatabase},
-		{"InternalDatabaseUnionedWithAllowedTableFunction", "SELECT number FROM numbers(31) UNION ALL SELECT name FROM system.users", CodeClickHouseSQLInternalDatabase},
-		{"RefusedTableFunctionJoinedOntoAllowedTableFunction", "SELECT * FROM numbers(31) AS n JOIN url('http://x', CSV, 'a String') AS u ON 1 = 1", CodeClickHouseSQLTableFunction},
-		{"RefusedTableFunctionInsideAllowedTableFunction", "SELECT * FROM numbers((SELECT count() FROM url('http://x', CSV, 'a String')))", CodeClickHouseSQLTableFunction},
-		{"InternalDatabaseInsideAllowedTableFunctionCommonTableExpression", "WITH axis AS (SELECT * FROM numbers((SELECT count() FROM system.users))) SELECT * FROM axis", CodeClickHouseSQLInternalDatabase},
+		{"InternalDatabaseInsideAllowedTableFunction", "SELECT * FROM numbers((SELECT count() FROM system.users))", CodeInternalDatabase},
+		{"InternalDatabaseJoinedOntoAllowedTableFunction", "SELECT * FROM numbers(31) AS n JOIN system.users AS u ON 1 = 1", CodeInternalDatabase},
+		{"InternalDatabaseUnionedWithAllowedTableFunction", "SELECT number FROM numbers(31) UNION ALL SELECT name FROM system.users", CodeInternalDatabase},
+		{"RefusedTableFunctionJoinedOntoAllowedTableFunction", "SELECT * FROM numbers(31) AS n JOIN url('http://x', CSV, 'a String') AS u ON 1 = 1", CodeTableFunction},
+		{"RefusedTableFunctionInsideAllowedTableFunction", "SELECT * FROM numbers((SELECT count() FROM url('http://x', CSV, 'a String')))", CodeTableFunction},
+		{"InternalDatabaseInsideAllowedTableFunctionCommonTableExpression", "WITH axis AS (SELECT * FROM numbers((SELECT count() FROM system.users))) SELECT * FROM axis", CodeInternalDatabase},
 		// Read a file, a dictionary or the server binary without naming a table, so neither the table rule nor the database rule sees them. The row count alone is an oracle: numbers(length(file(x))) returns one row per byte.
-		{"ScalarFileFunction", "SELECT file('/etc/passwd')", CodeClickHouseSQLReadingFunction},
-		{"ScalarFileFunctionInWhere", "SELECT * FROM t WHERE length(file('/etc/passwd')) > 0", CodeClickHouseSQLReadingFunction},
-		{"ScalarFileFunctionInGeneratorTableFunctionArgument", "SELECT * FROM numbers(length(file('/etc/passwd')))", CodeClickHouseSQLReadingFunction},
-		{"DictionaryFunction", "SELECT dictGetUInt64('d', 'k', toUInt64(1))", CodeClickHouseSQLReadingFunction},
-		{"DictionaryFunctionUppercase", "SELECT DICTGETSTRING('d', 'k', toUInt64(1))", CodeClickHouseSQLReadingFunction},
-		{"DictionaryFunctionInGeneratorTableFunctionArgument", "SELECT * FROM numbers(dictGetUInt64('d', 'k', toUInt64(1)))", CodeClickHouseSQLReadingFunction},
-		{"IntrospectionFunction", "SELECT demangle(addressToSymbol(toUInt64(1)))", CodeClickHouseSQLReadingFunction},
-		{"ModelEvaluationFunction", "SELECT catboostEvaluate('/model.bin', 1)", CodeClickHouseSQLReadingFunction},
+		{"ScalarFileFunction", "SELECT file('/etc/passwd')", CodeReadingFunction},
+		{"ScalarFileFunctionInWhere", "SELECT * FROM t WHERE length(file('/etc/passwd')) > 0", CodeReadingFunction},
+		{"ScalarFileFunctionInGeneratorTableFunctionArgument", "SELECT * FROM numbers(length(file('/etc/passwd')))", CodeReadingFunction},
+		{"DictionaryFunction", "SELECT dictGetUInt64('d', 'k', toUInt64(1))", CodeReadingFunction},
+		{"DictionaryFunctionUppercase", "SELECT DICTGETSTRING('d', 'k', toUInt64(1))", CodeReadingFunction},
+		{"DictionaryFunctionInGeneratorTableFunctionArgument", "SELECT * FROM numbers(dictGetUInt64('d', 'k', toUInt64(1)))", CodeReadingFunction},
+		{"IntrospectionFunction", "SELECT demangle(addressToSymbol(toUInt64(1)))", CodeReadingFunction},
+		{"ModelEvaluationFunction", "SELECT catboostEvaluate('/model.bin', 1)", CodeReadingFunction},
 		// ClickHouse reads `x IN table` as `x IN (SELECT * FROM table)`, and a qualified name there is a Path rather than a TableIdentifier.
-		{"InternalDatabaseInInOperator", "SELECT * FROM t WHERE a IN system.users", CodeClickHouseSQLInternalDatabase},
-		{"InternalDatabaseInGlobalInOperator", "SELECT * FROM t WHERE a GLOBAL IN system.users", CodeClickHouseSQLInternalDatabase},
-		{"InternalDatabaseInNotInOperator", "SELECT * FROM t WHERE a NOT IN system.users", CodeClickHouseSQLInternalDatabase},
-		{"SystemUsers", "SELECT * FROM system.users", CodeClickHouseSQLInternalDatabase},
-		{"SystemUppercase", "SELECT * FROM SYSTEM.USERS", CodeClickHouseSQLInternalDatabase},
-		{"SystemQuoted", "SELECT count() FROM `system`.`tables`", CodeClickHouseSQLInternalDatabase},
-		{"SystemInSubquery", "SELECT * FROM (SELECT name FROM system.parts)", CodeClickHouseSQLInternalDatabase},
-		{"SystemInJoin", "SELECT * FROM signoz_logs.distributed_logs_v2 AS l JOIN system.users AS u ON 1 = 1", CodeClickHouseSQLInternalDatabase},
-		{"SystemInIntersect", "SELECT * FROM t INTERSECT SELECT * FROM system.users", CodeClickHouseSQLInternalDatabase},
-		{"InformationSchema", "SELECT * FROM information_schema.tables", CodeClickHouseSQLInternalDatabase},
+		{"InternalDatabaseInInOperator", "SELECT * FROM t WHERE a IN system.users", CodeInternalDatabase},
+		{"InternalDatabaseInGlobalInOperator", "SELECT * FROM t WHERE a GLOBAL IN system.users", CodeInternalDatabase},
+		{"InternalDatabaseInNotInOperator", "SELECT * FROM t WHERE a NOT IN system.users", CodeInternalDatabase},
+		{"SystemUsers", "SELECT * FROM system.users", CodeInternalDatabase},
+		{"SystemUppercase", "SELECT * FROM SYSTEM.USERS", CodeInternalDatabase},
+		{"SystemQuoted", "SELECT count() FROM `system`.`tables`", CodeInternalDatabase},
+		{"SystemInSubquery", "SELECT * FROM (SELECT name FROM system.parts)", CodeInternalDatabase},
+		{"SystemInJoin", "SELECT * FROM signoz_logs.distributed_logs_v2 AS l JOIN system.users AS u ON 1 = 1", CodeInternalDatabase},
+		{"SystemInIntersect", "SELECT * FROM t INTERSECT SELECT * FROM system.users", CodeInternalDatabase},
+		{"InformationSchema", "SELECT * FROM information_schema.tables", CodeInternalDatabase},
 		// Takes precedence over the setting the caller applies.
-		{"ReadonlySettingOverride", "SELECT * FROM t SETTINGS readonly = 0", CodeClickHouseSQLReadonlyOverride},
-		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0", CodeClickHouseSQLReadonlyOverride},
+		{"ReadonlySettingOverride", "SELECT * FROM t SETTINGS readonly = 0", CodeReadonlyOverride},
+		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0", CodeReadonlyOverride},
 	}
 
 	for _, testCase := range testCases {
@@ -188,9 +188,9 @@ func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
 		expectedCode errors.Code
 	}{
 		// The one keyword PR 305 left behind, because ON also opens a join condition.
-		{"UnquotedOnAsColumnName", "SELECT on + 1 FROM t", CodeClickHouseSQLUnparseable},
+		{"UnquotedOnAsColumnName", "SELECT on + 1 FROM t", CodeUnparseable},
 		// ClickHouse accepts NULLS FIRST|LAST as an ORDER BY modifier; the parser's grammar has no rule for it.
-		{"OrderByNullsLast", "SELECT x FROM t ORDER BY x DESC NULLS LAST", CodeClickHouseSQLUnparseable},
+		{"OrderByNullsLast", "SELECT x FROM t ORDER BY x DESC NULLS LAST", CodeUnparseable},
 	}
 
 	for _, testCase := range testCases {

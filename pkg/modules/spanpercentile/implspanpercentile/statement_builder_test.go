@@ -9,6 +9,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -146,4 +147,52 @@ func getSortedKeys(m map[string]string) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func TestBuildSpanPercentileQueryQuotesFilterValues(t *testing.T) {
+	testCases := []struct {
+		name               string
+		serviceName        string
+		spanName           string
+		resourceAttributes map[string]string
+		expected           string
+	}{
+		{
+			name:        "QuoteInSpanName",
+			serviceName: "svc",
+			spanName:    `GET /api' OR '1'='1`,
+			expected:    `service.name = 'svc' AND name = 'GET /api\' OR \'1\'=\'1'`,
+		},
+		{
+			name:        "TrailingBackslashInServiceName",
+			serviceName: `svc\`,
+			spanName:    "GET /api",
+			expected:    `service.name = 'svc\\' AND name = 'GET /api'`,
+		},
+		{
+			name:               "EscapedQuoteInResourceAttribute",
+			serviceName:        "api-gateway",
+			spanName:           "GET /users",
+			resourceAttributes: map[string]string{"deployment.environment": `prod\'`},
+			expected:           `service.name = 'api-gateway' AND name = 'GET /users' AND deployment.environment = 'prod\\\''`,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result, err := buildSpanPercentileQuery(context.Background(), &spanpercentiletypes.SpanPercentileRequest{
+				DurationNano:       100000,
+				Name:               testCase.spanName,
+				ServiceName:        testCase.serviceName,
+				ResourceAttributes: testCase.resourceAttributes,
+				Start:              1640995200000,
+				End:                1640995800000,
+			})
+			require.NoError(t, err)
+
+			query, ok := result.CompositeQuery.Queries[0].Spec.(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation])
+			require.True(t, ok)
+			assert.Equal(t, testCase.expected, query.Filter.Expression)
+		})
+	}
 }

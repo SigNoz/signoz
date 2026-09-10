@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import { useGetAIObservabilityFieldsValues } from 'api/generated/services/ai-observability';
 import { useGetFieldsValues } from 'api/generated/services/fields';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	TelemetrytypesSignalDTO,
+	TelemetrytypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
@@ -36,6 +39,12 @@ export const DATA_SOURCE_TO_SIGNAL: Record<
 	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
 };
 
+const QUICK_FILTERS_SOURCE_TO_SOURCE: Partial<
+	Record<QuickFiltersSource, TelemetrytypesSourceDTO>
+> = {
+	[QuickFiltersSource.METER_EXPLORER]: TelemetrytypesSourceDTO.meter,
+};
+
 export function useFieldValues({
 	filter,
 	source,
@@ -57,6 +66,7 @@ export function useFieldValues({
 			searchText,
 			existingQuery,
 			metricNamespace,
+			source: source ? QUICK_FILTERS_SOURCE_TO_SOURCE[source] : undefined,
 			startUnixMilli,
 			// This field does not affect the backend but I wanted to keep it here
 			// in case we add the support in the future
@@ -121,8 +131,12 @@ export function useFieldValues({
 			values.numberValues
 				?.filter((value): value is number => value !== null && value !== undefined)
 				.map((value) => value.toString()) || [];
+		const boolValues =
+			values.boolValues
+				?.filter((value): value is boolean => value !== null && value !== undefined)
+				.map((value) => value.toString()) || [];
 
-		return [...stringValues, ...numberValues];
+		return [...stringValues, ...numberValues, ...boolValues];
 	}, [data]);
 
 	return { relatedValues, allValues, isLoading, isFetching };

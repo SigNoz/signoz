@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Collapse } from 'antd';
+import { Collapse } from 'antd';
+import { Undo2 } from '@signozhq/icons';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
@@ -14,11 +15,15 @@ import {
 	AllTraceFilterKeys,
 	AllTraceFilterKeyValue,
 	HandleRunProps,
+	traceFilterKeys,
 	unionTagFilterItems,
 } from 'pages/TracesExplorer/Filter/filterUtils';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
+
+import { clearFilterFromQuery } from '../shared/filterQuery';
+import { SectionActionButton } from '../shared/SectionActionButton/SectionActionButton';
 
 import './Duration.styles.scss';
 
@@ -268,12 +273,19 @@ function Duration({
 		handleRun();
 	}, [selectedFilters]);
 
-	const onClearHandler = (e: React.MouseEvent): void => {
-		e.stopPropagation();
-		e.preventDefault();
-
-		if (selectedFilters?.durationNanoMin || selectedFilters?.durationNanoMax) {
-			handleRun({ clearByType: 'durationNano' });
+	const onClearHandler = (): void => {
+		if (!selectedFilters?.durationNanoMin && !selectedFilters?.durationNanoMax) {
+			return;
+		}
+		const clearedQuery = clearFilterFromQuery({
+			currentQuery,
+			filterKey: traceFilterKeys.durationNano.key,
+			activeQueryIndex,
+		});
+		if (onFilterChange && isFunction(onFilterChange)) {
+			onFilterChange(clearedQuery);
+		} else {
+			redirectWithQueryBuilderData(clearedQuery);
 		}
 	};
 
@@ -294,18 +306,19 @@ function Duration({
 							/>
 						),
 						label: 'Duration',
+						extra: activeKeys.includes('durationNano') ? (
+							<div className="duration-reset">
+								<SectionActionButton
+									icon={<Undo2 size={14} />}
+									tooltip="Reset"
+									onClick={onClearHandler}
+									testId="collapse-duration-clearBtn"
+								/>
+							</div>
+						) : undefined,
 					},
 				]}
 			/>
-			{activeKeys.includes('durationNano') && (
-				<Button
-					type="link"
-					onClick={onClearHandler}
-					data-testid="collapse-duration-clearBtn"
-				>
-					Clear All
-				</Button>
-			)}
 		</div>
 	);
 }

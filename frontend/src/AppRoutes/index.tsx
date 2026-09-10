@@ -1,11 +1,12 @@
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
+import AppPageProviders from 'app/AppPageProviders';
+import AppShell from 'app/AppShell';
 import AppLoading from 'components/AppLoading/AppLoading';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import NotFound from 'components/NotFound';
@@ -17,22 +18,15 @@ import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
-import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { NotificationProvider } from 'hooks/useNotifications';
-import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { StatusCodes } from 'http-status-codes';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
-import { CmdKProvider } from 'providers/cmdKProvider';
-import { ErrorModalProvider } from 'providers/ErrorModalProvider';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
 
@@ -44,8 +38,17 @@ import defaultRoutes, {
 	SUPPORT_ROUTE,
 } from './routes';
 
+const appRouter = (children: ReactNode): ReactNode => (
+	<Router history={history}>
+		<CompatRouter>{children}</CompatRouter>
+	</Router>
+);
+
+const appLayout = (children: ReactNode): ReactNode => (
+	<AppLayout>{children}</AppLayout>
+);
+
 function App(): JSX.Element {
-	const themeConfig = useThemeConfig();
 	const {
 		user,
 		isFetchingUser,
@@ -451,48 +454,36 @@ function App(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<ConfigProvider theme={themeConfig}>
-				<Router history={history}>
-					<CompatRouter>
-						<CmdKProvider>
-							<NotificationProvider>
-								<ErrorModalProvider>
-									{isLoggedInState && <CmdKPalette userRole={user.role} />}
-									{isLoggedInState && (
-										<ShiftHoldOverlayController userRole={user.role} />
-									)}
-									<PrivateRoute>
-										<ResourceProvider>
-											<QueryBuilderProvider>
-												<KeyboardHotkeysProvider>
-													<AppLayout>
-														<PreferenceContextProvider>
-															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																<Switch>
-																	{routes.map(({ path, component, exact }) => (
-																		<Route
-																			key={`${path}`}
-																			exact={exact}
-																			path={path}
-																			component={component}
-																		/>
-																	))}
-																	<Route exact path="/" component={Home} />
-																	<Route path="*" component={NotFound} />
-																</Switch>
-															</Suspense>
-														</PreferenceContextProvider>
-													</AppLayout>
-												</KeyboardHotkeysProvider>
-											</QueryBuilderProvider>
-										</ResourceProvider>
-									</PrivateRoute>
-								</ErrorModalProvider>
-							</NotificationProvider>
-						</CmdKProvider>
-					</CompatRouter>
-				</Router>
-			</ConfigProvider>
+			<AppShell
+				router={appRouter}
+				overlays={
+					isLoggedInState && (
+						<>
+							<CmdKPalette userRole={user.role} />
+							<ShiftHoldOverlayController userRole={user.role} />
+						</>
+					)
+				}
+			>
+				<PrivateRoute>
+					<AppPageProviders layout={appLayout}>
+						<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+							<Switch>
+								{routes.map(({ path, component, exact }) => (
+									<Route
+										key={`${path}`}
+										exact={exact}
+										path={path}
+										component={component}
+									/>
+								))}
+								<Route exact path="/" component={Home} />
+								<Route path="*" component={NotFound} />
+							</Switch>
+						</Suspense>
+					</AppPageProviders>
+				</PrivateRoute>
+			</AppShell>
 		</Sentry.ErrorBoundary>
 	);
 }

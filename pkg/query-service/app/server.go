@@ -2,18 +2,8 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"net"
-	"net/http"
-	"slices"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/queryparser"
-
-	"github.com/gorilla/handlers"
-
-	"github.com/rs/cors"
-	"github.com/soheilhy/cmux"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
@@ -23,31 +13,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/web"
 
 	"log/slog"
 
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
-	"go.opentelemetry.io/otel/propagation"
-
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
-	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
-// Server runs HTTP, Mux and a grpc server
+// Server runs auxiliary servers (opamp) alongside the signoz apiserver
 type Server struct {
-	config signoz.Config
-	signoz *signoz.SigNoz
-
-	// public http router
-	httpConn     net.Listener
-	httpServer   *http.Server
-	httpHostPort string
-
 	opampServer *opamp.Server
-
-	unavailableChannel chan healthcheck.Status
 }
 
 // NewServer creates and initializes Server
@@ -90,20 +64,20 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		return nil, err
 	}
 
-	s := &Server{
-		config:             config,
-		signoz:             signoz,
-		httpHostPort:       constants.HTTPHostPort,
-		unavailableChannel: make(chan healthcheck.Status),
-	}
+	// Register the legacy query-service routes on the apiserver router. The
+	// apiserver owns the HTTP server and applies the middleware chain at serve
+	// time, so these routes get the same treatment as the apiserver routes.
+	r := signoz.APIServer.Router()
+	am := middleware.NewAuthZ(signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter, signoz.Authz)
 
-	httpServer, err := s.createPublicServer(apiHandler, signoz.Web)
-
-	if err != nil {
-		return nil, err
-	}
-
-	s.httpServer = httpServer
+	apiHandler.RegisterRoutes(r, am)
+	apiHandler.RegisterLogsRoutes(r, am)
+	apiHandler.RegisterIntegrationRoutes(r, am)
+	apiHandler.RegisterQueryRangeV3Routes(r, am)
+	apiHandler.RegisterQueryRangeV4Routes(r, am)
+	apiHandler.RegisterMessagingQueuesRoutes(r, am)
+	apiHandler.RegisterThirdPartyApiRoutes(r, am)
+	apiHandler.RegisterTraceFunnelsRoutes(r, am)
 
 	opAmpModel.Init(signoz.SQLStore, signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter)
 
@@ -121,6 +95,8 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		return nil, err
 	}
 
+	s := &Server{}
+
 	s.opampServer = opamp.InitializeServer(
 		&opAmpModel.AllAgents,
 		agentConfMgr,
@@ -130,146 +106,18 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	return s, nil
 }
 
-// HealthCheckStatus returns health check status channel a client can subscribe to
-func (s Server) HealthCheckStatus() chan healthcheck.Status {
-	return s.unavailableChannel
-}
-
-func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
-	r := NewRouter()
-
-	r.Use(middleware.NewRecovery(s.signoz.Instrumentation.Logger()).Wrap)
-	r.Use(otelmux.Middleware(
-		"apiserver",
-		otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()),
-		otelmux.WithTracerProvider(s.signoz.Instrumentation.TracerProvider()),
-		otelmux.WithPropagators(propagation.NewCompositeTextMapPropagator(propagation.Baggage{}, propagation.TraceContext{})),
-		otelmux.WithFilter(func(r *http.Request) bool {
-			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
-		}),
-	))
-	r.Use(middleware.NewIdentN(s.signoz.IdentNResolver, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
-	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
-		s.config.APIServer.Timeout.ExcludedRoutes,
-		s.config.APIServer.Timeout.Default,
-		s.config.APIServer.Timeout.Max,
-	).Wrap)
-	r.Use(middleware.NewResource(s.signoz.Instrumentation.Logger()).Wrap)
-	r.Use(middleware.NewAudit(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes, s.signoz.Auditor).Wrap)
-	r.Use(middleware.NewComment().Wrap)
-
-	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
-
-	api.RegisterRoutes(r, am)
-	api.RegisterLogsRoutes(r, am)
-	api.RegisterIntegrationRoutes(r, am)
-	api.RegisterQueryRangeV3Routes(r, am)
-	api.RegisterQueryRangeV4Routes(r, am)
-	api.RegisterMessagingQueuesRoutes(r, am)
-	api.RegisterThirdPartyApiRoutes(r, am)
-	api.RegisterTraceFunnelsRoutes(r, am)
-
-	err := s.signoz.APIServer.AddToRouter(r)
-	if err != nil {
-		return nil, err
-	}
-
-	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control"},
-	})
-
-	handler := c.Handler(r)
-
-	handler = handlers.CompressHandler(handler)
-
-	err = web.AddToRouter(r)
-	if err != nil {
-		return nil, err
-	}
-
-	routePrefix := s.config.Global.ExternalPath()
-	if routePrefix != "" {
-		prefixed := http.StripPrefix(routePrefix, handler)
-		handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			switch req.URL.Path {
-			case "/api/v1/health", "/api/v2/healthz", "/api/v2/readyz", "/api/v2/livez":
-				r.ServeHTTP(w, req)
-				return
-			}
-
-			prefixed.ServeHTTP(w, req)
-		})
-	}
-
-	return &http.Server{
-		Handler: handler,
-	}, nil
-}
-
-// initListeners initialises listeners of the server
-func (s *Server) initListeners() error {
-	// listen on public port
-	var err error
-	publicHostPort := s.httpHostPort
-	if publicHostPort == "" {
-		return fmt.Errorf("constants.HTTPHostPort is required")
-	}
-
-	s.httpConn, err = net.Listen("tcp", publicHostPort)
-	if err != nil {
-		return err
-	}
-
-	slog.Info(fmt.Sprintf("Query server started listening on %s...", s.httpHostPort))
-
-	return nil
-}
-
-// Start listening on http and private http port concurrently
+// Start starts the opamp websocket server. The HTTP API server is started by
+// the signoz registry.
 func (s *Server) Start(ctx context.Context) error {
-	err := s.initListeners()
-	if err != nil {
+	slog.Info("Starting OpAmp Websocket server", "addr", constants.OpAmpWsEndpoint)
+	if err := s.opampServer.Start(constants.OpAmpWsEndpoint); err != nil {
 		return err
 	}
-
-	var httpPort int
-	if port, err := utils.GetPort(s.httpConn.Addr()); err == nil {
-		httpPort = port
-	}
-
-	go func() {
-		slog.Info("Starting HTTP server", "port", httpPort, "addr", s.httpHostPort)
-
-		switch err := s.httpServer.Serve(s.httpConn); err {
-		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
-			// normal exit, nothing to do
-		default:
-			slog.Error("Could not start HTTP server", errors.Attr(err))
-		}
-		s.unavailableChannel <- healthcheck.Unavailable
-	}()
-
-	go func() {
-		slog.Info("Starting OpAmp Websocket server", "addr", constants.OpAmpWsEndpoint)
-		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
-		if err != nil {
-			slog.Error("opamp ws server failed to start", errors.Attr(err))
-			s.unavailableChannel <- healthcheck.Unavailable
-		}
-	}()
 
 	return nil
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	if s.httpServer != nil {
-		if err := s.httpServer.Shutdown(context.Background()); err != nil {
-			return err
-		}
-	}
-
 	s.opampServer.Stop()
 
 	return nil

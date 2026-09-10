@@ -137,7 +137,7 @@ func (c *conditionBuilder) conditionForArrayFunction(
 			vals[i] = legacyCoerceNeedle(v, elemType)
 		}
 		// Pin the needle array type to the haystack; scalar fallback below coerces value-level.
-		arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, castNeedleArray(elemType, sb.Var(vals)))
+		arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), sqlbuilder.Escape(arrayExpr), castNeedleArray(elemType, sb.Var(vals)))
 		if !hasScalar {
 			return arrayCond, nil
 		}
@@ -151,14 +151,14 @@ func (c *conditionBuilder) conditionForArrayFunction(
 		} else {
 			membership = sb.In(scalarExpr, vals...)
 		}
-		return fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(membership, scalarGuard)), nil
+		return fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(membership, sqlbuilder.Escape(scalarGuard))), nil
 	}
 	typedNeedle := legacyCoerceNeedle(needle, elemType)
-	arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, sb.Var(typedNeedle))
+	arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), sqlbuilder.Escape(arrayExpr), sb.Var(typedNeedle))
 	if !hasScalar {
 		return arrayCond, nil
 	}
-	return fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(sb.E(scalarExpr, typedNeedle), scalarGuard)), nil
+	return fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(sb.E(scalarExpr, typedNeedle), sqlbuilder.Escape(scalarGuard))), nil
 }
 
 // castNeedleArray pins an Int64 needle array to Array(Int64) so it matches the Array(Nullable(Int64))
@@ -358,9 +358,9 @@ func (c *conditionBuilder) conditionForResolvedKey(
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 		if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 			if operator == qbtypes.FilterOperatorExists {
-				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
+				return sqlbuilder.Escape(GetBodyJSONKeyForExists(ctx, key, operator, value)), nil
 			}
-			return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
+			return "NOT " + sqlbuilder.Escape(GetBodyJSONKeyForExists(ctx, key, operator, value)), nil
 		}
 		pred, err := querybuilder.ExistsExpression(columns, key, startNs, endNs, fieldExpression, operator == qbtypes.FilterOperatorExists)
 		if err != nil {
