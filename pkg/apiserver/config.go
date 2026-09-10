@@ -59,6 +59,10 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
+	if err := c.Config.Validate(); err != nil {
+		return err
+	}
+
 	if c.Address == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "apiserver.address is required")
 	}
