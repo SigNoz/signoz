@@ -106,20 +106,19 @@ describe('DashboardsList - AuthZ', () => {
 
 			await waitFor(() => {
 				expect(
-					screen.getByText(/is not authorized to perform/),
-				).toBeInTheDocument();
+					screen.getAllByText(/is not authorized to perform/).length,
+				).toBeGreaterThan(0);
 			});
-			expect(screen.getByText('list:dashboard:*')).toBeInTheDocument();
+			expect(screen.getAllByText('list:dashboard:*').length).toBeGreaterThan(0);
 			expect(onList).not.toHaveBeenCalled();
 
 			const cta = screen.getByTestId('new-dashboard-cta');
 			expect(cta).not.toBeDisabled();
 
-			// The chrome stays live: search and the views rail only rewrite filters,
-			// and the request behind them is gated, so there is nothing to prevent —
-			// the denial is stated once, where the table would be.
+			// Search stays live — it only rewrites what the gated request would ask
+			// for. The views rail is a section of its own and carries its own denial.
 			expect(screen.getByLabelText('Run search')).toBeEnabled();
-			expect(screen.getByTestId('dashboards-view-search')).toBeEnabled();
+			expect(screen.getByTestId('views-rail-denied')).toBeInTheDocument();
 		});
 
 		it('renders the table when list is granted', async () => {
@@ -176,8 +175,8 @@ describe('DashboardsList - AuthZ', () => {
 
 			await waitFor(() => {
 				expect(
-					screen.getByText(/is not authorized to perform/),
-				).toBeInTheDocument();
+					screen.getAllByText(/is not authorized to perform/).length,
+				).toBeGreaterThan(0);
 			});
 			expect(onViews).not.toHaveBeenCalled();
 		});
@@ -207,8 +206,8 @@ describe('DashboardsList - AuthZ', () => {
 
 			await waitFor(() => {
 				expect(
-					screen.getByText(/is not authorized to perform/),
-				).toBeInTheDocument();
+					screen.getAllByText(/is not authorized to perform/).length,
+				).toBeGreaterThan(0);
 			});
 			expect(onList).not.toHaveBeenCalled();
 		});
