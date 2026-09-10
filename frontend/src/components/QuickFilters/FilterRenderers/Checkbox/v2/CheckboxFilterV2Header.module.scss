@@ -49,7 +49,7 @@
 	pointer-events: none;
 }
 
-.header:hover .rightAction {
+:global(.qf-filter-category:hover) .rightAction {
 	width: auto;
 	opacity: 1;
 	pointer-events: auto;

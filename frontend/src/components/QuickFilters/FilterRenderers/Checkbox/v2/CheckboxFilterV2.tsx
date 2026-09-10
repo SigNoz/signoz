@@ -166,7 +166,10 @@ export default function CheckboxFilterV2(
 	});
 
 	return (
-		<div className={styles.checkboxFilter} data-testid="checkbox-filter-v2">
+		<div
+			className={`${styles.checkboxFilter} qf-filter-category`}
+			data-testid="checkbox-filter-v2"
+		>
 			<CheckboxFilterV2Header
 				title={filter.title}
 				isOpen={isOpen}

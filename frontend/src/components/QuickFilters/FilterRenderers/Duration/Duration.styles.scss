@@ -16,7 +16,7 @@
 		pointer-events: none;
 	}
 
-	.ant-collapse-header:hover .duration-reset {
+	&:hover .duration-reset {
 		opacity: 1;
 		pointer-events: auto;
 	}
