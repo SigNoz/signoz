@@ -22,22 +22,24 @@ type PromotePath struct {
 	Indexes []WrappedIndex `json:"indexes,omitempty"`
 }
 
-// Target identifies a JSON column whose paths can be promoted: where the
-// promotion is recorded in the column evolution table (signal, promoted
-// column, field context), which table per-path indexes are created on, and
-// the path rules enforced by the API.
+// Target identifies a promotion domain: the column evolution entry recorded
+// for each promoted path, the table per-path indexes are created on, and the
+// path rules enforced by the API.
 type Target struct {
-	Signal       telemetrytypes.Signal
-	FieldContext telemetrytypes.FieldContext
+	// Entry templates the column evolution row recorded per promoted path:
+	// signal, promoted column name and type, and field context. FieldName
+	// and ReleaseTime are filled in per write.
+	Entry telemetrytypes.EvolutionEntry
 
+	// DBName and LocalTableName hold the table per-path indexes are created
+	// on. They are index DDL config, not part of the evolution record, and
+	// are used only when IndexesSupported.
 	DBName         string
 	LocalTableName string
 
-	// BaseColumn holds every path; PromotedColumn additionally holds the
-	// promoted paths. Indexes are created on PromotedColumn for promoted
-	// paths and on BaseColumn otherwise.
-	BaseColumn     string
-	PromotedColumn string
+	// BaseColumn holds every path. Indexes are created on the promoted
+	// column for promoted paths and on BaseColumn otherwise.
+	BaseColumn string
 
 	// RequiredPathPrefix is the prefix paths must carry in the API ("body."
 	// for the logs body); it is stripped before storing. Empty for bare
@@ -50,9 +52,11 @@ type Target struct {
 	IndexesSupported bool
 }
 
+func (t Target) PromotedColumn() string { return t.Entry.ColumnName }
+
 func (t Target) BaseColumnPrefix() string { return t.BaseColumn + "." }
 
-func (t Target) PromotedColumnPrefix() string { return t.PromotedColumn + "." }
+func (t Target) PromotedColumnPrefix() string { return t.PromotedColumn() + "." }
 
 func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 	if i.Path == "" {
@@ -85,7 +89,7 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 	}
 
 	if len(i.Indexes) > 0 && !target.IndexesSupported {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "indexes are not supported for %s %s", target.Signal.StringValue(), target.FieldContext.StringValue())
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "indexes are not supported for %s %s", target.Entry.Signal.StringValue(), target.Entry.FieldContext.StringValue())
 	}
 
 	for idx, index := range i.Indexes {
