@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -163,9 +164,9 @@ func (c *conditionBuilder) conditionFor(
 		}
 
 		if operator == qbtypes.FilterOperatorExists {
-			return fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", key.Name), nil
+			return sqlbuilder.Escape(fmt.Sprintf("has(JSONExtractKeys(labels), %s)", clickhousesql.StringLiteral(key.Name))), nil
 		}
-		return fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", key.Name), nil
+		return sqlbuilder.Escape(fmt.Sprintf("not has(JSONExtractKeys(labels), %s)", clickhousesql.StringLiteral(key.Name))), nil
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }

@@ -1,4 +1,4 @@
-package querybuilder
+package clickhousesql
 
 import (
 	"context"
@@ -12,14 +12,14 @@ import (
 )
 
 var (
-	CodeClickHouseSQLParserPanic        = errors.MustNewCode("clickhouse_sql_parser_panic")
-	CodeClickHouseSQLUnparseable        = errors.MustNewCode("clickhouse_sql_unparseable")
-	CodeClickHouseSQLNotSingleStatement = errors.MustNewCode("clickhouse_sql_not_single_statement")
-	CodeClickHouseSQLNotSelect          = errors.MustNewCode("clickhouse_sql_not_select")
-	CodeClickHouseSQLTableFunction      = errors.MustNewCode("clickhouse_sql_table_function")
-	CodeClickHouseSQLReadingFunction    = errors.MustNewCode("clickhouse_sql_reading_function")
-	CodeClickHouseSQLInternalDatabase   = errors.MustNewCode("clickhouse_sql_internal_database")
-	CodeClickHouseSQLReadonlyOverride   = errors.MustNewCode("clickhouse_sql_readonly_override")
+	CodeParserPanic        = errors.MustNewCode("clickhouse_sql_parser_panic")
+	CodeUnparseable        = errors.MustNewCode("clickhouse_sql_unparseable")
+	CodeNotSingleStatement = errors.MustNewCode("clickhouse_sql_not_single_statement")
+	CodeNotSelect          = errors.MustNewCode("clickhouse_sql_not_select")
+	CodeTableFunction      = errors.MustNewCode("clickhouse_sql_table_function")
+	CodeReadingFunction    = errors.MustNewCode("clickhouse_sql_reading_function")
+	CodeInternalDatabase   = errors.MustNewCode("clickhouse_sql_internal_database")
+	CodeReadonlyOverride   = errors.MustNewCode("clickhouse_sql_readonly_override")
 )
 
 // internalDatabases hold server metadata, credentials and grants rather than telemetry.
@@ -68,23 +68,23 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 	defer func() {
 		// The parser has a history of panicking on malformed input rather than returning an error.
 		if recovered := recover(); recovered != nil {
-			err = errors.NewInvalidInputf(CodeClickHouseSQLParserPanic, "invalid ClickHouse SQL (recovered): %v", recovered)
+			err = errors.NewInvalidInputf(CodeParserPanic, "invalid ClickHouse SQL (recovered): %v", recovered)
 		}
 	}()
 
 	stmts, parseErr := chparser.NewParser(query).ParseStmts()
 	if parseErr != nil {
 		// Wrapped rather than formatted in, so that callers can recover the parser's *ParseError and read the position off it.
-		return errors.WrapInvalidInputf(parseErr, CodeClickHouseSQLUnparseable, "invalid ClickHouse SQL: %s", parseErr.Error())
+		return errors.WrapInvalidInputf(parseErr, CodeUnparseable, "invalid ClickHouse SQL: %s", parseErr.Error())
 	}
 
 	if len(stmts) != 1 {
-		return errors.NewInvalidInputf(CodeClickHouseSQLNotSingleStatement, "ClickHouse SQL must contain exactly one statement, found %d statements", len(stmts))
+		return errors.NewInvalidInputf(CodeNotSingleStatement, "ClickHouse SQL must contain exactly one statement, found %d statements", len(stmts))
 	}
 
 	selectQuery, ok := stmts[0].(*chparser.SelectQuery)
 	if !ok {
-		return errors.NewInvalidInputf(CodeClickHouseSQLNotSelect, "only SELECT statements are allowed in ClickHouse SQL queries")
+		return errors.NewInvalidInputf(CodeNotSelect, "only SELECT statements are allowed in ClickHouse SQL queries")
 	}
 
 	visitor := &chparser.DefaultASTVisitor{Visit: func(node chparser.Expr) error {
@@ -111,7 +111,7 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 			}
 
 			return errors.
-				NewInvalidInputf(CodeClickHouseSQLTableFunction, "ClickHouse table functions are not allowed in SQL queries: %s", name).
+				NewInvalidInputf(CodeTableFunction, "ClickHouse table functions are not allowed in SQL queries: %s", name).
 				WithAdditional(generatorTableFunctionsMessage)
 
 		case *chparser.FunctionExpr:
@@ -130,7 +130,7 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 			}
 
 			if _, ok := internalDatabases[strings.ToLower(expr.Fields[0].Name)]; ok {
-				return errors.NewInvalidInputf(CodeClickHouseSQLInternalDatabase, "the ClickHouse %s database is not allowed in SQL queries", expr.Fields[0].Name)
+				return errors.NewInvalidInputf(CodeInternalDatabase, "the ClickHouse %s database is not allowed in SQL queries", expr.Fields[0].Name)
 			}
 
 		case *chparser.TableIdentifier:
@@ -140,13 +140,13 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 			}
 
 			if _, ok := internalDatabases[strings.ToLower(expr.Database.Name)]; ok {
-				return errors.NewInvalidInputf(CodeClickHouseSQLInternalDatabase, "the ClickHouse %s database is not allowed in SQL queries", expr.Database.Name)
+				return errors.NewInvalidInputf(CodeInternalDatabase, "the ClickHouse %s database is not allowed in SQL queries", expr.Database.Name)
 			}
 
 		case *chparser.SettingExpr:
 			// A query-level setting takes precedence over the context setting.
 			if strings.EqualFold(expr.Name.Name, "readonly") {
-				return errors.NewInvalidInputf(CodeClickHouseSQLReadonlyOverride, "the ClickHouse readonly setting cannot be overridden")
+				return errors.NewInvalidInputf(CodeReadonlyOverride, "the ClickHouse readonly setting cannot be overridden")
 			}
 		}
 
@@ -169,7 +169,7 @@ func errIfFunctionReads(name string) error {
 		return nil
 	}
 
-	return errors.NewInvalidInputf(CodeClickHouseSQLReadingFunction, "ClickHouse functions that read outside the telemetry tables are not allowed in SQL queries: %s", name)
+	return errors.NewInvalidInputf(CodeReadingFunction, "ClickHouse functions that read outside the telemetry tables are not allowed in SQL queries: %s", name)
 }
 
 // The parser spells a call's name as an Ident everywhere it can. Reading the field rather than
