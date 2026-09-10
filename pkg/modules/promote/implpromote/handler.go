@@ -1,7 +1,6 @@
 package implpromote
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -21,22 +20,22 @@ func NewHandler(module promote.Module) promote.Handler {
 }
 
 func (h *handler) HandlePromoteAndIndexPaths(w http.ResponseWriter, r *http.Request) {
-	h.promote(w, r, h.module.PromoteAndIndexPaths)
+	h.promote(w, r, logsBodyTarget)
 }
 
 func (h *handler) HandlePromoteAttributes(w http.ResponseWriter, r *http.Request) {
-	h.promote(w, r, h.module.PromoteAttributes)
+	h.promote(w, r, tracesAttributesTarget)
 }
 
 func (h *handler) ListPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Request) {
-	h.list(w, r, h.module.ListPromotedAndIndexedPaths)
+	h.list(w, r, logsBodyTarget)
 }
 
 func (h *handler) ListPromotedAttributes(w http.ResponseWriter, r *http.Request) {
-	h.list(w, r, h.module.ListPromotedAttributes)
+	h.list(w, r, tracesAttributesTarget)
 }
 
-func (h *handler) promote(w http.ResponseWriter, r *http.Request, promoteFn func(context.Context, ...*promotetypes.PromotePath) error) {
+func (h *handler) promote(w http.ResponseWriter, r *http.Request, target promotetypes.Target) {
 	// TODO(Nitya): Use in multi tenant setup
 	_, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
@@ -50,7 +49,7 @@ func (h *handler) promote(w http.ResponseWriter, r *http.Request, promoteFn func
 		return
 	}
 
-	err = promoteFn(r.Context(), req...)
+	err = h.module.PromotePaths(r.Context(), target, req...)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -59,7 +58,7 @@ func (h *handler) promote(w http.ResponseWriter, r *http.Request, promoteFn func
 	render.Success(w, http.StatusCreated, nil)
 }
 
-func (h *handler) list(w http.ResponseWriter, r *http.Request, listFn func(context.Context) ([]promotetypes.PromotePath, error)) {
+func (h *handler) list(w http.ResponseWriter, r *http.Request, target promotetypes.Target) {
 	// TODO(Nitya): Use in multi tenant setup
 	_, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
@@ -67,7 +66,7 @@ func (h *handler) list(w http.ResponseWriter, r *http.Request, listFn func(conte
 		return
 	}
 
-	paths, err := listFn(r.Context())
+	paths, err := h.module.ListPromotedPaths(r.Context(), target)
 	if err != nil {
 		render.Error(w, err)
 		return
