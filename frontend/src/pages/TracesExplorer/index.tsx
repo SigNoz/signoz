@@ -8,6 +8,7 @@ import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -130,7 +131,9 @@ function TracesExplorer(): JSX.Element {
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
-	const quickFilterFieldApis = useSignalFieldApis();
+	const quickFilterFieldApis = useSignalFieldApis(
+		TelemetrytypesSignalDTO.traces,
+	);
 	const { safeNavigate } = useSafeNavigate();
 	const getExportToDashboardLink = useGetExportToDashboardLink();
 
@@ -265,8 +268,8 @@ function TracesExplorer(): JSX.Element {
 				<Card className="filter" hidden={!isOpen}>
 					<QuickFilters
 						className="qf-traces-explorer"
-						source={QuickFiltersSource.TRACES_EXPLORER}
-						signal={SignalType.TRACES}
+						pageSource={QuickFiltersSource.TRACES_EXPLORER}
+						quickFilterSignal={SignalType.TRACES}
 						handleFilterVisibilityChange={(): void => {
 							setOpen(!isOpen);
 						}}

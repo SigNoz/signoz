@@ -8,6 +8,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import RouteTab from 'components/RouteTab';
@@ -56,7 +57,9 @@ function AllErrors(): JSX.Element {
 		setShowFilters((prev) => !prev);
 	};
 
-	const quickFilterFieldApis = useSignalFieldApis();
+	const quickFilterFieldApis = useSignalFieldApis(
+		TelemetrytypesSignalDTO.traces,
+	);
 
 	return (
 		<div className={cx('all-errors-page', showFilters ? 'filter-visible' : '')}>
@@ -64,8 +67,8 @@ function AllErrors(): JSX.Element {
 				<section className={cx('all-errors-quick-filter-section')}>
 					<QuickFilters
 						className="qf-exceptions"
-						source={QuickFiltersSource.EXCEPTIONS}
-						signal={SignalType.EXCEPTIONS}
+						pageSource={QuickFiltersSource.EXCEPTIONS}
+						quickFilterSignal={SignalType.EXCEPTIONS}
 						handleFilterVisibilityChange={handleFilterVisibilityChange}
 						useFieldApis={quickFilterFieldApis}
 					/>

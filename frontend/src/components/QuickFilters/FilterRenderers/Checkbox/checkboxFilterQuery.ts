@@ -47,8 +47,8 @@ const SOURCES_WITH_SHORT_OPERATORS = [QuickFiltersSource.INFRA_MONITORING];
  * Returns the correct NOT_IN operator value based on source.
  * InfraMonitoring backend expects 'nin', others expect 'not in'.
  */
-export function getNotInOperator(source: QuickFiltersSource): string {
-	if (SOURCES_WITH_SHORT_OPERATORS.includes(source)) {
+export function getNotInOperator(pageSource: QuickFiltersSource): string {
+	if (SOURCES_WITH_SHORT_OPERATORS.includes(pageSource)) {
 		return 'nin';
 	}
 	return getOperatorValue('NOT_IN');
@@ -172,7 +172,7 @@ export function applyCheckboxToggle({
 	currentQuery,
 	activeQueryIndex,
 	filter,
-	source,
+	pageSource,
 	attributeValues,
 	value,
 	checked,
@@ -183,7 +183,7 @@ export function applyCheckboxToggle({
 	currentQuery: Query;
 	activeQueryIndex: number;
 	filter: IQuickFiltersConfig;
-	source: QuickFiltersSource;
+	pageSource: QuickFiltersSource;
 	attributeValues: string[];
 	value: string;
 	checked: boolean;
@@ -278,7 +278,7 @@ export function applyCheckboxToggle({
 							if (sectionType === SectionType.RELATED) {
 								const newFilter: TagFilterItem = {
 									id: uuid(),
-									op: getNotInOperator(source),
+									op: getNotInOperator(pageSource),
 									key: filter.attributeKey,
 									value,
 								};
@@ -418,7 +418,7 @@ export function applyCheckboxToggle({
 						if (!checked) {
 							const newFilter = {
 								...currentFilter,
-								op: getNotInOperator(source),
+								op: getNotInOperator(pageSource),
 								value: [currentFilter.value as string, value],
 							};
 							query.filters.items = query.filters.items.map((item) => {
@@ -442,7 +442,7 @@ export function applyCheckboxToggle({
 			// checked=true → user wants to select (IN), checked=false → exclude (NOT IN)
 			const newFilterItem: TagFilterItem = {
 				id: uuid(),
-				op: checked ? getOperatorValue(OPERATORS.IN) : getNotInOperator(source),
+				op: checked ? getOperatorValue(OPERATORS.IN) : getNotInOperator(pageSource),
 				key: filter.attributeKey,
 				value,
 			};

@@ -1,3 +1,7 @@
+import {
+	TelemetrytypesSignalDTO,
+	TelemetrytypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -51,10 +55,10 @@ export interface QuickFilterChangeEventData {
 export interface IQuickFiltersProps {
 	config: IQuickFiltersConfig[];
 	handleFilterVisibilityChange: () => void;
-	source: QuickFiltersSource;
+	pageSource: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
 	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
-	signal?: SignalType;
+	quickFilterSignal?: SignalType;
 	className?: string;
 	showFilterCollapse?: boolean;
 	showQueryName?: boolean;
@@ -74,6 +78,9 @@ export enum QuickFiltersSource {
  * Opt-in: fetch values from the /v1/fields/values API instead of /v3/autocomplete/attribute_values
  */
 export type QuickFilterCheckboxUseFieldApis = {
+	/** Telemetry signal and source sent to the fields APIs, declared by the page. */
+	signal?: TelemetrytypesSignalDTO;
+	source?: TelemetrytypesSourceDTO;
 	startUnixMilli: number;
 	endUnixMilli: number;
 	/**

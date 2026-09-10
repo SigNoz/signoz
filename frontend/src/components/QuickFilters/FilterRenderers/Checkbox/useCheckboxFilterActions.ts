@@ -16,7 +16,7 @@ import { SectionType } from './v2/itemRules';
 
 interface UseCheckboxFilterActionsProps {
 	filter: IQuickFiltersConfig;
-	source: QuickFiltersSource;
+	pageSource: QuickFiltersSource;
 	attributeValues: string[];
 	activeQueryIndex: number;
 	onFilterChange?: ((query: Query) => void) | null;
@@ -40,7 +40,7 @@ interface UseCheckboxFilterActionsReturn {
  */
 function useCheckboxFilterActions({
 	filter,
-	source,
+	pageSource,
 	attributeValues,
 	activeQueryIndex,
 	onFilterChange,
@@ -67,7 +67,7 @@ function useCheckboxFilterActions({
 			currentQuery,
 			activeQueryIndex,
 			filter,
-			source,
+			pageSource,
 			attributeValues,
 			value,
 			checked,

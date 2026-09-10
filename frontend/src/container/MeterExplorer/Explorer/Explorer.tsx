@@ -6,6 +6,10 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import {
+	TelemetrytypesSignalDTO,
+	TelemetrytypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
@@ -32,7 +36,10 @@ import { splitQueryIntoOneChartPerQuery } from './utils';
 import './Explorer.styles.scss';
 
 function Explorer(): JSX.Element {
-	const quickFilterFieldApis = useSignalFieldApis();
+	const quickFilterFieldApis = useSignalFieldApis(
+		TelemetrytypesSignalDTO.metrics,
+		TelemetrytypesSourceDTO.meter,
+	);
 	const {
 		handleRunQuery,
 		stagedQuery,
@@ -139,8 +146,8 @@ function Explorer(): JSX.Element {
 				>
 					<QuickFilters
 						className="qf-meter-explorer"
-						source={QuickFiltersSource.METER_EXPLORER}
-						signal={SignalType.METER_EXPLORER}
+						pageSource={QuickFiltersSource.METER_EXPLORER}
+						quickFilterSignal={SignalType.METER_EXPLORER}
 						showFilterCollapse
 						showQueryName={false}
 						handleFilterVisibilityChange={(): void => {

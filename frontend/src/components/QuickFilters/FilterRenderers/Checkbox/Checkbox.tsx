@@ -27,17 +27,17 @@ const SOURCES_WITH_EMPTY_STATE_ENABLED = [QuickFiltersSource.LOGS_EXPLORER];
 
 interface ICheckboxProps {
 	filter: IQuickFiltersConfig;
-	source: QuickFiltersSource;
+	pageSource: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
 	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
-	const { source, filter, onFilterChange, onQuickFilterChange } = props;
+	const { pageSource, filter, onFilterChange, onQuickFilterChange } = props;
 	const [searchText, setSearchText] = useState<string>('');
 
-	const activeQueryIndex = useActiveQueryIndex(source);
+	const activeQueryIndex = useActiveQueryIndex(pageSource);
 
 	const {
 		isOpen,
@@ -49,7 +49,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	const { attributeValues, isLoading } = useCheckboxFilterValues({
 		filter,
-		source,
+		pageSource,
 		searchText,
 		isOpen,
 	});
@@ -59,7 +59,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 
 	const { onChange, onClear } = useCheckboxFilterActions({
 		filter,
-		source,
+		pageSource,
 		attributeValues,
 		activeQueryIndex,
 		onFilterChange,
@@ -88,7 +88,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	);
 
 	const isEmptyStateWithDocsEnabled =
-		SOURCES_WITH_EMPTY_STATE_ENABLED.includes(source) &&
+		SOURCES_WITH_EMPTY_STATE_ENABLED.includes(pageSource) &&
 		!searchText &&
 		!attributeValues.length;
 
