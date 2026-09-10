@@ -74,6 +74,7 @@ export default function CheckboxFilterV2(
 		searchText,
 		existingQuery,
 		metricNamespace: useFieldApis.metricNamespace,
+		source,
 		startUnixMilli: useFieldApis.startUnixMilli,
 		endUnixMilli: useFieldApis.endUnixMilli,
 		enabled: isOpen,
@@ -153,6 +154,7 @@ export default function CheckboxFilterV2(
 		isSomeFilterPresentForCurrentAttribute,
 		isNotInOperator,
 		hasExistingQuery,
+		isRelatedValuesSupported: useFieldApis.existingQuery !== null,
 		visibleItemsCount,
 		relatedExclusions,
 	});

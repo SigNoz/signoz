@@ -7,6 +7,7 @@ import { QuickFiltersSource } from '../../../../types';
 
 import CheckboxFilterV2 from '../CheckboxFilterV2';
 import {
+	buildQueryBuilderOverrides,
 	DEFAULT_FILTER,
 	DEFAULT_USE_FIELD_APIS,
 	getFilterFromCall,
@@ -125,18 +126,16 @@ describe('CheckboxFilterV2 - interactions', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: { items: [], op: 'AND' },
-										filter: { expression: 'service.name = "api"' },
-									},
-								],
-							},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: { items: [], op: 'AND' },
+									filter: { expression: 'service.name = "api"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -490,26 +489,24 @@ describe('CheckboxFilterV2 - interactions', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'deployment.environment' },
-													op: 'in',
-													value: ['production'],
-												},
-											],
-											op: 'AND',
-										},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'in',
+												value: ['production'],
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -555,26 +552,24 @@ describe('CheckboxFilterV2 - interactions', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'deployment.environment' },
-													op: 'in',
-													value: ['production'],
-												},
-											],
-											op: 'AND',
-										},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'in',
+												value: ['production'],
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -637,7 +632,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(filter?.value).toBe('valueA');
 		});
 
-		it('converts NOT IN to IN when toggling unchecked (other) item', async () => {
+		it('adds to NOT IN when unchecking a non-excluded (other) item', async () => {
 			const user = userEvent.setup();
 			const onFilterChange = jest.fn();
 
@@ -646,18 +641,70 @@ describe('CheckboxFilterV2 - interactions', () => {
 				stringValues: ['valueB'],
 			});
 
-			// Clicking unchecked "Other" item with NOT IN filter should convert to IN [B]
+			// valueB is not excluded, so under NOT IN [valueA] it is still included
+			// and renders checked. Unchecking it excludes it too → NOT IN [A, B].
 			renderWithFilter(onFilterChange, { op: 'not in', value: ['valueA'] });
 
 			const rowB = await screen.findByTestId('checkbox-value-row-valueB');
-			expect(rowB).toHaveAttribute('data-state', 'unchecked');
+			expect(rowB).toHaveAttribute('data-state', 'checked');
 
 			await user.click(within(rowB).getByRole('checkbox'));
 
 			expect(onFilterChange).toHaveBeenCalledTimes(1);
 			const filter = getFilterFromCall(onFilterChange);
-			expect(filter?.op).toBe('in');
-			expect(filter?.value).toBe('valueB');
+			expect(filter?.op).toBe('not in');
+			expect(filter?.value).toStrictEqual(['valueA', 'valueB']);
+		});
+
+		it('adds to NOT IN when unchecking a non-excluded item without related values', async () => {
+			const user = userEvent.setup();
+			const onFilterChange = jest.fn();
+
+			mockFieldsValuesAPI({
+				stringValues: ['valueA', 'valueB'],
+			});
+
+			// Without related values the display follows the clause: valueB is not
+			// excluded, so it renders checked; unchecking it excludes it too.
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+					onFilterChange={onFilterChange}
+				/>,
+				undefined,
+				{
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'not in',
+												value: ['valueA'],
+											},
+										],
+										op: 'AND',
+									},
+								},
+							],
+						},
+					}),
+				},
+			);
+
+			const rowB = await screen.findByTestId('checkbox-value-row-valueB');
+			expect(rowB).toHaveAttribute('data-state', 'checked');
+
+			await user.click(within(rowB).getByRole('checkbox'));
+
+			expect(onFilterChange).toHaveBeenCalledTimes(1);
+			const filter = getFilterFromCall(onFilterChange);
+			expect(filter?.op).toBe('not in');
+			expect(filter?.value).toStrictEqual(['valueA', 'valueB']);
 		});
 
 		it('accumulates both values in IN when toggling checked (related) then unchecked (other)', async () => {

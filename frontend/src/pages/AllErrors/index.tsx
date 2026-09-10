@@ -8,6 +8,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import RouteTab from 'components/RouteTab';
 import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
@@ -55,6 +56,8 @@ function AllErrors(): JSX.Element {
 		setShowFilters((prev) => !prev);
 	};
 
+	const quickFilterFieldApis = useSignalFieldApis();
+
 	return (
 		<div className={cx('all-errors-page', showFilters ? 'filter-visible' : '')}>
 			{showFilters && (
@@ -64,6 +67,7 @@ function AllErrors(): JSX.Element {
 						source={QuickFiltersSource.EXCEPTIONS}
 						signal={SignalType.EXCEPTIONS}
 						handleFilterVisibilityChange={handleFilterVisibilityChange}
+						useFieldApis={quickFilterFieldApis}
 					/>
 				</section>
 			)}
