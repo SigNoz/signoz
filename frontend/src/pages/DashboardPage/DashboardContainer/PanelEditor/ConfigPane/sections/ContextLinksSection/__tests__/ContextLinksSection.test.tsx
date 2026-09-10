@@ -97,6 +97,28 @@ describe('ContextLinksSection', () => {
 		expect(onChange).toHaveBeenCalledWith([]);
 	});
 
+	it('preserves the disabled new-tab preference when saved and reopened', async () => {
+		const onChange = jest.fn();
+		const view = render(
+			<ContextLinksSection value={LINKS} onChange={onChange} />,
+		);
+		fireEvent.click(screen.getByTestId('context-link-edit-0'));
+		const toggle = await screen.findByTestId('context-link-newtab');
+		fireEvent.click(toggle);
+		fireEvent.click(screen.getByTestId('context-link-save'));
+
+		const saved = lastCall(onChange);
+		expect(saved[0].targetBlank).toBe(false);
+		view.unmount();
+		render(<ContextLinksSection value={saved} onChange={onChange} />);
+		fireEvent.click(screen.getByTestId('context-link-edit-0'));
+		const savedToggle = await screen.findByTestId('context-link-newtab');
+		expect(savedToggle).toHaveAttribute('aria-checked', 'false');
+		fireEvent.click(screen.getByTestId('context-link-save'));
+		expect(onChange).toHaveBeenCalledTimes(2);
+		expect(lastCall(onChange)[0].targetBlank).toBe(false);
+	});
+
 	it('shows a validation error only for a malformed URL', async () => {
 		render(<ContextLinksSection value={[]} onChange={jest.fn()} />);
 		fireEvent.click(screen.getByTestId('panel-editor-v2-add-link'));

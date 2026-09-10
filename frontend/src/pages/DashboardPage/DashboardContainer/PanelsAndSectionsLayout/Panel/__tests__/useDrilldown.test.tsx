@@ -7,6 +7,7 @@ import {
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { DrilldownContext } from 'pages/DashboardPage/DashboardContainer/Panels/types/drilldown';
 import { EQueryType } from 'types/common/dashboard';
+import * as basePath from 'utils/basePath';
 
 import { useDrilldown } from '../hooks/useDrilldown';
 
@@ -15,6 +16,7 @@ const mockNavigate = jest.fn();
 const mockGetBuilderQueries = jest.fn();
 const mockGetPanelQueryType = jest.fn();
 let mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
+let mockContextVariables: Record<string, string> = {};
 let mockDashboardVariables: {
 	hasFieldVariables: boolean;
 	actions: unknown[];
@@ -51,7 +53,7 @@ jest.mock('../DrilldownMenu/DrilldownDashboardVariablesMenu', () => ({
 }));
 // Context-link variable map (redux global time + store) — out of scope for this suite.
 jest.mock('../hooks/useDrilldownContextVariables', () => ({
-	useDrilldownContextVariables: (): unknown => ({}),
+	useDrilldownContextVariables: (): unknown => mockContextVariables,
 }));
 jest.mock('container/QueryTable/Drilldown/useBaseDrilldownNavigate', () => ({
 	__esModule: true,
@@ -144,6 +146,7 @@ describe('useDrilldown', () => {
 		mockGetBuilderQueries.mockReturnValue([{ name: 'A' }]);
 		mockGetPanelQueryType.mockReturnValue(EQueryType.QUERY_BUILDER);
 		mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
+		mockContextVariables = {};
 		mockDashboardVariables = {
 			hasFieldVariables: true,
 			actions: [],
@@ -180,6 +183,162 @@ describe('useDrilldown', () => {
 	});
 
 	describe('aggregate menu', () => {
+		afterEach(() => {
+			jest.restoreAllMocks();
+		});
+
+		it.each([true, false, undefined])(
+			'honors targetBlank=%s when clicking resolved panel context links',
+			async (targetBlank) => {
+				const user = userEvent.setup();
+				const open = jest.spyOn(window, 'open').mockReturnValue(null);
+				mockContextVariables = { service: 'frontend' };
+				const panel = {
+					...tsPanel,
+					spec: {
+						...tsPanel.spec,
+						links: [
+							{ name: 'External', url: 'https://wiki/{{service}}', targetBlank },
+							{ name: 'Internal', url: '/logs?service={{service}}', targetBlank },
+							{
+								name: 'Literal',
+								url: '/logs?service={{service}}',
+								targetBlank,
+								renderVariables: false,
+							},
+						],
+					},
+				};
+				const { result } = renderHook(() => useDrilldown(panel, 'p1'));
+				const view = render(<div />);
+				for (let index = 0; index < panel.spec.links.length; index++) {
+					act(() =>
+						result.current.onPanelClick({
+							coordinates: { x: 1, y: 1 },
+							context: aggregateContext,
+						}),
+					);
+					view.rerender(<div>{result.current.contextMenuProps.items}</div>);
+					await user.click(screen.getAllByTestId('drilldown-context-link')[index]);
+					expect(result.current.contextMenuProps.coordinates).toBeNull();
+				}
+
+				const target = targetBlank === false ? '_self' : '_blank';
+				expect(open.mock.calls).toStrictEqual([
+					['https://wiki/frontend', target],
+					['/logs?service=frontend', target],
+					['/logs?service={{service}}', target],
+				]);
+				expect(result.current.contextMenuProps.coordinates).toBeNull();
+			},
+		);
+
+		it.each([true, false])(
+			'preserves the deployment base path with targetBlank=%s',
+			async (targetBlank) => {
+				const user = userEvent.setup();
+				const open = jest.spyOn(window, 'open').mockReturnValue(null);
+				const base = document.createElement('base');
+				base.setAttribute('href', '/signoz/');
+				document.head.prepend(base);
+				try {
+					jest.isolateModules(() => {
+						const isolated = jest.requireActual<typeof basePath>('utils/basePath');
+						jest
+							.spyOn(basePath, 'withBasePath')
+							.mockImplementation(isolated.withBasePath);
+					});
+					const panel = {
+						...tsPanel,
+						spec: {
+							...tsPanel.spec,
+							links: [
+								{ url: '/logs', targetBlank },
+								{ url: '/signoz/logs', targetBlank },
+								{ url: 'https://wiki/runbook', targetBlank },
+							],
+						},
+					};
+					const { result } = renderHook(() => useDrilldown(panel, 'p1'));
+					const view = render(<div />);
+					for (let index = 0; index < panel.spec.links.length; index++) {
+						act(() =>
+							result.current.onPanelClick({
+								coordinates: { x: 1, y: 1 },
+								context: aggregateContext,
+							}),
+						);
+						view.rerender(<div>{result.current.contextMenuProps.items}</div>);
+						await user.click(screen.getAllByTestId('drilldown-context-link')[index]);
+					}
+					const target = targetBlank ? '_blank' : '_self';
+					expect(open.mock.calls).toStrictEqual([
+						['/signoz/logs', target],
+						['/signoz/logs', target],
+						['https://wiki/runbook', target],
+					]);
+				} finally {
+					base.remove();
+				}
+			},
+		);
+
+		it.each([
+			'javascript:alert(1)',
+			'java\nscript:alert(1)',
+			'data:text/html,example',
+			'https://[',
+		])(
+			'does not navigate the current page to an unsafe or malformed URL: %s',
+			async (destination) => {
+				const user = userEvent.setup();
+				const open = jest.spyOn(window, 'open').mockReturnValue(null);
+				mockContextVariables = { destination };
+				const panel = {
+					...tsPanel,
+					spec: {
+						...tsPanel.spec,
+						links: [
+							{ name: 'Imported link', url: '{{destination}}', targetBlank: false },
+						],
+					},
+				};
+				const { result } = renderHook(() => useDrilldown(panel, 'p1'));
+				act(() =>
+					result.current.onPanelClick({
+						coordinates: { x: 1, y: 1 },
+						context: aggregateContext,
+					}),
+				);
+				render(<div>{result.current.contextMenuProps.items}</div>);
+
+				await user.click(screen.getByTestId('drilldown-context-link'));
+				expect(open).not.toHaveBeenCalled();
+				expect(result.current.contextMenuProps.coordinates).toBeNull();
+			},
+		);
+
+		it('keeps automatic trace links opening in a new tab', async () => {
+			const user = userEvent.setup();
+			const open = jest.spyOn(window, 'open').mockReturnValue(null);
+			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
+			act(() =>
+				result.current.onPanelClick({
+					coordinates: { x: 1, y: 1 },
+					context: {
+						...aggregateContext,
+						filters: [
+							{ filterKey: 'trace_id', filterValue: 'abc123', operator: '=' },
+						],
+					},
+				}),
+			);
+			render(<div>{result.current.contextMenuProps.items}</div>);
+
+			await user.click(screen.getByTestId('drilldown-data-link'));
+			expect(open).toHaveBeenCalledWith('/trace/abc123', '_blank');
+		});
+
 		it('shows View in Logs/Traces + Breakout on an aggregate click', () => {
 			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
 			act(() =>

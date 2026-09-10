@@ -391,6 +391,32 @@ describe('enrichPieClick', () => {
 });
 
 describe('resolvePanelContextLinks', () => {
+	it.each([true, false, undefined])(
+		'preserves targetBlank=%s across variable resolution modes',
+		(targetBlank) => {
+			for (const renderVariables of [true, false, undefined]) {
+				const [link] = resolvePanelContextLinks(
+					[
+						{
+							name: 'Runbook',
+							url: 'https://wiki/{{service}}',
+							targetBlank,
+							renderVariables,
+						},
+					],
+					{ service: 'frontend' },
+				);
+
+				expect(link.targetBlank).toBe(targetBlank ?? true);
+				expect(link.url).toBe(
+					renderVariables === false
+						? 'https://wiki/{{service}}'
+						: 'https://wiki/frontend',
+				);
+			}
+		},
+	);
+
 	it('substitutes the clicked field value (_-prefixed) into the label and URL', () => {
 		const resolved = resolvePanelContextLinks(
 			[
