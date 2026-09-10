@@ -1,0 +1,18 @@
+# __Title__
+
+<!-- One paragraph: what this section of the product is, and what each tab is for. -->
+
+## Structure
+
+| Path | Purpose |
+| --- | --- |
+| `index.tsx` | Shell. Tab switching only — no feature logic. |
+| `constants.ts` | Tab definitions (`TabRoutes`). |
+| `<View>/` | One folder per tab, each a self-contained feature. |
+
+## Routing
+
+`constants.ts` builds tab paths from a local `BASE_PATH`. Register those paths in
+`src/constants/routes.ts`, add the lazy import to `src/AppRoutes/pageComponents.ts` and
+the entries to `src/AppRoutes/routes.ts`, then replace `BASE_PATH` with the `ROUTES`
+entries so there is a single source of truth for each path.
