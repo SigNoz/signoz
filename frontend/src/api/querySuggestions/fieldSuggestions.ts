@@ -1,29 +1,7 @@
-import {
-	getAIObservabilityFieldsKeys,
-	getAIObservabilityFieldsValues,
-} from 'api/generated/services/ai-observability';
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
+import { getAIObservabilityFieldsValues } from 'api/generated/services/ai-observability';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-
-export interface SuggestedFieldKey {
-	name: string;
-	fieldContext?: string;
-	fieldDataType?: string;
-}
-
-export type SuggestedFieldKeysByName = Record<string, SuggestedFieldKey[]>;
-
-export interface SuggestedFieldKeysPayload {
-	complete: boolean;
-	keys: SuggestedFieldKeysByName;
-}
-
-export interface SuggestedFieldKeysResponse {
-	data: { data?: SuggestedFieldKeysPayload };
-}
 
 export interface SuggestedFieldValuesPayload {
 	complete?: boolean;
@@ -37,17 +15,6 @@ export interface SuggestedFieldValuesResponse {
 	data: { data?: SuggestedFieldValuesPayload };
 }
 
-interface FetchFieldKeysParams {
-	builderQueryType: IBuilderQuery['builderQueryType'];
-	dataSource: DataSource;
-	searchText: string;
-	/** Narrows the ai_observability keys; the trace context names the per-trace aggregates. */
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	metricName?: string;
-	signalSource?: 'meter' | '';
-	metricNamespace?: string;
-}
-
 interface FetchFieldValuesParams {
 	builderQueryType: IBuilderQuery['builderQueryType'];
 	dataSource: DataSource;
@@ -56,39 +23,6 @@ interface FetchFieldValuesParams {
 	metricName?: string;
 	signalSource?: 'meter' | '';
 }
-
-export const fetchFieldKeysForQuery = async ({
-	builderQueryType,
-	dataSource,
-	searchText,
-	fieldContext,
-	metricName,
-	signalSource,
-	metricNamespace,
-}: FetchFieldKeysParams): Promise<SuggestedFieldKeysResponse> => {
-	if (builderQueryType === 'builder_ai_query') {
-		const response = await getAIObservabilityFieldsKeys({
-			searchText,
-			fieldContext,
-		});
-
-		return {
-			data: {
-				data: response.data
-					? { complete: response.data.complete, keys: response.data.keys ?? {} }
-					: undefined,
-			},
-		};
-	}
-
-	return getKeySuggestions({
-		signal: dataSource,
-		searchText,
-		metricName,
-		signalSource,
-		metricNamespace,
-	});
-};
 
 export const fetchFieldValuesForQuery = async ({
 	builderQueryType,

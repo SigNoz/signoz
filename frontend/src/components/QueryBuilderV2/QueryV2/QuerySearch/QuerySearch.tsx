@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { CircleCheck, Info, TriangleAlert, Filter } from '@signozhq/icons';
 import {
 	autocompletion,
@@ -45,19 +46,16 @@ import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
 import { getRecentQueries } from 'lib/recentQueries/getRecentQueries';
-import type { SignalType } from 'types/api/v5/queryRange';
+import type { SignalType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import {
 	queryExamples,
 	SUGGESTION_FETCH_DEBOUNCE_MS,
 	SUGGESTIONS_SECTION,
 } from './constants';
-import {
-	fetchFieldKeysForQuery,
-	fetchFieldValuesForQuery,
-	SuggestedFieldKey,
-	SuggestedFieldKeysByName,
-} from 'api/querySuggestions/fieldSuggestions';
+import { fetchFieldValuesForQuery } from 'api/querySuggestions/fieldSuggestions';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { fetchFieldKeys } from 'hooks/querySuggestions/fieldKeys';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
@@ -131,6 +129,7 @@ function QuerySearch({
 	metricNamespace,
 	valueSuggestionsOverride,
 }: QuerySearchProps): JSX.Element {
+	const queryClient = useQueryClient();
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
 	const [activeKey, setActiveKey] = useState<string>('');
@@ -265,17 +264,15 @@ function QuerySearch({
 	const dashboardDynamicVariables = useDynamicVariableSuggestions();
 
 	// Add back the generateOptions function and useEffect
-	const generateOptions = (keys: SuggestedFieldKeysByName): any[] =>
-		Object.values(keys).flatMap((items: SuggestedFieldKey[]) =>
-			items.map(({ name, fieldDataType, fieldContext }) => ({
-				label: name,
-				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
-				fieldContext,
-				fieldDataType,
-				info: '',
-				details: '',
-			})),
-		);
+	const generateOptions = (keys: TelemetryFieldKey[]): any[] =>
+		keys.map(({ name, fieldDataType, fieldContext }) => ({
+			label: name,
+			type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
+			fieldContext,
+			fieldDataType,
+			info: '',
+			details: '',
+		}));
 
 	// Debounce the metric name to prevent API calls on every keystroke
 	const debouncedMetricName = useDebounce(
@@ -319,17 +316,19 @@ function QuerySearch({
 
 			lastFetchedKeyRef.current = searchText || '';
 
-			const response = await fetchFieldKeysForQuery({
-				builderQueryType: queryData.builderQueryType,
+			const keys = await fetchFieldKeys(
+				queryClient,
+				{
+					builderQueryType: queryData.builderQueryType,
+					metricName: debouncedMetricName || undefined,
+					signalSource: signalSource as TelemetrytypesSourceDTO | undefined,
+					metricNamespace,
+				},
 				dataSource,
-				searchText: searchText || '',
-				metricName: debouncedMetricName ?? undefined,
-				signalSource: signalSource as 'meter' | '',
-				metricNamespace,
-			});
+				searchText || '',
+			);
 
-			if (response.data.data) {
-				const { keys } = response.data.data;
+			if (keys) {
 				const options = generateOptions(keys);
 				// Deduplicate by full variant identity (name + context + data type), NOT by
 				// label. deduping by label removes varient which is not expected. If we need
@@ -364,6 +363,7 @@ function QuerySearch({
 			showFilterSuggestionsWithoutMetric,
 			metricNamespace,
 			queryData.builderQueryType,
+			queryClient,
 		],
 	);
 

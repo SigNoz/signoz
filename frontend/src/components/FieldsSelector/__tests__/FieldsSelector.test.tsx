@@ -3,10 +3,10 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSelector from '../FieldsSelector';
-import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
+import { useFieldKeys } from 'hooks/querySuggestions/fieldKeys';
 
-jest.mock('hooks/querySuggestions/useSelectableFields', () => ({
-	useSelectableFields: jest.fn(() => ({
+jest.mock('hooks/querySuggestions/fieldKeys', () => ({
+	useFieldKeys: jest.fn(() => ({
 		data: undefined,
 		isFetching: false,
 		isFetched: true,
@@ -27,21 +27,13 @@ jest.mock('periscope/components/FloatingPanel', () => ({
 }));
 
 const mockSuggestions = (names: string[]): void => {
-	(useSelectableFields as jest.Mock).mockReturnValue({
-		data: {
-			data: {
-				data: {
-					keys: {
-						attributeKeys: names.map((name) => ({
-							name,
-							signal: 'logs',
-							fieldDataType: 'string',
-							fieldContext: '',
-						})),
-					},
-				},
-			},
-		},
+	(useFieldKeys as jest.Mock).mockReturnValue({
+		data: names.map((name) => ({
+			name,
+			signal: 'logs',
+			fieldDataType: 'string',
+			fieldContext: '',
+		})),
 		isFetching: false,
 		isFetched: true,
 	});

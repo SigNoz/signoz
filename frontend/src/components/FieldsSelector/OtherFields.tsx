@@ -12,8 +12,12 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './FieldsSelector.module.scss';
-import { StaticFieldsSource } from 'hooks/querySuggestions/staticFields';
-import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
+import {
+	FieldKeysConfig,
+	useFieldKeys,
+} from 'hooks/querySuggestions/fieldKeys';
+
+const EMPTY_FIELD_KEYS_CONFIG: FieldKeysConfig = {};
 
 interface OtherFieldsProps {
 	signal: DataSource;
@@ -22,7 +26,7 @@ interface OtherFieldsProps {
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 	allowCustomFields?: boolean;
-	addStaticFields?: StaticFieldsSource;
+	fieldKeysConfig?: FieldKeysConfig;
 }
 
 function OtherFields({
@@ -32,24 +36,24 @@ function OtherFields({
 	onAdd,
 	isAtLimit,
 	allowCustomFields,
-	addStaticFields,
+	fieldKeysConfig = EMPTY_FIELD_KEYS_CONFIG,
 }: OtherFieldsProps): JSX.Element {
-	const { data, isFetching } = useSelectableFields({
+	const { data: fetchedFields, isFetching } = useFieldKeys(
+		fieldKeysConfig,
 		signal,
-		searchText: debouncedInputValue,
-		source: addStaticFields,
-	});
+		debouncedInputValue,
+	);
 
 	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
-		const rawSuggestions = Object.values(data?.data.data.keys || {}).flat();
-		// Normalize: synthesize `key` once so downstream reads can trust it.
-		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
-			...attr,
-			key: buildCompositeKey(attr.name, attr.fieldContext, attr.fieldDataType),
-			signal: attr.signal as SignalType,
-			fieldContext: attr.fieldContext as FieldContext,
-			fieldDataType: attr.fieldDataType,
-		}));
+		const suggestions: TelemetryFieldKey[] = (fetchedFields ?? []).map(
+			(attr) => ({
+				...attr,
+				key: buildCompositeKey(attr.name, attr.fieldContext, attr.fieldDataType),
+				signal: attr.signal as SignalType,
+				fieldContext: attr.fieldContext as FieldContext,
+				fieldDataType: attr.fieldDataType,
+			}),
+		);
 		const addedIds = new Set(
 			addedFields.map((f) =>
 				buildCompositeKey(f.name, f.fieldContext, f.fieldDataType),
@@ -80,7 +84,7 @@ function OtherFields({
 			key: buildCompositeKey(typed, ''),
 		};
 		return [customField, ...available];
-	}, [data, addedFields, allowCustomFields, debouncedInputValue]);
+	}, [fetchedFields, addedFields, allowCustomFields, debouncedInputValue]);
 
 	if (isFetching) {
 		return (

@@ -1,28 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
 import { Select, Spin } from 'antd';
-import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import {
-	fetchFieldKeysForQuery,
-	SuggestedFieldKey,
-} from 'api/querySuggestions/fieldSuggestions';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+	FieldKeysConfig,
+	useFieldKeys,
+} from 'hooks/querySuggestions/fieldKeys';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
 
-const DEFAULT_STATIC_OPTION_KEYS = ['timestamp'];
+const DEFAULT_ORDER_BY_KEYS: FieldKeysConfig = {
+	staticFields: [{ name: 'timestamp' } as TelemetryFieldKey],
+};
 
 interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;
 	dataSource: DataSource;
-	builderQueryType?: IBuilderQuery['builderQueryType'];
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	staticOptionKeys?: string[];
+	fieldKeysConfig?: FieldKeysConfig;
 }
 
-// Loader component for the dropdown when loading or no results
 function Loader({ isLoading }: { isLoading: boolean }): JSX.Element {
 	return (
 		<div className="order-by-loading-container">
@@ -35,9 +32,7 @@ function ListViewOrderBy({
 	value,
 	onChange,
 	dataSource,
-	builderQueryType,
-	fieldContext,
-	staticOptionKeys = DEFAULT_STATIC_OPTION_KEYS,
+	fieldKeysConfig = DEFAULT_ORDER_BY_KEYS,
 }: ListViewOrderByProps): JSX.Element {
 	const [searchInput, setSearchInput] = useState('');
 	const [debouncedInput, setDebouncedInput] = useState('');
@@ -46,26 +41,11 @@ function ListViewOrderBy({
 	>([]);
 	const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	// Fetch key suggestions based on debounced input
-	const { data, isLoading } = useQuery({
-		queryKey: [
-			'orderByKeySuggestions',
-			dataSource,
-			builderQueryType,
-			fieldContext,
-			debouncedInput,
-		],
-		queryFn: async () => {
-			const response = await fetchFieldKeysForQuery({
-				builderQueryType,
-				dataSource,
-				fieldContext,
-				searchText: debouncedInput,
-			});
-
-			return response.data.data?.keys;
-		},
-	});
+	const { data, isLoading } = useFieldKeys(
+		fieldKeysConfig,
+		dataSource,
+		debouncedInput,
+	);
 
 	useEffect(
 		() => (): void => {
@@ -76,37 +56,33 @@ function ListViewOrderBy({
 		[],
 	);
 
-	const staticKeysSignature = staticOptionKeys.join(',');
+	const staticKeysSignature = (fieldKeysConfig.staticFields ?? [])
+		.map((field) => field.name)
+		.join(',');
 
-	// Update options when API data changes
 	useEffect(() => {
-		const rawKeys: SuggestedFieldKey[] = data ? Object.values(data).flat() : [];
-
-		const keyNames = rawKeys.map((key) => key.name);
+		const keyNames = (data ?? []).map((field) => field.name);
 		const search = searchInput.trim().toLowerCase();
 		const staticMatches = staticKeysSignature
 			.split(',')
 			.filter((key) => key.length > 0 && key.toLowerCase().includes(search));
 		const uniqueKeys = [...new Set([...staticMatches, ...keyNames])];
 
-		const updatedOptions = uniqueKeys.flatMap((key) => [
-			{ label: `${key} (desc)`, value: `${key}:desc` },
-			{ label: `${key} (asc)`, value: `${key}:asc` },
-		]);
-
-		setSelectOptions(updatedOptions);
+		setSelectOptions(
+			uniqueKeys.flatMap((key) => [
+				{ label: `${key} (desc)`, value: `${key}:desc` },
+				{ label: `${key} (asc)`, value: `${key}:asc` },
+			]),
+		);
 	}, [data, searchInput, staticKeysSignature]);
 
-	// Handle search input with debounce
 	const handleSearch = (input: string): void => {
 		setSearchInput(input);
 
-		// Filter current options for instant client-side match
 		const filteredOptions = selectOptions.filter((option) =>
 			option.value.toLowerCase().includes(input.trim().toLowerCase()),
 		);
 
-		// If no match found or input is empty, trigger debounced fetch
 		if (filteredOptions.length === 0 || input === '') {
 			if (debounceTimer.current) {
 				clearTimeout(debounceTimer.current);

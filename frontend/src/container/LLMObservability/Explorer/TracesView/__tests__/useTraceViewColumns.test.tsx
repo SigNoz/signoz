@@ -2,22 +2,18 @@
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { fetchFieldKeysForQuery } from 'api/querySuggestions/fieldSuggestions';
+import { ENVIRONMENT } from 'constants/env';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
+import {
+	TelemetrytypesFieldContextDTO,
+	TelemetrytypesFieldDataTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { useColumnStore } from 'components/TanStackTableView/useColumnStore';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { useTraceViewColumns } from '../useTraceViewColumns';
-
-jest.mock('api/querySuggestions/fieldSuggestions', () => ({
-	fetchFieldKeysForQuery: jest.fn(),
-}));
-
-const mockedFetchKeys = fetchFieldKeysForQuery as jest.MockedFunction<
-	typeof fetchFieldKeysForQuery
->;
 
 const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
 
@@ -47,6 +43,40 @@ function wrapper({ children }: { children: ReactNode }): JSX.Element {
 	);
 }
 
+const seenAI: URLSearchParams[] = [];
+
+const mockAggregateKeys = (names: string[]): void => {
+	server.use(
+		rest.get(
+			`${ENVIRONMENT.baseURL}/api/v1/ai_observability/fields/keys`,
+			(req, res, ctx) => {
+				seenAI.push(req.url.searchParams);
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							complete: true,
+							keys: Object.fromEntries(
+								names.map((name) => [
+									name,
+									[
+										{
+											name,
+											fieldContext: TelemetrytypesFieldContextDTO.trace,
+											fieldDataType: TelemetrytypesFieldDataTypeDTO.float64,
+										},
+									],
+								]),
+							),
+						},
+					}),
+				);
+			},
+		),
+	);
+};
+
 const renderColumns = async (): Promise<
 	ReturnType<typeof renderHook<ReturnType<typeof useTraceViewColumns>, unknown>>
 > => {
@@ -59,40 +89,26 @@ const renderColumns = async (): Promise<
 
 describe('useTraceViewColumns', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		seenAI.length = 0;
 		useColumnStore.getState().tables = {};
 		localStorage.clear();
-		mockedFetchKeys.mockResolvedValue({
-			data: {
-				data: {
-					complete: true,
-					keys: Object.fromEntries(
-						AGGREGATE_KEYS.map((name) => [
-							name,
-							[{ name, fieldContext: 'trace', fieldDataType: 'float64' }],
-						]),
-					),
-				},
-			},
-		});
+		mockAggregateKeys(AGGREGATE_KEYS);
 	});
 
 	it('reads the aggregates from the trace context of the keys endpoint', async () => {
 		await renderColumns();
 
-		expect(mockedFetchKeys).toHaveBeenCalledWith({
-			builderQueryType: 'builder_ai_query',
-			dataSource: DataSource.TRACES,
-			searchText: '',
-			fieldContext: TelemetrytypesFieldContextDTO.trace,
-		});
+		expect(seenAI).toHaveLength(1);
+		expect(seenAI[0]?.get('searchText')).toBe('');
+		expect(seenAI[0]?.get('fieldContext')).toBe(
+			TelemetrytypesFieldContextDTO.trace,
+		);
 	});
 
 	it('pools the hardcoded display-only columns with the endpoint aggregates', async () => {
 		const { result } = await renderColumns();
 
 		expect(columnNames(result.current.columns)).toStrictEqual([
-			// display-only: the endpoint cannot report these
 			'service.name',
 			'root_span_name',
 			'trace_duration_nano',
@@ -123,18 +139,7 @@ describe('useTraceViewColumns', () => {
 	});
 
 	it('keeps a newly reported aggregate hidden until it is picked', async () => {
-		mockedFetchKeys.mockResolvedValue({
-			data: {
-				data: {
-					complete: true,
-					keys: {
-						brand_new_aggregate: [
-							{ name: 'brand_new_aggregate', fieldContext: 'trace' },
-						],
-					},
-				},
-			},
-		});
+		mockAggregateKeys(['brand_new_aggregate']);
 
 		const { result } = await renderColumns();
 
@@ -203,7 +208,6 @@ describe('useTraceViewColumns', () => {
 			'trace_id',
 			'service.name',
 		]);
-		// Fields address their column by a composite id of context, name and data type.
 		expect(
 			useColumnStore.getState().tables[STORAGE_KEY].columnOrder,
 		).toStrictEqual([

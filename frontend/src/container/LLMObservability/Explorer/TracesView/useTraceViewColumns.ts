@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
+import { useFieldKeys } from 'hooks/querySuggestions/fieldKeys';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import {
 	hideColumn,
@@ -15,6 +15,7 @@ import { TracesTableRow } from '../TracesTable/getFieldColumn';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { TRACE_VIEW_COLUMN_KEYS } from '../constants';
 import { buildTraceViewColumns, TRACE_ID_COLUMN_ID } from './configs';
 
 const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
@@ -33,15 +34,10 @@ interface UseTraceViewColumns {
 
 // TODO(ai-explorer): browser-local only, unlike the list views' `?options=` columns.
 export function useTraceViewColumns(): UseTraceViewColumns {
-	const { data, isFetched } = useSelectableFields({
-		signal: DataSource.TRACES,
-		searchText: '',
-		source: 'ai_o11y',
-	});
-
-	const availableFields = useMemo(
-		() => Object.values(data?.data.data.keys || {}).flat(),
-		[data],
+	const { data: availableFields = [], isFetched } = useFieldKeys(
+		TRACE_VIEW_COLUMN_KEYS,
+		DataSource.TRACES,
+		'',
 	);
 
 	const columns = useMemo(

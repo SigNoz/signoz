@@ -1,12 +1,16 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	FieldKeysConfig,
+	useFieldKeys,
+} from 'hooks/querySuggestions/fieldKeys';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import OtherFields from '../OtherFields';
-import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
 
-jest.mock('hooks/querySuggestions/useSelectableFields', () => ({
-	useSelectableFields: jest.fn(() => ({
+jest.mock('hooks/querySuggestions/fieldKeys', () => ({
+	useFieldKeys: jest.fn(() => ({
 		data: undefined,
 		isFetching: false,
 		isFetched: true,
@@ -14,21 +18,13 @@ jest.mock('hooks/querySuggestions/useSelectableFields', () => ({
 }));
 
 const mockSuggestions = (names: string[]): void => {
-	(useSelectableFields as jest.Mock).mockReturnValue({
-		data: {
-			data: {
-				data: {
-					keys: {
-						attributeKeys: names.map((name) => ({
-							name,
-							signal: 'logs',
-							fieldDataType: 'string',
-							fieldContext: '',
-						})),
-					},
-				},
-			},
-		},
+	(useFieldKeys as jest.Mock).mockReturnValue({
+		data: names.map((name) => ({
+			name,
+			signal: 'logs',
+			fieldDataType: 'string',
+			fieldContext: '',
+		})),
 		isFetching: false,
 		isFetched: true,
 	});
@@ -89,7 +85,6 @@ describe('OtherFields — custom (free-typed) option', () => {
 		mockSuggestions(['orderId']);
 		renderOtherFields({ debouncedInputValue: 'orderid' });
 
-		// the real suggestion shows, the lowercased custom name does not
 		expect(screen.getByText('orderId')).toBeInTheDocument();
 		expect(screen.queryByText('orderid')).not.toBeInTheDocument();
 	});
@@ -123,22 +118,28 @@ describe('OtherFields — custom (free-typed) option', () => {
 	it('shows the custom option at the field limit but hides its Add button', () => {
 		renderOtherFields({ debouncedInputValue: 'unknown.a.b.c', isAtLimit: true });
 
-		// same as every other row at the limit: name shown, no Add button
 		expect(screen.getByText('unknown.a.b.c')).toBeInTheDocument();
 		expect(
 			screen.queryByRole('button', { name: /add/i }),
 		).not.toBeInTheDocument();
 	});
 });
-describe('OtherFields — addStaticFields (named pool)', () => {
+
+describe('OtherFields — fieldKeysConfig', () => {
 	const pool: TelemetryFieldKey[] = [
 		{ name: 'total_tokens', fieldContext: 'trace', fieldDataType: 'float64' },
 		{ name: 'llm_call_count', fieldContext: 'trace', fieldDataType: 'float64' },
 	];
 
+	const fieldKeysConfig: FieldKeysConfig = {
+		builderQueryType: 'builder_ai_query',
+		fieldContext: TelemetrytypesFieldContextDTO.trace,
+		staticFields: pool,
+	};
+
 	const mockPool = (fields: TelemetryFieldKey[]): void => {
-		(useSelectableFields as jest.Mock).mockReturnValue({
-			data: { data: { data: { keys: { ai_o11y: fields } } } },
+		(useFieldKeys as jest.Mock).mockReturnValue({
+			data: fields,
 			isFetching: false,
 			isFetched: true,
 		});
@@ -149,27 +150,29 @@ describe('OtherFields — addStaticFields (named pool)', () => {
 	});
 
 	it('lists the pool it is handed', () => {
-		renderOtherFields({ addStaticFields: 'ai_o11y', allowCustomFields: false });
+		renderOtherFields({ fieldKeysConfig, allowCustomFields: false });
 
 		expect(screen.getByText('total_tokens')).toBeInTheDocument();
 		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
 	});
 
-	it('names the source and forwards the search so the hook can narrow the pool', () => {
+	it('forwards the config and search to the shared keys hook', () => {
 		renderOtherFields({
-			addStaticFields: 'ai_o11y',
+			fieldKeysConfig,
 			allowCustomFields: false,
 			debouncedInputValue: 'llm',
 		});
 
-		expect(useSelectableFields).toHaveBeenCalledWith(
-			expect.objectContaining({ source: 'ai_o11y', searchText: 'llm' }),
+		expect(useFieldKeys).toHaveBeenCalledWith(
+			fieldKeysConfig,
+			DataSource.LOGS,
+			'llm',
 		);
 	});
 
 	it('omits pool fields that are already added', () => {
 		renderOtherFields({
-			addStaticFields: 'ai_o11y',
+			fieldKeysConfig,
 			allowCustomFields: false,
 			addedFields: [
 				{
