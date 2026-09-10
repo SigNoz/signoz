@@ -24,7 +24,7 @@ func (r dashboardFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, rawKey
 		v.AddError("operator %s is not allowed on a tag-key filter", sqlcompiler.OperationName(operation))
 		return ""
 	}
-	return r.tagComparison(v, ctx, operation, key)
+	return r.buildTagComparison(v, ctx, operation, key)
 }
 
 func (r dashboardFieldResolver) resolveReservedKey(v *sqlcompiler.Visitor, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, key dashboardtypes.DSLKey, allowedOperations map[qbtypesv5.FilterOperator]struct{}) string {
@@ -34,25 +34,25 @@ func (r dashboardFieldResolver) resolveReservedKey(v *sqlcompiler.Visitor, ctx *
 	}
 	switch key {
 	case dashboardtypes.DSLKeyName:
-		columnExpression := string(v.Formatter().JSONExtractString("dashboard.data", "$.spec.display.name"))
-		return v.StringOperation(v.SelectBuilder(), ctx, operation, columnExpression, string(key))
+		columnExpression := string(v.Formatter.JSONExtractString("dashboard.data", "$.spec.display.name"))
+		return v.BuildStringOperation(v.Sb, ctx, operation, columnExpression, string(key))
 	case dashboardtypes.DSLKeyDescription:
-		columnExpression := string(v.Formatter().JSONExtractString("dashboard.data", "$.spec.display.description"))
-		return v.StringOperation(v.SelectBuilder(), ctx, operation, columnExpression, string(key))
+		columnExpression := string(v.Formatter.JSONExtractString("dashboard.data", "$.spec.display.description"))
+		return v.BuildStringOperation(v.Sb, ctx, operation, columnExpression, string(key))
 	case dashboardtypes.DSLKeyCreatedAt:
-		return v.TimestampComparison(ctx, operation, "dashboard.created_at")
+		return v.BuildTimestampComparison(ctx, operation, "dashboard.created_at")
 	case dashboardtypes.DSLKeyUpdatedAt:
-		return v.TimestampComparison(ctx, operation, "dashboard.updated_at")
+		return v.BuildTimestampComparison(ctx, operation, "dashboard.updated_at")
 	case dashboardtypes.DSLKeyCreatedBy:
-		return v.StringOperation(v.SelectBuilder(), ctx, operation, "dashboard.created_by", string(key))
+		return v.BuildStringOperation(v.Sb, ctx, operation, "dashboard.created_by", string(key))
 	case dashboardtypes.DSLKeyLocked:
-		return v.BoolComparison(ctx, operation, "dashboard.locked")
+		return v.BuildBoolComparison(ctx, operation, "dashboard.locked")
 	}
 	v.AddError("no handler for reserved key %q", key)
 	return ""
 }
 
-func (dashboardFieldResolver) tagComparison(v *sqlcompiler.Visitor, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, tagKey string) string {
+func (dashboardFieldResolver) buildTagComparison(v *sqlcompiler.Visitor, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, tagKey string) string {
 	subqueryBuilder := sqlbuilder.NewSelectBuilder()
 
 	if operation == qbtypesv5.FilterOperatorExists || operation == qbtypesv5.FilterOperatorNotExists {
@@ -63,7 +63,7 @@ func (dashboardFieldResolver) tagComparison(v *sqlcompiler.Visitor, ctx *grammar
 		if operation.IsNegativeOperator() {
 			positiveOperation = operation.Inverse()
 		}
-		valuePredicate := v.StringOperation(subqueryBuilder, ctx, positiveOperation, "t.value", tagKey)
+		valuePredicate := v.BuildStringOperation(subqueryBuilder, ctx, positiveOperation, "t.value", tagKey)
 		if valuePredicate == "" {
 			return ""
 		}
@@ -71,9 +71,9 @@ func (dashboardFieldResolver) tagComparison(v *sqlcompiler.Visitor, ctx *grammar
 	}
 
 	if operation.IsNegativeOperator() {
-		return v.SelectBuilder().NotExists(subqueryBuilder)
+		return v.Sb.NotExists(subqueryBuilder)
 	}
-	return v.SelectBuilder().Exists(subqueryBuilder)
+	return v.Sb.Exists(subqueryBuilder)
 }
 
 func buildSubqueryForTagKey(subqueryBuilder *sqlbuilder.SelectBuilder, tagKey string) *sqlbuilder.SelectBuilder {
@@ -94,20 +94,20 @@ func buildSubqueryForTagKeyAndValue(subqueryBuilder *sqlbuilder.SelectBuilder, t
 	return buildSubqueryForTagKey(subqueryBuilder, tagKey).Where(valuePredicate)
 }
 
-// FreeText searches name, description and tag keys/values.
-func (dashboardFieldResolver) FreeText(v *sqlcompiler.Visitor, value string) string {
-	nameColumn := string(v.Formatter().JSONExtractString("dashboard.data", "$.spec.display.name"))
-	descriptionColumn := string(v.Formatter().JSONExtractString("dashboard.data", "$.spec.display.description"))
-	namePredicate := v.FreeTextContains(v.SelectBuilder(), nameColumn, value)
-	descriptionPredicate := v.FreeTextContains(v.SelectBuilder(), descriptionColumn, value)
+// ResolveFreeText searches name, description and tag keys/values.
+func (dashboardFieldResolver) ResolveFreeText(v *sqlcompiler.Visitor, value string) string {
+	nameColumn := string(v.Formatter.JSONExtractString("dashboard.data", "$.spec.display.name"))
+	descriptionColumn := string(v.Formatter.JSONExtractString("dashboard.data", "$.spec.display.description"))
+	namePredicate := v.BuildFreeTextContains(v.Sb, nameColumn, value)
+	descriptionPredicate := v.BuildFreeTextContains(v.Sb, descriptionColumn, value)
 
 	subqueryBuilder := sqlbuilder.NewSelectBuilder()
-	keyPredicate := v.FreeTextContains(subqueryBuilder, "t.key", value)
-	valuePredicate := v.FreeTextContains(subqueryBuilder, "t.value", value)
+	keyPredicate := v.BuildFreeTextContains(subqueryBuilder, "t.key", value)
+	valuePredicate := v.BuildFreeTextContains(subqueryBuilder, "t.value", value)
 	buildSubqueryForFreeTextTag(subqueryBuilder, keyPredicate, valuePredicate)
-	tagPredicate := v.SelectBuilder().Exists(subqueryBuilder)
+	tagPredicate := v.Sb.Exists(subqueryBuilder)
 
-	return v.SelectBuilder().Or(namePredicate, descriptionPredicate, tagPredicate)
+	return v.Sb.Or(namePredicate, descriptionPredicate, tagPredicate)
 }
 
 func buildSubqueryForFreeTextTag(subqueryBuilder *sqlbuilder.SelectBuilder, keyPredicate, valuePredicate string) *sqlbuilder.SelectBuilder {

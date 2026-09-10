@@ -565,6 +565,11 @@ func TestCompile_Rejections(t *testing.T) {
 			expectedErrShouldContain: "must not end with an unescaped backslash",
 		},
 		{
+			subtestName:              "rejects ILIKE pattern ending in an unescaped backslash",
+			dslQueryToCompile:        `name ILIKE '%\\'`,
+			expectedErrShouldContain: "must not end with an unescaped backslash",
+		},
+		{
 			subtestName:              "rejects REGEXP — not yet supported",
 			dslQueryToCompile:        `name REGEXP '.*'`,
 			expectedErrShouldContain: "REGEXP",
@@ -573,6 +578,17 @@ func TestCompile_Rejections(t *testing.T) {
 			subtestName:              "rejects syntax error from grammar",
 			dslQueryToCompile:        `name = `,
 			expectedErrShouldContain: "syntax",
+		},
+	})
+}
+
+func TestCompileTrailingLiteralBackslash(t *testing.T) {
+	runCompileCases(t, []compileCase{
+		{
+			subtestName:       "escaped trailing backslash compiles",
+			dslQueryToCompile: `name LIKE '%\\\\'`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'`,
+			expectedArgs:      []any{`%\\`},
 		},
 	})
 }
