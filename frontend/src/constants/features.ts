@@ -8,7 +8,6 @@ export enum FeatureKeys {
 	PREMIUM_SUPPORT = 'premium_support',
 	ANOMALY_DETECTION = 'anomaly_detection',
 	USE_JSON_BODY = 'use_json_body',
-	JSON_BODY_DUAL_INGESTION = 'json_body_dual_ingestion',
 	ENABLE_AI_OBSERVABILITY = 'enable_ai_observability',
 	ENABLE_METRICS_REDUCTION = 'enable_metrics_reduction',
 }
