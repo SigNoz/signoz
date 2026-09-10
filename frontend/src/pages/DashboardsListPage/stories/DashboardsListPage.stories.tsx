@@ -1,15 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { rest } from 'msw';
 import { expect, userEvent, screen, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { dashboardsListMocks } from './DashboardsListPage.stories.mocks';
 import {
-	dashboardsListResponse,
-	ROW_MARKERS,
-} from './__story_mockdata__/dashboardsList';
+	dashboardsListMocks,
+	overflowingRows,
+} from './DashboardsListPage.stories.mocks';
 import { BuiltinViewId } from '../types';
 
 import DashboardsListPage from '../DashboardsListPage';
@@ -113,55 +111,6 @@ export const NewDashboardImportJsonInvalid: Story = {
 		await screen.findAllByText('Unexpected end of JSON input');
 	},
 };
-
-const TOOLTIP_TAGS = [
-	{ key: 'env', value: 'production-eu-central-1' },
-	{ key: 'team', value: 'platform-observability' },
-	{ key: 'component', value: 'otel-collector' },
-	{ key: 'owner', value: 'sre-oncall-primary' },
-	{ key: 'tier', value: 'tier-0-revenue-critical' },
-	{ key: 'compliance', value: 'soc2-in-scope' },
-];
-
-/**
- * A row shows the full-name tooltip only past 50 characters of title and the
- * overflow chip only past three tags, and the page's own rows are under both.
- * This answers the list with rows over both instead, which is why the Dashboards
- * and Row markers controls do not reach this story.
- */
-const overflowingRows = rest.get(
-	'http://localhost/api/v2/users/me/dashboards',
-	(_req, res, ctx) => {
-		const list = dashboardsListResponse({
-			count: 6,
-			offset: 0,
-			limit: 20,
-			markers: [...ROW_MARKERS],
-			query: '',
-		});
-
-		return res(
-			ctx.status(200),
-			ctx.json({
-				...list,
-				data: {
-					...list.data,
-					dashboards: list.data.dashboards.map((dashboard) => {
-						const name = `${dashboard.name} across every production region, rolled up by service and owner`;
-
-						// The row reads `spec.display.name`, not `name`.
-						return {
-							...dashboard,
-							name,
-							spec: { ...dashboard.spec, display: { name } },
-							tags: TOOLTIP_TAGS,
-						};
-					}),
-				},
-			}),
-		);
-	},
-);
 
 /**
  * Every tooltip a row carries, held open at once: the full name a truncated

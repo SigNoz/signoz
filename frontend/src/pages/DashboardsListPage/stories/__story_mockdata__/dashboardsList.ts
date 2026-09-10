@@ -116,6 +116,16 @@ export const ROW_MARKERS = ['pinned', 'locked', 'legacy'] as const;
 
 export type RowMarker = (typeof ROW_MARKERS)[number];
 
+/** Tags on every row of the overflowing-rows fixture, six deep past the chip's cutoff. */
+export const TOOLTIP_TAGS: TagtypesGettableTagDTO[] = [
+	tag('env', 'production-eu-central-1'),
+	tag('team', 'platform-observability'),
+	tag('component', 'otel-collector'),
+	tag('owner', 'sre-oncall-primary'),
+	tag('tier', 'tier-0-revenue-critical'),
+	tag('compliance', 'soc2-in-scope'),
+];
+
 export const dashboardIdAt = (index: number): string =>
 	`storybook-dashboard-${index + 1}`;
 

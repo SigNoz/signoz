@@ -27,6 +27,7 @@ import {
 	seedPinnedDashboards,
 	setDashboardPinned,
 	STORY_USER_EMAIL,
+	TOOLTIP_TAGS,
 	type RowMarker,
 } from './__story_mockdata__/dashboardsList';
 import { useDashboardViewsStore } from '../store/useDashboardViewsStore';
@@ -104,6 +105,46 @@ const visibleColumns = (
 	updatedAt: columns.includes('updatedAt'),
 	updatedBy: columns.includes('updatedBy'),
 });
+
+/**
+ * A row shows the full-name tooltip only past 50 characters of title and the
+ * overflow chip only past three tags, and the page's own rows are under both.
+ * This answers the list with rows over both instead, which is why the Dashboards
+ * and Row markers controls do not reach this story.
+ */
+export const overflowingRows = rest.get(
+	'http://localhost/api/v2/users/me/dashboards',
+	(_req, res, ctx) => {
+		const list = dashboardsListResponse({
+			count: 6,
+			offset: 0,
+			limit: 20,
+			markers: [...ROW_MARKERS],
+			query: '',
+		});
+
+		return res(
+			ctx.status(200),
+			ctx.json({
+				...list,
+				data: {
+					...list.data,
+					dashboards: list.data.dashboards.map((dashboard) => {
+						const name = `${dashboard.name} across every production region, rolled up by service and owner`;
+
+						// The row reads `spec.display.name`, not `name`.
+						return {
+							...dashboard,
+							name,
+							spec: { ...dashboard.spec, display: { name } },
+							tags: TOOLTIP_TAGS,
+						};
+					}),
+				},
+			}),
+		);
+	},
+);
 
 export const dashboardsListMocks = defineStoryMocks({
 	controls: {
