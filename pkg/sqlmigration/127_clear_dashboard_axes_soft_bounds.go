@@ -24,7 +24,7 @@ type clearDashboardAxesSoftBounds struct {
 }
 
 func NewClearDashboardAxesSoftBoundsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("clear_dashboard_axes_soft_bounds"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+	return factory.NewProviderFactory(factory.MustNewName("clear_dashboard_soft_bounds"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 		return &clearDashboardAxesSoftBounds{settings: ps}, nil
 	})
 }
