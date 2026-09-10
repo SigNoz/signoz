@@ -72,3 +72,9 @@ export const roleDetailsMocks = defineStoryMocks({
 		};
 	},
 });
+
+export const deleteRoleFailed = [
+	rest.delete('http://localhost/api/v1/roles/:id', (_req, res, ctx) =>
+		res(ctx.status(500), ctx.json({ message: 'Role deletion failed' })),
+	),
+];

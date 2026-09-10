@@ -1,12 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { rest } from 'msw';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { RoleType } from 'types/roles';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { roleDetailsMocks } from './RoleDetails.stories.mocks';
+import {
+	deleteRoleFailed,
+	roleDetailsMocks,
+} from './RoleDetails.stories.mocks';
 
 import SettingsPage from '../../../Settings';
 
@@ -102,13 +104,7 @@ export const DeleteRoleConfirm: Story = {
 /** Failure: the delete dialog retains the action and exposes the server error. */
 export const DeleteRoleFailed: Story = {
 	parameters: {
-		msw: {
-			handlers: [
-				rest.delete('http://localhost/api/v1/roles/:id', (_req, res, ctx) =>
-					res(ctx.status(500), ctx.json({ message: 'Role deletion failed' })),
-				),
-			],
-		},
+		msw: { handlers: deleteRoleFailed },
 	},
 	play: async ({ canvasElement }): Promise<void> => {
 		// The header renders a disabled Delete while the role loads and swaps it for
