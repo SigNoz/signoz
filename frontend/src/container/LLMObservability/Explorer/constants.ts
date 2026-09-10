@@ -1,6 +1,6 @@
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { FieldKeysConfig } from 'hooks/querySuggestions/fieldKeys';
+import { FieldKeysConfig } from 'hooks/querySuggestions/useFieldKeys';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 export const DEFAULT_PANEL_TYPE = PANEL_TYPES.TRACE;
@@ -63,12 +63,12 @@ const TRACE_VIEW_KEYS = {
 	fieldContext: TelemetrytypesFieldContextDTO.trace,
 } as const;
 
-export const TRACE_VIEW_ORDER_BY_KEYS: FieldKeysConfig = {
+export const TRACE_VIEW_ORDER_BY_CONFIG: FieldKeysConfig = {
 	...TRACE_VIEW_KEYS,
 	staticFields: [{ name: 'last_activity_time' }],
 };
 
-export const TRACE_VIEW_COLUMN_KEYS: FieldKeysConfig = {
+export const TRACE_VIEW_COLUMN_CONFIG: FieldKeysConfig = {
 	...TRACE_VIEW_KEYS,
 	staticFields: AI_O11Y_DISPLAY_ONLY_FIELDS,
 };

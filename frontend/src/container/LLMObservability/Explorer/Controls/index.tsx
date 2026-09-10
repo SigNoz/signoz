@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Settings } from '@signozhq/icons';
 import FieldsSelector from 'components/FieldsSelector';
 import Controls, { ControlsProps } from 'container/Controls';
-import { FieldKeysConfig } from 'hooks/querySuggestions/fieldKeys';
+import { FieldKeysConfig } from 'hooks/querySuggestions/useFieldKeys';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
 import { DataSource } from 'types/common/queryBuilder';

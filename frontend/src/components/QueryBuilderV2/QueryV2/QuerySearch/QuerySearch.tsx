@@ -55,7 +55,7 @@ import {
 } from './constants';
 import { fetchFieldValuesForQuery } from './fieldSuggestions';
 import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { fetchFieldKeys } from 'hooks/querySuggestions/fieldKeys';
+import { fetchFieldKeys } from 'hooks/querySuggestions/useFieldKeys';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,

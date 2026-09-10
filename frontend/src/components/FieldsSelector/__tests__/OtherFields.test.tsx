@@ -3,13 +3,13 @@ import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.sch
 import {
 	FieldKeysConfig,
 	useFieldKeys,
-} from 'hooks/querySuggestions/fieldKeys';
+} from 'hooks/querySuggestions/useFieldKeys';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import OtherFields from '../OtherFields';
 
-jest.mock('hooks/querySuggestions/fieldKeys', () => ({
+jest.mock('hooks/querySuggestions/useFieldKeys', () => ({
 	useFieldKeys: jest.fn(() => ({
 		data: undefined,
 		isFetching: false,

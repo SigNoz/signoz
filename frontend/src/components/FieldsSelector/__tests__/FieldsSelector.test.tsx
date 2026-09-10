@@ -3,9 +3,9 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSelector from '../FieldsSelector';
-import { useFieldKeys } from 'hooks/querySuggestions/fieldKeys';
+import { useFieldKeys } from 'hooks/querySuggestions/useFieldKeys';
 
-jest.mock('hooks/querySuggestions/fieldKeys', () => ({
+jest.mock('hooks/querySuggestions/useFieldKeys', () => ({
 	useFieldKeys: jest.fn(() => ({
 		data: undefined,
 		isFetching: false,

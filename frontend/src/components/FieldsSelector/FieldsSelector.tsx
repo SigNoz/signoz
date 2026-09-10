@@ -10,7 +10,7 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import AddedFields from './AddedFields';
-import { FieldKeysConfig } from 'hooks/querySuggestions/fieldKeys';
+import { FieldKeysConfig } from 'hooks/querySuggestions/useFieldKeys';
 import OtherFields from './OtherFields';
 
 import styles from './FieldsSelector.module.scss';

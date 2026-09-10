@@ -6,7 +6,7 @@ import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.sch
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { fetchFieldKeys, mergeStatics, toFieldKeys } from '../fieldKeys';
+import { fetchFieldKeys, mergeStatics, toFieldKeys } from '../useFieldKeys';
 
 const mockKeys = (
 	path: '/api/v1/ai_observability/fields/keys' | '/api/v1/fields/keys',

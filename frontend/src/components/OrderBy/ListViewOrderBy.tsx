@@ -3,13 +3,13 @@ import { Select, Spin } from 'antd';
 import {
 	FieldKeysConfig,
 	useFieldKeys,
-} from 'hooks/querySuggestions/fieldKeys';
+} from 'hooks/querySuggestions/useFieldKeys';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
 
-const DEFAULT_ORDER_BY_KEYS: FieldKeysConfig = {
+const DEFAULT_ORDER_BY_CONFIG: FieldKeysConfig = {
 	staticFields: [{ name: 'timestamp' } as TelemetryFieldKey],
 };
 
@@ -32,7 +32,7 @@ function ListViewOrderBy({
 	value,
 	onChange,
 	dataSource,
-	fieldKeysConfig = DEFAULT_ORDER_BY_KEYS,
+	fieldKeysConfig = DEFAULT_ORDER_BY_CONFIG,
 }: ListViewOrderByProps): JSX.Element {
 	const [searchInput, setSearchInput] = useState('');
 	const [debouncedInput, setDebouncedInput] = useState('');

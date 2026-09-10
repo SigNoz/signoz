@@ -15,7 +15,7 @@ import styles from './FieldsSelector.module.scss';
 import {
 	FieldKeysConfig,
 	useFieldKeys,
-} from 'hooks/querySuggestions/fieldKeys';
+} from 'hooks/querySuggestions/useFieldKeys';
 
 const EMPTY_FIELD_KEYS_CONFIG: FieldKeysConfig = {};
 
