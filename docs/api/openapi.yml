@@ -7395,10 +7395,7 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
           type: array
         meta:
-          properties:
-            unit:
-              type: string
-          type: object
+          $ref: '#/components/schemas/Querybuildertypesv5AggregationMeta'
         predictedSeries:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
@@ -7413,12 +7410,51 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
           type: array
       type: object
-    Querybuildertypesv5Bucket:
+    Querybuildertypesv5AggregationMeta:
       properties:
-        step:
-          format: double
-          type: number
+        buckets:
+          items:
+            format: double
+            type: number
+          type: array
+        unit:
+          type: string
       type: object
+    Querybuildertypesv5BucketOptions:
+      discriminator:
+        mapping:
+          linear: '#/components/schemas/Querybuildertypesv5BucketOptionsLinear'
+          log: '#/components/schemas/Querybuildertypesv5BucketOptionsLog'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5BucketOptionsLinear'
+      - $ref: '#/components/schemas/Querybuildertypesv5BucketOptionsLog'
+      type: object
+    Querybuildertypesv5BucketOptionsLinear:
+      properties:
+        kind:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5LinearBucketsSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    Querybuildertypesv5BucketOptionsLog:
+      properties:
+        kind:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5LogBucketsSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    Querybuildertypesv5BucketsKind:
+      enum:
+      - linear
+      - log
+      type: string
     Querybuildertypesv5BuilderQuerySpec:
       discriminator:
         mapping:
@@ -7599,12 +7635,28 @@ components:
         value:
           type: string
       type: object
+    Querybuildertypesv5LinearBucketsSpec:
+      properties:
+        maxValue:
+          format: double
+          type: number
+        numBuckets:
+          type: integer
+      required:
+      - maxValue
+      type: object
     Querybuildertypesv5LogAggregation:
       properties:
         alias:
           type: string
         expression:
           type: string
+      type: object
+    Querybuildertypesv5LogBucketsSpec:
+      properties:
+        scale:
+          nullable: true
+          type: integer
       type: object
     Querybuildertypesv5MetricAggregation:
       properties:
@@ -7686,6 +7738,8 @@ components:
       type: object
     Querybuildertypesv5QueryBuilderFormula:
       properties:
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         disabled:
           type: boolean
         expression:
@@ -7716,6 +7770,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -7777,6 +7833,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -7838,6 +7896,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -8163,6 +8223,7 @@ components:
       - raw
       - raw_stream
       - trace
+      - heatmap
       type: string
     Querybuildertypesv5ScalarData:
       properties:
@@ -8237,8 +8298,6 @@ components:
       type: object
     Querybuildertypesv5TimeSeriesValue:
       properties:
-        bucket:
-          $ref: '#/components/schemas/Querybuildertypesv5Bucket'
         partial:
           type: boolean
         timestamp:

@@ -4079,6 +4079,53 @@ export interface Querybuildertypesv5LogAggregationDTO {
 	expression?: string;
 }
 
+export enum Querybuildertypesv5BucketOptionsLinearDTOKind {
+	linear = 'linear',
+}
+export interface Querybuildertypesv5LinearBucketsSpecDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	maxValue: number;
+	/**
+	 * @type integer
+	 */
+	numBuckets?: number;
+}
+
+export interface Querybuildertypesv5BucketOptionsLinearDTO {
+	/**
+	 * @type string
+	 * @enum linear
+	 */
+	kind: Querybuildertypesv5BucketOptionsLinearDTOKind;
+	spec: Querybuildertypesv5LinearBucketsSpecDTO;
+}
+
+export enum Querybuildertypesv5BucketOptionsLogDTOKind {
+	log = 'log',
+}
+export interface Querybuildertypesv5LogBucketsSpecDTO {
+	/**
+	 * @type integer,null
+	 */
+	scale?: number | null;
+}
+
+export interface Querybuildertypesv5BucketOptionsLogDTO {
+	/**
+	 * @type string
+	 * @enum log
+	 */
+	kind: Querybuildertypesv5BucketOptionsLogDTOKind;
+	spec: Querybuildertypesv5LogBucketsSpecDTO;
+}
+
+export type Querybuildertypesv5BucketOptionsDTO =
+	| Querybuildertypesv5BucketOptionsLinearDTO
+	| Querybuildertypesv5BucketOptionsLogDTO;
+
 export interface Querybuildertypesv5FilterDTO {
 	/**
 	 * @type string
@@ -4272,6 +4319,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array,null
 	 */
 	aggregations?: Querybuildertypesv5LogAggregationDTO[] | null;
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
 	 */
@@ -4399,6 +4447,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array,null
 	 */
 	aggregations?: Querybuildertypesv5MetricAggregationDTO[] | null;
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
 	 */
@@ -4474,6 +4523,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array,null
 	 */
 	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
 	 */
@@ -4929,6 +4979,7 @@ export enum Querybuildertypesv5RequestTypeDTO {
 	raw = 'raw',
 	raw_stream = 'raw_stream',
 	trace = 'trace',
+	heatmap = 'heatmap',
 }
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind {
 	'signoz/BuilderQuery' = 'signoz/BuilderQuery',
@@ -4975,6 +5026,7 @@ export interface Querybuildertypesv5QueryEnvelopeBuilderAIDTO {
 }
 
 export interface Querybuildertypesv5QueryBuilderFormulaDTO {
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type boolean
 	 */
@@ -8542,16 +8594,7 @@ export interface Querybuildertypesv5LabelDTO {
 	value?: Querybuildertypesv5LabelDTOValue;
 }
 
-export interface Querybuildertypesv5BucketDTO {
-	/**
-	 * @type number
-	 * @format double
-	 */
-	step?: number;
-}
-
 export interface Querybuildertypesv5TimeSeriesValueDTO {
-	bucket?: Querybuildertypesv5BucketDTO;
 	/**
 	 * @type boolean
 	 */
@@ -9102,12 +9145,16 @@ export interface PromotetypesPromotePathDTO {
 	promote?: boolean;
 }
 
-export type Querybuildertypesv5AggregationBucketDTOMeta = {
+export interface Querybuildertypesv5AggregationMetaDTO {
+	/**
+	 * @type array
+	 */
+	buckets?: number[];
 	/**
 	 * @type string
 	 */
 	unit?: string;
-};
+}
 
 export interface Querybuildertypesv5AggregationBucketDTO {
 	/**
@@ -9126,10 +9173,7 @@ export interface Querybuildertypesv5AggregationBucketDTO {
 	 * @type array
 	 */
 	lowerBoundSeries?: Querybuildertypesv5TimeSeriesDTO[];
-	/**
-	 * @type object
-	 */
-	meta?: Querybuildertypesv5AggregationBucketDTOMeta;
+	meta?: Querybuildertypesv5AggregationMetaDTO;
 	/**
 	 * @type array
 	 */
@@ -9144,6 +9188,10 @@ export interface Querybuildertypesv5AggregationBucketDTO {
 	upperBoundSeries?: Querybuildertypesv5TimeSeriesDTO[];
 }
 
+export enum Querybuildertypesv5BucketsKindDTO {
+	linear = 'linear',
+	log = 'log',
+}
 export type Querybuildertypesv5ColumnDescriptorDTOMeta = {
 	/**
 	 * @type string
