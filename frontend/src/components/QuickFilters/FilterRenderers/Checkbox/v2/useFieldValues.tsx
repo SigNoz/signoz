@@ -47,10 +47,10 @@ const QUICK_FILTERS_SOURCE_TO_SOURCE: Partial<
 
 export function useFieldValues({
 	filter,
-	source,
 	searchText,
 	existingQuery,
 	metricNamespace,
+	source,
 	startUnixMilli,
 	endUnixMilli,
 	enabled,
