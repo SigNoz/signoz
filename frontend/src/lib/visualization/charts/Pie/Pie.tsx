@@ -45,9 +45,10 @@ export default function Pie({
 		visibleData,
 		legendItems,
 		focusedSeriesIndex,
-		onLegendClick,
-		onLegendMouseMove,
-		onLegendMouseLeave,
+		onToggleSeries,
+		onShowOnlySeries,
+		onShowAllSeries,
+		onHoverSeries,
 	} = usePieInteractions(data, id);
 
 	const {
@@ -227,9 +228,10 @@ export default function Pie({
 					position={position}
 					averageLegendWidth={averageLegendWidth}
 					focusedSeriesIndex={focusedSeriesIndex}
-					onClick={onLegendClick}
-					onMouseMove={onLegendMouseMove}
-					onMouseLeave={onLegendMouseLeave}
+					onToggleSeries={onToggleSeries}
+					onShowOnlySeries={onShowOnlySeries}
+					onShowAllSeries={onShowAllSeries}
+					onHoverSeries={onHoverSeries}
 				/>
 			</div>
 		</div>

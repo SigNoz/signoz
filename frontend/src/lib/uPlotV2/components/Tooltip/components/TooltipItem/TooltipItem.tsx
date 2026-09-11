@@ -25,7 +25,7 @@ export default function TooltipItem({
 		>
 			<div
 				className={Styles.uplotTooltipItemMarker}
-				style={{ borderColor: item.color }}
+				style={{ borderColor: item.color, backgroundColor: item.color }}
 				data-is-legend-marker={true}
 				data-testid={markerTestId}
 			/>
@@ -39,7 +39,7 @@ export default function TooltipItem({
 					className={Styles.uplotTooltipItemContentSeparator}
 					style={{ borderColor: item.color }}
 				/>
-				<span>{item.tooltipValue}</span>
+				<span className={Styles.uplotTooltipItemValue}>{item.tooltipValue}</span>
 			</div>
 		</div>
 	);

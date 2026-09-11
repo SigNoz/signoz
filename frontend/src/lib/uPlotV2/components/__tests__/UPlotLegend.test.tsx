@@ -61,16 +61,16 @@ describe('UPlotLegend', () => {
 		},
 	};
 
-	let onLegendClick: jest.Mock;
-	let onLegendMouseMove: jest.Mock;
-	let onLegendMouseLeave: jest.Mock;
-	let onFocusSeries: jest.Mock;
+	let onToggleSeries: jest.Mock;
+	let onShowOnlySeries: jest.Mock;
+	let onShowAllSeries: jest.Mock;
+	let onHoverSeries: jest.Mock;
 
 	beforeEach(() => {
-		onLegendClick = jest.fn();
-		onLegendMouseMove = jest.fn();
-		onLegendMouseLeave = jest.fn();
-		onFocusSeries = jest.fn();
+		onToggleSeries = jest.fn();
+		onShowOnlySeries = jest.fn();
+		onShowAllSeries = jest.fn();
+		onHoverSeries = jest.fn();
 
 		mockUseLegendsSync.mockReturnValue({
 			legendItemsMap: baseLegendItemsMap,
@@ -79,10 +79,10 @@ describe('UPlotLegend', () => {
 		});
 
 		mockUseLegendActions.mockReturnValue({
-			onLegendClick,
-			onLegendMouseMove,
-			onLegendMouseLeave,
-			onFocusSeries,
+			onToggleSeries,
+			onShowOnlySeries,
+			onShowAllSeries,
+			onHoverSeries,
 		});
 	});
 
@@ -102,28 +102,39 @@ describe('UPlotLegend', () => {
 		);
 
 	describe('layout and position', () => {
-		it('renders search input when legend position is RIGHT', () => {
+		it('renders the search input on a RIGHT legend', () => {
 			renderLegend(LegendPosition.RIGHT);
 
 			expect(screen.getByTestId('legend-search-input')).toBeInTheDocument();
 		});
 
-		it('does not render search input when legend position is BOTTOM (default)', () => {
+		it('keeps a BOTTOM legend bare — its two rows all go to series', () => {
 			renderLegend();
 
 			expect(screen.queryByTestId('legend-search-input')).not.toBeInTheDocument();
+			expect(screen.queryByTestId('legend-status')).not.toBeInTheDocument();
+			// The row interactions are the same in both placements.
+			expect(screen.getByTestId('legend-item-0')).toBeInTheDocument();
+			expect(screen.getByTestId('legend-scope-0')).toBeInTheDocument();
 		});
 
-		it('renders the marker with the correct border color', () => {
+		it('renders the marker with the series colour, filled only when shown', () => {
 			renderLegend(LegendPosition.RIGHT);
 
-			const legendMarker = document.querySelector(
-				'[data-legend-item-id="0"] [data-is-legend-marker="true"]',
-			) as HTMLElement;
-
-			expect(legendMarker).toHaveStyle({
+			expect(
+				document.querySelector(
+					'[data-legend-item-id="0"] [data-is-legend-marker="true"]',
+				),
+			).toHaveStyle({
 				'border-color': '#ff0000',
+				'background-color': '#ff0000',
 			});
+			// Hidden series read as an empty checkbox.
+			expect(
+				document.querySelector(
+					'[data-legend-item-id="1"] [data-is-legend-marker="true"]',
+				),
+			).toHaveStyle({ 'background-color': 'transparent' });
 		});
 
 		it('renders all legend items in the grid by default', () => {
@@ -136,25 +147,33 @@ describe('UPlotLegend', () => {
 		});
 	});
 
-	describe('search behavior (RIGHT position)', () => {
-		it('filters legend items based on search query (case-insensitive)', async () => {
+	describe('status readout', () => {
+		it('reports how many series are showing', () => {
+			renderLegend(LegendPosition.RIGHT);
+
+			expect(screen.getByTestId('legend-status')).toHaveTextContent(
+				'Showing 2 of 3 series',
+			);
+		});
+	});
+
+	describe('filter behavior', () => {
+		it('filters legend items based on the query (case-insensitive)', async () => {
 			const user = userEvent.setup();
 			renderLegend(LegendPosition.RIGHT);
 
-			const searchInput = screen.getByTestId('legend-search-input');
-			await user.type(searchInput, 'A');
+			await user.type(screen.getByTestId('legend-search-input'), 'a');
 
 			expect(screen.getByText('A')).toBeInTheDocument();
 			expect(screen.queryByText('B')).not.toBeInTheDocument();
 			expect(screen.queryByText('C')).not.toBeInTheDocument();
 		});
 
-		it('shows empty state when no legend items match the search query', async () => {
+		it('shows the empty state when nothing matches', async () => {
 			const user = userEvent.setup();
 			renderLegend(LegendPosition.RIGHT);
 
-			const searchInput = screen.getByTestId('legend-search-input');
-			await user.type(searchInput, 'network');
+			await user.type(screen.getByTestId('legend-search-input'), 'network');
 
 			expect(
 				screen.getByText(/No series found matching "network"/i),
@@ -162,12 +181,11 @@ describe('UPlotLegend', () => {
 			expect(screen.queryByTestId('virtuoso-grid')).not.toBeInTheDocument();
 		});
 
-		it('does not filter or show empty state when search query is empty or only whitespace', async () => {
+		it('ignores a whitespace-only query', async () => {
 			const user = userEvent.setup();
 			renderLegend(LegendPosition.RIGHT);
 
-			const searchInput = screen.getByTestId('legend-search-input');
-			await user.type(searchInput, '   ');
+			await user.type(screen.getByTestId('legend-search-input'), '   ');
 
 			expect(
 				screen.queryByText(/No series found matching/i),
@@ -178,39 +196,197 @@ describe('UPlotLegend', () => {
 		});
 	});
 
-	describe('legend actions', () => {
-		it('calls onLegendClick when a legend item is clicked', async () => {
+	describe('row interactions', () => {
+		const allShownItemsMap = {
+			0: { ...baseLegendItemsMap[0] },
+			1: { ...baseLegendItemsMap[1], show: true },
+			2: { ...baseLegendItemsMap[2] },
+		};
+
+		const mockAllShown = (): void => {
+			mockUseLegendsSync.mockReturnValue({
+				legendItemsMap: allShownItemsMap,
+				focusedSeriesIndex: null,
+				setFocusedSeriesIndex: jest.fn(),
+			});
+		};
+
+		it('isolates the series when everything is showing', async () => {
+			const user = userEvent.setup();
+			mockAllShown();
+			renderLegend(LegendPosition.RIGHT);
+
+			await user.click(screen.getByText('A'));
+
+			// Nothing the user can see is there to exclude, so the click means Only.
+			expect(onShowOnlySeries).toHaveBeenCalledWith(0);
+			expect(onToggleSeries).not.toHaveBeenCalled();
+		});
+
+		it('toggles the series once something is already hidden', async () => {
 			const user = userEvent.setup();
 			renderLegend(LegendPosition.RIGHT);
 
 			await user.click(screen.getByText('A'));
 
-			expect(onLegendClick).toHaveBeenCalledTimes(1);
+			expect(onToggleSeries).toHaveBeenCalledWith(0);
+			expect(onShowOnlySeries).not.toHaveBeenCalled();
 		});
 
-		it('calls mouseMove when the mouse moves over a legend item', async () => {
+		it('excludes just that series when its marker is clicked', async () => {
+			const user = userEvent.setup();
+			mockAllShown();
+			renderLegend(LegendPosition.RIGHT);
+
+			await user.click(screen.getByTestId('legend-marker-0'));
+
+			// The marker is the one way to exclude a single series while
+			// everything is showing — the row click isolates instead.
+			expect(onToggleSeries).toHaveBeenCalledWith(0);
+			expect(onShowOnlySeries).not.toHaveBeenCalled();
+		});
+
+		it('stops the marker offering to hide the last series showing', () => {
+			mockUseLegendsSync.mockReturnValue({
+				legendItemsMap: {
+					0: { ...baseLegendItemsMap[0] },
+					1: { ...baseLegendItemsMap[1] },
+					2: { ...baseLegendItemsMap[2], show: false },
+				},
+				focusedSeriesIndex: null,
+				setFocusedSeriesIndex: jest.fn(),
+			});
+			renderLegend(LegendPosition.RIGHT);
+
+			expect(screen.getByTestId('legend-marker-0')).toBeDisabled();
+			expect(screen.getByTestId('legend-marker-1')).toBeEnabled();
+		});
+
+		it('labels the marker with what clicking it does', () => {
+			renderLegend(LegendPosition.RIGHT);
+
+			expect(screen.getByTestId('legend-marker-0')).toHaveAttribute(
+				'aria-label',
+				'Hide A',
+			);
+			expect(screen.getByTestId('legend-marker-1')).toHaveAttribute(
+				'aria-label',
+				'Show B',
+			);
+		});
+
+		it('adds the clicked series to the selection while one is alone', async () => {
+			const user = userEvent.setup();
+			mockUseLegendsSync.mockReturnValue({
+				legendItemsMap: {
+					0: { ...baseLegendItemsMap[0] },
+					1: { ...baseLegendItemsMap[1] },
+					2: { ...baseLegendItemsMap[2], show: false },
+				},
+				focusedSeriesIndex: null,
+				setFocusedSeriesIndex: jest.fn(),
+			});
+			renderLegend(LegendPosition.RIGHT);
+
+			// Series 0 is showing alone; clicking another row builds the selection
+			// up rather than moving the isolation.
+			await user.click(screen.getByText('B'));
+
+			expect(onToggleSeries).toHaveBeenCalledWith(1);
+			expect(onShowOnlySeries).not.toHaveBeenCalled();
+		});
+
+		it('toggles the series on Enter and Space', async () => {
 			const user = userEvent.setup();
 			renderLegend(LegendPosition.RIGHT);
 
-			const legendItem = document.querySelector(
-				'[data-legend-item-id="0"]',
-			) as HTMLElement;
+			const row = screen.getByTestId('legend-item-0');
+			row.focus();
+			await user.keyboard('{Enter}');
+			await user.keyboard(' ');
 
-			await user.hover(legendItem);
-
-			expect(onLegendMouseMove).toHaveBeenCalledTimes(1);
+			expect(onToggleSeries).toHaveBeenCalledTimes(2);
+			expect(onToggleSeries).toHaveBeenCalledWith(0);
 		});
 
-		it('calls onLegendMouseLeave when the mouse leaves the legend container', async () => {
+		it('reflects visibility on the row for assistive tech', () => {
+			renderLegend(LegendPosition.RIGHT);
+
+			expect(screen.getByTestId('legend-item-0')).toHaveAttribute(
+				'aria-checked',
+				'true',
+			);
+			expect(screen.getByTestId('legend-item-1')).toHaveAttribute(
+				'aria-checked',
+				'false',
+			);
+		});
+
+		it('restores every series from All without also toggling the row', async () => {
 			const user = userEvent.setup();
 			renderLegend(LegendPosition.RIGHT);
 
-			const container = document.querySelector('.legend-container') as HTMLElement;
+			// Series 0 is shown while B is hidden, so its action is All.
+			await user.click(screen.getByTestId('legend-scope-0'));
 
-			await user.hover(container);
-			await user.unhover(container);
+			expect(onShowAllSeries).toHaveBeenCalled();
+			expect(onToggleSeries).not.toHaveBeenCalled();
+			expect(onShowOnlySeries).not.toHaveBeenCalled();
+		});
 
-			expect(onLegendMouseLeave).toHaveBeenCalledTimes(1);
+		it('isolates the series from Only on a hidden row', async () => {
+			const user = userEvent.setup();
+			renderLegend(LegendPosition.RIGHT);
+
+			await user.click(screen.getByTestId('legend-scope-1'));
+
+			expect(onShowOnlySeries).toHaveBeenCalledWith(1);
+			expect(onToggleSeries).not.toHaveBeenCalled();
+		});
+
+		it('highlights the hovered series and clears it on leave', async () => {
+			const user = userEvent.setup();
+			renderLegend(LegendPosition.RIGHT);
+
+			const row = screen.getByTestId('legend-item-0');
+			await user.hover(row);
+			expect(onHoverSeries).toHaveBeenCalledWith(0);
+
+			await user.unhover(row);
+			expect(onHoverSeries).toHaveBeenCalledWith(null);
+		});
+	});
+
+	describe('one-series state', () => {
+		const soleShownItemsMap = {
+			0: { ...baseLegendItemsMap[0] },
+			1: { ...baseLegendItemsMap[1] },
+			2: { ...baseLegendItemsMap[2], show: false },
+		};
+
+		beforeEach(() => {
+			mockUseLegendsSync.mockReturnValue({
+				legendItemsMap: soleShownItemsMap,
+				focusedSeriesIndex: null,
+				setFocusedSeriesIndex: jest.fn(),
+			});
+		});
+
+		it('offers All on the shown row and Only on the hidden ones', () => {
+			renderLegend(LegendPosition.RIGHT);
+
+			expect(screen.getByTestId('legend-scope-0')).toHaveTextContent('All');
+			expect(screen.getByTestId('legend-scope-1')).toHaveTextContent('Only');
+			expect(screen.getByTestId('legend-scope-2')).toHaveTextContent('Only');
+		});
+
+		it('restores everything from All', async () => {
+			const user = userEvent.setup();
+			renderLegend(LegendPosition.RIGHT);
+
+			await user.click(screen.getByTestId('legend-scope-0'));
+
+			expect(onShowAllSeries).toHaveBeenCalled();
 		});
 	});
 });

@@ -11,10 +11,12 @@ const mockUsePlotContext = usePlotContext as jest.MockedFunction<
 describe('useLegendActions', () => {
 	let onToggleSeriesVisibility: jest.Mock;
 	let onToggleSeriesOnOff: jest.Mock;
-	let onFocusSeriesPlot: jest.Mock;
+	let onShowOnlySeries: jest.Mock;
+	let onShowAllSeries: jest.Mock;
+	let onFocusSeries: jest.Mock;
+	let onHighlightSeries: jest.Mock;
 	let setPlotContextInitialState: jest.Mock;
 	let syncSeriesVisibilityToLocalStorage: jest.Mock;
-	let setFocusedSeriesIndexMock: jest.Mock;
 	let cancelAnimationFrameSpy: jest.SpyInstance<void, [handle: number]>;
 
 	beforeAll(() => {
@@ -37,15 +39,20 @@ describe('useLegendActions', () => {
 	beforeEach(() => {
 		onToggleSeriesVisibility = jest.fn();
 		onToggleSeriesOnOff = jest.fn();
-		onFocusSeriesPlot = jest.fn();
+		onShowOnlySeries = jest.fn();
+		onShowAllSeries = jest.fn();
+		onFocusSeries = jest.fn();
+		onHighlightSeries = jest.fn();
 		setPlotContextInitialState = jest.fn();
 		syncSeriesVisibilityToLocalStorage = jest.fn();
-		setFocusedSeriesIndexMock = jest.fn();
 
 		mockUsePlotContext.mockReturnValue({
 			onToggleSeriesVisibility,
 			onToggleSeriesOnOff,
-			onFocusSeries: onFocusSeriesPlot,
+			onShowOnlySeries,
+			onShowAllSeries,
+			onFocusSeries,
+			onHighlightSeries,
 			setPlotContextInitialState,
 			syncSeriesVisibilityToLocalStorage,
 		});
@@ -53,149 +60,65 @@ describe('useLegendActions', () => {
 		cancelAnimationFrameSpy.mockClear();
 	});
 
-	const createMouseEvent = (options: {
-		legendItemId?: number;
-		isMarker?: boolean;
-	}): any => {
-		const { legendItemId, isMarker = false } = options;
+	describe('visibility actions', () => {
+		it('toggles a single series on row click', () => {
+			const { result } = renderHook(() => useLegendActions());
 
-		return {
-			target: {
-				dataset: {
-					...(isMarker ? { isLegendMarker: 'true' } : {}),
-				},
-				closest: jest.fn(() =>
-					legendItemId !== undefined
-						? { dataset: { legendItemId: String(legendItemId) } }
-						: null,
-				),
-			},
-		};
-	};
+			result.current.onToggleSeries(2);
 
-	describe('onLegendClick', () => {
-		it('toggles series visibility when clicking on legend label', async () => {
-			const { result } = renderHook(() =>
-				useLegendActions({
-					setFocusedSeriesIndex: setFocusedSeriesIndexMock,
-					focusedSeriesIndex: null,
-				}),
-			);
-
-			result.current.onLegendClick(createMouseEvent({ legendItemId: 0 }));
-
-			expect(onToggleSeriesVisibility).toHaveBeenCalledTimes(1);
-			expect(onToggleSeriesVisibility).toHaveBeenCalledWith(0);
-			expect(onToggleSeriesOnOff).not.toHaveBeenCalled();
-		});
-
-		it('toggles series on/off when clicking on marker', async () => {
-			const { result } = renderHook(() =>
-				useLegendActions({
-					setFocusedSeriesIndex: setFocusedSeriesIndexMock,
-					focusedSeriesIndex: null,
-				}),
-			);
-
-			result.current.onLegendClick(
-				createMouseEvent({ legendItemId: 0, isMarker: true }),
-			);
-
-			expect(onToggleSeriesOnOff).toHaveBeenCalledTimes(1);
-			expect(onToggleSeriesOnOff).toHaveBeenCalledWith(0);
+			expect(onToggleSeriesOnOff).toHaveBeenCalledWith(2);
+			// The row must never isolate — that is what "Only" is for.
 			expect(onToggleSeriesVisibility).not.toHaveBeenCalled();
 		});
 
-		it('does nothing when click target is not inside a legend item', async () => {
-			const { result } = renderHook(() =>
-				useLegendActions({
-					setFocusedSeriesIndex: setFocusedSeriesIndexMock,
-					focusedSeriesIndex: null,
-				}),
-			);
+		it('forwards the Only and All actions to the plot', () => {
+			const { result } = renderHook(() => useLegendActions());
 
-			result.current.onLegendClick(createMouseEvent({}));
+			result.current.onShowOnlySeries(1);
+			result.current.onShowAllSeries();
 
-			expect(onToggleSeriesOnOff).not.toHaveBeenCalled();
-			expect(onToggleSeriesVisibility).not.toHaveBeenCalled();
+			expect(onShowOnlySeries).toHaveBeenCalledWith(1);
+			expect(onShowAllSeries).toHaveBeenCalled();
 		});
 	});
 
-	describe('onFocusSeries', () => {
-		it('schedules focus update and calls plot focus handler via mouse move', async () => {
-			const { result } = renderHook(() =>
-				useLegendActions({
-					setFocusedSeriesIndex: setFocusedSeriesIndexMock,
-					focusedSeriesIndex: null,
-				}),
-			);
+	describe('hover highlight', () => {
+		it('highlights the hovered series', () => {
+			const { result } = renderHook(() => useLegendActions());
 
-			result.current.onLegendMouseMove(createMouseEvent({ legendItemId: 0 }));
+			result.current.onHoverSeries(2);
 
-			expect(setFocusedSeriesIndexMock).toHaveBeenCalledWith(0);
-			expect(onFocusSeriesPlot).toHaveBeenCalledWith(0);
+			expect(onHighlightSeries).toHaveBeenCalledWith(2);
 		});
 
-		it('cancels previous animation frame before scheduling new one on subsequent mouse moves', async () => {
-			const { result } = renderHook(() =>
-				useLegendActions({
-					setFocusedSeriesIndex: setFocusedSeriesIndexMock,
-					focusedSeriesIndex: null,
-				}),
-			);
+		it('clears the highlight on leave', () => {
+			const { result } = renderHook(() => useLegendActions());
 
-			result.current.onLegendMouseMove(createMouseEvent({ legendItemId: 0 }));
-			result.current.onLegendMouseMove(createMouseEvent({ legendItemId: 1 }));
+			result.current.onHoverSeries(null);
 
+			expect(onHighlightSeries).toHaveBeenCalledWith(null);
+		});
+
+		it('coalesces rapid hovers into one frame', () => {
+			const { result } = renderHook(() => useLegendActions());
+
+			result.current.onHoverSeries(1);
+			result.current.onHoverSeries(2);
+
+			// Each new hover cancels the frame the previous one queued.
 			expect(cancelAnimationFrameSpy).toHaveBeenCalled();
 		});
-	});
 
-	describe('onLegendMouseMove', () => {
-		it('focuses new series when hovering over different legend item', async () => {
-			const { result } = renderHook(() =>
-				useLegendActions({
-					setFocusedSeriesIndex: setFocusedSeriesIndexMock,
-					focusedSeriesIndex: 0,
-				}),
-			);
+		it('cancels a pending highlight frame on unmount', () => {
+			jest
+				.spyOn(global, 'requestAnimationFrame')
+				.mockImplementation((): number => 7);
 
-			result.current.onLegendMouseMove(createMouseEvent({ legendItemId: 1 }));
+			const { result, unmount } = renderHook(() => useLegendActions());
+			result.current.onHoverSeries(1);
+			unmount();
 
-			expect(setFocusedSeriesIndexMock).toHaveBeenCalledWith(1);
-			expect(onFocusSeriesPlot).toHaveBeenCalledWith(1);
-		});
-
-		it('does nothing when hovering over already focused series', async () => {
-			const { result } = renderHook(() =>
-				useLegendActions({
-					setFocusedSeriesIndex: setFocusedSeriesIndexMock,
-					focusedSeriesIndex: 1,
-				}),
-			);
-
-			result.current.onLegendMouseMove(createMouseEvent({ legendItemId: 1 }));
-
-			expect(setFocusedSeriesIndexMock).not.toHaveBeenCalled();
-			expect(onFocusSeriesPlot).not.toHaveBeenCalled();
-		});
-	});
-
-	describe('onLegendMouseLeave', () => {
-		it('cancels pending animation frame and clears focus state', async () => {
-			const { result } = renderHook(() =>
-				useLegendActions({
-					setFocusedSeriesIndex: setFocusedSeriesIndexMock,
-					focusedSeriesIndex: null,
-				}),
-			);
-
-			result.current.onLegendMouseMove(createMouseEvent({ legendItemId: 0 }));
-			result.current.onLegendMouseLeave();
-
-			expect(cancelAnimationFrameSpy).toHaveBeenCalled();
-			expect(setFocusedSeriesIndexMock).toHaveBeenCalledWith(null);
-			expect(onFocusSeriesPlot).toHaveBeenCalledWith(null);
+			expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(7);
 		});
 	});
 });

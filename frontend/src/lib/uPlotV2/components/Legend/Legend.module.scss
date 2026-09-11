@@ -1,0 +1,270 @@
+@use '../../../../styles/scrollbar' as *;
+
+.container {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+	// Let the flex children shrink below their content height so the series list
+	// scrolls within the capped legend height instead of overflowing the wrapper
+	// (the default min-height:auto would block the shrink).
+	min-height: 0;
+}
+
+/* Toolbar */
+
+.toolbar {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-5, 10px);
+	padding: 0 var(--spacing-4) var(--spacing-5, 10px);
+	flex-shrink: 0;
+
+	> * {
+		flex: 0 1 auto;
+	}
+}
+
+.status {
+	// Wraps rather than losing the count at its end.
+	min-width: 0;
+	font-family: var(--font-mono);
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
+}
+
+.searchContainer {
+	flex-shrink: 0;
+	width: 100%;
+	padding-right: var(--spacing-4);
+	padding-bottom: var(--spacing-5, 10px);
+}
+
+.searchInput {
+	font-size: var(--font-size-xs);
+}
+
+.searchIcon {
+	color: var(--l3-foreground);
+}
+
+/* Series list */
+
+.scroller {
+	// flex:1 + min-height:0 pins the scroller to the space left after the
+	// toolbar instead of growing to fit every row.
+	flex: 1;
+	min-height: 0;
+	height: 100%;
+	width: 100%;
+	padding-right: var(--spacing-2);
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+
+	@include custom-scrollbar;
+}
+
+.gridItem {
+	// Or the item keeps its content width and the label never ellipsizes.
+	min-width: 0;
+	max-width: 100%;
+}
+
+.gridList {
+	min-width: 0;
+	display: grid;
+	grid-auto-flow: row;
+	// min() keeps the column inside a narrow panel, where a wider one would push
+	// the row's actions out of the clipped area.
+	grid-template-columns: repeat(
+		auto-fill,
+		minmax(min(var(--legend-item-width, 240px), 100%), 1fr)
+	);
+	gap: var(--spacing-1) var(--spacing-4);
+}
+
+.container.isRight .gridList {
+	grid-template-columns: 1fr;
+}
+
+.emptyState {
+	padding: var(--spacing-16) 0;
+	font-size: var(--font-size-xs);
+	color: var(--l3-foreground);
+	text-align: center;
+}
+
+/* Row */
+
+.row {
+	// Width of the revealed actions, given up by the label on hover only.
+	--legend-actions-reserve: 78px;
+
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	height: 28px;
+	padding: 0 var(--spacing-3) 0 var(--spacing-4);
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	border-radius: var(--radius);
+	cursor: pointer;
+	transition: background 160ms linear;
+
+	&:hover,
+	&:focus-visible {
+		background: var(--l3-background);
+	}
+}
+
+.isFocused {
+	background: var(--l3-background);
+}
+
+.marker {
+	// Reads as a checkbox without being one: filled when shown, hollow when
+	// hidden, deliberately not a check glyph.
+	flex: 0 0 auto;
+	box-sizing: border-box;
+	position: relative;
+	// Above the actions, so a narrow row's chip never covers the series colour.
+	z-index: 4;
+	width: 12px;
+	height: 12px;
+	padding: 0;
+	appearance: none;
+	border-width: 1.5px;
+	border-style: solid;
+	border-radius: var(--radius);
+	cursor: pointer;
+	transition:
+		transform 200ms ease,
+		box-shadow 200ms ease,
+		background-color 160ms linear,
+		opacity 160ms linear;
+
+	&:hover {
+		transform: scale(1.2);
+		box-shadow: 0 0 0 2px
+			color-mix(in srgb, var(--l1-foreground) 30%, transparent);
+	}
+
+	&:active {
+		transform: scale(0.9);
+	}
+
+	&:disabled {
+		cursor: default;
+	}
+
+	&:disabled:hover {
+		transform: none;
+		box-shadow: none;
+	}
+}
+
+// Series names run long and have no spaces to break on, so they need both a
+// cap and a break rule or the tooltip becomes one panel-wide line.
+.rowTooltip {
+	max-width: 420px;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.label {
+	flex: 1 1 auto;
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	letter-spacing: -0.01em;
+	color: var(--l2-foreground);
+	user-select: none;
+}
+
+.isHidden .marker {
+	opacity: 0.45;
+}
+
+.isHidden .label {
+	color: var(--l3-foreground);
+	text-decoration: line-through;
+	text-decoration-thickness: 1px;
+}
+
+/* Row actions */
+
+.actions {
+	position: absolute;
+	top: var(--spacing-2);
+	right: var(--spacing-3);
+	z-index: 3;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	padding-left: var(--spacing-5, 10px);
+	// Sits on the row's hover background and masks the label's tail behind it.
+	background: var(--l3-background);
+	box-shadow: -8px 0 8px var(--l3-background);
+	opacity: 0;
+	transform: translateX(10px);
+	pointer-events: none;
+	transition:
+		opacity 180ms cubic-bezier(0.08, 0.52, 0.52, 1),
+		transform 180ms cubic-bezier(0.08, 0.52, 0.52, 1);
+}
+
+// :focus-visible, not :focus-within — the latter also matches the click that
+// just toggled the series, leaving the actions stuck open.
+.row:hover .actions,
+.row:focus-visible .actions,
+.row:has(:focus-visible) .actions {
+	opacity: 1;
+	transform: translateX(0);
+	pointer-events: auto;
+}
+
+// The cap spares rows sized to their actions, not their label.
+.row:hover .label,
+.row:focus-visible .label,
+.row:has(:focus-visible) .label {
+	padding-right: min(var(--legend-actions-reserve), 50%);
+}
+
+.actionTrigger {
+	display: inline-flex;
+}
+
+.actionButton {
+	--button-height: 20px;
+	--button-width: 20px;
+	--button-padding: 0;
+	--button-variant-ghost-color: var(--l3-foreground);
+	--button-variant-ghost-hover-color: var(--l1-foreground);
+
+	flex-shrink: 0;
+}
+
+.actionButton.scopeButton {
+	--button-width: auto;
+	--button-padding: 0 var(--spacing-4);
+	--button-font-size: var(--font-size-xs);
+	--button-border-radius: calc(var(--radius) * 4);
+	--button-base-border-width: 1px;
+	// --l2-border is the actions bar's own background: one step up reads.
+	--button-base-border-color: var(--l3-border);
+
+	border-style: solid;
+}
+.actionButton.scopeButton:hover {
+	border-color: var(--l2-border);
+}
