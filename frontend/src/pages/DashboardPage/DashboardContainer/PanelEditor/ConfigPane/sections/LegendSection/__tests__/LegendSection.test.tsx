@@ -120,7 +120,7 @@ describe('LegendSection', () => {
 			/>,
 		);
 
-		await pickOption('panel-editor-v2-legend-series-order', 'Query order');
+		await pickOption('panel-editor-v2-legend-series-order', 'Query Order');
 
 		expect(onChange).toHaveBeenCalledWith({
 			position: DashboardtypesLegendPositionDTO.bottom,

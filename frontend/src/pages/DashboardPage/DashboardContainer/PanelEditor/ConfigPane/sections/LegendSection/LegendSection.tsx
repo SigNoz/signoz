@@ -33,12 +33,16 @@ const POSITION_OPTIONS = [
 	},
 ];
 
-// Which order the legend lists series in (and the chart draws them). "Largest
-// first" sorts by mean value, so the order follows the data; "Query order" pins
-// it to the panel's query list, so it stays put across refreshes.
+// Which order the legend lists series in (and the chart draws them). "Highest
+// Average First" sorts by each series' mean over the window, so the order
+// follows the data; "Query Order" pins it to the panel's query list, so it
+// stays put across refreshes.
 const SERIES_ORDER_OPTIONS: ConfigSelectItem<DashboardtypesSeriesOrderDTO>[] = [
-	{ value: DashboardtypesSeriesOrderDTO.mean_desc, label: 'Largest first' },
-	{ value: DashboardtypesSeriesOrderDTO.definition, label: 'Query order' },
+	{
+		value: DashboardtypesSeriesOrderDTO.mean_desc,
+		label: 'Highest Average First',
+	},
+	{ value: DashboardtypesSeriesOrderDTO.definition, label: 'Query Order' },
 ];
 
 /**
