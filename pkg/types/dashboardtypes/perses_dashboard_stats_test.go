@@ -117,6 +117,22 @@ func TestNewStatsFromStorableDashboardsCountsCompositeSubQueries(t *testing.T) {
 	assert.Equal(t, int64(1), stats[statKeyPanelLogsCount])
 }
 
+// An AI builder query is always a traces query, so it counts towards traces.
+func TestNewStatsFromStorableDashboardsCountsAIBuilderQueries(t *testing.T) {
+	aiBuilder := `{
+		"kind": "time_series",
+		"spec": {"plugin": {"kind": "signoz/AIBuilderQuery", "spec": {"name": "A", "aggregations": [{"expression": "count()"}]}}}
+	}`
+	dashboard := newStatsStorableV2(t, `"p1": `+statsPanel(aiBuilder))
+
+	stats := NewStatsFromStorableDashboards([]*StorableDashboard{dashboard})
+
+	assert.Equal(t, int64(1), stats[statKeyPanelCount])
+	assert.Equal(t, int64(1), stats[statKeyPanelTracesCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelMetricsCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelLogsCount])
+}
+
 // promql and clickhouse queries carry no signal, so they land in the panel total
 // and nowhere else.
 func TestNewStatsFromStorableDashboardsIgnoresSignallessQueries(t *testing.T) {
