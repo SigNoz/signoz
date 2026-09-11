@@ -292,7 +292,7 @@ func TestStatementBuilder(t *testing.T) {
 				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
 				Aggregations: []qbtypes.MetricAggregation{
 					{
-						MetricName:       "signoz_latency",
+						MetricName:       "signoz_latency.bucket",
 						Type:             metrictypes.HistogramType,
 						Temporality:      metrictypes.Delta,
 						TimeAggregation:  metrictypes.TimeAggregationIncrease,
@@ -324,7 +324,7 @@ func TestStatementBuilder(t *testing.T) {
 				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
 				Aggregations: []qbtypes.MetricAggregation{
 					{
-						MetricName:       "signoz_latency",
+						MetricName:       "signoz_latency.bucket",
 						Type:             metrictypes.HistogramType,
 						Temporality:      metrictypes.Delta,
 						TimeAggregation:  metrictypes.TimeAggregationRate,
