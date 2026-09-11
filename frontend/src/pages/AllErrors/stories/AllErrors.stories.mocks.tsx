@@ -9,6 +9,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 
 import { countControl, toggleControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
 
 import {
 	EXCEPTION_CATALOGUE_SIZE,
@@ -76,6 +77,16 @@ export const exceptionsMocks = defineStoryMocks({
 			'http://localhost/api/v1/fields/keys',
 			response.json((req) =>
 				exceptionFieldKeysResponse(req.url.searchParams.get('searchText')),
+			),
+		),
+
+		rest.get(
+			'http://localhost/api/v1/fields/values',
+			response.json((req) =>
+				fieldValuesResponse(
+					exceptionAttributeValuesResponse(req.url.searchParams.get('name'), null)
+						.data.stringAttributeValues ?? [],
+				),
 			),
 		),
 
