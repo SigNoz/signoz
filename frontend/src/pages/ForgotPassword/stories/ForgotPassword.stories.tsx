@@ -57,6 +57,8 @@ export const LinkSent: Story = {
 /** Asked once too often, which the backend rate-limits. */
 export const RateLimited: Story = {
 	args: { request: 'rejected' },
+	// The deliberate 429 is the state under test.
+	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
 		await submit(canvasElement);
 		await within(canvasElement).findByText(/rate_limited/i);
