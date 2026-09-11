@@ -17,6 +17,7 @@ import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
+import { DATA_SOURCE_TO_SIGNAL } from 'constants/fieldSuggestions';
 import {
 	negationQueryOperatorSuggestions,
 	OPERATORS,
@@ -52,7 +53,6 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
-import { DATA_SOURCE_TO_SIGNAL } from 'components/QuickFilters/FilterRenderers/Checkbox/v2/useFieldValues';
 import type { SignalType } from 'types/api/v5/queryRange';
 
 import {
