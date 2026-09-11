@@ -67,16 +67,6 @@ export const Pinned: Story = {
 	args: { view: BuiltinViewId.Pinned },
 };
 
-/**
- * The query the backend refused: the parse error it returned replaces the
- * generic failure copy, and there is nothing to retry.
- */
-export const InvalidQuery: Story = {
-	args: { invalidQuery: true },
-	// The deliberate 400 is the state under test.
-	parameters: { allowConsoleErrors: true },
-};
-
 /** The template tab of the New dashboard dialog. */
 export const NewDashboardTemplateTab: Story = {
 	play: async ({ canvasElement }) => {
@@ -122,4 +112,18 @@ export const NewDashboardImportJsonInvalid: Story = {
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
 	parameters: { msw: { handlers: [overflowingRows] } },
+};
+
+/**
+ * The query the backend refused: the parse error it returned replaces the
+ * generic failure copy, and there is nothing to retry.
+ *
+ * Kept last: test-runner shares one page across a file's stories, and the 400
+ * this story is about can settle after the next story has already started,
+ * which fails that one instead.
+ */
+export const InvalidQuery: Story = {
+	args: { invalidQuery: true },
+	// The deliberate 400 is the state under test.
+	parameters: { allowConsoleErrors: true },
 };
