@@ -147,6 +147,8 @@ export const Loading: Story = {
 /** A failed logs query. */
 export const Failed: Story = {
 	args: { dataState: 'error' },
+	// The mocked queries deliberately fail; the resulting console errors are the state under test.
+	parameters: { allowConsoleErrors: true },
 };
 
 /** The editable quick-filter settings panel. */
