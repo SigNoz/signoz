@@ -16,6 +16,6 @@ type Handler interface {
 	HandlePromoteAndIndexPaths(w http.ResponseWriter, r *http.Request)
 	ListPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Request)
 
-	HandlePromotePaths(w http.ResponseWriter, r *http.Request)
+	PromotePaths(w http.ResponseWriter, r *http.Request)
 	ListPromotedPaths(w http.ResponseWriter, r *http.Request)
 }
