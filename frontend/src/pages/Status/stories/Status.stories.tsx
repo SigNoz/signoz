@@ -37,4 +37,6 @@ export const UpdateAvailable: Story = {
 /** Neither version could be read, so the page says so rather than guessing. */
 export const VersionUnavailable: Story = {
 	args: { version: 'unavailable' },
+	// The deliberate 500 and 503 are the state under test.
+	parameters: { allowConsoleErrors: true },
 };
