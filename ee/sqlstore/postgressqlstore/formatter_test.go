@@ -55,6 +55,39 @@ func TestJSONExtractString(t *testing.T) {
 	}
 }
 
+func TestJSONExtractMapValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		column   string
+		mapField string
+		key      string
+		expected string
+	}{
+		{
+			name:     "plain key",
+			column:   "data",
+			mapField: "labels",
+			key:      "team",
+			expected: `"data"::jsonb->'labels'->>'team'`,
+		},
+		{
+			name:     "dotted key stays one map entry",
+			column:   "data",
+			mapField: "labels",
+			key:      "k8s.cluster",
+			expected: `"data"::jsonb->'labels'->>'k8s.cluster'`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newFormatter(pgdialect.New())
+			got := string(f.JSONExtractMapValue(tt.column, tt.mapField, tt.key))
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
 func TestJSONType(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -23,6 +23,15 @@ func (f *formatter) JSONExtractString(column, path string) []byte {
 	return append(f.TextToJsonColumn(column), ops...)
 }
 
+func (f *formatter) JSONExtractMapValue(column, mapField, key string) []byte {
+	sql := f.TextToJsonColumn(column)
+	sql = append(sql, "->"...)
+	sql = schema.Append(f.bunf, sql, mapField)
+	sql = append(sql, "->>"...)
+	sql = schema.Append(f.bunf, sql, key)
+	return sql
+}
+
 func (f *formatter) JSONType(column, path string) []byte {
 	var sql []byte
 	sql = append(sql, "jsonb_typeof("...)

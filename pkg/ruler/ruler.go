@@ -17,6 +17,9 @@ type Ruler interface {
 	// ListRuleStates returns all rules with their current evaluation state.
 	ListRuleStates(ctx context.Context) (*ruletypes.GettableRules, error)
 
+	// ListRules returns a filtered, sorted page of rules with state, plus label pairs and reserved filter keys.
+	ListRules(ctx context.Context, params *ruletypes.ListRulesParams) (*ruletypes.ListableRules, error)
+
 	// GetRule returns a single rule by ID.
 	GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error)
 

@@ -8616,6 +8616,89 @@ components:
         message:
           type: string
       type: object
+    RuletypesLabelPair:
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+      - key
+      - value
+      type: object
+    RuletypesListOrder:
+      enum:
+      - asc
+      - desc
+      type: string
+    RuletypesListSort:
+      enum:
+      - updated_at
+      - created_at
+      - name
+      - state
+      - severity
+      type: string
+    RuletypesListableRule:
+      properties:
+        alert:
+          type: string
+        alertType:
+          $ref: '#/components/schemas/RuletypesAlertType'
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        description:
+          type: string
+        disabled:
+          type: boolean
+        id:
+          type: string
+        labels:
+          additionalProperties:
+            type: string
+          type: object
+        ruleType:
+          $ref: '#/components/schemas/RuletypesRuleType'
+        state:
+          $ref: '#/components/schemas/RuletypesAlertState'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - state
+      - alert
+      - alertType
+      - ruleType
+      type: object
+    RuletypesListableRules:
+      properties:
+        labels:
+          items:
+            $ref: '#/components/schemas/RuletypesLabelPair'
+          type: array
+        reservedKeywords:
+          items:
+            type: string
+          type: array
+        rules:
+          items:
+            $ref: '#/components/schemas/RuletypesListableRule'
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - rules
+      - total
+      - labels
+      - reservedKeywords
+      type: object
     RuletypesMatchType:
       enum:
       - at_least_once
@@ -20316,9 +20399,10 @@ paths:
       - users
   /api/v2/rules:
     get:
-      deprecated: false
-      description: This endpoint lists all alert rules with their current evaluation
-        state
+      deprecated: true
+      description: 'This endpoint lists all alert rules with their current evaluation
+        state. Deprecated: use ListRulesV3, which supports filtering, sorting and
+        pagination.'
       operationId: ListRules
       responses:
         "200":
@@ -26100,6 +26184,90 @@ paths:
       summary: Get metric dashboards (v2)
       tags:
       - metrics
+  /api/v3/rules:
+    get:
+      deprecated: false
+      description: Returns a page of alert rules with their current evaluation state,
+        trimmed to the fields the list page renders. Supports a filter DSL (`query`),
+        a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`),
+        order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). The
+        response also carries the org's label pairs and the reserved filter keys for
+        building filter suggestions.
+      operationId: ListRulesV3
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: states
+        schema:
+          items:
+            type: string
+          type: array
+      - in: query
+        name: sort
+        schema:
+          $ref: '#/components/schemas/RuletypesListSort'
+      - in: query
+        name: order
+        schema:
+          $ref: '#/components/schemas/RuletypesListOrder'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesListableRules'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List alert rules (v3)
+      tags:
+      - rules
   /api/v3/traces/{traceID}/flamegraph:
     post:
       deprecated: false

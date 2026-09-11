@@ -41,6 +41,8 @@ import type {
 	GetRuleHistoryTopContributorsParams,
 	GetRuleHistoryTopContributorsPathParameters,
 	ListRules200,
+	ListRulesV3200,
+	ListRulesV3Params,
 	PatchRuleByID200,
 	PatchRuleByIDPathParameters,
 	RenderErrorResponseDTO,
@@ -53,7 +55,8 @@ import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
- * This endpoint lists all alert rules with their current evaluation state
+ * This endpoint lists all alert rules with their current evaluation state. Deprecated: use ListRulesV3, which supports filtering, sorting and pagination.
+ * @deprecated
  * @summary List alert rules
  */
 export const listRules = (signal?: AbortSignal) => {
@@ -95,6 +98,7 @@ export type ListRulesQueryResult = NonNullable<
 export type ListRulesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary List alert rules
  */
 
@@ -114,6 +118,7 @@ export function useListRules<
 }
 
 /**
+ * @deprecated
  * @summary List alert rules
  */
 export const invalidateListRules = async (
@@ -1367,4 +1372,98 @@ export const useTestRule = <
 	TContext
 > => {
 	return useMutation(getTestRuleMutationOptions(options));
+};
+/**
+ * Returns a page of alert rules with their current evaluation state, trimmed to the fields the list page renders. Supports a filter DSL (`query`), a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). The response also carries the org's label pairs and the reserved filter keys for building filter suggestions.
+ * @summary List alert rules (v3)
+ */
+export const listRulesV3 = (
+	params?: ListRulesV3Params,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListRulesV3200>({
+		url: `/api/v3/rules`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListRulesV3QueryKey = (params?: ListRulesV3Params) => {
+	return [`/api/v3/rules`, ...(params ? [params] : [])] as const;
+};
+
+export const getListRulesV3QueryOptions = <
+	TData = Awaited<ReturnType<typeof listRulesV3>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: ListRulesV3Params,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listRulesV3>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getListRulesV3QueryKey(params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof listRulesV3>>> = ({
+		signal,
+	}) => listRulesV3(params, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof listRulesV3>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListRulesV3QueryResult = NonNullable<
+	Awaited<ReturnType<typeof listRulesV3>>
+>;
+export type ListRulesV3QueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List alert rules (v3)
+ */
+
+export function useListRulesV3<
+	TData = Awaited<ReturnType<typeof listRulesV3>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: ListRulesV3Params,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listRulesV3>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListRulesV3QueryOptions(params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List alert rules (v3)
+ */
+export const invalidateListRulesV3 = async (
+	queryClient: QueryClient,
+	params?: ListRulesV3Params,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListRulesV3QueryKey(params) },
+		options,
+	);
+
+	return queryClient;
 };
