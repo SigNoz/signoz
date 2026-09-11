@@ -13,7 +13,11 @@ overrides:
  '@babel/core@<=7.29.0': '>=7.29.6 <8'
  # via: jest > babel-plugin-istanbul > @istanbuljs/load-nyc-config@1.1.0 (js-yaml ^3.13.1)
  # remove: blocked — 1.1.0 is latest and still depends on js-yaml 3.x
- '@istanbuljs/load-nyc-config>js-yaml': '>=4.3.1 <5'
+ '@istanbuljs/load-nyc-config>js-yaml': '>=4.3.2 <5'
+ # via: msw@1.3.2 (devDep) > @mswjs/interceptors@0.17.10 (@xmldom/xmldom ^0.8.3)
+ # remove: upgrade msw to >=2 (drops the 0.8.x interceptor). Do NOT open the cap:
+ # 0.9.x is ESM-only and changes the DOMParser error contract
+ '@xmldom/xmldom@<0.8.15': '>=0.8.15 <0.9'
  # via: babel-plugin-istanbul > test-exclude@6 > minimatch@3.1.5 (^1.1.7); also glob@7
  # remove: blocked — babel-plugin-istanbul pins test-exclude@6, which pins minimatch@3
  brace-expansion@<1.1.18: '>=1.1.18 <2'
@@ -23,32 +27,39 @@ overrides:
  # via: eslint-plugin-sonarjs@4.0.2 (minimatch ^10.2.4) > minimatch@10.2.5 (^5.0.5)
  # remove: blocked — minimatch@10.2.6 (latest) only widens to ^5.0.8, still vulnerable
  'brace-expansion@>=5.0.0 <5.0.9': '>=5.0.9 <6'
+ # via: direct devDep @babel/core > @babel/helper-compilation-targets (browserslist ^4.24.0)
+ # remove: blocked, the range is open so the floor is what pulls the fix.
+ # Also lifts baseline-browser-mapping, which browserslist@4.28.7 floors at ^2.11.20
+ browserslist@<4.28.7: '>=4.28.7 <5'
  # via: msw@1.3.2 (devDep) > cookie ^0.4.2
  # remove: upgrade msw to >=2 (ships cookie ^1). Do NOT open the cap: cookie >=1 is
  # ESM-only and breaks msw under jest's CJS sandbox (kills every test suite)
  cookie@<0.7.0: '>=0.7.1 <1'
- # via: direct dep dompurify 3.4.0; @grafana/data@11.6.15 (3.4.0/3.2.4 exact);
+ # via: @grafana/data@11.6.15 (3.4.0/3.2.4 exact);
  #      @monaco-editor/react > monaco-editor@0.55.1 (3.2.7 exact)
- # remove: bump direct dep to 3.4.11; @grafana/data (latest 13.1.0) and
- #         monaco-editor (latest 0.55.1) still pin vulnerable versions — blocked
- dompurify@<=3.4.10: '>=3.4.11 <4'
- # via: rolldown-vite@7.3.1 (esbuild ^0.27.0); orval@8.9.1 (^0.27.4); ts-jest@29.4.9 (~0.27.4)
+ # remove: blocked. The direct dep is already on 3.4.15, but @grafana/data
+ #         (latest 13.1.0) and monaco-editor (latest 0.55.1) still pin vulnerable versions
+ dompurify@<=3.4.12: '>=3.4.13 <4'
+ # via: rolldown-vite@7.3.1 (esbuild ^0.27.0); ts-jest@29.4.9 (~0.27.4)
  # remove: blocked on rolldown-vite (7.3.1 is latest, still ^0.27.0);
  #         orval >=8.20.0 and ts-jest >=29.4.11 already fixed on their side
  esbuild@>=0.27.3 <0.28.1: '>=0.28.1 <0.29.0'
  # via: @commitlint/cli > @commitlint/config-validator > ajv@8 (fast-uri ^3.0.1)
- # remove: blocked — ajv@8 caps fast-uri at ^3, and only 3.1.5 carries the fix
- fast-uri@<3.1.5: '>=3.1.5 <4'
+ # remove: blocked — ajv@8 caps fast-uri at ^3, and only 3.1.6 carries the fix
+ fast-uri@<3.1.6: '>=3.1.6 <4'
+ # via: direct dep posthog-js@1.298.0 (fflate ^0.4.8)
+ # remove: blocked, posthog-js 1.430.2 (latest) is still on ^0.4.8
+ fflate@<0.4.9: '>=0.4.9 <0.5'
  # via: direct devDep sass@1.97.3 (immutable ^5.0.2)
  # remove: blocked — plain sass bumps stay within ^5, so the floor is what pulls 5.1.8
  immutable@<5.1.8: '>=5.1.8 <6'
  # via: react-use@17.5.1 (direct, js-cookie ^2.2.1); @grafana/data > react-use@17.6.0
  # remove: bump react-use to >=17.6.1 (js-cookie ^3); @grafana/data side blocked
  js-cookie@<=3.0.5: '>=3.0.7 <4'
- # via: @orval/core@8.9.1 (devDep, js-yaml 4.1.1 EXACT pin — not deletable);
- #      json-schema-to-typescript@15 > @apidevtools/json-schema-ref-parser (^4.1.0)
- # remove: upgrade orval to >=8.20.0 (drops js-yaml dependency entirely)
- 'js-yaml@>=4.0.0 <4.3.1': '>=4.3.1 <5'
+ # via: json-schema-to-typescript@15 > @apidevtools/json-schema-ref-parser (^4.1.0);
+ #      @commitlint/cli > @commitlint/load > cosmiconfig@9 (^4.1.0)
+ # remove: blocked, both consumers cap js-yaml at ^4 and only 4.3.2 carries the fix
+ 'js-yaml@>=4.0.0 <4.3.2': '>=4.3.2 <5'
  # via: typescript-plugin-css-modules@5.2.0 (less ^4.2.0) > less@4.4.0 (image-size ~0.5.0)
  # remove: bump typescript-plugin-css-modules once it floors less itself; image-size has
  #         no patched release at all, so dropping the dep is the only fix — less@4.5.0 did
@@ -59,10 +70,15 @@ overrides:
  # via: react-syntax-highlighter@15.5.0 (prismjs ^1.27.0 + refractor@3 ~1.27.0 tilde-pinned)
  # remove: bump react-syntax-highlighter to >=16.1.1 (prismjs ^1.30.0, refractor@5)
  prismjs@<1.30.0: '>=1.30.0 <2'
- # via: direct dep react-router-dom-v5-compat@6.30.3 (react-router 6.30.3 exact)
- # remove: bump react-router-dom-v5-compat to 6.30.4. Do NOT open the cap:
- # react-router >=7 requires React 19 and breaks the app-wide CompatRouter
- react-router@>=6.7.0 <6.30.4: '>=6.30.4 <7'
+ # via: typescript-plugin-css-modules@5.2.0 > postcss-modules-local-by-default@4.2.0
+ #      (postcss-selector-parser ^7.0.0)
+ # remove: blocked, 4.2.0 is latest and the range is open, so the floor is what pulls the fix
+ postcss-selector-parser@>=7.1.0 <7.1.3: '>=7.1.3 <8'
+ # via: @signozhq/ui > nuqs@2 (react-router ^6.4.0 || ^7)
+ # remove: blocked. GHSA-wrjc-x8rr-h8h6 and the deserializeErrors advisory are patched
+ # only in 7.18.0. Do NOT open the cap: react-router >=7 requires React 19 and breaks
+ # the app-wide CompatRouter, so those two moderates stay until the app moves to React 19
+ react-router@>=6.7.0 <6.30.6: '>=6.30.6 <7'
  # via: msw@1.3.2 (devDep) > inquirer@8 > external-editor@3.1.0 (tmp ^0.0.33)
  # remove: upgrade msw to >=2 (drops the inquirer/external-editor chain)
  tmp@<0.2.6: '>=0.2.6 <0.3.0'
