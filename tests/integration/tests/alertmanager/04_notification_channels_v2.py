@@ -695,7 +695,7 @@ def test_list_and_get_a_v1_channel_of_an_unmodelled_kind(
         headers={"Authorization": f"Bearer {token}"},
         timeout=TIMEOUT,
     )
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY, response.text
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
 
 @pytest.mark.parametrize(
