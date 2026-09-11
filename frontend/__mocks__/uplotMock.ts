@@ -2,6 +2,8 @@
 
 // Mock for uplot library used in tests
 export interface MockUPlotInstance {
+	/** Consumers read `root.parentElement` to detect a re-mounted container. */
+	root: HTMLDivElement;
 	setData: jest.Mock;
 	setSize: jest.Mock;
 	destroy: jest.Mock;
@@ -17,13 +19,20 @@ export interface MockUPlotPaths {
 }
 
 // Create mock instance methods
-const createMockUPlotInstance = (): MockUPlotInstance => ({
-	setData: jest.fn(),
-	setSize: jest.fn(),
-	destroy: jest.fn(),
-	redraw: jest.fn(),
-	setSeries: jest.fn(),
-});
+const createMockUPlotInstance = (target?: HTMLElement): MockUPlotInstance => {
+	const root = document.createElement('div');
+	// Real uPlot mounts its root inside the target; without it a re-render reads
+	// `root.parentElement` off undefined and throws.
+	target?.appendChild(root);
+	return {
+		root,
+		setData: jest.fn(),
+		setSize: jest.fn(),
+		destroy: jest.fn(),
+		redraw: jest.fn(),
+		setSeries: jest.fn(),
+	};
+};
 
 // Path builder: (self, seriesIdx, idx0, idx1) => paths or null
 const createMockPathBuilder = (name: string): jest.Mock =>
@@ -53,14 +62,16 @@ const mockTzDate = jest.fn(
 function MockUPlot(
 	_options: unknown,
 	_data: unknown,
-	_target: HTMLElement,
+	target: HTMLElement,
 ): MockUPlotInstance {
-	return createMockUPlotInstance();
+	return createMockUPlotInstance(target);
 }
 
 // Add static methods to the constructor
 MockUPlot.tzDate = mockTzDate;
 MockUPlot.paths = mockPaths;
+// Pinned so canvas-space maths in draw hooks is deterministic under jsdom.
+MockUPlot.pxRatio = 1;
 
 // Export the constructor as default
 export default MockUPlot;
