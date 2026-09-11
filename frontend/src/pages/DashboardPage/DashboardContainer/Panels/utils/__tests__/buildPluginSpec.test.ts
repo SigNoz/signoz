@@ -5,6 +5,7 @@ import {
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesPanelSpecDTO,
+	DashboardtypesSeriesOrderDTO,
 	DashboardtypesThresholdFormatDTO,
 	DashboardtypesTimePreferenceDTO,
 	TelemetrytypesSignalDTO,
@@ -192,6 +193,34 @@ describe('buildPluginSpec', () => {
 			expect(buildPluginSpec(sections, { oldSpec }).legend).toStrictEqual({
 				position: DashboardtypesLegendPositionDTO.right,
 			});
+		});
+
+		it('seeds legend seriesOrder mean_desc when the control is on', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Legend, controls: { seriesOrder: true } },
+			];
+			expect(buildPluginSpec(sections)).toStrictEqual({
+				legend: { seriesOrder: DashboardtypesSeriesOrderDTO.mean_desc },
+			});
+		});
+
+		it('carries old legend seriesOrder only when the target declares the control', () => {
+			const oldSpec = oldSpecWith({
+				legend: { seriesOrder: DashboardtypesSeriesOrderDTO.definition },
+			});
+
+			expect(
+				buildPluginSpec(
+					[{ kind: SectionKind.Legend, controls: { seriesOrder: true } }],
+					{ oldSpec },
+				).legend,
+			).toStrictEqual({ seriesOrder: DashboardtypesSeriesOrderDTO.definition });
+			expect(
+				buildPluginSpec(
+					[{ kind: SectionKind.Legend, controls: { position: true } }],
+					{ oldSpec },
+				).legend,
+			).toStrictEqual({ position: DashboardtypesLegendPositionDTO.bottom });
 		});
 	});
 
@@ -539,7 +568,10 @@ describe('buildPluginSpec', () => {
 				visualization: {
 					timePreference: DashboardtypesTimePreferenceDTO.global_time,
 				},
-				legend: { position: DashboardtypesLegendPositionDTO.bottom },
+				legend: {
+					position: DashboardtypesLegendPositionDTO.bottom,
+					seriesOrder: DashboardtypesSeriesOrderDTO.mean_desc,
+				},
 				chartAppearance: {
 					lineStyle: DashboardtypesLineStyleDTO.solid,
 					lineInterpolation: DashboardtypesLineInterpolationDTO.spline,

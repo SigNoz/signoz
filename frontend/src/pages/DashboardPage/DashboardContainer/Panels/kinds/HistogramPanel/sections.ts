@@ -9,6 +9,7 @@ export const sections: SectionConfig[] = [
 	},
 	{
 		kind: SectionKind.Legend,
+		// seriesOrder is TimeSeries/Bar-only, so Histogram omits it.
 		controls: { position: true, colors: true },
 		// Merging all queries collapses to one distribution with no legend.
 		isHidden: (spec): boolean =>

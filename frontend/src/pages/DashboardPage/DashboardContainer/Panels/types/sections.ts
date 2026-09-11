@@ -105,7 +105,13 @@ export interface SectionControls {
 		columnUnits?: boolean;
 	};
 	[SectionKind.Axes]: { minMax?: boolean; logScale?: boolean }; // minMax → softMin/softMax
-	[SectionKind.Legend]: { position?: boolean; colors?: boolean }; // colors → customColors
+	// colors → customColors; seriesOrder → the legend/draw order (TimeSeries / Bar,
+	// the kinds whose renderer reads it).
+	[SectionKind.Legend]: {
+		position?: boolean;
+		colors?: boolean;
+		seriesOrder?: boolean;
+	};
 	[SectionKind.ChartAppearance]: {
 		lineStyle?: boolean;
 		lineInterpolation?: boolean;

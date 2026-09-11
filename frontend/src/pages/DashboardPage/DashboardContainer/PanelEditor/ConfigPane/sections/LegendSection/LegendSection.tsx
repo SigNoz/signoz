@@ -1,11 +1,17 @@
 import { Typography } from '@signozhq/ui/typography';
-import { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesLegendPositionDTO,
+	DashboardtypesSeriesOrderDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
 import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
+import ConfigSelect, {
+	type ConfigSelectItem,
+} from '../../controls/ConfigSelect/ConfigSelect';
 import LegendColors from '../../controls/LegendColors/LegendColors';
 import type { SectionEditorContext } from '../../sectionContext';
 
@@ -27,10 +33,19 @@ const POSITION_OPTIONS = [
 	},
 ];
 
+// Which order the legend lists series in (and the chart draws them). "Largest
+// first" sorts by mean value, so the order follows the data; "Query order" pins
+// it to the panel's query list, so it stays put across refreshes.
+const SERIES_ORDER_OPTIONS: ConfigSelectItem<DashboardtypesSeriesOrderDTO>[] = [
+	{ value: DashboardtypesSeriesOrderDTO.mean_desc, label: 'Largest first' },
+	{ value: DashboardtypesSeriesOrderDTO.definition, label: 'Query order' },
+];
+
 /**
- * Edits the `legend` slice of a panel spec: legend position and per-series color
- * overrides. The colors control reads the panel's resolved series from context (the
- * shared preview query) and writes `customColors` keyed by series label.
+ * Edits the `legend` slice of a panel spec: legend position, series order, and
+ * per-series color overrides. The colors control reads the panel's resolved series
+ * from context (the shared preview query) and writes `customColors` keyed by series
+ * label.
  */
 function LegendSection({
 	value,
@@ -53,6 +68,19 @@ function LegendSection({
 								position: next as DashboardtypesLegendPositionDTO,
 							})
 						}
+					/>
+				</div>
+			)}
+
+			{controls.seriesOrder && (
+				<div className={styles.field}>
+					<Typography.Text>Series order</Typography.Text>
+					<ConfigSelect
+						testId="panel-editor-v2-legend-series-order"
+						placeholder="Select order…"
+						value={value?.seriesOrder}
+						items={SERIES_ORDER_OPTIONS}
+						onChange={(seriesOrder): void => onChange({ ...value, seriesOrder })}
 					/>
 				</div>
 			)}
