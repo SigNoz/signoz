@@ -24,10 +24,10 @@ export interface IPlotContext {
 	setPlotContextInitialState: (state: PlotContextInitialState) => void;
 	onToggleSeriesVisibility: (seriesIndex: number) => void;
 	onToggleSeriesOnOff: (seriesIndex: number) => void;
-	/** Show this series alone; showing all again when it is already the only one shown. */
+	/** Show this series alone. */
 	onShowOnlySeries: (seriesIndex: number) => void;
-	/** Show this series without hiding anything else. */
-	onShowSeries: (seriesIndex: number) => void;
+	/** Show every series again. */
+	onShowAllSeries: () => void;
 	onFocusSeries: (seriesIndex: number | null) => void;
 	/** Lift one series above the rest (dim + thicken) without changing visibility. */
 	onHighlightSeries: (seriesIndex: number | null) => void;
@@ -220,35 +220,14 @@ export const PlotContextProvider = ({
 
 	const onShowOnlySeries = useCallback(
 		(seriesIndex: number): void => {
-			const plot = uPlotInstanceRef.current;
-			if (!plot) {
-				return;
-			}
-
-			// From what is on screen, not a remembered isolation.
-			const isAlreadySole =
-				countShownSeries(plot) === 1 && plot.series[seriesIndex]?.show !== false;
-
-			setSeriesVisibility((index) => isAlreadySole || index === seriesIndex);
+			setSeriesVisibility((index) => index === seriesIndex);
 		},
 		[setSeriesVisibility],
 	);
 
-	const onShowSeries = useCallback(
-		(seriesIndex: number): void => {
-			const plot = uPlotInstanceRef.current;
-			if (!plot?.series[seriesIndex]) {
-				return;
-			}
-
-			activeSeriesIndex.current = undefined;
-			plot.setSeries(seriesIndex, { show: true });
-			if (idRef.current && shouldSavePreferencesRef.current) {
-				syncSeriesVisibilityToLocalStorage();
-			}
-		},
-		[syncSeriesVisibilityToLocalStorage],
-	);
+	const onShowAllSeries = useCallback((): void => {
+		setSeriesVisibility(() => true);
+	}, [setSeriesVisibility]);
 
 	const onFocusSeries = useCallback((seriesIndex: number | null): void => {
 		const plot = uPlotInstanceRef.current;
@@ -271,7 +250,7 @@ export const PlotContextProvider = ({
 			setPlotContextInitialState,
 			onToggleSeriesOnOff,
 			onShowOnlySeries,
-			onShowSeries,
+			onShowAllSeries,
 			onFocusSeries,
 			onHighlightSeries,
 			syncSeriesVisibilityToLocalStorage,
@@ -281,7 +260,7 @@ export const PlotContextProvider = ({
 			setPlotContextInitialState,
 			onToggleSeriesOnOff,
 			onShowOnlySeries,
-			onShowSeries,
+			onShowAllSeries,
 			onFocusSeries,
 			onHighlightSeries,
 			syncSeriesVisibilityToLocalStorage,

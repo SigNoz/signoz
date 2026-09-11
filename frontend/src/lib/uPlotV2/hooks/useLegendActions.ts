@@ -3,10 +3,10 @@ import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 
 export interface UseLegendActionsResult {
 	onToggleSeries: (seriesIndex: number) => void;
-	/** Show this series alone, or show all when it is already alone. */
+	/** Show this series alone. */
 	onShowOnlySeries: (seriesIndex: number) => void;
-	/** Show this series alongside the ones already shown. */
-	onShowSeries: (seriesIndex: number) => void;
+	/** Leave the narrowed selection and show every series. */
+	onShowAllSeries: () => void;
 	/** null clears the highlight. */
 	onHoverSeries: (seriesIndex: number | null) => void;
 }
@@ -19,7 +19,7 @@ export function useLegendActions(): UseLegendActionsResult {
 	const {
 		onToggleSeriesOnOff,
 		onShowOnlySeries,
-		onShowSeries,
+		onShowAllSeries,
 		onHighlightSeries,
 	} = usePlotContext();
 
@@ -48,7 +48,7 @@ export function useLegendActions(): UseLegendActionsResult {
 	return {
 		onToggleSeries: onToggleSeriesOnOff,
 		onShowOnlySeries,
-		onShowSeries,
+		onShowAllSeries,
 		onHoverSeries,
 	};
 }

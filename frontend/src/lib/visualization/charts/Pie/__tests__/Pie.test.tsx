@@ -117,7 +117,7 @@ describe('Pie', () => {
 
 		// Isolate, then add a second slice back, so nothing is isolated any more.
 		fireEvent.click(screen.getByTestId('legend-item-1'));
-		fireEvent.click(screen.getByTestId('legend-add-0'));
+		fireEvent.click(screen.getByTestId('legend-item-0'));
 		expect(svg.querySelectorAll('path')).toHaveLength(2);
 
 		fireEvent.click(screen.getByTestId('legend-item-0'));

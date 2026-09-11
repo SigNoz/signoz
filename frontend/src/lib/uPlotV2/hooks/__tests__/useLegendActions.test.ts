@@ -12,7 +12,7 @@ describe('useLegendActions', () => {
 	let onToggleSeriesVisibility: jest.Mock;
 	let onToggleSeriesOnOff: jest.Mock;
 	let onShowOnlySeries: jest.Mock;
-	let onShowSeries: jest.Mock;
+	let onShowAllSeries: jest.Mock;
 	let onFocusSeries: jest.Mock;
 	let onHighlightSeries: jest.Mock;
 	let setPlotContextInitialState: jest.Mock;
@@ -40,7 +40,7 @@ describe('useLegendActions', () => {
 		onToggleSeriesVisibility = jest.fn();
 		onToggleSeriesOnOff = jest.fn();
 		onShowOnlySeries = jest.fn();
-		onShowSeries = jest.fn();
+		onShowAllSeries = jest.fn();
 		onFocusSeries = jest.fn();
 		onHighlightSeries = jest.fn();
 		setPlotContextInitialState = jest.fn();
@@ -50,7 +50,7 @@ describe('useLegendActions', () => {
 			onToggleSeriesVisibility,
 			onToggleSeriesOnOff,
 			onShowOnlySeries,
-			onShowSeries,
+			onShowAllSeries,
 			onFocusSeries,
 			onHighlightSeries,
 			setPlotContextInitialState,
@@ -71,14 +71,14 @@ describe('useLegendActions', () => {
 			expect(onToggleSeriesVisibility).not.toHaveBeenCalled();
 		});
 
-		it('forwards the Only and Add actions to the plot', () => {
+		it('forwards the Only and All actions to the plot', () => {
 			const { result } = renderHook(() => useLegendActions());
 
 			result.current.onShowOnlySeries(1);
-			result.current.onShowSeries(3);
+			result.current.onShowAllSeries();
 
 			expect(onShowOnlySeries).toHaveBeenCalledWith(1);
-			expect(onShowSeries).toHaveBeenCalledWith(3);
+			expect(onShowAllSeries).toHaveBeenCalled();
 		});
 	});
 

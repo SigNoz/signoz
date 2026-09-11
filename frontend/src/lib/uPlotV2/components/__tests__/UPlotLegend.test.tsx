@@ -63,13 +63,13 @@ describe('UPlotLegend', () => {
 
 	let onToggleSeries: jest.Mock;
 	let onShowOnlySeries: jest.Mock;
-	let onShowSeries: jest.Mock;
+	let onShowAllSeries: jest.Mock;
 	let onHoverSeries: jest.Mock;
 
 	beforeEach(() => {
 		onToggleSeries = jest.fn();
 		onShowOnlySeries = jest.fn();
-		onShowSeries = jest.fn();
+		onShowAllSeries = jest.fn();
 		onHoverSeries = jest.fn();
 
 		mockUseLegendsSync.mockReturnValue({
@@ -81,7 +81,7 @@ describe('UPlotLegend', () => {
 		mockUseLegendActions.mockReturnValue({
 			onToggleSeries,
 			onShowOnlySeries,
-			onShowSeries,
+			onShowAllSeries,
 			onHoverSeries,
 		});
 	});
@@ -115,7 +115,7 @@ describe('UPlotLegend', () => {
 			expect(screen.queryByTestId('legend-status')).not.toBeInTheDocument();
 			// The row interactions are the same in both placements.
 			expect(screen.getByTestId('legend-item-0')).toBeInTheDocument();
-			expect(screen.getByTestId('legend-only-0')).toBeInTheDocument();
+			expect(screen.getByTestId('legend-scope-0')).toBeInTheDocument();
 		});
 
 		it('renders the marker with the series colour, filled only when shown', () => {
@@ -275,7 +275,7 @@ describe('UPlotLegend', () => {
 			);
 		});
 
-		it('moves the isolation when another row is clicked while one is alone', async () => {
+		it('adds the clicked series to the selection while one is alone', async () => {
 			const user = userEvent.setup();
 			mockUseLegendsSync.mockReturnValue({
 				legendItemsMap: {
@@ -288,32 +288,12 @@ describe('UPlotLegend', () => {
 			});
 			renderLegend(LegendPosition.RIGHT);
 
-			// Series 0 is showing alone; clicking another row swaps to it rather
-			// than adding it — Add is there for keeping both.
+			// Series 0 is showing alone; clicking another row builds the selection
+			// up rather than moving the isolation.
 			await user.click(screen.getByText('B'));
 
-			expect(onShowOnlySeries).toHaveBeenCalledWith(1);
-			expect(onToggleSeries).not.toHaveBeenCalled();
-		});
-
-		it('puts everything back when the series showing alone is clicked', async () => {
-			const user = userEvent.setup();
-			mockUseLegendsSync.mockReturnValue({
-				legendItemsMap: {
-					0: { ...baseLegendItemsMap[0] },
-					1: { ...baseLegendItemsMap[1] },
-					2: { ...baseLegendItemsMap[2], show: false },
-				},
-				focusedSeriesIndex: null,
-				setFocusedSeriesIndex: jest.fn(),
-			});
-			renderLegend(LegendPosition.RIGHT);
-
-			await user.click(screen.getByText('A'));
-
-			// Only clears the isolation, however the legend came to be isolated.
-			expect(onShowOnlySeries).toHaveBeenCalledWith(0);
-			expect(onToggleSeries).not.toHaveBeenCalled();
+			expect(onToggleSeries).toHaveBeenCalledWith(1);
+			expect(onShowOnlySeries).not.toHaveBeenCalled();
 		});
 
 		it('toggles the series on Enter and Space', async () => {
@@ -342,13 +322,25 @@ describe('UPlotLegend', () => {
 			);
 		});
 
-		it('isolates the series from Only without also toggling the row', async () => {
+		it('restores every series from All without also toggling the row', async () => {
 			const user = userEvent.setup();
 			renderLegend(LegendPosition.RIGHT);
 
-			await user.click(screen.getByTestId('legend-only-0'));
+			// Series 0 is shown while B is hidden, so its action is All.
+			await user.click(screen.getByTestId('legend-scope-0'));
 
-			expect(onShowOnlySeries).toHaveBeenCalledWith(0);
+			expect(onShowAllSeries).toHaveBeenCalled();
+			expect(onToggleSeries).not.toHaveBeenCalled();
+			expect(onShowOnlySeries).not.toHaveBeenCalled();
+		});
+
+		it('isolates the series from Only on a hidden row', async () => {
+			const user = userEvent.setup();
+			renderLegend(LegendPosition.RIGHT);
+
+			await user.click(screen.getByTestId('legend-scope-1'));
+
+			expect(onShowOnlySeries).toHaveBeenCalledWith(1);
 			expect(onToggleSeries).not.toHaveBeenCalled();
 		});
 
@@ -380,47 +372,21 @@ describe('UPlotLegend', () => {
 			});
 		});
 
-		it('lights Only on the series that is showing alone', () => {
+		it('offers All on the shown row and Only on the hidden ones', () => {
 			renderLegend(LegendPosition.RIGHT);
 
-			expect(screen.getByTestId('legend-only-0')).toHaveAttribute(
-				'aria-pressed',
-				'true',
-			);
-			expect(screen.getByTestId('legend-only-1')).toHaveAttribute(
-				'aria-pressed',
-				'false',
-			);
+			expect(screen.getByTestId('legend-scope-0')).toHaveTextContent('All');
+			expect(screen.getByTestId('legend-scope-1')).toHaveTextContent('Only');
+			expect(screen.getByTestId('legend-scope-2')).toHaveTextContent('Only');
 		});
 
-		it('offers Add on the hidden rows, not the one that is showing', async () => {
+		it('restores everything from All', async () => {
 			const user = userEvent.setup();
 			renderLegend(LegendPosition.RIGHT);
 
-			expect(screen.queryByTestId('legend-add-0')).not.toBeInTheDocument();
+			await user.click(screen.getByTestId('legend-scope-0'));
 
-			await user.click(screen.getByTestId('legend-add-1'));
-
-			expect(onShowSeries).toHaveBeenCalledWith(1);
-			expect(onToggleSeries).not.toHaveBeenCalled();
-		});
-
-		it('keeps Add on every hidden row however many are showing', () => {
-			mockUseLegendsSync.mockReturnValue({
-				legendItemsMap: {
-					0: { ...baseLegendItemsMap[0] },
-					1: { ...baseLegendItemsMap[1] },
-					2: { ...baseLegendItemsMap[2], show: false },
-				},
-				focusedSeriesIndex: null,
-				setFocusedSeriesIndex: jest.fn(),
-			});
-			renderLegend(LegendPosition.RIGHT);
-
-			// Two shown, two hidden: both hidden rows can still be added.
-			expect(screen.getByTestId('legend-add-1')).toBeInTheDocument();
-			expect(screen.getByTestId('legend-add-2')).toBeInTheDocument();
-			expect(screen.queryByTestId('legend-add-0')).not.toBeInTheDocument();
+			expect(onShowAllSeries).toHaveBeenCalled();
 		});
 	});
 });

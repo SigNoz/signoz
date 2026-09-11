@@ -27,6 +27,10 @@ const MAX_RIGHT_LEGEND_WIDTH = 320;
 const RIGHT_LEGEND_WIDTH_RATIO = 0.4;
 // Column padding + copy button, not covered by the text-length estimate.
 const RIGHT_LEGEND_RESERVED_WIDTH = 40;
+// Fits the toolbar's "Showing N of M series" readout plus the wrapper padding.
+const MIN_RIGHT_LEGEND_WIDTH = 190;
+// Past this the split inverts and the chart becomes the smaller half.
+const RIGHT_LEGEND_FLOOR_RATIO = 0.5;
 
 /**
  * Calculates the average width of the legend items based on the labels of the series.
@@ -116,9 +120,14 @@ export function calculateChartDimensions({
 			MAX_RIGHT_LEGEND_WIDTH,
 			containerWidth * RIGHT_LEGEND_WIDTH_RATIO,
 		);
+		// The column's chrome outranks the 40% share on a narrow panel.
+		const floorWidth = Math.min(
+			MIN_RIGHT_LEGEND_WIDTH,
+			containerWidth * RIGHT_LEGEND_FLOOR_RATIO,
+		);
 		const rightLegendWidth = Math.min(
-			Math.max(150, desiredLegendWidth),
-			maxRightLegendWidth,
+			Math.max(MIN_RIGHT_LEGEND_WIDTH, desiredLegendWidth),
+			Math.max(floorWidth, maxRightLegendWidth),
 		);
 
 		return {

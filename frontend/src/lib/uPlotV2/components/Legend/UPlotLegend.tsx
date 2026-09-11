@@ -18,7 +18,7 @@ export default function UPlotLegend({
 	averageLegendWidth,
 }: UPlotLegendProps): JSX.Element {
 	const { legendItemsMap, focusedSeriesIndex } = useLegendsSync({ config });
-	const { onToggleSeries, onShowOnlySeries, onShowSeries, onHoverSeries } =
+	const { onToggleSeries, onShowOnlySeries, onShowAllSeries, onHoverSeries } =
 		useLegendActions();
 
 	const items = useMemo(() => Object.values(legendItemsMap), [legendItemsMap]);
@@ -31,7 +31,7 @@ export default function UPlotLegend({
 			focusedSeriesIndex={focusedSeriesIndex}
 			onToggleSeries={onToggleSeries}
 			onShowOnlySeries={onShowOnlySeries}
-			onShowSeries={onShowSeries}
+			onShowAllSeries={onShowAllSeries}
 			onHoverSeries={onHoverSeries}
 		/>
 	);
