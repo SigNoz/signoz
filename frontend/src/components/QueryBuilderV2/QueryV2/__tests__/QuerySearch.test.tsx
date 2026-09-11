@@ -2,7 +2,13 @@ import { EditorView } from '@uiw/react-codemirror';
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -113,6 +119,18 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			typeof getFieldValueSuggestions
 		>;
 		mockedGetValues.mockClear();
+		mockedGetValues.mockResolvedValueOnce({
+			status: 'success',
+			data: {
+				complete: true,
+				values: {
+					stringValues: ['payment-service'],
+					numberValues: [200],
+					boolValues: [],
+					relatedValues: [],
+				},
+			},
+		});
 
 		render(
 			<QuerySearch
@@ -136,6 +154,12 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		await waitFor(() => expect(mockedGetValues).toHaveBeenCalled(), {
 			timeout: 2000,
 		});
+
+		// the string and number values off the response both reach the dropdown
+		await expect(
+			screen.findByText('payment-service'),
+		).resolves.toBeInTheDocument();
+		await expect(screen.findByText('200')).resolves.toBeInTheDocument();
 	});
 
 	it('fetches key suggestions on mount for LOGS', async () => {
