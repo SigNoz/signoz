@@ -21,6 +21,15 @@ jest.mock('AppRoutes/utils', () => ({
 	default: jest.fn(),
 }));
 
+// The 401 path waits for the preflight effect in providers/App/App.tsx to
+// record which auth mode this deployment uses. No App renders here, so the real
+// gate would stay shut until its timeout. These cases are about the retried
+// request's payload, not about the gate; interceptorRejected.preflight.test.ts
+// covers the gate itself.
+jest.mock('utils/preflight', () => ({
+	waitForPreflight: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('axios', () => {
 	const actualAxios = jest.requireActual('axios');
 	const mockAxios = jest.fn().mockResolvedValue({ data: 'success' });
