@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
@@ -31,7 +32,9 @@ const pageStory = storyMocks(dashboardMocks, { layout: 'app' });
 const meta = {
 	title: 'Pages/Dashboards/Detail',
 	tags: ['role-gated', 'play'],
-	component: DashboardPage,
+	// The page is wrapped in `withAuthZPage`, which types its props as an index
+	// signature; the story's args are what the controls resolve to.
+	component: DashboardPage as ComponentType<DashboardArgs>,
 	// The page reads the dashboard id out of the pathname, so it renders under
 	// its own route rather than being mounted on its own.
 	render: (): JSX.Element => (
@@ -98,6 +101,8 @@ export const Loading: Story = {
 /** A dashboard id nobody has, which is what a deleted or mistyped link opens on. */
 export const NotFound: Story = {
 	args: { notFound: true },
+	// The deliberate 404 is the state under test.
+	parameters: { allowConsoleErrors: true },
 };
 
 /**
