@@ -98,6 +98,9 @@ function BarPanelRenderer({
 				maxTimeScale,
 				onDragSelect,
 			}),
+		// TooltipPlugin mutates `config` for cursor sync; rebuild on syncMode change
+		// so a fresh instance doesn't inherit stale sync settings (e.g. "No Sync").
+		// oxlint-disable-next-line react-hooks/exhaustive-deps
 		[
 			panelId,
 			spec,
@@ -110,8 +113,6 @@ function BarPanelRenderer({
 			minTimeScale,
 			maxTimeScale,
 			onDragSelect,
-			// TooltipPlugin mutates `config` for cursor sync; rebuild on syncMode change
-			// so a fresh instance doesn't inherit stale sync settings (e.g. "No Sync").
 			dashboardPreference?.syncMode,
 		],
 	);
