@@ -65,6 +65,8 @@ export const PasswordMismatch: Story = {
 /** A workspace that already has its admin, which is what setup being done looks like. */
 export const RegistrationRejected: Story = {
 	args: { registration: 'rejected' },
+	// The deliberate 409 is the state under test.
+	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
 
