@@ -118,6 +118,8 @@ export const QueryWarning: Story = {
 /** A failed explorer request. */
 export const Failed: Story = {
 	args: { dataState: 'error' },
+	// The failure is the state under test, so its console errors are expected.
+	parameters: { allowConsoleErrors: true },
 };
 
 /** The editable quick-filter settings panel. */

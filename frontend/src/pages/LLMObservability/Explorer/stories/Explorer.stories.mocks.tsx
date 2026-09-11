@@ -127,6 +127,20 @@ export const llmExplorerMocks = defineStoryMocks({
 		),
 
 		rest.get(
+			'http://localhost/api/v1/ai_observability/fields/keys',
+			response.json((req) =>
+				traceFieldKeysResponse(req.url.searchParams.get('searchText')),
+			),
+		),
+
+		rest.get(
+			'http://localhost/api/v1/ai_observability/fields/values',
+			response.json((req) =>
+				fieldValuesResponse(traceFieldValues(req.url.searchParams.get('name'))),
+			),
+		),
+
+		rest.get(
 			'http://localhost/api/v3/autocomplete/attribute_values',
 			response.json((req) =>
 				traceAttributeValuesResponse(req.url.searchParams.get('attributeKey')),
