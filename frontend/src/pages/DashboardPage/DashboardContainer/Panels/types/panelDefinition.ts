@@ -61,8 +61,6 @@ export const NO_PANEL_ACTIONS: PanelActionCapabilities = {
 	drilldown: false,
 };
 
-// Derived from an icon component so the props stay exact (size is a constrained
-// IconSize union) and ForwardRef-compatible.
 export type PanelIcon = typeof ChartLine;
 
 export interface PanelDefinition<K extends PanelKind = PanelKind> {

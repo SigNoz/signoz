@@ -22,7 +22,7 @@ export interface LegendSeries {
 
 type PanelQueries = DashboardtypesPanelDTO['spec']['queries'];
 
-export interface LegendSeriesArgs {
+interface LegendSeriesArgs {
 	queries: PanelQueries;
 	data: PanelQueryData;
 	isDarkMode: boolean;
