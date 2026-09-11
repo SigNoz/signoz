@@ -9,14 +9,17 @@ const LOADERS: Record<string, LanguageLoader> = {
 	bash: () => import('react-syntax-highlighter/dist/esm/languages/prism/bash'),
 	css: () => import('react-syntax-highlighter/dist/esm/languages/prism/css'),
 	diff: () => import('react-syntax-highlighter/dist/esm/languages/prism/diff'),
-	docker: () => import('react-syntax-highlighter/dist/esm/languages/prism/docker'),
+	docker: () =>
+		import('react-syntax-highlighter/dist/esm/languages/prism/docker'),
 	go: () => import('react-syntax-highlighter/dist/esm/languages/prism/go'),
 	java: () => import('react-syntax-highlighter/dist/esm/languages/prism/java'),
 	javascript: () =>
 		import('react-syntax-highlighter/dist/esm/languages/prism/javascript'),
 	json: () => import('react-syntax-highlighter/dist/esm/languages/prism/json'),
-	markup: () => import('react-syntax-highlighter/dist/esm/languages/prism/markup'),
-	python: () => import('react-syntax-highlighter/dist/esm/languages/prism/python'),
+	markup: () =>
+		import('react-syntax-highlighter/dist/esm/languages/prism/markup'),
+	python: () =>
+		import('react-syntax-highlighter/dist/esm/languages/prism/python'),
 	rust: () => import('react-syntax-highlighter/dist/esm/languages/prism/rust'),
 	sql: () => import('react-syntax-highlighter/dist/esm/languages/prism/sql'),
 	typescript: () =>

@@ -32,9 +32,7 @@ function EditorStatusBar({
 					})}
 					data-testid="markdown-editor-char-count"
 				>
-					{isOverLimit
-						? `${length} / ${maxLength} chars`
-						: `${length} chars`}
+					{isOverLimit ? `${length} / ${maxLength} chars` : `${length} chars`}
 				</span>
 			</Typography.Text>
 			{hint && (
