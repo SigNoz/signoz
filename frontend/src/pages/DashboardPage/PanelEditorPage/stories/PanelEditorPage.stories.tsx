@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
@@ -21,7 +22,9 @@ const pageStory = storyMocks(panelEditorMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Dashboards/Panel Editor',
-	component: PanelEditorPage,
+	// The page is wrapped in `withAuthZPage`, which types its props as an index
+	// signature; the story's args are what the controls resolve to.
+	component: PanelEditorPage as ComponentType<PanelEditorArgs>,
 	// The dashboard and panel ids come out of the pathname, so the editor renders
 	// under its own route rather than being mounted on its own.
 	render: (): JSX.Element => (
@@ -69,6 +72,8 @@ export const PreviewQueryError: Story = {
 /** A locked dashboard: the editor still opens, but it cannot save. */
 export const ReadOnly: Story = {
 	args: { locked: true },
+	// The deliberate 500s on the metrics queries are the state under test.
+	parameters: { allowConsoleErrors: true },
 };
 
 /**
