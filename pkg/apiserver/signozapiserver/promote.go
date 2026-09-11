@@ -10,11 +10,11 @@ import (
 )
 
 func (provider *provider) addPromoteRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/promote_paths/{signal}/{context}", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.PromotePaths), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/promote_paths/{telemetry_signal}/{context}", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.PromotePaths), handler.OpenAPIDef{
 		ID:                  "PromotePaths",
 		Tags:                []string{"promote"},
 		Summary:             "Promote paths",
-		Description:         "This endpoint promotes paths of a JSON column to its promoted column. The promotion domain is identified by the signal and field context path variables, e.g. traces/attribute.",
+		Description:         "This endpoint promotes paths of a JSON column to its promoted column. The promotion domain is identified by the telemetry_signal and context path variables, e.g. traces/attribute.",
 		Request:             new([]*promotetypes.PromotePath),
 		RequestContentType:  "application/json",
 		Response:            nil,
@@ -26,11 +26,11 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/promote_paths/{signal}/{context}", handler.New(provider.authzMiddleware.ViewAccess(provider.promoteHandler.ListPromotedPaths), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/promote_paths/{telemetry_signal}/{context}", handler.New(provider.authzMiddleware.ViewAccess(provider.promoteHandler.ListPromotedPaths), handler.OpenAPIDef{
 		ID:                  "ListPromotedPaths",
 		Tags:                []string{"promote"},
 		Summary:             "List promoted paths",
-		Description:         "This endpoint lists the promoted paths of a JSON column. The promotion domain is identified by the signal and field context path variables, e.g. traces/attribute.",
+		Description:         "This endpoint lists the promoted paths of a JSON column. The promotion domain is identified by the telemetry_signal and context path variables, e.g. traces/attribute.",
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            new([]*promotetypes.PromotePath),
