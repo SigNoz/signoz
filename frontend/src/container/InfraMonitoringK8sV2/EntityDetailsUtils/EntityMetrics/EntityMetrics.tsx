@@ -152,13 +152,16 @@ function EntityMetrics<T>({
 		}
 
 		const panelType = queryPayloads[idx]?.graphType;
+		const isNoData =
+			!query.isLoading && !query?.data?.payload?.data?.result?.length;
 
 		return (
 			<div
 				className={cx(styles.chartContainer, {
-					[styles.noDataContainer]:
-						!query.isLoading && !query?.data?.payload?.data?.result?.length,
+					[styles.noDataContainer]: isNoData,
 				})}
+				data-testid="entity-metrics-chart"
+				data-has-data={isNoData ? 'false' : 'true'}
 			>
 				{panelType === PANEL_TYPES.TABLE ? (
 					<MetricsTable

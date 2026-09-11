@@ -20,7 +20,7 @@ export default function EntityError(): JSX.Element {
 	};
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} data-testid="entity-error-state">
 			<div className={styles.content}>
 				<img src={awwSnapUrl} alt="error" className={styles.icon} />
 				<Typography.Text>

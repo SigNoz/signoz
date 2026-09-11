@@ -51,7 +51,7 @@ function EntityDateTimeSelector({
 	);
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} data-testid="drawer-time-selection">
 			{hasTimeChanged && (
 				<TooltipSimple title="Reset to list time" side="bottom">
 					<Button

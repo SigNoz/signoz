@@ -82,7 +82,7 @@ export function GroupedStatusCounts({
 	}
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} data-testid="grouped-status-counts">
 			{visibleItems.map((item) => (
 				<TanStackTable.HoverTooltip
 					key={item.label}
@@ -94,6 +94,7 @@ export function GroupedStatusCounts({
 					{item.value ? (
 						<TanStackTable.Text
 							className={styles.item}
+							data-testid={`status-count-${item.label.toLowerCase()}`}
 							style={{ '--gsc-color': item.color } as React.CSSProperties}
 						>
 							{item.value}

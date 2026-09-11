@@ -68,7 +68,15 @@ export default defineConfig({
 		: Math.max(1, Math.min(6, Math.floor(os.cpus().length / 2))),
 
 	// The SPA hydrates slowly on CI, so the 5s expect default fires mid-load.
-	expect: { timeout: 15_000 },
+	//
+	// `toPass` needs its own budget: it reads `expect.toPass.timeout`, *not*
+	// `expect.timeout` (see `takeFirst(...)` in playwright's matchers.js), so
+	// without this every bare `toPass()` in the suite defaults to 0 — meaning
+	// "run to the test deadline". A retry budget that equals the test timeout
+	// reports as a bare "Test timeout exceeded" with no failing assertion and no
+	// steps, which is the least debuggable failure Playwright can emit. Keep this
+	// strictly under `timeout` so the assertion, not the deadline, is what fails.
+	expect: { timeout: 15_000, toPass: { timeout: 20_000 } },
 	timeout: process.env.CI ? 60_000 : 30_000,
 
 	// Reporter

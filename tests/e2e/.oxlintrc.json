@@ -20,7 +20,26 @@
 		"no-console": ["warn", { "allow": ["warn", "error"] }],
 		"typescript/no-unused-vars": "error",
 		"typescript/no-explicit-any": "warn",
-		"playwright/expect-expect": "error",
+		"playwright/expect-expect": [
+			"error",
+			{
+				"assertFunctionNames": [
+					"expectColumnState",
+					"expectDefaultColumns",
+					"expectDrawerTabs",
+					"expectExpression",
+					"expectExpressionContains",
+					"expectMetadataLabels",
+					"expectQuickFilterSections",
+					"expectTotalCountLabel",
+					"expectUrlParams",
+					"expectVisibleColumns",
+					"expectWidgetTitles",
+					"waitForRow",
+					"waitForRows"
+				]
+			}
+		],
 		"playwright/no-conditional-in-test": "error",
 		"playwright/no-page-pause": "error",
 		"playwright/no-wait-for-timeout": "warn",

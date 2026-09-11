@@ -374,6 +374,11 @@ export function K8sBaseList<
 
 	const isGroupedByAttribute = groupBy.length > 0;
 
+	const getRowTestId = useCallback(
+		(record: T): string => `row-${getRowKey(record)}`,
+		[getRowKey],
+	);
+
 	// Filter columns for expanded row based on parent's hidden columns
 	const expandedRowColumns = useMemo(
 		() => tableColumns.filter((col) => !hiddenColumnIds.includes(col.id)),
@@ -395,6 +400,7 @@ export function K8sBaseList<
 				extraQueryKeyParts={extraQueryKeyParts}
 				getRowKey={getRowKey}
 				getItemKey={getItemKey}
+				getRowTestId={getRowTestId}
 				detailsQueryKeyPrefix={detailsQueryKeyPrefix}
 			/>
 		),
@@ -403,6 +409,7 @@ export function K8sBaseList<
 			fetchListData,
 			getRowKey,
 			getItemKey,
+			getRowTestId,
 			expandedRowColumns,
 			extraQueryKeyParts,
 			detailsQueryKeyPrefix,
@@ -484,6 +491,7 @@ export function K8sBaseList<
 						isLoading={showTableLoadingState}
 						getRowKey={getRowKey}
 						getItemKey={getItemKey}
+						getRowTestId={getRowTestId}
 						groupBy={groupBy.map((g) => ({ key: g }))}
 						getGroupKey={getGroupKeyFn}
 						onRowClick={handleRowClick}
