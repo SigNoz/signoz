@@ -60,6 +60,9 @@ export const InvalidRequiredFields: Story = {
 /** Mutation: a failed test request keeps the edit form open and renders its error feedback. */
 export const TestChannelFailure: Story = {
 	args: { testOutcome: 'fails' },
+	// The mocked test request intentionally fails; the resulting console error is
+	// the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
 		await userEvent.click(
 			await within(canvasElement).findByTestId(
@@ -75,6 +78,9 @@ export const TestChannelFailure: Story = {
 /** Mutation: a failed save leaves the saved channel editable and surfaces the request error. */
 export const SaveFailure: Story = {
 	args: { saveOutcome: 'fails' },
+	// The mocked save request intentionally fails; the resulting console error is
+	// the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
 		await userEvent.click(
 			await within(canvasElement).findByTestId(
