@@ -60,6 +60,9 @@ export const Loading: Story = {
 /** Data: the table's retryable error state after the rule request fails. */
 export const LoadError: Story = {
 	args: { dataState: 'error' },
+	// The mocked rule request intentionally fails; the resulting console error is
+	// the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 };
 
 /** Density: a second page of rules with the shared pagination controls visible. */
