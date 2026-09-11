@@ -18,7 +18,7 @@ import type { PanelKind } from './types/panelKind';
  */
 
 /** Renders from its own plugin spec — no query surface at all. */
-export function isQuerylessPanelKind(kind: PanelKind): boolean {
+export function isStaticPanelKind(kind: PanelKind): boolean {
 	return getPanelDefinition(kind).mode === 'static';
 }
 
@@ -93,7 +93,7 @@ export function isPanelCombinationValid({
 	signal?: TelemetrytypesSignalDTO;
 }): boolean {
 	// A query-less kind ignores the query entirely, so it pairs with anything.
-	if (isQuerylessPanelKind(kind)) {
+	if (isStaticPanelKind(kind)) {
 		return true;
 	}
 	if (!isQueryTypeSupportedByPanelKind(kind, queryType)) {

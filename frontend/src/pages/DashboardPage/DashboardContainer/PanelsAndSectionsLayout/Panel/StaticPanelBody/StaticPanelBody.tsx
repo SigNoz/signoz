@@ -7,7 +7,7 @@ import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/
 import styles from './StaticPanelBody.module.scss';
 
 interface StaticPanelBodyProps {
-	panelDefinition: RenderableStaticPanelDefinition;
+	Renderer: RenderableStaticPanelDefinition['Renderer'];
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
 	/** Render context — defaults to the dashboard view; the editor preview passes EDIT. */
@@ -21,7 +21,7 @@ interface StaticPanelBodyProps {
  * live while the draft spec changes.
  */
 function StaticPanelBody({
-	panelDefinition,
+	Renderer,
 	panel,
 	panelId,
 	panelMode = PanelMode.DASHBOARD_VIEW,
@@ -29,7 +29,6 @@ function StaticPanelBody({
 	// From the edit context, not props: the editor route seeds it too, so an
 	// unsaved panel's preview resolves variables the same way the grid does.
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const { Renderer } = panelDefinition;
 
 	return (
 		<div className={styles.body} data-testid="static-panel-body">

@@ -36,7 +36,7 @@ function StaticViewModalBody({
 	onChangePanelKind,
 }: StaticViewModalBodyProps): JSX.Element {
 	const { draft, spec, setSpec } = draftApi;
-	const { EditorPane } = panelDefinition;
+	const { EditorPane, Renderer } = panelDefinition;
 	const openPanelEditor = useOpenPanelEditor();
 
 	const onSwitchToEdit = useCallback((): void => {
@@ -77,7 +77,7 @@ function StaticViewModalBody({
 					hideActions
 				/>
 				<StaticPanelBody
-					panelDefinition={panelDefinition}
+					Renderer={Renderer}
 					panel={draft}
 					panelId={panelId}
 					panelMode={PanelMode.STANDALONE_VIEW}

@@ -51,7 +51,7 @@ function StaticEditorBody({
 		useDashboardEditContext();
 
 	const { draft, spec, setSpec, isSpecDirty } = draftApi;
-	const { EditorPane } = panelDefinition;
+	const { EditorPane, Renderer } = panelDefinition;
 
 	const { save, isSaving } = usePanelEditorSave({
 		dashboardId,
@@ -78,7 +78,14 @@ function StaticEditorBody({
 		} catch (err) {
 			showErrorModal(err);
 		}
-	}, [isEditable, save, draft.spec, setScrollTargetId, onSaved, showErrorModal]);
+	}, [
+		isEditable,
+		save,
+		draft.spec,
+		setScrollTargetId,
+		onSaved,
+		showErrorModal,
+	]);
 
 	const onCloseEditor = useCallback((): void => {
 		if (!isNew) {
@@ -113,7 +120,7 @@ function StaticEditorBody({
 						hideActions
 					/>
 					<StaticPanelBody
-						panelDefinition={panelDefinition}
+						Renderer={Renderer}
 						panel={draft}
 						panelId={panelId}
 						panelMode={PanelMode.DASHBOARD_EDIT}

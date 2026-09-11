@@ -34,7 +34,7 @@ function StaticPublicPanel({
 				hideActions
 			/>
 			<StaticPanelBody
-				panelDefinition={panelDefinition}
+				Renderer={panelDefinition.Renderer}
 				panel={panel}
 				panelId={panelKey}
 			/>

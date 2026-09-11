@@ -18,10 +18,7 @@ import type {
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 
-import {
-	isQuerylessPanelKind,
-	resolveQueryType,
-} from '../../Panels/capabilities';
+import { isStaticPanelKind, resolveQueryType } from '../../Panels/capabilities';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
@@ -137,7 +134,7 @@ export function usePanelTypeSwitch({
 			const cached = cacheRef.current.get(newKind);
 			if (cached) {
 				setSpec(buildSpec(cached.pluginSpec, cached.queries));
-				if (!isQuerylessPanelKind(newKind)) {
+				if (!isStaticPanelKind(newKind)) {
 					redirectWithQueryBuilderData(cached.builderQuery);
 				}
 				return;
@@ -146,7 +143,7 @@ export function usePanelTypeSwitch({
 			// First visit to a static kind → fresh spec from its sections, queries
 			// emptied (the API accepts nothing else), and the query builder left as-is:
 			// the stash above keeps the old kind's query for the return trip.
-			if (isQuerylessPanelKind(newKind)) {
+			if (isStaticPanelKind(newKind)) {
 				const signal = getBuilderQueries(currentSpec.queries)[0]
 					?.signal as TelemetrytypesSignalDTO;
 				setSpec(buildSpec(getSwitchedPluginSpec(currentSpec, newKind, signal), []));
