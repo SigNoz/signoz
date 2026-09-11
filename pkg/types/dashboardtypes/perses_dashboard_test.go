@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/stretchr/testify/assert"
@@ -522,6 +523,149 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
 	}
+}
+
+// TestHeatmapPanelQueryKinds pins the panel allowlist to what validateHeatmap
+// accepts in querybuildertypesv5: everything but a trace operator.
+func TestHeatmapPanelQueryKinds(t *testing.T) {
+	testCases := []struct {
+		description     string
+		queryPluginKind string
+		queryPluginSpec string
+		expectedAllowed bool
+	}{
+		{
+			description:     "a metrics builder query is allowed",
+			queryPluginKind: "signoz/BuilderQuery",
+			queryPluginSpec: `{"name": "A", "signal": "metrics", "aggregations": [
+				{"metricName": "http.server.request.duration", "timeAggregation": "increase", "spaceAggregation": "sum"}
+			]}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a promql query is allowed",
+			queryPluginKind: "signoz/PromQLQuery",
+			queryPluginSpec: `{"name": "A", "query": "sum by (le) (increase(signoz_latency_bucket[5m]))"}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a clickhouse query is allowed",
+			queryPluginKind: "signoz/ClickHouseSQL",
+			queryPluginSpec: `{"name": "A", "query": "SELECT ts, bucket, value FROM cells"}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a formula is allowed",
+			queryPluginKind: "signoz/Formula",
+			queryPluginSpec: `{"name": "F1", "expression": "A / B"}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a composite query is allowed, since a formula needs its disabled inputs alongside it",
+			queryPluginKind: "signoz/CompositeQuery",
+			queryPluginSpec: `{"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "disabled": true, "aggregations": [
+					{"metricName": "http.server.request.duration", "timeAggregation": "increase", "spaceAggregation": "sum"}
+				]}},
+				{"type": "builder_formula", "spec": {"name": "F1", "expression": "A * 2"}}
+			]}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a trace operator is refused",
+			queryPluginKind: "signoz/TraceOperator",
+			queryPluginSpec: `{"name": "T1", "expression": "A => B"}`,
+			expectedAllowed: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			data := fmt.Sprintf(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "signoz/HeatmapPanel", "spec": {}},
+							"queries": [{
+								"kind": "heatmap",
+								"spec": {
+									"plugin": {"kind": %q, "spec": %s}
+								}
+							}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`, testCase.queryPluginKind, testCase.queryPluginSpec)
+
+			_, err := unmarshalDashboard([]byte(data))
+
+			if testCase.expectedAllowed {
+				require.NoError(t, err)
+				return
+			}
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "is not supported by panel kind")
+		})
+	}
+}
+
+func TestValidateHeatmapDashboard(t *testing.T) {
+	data, err := os.ReadFile("testdata/perses_heatmap_panel.json")
+	require.NoError(t, err, "reading example file")
+
+	spec, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &HeatmapPanelSpec{}, spec.Panels["p1"].Spec.Plugin.Spec)
+	panelSpec := spec.Panels["p1"].Spec.Plugin.Spec.(*HeatmapPanelSpec)
+	assert.Equal(t, "log", panelSpec.Axes.YScale.ValueOrDefault())
+	assert.Equal(t, "ember", panelSpec.ChartAppearance.Colors.Palette.ValueOrDefault())
+	assert.Equal(t, "sqrt", panelSpec.ChartAppearance.Colors.Scale.ValueOrDefault())
+	assert.Equal(t, 8, panelSpec.ChartAppearance.Colors.Steps)
+
+	dashboard := &DashboardV2{Spec: *spec}
+	request, err := dashboard.GetPanelQuery(1, 2, "p1")
+	require.NoError(t, err, "building the panel's query failed")
+	assert.Equal(t, qb.RequestTypeHeatmap, request.RequestType)
+
+	require.Len(t, request.CompositeQuery.Queries, 3)
+	numerator, ok := request.CompositeQuery.Queries[0].Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "expected a metrics builder query")
+	assert.True(t, numerator.Disabled)
+	require.NotNil(t, numerator.BucketOptions)
+	require.IsType(t, qb.LogBucketsSpec{}, numerator.BucketOptions.Spec)
+	assert.Equal(t, 4, *numerator.BucketOptions.Spec.(qb.LogBucketsSpec).Scale)
+
+	denominator, ok := request.CompositeQuery.Queries[1].Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "expected a metrics builder query")
+	assert.True(t, denominator.Disabled)
+	require.NotNil(t, denominator.BucketOptions)
+	require.IsType(t, qb.LinearBucketsSpec{}, denominator.BucketOptions.Spec)
+	assert.Equal(t, float64(1000), denominator.BucketOptions.Spec.(qb.LinearBucketsSpec).MaxValue)
+
+	formula, ok := request.CompositeQuery.Queries[2].Spec.(qb.QueryBuilderFormula)
+	require.True(t, ok, "expected a formula")
+	require.NotNil(t, formula.BucketOptions)
+	assert.Equal(t, qb.BucketsKindLog, formula.BucketOptions.Kind)
+	require.IsType(t, qb.LogBucketsSpec{}, formula.BucketOptions.Spec)
+	assert.Equal(t, 2, *formula.BucketOptions.Spec.(qb.LogBucketsSpec).Scale)
+
+	require.NoError(t, request.Validate(), "the request built from the panel is not a valid heatmap request")
+
+	// the panel read back out of storage draws the same heatmap
+	stored, err := json.Marshal(spec)
+	require.NoError(t, err, "marshal dashboard failed")
+	reread, err := unmarshalDashboard(stored)
+	require.NoError(t, err, "the stored dashboard does not validate")
+	rereadRequest, err := (&DashboardV2{Spec: *reread}).GetPanelQuery(1, 2, "p1")
+	require.NoError(t, err, "building the stored panel's query failed")
+	assert.Equal(t, request, rereadRequest)
 }
 
 func TestInvalidateOneInvalidPanel(t *testing.T) {
