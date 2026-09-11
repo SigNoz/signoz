@@ -81,7 +81,7 @@ func (b *BucketOptions) ToHeatmapBucketing() HeatmapBucketing {
 	return resolved
 }
 
-// This cannot be called in validateHeatmap cuz type is resolved in querier.go.
+// This cannot be called in validateHeatmap cuz metric type is resolved in querier.go.
 func (a *MetricAggregation) VerifyAndApplyBucketOptions(bucketOptions *BucketOptions) error {
 	switch a.Type {
 	case metrictypes.HistogramType:
