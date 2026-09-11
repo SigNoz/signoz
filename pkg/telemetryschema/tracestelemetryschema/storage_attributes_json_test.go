@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,6 +20,11 @@ var (
 	attrWindowAfter    = [2]uint64{tsNano(2025, 6), tsNano(2025, 7)}
 	attrWindowStraddle = [2]uint64{tsNano(2024, 6), tsNano(2025, 6)}
 )
+
+func readSQL(ctx context.Context, storage qbtypes.Storage, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	read, err := storage.Read(ctx, qbtypes.QueryInfo{StartNs: startNs, EndNs: endNs}, key)
+	return read.SQL, err
+}
 
 func tsNano(y int, m time.Month) uint64 {
 	return uint64(time.Date(y, m, 1, 0, 0, 0, 0, time.UTC).UnixNano())
@@ -40,7 +44,7 @@ func attrKey(name string, dt telemetrytypes.FieldDataType, evo []*telemetrytypes
 // cast, straddling a dual-read multiIf with the JSON column first.
 func TestFieldForAttributeJSONEvolution(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	testCases := []struct {
@@ -64,7 +68,7 @@ func TestFieldForAttributeJSONEvolution(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			key := attrKey("user.id", tc.dataType, evo)
-			got, err := fm.FieldFor(ctx, valuer.UUID{}, tc.window[0], tc.window[1], &key)
+			got, err := readSQL(ctx, storage, tc.window[0], tc.window[1], &key)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		})
@@ -75,7 +79,7 @@ func TestFieldForAttributeJSONEvolution(t *testing.T) {
 // entry is registered: a key with no evolutions resolves to the Map column for every window.
 func TestFieldForAttributeNoEvolutionParity(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
+	storage := NewStorage()
 
 	for _, dt := range []struct {
 		dataType telemetrytypes.FieldDataType
@@ -86,7 +90,7 @@ func TestFieldForAttributeNoEvolutionParity(t *testing.T) {
 		{telemetrytypes.FieldDataTypeBool, "attributes_bool['user.id']"},
 	} {
 		key := attrKey("user.id", dt.dataType, nil)
-		got, err := fm.FieldFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key)
+		got, err := readSQL(ctx, storage, attrWindowAfter[0], attrWindowAfter[1], &key)
 		require.NoError(t, err)
 		assert.Equal(t, dt.expected, got, "no evolution entry must keep the Map path")
 	}
@@ -97,8 +101,7 @@ func TestFieldForAttributeNoEvolutionParity(t *testing.T) {
 // numeric comparisons keep numeric semantics; existence never tests the ::String cast.
 func TestConditionForAttributeJSON(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
-	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	testCases := []struct {
@@ -167,8 +170,7 @@ func TestConditionForAttributeJSON(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			sb := sqlbuilder.NewSelectBuilder()
-			conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &tc.key,
-				map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
+			conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1]}, storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
 			require.NoError(t, err)
 			sb.Where(conds...)
 			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -182,14 +184,12 @@ func TestConditionForAttributeJSON(t *testing.T) {
 // home is excluded (De Morgan), including rows that predate the JSON column.
 func TestConditionForAttributeJSONNotExistsDualRead(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
-	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, attrWindowStraddle[0], attrWindowStraddle[1], &key,
-		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotExists, nil, sb)
+	conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowStraddle[0], EndNs: attrWindowStraddle[1]}, storage, &key, qbtypes.FilterOperatorNotExists, nil, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
 	require.NoError(t, err)
 	sb.Where(conds...)
 	sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -204,21 +204,21 @@ func TestConditionForAttributeJSONNotExistsDualRead(t *testing.T) {
 // path is NULL rather than a spurious ”/0, and the numeric branch keeps its toFloat64 coercion.
 func TestColumnExpressionForAttributeJSON(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	t.Run("group by string", func(t *testing.T) {
 		key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
-		got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key, telemetrytypes.FieldDataTypeString, nil)
+		got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1]}, storage, &key, telemetrytypes.FieldDataTypeString, nil)
 		require.NoError(t, err)
-		assert.Equal(t, "multiIf(attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, NULL)", got)
+		assert.Equal(t, "multiIf(attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, mapContains(attributes_string, 'attribute.user.id'), attributes_string['attribute.user.id'], NULL)", got)
 	})
 
 	t.Run("aggregation numeric", func(t *testing.T) {
 		key := attrKey("latency", telemetrytypes.FieldDataTypeNumber, evo)
-		got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key, telemetrytypes.FieldDataTypeFloat64, nil)
+		got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1]}, storage, &key, telemetrytypes.FieldDataTypeFloat64, nil)
 		require.NoError(t, err)
-		assert.Equal(t, "multiIf(if(dynamicType(attributes.`latency`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`latency`, 'Float64'), NULL) IS NOT NULL, toFloat64(if(dynamicType(attributes.`latency`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`latency`, 'Float64'), NULL)), NULL)", got)
+		assert.Equal(t, "multiIf(if(dynamicType(attributes.`latency`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`latency`, 'Float64'), NULL) IS NOT NULL, toFloat64(if(dynamicType(attributes.`latency`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`latency`, 'Float64'), NULL)), mapContains(attributes_number, 'attribute.latency'), toFloat64(attributes_number['attribute.latency']), NULL)", got)
 	})
 }
 
@@ -227,14 +227,12 @@ func TestColumnExpressionForAttributeJSON(t *testing.T) {
 // attribute filter must not emit the "ambiguous key" warning.
 func TestAttributeJSONNoAmbiguityWarning(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
-	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
 	sb := sqlbuilder.NewSelectBuilder()
-	_, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key,
-		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "x", sb)
+	_, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1]}, storage, &key, qbtypes.FilterOperatorEqual, "x", map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
 	require.NoError(t, err)
 	assert.Empty(t, warnings, "a plain attribute filter must not emit an ambiguity warning")
 }
@@ -245,8 +243,7 @@ func TestAttributeJSONNoAmbiguityWarning(t *testing.T) {
 // warning. In the JSON column the two branches share the raw path; only the cast differs.
 func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
-	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	strKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeString, evo)
@@ -257,8 +254,7 @@ func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
 
 	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &ref,
-		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, float64(200), sb)
+	conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1]}, storage, &ref, qbtypes.FilterOperatorEqual, float64(200), fieldKeys, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 2, "a colliding name must build one condition per data type")
 
@@ -277,7 +273,7 @@ func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
 // as its actual stored type.
 func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	strKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeString, evo)
@@ -287,7 +283,7 @@ func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	}
 
 	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
-	got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &ref, telemetrytypes.FieldDataTypeString, fieldKeys)
+	got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1]}, storage, &ref, telemetrytypes.FieldDataTypeString, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
 		"multiIf(attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL) IS NOT NULL, toString(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)), NULL)",
@@ -301,7 +297,7 @@ func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 // coverage.
 func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	numKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeNumber, evo)
@@ -311,7 +307,7 @@ func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
 	}
 
 	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
-	got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &ref, telemetrytypes.FieldDataTypeFloat64, fieldKeys)
+	got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1]}, storage, &ref, telemetrytypes.FieldDataTypeFloat64, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
 		"multiIf(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL) IS NOT NULL, toFloat64(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)), attributes.`http.status_code` IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), NULL)",
@@ -323,8 +319,7 @@ func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
 // columns (attributes_string / attributes_number), each with its own mapContains guard.
 func TestConditionForAttributeMapTypeCollisionParity(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
-	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	strKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeString, evo)
@@ -335,8 +330,7 @@ func TestConditionForAttributeMapTypeCollisionParity(t *testing.T) {
 
 	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
 	sb := sqlbuilder.NewSelectBuilder()
-	conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, attrWindowBefore[0], attrWindowBefore[1], &ref,
-		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, float64(200), sb)
+	conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowBefore[0], EndNs: attrWindowBefore[1]}, storage, &ref, qbtypes.FilterOperatorEqual, float64(200), fieldKeys, false, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 2, "a colliding name must build one condition per data type")
 
@@ -354,11 +348,10 @@ func TestConditionForAttributeMapTypeCollisionParity(t *testing.T) {
 // metadata-first resolvable.
 func TestColumnForUnspecifiedAttributeNoBranchFlip(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	key := attrKey("user.id", telemetrytypes.FieldDataTypeUnspecified, evo)
-	_, err := fm.ColumnFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key)
+	_, err := (&storage{}).getColumn(ctx, attrWindowAfter[0], attrWindowAfter[1], &key)
 	assert.ErrorIs(t, err, qbtypes.ErrColumnNotFound)
 }
 
@@ -370,15 +363,13 @@ func TestColumnForUnspecifiedAttributeNoBranchFlip(t *testing.T) {
 // evolution: a key without it (the pre-rollout system) is byte-identical to today.
 func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
-	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	build := func(t *testing.T, key telemetrytypes.TelemetryFieldKey, window [2]uint64, op qbtypes.FilterOperator, value any) string {
 		t.Helper()
 		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, window[0], window[1], &key,
-			map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, op, value, sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: window[0], EndNs: window[1]}, storage, &key, op, value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -410,7 +401,7 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	t.Run("equal number after -> not folded, exists guard excludes absent", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorEqual, float64(0))
-		assert.Contains(t, sql, "(toFloat64(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)) = ? AND attributes.`http.status_code` IS NOT NULL)")
+		assert.Contains(t, sql, "toFloat64(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)) = ?")
 		assert.NotContains(t, sql, "ifNull")
 	})
 
@@ -452,15 +443,13 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 // EXISTS/NOT EXISTS must still exclude a key absent from every home, rather than matching it.
 func TestConditionForAttributeJSONStraddleAbsentKeyExclusion(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
-	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
 
 	build := func(t *testing.T, key telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) string {
 		t.Helper()
 		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, attrWindowStraddle[0], attrWindowStraddle[1], &key,
-			map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, op, value, sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: attrWindowStraddle[0], EndNs: attrWindowStraddle[1]}, storage, &key, op, value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -469,9 +458,11 @@ func TestConditionForAttributeJSONStraddleAbsentKeyExclusion(t *testing.T) {
 
 	guard := "multiIf(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL) IS NOT NULL"
 
-	t.Run("equal zero keeps the exists guard", func(t *testing.T) {
+	t.Run("equal zero takes no guard: the absent read is NULL", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
-		assert.Contains(t, build(t, key, qbtypes.FilterOperatorEqual, float64(0)), guard)
+		sql := build(t, key, qbtypes.FilterOperatorEqual, float64(0))
+		assert.Contains(t, sql, "toFloat64(multiIf(")
+		assert.NotContains(t, sql, guard)
 	})
 	t.Run("exists is the raw multiIf, not always-true", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)

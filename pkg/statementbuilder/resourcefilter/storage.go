@@ -1,0 +1,86 @@
+package resourcefilter
+
+import (
+	"context"
+	"fmt"
+
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+)
+
+var (
+	resourceColumns = map[string]*schema.Column{
+		"labels":                  {Name: "labels", Type: schema.ColumnTypeString},
+		"fingerprint":             {Name: "fingerprint", Type: schema.ColumnTypeString},
+		"seen_at_ts_bucket_start": {Name: "seen_at_ts_bucket_start", Type: schema.ColumnTypeInt64},
+	}
+)
+
+type storage struct{}
+
+var _ qbtypes.Storage = (*storage)(nil)
+
+func newStorage() *storage {
+	return &storage{}
+}
+
+func (m *storage) getColumn(
+	_ context.Context,
+	_, _ uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+) ([]*schema.Column, error) {
+	if key.FieldContext == telemetrytypes.FieldContextResource {
+		return []*schema.Column{resourceColumns["labels"]}, nil
+	}
+	if col, ok := resourceColumns[key.Name]; ok {
+		return []*schema.Column{col}, nil
+	}
+	return nil, qbtypes.ErrColumnNotFound
+}
+
+func (m *storage) read(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	columns, err := m.getColumn(ctx, q.StartNs, q.EndNs, key)
+	if err != nil {
+		return "", err
+	}
+	if key.FieldContext == telemetrytypes.FieldContextResource {
+		return fmt.Sprintf("simpleJSONExtractString(%s, %s)", columns[0].Name, clickhousesql.StringLiteral(key.Name)), nil
+	}
+	return columns[0].Name, nil
+}
+
+// Read composes the bare read of one key with its membership test. Only a
+// resource key has a presence notion in the labels JSON; anything else is a
+// real column and always present.
+func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (qbtypes.Read, error) {
+	columns, err := m.getColumn(ctx, q.StartNs, q.EndNs, key)
+	if err != nil {
+		return qbtypes.Read{}, err
+	}
+	sql, err := m.read(ctx, q, key)
+	if err != nil {
+		return qbtypes.Read{}, err
+	}
+	if key.FieldContext != telemetrytypes.FieldContextResource {
+		return qbtypes.Read{SQL: sql, Presence: "true", Absence: "false", WhenAbsent: qbtypes.AlwaysPresent}, nil
+	}
+	presence := fmt.Sprintf("simpleJSONHas(%s, %s)", columns[0].Name, clickhousesql.StringLiteral(key.Name))
+	return qbtypes.Read{
+		SQL:        sql,
+		Presence:   presence,
+		Absence:    "NOT " + presence,
+		WhenAbsent: qbtypes.AbsentIsSentinel,
+	}, nil
+}
+
+// Fallback returns nil: the fingerprint table holds only what the metadata
+// reports, and a term it cannot serve is the main query's to evaluate.
+func (m *storage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) ([]*telemetrytypes.LogicalField, error) {
+	return nil, nil
+}
+
+func (m *storage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{Split: qbtypes.FingerprintOfSplit, UnknownKey: qbtypes.IgnoreUnknownKey}
+}

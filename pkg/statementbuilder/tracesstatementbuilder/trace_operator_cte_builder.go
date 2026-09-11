@@ -265,15 +265,11 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 			query.Filter.Expression,
 			querybuilder.FilterExprVisitorOpts{
 				Context:            ctx,
-				OrgID:              b.orgID,
-				Flagger:            b.stmtBuilder.fl,
+				Query:              querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end),
+				Storage:            b.stmtBuilder.storage,
 				Logger:             b.stmtBuilder.logger,
-				FieldMapper:        b.stmtBuilder.fm,
-				ConditionBuilder:   b.stmtBuilder.cb,
 				FieldKeys:          keys,
 				SkipResourceFilter: true,
-				StartNs:            b.start,
-				EndNs:              b.end,
 			},
 		)
 		if err != nil {
@@ -489,11 +485,12 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	}
 
 	// Add selectFields since we now have all base table columns
+	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for i, field := range b.operator.SelectFields {
 		if selectedFields[field.Name] {
 			continue
 		}
-		expr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.orgID, b.start, b.end, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			b.stmtBuilder.logger.WarnContext(ctx, "failed to map select field",
 				slog.String("field", field.Name), errors.Attr(err))
@@ -514,7 +511,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	// Add order by support
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
-		expr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.orgID, b.start, b.end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -632,8 +629,9 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 		int64(b.operator.StepInterval.Seconds()),
 	))
 
+	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.orgID, b.start, b.end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -728,8 +726,9 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 
 	sb := sqlbuilder.NewSelectBuilder()
 
+	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.orgID, b.start, b.end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -854,8 +853,9 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
+	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.orgID, b.start, b.end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
