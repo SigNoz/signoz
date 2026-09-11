@@ -150,7 +150,7 @@ func (b *StatementBuilder) buildPipelineStatement(
 	cteQuery := query
 	if query.Aggregations[0].Type == metrictypes.HistogramType {
 		query.GroupBy = slices.DeleteFunc(slices.Clone(query.GroupBy), isHistogramBucket)
-		cteQuery = rewriteQueryForHistogramCTE(query)
+		cteQuery = rewriteQueryForHistogramCTE(requestType, query)
 	}
 
 	agg := cteQuery.Aggregations[0]
@@ -237,15 +237,19 @@ func (b *StatementBuilder) buildPipelineStatement(
 	return unionStatements(mainStmt, reducedStmt, query)
 }
 
-func rewriteQueryForHistogramCTE(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation] {
+func rewriteQueryForHistogramCTE(requestType qbtypes.RequestType, query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation] {
 	query.GroupBy = append(slices.Clone(query.GroupBy), qbtypes.GroupByKey{
 		TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: histogramBucketKey},
 	})
 
-	// The CTE yields one observation count per `le` per step. The space
-	// aggregation the caller asked for is applied downstream, over the `le` array.
+	// A heatmap cell is a count of observations, so the CTE has to hand it whole
+	// numbers however the percentile it was asked for would read them.
 	query.Aggregations = slices.Clone(query.Aggregations)
-	query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
+	if query.Aggregations[0].SpaceAggregation.IsPercentile() && requestType != qbtypes.RequestTypeHeatmap {
+		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
+	} else {
+		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
+	}
 	query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
 
 	return query
