@@ -31,9 +31,9 @@ func (h *handler) ListPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Req
 	h.list(w, r, promotetypes.NewLogsBodyTarget())
 }
 
-// HandlePromotePaths serves the generic domain route; the domain is resolved
-// from the {signal}/{context} path variables.
-func (h *handler) HandlePromotePaths(w http.ResponseWriter, r *http.Request) {
+// PromotePaths serves the generic domain route; the domain is resolved from
+// the {signal}/{context} path variables.
+func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 	target, err := targetFromPath(r)
 	if err != nil {
 		render.Error(w, err)
