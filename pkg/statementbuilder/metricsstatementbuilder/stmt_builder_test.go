@@ -309,7 +309,7 @@ func TestStatementBuilder(t *testing.T) {
 			},
 			expected: qbtypes.Statement{
 				Query: "WITH __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts, `__GROUP_BY_KEY_0_service.name`, `le`, sum(value) AS value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, `le`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, lagInFrame(toFloat64(le), 1, toFloat64('-Inf')) OVER __heatmap_window AS __bucket_min, toFloat64(le) AS __bucket_max, greatest(value - lagInFrame(value, 1, 0) OVER __heatmap_window, 0) AS __result_0 FROM __spatial_aggregation_cte WINDOW __heatmap_window AS (PARTITION BY `__GROUP_BY_KEY_0_service.name`, ts ORDER BY toFloat64(le)) ORDER BY `__GROUP_BY_KEY_0_service.name`, ts, toFloat64(le)",
-				Args:  []any{"signoz_latency", uint64(1747936800000), uint64(1747983420000), "delta", "signoz_latency", uint64(1747947360000), uint64(1747983420000)},
+				Args:  []any{"signoz_latency.bucket", uint64(1747936800000), uint64(1747983420000), "delta", "signoz_latency.bucket", uint64(1747947360000), uint64(1747983420000)},
 			},
 			expectedErr: nil,
 		},
@@ -341,7 +341,7 @@ func TestStatementBuilder(t *testing.T) {
 			},
 			expected: qbtypes.Statement{
 				Query: "WITH __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts, `__GROUP_BY_KEY_0_service.name`, `le`, sum(value) AS value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, `le`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, lagInFrame(toFloat64(le), 1, toFloat64('-Inf')) OVER __heatmap_window AS __bucket_min, toFloat64(le) AS __bucket_max, greatest(value - lagInFrame(value, 1, 0) OVER __heatmap_window, 0) AS __result_0 FROM __spatial_aggregation_cte WINDOW __heatmap_window AS (PARTITION BY `__GROUP_BY_KEY_0_service.name`, ts ORDER BY toFloat64(le)) ORDER BY `__GROUP_BY_KEY_0_service.name`, ts, toFloat64(le)",
-				Args:  []any{"signoz_latency", uint64(1747936800000), uint64(1747983420000), "delta", "signoz_latency", uint64(1747947360000), uint64(1747983420000)},
+				Args:  []any{"signoz_latency.bucket", uint64(1747936800000), uint64(1747983420000), "delta", "signoz_latency.bucket", uint64(1747947360000), uint64(1747983420000)},
 			},
 			expectedErr: nil,
 		},
