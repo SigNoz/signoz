@@ -48,6 +48,26 @@ import type {
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
+
 /**
  * This endpoint returns the ingestion keys for a workspace
  * @summary Get ingestion keys for workspace
@@ -129,7 +149,7 @@ export function useGetIngestionKeys<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -356,7 +376,7 @@ export const getGetIngestionKeyQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!keyId,
+		enabled: keyId !== null && keyId !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getIngestionKey>>,
@@ -393,7 +413,7 @@ export function useGetIngestionKey<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -557,7 +577,7 @@ export const getGetIngestionKeyLimitsQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!keyId,
+		enabled: keyId !== null && keyId !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getIngestionKeyLimits>>,
@@ -594,7 +614,7 @@ export function useGetIngestionKeyLimits<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -981,7 +1001,7 @@ export function useSearchIngestionKeys<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1210,7 +1230,7 @@ export const getGetIngestionLimitQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!limitId,
+		enabled: limitId !== null && limitId !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getIngestionLimit>>,
@@ -1247,7 +1267,7 @@ export function useGetIngestionLimit<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
