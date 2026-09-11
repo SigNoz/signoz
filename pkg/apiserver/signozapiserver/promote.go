@@ -42,8 +42,8 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/promote_paths/{signal}/{context}", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.HandlePromotePaths), handler.OpenAPIDef{
-		ID:                  "HandlePromotePaths",
+	if err := router.Handle("/api/v1/promote_paths/{signal}/{context}", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.PromotePaths), handler.OpenAPIDef{
+		ID:                  "PromotePaths",
 		Tags:                []string{"promote"},
 		Summary:             "Promote paths",
 		Description:         "This endpoint promotes paths of a JSON column to its promoted column. The promotion domain is identified by the signal and field context path variables, e.g. traces/attribute.",
