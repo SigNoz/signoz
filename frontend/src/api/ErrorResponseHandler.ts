@@ -42,10 +42,7 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 		};
 	}
 	if (request) {
-		// A canceled request is not a failure: react-query and the app's own
-		// AbortControllers cancel in-flight work on unmount or refetch, and an
-		// aborted request has no response either. Logging it as one is noise on a
-		// normal event, so only a request that really never got a response is.
+		// Avoid logging error when the request was just cancelled for whatever reason
 		if (isCancel(error)) {
 			return {
 				statusCode: 500,
