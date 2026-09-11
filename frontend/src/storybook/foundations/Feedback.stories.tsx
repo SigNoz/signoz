@@ -3,6 +3,7 @@ import {
 	expect,
 	screen,
 	userEvent,
+	waitFor,
 	waitForElementToBeRemoved,
 	within,
 } from 'storybook/test';
@@ -28,9 +29,12 @@ export const SuccessToast: Story = {
 		await userEvent.click(
 			within(canvasElement).getByTestId('show-feedback-toast'),
 		);
-		await expect(
-			await screen.findByText('Retention policy updated successfully'),
-		).toBeVisible();
+		await screen.findByText('Retention policy updated successfully');
+		await waitFor(() =>
+			expect(
+				screen.getByText('Retention policy updated successfully'),
+			).toBeVisible(),
+		);
 	},
 };
 
@@ -41,12 +45,16 @@ export const ActionableErrorToast: Story = {
 		await userEvent.click(
 			within(canvasElement).getByTestId('show-feedback-toast'),
 		);
-		await expect(
-			await screen.findByText('Failed to save the notification channel'),
-		).toBeVisible();
-		await expect(
-			await screen.findByRole('button', { name: 'Retry' }),
-		).toBeVisible();
+		await screen.findByText('Failed to save the notification channel');
+		await waitFor(() =>
+			expect(
+				screen.getByText('Failed to save the notification channel'),
+			).toBeVisible(),
+		);
+		await screen.findByRole('button', { name: 'Retry' });
+		await waitFor(() =>
+			expect(screen.getByRole('button', { name: 'Retry' })).toBeVisible(),
+		);
 	},
 };
 
