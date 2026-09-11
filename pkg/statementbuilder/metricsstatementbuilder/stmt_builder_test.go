@@ -394,7 +394,6 @@ func TestStatementBuilder(t *testing.T) {
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						HeatmapBucketing: &qbtypes.HeatmapBucketing{
 							Kind:       qbtypes.BucketsKindLinear,
-							LogScale:   qbtypes.MaxLogScale,
 							MaxValue:   500,
 							NumBuckets: 25,
 						},
