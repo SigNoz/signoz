@@ -1,12 +1,14 @@
 import type { ChangeEvent } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
+import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
 import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
+import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
 
 import styles from './AxesSection.module.scss';
 
@@ -17,9 +19,37 @@ const SCALE_OPTIONS = [
 	{ value: 'log', label: 'Log', icon: 'scale-log' as const },
 ];
 
+// Auto is the only one that reads the boundaries rather than overriding them.
+const Y_SCALE_OPTIONS = [
+	{
+		value: DashboardtypesHeatmapYScaleDTO.auto,
+		label: 'Auto',
+		tooltip:
+			'Log when every bucket bound is positive, symmetric log when they cross zero',
+	},
+	{
+		value: DashboardtypesHeatmapYScaleDTO.linear,
+		label: 'Linear',
+		tooltip: 'Row heights proportional to the bucket range',
+	},
+	{
+		value: DashboardtypesHeatmapYScaleDTO.log,
+		label: 'Log',
+		tooltip:
+			'Log-proportional row heights; a zero bucket sits one bucket below the smallest positive bound',
+	},
+	{
+		value: DashboardtypesHeatmapYScaleDTO.symlog,
+		label: 'Symmetric log',
+		tooltip:
+			'Linear within the smallest non-zero bound, logarithmic beyond, mirrored across zero',
+	},
+];
+
 /**
- * Edits the `axes` slice of a panel spec: soft Y-axis min/max bounds and the
- * linear/logarithmic scale toggle. Each control is gated by its `controls` flag.
+ * Edits the `axes` slice of a panel spec: soft Y-axis min/max bounds, the
+ * linear/logarithmic scale toggle, and the heatmap's bucket-axis distribution.
+ * Each control is gated by its `controls` flag.
  */
 function AxesSection({
 	value,
@@ -73,6 +103,19 @@ function AxesSection({
 						onChange={(next): void =>
 							onChange({ ...value, isLogScale: next === 'log' })
 						}
+					/>
+				</div>
+			)}
+
+			{controls.yScale && (
+				<div className={styles.field}>
+					<Typography.Text>Y-axis scale</Typography.Text>
+					<ConfigSelect
+						testId="panel-editor-v2-y-scale"
+						placeholder="Select scale…"
+						value={value?.yScale}
+						items={Y_SCALE_OPTIONS}
+						onChange={(next): void => onChange({ ...value, yScale: next })}
 					/>
 				</div>
 			)}

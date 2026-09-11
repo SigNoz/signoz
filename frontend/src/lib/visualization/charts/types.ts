@@ -110,7 +110,8 @@ export interface HeatmapChartProps {
 	isDarkMode: boolean;
 	/** Overrides on top of `DEFAULT_HEATMAP_COLORS`. */
 	colors?: Partial<HeatmapColorOptions>;
-	/** Default log. */
+	/** Default auto: the boundaries pick between log, symmetric log and
+	 *  linear. */
 	axisScale?: HeatmapAxisScale;
 	/** Unit of the bucket boundaries; counts are always plain numbers. */
 	yAxisUnit?: string;

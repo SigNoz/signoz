@@ -233,6 +233,21 @@ describe('heatmap renderer — hover', () => {
 		});
 	});
 
+	it('clips the overlay to the plot area', () => {
+		const hooks = createHooks();
+		const { plot, over } = createFakePlot({ left: 10, top: 10 });
+
+		hooks.init(plot);
+		hooks.setCursor(plot);
+
+		// An end cell whose bucket or time slice is only partly in view is positioned
+		// past the axis; the plot area's edge is where the highlight has to stop.
+		const overlay = over.querySelector<HTMLDivElement>(
+			'[data-testid="heatmap-hover-overlay"]',
+		);
+		expect(overlay?.style.overflow).toBe('hidden');
+	});
+
 	it('collapses the dim rects when dimming is off', () => {
 		const hooks = createHooks(undefined, false);
 		const { plot, over } = createFakePlot({ left: 10, top: 10 });

@@ -3,11 +3,9 @@ import userEvent from '@testing-library/user-event';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
 import { render, screen } from 'tests/test-utils';
 import {
-	createHeatmapColorResolver,
 	DEFAULT_HEATMAP_COLORS,
-	resolveCountDomain,
+	resolveExtremeColor,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
-import { resolveHeatmapGrid } from 'lib/uPlotV2/plugins/HeatmapPlugin/grid';
 import {
 	HeatmapColorMode,
 	HeatmapSeries,
@@ -195,35 +193,18 @@ describe('Heatmap group legend', () => {
 		expect(legendItem(CART)).not.toHaveClass('legend-item-off');
 	});
 
-	/** The ramp the cells and colour bar are drawn from, for the default options. */
-	function activeRamp(): string[] {
-		const grid = resolveHeatmapGrid({
-			buckets: BUCKETS,
-			step: STEP,
-			series: SERIES,
-		});
-		return createHeatmapColorResolver({
+	it('gives every marker the top of the palette, whatever the group"s counts', () => {
+		renderHeatmap();
+		// The DOM lowercases hex; the palette is built uppercase.
+		const extreme = resolveExtremeColor({
 			options: DEFAULT_HEATMAP_COLORS,
-			domain: resolveCountDomain(DEFAULT_HEATMAP_COLORS, grid.counts),
 			isDarkMode: true,
 			seriesColor: DEFAULT_HEATMAP_COLORS.fill,
-		}).ramp.map((color) => color.toLowerCase());
-	}
+		}).toLowerCase();
 
-	it('places each marker where its group sits on the colour bar', () => {
-		renderHeatmap();
-		const ramp = activeRamp();
-
-		// cart peaks at 1200, checkout at 4, so cart sits further along the ramp.
-		// The DOM lowercases hex; the ramp is built uppercase.
-		const cart = ramp.indexOf(marker(CART).style.borderColor.toLowerCase());
-		const checkout = ramp.indexOf(
-			marker(CHECKOUT).style.borderColor.toLowerCase(),
-		);
-
-		expect(cart).toBeGreaterThan(-1);
-		expect(checkout).toBeGreaterThan(-1);
-		expect(cart).toBeGreaterThan(checkout);
+		// cart peaks at 1200 and checkout at 4, which the marker does not report.
+		expect(marker(CART).style.borderColor.toLowerCase()).toBe(extreme);
+		expect(marker(CHECKOUT).style.borderColor.toLowerCase()).toBe(extreme);
 	});
 
 	it('gives every marker the solid fill in opacity mode', () => {
@@ -238,10 +219,10 @@ describe('Heatmap group legend', () => {
 		expect(marker(CART).style.borderColor).not.toBe('');
 	});
 
-	it('hides the legend when there is only one group to choose from', () => {
+	it('shows the legend for a single group, which names what the grid plots', () => {
 		renderHeatmap({ series: [SERIES[0]] });
 
-		expect(screen.queryByText(CART)).not.toBeInTheDocument();
+		expect(screen.getByText(CART)).toBeInTheDocument();
 	});
 
 	it('hides the legend when asked', () => {

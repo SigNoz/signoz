@@ -2,7 +2,6 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { OPERATORS } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
 import { UNSUPPORTED_PANEL } from '../kinds/UnsupportedPanel/definition';
@@ -10,8 +9,9 @@ import { getPanelDefinition, isPanelKindSupported } from '../registry';
 import type { PanelQueryCapabilities } from '../types/panelCapabilities';
 import { NO_PANEL_ACTIONS } from '../types/panelDefinition';
 import {
-	getHiddenQueryBuilderFields,
+	getQueryBuilderFields,
 	getQueryPanelDefinition,
+	isRawQueryKind,
 	requireQueryPanelDefinition,
 	getSupportedQueryTypes,
 	getSupportedSignals,
@@ -20,17 +20,19 @@ import {
 	isSignalSupported,
 	resolveQueryType,
 } from '../capabilities';
+import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import type { PanelKind } from '../types/panelKind';
 
 const { QUERY_BUILDER, CLICKHOUSE, PROM } = EQueryType;
 const { logs, traces, metrics } = TelemetrytypesSignalDTO;
-const { time_series, scalar, raw } = Querybuildertypesv5RequestTypeDTO;
+const { time_series, scalar, raw, heatmap } = Querybuildertypesv5RequestTypeDTO;
 
 const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/TimeSeriesPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/BarChartPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/NumberPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/HistogramPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
@@ -41,6 +43,8 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/BarChartPanel': [metrics, logs, traces],
 	'signoz/NumberPanel': [metrics, logs, traces],
 	'signoz/HistogramPanel': [metrics, logs, traces],
+	// A heatmap needs a bucket axis, which only a metric carries.
+	'signoz/HeatmapPanel': [metrics],
 	'signoz/PieChartPanel': [metrics, logs, traces],
 	'signoz/TablePanel': [metrics, logs, traces],
 	// List renders raw rows; metrics produce no row data.
@@ -69,6 +73,15 @@ const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
 		requestType: time_series,
 		formatTableResultForUI: false,
 		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
+	// Only Heatmap asks for `heatmap`: server-bucketed counts, one set per timestamp. Like
+	// Bar it draws one mark per point, so it asks for a widened step interval too.
+	'signoz/HeatmapPanel': {
+		requestType: heatmap,
+		formatTableResultForUI: false,
+		bucketedStepInterval: true,
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
@@ -137,7 +150,7 @@ describe('panel capabilities guard', () => {
 			expect(
 				isPanelCombinationValid({ kind: unknownKind, queryType: QUERY_BUILDER }),
 			).toBe(false);
-			expect(getHiddenQueryBuilderFields(unknownKind, logs)).toStrictEqual({});
+			expect(getQueryBuilderFields(unknownKind)).toStrictEqual({});
 			expect(getPanelDefinition(unknownKind).sections).toStrictEqual([]);
 		});
 
@@ -151,8 +164,8 @@ describe('panel capabilities guard', () => {
 		});
 
 		it('carries an inert query shape, so a stray request can do no harm', () => {
-			const queryCapabilities = requireQueryPanelDefinition(unknownKind)
-				.queryCapabilities;
+			const queryCapabilities =
+				requireQueryPanelDefinition(unknownKind).queryCapabilities;
 			expect(queryCapabilities.requestType).toBe(time_series);
 			expect(queryCapabilities.serverPaginated).toBe(false);
 			expect(queryCapabilities.formatTableResultForUI).toBe(false);
@@ -261,36 +274,35 @@ describe('panel capabilities guard', () => {
 		});
 	});
 
-	describe('getHiddenQueryBuilderFields', () => {
-		it('returns {} for kinds that declare no field rules', () => {
-			expect(
-				getHiddenQueryBuilderFields('signoz/TimeSeriesPanel', logs),
-			).toStrictEqual({});
-			expect(getHiddenQueryBuilderFields('signoz/TablePanel', logs)).toStrictEqual(
-				{},
-			);
+	describe('getQueryBuilderFields', () => {
+		it('returns {} for kinds that narrow nothing', () => {
+			expect(getQueryBuilderFields('signoz/TimeSeriesPanel')).toStrictEqual({});
+			expect(getQueryBuilderFields('signoz/TablePanel')).toStrictEqual({});
+			expect(getQueryBuilderFields('signoz/NumberPanel')).toStrictEqual({});
 		});
 
-		// Mirrors QueryBuilderV2's internal listViewLogFilterConfigs — the guard is the
-		// single source of truth for these values.
-		it('hides step interval / having and sets body-contains for List + logs', () => {
-			expect(getHiddenQueryBuilderFields('signoz/ListPanel', logs)).toStrictEqual({
-				stepInterval: { isHidden: true, isDisabled: true },
-				having: { isHidden: true, isDisabled: true },
-				filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
-			});
+		it('returns {} for List, which relies on the raw baseline', () => {
+			expect(getQueryBuilderFields('signoz/ListPanel')).toStrictEqual({});
 		});
 
-		// Mirrors listViewTracesFilterConfigs — traces additionally hide `limit`.
-		it('additionally hides limit for List + traces', () => {
-			expect(
-				getHiddenQueryBuilderFields('signoz/ListPanel', traces),
-			).toStrictEqual({
-				stepInterval: { isHidden: true, isDisabled: true },
-				having: { isHidden: true, isDisabled: true },
-				limit: { isHidden: true, isDisabled: true },
-				filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
+		it('hides the fields a Heatmap has nothing to apply them to', () => {
+			// A point is a count per bucket: there is no single value for a function or
+			// a having clause to act on, and the request rejects both. Extra queries and
+			// formulas stay available, since the one enabled query the request takes can
+			// be either of them.
+			expect(getQueryBuilderFields('signoz/HeatmapPanel')).toStrictEqual({
+				[QueryBuilderField.Functions]: { state: 'hidden' },
+				[QueryBuilderField.Having]: { state: 'hidden' },
 			});
+		});
+	});
+
+	describe('isRawQueryKind', () => {
+		it('is true only for the kind whose request type is raw', () => {
+			expect(isRawQueryKind('signoz/ListPanel')).toBe(true);
+			expect(isRawQueryKind('signoz/TimeSeriesPanel')).toBe(false);
+			expect(isRawQueryKind('signoz/TablePanel')).toBe(false);
+			expect(isRawQueryKind('signoz/NumberPanel')).toBe(false);
 		});
 	});
 });

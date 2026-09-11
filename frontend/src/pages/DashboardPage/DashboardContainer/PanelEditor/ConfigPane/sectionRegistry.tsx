@@ -1,16 +1,16 @@
 import type { ComponentType } from 'react';
 import type {
 	DashboardtypesLinkDTO,
-	DashboardtypesAxesDTO,
 	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
 	DashboardtypesPanelSpecDTO,
-	DashboardtypesTimeSeriesChartAppearanceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	SectionKind,
 	type AnyThreshold,
+	type PanelAxesSlice,
+	type PanelChartAppearanceSlice,
 	type PanelFormattingSlice,
 	type SectionEditorProps,
 	type SectionSpecMap,
@@ -79,8 +79,8 @@ export const SECTION_REGISTRY: {
 	},
 	[SectionKind.Axes]: {
 		Component: AxesSection,
-		get: (spec): DashboardtypesAxesDTO | undefined =>
-			getPluginSlice<DashboardtypesAxesDTO>(spec, 'axes'),
+		get: (spec): PanelAxesSlice | undefined =>
+			getPluginSlice<PanelAxesSlice>(spec, 'axes'),
 		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
 	},
 	[SectionKind.Legend]: {
@@ -92,11 +92,8 @@ export const SECTION_REGISTRY: {
 	},
 	[SectionKind.ChartAppearance]: {
 		Component: ChartAppearanceSection,
-		get: (spec): DashboardtypesTimeSeriesChartAppearanceDTO | undefined =>
-			getPluginSlice<DashboardtypesTimeSeriesChartAppearanceDTO>(
-				spec,
-				'chartAppearance',
-			),
+		get: (spec): PanelChartAppearanceSlice | undefined =>
+			getPluginSlice<PanelChartAppearanceSlice>(spec, 'chartAppearance'),
 		update: (spec, chartAppearance): PanelSpec =>
 			updatePluginSlice(spec, 'chartAppearance', chartAppearance),
 	},

@@ -26,8 +26,10 @@ jest.mock('hooks/queryBuilder/useQueryBuilderOperations', () => ({
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): {
 		handleSetQueryData: typeof mockHandleSetQueryData;
+		currentQuery: { unit: string | undefined };
 	} => ({
 		handleSetQueryData: mockHandleSetQueryData,
+		currentQuery: { unit: undefined },
 	}),
 }));
 
@@ -95,7 +97,7 @@ describe('QueryAddOns', () => {
 			<QueryAddOns
 				query={baseQuery()}
 				version="v5"
-				isListViewPanel={false}
+				isRawQuery={false}
 				showReduceTo
 				panelType={PANEL_TYPES.VALUE}
 				index={0}
@@ -119,7 +121,7 @@ describe('QueryAddOns', () => {
 					groupBy: ['service.name'],
 				})}
 				version="v5"
-				isListViewPanel={false}
+				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
 				index={0}
@@ -135,7 +137,7 @@ describe('QueryAddOns', () => {
 			<QueryAddOns
 				query={baseQuery()}
 				version="v5"
-				isListViewPanel
+				isRawQuery
 				showReduceTo={false}
 				panelType={PANEL_TYPES.LIST}
 				index={0}
@@ -151,7 +153,7 @@ describe('QueryAddOns', () => {
 			<QueryAddOns
 				query={baseQuery({ limit: 5 })}
 				version="v5"
-				isListViewPanel={false}
+				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
 				index={0}
@@ -176,7 +178,7 @@ describe('QueryAddOns', () => {
 			<QueryAddOns
 				query={query}
 				version="v5"
-				isListViewPanel={false}
+				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
 				index={0}
@@ -195,7 +197,7 @@ describe('QueryAddOns', () => {
 			<QueryAddOns
 				query={baseQuery()}
 				version="v5"
-				isListViewPanel={false}
+				isRawQuery={false}
 				showReduceTo
 				panelType={PANEL_TYPES.TIME_SERIES}
 				index={0}
@@ -211,7 +213,7 @@ describe('QueryAddOns', () => {
 			<QueryAddOns
 				query={baseQuery({ reduceTo: ReduceOperators.SUM })}
 				version="v5"
-				isListViewPanel={false}
+				isRawQuery={false}
 				showReduceTo
 				panelType={PANEL_TYPES.TIME_SERIES}
 				index={0}
@@ -234,7 +236,7 @@ describe('QueryAddOns', () => {
 			<QueryAddOns
 				query={query}
 				version="v5"
-				isListViewPanel={false}
+				isRawQuery={false}
 				showReduceTo
 				panelType={PANEL_TYPES.TIME_SERIES}
 				index={0}
@@ -286,7 +288,7 @@ describe('QueryAddOns', () => {
 			<QueryAddOns
 				query={query}
 				version="v5"
-				isListViewPanel={false}
+				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
 				index={0}
@@ -314,7 +316,7 @@ describe('QueryAddOns', () => {
 			<QueryAddOns
 				query={query}
 				version="v5"
-				isListViewPanel={false}
+				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
 				index={0}
@@ -329,5 +331,146 @@ describe('QueryAddOns', () => {
 			'legend',
 			expect.anything(),
 		);
+	});
+	describe('bucket options', () => {
+		function renderHeatmap(overrides: Partial<any> = {}): void {
+			render(
+				<QueryAddOns
+					query={baseQuery({ dataSource: DataSource.METRICS, ...overrides })}
+					version="v5"
+					isRawQuery={false}
+					showReduceTo={false}
+					panelType={PANEL_TYPES.HEATMAP}
+					index={0}
+					isForTraceOperator={false}
+				/>,
+			);
+		}
+
+		it('is offered on a metrics heatmap only', () => {
+			renderHeatmap();
+
+			expect(
+				screen.getByTestId('query-add-on-bucket_options'),
+			).toBeInTheDocument();
+		});
+
+		it('is not offered on other panel types', () => {
+			render(
+				<QueryAddOns
+					query={baseQuery({ dataSource: DataSource.METRICS })}
+					version="v5"
+					isRawQuery={false}
+					showReduceTo={false}
+					panelType={PANEL_TYPES.TIME_SERIES}
+					index={0}
+					isForTraceOperator={false}
+				/>,
+			);
+
+			expect(
+				screen.queryByTestId('query-add-on-bucket_options'),
+			).not.toBeInTheDocument();
+		});
+
+		it('is not offered on a heatmap over another signal', () => {
+			render(
+				<QueryAddOns
+					query={baseQuery({ dataSource: DataSource.LOGS })}
+					version="v5"
+					isRawQuery={false}
+					showReduceTo={false}
+					panelType={PANEL_TYPES.HEATMAP}
+					index={0}
+					isForTraceOperator={false}
+				/>,
+			);
+
+			expect(
+				screen.queryByTestId('query-add-on-bucket_options'),
+			).not.toBeInTheDocument();
+		});
+
+		it("auto-opens on the query's own kind", () => {
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			expect(screen.getByTestId('bucket-options-content')).toBeInTheDocument();
+			expect(screen.getByRole('radio', { name: 'Log' })).toBeChecked();
+			expect(screen.getByRole('radio', { name: '1' })).toBeChecked();
+		});
+
+		it('sends no options for Auto', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			await user.click(screen.getByRole('radio', { name: 'Auto' }));
+
+			expect(mockHandleChangeQueryData).toHaveBeenCalledWith(
+				'bucketOptions',
+				undefined,
+			);
+		});
+
+		it('sends the scale the picked bands per doubling resolve to', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 4 } } });
+
+			await user.click(screen.getByRole('radio', { name: '1' }));
+
+			expect(mockHandleChangeQueryData).toHaveBeenCalledWith('bucketOptions', {
+				kind: 'log',
+				spec: { scale: 0 },
+			});
+		});
+
+		it('previews the bounds the picked axis will carry', () => {
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			const bounds = within(screen.getByTestId('bucket-options-bounds'));
+			['1', '2', '4', '8', '16', '32', '64', '128', '+Inf'].forEach((bound) => {
+				expect(bounds.getByText(bound)).toBeInTheDocument();
+			});
+		});
+
+		it('sends nothing for a linear axis until it has a max value', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			await user.click(screen.getByRole('radio', { name: 'Linear' }));
+
+			expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith(
+				'bucketOptions',
+				undefined,
+			);
+			expect(
+				screen.getByText('Set a max value to see the bounds'),
+			).toBeInTheDocument();
+		});
+
+		it('sends the linear axis once a max value is filled in', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			await user.click(screen.getByRole('radio', { name: 'Linear' }));
+			await user.type(screen.getByTestId('bucket-options-max-value'), '500');
+
+			await waitFor(() => {
+				expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith(
+					'bucketOptions',
+					{ kind: 'linear', spec: { maxValue: 500 } },
+				);
+			});
+		});
+
+		it('closes back to the toggle bar', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			await user.click(screen.getByTestId('bucket-options-close'));
+
+			expect(
+				screen.queryByTestId('bucket-options-content'),
+			).not.toBeInTheDocument();
+		});
 	});
 });

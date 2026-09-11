@@ -155,7 +155,10 @@ func (q *promqlQuery) Fingerprint() string {
 	if q.opts.serve != nil {
 		return ""
 	}
-	if q.requestType != qbv5.RequestTypeTimeSeries {
+
+	switch q.requestType {
+	case qbv5.RequestTypeTimeSeries, qbv5.RequestTypeHeatmap:
+	default:
 		return ""
 	}
 
@@ -166,6 +169,8 @@ func (q *promqlQuery) Fingerprint() string {
 	}
 	parts := []string{
 		"promql",
+		// one expression returns a different shape per request type
+		fmt.Sprintf("requestType=%s", q.requestType.StringValue()),
 		query,
 		q.query.Step.String(),
 	}
@@ -369,7 +374,7 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 			}
 			return nil, err
 		}
-		return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned), nil
+		return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned)
 	}
 
 	// When the serving provider has the RangeExecutor capability
@@ -385,7 +390,7 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 			return nil, err
 		}
 		if served {
-			return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned), nil
+			return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned)
 		}
 	}
 
@@ -446,28 +451,60 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	}
 
 	warnings, _ := res.Warnings.AsStrings(query, 10, 0)
-	return q.toResult(matrix, warnings, began, &statsMu, &rowsScanned, &bytesScanned), nil
+	return q.toResult(matrix, warnings, began, &statsMu, &rowsScanned, &bytesScanned)
 }
 
-// toResult converts an evaluated matrix into the v5 result shape, attaching
-// the ClickHouse scan stats accumulated during evaluation.
-func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) *qbv5.Result {
-	// Hide only known SigNoz storage keys: label names are user data and may
-	// legitimately start with "__" (e.g. __address__), so a blanket dunder
-	// strip mangles user labelsets. The __scope./__resource. prefixes cover
-	// every exporter version's keys.
-	excludeLabel := func(labelName string) bool {
-		return labelName == "__temporality__" ||
-			strings.HasPrefix(labelName, "__scope.") ||
-			strings.HasPrefix(labelName, "__resource.")
+// excludePromLabel hides only known SigNoz storage keys: label names are user
+// data and may legitimately start with "__" (e.g. __address__), so a blanket
+// dunder strip mangles user labelsets. The __scope./__resource. prefixes cover
+// every exporter version's keys.
+func excludePromLabel(labelName string) bool {
+	return labelName == "__temporality__" ||
+		strings.HasPrefix(labelName, "__scope.") ||
+		strings.HasPrefix(labelName, "__resource.")
+}
+
+// collectExecStats snapshots the scan counters a query accumulated. Callers take
+// it at the point they are done with the matrix, so the duration covers the
+// shaping they did.
+func collectExecStats(began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) qbv5.ExecStats {
+	statsMu.Lock()
+	defer statsMu.Unlock()
+	return qbv5.ExecStats{
+		RowsScanned:  *rowsScanned,
+		BytesScanned: *bytesScanned,
+		DurationMS:   uint64(time.Since(began).Milliseconds()),
+	}
+}
+
+func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
+	if q.requestType == qbv5.RequestTypeHeatmap {
+		return q.toResultForHeatmap(matrix, warnings, began, statsMu, rowsScanned, bytesScanned)
+	}
+	return q.toResultForTimeSeriesAndScalar(matrix, warnings, began, statsMu, rowsScanned, bytesScanned), nil
+}
+
+func (q *promqlQuery) toResultForHeatmap(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
+	tsData, err := foldMatrixAsHeatmap(matrix, &q.tr, uint64(q.query.Step.Milliseconds()), q.query.Name)
+	if err != nil {
+		return nil, err
 	}
 
+	return &qbv5.Result{
+		Type:     q.requestType,
+		Value:    tsData,
+		Warnings: warnings,
+		Stats:    collectExecStats(began, statsMu, rowsScanned, bytesScanned),
+	}, nil
+}
+
+func (q *promqlQuery) toResultForTimeSeriesAndScalar(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) *qbv5.Result {
 	var series []*qbv5.TimeSeries
 	for _, v := range matrix {
 		var s qbv5.TimeSeries
 		lbls := make([]*qbv5.Label, 0, v.Metric.Len())
 		v.Metric.Range(func(l labels.Label) {
-			if excludeLabel(l.Name) {
+			if excludePromLabel(l.Name) {
 				return
 			}
 			lbls = append(lbls, &qbv5.Label{
@@ -495,13 +532,7 @@ func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began ti
 		series = append(series, &s)
 	}
 
-	statsMu.Lock()
-	stats := qbv5.ExecStats{
-		RowsScanned:  *rowsScanned,
-		BytesScanned: *bytesScanned,
-		DurationMS:   uint64(time.Since(began).Milliseconds()),
-	}
-	statsMu.Unlock()
+	stats := collectExecStats(began, statsMu, rowsScanned, bytesScanned)
 
 	tsData := &qbv5.TimeSeriesData{QueryName: q.query.Name}
 	// No bucket at all when nothing survived: a bucket holding no series reads

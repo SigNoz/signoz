@@ -1,13 +1,26 @@
 import { rangeUtil } from '@grafana/data';
 import {
+	DashboardtypesHeatmapYScaleDTO,
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesPrecisionOptionDTO,
+	type DashboardtypesHeatmapColorsDTO,
 	type DashboardtypesSpanGapsDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
+import { clampColorSteps } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
+import {
+	HeatmapAxisScale,
+	type HeatmapColorOptions,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 
-import { LEGEND_POSITION_MAP } from './enumMaps';
+import {
+	HEATMAP_COLOR_MODE_MAP,
+	HEATMAP_COLOR_SCALE_MAP,
+	HEATMAP_PALETTE_MAP,
+	HEATMAP_Y_SCALE_MAP,
+	LEGEND_POSITION_MAP,
+} from './enumMaps';
 
 // Resolvers turning raw `spec` chart-appearance fields into runtime chart
 // values, falling back to chart defaults for missing/unknown input.
@@ -64,4 +77,42 @@ export function resolveLegendPosition(
 		return LEGEND_POSITION_MAP[position];
 	}
 	return LegendPosition.BOTTOM;
+}
+
+/**
+ * Row-height distribution of a heatmap's bucket axis. Missing/unknown resolves to
+ * `auto`, the one option that reads the bucket bounds rather than overriding them.
+ */
+export function resolveHeatmapAxisScale(
+	yScale: DashboardtypesHeatmapYScaleDTO | undefined,
+): HeatmapAxisScale {
+	if (yScale && yScale in HEATMAP_Y_SCALE_MAP) {
+		return HEATMAP_Y_SCALE_MAP[yScale];
+	}
+	return HeatmapAxisScale.Auto;
+}
+
+/**
+ * `chartAppearance.colors` → the chart's colour options. Only fields the spec sets
+ * are returned: the chart spreads this over its own defaults, so an explicit
+ * `undefined` would erase one. `null` bounds pass through — that is the spec's own
+ * way of asking for a derived one.
+ */
+export function resolveHeatmapColors(
+	colors: DashboardtypesHeatmapColorsDTO | undefined,
+): Partial<HeatmapColorOptions> {
+	if (!colors) {
+		return {};
+	}
+	return {
+		...(colors.mode && { mode: HEATMAP_COLOR_MODE_MAP[colors.mode] }),
+		...(colors.scale && { scale: HEATMAP_COLOR_SCALE_MAP[colors.scale] }),
+		...(colors.palette && { palette: HEATMAP_PALETTE_MAP[colors.palette] }),
+		...(colors.steps !== undefined && {
+			steps: clampColorSteps(colors.steps),
+		}),
+		...(colors.minCount !== undefined && { minCount: colors.minCount }),
+		...(colors.maxCount !== undefined && { maxCount: colors.maxCount }),
+		...(colors.fill !== undefined && { fill: colors.fill }),
+	};
 }

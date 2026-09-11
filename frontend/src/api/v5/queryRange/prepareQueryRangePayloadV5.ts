@@ -198,6 +198,10 @@ function createBaseSpec(
 				: undefined,
 		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
 		having: normalizeHaving(queryData.having),
+		// Heatmap only. Every other request type rejects an axis, and
+		// `panelTypeDataSourceFormValuesMap` is what keeps one from being carried onto a
+		// query the panel type switched away from.
+		bucketOptions: queryData.bucketOptions,
 		functions: isEmpty(queryData.functions)
 			? undefined
 			: queryData.functions.map((func: QueryFunction): QueryFunction => {
@@ -365,7 +369,7 @@ export function convertBuilderQueriesToV5(
 			}
 
 			return {
-				type: 'builder_query' as QueryType,
+				type: queryData.builderQueryType ?? 'builder_query',
 				spec,
 			};
 		},

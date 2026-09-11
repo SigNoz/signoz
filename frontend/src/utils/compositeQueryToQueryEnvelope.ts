@@ -25,6 +25,9 @@ function convertFormulasToV5(
 				disabled: formulaData.disabled,
 				limit: formulaData.limit ?? undefined,
 				legend: formulaData.legend,
+				// Heatmap only; `handleQueryChange` is what keeps one off a formula whose
+				// panel type switched away.
+				bucketOptions: formulaData.bucketOptions,
 				order: formulaData.orderBy?.map(
 					(order: any): OrderBy => ({
 						key: {

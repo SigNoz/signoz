@@ -14,12 +14,11 @@ import {
 	initialQueryBuilderFormValuesMap,
 	listViewInitialLogQuery,
 	listViewInitialTraceQuery,
-	mapOfFormulaToFilters,
-	mapOfQueryFilters,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import {
 	metricsGaugeSpaceAggregateOperatorOptions,
+	metricsHeatmapHistogramSpaceAggregateOperatorOptions,
 	metricsHistogramSpaceAggregateOperatorOptions,
 	metricsSumSpaceAggregateOperatorOptions,
 	metricsUnknownSpaceAggregateOperatorOptions,
@@ -59,9 +58,8 @@ import { getFormatedLegend } from 'utils/getFormatedLegend';
 export const useQueryOperations: UseQueryOperations = ({
 	query,
 	index,
-	filterConfigs,
 	formula,
-	isListViewPanel = false,
+	isRawQuery = false,
 	entityVersion,
 	isForTraceOperator = false,
 	savePreviousQuery = false,
@@ -105,46 +103,7 @@ export const useQueryOperations: UseQueryOperations = ({
 		}
 	}, [query]);
 
-	const { dataSource, aggregateOperator } = query;
-
-	const getNewListOfAdditionalFilters = useCallback(
-		(dataSource: DataSource, isQuery: boolean): string[] => {
-			const additionalFiltersKeys: (keyof Pick<
-				IBuilderQuery,
-				'orderBy' | 'limit' | 'having' | 'stepInterval'
-			>)[] = ['having', 'limit', 'orderBy', 'stepInterval'];
-
-			const mapsOfFilters = isQuery ? mapOfQueryFilters : mapOfFormulaToFilters;
-
-			const result: string[] = mapsOfFilters[dataSource]?.reduce<string[]>(
-				(acc, item) => {
-					if (
-						filterConfigs &&
-						filterConfigs[item.field as (typeof additionalFiltersKeys)[number]]
-							?.isHidden
-					) {
-						return acc;
-					}
-
-					acc.push(item.text);
-
-					return acc;
-				},
-				[],
-			);
-
-			return result;
-		},
-
-		[filterConfigs],
-	);
-
-	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
-		string[]
-	>(getNewListOfAdditionalFilters(dataSource, true));
-
-	const [listOfAdditionalFormulaFilters, setListOfAdditionalFormulaFilters] =
-		useState<string[]>(getNewListOfAdditionalFilters(dataSource, false));
+	const { dataSource } = query;
 
 	const handleChangeOperator = useCallback(
 		(value: string): void => {
@@ -218,6 +177,11 @@ export const useQueryOperations: UseQueryOperations = ({
 							(aggregateAttribute?.type as ATTRIBUTE_TYPES) || ATTRIBUTE_TYPES.GAUGE,
 					});
 
+			const histogramSpaceAggregationOptions =
+				panelType === PANEL_TYPES.HEATMAP
+					? metricsHeatmapHistogramSpaceAggregateOperatorOptions
+					: metricsHistogramSpaceAggregateOperatorOptions;
+
 			switch (aggregateAttribute?.type) {
 				case ATTRIBUTE_TYPES.SUM:
 					setSpaceAggregationOptions(metricsSumSpaceAggregateOperatorOptions);
@@ -227,11 +191,11 @@ export const useQueryOperations: UseQueryOperations = ({
 					break;
 
 				case ATTRIBUTE_TYPES.HISTOGRAM:
-					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
+					setSpaceAggregationOptions(histogramSpaceAggregationOptions);
 					break;
 
 				case ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM:
-					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
+					setSpaceAggregationOptions(histogramSpaceAggregationOptions);
 					break;
 				default:
 					setSpaceAggregationOptions(metricsUnknownSpaceAggregateOperatorOptions);
@@ -340,7 +304,13 @@ export const useQueryOperations: UseQueryOperations = ({
 									timeAggregation: '',
 									metricName: newQuery.aggregateAttribute?.key || '',
 									temporality: '',
-									spaceAggregation: MetricAggregateOperator.P90,
+									// A heatmap cell holds a count of observations per `le` band, which is
+									// the one option the kind offers — a percentile default would sit in the
+									// selector with nothing behind it.
+									spaceAggregation:
+										panelType === PANEL_TYPES.HEATMAP
+											? MetricAggregateOperator.COUNT
+											: MetricAggregateOperator.P90,
 									reduceTo: ReduceOperators.AVG,
 								},
 							];
@@ -430,6 +400,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			index,
 			handleMetricAggregateAtributeTypes,
 			previousMetricInfo,
+			panelType,
 		],
 	);
 
@@ -460,7 +431,7 @@ export const useQueryOperations: UseQueryOperations = ({
 				removeKeyFromPreviousQuery(newKey);
 			}
 
-			if (isListViewPanel) {
+			if (isRawQuery) {
 				let listPanelQuery: Query | null = null;
 
 				if (nextSource === DataSource.LOGS) {
@@ -506,7 +477,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			handleSetQueryData(index, newQueryData);
 		},
 		[
-			isListViewPanel,
+			isRawQuery,
 			panelType,
 			query,
 			handleSetQueryData,
@@ -625,32 +596,18 @@ export const useQueryOperations: UseQueryOperations = ({
 		handleMetricAggregateAtributeTypes,
 	]);
 
-	useEffect(() => {
-		const additionalFilters = getNewListOfAdditionalFilters(dataSource, true);
-
-		setListOfAdditionalFilters(additionalFilters);
-	}, [dataSource, aggregateOperator, getNewListOfAdditionalFilters]);
-
-	useEffect(() => {
-		const additionalFilters = getNewListOfAdditionalFilters(dataSource, false);
-
-		setListOfAdditionalFormulaFilters(additionalFilters);
-	}, [dataSource, aggregateOperator, getNewListOfAdditionalFilters]);
-
 	return {
 		isTracePanelType,
 		isMetricsDataSource,
 		isLogsDataSource,
 		operators,
 		spaceAggregationOptions,
-		listOfAdditionalFilters,
 		handleChangeOperator,
 		handleSpaceAggregationChange,
 		handleChangeAggregatorAttribute,
 		handleChangeDataSource,
 		handleDeleteQuery,
 		handleChangeQueryData,
-		listOfAdditionalFormulaFilters,
 		handleChangeFormulaData,
 		handleQueryFunctionsUpdates,
 	};

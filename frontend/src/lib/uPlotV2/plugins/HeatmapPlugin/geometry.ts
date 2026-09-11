@@ -80,21 +80,67 @@ function createSymlogTransform(threshold: number): AxisTransform {
 	};
 }
 
-function resolveAxisTransform(
-	bounds: number[],
-	scale: HeatmapAxisScale,
-): AxisTransform {
-	if (scale !== HeatmapAxisScale.Log) {
-		return LINEAR_TRANSFORM;
-	}
-	if (canUseLogAxis(bounds)) {
-		return LOG_TRANSFORM;
-	}
-	// All-zero bounds have no magnitude to scale against.
+/** Symmetric log about the threshold the bucket layout implies. All-zero
+ *  boundaries have no magnitude to scale against and stay linear. */
+function resolveSymlogTransform(bounds: number[]): AxisTransform {
 	if (!bounds.some((bound) => bound !== 0)) {
 		return LINEAR_TRANSFORM;
 	}
 	return createSymlogTransform(resolveLinearThreshold(bounds));
+}
+
+/** One typical bucket, in axis space — the mean ratio between adjacent positive
+ *  boundaries, which on a geometric layout is exactly one bucket. */
+function resolveLogGap(positive: number[]): number {
+	const axisFirst = Math.log10(positive[0]);
+	const axisLast = Math.log10(positive[positive.length - 1]);
+	const gap =
+		positive.length > 1
+			? (axisLast - axisFirst) / (positive.length - 1)
+			: Math.log10(FALLBACK_LOG_RATIO);
+	return gap > 0 ? gap : Math.log10(FALLBACK_LOG_RATIO);
+}
+
+/**
+ * Plain log10, with the boundaries a logarithm has no answer for — zero and
+ * below — pinned one bucket beneath the smallest positive one. They keep their
+ * own rows, ticks and labels; only their height is synthetic, and it is the
+ * height of a bucket rather than the decade a symmetric log would spend on them.
+ *
+ * Several of them share that one edge, which squashes them together: a layout
+ * that straddles zero wants `Symlog`. This is the scale for the one non-positive
+ * boundary an explicit-bounds histogram routinely carries — its zero bucket.
+ */
+function createFloorLogTransform(positive: number[]): AxisTransform {
+	const floor = Math.log10(positive[0]) - resolveLogGap(positive);
+	return {
+		toAxisValue: (value) => (value > 0 ? Math.log10(value) : floor),
+		toBucketValue: (axisValue) => 10 ** axisValue,
+	};
+}
+
+function resolveAxisTransform(
+	bounds: number[],
+	scale: HeatmapAxisScale,
+): AxisTransform {
+	if (scale === HeatmapAxisScale.Linear) {
+		return LINEAR_TRANSFORM;
+	}
+	if (scale === HeatmapAxisScale.Symlog) {
+		return resolveSymlogTransform(bounds);
+	}
+	if (canUseLogAxis(bounds)) {
+		return LOG_TRANSFORM;
+	}
+	// A plain log is still a plain log where the boundaries allow one; `Auto`
+	// instead reads the layout and answers with the scale that fits it.
+	if (scale === HeatmapAxisScale.Log) {
+		const positive = bounds.filter((bound) => bound > 0);
+		return positive.length > 0
+			? createFloorLogTransform(positive)
+			: LINEAR_TRANSFORM;
+	}
+	return resolveSymlogTransform(bounds);
 }
 
 /**
@@ -294,4 +340,150 @@ export function decimateAxisSplits({
 	}
 
 	return kept.reverse();
+}
+
+/** Where uPlot switches from a fixed increment to a calendar walk. */
+const MONTH_INCR_SECONDS = 3600 * 24 * 28;
+const YEAR_INCR_SECONDS = 3600 * 24 * 365;
+
+/** Shifts a timestamp into the axis timezone, as uPlot's `tzDate` does: the
+ *  returned date's *local* fields read as that timezone's wall clock. */
+type ToAxisDate = (timestamp: number) => Date;
+
+const BROWSER_DATE: ToAxisDate = (timestamp) => new Date(timestamp * 1e3);
+
+/**
+ * Real epoch seconds of the midnight at or before `timestamp`, in the axis
+ * timezone. The browser's own offset cancels: it is inside the shifted date's
+ * fields and inside the correction.
+ */
+function resolveDayOrigin(timestamp: number, toDate: ToAxisDate): number {
+	const shifted = toDate(timestamp);
+	const midnight = new Date(
+		shifted.getFullYear(),
+		shifted.getMonth(),
+		shifted.getDate(),
+	);
+	const correction = Math.floor(timestamp) - Math.floor(shifted.getTime() / 1e3);
+	return Math.floor(midnight.getTime() / 1e3) + correction;
+}
+
+function fromAxisDate(wall: Date, toDate: ToAxisDate): number {
+	const wallTs = Math.floor(wall.getTime() / 1e3);
+	return wallTs + (wallTs - Math.floor(toDate(wallTs).getTime() / 1e3));
+}
+
+function snapToColumnEdge(value: number, phase: number, width: number): number {
+	return phase + Math.round((value - phase) / width) * width;
+}
+
+/**
+ * Month and year ticks, walked as calendar dates the way uPlot walks them — no
+ * fixed increment expresses a month. Their spacing is uneven to begin with, so
+ * each tick is snapped to its own nearest column edge.
+ */
+function resolveCalendarSplits({
+	incr,
+	min,
+	max,
+	toDate,
+	phase,
+	columnWidth,
+}: {
+	incr: number;
+	min: number;
+	max: number;
+	toDate: ToAxisDate;
+	phase: number;
+	columnWidth: number;
+}): number[] {
+	const isYear = incr >= YEAR_INCR_SECONDS;
+	const monthsPerTick = Math.max(
+		1,
+		isYear
+			? Math.round(incr / YEAR_INCR_SECONDS) * 12
+			: Math.round(incr / MONTH_INCR_SECONDS),
+	);
+
+	const start = toDate(min);
+	const baseYear = start.getFullYear();
+	const baseMonth = isYear ? 0 : start.getMonth();
+
+	const splits: number[] = [];
+	for (let index = 0; ; index += 1) {
+		const wall = new Date(baseYear, baseMonth + monthsPerTick * index, 1);
+		const value = snapToColumnEdge(
+			fromAxisDate(wall, toDate),
+			phase,
+			columnWidth,
+		);
+		if (value > max) {
+			break;
+		}
+		if (value >= min && value !== splits[splits.length - 1]) {
+			splits.push(value);
+		}
+	}
+	return splits;
+}
+
+/**
+ * Time ticks placed on column edges, so a vertical grid line falls in the gap
+ * between two cells instead of through one. uPlot's increment is rounded up to a
+ * whole number of columns, and the sequence starts at the column edge nearest
+ * the timezone's midnight — the closest the grid can get to the ticks uPlot
+ * would have drawn. Where midnight is itself an edge, they are those ticks.
+ */
+export function resolveColumnAlignedSplits({
+	anchor,
+	step,
+	incr,
+	min,
+	max,
+	toDate = BROWSER_DATE,
+}: {
+	/** Any column start: every edge sits at `anchor + n * step`. */
+	anchor: number;
+	/** Column width in seconds. */
+	step: number;
+	/** Increment uPlot picked for the axis, in seconds. */
+	incr: number;
+	min: number;
+	max: number;
+	toDate?: ToAxisDate;
+}): number[] {
+	if (!(incr > 0) || !(max > min)) {
+		return [];
+	}
+
+	const columnWidth = step > 0 ? step : incr;
+	const phase = step > 0 ? ((anchor % step) + step) % step : 0;
+
+	if (incr >= MONTH_INCR_SECONDS) {
+		return resolveCalendarSplits({
+			incr,
+			min,
+			max,
+			toDate,
+			phase,
+			columnWidth,
+		});
+	}
+
+	const tickIncr = Math.ceil(incr / columnWidth) * columnWidth;
+	const origin = snapToColumnEdge(
+		resolveDayOrigin(min, toDate),
+		phase,
+		columnWidth,
+	);
+
+	const splits: number[] = [];
+	for (let index = Math.ceil((min - origin) / tickIncr); ; index += 1) {
+		const value = origin + index * tickIncr;
+		if (value > max) {
+			break;
+		}
+		splits.push(value);
+	}
+	return splits;
 }

@@ -18,4 +18,6 @@ export const PanelTypeVsPanelWrapper = {
 	[PANEL_TYPES.PIE]: PiePanelWrapper,
 	[PANEL_TYPES.BAR]: BarPanel,
 	[PANEL_TYPES.HISTOGRAM]: HistogramPanel,
+	// V2-only kind; it renders through the V2 panel registry.
+	[PANEL_TYPES.HEATMAP]: null,
 };

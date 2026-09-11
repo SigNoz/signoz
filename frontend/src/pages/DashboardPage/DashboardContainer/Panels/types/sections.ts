@@ -3,6 +3,8 @@ import type {
 	DashboardtypesAxesDTO,
 	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesComparisonThresholdDTO,
+	DashboardtypesHeatmapAxesDTO,
+	DashboardtypesHeatmapChartAppearanceDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
 	DashboardtypesPanelFormattingDTO,
@@ -81,11 +83,20 @@ export type AnyThreshold =
 export type PanelFormattingSlice = DashboardtypesPanelFormattingDTO &
 	Pick<DashboardtypesTableFormattingDTO, 'columnUnits'>;
 
+// Superset of every kind's axes DTO, gated by the `controls` bag.
+export type PanelAxesSlice = DashboardtypesAxesDTO &
+	DashboardtypesHeatmapAxesDTO;
+
+// Superset of every kind's chart-appearance DTO, gated by `controls`.
+export type PanelChartAppearanceSlice =
+	DashboardtypesTimeSeriesChartAppearanceDTO &
+		DashboardtypesHeatmapChartAppearanceDTO;
+
 export interface SectionSpecMap {
 	[SectionKind.Formatting]: PanelFormattingSlice; // spec.plugin.spec.formatting
-	[SectionKind.Axes]: DashboardtypesAxesDTO; // spec.plugin.spec.axes
+	[SectionKind.Axes]: PanelAxesSlice; // spec.plugin.spec.axes
 	[SectionKind.Legend]: DashboardtypesLegendDTO; // spec.plugin.spec.legend
-	[SectionKind.ChartAppearance]: DashboardtypesTimeSeriesChartAppearanceDTO; // spec.plugin.spec.chartAppearance
+	[SectionKind.ChartAppearance]: PanelChartAppearanceSlice; // spec.plugin.spec.chartAppearance
 	[SectionKind.Buckets]: DashboardtypesHistogramBucketsDTO; // spec.plugin.spec.histogramBuckets
 	// spec.plugin.spec.visualization — typed as the Bar shape (widest superset);
 	// the `controls` bag gates which fields each kind writes.
@@ -105,7 +116,13 @@ export interface SectionControls {
 		decimals?: boolean;
 		columnUnits?: boolean;
 	};
-	[SectionKind.Axes]: { minMax?: boolean; logScale?: boolean }; // minMax → softMin/softMax
+	// minMax → softMin/softMax; yScale → the heatmap's bucket-axis distribution,
+	// whose domain comes from the response and so takes no soft bounds.
+	[SectionKind.Axes]: {
+		minMax?: boolean;
+		logScale?: boolean;
+		yScale?: boolean;
+	};
 	[SectionKind.Legend]: {
 		position?: boolean;
 		// colors → customColors; the resolver supplies the labels overrides are keyed by,
@@ -118,6 +135,8 @@ export interface SectionControls {
 		fillMode?: boolean;
 		showPoints?: boolean;
 		spanGaps?: boolean;
+		// colors → the heatmap's cell colour ramp; nothing else here applies to a grid.
+		colors?: boolean;
 	};
 	[SectionKind.Buckets]: {
 		count?: boolean;

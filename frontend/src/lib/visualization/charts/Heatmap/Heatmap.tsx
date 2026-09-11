@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
 import ColorBar from 'lib/uPlotV2/components/ColorBar/ColorBar';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
@@ -15,23 +15,32 @@ import {
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
 import { resolveHeatmapYAxis } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
-import {
-	resolveGroupPeaks,
-	resolveHeatmapGrid,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/grid';
+import { resolveHeatmapGrid } from 'lib/uPlotV2/plugins/HeatmapPlugin/grid';
 import {
 	HeatmapAxisScale,
 	HeatmapCell,
-	HeatmapColorMode,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 import { HeatmapChartProps } from 'lib/visualization/charts/types';
 import { useHeatmapGroupLegend } from './useHeatmapGroupLegend';
-import { buildHeatmapConfig, prepareHeatmapChartData } from './utils';
+import {
+	buildHeatmapConfig,
+	prepareHeatmapChartData,
+	resolveBoundaryPrecision,
+} from './utils';
 
 /** Vertical space the colour bar takes out of the container. */
 const COLOR_BAR_HEIGHT = 28;
+
+/** Row, column and count together: a refetch changes what the cell under a
+ *  stationary cursor means, while the row and column stay put. */
+function isSameCell(a: HeatmapCell | null, b: HeatmapCell | null): boolean {
+	if (a === null || b === null) {
+		return a === b;
+	}
+	return a.row === b.row && a.column === b.column && a.count === b.count;
+}
 
 /**
  * Columns are time slices, rows are bucket ranges, cell colour is the observation
@@ -48,7 +57,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 		width,
 		height,
 		isDarkMode,
-		axisScale = HeatmapAxisScale.Log,
+		axisScale = HeatmapAxisScale.Auto,
 		yAxisUnit,
 		decimalPrecision,
 		timezone,
@@ -72,13 +81,11 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 
 	const [hoveredCell, setHoveredCell] = useState<HeatmapCell | null>(null);
 	const hoveredCellRef = useRef<HeatmapCell | null>(null);
+	const hoverFrameRef = useRef<number | null>(null);
 	const onCellClickRef = useRef(onCellClick);
 	onCellClickRef.current = onCellClick;
 
 	const groups = useMemo(() => series.map((entry) => entry.label), [series]);
-
-	// One series has nothing to choose between.
-	const hasGroupLegend = showLegend && groups.length > 1;
 
 	const colors = useMemo(
 		() => ({ ...DEFAULT_HEATMAP_COLORS, ...props.colors }),
@@ -115,6 +122,13 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 		[grid.bounds, axisScale],
 	);
 
+	// The axis, the series labels and the tooltip all name rows by their boundaries,
+	// so they share one precision.
+	const boundaryPrecision = useMemo(
+		() => resolveBoundaryPrecision({ yAxis, yAxisUnit, decimalPrecision }),
+		[yAxis, yAxisUnit, decimalPrecision],
+	);
+
 	const hasGrid = yAxis.rows.length > 0 && grid.timestamps.length > 0;
 
 	const data = useMemo(
@@ -138,10 +152,36 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 
 	// Stable: the renderer captures it at config-build time, so a new identity would
 	// recreate the plot on every hover.
+	//
+	// The plot reports the cell from inside its own render path, which React can be
+	// driving — a resize or a data swap runs the plot's hooks during a commit, and a
+	// rebuilt plot re-reports the cell the cursor is still sitting on. Committing to
+	// state there nests an update inside the commit that caused it, so the two feed
+	// each other until React gives up at its depth limit. The frame takes the update
+	// out of that chain; the equality check drops a report that carries nothing new.
 	const handleHoverChange = useCallback((cell: HeatmapCell | null): void => {
 		hoveredCellRef.current = cell;
-		setHoveredCell(cell);
+		if (hoverFrameRef.current !== null) {
+			return;
+		}
+		hoverFrameRef.current = requestAnimationFrame(() => {
+			hoverFrameRef.current = null;
+			setHoveredCell((previous) =>
+				isSameCell(previous, hoveredCellRef.current)
+					? previous
+					: hoveredCellRef.current,
+			);
+		});
 	}, []);
+
+	useEffect(
+		() => (): void => {
+			if (hoverFrameRef.current !== null) {
+				cancelAnimationFrame(hoverFrameRef.current);
+			}
+		},
+		[],
+	);
 
 	const config = useMemo(
 		() =>
@@ -155,7 +195,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				dimOnHover,
 				onHoverChange: handleHoverChange,
 				yAxisUnit,
-				decimalPrecision,
+				decimalPrecision: boundaryPrecision,
 				timezone,
 				minTimeScale,
 				maxTimeScale,
@@ -171,18 +211,13 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 			dimOnHover,
 			handleHoverChange,
 			yAxisUnit,
-			decimalPrecision,
+			boundaryPrecision,
 			timezone,
 			minTimeScale,
 			maxTimeScale,
 			onDragSelect,
 		],
 	);
-
-	// Each marker takes the ramp colour for where that group's densest cell falls on
-	// the colour bar, so a swatch reads against the same scale as the grid.
-	const groupPeaks = useMemo(() => resolveGroupPeaks(series), [series]);
-	const isPaletteMode = colors.mode === HeatmapColorMode.Palette;
 
 	const legendItems = useMemo<LegendItem[]>(
 		() =>
@@ -191,19 +226,12 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				// handling is identical across charts.
 				seriesIndex: index + 1,
 				label: group,
-				color: isPaletteMode
-					? (colorResolver.colorFor(groupPeaks.get(group) ?? 0) ?? extremeColor)
-					: extremeColor,
+				// Colour means count here, so a marker names its group rather than keying
+				// a colour — every one of them takes the top of the ramp.
+				color: extremeColor,
 				show: visibleGroups.includes(group),
 			})),
-		[
-			groups,
-			visibleGroups,
-			isPaletteMode,
-			colorResolver,
-			groupPeaks,
-			extremeColor,
-		],
+		[groups, visibleGroups, extremeColor],
 	);
 
 	const renderTooltip = useCallback(
@@ -217,7 +245,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				visibleGroups={visibleGroups}
 				groupColor={extremeColor}
 				yAxisUnit={yAxisUnit}
-				decimalPrecision={decimalPrecision}
+				decimalPrecision={boundaryPrecision}
 				timezone={timezone}
 				canPinTooltip={canPinTooltip}
 				renderTooltipFooter={renderTooltipFooter}
@@ -231,7 +259,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 			visibleGroups,
 			extremeColor,
 			yAxisUnit,
-			decimalPrecision,
+			boundaryPrecision,
 			timezone,
 			canPinTooltip,
 			renderTooltipFooter,
@@ -290,7 +318,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				showVisualMap && hasGrid ? Math.max(0, height - COLOR_BAR_HEIGHT) : height
 			}
 			legendConfig={{ position: legendPosition }}
-			showLegend={hasGroupLegend}
+			showLegend={showLegend}
 			customLegend={groupLegend}
 			legendLabels={groups}
 			showTooltip={showTooltip}

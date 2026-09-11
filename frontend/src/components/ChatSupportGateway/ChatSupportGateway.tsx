@@ -4,11 +4,12 @@ import { useLocation } from 'react-router-dom';
 import { Button, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import updateCreditCardApi from 'api/v1/checkout/create';
+import { createSubscription } from 'api/generated/services/subscriptions';
+import type { CreateSubscription201 } from 'api/generated/services/sigNoz.schemas';
 import { useNotifications } from 'hooks/useNotifications';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { SubscriptionCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import { CreditCard, MessageSquareText, X } from '@signozhq/icons';
-import { SuccessResponseV2 } from 'types/api';
-import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 
@@ -18,9 +19,7 @@ export default function ChatSupportGateway(): JSX.Element {
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] =
 		useState(false);
 
-	const handleBillingOnSuccess = (
-		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
-	): void => {
+	const handleBillingOnSuccess = (data: CreateSubscription201): void => {
 		if (data?.data?.redirectURL) {
 			const newTab = document.createElement('a');
 			newTab.href = data.data.redirectURL;
@@ -38,7 +37,7 @@ export default function ChatSupportGateway(): JSX.Element {
 	};
 
 	const { mutate: updateCreditCard, isLoading: isLoadingBilling } = useMutation(
-		updateCreditCardApi,
+		createSubscription,
 		{
 			onSuccess: (data) => {
 				handleBillingOnSuccess(data);
@@ -94,18 +93,23 @@ export default function ChatSupportGateway(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<Button
+					<AuthZTooltip
 						key="submit"
-						type="primary"
-						icon={<CreditCard size={16} />}
-						size="middle"
-						loading={isLoadingBilling}
-						disabled={isLoadingBilling}
-						onClick={handleAddCreditCard}
-						className="add-credit-card-btn"
+						checks={[SubscriptionCreatePermission]}
+						withPortal={false}
 					>
-						Add Credit Card
-					</Button>,
+						<Button
+							type="primary"
+							icon={<CreditCard size={16} />}
+							size="middle"
+							loading={isLoadingBilling}
+							disabled={isLoadingBilling}
+							onClick={handleAddCreditCard}
+							className="add-credit-card-btn"
+						>
+							Add Credit Card
+						</Button>
+					</AuthZTooltip>,
 				]}
 			>
 				<Typography.Text className="add-credit-card-text">

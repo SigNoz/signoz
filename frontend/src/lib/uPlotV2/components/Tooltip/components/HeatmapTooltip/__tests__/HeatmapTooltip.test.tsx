@@ -100,7 +100,7 @@ describe('HeatmapTooltip — cell identity', () => {
 		renderTooltip();
 
 		expect(screen.getByTestId('heatmap-tooltip-range').textContent).toMatch(
-			/^\d{2}:\d{2} → \d{2}:\d{2}$/,
+			/^\d{2}\/\d{2} \d{2}:\d{2} → \d{2}\/\d{2} \d{2}:\d{2}$/,
 		);
 	});
 
