@@ -4,7 +4,6 @@ import {
 	screen,
 	userEvent,
 	waitFor,
-	waitForElementToBeRemoved,
 	within,
 } from 'storybook/test';
 
@@ -89,12 +88,16 @@ export const Confirmation: Story = {
 		);
 
 		await userEvent.click(trigger);
-		const dialog = await screen.findByRole('dialog', {
-			name: 'Delete environment',
-		});
+		await screen.findByRole('dialog', { name: 'Delete environment' });
 
 		await userEvent.keyboard('{Escape}');
-		await waitForElementToBeRemoved(dialog);
+		// Escape can close the dialog before the assertion runs, which
+		// `waitForElementToBeRemoved` treats as an error rather than a pass.
+		await waitFor(() =>
+			expect(
+				screen.queryByRole('dialog', { name: 'Delete environment' }),
+			).not.toBeInTheDocument(),
+		);
 	},
 };
 
