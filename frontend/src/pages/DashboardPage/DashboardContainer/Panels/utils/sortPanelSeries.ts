@@ -32,9 +32,18 @@ export function sortSeriesByDefinitionOrder(
 			rank: rankByQueryName.get(item.queryName) ?? queryNames.length,
 			key: seriesKey(item),
 		}))
-		.sort((a, b) =>
-			a.rank !== b.rank ? a.rank - b.rank : a.key.localeCompare(b.key),
-		)
+		.sort((a, b) => {
+			if (a.rank !== b.rank) {
+				return a.rank - b.rank;
+			}
+			if (a.item.queryName !== b.item.queryName) {
+				return a.item.queryName.localeCompare(b.item.queryName);
+			}
+			// Numeric, so a query with more than ten aggregations keeps them in
+			// definition order rather than "1, 10, 2".
+			const byIndex = a.item.aggregation.index - b.item.aggregation.index;
+			return byIndex !== 0 ? byIndex : a.key.localeCompare(b.key);
+		})
 		.map(({ item }) => item);
 }
 

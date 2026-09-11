@@ -117,6 +117,37 @@ describe('sortSeriesByDefinitionOrder', () => {
 		expect(sorted.map((item) => item.aggregation.index)).toStrictEqual([0, 1]);
 	});
 
+	it('orders aggregation indices numerically, not as text', () => {
+		// As text, "10" sorts before "2"; a query with more than ten aggregations
+		// must still follow its definition order.
+		const sorted = sortSeriesByDefinitionOrder(
+			[
+				makeSeries('A', [1], { aggregation: { index: 10, alias: '' } }),
+				makeSeries('A', [1], { aggregation: { index: 2, alias: '' } }),
+				makeSeries('A', [1], { aggregation: { index: 1, alias: '' } }),
+			],
+			['A'],
+		);
+
+		expect(sorted.map((item) => item.aggregation.index)).toStrictEqual([
+			1, 2, 10,
+		]);
+	});
+
+	it('keeps label sets distinct when a value contains the old delimiters', () => {
+		// `{a: "x,b=y"}` and `{a: "x", b: "y"}` used to serialise to the same key,
+		// which handed their relative order back to the wire.
+		const joined = makeSeries('A', [1], { labels: { a: 'x,b=y' } });
+		const split = makeSeries('A', [1], { labels: { a: 'x', b: 'y' } });
+
+		const forward = sortSeriesByDefinitionOrder([joined, split], ['A']);
+		const backward = sortSeriesByDefinitionOrder([split, joined], ['A']);
+
+		expect(forward.map((item) => item.labels)).toStrictEqual(
+			backward.map((item) => item.labels),
+		);
+	});
+
 	it('sinks series whose query the panel no longer defines to the bottom', () => {
 		const sorted = sortSeriesByDefinitionOrder(
 			[makeSeries('Z', [1]), makeSeries('B', [1]), makeSeries('A', [1])],
