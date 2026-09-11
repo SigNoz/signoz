@@ -151,8 +151,8 @@ describe('panel capabilities guard', () => {
 		});
 
 		it('carries an inert query shape, so a stray request can do no harm', () => {
-			const queryCapabilities = requireQueryPanelDefinition(unknownKind)
-				.queryCapabilities;
+			const queryCapabilities =
+				requireQueryPanelDefinition(unknownKind).queryCapabilities;
 			expect(queryCapabilities.requestType).toBe(time_series);
 			expect(queryCapabilities.serverPaginated).toBe(false);
 			expect(queryCapabilities.formatTableResultForUI).toBe(false);

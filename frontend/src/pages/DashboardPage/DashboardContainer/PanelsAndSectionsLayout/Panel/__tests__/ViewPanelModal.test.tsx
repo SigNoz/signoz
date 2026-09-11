@@ -223,7 +223,9 @@ describe('ViewPanelModal', () => {
 			EditorPane: (): JSX.Element => <div data-testid="static-editor-pane" />,
 		};
 		(getPanelDefinition as jest.Mock).mockImplementation((kind: string) =>
-			kind === 'signoz/TimeSeriesPanel' ? staticDefinition : actual.getPanelDefinition(kind),
+			kind === 'signoz/TimeSeriesPanel'
+				? staticDefinition
+				: actual.getPanelDefinition(kind),
 		);
 
 		renderWithProvider(

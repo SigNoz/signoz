@@ -25,7 +25,11 @@ function ListEditorPane({
 			onCancelQuery={onCancelQuery}
 			stickyHeader={stickyHeader}
 			footer={
-				<ListColumnsEditor spec={spec} onChangeSpec={onChangeSpec} signal={signal} />
+				<ListColumnsEditor
+					spec={spec}
+					onChangeSpec={onChangeSpec}
+					signal={signal}
+				/>
 			}
 		/>
 	);

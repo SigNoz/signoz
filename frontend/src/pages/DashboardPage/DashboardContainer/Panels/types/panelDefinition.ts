@@ -107,8 +107,9 @@ export interface QueryEditorPaneProps {
  * kind without one carries no query declarations at all — no dummy capabilities,
  * no empty signal lists standing in for "not applicable".
  */
-export interface QueryPanelDefinition<K extends PanelKind = PanelKind>
-	extends PanelDefinitionBase<K> {
+export interface QueryPanelDefinition<
+	K extends PanelKind = PanelKind,
+> extends PanelDefinitionBase<K> {
 	mode: 'query';
 	Renderer: ComponentType<PanelRendererProps<K>>;
 	/** Lower editor pane — the shared query-builder pane, or a kind wrapper of it. */
@@ -129,8 +130,9 @@ export interface QueryPanelDefinition<K extends PanelKind = PanelKind>
  * pane replaces the query builder (TDD D8). No query machinery mounts for it
  * anywhere — every host forks on `mode` before touching a query hook.
  */
-export interface StaticPanelDefinition<K extends PanelKind = PanelKind>
-	extends PanelDefinitionBase<K> {
+export interface StaticPanelDefinition<
+	K extends PanelKind = PanelKind,
+> extends PanelDefinitionBase<K> {
 	mode: 'static';
 	Renderer: ComponentType<StaticRendererProps<K>>;
 	EditorPane: ComponentType<StaticEditorPaneProps>;

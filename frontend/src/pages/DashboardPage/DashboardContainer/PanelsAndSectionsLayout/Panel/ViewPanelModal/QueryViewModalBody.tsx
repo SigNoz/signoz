@@ -77,7 +77,6 @@ function QueryViewModalBody({
 		pagination,
 	} = query;
 
-
 	// Grid drill-down, but filter-by-value / breakout refine this view in place. Drills the draft
 	// so it reflects in-modal edits (and the click's time range follows the per-view window).
 	const drilldown = useDrilldown(draft, panelId, {
