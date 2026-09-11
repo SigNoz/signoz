@@ -156,7 +156,7 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 			triggeredTestAlerts := []map[*alertmanagertypes.PostableAlert][]string{}
 
 			// Variable to store promProvider for cleanup
-			var promProvider *prometheustest.Provider
+			var promProvider prometheus.Prometheus
 
 			// Create manager using test factory with hooks
 			mgr := NewTestManager(t, &TestManagerOptions{
@@ -181,74 +181,29 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 				TelemetryStoreHook: func(store telemetrystore.TelemetryStore) {
 					mockStore := store.(*telemetrystoretest.Provider)
 
-					// Set up Prometheus-specific mock data
-					// Fingerprint columns for Prometheus queries
-					fingerprintCols := []cmock.ColumnType{
-						{Name: "fingerprint", Type: "UInt64"},
-						{Name: "any(labels)", Type: "String"},
-					}
-
-					// Samples columns for Prometheus queries
-					samplesCols := []cmock.ColumnType{
-						{Name: "metric_name", Type: "String"},
-						{Name: "fingerprint", Type: "UInt64"},
-						{Name: "unix_milli", Type: "Int64"},
-						{Name: "value", Type: "Float64"},
-						{Name: "flags", Type: "UInt32"},
-					}
-
-					// Calculate query time range similar to Prometheus rule tests
-					// TestNotification uses time.Now().UTC() for evaluation
-					// We calculate the query window based on current time to match what the actual evaluation will use
+					// Grid the TestNotification eval computes over (see
+					// Timestamps on base_rule); nil args match any window.
 					evalTime := baseTime
 					evalWindowMs := int64(5 * 60 * 1000) // 5 minutes in ms
-					evalTimeMs := evalTime.UnixMilli()
-					queryStart := ((evalTimeMs-2*evalWindowMs)/60000)*60000 + 1 // truncate to minute + 1ms
-					queryEnd := (evalTimeMs / 60000) * 60000                    // truncate to minute
+					gridEnd := (evalTime.UnixMilli() / 60000) * 60000
+					gridStart := gridEnd - evalWindowMs
 
-					// Create fingerprint data
-					fingerprint := uint64(12345)
-					labelsJSON := `{"__name__":"test_metric"}`
-					fingerprintData := [][]any{
-						{fingerprint, labelsJSON},
-					}
-					fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
-
-					// Create samples data from test case values, calculating timestamps relative to baseTime
-					validSamplesData := make([][]any, 0)
+					tsList := make([]int64, 0, len(tc.Values))
+					vList := make([]float64, 0, len(tc.Values))
 					for _, v := range tc.Values {
 						// Skip NaN and Inf values in the samples data
 						if math.IsNaN(v.Value) || math.IsInf(v.Value, 0) {
 							continue
 						}
-						// Calculate timestamp relative to baseTime
-						sampleTimestamp := baseTime.Add(v.Offset).UnixMilli()
-						validSamplesData = append(validSamplesData, []any{
-							"test_metric",
-							fingerprint,
-							sampleTimestamp,
-							v.Value,
-							uint32(0), // flags - 0 means normal value
-						})
+						tsList = append(tsList, baseTime.Add(v.Offset).UnixMilli())
+						vList = append(vList, v.Value)
 					}
-					samplesRows := cmock.NewRows(samplesCols, validSamplesData)
+					grid := prometheustest.LastSampleGrid(tsList, vList, gridStart, gridEnd, 60_000, 300_000)
 
 					mock := mockStore.Mock()
-
-					// Mock the fingerprint query (for Prometheus label matching)
-					mock.ExpectQuery("SELECT fingerprint, any").
-						WithArgs("test_metric").
-						WillReturnRows(fingerprintRows)
-
-					// Mock the samples query (for Prometheus metric data)
-					mock.ExpectQuery("SELECT metric_name, fingerprint, unix_milli").
-						WithArgs(
-							"test_metric",
-							"test_metric",
-							queryStart,
-							queryEnd,
-						).
-						WillReturnRows(samplesRows)
+					mock.ExpectQuery("SELECT gkey").
+						WithArgs("test_metric", nil, nil, "test_metric", nil, nil).
+						WillReturnRows(cmock.NewRows(prometheustest.GridCols, [][]any{{`[["__name__","test_metric"]]`, grid}}))
 
 					// Create Prometheus provider for this test
 					promProvider = prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, store)
@@ -282,7 +237,6 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 				assert.Empty(t, triggeredTestAlerts)
 			}
 
-			promProvider.Close()
 		})
 	}
 }
