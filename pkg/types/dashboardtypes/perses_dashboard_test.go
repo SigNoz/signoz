@@ -1137,7 +1137,7 @@ func TestInvalidatePanelWithMultipleDirectQueries(t *testing.T) {
 }
 
 func TestValidateTextPanel(t *testing.T) {
-	wrapPanel := func(panelSpec string) []byte {
+	wrapPanel := func(panelSpec, queries string) []byte {
 		return []byte(`{
 			"variables": [],
 			"panels": {
@@ -1146,7 +1146,7 @@ func TestValidateTextPanel(t *testing.T) {
 					"spec": {
 						"links": [],
 						"plugin": {"kind": "signoz/TextPanel", "spec": ` + panelSpec + `},
-						"queries": []
+						"queries": ` + queries + `
 					}
 				}
 			},
@@ -1155,134 +1155,177 @@ func TestValidateTextPanel(t *testing.T) {
 		}`)
 	}
 
-	t.Run("fully specified text panel validates", func(t *testing.T) {
-		d, err := unmarshalDashboard(wrapPanel(`{
-			"mode": "markdown",
-			"text": "# Runbook\n\nSee the [oncall doc](https://example.com).",
-			"presentation": {"textAlign": "center", "verticalAlign": "bottom", "background": "#1A2b3C"},
-			"headerOptions": {"hide": true}
-		}`))
-		require.NoError(t, err, "expected a fully specified text panel to validate")
+	type specCase struct {
+		panelSpec              string
+		expectedMarshalledSpec string
+		expectedError          string
+	}
 
-		spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TextPanelSpec)
-		require.True(t, ok, "expected the panel spec to decode as *TextPanelSpec")
-		assert.Equal(t, TextModeMarkdown, spec.Mode)
-		assert.Equal(t, "# Runbook\n\nSee the [oncall doc](https://example.com).", spec.Text)
-		assert.Equal(t, TextAlignCenter, spec.Presentation.TextAlign)
-		assert.Equal(t, VerticalAlignBottom, spec.Presentation.VerticalAlign)
-		require.NotNil(t, spec.Presentation.Background, "expected background to be set")
-		assert.Equal(t, "#1A2b3C", *spec.Presentation.Background)
-		assert.True(t, spec.HeaderOptions.Hide)
-	})
-
-	// The header shows unless explicitly hidden, so the zero value must round-trip
-	// as a shown header. Background has no default: omitted stays omitted.
-	t.Run("omitted fields marshal back as their defaults", func(t *testing.T) {
-		d, err := unmarshalDashboard(wrapPanel(`{}`))
-		require.NoError(t, err, "expected an empty text panel spec to validate")
-
-		spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TextPanelSpec)
-		require.True(t, ok, "expected the panel spec to decode as *TextPanelSpec")
-		assert.Nil(t, spec.Presentation.Background, "expected an omitted background to stay unset")
-
-		out, err := json.Marshal(d.Panels["p1"].Spec.Plugin.Spec)
-		require.NoError(t, err, "marshalling the decoded text panel spec")
-		assert.JSONEq(t, `{
-			"mode": "markdown",
-			"text": "",
-			"presentation": {"textAlign": "left", "verticalAlign": "top"},
-			"headerOptions": {"hide": false}
-		}`, string(out))
-	})
-
-	t.Run("a text panel carrying a query is rejected", func(t *testing.T) {
-		data := []byte(`{
-			"variables": [],
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"links": [],
-						"plugin": {"kind": "signoz/TextPanel", "spec": {"text": "hi"}},
-						"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "metrics"}}}}]
-					}
-				}
+	testCases := []struct {
+		description string
+		queries     string
+		specCases   []specCase
+	}{
+		{
+			description: "fully specified text panel validates",
+			queries:     "[]",
+			specCases: []specCase{{
+				panelSpec: `{
+					"mode": "markdown",
+					"text": "# Runbook\n\nSee the [oncall doc](https://example.com).",
+					"presentation": {"textAlign": "center", "verticalAlign": "bottom", "background": "#1A2b3C"},
+					"headerOptions": {"hide": true}
+				}`,
+				expectedMarshalledSpec: `{
+					"mode": "markdown",
+					"text": "# Runbook\n\nSee the [oncall doc](https://example.com).",
+					"presentation": {"textAlign": "center", "verticalAlign": "bottom", "background": "#1A2b3C"},
+					"headerOptions": {"hide": true}
+				}`,
+			}},
+		},
+		// The header shows unless explicitly hidden, so the zero value must round-trip
+		// as a shown header. Background has no default: omitted stays omitted.
+		{
+			description: "omitted fields marshal back as their defaults",
+			queries:     "[]",
+			specCases: []specCase{{
+				panelSpec: `{}`,
+				expectedMarshalledSpec: `{
+					"mode": "markdown",
+					"text": "",
+					"presentation": {"textAlign": "left", "verticalAlign": "top"},
+					"headerOptions": {"hide": false}
+				}`,
+			}},
+		},
+		{
+			description: "a text panel carrying a query is rejected",
+			queries:     `[{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "metrics"}}}}]`,
+			specCases: []specCase{{
+				panelSpec:     `{"text": "hi"}`,
+				expectedError: "renders without a query and must have queries: [], found 1",
+			}},
+		},
+		{
+			description: "a text panel with null queries is rejected",
+			queries:     "null",
+			specCases: []specCase{{
+				panelSpec:     `{"text": "hi"}`,
+				expectedError: "spec.queries: is required and must not be null",
+			}},
+		},
+		{
+			description: "hex background colours validate",
+			queries:     "[]",
+			specCases: []specCase{
+				{
+					panelSpec:              `{"presentation": {"background": "#abc"}}`,
+					expectedMarshalledSpec: `{"mode": "markdown", "text": "", "presentation": {"textAlign": "left", "verticalAlign": "top", "background": "#abc"}, "headerOptions": {"hide": false}}`,
+				},
+				{
+					panelSpec:              `{"presentation": {"background": "#abcd"}}`,
+					expectedMarshalledSpec: `{"mode": "markdown", "text": "", "presentation": {"textAlign": "left", "verticalAlign": "top", "background": "#abcd"}, "headerOptions": {"hide": false}}`,
+				},
+				{
+					panelSpec:              `{"presentation": {"background": "#aabbcc"}}`,
+					expectedMarshalledSpec: `{"mode": "markdown", "text": "", "presentation": {"textAlign": "left", "verticalAlign": "top", "background": "#aabbcc"}, "headerOptions": {"hide": false}}`,
+				},
+				{
+					panelSpec:              `{"presentation": {"background": "#aabbccdd"}}`,
+					expectedMarshalledSpec: `{"mode": "markdown", "text": "", "presentation": {"textAlign": "left", "verticalAlign": "top", "background": "#aabbccdd"}, "headerOptions": {"hide": false}}`,
+				},
+				{
+					panelSpec:              `{"presentation": {"background": "#AABBCC"}}`,
+					expectedMarshalledSpec: `{"mode": "markdown", "text": "", "presentation": {"textAlign": "left", "verticalAlign": "top", "background": "#AABBCC"}, "headerOptions": {"hide": false}}`,
+				},
 			},
-			"links": [],
-			"layouts": []
-		}`)
-		_, err := unmarshalDashboard(data)
-		require.Error(t, err, "expected a text panel with a query to be rejected")
-		assert.Contains(t, err.Error(), "renders without a query and must have queries: [], found 1")
-	})
-
-	t.Run("a text panel with null queries is rejected", func(t *testing.T) {
-		data := []byte(`{
-			"variables": [],
-			"panels": {
-				"p1": {
-					"kind": "Panel",
-					"spec": {
-						"links": [],
-						"plugin": {"kind": "signoz/TextPanel", "spec": {"text": "hi"}},
-						"queries": null
-					}
-				}
+		},
+		{
+			description: "unknown enum values are rejected",
+			queries:     "[]",
+			specCases: []specCase{
+				{
+					panelSpec:     `{"mode": "html"}`,
+					expectedError: `invalid text mode "html"`,
+				},
+				{
+					panelSpec:     `{"presentation": {"textAlign": "justify"}}`,
+					expectedError: `invalid text align "justify"`,
+				},
+				{
+					panelSpec:     `{"presentation": {"verticalAlign": "middle"}}`,
+					expectedError: `invalid vertical align "middle"`,
+				},
 			},
-			"links": [],
-			"layouts": []
-		}`)
-		_, err := unmarshalDashboard(data)
-		require.Error(t, err, "expected a text panel with null queries to be rejected")
-		assert.Contains(t, err.Error(), "spec.queries: is required and must not be null")
-	})
+		},
+		{
+			description: "invalid background colours are rejected",
+			queries:     "[]",
+			specCases: []specCase{
+				{
+					panelSpec:     `{"presentation": {"background": ""}}`,
+					expectedError: "failed on the 'hexcolor' tag",
+				},
+				{
+					panelSpec:     `{"presentation": {"background": "aabbcc"}}`,
+					expectedError: "failed on the 'hexcolor' tag",
+				},
+				{
+					panelSpec:     `{"presentation": {"background": "red"}}`,
+					expectedError: "failed on the 'hexcolor' tag",
+				},
+				{
+					panelSpec:     `{"presentation": {"background": "#abcde"}}`,
+					expectedError: "failed on the 'hexcolor' tag",
+				},
+				{
+					panelSpec:     `{"presentation": {"background": "#gggggg"}}`,
+					expectedError: "failed on the 'hexcolor' tag",
+				},
+			},
+		},
+		{
+			description: "unknown spec fields are rejected",
+			queries:     "[]",
+			specCases: []specCase{
+				{
+					panelSpec:     `{"markdown": "hi"}`,
+					expectedError: `json: unknown field "markdown"`,
+				},
+				{
+					panelSpec:     `{"presentation": {"horizontalAlign": "left"}}`,
+					expectedError: `json: unknown field "horizontalAlign"`,
+				},
+				{
+					panelSpec:     `{"headerOptions": {"show": true}}`,
+					expectedError: `json: unknown field "show"`,
+				},
+			},
+		},
+	}
 
-	t.Run("hex background colours validate", func(t *testing.T) {
-		for _, background := range []string{"#abc", "#abcd", "#aabbcc", "#aabbccdd", "#AABBCC"} {
-			d, err := unmarshalDashboard(wrapPanel(`{"presentation": {"background": "` + background + `"}}`))
-			require.NoError(t, err, "expected background %q to validate", background)
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			for _, specCase := range testCase.specCases {
+				d, err := unmarshalDashboard(wrapPanel(specCase.panelSpec, testCase.queries))
 
-			spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TextPanelSpec)
-			require.True(t, ok, "expected the panel spec to decode as *TextPanelSpec")
-			require.NotNil(t, spec.Presentation.Background)
-			assert.Equal(t, background, *spec.Presentation.Background)
-		}
-	})
+				if specCase.expectedError != "" {
+					require.Error(t, err, "expected %s to be rejected", specCase.panelSpec)
+					assert.Contains(t, err.Error(), specCase.expectedError)
+					continue
+				}
+				require.NoError(t, err, "expected %s to validate", specCase.panelSpec)
 
-	t.Run("unknown enum values are rejected", func(t *testing.T) {
-		for field, spec := range map[string]string{
-			"mode":          `{"mode": "html"}`,
-			"textAlign":     `{"presentation": {"textAlign": "justify"}}`,
-			"verticalAlign": `{"presentation": {"verticalAlign": "middle"}}`,
-		} {
-			_, err := unmarshalDashboard(wrapPanel(spec))
-			assert.Error(t, err, "expected an unknown %s value to be rejected", field)
-		}
-	})
+				spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TextPanelSpec)
+				require.True(t, ok, "expected the panel spec to decode as *TextPanelSpec")
 
-	t.Run("invalid background colours are rejected", func(t *testing.T) {
-		for name, spec := range map[string]string{
-			"empty string":   `{"presentation": {"background": ""}}`,
-			"missing hash":   `{"presentation": {"background": "aabbcc"}}`,
-			"named colour":   `{"presentation": {"background": "red"}}`,
-			"wrong length":   `{"presentation": {"background": "#abcde"}}`,
-			"non hex digits": `{"presentation": {"background": "#gggggg"}}`,
-		} {
-			_, err := unmarshalDashboard(wrapPanel(spec))
-			assert.Error(t, err, "expected %s background to be rejected", name)
-		}
-	})
-
-	t.Run("unknown spec fields are rejected", func(t *testing.T) {
-		for field, spec := range map[string]string{
-			"top level":     `{"markdown": "hi"}`,
-			"presentation":  `{"presentation": {"horizontalAlign": "left"}}`,
-			"headerOptions": `{"headerOptions": {"show": true}}`,
-		} {
-			_, err := unmarshalDashboard(wrapPanel(spec))
-			assert.Error(t, err, "expected an unknown %s field to be rejected", field)
-		}
-	})
+				out, err := json.Marshal(spec)
+				require.NoError(t, err, "marshalling the decoded text panel spec")
+				assert.JSONEq(t, specCase.expectedMarshalledSpec, string(out))
+			}
+		})
+	}
 }
 
 func TestValidateRequiredFields(t *testing.T) {
