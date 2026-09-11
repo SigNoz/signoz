@@ -98,13 +98,6 @@ export const Loading: Story = {
 	args: { dataState: 'loading' },
 };
 
-/** A dashboard id nobody has, which is what a deleted or mistyped link opens on. */
-export const NotFound: Story = {
-	args: { notFound: true },
-	// The deliberate 404 is the state under test.
-	parameters: { allowConsoleErrors: true },
-};
-
 /**
  * Every tooltip the dashboard itself carries, held open at once: the title, the
  * description with its link, the public-page globe, the `+N` of tags that did
@@ -236,4 +229,17 @@ export const TooltipsInViewPanelModal: Story = {
 		await userEvent.click(await screen.findByText('View'));
 		await screen.findByText(`${TOOLTIP_PANEL_NAME} - (View mode)`);
 	},
+};
+
+/**
+ * A dashboard id nobody has, which is what a deleted or mistyped link opens on.
+ *
+ * Kept last: test-runner shares one page across a file's stories, and the 404
+ * this story is about can settle after the next story has already started,
+ * which fails that one instead.
+ */
+export const NotFound: Story = {
+	args: { notFound: true },
+	// The deliberate 404 is the state under test.
+	parameters: { allowConsoleErrors: true },
 };
