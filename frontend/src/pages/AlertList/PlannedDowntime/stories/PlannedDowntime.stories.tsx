@@ -121,11 +121,17 @@ export const SearchNoResults: Story = {
 /** The schedule list request failed. */
 export const LoadError: Story = {
 	args: { schedulesState: 'error' },
+	// The mocked schedules request intentionally fails; the resulting console error
+	// is the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 };
 
 /** The new-downtime form with its alert-rules request failed. */
 export const RulesLoadError: Story = {
 	args: { rulesState: 'error' },
+	// The mocked rules request intentionally fails; the resulting console error is
+	// the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 	play: NewDowntime.play,
 };
 
