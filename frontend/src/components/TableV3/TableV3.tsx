@@ -71,7 +71,7 @@ interface ITableConfig {
 		instance: Virtualizer<HTMLDivElement, Element>,
 	) => void;
 }
-interface ITableV3Props<T> {
+export interface ITableV3Props<T> {
 	columns: ColumnDef<T, any>[];
 	data: T[];
 	config: ITableConfig;
@@ -201,5 +201,5 @@ export function TableV3<T>(props: ITableV3Props<T>): JSX.Element {
 
 TableV3.defaultProps = {
 	customClassName: '',
-	virtualiserRef: null,
+	virtualiserRef: undefined,
 };

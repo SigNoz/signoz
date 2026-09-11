@@ -20,6 +20,11 @@ export interface StoryOwnedConfig {
 	queryBuilder?: Partial<QueryBuilderContextType>;
 	/** Initial route, search included, e.g. `/home?relativeTime=1h`. */
 	route?: string;
+	/**
+	 * `location.state` the story starts on, for a page reached by a push that
+	 * carried state rather than by its URL alone.
+	 */
+	routeState?: unknown;
 	/** Overrides the theme toolbar for this story. */
 	theme?: StoryTheme;
 	/**
@@ -55,4 +60,6 @@ export interface ResolvedStoryConfig extends StoryOwnedConfig {
 export interface SignozStoryParameters {
 	signoz?: SignozStoryConfig;
 	msw?: StoryMswParameter;
+	/** Written by the csf plugin from the doc comments in the story file. */
+	docs?: { description?: { component?: string } };
 }

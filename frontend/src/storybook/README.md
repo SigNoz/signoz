@@ -21,10 +21,63 @@ pnpm storybook:build    # static build into storybook-static/
 | `navigation/`     | Keeping a story on its page, and reporting what it tried to leave for   |
 | `msw/`            | The default handler set and the shell's endpoints                       |
 | `mocks/`          | Modules aliased in place of the app's own                               |
-| `decorators/`     | `withProviders`, the global decorator                                   |
+| `decorators/`     | `withProviders` (global) and `withCanvas` (opt-in per component)        |
+| `docs/`           | The `Docs/*` pages, the docs page template, and the sidebar order       |
+| `foundations/`    | Cross-cutting stories with no single owning component, and their fixtures |
 
 A page's own mocks live with the page, not here. See [Adding a page
 story](#adding-a-page-story).
+
+## The sidebar
+
+Titles mirror the app's own side nav (`container/SideNav/menuItems.tsx`):
+`Pages/<Area>/<Page>`, where the area is the nav section and the page is the
+label the nav gives it, so a page sits where someone would click it in the
+product. The leaf is the product's label rather than the component's name, never
+repeats its area (`Alerts/Rules`, not `Alerts/AlertRules`), and never shares a
+name with a sibling folder: a page beside its own detail page is `List`, or
+`Overview` for a tab strip.
+
+The `storySort.order` literal in `.storybook/preview.tsx` carries the order of
+every level, mirroring the nav again. Anything missing from a level falls to the
+end of it, so a new story shows up at the bottom of its area rather than not at
+all.
+
+Tags on the meta are what the sidebar's tag filter reads: `authz` (the page gates
+UI on permission checks through `lib/authz`), `role-gated` (it still branches on
+the legacy role), `beta`, `legacy` (superseded but still routed) and `play` (a
+state the story reaches by interacting). `autodocs` comes from `preview.tsx` and
+is never written on a meta.
+
+`Components/<Component>` and `Foundations/<Concern>` sit beside `Pages`, for the
+shared pieces a page is assembled from and for the cross-cutting behaviour no
+single page owns (feedback, layering, tooltips). Neither is in the
+`storySort.order` literal, so both land after `Pages`, in file order.
+
+## Docs pages
+
+`@storybook/addon-docs` is on, and `preview.tsx` tags every story `autodocs`, so
+each page gets a Docs page: the doc comment above its `const meta`, the controls
+table, and one row per state from the story's own doc comment. Those comments are
+the page's documentation; without the addon they render nowhere.
+
+`docs/PageDocs.tsx` replaces Storybook's default template, which renders a canvas
+per story. A page story is the whole app behind msw, so that is one boot per
+state; this one renders no canvas and lists every state as a link.
+
+`docs/*.mdx` are the `Docs/*` pages in the sidebar: `Introduction`, for someone
+opening Storybook for the first time. This README is the reference and stays a
+file; it is not rendered in the sidebar.
+
+`docs/ThemedDocsContainer.tsx` is the container for every docs page. It themes
+the page off the theme toolbar, which Storybook's own container does not do, and
+it lets the page scroll: a docs page renders in the story iframe, where
+`styles.scss` pins `html` and `body` with `overflow: hidden` for `AppLayout`.
+Both are undone when the page unmounts, so a story keeps the viewport the app
+expects.
+
+MDX here is not GFM: a pipe table renders as its own pipes. Write the table as
+JSX and Storybook's docs styles pick it up.
 
 ## What a story gets for free
 
@@ -57,6 +110,12 @@ Storybook fills the seams with:
 - A fresh react-query client and redux store per story: no cache or state bleed.
 - `nuqs` on its testing adapter, so query-param state lives in memory and never
   touches the iframe URL.
+- A clock frozen at the instant `.storybook/preview-head.html` names, so chart
+  windows, `4 mins ago` labels and trial countdowns are the same in two builds
+  of the same code. `new Date()` is that instant; `Date.now()` runs on from it,
+  because elapsed-time code reads it — `lodash.debounce` compares two readings
+  to decide its trailing call is due, and a frozen one leaves every debounced
+  input in the app filtering nothing. `?storyClock=live` opts out.
 - Theme from the toolbar (dark/light). `applyThemeBodyClass` puts `<body>` in the
   state the app gets from `index.html` plus `AppLayout`: `data-theme="default"`
   (every `@signozhq/design-tokens` semantic token is scoped to it, and without it
@@ -79,11 +138,17 @@ Handlers resolve first-match-wins, in this order:
 3. the global mocks' handlers (access);
 4. `msw/appShellHandlers.ts`, the endpoints the shell hits on every route, and
    the ones whose jest fixture is too thin to show it doing its job;
-5. `src/mocks-server/handlers.ts`, the jest handlers verbatim. An endpoint both
+5. `msw/queryBuilderHandlers.ts`, the legacy v3 autocomplete pair, which the
+   jest handlers answer for one query and 500 for every other;
+6. `src/mocks-server/handlers.ts`, the jest handlers verbatim. An endpoint both
    runners need belongs here so jest gets it too;
-6. a catch-all for `http://localhost/api/*` that logs and answers 501, so an
+7. a catch-all for `http://localhost/api/*` that logs and answers 501, so an
    endpoint nobody mocked fails loudly instead of hanging on a refused
    connection.
+
+A handler that returns nothing hands the request to the next one in the list, so
+a Storybook-level handler can cover the cases a jest fixture does not and leave
+the ones it does.
 
 The whole set is re-registered on every story render rather than handed to
 `setupWorker` once. Editing a handler module then takes effect on the next
@@ -171,16 +236,33 @@ export const homeMocks = defineStoryMocks({
 // src/pages/HomePage/stories/HomePage.stories.tsx
 type HomeArgs = PageStoryArgs<typeof homeMocks>;
 
+const pageStory = storyMocks(homeMocks, { route: ROUTES.HOME, layout: 'app' });
+
+/**
+ * The workspace landing page: ingestion state per signal, the welcome checklist
+ * while a signal is missing, then the widgets over what the workspace has.
+ *
+ * Route: `/home`.
+ */
 const meta = {
 	title: 'Pages/Home',
 	component: HomePage,
-	...storyMocks(homeMocks, { route: ROUTES.HOME, layout: 'app' }),
+	...pageStory,
+	parameters: { ...pageStory.parameters },
 } satisfies Meta<HomeArgs>;
 
 export const NoIngestion: StoryObj<HomeArgs> = {
 	args: { logsIngestion: false, tracesIngestion: false, metricsIngestion: false },
 };
 ```
+
+The trailing `parameters` line is not decoration. `storyMocks` returns the mocks
+under `parameters.signoz`, and the doc comment above `const meta` compiles to a
+`parameters` property that the csf plugin appends **after** the spread, which
+would overwrite it. Restating `parameters` as a literal gives the plugin
+something to merge into, so both survive. A meta that skips it renders the page
+against the global handlers alone, and `resolveStory` says so in the console
+rather than leaving it to be guessed at.
 
 `toggleControl`, `countControl`, `choiceControl` and `multiChoiceControl` build
 the panel row and carry the value's type, so `values` inside `handlers` is typed
@@ -267,8 +349,16 @@ rather than a story that fails at render:
 | Module                | Replacement                        | Why                                        |
 | --------------------- | ---------------------------------- | ------------------------------------------ |
 | `lib/history`         | `navigation/history.alias.ts`      | keeps a story on its page, see below       |
+| `store`               | `mocks/store.mock.ts`              | the singleton answers from the story's store |
 | `api/common/logEvent` | `mocks/logEvent.mock.ts`           | analytics never leave the iframe           |
 | `constants/env`       | `mocks/env.mock.ts`                | pins the API origin the handlers answer on |
+| `@signozhq/ui/tooltip` | `mocks/tooltip.mock.tsx`          | the Tooltips control, see below             |
+
+`store` is the redux singleton, not the provider. A story mounts its own store,
+but around a dozen modules read `store.getState()` directly, and one of them,
+`lib/getStartEndRangeTime`, is how every query decides the time range it asks
+for. Without the alias those modules answer from a store no story seeded, so the
+time picker shows one range and the data covers another.
 
 Mocks use `fn()` from `storybook/test`, so a play function can assert on them:
 
@@ -279,6 +369,45 @@ play: async () => {
 	await expect(logEvent).toHaveBeenCalledWith('Homepage: Visited', {});
 },
 ```
+
+## Tooltips
+
+**Hold tooltips open** is a project-level control, so every story has it. Turning
+it on opens every tooltip the page renders and keeps it open, which is what makes
+a page's tooltips one screenshot rather than one hover each.
+
+Hovering cannot do this. Radix dispatches a `tooltip.open` event on `document`
+when a tooltip opens, and every mounted tooltip closes itself on it, so exactly
+one is open at a time no matter how many providers the tree has. A tooltip whose
+`open` is controlled ignores the event, which is what the alias passes:
+`mocks/tooltip.mock.tsx` wraps `TooltipSimple` and `TooltipRoot` and hands them
+`open` while the control is on.
+
+Two cases keep their own state. A tooltip the page already drives, such as
+`SpanHoverCard`, is left alone: only the page knows what its popup is anchored
+to. A tooltip whose title is empty is left alone too, because there is nothing to
+show but the padding of a popup.
+
+What the control cannot reach is a tooltip that is not mounted: one inside a
+closed drawer or modal, one in a row that renders its actions on hover, and
+`TanStackHoverTooltip`, which renders its children bare until the row is
+hovered. Those need a `play` that reaches the state first; the control then holds
+open whatever it uncovered.
+
+Every page whose tooltips are worth reviewing has a `Tooltips` story, so the
+state can be linked to and snapshotted rather than reproduced by hand:
+
+```tsx
+/** Every tooltip on the page, held open. */
+export const Tooltips: Story = {
+	args: { tooltipsOpen: true },
+};
+```
+
+A page whose interesting tooltips only exist in a drawer, a modal or a hovered
+row gets the `play` that opens that surface first, and `tags: ['play']` on the
+meta. Where the page's own fixture is too tame to show a tooltip growing, the
+story turns the control that lengthens it rather than a story-only prop.
 
 ## Navigation
 
@@ -298,17 +427,54 @@ pathname:
   `NavigationBlockedOverlay`, which lists what was attempted. Nothing is silently
   dropped.
 
+The story's search is mirrored onto the iframe's URL, keeping the preview's own
+params (`id`, `viewMode`, `args`, `globals`). Much of the app reads
+`window.location.search` rather than the router, which is how every writer that
+builds a target on top of the current params reads them, and in a story that
+read would otherwise answer with the preview's query and nothing the page put
+there. Two writers would then publish over each other forever: the query builder
+dropping the time range, the time range dropping the query builder. Whatever the
+app hands back is stripped of the preview's params again on the way in, so the
+story's history stays the page's own URL.
+
 `nuqs` is the one gap: it runs on its testing adapter and keeps its own copy of
 the query string, seeded from the story's `route`. A page that writes params
 through both `useQueryState` and `history.push({ search })` sees the two diverge
 inside a story; a page that stays on one mechanism does not.
+
+## Adding a component story
+
+A component story covers a piece several pages share, or a concern that no single
+page owns. It differs from a page story in three ways:
+
+1. **Bound the canvas.** `preview.tsx` lays every story out `fullscreen`, which
+   is what a page wants and what leaves a select stretched across 1440px. Give
+   the meta `decorators: [withCanvas({ maxWidth: 400 })]`
+   (`storybook/decorators/withCanvas`) with the slot the app actually gives the
+   component: `QuickFilters` gets the explorers' 260px rail, a table gets the
+   height it scrolls in. A component that portals out of the canvas, such as
+   `FieldsSelector`, needs no decorator.
+2. **Drive the component, not a route.** Props come from `args`, not from
+   `storyMocks`; a component that still calls an endpoint declares
+   `parameters.msw` handlers of its own. `layout: 'app'` is for pages only.
+3. **Fix the first-run state.** A component that reads localStorage shows its
+   announcement or its onboarding tooltip in every story, on top of the thing the
+   story is about. Set the key from a `beforeEach` on the meta and keep one story
+   that clears it.
+
+A concern rather than a component — how feedback stacks, what sits above what,
+every tooltip a surface renders — goes under `storybook/foundations/` as a
+fixture plus its story file, since there is no single app component to point at.
 
 ## Adding a page story
 
 The `signoz-page-story` skill in `.claude/skills/` carries this as a workflow:
 mapping the page, deriving its controls, and the checks a story has to pass.
 
-1. Point the story at the page component under `src/pages/<Page>`.
+1. Point the story at the page component under `src/pages/<Page>`. Title it
+   `Pages/<Area>/<Page>` per [The sidebar](#the-sidebar), tag it, add its entry
+   to the `storySort.order` literal in `.storybook/preview.tsx`, and give the
+   meta a doc comment: what the page is, then its route.
 2. Keep every story file under `src/pages/<Page>/stories/`: the story, the
    page's mocks in `<Page>.stories.mocks.ts`, and its payload builders under
    `stories/__story_mockdata__/`. Spread `storyMocks(<page>Mocks, { route })`
@@ -316,8 +482,45 @@ mapping the page, deriving its controls, and the checks a story has to pass.
 3. Pass `layout: 'app'` in the same config, so the page renders inside
    `AppLayout` where a route puts it.
 4. Give the default story every widget populated. A page story earns its keep by
-   showing what the page looks like with data, not with empty states.
+   showing what the page looks like with data, not with empty states. Every story
+   export gets a doc comment saying what that state shows: it is the row the Docs
+   page renders for it.
 5. Run it and watch the console: an msw warning or a `[storybook] no msw handler`
    line is an endpoint the page hits that no handler covers yet.
 6. Reach for a control before a story. A variant earns a story only when it is
    worth linking to; anything else is a control someone can turn.
+
+A page that is a tab strip over several routes, such as
+`src/pages/LogsModulePage`, gets one story file per tab, each in its own
+`stories/` folder under the module page
+(`LogsModulePage/Pipelines/stories/Pipelines.stories.tsx`) with its own mocks and
+`__story_mockdata__/`. All of them render the module page, so the tab strip is
+there; the `route` its mocks return is what decides which tab is open. Builders
+more than one tab needs stay in the module page's own
+`stories/__story_mockdata__/`, which a tab reaches as
+`../../stories/__story_mockdata__/<page>`.
+
+A state that only a click reaches, such as a drawer or a modal a page holds in
+component state, is a story with a `play` function rather than a control. Use
+`userEvent` and the queries from `storybook/test`, take the first of a repeated
+row action, and wait on the state's own text. The page fetches before it renders
+a row, so the finder needs a timeout past the 1s default.
+
+A *sequence* of those states, such as the steps of a wizard or the pages of a
+questionnaire, is still a control. Declare the steps in the page's mocks and walk
+them from a `play` on the meta, so every story of the page inherits the walk and
+only sets `args`:
+
+```tsx
+play: async ({ mount, args, canvasElement }): Promise<void> => {
+	await mount();
+	await advanceToStep(canvasElement, args.step);
+},
+```
+
+Destructuring `mount` is what makes the panel row work. Storybook replays a play
+function on an arg change only for a story whose play asks to be remounted;
+without it the story re-renders the tree the previous walk left behind and the
+control looks dead. The endpoint that settles a transition between two steps then
+needs a plain resolver rather than `response.json`, or the Data control on
+`loading` strands the walk halfway.
