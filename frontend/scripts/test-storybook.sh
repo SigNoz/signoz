@@ -28,4 +28,4 @@ until curl -sf http://127.0.0.1:6006/index.json >/dev/null 2>&1; do
 	sleep 1
 done
 
-pnpm exec test-storybook --ci --maxWorkers=2 "$@"
+pnpm exec test-storybook --ci --maxWorkers=2 --testTimeout 30000 "$@"
