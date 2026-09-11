@@ -41,6 +41,9 @@ export default function ChartWrapper({
 	customTooltip,
 	pinnedTooltipElement,
 	tooltipPortalRoot,
+	customLegend,
+	legendLabels,
+	contentFooter,
 	'data-testid': testId,
 }: ChartWrapperProps): JSX.Element {
 	const plotInstanceRef = useRef<uPlot | null>(null);
@@ -61,6 +64,10 @@ export default function ChartWrapper({
 			if (!showLegend) {
 				return null;
 			}
+			// Charts whose legend does not list uPlot series supply their own.
+			if (customLegend) {
+				return customLegend(averageLegendWidth);
+			}
 			return (
 				<UPlotLegend
 					config={config}
@@ -69,7 +76,7 @@ export default function ChartWrapper({
 				/>
 			);
 		},
-		[config, legendConfig.position, showLegend],
+		[config, legendConfig.position, showLegend, customLegend],
 	);
 
 	const renderTooltipCallback = useCallback(
@@ -100,6 +107,8 @@ export default function ChartWrapper({
 				containerHeight={containerHeight}
 				legendConfig={legendConfig}
 				legendComponent={legendComponent}
+				seriesLabels={legendLabels}
+				contentFooter={contentFooter}
 				layoutChildren={layoutChildren}
 			>
 				{({ chartWidth, chartHeight, averageLegendWidth }): JSX.Element => (
