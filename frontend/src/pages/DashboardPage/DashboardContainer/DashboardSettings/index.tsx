@@ -13,9 +13,7 @@ import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/service
 import Overview from './Overview';
 import PublicDashboardSettings from './PublicDashboard';
 import VariablesSettings from './Variables';
-import { useAppContext } from 'providers/App/App';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { USER_ROLES } from 'types/roles';
 
 import { useDashboardStore } from '../store/useDashboardStore';
 import styles from './DashboardSettings.module.scss';
@@ -37,7 +35,6 @@ const prefixIcons: Record<TabKeys, JSX.Element> = {
 };
 
 function DashboardSettings({ dashboard }: DashboardSettingsProps): JSX.Element {
-	const { user } = useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 	// Opened once per drawer mount (the drawer destroys on close); a deep-link
 	// request lands us on the right tab.
@@ -58,27 +55,28 @@ function DashboardSettings({ dashboard }: DashboardSettingsProps): JSX.Element {
 				children: <VariablesSettings dashboard={dashboard} />,
 				prefixIcon: <Braces size={14} />,
 			},
+			// Readable by anyone who can open the dashboard; the controls inside
+			// gate on update.
 			...(enablePublicDashboard
 				? [
 						{
 							key: TabKeys.PUBLISH,
 							label: TabKeys.PUBLISH,
 							children: <PublicDashboardSettings dashboard={dashboard} />,
-							disabled: user?.role !== USER_ROLES.ADMIN,
 						},
 					]
 				: []),
 		],
-		[enablePublicDashboard, dashboard, user?.role],
+		[enablePublicDashboard, dashboard],
 	);
 
 	return (
 		<TabsRoot defaultValue={settingsRequest?.tab ?? TabKeys.OVERVIEW}>
 			<TabsList variant="primary">
-				{Object.values(TabKeys).map((key) => (
-					<TabsTrigger value={key} key={key}>
-						{prefixIcons[key]}
-						{key}
+				{items.map((item) => (
+					<TabsTrigger value={item.key} key={item.key} disabled={item.disabled}>
+						{prefixIcons[item.key as TabKeys]}
+						{item.label}
 					</TabsTrigger>
 				))}
 			</TabsList>

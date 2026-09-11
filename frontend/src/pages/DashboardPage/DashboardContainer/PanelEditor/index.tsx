@@ -21,6 +21,7 @@ import {
 import { getBuilderQueries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 
+import { useDashboardEditContext } from '../hooks/useDashboardEditContext';
 import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
 import { useScrollIntoViewStore } from '../store/useScrollIntoViewStore';
@@ -63,10 +64,6 @@ interface PanelEditorContainerProps {
 	isNew?: boolean;
 	/** Target section for a new panel; falls back to the last/new section. */
 	layoutIndex?: number;
-	/** The dashboard can be edited (unlocked + permission); gates Save. */
-	isEditable: boolean;
-	/** Why Save is disabled (locked / no permission); '' when editable. */
-	editDisabledReason: string;
 	/** Leave the editor (navigate back to the dashboard) without saving. */
 	onClose: () => void;
 	/** Called after a successful save — navigates back to the dashboard. */
@@ -85,11 +82,14 @@ function PanelEditorContainer({
 	savedPanel,
 	isNew = false,
 	layoutIndex,
-	isEditable,
-	editDisabledReason,
 	onClose,
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
+	// Read here rather than taken as props: this renders inside a loaded dashboard
+	// subtree, so it resolves the same context every other consumer does.
+	const { isEditable, editChecks, editDisabledTooltip } =
+		useDashboardEditContext();
+
 	// Shared editing pipeline (draft + query + staged-query sync + kind switch). A new
 	// panel always serializes its seed query and seeds the builder's default signal.
 	const {
@@ -280,7 +280,8 @@ function PanelEditorContainer({
 				isSaving={isSaving}
 				showSwitchToView={!isNew}
 				readOnly={!isEditable}
-				readOnlyReason={editDisabledReason}
+				readOnlyChecks={editChecks}
+				readOnlyTooltip={editDisabledTooltip}
 				onSave={onSave}
 				onSwitchToView={switchToViewMode}
 				onClose={onCloseEditor}
