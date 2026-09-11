@@ -80,9 +80,13 @@ export const AutoRefreshMenuOpen: Story = {
 /** A dashboard saved before the Perses spec, which falls back to the v1 viewer. */
 export const LegacySchema: Story = {
 	args: { schema: 'v1' },
+	// The deliberate 400 is the state under test.
+	parameters: { allowConsoleErrors: true },
 };
 
 /** The link after it was unpublished, or one that never existed. */
 export const Unpublished: Story = {
 	args: { unpublished: true },
+	// The deliberate 404 is the state under test.
+	parameters: { allowConsoleErrors: true },
 };
