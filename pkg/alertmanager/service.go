@@ -240,7 +240,7 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 }
 
 func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConfig *alertmanagertypes.Config) (*alertmanagertypes.Config, error) {
-	channels, err := service.configStore.ListChannels(ctx, incomingConfig.StoreableConfig().OrgID)
+	channels, _, err := service.configStore.ListChannels(ctx, incomingConfig.StoreableConfig().OrgID, nil)
 	if err != nil {
 		return nil, err
 	}

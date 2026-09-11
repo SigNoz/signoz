@@ -41,7 +41,8 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		return nil
 	}
 
-	if rule.AlertType != ruletypes.AlertTypeLogs && rule.AlertType != ruletypes.AlertTypeTraces {
+	signal, ok := relatedLinkSignal(rule.AlertType)
+	if !ok {
 		return nil
 	}
 	if rule.RuleCondition == nil || rule.RuleCondition.CompositeQuery == nil {
@@ -62,10 +63,6 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		builder.evaluation = ruletypes.RollingWindow{EvalWindow: evalWindow}
 	}
 
-	signal := telemetrytypes.SignalLogs
-	if rule.AlertType == ruletypes.AlertTypeTraces {
-		signal = telemetrytypes.SignalTraces
-	}
 	// links are still built from the labels alone when the rule has no builder
 	// query for the signal (e.g. ClickHouse SQL alerts)
 	builder.filterExpr, builder.groupBy, _ = contextlinks.BuilderQueryForSignal(rule.RuleCondition.CompositeQuery.Queries, signal)
@@ -84,21 +81,35 @@ func (b *relatedLinkBuilder) queryWindow(unixMilli int64) (time.Time, time.Time)
 	return start.Add(-3 * time.Minute), end
 }
 
-// links returns the encoded logs and traces explorer query params for the
-// given entry labels and time range; at most one of the two is non-empty.
-func (b *relatedLinkBuilder) links(labels rulestatehistorytypes.LabelsString, start, end time.Time) (string, string) {
+// links returns the explorer query params for the given entry labels and time
+// range.
+func (b *relatedLinkBuilder) links(labels rulestatehistorytypes.LabelsString, start, end time.Time) rulestatehistorytypes.RelatedLinks {
 	lbls := map[string]string{}
 	if err := json.Unmarshal([]byte(labels), &lbls); err != nil {
-		return "", ""
+		return rulestatehistorytypes.RelatedLinks{}
 	}
 
 	whereClause := contextlinks.PrepareFilterExpression(lbls, b.filterExpr, b.groupBy)
 
 	switch b.alertType {
 	case ruletypes.AlertTypeLogs:
-		return contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode(), ""
+		return rulestatehistorytypes.RelatedLinks{RelatedLogsLink: contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()}
 	case ruletypes.AlertTypeTraces:
-		return "", contextlinks.PrepareParamsForTracesV5(start, end, whereClause).Encode()
+		return rulestatehistorytypes.RelatedLinks{RelatedTracesLink: contextlinks.PrepareParamsForTracesV5(start, end, whereClause, qbtypes.QueryTypeBuilder).Encode()}
+	case ruletypes.AlertTypeAITraces:
+		return rulestatehistorytypes.RelatedLinks{RelatedAITracesLink: contextlinks.PrepareParamsForTracesV5(start, end, whereClause, qbtypes.QueryTypeBuilderAI).Encode()}
 	}
-	return "", ""
+	return rulestatehistorytypes.RelatedLinks{}
+}
+
+// relatedLinkSignal returns the explorer signal that related links open for
+// the alert type, or ok=false when the alert type has none (e.g. metrics).
+func relatedLinkSignal(alertType ruletypes.AlertType) (telemetrytypes.Signal, bool) {
+	switch alertType {
+	case ruletypes.AlertTypeLogs:
+		return telemetrytypes.SignalLogs, true
+	case ruletypes.AlertTypeTraces, ruletypes.AlertTypeAITraces:
+		return telemetrytypes.SignalTraces, true
+	}
+	return telemetrytypes.SignalUnspecified, false
 }

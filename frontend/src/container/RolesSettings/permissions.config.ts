@@ -4,8 +4,10 @@ import {
 	DraftingCompass,
 	FileKey,
 	Gauge,
+	Grid3X3,
 	Key,
 	Logs,
+	Receipt,
 	Shield,
 } from '@signozhq/icons';
 
@@ -40,6 +42,14 @@ export interface ResourcePanelConfig {
  * not all of them
  */
 export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
+	dashboard: {
+		label: 'Dashboards',
+		description: 'Dashboards and their panels across the workspace.',
+		icon: Grid3X3,
+		selectorPlaceholder:
+			'Type dashboard ID, separate multiple with comma or space',
+		docsAnchor: 'dashboard',
+	},
 	'factor-api-key': {
 		label: 'API Keys',
 		description: 'Programmatic access tokens for the workspace.',
@@ -68,6 +78,13 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		icon: FileKey,
 		selectorPlaceholder: 'Type license ID, separate multiple with comma or space',
 		docsAnchor: 'license',
+	},
+	subscription: {
+		label: 'Subscription',
+		description: 'The workspace subscription, its usage and billing details.',
+		icon: Receipt,
+		selectorPlaceholder: 'Type * to cover the workspace subscription',
+		docsAnchor: 'subscription',
 	},
 	logs: {
 		label: 'Logs',
@@ -107,7 +124,11 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 	},
 };
 
-export const RESOURCE_ORDER = Object.keys(RESOURCE_PANELS) as AuthZResource[];
+export const RESOURCE_ORDER = (
+	Object.keys(RESOURCE_PANELS) as AuthZResource[]
+).sort((left, right) =>
+	RESOURCE_PANELS[left].label.localeCompare(RESOURCE_PANELS[right].label),
+);
 
 export function getResourcePanel(resource: AuthZResource): ResourcePanelConfig {
 	const panel = RESOURCE_PANELS[resource];

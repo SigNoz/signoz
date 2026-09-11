@@ -8,6 +8,7 @@ import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -128,6 +129,8 @@ function TracesExplorer(): JSX.Element {
 	);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+
+	const quickFilterFieldApis = useSignalFieldApis();
 	const { safeNavigate } = useSafeNavigate();
 	const getExportToDashboardLink = useGetExportToDashboardLink();
 
@@ -267,6 +270,7 @@ function TracesExplorer(): JSX.Element {
 						handleFilterVisibilityChange={(): void => {
 							setOpen(!isOpen);
 						}}
+						useFieldApis={quickFilterFieldApis}
 					/>
 				</Card>
 				<div

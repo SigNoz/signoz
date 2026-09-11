@@ -348,6 +348,19 @@ export const initialQueryMeterWithType: Query = {
 	},
 };
 
+export const initialQueryAIWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [
+			{
+				...initialQueryBuilderFormValuesMap.traces,
+				builderQueryType: 'builder_ai_query',
+			},
+		],
+	},
+};
+
 export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	string: Object.values(StringOperators),
 	number: Object.values(NumberOperators),
@@ -599,18 +612,6 @@ export const listViewInitialLogQuery: Query = {
 			},
 		],
 	},
-};
-
-export const PANEL_TYPES_INITIAL_QUERY: Record<PANEL_TYPES, Query> = {
-	[PANEL_TYPES.TIME_SERIES]: initialQueriesMap.metrics,
-	[PANEL_TYPES.VALUE]: initialQueriesMap.metrics,
-	[PANEL_TYPES.TABLE]: initialQueriesMap.metrics,
-	[PANEL_TYPES.LIST]: listViewInitialLogQuery,
-	[PANEL_TYPES.TRACE]: initialQueriesMap.traces,
-	[PANEL_TYPES.BAR]: initialQueriesMap.metrics,
-	[PANEL_TYPES.PIE]: initialQueriesMap.metrics,
-	[PANEL_TYPES.HISTOGRAM]: initialQueriesMap.metrics,
-	[PANEL_TYPES.EMPTY_WIDGET]: initialQueriesMap.metrics,
 };
 
 export const listViewInitialTraceQuery: Query = {

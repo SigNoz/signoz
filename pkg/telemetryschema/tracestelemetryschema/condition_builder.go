@@ -69,6 +69,12 @@ func (c *conditionBuilder) conditionFor(
 		}
 	}
 
+	// Fold the absent read to the Map's type default on the raw numeric/bool read, before the
+	// collision cast: the read is then non-nullable (like a Map column), so a downstream string
+	// cast (numeric member vs a string value) can't pair a Nullable(String) with the numeric
+	// default and raise a type mismatch.
+	fieldExpression = foldAbsentJSONReadToTypeDefault(logical.Single(), operator, fieldExpression)
+
 	// Coercion switches only on the data type, which every member shares, so
 	// the first member stands in for the field.
 	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(logical.Single(), value, fieldExpression, operator)
@@ -175,6 +181,31 @@ func (c *conditionBuilder) conditionFor(
 		return sqlbuilder.Escape(pred), nil
 	}
 	return "", nil
+}
+
+// foldAbsentJSONReadToTypeDefault gives negative operators on a numeric/bool JSON attribute the
+// legacy Map's absent-key semantics. Negative operators carry no guard, so NULL <> x would drop rows
+// lacking the key, whereas the Map defaulted them to the type zero and kept them (0 <> x).
+// String needs no fold — its ::String value already reads absent as ”.
+func foldAbsentJSONReadToTypeDefault(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, expr string) string {
+	if !operator.IsNegativeOperator() || operator == qbtypes.FilterOperatorNotExists {
+		return expr
+	}
+	if key.FieldContext != telemetrytypes.FieldContextAttribute {
+		return expr
+	}
+	if !attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
+		return expr
+	}
+	switch key.FieldDataType {
+	case telemetrytypes.FieldDataTypeInt64,
+		telemetrytypes.FieldDataTypeFloat64,
+		telemetrytypes.FieldDataTypeNumber:
+		return fmt.Sprintf("ifNull(%s, 0)", expr)
+	case telemetrytypes.FieldDataTypeBool:
+		return fmt.Sprintf("ifNull(%s, false)", expr)
+	}
+	return expr
 }
 
 // isFoldContext reports whether the context is one CandidateKeys would fold the prefix into

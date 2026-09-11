@@ -5,17 +5,12 @@ import type {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { usePanelEditSession } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelEditSession';
+import type { PanelEditorDraftApi } from 'pages/DashboardPage/DashboardContainer/PanelEditor/types';
 import type { OpenDrilldownView } from 'pages/DashboardPage/DashboardContainer/Panels/types/drilldown';
-import type { RenderablePanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
-import {
-	PANEL_KIND_TO_PANEL_TYPE,
-	type PanelKind,
-} from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
 import { buildViewPanelSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/buildViewPanelSpec';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
@@ -23,16 +18,15 @@ import {
 	type PanelQueryTimeOverride,
 	type UsePanelQueryResult,
 } from 'pages/DashboardPage/DashboardContainer/hooks/usePanelQuery';
-import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 import type { EQueryType } from 'types/common/dashboard';
-
-import { readViewPanelHandoff } from './viewPanelHandoffStore';
 
 interface UseViewPanelModeArgs {
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
 	/** Per-view time window (epoch ms); isolates the preview from the dashboard. */
 	time: PanelQueryTimeOverride;
+	/** Draft state, owned by the modal shell so it survives an authoring-mode switch. */
+	draftApi: PanelEditorDraftApi;
 }
 
 export interface UseViewPanelModeReturn {
@@ -41,7 +35,7 @@ export interface UseViewPanelModeReturn {
 	/** Update the draft's spec in place (e.g. the List columns editor). */
 	setSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Resolved renderer for the draft's current kind (registry always resolves a kind). */
-	panelDefinition: RenderablePanelDefinition;
+	panelDefinition: RenderableQueryPanelDefinition;
 	/**
 	 * Builder datasource driving the query builder and the panel-type selector's
 	 * disabled rule. Resolved from the query, falling back to the kind's default
@@ -54,8 +48,6 @@ export interface UseViewPanelModeReturn {
 	query: UsePanelQueryResult;
 	/** Stage & run the live builder query into the draft (drilldown; not persisted). */
 	runQuery: () => void;
-	/** Switch the draft's visualization kind (temporary; reversible per session). */
-	onChangePanelKind: (kind: PanelKind) => void;
 	/** Restore the query the view opened with, discarding in-modal edits. */
 	resetQuery: () => void;
 	/** Bake the live (possibly un-run) query into a spec — used to hand edits to the full editor. */
@@ -77,39 +69,9 @@ export function useViewPanelMode({
 	panel,
 	panelId,
 	time,
+	draftApi,
 }: UseViewPanelModeArgs): UseViewPanelModeReturn {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
-
-	// Config edits from the editor's "Switch to View Mode" arrive via the handoff; the query
-	// still comes from the URL. Falls back to the saved panel for a plain grid "View".
-	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const baseSpec = useMemo<DashboardtypesPanelSpecDTO>(
-		() => readViewPanelHandoff(dashboardId, panelId) ?? panel.spec,
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only seed
-		[],
-	);
-
-	// Mount-only so a refresh re-seeds and in-modal edits survive (V1 parity).
-	const compositeQuery = useGetCompositeQueryParam();
-	const urlGraphType = useUrlQuery().get(
-		QueryParams.graphType,
-	) as PANEL_TYPES | null;
-	const initialPanel = useMemo<DashboardtypesPanelDTO>(
-		() =>
-			compositeQuery
-				? {
-						...panel,
-						spec: buildViewPanelSpec({
-							spec: baseSpec,
-							query: compositeQuery,
-							panelType:
-								urlGraphType ?? PANEL_KIND_TO_PANEL_TYPE[baseSpec.plugin.kind],
-						}),
-					}
-				: { ...panel, spec: baseSpec },
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only seed from the URL
-		[],
-	);
 
 	const {
 		draft,
@@ -117,11 +79,10 @@ export function useViewPanelMode({
 		defaultSignal,
 		query,
 		runQuery,
-		onChangePanelKind,
 		buildSaveSpec,
 		reset,
 		setSpec,
-	} = usePanelEditSession({ panel: initialPanel, panelId, time });
+	} = usePanelEditSession({ panel, panelId, time, draftApi });
 
 	// The query the view opened with, captured once — the Reset target.
 	const savedQuery = useMemo(
@@ -178,7 +139,6 @@ export function useViewPanelMode({
 		queryType: currentQuery.queryType,
 		query,
 		runQuery,
-		onChangePanelKind,
 		resetQuery,
 		buildSaveSpec,
 		applyDrilldownQuery,

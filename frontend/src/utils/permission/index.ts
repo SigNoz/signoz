@@ -112,7 +112,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	ROLE_EDIT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	MEMBERS_SETTINGS: ['ADMIN'],
 	SERVICE_ACCOUNTS_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
-	BILLING: ['ADMIN'],
+	BILLING: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SUPPORT: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
 	SOMETHING_WENT_WRONG: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS_SAVE_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -162,6 +162,9 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
  * This prevents us from adding `ANONYMOUS` on the `routePermission`
  */
 export const routeWithInitialAuthZSupport = {
+	ALL_DASHBOARD: true,
+	DASHBOARD: true,
+	DASHBOARD_PANEL_EDITOR: true,
 	MY_SETTINGS: true,
 	SETTINGS: true,
 	TRACES_EXPLORER: true,
@@ -186,4 +189,5 @@ export const routeWithInitialAuthZSupport = {
 	WORKSPACE_LOCKED: true,
 	WORKSPACE_SUSPENDED: true,
 	WORKSPACE_ACCESS_RESTRICTED: true,
+	BILLING: true,
 } as const satisfies Partial<Record<keyof typeof ROUTES, true>>;

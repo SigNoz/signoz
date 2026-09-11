@@ -13,6 +13,7 @@ import type {
 	DashboardtypesTimeSeriesChartAppearanceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import type { LegendSeriesResolver } from '../utils/legendSeries';
 import {
 	Antenna,
 	BarChart,
@@ -105,7 +106,12 @@ export interface SectionControls {
 		columnUnits?: boolean;
 	};
 	[SectionKind.Axes]: { minMax?: boolean; logScale?: boolean }; // minMax → softMin/softMax
-	[SectionKind.Legend]: { position?: boolean; colors?: boolean }; // colors → customColors
+	[SectionKind.Legend]: {
+		position?: boolean;
+		// colors → customColors; the resolver supplies the labels overrides are keyed by,
+		// so a kind can't offer color overrides with nothing to color
+		colors?: LegendSeriesResolver;
+	};
 	[SectionKind.ChartAppearance]: {
 		lineStyle?: boolean;
 		lineInterpolation?: boolean;

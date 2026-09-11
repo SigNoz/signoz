@@ -8,24 +8,24 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import {
+	SectionKind,
+	type PanelFormattingSlice,
+} from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
+import { getSectionControls } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getSectionControls';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { deriveAlertPrefill, PanelAlertPrefill } from './deriveAlertPrefill';
 
-/** The panel's configured y-axis unit, for the kinds that carry one. */
+/** The panel's configured y-axis unit, for the kinds that declare one. */
 export function readPanelUnit(
 	plugin: DashboardtypesPanelPluginDTO,
 ): string | undefined {
-	switch (plugin.kind) {
-		case 'signoz/TimeSeriesPanel':
-		case 'signoz/BarChartPanel':
-		case 'signoz/NumberPanel':
-		case 'signoz/PieChartPanel':
-			return plugin.spec.formatting?.unit;
-		default:
-			return undefined;
+	if (!getSectionControls(plugin.kind, SectionKind.Formatting)?.unit) {
+		return undefined;
 	}
+	return (plugin.spec as { formatting?: PanelFormattingSlice }).formatting?.unit;
 }
 
 /**

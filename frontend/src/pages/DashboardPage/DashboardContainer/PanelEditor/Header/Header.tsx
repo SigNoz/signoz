@@ -8,10 +8,12 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
+
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
-import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import styles from './Header.module.scss';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 interface HeaderProps {
 	/** Unsaved edits exist — shows the "Unsaved Changes" badge and gates the discard confirmation on close (not the Save button). */
@@ -20,7 +22,9 @@ interface HeaderProps {
 	showSwitchToView?: boolean;
 	/** Locked/no-permission dashboard — Save is disabled with a reason. */
 	readOnly?: boolean;
-	readOnlyReason?: string;
+	/** Present when saving is unavailable — the Save button explains itself with it. */
+	readOnlyChecks?: BrandedPermission[];
+	readOnlyTooltip?: string;
 	onSave: () => void;
 	onSwitchToView?: () => void;
 	onClose: () => void;
@@ -31,7 +35,8 @@ function Header({
 	isSaving,
 	showSwitchToView = false,
 	readOnly = false,
-	readOnlyReason,
+	readOnlyChecks = [],
+	readOnlyTooltip,
 	onSave,
 	onSwitchToView,
 	onClose,
@@ -90,7 +95,10 @@ function Header({
 						Switch to View Mode
 					</Button>
 				)}
-				<DisabledControlTooltip reason={readOnlyReason ?? ''} disabled={readOnly}>
+				<AuthZTooltip
+					checks={readOnlyChecks}
+					disabledTooltip={readOnly ? readOnlyTooltip : undefined}
+				>
 					<Button
 						variant="solid"
 						color="primary"
@@ -101,7 +109,7 @@ function Header({
 					>
 						Save changes
 					</Button>
-				</DisabledControlTooltip>
+				</AuthZTooltip>
 			</div>
 
 			<DialogWrapper

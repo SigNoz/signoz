@@ -25,6 +25,390 @@ components:
       - data
       - orgId
       type: object
+    AlertmanagertypesChannelConfig:
+      discriminator:
+        mapping:
+          email: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig'
+          googlechat: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfig'
+          incidentio: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig'
+          jira: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig'
+          jsmops: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig'
+          msteams: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfig'
+          opsgenie: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig'
+          pagerduty: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfig'
+          slack: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfig'
+          webhook: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfig'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig'
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig:
+      properties:
+        kind:
+          enum:
+          - email
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelEmailConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfig:
+      properties:
+        kind:
+          enum:
+          - googlechat
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelGoogleChatConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig:
+      properties:
+        kind:
+          enum:
+          - incidentio
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelIncidentIOConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig:
+      properties:
+        kind:
+          enum:
+          - jsmops
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelJSMOpsConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig:
+      properties:
+        kind:
+          enum:
+          - jira
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelJiraConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfig:
+      properties:
+        kind:
+          enum:
+          - msteams
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelMSTeamsConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig:
+      properties:
+        kind:
+          enum:
+          - opsgenie
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelOpsgenieConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfig:
+      properties:
+        kind:
+          enum:
+          - pagerduty
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelPagerdutyConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfig:
+      properties:
+        kind:
+          enum:
+          - slack
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelSlackConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfig:
+      properties:
+        kind:
+          enum:
+          - webhook
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelWebhookConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelEmailConfig:
+      properties:
+        headers:
+          additionalProperties:
+            type: string
+          type: object
+        html:
+          type: string
+        sendResolved:
+          nullable: true
+          type: boolean
+        to:
+          type: string
+      required:
+      - to
+      type: object
+    AlertmanagertypesChannelGoogleChatConfig:
+      properties:
+        sendResolved:
+          nullable: true
+          type: boolean
+        text:
+          type: string
+        title:
+          type: string
+        webhookUrl:
+          type: string
+      required:
+      - webhookUrl
+      type: object
+    AlertmanagertypesChannelIncidentIOConfig:
+      properties:
+        description:
+          type: string
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
+        sendResolved:
+          nullable: true
+          type: boolean
+        title:
+          type: string
+        token:
+          type: string
+        url:
+          type: string
+      required:
+      - url
+      - token
+      type: object
+    AlertmanagertypesChannelJSMOpsConfig:
+      properties:
+        apiKey:
+          type: string
+        description:
+          type: string
+        message:
+          type: string
+        priority:
+          type: string
+        sendResolved:
+          nullable: true
+          type: boolean
+        tags:
+          type: string
+      required:
+      - apiKey
+      type: object
+    AlertmanagertypesChannelJiraConfig:
+      properties:
+        apiToken:
+          type: string
+        customFields:
+          additionalProperties: {}
+          type: object
+        description:
+          type: string
+        email:
+          type: string
+        issueType:
+          type: string
+        labels:
+          items:
+            type: string
+          type: array
+        priority:
+          type: string
+        project:
+          type: string
+        reopenDuration:
+          type: string
+        reopenTransition:
+          type: string
+        resolveTransition:
+          type: string
+        sendResolved:
+          nullable: true
+          type: boolean
+        site:
+          type: string
+        summary:
+          type: string
+        wontFixResolution:
+          type: string
+      required:
+      - site
+      - project
+      - issueType
+      - email
+      - apiToken
+      type: object
+    AlertmanagertypesChannelKind:
+      enum:
+      - slack
+      - email
+      - webhook
+      - pagerduty
+      - opsgenie
+      - msteams
+      - googlechat
+      - jira
+      - jsmops
+      - incidentio
+      type: string
+    AlertmanagertypesChannelListOrder:
+      enum:
+      - asc
+      - desc
+      type: string
+    AlertmanagertypesChannelListSort:
+      enum:
+      - updated_at
+      - created_at
+      - name
+      type: string
+    AlertmanagertypesChannelMSTeamsConfig:
+      properties:
+        sendResolved:
+          nullable: true
+          type: boolean
+        text:
+          type: string
+        title:
+          type: string
+        webhookUrl:
+          type: string
+      required:
+      - webhookUrl
+      type: object
+    AlertmanagertypesChannelOpsgenieConfig:
+      properties:
+        apiKey:
+          type: string
+        apiUrl:
+          type: string
+        description:
+          type: string
+        details:
+          additionalProperties:
+            type: string
+          type: object
+        message:
+          type: string
+        priority:
+          type: string
+        sendResolved:
+          nullable: true
+          type: boolean
+        source:
+          type: string
+      required:
+      - apiKey
+      type: object
+    AlertmanagertypesChannelPagerdutyConfig:
+      properties:
+        class:
+          type: string
+        client:
+          type: string
+        clientUrl:
+          type: string
+        component:
+          type: string
+        description:
+          type: string
+        details:
+          additionalProperties:
+            type: string
+          type: object
+        group:
+          type: string
+        routingKey:
+          type: string
+        sendResolved:
+          nullable: true
+          type: boolean
+        severity:
+          type: string
+        source:
+          type: string
+        url:
+          type: string
+      required:
+      - routingKey
+      type: object
+    AlertmanagertypesChannelSlackConfig:
+      properties:
+        apiUrl:
+          type: string
+        channel:
+          type: string
+        sendResolved:
+          nullable: true
+          type: boolean
+        text:
+          type: string
+        title:
+          type: string
+      required:
+      - apiUrl
+      type: object
+    AlertmanagertypesChannelWebhookConfig:
+      properties:
+        bearerToken:
+          type: string
+        password:
+          type: string
+        sendResolved:
+          nullable: true
+          type: boolean
+        url:
+          type: string
+        username:
+          type: string
+      required:
+      - url
+      type: object
     AlertmanagertypesDeprecatedGettableAlert:
       properties:
         annotations:
@@ -54,6 +438,30 @@ components:
       - rule
       - policy
       type: string
+    AlertmanagertypesGettableNotificationChannel:
+      properties:
+        config:
+          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - name
+      - displayName
+      - config
+      - id
+      - createdAt
+      - updatedAt
+      type: object
     AlertmanagertypesGettableRoutePolicy:
       properties:
         channels:
@@ -178,6 +586,43 @@ components:
           type: string
         wont_fix_resolution:
           type: string
+      type: object
+    AlertmanagertypesListableNotificationChannel:
+      properties:
+        channels:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesListedNotificationChannel'
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - channels
+      - total
+      type: object
+    AlertmanagertypesListedNotificationChannel:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        id:
+          type: string
+        kind:
+          $ref: '#/components/schemas/AlertmanagertypesChannelKind'
+        name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - displayName
+      - kind
+      - createdAt
+      - updatedAt
       type: object
     AlertmanagertypesMaintenanceKind:
       enum:
@@ -356,6 +801,19 @@ components:
       required:
       - name
       type: object
+    AlertmanagertypesPostableNotificationChannel:
+      properties:
+        config:
+          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+        displayName:
+          type: string
+        generateName:
+          type: boolean
+        name:
+          type: string
+      required:
+      - config
+      type: object
     AlertmanagertypesPostablePlannedMaintenance:
       properties:
         alertIds:
@@ -531,6 +989,20 @@ components:
       required:
       - timezone
       - startTime
+      type: object
+    AlertmanagertypesTestableNotificationChannel:
+      properties:
+        config:
+          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+      required:
+      - config
+      type: object
+    AlertmanagertypesUpdatableNotificationChannel:
+      properties:
+        config:
+          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+      required:
+      - config
       type: object
     AuthtypesAttributeMapping:
       properties:
@@ -7042,10 +7514,7 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
           type: array
         meta:
-          properties:
-            unit:
-              type: string
-          type: object
+          $ref: '#/components/schemas/Querybuildertypesv5AggregationMeta'
         predictedSeries:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
@@ -7060,12 +7529,51 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
           type: array
       type: object
-    Querybuildertypesv5Bucket:
+    Querybuildertypesv5AggregationMeta:
       properties:
-        step:
-          format: double
-          type: number
+        buckets:
+          items:
+            format: double
+            type: number
+          type: array
+        unit:
+          type: string
       type: object
+    Querybuildertypesv5BucketOptions:
+      discriminator:
+        mapping:
+          linear: '#/components/schemas/Querybuildertypesv5BucketOptionsLinear'
+          log: '#/components/schemas/Querybuildertypesv5BucketOptionsLog'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5BucketOptionsLinear'
+      - $ref: '#/components/schemas/Querybuildertypesv5BucketOptionsLog'
+      type: object
+    Querybuildertypesv5BucketOptionsLinear:
+      properties:
+        kind:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5LinearBucketsSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    Querybuildertypesv5BucketOptionsLog:
+      properties:
+        kind:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5LogBucketsSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    Querybuildertypesv5BucketsKind:
+      enum:
+      - linear
+      - log
+      type: string
     Querybuildertypesv5BuilderQuerySpec:
       discriminator:
         mapping:
@@ -7246,12 +7754,28 @@ components:
         value:
           type: string
       type: object
+    Querybuildertypesv5LinearBucketsSpec:
+      properties:
+        maxValue:
+          format: double
+          type: number
+        numBuckets:
+          type: integer
+      required:
+      - maxValue
+      type: object
     Querybuildertypesv5LogAggregation:
       properties:
         alias:
           type: string
         expression:
           type: string
+      type: object
+    Querybuildertypesv5LogBucketsSpec:
+      properties:
+        scale:
+          nullable: true
+          type: integer
       type: object
     Querybuildertypesv5MetricAggregation:
       properties:
@@ -7333,6 +7857,8 @@ components:
       type: object
     Querybuildertypesv5QueryBuilderFormula:
       properties:
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         disabled:
           type: boolean
         expression:
@@ -7363,6 +7889,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -7424,6 +7952,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -7485,6 +8015,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -7810,6 +8342,7 @@ components:
       - raw
       - raw_stream
       - trace
+      - heatmap
       type: string
     Querybuildertypesv5ScalarData:
       properties:
@@ -7884,8 +8417,6 @@ components:
       type: object
     Querybuildertypesv5TimeSeriesValue:
       properties:
-        bucket:
-          $ref: '#/components/schemas/Querybuildertypesv5Bucket'
         partial:
           type: boolean
         timestamp:
@@ -7996,6 +8527,8 @@ components:
           $ref: '#/components/schemas/RuletypesAlertState'
         overallStateChanged:
           type: boolean
+        relatedAITracesLink:
+          type: string
         relatedLogsLink:
           type: string
         relatedTracesLink:
@@ -8039,6 +8572,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5Label'
           nullable: true
           type: array
+        relatedAITracesLink:
+          type: string
         relatedLogsLink:
           type: string
         relatedTracesLink:
@@ -8144,6 +8679,7 @@ components:
       - TRACES_BASED_ALERT
       - LOGS_BASED_ALERT
       - EXCEPTIONS_BASED_ALERT
+      - AI_TRACES_BASED_ALERT
       type: string
     RuletypesBasicRuleThreshold:
       properties:
@@ -19366,6 +19902,382 @@ paths:
       summary: Get metrics treemap
       tags:
       - metrics
+  /api/v2/notification_channels:
+    get:
+      deprecated: false
+      description: Returns a page of notification channels for the org. Each entry
+        carries the channel's identity and kind but not its configuration; fetch a
+        channel by ID for that. Supports a case-insensitive display name search (`query`),
+        a kind filter (`kind`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`),
+        and offset-based pagination (`limit`/`offset`).
+      operationId: ListNotificationChannels
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: kind
+        schema:
+          $ref: '#/components/schemas/AlertmanagertypesChannelKind'
+      - in: query
+        name: sort
+        schema:
+          $ref: '#/components/schemas/AlertmanagertypesChannelListSort'
+      - in: query
+        name: order
+        schema:
+          $ref: '#/components/schemas/AlertmanagertypesChannelListOrder'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesListableNotificationChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:list
+      - tokenizer:
+        - notification-channel:list
+      summary: List notification channels
+      tags:
+      - channels
+    post:
+      deprecated: false
+      description: This endpoint creates a notification channel
+      operationId: CreateNotificationChannel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertmanagertypesPostableNotificationChannel'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesGettableNotificationChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:create
+      - tokenizer:
+        - notification-channel:create
+      summary: Create notification channel
+      tags:
+      - channels
+  /api/v2/notification_channels/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes a notification channel by ID
+      operationId: DeleteNotificationChannel
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:delete
+      - tokenizer:
+        - notification-channel:delete
+      summary: Delete notification channel
+      tags:
+      - channels
+    get:
+      deprecated: false
+      description: This endpoint returns a notification channel by ID. A channel written
+        by the v1 API can carry a configuration this API does not model.
+      operationId: GetNotificationChannel
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesGettableNotificationChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:read
+      - tokenizer:
+        - notification-channel:read
+      summary: Get notification channel by ID
+      tags:
+      - channels
+    put:
+      deprecated: false
+      description: 'This endpoint replaces a notification channel''s configuration
+        in full. Neither name is part of the request body: both are immutable. The
+        kind may change, which replaces the channel''s notifier configuration.'
+      operationId: UpdateNotificationChannel
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertmanagertypesUpdatableNotificationChannel'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesGettableNotificationChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:update
+      - tokenizer:
+        - notification-channel:update
+      summary: Update notification channel
+      tags:
+      - channels
+  /api/v2/notification_channels/test:
+    post:
+      deprecated: false
+      description: This endpoint sends a test notification for the configuration in
+        the request body. The channel need not exist and nothing is persisted, so
+        the body carries a configuration only.
+      operationId: TestNotificationChannel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertmanagertypesTestableNotificationChannel'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:create
+      - tokenizer:
+        - notification-channel:create
+      summary: Test notification channel
+      tags:
+      - channels
   /api/v2/orgs/me:
     get:
       deprecated: false

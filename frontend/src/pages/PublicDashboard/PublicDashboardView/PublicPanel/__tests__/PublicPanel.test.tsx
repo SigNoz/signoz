@@ -1,12 +1,22 @@
 import { render, screen } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 
+import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+
 import { usePublicPanelQuery } from '../../hooks/usePublicPanelQuery';
 import PublicPanel from '../PublicPanel';
 
 jest.mock('../../hooks/usePublicPanelQuery', () => ({
 	usePublicPanelQuery: jest.fn(),
 }));
+
+// Real registry by default; individual tests override to a static definition.
+jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => {
+	const actual = jest.requireActual(
+		'pages/DashboardPage/DashboardContainer/Panels/registry',
+	);
+	return { ...actual, getPanelDefinition: jest.fn(actual.getPanelDefinition) };
+});
 
 // Stub the reused V2 renderers so the test targets PublicPanel's own wiring, not uPlot/timezone.
 jest.mock(
@@ -95,6 +105,30 @@ describe('PublicPanel', () => {
 				endMs: 2000,
 			}),
 		);
+	});
+
+	it('renders a static kind with no fetch at all', () => {
+		const StaticRenderer = (): JSX.Element => (
+			<div data-testid="fake-static-renderer" />
+		);
+		(getPanelDefinition as jest.Mock).mockReturnValueOnce({
+			kind: 'signoz/TimeSeriesPanel',
+			displayName: 'Static',
+			sections: [],
+			actions: {},
+			mode: 'static',
+			Renderer: StaticRenderer,
+			EditorPane: StaticRenderer,
+		});
+
+		render(<PublicPanel panel={timeseriesPanel} {...commonProps} />);
+
+		expect(screen.getByTestId('fake-static-renderer')).toBeInTheDocument();
+		expect(screen.getByTestId('panel-header')).toHaveAttribute(
+			'data-hide-actions',
+			'true',
+		);
+		expect(mockQuery).not.toHaveBeenCalled();
 	});
 
 	it('gates the fetch when off screen', () => {

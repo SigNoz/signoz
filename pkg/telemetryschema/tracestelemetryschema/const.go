@@ -40,10 +40,12 @@ const (
 	SpanIsRemoteColumn           = "is_remote"
 
 	// Contextual Columns.
-	SpanAttributesStringColumn = "attributes_string"
-	SpanAttributesNumberColumn = "attributes_number"
-	SpanAttributesBoolColumn   = "attributes_bool"
-	SpanResourcesStringColumn  = "resources_string"
+	SpanAttributesStringColumn   = "attributes_string"
+	SpanAttributesNumberColumn   = "attributes_number"
+	SpanAttributesBoolColumn     = "attributes_bool"
+	SpanAttributesColumn         = "attributes"
+	SpanAttributesPromotedColumn = "attributes_promoted"
+	SpanResourcesStringColumn    = "resources_string"
 )
 
 var (
@@ -391,6 +393,24 @@ var (
 	}
 	SpanSearchScopeRoot       = "isroot"
 	SpanSearchScopeEntryPoint = "isentrypoint"
+
+	// SpanSearchScopeFields are the search-scope selectors (isRoot, isEntryPoint),
+	// not columns and unrelated to the instrumentation scope: they only filter
+	// with the value true.
+	SpanSearchScopeFields = map[string]telemetrytypes.TelemetryFieldKey{
+		"isRoot": {
+			Name:          "isRoot",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeBool,
+		},
+		"isEntryPoint": {
+			Name:          "isEntryPoint",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeBool,
+		},
+	}
 
 	// IntrinsicSpanFields lists the intrinsic span columns, in the order they
 	// should appear when a raw query expands its SelectFields.

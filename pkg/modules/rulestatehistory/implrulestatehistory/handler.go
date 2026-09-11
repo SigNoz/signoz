@@ -114,6 +114,7 @@ func (h *handler) GetRuleHistoryTimeline(w http.ResponseWriter, r *http.Request)
 			Fingerprint:         item.Fingerprint,
 			Value:               item.Value,
 			RelatedTracesLink:   item.RelatedTracesLink,
+			RelatedAITracesLink: item.RelatedAITracesLink,
 			RelatedLogsLink:     item.RelatedLogsLink,
 		})
 	}
@@ -151,11 +152,12 @@ func (h *handler) GetRuleHistoryContributors(w http.ResponseWriter, r *http.Requ
 	converted := make([]rulestatehistorytypes.GettableRuleStateHistoryContributor, 0, len(res))
 	for _, item := range res {
 		converted = append(converted, rulestatehistorytypes.GettableRuleStateHistoryContributor{
-			Fingerprint:       item.Fingerprint,
-			Labels:            item.Labels.ToQBLabels(),
-			Count:             item.Count,
-			RelatedTracesLink: item.RelatedTracesLink,
-			RelatedLogsLink:   item.RelatedLogsLink,
+			Fingerprint:         item.Fingerprint,
+			Labels:              item.Labels.ToQBLabels(),
+			Count:               item.Count,
+			RelatedTracesLink:   item.RelatedTracesLink,
+			RelatedAITracesLink: item.RelatedAITracesLink,
+			RelatedLogsLink:     item.RelatedLogsLink,
 		})
 	}
 	render.Success(w, http.StatusOK, converted)

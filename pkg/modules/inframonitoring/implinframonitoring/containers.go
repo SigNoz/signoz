@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
@@ -394,7 +395,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 	}
 	for _, key := range groupBy {
 		stateFpsCols = append(stateFpsCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", stateFps.Var(key.Name), quoteIdentifier(key.Name)),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", stateFps.Var(key.Name), sqlbuilder.Escape(clickhousesql.Identifier(key.Name))),
 		)
 	}
 	stateFps.Select(stateFpsCols...)
@@ -409,7 +410,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 	}
 	stateFpsGroupBy := []string{"fingerprint", "pod_uid", "container_name", "state"}
 	for _, key := range groupBy {
-		stateFpsGroupBy = append(stateFpsGroupBy, quoteIdentifier(key.Name))
+		stateFpsGroupBy = append(stateFpsGroupBy, sqlbuilder.Escape(clickhousesql.Identifier(key.Name)))
 	}
 	stateFps.GroupBy(stateFpsGroupBy...)
 	stateFpsSQL, stateFpsArgs := stateFps.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -421,7 +422,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 		"fps.container_name AS container_name",
 	}
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := sqlbuilder.Escape(clickhousesql.Identifier(key.Name))
 		containerStateCols = append(containerStateCols, fmt.Sprintf("argMax(fps.%s, samples.unix_milli) AS %s", col, col))
 	}
 	containerStateCols = append(containerStateCols,
@@ -508,7 +509,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 		"st.container_name AS container_name",
 	}
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := clickhousesql.Identifier(key.Name)
 		containerStatusSelectCols = append(containerStatusSelectCols, fmt.Sprintf("st.%s AS %s", col, col))
 	}
 	containerStatusSelectCols = append(containerStatusSelectCols, displayStatusExpr+" AS display_status")
@@ -537,7 +538,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 	countSelectCols := make([]string, 0, len(groupBy)+len(statusCountCols))
 	countGroupBy := make([]string, 0, len(groupBy))
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := sqlbuilder.Escape(clickhousesql.Identifier(key.Name))
 		countSelectCols = append(countSelectCols, col)
 		countGroupBy = append(countGroupBy, col)
 	}
@@ -660,7 +661,7 @@ func (m *module) getPerGroupContainerRestartCounts(
 	}
 	for _, key := range groupBy {
 		restartFpsCols = append(restartFpsCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", restartFps.Var(key.Name), quoteIdentifier(key.Name)),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", restartFps.Var(key.Name), sqlbuilder.Escape(clickhousesql.Identifier(key.Name))),
 		)
 	}
 	restartFps.Select(restartFpsCols...)
@@ -675,7 +676,7 @@ func (m *module) getPerGroupContainerRestartCounts(
 	}
 	restartFpsGroupBy := []string{"fingerprint", "pod_uid", "container_name"}
 	for _, key := range groupBy {
-		restartFpsGroupBy = append(restartFpsGroupBy, quoteIdentifier(key.Name))
+		restartFpsGroupBy = append(restartFpsGroupBy, sqlbuilder.Escape(clickhousesql.Identifier(key.Name)))
 	}
 	restartFps.GroupBy(restartFpsGroupBy...)
 	restartFpsSQL, restartFpsArgs := restartFps.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -687,7 +688,7 @@ func (m *module) getPerGroupContainerRestartCounts(
 		"fps.container_name AS container_name",
 	}
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := sqlbuilder.Escape(clickhousesql.Identifier(key.Name))
 		containerRestartsCols = append(containerRestartsCols, fmt.Sprintf("argMax(fps.%s, samples.unix_milli) AS %s", col, col))
 	}
 	containerRestartsCols = append(containerRestartsCols, fmt.Sprintf("argMax(samples.%s, samples.unix_milli) AS restart_count", valueCol))
@@ -709,7 +710,7 @@ func (m *module) getPerGroupContainerRestartCounts(
 	sumSelectCols := make([]string, 0, len(groupBy)+1)
 	sumGroupBy := make([]string, 0, len(groupBy))
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := clickhousesql.Identifier(key.Name)
 		sumSelectCols = append(sumSelectCols, col)
 		sumGroupBy = append(sumGroupBy, col)
 	}
@@ -804,7 +805,7 @@ func (m *module) getPerGroupContainerReadyCounts(
 	}
 	for _, key := range groupBy {
 		readyFpsCols = append(readyFpsCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", readyFps.Var(key.Name), quoteIdentifier(key.Name)),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", readyFps.Var(key.Name), sqlbuilder.Escape(clickhousesql.Identifier(key.Name))),
 		)
 	}
 	readyFps.Select(readyFpsCols...)
@@ -819,7 +820,7 @@ func (m *module) getPerGroupContainerReadyCounts(
 	}
 	readyFpsGroupBy := []string{"fingerprint", "pod_uid", "container_name"}
 	for _, key := range groupBy {
-		readyFpsGroupBy = append(readyFpsGroupBy, quoteIdentifier(key.Name))
+		readyFpsGroupBy = append(readyFpsGroupBy, sqlbuilder.Escape(clickhousesql.Identifier(key.Name)))
 	}
 	readyFps.GroupBy(readyFpsGroupBy...)
 	readyFpsSQL, readyFpsArgs := readyFps.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -831,7 +832,7 @@ func (m *module) getPerGroupContainerReadyCounts(
 		"fps.container_name AS container_name",
 	}
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := sqlbuilder.Escape(clickhousesql.Identifier(key.Name))
 		containerReadyCols = append(containerReadyCols, fmt.Sprintf("argMax(fps.%s, samples.unix_milli) AS %s", col, col))
 	}
 	containerReadyCols = append(containerReadyCols, fmt.Sprintf("argMax(samples.%s, samples.unix_milli) AS ready_value", valueCol))
@@ -853,7 +854,7 @@ func (m *module) getPerGroupContainerReadyCounts(
 	countSelectCols := make([]string, 0, len(groupBy)+2)
 	countGroupBy := make([]string, 0, len(groupBy))
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := clickhousesql.Identifier(key.Name)
 		countSelectCols = append(countSelectCols, col)
 		countGroupBy = append(countGroupBy, col)
 	}
