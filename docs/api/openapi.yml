@@ -296,6 +296,17 @@ components:
       - jsmops
       - incidentio
       type: string
+    AlertmanagertypesChannelListOrder:
+      enum:
+      - asc
+      - desc
+      type: string
+    AlertmanagertypesChannelListSort:
+      enum:
+      - updated_at
+      - created_at
+      - name
+      type: string
     AlertmanagertypesChannelMSTeamsConfig:
       properties:
         sendResolved:
@@ -575,6 +586,43 @@ components:
           type: string
         wont_fix_resolution:
           type: string
+      type: object
+    AlertmanagertypesListableNotificationChannel:
+      properties:
+        channels:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesListedNotificationChannel'
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - channels
+      - total
+      type: object
+    AlertmanagertypesListedNotificationChannel:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        id:
+          type: string
+        kind:
+          $ref: '#/components/schemas/AlertmanagertypesChannelKind'
+        name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - displayName
+      - kind
+      - createdAt
+      - updatedAt
       type: object
     AlertmanagertypesMaintenanceKind:
       enum:
@@ -941,6 +989,20 @@ components:
       required:
       - timezone
       - startTime
+      type: object
+    AlertmanagertypesTestableNotificationChannel:
+      properties:
+        config:
+          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+      required:
+      - config
+      type: object
+    AlertmanagertypesUpdatableNotificationChannel:
+      properties:
+        config:
+          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+      required:
+      - config
       type: object
     AuthtypesAttributeMapping:
       properties:
@@ -19784,6 +19846,86 @@ paths:
       tags:
       - metrics
   /api/v2/notification_channels:
+    get:
+      deprecated: false
+      description: Returns a page of notification channels for the org. Each entry
+        carries the channel's identity and kind but not its configuration; fetch a
+        channel by ID for that. Supports a case-insensitive display name search (`query`),
+        a kind filter (`kind`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`),
+        and offset-based pagination (`limit`/`offset`).
+      operationId: ListNotificationChannels
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: kind
+        schema:
+          $ref: '#/components/schemas/AlertmanagertypesChannelKind'
+      - in: query
+        name: sort
+        schema:
+          $ref: '#/components/schemas/AlertmanagertypesChannelListSort'
+      - in: query
+        name: order
+        schema:
+          $ref: '#/components/schemas/AlertmanagertypesChannelListOrder'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesListableNotificationChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:list
+      - tokenizer:
+        - notification-channel:list
+      summary: List notification channels
+      tags:
+      - channels
     post:
       deprecated: false
       description: This endpoint creates a notification channel
@@ -19844,6 +19986,239 @@ paths:
       - tokenizer:
         - notification-channel:create
       summary: Create notification channel
+      tags:
+      - channels
+  /api/v2/notification_channels/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes a notification channel by ID
+      operationId: DeleteNotificationChannel
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:delete
+      - tokenizer:
+        - notification-channel:delete
+      summary: Delete notification channel
+      tags:
+      - channels
+    get:
+      deprecated: false
+      description: This endpoint returns a notification channel by ID. A channel written
+        by the v1 API can carry a configuration this API does not model.
+      operationId: GetNotificationChannel
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesGettableNotificationChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:read
+      - tokenizer:
+        - notification-channel:read
+      summary: Get notification channel by ID
+      tags:
+      - channels
+    put:
+      deprecated: false
+      description: 'This endpoint replaces a notification channel''s configuration
+        in full. Neither name is part of the request body: both are immutable. The
+        kind may change, which replaces the channel''s notifier configuration.'
+      operationId: UpdateNotificationChannel
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertmanagertypesUpdatableNotificationChannel'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesGettableNotificationChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:update
+      - tokenizer:
+        - notification-channel:update
+      summary: Update notification channel
+      tags:
+      - channels
+  /api/v2/notification_channels/test:
+    post:
+      deprecated: false
+      description: This endpoint sends a test notification for the configuration in
+        the request body. The channel need not exist and nothing is persisted, so
+        the body carries a configuration only.
+      operationId: TestNotificationChannel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertmanagertypesTestableNotificationChannel'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:create
+      - tokenizer:
+        - notification-channel:create
+      summary: Test notification channel
       tags:
       - channels
   /api/v2/orgs/me:

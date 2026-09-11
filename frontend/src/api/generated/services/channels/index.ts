@@ -21,14 +21,23 @@ import type {
 	AlertmanagertypesPostableChannelDTO,
 	AlertmanagertypesPostableNotificationChannelDTO,
 	AlertmanagertypesReceiverDTO,
+	AlertmanagertypesTestableNotificationChannelDTO,
+	AlertmanagertypesUpdatableNotificationChannelDTO,
 	CreateChannel201,
 	CreateNotificationChannel201,
 	DeleteChannelByIDPathParameters,
+	DeleteNotificationChannelPathParameters,
 	GetChannelByID200,
 	GetChannelByIDPathParameters,
+	GetNotificationChannel200,
+	GetNotificationChannelPathParameters,
 	ListChannels200,
+	ListNotificationChannels200,
+	ListNotificationChannelsParams,
 	RenderErrorResponseDTO,
 	UpdateChannelByIDPathParameters,
+	UpdateNotificationChannel200,
+	UpdateNotificationChannelPathParameters,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
@@ -650,6 +659,105 @@ export const useTestChannelDeprecated = <
 	return useMutation(getTestChannelDeprecatedMutationOptions(options));
 };
 /**
+ * Returns a page of notification channels for the org. Each entry carries the channel's identity and kind but not its configuration; fetch a channel by ID for that. Supports a case-insensitive display name search (`query`), a kind filter (`kind`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`).
+ * @summary List notification channels
+ */
+export const listNotificationChannels = (
+	params?: ListNotificationChannelsParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListNotificationChannels200>({
+		url: `/api/v2/notification_channels`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListNotificationChannelsQueryKey = (
+	params?: ListNotificationChannelsParams,
+) => {
+	return [`/api/v2/notification_channels`, ...(params ? [params] : [])] as const;
+};
+
+export const getListNotificationChannelsQueryOptions = <
+	TData = Awaited<ReturnType<typeof listNotificationChannels>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: ListNotificationChannelsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listNotificationChannels>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getListNotificationChannelsQueryKey(params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listNotificationChannels>>
+	> = ({ signal }) => listNotificationChannels(params, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof listNotificationChannels>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListNotificationChannelsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listNotificationChannels>>
+>;
+export type ListNotificationChannelsQueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List notification channels
+ */
+
+export function useListNotificationChannels<
+	TData = Awaited<ReturnType<typeof listNotificationChannels>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: ListNotificationChannelsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listNotificationChannels>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListNotificationChannelsQueryOptions(params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List notification channels
+ */
+export const invalidateListNotificationChannels = async (
+	queryClient: QueryClient,
+	params?: ListNotificationChannelsParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListNotificationChannelsQueryKey(params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
  * This endpoint creates a notification channel
  * @summary Create notification channel
  */
@@ -732,4 +840,371 @@ export const useCreateNotificationChannel = <
 	TContext
 > => {
 	return useMutation(getCreateNotificationChannelMutationOptions(options));
+};
+/**
+ * This endpoint deletes a notification channel by ID
+ * @summary Delete notification channel
+ */
+export const deleteNotificationChannel = (
+	{ id }: DeleteNotificationChannelPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/notification_channels/${id}`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getDeleteNotificationChannelMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteNotificationChannel>>,
+		TError,
+		{ pathParams: DeleteNotificationChannelPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteNotificationChannel>>,
+	TError,
+	{ pathParams: DeleteNotificationChannelPathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteNotificationChannel'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteNotificationChannel>>,
+		{ pathParams: DeleteNotificationChannelPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteNotificationChannel(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteNotificationChannelMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteNotificationChannel>>
+>;
+
+export type DeleteNotificationChannelMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete notification channel
+ */
+export const useDeleteNotificationChannel = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteNotificationChannel>>,
+		TError,
+		{ pathParams: DeleteNotificationChannelPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteNotificationChannel>>,
+	TError,
+	{ pathParams: DeleteNotificationChannelPathParameters },
+	TContext
+> => {
+	return useMutation(getDeleteNotificationChannelMutationOptions(options));
+};
+/**
+ * This endpoint returns a notification channel by ID. A channel written by the v1 API can carry a configuration this API does not model.
+ * @summary Get notification channel by ID
+ */
+export const getNotificationChannel = (
+	{ id }: GetNotificationChannelPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetNotificationChannel200>({
+		url: `/api/v2/notification_channels/${id}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetNotificationChannelQueryKey = ({
+	id,
+}: GetNotificationChannelPathParameters) => {
+	return [`/api/v2/notification_channels/${id}`] as const;
+};
+
+export const getGetNotificationChannelQueryOptions = <
+	TData = Awaited<ReturnType<typeof getNotificationChannel>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetNotificationChannelPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getNotificationChannel>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetNotificationChannelQueryKey({ id });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getNotificationChannel>>
+	> = ({ signal }) => getNotificationChannel({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getNotificationChannel>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetNotificationChannelQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getNotificationChannel>>
+>;
+export type GetNotificationChannelQueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get notification channel by ID
+ */
+
+export function useGetNotificationChannel<
+	TData = Awaited<ReturnType<typeof getNotificationChannel>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetNotificationChannelPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getNotificationChannel>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetNotificationChannelQueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get notification channel by ID
+ */
+export const invalidateGetNotificationChannel = async (
+	queryClient: QueryClient,
+	{ id }: GetNotificationChannelPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetNotificationChannelQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint replaces a notification channel's configuration in full. Neither name is part of the request body: both are immutable. The kind may change, which replaces the channel's notifier configuration.
+ * @summary Update notification channel
+ */
+export const updateNotificationChannel = (
+	{ id }: UpdateNotificationChannelPathParameters,
+	alertmanagertypesUpdatableNotificationChannelDTO?: BodyType<AlertmanagertypesUpdatableNotificationChannelDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<UpdateNotificationChannel200>({
+		url: `/api/v2/notification_channels/${id}`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: alertmanagertypesUpdatableNotificationChannelDTO,
+		signal,
+	});
+};
+
+export const getUpdateNotificationChannelMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateNotificationChannel>>,
+		TError,
+		{
+			pathParams: UpdateNotificationChannelPathParameters;
+			data?: BodyType<AlertmanagertypesUpdatableNotificationChannelDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateNotificationChannel>>,
+	TError,
+	{
+		pathParams: UpdateNotificationChannelPathParameters;
+		data?: BodyType<AlertmanagertypesUpdatableNotificationChannelDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['updateNotificationChannel'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateNotificationChannel>>,
+		{
+			pathParams: UpdateNotificationChannelPathParameters;
+			data?: BodyType<AlertmanagertypesUpdatableNotificationChannelDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return updateNotificationChannel(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateNotificationChannelMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateNotificationChannel>>
+>;
+export type UpdateNotificationChannelMutationBody =
+	| BodyType<AlertmanagertypesUpdatableNotificationChannelDTO>
+	| undefined;
+export type UpdateNotificationChannelMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update notification channel
+ */
+export const useUpdateNotificationChannel = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateNotificationChannel>>,
+		TError,
+		{
+			pathParams: UpdateNotificationChannelPathParameters;
+			data?: BodyType<AlertmanagertypesUpdatableNotificationChannelDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateNotificationChannel>>,
+	TError,
+	{
+		pathParams: UpdateNotificationChannelPathParameters;
+		data?: BodyType<AlertmanagertypesUpdatableNotificationChannelDTO>;
+	},
+	TContext
+> => {
+	return useMutation(getUpdateNotificationChannelMutationOptions(options));
+};
+/**
+ * This endpoint sends a test notification for the configuration in the request body. The channel need not exist and nothing is persisted, so the body carries a configuration only.
+ * @summary Test notification channel
+ */
+export const testNotificationChannel = (
+	alertmanagertypesTestableNotificationChannelDTO?: BodyType<AlertmanagertypesTestableNotificationChannelDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/notification_channels/test`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: alertmanagertypesTestableNotificationChannelDTO,
+		signal,
+	});
+};
+
+export const getTestNotificationChannelMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof testNotificationChannel>>,
+		TError,
+		{ data?: BodyType<AlertmanagertypesTestableNotificationChannelDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof testNotificationChannel>>,
+	TError,
+	{ data?: BodyType<AlertmanagertypesTestableNotificationChannelDTO> },
+	TContext
+> => {
+	const mutationKey = ['testNotificationChannel'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof testNotificationChannel>>,
+		{ data?: BodyType<AlertmanagertypesTestableNotificationChannelDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return testNotificationChannel(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type TestNotificationChannelMutationResult = NonNullable<
+	Awaited<ReturnType<typeof testNotificationChannel>>
+>;
+export type TestNotificationChannelMutationBody =
+	| BodyType<AlertmanagertypesTestableNotificationChannelDTO>
+	| undefined;
+export type TestNotificationChannelMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Test notification channel
+ */
+export const useTestNotificationChannel = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof testNotificationChannel>>,
+		TError,
+		{ data?: BodyType<AlertmanagertypesTestableNotificationChannelDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof testNotificationChannel>>,
+	TError,
+	{ data?: BodyType<AlertmanagertypesTestableNotificationChannelDTO> },
+	TContext
+> => {
+	return useMutation(getTestNotificationChannelMutationOptions(options));
 };
