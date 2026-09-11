@@ -45,4 +45,12 @@ export const appShellHandlers = [
 	rest.get('https://cms.signoz.cloud/api/release-changelogs', (_req, res, ctx) =>
 		res(ctx.status(200), ctx.json(changelogResponse)),
 	),
+
+	// The webfonts `index.html` links and `styles.scss` imports. The story
+	// declares the same families over `public/fonts` in
+	// `.storybook/public/storybook-fonts.css`, so answering the CDN with nothing
+	// keeps a request from leaving the browser on every story.
+	rest.get('https://fonts.googleapis.com/css2', (_req, res, ctx) =>
+		res(ctx.status(200), ctx.text('')),
+	),
 ];
