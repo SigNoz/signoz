@@ -1,11 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import {
-	expect,
-	screen,
-	userEvent,
-	waitFor,
-	within,
-} from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { withCanvas } from '../decorators/withCanvas';
 import FeedbackFixture from './FeedbackFixture';
