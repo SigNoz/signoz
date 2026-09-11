@@ -1,0 +1,22 @@
+{
+	"trialPlanExpired": "체험판 기간이 만료되었습니다",
+	"gotQuestions": "궁금한 점이 있으신가요?",
+	"contactUs": "문의하기",
+	"upgradeToContinue": "계속하려면 업그레이드하세요",
+	"upgradeNow": "지금까지 이용해 오신 모든 기능을 계속 사용하려면 지금 업그레이드하세요.",
+	"yourDataIsSafe": "다음 시점까지 데이터는 안전하게 보관됩니다",
+	"actNow": "서비스 중단을 방지하려면 지금 조치하고 이어서 이용하세요.",
+	"contactAdmin": "업그레이드를 진행하려면 관리자에게 문의하세요.",
+	"continueMyJourney": "계속 이용하기",
+	"needMoreTime": "시간이 더 필요하신가요?",
+	"extendTrial": "체험 기간 연장",
+	"extendTrialMsgPart1": "체험 기간 내에 PoC를 완료하지 못한 특별한 사유가 있다면, 사유와 함께",
+	"extendTrialMsgPart2": "으로 문의해 주세요. 상황에 따라 며칠간 체험 기간을 연장해 드릴 수 있습니다",
+	"whyChooseSignoz": "SigNoz를 선택해야 하는 이유",
+	"enterpriseGradeObservability": "엔터프라이즈급 옵저버빌리티",
+	"observabilityDescription": "뛰어난 보안과 컴플라이언스로 어떤 규모에서도 옵저버빌리티를 이용할 수 있습니다.",
+	"continueToUpgrade": "업그레이드 계속하기",
+	"youAreInGoodCompany": "좋은 선택을 하셨습니다",
+	"faqs": "자주 묻는 질문",
+	"somethingWentWrong": "문제가 발생했습니다"
+}

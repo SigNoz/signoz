@@ -1,0 +1,18 @@
+{
+	"display_name": "표시 이름",
+	"signoz": "SigNoz",
+	"email_address": "이메일 주소",
+	"name_optional": "이름 (선택 사항)",
+	"role": "역할",
+	"email_placeholder": "john@signoz.io",
+	"name_placeholder": "John",
+	"add_another_team_member": "팀원 추가하기",
+	"invite_team_members": "팀원 초대하기",
+	"invite_members": "멤버 초대",
+	"pending_invites": "대기 중인 초대",
+	"authenticated_domains": "인증된 도메인",
+	"delete_domain_message": "이 도메인을 삭제하시겠습니까?",
+	"delete_domain": "도메인 삭제",
+	"add_domain": "도메인 추가",
+	"saml_settings": "SAML 설정이 저장되었습니다. 시크릿(익명) 창에서 로그인하여 올바르게 설정되었는지 확인해 주세요"
+}

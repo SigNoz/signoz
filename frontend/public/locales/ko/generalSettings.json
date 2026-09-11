@@ -1,0 +1,21 @@
+{
+	"total_retention_period": "전체 보존 기간",
+	"move_to_s3": "S3로 이동\n(전체 보존 기간보다 짧아야 합니다)",
+	"status_message": {
+		"success": "보존 기간을 {{total_retention}} {{s3_part}}(으)로 변경한 마지막 요청이 성공했습니다.",
+		"failed": "보존 기간을 {{total_retention}} {{s3_part}}(으)로 변경한 마지막 요청이 실패했습니다. 다시 시도해 주세요.",
+		"pending": "보존 기간을 {{total_retention}} {{s3_part}}(으)로 변경한 마지막 요청이 처리 중입니다. 시간이 다소 걸릴 수 있습니다.",
+		"s3_part": "그리고 S3는 {{s3_retention}}(으)로"
+	},
+	"retention_save_button": {
+		"pending": "{{name}} 보존 기간 업데이트 중",
+		"success": "저장"
+	},
+	"retention_request_race_condition": "다른 요청이 아직 처리 중이어서 보존 기간 변경 요청이 실패했습니다.",
+	"retention_error_message": "{{name}}의 보존 기간을 변경하는 중 문제가 발생했습니다. 다시 시도하거나 support@signoz.io로 문의해 주세요",
+	"retention_failed_message": "보존 기간을 변경하는 중 문제가 발생했습니다. 다시 시도하거나 support@signoz.io로 문의해 주세요",
+	"retention_comparison_error": "{{name}}의 전체 보존 기간은 데이터가 S3로 이동되는 기간보다 짧거나 같을 수 없습니다.",
+	"retention_null_value_error": "{{name}}의 보존 기간이 아직 설정되지 않았습니다. 아래에서 선택하여 설정해 주세요",
+	"retention_confirmation": "보존 기간을 변경하시겠습니까?",
+	"retention_confirmation_description": "{{name}} 저장에 필요한 스토리지 용량이 변경됩니다."
+}
