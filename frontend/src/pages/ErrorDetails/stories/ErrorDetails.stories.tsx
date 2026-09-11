@@ -60,6 +60,8 @@ export const NewestEvent: Story = {
  */
 export const EventMissing: Story = {
 	args: { found: false },
+	// The mocked event lookup deliberately 404s; the resulting console error is the state under test.
+	parameters: { allowConsoleErrors: true },
 };
 
 /** The page mid-fetch, shell included. */
