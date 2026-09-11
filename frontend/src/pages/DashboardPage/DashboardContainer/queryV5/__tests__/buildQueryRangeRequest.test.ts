@@ -55,6 +55,11 @@ const BUCKETED_CAPABILITIES = {
 	...TIME_SERIES_CAPABILITIES,
 	bucketedStepInterval: true,
 };
+const HEATMAP_CAPABILITIES = {
+	...TIME_SERIES_CAPABILITIES,
+	requestType: Querybuildertypesv5RequestTypeDTO.heatmap,
+	bucketedStepInterval: true,
+};
 const TABLE_CAPABILITIES = {
 	...TIME_SERIES_CAPABILITIES,
 	requestType: Querybuildertypesv5RequestTypeDTO.scalar,
@@ -302,6 +307,25 @@ describe('buildQueryRangeRequest', () => {
 		expect(spec.stepInterval).toBe(
 			getBucketedStepIntervalSeconds(START_MS, START_MS + HOUR_MS),
 		);
+	});
+
+	// The bucket axis rides on the query it draws, so it reaches the request the same
+	// way every other query field does — nothing at request level carries it.
+	it("carries a query's bucket options into the payload", () => {
+		const bucketOptions = { kind: 'log', spec: { scale: 0 } };
+		const request = buildQueryRangeRequest({
+			queries: bareBuilderQuery({ name: 'A', signal: 'metrics', bucketOptions }),
+			queryCapabilities: HEATMAP_CAPABILITIES,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+		});
+
+		expect(request.requestType).toBe(Querybuildertypesv5RequestTypeDTO.heatmap);
+		const spec = (request.compositeQuery?.queries?.[0]?.spec ?? {}) as {
+			bucketOptions?: unknown;
+		};
+		expect(spec.bucketOptions).toStrictEqual(bucketOptions);
+		expect(request).not.toHaveProperty('bucketOptions');
 	});
 
 	it('preserves a user-set stepInterval', () => {

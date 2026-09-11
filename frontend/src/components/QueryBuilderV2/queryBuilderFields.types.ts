@@ -16,6 +16,7 @@ export enum QueryBuilderField {
 	Limit = 'limit',
 	Legend = 'legend_format',
 	ReduceTo = 'reduce_to',
+	BucketOptions = 'bucket_options',
 	// Builder level
 	Formula = 'formula',
 	AdditionalQueries = 'additional_queries',

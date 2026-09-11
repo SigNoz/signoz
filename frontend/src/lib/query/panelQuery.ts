@@ -8,7 +8,11 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { cloneDeep, isEqual, set, unset } from 'lodash-es';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderFormula,
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 // Asks "would saving the current panel change the persisted widget spec?".
@@ -350,6 +354,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'disabled',
 					'expression',
 					'aggregations',
+					'bucketOptions',
 				],
 			},
 		},
@@ -607,6 +612,24 @@ export const panelTypeDataSourceFormValuesMap: Record<
 	},
 };
 
+/**
+ * Formulas are carried across a panel-type switch whole, not rebuilt from
+ * `panelTypeDataSourceFormValuesMap` the way `queryData` is, so a bucket axis has to be
+ * dropped by hand. The request rejects one on any type but heatmap.
+ */
+const withoutNonHeatmapBucketOptions = (
+	formulas: IBuilderFormula[],
+	newPanelType: keyof PartialPanelTypes,
+): IBuilderFormula[] => {
+	if (newPanelType === PANEL_TYPES.HEATMAP) {
+		return formulas;
+	}
+
+	return (formulas ?? []).map(
+		({ bucketOptions: _bucketOptions, ...rest }) => rest,
+	);
+};
+
 export function handleQueryChange(
 	newPanelType: keyof PartialPanelTypes,
 	supersetQuery: Query,
@@ -650,6 +673,10 @@ export function handleQueryChange(
 
 				return tempQuery;
 			}),
+			queryFormulas: withoutNonHeatmapBucketOptions(
+				supersetQuery.builder.queryFormulas,
+				newPanelType,
+			),
 			queryTraceOperator:
 				newPanelType === PANEL_TYPES.LIST
 					? []

@@ -4079,6 +4079,53 @@ export interface Querybuildertypesv5LogAggregationDTO {
 	expression?: string;
 }
 
+export enum Querybuildertypesv5BucketOptionsLinearDTOKind {
+	linear = 'linear',
+}
+export interface Querybuildertypesv5LinearBucketsSpecDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	maxValue: number;
+	/**
+	 * @type integer
+	 */
+	numBuckets?: number;
+}
+
+export interface Querybuildertypesv5BucketOptionsLinearDTO {
+	/**
+	 * @type string
+	 * @enum linear
+	 */
+	kind: Querybuildertypesv5BucketOptionsLinearDTOKind;
+	spec: Querybuildertypesv5LinearBucketsSpecDTO;
+}
+
+export enum Querybuildertypesv5BucketOptionsLogDTOKind {
+	log = 'log',
+}
+export interface Querybuildertypesv5LogBucketsSpecDTO {
+	/**
+	 * @type integer,null
+	 */
+	scale?: number | null;
+}
+
+export interface Querybuildertypesv5BucketOptionsLogDTO {
+	/**
+	 * @type string
+	 * @enum log
+	 */
+	kind: Querybuildertypesv5BucketOptionsLogDTOKind;
+	spec: Querybuildertypesv5LogBucketsSpecDTO;
+}
+
+export type Querybuildertypesv5BucketOptionsDTO =
+	| Querybuildertypesv5BucketOptionsLinearDTO
+	| Querybuildertypesv5BucketOptionsLogDTO;
+
 export interface Querybuildertypesv5FilterDTO {
 	/**
 	 * @type string
@@ -4272,6 +4319,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array,null
 	 */
 	aggregations?: Querybuildertypesv5LogAggregationDTO[] | null;
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
 	 */
@@ -4399,6 +4447,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array,null
 	 */
 	aggregations?: Querybuildertypesv5MetricAggregationDTO[] | null;
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
 	 */
@@ -4474,6 +4523,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array,null
 	 */
 	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
 	 */
@@ -5054,6 +5104,7 @@ export interface Querybuildertypesv5QueryEnvelopeBuilderAIDTO {
 }
 
 export interface Querybuildertypesv5QueryBuilderFormulaDTO {
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type boolean
 	 */
@@ -9216,53 +9267,6 @@ export interface Querybuildertypesv5AggregationBucketDTO {
 	upperBoundSeries?: Querybuildertypesv5TimeSeriesDTO[];
 }
 
-export enum Querybuildertypesv5BucketOptionsLinearDTOKind {
-	linear = 'linear',
-}
-export interface Querybuildertypesv5LinearBucketsSpecDTO {
-	/**
-	 * @type number
-	 * @format double
-	 */
-	maxValue: number;
-	/**
-	 * @type integer
-	 */
-	numBuckets?: number;
-}
-
-export interface Querybuildertypesv5BucketOptionsLinearDTO {
-	/**
-	 * @type string
-	 * @enum linear
-	 */
-	kind: Querybuildertypesv5BucketOptionsLinearDTOKind;
-	spec: Querybuildertypesv5LinearBucketsSpecDTO;
-}
-
-export enum Querybuildertypesv5BucketOptionsLogDTOKind {
-	log = 'log',
-}
-export interface Querybuildertypesv5LogBucketsSpecDTO {
-	/**
-	 * @type integer,null
-	 */
-	scale?: number | null;
-}
-
-export interface Querybuildertypesv5BucketOptionsLogDTO {
-	/**
-	 * @type string
-	 * @enum log
-	 */
-	kind: Querybuildertypesv5BucketOptionsLogDTOKind;
-	spec: Querybuildertypesv5LogBucketsSpecDTO;
-}
-
-export type Querybuildertypesv5BucketOptionsDTO =
-	| Querybuildertypesv5BucketOptionsLinearDTO
-	| Querybuildertypesv5BucketOptionsLogDTO;
-
 export enum Querybuildertypesv5BucketsKindDTO {
 	linear = 'linear',
 	log = 'log',
@@ -9616,7 +9620,6 @@ export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
  * Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.
  */
 export interface Querybuildertypesv5QueryRangeRequestDTO {
-	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	compositeQuery?: Querybuildertypesv5CompositeQueryDTO;
 	/**
 	 * @type integer
