@@ -52,4 +52,7 @@ export const NoPreviewData: Story = {
 /** The rule id in the URL does not resolve, which is where the page gives up. */
 export const RuleNotFound: Story = {
 	args: { dataState: 'error' },
+	// The mocked rule request intentionally fails; the resulting console error is
+	// the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 };
