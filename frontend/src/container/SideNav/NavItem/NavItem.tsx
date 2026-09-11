@@ -2,6 +2,7 @@ import { Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
 import { Pin, PinOff } from '@signozhq/icons';
+import { Link } from 'react-router-dom';
 
 import { SidebarItem } from '../sideNav.types';
 
@@ -16,15 +17,18 @@ export default function NavItem({
 	isPinned,
 	showIcon,
 	dataTestId,
+	href,
 }: {
 	item: SidebarItem;
 	isActive: boolean;
-	onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+	onClick: (event: React.MouseEvent) => void;
 	isDisabled: boolean;
 	onTogglePin?: (item: SidebarItem) => void;
 	isPinned?: boolean;
 	showIcon?: boolean;
 	dataTestId?: string;
+	/** When provided, the nav item renders as a <Link> with a real href. */
+	href?: string;
 }): JSX.Element {
 	const { label, icon, isBeta, isNew, isEarlyAccess, tooltip } = item;
 
@@ -32,24 +36,12 @@ export default function NavItem({
 		event: React.MouseEvent<SVGSVGElement, MouseEvent>,
 	): void => {
 		event.stopPropagation();
+		event.preventDefault();
 		onTogglePin?.(item);
 	};
 
-	const navItem = (
-		<div
-			className={cx(
-				'nav-item',
-				isActive ? 'active' : '',
-				isDisabled ? 'disabled' : '',
-			)}
-			onClick={(event): void => {
-				if (isDisabled) {
-					return;
-				}
-				onClick(event);
-			}}
-			data-testid={dataTestId}
-		>
+	const innerContent = (
+		<>
 			{showIcon && <div className="nav-item-active-marker" />}
 			<div className={cx('nav-item-data', isBeta ? 'beta-tag' : '')}>
 				{showIcon && (
@@ -104,8 +96,46 @@ export default function NavItem({
 					</Tooltip>
 				)}
 			</div>
-		</div>
+		</>
 	);
+
+	const sharedClassName = cx(
+		'nav-item',
+		isActive ? 'active' : '',
+		isDisabled ? 'disabled' : '',
+	);
+
+	const navItem =
+		href && !isDisabled ? (
+			<Link
+				to={href}
+				className={sharedClassName}
+				onClick={(event): void => {
+					if (isDisabled) {
+						event.preventDefault();
+						return;
+					}
+					onClick(event);
+				}}
+				data-testid={dataTestId}
+				draggable={false}
+			>
+				{innerContent}
+			</Link>
+		) : (
+			<div
+				className={sharedClassName}
+				onClick={(event): void => {
+					if (isDisabled) {
+						return;
+					}
+					onClick(event);
+				}}
+				data-testid={dataTestId}
+			>
+				{innerContent}
+			</div>
+		);
 
 	// Only non-pinnable items set `tooltip`; it would nest with the pin tooltip.
 	return tooltip ? (
@@ -122,4 +152,5 @@ NavItem.defaultProps = {
 	isPinned: false,
 	showIcon: false,
 	dataTestId: undefined,
+	href: undefined,
 };
