@@ -11,6 +11,7 @@ import type {
 	TextBackgroundPreset,
 	TextBackgroundSelection,
 } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/types';
+import { TextBackgroundKind } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/types';
 
 import styles from './BackgroundSwatches.module.scss';
 
@@ -25,20 +26,22 @@ const PRESET_TITLES: Record<TextBackgroundPreset, string> = {
 	slate: 'Slate',
 };
 
-const BASE_TITLES: Record<'none' | 'default', string> = {
+type BaseSelection = TextBackgroundKind.None | TextBackgroundKind.Default;
+
+const BASE_TITLES: Record<BaseSelection, string> = {
 	none: 'Transparent',
 	default: 'Default panel',
 };
 
 /** Neither base swatch shows a colour, so its tooltip says what it does. */
-const BASE_TOOLTIPS: Record<'none' | 'default', string> = {
+const BASE_TOOLTIPS: Record<BaseSelection, string> = {
 	none: 'Transparent — no card, border or title bar',
 	default: 'Default panel colour',
 };
 
 const OPTIONS: TextBackgroundSelection[] = [
-	'none',
-	'default',
+	TextBackgroundKind.None,
+	TextBackgroundKind.Default,
 	...TEXT_BACKGROUND_PRESETS,
 ];
 
@@ -75,7 +78,9 @@ function BackgroundSwatches({
 			data-testid={testId}
 		>
 			{OPTIONS.map((option, index) => {
-				const isBase = option === 'none' || option === 'default';
+				const isBase =
+					option === TextBackgroundKind.None ||
+					option === TextBackgroundKind.Default;
 				const pair = isBase ? undefined : TEXT_BACKGROUND_PAIRS[option][theme];
 				const title = isBase ? BASE_TITLES[option] : PRESET_TITLES[option];
 
@@ -84,8 +89,8 @@ function BackgroundSwatches({
 						<TooltipSimple title={isBase ? BASE_TOOLTIPS[option] : title} arrow>
 							<label
 								className={cx(styles.swatch, {
-									[styles.checkerboard]: option === 'none',
-									[styles.defaultSurface]: option === 'default',
+									[styles.checkerboard]: option === TextBackgroundKind.None,
+									[styles.defaultSurface]: option === TextBackgroundKind.Default,
 									[styles.selected]: option === value,
 								})}
 								style={pair ? { background: pair.surface, color: pair.ink } : undefined}

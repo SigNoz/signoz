@@ -1,26 +1,38 @@
-export type TextBackgroundPreset =
-	| 'robin'
-	| 'purple'
-	| 'sakura'
-	| 'cherry'
-	| 'amber'
-	| 'forest'
-	| 'sienna'
-	| 'slate';
+export enum TextBackgroundPreset {
+	Robin = 'robin',
+	Purple = 'purple',
+	Sakura = 'sakura',
+	Cherry = 'cherry',
+	Amber = 'amber',
+	Forest = 'forest',
+	Sienna = 'sienna',
+	Slate = 'slate',
+}
 
-export type TextBackgroundKind = 'none' | 'default' | 'preset' | 'custom';
+export enum TextBackgroundKind {
+	None = 'none',
+	Default = 'default',
+	Preset = 'preset',
+	Custom = 'custom',
+}
 
-/** `custom` is absent: it opens a picker, so it has its own row. */
-export type TextBackgroundSelection = 'none' | 'default' | TextBackgroundPreset;
+/** `Custom` is absent: it opens a picker, so it has its own row. */
+export type TextBackgroundSelection =
+	| TextBackgroundKind.None
+	| TextBackgroundKind.Default
+	| TextBackgroundPreset;
 
-export type PanelTheme = 'light' | 'dark';
+export enum PanelTheme {
+	Light = 'light',
+	Dark = 'dark',
+}
 
 export interface TextBackgroundPair {
 	surface: string;
 	ink: string;
 }
 
-/** `none` and `default` carry no colours: the card keeps or drops its own. */
+/** `None` and `Default` carry no colours: the card keeps or drops its own. */
 export interface ResolvedTextBackground {
 	kind: TextBackgroundKind;
 	preset?: TextBackgroundPreset;

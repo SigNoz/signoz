@@ -1,7 +1,7 @@
 import { Type } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
-import EditorPane from './components/EditorPane/EditorPane';
+import TextEditorPane from './components/TextEditorPane/TextEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
 
@@ -12,7 +12,7 @@ export const definition: PanelDefinition<'signoz/TextPanel'> = {
 	sections,
 	mode: 'static',
 	Renderer,
-	EditorPane,
+	EditorPane: TextEditorPane,
 	actions: {
 		view: true,
 		edit: true,

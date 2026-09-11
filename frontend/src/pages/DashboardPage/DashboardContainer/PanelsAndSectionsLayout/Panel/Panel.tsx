@@ -1,15 +1,10 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import cx from 'classnames';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { useTextBackground } from 'pages/DashboardPage/DashboardContainer/Panels/hooks/useTextBackground';
-import { useUpdatePanelText } from 'pages/DashboardPage/DashboardContainer/Panels/hooks/useUpdatePanelText';
-import { isPanelHeaderHidden } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isPanelHeaderHidden';
 
 import type { DashboardSection } from '../../utils';
-import PanelActionsMenu from './PanelActionsMenu/PanelActionsMenu';
-import PanelHeader from './PanelHeader/PanelHeader';
 import QueryPanelContent from './QueryPanelContent';
-import StaticPanelBody from './StaticPanelBody/StaticPanelBody';
+import StaticPanelContent from './StaticPanelContent';
 import styles from './Panel.module.scss';
 
 /**
@@ -31,9 +26,9 @@ interface PanelProps {
 }
 
 /**
- * A single dashboard panel: shared shell chrome, forking on the kind's mode
- * before any query machinery exists, so a static kind never mounts a fetch —
- * not even a disabled one.
+ * A single dashboard panel: the card shell, forking on the kind's mode before any
+ * query machinery exists, so a static kind never mounts a fetch — not even a
+ * disabled one.
  */
 function Panel({
 	panel,
@@ -43,7 +38,6 @@ function Panel({
 }: PanelProps): JSX.Element {
 	const panelDefinition = getPanelDefinition(panel.spec.plugin.kind);
 	const background = useTextBackground(panel.spec);
-	const onChangeText = useUpdatePanelText(panelId);
 
 	return (
 		<div
@@ -55,36 +49,12 @@ function Panel({
 			data-panel-root={panelId}
 		>
 			{panelDefinition.mode === 'static' ? (
-				<>
-					{isPanelHeaderHidden(panel.spec) ? (
-						<div className={styles.hiddenHeaderControls}>
-							<span
-								className={cx('panel-drag-handle', styles.dragPill)}
-								data-testid="hidden-header-drag-handle"
-							/>
-							<div className={styles.floatingActions}>
-								<PanelActionsMenu
-									panelId={panelId}
-									panel={panel}
-									panelActions={panelActions}
-								/>
-							</div>
-						</div>
-					) : (
-						<PanelHeader
-							mode="static"
-							panelId={panelId}
-							panel={panel}
-							panelActions={panelActions}
-						/>
-					)}
-					<StaticPanelBody
-						Renderer={panelDefinition.Renderer}
-						panel={panel}
-						panelId={panelId}
-						onChangeText={onChangeText}
-					/>
-				</>
+				<StaticPanelContent
+					panel={panel}
+					panelId={panelId}
+					panelDefinition={panelDefinition}
+					panelActions={panelActions}
+				/>
 			) : (
 				<QueryPanelContent
 					panel={panel}

@@ -171,6 +171,7 @@ function QueryViewModalBody({
 			</div>
 			<div className={styles.body}>
 				<PreviewPane
+					mode="query"
 					panelId={panelId}
 					panel={draft}
 					panelDefinition={panelDefinition}

@@ -7,7 +7,7 @@ import {
 	isQueryTypeSupportedByPanelKind,
 } from '../DashboardContainer/Panels/capabilities';
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
-import { toLegacyPanelType } from '../DashboardContainer/Panels/types/panelKind';
+import { toPanelType } from '../DashboardContainer/Panels/types/panelKind';
 import type { PanelKind } from '../DashboardContainer/Panels/types/panelKind';
 import { SectionKind } from '../DashboardContainer/Panels/types/sections';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
@@ -66,7 +66,7 @@ export function buildNewPanelSeed(
 	const kind = resolveSeededPanelKind(requestedKind, compositeQuery);
 	const pluginSpec = buildPluginSpec(getPanelDefinition(kind).sections);
 
-	const converted = toPerses(compositeQuery, toLegacyPanelType(kind));
+	const converted = toPerses(compositeQuery, toPanelType(kind));
 	const queries = converted.length > 0 ? converted : buildDefaultQueries(kind);
 
 	// Explorers put the single `unit` on the query itself, not the panel spec.

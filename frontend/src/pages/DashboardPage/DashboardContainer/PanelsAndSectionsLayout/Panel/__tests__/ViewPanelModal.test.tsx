@@ -210,6 +210,7 @@ describe('ViewPanelModal', () => {
 	});
 
 	it('mounts the static body — editor pane, no query builder slot — for a static kind', () => {
+		mockPreviewPaneRender.mockClear();
 		const actual = jest.requireActual(
 			'pages/DashboardPage/DashboardContainer/Panels/registry',
 		);
@@ -219,7 +220,7 @@ describe('ViewPanelModal', () => {
 			sections: [],
 			actions: {},
 			mode: 'static',
-			Renderer: (): JSX.Element => <div data-testid="fake-static-renderer" />,
+			Renderer: (): null => null,
 			EditorPane: (): JSX.Element => <div data-testid="static-editor-pane" />,
 		};
 		(getPanelDefinition as jest.Mock).mockImplementation((kind: string) =>
@@ -239,11 +240,13 @@ describe('ViewPanelModal', () => {
 
 		expect(screen.getByTestId('view-panel-header')).toBeInTheDocument();
 		expect(screen.getByTestId('static-editor-pane')).toBeInTheDocument();
-		expect(screen.getByTestId('fake-static-renderer')).toBeInTheDocument();
 		expect(
 			screen.queryByTestId('panel-editor-v2-query-builder'),
 		).not.toBeInTheDocument();
-		expect(mockPreviewPaneRender).not.toHaveBeenCalled();
+		// One PreviewPane serves both arms; the static body asks it for the static one.
+		expect(mockPreviewPaneRender).toHaveBeenLastCalledWith(
+			expect.objectContaining({ mode: 'static' }),
+		);
 
 		(getPanelDefinition as jest.Mock).mockImplementation(
 			actual.getPanelDefinition,

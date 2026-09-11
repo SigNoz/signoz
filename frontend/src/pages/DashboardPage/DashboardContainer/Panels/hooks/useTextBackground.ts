@@ -9,7 +9,10 @@ import {
 	PRESET_BORDER,
 } from '../kinds/TextPanel/background/presets';
 import { resolveTextBackground } from '../kinds/TextPanel/background/resolveTextBackground';
-import type { TextBackgroundKind } from '../kinds/TextPanel/background/types';
+import {
+	PanelTheme,
+	TextBackgroundKind,
+} from '../kinds/TextPanel/background/types';
 
 export interface TextBackground {
 	kind: TextBackgroundKind;
@@ -22,7 +25,7 @@ export interface TextBackground {
 
 const NO_STYLE: CSSProperties = {};
 
-// D7: `none` drops the card so the body sits on the dashboard canvas. It rides the
+// D7: `None` drops the card so the body sits on the dashboard canvas. It rides the
 // same properties as a colour, which takes the header's divider with it.
 const CARDLESS_STYLE = {
 	'--text-panel-surface': 'transparent',
@@ -56,10 +59,10 @@ export function useTextBackground(
 	).presentation?.background;
 
 	return useMemo(() => {
-		const theme = isDarkMode ? 'dark' : 'light';
+		const theme = isDarkMode ? PanelTheme.Dark : PanelTheme.Light;
 		const resolved = resolveTextBackground(background, theme);
 
-		if (resolved.kind === 'none') {
+		if (resolved.kind === TextBackgroundKind.None) {
 			return { kind: resolved.kind, style: CARDLESS_STYLE };
 		}
 

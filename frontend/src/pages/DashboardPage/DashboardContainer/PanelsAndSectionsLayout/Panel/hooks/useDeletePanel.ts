@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import logEvent from 'api/common/logEvent';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import { toLegacyPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -58,7 +58,7 @@ export function useDeletePanel({
 					// is the V2 identity.
 					...(removedKind
 						? {
-								panelType: toLegacyPanelType(removedKind),
+								panelType: toPanelType(removedKind),
 								panelKind: removedKind,
 							}
 						: {}),

@@ -10,6 +10,10 @@ import {
 	storedFromSelection,
 } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/resolveTextBackground';
 import type { TextBackgroundSelection } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/types';
+import {
+	PanelTheme,
+	TextBackgroundKind,
+} from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/types';
 import type {
 	SectionEditorProps,
 	SectionKind,
@@ -41,7 +45,7 @@ function TextLayoutSection({
 	value,
 	onChange,
 }: SectionEditorProps<SectionKind.TextLayout>): JSX.Element {
-	const theme = useIsDarkMode() ? 'dark' : 'light';
+	const theme = useIsDarkMode() ? PanelTheme.Dark : PanelTheme.Light;
 	const background = resolveTextBackground(value?.background, theme);
 
 	return (
@@ -80,7 +84,11 @@ function TextLayoutSection({
 				/>
 				<CustomBackgroundRow
 					testId="text-layout-background-custom"
-					value={background.kind === 'custom' ? background.surface : undefined}
+					value={
+						background.kind === TextBackgroundKind.Custom
+							? background.surface
+							: undefined
+					}
 					onChange={(hex): void => onChange({ ...value, background: hex })}
 				/>
 			</div>

@@ -1,6 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { TEXT_BACKGROUND_PAIRS } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/presets';
+import {
+	PanelTheme,
+	TextBackgroundKind,
+	TextBackgroundPreset,
+} from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/types';
 
 import BackgroundSwatches from '../BackgroundSwatches';
 
@@ -13,8 +18,8 @@ function renderRow(
 			<BackgroundSwatches
 				testId="background"
 				label="Panel background"
-				theme="dark"
-				value="default"
+				theme={PanelTheme.Dark}
+				value={TextBackgroundKind.Default}
 				onChange={onChange}
 				{...props}
 			/>
@@ -68,7 +73,7 @@ describe('BackgroundSwatches', () => {
 	});
 
 	it('paints each preset in the given theme', () => {
-		renderRow({ theme: 'light' });
+		renderRow({ theme: PanelTheme.Light });
 
 		expect(screen.getByTestId('background-amber')).toHaveStyle({
 			background: TEXT_BACKGROUND_PAIRS.amber.light.surface,
@@ -77,7 +82,7 @@ describe('BackgroundSwatches', () => {
 	});
 
 	it('marks only the selected swatch, and checks it', () => {
-		renderRow({ value: 'forest' });
+		renderRow({ value: TextBackgroundPreset.Forest });
 
 		expect(screen.getByRole('radio', { name: 'Forest' })).toBeChecked();
 		expect(

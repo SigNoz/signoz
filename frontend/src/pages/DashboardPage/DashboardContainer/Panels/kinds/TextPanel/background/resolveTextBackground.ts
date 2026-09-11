@@ -10,14 +10,17 @@ import type {
 	TextBackgroundPreset,
 	TextBackgroundSelection,
 } from './types';
+import { TextBackgroundKind } from './types';
 
 /** `presentation.background` before it was a hex string; the API rejects both now. */
-const LEGACY_VALUES: Record<string, ResolvedTextBackground['kind']> = {
-	solid: 'default',
-	transparent: 'none',
+const LEGACY_VALUES: Record<string, TextBackgroundKind> = {
+	solid: TextBackgroundKind.Default,
+	transparent: TextBackgroundKind.None,
 };
 
-const DEFAULT_BACKGROUND: ResolvedTextBackground = { kind: 'default' };
+const DEFAULT_BACKGROUND: ResolvedTextBackground = {
+	kind: TextBackgroundKind.Default,
+};
 
 /**
  * A stored preset surface resolves to its pair in the *current* theme, so a panel
@@ -34,7 +37,9 @@ export function resolveTextBackground(
 
 	const legacy = LEGACY_VALUES[background];
 	if (legacy) {
-		return legacy === 'none' ? { kind: 'none' } : DEFAULT_BACKGROUND;
+		return legacy === TextBackgroundKind.None
+			? { kind: TextBackgroundKind.None }
+			: DEFAULT_BACKGROUND;
 	}
 
 	const channels = parseHex(background);
@@ -42,17 +47,21 @@ export function resolveTextBackground(
 		return DEFAULT_BACKGROUND;
 	}
 	if (channels.a === 0) {
-		return { kind: 'none' };
+		return { kind: TextBackgroundKind.None };
 	}
 
 	const normalized = normalizeHex(background);
 	const preset = normalized ? PRESET_BY_SURFACE[normalized] : undefined;
 	if (preset) {
-		return { kind: 'preset', preset, ...TEXT_BACKGROUND_PAIRS[preset][theme] };
+		return {
+			kind: TextBackgroundKind.Preset,
+			preset,
+			...TEXT_BACKGROUND_PAIRS[preset][theme],
+		};
 	}
 
 	return {
-		kind: 'custom',
+		kind: TextBackgroundKind.Custom,
 		surface: background,
 		ink: inkForSurface(background),
 	};
@@ -64,13 +73,13 @@ export function toStoredBackground(
 	theme: PanelTheme,
 ): string | undefined {
 	switch (resolved.kind) {
-		case 'none':
+		case TextBackgroundKind.None:
 			return TRANSPARENT_BACKGROUND;
-		case 'preset':
+		case TextBackgroundKind.Preset:
 			return resolved.preset
 				? TEXT_BACKGROUND_PAIRS[resolved.preset][theme].surface
 				: undefined;
-		case 'custom':
+		case TextBackgroundKind.Custom:
 			return resolved.surface;
 		default:
 			return undefined;
@@ -81,10 +90,10 @@ export function toStoredBackground(
 export function selectionFromResolved(
 	resolved: ResolvedTextBackground,
 ): TextBackgroundSelection | undefined {
-	if (resolved.kind === 'preset') {
+	if (resolved.kind === TextBackgroundKind.Preset) {
 		return resolved.preset;
 	}
-	return resolved.kind === 'custom' ? undefined : resolved.kind;
+	return resolved.kind === TextBackgroundKind.Custom ? undefined : resolved.kind;
 }
 
 /** What a swatch click stores. */
@@ -92,10 +101,16 @@ export function storedFromSelection(
 	selection: TextBackgroundSelection,
 	theme: PanelTheme,
 ): string | undefined {
-	if (selection === 'none' || selection === 'default') {
+	if (
+		selection === TextBackgroundKind.None ||
+		selection === TextBackgroundKind.Default
+	) {
 		return toStoredBackground({ kind: selection }, theme);
 	}
-	return toStoredBackground({ kind: 'preset', preset: selection }, theme);
+	return toStoredBackground(
+		{ kind: TextBackgroundKind.Preset, preset: selection },
+		theme,
+	);
 }
 
 /** The hex a swatch paints in the given theme. */

@@ -13,7 +13,7 @@ import Header from './Header/Header';
 import PanelEditorLayout, {
 	PANE_SPLIT,
 } from './PanelEditorLayout/PanelEditorLayout';
-import StaticPreviewPane from './StaticPreviewPane/StaticPreviewPane';
+import PreviewPane from './PreviewPane/PreviewPane';
 import type { PanelEditorContainerProps } from './index';
 import type { PanelEditorDraftApi } from './types';
 import { withPanelText } from '../Panels/utils/withPanelText';
@@ -105,7 +105,8 @@ function StaticEditorBody({
 				/>
 			}
 			preview={
-				<StaticPreviewPane
+				<PreviewPane
+					mode="static"
 					panelId={panelId}
 					panel={draft}
 					panelDefinition={panelDefinition}

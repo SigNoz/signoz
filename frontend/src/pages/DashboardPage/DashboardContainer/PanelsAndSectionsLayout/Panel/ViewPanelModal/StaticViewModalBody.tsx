@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import cx from 'classnames';
 import { PanelMode } from 'lib/visualization/panels/types';
 import logEvent from 'api/common/logEvent';
-import StaticPreviewPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/StaticPreviewPane/StaticPreviewPane';
+import PreviewPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PreviewPane/PreviewPane';
 import type { PanelEditorDraftApi } from 'pages/DashboardPage/DashboardContainer/PanelEditor/types';
 import type { RenderableStaticPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
@@ -62,7 +62,8 @@ function StaticViewModalBody({
 				<EditorPane spec={spec} onChangeSpec={setSpec} />
 			</div>
 			<div className={styles.body}>
-				<StaticPreviewPane
+				<PreviewPane
+					mode="static"
 					panelId={panelId}
 					panel={draft}
 					panelDefinition={panelDefinition}

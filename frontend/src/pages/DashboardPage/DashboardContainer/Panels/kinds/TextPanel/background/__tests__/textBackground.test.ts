@@ -20,9 +20,10 @@ import {
 	storedFromSelection,
 	toStoredBackground,
 } from '../resolveTextBackground';
-import type { PanelTheme, ResolvedTextBackground } from '../types';
+import type { ResolvedTextBackground } from '../types';
+import { PanelTheme, TextBackgroundKind, TextBackgroundPreset } from '../types';
 
-const THEMES: PanelTheme[] = ['light', 'dark'];
+const THEMES: PanelTheme[] = Object.values(PanelTheme);
 
 describe('preset tokens', () => {
 	const pairs = TEXT_BACKGROUND_PRESETS.flatMap((preset) =>
@@ -108,109 +109,128 @@ describe('inkForSurface', () => {
 
 describe('resolveTextBackground', () => {
 	it.each([undefined, null, ''])('reads %s as the default surface', (stored) => {
-		expect(resolveTextBackground(stored, 'dark')).toStrictEqual({
-			kind: 'default',
+		expect(resolveTextBackground(stored, PanelTheme.Dark)).toStrictEqual({
+			kind: TextBackgroundKind.Default,
 		});
 	});
 
 	it.each([TRANSPARENT_BACKGROUND, '#0000'])(
 		'reads the zero-alpha colour %s as no card',
 		(stored) => {
-			expect(resolveTextBackground(stored, 'dark')).toStrictEqual({
-				kind: 'none',
+			expect(resolveTextBackground(stored, PanelTheme.Dark)).toStrictEqual({
+				kind: TextBackgroundKind.None,
 			});
 		},
 	);
 
 	it('resolves a surface stored in one theme to the pair of the other', () => {
-		const storedInLight = presetSurface('amber', 'light');
+		const storedInLight = presetSurface(
+			TextBackgroundPreset.Amber,
+			PanelTheme.Light,
+		);
 
-		expect(resolveTextBackground(storedInLight, 'dark')).toStrictEqual({
-			kind: 'preset',
-			preset: 'amber',
+		expect(resolveTextBackground(storedInLight, PanelTheme.Dark)).toStrictEqual({
+			kind: TextBackgroundKind.Preset,
+			preset: TextBackgroundPreset.Amber,
 			...TEXT_BACKGROUND_PAIRS.amber.dark,
 		});
 	});
 
 	it('recognises a preset surface whatever its case', () => {
-		const stored = presetSurface('forest', 'dark').toLowerCase();
+		const stored = presetSurface(
+			TextBackgroundPreset.Forest,
+			PanelTheme.Dark,
+		).toLowerCase();
 
-		expect(resolveTextBackground(stored, 'light')).toMatchObject({
-			kind: 'preset',
-			preset: 'forest',
+		expect(resolveTextBackground(stored, PanelTheme.Light)).toMatchObject({
+			kind: TextBackgroundKind.Preset,
+			preset: TextBackgroundPreset.Forest,
 		});
 	});
 
 	it('reads a hex that is not a preset surface as a custom colour', () => {
-		expect(resolveTextBackground('#3A2A64', 'dark')).toStrictEqual({
-			kind: 'custom',
+		expect(resolveTextBackground('#3A2A64', PanelTheme.Dark)).toStrictEqual({
+			kind: TextBackgroundKind.Custom,
 			surface: '#3A2A64',
 			ink: CUSTOM_INK.light,
 		});
 	});
 
 	it('holds a custom colour steady across a theme switch', () => {
-		expect(resolveTextBackground('#3A2A64', 'light')).toStrictEqual(
-			resolveTextBackground('#3A2A64', 'dark'),
+		expect(resolveTextBackground('#3A2A64', PanelTheme.Light)).toStrictEqual(
+			resolveTextBackground('#3A2A64', PanelTheme.Dark),
 		);
 	});
 
 	// The enum the API used to accept; neither value is a hex.
 	it.each([
-		['solid', 'default'],
-		['transparent', 'none'],
+		['solid', TextBackgroundKind.Default],
+		['transparent', TextBackgroundKind.None],
 	])('migrates the legacy %s value to %s', (stored, kind) => {
-		expect(resolveTextBackground(stored, 'dark')).toStrictEqual({ kind });
+		expect(resolveTextBackground(stored, PanelTheme.Dark)).toStrictEqual({
+			kind,
+		});
 	});
 
 	it('falls back to the default surface for an unreadable value', () => {
-		expect(resolveTextBackground('rgb(1, 2, 3)', 'dark')).toStrictEqual({
-			kind: 'default',
+		expect(resolveTextBackground('rgb(1, 2, 3)', PanelTheme.Dark)).toStrictEqual({
+			kind: TextBackgroundKind.Default,
 		});
 	});
 });
 
 describe('editor adapters', () => {
 	it.each([
-		[undefined, 'default'],
-		[TRANSPARENT_BACKGROUND, 'none'],
-		['solid', 'default'],
+		[undefined, TextBackgroundKind.Default],
+		[TRANSPARENT_BACKGROUND, TextBackgroundKind.None],
+		['solid', TextBackgroundKind.Default],
 	])('lights up the %s swatch', (stored, selection) => {
-		expect(selectionFromResolved(resolveTextBackground(stored, 'dark'))).toBe(
-			selection,
-		);
+		expect(
+			selectionFromResolved(resolveTextBackground(stored, PanelTheme.Dark)),
+		).toBe(selection);
 	});
 
 	it('lights up the preset a stored surface belongs to', () => {
 		expect(
 			selectionFromResolved(
-				resolveTextBackground(presetSurface('slate', 'light'), 'dark'),
+				resolveTextBackground(
+					presetSurface(TextBackgroundPreset.Slate, PanelTheme.Light),
+					PanelTheme.Dark,
+				),
 			),
-		).toBe('slate');
+		).toBe(TextBackgroundPreset.Slate);
 	});
 
 	it('lights up nothing for a custom colour', () => {
 		expect(
-			selectionFromResolved(resolveTextBackground('#3A2A64', 'dark')),
+			selectionFromResolved(resolveTextBackground('#3A2A64', PanelTheme.Dark)),
 		).toBeUndefined();
 	});
 
 	it('stores what each swatch means', () => {
-		expect(storedFromSelection('none', 'dark')).toBe(TRANSPARENT_BACKGROUND);
-		expect(storedFromSelection('default', 'dark')).toBeUndefined();
-		expect(storedFromSelection('cherry', 'light')).toBe(
-			presetSurface('cherry', 'light'),
+		expect(storedFromSelection(TextBackgroundKind.None, PanelTheme.Dark)).toBe(
+			TRANSPARENT_BACKGROUND,
 		);
+		expect(
+			storedFromSelection(TextBackgroundKind.Default, PanelTheme.Dark),
+		).toBeUndefined();
+		expect(
+			storedFromSelection(TextBackgroundPreset.Cherry, PanelTheme.Light),
+		).toBe(presetSurface(TextBackgroundPreset.Cherry, PanelTheme.Light));
 	});
 });
 
 describe('round trip', () => {
 	const cases: ResolvedTextBackground[] = [
-		{ kind: 'none' },
-		{ kind: 'default' },
-		{ kind: 'custom', surface: '#3A2A64', ink: CUSTOM_INK.light },
+		{ kind: TextBackgroundKind.None },
+		{ kind: TextBackgroundKind.Default },
+		{
+			kind: TextBackgroundKind.Custom,
+			surface: '#3A2A64',
+			ink: CUSTOM_INK.light,
+		},
 		...TEXT_BACKGROUND_PRESETS.map((preset) => ({
-			kind: 'preset' as const,
+			kind: TextBackgroundKind.Preset,
 			preset,
 		})),
 	];

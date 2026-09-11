@@ -11,6 +11,7 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 
 import type { PanelActionsConfig } from '../Panel';
 import PanelActionsMenu from '../PanelActionsMenu/PanelActionsMenu';
+import { EMPTY_PANEL_QUERY_DATA } from '../utils/emptyPanelQueryData';
 import PanelHeaderSearch from './PanelHeaderSearch';
 import PanelStatusPopover from '../PanelStatus/PanelStatusPopover';
 import {
@@ -156,7 +157,7 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 					<PanelActionsMenu
 						panelId={panelId}
 						panel={panel}
-						data={query?.data}
+						data={query?.data ?? EMPTY_PANEL_QUERY_DATA}
 						panelActions={panelActions}
 					/>
 				)}

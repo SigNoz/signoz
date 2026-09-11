@@ -6,9 +6,6 @@ interface ScrollToBottomPillProps {
 	onClick: () => void;
 }
 
-/**
- * Floating affordance signalling content below the fold; click jumps to the end.
- */
 function ScrollToBottomPill({ onClick }: ScrollToBottomPillProps): JSX.Element {
 	return (
 		<button

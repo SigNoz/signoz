@@ -1,20 +1,9 @@
-import type {
-	PanelTheme,
-	TextBackgroundPair,
-	TextBackgroundPreset,
-} from './types';
+import type { PanelTheme, TextBackgroundPair } from './types';
+import { TextBackgroundPreset } from './types';
 
-/** Swatch row order, after Transparent and Default panel. */
-export const TEXT_BACKGROUND_PRESETS: readonly TextBackgroundPreset[] = [
-	'robin',
-	'purple',
-	'sakura',
-	'cherry',
-	'amber',
-	'forest',
-	'sienna',
-	'slate',
-];
+/** Declaration order is the swatch row order, after Transparent and Default panel. */
+export const TEXT_BACKGROUND_PRESETS: readonly TextBackgroundPreset[] =
+	Object.values(TextBackgroundPreset);
 
 /**
  * The sixteen surfaces must stay distinct — `resolveTextBackground` recovers a
@@ -59,7 +48,7 @@ export const TEXT_BACKGROUND_PAIRS: Record<
 	},
 };
 
-/** How `kind: 'none'` survives a string-only schema. */
+/** How `TextBackgroundKind.None` survives a string-only schema. */
 export const TRANSPARENT_BACKGROUND = '#00000000';
 
 /** The theme's own overlay ink, so a note keeps the edge weight of its neighbours. */

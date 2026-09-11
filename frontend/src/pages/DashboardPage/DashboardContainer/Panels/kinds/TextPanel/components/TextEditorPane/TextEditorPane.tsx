@@ -8,14 +8,14 @@ import type { StaticEditorPaneProps } from '../../../../types/panelDefinition';
 import { withPanelText } from '../../../../utils/withPanelText';
 import type { DashboardtypesTextPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 
-import styles from './EditorPane.module.scss';
+import styles from './TextEditorPane.module.scss';
 
 /**
  * The Text panel's authoring pane — the Markdown source editor in the slot where
  * query-backed kinds show the query builder. The preview above renders the draft
  * spec, so it updates live as the body changes; there is no Run step.
  */
-function EditorPane({
+function TextEditorPane({
 	spec,
 	onChangeSpec,
 }: StaticEditorPaneProps): JSX.Element {
@@ -51,4 +51,4 @@ function EditorPane({
 	);
 }
 
-export default EditorPane;
+export default TextEditorPane;

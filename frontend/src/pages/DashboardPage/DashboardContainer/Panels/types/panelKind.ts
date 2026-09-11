@@ -32,7 +32,7 @@ export const PANEL_KIND_TO_PANEL_TYPE: Record<PanelKind, PANEL_TYPES> = {
  * nothing to default and no call site can be handed a visualisation that isn't its
  * own.
  */
-export function toLegacyPanelType(kind: PanelKind): PANEL_TYPES {
+export function toPanelType(kind: PanelKind): PANEL_TYPES {
 	return PANEL_KIND_TO_PANEL_TYPE[kind];
 }
 

@@ -23,7 +23,7 @@ import { EQueryType } from 'types/common/dashboard';
 
 import { mergeQueryBuilderFieldRule } from '../../Panels/types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDefinition';
-import { toLegacyPanelType } from '../../Panels/types/panelKind';
+import { toPanelType } from '../../Panels/types/panelKind';
 
 import styles from './PanelEditorQueryBuilder.module.scss';
 
@@ -60,7 +60,7 @@ function PanelEditorQueryBuilder({
 }: PanelEditorQueryBuilderProps): JSX.Element {
 	// The shared QueryBuilderV2 provider still speaks the legacy PANEL_TYPES; what the
 	// builder offers for this kind comes from the kind's own declaration.
-	const panelType = toLegacyPanelType(panelDefinition.kind);
+	const panelType = toPanelType(panelDefinition.kind);
 	// Raw rows: the builder drops its aggregation controls, and with them the trace
 	// operator that combines aggregated trace queries (V1 parity).
 	const isListViewPanel = panelDefinition.kind === 'signoz/ListPanel';
