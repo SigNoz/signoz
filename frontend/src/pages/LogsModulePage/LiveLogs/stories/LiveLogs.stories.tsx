@@ -64,7 +64,10 @@ const meta = {
 		}
 	},
 	...pageStory,
-	parameters: { ...pageStory.parameters },
+	// The stream mock answers in one piece, so the polyfill reads its end as a
+	// dropped connection and logs the error it would on any reconnect; that is the
+	// state under test, not a regression.
+	parameters: { ...pageStory.parameters, allowConsoleErrors: true },
 } satisfies Meta<LiveLogsArgs>;
 
 export default meta;
