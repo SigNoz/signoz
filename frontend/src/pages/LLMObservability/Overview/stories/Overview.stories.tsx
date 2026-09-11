@@ -20,7 +20,8 @@ const meta = {
 	title: 'Pages/AI Observability/Overview',
 	component: LLMObservabilityPage,
 	...pageStory,
-	parameters: { ...pageStory.parameters },
+	// The header's public-dashboard lookup is expected to 404, so every story opts out.
+	parameters: { ...pageStory.parameters, allowConsoleErrors: true },
 } satisfies Meta<LLMOverviewArgs>;
 
 export default meta;
