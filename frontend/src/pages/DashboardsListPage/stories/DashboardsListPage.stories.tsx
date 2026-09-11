@@ -73,6 +73,8 @@ export const Pinned: Story = {
  */
 export const InvalidQuery: Story = {
 	args: { invalidQuery: true },
+	// The deliberate 400 is the state under test.
+	parameters: { allowConsoleErrors: true },
 };
 
 /** The template tab of the New dashboard dialog. */
