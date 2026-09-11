@@ -21,18 +21,8 @@ func NewHandler(module promote.Module) promote.Handler {
 	return &handler{module: module}
 }
 
-// HandlePromoteAndIndexPaths serves the legacy logs body route; the domain is
-// fixed to logs/body.
-func (h *handler) HandlePromoteAndIndexPaths(w http.ResponseWriter, r *http.Request) {
-	h.promote(w, r, promotetypes.NewLogsBodyTarget())
-}
-
-func (h *handler) ListPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Request) {
-	h.list(w, r, promotetypes.NewLogsBodyTarget())
-}
-
-// PromotePaths serves the generic domain route; the domain is resolved from
-// the {signal}/{context} path variables.
+// PromotePaths serves the promote route; the domain is resolved from the
+// {signal}/{context} path variables.
 func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 	target, err := targetFromPath(r)
 	if err != nil {
