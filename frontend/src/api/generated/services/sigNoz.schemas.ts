@@ -37,476 +37,6 @@ export interface AlertmanagertypesChannelDTO {
 	updatedAt?: string;
 }
 
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTOKind {
-	slack = 'slack',
-}
-export interface AlertmanagertypesChannelSlackConfigDTO {
-	/**
-	 * @type string
-	 */
-	apiUrl: string;
-	/**
-	 * @type string
-	 */
-	channel?: string;
-	/**
-	 * @type boolean,null
-	 */
-	sendResolved?: boolean | null;
-	/**
-	 * @type string
-	 */
-	text?: string;
-	/**
-	 * @type string
-	 */
-	title?: string;
-}
-
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO {
-	/**
-	 * @enum slack
-	 * @type string
-	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTOKind;
-	spec: AlertmanagertypesChannelSlackConfigDTO;
-}
-
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTOKind {
-	email = 'email',
-}
-export type AlertmanagertypesChannelEmailConfigDTOHeaders = {
-	[key: string]: string;
-};
-
-export interface AlertmanagertypesChannelEmailConfigDTO {
-	/**
-	 * @type object
-	 */
-	headers?: AlertmanagertypesChannelEmailConfigDTOHeaders;
-	/**
-	 * @type string
-	 */
-	html?: string;
-	/**
-	 * @type boolean,null
-	 */
-	sendResolved?: boolean | null;
-	/**
-	 * @type string
-	 */
-	to: string;
-}
-
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTO {
-	/**
-	 * @enum email
-	 * @type string
-	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTOKind;
-	spec: AlertmanagertypesChannelEmailConfigDTO;
-}
-
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTOKind {
-	webhook = 'webhook',
-}
-export interface AlertmanagertypesChannelWebhookConfigDTO {
-	/**
-	 * @type string
-	 */
-	bearerToken?: string;
-	/**
-	 * @type string
-	 */
-	password?: string;
-	/**
-	 * @type boolean,null
-	 */
-	sendResolved?: boolean | null;
-	/**
-	 * @type string
-	 */
-	url: string;
-	/**
-	 * @type string
-	 */
-	username?: string;
-}
-
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTO {
-	/**
-	 * @enum webhook
-	 * @type string
-	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTOKind;
-	spec: AlertmanagertypesChannelWebhookConfigDTO;
-}
-
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTOKind {
-	pagerduty = 'pagerduty',
-}
-export type AlertmanagertypesChannelPagerdutyConfigDTODetails = {
-	[key: string]: string;
-};
-
-export interface AlertmanagertypesChannelPagerdutyConfigDTO {
-	/**
-	 * @type string
-	 */
-	class?: string;
-	/**
-	 * @type string
-	 */
-	client?: string;
-	/**
-	 * @type string
-	 */
-	clientUrl?: string;
-	/**
-	 * @type string
-	 */
-	component?: string;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type object
-	 */
-	details?: AlertmanagertypesChannelPagerdutyConfigDTODetails;
-	/**
-	 * @type string
-	 */
-	group?: string;
-	/**
-	 * @type string
-	 */
-	routingKey: string;
-	/**
-	 * @type boolean,null
-	 */
-	sendResolved?: boolean | null;
-	/**
-	 * @type string
-	 */
-	severity?: string;
-	/**
-	 * @type string
-	 */
-	source?: string;
-	/**
-	 * @type string
-	 */
-	url?: string;
-}
-
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTO {
-	/**
-	 * @enum pagerduty
-	 * @type string
-	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTOKind;
-	spec: AlertmanagertypesChannelPagerdutyConfigDTO;
-}
-
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTOKind {
-	opsgenie = 'opsgenie',
-}
-export type AlertmanagertypesChannelOpsgenieConfigDTODetails = {
-	[key: string]: string;
-};
-
-export interface AlertmanagertypesChannelOpsgenieConfigDTO {
-	/**
-	 * @type string
-	 */
-	apiKey: string;
-	/**
-	 * @type string
-	 */
-	apiUrl?: string;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type object
-	 */
-	details?: AlertmanagertypesChannelOpsgenieConfigDTODetails;
-	/**
-	 * @type string
-	 */
-	message?: string;
-	/**
-	 * @type string
-	 */
-	priority?: string;
-	/**
-	 * @type boolean,null
-	 */
-	sendResolved?: boolean | null;
-	/**
-	 * @type string
-	 */
-	source?: string;
-}
-
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTO {
-	/**
-	 * @enum opsgenie
-	 * @type string
-	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTOKind;
-	spec: AlertmanagertypesChannelOpsgenieConfigDTO;
-}
-
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTOKind {
-	msteams = 'msteams',
-}
-export interface AlertmanagertypesChannelMSTeamsConfigDTO {
-	/**
-	 * @type boolean,null
-	 */
-	sendResolved?: boolean | null;
-	/**
-	 * @type string
-	 */
-	text?: string;
-	/**
-	 * @type string
-	 */
-	title?: string;
-	/**
-	 * @type string
-	 */
-	webhookUrl: string;
-}
-
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTO {
-	/**
-	 * @enum msteams
-	 * @type string
-	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTOKind;
-	spec: AlertmanagertypesChannelMSTeamsConfigDTO;
-}
-
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTOKind {
-	googlechat = 'googlechat',
-}
-export interface AlertmanagertypesChannelGoogleChatConfigDTO {
-	/**
-	 * @type boolean,null
-	 */
-	sendResolved?: boolean | null;
-	/**
-	 * @type string
-	 */
-	text?: string;
-	/**
-	 * @type string
-	 */
-	title?: string;
-	/**
-	 * @type string
-	 */
-	webhookUrl: string;
-}
-
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTO {
-	/**
-	 * @enum googlechat
-	 * @type string
-	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTOKind;
-	spec: AlertmanagertypesChannelGoogleChatConfigDTO;
-}
-
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
-	jira = 'jira',
-}
-export type AlertmanagertypesChannelJiraConfigDTOCustomFields = {
-	[key: string]: unknown;
-};
-
-export interface AlertmanagertypesChannelJiraConfigDTO {
-	/**
-	 * @type string
-	 */
-	apiToken: string;
-	/**
-	 * @type object
-	 */
-	customFields?: AlertmanagertypesChannelJiraConfigDTOCustomFields;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	email: string;
-	/**
-	 * @type string
-	 */
-	issueType: string;
-	/**
-	 * @type array
-	 */
-	labels?: string[];
-	/**
-	 * @type string
-	 */
-	priority?: string;
-	/**
-	 * @type string
-	 */
-	project: string;
-	/**
-	 * @type string
-	 */
-	reopenDuration?: string;
-	/**
-	 * @type string
-	 */
-	reopenTransition?: string;
-	/**
-	 * @type string
-	 */
-	resolveTransition?: string;
-	/**
-	 * @type boolean,null
-	 */
-	sendResolved?: boolean | null;
-	/**
-	 * @type string
-	 */
-	site: string;
-	/**
-	 * @type string
-	 */
-	summary?: string;
-	/**
-	 * @type string
-	 */
-	wontFixResolution?: string;
-}
-
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO {
-	/**
-	 * @enum jira
-	 * @type string
-	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind;
-	spec: AlertmanagertypesChannelJiraConfigDTO;
-}
-
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTOKind {
-	jsmops = 'jsmops',
-}
-export interface AlertmanagertypesChannelJSMOpsConfigDTO {
-	/**
-	 * @type string
-	 */
-	apiKey: string;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	message?: string;
-	/**
-	 * @type string
-	 */
-	priority?: string;
-	/**
-	 * @type boolean,null
-	 */
-	sendResolved?: boolean | null;
-	/**
-	 * @type string
-	 */
-	tags?: string;
-}
-
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO {
-	/**
-	 * @enum jsmops
-	 * @type string
-	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTOKind;
-	spec: AlertmanagertypesChannelJSMOpsConfigDTO;
-}
-
-export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTOKind {
-	incidentio = 'incidentio',
-}
-export type AlertmanagertypesChannelIncidentIOConfigDTOMetadata = {
-	[key: string]: string;
-};
-
-export interface AlertmanagertypesChannelIncidentIOConfigDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type object
-	 */
-	metadata?: AlertmanagertypesChannelIncidentIOConfigDTOMetadata;
-	/**
-	 * @type boolean,null
-	 */
-	sendResolved?: boolean | null;
-	/**
-	 * @type string
-	 */
-	title?: string;
-	/**
-	 * @type string
-	 */
-	token: string;
-	/**
-	 * @type string
-	 */
-	url: string;
-}
-
-export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO {
-	/**
-	 * @enum incidentio
-	 * @type string
-	 */
-	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTOKind;
-	spec: AlertmanagertypesChannelIncidentIOConfigDTO;
-}
-
-export type AlertmanagertypesChannelConfigDTO =
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO;
-
-export enum AlertmanagertypesChannelKindDTO {
-	slack = 'slack',
-	email = 'email',
-	webhook = 'webhook',
-	pagerduty = 'pagerduty',
-	opsgenie = 'opsgenie',
-	msteams = 'msteams',
-	googlechat = 'googlechat',
-	jira = 'jira',
-	jsmops = 'jsmops',
-	incidentio = 'incidentio',
-}
 export interface ModelLabelSetDTO {
 	[key: string]: string;
 }
@@ -558,32 +88,6 @@ export enum AlertmanagertypesExpressionKindDTO {
 	rule = 'rule',
 	policy = 'policy',
 }
-export interface AlertmanagertypesGettableNotificationChannelDTO {
-	config: AlertmanagertypesChannelConfigDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt: string;
-	/**
-	 * @type string
-	 */
-	displayName: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt: string;
-}
-
 export interface AlertmanagertypesGettableRoutePolicyDTO {
 	/**
 	 * @type array,null
@@ -879,38 +383,6 @@ export interface AlertmanagertypesGoogleChatReceiverConfigDTO {
 	 */
 	title?: string;
 	webhook_url?: ConfigSecretURLDTO;
-}
-
-export type AlertmanagertypesIncidentIOReceiverConfigDTOMetadata = {
-	[key: string]: string;
-};
-
-export interface AlertmanagertypesIncidentIOReceiverConfigDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type object
-	 */
-	metadata?: AlertmanagertypesIncidentIOReceiverConfigDTOMetadata;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	/**
-	 * @type string
-	 */
-	title?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 */
-	url?: string;
 }
 
 export interface AlertmanagertypesJSMOpsReceiverConfigDTO {
@@ -1213,6 +685,39 @@ export interface ConfigEmailConfigDTO {
 	to?: string;
 }
 
+export type TimeDurationDTO = number;
+
+export interface ConfigURLType2DTO {
+	[key: string]: unknown;
+}
+
+export interface ConfigIncidentioConfigDTO {
+	/**
+	 * @type string
+	 */
+	alert_source_token?: string;
+	/**
+	 * @type string
+	 */
+	alert_source_token_file?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	max_alerts?: number;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	timeout?: TimeDurationDTO;
+	url?: ConfigURLType2DTO;
+	/**
+	 * @type string
+	 */
+	url_file?: string;
+}
+
 export interface ConfigMattermostFieldDTO {
 	/**
 	 * @type boolean,null
@@ -1398,10 +903,6 @@ export interface ConfigMSTeamsV2ConfigDTO {
 	webhook_url_file?: string;
 }
 
-export interface ConfigURLType2DTO {
-	[key: string]: unknown;
-}
-
 export interface ConfigOpsGenieConfigResponderDTO {
 	/**
 	 * @type string
@@ -1509,8 +1010,6 @@ export interface ConfigPagerdutyLinkDTO {
 	 */
 	text?: string;
 }
-
-export type TimeDurationDTO = number;
 
 export type ConfigPagerdutyConfigDTODetails = { [key: string]: unknown };
 
@@ -2173,7 +1672,7 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	/**
 	 * @type array
 	 */
-	incidentio_configs?: AlertmanagertypesIncidentIOReceiverConfigDTO[];
+	incidentio_configs?: ConfigIncidentioConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -2244,22 +1743,6 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	wechat_configs?: ConfigWechatConfigDTO[];
 };
 
-export interface AlertmanagertypesPostableNotificationChannelDTO {
-	config: AlertmanagertypesChannelConfigDTO;
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type boolean
-	 */
-	generateName?: boolean;
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
 export interface AlertmanagertypesPostablePlannedMaintenanceDTO {
 	/**
 	 * @type array,null
@@ -2320,7 +1803,7 @@ export interface AlertmanagertypesReceiverDTO {
 	/**
 	 * @type array
 	 */
-	incidentio_configs?: AlertmanagertypesIncidentIOReceiverConfigDTO[];
+	incidentio_configs?: ConfigIncidentioConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -3815,33 +3298,6 @@ export interface CommonJSONRefDTO {
 	 * @type string
 	 */
 	$ref?: string;
-}
-
-export interface ConfigIncidentioConfigDTO {
-	/**
-	 * @type string
-	 */
-	alert_source_token?: string;
-	/**
-	 * @type string
-	 */
-	alert_source_token_file?: string;
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	max_alerts?: number;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	timeout?: TimeDurationDTO;
-	url?: ConfigURLType2DTO;
-	/**
-	 * @type string
-	 */
-	url_file?: string;
 }
 
 export type ConfigJiraConfigDTOCustomFields = { [key: string]: unknown };
@@ -6005,34 +5461,6 @@ export interface FeaturetypesGettableFeatureDTO {
 	variants?: FeaturetypesGettableFeatureDTOVariants;
 }
 
-export interface GatewaytypesLimitValueDTO {
-	/**
-	 * @type integer,null
-	 */
-	count?: number | null;
-	/**
-	 * @type integer,null
-	 */
-	size?: number | null;
-}
-
-export interface GatewaytypesLimitConfigDTO {
-	day?: GatewaytypesLimitValueDTO;
-	second?: GatewaytypesLimitValueDTO;
-}
-
-export interface GatewaytypesDeprecatedPostableIngestionKeyLimitDTO {
-	config?: GatewaytypesLimitConfigDTO;
-	/**
-	 * @type string
-	 */
-	signal?: string;
-	/**
-	 * @type array,null
-	 */
-	tags?: string[] | null;
-}
-
 export interface GatewaytypesGettableCreatedIngestionKeyDTO {
 	/**
 	 * @type string
@@ -6068,6 +5496,22 @@ export interface GatewaytypesPaginationDTO {
 	 * @type integer
 	 */
 	total?: number;
+}
+
+export interface GatewaytypesLimitValueDTO {
+	/**
+	 * @type integer,null
+	 */
+	count?: number | null;
+	/**
+	 * @type integer,null
+	 */
+	size?: number | null;
+}
+
+export interface GatewaytypesLimitConfigDTO {
+	day?: GatewaytypesLimitValueDTO;
+	second?: GatewaytypesLimitValueDTO;
 }
 
 export interface GatewaytypesLimitMetricValueDTO {
@@ -6187,10 +5631,6 @@ export interface GatewaytypesPostableIngestionKeyDTO {
 
 export interface GatewaytypesPostableIngestionKeyLimitDTO {
 	config?: GatewaytypesLimitConfigDTO;
-	/**
-	 * @type string
-	 */
-	keyId: string;
 	/**
 	 * @type string
 	 */
@@ -7873,249 +7313,6 @@ export interface InframonitoringtypesVolumesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export interface LicensetypesFeatureDTO {
-	/**
-	 * @type boolean
-	 */
-	active?: boolean;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	route?: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	usage?: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	usage_limit?: number;
-}
-
-export interface LicensetypesLicenseEventQueueDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt: string;
-	/**
-	 * @type string
-	 */
-	event: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	scheduledAt: string;
-	/**
-	 * @type string
-	 */
-	status: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt: string;
-}
-
-export interface LicensetypesLicensePlanDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt: string;
-	/**
-	 * @type string
-	 */
-	description: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type boolean
-	 */
-	isActive: boolean;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt: string;
-}
-
-export interface LicensetypesGettableActiveLicenseDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt: string;
-	eventQueue: LicensetypesLicenseEventQueueDTO;
-	/**
-	 * @type array
-	 */
-	features: LicensetypesFeatureDTO[];
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	freeUntil: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	plan: LicensetypesLicensePlanDTO;
-	/**
-	 * @type string
-	 */
-	platform: string;
-	/**
-	 * @type string
-	 */
-	state: string;
-	/**
-	 * @type string
-	 */
-	status: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	validFrom: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	validUntil: number;
-}
-
-export interface LicensetypesGettableLicenseDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt: string;
-	eventQueue: LicensetypesLicenseEventQueueDTO;
-	/**
-	 * @type array
-	 */
-	features: LicensetypesFeatureDTO[];
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	freeUntil: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	plan: LicensetypesLicensePlanDTO;
-	/**
-	 * @type string
-	 */
-	platform: string;
-	/**
-	 * @type string
-	 */
-	state: string;
-	/**
-	 * @type string
-	 */
-	status: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	validFrom: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	validUntil: number;
-}
-
-export interface LicensetypesGettableLicenseWithKeyDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt: string;
-	eventQueue: LicensetypesLicenseEventQueueDTO;
-	/**
-	 * @type array
-	 */
-	features: LicensetypesFeatureDTO[];
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	freeUntil: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 * @format password
-	 */
-	key: string;
-	plan: LicensetypesLicensePlanDTO;
-	/**
-	 * @type string
-	 */
-	platform: string;
-	/**
-	 * @type string
-	 */
-	state: string;
-	/**
-	 * @type string
-	 */
-	status: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	validFrom: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	validUntil: number;
-}
-
-export interface LicensetypesPostableLicenseDTO {
-	/**
-	 * @type string
-	 * @format password
-	 */
-	key?: string;
-}
-
 /**
  * @nullable
  */
@@ -9538,47 +8735,6 @@ export enum Querybuildertypesv5QueryTypeDTO {
 	clickhouse_sql = 'clickhouse_sql',
 	promql = 'promql',
 }
-export enum QuickfiltertypesSourceDTO {
-	traces = 'traces',
-	logs = 'logs',
-	api_monitoring = 'api_monitoring',
-	exceptions = 'exceptions',
-	meter = 'meter',
-	ai_observability = 'ai_observability',
-}
-export interface QuickfiltertypesSourceFiltersDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type array
-	 */
-	filters: TelemetrytypesTelemetryFieldKeyDTO[];
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	source: QuickfiltertypesSourceDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-}
-
-export interface QuickfiltertypesUpdatableQuickFiltersDTO {
-	/**
-	 * @type array
-	 */
-	filters: TelemetrytypesTelemetryFieldKeyDTO[];
-}
-
 export interface RenderErrorResponseDTO {
 	error: ErrorsJSONDTO;
 	/**
@@ -11034,153 +10190,6 @@ export interface SpantypesUpdatableSpanMapperGroupDTO {
 	name?: string | null;
 }
 
-export interface SubscriptiontypesGettableSubscriptionDTO {
-	/**
-	 * @type string
-	 */
-	redirectURL: string;
-}
-
-export interface SubscriptiontypesSubscriptionUsageDayWiseDataDTO {
-	/**
-	 * @type number
-	 * @format double
-	 */
-	count?: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	quantity?: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	size?: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	timestamp?: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	total?: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	unitPrice?: number;
-}
-
-export interface SubscriptiontypesSubscriptionUsageDayWiseBreakdownDTO {
-	/**
-	 * @type array,null
-	 */
-	breakdown?: SubscriptiontypesSubscriptionUsageDayWiseDataDTO[] | null;
-	/**
-	 * @type string
-	 */
-	type?: string;
-}
-
-export interface SubscriptiontypesSubscriptionUsageTierDTO {
-	/**
-	 * @type number
-	 * @format double
-	 */
-	quantity?: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	tierCost?: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	tierEnd?: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	tierStart?: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	unitPrice?: number;
-}
-
-export interface SubscriptiontypesSubscriptionUsageBreakdownDTO {
-	dayWiseBreakdown?: SubscriptiontypesSubscriptionUsageDayWiseBreakdownDTO;
-	/**
-	 * @type array,null
-	 */
-	tiers?: SubscriptiontypesSubscriptionUsageTierDTO[] | null;
-	/**
-	 * @type string
-	 */
-	type?: string;
-	/**
-	 * @type string
-	 */
-	unit?: string;
-}
-
-export interface SubscriptiontypesSubscriptionUsageDetailsDTO {
-	/**
-	 * @type number
-	 * @format double
-	 */
-	baseFee?: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	billTotal?: number;
-	/**
-	 * @type array,null
-	 */
-	breakdown?: SubscriptiontypesSubscriptionUsageBreakdownDTO[] | null;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	total?: number;
-}
-
-export interface SubscriptiontypesGettableSubscriptionUsageDTO {
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	billingPeriodEnd?: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	billingPeriodStart?: number;
-	details?: SubscriptiontypesSubscriptionUsageDetailsDTO;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	discount?: number;
-	/**
-	 * @type string
-	 */
-	subscriptionStatus?: string;
-}
-
-export interface SubscriptiontypesPostableSubscriptionDTO {
-	/**
-	 * @type string
-	 */
-	url: string;
-}
-
 export type TelemetrytypesGettableFieldKeysDTOKeysAnyOf = {
 	[key: string]: TelemetrytypesTelemetryFieldKeyDTO[];
 };
@@ -11538,11 +10547,6 @@ export type GetAIObservabilityFieldsValuesParams = {
 	 * @description undefined
 	 */
 	name?: string;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	existingQuery?: string;
 };
 
 export type GetAIObservabilityFieldsValues200 = {
@@ -12066,17 +11070,6 @@ export type ListUnmappedLLMModels200 = {
 	status: string;
 };
 
-export type ListPromotedAndIndexedPaths200 = {
-	/**
-	 * @type array,null
-	 */
-	data: PromotetypesPromotePathDTO[] | null;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListOrgPreferences200 = {
 	/**
 	 * @type array
@@ -12101,6 +11094,25 @@ export type GetOrgPreference200 = {
 
 export type UpdateOrgPreferencePathParameters = {
 	name: string;
+};
+export type ListPromotedPathsPathParameters = {
+	telemetrySignal: string;
+	context: string;
+};
+export type ListPromotedPaths200 = {
+	/**
+	 * @type array,null
+	 */
+	data: PromotetypesPromotePathDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type PromotePathsPathParameters = {
+	telemetrySignal: string;
+	context: string;
 };
 export type GetPublicDashboardDataPathParameters = {
 	id: string;
@@ -12399,30 +11411,6 @@ export type GetStats200 = {
 	status: string;
 };
 
-export type GetSubscription200 = {
-	data: SubscriptiontypesGettableSubscriptionUsageDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateSubscription201 = {
-	data: SubscriptiontypesGettableSubscriptionDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type UpdateSubscription200 = {
-	data: SubscriptiontypesGettableSubscriptionDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetTraceAggregationsPathParameters = {
 	traceID: string;
 };
@@ -12685,34 +11673,9 @@ export type CreateIngestionKey201 = {
 export type DeleteIngestionKeyPathParameters = {
 	keyId: string;
 };
-export type GetIngestionKeyPathParameters = {
-	keyId: string;
-};
-export type GetIngestionKey200 = {
-	data: GatewaytypesIngestionKeyDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type UpdateIngestionKeyPathParameters = {
 	keyId: string;
 };
-export type GetIngestionKeyLimitsPathParameters = {
-	keyId: string;
-};
-export type GetIngestionKeyLimits200 = {
-	/**
-	 * @type array,null
-	 */
-	data: GatewaytypesLimitDTO[] | null;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type CreateIngestionKeyLimitPathParameters = {
 	keyId: string;
 };
@@ -12756,31 +11719,6 @@ export type SearchIngestionKeys200 = {
 	status: string;
 };
 
-export type CreateIngestionLimit201 = {
-	data: TypesIdentifiableDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteIngestionLimitPathParameters = {
-	limitId: string;
-};
-export type GetIngestionLimitPathParameters = {
-	limitId: string;
-};
-export type GetIngestionLimit200 = {
-	data: GatewaytypesLimitDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type UpdateIngestionLimitPathParameters = {
-	limitId: string;
-};
 export type Healthz200 = {
 	data: FactoryResponseDTO;
 	/**
@@ -13162,14 +12100,6 @@ export type GetMetricsTreemap200 = {
 	status: string;
 };
 
-export type CreateNotificationChannel201 = {
-	data: AlertmanagertypesGettableNotificationChannelDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetMyOrganization200 = {
 	data: TypesOrganizationDTO;
 	/**
@@ -13214,31 +12144,6 @@ export type GetPublicDashboardPanelQueryRangeV2200 = {
 	status: string;
 };
 
-export type ListQuickFilters200 = {
-	/**
-	 * @type array
-	 */
-	data: QuickfiltertypesSourceFiltersDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetQuickFiltersPathParameters = {
-	source: string;
-};
-export type GetQuickFilters200 = {
-	data: QuickfiltertypesSourceFiltersDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type UpdateQuickFiltersPathParameters = {
-	source: string;
-};
 export type Readyz200 = {
 	data: FactoryResponseDTO;
 	/**
@@ -13835,50 +12740,6 @@ export type GetFlamegraphPathParameters = {
 };
 export type GetFlamegraph200 = {
 	data: SpantypesGettableFlamegraphTraceDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type ListLicenses200 = {
-	/**
-	 * @type array
-	 */
-	data: LicensetypesGettableLicenseDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type ActivateLicense201 = {
-	data: TypesIdentifiableDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteLicensePathParameters = {
-	id: string;
-};
-export type GetLicensePathParameters = {
-	id: string;
-};
-export type GetLicense200 = {
-	data: LicensetypesGettableLicenseWithKeyDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type RefreshLicensePathParameters = {
-	id: string;
-};
-export type GetActiveLicense200 = {
-	data: LicensetypesGettableActiveLicenseDTO;
 	/**
 	 * @type string
 	 */
