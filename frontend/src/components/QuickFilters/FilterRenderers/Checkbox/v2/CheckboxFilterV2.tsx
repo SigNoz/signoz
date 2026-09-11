@@ -78,10 +78,10 @@ export default function CheckboxFilterV2(
 
 	const { relatedValues, allValues, isLoading, isFetching } = useFieldValues({
 		filter,
-		source,
 		searchText,
 		existingQuery,
 		metricNamespace: useFieldApis.metricNamespace,
+		source,
 		startUnixMilli: useFieldApis.startUnixMilli,
 		endUnixMilli: useFieldApis.endUnixMilli,
 		enabled: isOpen,
