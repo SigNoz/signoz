@@ -35,15 +35,14 @@ const (
 type StatementBuilder struct {
 	logger        *slog.Logger
 	metadataStore telemetrytypes.MetadataStore
-	fm            qbtypes.FieldMapper
-	cb            qbtypes.ConditionBuilder
+	storage       qbtypes.Storage
 	flagger       flagger.Flagger
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*StatementBuilder)(nil)
 
 // NewFactory returns a provider factory for the metrics statement builder. Its
-// New internalizes the FieldMapper and ConditionBuilder and yields the concrete
+// New internalizes the storage and yields the concrete
 // *StatementBuilder so the meter builder can reuse it.
 func NewFactory(
 	metadataStore telemetrytypes.MetadataStore,
@@ -52,9 +51,7 @@ func NewFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("metrics"),
 		func(_ context.Context, settings factory.ProviderSettings, _ statementbuilder.Config) (*StatementBuilder, error) {
-			fm := metricstelemetryschema.NewFieldMapper()
-			cb := metricstelemetryschema.NewConditionBuilder(fm)
-			return NewMetricQueryStatementBuilder(settings, metadataStore, fm, cb, fl), nil
+			return NewMetricQueryStatementBuilder(settings, metadataStore, metricstelemetryschema.NewStorage(), fl), nil
 		},
 	)
 }
@@ -62,16 +59,14 @@ func NewFactory(
 func NewMetricQueryStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
+	storage qbtypes.Storage,
 	flagger flagger.Flagger,
 ) *StatementBuilder {
 	metricsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema")
 	return &StatementBuilder{
 		logger:        metricsSettings.Logger(),
 		metadataStore: metadataStore,
-		fm:            fieldMapper,
-		cb:            conditionBuilder,
+		storage:       storage,
 		flagger:       flagger,
 	}
 }
@@ -255,21 +250,19 @@ func (b *StatementBuilder) buildReducedTimeSeriesCTE(
 	variables map[string]qbtypes.VariableItem,
 ) (string, []any, error) {
 	sb := sqlbuilder.NewSelectBuilder()
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.flagger, telemetrytypes.SignalMetrics, &telemetrytypes.MetricContext{MetricName: query.Aggregations[0].MetricName}, start, end)
 
 	var preparedWhereClause querybuilder.PreparedWhereClause
 	var err error
 	if query.Filter != nil && query.Filter.Expression != "" {
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
-			Context:          ctx,
-			OrgID:            orgID,
-			Logger:           b.logger,
-			FieldMapper:      b.fm,
-			ConditionBuilder: b.cb,
-			FieldKeys:        keys,
-			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
-			Variables:        variables,
-			StartNs:          start,
-			EndNs:            end,
+			Context:        ctx,
+			Query:          info,
+			Storage:        b.storage,
+			Logger:         b.logger,
+			FieldKeys:      keys,
+			FullTextColumn: &telemetrytypes.TelemetryFieldKey{Name: "labels"},
+			Variables:      variables,
 		})
 		if err != nil {
 			return "", nil, err
@@ -279,7 +272,7 @@ func (b *StatementBuilder) buildReducedTimeSeriesCTE(
 	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.TimeseriesV4ReducedLocalTableName))
 	sb.Select("fingerprint")
 	for i, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -476,22 +469,20 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 	tsTable string,
 ) (string, []any, []string, error) {
 	sb := sqlbuilder.NewSelectBuilder()
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.flagger, telemetrytypes.SignalMetrics, &telemetrytypes.MetricContext{MetricName: query.Aggregations[0].MetricName}, start, end)
 
 	var preparedWhereClause querybuilder.PreparedWhereClause
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
-			Context:          ctx,
-			OrgID:            orgID,
-			Logger:           b.logger,
-			FieldMapper:      b.fm,
-			ConditionBuilder: b.cb,
-			FieldKeys:        keys,
-			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
-			Variables:        variables,
-			StartNs:          start,
-			EndNs:            end,
+			Context:        ctx,
+			Query:          info,
+			Storage:        b.storage,
+			Logger:         b.logger,
+			FieldKeys:      keys,
+			FullTextColumn: &telemetrytypes.TelemetryFieldKey{Name: "labels"},
+			Variables:      variables,
 		})
 		if err != nil {
 			return "", nil, nil, err
@@ -502,7 +493,7 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 
 	sb.Select("fingerprint")
 	for i, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, nil, err
 		}

@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +24,7 @@ var (
 // `attributes_promoted` alone after promotion — fanning out only across an evolution boundary.
 func TestFieldForAttributePromotedEvolution(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockPromotedAttributeEvolutionData("span.operation", promoJSONRelease, promoPromoRelease)
 
 	win := func(from, to string) [2]uint64 {
@@ -54,7 +53,7 @@ func TestFieldForAttributePromotedEvolution(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Evolutions:    evo,
 			}
-			got, err := fm.FieldFor(ctx, valuer.UUID{}, tc.window[0], tc.window[1], &key)
+			got, err := readSQL(ctx, storage, tc.window[0], tc.window[1], &key)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		})
@@ -66,8 +65,7 @@ func TestFieldForAttributePromotedEvolution(t *testing.T) {
 // attributes_promoted_paths_tokenbf) — not the attributes column.
 func TestConditionForAttributePromoted(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
-	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 	evo := MockPromotedAttributeEvolutionData("span.operation", promoJSONRelease, promoPromoRelease)
 	afterPromo := [2]uint64{
 		uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
@@ -83,8 +81,7 @@ func TestConditionForAttributePromoted(t *testing.T) {
 
 	t.Run("equal reads promoted column only", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, afterPromo[0], afterPromo[1], &key,
-			map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "GET", sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: afterPromo[0], EndNs: afterPromo[1]}, storage, &key, qbtypes.FilterOperatorEqual, "GET", map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -94,8 +91,7 @@ func TestConditionForAttributePromoted(t *testing.T) {
 
 	t.Run("exists uses promoted raw path", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, afterPromo[0], afterPromo[1], &key,
-			map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorExists, nil, sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: afterPromo[0], EndNs: afterPromo[1]}, storage, &key, qbtypes.FilterOperatorExists, nil, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

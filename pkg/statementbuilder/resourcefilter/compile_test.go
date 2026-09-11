@@ -2,12 +2,11 @@ package resourcefilter
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -201,13 +200,12 @@ func TestConditionBuilder(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := newStorage()
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := conditionBuilder.ConditionFor(context.Background(), valuer.UUID{}, 0, 0, tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.op, tc.value, sb)
+			cond, _, err := querybuilder.Conditions(context.Background(), qbtypes.QueryInfo{}, storage, tc.key, tc.op, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {tc.key}}, false, sb)
 			sb.Where(cond...)
 
 			if tc.expectedErr != nil {

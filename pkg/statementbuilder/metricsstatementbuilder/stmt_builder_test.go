@@ -376,7 +376,7 @@ func TestStatementBuilder(t *testing.T) {
 			expected: qbtypes.Statement{
 				Query:    "WITH __temporal_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_k8s.statefulset.name`, multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) / (ts - lagInFrame(ts, 1) OVER rate_window)) AS per_series_value FROM (SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `__GROUP_BY_KEY_0_k8s.statefulset.name`, max(value) AS per_series_value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'k8s.statefulset.name') AS `__GROUP_BY_KEY_0_k8s.statefulset.name` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) AND JSONExtractString(labels, 'k8s.statefulset.name') = ? GROUP BY fingerprint, `__GROUP_BY_KEY_0_k8s.statefulset.name`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY fingerprint, ts, `__GROUP_BY_KEY_0_k8s.statefulset.name` ORDER BY fingerprint, ts) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)), __spatial_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_k8s.statefulset.name`, sum(per_series_value) AS value FROM __temporal_aggregation_cte WHERE isNaN(per_series_value) = ? GROUP BY ts, `__GROUP_BY_KEY_0_k8s.statefulset.name`) SELECT * FROM __spatial_aggregation_cte ORDER BY `__GROUP_BY_KEY_0_k8s.statefulset.name`, ts",
 				Args:     []any{"signoz_calls_total", uint64(1747936800000), uint64(1747983420000), "cumulative", "my-statefulset", "signoz_calls_total", uint64(1747947360000), uint64(1747983420000), 0},
-				Warnings: []string{"label `k8s.statefulset.name` not found in metadata; check the label name for typos"},
+				Warnings: []string{"key `k8s.statefulset.name` not found in metadata; querying the underlying data directly. If this is unexpected, check the key name for typos."},
 			},
 			expectedErr: nil,
 		},
@@ -414,8 +414,7 @@ func TestStatementBuilder(t *testing.T) {
 		},
 	}
 
-	fm := metricstelemetryschema.NewFieldMapper()
-	cb := metricstelemetryschema.NewConditionBuilder(fm)
+	storage := metricstelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	keys, err := telemetrytypestest.LoadFieldKeysFromJSON("testdata/keys_map.json")
 	if err != nil {
@@ -438,8 +437,7 @@ func TestStatementBuilder(t *testing.T) {
 	statementBuilder := NewMetricQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		flagger,
 	)
 
@@ -462,8 +460,7 @@ func TestStatementBuilder(t *testing.T) {
 }
 
 func TestGroupByAliasAvoidsColumnCollision(t *testing.T) {
-	fm := metricstelemetryschema.NewFieldMapper()
-	cb := metricstelemetryschema.NewConditionBuilder(fm)
+	storage := metricstelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	keys, err := telemetrytypestest.LoadFieldKeysFromJSON("testdata/keys_map.json")
 	require.NoError(t, err)
@@ -475,8 +472,7 @@ func TestGroupByAliasAvoidsColumnCollision(t *testing.T) {
 	statementBuilder := NewMetricQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		fl,
 	)
 
