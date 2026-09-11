@@ -113,11 +113,17 @@ export const SearchNoResults: Story = {
 /** The list request failed while the rest of the alerts shell remains available. */
 export const LoadError: Story = {
 	args: { policiesState: 'error' },
+	// The mocked policies request intentionally fails; the resulting console error
+	// is the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 };
 
 /** The create form with its notification-channel request failed. */
 export const ChannelsLoadError: Story = {
 	args: { channelsState: 'error' },
+	// The mocked channels request intentionally fails; the resulting console error
+	// is the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 	play: NewPolicy.play,
 };
 
