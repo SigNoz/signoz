@@ -23,12 +23,13 @@
 	flex-shrink: 0;
 
 	> * {
-		flex: 0 0 auto;
-		white-space: nowrap;
+		flex: 0 1 auto;
 	}
 }
 
 .status {
+	// Wraps rather than losing the count at its end.
+	min-width: 0;
 	font-family: var(--font-mono);
 	font-size: var(--periscope-font-size-small);
 	color: var(--l3-foreground);
@@ -98,6 +99,9 @@
 /* Row */
 
 .row {
+	// Width of the revealed actions, given up by the label on hover only.
+	--legend-actions-reserve: 78px;
+
 	position: relative;
 	display: flex;
 	align-items: center;
@@ -173,9 +177,8 @@
 }
 
 .label {
-	// Full remaining width: the actions overlay its tail rather than shortening
-	// it, so revealing them never reflows the row.
 	flex: 1 1 auto;
+	box-sizing: border-box;
 	width: 100%;
 	min-width: 0;
 	overflow: hidden;
@@ -230,6 +233,13 @@
 	pointer-events: auto;
 }
 
+// The cap spares rows sized to their actions, not their label.
+.row:hover .label,
+.row:focus-visible .label,
+.row:has(:focus-visible) .label {
+	padding-right: min(var(--legend-actions-reserve), 50%);
+}
+
 .actionTrigger {
 	display: inline-flex;
 }
@@ -244,7 +254,17 @@
 	flex-shrink: 0;
 }
 
-.actionButton.isActive {
-	--button-variant-ghost-color: var(--accent-primary);
-	--button-variant-ghost-hover-color: var(--accent-primary-hover);
+.actionButton.scopeButton {
+	--button-width: auto;
+	--button-padding: 0 var(--spacing-4);
+	--button-font-size: var(--font-size-xs);
+	--button-border-radius: calc(var(--radius) * 4);
+	--button-base-border-width: 1px;
+	// --l2-border is the actions bar's own background: one step up reads.
+	--button-base-border-color: var(--l3-border);
+
+	border-style: solid;
+}
+.actionButton.scopeButton:hover {
+	border-color: var(--l2-border);
 }

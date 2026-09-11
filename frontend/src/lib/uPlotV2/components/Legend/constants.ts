@@ -3,9 +3,9 @@ export const MAX_LEGEND_WIDTH = 240;
 
 /**
  * Enough for a row to contain its own hover actions, which a short label would
- * otherwise size a column too narrow for. No room for the label is intended.
+ * otherwise size a column too narrow for. Little room for the label is intended.
  */
-export const MIN_LEGEND_ITEM_WIDTH = 90;
+export const MIN_LEGEND_ITEM_WIDTH = 110;
 
 /** Marker + row padding, on top of the estimated label width. */
 export const LEGEND_ITEM_EXTRA_WIDTH = 16;

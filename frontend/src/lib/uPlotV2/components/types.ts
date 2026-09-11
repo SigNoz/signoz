@@ -129,10 +129,10 @@ export interface LegendProps {
 	focusedSeriesIndex: number | null;
 	/** Row click / Space / Enter: hide or show that one series. */
 	onToggleSeries: (seriesIndex: number) => void;
-	/** "Only": show that series alone, or show all when it is already alone. */
+	/** "Only": show that series alone. */
 	onShowOnlySeries: (seriesIndex: number) => void;
-	/** "Add": show that series alongside the one already shown. */
-	onShowSeries: (seriesIndex: number) => void;
+	/** "All": leave the narrowed selection and show every series. */
+	onShowAllSeries: () => void;
 	/** Row hover, for the chart-side highlight; null on leave. */
 	onHoverSeries: (seriesIndex: number | null) => void;
 	/** Show the per-item copy button. Default true. */

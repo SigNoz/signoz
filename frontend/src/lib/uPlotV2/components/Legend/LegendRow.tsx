@@ -1,5 +1,4 @@
 import { KeyboardEvent, memo, MouseEvent, useCallback } from 'react';
-import { Crosshair, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
@@ -13,6 +12,8 @@ export interface LegendRowProps {
 	item: LegendItem;
 	/** The only series currently shown, so hiding it is refused. */
 	isSoleShown: boolean;
+	/** Nothing is hidden, so the row's action can only narrow the selection. */
+	isAllShown: boolean;
 	isFocused: boolean;
 	showCopy: boolean;
 	/** Row click, whose meaning depends on how many series are shown. */
@@ -20,7 +21,7 @@ export interface LegendRowProps {
 	/** Marker click: hide or show just this series. */
 	onToggleVisibility: (seriesIndex: number) => void;
 	onShowOnly: (seriesIndex: number) => void;
-	onShow: (seriesIndex: number) => void;
+	onShowAll: () => void;
 	onHover: (seriesIndex: number | null) => void;
 }
 
@@ -33,20 +34,21 @@ export interface LegendRowProps {
 function LegendRow({
 	item,
 	isSoleShown,
+	isAllShown,
 	isFocused,
 	showCopy,
 	onRowClick,
 	onToggleVisibility,
 	onShowOnly,
-	onShow,
+	onShowAll,
 	onHover,
 }: LegendRowProps): JSX.Element {
 	const { seriesIndex, show } = item;
 	const label = item.label ?? '';
-	const canAdd = !show;
-	const onlyActionLabel = isSoleShown
+	const isShowAllAction = show && !isAllShown;
+	const scopeActionLabel = isShowAllAction
 		? 'Show all series'
-		: `Show only current series`;
+		: 'Show only current series';
 	// `color` is uPlot's stroke union (string | fn | gradient); only a string is
 	// a usable CSS colour for the marker.
 	const seriesColor = typeof item.color === 'string' ? item.color : undefined;
@@ -78,20 +80,16 @@ function LegendRow({
 		[onRowClick, seriesIndex],
 	);
 
-	const handleShowOnly = useCallback(
+	const handleScopeClick = useCallback(
 		(event: MouseEvent<HTMLButtonElement>): void => {
 			event.stopPropagation();
+			if (isShowAllAction) {
+				onShowAll();
+				return;
+			}
 			onShowOnly(seriesIndex);
 		},
-		[onShowOnly, seriesIndex],
-	);
-
-	const handleShow = useCallback(
-		(event: MouseEvent<HTMLButtonElement>): void => {
-			event.stopPropagation();
-			onShow(seriesIndex);
-		},
-		[onShow, seriesIndex],
+		[isShowAllAction, onShowAll, onShowOnly, seriesIndex],
 	);
 
 	const handleMouseEnter = useCallback(
@@ -142,53 +140,26 @@ function LegendRow({
 				<span className={styles.label}>{label}</span>
 			</TooltipSimple>
 			<div className={styles.actions}>
-				{canAdd && (
-					<TooltipSimple
-						title="Show this series too"
-						arrow
-						side="top"
-						delayDuration={LEGEND_TOOLTIP_DELAY_MS}
-						disableHoverableContent
-						tooltipContentProps={{ className: styles.rowTooltip }}
-					>
-						{/* Radix's asChild merge strips the button's own data-testid. */}
-						<span className={styles.actionTrigger}>
-							<Button
-								variant="ghost"
-								color="secondary"
-								size="icon"
-								className={styles.actionButton}
-								onClick={handleShow}
-								aria-label={`Show ${label} too`}
-								testId={`legend-add-${seriesIndex}`}
-							>
-								<Plus size={13} />
-							</Button>
-						</span>
-					</TooltipSimple>
-				)}
 				<TooltipSimple
-					title={onlyActionLabel}
+					title={scopeActionLabel}
 					arrow
 					side="top"
 					delayDuration={LEGEND_TOOLTIP_DELAY_MS}
 					disableHoverableContent
 					tooltipContentProps={{ className: styles.rowTooltip }}
 				>
+					{/* Radix's asChild merge strips the button's own data-testid. */}
 					<span className={styles.actionTrigger}>
 						<Button
 							variant="ghost"
 							color="secondary"
-							size="icon"
-							className={cx(styles.actionButton, {
-								[styles.isActive]: isSoleShown,
-							})}
-							onClick={handleShowOnly}
-							aria-pressed={isSoleShown}
-							aria-label={onlyActionLabel}
-							testId={`legend-only-${seriesIndex}`}
+							size="sm"
+							className={cx(styles.actionButton, styles.scopeButton)}
+							onClick={handleScopeClick}
+							aria-label={scopeActionLabel}
+							testId={`legend-scope-${seriesIndex}`}
 						>
-							<Crosshair size={13} />
+							{isShowAllAction ? 'All' : 'Only'}
 						</Button>
 					</span>
 				</TooltipSimple>

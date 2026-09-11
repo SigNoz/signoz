@@ -46,7 +46,7 @@ const TestComponent = ({
 		onToggleSeriesVisibility,
 		onToggleSeriesOnOff,
 		onShowOnlySeries,
-		onShowSeries,
+		onShowAllSeries,
 		onFocusSeries,
 		onHighlightSeries,
 	} = usePlotContext();
@@ -90,6 +90,13 @@ const TestComponent = ({
 			</button>
 			<button
 				type="button"
+				data-testid="toggle-on-off-2"
+				onClick={(): void => onToggleSeriesOnOff(2)}
+			>
+				Toggle on/off 2
+			</button>
+			<button
+				type="button"
 				data-testid="toggle-on-off-5"
 				onClick={(): void => onToggleSeriesOnOff(5)}
 			>
@@ -111,10 +118,10 @@ const TestComponent = ({
 			</button>
 			<button
 				type="button"
-				data-testid="show-series-2"
-				onClick={(): void => onShowSeries(2)}
+				data-testid="show-all"
+				onClick={(): void => onShowAllSeries()}
 			>
-				Show 2
+				Show all
 			</button>
 			<button
 				type="button"
@@ -489,8 +496,7 @@ describe('PlotContext', () => {
 			expect(mockUpdateSeriesVisibilityToLocalStorage).toHaveBeenCalled();
 		});
 
-		it('shows everything again when that series is already the only one shown', async () => {
-			// Reached by hiding series one at a time, not by a remembered isolation.
+		it('keeps isolating the series that is already the only one shown', async () => {
 			const { plot, user } = renderWithSeries([
 				{ label: 'x-axis', show: true },
 				{ label: 'CPU', show: true },
@@ -501,12 +507,12 @@ describe('PlotContext', () => {
 			await user.click(screen.getByTestId('show-only-1'));
 
 			expect(plot.setSeries).toHaveBeenCalledWith(1, { show: true });
-			expect(plot.setSeries).toHaveBeenCalledWith(2, { show: true });
+			expect(plot.setSeries).toHaveBeenCalledWith(2, { show: false });
 		});
 	});
 
-	describe('onShowSeries', () => {
-		it('shows one series without touching the others', async () => {
+	describe('onShowAllSeries', () => {
+		it('shows every hidden series again', async () => {
 			const user = userEvent.setup();
 			const plot = createMockPlot([
 				{ label: 'x-axis', show: true },
@@ -521,10 +527,11 @@ describe('PlotContext', () => {
 			);
 
 			await user.click(screen.getByTestId('init'));
-			await user.click(screen.getByTestId('show-series-2'));
+			await user.click(screen.getByTestId('show-all'));
 
-			expect(plot.setSeries).toHaveBeenCalledTimes(1);
+			expect(plot.setSeries).toHaveBeenCalledWith(1, { show: true });
 			expect(plot.setSeries).toHaveBeenCalledWith(2, { show: true });
+			expect(plot.setSeries).not.toHaveBeenCalledWith(0, expect.anything());
 		});
 	});
 
@@ -623,7 +630,7 @@ describe('PlotContext', () => {
 
 			await user.click(screen.getByTestId('init'));
 			await user.click(screen.getByTestId('highlight-1'));
-			await user.click(screen.getByTestId('show-series-2'));
+			await user.click(screen.getByTestId('toggle-on-off-2'));
 
 			expect(plot.series[1].alpha).toBe(1);
 			expect(plot.series[2].alpha).toBe(0.16);

@@ -23,7 +23,7 @@ export default function Legend({
 	focusedSeriesIndex,
 	onToggleSeries,
 	onShowOnlySeries,
-	onShowSeries,
+	onShowAllSeries,
 	onHoverSeries,
 	showCopy = true,
 }: LegendProps): JSX.Element {
@@ -53,29 +53,19 @@ export default function Legend({
 	const isEmptyState =
 		!!effectiveQuery.trim() && visibleLegendItems.length === 0;
 
-	/**
-	 * Everything showing -> isolate. One showing -> that row shows all, another
-	 * row takes over the isolation (Add is what keeps both). Otherwise -> toggle.
-	 */
+	const isAllShown = visibleCount === items.length;
+
+	/** Everything showing -> isolate, since there is nothing to exclude yet. */
 	const handleRowClick = useCallback(
 		(seriesIndex: number): void => {
-			const isEverythingShown = visibleCount === items.length;
-			const isOneShown = soleShownSeriesIndex !== null;
-
-			if (isEverythingShown || isOneShown) {
+			if (isAllShown) {
 				onShowOnlySeries(seriesIndex);
 				return;
 			}
 
 			onToggleSeries(seriesIndex);
 		},
-		[
-			visibleCount,
-			items.length,
-			soleShownSeriesIndex,
-			onShowOnlySeries,
-			onToggleSeries,
-		],
+		[isAllShown, onShowOnlySeries, onToggleSeries],
 	);
 
 	// A row that unmounts under the pointer never fires its own mouseleave.
@@ -90,23 +80,25 @@ export default function Legend({
 				key={item.seriesIndex}
 				item={item}
 				isSoleShown={soleShownSeriesIndex === item.seriesIndex}
+				isAllShown={isAllShown}
 				isFocused={focusedSeriesIndex === item.seriesIndex}
 				showCopy={showCopy}
 				onRowClick={handleRowClick}
 				onToggleVisibility={onToggleSeries}
 				onShowOnly={onShowOnlySeries}
-				onShow={onShowSeries}
+				onShowAll={onShowAllSeries}
 				onHover={onHoverSeries}
 			/>
 		),
 		[
 			soleShownSeriesIndex,
+			isAllShown,
 			focusedSeriesIndex,
 			showCopy,
 			handleRowClick,
 			onToggleSeries,
 			onShowOnlySeries,
-			onShowSeries,
+			onShowAllSeries,
 			onHoverSeries,
 		],
 	);

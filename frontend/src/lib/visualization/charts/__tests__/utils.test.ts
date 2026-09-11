@@ -52,26 +52,38 @@ describe('calculateChartDimensions', () => {
 		expect(dims.width).toBe(784);
 	});
 
-	it('RIGHT: never shrinks the column below the 150px floor', () => {
+	it('RIGHT: never shrinks the column below the floor that fits its chrome', () => {
 		const dims = calculateChartDimensions({
 			containerWidth: 1000,
 			containerHeight: 400,
 			legendConfig: { position: LegendPosition.RIGHT },
 			seriesLabels: labels(3, 3),
 		});
-		expect(dims.legendWidth).toBe(150);
-		expect(dims.width).toBe(850);
+		expect(dims.legendWidth).toBe(190);
+		expect(dims.width).toBe(810);
 	});
 
-	it('RIGHT: on a narrow container the legend never takes more than 40% of the width', () => {
+	it('RIGHT: on a narrow container the legend keeps its chrome, up to half the width', () => {
 		const dims = calculateChartDimensions({
 			containerWidth: 300,
 			containerHeight: 400,
 			legendConfig: { position: LegendPosition.RIGHT },
 			seriesLabels: labels(10, 40),
 		});
-		expect(dims.legendWidth).toBe(120);
-		expect(dims.width).toBe(180);
+		// 40% is 120px, too narrow for the column's own toolbar.
+		expect(dims.legendWidth).toBe(150);
+		expect(dims.width).toBe(150);
+	});
+
+	it('RIGHT: stops widening the column once the panel is narrower than its chrome', () => {
+		const dims = calculateChartDimensions({
+			containerWidth: 200,
+			containerHeight: 400,
+			legendConfig: { position: LegendPosition.RIGHT },
+			seriesLabels: labels(10, 40),
+		});
+		expect(dims.legendWidth).toBe(100);
+		expect(dims.width).toBe(100);
 	});
 
 	it('BOTTOM: items that fit one row reserve exactly one row', () => {
@@ -133,8 +145,8 @@ describe('calculateAverageLegendWidth', () => {
 	it('never drops below what a row needs to contain its hover actions', () => {
 		// Short or unnamed series would otherwise size a column the actions
 		// escape, spilling over the item beside it.
-		expect(calculateAverageLegendWidth(['cpu'])).toBe(90);
-		expect(calculateAverageLegendWidth([''])).toBe(90);
+		expect(calculateAverageLegendWidth(['cpu'])).toBe(110);
+		expect(calculateAverageLegendWidth([''])).toBe(110);
 	});
 
 	it('keeps the default estimate when there are no labels to measure', () => {

@@ -76,7 +76,7 @@ describe('usePieInteractions', () => {
 	});
 
 	describe('Only', () => {
-		it('isolates the slice, then shows everything on a second click', () => {
+		it('isolates the slice', () => {
 			const { result } = renderHook(() => usePieInteractions(DATA));
 
 			act(() => result.current.onShowOnlySeries(0));
@@ -87,10 +87,6 @@ describe('usePieInteractions', () => {
 				false,
 				false,
 			]);
-
-			act(() => result.current.onShowOnlySeries(0));
-
-			expect(result.current.visibleData).toStrictEqual(DATA);
 		});
 
 		it('switches the isolation to another slice', () => {
@@ -101,27 +97,16 @@ describe('usePieInteractions', () => {
 
 			expect(result.current.visibleData).toStrictEqual([DATA[2]]);
 		});
-
-		it('shows everything when the last remaining slice was hidden one by one', () => {
-			const { result } = renderHook(() => usePieInteractions(DATA));
-
-			// Hiding down to one slice must behave exactly like isolating it.
-			act(() => result.current.onToggleSeries(1));
-			act(() => result.current.onToggleSeries(2));
-			act(() => result.current.onShowOnlySeries(0));
-
-			expect(result.current.visibleData).toStrictEqual(DATA);
-		});
 	});
 
-	describe('Add', () => {
-		it('shows a slice alongside the isolated one', () => {
+	describe('All', () => {
+		it('brings every hidden slice back', () => {
 			const { result } = renderHook(() => usePieInteractions(DATA));
 
 			act(() => result.current.onShowOnlySeries(0));
-			act(() => result.current.onShowSeries(2));
+			act(() => result.current.onShowAllSeries());
 
-			expect(result.current.visibleData).toStrictEqual([DATA[0], DATA[2]]);
+			expect(result.current.visibleData).toStrictEqual(DATA);
 		});
 	});
 

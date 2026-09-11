@@ -47,7 +47,7 @@ export default function Pie({
 		focusedSeriesIndex,
 		onToggleSeries,
 		onShowOnlySeries,
-		onShowSeries,
+		onShowAllSeries,
 		onHoverSeries,
 	} = usePieInteractions(data, id);
 
@@ -230,7 +230,7 @@ export default function Pie({
 					focusedSeriesIndex={focusedSeriesIndex}
 					onToggleSeries={onToggleSeries}
 					onShowOnlySeries={onShowOnlySeries}
-					onShowSeries={onShowSeries}
+					onShowAllSeries={onShowAllSeries}
 					onHoverSeries={onHoverSeries}
 				/>
 			</div>

@@ -2,7 +2,6 @@ import { LegendItem } from 'lib/uPlotV2/config/types';
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { getShownSeriesState } from 'lib/uPlotV2/components/Legend/utils';
 import {
 	getStoredSeriesVisibility,
 	updateSeriesVisibilityToLocalStorage,
@@ -21,7 +20,7 @@ export interface UsePieInteractionsResult {
 	focusedSeriesIndex: number | null;
 	onToggleSeries: (sliceIndex: number) => void;
 	onShowOnlySeries: (sliceIndex: number) => void;
-	onShowSeries: (sliceIndex: number) => void;
+	onShowAllSeries: () => void;
 	onHoverSeries: (sliceIndex: number | null) => void;
 }
 
@@ -125,12 +124,6 @@ export function usePieInteractions(
 
 	const onShowOnlySeries = useCallback(
 		(sliceIndex: number): void => {
-			const { soleShownSeriesIndex } = getShownSeriesState(legendItems);
-			if (soleShownSeriesIndex === sliceIndex) {
-				applyHidden(new Set());
-				return;
-			}
-
 			const next = new Set<number>();
 			data.forEach((_, index) => {
 				if (index !== sliceIndex) {
@@ -139,16 +132,12 @@ export function usePieInteractions(
 			});
 			applyHidden(next);
 		},
-		[data, legendItems, applyHidden],
+		[data, applyHidden],
 	);
 
-	const onShowSeries = useCallback(
-		(sliceIndex: number): void => {
-			const next = new Set(hiddenIndices);
-			next.delete(sliceIndex);
-			applyHidden(next);
-		},
-		[hiddenIndices, applyHidden],
+	const onShowAllSeries = useCallback(
+		(): void => applyHidden(new Set()),
+		[applyHidden],
 	);
 
 	const activeIndex = active ? data.indexOf(active) : -1;
@@ -166,7 +155,7 @@ export function usePieInteractions(
 		focusedSeriesIndex: focusedIndex >= 0 ? focusedIndex : null,
 		onToggleSeries,
 		onShowOnlySeries,
-		onShowSeries,
+		onShowAllSeries,
 		onHoverSeries,
 	};
 }
