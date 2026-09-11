@@ -336,6 +336,10 @@
             "name": "api/generated/services/dashboard",
             "importNames": ["patchDashboardV2", "usePatchDashboardV2"],
             "message": "[dashboard-v2] Don't call patchDashboardV2/usePatchDashboardV2 directly — use useOptimisticPatch().patchAsync so spec edits update the react-query cache optimistically and reconcile on settle."
+          },
+          {
+            "name": "motion/react-client",
+            "message": "[motion] motion/react-client is for React Server Components only. Use 'motion/react' instead — it provides the same exports and works correctly in client-side SPAs."
           }
         ]
       }
