@@ -32,4 +32,6 @@ export const Default: Story = {};
 /** The link used too late, which the page tells the user to ask again for. */
 export const ExpiredLink: Story = {
 	args: { token: 'expired' },
+	// The deliberate 410 is the state under test.
+	parameters: { allowConsoleErrors: true },
 };
