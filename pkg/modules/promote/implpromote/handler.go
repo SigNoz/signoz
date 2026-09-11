@@ -73,13 +73,13 @@ func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, paths)
 }
 
-// targetFromPath resolves the promotion domain from the {signal} and
-// {context} path variables.
+// targetFromPath resolves the promotion domain from the {telemetry_signal}
+// and {context} path variables.
 func targetFromPath(r *http.Request) (promotetypes.Target, error) {
 	vars := mux.Vars(r)
-	signal, ok := telemetrytypes.SignalFromText(vars["signal"])
+	signal, ok := telemetrytypes.SignalFromText(vars["telemetry_signal"])
 	if !ok {
-		return promotetypes.Target{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid signal: %s", vars["signal"])
+		return promotetypes.Target{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid signal: %s", vars["telemetry_signal"])
 	}
 	context, ok := telemetrytypes.FieldContextFromText(vars["context"])
 	if !ok {
