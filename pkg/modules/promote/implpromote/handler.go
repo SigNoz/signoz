@@ -21,48 +21,15 @@ func NewHandler(module promote.Module) promote.Handler {
 	return &handler{module: module}
 }
 
-// PromotePaths serves the promote route; the domain is resolved from the
-// {signal}/{context} path variables.
 func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 	target, err := targetFromPath(r)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
-	h.promote(w, r, target)
-}
 
-func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
-	target, err := targetFromPath(r)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	h.list(w, r, target)
-}
-
-// targetFromPath resolves the promotion domain from the {signal} and
-// {context} path variables.
-func targetFromPath(r *http.Request) (promotetypes.Target, error) {
-	vars := mux.Vars(r)
-	signal, ok := telemetrytypes.SignalFromText(vars["signal"])
-	if !ok {
-		return promotetypes.Target{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid signal: %s", vars["signal"])
-	}
-	context, ok := telemetrytypes.FieldContextFromText(vars["context"])
-	if !ok {
-		return promotetypes.Target{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid context: %s", vars["context"])
-	}
-	target, ok := promotetypes.TargetFor(signal, context)
-	if !ok {
-		return promotetypes.Target{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "promotion is not supported for %s %s", signal.StringValue(), context.StringValue())
-	}
-	return target, nil
-}
-
-func (h *handler) promote(w http.ResponseWriter, r *http.Request, target promotetypes.Target) {
 	// TODO(Nitya): Use in multi tenant setup
-	_, err := authtypes.ClaimsFromContext(r.Context())
+	_, err = authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, errors.NewInternalf(errors.CodeInternal, "failed to get org id from context"))
 		return
@@ -83,9 +50,15 @@ func (h *handler) promote(w http.ResponseWriter, r *http.Request, target promote
 	render.Success(w, http.StatusCreated, nil)
 }
 
-func (h *handler) list(w http.ResponseWriter, r *http.Request, target promotetypes.Target) {
+func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
+	target, err := targetFromPath(r)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	// TODO(Nitya): Use in multi tenant setup
-	_, err := authtypes.ClaimsFromContext(r.Context())
+	_, err = authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, errors.NewInternalf(errors.CodeInternal, "failed to get org id from context"))
 		return
@@ -98,4 +71,23 @@ func (h *handler) list(w http.ResponseWriter, r *http.Request, target promotetyp
 	}
 
 	render.Success(w, http.StatusOK, paths)
+}
+
+// targetFromPath resolves the promotion domain from the {signal} and
+// {context} path variables.
+func targetFromPath(r *http.Request) (promotetypes.Target, error) {
+	vars := mux.Vars(r)
+	signal, ok := telemetrytypes.SignalFromText(vars["signal"])
+	if !ok {
+		return promotetypes.Target{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid signal: %s", vars["signal"])
+	}
+	context, ok := telemetrytypes.FieldContextFromText(vars["context"])
+	if !ok {
+		return promotetypes.Target{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid context: %s", vars["context"])
+	}
+	target, ok := promotetypes.TargetFor(signal, context)
+	if !ok {
+		return promotetypes.Target{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "promotion is not supported for %s %s", signal.StringValue(), context.StringValue())
+	}
+	return target, nil
 }
