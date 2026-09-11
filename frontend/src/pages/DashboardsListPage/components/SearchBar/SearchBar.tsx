@@ -5,6 +5,7 @@ import {
 	completionKeymap,
 	startCompletion,
 } from '@codemirror/autocomplete';
+import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { Color } from '@signozhq/design-tokens';
 import { ChevronUp, Command, CornerDownLeft, Search } from '@signozhq/icons';
@@ -32,6 +33,8 @@ interface Props {
 	source?: SuggestionSource;
 	// The draft differs from the last-run query — shows a "run to apply" hint.
 	dirty?: boolean;
+	/** Filtering needs `list`: the draft edits a query that cannot be run. */
+	disabled?: boolean;
 }
 
 const EMPTY_SOURCE: SuggestionSource = {
@@ -78,6 +81,7 @@ function SearchBar({
 	placeholder = "Filter with DSL (e.g. name CONTAINS 'foo')",
 	source = EMPTY_SOURCE,
 	dirty = false,
+	disabled = false,
 }: Props): JSX.Element {
 	const isMac = getUserOperatingSystem() === UserOperatingSystem.MACOS;
 	const editorRef = useRef<ReactCodeMirrorRef>(null);
@@ -100,28 +104,34 @@ function SearchBar({
 			editorTheme,
 			// Wrap a long query onto the next line instead of scrolling horizontally.
 			EditorView.lineWrapping,
-			autocompletion({
-				override: [dslCompletionSource(() => sourceRef.current)],
-				closeOnBlur: true,
-				activateOnTyping: true,
-				maxRenderedOptions: 100,
-				icons: false,
-			}),
-			// Open the suggestions on focus/click (not only while typing), so a click
-			// into the box immediately shows the key list.
-			EditorView.domEventHandlers({
-				focus: (_event, view): boolean => {
-					startCompletion(view);
-					return false;
-				},
-				click: (_event, view): boolean => {
-					startCompletion(view);
-					return false;
-				},
-			}),
+			// Read-only is not enough: these open the list on click and accepting an
+			// option writes to the document, so a disabled box must not carry them.
+			...(disabled
+				? []
+				: [
+						autocompletion({
+							override: [dslCompletionSource(() => sourceRef.current)],
+							closeOnBlur: true,
+							activateOnTyping: true,
+							maxRenderedOptions: 100,
+							icons: false,
+						}),
+						// Open the suggestions on focus/click (not only while typing), so a
+						// click into the box immediately shows the key list.
+						EditorView.domEventHandlers({
+							focus: (_event, view): boolean => {
+								startCompletion(view);
+								return false;
+							},
+							click: (_event, view): boolean => {
+								startCompletion(view);
+								return false;
+							},
+						}),
+					]),
 			Prec.highest(
 				keymap.of([
-					...completionKeymap,
+					...(disabled ? [] : completionKeymap),
 					{ key: 'Escape', run: closeCompletion },
 					// Enter accepts an open suggestion (via completionKeymap above); with
 					// none open it is a no-op — it never runs the query or inserts a newline.
@@ -138,12 +148,12 @@ function SearchBar({
 				]),
 			),
 		],
-		[],
+		[disabled],
 	);
 
 	return (
 		<div className={styles.wrapper}>
-			<div className={styles.field}>
+			<div className={cx(styles.field, { [styles.disabled]: disabled })}>
 				<Search
 					size={12}
 					color={Color.BG_VANILLA_400}
@@ -157,6 +167,7 @@ function SearchBar({
 					extensions={extensions}
 					basicSetup={BASIC_SETUP}
 					indentWithTab={false}
+					editable={!disabled}
 					data-testid="dashboards-list-search"
 					onChange={(next): void => onChange(next.replace(/\n/g, ' '))}
 				/>
@@ -166,6 +177,7 @@ function SearchBar({
 					size="sm"
 					className={styles.submit}
 					aria-label="Run search"
+					disabled={disabled}
 					testId="dashboards-list-search-submit"
 					onMouseDown={(e: MouseEvent<HTMLButtonElement>): void => {
 						e.preventDefault();

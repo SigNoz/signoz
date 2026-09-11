@@ -10,7 +10,9 @@ import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { X } from '@signozhq/icons';
 
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
+import { LIST_CHECKS } from 'pages/DashboardsListPage/constants/permissions';
 
 import type { SuggestionSource } from '../../utils/dslSuggestions';
 import {
@@ -34,6 +36,8 @@ interface Props {
 	onQueryChange: (value: string) => void;
 	// Rendered at the end of the search row (e.g. the New Dashboard action).
 	rightSlot?: ReactNode;
+	/** Filtering needs `list`: the box and chips edit a query that cannot be run. */
+	disabled?: boolean;
 }
 
 // The filter command zone. The query box is a DRAFT: typing and the Created-by /
@@ -47,6 +51,7 @@ function FilterZone({
 	source,
 	onQueryChange,
 	rightSlot,
+	disabled = false,
 }: Props): JSX.Element {
 	const [draft, setDraft] = useState(query);
 
@@ -114,41 +119,53 @@ function FilterZone({
 	return (
 		<div className={styles.filterZone}>
 			<div className={styles.searchRow}>
-				<div className={styles.searchInput}>
-					<SearchBar
-						value={draft}
-						placeholder="DSL Filter — e.g. name CONTAINS 'api' AND env IN ['prod','staging']"
-						source={source}
-						dirty={dirty}
-						onChange={setDraft}
-						onSubmit={run}
-					/>
-				</div>
+				<AuthZTooltip checks={LIST_CHECKS}>
+					<div className={styles.searchInput} data-testid="dashboards-search-zone">
+						<SearchBar
+							value={draft}
+							placeholder="DSL Filter — e.g. name CONTAINS 'api' AND env IN ['prod','staging']"
+							source={source}
+							dirty={dirty}
+							disabled={disabled}
+							onChange={setDraft}
+							onSubmit={run}
+						/>
+					</div>
+				</AuthZTooltip>
 				{rightSlot}
 			</div>
 			<div className={styles.filtersRow}>
 				<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
-				<FilterChips
-					createdBy={reflected.createdBy}
-					updated={reflected.updated}
-					creatorOptions={creatorOptions}
-					onCreatedByChange={handleCreatedByChange}
-					onUpdatedChange={handleUpdatedChange}
-					onApply={run}
-					onClearCreatedBy={handleClearCreatedBy}
-				/>
-				{!isEmpty && (
-					<Button
-						variant="outlined"
-						color="primary"
-						size="sm"
-						prefix={<X size={12} />}
-						onClick={handleClear}
-						testId="dashboards-filter-clear"
+				<AuthZTooltip checks={LIST_CHECKS}>
+					<div
+						className={styles.filterControls}
+						data-testid="dashboards-filter-zone"
 					>
-						Clear
-					</Button>
-				)}
+						<FilterChips
+							createdBy={reflected.createdBy}
+							updated={reflected.updated}
+							creatorOptions={creatorOptions}
+							onCreatedByChange={handleCreatedByChange}
+							onUpdatedChange={handleUpdatedChange}
+							onApply={run}
+							onClearCreatedBy={handleClearCreatedBy}
+							disabled={disabled}
+						/>
+						{!isEmpty && (
+							<Button
+								variant="outlined"
+								color="primary"
+								size="sm"
+								prefix={<X size={12} />}
+								disabled={disabled}
+								onClick={handleClear}
+								testId="dashboards-filter-clear"
+							>
+								Clear
+							</Button>
+						)}
+					</div>
+				</AuthZTooltip>
 			</div>
 		</div>
 	);
