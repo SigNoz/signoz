@@ -1260,6 +1260,20 @@ func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, 
 	return true, nil
 }
 
+// retentionDaysFallback is the safe retention (in days) substituted when a
+// TTL-driving column reads 0. A value of 0 can never be operator intent -
+// zero-day retention expires rows on write - and can only arise from a
+// misconfiguration or a bug in the retention write path, so TTL DELETE
+// expressions fall back to a positive retention instead of deleting data.
+const retentionDaysFallback = 30
+
+// guardedRetentionDays wraps a retention-days column reference for use inside
+// a TTL DELETE expression so that a column value of 0 falls back to
+// retentionDaysFallback instead of expiring rows on write.
+func guardedRetentionDays(column string) string {
+	return fmt.Sprintf("if(%s = 0, %d, %s)", column, retentionDaysFallback, column)
+}
+
 func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *retentiontypes.CustomRetentionTTLParams) (*retentiontypes.CustomRetentionTTLResponse, error) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
@@ -1363,8 +1377,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
 			distributedTableNames[0], r.cluster, coldStorageDuration))
 
-		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
-			tableNames[0], r.cluster, params.ColdStorageVolume))
+		queries = append(queries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + toIntervalDay(%s) DELETE, toDateTime(timestamp / 1000000000) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
+			tableNames[0], r.cluster, guardedRetentionDays("_retention_days"), params.ColdStorageVolume))
 	}
 
 	ttlPayload[tableNames[0]] = queries
@@ -1383,8 +1397,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 		// for distributed table
 		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY COLUMN _retention_days_cold UInt16 DEFAULT %d`,
 			distributedTableNames[1], r.cluster, coldStorageDuration))
-		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
-			tableNames[1], r.cluster, params.ColdStorageVolume))
+		resourceQueries = append(resourceQueries, fmt.Sprintf(`ALTER TABLE %s ON CLUSTER %s MODIFY TTL toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(%s) DELETE, toDateTime(seen_at_ts_bucket_start) + toIntervalSecond(1800) + toIntervalDay(_retention_days_cold) TO VOLUME '%s' SETTINGS materialize_ttl_after_modify=0`,
+			tableNames[1], r.cluster, guardedRetentionDays("_retention_days"), params.ColdStorageVolume))
 	}
 
 	ttlPayload[tableNames[1]] = resourceQueries
@@ -1669,6 +1683,13 @@ func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditi
 	conditionSignatures := make(map[string]bool)
 
 	for i, rule := range ttlConditions {
+		// A non-positive rule TTL lands verbatim in the multiIf expression and
+		// expires matching rows on write. Reject it like the default TTL.
+		if rule.TTLDays <= 0 {
+			return errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput,
+				"rule at index %d has a non-positive TTL of %d days; zero-day retention expires matching rows on write", i, rule.TTLDays)
+		}
+
 		if len(rule.Filters) == 0 {
 			return errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "rule at index %d has no filters", i)
 		}
