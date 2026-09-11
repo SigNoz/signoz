@@ -1,4 +1,10 @@
-import { useTaskItemOffset } from './taskItemOffset';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+
+import { useTaskItemOffset } from '../MarkdownContent/taskItemOffset';
+
+// A tick is an edit to the panel's markdown, not a per-viewer preference — say so
+// before it is made, since the surface otherwise reads like an ordinary checkbox.
+const WRITE_BACK_HINT = 'Toggling this updates the panel spec';
 
 interface TaskCheckboxProps {
 	checked: boolean;
@@ -13,7 +19,7 @@ interface TaskCheckboxProps {
 function TaskCheckbox({ checked, onChange }: TaskCheckboxProps): JSX.Element {
 	const offset = useTaskItemOffset();
 
-	return (
+	const box = (
 		<input
 			type="checkbox"
 			checked={checked}
@@ -26,6 +32,18 @@ function TaskCheckbox({ checked, onChange }: TaskCheckboxProps): JSX.Element {
 				}
 			}}
 		/>
+	);
+
+	if (offset === undefined) {
+		return box;
+	}
+
+	// `asChild` on the trigger keeps the input itself as the hover target, so no
+	// wrapper lands inside the body's style reset.
+	return (
+		<TooltipSimple title={WRITE_BACK_HINT} arrow>
+			{box}
+		</TooltipSimple>
 	);
 }
 

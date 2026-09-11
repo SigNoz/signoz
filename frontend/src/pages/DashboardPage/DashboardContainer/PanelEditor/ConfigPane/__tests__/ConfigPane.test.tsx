@@ -23,6 +23,14 @@ jest.mock(
 	}),
 );
 
+function textSpec(): DashboardtypesPanelSpecDTO {
+	return {
+		display: { name: 'Runbook', description: 'steps' },
+		plugin: { kind: 'signoz/TextPanel', spec: { text: '' } },
+		queries: [],
+	} as unknown as DashboardtypesPanelSpecDTO;
+}
+
 function spec(unit?: string): DashboardtypesPanelSpecDTO {
 	return {
 		display: { name: 'CPU', description: 'usage' },
@@ -91,6 +99,24 @@ describe('ConfigPane', () => {
 				display: { name: 'Memory', description: 'usage' },
 			}),
 		);
+	});
+
+	// It hides the title strip, so it sits with the title rather than under the
+	// display options — and only a kind whose spec accepts `headerOptions` shows it.
+	it('renders the hide-header toggle among the Panel Details fields', () => {
+		renderConfigPane({ spec: textSpec() });
+
+		const toggle = screen.getByTestId('panel-header-hide');
+		expect(toggle).toBeInTheDocument();
+		expect(screen.getByText('Hide header')).toBeInTheDocument();
+		// No collapsible wrapper of its own.
+		expect(screen.queryByText('Panel header')).not.toBeInTheDocument();
+	});
+
+	it('omits the hide-header toggle for a kind that has no header options', () => {
+		renderConfigPane();
+
+		expect(screen.queryByTestId('panel-header-hide')).not.toBeInTheDocument();
 	});
 
 	it('renders the Formatting section for a kind that declares it', () => {

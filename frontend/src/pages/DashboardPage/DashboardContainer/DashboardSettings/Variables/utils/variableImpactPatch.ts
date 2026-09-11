@@ -107,6 +107,18 @@ export function buildVariableImpactPatch(
 
 	byPanel.forEach((list, panelId) => {
 		const panel = panels[panelId];
+
+		// A static kind's usage edits its markdown body, not a query.
+		const textUsage = list.find((usage) => usage.kind === 'text');
+		if (textUsage) {
+			ops.push({
+				op: 'replace' as DashboardtypesJSONPatchOperationDTO['op'],
+				path: `/spec/panels/${panelId}/spec/plugin/spec/text`,
+				value: textUsage.resultingText,
+			});
+			return;
+		}
+
 		if (!panel?.spec?.queries?.length) {
 			return;
 		}

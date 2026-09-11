@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { isLanguageRegistered, loadLanguage } from './syntaxLanguages';
+import { isLanguageRegistered, loadLanguage } from '../utils/syntaxLanguages';
 
 /**
  * Registers `language` with Prism on demand, reporting when it is ready to

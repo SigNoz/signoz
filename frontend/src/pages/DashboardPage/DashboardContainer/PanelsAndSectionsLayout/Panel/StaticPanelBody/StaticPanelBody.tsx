@@ -12,6 +12,8 @@ interface StaticPanelBodyProps {
 	panelId: string;
 	/** Render context — defaults to the dashboard view; the editor preview passes EDIT. */
 	panelMode?: PanelMode;
+	/** Saves an edit made from the rendered body; absent leaves it read-only. */
+	onChangeText?: (text: string) => void;
 }
 
 /**
@@ -25,6 +27,7 @@ function StaticPanelBody({
 	panel,
 	panelId,
 	panelMode = PanelMode.DASHBOARD_VIEW,
+	onChangeText,
 }: StaticPanelBodyProps): JSX.Element {
 	// From the edit context, not props: the editor route seeds it too, so an
 	// unsaved panel's preview resolves variables the same way the grid does.
@@ -37,6 +40,7 @@ function StaticPanelBody({
 				panel={panel as PanelOfKind}
 				panelMode={panelMode}
 				dashboardId={dashboardId || undefined}
+				onChangeText={onChangeText}
 			/>
 		</div>
 	);

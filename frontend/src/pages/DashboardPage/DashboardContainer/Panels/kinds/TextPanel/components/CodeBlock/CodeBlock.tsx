@@ -2,8 +2,10 @@ import type { CodeProps } from 'react-markdown/lib/ast-to-react';
 
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
-import SyntaxHighlighter, { resolveLanguage } from './syntaxLanguages';
-import { usePrismLanguage } from './usePrismLanguage';
+import SyntaxHighlighter, {
+	resolveLanguage,
+} from '../../../../utils/syntaxLanguages';
+import { usePrismLanguage } from '../../../../hooks/usePrismLanguage';
 
 import styles from './CodeBlock.module.scss';
 

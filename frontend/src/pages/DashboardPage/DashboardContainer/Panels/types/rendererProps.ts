@@ -86,6 +86,12 @@ export interface StaticRendererProps<K extends PanelKind = PanelKind> {
 	panel: PanelOfKind<K>;
 	panelMode: PanelMode;
 	dashboardId?: string;
+	/**
+	 * Writes the authored body back. Supplied only by a host with somewhere to put
+	 * it — the grid patches, the editor updates its draft — so its absence is what
+	 * makes a surface read-only.
+	 */
+	onChangeText?: (text: string) => void;
 }
 
 // Renderer props for kind K: the base (with `panel` narrowed to K) plus K's

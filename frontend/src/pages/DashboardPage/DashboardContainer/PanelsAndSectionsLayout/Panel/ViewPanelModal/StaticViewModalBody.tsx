@@ -1,19 +1,16 @@
 import { useCallback } from 'react';
-import { PenLine } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
+import cx from 'classnames';
 import { PanelMode } from 'lib/visualization/panels/types';
 import logEvent from 'api/common/logEvent';
-import PanelTypeSwitcher from 'pages/DashboardPage/DashboardContainer/PanelEditor/ConfigPane/PanelTypeSwitcher/PanelTypeSwitcher';
+import PreviewPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PreviewPane/PreviewPane';
 import type { PanelEditorDraftApi } from 'pages/DashboardPage/DashboardContainer/PanelEditor/types';
-import PanelHeader from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
-import StaticPanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/StaticPanelBody/StaticPanelBody';
 import type { RenderableStaticPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
-import { EMPTY_PANEL_QUERY_DATA } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
+import { withPanelText } from 'pages/DashboardPage/DashboardContainer/Panels/utils/withPanelText';
 import { useOpenPanelEditor } from 'pages/DashboardPage/DashboardContainer/hooks/useOpenPanelEditor';
 import { DashboardEvents } from 'pages/DashboardPage/constants/events';
-import { EQueryType } from 'types/common/dashboard';
 
+import ViewPanelModalHeader from './ViewPanelModalHeader';
 import styles from './ViewPanelModal.module.scss';
 
 interface StaticViewModalBodyProps {
@@ -24,10 +21,10 @@ interface StaticViewModalBodyProps {
 }
 
 /**
- * The static-kind View modal body: the panel rendered live over the kind's
- * editor pane — the same layout idea as the query body, with the time window,
- * query builder and drilldown machinery absent because none of it applies.
- * Edits are temporary; "Edit panel" hands them to the full editor.
+ * The static-kind View modal body: the query body's layout with the kind's
+ * editor pane in the query-builder slot and the live panel below — the time
+ * window, query builder and drilldown machinery absent because none of it
+ * applies. Edits are temporary; "Switch to Edit Mode" hands them to the editor.
  */
 function StaticViewModalBody({
 	panelId,
@@ -36,8 +33,14 @@ function StaticViewModalBody({
 	onChangePanelKind,
 }: StaticViewModalBodyProps): JSX.Element {
 	const { draft, spec, setSpec } = draftApi;
-	const { EditorPane, Renderer } = panelDefinition;
+	const { EditorPane } = panelDefinition;
 	const openPanelEditor = useOpenPanelEditor();
+
+	// Temporary, like every edit here: "Switch to Edit Mode" carries it over.
+	const onChangeText = useCallback(
+		(text: string): void => setSpec(withPanelText(spec, text)),
+		[spec, setSpec],
+	);
 
 	const onSwitchToEdit = useCallback((): void => {
 		void logEvent(DashboardEvents.SWITCH_TO_EDIT_MODE, { panelId });
@@ -49,42 +52,24 @@ function StaticViewModalBody({
 
 	return (
 		<div className={styles.content} data-testid="view-panel-modal-content">
-			<div className={styles.staticToolbar}>
-				<PanelTypeSwitcher
-					panelKind={draft.spec.plugin.kind}
-					queryType={EQueryType.QUERY_BUILDER}
-					onChange={onChangePanelKind}
-				/>
-				<Button
-					type="button"
-					variant="outlined"
-					color="secondary"
-					size="sm"
-					prefix={<PenLine size={14} />}
-					onClick={onSwitchToEdit}
-					data-testid="static-view-switch-to-edit"
-				>
-					Edit panel
-				</Button>
-			</div>
-			<div className={styles.staticPreview}>
-				<PanelHeader
-					panelId={panelId}
-					panel={draft}
-					data={EMPTY_PANEL_QUERY_DATA}
-					isFetching={false}
-					error={null}
-					hideActions
-				/>
-				<StaticPanelBody
-					Renderer={Renderer}
-					panel={draft}
-					panelId={panelId}
-					panelMode={PanelMode.STANDALONE_VIEW}
-				/>
-			</div>
-			<div className={styles.staticEditorPane}>
+			<ViewPanelModalHeader
+				mode="static"
+				panelKind={draft.spec.plugin.kind}
+				onChangePanelKind={onChangePanelKind}
+				onSwitchToEdit={onSwitchToEdit}
+			/>
+			<div className={cx(styles.queryBuilder, styles.staticEditor)}>
 				<EditorPane spec={spec} onChangeSpec={setSpec} />
+			</div>
+			<div className={styles.body}>
+				<PreviewPane
+					mode="static"
+					panelId={panelId}
+					panel={draft}
+					panelDefinition={panelDefinition}
+					panelMode={PanelMode.STANDALONE_VIEW}
+					onChangeText={onChangeText}
+				/>
 			</div>
 		</div>
 	);

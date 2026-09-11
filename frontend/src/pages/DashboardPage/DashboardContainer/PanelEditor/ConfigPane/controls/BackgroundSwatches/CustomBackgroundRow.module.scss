@@ -1,0 +1,67 @@
+.row {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	background: transparent;
+	cursor: pointer;
+	text-align: left;
+}
+
+.active {
+	border-color: var(--bg-robin-500);
+}
+
+.chip {
+	flex: none;
+	width: 18px;
+	height: 18px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+}
+
+// No colour to show yet, so the chip advertises that it opens a picker.
+.chipEmpty {
+	background: conic-gradient(
+		from 0deg,
+		var(--bg-cherry-400),
+		var(--bg-amber-400),
+		var(--bg-forest-400),
+		var(--bg-robin-400),
+		var(--bg-sakura-400),
+		var(--bg-cherry-400)
+	);
+}
+
+.label {
+	flex: 1;
+	font-size: 12px;
+	color: var(--l2-foreground);
+}
+
+.hex {
+	font-family: var(--font-family-sf-mono);
+	font-size: 12px;
+	color: var(--text-vanilla-400);
+	letter-spacing: 0.02em;
+}
+
+// Appended under the picker's own panel.
+.contrast {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 4px 2px;
+	font-size: 12px;
+	color: var(--text-vanilla-400);
+}
+
+.warning {
+	color: var(--bg-amber-400);
+}

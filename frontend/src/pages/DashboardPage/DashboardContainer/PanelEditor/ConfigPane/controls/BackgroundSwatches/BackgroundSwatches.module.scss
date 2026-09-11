@@ -1,0 +1,76 @@
+.row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.swatch {
+	flex: none;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	background: none;
+	cursor: pointer;
+	position: relative;
+
+	// The input carries focus, so the ring is drawn on the swatch around it.
+	&:has(.input:focus-visible) {
+		outline: 2px solid var(--bg-robin-400);
+		outline-offset: 1px;
+	}
+}
+
+// The real control, sized to the swatch and invisible over it: clicks and focus
+// land on the radio, the swatch is what the user sees.
+.input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.selected {
+	box-shadow: 0 0 0 2px var(--bg-robin-500);
+}
+
+// Transparency has no colour to show, so it reads as the conventional checkerboard.
+.checkerboard {
+	background-color: var(--l2-background);
+	background-image:
+		linear-gradient(
+			45deg,
+			var(--l2-border) 25%,
+			transparent 25%,
+			transparent 75%,
+			var(--l2-border) 75%
+		),
+		linear-gradient(
+			45deg,
+			var(--l2-border) 25%,
+			transparent 25%,
+			transparent 75%,
+			var(--l2-border) 75%
+		);
+	background-size: 8px 8px;
+	background-position:
+		0 0,
+		4px 4px;
+}
+
+.defaultSurface {
+	background: var(--l2-background);
+}
+
+.divider {
+	flex: none;
+	width: 1px;
+	height: 18px;
+	margin: 0 2px;
+	background: var(--l2-border);
+}

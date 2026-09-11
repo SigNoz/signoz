@@ -14,6 +14,8 @@ export const PanelTypeVsPanelWrapper = {
 	[PANEL_TYPES.LIST]: ListPanelWrapper,
 	[PANEL_TYPES.VALUE]: ValuePanelWrapper,
 	[PANEL_TYPES.TRACE]: null,
+	// Dashboards v2 renders this kind; the V1 wrapper map is never asked for it.
+	[PANEL_TYPES.TEXT]: null,
 	[PANEL_TYPES.EMPTY_WIDGET]: null,
 	[PANEL_TYPES.PIE]: PiePanelWrapper,
 	[PANEL_TYPES.BAR]: BarPanel,
