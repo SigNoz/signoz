@@ -242,8 +242,6 @@ func rewriteQueryForHistogramCTE(requestType qbtypes.RequestType, query qbtypes.
 		TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: histogramBucketKey},
 	})
 
-	// A heatmap cell is a count of observations, so the CTE has to hand it whole
-	// numbers however the percentile it was asked for would read them.
 	query.Aggregations = slices.Clone(query.Aggregations)
 	if query.Aggregations[0].SpaceAggregation.IsPercentile() && requestType != qbtypes.RequestTypeHeatmap {
 		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
