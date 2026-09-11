@@ -154,7 +154,7 @@ func TestBuilderQueryFingerprintHeatmapBucketing(t *testing.T) {
 					Aggregations: []qbtypes.MetricAggregation{{
 						MetricName:       "system.memory.usage",
 						Type:             metrictypes.GaugeType,
-						HeatmapBucketing: &qbtypes.HeatmapBucketing{Kind: qbtypes.BucketsKindLog, LogScale: qbtypes.MaxLogScale, NumBuckets: qbtypes.DefaultNumBuckets},
+						HeatmapBucketing: &qbtypes.HeatmapBucketing{Kind: qbtypes.BucketsKindLog, LogScale: coarseLogScale, NumBuckets: qbtypes.DefaultNumBuckets},
 					}},
 				},
 			},
@@ -255,14 +255,6 @@ func TestBuilderQueryFingerprintHeatmapBucketing(t *testing.T) {
 			assert.NotEqual(t, testCase.left.Fingerprint(), testCase.right.Fingerprint())
 		})
 	}
-
-	t.Run("a coarser scale is carried but reads the same cache entry", func(t *testing.T) {
-		finest := (&qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLog, Spec: qbtypes.LogBucketsSpec{}}).ToHeatmapBucketing()
-		coarse := (&qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLog, Spec: qbtypes.LogBucketsSpec{Scale: &coarseLogScale}}).ToHeatmapBucketing()
-
-		assert.NotEqual(t, finest.LogScale, coarse.LogScale)
-		assert.Equal(t, fingerprintHeatmapBucketing(finest), fingerprintHeatmapBucketing(coarse))
-	})
 
 	t.Run("a histogram folds in no bucket options at all", func(t *testing.T) {
 		// resolveHeatmapBucketing leaves histograms nil, so bucketOptions sent
