@@ -59,6 +59,8 @@ export const Loading: Story = {
 /** Error: the real role-details error banner appears after a failed fetch. */
 export const LoadError: Story = {
 	args: { dataState: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
 };
 
 /**
@@ -103,8 +105,10 @@ export const DeleteRoleConfirm: Story = {
 
 /** Failure: the delete dialog retains the action and exposes the server error. */
 export const DeleteRoleFailed: Story = {
+	// The deliberate 500 is the state under test.
 	parameters: {
 		msw: { handlers: deleteRoleFailed },
+		allowConsoleErrors: true,
 	},
 	play: async ({ canvasElement }): Promise<void> => {
 		// The header renders a disabled Delete while the role loads and swaps it for
