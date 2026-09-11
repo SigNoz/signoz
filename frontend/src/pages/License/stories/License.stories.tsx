@@ -44,6 +44,8 @@ export const Default: Story = {};
 /** A key the backend will not take, which the form reports where it stands. */
 export const KeyRejected: Story = {
 	args: { apply: 'rejected' },
+	// The deliberate 400 is the state under test.
+	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
 		await applyKey(canvasElement);
 	},
