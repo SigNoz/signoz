@@ -34,7 +34,8 @@ const meta = {
 		/>
 	),
 	...pageStory,
-	parameters: { ...pageStory.parameters },
+	// The built-in-integration lookup is expected to 404 for a cloud provider.
+	parameters: { ...pageStory.parameters, allowConsoleErrors: true },
 } satisfies Meta<CloudIntegrationArgs>;
 
 export default meta;
