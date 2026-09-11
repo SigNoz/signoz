@@ -27,7 +27,7 @@ import { stepClickTimeRange } from '../../utils/drilldown/chartClickTimeRange';
 import { enrichChartClick } from '../../utils/drilldown/enrichChartClick';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
-import { sortSeriesByMeanDesc } from '../../utils/sortSeriesByMean';
+import { sortPanelSeries } from '../../utils/sortPanelSeries';
 
 import { buildTimeSeriesConfig } from './utils/buildConfig';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
@@ -72,13 +72,15 @@ function TimeSeriesPanelRenderer({
 
 	const flatSeries = useMemo(
 		() =>
-			sortSeriesByMeanDesc(
-				flattenTimeSeries(
+			sortPanelSeries({
+				series: flattenTimeSeries(
 					getTimeSeriesResults(data.response),
 					data.legendMap ?? {},
 				),
-			),
-		[data.response, data.legendMap],
+				seriesOrder: spec.seriesOrder,
+				queries: panel.spec.queries,
+			}),
+		[data.response, data.legendMap, spec.seriesOrder, panel.spec.queries],
 	);
 
 	const config = useMemo(
