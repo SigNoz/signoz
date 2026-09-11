@@ -3156,6 +3156,8 @@ components:
           $ref: '#/components/schemas/DashboardtypesPanelFormatting'
         legend:
           $ref: '#/components/schemas/DashboardtypesLegend'
+        seriesOrder:
+          $ref: '#/components/schemas/DashboardtypesSeriesOrder'
         thresholds:
           items:
             $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
@@ -4152,6 +4154,11 @@ components:
       required:
       - queryValue
       type: object
+    DashboardtypesSeriesOrder:
+      enum:
+      - mean_desc
+      - definition
+      type: string
     DashboardtypesSource:
       enum:
       - user
@@ -4287,6 +4294,8 @@ components:
           $ref: '#/components/schemas/DashboardtypesPanelFormatting'
         legend:
           $ref: '#/components/schemas/DashboardtypesLegend'
+        seriesOrder:
+          $ref: '#/components/schemas/DashboardtypesSeriesOrder'
         thresholds:
           items:
             $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'

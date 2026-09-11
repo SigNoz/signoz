@@ -185,6 +185,7 @@ type TimeSeriesPanelSpec struct {
 	ChartAppearance TimeSeriesChartAppearance `json:"chartAppearance"`
 	Axes            Axes                      `json:"axes"`
 	Legend          Legend                    `json:"legend"`
+	SeriesOrder     SeriesOrder               `json:"seriesOrder"`
 	Thresholds      []ThresholdWithLabel      `json:"thresholds" validate:"dive"`
 }
 
@@ -201,6 +202,7 @@ type BarChartPanelSpec struct {
 	Formatting    PanelFormatting       `json:"formatting"`
 	Axes          Axes                  `json:"axes"`
 	Legend        Legend                `json:"legend"`
+	SeriesOrder   SeriesOrder           `json:"seriesOrder"`
 	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive"`
 }
 
@@ -424,6 +426,47 @@ func (m *LegendMode) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend mode %q: must be `list` or `table`", v)
+	}
+}
+
+// SeriesOrder decides the order series are drawn in, and with it the order the
+// legend lists them. `mean_desc` lets the data decide; `definition` pins the
+// order to the panel's own query list, so a stacked chart's segments stay in
+// the same place from one panel and one refresh to the next.
+type SeriesOrder struct{ valuer.String }
+
+var (
+	SeriesOrderMeanDesc   = SeriesOrder{valuer.NewString("mean_desc")} // default
+	SeriesOrderDefinition = SeriesOrder{valuer.NewString("definition")}
+)
+
+func (SeriesOrder) Enum() []any {
+	return []any{SeriesOrderMeanDesc, SeriesOrderDefinition}
+}
+
+func (so SeriesOrder) ValueOrDefault() string {
+	if so.IsZero() {
+		return SeriesOrderMeanDesc.StringValue()
+	}
+	return so.StringValue()
+}
+
+func (so SeriesOrder) MarshalJSON() ([]byte, error) {
+	return json.Marshal(so.ValueOrDefault())
+}
+
+func (so *SeriesOrder) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid series order: must be a string, one of `mean_desc` or `definition`")
+	}
+	val := SeriesOrder{valuer.NewString(v)}
+	switch val {
+	case SeriesOrderMeanDesc, SeriesOrderDefinition:
+		*so = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid series order %q: must be `mean_desc` or `definition`", v)
 	}
 }
 

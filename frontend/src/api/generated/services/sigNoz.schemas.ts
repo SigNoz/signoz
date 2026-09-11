@@ -4009,6 +4009,10 @@ export interface DashboardtypesLegendDTO {
 	position?: DashboardtypesLegendPositionDTO;
 }
 
+export enum DashboardtypesSeriesOrderDTO {
+	mean_desc = 'mean_desc',
+	definition = 'definition',
+}
 export interface DashboardtypesThresholdWithLabelDTO {
 	/**
 	 * @type string
@@ -4057,6 +4061,7 @@ export interface DashboardtypesBarChartPanelSpecDTO {
 	axes?: DashboardtypesAxesDTO;
 	formatting?: DashboardtypesPanelFormattingDTO;
 	legend?: DashboardtypesLegendDTO;
+	seriesOrder?: DashboardtypesSeriesOrderDTO;
 	/**
 	 * @type array,null
 	 */
@@ -4735,6 +4740,7 @@ export interface DashboardtypesTimeSeriesPanelSpecDTO {
 	chartAppearance?: DashboardtypesTimeSeriesChartAppearanceDTO;
 	formatting?: DashboardtypesPanelFormattingDTO;
 	legend?: DashboardtypesLegendDTO;
+	seriesOrder?: DashboardtypesSeriesOrderDTO;
 	/**
 	 * @type array,null
 	 */
