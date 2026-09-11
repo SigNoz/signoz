@@ -39,6 +39,9 @@ export const Default: Story = {};
 /** The rule id in the URL does not resolve, so the page offers the way back. */
 export const RuleNotFound: Story = {
 	args: { dataState: 'error' },
+	// The mocked rule request intentionally fails; the resulting console error is
+	// the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 };
 
 /**
