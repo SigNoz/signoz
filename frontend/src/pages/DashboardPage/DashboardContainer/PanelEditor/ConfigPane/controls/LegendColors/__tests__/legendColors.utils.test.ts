@@ -1,4 +1,4 @@
-import type { LegendSeries } from '../../../../utils/legendSeries';
+import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import {
 	clearSeriesColor,
 	filterLegendSeries,
