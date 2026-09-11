@@ -5,6 +5,7 @@ import {
 	NO_PANEL_ACTIONS,
 	type RenderablePanelDefinition,
 } from '../../types/panelDefinition';
+import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 
 /**
@@ -19,8 +20,10 @@ import Renderer from './Renderer';
 export const UNSUPPORTED_PANEL: RenderablePanelDefinition = {
 	kind: '<unsupported>' as RenderablePanelDefinition['kind'],
 	displayName: 'Unsupported panel',
+	mode: 'query',
 	icon: TriangleAlert,
 	Renderer,
+	EditorPane: QueryBuilderEditorPane,
 	sections: [],
 	supportedSignals: [],
 	supportedQueryTypes: [],

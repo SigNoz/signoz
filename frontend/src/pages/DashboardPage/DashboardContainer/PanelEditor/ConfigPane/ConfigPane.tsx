@@ -5,6 +5,7 @@ import type {
 	DashboardtypesPanelSpecDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+import { getSupportedSignals } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
 import type { EQueryType } from 'types/common/dashboard';
 
@@ -67,7 +68,7 @@ function ConfigPane({
 	const definition = getPanelDefinition(panelKind);
 	const sections = definition.sections;
 
-	const signal = resolveSignal(spec.queries, definition.supportedSignals[0]);
+	const signal = resolveSignal(spec.queries, getSupportedSignals(panelKind)[0]);
 
 	// Title/description are just a slice of the spec — edit them through the same
 	// onChangeSpec path the sections use, so there's a single editing surface.

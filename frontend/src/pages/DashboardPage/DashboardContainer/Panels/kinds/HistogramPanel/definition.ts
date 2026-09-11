@@ -1,6 +1,7 @@
 import { BarChart } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
+import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
 import {
@@ -12,8 +13,10 @@ import { EQueryType } from 'types/common/dashboard';
 export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
 	kind: 'signoz/HistogramPanel',
 	displayName: 'Histogram',
+	mode: 'query',
 	icon: BarChart,
 	Renderer,
+	EditorPane: QueryBuilderEditorPane,
 	sections,
 	supportedSignals: [
 		TelemetrytypesSignalDTO.metrics,
