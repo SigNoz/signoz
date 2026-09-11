@@ -47,6 +47,26 @@ import type {
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
+
 /**
  * This endpoint assigns a role to a service account
  * @summary Create service account role
@@ -257,7 +277,7 @@ export const getGetServiceAccountRoleQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getServiceAccountRole>>,
@@ -294,7 +314,7 @@ export function useGetServiceAccountRole<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -379,7 +399,7 @@ export function useListServiceAccounts<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -607,7 +627,7 @@ export const getGetServiceAccountQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getServiceAccount>>,
@@ -644,7 +664,7 @@ export function useGetServiceAccount<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -809,7 +829,7 @@ export const getListServiceAccountKeysQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof listServiceAccountKeys>>,
@@ -847,7 +867,7 @@ export function useListServiceAccountKeys<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1192,7 +1212,7 @@ export const getGetServiceAccountRolesQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getServiceAccountRoles>>,
@@ -1230,7 +1250,7 @@ export function useGetServiceAccountRoles<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1315,7 +1335,7 @@ export function useGetMyServiceAccount<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**

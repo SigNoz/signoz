@@ -72,6 +72,26 @@ import type {
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
+
 /**
  * This endpoint deletes the public sharing config and disables the public sharing of a dashboard
  * @summary Delete public dashboard
@@ -198,7 +218,7 @@ export const getGetPublicDashboardQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getPublicDashboard>>,
@@ -235,7 +255,7 @@ export function useGetPublicDashboard<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -500,7 +520,7 @@ export const getGetPublicDashboardDataQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getPublicDashboardData>>,
@@ -538,7 +558,7 @@ export function useGetPublicDashboardData<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -605,7 +625,7 @@ export const getGetPublicDashboardWidgetQueryRangeQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!(id && idx),
+		enabled: id !== null && id !== undefined && idx !== null && idx !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>,
@@ -646,7 +666,7 @@ export function useGetPublicDashboardWidgetQueryRange<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -731,7 +751,7 @@ export function useListDashboardViews<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1091,7 +1111,7 @@ export function useListDashboardsV2<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1317,7 +1337,7 @@ export const getGetDashboardV2QueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getDashboardV2>>,
@@ -1354,7 +1374,7 @@ export function useGetDashboardV2<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1933,7 +1953,7 @@ export const getGetSystemDashboardQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!name,
+		enabled: name !== null && name !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getSystemDashboard>>,
@@ -1970,7 +1990,7 @@ export function useGetSystemDashboard<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -2035,7 +2055,7 @@ export const getGetPublicDashboardDataV2QueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getPublicDashboardDataV2>>,
@@ -2073,7 +2093,7 @@ export function useGetPublicDashboardDataV2<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -2147,7 +2167,7 @@ export const getGetPublicDashboardPanelQueryRangeV2QueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!(id && key),
+		enabled: id !== null && id !== undefined && key !== null && key !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>,
@@ -2190,7 +2210,7 @@ export function useGetPublicDashboardPanelQueryRangeV2<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -2295,7 +2315,7 @@ export function useListDashboardsForUserV2<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
