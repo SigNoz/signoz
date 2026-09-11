@@ -76,13 +76,17 @@ const selectFirstQuickFilterValue = async (
 		return found;
 	}, untilLoaded);
 
-	const [filter] = await within(panel).findAllByRole(
-		'checkbox',
+	// The V2 checkbox panel starts with every value selected, so its checkbox only
+	// toggles an exclusion. The value's own label is what selects it on its own
+	// ("Only"), which is the state this story shows.
+	const [row] = await within(panel).findAllByTestId(
+		/^checkbox-value-row-/,
 		undefined,
 		untilLoaded,
 	);
 
-	await userEvent.click(filter);
+	await userEvent.click(within(row).getAllByRole('button')[0]);
+
 	// The panel re-renders around the new query, so the checkbox is looked up
 	// again on every attempt rather than held from before the click.
 	await waitFor(

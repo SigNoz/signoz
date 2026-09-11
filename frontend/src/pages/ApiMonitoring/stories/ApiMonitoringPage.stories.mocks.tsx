@@ -24,6 +24,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
 import {
@@ -314,6 +315,15 @@ export const apiMonitoringMocks = defineStoryMocks({
 						QUICK_FILTER_VALUES[req.url.searchParams.get('attributeKey') ?? ''] ?? [],
 				},
 			})),
+		),
+
+		rest.get(
+			'http://localhost/api/v1/fields/values',
+			response.json((req) =>
+				fieldValuesResponse(
+					QUICK_FILTER_VALUES[req.url.searchParams.get('name') ?? ''] ?? [],
+				),
+			),
 		),
 
 		// Every widget in the drawer asks the same endpoint, so what a request is
