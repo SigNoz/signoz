@@ -30,6 +30,15 @@ func TestBuilderQueryForSignal(t *testing.T) {
 		Type: qbtypes.QueryTypePromQL,
 		Spec: qbtypes.PromQuery{Name: "C"},
 	}
+	aiTraceQuery := qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilderAI,
+		Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Name:    "D",
+			Signal:  telemetrytypes.SignalTraces,
+			Filter:  &qbtypes.Filter{Expression: "trace.input_tokens > 1000"},
+			GroupBy: []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "session.id"}}},
+		},
+	}
 
 	t.Run("logs query among mixed queries", func(t *testing.T) {
 		filterExpr, groupBy, found := BuilderQueryForSignal([]qbtypes.QueryEnvelope{promQuery, logQuery, traceQuery}, telemetrytypes.SignalLogs)
@@ -44,6 +53,14 @@ func TestBuilderQueryForSignal(t *testing.T) {
 		require.True(t, found)
 		assert.Empty(t, filterExpr)
 		assert.Empty(t, groupBy)
+	})
+
+	t.Run("ai trace query counts as traces", func(t *testing.T) {
+		filterExpr, groupBy, found := BuilderQueryForSignal([]qbtypes.QueryEnvelope{logQuery, aiTraceQuery}, telemetrytypes.SignalTraces)
+		require.True(t, found)
+		assert.Equal(t, "trace.input_tokens > 1000", filterExpr)
+		require.Len(t, groupBy, 1)
+		assert.Equal(t, "session.id", groupBy[0].Name)
 	})
 
 	t.Run("no builder query for signal", func(t *testing.T) {

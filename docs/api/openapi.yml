@@ -8349,6 +8349,8 @@ components:
           $ref: '#/components/schemas/RuletypesAlertState'
         overallStateChanged:
           type: boolean
+        relatedAITracesLink:
+          type: string
         relatedLogsLink:
           type: string
         relatedTracesLink:
@@ -8392,6 +8394,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5Label'
           nullable: true
           type: array
+        relatedAITracesLink:
+          type: string
         relatedLogsLink:
           type: string
         relatedTracesLink:
@@ -8497,6 +8501,7 @@ components:
       - TRACES_BASED_ALERT
       - LOGS_BASED_ALERT
       - EXCEPTIONS_BASED_ALERT
+      - AI_TRACES_BASED_ALERT
       type: string
     RuletypesBasicRuleThreshold:
       properties:

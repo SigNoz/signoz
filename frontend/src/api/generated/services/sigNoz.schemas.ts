@@ -9613,6 +9613,10 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type string
 	 */
+	relatedAITracesLink?: string;
+	/**
+	 * @type string
+	 */
 	relatedLogsLink?: string;
 	/**
 	 * @type string
@@ -9658,6 +9662,10 @@ export interface RulestatehistorytypesGettableRuleStateHistoryContributorDTO {
 	 * @type array,null
 	 */
 	labels: Querybuildertypesv5LabelDTO[] | null;
+	/**
+	 * @type string
+	 */
+	relatedAITracesLink?: string;
 	/**
 	 * @type string
 	 */
@@ -9753,6 +9761,7 @@ export enum RuletypesAlertTypeDTO {
 	TRACES_BASED_ALERT = 'TRACES_BASED_ALERT',
 	LOGS_BASED_ALERT = 'LOGS_BASED_ALERT',
 	EXCEPTIONS_BASED_ALERT = 'EXCEPTIONS_BASED_ALERT',
+	AI_TRACES_BASED_ALERT = 'AI_TRACES_BASED_ALERT',
 }
 export enum RuletypesMatchTypeDTO {
 	at_least_once = 'at_least_once',
