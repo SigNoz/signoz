@@ -49,14 +49,21 @@ export const QueueDetails: Story = {
 		// Every row opens the same panel, so the first one will do. The header row
 		// and antd's zero-height measuring row both answer to the row role, and the
 		// header is there before the fetch returns, so waiting on the role alone
-		// resolves against a table that has no data in it yet.
+		// resolves against a table that has no data in it yet. The measuring row is
+		// non-interactive, so it is excluded along with anything a loading mask has
+		// left without pointer events.
 		const firstRow = await waitFor(() => {
 			const [row] = within(canvasElement)
 				.getAllByRole('row')
-				.filter((candidate) => candidate.classList.contains('ant-table-row'));
+				.filter(
+					(candidate) =>
+						candidate.classList.contains('ant-table-row') &&
+						!candidate.classList.contains('ant-table-measure-row') &&
+						getComputedStyle(candidate).pointerEvents !== 'none',
+				);
 
 			if (!row) {
-				throw new Error('the queue table has not rendered a row yet');
+				throw new Error('the queue table has not rendered a clickable row yet');
 			}
 
 			return row;
