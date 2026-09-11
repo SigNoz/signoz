@@ -22,42 +22,6 @@ type PromotePath struct {
 	Indexes []WrappedIndex `json:"indexes,omitempty"`
 }
 
-// Target identifies a promotion domain: the column evolution entry recorded
-// for each promoted path, the table per-path indexes are created on, and the
-// path rules enforced by the API.
-type Target struct {
-	// Entry templates the column evolution row recorded per promoted path:
-	// signal, promoted column name and type, and field context. FieldName
-	// and ReleaseTime are filled in per write.
-	Entry telemetrytypes.EvolutionEntry
-
-	// DBName and LocalTableName hold the table per-path indexes are created
-	// on. They are index DDL config, not part of the evolution record, and
-	// are used only when IndexesSupported.
-	DBName         string
-	LocalTableName string
-
-	// BaseColumn holds every path. Indexes are created on the promoted
-	// column for promoted paths and on BaseColumn otherwise.
-	BaseColumn string
-
-	// RequiredPathPrefix is the prefix paths must carry in the API ("body."
-	// for the logs body); it is stripped before storing. Empty for bare
-	// names (trace attributes).
-	RequiredPathPrefix string
-
-	// IndexesSupported reports whether per-path skip indexes can be created
-	// for this target. Index support is optional: a target may support
-	// promotion only.
-	IndexesSupported bool
-}
-
-func (t Target) PromotedColumn() string { return t.Entry.ColumnName }
-
-func (t Target) BaseColumnPrefix() string { return t.BaseColumn + "." }
-
-func (t Target) PromotedColumnPrefix() string { return t.PromotedColumn() + "." }
-
 func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 	if i.Path == "" {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path is required")
