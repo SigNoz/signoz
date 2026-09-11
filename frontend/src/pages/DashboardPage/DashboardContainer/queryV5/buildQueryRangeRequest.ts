@@ -276,6 +276,16 @@ export function buildQueryRangeRequest({
 	};
 }
 
+/**
+ * Query names in the order the panel defines them, formulas and trace operators included.
+ * Ranks series when the panel pins its series order to its own definition.
+ */
+export function extractQueryNames(queries: DashboardtypesQueryDTO[]): string[] {
+	return toQueryEnvelopes(queries)
+		.map((envelope) => (envelope.spec as QuerySpecView | undefined)?.name)
+		.filter((name): name is string => !!name);
+}
+
 /** queryName → legend for every envelope that carries one, for legend resolution. */
 export function extractLegendMap(
 	queries: DashboardtypesQueryDTO[],

@@ -5,6 +5,7 @@ import {
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesPanelSpecDTO,
+	DashboardtypesSeriesOrderDTO,
 	DashboardtypesThresholdFormatDTO,
 	DashboardtypesTextAlignDTO,
 	DashboardtypesTimePreferenceDTO,
@@ -189,9 +190,14 @@ const SECTION_SEEDS: SectionSeeds = {
 		seed: (controls, { oldPluginSpec }): SectionSpecMap[SectionKind.Legend] => {
 			const old = oldPluginSpec?.legend;
 			// customColors is keyed by series label, which the new kind may not reproduce.
-			return controls.position
-				? { position: old?.position ?? DashboardtypesLegendPositionDTO.bottom }
-				: {};
+			return {
+				...(controls.position && {
+					position: old?.position ?? DashboardtypesLegendPositionDTO.bottom,
+				}),
+				...(controls.seriesOrder && {
+					seriesOrder: old?.seriesOrder ?? DashboardtypesSeriesOrderDTO.mean_desc,
+				}),
+			};
 		},
 	},
 	[SectionKind.ChartAppearance]: {

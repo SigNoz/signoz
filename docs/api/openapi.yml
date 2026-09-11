@@ -3614,6 +3614,8 @@ components:
           $ref: '#/components/schemas/DashboardtypesLegendMode'
         position:
           $ref: '#/components/schemas/DashboardtypesLegendPosition'
+        seriesOrder:
+          $ref: '#/components/schemas/DashboardtypesSeriesOrder'
       type: object
     DashboardtypesLegendMode:
       enum:
@@ -4234,6 +4236,11 @@ components:
       required:
       - queryValue
       type: object
+    DashboardtypesSeriesOrder:
+      enum:
+      - mean_desc
+      - definition
+      type: string
     DashboardtypesSource:
       enum:
       - user

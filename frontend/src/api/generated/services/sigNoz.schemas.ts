@@ -4045,6 +4045,10 @@ export enum DashboardtypesLegendPositionDTO {
 	bottom = 'bottom',
 	right = 'right',
 }
+export enum DashboardtypesSeriesOrderDTO {
+	mean_desc = 'mean_desc',
+	definition = 'definition',
+}
 export type DashboardtypesLegendDTOCustomColorsAnyOf = {
 	[key: string]: string;
 };
@@ -4062,6 +4066,7 @@ export interface DashboardtypesLegendDTO {
 	customColors?: DashboardtypesLegendDTOCustomColors;
 	mode?: DashboardtypesLegendModeDTO;
 	position?: DashboardtypesLegendPositionDTO;
+	seriesOrder?: DashboardtypesSeriesOrderDTO;
 }
 
 export interface DashboardtypesThresholdWithLabelDTO {
