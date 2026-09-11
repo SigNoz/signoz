@@ -47,11 +47,18 @@ export const Loading: Story = {
 /** Error: a failed roles list uses the table's inline error branch. */
 export const LoadError: Story = {
 	args: { dataState: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
 };
 
-/** Density: every supported custom-role fixture renders beside the managed roles. */
+/**
+ * Density: every supported custom-role fixture renders beside the managed roles.
+ * It follows `LoadError`, whose deliberate 500 on the same endpoint can land
+ * while this story is running, so the opt-out covers the attribution as well.
+ */
 export const MaximumCustomRoles: Story = {
 	args: { customRoles: 8 },
+	parameters: { allowConsoleErrors: true },
 };
 
 /**
