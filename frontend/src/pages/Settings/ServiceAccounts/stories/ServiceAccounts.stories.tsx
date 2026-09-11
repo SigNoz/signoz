@@ -80,9 +80,19 @@ export const Searched: Story = {
 /** Interaction: the status menu is open with its active and deleted counts. */
 export const FilterMenuOpen: Story = {
 	play: async (): Promise<void> => {
-		await userEvent.click(
-			await screen.findByText(/all accounts/i, undefined, untilLoaded),
-		);
+		// The trigger is disabled until the list and its permission check answer, so
+		// waiting on the text alone lands on a button that drops the click.
+		const trigger = await waitFor(() => {
+			const button = screen.getByRole('button', { name: /all accounts/i });
+
+			if ((button as HTMLButtonElement).disabled) {
+				throw new Error('the filter trigger is still disabled');
+			}
+
+			return button;
+		}, untilLoaded);
+
+		await userEvent.click(trigger);
 		// Every active row carries an ACTIVE badge, so the menu option is matched on
 		// its own count suffix.
 		await screen.findByText(/^active ⎯/i, undefined, untilLoaded);
@@ -101,7 +111,8 @@ export const LoadError: Story = {
 
 /** An account opened up: the name and the roles it acts under. */
 export const AccountOverview: Story = {
-	parameters: at(`account=${ACCOUNT}`),
+	// The deliberate 500 is the state under test.
+	parameters: { ...at(`account=${ACCOUNT}`), allowConsoleErrors: true },
 };
 
 /**
@@ -132,7 +143,8 @@ export const AssignRoles: Story = {
  */
 export const SaveFailed: Story = {
 	args: { saveOutcome: 'fails' },
-	parameters: at(`account=${ACCOUNT}`),
+	// The deliberate 500 is the state under test.
+	parameters: { ...at(`account=${ACCOUNT}`), allowConsoleErrors: true },
 	play: async (): Promise<void> => {
 		await userEvent.type(
 			await screen.findByDisplayValue('ci-pipeline', undefined, untilLoaded),
