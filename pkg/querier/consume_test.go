@@ -281,6 +281,41 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 		assert.Equal(t, []any{float64(1), float64(2)}, attrs["http.codes"])
 	})
 
+	t.Run("array of maps stays a native leaf, not the collector's string form", func(t *testing.T) {
+		// Divergence from the legacy home, pinned deliberately: a top-level array
+		// attribute lands in attributes_string as the JSON-encoded string
+		// [{"a":1},{"b":2}] (collector: pcommon Value.AsString on a slice), while the
+		// JSON column stores it natively. Reading the JSON home surfaces the typed
+		// array; we do not stringify it to mimic the map home.
+		data := map[string]any{
+			"attributes":       telemetrystoretypes.JSONValue{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
+			"resources_string": map[string]string{"service.name": "api"},
+		}
+
+		mergeSpanAttributeColumns(data)
+
+		attrs := data["attributes"].(map[string]any)
+		assert.Equal(t, []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}, attrs["key"])
+	})
+
+	t.Run("array of maps nested inside a map stays a native leaf, not the collector's index paths", func(t *testing.T) {
+		// Divergence from the legacy home, pinned deliberately: the collector's
+		// flatten.FlattenJSON descends into arrays nested in a map-valued attribute
+		// using the element index as a path segment (http.items.0.a), while reading
+		// the JSON home keeps the array whole at its dotted key.
+		data := map[string]any{
+			"attributes":       telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
+			"resources_string": map[string]string{"service.name": "api"},
+		}
+
+		mergeSpanAttributeColumns(data)
+
+		attrs := data["attributes"].(map[string]any)
+		assert.Equal(t, []any{map[string]any{"a": float64(1)}}, attrs["http.items"])
+		_, exploded := attrs["http.items.0.a"]
+		assert.False(t, exploded, "index path segments are a collector flattening artifact and must not appear")
+	})
+
 	t.Run("json null is kept as a nil value (never emitted by ClickHouse JSON; defensive pin)", func(t *testing.T) {
 		data := map[string]any{
 			"attributes":       telemetrystoretypes.JSONValue{"k": nil},
