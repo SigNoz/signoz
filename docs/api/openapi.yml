@@ -3536,6 +3536,11 @@ components:
       - tags
       - spec
       type: object
+    DashboardtypesHeaderOptions:
+      properties:
+        hide:
+          type: boolean
+      type: object
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
@@ -3893,6 +3898,7 @@ components:
           signoz/NumberPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
           signoz/PieChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
           signoz/TablePanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
+          signoz/TextPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
           signoz/TimeSeriesPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
         propertyName: kind
       oneOf:
@@ -3903,6 +3909,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -3913,6 +3920,7 @@ components:
       - signoz/TablePanel
       - signoz/HistogramPanel
       - signoz/ListPanel
+      - signoz/TextPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec:
       properties:
@@ -3982,6 +3990,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesTablePanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/TextPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesTextPanelSpec'
       required:
       - kind
       - spec
@@ -4277,6 +4297,37 @@ components:
       - color
       - columnName
       type: object
+    DashboardtypesTextAlign:
+      enum:
+      - left
+      - center
+      - right
+      type: string
+    DashboardtypesTextMode:
+      enum:
+      - markdown
+      type: string
+    DashboardtypesTextPanelSpec:
+      properties:
+        headerOptions:
+          $ref: '#/components/schemas/DashboardtypesHeaderOptions'
+        mode:
+          $ref: '#/components/schemas/DashboardtypesTextMode'
+        presentation:
+          $ref: '#/components/schemas/DashboardtypesTextPresentation'
+        text:
+          type: string
+      type: object
+    DashboardtypesTextPresentation:
+      properties:
+        background:
+          nullable: true
+          type: string
+        textAlign:
+          $ref: '#/components/schemas/DashboardtypesTextAlign'
+        verticalAlign:
+          $ref: '#/components/schemas/DashboardtypesVerticalAlign'
+      type: object
     DashboardtypesTextVariableSpec:
       properties:
         constant:
@@ -4486,6 +4537,12 @@ components:
       - kind
       - spec
       type: object
+    DashboardtypesVerticalAlign:
+      enum:
+      - top
+      - center
+      - bottom
+      type: string
     ErrorsJSON:
       properties:
         code:

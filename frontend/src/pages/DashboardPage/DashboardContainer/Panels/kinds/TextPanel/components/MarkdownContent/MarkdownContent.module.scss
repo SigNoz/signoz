@@ -1,4 +1,4 @@
-@use '../../../../../../styles/scrollbar' as *;
+@use '../../../../../../../../styles/scrollbar' as *;
 
 // Style isolation: the subtree is rolled back to user-agent styling, so no global
 // rule reaches the rendered body and the rules below are the only author styles that
@@ -15,12 +15,20 @@
 	box-sizing: border-box;
 }
 
+// Sourced from the panel's ink when it has one — the Robin link colour and the
+// neutral muted tone hold no contrast on a coloured surface — and from the theme
+// token when it does not, which is byte-identical to before.
 .content.content {
-	--md-foreground: var(--text-vanilla-100);
-	--md-muted: var(--text-neutral-dark-100);
-	--md-link: var(--text-robin-400);
-	--md-border: var(--l1-border);
-	--md-surface: color-mix(in srgb, var(--l1-foreground) 6%, transparent);
+	--md-foreground: var(--text-panel-ink, var(--text-vanilla-100));
+	--md-muted: var(--text-panel-ink-secondary, var(--text-neutral-dark-100));
+	--md-link: var(--text-panel-ink, var(--text-robin-400));
+	--md-link-decoration: var(--text-panel-link-decoration, none);
+	--md-border: var(--text-panel-border, var(--l1-border));
+	--md-surface: color-mix(
+		in srgb,
+		var(--text-panel-ink, var(--l1-foreground)) 6%,
+		transparent
+	);
 	--md-code-comment: var(--text-neutral-dark-200);
 	--md-code-punctuation: var(--text-neutral-dark-100);
 	--md-code-keyword: var(--text-sakura-400);
@@ -41,9 +49,9 @@
 }
 
 :global(body.lightMode) .content.content {
-	--md-foreground: var(--text-ink-400);
-	--md-muted: var(--text-neutral-light-100);
-	--md-link: var(--text-robin-500);
+	--md-foreground: var(--text-panel-ink, var(--text-ink-400));
+	--md-muted: var(--text-panel-ink-secondary, var(--text-neutral-light-100));
+	--md-link: var(--text-panel-ink, var(--text-robin-500));
 	--md-code-comment: var(--text-neutral-light-100);
 	--md-code-punctuation: var(--text-neutral-light-100);
 	--md-code-keyword: var(--text-sakura-600);
@@ -166,7 +174,7 @@
 
 .content.content a {
 	color: var(--md-link);
-	text-decoration: none;
+	text-decoration: var(--md-link-decoration);
 
 	&:hover,
 	&:focus-visible {

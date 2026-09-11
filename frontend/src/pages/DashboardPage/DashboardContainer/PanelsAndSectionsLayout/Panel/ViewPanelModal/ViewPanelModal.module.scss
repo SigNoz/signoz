@@ -61,28 +61,8 @@
 	width: 240px;
 }
 
-// Static-kind modal body: toolbar, live panel, editor pane.
-.staticToolbar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-	padding: 8px 0;
-}
-
-.staticPreview {
-	display: flex;
-	flex-direction: column;
-	flex: 1 1 55%;
-	min-height: 0;
-	border: 1px solid var(--l2-border);
-	border-radius: 4px;
-	background: var(--l2-background);
-	overflow: hidden;
-}
-
-.staticEditorPane {
-	flex: 1 1 45%;
-	min-height: 0;
-	margin-top: 12px;
+// The markdown editor fills its container (CodeMirror), unlike the
+// content-sized query builder — give the static editor slot a fixed share.
+.staticEditor {
+	flex: 0 0 30vh;
 }

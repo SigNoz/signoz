@@ -1,8 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	TEXT_BACKGROUND_PAIRS,
+	TRANSPARENT_BACKGROUND,
+} from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/presets';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { usePanelQuery } from 'pages/DashboardPage/DashboardContainer/hooks/usePanelQuery';
-import { EMPTY_PANEL_QUERY_DATA } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import Panel from '../Panel';
 
@@ -26,6 +29,10 @@ jest.mock('../PanelBody/PanelBody', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="query-panel-body" />,
 }));
+jest.mock('../PanelActionsMenu/PanelActionsMenu', () => ({
+	__esModule: true,
+	default: (): JSX.Element => <div data-testid="panel-actions-menu" />,
+}));
 jest.mock('../hooks/useDrilldown', () => ({
 	useDrilldown: (): unknown => ({
 		onPanelClick: jest.fn(),
@@ -43,6 +50,13 @@ jest.mock('periscope/components/ContextMenu', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
+// Reaches react-query for the dashboard patch; this file renders without providers.
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/Panels/hooks/useUpdatePanelText',
+	() => ({
+		useUpdatePanelText: (): undefined => undefined,
+	}),
+);
 
 const mockUsePanelQuery = usePanelQuery as jest.Mock;
 const mockGetPanelDefinition = getPanelDefinition as jest.Mock;
@@ -74,7 +88,7 @@ describe('Panel — authoring-mode fork', () => {
 	beforeEach(() => {
 		mockUsePanelQuery.mockReset();
 		mockUsePanelQuery.mockReturnValue({
-			data: EMPTY_PANEL_QUERY_DATA,
+			data: { response: undefined, requestPayload: undefined, legendMap: {} },
 			isFetching: false,
 			isPreviousData: false,
 			error: null,
@@ -101,6 +115,27 @@ describe('Panel — authoring-mode fork', () => {
 		expect(mockUsePanelQuery).not.toHaveBeenCalled();
 	});
 
+	it('swaps a hidden header for the floating drag pill + actions menu', () => {
+		mockGetPanelDefinition.mockReturnValueOnce(staticDefinition);
+		const hiddenHeaderPanel = {
+			...panel,
+			spec: {
+				...panel.spec,
+				plugin: {
+					kind: 'signoz/TimeSeriesPanel',
+					spec: { headerOptions: { hide: true } },
+				},
+			},
+		} as unknown as DashboardtypesPanelDTO;
+
+		render(<Panel panel={hiddenHeaderPanel} panelId="p1" />);
+
+		expect(screen.queryByTestId('panel-header')).not.toBeInTheDocument();
+		const dragHandle = screen.getByTestId('hidden-header-drag-handle');
+		expect(dragHandle).toHaveClass('panel-drag-handle');
+		expect(screen.getByTestId('panel-actions-menu')).toBeInTheDocument();
+	});
+
 	it('renders the static body in dashboard-view mode with panel chrome', () => {
 		mockGetPanelDefinition.mockReturnValueOnce(staticDefinition);
 
@@ -111,5 +146,62 @@ describe('Panel — authoring-mode fork', () => {
 			'DASHBOARD_VIEW',
 		);
 		expect(screen.getByTestId('panel-header')).toBeInTheDocument();
+	});
+
+	describe('text background', () => {
+		function textPanelWith(background?: string): DashboardtypesPanelDTO {
+			return {
+				...panel,
+				spec: {
+					...panel.spec,
+					plugin: {
+						kind: 'signoz/TextPanel',
+						spec: { text: '', presentation: { background } },
+					},
+				},
+			} as unknown as DashboardtypesPanelDTO;
+		}
+
+		function renderPanel(target: DashboardtypesPanelDTO): HTMLElement {
+			mockGetPanelDefinition.mockReturnValueOnce(staticDefinition);
+			const { container } = render(<Panel panel={target} panelId="p1" />);
+			return container.querySelector('[data-panel-root="p1"]') as HTMLElement;
+		}
+
+		// The header is `headerOptions`' business alone: a transparent panel keeps its
+		// title bar, and drops the card by painting the surface rather than by class.
+		it('keeps the title bar for a zero-alpha background', () => {
+			const root = renderPanel(textPanelWith(TRANSPARENT_BACKGROUND));
+
+			expect(screen.getByTestId('panel-header')).toBeInTheDocument();
+			expect(root.style.getPropertyValue('--text-panel-surface')).toBe(
+				'transparent',
+			);
+			expect(root.style.getPropertyValue('--text-panel-border')).toBe(
+				'transparent',
+			);
+		});
+
+		it('keeps the card and hands down the pair for a preset', () => {
+			const root = renderPanel(
+				textPanelWith(TEXT_BACKGROUND_PAIRS.forest.dark.surface),
+			);
+
+			expect(root.style.getPropertyValue('--text-panel-surface')).toBe(
+				TEXT_BACKGROUND_PAIRS.forest.dark.surface,
+			);
+			expect(root.style.getPropertyValue('--text-panel-ink')).toBe(
+				TEXT_BACKGROUND_PAIRS.forest.dark.ink,
+			);
+			expect(screen.getByTestId('panel-header')).toBeInTheDocument();
+		});
+
+		// Chart kinds are out of scope: the card keeps its own tokens.
+		it('sets no custom properties for a panel with no background', () => {
+			const root = renderPanel(panel);
+
+			expect(root.style.getPropertyValue('--text-panel-surface')).toBe('');
+			expect(screen.getByTestId('panel-header')).toBeInTheDocument();
+		});
 	});
 });

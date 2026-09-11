@@ -114,8 +114,8 @@ func (d *DashboardSpec) validatePanels() error {
 			return err
 		}
 		panelKind := panel.Spec.Plugin.Kind
-		if len(panel.Spec.Queries) != 1 {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have one query, found %d", path, len(panel.Spec.Queries))
+		if err := validatePanelQueryCount(panel.Spec.Queries, panelKind, path); err != nil {
+			return err
 		}
 		allowed := allowedQueryKinds[panelKind]
 		for qi, q := range panel.Spec.Queries {
@@ -123,6 +123,22 @@ func (d *DashboardSpec) validatePanels() error {
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+func validatePanelQueryCount(queries []Query, panelKind PanelPluginKind, path string) error {
+	if queries == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: is required and must not be null; use [] for a panel that renders without a query", path)
+	}
+	if panelKind.rendersWithoutQuery() {
+		if len(queries) != 0 {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel kind %q renders without a query and must have queries: [], found %d", path, panelKind, len(queries))
+		}
+		return nil
+	}
+	if len(queries) != 1 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have one query, found %d", path, len(queries))
 	}
 	return nil
 }

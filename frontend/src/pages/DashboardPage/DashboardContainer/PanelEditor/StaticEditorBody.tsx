@@ -1,11 +1,8 @@
 import { useCallback } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import { PanelMode } from 'lib/visualization/panels/types';
-import StaticPanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/StaticPanelBody/StaticPanelBody';
-import PanelHeader from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
 import type { RenderableStaticPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
-import { EMPTY_PANEL_QUERY_DATA } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { EQueryType } from 'types/common/dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 
@@ -16,11 +13,11 @@ import Header from './Header/Header';
 import PanelEditorLayout, {
 	PANE_SPLIT,
 } from './PanelEditorLayout/PanelEditorLayout';
+import PreviewPane from './PreviewPane/PreviewPane';
 import type { PanelEditorContainerProps } from './index';
 import type { PanelEditorDraftApi } from './types';
+import { withPanelText } from '../Panels/utils/withPanelText';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
-
-import styles from './PanelEditor.module.scss';
 
 interface StaticEditorBodyProps extends PanelEditorContainerProps {
 	draftApi: PanelEditorDraftApi;
@@ -51,7 +48,7 @@ function StaticEditorBody({
 		useDashboardEditContext();
 
 	const { draft, spec, setSpec, isSpecDirty } = draftApi;
-	const { EditorPane, Renderer } = panelDefinition;
+	const { EditorPane } = panelDefinition;
 
 	const { save, isSaving } = usePanelEditorSave({
 		dashboardId,
@@ -80,6 +77,11 @@ function StaticEditorBody({
 		}
 	}, [isEditable, save, draft.spec, setScrollTargetId, onSaved, showErrorModal]);
 
+	const onChangeText = useCallback(
+		(text: string): void => setSpec(withPanelText(spec, text)),
+		[spec, setSpec],
+	);
+
 	const onCloseEditor = useCallback((): void => {
 		if (!isNew) {
 			setScrollTargetId(panelId);
@@ -103,22 +105,14 @@ function StaticEditorBody({
 				/>
 			}
 			preview={
-				<div className={styles.staticPreviewSurface}>
-					<PanelHeader
-						panelId={panelId}
-						panel={draft}
-						data={EMPTY_PANEL_QUERY_DATA}
-						isFetching={false}
-						error={null}
-						hideActions
-					/>
-					<StaticPanelBody
-						Renderer={Renderer}
-						panel={draft}
-						panelId={panelId}
-						panelMode={PanelMode.DASHBOARD_EDIT}
-					/>
-				</div>
+				<PreviewPane
+					mode="static"
+					panelId={panelId}
+					panel={draft}
+					panelDefinition={panelDefinition}
+					panelMode={PanelMode.DASHBOARD_EDIT}
+					onChangeText={isEditable ? onChangeText : undefined}
+				/>
 			}
 			editor={<EditorPane spec={spec} onChangeSpec={setSpec} />}
 			config={

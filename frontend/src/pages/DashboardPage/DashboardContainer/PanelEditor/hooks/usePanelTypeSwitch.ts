@@ -19,10 +19,7 @@ import type {
 } from 'types/api/queryBuilder/queryBuilderData';
 
 import { isStaticPanelKind, resolveQueryType } from '../../Panels/capabilities';
-import {
-	PANEL_KIND_TO_PANEL_TYPE,
-	type PanelKind,
-} from '../../Panels/types/panelKind';
+import { toPanelType, type PanelKind } from '../../Panels/types/panelKind';
 import { getBuilderQueries } from '../../Panels/utils/getBuilderQueries';
 import { toPerses } from '../../queryV5/persesQueryAdapters';
 import {
@@ -110,7 +107,7 @@ export function usePanelTypeSwitch({
 				builderQuery: query,
 			});
 
-			const newPanelType = PANEL_KIND_TO_PANEL_TYPE[newKind];
+			const newPanelType = toPanelType(newKind);
 
 			// Only `plugin` needs a cast: it's a discriminated union over `kind`, and a
 			// dynamically-chosen kind can't be correlated with its spec statically (as in

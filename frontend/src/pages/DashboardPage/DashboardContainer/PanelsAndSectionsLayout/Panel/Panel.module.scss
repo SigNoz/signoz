@@ -1,10 +1,52 @@
 .panel {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	width: 100%;
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
+	background: var(--text-panel-surface, var(--l2-background));
+	border: 1px solid var(--text-panel-border, var(--l2-border));
 	border-radius: 4px;
+	// Inherits into the header and the body, so no descendant names a colour.
+	color: var(--text-panel-ink, inherit);
 	overflow: hidden;
+}
+
+// `headerOptions.hide`: hover floats in the drag pill + actions menu, so a
+// headerless panel can still be moved and edited.
+.hiddenHeaderControls {
+	position: absolute;
+	inset: 0 0 auto;
+	z-index: 2;
+	height: 36px;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding-top: 8px;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease;
+}
+
+// The open-menu case: the dropdown is a portal, so hovering it un-hovers the
+// panel — without this the trigger fades while its menu stays up.
+.panel:hover .hiddenHeaderControls,
+.hiddenHeaderControls:focus-within,
+.hiddenHeaderControls:has([data-state='open']) {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.dragPill {
+	width: 64px;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--text-panel-grip, var(--l2-border));
+	cursor: grab;
+}
+
+.floatingActions {
+	position: absolute;
+	top: 4px;
+	right: 8px;
 }

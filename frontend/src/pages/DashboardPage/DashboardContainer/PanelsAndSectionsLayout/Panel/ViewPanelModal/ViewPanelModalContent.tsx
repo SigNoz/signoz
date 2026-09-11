@@ -10,7 +10,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { usePanelEditorDraft } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelEditorDraft';
 import { usePanelTypeSwitch } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelTypeSwitch';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { buildViewPanelSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/buildViewPanelSpec';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 
@@ -60,8 +60,7 @@ function ViewPanelModalContent({
 						spec: buildViewPanelSpec({
 							spec: baseSpec,
 							query: compositeQuery,
-							panelType:
-								urlGraphType ?? PANEL_KIND_TO_PANEL_TYPE[baseSpec.plugin.kind],
+							panelType: urlGraphType ?? toPanelType(baseSpec.plugin.kind),
 						}),
 					}
 				: { ...panel, spec: baseSpec };
@@ -76,7 +75,7 @@ function ViewPanelModalContent({
 
 	const { onChangePanelKind } = usePanelTypeSwitch({
 		spec: draftApi.draft.spec,
-		panelType: PANEL_KIND_TO_PANEL_TYPE[draftKind],
+		panelType: toPanelType(draftKind),
 		setSpec: draftApi.setSpec,
 	});
 
