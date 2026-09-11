@@ -1,8 +1,11 @@
 package querier
 
 import (
+	"fmt"
 	"math"
 	"slices"
+	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -25,6 +28,25 @@ func isValidBucketBounds(bounds bucketBounds) bool {
 		!math.IsInf(bounds.Upper, -1) && bounds.Lower < bounds.Upper
 }
 
+type heatmapAxisBucketDetails struct {
+	bounds bucketBounds
+	labels []*qbtypes.Label
+	ts     int64
+}
+
+func (b heatmapAxisBucketDetails) describe() string {
+	at := time.UnixMilli(b.ts).UTC().Format(time.RFC3339)
+	if len(b.labels) == 0 {
+		return at
+	}
+
+	pairs := make([]string, 0, len(b.labels))
+	for _, label := range b.labels {
+		pairs = append(pairs, fmt.Sprintf("%s=%v", label.Key.Name, label.Value))
+	}
+	return fmt.Sprintf("%s at %s", strings.Join(pairs, ", "), at)
+}
+
 // heatmapSeries accumulates one group's columns while the rows are read.
 type heatmapSeries struct {
 	labels            []*qbtypes.Label
@@ -34,15 +56,15 @@ type heatmapSeries struct {
 // heatmapAccumulator collects cells from either reader and folds them into one
 // series per group.
 type heatmapAccumulator struct {
-	keyToSeries  map[string]*heatmapSeries
-	seriesOrder  []string
-	upperToLower map[float64]float64
+	keyToSeries        map[string]*heatmapSeries
+	seriesOrder        []string
+	upperBoundToBucket map[float64]heatmapAxisBucketDetails
 }
 
 func newHeatmapAccumulator() *heatmapAccumulator {
 	return &heatmapAccumulator{
-		keyToSeries:  map[string]*heatmapSeries{},
-		upperToLower: map[float64]float64{},
+		keyToSeries:        map[string]*heatmapSeries{},
+		upperBoundToBucket: map[float64]heatmapAxisBucketDetails{},
 	}
 }
 
@@ -51,12 +73,15 @@ func newHeatmapAccumulator() *heatmapAccumulator {
 // alone cannot express two rows cutting the same bucket differently, so the
 // second of them is rejected here.
 func (a *heatmapAccumulator) addCell(labelsKey string, lbls []*qbtypes.Label, ts int64, bounds bucketBounds, count float64) error {
-	if seenLowerBound, isUpperBoundSeenBefore := a.upperToLower[bounds.Upper]; isUpperBoundSeenBefore && seenLowerBound != bounds.Lower {
+	bucketToAdd := heatmapAxisBucketDetails{bounds: bounds, labels: lbls, ts: ts}
+
+	if seenBucket, isUpperBoundSeenBefore := a.upperBoundToBucket[bounds.Upper]; isUpperBoundSeenBefore && seenBucket.bounds.Lower != bounds.Lower {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"the bucket ending at %v is reported as starting at both %v and %v", bounds.Upper, seenLowerBound, bounds.Lower).
-			WithAdditional("Every row of a heatmap has to cut its buckets the same way")
+			"the bucket ending at %v starts at %v for %s and at %v for %s",
+			bounds.Upper, seenBucket.bounds.Lower, seenBucket.describe(), bounds.Lower, bucketToAdd.describe()).
+			WithAdditional("A heatmap draws one set of buckets, so every row has to report the same ones")
 	}
-	a.upperToLower[bounds.Upper] = bounds.Lower
+	a.upperBoundToBucket[bounds.Upper] = bucketToAdd
 
 	series, found := a.keyToSeries[labelsKey]
 	if !found {
@@ -76,8 +101,8 @@ func (a *heatmapAccumulator) addCell(labelsKey string, lbls []*qbtypes.Label, ts
 // gap goes on the axis as its own empty bucket, or the bucket above it would
 // widen to cover a range nothing bucketed.
 func (a *heatmapAccumulator) resolveBucketAxis() ([]float64, error) {
-	upperBounds := make([]float64, 0, len(a.upperToLower))
-	for upperBound := range a.upperToLower {
+	upperBounds := make([]float64, 0, len(a.upperBoundToBucket))
+	for upperBound := range a.upperBoundToBucket {
 		if !math.IsInf(upperBound, 1) {
 			upperBounds = append(upperBounds, upperBound)
 		}
@@ -86,15 +111,18 @@ func (a *heatmapAccumulator) resolveBucketAxis() ([]float64, error) {
 
 	axis := make([]float64, 0, 2*len(upperBounds))
 	for index, upperBound := range upperBounds {
+		currentBucket := a.upperBoundToBucket[upperBound]
 		if index > 0 {
-			previousUpperBound := upperBounds[index-1]
-			switch lowerBoundForCurrUpperBound := a.upperToLower[upperBound]; {
-			case lowerBoundForCurrUpperBound < previousUpperBound:
+			previousBucket := a.upperBoundToBucket[upperBounds[index-1]]
+			switch {
+			case currentBucket.bounds.Lower < previousBucket.bounds.Upper:
 				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
-					"the buckets ending at %v and %v overlap", previousUpperBound, upperBound).
-					WithAdditional("Every row of a heatmap has to cut its buckets the same way")
-			case lowerBoundForCurrUpperBound > previousUpperBound:
-				axis = append(axis, lowerBoundForCurrUpperBound)
+					"the bucket %v to %v for %s covers values already in the bucket %v to %v for %s",
+					currentBucket.bounds.Lower, currentBucket.bounds.Upper, currentBucket.describe(),
+					previousBucket.bounds.Lower, previousBucket.bounds.Upper, previousBucket.describe()).
+					WithAdditional("A heatmap draws one set of buckets, so every row has to report the same ones")
+			case currentBucket.bounds.Lower > previousBucket.bounds.Upper:
+				axis = append(axis, currentBucket.bounds.Lower)
 			}
 		}
 		axis = append(axis, upperBound)

@@ -250,7 +250,7 @@ def test_bucket_options_outside_a_heatmap(
             ],
             # which of the two lower bounds is named first follows the row order
             # the union happens to return
-            "the bucket ending at 20 is reported as starting at both",
+            "the bucket ending at 20 starts at",
             id="one_bucket_cut_two_ways",
         ),
         pytest.param(
