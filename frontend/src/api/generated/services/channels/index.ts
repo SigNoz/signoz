@@ -922,7 +922,7 @@ export const useDeleteNotificationChannel = <
 	return useMutation(getDeleteNotificationChannelMutationOptions(options));
 };
 /**
- * This endpoint returns a notification channel by ID. A channel written by the v1 API can carry a configuration this API does not model, which is reported as unprocessable.
+ * This endpoint returns a notification channel by ID. A channel written by the v1 API can carry a configuration this API does not model.
  * @summary Get notification channel by ID
  */
 export const getNotificationChannel = (

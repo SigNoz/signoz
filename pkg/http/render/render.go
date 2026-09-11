@@ -65,8 +65,6 @@ func ErrorTypeFromStatusCode(statusCode int) string {
 		return errors.TypeInvalidInput.String()
 	case http.StatusNotFound:
 		return errors.TypeNotFound.String()
-	case http.StatusUnprocessableEntity:
-		return errors.TypeUnprocessableEntity.String()
 	case http.StatusConflict:
 		return errors.TypeAlreadyExists.String()
 	case http.StatusUnauthorized:
@@ -98,8 +96,6 @@ func Error(rw http.ResponseWriter, cause error) {
 		httpCode = http.StatusBadRequest
 	case errors.TypeNotFound:
 		httpCode = http.StatusNotFound
-	case errors.TypeUnprocessableEntity:
-		httpCode = http.StatusUnprocessableEntity
 	case errors.TypeAlreadyExists:
 		httpCode = http.StatusConflict
 	case errors.TypeUnauthenticated:

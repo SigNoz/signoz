@@ -19979,8 +19979,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint returns a notification channel by ID. A channel written
-        by the v1 API can carry a configuration this API does not model, which is
-        reported as unprocessable.
+        by the v1 API can carry a configuration this API does not model.
       operationId: GetNotificationChannel
       parameters:
       - in: path
@@ -20003,6 +20002,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -20021,12 +20026,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Not Found
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unprocessable Entity
         "500":
           content:
             application/json:
