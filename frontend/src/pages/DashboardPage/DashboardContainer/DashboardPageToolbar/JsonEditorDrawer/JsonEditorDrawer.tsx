@@ -16,8 +16,8 @@ import { defineJsonEditorTheme, JSON_EDITOR_THEME } from './editorTheme';
 import styles from './JsonEditorDrawer.module.scss';
 import JsonEditorToolbar from './JsonEditorToolbar';
 import { useJsonEditor } from './useJsonEditor';
-import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
-import { useDashboardStore } from '../../store/useDashboardStore';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
 
 interface JsonEditorDrawerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -30,10 +30,13 @@ function JsonEditorDrawer({
 	isOpen,
 	onClose,
 }: JsonEditorDrawerProps): JSX.Element {
+	const {
+		isEditable,
+		editDisabledTooltip: readOnlyTooltip,
+		editChecks: readOnlyChecks,
+	} = useDashboardEditContext();
 	const [, copyToClipboard] = useCopyToClipboard();
 
-	const isEditable = useDashboardStore((s) => s.isEditable);
-	const readOnlyReason = useDashboardStore((s) => s.editDisabledReason);
 	// Inspect-only when not editable: Apply/Format/Reset disabled.
 	const readOnly = !isEditable;
 
@@ -175,7 +178,10 @@ function JsonEditorDrawer({
 						>
 							Cancel
 						</Button>
-						<DisabledControlTooltip reason={readOnlyReason} disabled={readOnly}>
+						<AuthZTooltip
+							checks={readOnlyChecks}
+							disabledTooltip={readOnly ? readOnlyTooltip : undefined}
+						>
 							<Button
 								variant="solid"
 								color="primary"
@@ -186,7 +192,7 @@ function JsonEditorDrawer({
 							>
 								Apply changes
 							</Button>
-						</DisabledControlTooltip>
+						</AuthZTooltip>
 					</div>
 				</div>
 			}

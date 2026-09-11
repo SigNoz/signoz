@@ -4,6 +4,7 @@ import { buildPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import type {
 	AuthZObject,
 	BrandedPermission,
+	UseAuthZResult,
 } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import AuthZTooltip from './AuthZTooltip';
@@ -11,15 +12,26 @@ import AuthZTooltip from './AuthZTooltip';
 jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
-const noPermissions = {
-	isLoading: false,
-	isFetching: false,
-	error: null,
-	permissions: null,
-	allowed: false,
-	deniedPermissions: [] as BrandedPermission[],
-	refetchPermissions: jest.fn(),
-};
+// Builds a full UseAuthZResult so `isGranted` stays consistent with `permissions`
+// rather than being a stub that could drift from it.
+function authZResult(overrides: Partial<UseAuthZResult> = {}): UseAuthZResult {
+	const base: UseAuthZResult = {
+		isLoading: false,
+		isFetching: false,
+		error: null,
+		permissions: null,
+		allowed: false,
+		deniedPermissions: [] as BrandedPermission[],
+		isGranted: (): boolean => false,
+		refetchPermissions: jest.fn(),
+		...overrides,
+	};
+	return {
+		...base,
+		isGranted: (permission: BrandedPermission): boolean =>
+			base.permissions?.[permission]?.isGranted === true,
+	};
+}
 
 const TestButton = (
 	props: React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -42,10 +54,11 @@ const attachRolePerm = buildPermission(
 
 describe('AuthZTooltip — single check', () => {
 	it('renders child unchanged when permission is granted', () => {
-		mockUseAuthZ.mockReturnValue({
-			...noPermissions,
-			permissions: { [createPerm]: { isGranted: true } },
-		});
+		mockUseAuthZ.mockReturnValue(
+			authZResult({
+				permissions: { [createPerm]: { isGranted: true } },
+			}),
+		);
 
 		render(
 			<AuthZTooltip checks={[createPerm]}>
@@ -57,10 +70,11 @@ describe('AuthZTooltip — single check', () => {
 	});
 
 	it('disables child when permission is denied', () => {
-		mockUseAuthZ.mockReturnValue({
-			...noPermissions,
-			permissions: { [createPerm]: { isGranted: false } },
-		});
+		mockUseAuthZ.mockReturnValue(
+			authZResult({
+				permissions: { [createPerm]: { isGranted: false } },
+			}),
+		);
 
 		render(
 			<AuthZTooltip checks={[createPerm]}>
@@ -72,10 +86,11 @@ describe('AuthZTooltip — single check', () => {
 	});
 
 	it('shows formatted permission message in tooltip when denied', async () => {
-		mockUseAuthZ.mockReturnValue({
-			...noPermissions,
-			permissions: { [createPerm]: { isGranted: false } },
-		});
+		mockUseAuthZ.mockReturnValue(
+			authZResult({
+				permissions: { [createPerm]: { isGranted: false } },
+			}),
+		);
 
 		render(
 			<AuthZTooltip checks={[createPerm]}>
@@ -95,7 +110,7 @@ describe('AuthZTooltip — single check', () => {
 	});
 
 	it('disables child while loading', () => {
-		mockUseAuthZ.mockReturnValue({ ...noPermissions, isLoading: true });
+		mockUseAuthZ.mockReturnValue(authZResult({ isLoading: true }));
 
 		render(
 			<AuthZTooltip checks={[createPerm]}>
@@ -110,13 +125,14 @@ describe('AuthZTooltip — single check', () => {
 describe('AuthZTooltip — multi-check (checks array)', () => {
 	it('renders child enabled when all checks are granted', () => {
 		const sa = attachSAPerm('sa-1');
-		mockUseAuthZ.mockReturnValue({
-			...noPermissions,
-			permissions: {
-				[sa]: { isGranted: true },
-				[attachRolePerm]: { isGranted: true },
-			},
-		});
+		mockUseAuthZ.mockReturnValue(
+			authZResult({
+				permissions: {
+					[sa]: { isGranted: true },
+					[attachRolePerm]: { isGranted: true },
+				},
+			}),
+		);
 
 		render(
 			<AuthZTooltip checks={[sa, attachRolePerm]}>
@@ -129,13 +145,14 @@ describe('AuthZTooltip — multi-check (checks array)', () => {
 
 	it('disables child when first check is denied, second granted', () => {
 		const sa = attachSAPerm('sa-1');
-		mockUseAuthZ.mockReturnValue({
-			...noPermissions,
-			permissions: {
-				[sa]: { isGranted: false },
-				[attachRolePerm]: { isGranted: true },
-			},
-		});
+		mockUseAuthZ.mockReturnValue(
+			authZResult({
+				permissions: {
+					[sa]: { isGranted: false },
+					[attachRolePerm]: { isGranted: true },
+				},
+			}),
+		);
 
 		render(
 			<AuthZTooltip checks={[sa, attachRolePerm]}>
@@ -148,13 +165,14 @@ describe('AuthZTooltip — multi-check (checks array)', () => {
 
 	it('disables child when both checks are denied and lists denied permissions in data attr', () => {
 		const sa = attachSAPerm('sa-1');
-		mockUseAuthZ.mockReturnValue({
-			...noPermissions,
-			permissions: {
-				[sa]: { isGranted: false },
-				[attachRolePerm]: { isGranted: false },
-			},
-		});
+		mockUseAuthZ.mockReturnValue(
+			authZResult({
+				permissions: {
+					[sa]: { isGranted: false },
+					[attachRolePerm]: { isGranted: false },
+				},
+			}),
+		);
 
 		render(
 			<AuthZTooltip checks={[sa, attachRolePerm]}>
@@ -173,13 +191,14 @@ describe('AuthZTooltip — multi-check (checks array)', () => {
 
 	it('shows multiple formatted permissions in tooltip when both denied', async () => {
 		const sa = attachSAPerm('sa-1');
-		mockUseAuthZ.mockReturnValue({
-			...noPermissions,
-			permissions: {
-				[sa]: { isGranted: false },
-				[attachRolePerm]: { isGranted: false },
-			},
-		});
+		mockUseAuthZ.mockReturnValue(
+			authZResult({
+				permissions: {
+					[sa]: { isGranted: false },
+					[attachRolePerm]: { isGranted: false },
+				},
+			}),
+		);
 
 		render(
 			<AuthZTooltip checks={[sa, attachRolePerm]}>

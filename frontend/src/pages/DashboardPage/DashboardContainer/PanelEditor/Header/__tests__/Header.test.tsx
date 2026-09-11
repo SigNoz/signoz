@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from 'tests/test-utils';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 
@@ -82,7 +82,11 @@ describe('PanelEditor Header', () => {
 	it('disables Save only while read-only or saving', () => {
 		mockUseIsAIAssistantEnabled.mockReturnValue(false);
 
-		renderHeader({ isDirty: true, readOnly: true, readOnlyReason: 'Locked' });
+		renderHeader({
+			isDirty: true,
+			readOnly: true,
+			readOnlyTooltip: 'Locked',
+		});
 
 		expect(screen.getByTestId('panel-editor-v2-save')).toBeDisabled();
 	});

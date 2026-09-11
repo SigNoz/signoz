@@ -154,6 +154,15 @@
 	}
 }
 
+.disabled {
+	cursor: not-allowed;
+	opacity: 0.6;
+
+	&:focus-within {
+		border-color: var(--l2-border);
+	}
+}
+
 .leadIcon {
 	position: absolute;
 	top: 11px;

@@ -419,3 +419,23 @@ func TestNormalizeWhereClauseVariablesEmptyList(t *testing.T) {
 	_, err := NormalizeWhereClause("status IN $statuses", variables)
 	require.Error(t, err)
 }
+
+func TestFilterStringLiteral(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{name: "Plain", input: "svc", expected: `'svc'`},
+		{name: "SingleQuote", input: "a'b", expected: `'a\'b'`},
+		{name: "TrailingBackslash", input: `a\`, expected: `'a\\'`},
+		{name: "DollarDigit_Unchanged", input: "a$0b", expected: `'a$0b'`},
+		{name: "Injection", input: "x' OR '1'='1", expected: `'x\' OR \'1\'=\'1'`},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, FilterStringLiteral(testCase.input))
+		})
+	}
+}

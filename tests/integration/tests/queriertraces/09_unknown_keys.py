@@ -2,6 +2,8 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
+import pytest
+
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
@@ -21,13 +23,18 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # synthesized type-variant columns (filter / group-by / select) instead of failing.
 
 
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_filter_unknown_key_synthesizes(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
 ) -> None:
     """An unknown attribute key runs against synthesized columns and returns 200 with a
     "not found" warning so typos still surface."""
+    use_attribute_backend(attribute_backend)
+
     now = datetime.now(tz=UTC)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_query_request(
@@ -50,15 +57,20 @@ def test_traces_filter_unknown_key_synthesizes(
     assert any("totally.unknown.key" in m and "not found" in m for m in messages), f"expected a key-not-found warning, got warnings={messages}"
 
 
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_filter_unknown_resource_key_filters(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
 ) -> None:
     """A resource-qualified unknown key must FILTER (0 rows), not be dropped: the
     resource-fingerprint sub-query skips keys absent from metadata, so the synthesized
     condition stays in the main query. A regression here returns every span."""
+    use_attribute_backend(attribute_backend)
+
     now = datetime.now(tz=UTC)
     insert_traces(
         [
@@ -99,14 +111,19 @@ def test_traces_filter_unknown_resource_key_filters(
         assert len(get_rows(response)) == expected, f"{expression}: expected {expected} rows"
 
 
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_group_by_unknown_key_null_bucket(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
 ) -> None:
     """Grouping by an unknown key runs against synthesized columns: every span lands in
     the NULL bucket instead of the query failing."""
+    use_attribute_backend(attribute_backend)
+
     now = datetime.now(tz=UTC)
     insert_traces(
         [

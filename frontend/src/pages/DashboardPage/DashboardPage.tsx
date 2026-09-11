@@ -4,6 +4,12 @@ import { useParams } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
+import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
+import {
+	buildDashboardDeletePermission,
+	buildDashboardReadPermission,
+	buildDashboardUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import DashboardContainer from './DashboardContainer';
@@ -49,4 +55,15 @@ function DashboardPage(): JSX.Element {
 	return <DashboardContainer dashboard={dashboard} refetch={refetch} />;
 }
 
-export default DashboardPage;
+// Typed explicitly: the route lazy-loads this, and Loadable needs indexable props.
+export default withAuthZPage<Record<string, unknown>>(DashboardPage, {
+	checks: (_props, router) => [
+		buildDashboardReadPermission(router.params.dashboardId ?? ''),
+	],
+	// Same batch as `checks`, so the controls below resolve from cache.
+	preloadChecks: (_props, router) => [
+		buildDashboardUpdatePermission(router.params.dashboardId ?? ''),
+		buildDashboardDeletePermission(router.params.dashboardId ?? ''),
+	],
+	fallbackOnLoading: <Spinner tip="Loading dashboard..." />,
+});
