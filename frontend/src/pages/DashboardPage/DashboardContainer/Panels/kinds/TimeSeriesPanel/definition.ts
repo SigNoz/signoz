@@ -1,3 +1,5 @@
+import { ChartLine } from '@signozhq/icons';
+
 import type { PanelDefinition } from '../../types/panelDefinition';
 import Renderer from './Renderer';
 import { sections } from './sections';
@@ -10,6 +12,7 @@ import { EQueryType } from 'types/common/dashboard';
 export const definition: PanelDefinition<'signoz/TimeSeriesPanel'> = {
 	kind: 'signoz/TimeSeriesPanel',
 	displayName: 'Time Series',
+	icon: ChartLine,
 	Renderer,
 	sections,
 	supportedSignals: [

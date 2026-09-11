@@ -5,8 +5,18 @@ import PanelTypeSwitcher from '../PanelTypeSwitcher';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
+// Stub the registry so the test doesn't pull in the real renderers and chart libs.
 jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: jest.fn(),
+	PANEL_OPTIONS: [
+		{ kind: 'signoz/TimeSeriesPanel', displayName: 'Time Series' },
+		{ kind: 'signoz/NumberPanel', displayName: 'Number' },
+		{ kind: 'signoz/TablePanel', displayName: 'Table' },
+		{ kind: 'signoz/BarChartPanel', displayName: 'Bar Chart' },
+		{ kind: 'signoz/PieChartPanel', displayName: 'Pie Chart' },
+		{ kind: 'signoz/HistogramPanel', displayName: 'Histogram' },
+		{ kind: 'signoz/ListPanel', displayName: 'List' },
+	].map((option) => ({ ...option, icon: (): null => null })),
 }));
 
 const mockGetPanelDefinition = getPanelDefinition as unknown as jest.Mock;
