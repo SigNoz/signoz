@@ -40,7 +40,7 @@ export function sortSeriesByDefinitionOrder(
 
 interface SortPanelSeriesArgs {
 	series: PanelSeries[];
-	/** `spec.seriesOrder`; missing falls back to `mean_desc`, the schema default. */
+	/** `spec.legend.seriesOrder`; missing falls back to `mean_desc`, the schema default. */
 	seriesOrder: DashboardtypesSeriesOrderDTO | undefined;
 	queries: DashboardtypesQueryDTO[];
 }

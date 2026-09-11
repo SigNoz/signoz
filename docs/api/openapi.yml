@@ -3156,8 +3156,6 @@ components:
           $ref: '#/components/schemas/DashboardtypesPanelFormatting'
         legend:
           $ref: '#/components/schemas/DashboardtypesLegend'
-        seriesOrder:
-          $ref: '#/components/schemas/DashboardtypesSeriesOrder'
         thresholds:
           items:
             $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
@@ -3549,6 +3547,8 @@ components:
           $ref: '#/components/schemas/DashboardtypesLegendMode'
         position:
           $ref: '#/components/schemas/DashboardtypesLegendPosition'
+        seriesOrder:
+          $ref: '#/components/schemas/DashboardtypesSeriesOrder'
       type: object
     DashboardtypesLegendMode:
       enum:
@@ -4294,8 +4294,6 @@ components:
           $ref: '#/components/schemas/DashboardtypesPanelFormatting'
         legend:
           $ref: '#/components/schemas/DashboardtypesLegend'
-        seriesOrder:
-          $ref: '#/components/schemas/DashboardtypesSeriesOrder'
         thresholds:
           items:
             $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'

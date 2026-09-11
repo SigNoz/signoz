@@ -185,7 +185,6 @@ type TimeSeriesPanelSpec struct {
 	ChartAppearance TimeSeriesChartAppearance `json:"chartAppearance"`
 	Axes            Axes                      `json:"axes"`
 	Legend          Legend                    `json:"legend"`
-	SeriesOrder     SeriesOrder               `json:"seriesOrder"`
 	Thresholds      []ThresholdWithLabel      `json:"thresholds" validate:"dive"`
 }
 
@@ -202,7 +201,6 @@ type BarChartPanelSpec struct {
 	Formatting    PanelFormatting       `json:"formatting"`
 	Axes          Axes                  `json:"axes"`
 	Legend        Legend                `json:"legend"`
-	SeriesOrder   SeriesOrder           `json:"seriesOrder"`
 	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive"`
 }
 
@@ -278,6 +276,7 @@ type Legend struct {
 	Position     LegendPosition    `json:"position"`
 	Mode         LegendMode        `json:"mode"`
 	CustomColors map[string]string `json:"customColors"`
+	SeriesOrder  SeriesOrder       `json:"seriesOrder"`
 }
 
 type ThresholdWithLabel struct {
@@ -429,10 +428,15 @@ func (m *LegendMode) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// SeriesOrder decides the order series are drawn in, and with it the order the
-// legend lists them. `mean_desc` lets the data decide; `definition` pins the
+// SeriesOrder decides the order the legend lists series in, and with it the
+// order they are drawn. `mean_desc` lets the data decide; `definition` pins the
 // order to the panel's own query list, so a stacked chart's segments stay in
 // the same place from one panel and one refresh to the next.
+//
+// It lives on Legend because that is where per-series presentation
+// (CustomColors) already lives. Legend is shared with Pie and Histogram, where
+// the field is inert: those renderers do not read it, and the editor does not
+// expose it for them.
 type SeriesOrder struct{ valuer.String }
 
 var (

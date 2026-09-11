@@ -3990,6 +3990,10 @@ export enum DashboardtypesLegendPositionDTO {
 	bottom = 'bottom',
 	right = 'right',
 }
+export enum DashboardtypesSeriesOrderDTO {
+	mean_desc = 'mean_desc',
+	definition = 'definition',
+}
 export type DashboardtypesLegendDTOCustomColorsAnyOf = {
 	[key: string]: string;
 };
@@ -4007,12 +4011,9 @@ export interface DashboardtypesLegendDTO {
 	customColors?: DashboardtypesLegendDTOCustomColors;
 	mode?: DashboardtypesLegendModeDTO;
 	position?: DashboardtypesLegendPositionDTO;
+	seriesOrder?: DashboardtypesSeriesOrderDTO;
 }
 
-export enum DashboardtypesSeriesOrderDTO {
-	mean_desc = 'mean_desc',
-	definition = 'definition',
-}
 export interface DashboardtypesThresholdWithLabelDTO {
 	/**
 	 * @type string
@@ -4061,7 +4062,6 @@ export interface DashboardtypesBarChartPanelSpecDTO {
 	axes?: DashboardtypesAxesDTO;
 	formatting?: DashboardtypesPanelFormattingDTO;
 	legend?: DashboardtypesLegendDTO;
-	seriesOrder?: DashboardtypesSeriesOrderDTO;
 	/**
 	 * @type array,null
 	 */
@@ -4740,7 +4740,6 @@ export interface DashboardtypesTimeSeriesPanelSpecDTO {
 	chartAppearance?: DashboardtypesTimeSeriesChartAppearanceDTO;
 	formatting?: DashboardtypesPanelFormattingDTO;
 	legend?: DashboardtypesLegendDTO;
-	seriesOrder?: DashboardtypesSeriesOrderDTO;
 	/**
 	 * @type array,null
 	 */

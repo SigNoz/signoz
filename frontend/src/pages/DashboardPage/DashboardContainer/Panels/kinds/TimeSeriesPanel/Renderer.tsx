@@ -77,10 +77,10 @@ function TimeSeriesPanelRenderer({
 					getTimeSeriesResults(data.response),
 					data.legendMap ?? {},
 				),
-				seriesOrder: spec.seriesOrder,
+				seriesOrder: spec.legend?.seriesOrder,
 				queries: panel.spec.queries,
 			}),
-		[data.response, data.legendMap, spec.seriesOrder, panel.spec.queries],
+		[data.response, data.legendMap, spec.legend?.seriesOrder, panel.spec.queries],
 	);
 
 	const config = useMemo(
