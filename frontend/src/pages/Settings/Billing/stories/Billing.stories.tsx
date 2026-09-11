@@ -43,6 +43,18 @@ const PERIOD_LENGTH = 31;
  */
 export const Default: Story = {};
 
+/**
+ * The usage graph's legend, where each signal the workspace is billed for
+ * carries its own name as a tooltip.
+ *
+ * Kept right after `Default`: test-runner shares one page across a file's
+ * stories, and a story after this one would otherwise inherit whatever
+ * `dataState` a state-mutating story (`Loading`, `Error`) last left behind.
+ */
+export const Tooltips: Story = {
+	args: { tooltipsOpen: true },
+};
+
 /** The first day of a period, before there is a shape to the graph. */
 export const PeriodJustStarted: Story = {
 	args: { billedDays: 1 },
@@ -111,24 +123,6 @@ export const SelfHosted: Story = {
 	args: { license: 'enterprise' },
 };
 
-/** The period being fetched: the plan, the graph and the table all stand in. */
-export const Loading: Story = {
-	args: { dataState: 'loading' },
-};
-
-/** Error: the usage request failed, leaving the plan card with nothing to report. */
-export const Error: Story = {
-	args: { dataState: 'error' },
-};
-
-/**
- * The usage graph's legend, where each signal the workspace is billed for
- * carries its own name as a tooltip.
- */
-export const Tooltips: Story = {
-	args: { tooltipsOpen: true },
-};
-
 /**
  * Interaction: cancelling is deliberate. The dialog only arms its own button
  * once the word is typed out, and the cancellation itself goes to support.
@@ -160,4 +154,20 @@ export const CancelSubscription: Story = {
 			expect(screen.getByTestId('cancel-subscription-confirm-btn')).toBeEnabled(),
 		);
 	},
+};
+
+/**
+ * The period being fetched: the plan, the graph and the table all stand in.
+ *
+ * Kept last with `Error`: test-runner shares one page across a file's
+ * stories, and a story after either of these would otherwise inherit the
+ * `dataState` it sets instead of its own.
+ */
+export const Loading: Story = {
+	args: { dataState: 'loading' },
+};
+
+/** Error: the usage request failed, leaving the plan card with nothing to report. */
+export const Error: Story = {
+	args: { dataState: 'error' },
 };

@@ -110,4 +110,7 @@ export const NoSubscriptionAccess: Story = {
  */
 export const CheckFailed: Story = {
 	args: { authzState: 'error' },
+	// The mocked check intentionally fails; the resulting console error is the
+	// point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 };
