@@ -97,7 +97,7 @@ describe('LegendSection', () => {
 		render(
 			<LegendSection
 				value={undefined}
-				controls={{ position: true, colors: true }}
+				controls={{ position: true, colors: (): [] => [] }}
 				onChange={jest.fn()}
 			/>,
 		);

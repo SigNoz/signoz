@@ -16,6 +16,8 @@ type SectionSlotProps = {
 	config: SectionConfig;
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
+	/** Renders the editor alone, for a section promoted into the Panel Details fields. */
+	bare?: boolean;
 } & Omit<SectionEditorContext, 'yAxisUnit' | 'registerHeaderAction'>;
 
 // Per-section header content; `trigger` expands the section and runs the editor's handler.
@@ -50,6 +52,7 @@ function SectionSlot({
 	config,
 	spec,
 	onChangeSpec,
+	bare,
 	legendSeries,
 	tableColumns,
 	signal,
@@ -110,6 +113,28 @@ function SectionSlot({
 
 	const headerSlot = SECTION_HEADER_SLOT[config.kind]?.(triggerHeaderAction);
 
+	const editorElement = (
+		<Component
+			value={get(spec)}
+			controls={controls}
+			onChange={(next): void => onChangeSpec(update(spec, next))}
+			legendSeries={legendSeries}
+			yAxisUnit={yAxisUnit}
+			tableColumns={tableColumns}
+			signal={signal}
+			panelKind={panelKind}
+			onChangePanelKind={onChangePanelKind}
+			queryType={queryType}
+			stepInterval={stepInterval}
+			metricUnit={metricUnit}
+			registerHeaderAction={registerHeaderAction}
+		/>
+	);
+
+	if (bare) {
+		return editorElement;
+	}
+
 	return (
 		<SettingsSection
 			title={title}
@@ -118,21 +143,7 @@ function SectionSlot({
 			onOpenChange={setOpen}
 			headerSlot={headerSlot}
 		>
-			<Component
-				value={get(spec)}
-				controls={controls}
-				onChange={(next): void => onChangeSpec(update(spec, next))}
-				legendSeries={legendSeries}
-				yAxisUnit={yAxisUnit}
-				tableColumns={tableColumns}
-				signal={signal}
-				panelKind={panelKind}
-				onChangePanelKind={onChangePanelKind}
-				queryType={queryType}
-				stepInterval={stepInterval}
-				metricUnit={metricUnit}
-				registerHeaderAction={registerHeaderAction}
-			/>
+			{editorElement}
 		</SettingsSection>
 	);
 }

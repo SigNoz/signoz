@@ -1,3 +1,4 @@
+import { resolvePieLegendSeries } from '../../utils/legendSeries';
 import { SectionKind, type SectionConfig } from '../../types/sections';
 
 // Pie has no axes, thresholds, or stacking — just value formatting and a legend
@@ -9,6 +10,10 @@ export const sections: SectionConfig[] = [
 		controls: { switchPanelKind: true, timePreference: true },
 	},
 	{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },
-	{ kind: SectionKind.Legend, controls: { position: true, colors: true } },
+	{
+		kind: SectionKind.Legend,
+		// seriesOrder is TimeSeries/Bar-only, so Pie omits it.
+		controls: { position: true, colors: resolvePieLegendSeries },
+	},
 	{ kind: SectionKind.ContextLinks },
 ];

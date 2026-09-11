@@ -1,11 +1,14 @@
+import type { ComponentType } from 'react';
 import { RotateCw, SquarePlus, TriangleAlert } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'lib/visualization/panels/types';
 import PanelLoader from 'pages/DashboardPage/DashboardContainer/Panels/components/PanelLoader/PanelLoader';
 import PanelMessage from 'pages/DashboardPage/DashboardContainer/Panels/components/PanelMessage/PanelMessage';
 import type { AnyPanelInteractionProps } from 'pages/DashboardPage/DashboardContainer/Panels/types/interactions';
-import type { RenderablePanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
-import type { DashboardPreference } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
+import type {
+	BaseRendererProps,
+	DashboardPreference,
+} from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
 import { hasRunnableQueries } from 'pages/DashboardPage/DashboardContainer/queryV5/buildQueryRangeRequest';
 import { getResponseType } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
 import type {
@@ -17,8 +20,8 @@ import { panelStatusFromError } from '../PanelStatus/utils';
 import styles from './PanelBody.module.scss';
 
 interface PanelBodyProps {
-	/** Resolved renderer for the panel kind (`Panel` handles the unsupported case). */
-	panelDefinition: RenderablePanelDefinition;
+	/** The query arm's renderer — hosts narrow `mode === 'query'` before this mounts. */
+	Renderer: ComponentType<BaseRendererProps & AnyPanelInteractionProps>;
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
 	data: PanelQueryData;
@@ -51,7 +54,7 @@ interface PanelBodyProps {
  * first-load / renderer. The renderer keeps stale data mounted across refetches.
  */
 function PanelBody({
-	panelDefinition,
+	Renderer,
 	panel,
 	panelId,
 	data,
@@ -116,7 +119,7 @@ function PanelBody({
 
 	return (
 		<div className={styles.panelContainer}>
-			<panelDefinition.Renderer
+			<Renderer
 				panelId={panelId}
 				panel={panel}
 				data={data}

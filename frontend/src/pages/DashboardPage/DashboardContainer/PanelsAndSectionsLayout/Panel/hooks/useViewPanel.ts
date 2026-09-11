@@ -52,15 +52,18 @@ export function useViewPanel(): UseViewPanelApi {
 			// Only a drilldown retargets the panel type.
 			next.delete(QueryParams.graphType);
 			clearViewPanelHandoff();
+			// `null` for a static kind — no query state to stage or persist.
 			const query = getPanelBuilderQuery(panel);
-			next.set(
-				QueryParams.compositeQuery,
-				encodeURIComponent(JSON.stringify(query)),
-			);
-			// The provider applies the URL in an effect, a tick after the builder's fields have
-			// mounted and read the query they keep. `resetQuery` — not `initQueryBuilderData`:
-			// swapping one staged id for another re-anchors global time and refetches the grid.
-			resetQuery(query);
+			if (query) {
+				next.set(
+					QueryParams.compositeQuery,
+					encodeURIComponent(JSON.stringify(query)),
+				);
+				// The provider applies the URL in an effect, a tick after the builder's fields have
+				// mounted and read the query they keep. `resetQuery` — not `initQueryBuilderData`:
+				// swapping one staged id for another re-anchors global time and refetches the grid.
+				resetQuery(query);
+			}
 			void logEvent(DashboardDetailEvents.PanelViewed, { panelId });
 			safeNavigate(`${pathname}?${next.toString()}`);
 		},

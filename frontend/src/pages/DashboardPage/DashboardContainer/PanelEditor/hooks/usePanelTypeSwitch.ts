@@ -18,11 +18,8 @@ import type {
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 
-import { resolveQueryType } from '../../Panels/capabilities';
-import {
-	PANEL_KIND_TO_PANEL_TYPE,
-	type PanelKind,
-} from '../../Panels/types/panelKind';
+import { isStaticPanelKind, resolveQueryType } from '../../Panels/capabilities';
+import { toPanelType, type PanelKind } from '../../Panels/types/panelKind';
 import { getBuilderQueries } from '../../Panels/utils/getBuilderQueries';
 import { toPerses } from '../../queryV5/persesQueryAdapters';
 import {
@@ -110,7 +107,7 @@ export function usePanelTypeSwitch({
 				builderQuery: query,
 			});
 
-			const newPanelType = PANEL_KIND_TO_PANEL_TYPE[newKind];
+			const newPanelType = toPanelType(newKind);
 
 			// Only `plugin` needs a cast: it's a discriminated union over `kind`, and a
 			// dynamically-chosen kind can't be correlated with its spec statically (as in
@@ -128,11 +125,25 @@ export function usePanelTypeSwitch({
 				queries,
 			});
 
-			// Revisit → restore the stash verbatim (the reversibility path).
+			// Revisit → restore the stash verbatim (the reversibility path). A static
+			// kind's stash carries `queries: []` and its builder query is untouched —
+			// there is no builder to re-seed for it.
 			const cached = cacheRef.current.get(newKind);
 			if (cached) {
 				setSpec(buildSpec(cached.pluginSpec, cached.queries));
-				redirectWithQueryBuilderData(cached.builderQuery);
+				if (!isStaticPanelKind(newKind)) {
+					redirectWithQueryBuilderData(cached.builderQuery);
+				}
+				return;
+			}
+
+			// First visit to a static kind → fresh spec from its sections, queries
+			// emptied (the API accepts nothing else), and the query builder left as-is:
+			// the stash above keeps the old kind's query for the return trip.
+			if (isStaticPanelKind(newKind)) {
+				const signal = getBuilderQueries(currentSpec.queries)[0]
+					?.signal as TelemetrytypesSignalDTO;
+				setSpec(buildSpec(getSwitchedPluginSpec(currentSpec, newKind, signal), []));
 				return;
 			}
 

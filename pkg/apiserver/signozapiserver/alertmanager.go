@@ -158,6 +158,140 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/notification_channels", handler.New(
+		provider.authzMiddleware.CheckResources(provider.alertmanagerHandler.ListNotificationChannels, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "ListNotificationChannels",
+			Tags:                []string{"channels"},
+			Summary:             "List notification channels",
+			Description:         "Returns a page of notification channels for the org. Each entry carries the channel's identity and kind but not its configuration; fetch a channel by ID for that. Supports a case-insensitive display name search (`query`), a kind filter (`kind`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`).",
+			Request:             nil,
+			RequestQuery:        new(alertmanagertypes.ListChannelsParams),
+			RequestContentType:  "",
+			Response:            new(alertmanagertypes.ListableNotificationChannel),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbList)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceNotificationChannel,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/notification_channels/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.alertmanagerHandler.GetNotificationChannel, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "GetNotificationChannel",
+			Tags:                []string{"channels"},
+			Summary:             "Get notification channel by ID",
+			Description:         "This endpoint returns a notification channel by ID. A channel written by the v1 API can carry a configuration this API does not model.",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(alertmanagertypes.GettableNotificationChannel),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbRead)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceNotificationChannel,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/notification_channels/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.alertmanagerHandler.UpdateNotificationChannel, authtypes.SigNozAdminRoleName),
+		handler.OpenAPIDef{
+			ID:                  "UpdateNotificationChannel",
+			Tags:                []string{"channels"},
+			Summary:             "Update notification channel",
+			Description:         "This endpoint replaces a notification channel's configuration in full. Neither name is part of the request body: both are immutable. The kind may change, which replaces the channel's notifier configuration.",
+			Request:             new(alertmanagertypes.UpdatableNotificationChannel),
+			RequestContentType:  "application/json",
+			Response:            new(alertmanagertypes.GettableNotificationChannel),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbUpdate)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceNotificationChannel,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/notification_channels/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.alertmanagerHandler.DeleteNotificationChannel, authtypes.SigNozAdminRoleName),
+		handler.OpenAPIDef{
+			ID:                  "DeleteNotificationChannel",
+			Tags:                []string{"channels"},
+			Summary:             "Delete notification channel",
+			Description:         "This endpoint deletes a notification channel by ID",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbDelete)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceNotificationChannel,
+			Verb:     coretypes.VerbDelete,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/notification_channels/test", handler.New(
+		provider.authzMiddleware.CheckResources(provider.alertmanagerHandler.TestNotificationChannel, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "TestNotificationChannel",
+			Tags:                []string{"channels"},
+			Summary:             "Test notification channel",
+			Description:         "This endpoint sends a test notification for the configuration in the request body. The channel need not exist and nothing is persisted, so the body carries a configuration only.",
+			Request:             new(alertmanagertypes.TestableNotificationChannel),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbCreate)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceNotificationChannel,
+			Verb:     coretypes.VerbCreate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/route_policies", handler.New(provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.GetAllRoutePolicies), handler.OpenAPIDef{
 		ID:                  "GetAllRoutePolicies",
 		Tags:                []string{"routepolicies"},

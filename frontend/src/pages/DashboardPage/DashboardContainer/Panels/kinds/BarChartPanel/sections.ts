@@ -1,3 +1,4 @@
+import { resolveTimeSeriesLegendSeries } from '../../utils/legendSeries';
 import {
 	SectionKind,
 	ThresholdVariant,
@@ -15,7 +16,11 @@ export const sections: SectionConfig[] = [
 	{ kind: SectionKind.Axes, controls: { minMax: true, logScale: true } },
 	{
 		kind: SectionKind.Legend,
-		controls: { position: true, colors: true, seriesOrder: true },
+		controls: {
+			position: true,
+			colors: resolveTimeSeriesLegendSeries,
+			seriesOrder: true,
+		},
 	},
 	{
 		kind: SectionKind.Thresholds,

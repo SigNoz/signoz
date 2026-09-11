@@ -18,6 +18,8 @@ import appStore from 'store';
 
 import { useOpenPanelEditor } from '../../hooks/useOpenPanelEditor';
 import { usePanelEditorQuerySync } from '../hooks/usePanelEditorQuerySync';
+import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 
 // jest.config maps the real hook to a no-op mock; this suite needs real navigation.
@@ -83,7 +85,7 @@ function EditorRoute(): JSX.Element {
 
 	return (
 		<PanelEditorQueryBuilder
-			panelKind="signoz/TimeSeriesPanel"
+			panelDefinition={requireQueryPanelDefinition('signoz/TimeSeriesPanel')}
 			signal={TelemetrytypesSignalDTO.metrics}
 			isLoadingQueries={false}
 			onStageRunQuery={noop}

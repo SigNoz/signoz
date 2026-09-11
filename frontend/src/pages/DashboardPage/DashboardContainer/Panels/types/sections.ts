@@ -3,16 +3,19 @@ import type {
 	DashboardtypesAxesDTO,
 	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesComparisonThresholdDTO,
+	DashboardtypesHeaderOptionsDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
 	DashboardtypesPanelFormattingDTO,
 	DashboardtypesPanelSpecDTO,
 	DashboardtypesTableFormattingDTO,
 	DashboardtypesTableThresholdDTO,
+	DashboardtypesTextPresentationDTO,
 	DashboardtypesThresholdWithLabelDTO,
 	DashboardtypesTimeSeriesChartAppearanceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import type { LegendSeriesResolver } from '../utils/legendSeries';
 import {
 	Antenna,
 	BarChart,
@@ -20,10 +23,12 @@ import {
 	Hash,
 	Link2,
 	Palette,
+	PanelTop,
 	PencilRuler,
 	Scale3D,
 	Signpost,
 	Wallpaper,
+	AlignLeft,
 } from '@signozhq/icons';
 
 // Derived from an actual icon component so the type stays exact (size is a
@@ -50,6 +55,8 @@ export enum SectionKind {
 	Thresholds = 'thresholds',
 	ContextLinks = 'contextLinks',
 	Columns = 'columns',
+	TextLayout = 'presentation',
+	PanelHeader = 'headerOptions',
 }
 
 /**
@@ -92,6 +99,8 @@ export interface SectionSpecMap {
 	[SectionKind.Thresholds]: AnyThreshold[]; // spec.plugin.spec.thresholds (variant picks the editor)
 	[SectionKind.ContextLinks]: DashboardtypesLinkDTO[]; // spec.links (PANEL-level)
 	[SectionKind.Columns]: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
+	[SectionKind.TextLayout]: DashboardtypesTextPresentationDTO; // spec.plugin.spec.presentation (Text)
+	[SectionKind.PanelHeader]: DashboardtypesHeaderOptionsDTO; // spec.plugin.spec.headerOptions (Text)
 }
 
 /**
@@ -105,11 +114,13 @@ export interface SectionControls {
 		columnUnits?: boolean;
 	};
 	[SectionKind.Axes]: { minMax?: boolean; logScale?: boolean }; // minMax → softMin/softMax
-	// colors → customColors; seriesOrder → the legend/draw order (TimeSeries / Bar,
-	// the kinds whose renderer reads it).
 	[SectionKind.Legend]: {
 		position?: boolean;
-		colors?: boolean;
+		// colors → customColors; the resolver supplies the labels overrides are keyed by,
+		// so a kind can't offer color overrides with nothing to color
+		colors?: LegendSeriesResolver;
+		// seriesOrder → the legend/draw order (TimeSeries / Bar, the kinds whose
+		// renderer reads it)
 		seriesOrder?: boolean;
 	};
 	[SectionKind.ChartAppearance]: {
@@ -140,7 +151,11 @@ export interface SectionControls {
 export type ControlledSectionKind = keyof SectionControls;
 
 /** Atomic sections — no sub-controls; a kind either shows them or not. */
-export type AtomicSectionKind = SectionKind.ContextLinks | SectionKind.Columns;
+export type AtomicSectionKind =
+	| SectionKind.ContextLinks
+	| SectionKind.Columns
+	| SectionKind.TextLayout
+	| SectionKind.PanelHeader;
 
 /** Predicate to hide a section from the current spec; returning true removes it. */
 export type SectionVisibilityPredicate = (
@@ -173,6 +188,8 @@ export const SECTION_METADATA = {
 	[SectionKind.Thresholds]: { title: 'Thresholds', icon: Antenna },
 	[SectionKind.ContextLinks]: { title: 'Context Links', icon: Link2 },
 	[SectionKind.Columns]: { title: 'Columns', icon: Columns3 },
+	[SectionKind.TextLayout]: { title: 'Panel appearance', icon: AlignLeft },
+	[SectionKind.PanelHeader]: { title: 'Panel header', icon: PanelTop },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**
