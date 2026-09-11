@@ -367,19 +367,19 @@ def test_traces_attributes_json_list_view(
             timestamp=evolution_time + timedelta(minutes=5),
             trace_id=TraceIdGenerator.trace_id(),
             span_id=TraceIdGenerator.span_id(),
-            name="json only",
+            name="dual written",
             resources={"service.name": service},
-            attributes={"http.route": "/json", "http.retry.count": 2, "http.cache.hit": False},
-            attribute_write_mode="json_only",
+            attributes={"http.route": "/dual", "http.retry.count": 2, "http.cache.hit": False},
+            attribute_write_mode="dual_write",
         ),
         Traces(
             timestamp=evolution_time + timedelta(minutes=10),
             trace_id=TraceIdGenerator.trace_id(),
             span_id=TraceIdGenerator.span_id(),
-            name="dual written",
+            name="json only",
             resources={"service.name": service},
-            attributes={"http.route": "/dual", "http.retry.count": 3, "http.cache.hit": True},
-            attribute_write_mode="dual_write",
+            attributes={"http.route": "/json", "http.retry.count": 3, "http.cache.hit": True},
+            attribute_write_mode="json_only",
         ),
     ]
     insert_traces(spans)
@@ -406,8 +406,8 @@ def test_traces_attributes_json_list_view(
     assert len(rows) == 3
     expected = [
         ("map only", {"http.route": "/map", "http.retry.count": 1, "http.cache.hit": True}),
-        ("json only", {"http.route": "/json", "http.retry.count": 2, "http.cache.hit": False}),
-        ("dual written", {"http.route": "/dual", "http.retry.count": 3, "http.cache.hit": True}),
+        ("dual written", {"http.route": "/dual", "http.retry.count": 2, "http.cache.hit": False}),
+        ("json only", {"http.route": "/json", "http.retry.count": 3, "http.cache.hit": True}),
     ]
     for row, (name, attributes) in zip(rows, expected, strict=True):
         assert row["data"]["name"] == name
