@@ -47,6 +47,9 @@ export const Loading: Story = {
 /** Data: the channel list's retryable request-error branch. */
 export const LoadError: Story = {
 	args: { dataState: 'error' },
+	// The mocked channels request intentionally fails; the resulting console error
+	// is the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 };
 
 /**
