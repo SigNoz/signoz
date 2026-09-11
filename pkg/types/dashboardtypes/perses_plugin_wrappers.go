@@ -30,6 +30,7 @@ func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return markDiscriminator(s, "kind", map[string]string{
 		string(PanelKindTimeSeries): schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec"),
 		string(PanelKindBarChart):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec"),
+		string(PanelKindAreaChart):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec"),
 		string(PanelKindNumber):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec"),
 		string(PanelKindPieChart):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec"),
 		string(PanelKindTable):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec"),
@@ -60,6 +61,7 @@ func (PanelPlugin) JSONSchemaOneOf() []any {
 	return []any{
 		PanelPluginVariant[TimeSeriesPanelSpec]{Kind: string(PanelKindTimeSeries)},
 		PanelPluginVariant[BarChartPanelSpec]{Kind: string(PanelKindBarChart)},
+		PanelPluginVariant[AreaChartPanelSpec]{Kind: string(PanelKindAreaChart)},
 		PanelPluginVariant[NumberPanelSpec]{Kind: string(PanelKindNumber)},
 		PanelPluginVariant[PieChartPanelSpec]{Kind: string(PanelKindPieChart)},
 		PanelPluginVariant[TablePanelSpec]{Kind: string(PanelKindTable)},
@@ -223,6 +225,7 @@ var (
 	panelPluginSpecs = map[PanelPluginKind]func() any{
 		PanelKindTimeSeries: func() any { return new(TimeSeriesPanelSpec) },
 		PanelKindBarChart:   func() any { return new(BarChartPanelSpec) },
+		PanelKindAreaChart:  func() any { return new(AreaChartPanelSpec) },
 		PanelKindNumber:     func() any { return new(NumberPanelSpec) },
 		PanelKindPieChart:   func() any { return new(PieChartPanelSpec) },
 		PanelKindTable:      func() any { return new(TablePanelSpec) },
@@ -245,6 +248,7 @@ var (
 	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{
 		PanelKindTimeSeries: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
 		PanelKindBarChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindAreaChart:  {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
 		PanelKindNumber:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
 		PanelKindHistogram:  {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
 		PanelKindPieChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
