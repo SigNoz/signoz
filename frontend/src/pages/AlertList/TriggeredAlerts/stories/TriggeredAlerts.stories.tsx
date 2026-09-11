@@ -62,6 +62,9 @@ export const Loading: Story = {
 /** Data: the retryable error branch when the alert request fails. */
 export const LoadError: Story = {
 	args: { dataState: 'error' },
+	// The mocked alerts request intentionally fails; the resulting console error is
+	// the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 };
 
 /**
