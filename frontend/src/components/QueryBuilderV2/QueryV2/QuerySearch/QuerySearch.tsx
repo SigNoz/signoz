@@ -512,11 +512,16 @@ function QuerySearch({
 								metricName: debouncedMetricName ?? undefined,
 							},
 							queryData.builderQueryType,
-						).then((response) => ({
-							stringValues: response.data.values.stringValues ?? [],
-							numberValues: response.data.values.numberValues ?? [],
-							complete: response.data.complete ?? false,
-						}));
+						).then((response) => {
+							const responseData = response.data;
+							const responseDataValues = responseData.values;
+
+							return {
+								stringValues: responseDataValues.stringValues ?? [],
+								numberValues: responseDataValues.numberValues ?? [],
+								complete: responseData.complete ?? false,
+							};
+						});
 
 				// Skip updates if component unmounted or key changed
 				if (
