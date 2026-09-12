@@ -154,21 +154,13 @@ func New(
 				// Don't return here - we need to snapshot our state first.
 			}
 
-			storableSilences, err := server.stateStore.Get(ctx, server.orgID)
-			if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-				return 0, err
-			}
-
-			if storableSilences == nil {
-				storableSilences = alertmanagertypes.NewStoreableState(server.orgID)
-			}
-
+			storableSilences := alertmanagertypes.NewStoreableState(server.orgID)
 			c, err := storableSilences.Set(alertmanagertypes.SilenceStateName, server.silences)
 			if err != nil {
 				return 0, err
 			}
 
-			return c, server.stateStore.Set(ctx, storableSilences)
+			return c, server.stateStore.Set(ctx, storableSilences, alertmanagertypes.SilenceStateName)
 		})
 	}()
 
@@ -182,21 +174,13 @@ func New(
 				// Don't return without saving the current state.
 			}
 
-			storableNFLog, err := server.stateStore.Get(ctx, server.orgID)
-			if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-				return 0, err
-			}
-
-			if storableNFLog == nil {
-				storableNFLog = alertmanagertypes.NewStoreableState(server.orgID)
-			}
-
+			storableNFLog := alertmanagertypes.NewStoreableState(server.orgID)
 			c, err := storableNFLog.Set(alertmanagertypes.NFLogStateName, server.nflog)
 			if err != nil {
 				return 0, err
 			}
 
-			return c, server.stateStore.Set(ctx, storableNFLog)
+			return c, server.stateStore.Set(ctx, storableNFLog, alertmanagertypes.NFLogStateName)
 		})
 	}()
 
