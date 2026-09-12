@@ -254,6 +254,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddIngestionTuplesFactory(sqlstore),
 		sqlmigration.NewAddSubscriptionTuplesFactory(sqlstore),
 		sqlmigration.NewNormalizeQuickFilterFieldsFactory(sqlstore),
+		sqlmigration.NewAddUserTuplesFactory(sqlstore),
 	)
 }
 
@@ -326,6 +327,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			authz,
 			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
 			impluser.NewHandler(modules.UserSetter, modules.UserGetter),
+			modules.UserGetter,
 			implsession.NewHandler(modules.Session, globalConfig),
 			implauthdomain.NewHandler(modules.AuthDomain),
 			modules.AuthDomain,
