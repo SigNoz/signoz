@@ -1,19 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
 import { Select, Spin } from 'antd';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
+import {
+	FieldKeysConfig,
+	useFieldKeys,
+} from 'hooks/querySuggestions/useFieldKeys';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
+
+const DEFAULT_ORDER_BY_CONFIG: FieldKeysConfig = {
+	staticFields: [{ name: 'timestamp' } as TelemetryFieldKey],
+};
 
 interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;
 	dataSource: DataSource;
+	fieldKeysConfig?: FieldKeysConfig;
 }
 
-// Loader component for the dropdown when loading or no results
 function Loader({ isLoading }: { isLoading: boolean }): JSX.Element {
 	return (
 		<div className="order-by-loading-container">
@@ -26,6 +32,7 @@ function ListViewOrderBy({
 	value,
 	onChange,
 	dataSource,
+	fieldKeysConfig = DEFAULT_ORDER_BY_CONFIG,
 }: ListViewOrderByProps): JSX.Element {
 	const [searchInput, setSearchInput] = useState('');
 	const [debouncedInput, setDebouncedInput] = useState('');
@@ -34,17 +41,11 @@ function ListViewOrderBy({
 	>([]);
 	const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	// Fetch key suggestions based on debounced input
-	const { data, isLoading } = useQuery({
-		queryKey: ['orderByKeySuggestions', dataSource, debouncedInput],
-		queryFn: async () => {
-			const response = await getKeySuggestions({
-				signal: dataSource,
-				searchText: debouncedInput,
-			});
-			return response.data;
-		},
-	});
+	const { data, isLoading } = useFieldKeys(
+		fieldKeysConfig,
+		dataSource,
+		debouncedInput,
+	);
 
 	useEffect(
 		() => (): void => {
@@ -55,35 +56,33 @@ function ListViewOrderBy({
 		[],
 	);
 
-	// Update options when API data changes
+	const staticKeysSignature = (fieldKeysConfig.staticFields ?? [])
+		.map((field) => field.name)
+		.join(',');
+
 	useEffect(() => {
-		const rawKeys: QueryKeyDataSuggestionsProps[] = data?.data?.keys
-			? Object.values(data.data?.keys).flat()
-			: [];
+		const keyNames = (data ?? []).map((field) => field.name);
+		const search = searchInput.trim().toLowerCase();
+		const staticMatches = staticKeysSignature
+			.split(',')
+			.filter((key) => key.length > 0 && key.toLowerCase().includes(search));
+		const uniqueKeys = [...new Set([...staticMatches, ...keyNames])];
 
-		const keyNames = rawKeys.map((key) => key.name);
-		const uniqueKeys = [
-			...new Set(searchInput ? keyNames : ['timestamp', ...keyNames]),
-		];
+		setSelectOptions(
+			uniqueKeys.flatMap((key) => [
+				{ label: `${key} (desc)`, value: `${key}:desc` },
+				{ label: `${key} (asc)`, value: `${key}:asc` },
+			]),
+		);
+	}, [data, searchInput, staticKeysSignature]);
 
-		const updatedOptions = uniqueKeys.flatMap((key) => [
-			{ label: `${key} (desc)`, value: `${key}:desc` },
-			{ label: `${key} (asc)`, value: `${key}:asc` },
-		]);
-
-		setSelectOptions(updatedOptions);
-	}, [data, searchInput]);
-
-	// Handle search input with debounce
 	const handleSearch = (input: string): void => {
 		setSearchInput(input);
 
-		// Filter current options for instant client-side match
 		const filteredOptions = selectOptions.filter((option) =>
 			option.value.toLowerCase().includes(input.trim().toLowerCase()),
 		);
 
-		// If no match found or input is empty, trigger debounced fetch
 		if (filteredOptions.length === 0 || input === '') {
 			if (debounceTimer.current) {
 				clearTimeout(debounceTimer.current);

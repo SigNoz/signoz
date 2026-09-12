@@ -1,10 +1,11 @@
 import { EditorView } from '@uiw/react-codemirror';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
+import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 
 import QuerySearch from '../QuerySearch/QuerySearch';
@@ -30,14 +31,6 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
 	};
 });
 
-jest.mock('api/querySuggestions/getKeySuggestions', () => ({
-	getKeySuggestions: jest.fn().mockResolvedValue({
-		data: {
-			data: { keys: {} as Record<string, QueryKeyDataSuggestionsProps[]> },
-		},
-	}),
-}));
-
 jest.mock('api/querySuggestions/getValueSuggestion', () => ({
 	getValueSuggestions: jest.fn().mockResolvedValue({
 		data: { data: { values: { stringValues: [], numberValues: [] } } },
@@ -46,6 +39,26 @@ jest.mock('api/querySuggestions/getValueSuggestion', () => ({
 
 // Note: We're NOT mocking CodeMirror here - using the real component
 // This provides integration testing with the actual CodeMirror editor
+
+const keyRequests: URLSearchParams[] = [];
+
+const mockFieldKeys = (): void => {
+	server.use(
+		rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/keys`, (req, res, ctx) => {
+			keyRequests.push(req.url.searchParams);
+			return res(
+				ctx.status(200),
+				ctx.json({ status: 'success', data: { complete: true, keys: {} } }),
+			);
+		}),
+	);
+};
+
+// server.resetHandlers() runs after every test, so the handler is re-registered here.
+beforeEach(() => {
+	keyRequests.length = 0;
+	mockFieldKeys();
+});
 
 const SAMPLE_KEY_TYPING = 'http.';
 const SAMPLE_VALUE_TYPING_INCOMPLETE = "service.name = '";
@@ -67,12 +80,6 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 	});
 
 	it('fetches key suggestions when typing a key (debounced)', async () => {
-		// Use real timers for CodeMirror integration tests
-		const mockedGetKeys = getKeySuggestions as jest.MockedFunction<
-			typeof getKeySuggestions
-		>;
-		mockedGetKeys.mockClear();
-
 		render(
 			<QuerySearch
 				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
@@ -95,7 +102,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		await userEvent.type(editor, SAMPLE_KEY_TYPING);
 
 		// Wait for debounced API call (300ms debounce + some buffer)
-		await waitFor(() => expect(mockedGetKeys).toHaveBeenCalled(), {
+		await waitFor(() => expect(keyRequests.length).toBeGreaterThan(0), {
 			timeout: 2000,
 		});
 	});
@@ -132,12 +139,6 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 	});
 
 	it('fetches key suggestions on mount for LOGS', async () => {
-		// Use real timers for CodeMirror integration tests
-		const mockedGetKeysOnMount = getKeySuggestions as jest.MockedFunction<
-			typeof getKeySuggestions
-		>;
-		mockedGetKeysOnMount.mockClear();
-
 		render(
 			<QuerySearch
 				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
@@ -151,9 +152,13 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		// assert against that one instead and make the result order-dependent.
 		await waitFor(
 			() =>
-				expect(mockedGetKeysOnMount).toHaveBeenCalledWith(
-					expect.objectContaining({ signal: DataSource.LOGS, searchText: '' }),
-				),
+				expect(
+					keyRequests.some(
+						(params) =>
+							params.get('signal') === DataSource.LOGS &&
+							params.get('searchText') === '',
+					),
+				).toBe(true),
 			{ timeout: 2000 },
 		);
 	});
@@ -357,11 +362,6 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 	});
 
 	it('fetches key suggestions for metrics even without aggregateAttribute.key when showFilterSuggestionsWithoutMetric is true', async () => {
-		const mockedGetKeys = getKeySuggestions as jest.MockedFunction<
-			typeof getKeySuggestions
-		>;
-		mockedGetKeys.mockClear();
-
 		const queryData = {
 			...initialQueriesMap.metrics.builder.queryData[0],
 			aggregateAttribute: {
@@ -382,7 +382,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 
 		await waitFor(
 			() => {
-				expect(mockedGetKeys).toHaveBeenCalled();
+				expect(keyRequests.length).toBeGreaterThan(0);
 			},
 			{ timeout: 2000 },
 		);

@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { jest } from '@jest/globals';
 import { fireEvent, waitFor } from '@testing-library/react';
+import { ENVIRONMENT } from 'constants/env';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { render, screen, userEvent } from 'tests/test-utils';
 import {
 	Having,
@@ -41,6 +44,22 @@ jest.mock(
 // Mock hooks
 jest.mock('hooks/queryBuilder/useQueryBuilder');
 jest.mock('hooks/queryBuilder/useQueryBuilderOperations');
+
+const mockFieldKeys = (): void => {
+	server.use(
+		rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/keys`, (req, res, ctx) =>
+			res(
+				ctx.status(200),
+				ctx.json({ status: 'success', data: { complete: true, keys: {} } }),
+			),
+		),
+	);
+};
+
+// server.resetHandlers() runs after every test, so the handler is re-registered here.
+beforeEach(() => {
+	mockFieldKeys();
+});
 
 const mockedUseQueryBuilder = jest.mocked(useQueryBuilder);
 const mockedUseQueryOperations = jest.mocked(

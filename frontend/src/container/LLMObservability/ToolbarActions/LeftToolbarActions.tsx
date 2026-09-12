@@ -1,19 +1,21 @@
-import {
-	ArrowUpToLine,
-	Atom,
-	Filter,
-	SquareMousePointer,
-	Terminal,
-	Binoculars,
-} from '@signozhq/icons';
+import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
+import { TOOLBAR_VIEW_CONFIG } from './toolbarViewsConfig';
+
 import './ToolbarActions.styles.scss';
 
+interface ToolbarViewItem {
+	name: string;
+	key: string;
+	show?: boolean;
+	disabled?: boolean;
+}
+
 interface LeftToolbarActionsProps {
-	items: any;
+	items: Record<string, ToolbarViewItem>;
 	selectedView: string;
 	onChangeSelectedView: (view: ExplorerViews) => void;
 	showFilter: boolean;
@@ -29,8 +31,6 @@ export default function LeftToolbarActions({
 	showFilter,
 	handleFilterVisibilityChange,
 }: LeftToolbarActionsProps): JSX.Element {
-	const { clickhouse, list, timeseries, table, trace } = items;
-
 	return (
 		<div className="left-toolbar">
 			{!showFilter && (
@@ -41,91 +41,34 @@ export default function LeftToolbarActions({
 					</Button>
 				</Tooltip>
 			)}
+			{/* Buttons render in the order the caller declares its views. */}
 			<div className="left-toolbar-query-actions">
-				{list?.show && (
-					<Tooltip title="List View">
-						<Button
-							disabled={list.disabled}
-							className={cx(
-								'list-view-tab',
-								'explorer-view-option',
-								selectedView === list.key ? activeTab : '',
-							)}
-							onClick={(): void => onChangeSelectedView(list.key)}
-						>
-							<SquareMousePointer size={14} data-testid="search-view" />
-							List View
-						</Button>
-					</Tooltip>
-				)}
+				{Object.values(items).map((item) => {
+					const config = TOOLBAR_VIEW_CONFIG[item?.key];
 
-				{trace?.show && (
-					<Tooltip title="Trace View">
-						<Button
-							disabled={trace.disabled}
-							className={cx(
-								'trace-view-tab',
-								'explorer-view-option',
-								selectedView === trace.key ? activeTab : '',
-							)}
-							onClick={(): void => onChangeSelectedView(trace.key)}
-						>
-							<SquareMousePointer size={14} data-testid="trace-view" />
-							Trace View
-						</Button>
-					</Tooltip>
-				)}
+					if (!item?.show || !config) {
+						return null;
+					}
 
-				{timeseries?.show && (
-					<Tooltip title="Time Series">
-						<Button
-							disabled={timeseries.disabled}
-							className={cx(
-								'timeseries-view-tab',
-								'explorer-view-option',
-								selectedView === timeseries.key ? activeTab : '',
-							)}
-							onClick={(): void => onChangeSelectedView(timeseries.key)}
-						>
-							<Atom size={14} data-testid="query-builder-view" />
-							Time Series
-						</Button>
-					</Tooltip>
-				)}
+					const { icon: Icon, label, className, testId } = config;
 
-				{clickhouse?.show && (
-					<Tooltip title="Clickhouse">
-						<Button
-							disabled={clickhouse.disabled}
-							className={cx(
-								'clickhouse-view-tab',
-								'explorer-view-option',
-								selectedView === clickhouse.key ? activeTab : '',
-							)}
-							onClick={(): void => onChangeSelectedView(clickhouse.key)}
-						>
-							<Terminal size={14} data-testid="clickhouse-view" />
-							Clickhouse
-						</Button>
-					</Tooltip>
-				)}
-
-				{table?.show && (
-					<Tooltip title="Table">
-						<Button
-							disabled={table.disabled}
-							className={cx(
-								'table-view-tab',
-								'explorer-view-option',
-								selectedView === table.key ? activeTab : '',
-							)}
-							onClick={(): void => onChangeSelectedView(table.key)}
-						>
-							<Binoculars size={14} data-testid="query-builder-view-v2" />
-							Table
-						</Button>
-					</Tooltip>
-				)}
+					return (
+						<Tooltip key={item.key} title={label}>
+							<Button
+								disabled={item.disabled}
+								className={cx(
+									className,
+									'explorer-view-option',
+									selectedView === item.key ? activeTab : '',
+								)}
+								onClick={(): void => onChangeSelectedView(item.key as ExplorerViews)}
+							>
+								<Icon size={14} data-testid={testId} />
+								{label}
+							</Button>
+						</Tooltip>
+					);
+				})}
 			</div>
 		</div>
 	);

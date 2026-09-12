@@ -64,6 +64,7 @@ function TimeSeriesView({
 	panelType = PANEL_TYPES.TIME_SERIES,
 	stackBarChart = false,
 	allowExport = false,
+	exportFileName,
 	onYAxisUnitChange,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -270,7 +271,7 @@ function TimeSeriesView({
 							yAxisUnit={yAxisUnit}
 							data={data}
 							query={currentQuery}
-							fileName={`${dataSource}-timeseries`}
+							fileName={exportFileName ?? `${dataSource}-timeseries`}
 						/>
 					)}
 				</div>
@@ -339,6 +340,7 @@ interface TimeSeriesViewProps {
 	stackBarChart?: boolean;
 	// Opt-in: render the client-side export menu (Logs explorer for now).
 	allowExport?: boolean;
+	exportFileName?: string;
 	// Opt-in: render the y-axis unit selector in the header (views without their
 	// own selector, e.g. Logs). Metrics keeps its separate YAxisUnitSelector.
 	onYAxisUnitChange?: (value: string) => void;
@@ -351,6 +353,7 @@ TimeSeriesView.defaultProps = {
 	setWarning: undefined,
 	panelType: PANEL_TYPES.TIME_SERIES,
 	stackBarChart: false,
+	exportFileName: undefined,
 };
 
 export default TimeSeriesView;
