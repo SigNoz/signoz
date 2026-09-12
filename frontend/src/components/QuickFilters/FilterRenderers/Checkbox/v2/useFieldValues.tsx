@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useGetAIObservabilityFieldsValues } from 'api/generated/services/ai-observability';
 import { useGetFieldsValues } from 'api/generated/services/fields';
 import {
 	TelemetrytypesSignalDTO,
@@ -13,10 +14,10 @@ import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 
 interface UseFieldValuesProps {
 	filter: IQuickFiltersConfig;
+	source: QuickFiltersSource;
 	searchText: string;
 	existingQuery?: string;
 	metricNamespace?: string;
-	source?: QuickFiltersSource;
 	startUnixMilli?: number;
 	endUnixMilli?: number;
 	enabled: boolean;
@@ -54,7 +55,9 @@ export function useFieldValues({
 	endUnixMilli,
 	enabled,
 }: UseFieldValuesProps): UseFieldValuesReturn {
-	const { data, isLoading, isFetching } = useGetFieldsValues(
+	const isAIObservability = source === QuickFiltersSource.AI_OBSERVABILITY;
+
+	const fieldsValues = useGetFieldsValues(
 		{
 			signal: filter.dataSource
 				? DATA_SOURCE_TO_SIGNAL[filter.dataSource]
@@ -71,12 +74,33 @@ export function useFieldValues({
 		},
 		{
 			query: {
-				enabled,
+				enabled: enabled && !isAIObservability,
 				cacheTime: FIELD_API_CACHE_TIME,
 				keepPreviousData: true,
 			},
 		},
 	);
+
+	const aiObservabilityValues = useGetAIObservabilityFieldsValues(
+		{
+			name: filter.attributeKey.key,
+			searchText,
+			existingQuery,
+			startUnixMilli,
+			endUnixMilli,
+		},
+		{
+			query: {
+				enabled: enabled && isAIObservability,
+				cacheTime: FIELD_API_CACHE_TIME,
+				keepPreviousData: true,
+			},
+		},
+	);
+
+	const { data, isLoading, isFetching } = isAIObservability
+		? aiObservabilityValues
+		: fieldsValues;
 
 	const relatedValues: string[] = useMemo(() => {
 		const values = data?.data?.values;

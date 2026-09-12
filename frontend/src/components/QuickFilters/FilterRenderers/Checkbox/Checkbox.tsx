@@ -15,7 +15,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import CheckboxFilterHeader from './CheckboxFilterHeader';
 import CheckboxValueRow from './CheckboxValueRow';
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
-import useActiveQueryIndex from './useActiveQueryIndex';
+import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryIndex';
 import useCheckboxDisclosure from './useCheckboxDisclosure';
 import useCheckboxFilterActions from './useCheckboxFilterActions';
 import useCheckboxFilterState from './useCheckboxFilterState';

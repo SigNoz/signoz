@@ -32,6 +32,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
+import useActiveQueryIndex from './hooks/useActiveQueryIndex';
 import CheckboxV2 from './FilterRenderers/Checkbox/v2/CheckboxFilterV2';
 import Duration from './FilterRenderers/Duration/Duration';
 import Slider from './FilterRenderers/Slider/Slider';
@@ -107,6 +108,12 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const shouldShowDropdownInListView =
 		isListView && source === QuickFiltersSource.TRACES_EXPLORER;
 
+	// AI observability builds a single query in the row-level views, so there is
+	// no query for the selector to switch between.
+	const isAIObservabilityRowView =
+		source === QuickFiltersSource.AI_OBSERVABILITY &&
+		(isListView || panelType === PANEL_TYPES.TRACE);
+
 	const showAnnouncementTooltip = useMemo(() => {
 		const localStorageValue = getLocalStorageKey(
 			LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT,
@@ -117,14 +124,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		return true;
 	}, []);
 
-	const activeQueryIndex = useMemo(() => {
-		if (isListView) {
-			return source === QuickFiltersSource.TRACES_EXPLORER
-				? lastUsedQuery || 0
-				: 0;
-		}
-		return lastUsedQuery || 0;
-	}, [isListView, source, lastUsedQuery]);
+	const activeQueryIndex = useActiveQueryIndex(source);
 
 	// clear all the filters for the query which is in sync with filters
 	const handleReset = (): void => {
@@ -186,7 +186,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			<Typography.Text className="text">
 				{displayedQueryName ? 'Filters for' : 'Filters'}
 			</Typography.Text>
-			{queryOptions.length > 1 && (!isListView || shouldShowDropdownInListView) ? (
+			{queryOptions.length > 1 &&
+			!isAIObservabilityRowView &&
+			(!isListView || shouldShowDropdownInListView) ? (
 				<Combobox open={open} onOpenChange={setOpen}>
 					<ComboboxTrigger
 						placeholder="Select a query"
