@@ -10683,15 +10683,31 @@ export interface SpantypesGettableFlamegraphTraceDTO {
 	startTimestampMillis: number;
 }
 
+export enum SpantypesSpanMapperOriginDTO {
+	user = 'user',
+	system = 'system',
+}
+export interface SpantypesSpanMapperGroupConditionKeyDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	origin?: SpantypesSpanMapperOriginDTO;
+	/**
+	 * @type string
+	 */
+	value: string;
+}
+
 export type SpantypesSpanMapperGroupConditionDTOAnyOf = {
 	/**
 	 * @type array,null
 	 */
-	attributes: string[] | null;
+	attributes: SpantypesSpanMapperGroupConditionKeyDTO[] | null;
 	/**
 	 * @type array,null
 	 */
-	resource: string[] | null;
+	resource: SpantypesSpanMapperGroupConditionKeyDTO[] | null;
 };
 
 /**
@@ -10727,6 +10743,7 @@ export interface SpantypesSpanMapperGroupDTO {
 	 * @type string
 	 */
 	orgId: string;
+	origin: SpantypesSpanMapperOriginDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -10736,6 +10753,10 @@ export interface SpantypesSpanMapperGroupDTO {
 	 * @type string
 	 */
 	updatedBy?: string;
+	/**
+	 * @type integer
+	 */
+	version: number;
 }
 
 export interface SpantypesGettableSpanMapperGroupsDTO {
@@ -10794,10 +10815,15 @@ export enum SpantypesSpanMapperOperationDTO {
 export interface SpantypesSpanMapperSourceDTO {
 	context: SpantypesFieldContextDTO;
 	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
 	 * @type string
 	 */
 	key: string;
 	operation: SpantypesSpanMapperOperationDTO;
+	origin?: SpantypesSpanMapperOriginDTO;
 	/**
 	 * @type integer
 	 */
@@ -10839,6 +10865,7 @@ export interface SpantypesSpanMapperDTO {
 	 * @type string
 	 */
 	name: string;
+	origin: SpantypesSpanMapperOriginDTO;
 	/**
 	 * @type string
 	 * @format date-time

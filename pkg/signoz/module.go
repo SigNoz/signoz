@@ -45,7 +45,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
-	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/tag"
@@ -124,9 +123,10 @@ func NewModules(
 	fl flagger.Flagger,
 	tagModule tag.Module,
 	metricReductionRule metricreductionrule.Module,
+	spanMapper spanmapper.Module,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
-	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter, dashboard)
+	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter, dashboard, spanMapper)
 	// Cleanup callbacks from other modules, invoked when a user is deleted.
 	onDeleteUser := []user.OnDeleteUser{
 		dashboard.DeletePreferencesForUser,
@@ -162,7 +162,7 @@ func NewModules(
 		RuleStateHistory:     implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger), ruleStore),
 		CloudIntegration:     cloudIntegrationModule,
 		TraceDetail:          impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
-		SpanMapper:           implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), fl),
+		SpanMapper:           spanMapper,
 		LLMPricingRule:       impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), fl, querier),
 		Tag:                  tagModule,
 	}

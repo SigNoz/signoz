@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "definition": {
+    "name": "tool",
+    "condition": {
+      "attributes": [
+        {
+          "value": "tool"
+        }
+      ],
+      "resource": []
+    },
+    "enabled": true,
+    "mappers": [
+      {
+        "name": "gen_ai.tool.name",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "tool.name",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "ai.toolCall.name",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.tool.call.id",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "tool.id",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "ai.toolCall.id",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.tool.description",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "tool.description",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.tool.call.arguments",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "ai.toolCall.args",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 40
+            },
+            {
+              "key": "traceloop.entity.input",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "gcp.vertex.agent.tool_call_args",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "input.value",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.tool.call.result",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "ai.toolCall.result",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 40
+            },
+            {
+              "key": "traceloop.entity.output",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "gcp.vertex.agent.tool_response",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "output.value",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

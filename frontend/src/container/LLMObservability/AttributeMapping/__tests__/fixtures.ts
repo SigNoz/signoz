@@ -3,6 +3,7 @@ import {
 	SpantypesSpanMapperDTO as Mapper,
 	SpantypesSpanMapperGroupDTO as MapperGroup,
 	SpantypesSpanMapperOperationDTO as MapperOperation,
+	SpantypesSpanMapperOriginDTO as MapperOrigin,
 	SpantypesSpanMapperTestSpanDTO as TestSpan,
 } from 'api/generated/services/sigNoz.schemas';
 
@@ -21,9 +22,15 @@ export function makeGroup(overrides: Partial<MapperGroup> = {}): MapperGroup {
 		orgId: 'org-1',
 		name: 'demo',
 		enabled: true,
+		origin: MapperOrigin.user,
+		version: 0,
 		condition: {
-			attributes: ['ai.embeddings'],
-			resource: ['cloud.account.id'],
+			attributes: [
+				{ value: 'ai.embeddings', enabled: true, origin: MapperOrigin.user },
+			],
+			resource: [
+				{ value: 'cloud.account.id', enabled: true, origin: MapperOrigin.user },
+			],
 		},
 		...overrides,
 	};
@@ -35,6 +42,7 @@ export function makeMapper(overrides: Partial<Mapper> = {}): Mapper {
 		groupId: 'group-1',
 		name: 'gen_ai.request.model',
 		enabled: true,
+		origin: MapperOrigin.user,
 		fieldContext: FieldContext.attribute,
 		config: {
 			sources: [
@@ -43,12 +51,16 @@ export function makeMapper(overrides: Partial<Mapper> = {}): Mapper {
 					context: FieldContext.attribute,
 					operation: MapperOperation.copy,
 					priority: 2,
+					enabled: true,
+					origin: MapperOrigin.user,
 				},
 				{
 					key: 'llm.model',
 					context: FieldContext.attribute,
 					operation: MapperOperation.move,
 					priority: 1,
+					enabled: true,
+					origin: MapperOrigin.user,
 				},
 			],
 		},
@@ -85,8 +97,12 @@ export const mockGroups: MapperGroup[] = [
 		id: 'group-1',
 		name: 'demo',
 		condition: {
-			attributes: ['ai.embeddings'],
-			resource: ['cloud.account.id'],
+			attributes: [
+				{ value: 'ai.embeddings', enabled: true, origin: MapperOrigin.user },
+			],
+			resource: [
+				{ value: 'cloud.account.id', enabled: true, origin: MapperOrigin.user },
+			],
 		},
 	}),
 	makeGroup({

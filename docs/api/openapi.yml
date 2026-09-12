@@ -9610,6 +9610,8 @@ components:
           type: string
         name:
           type: string
+        origin:
+          $ref: '#/components/schemas/SpantypesSpanMapperOrigin'
         updatedAt:
           format: date-time
           type: string
@@ -9622,6 +9624,7 @@ components:
       - fieldContext
       - config
       - enabled
+      - origin
       type: object
     SpantypesSpanMapperConfig:
       properties:
@@ -9650,48 +9653,75 @@ components:
           type: string
         orgId:
           type: string
+        origin:
+          $ref: '#/components/schemas/SpantypesSpanMapperOrigin'
         updatedAt:
           format: date-time
           type: string
         updatedBy:
           type: string
+        version:
+          type: integer
       required:
       - id
       - orgId
       - name
       - condition
       - enabled
+      - origin
+      - version
       type: object
     SpantypesSpanMapperGroupCondition:
       nullable: true
       properties:
         attributes:
           items:
-            type: string
+            $ref: '#/components/schemas/SpantypesSpanMapperGroupConditionKey'
           nullable: true
           type: array
         resource:
           items:
-            type: string
+            $ref: '#/components/schemas/SpantypesSpanMapperGroupConditionKey'
           nullable: true
           type: array
       required:
       - attributes
       - resource
       type: object
+    SpantypesSpanMapperGroupConditionKey:
+      properties:
+        enabled:
+          type: boolean
+        origin:
+          $ref: '#/components/schemas/SpantypesSpanMapperOrigin'
+        value:
+          type: string
+      required:
+      - value
+      - enabled
+      type: object
     SpantypesSpanMapperOperation:
       enum:
       - move
       - copy
       type: string
+    SpantypesSpanMapperOrigin:
+      enum:
+      - user
+      - system
+      type: string
     SpantypesSpanMapperSource:
       properties:
         context:
           $ref: '#/components/schemas/SpantypesFieldContext'
+        enabled:
+          type: boolean
         key:
           type: string
         operation:
           $ref: '#/components/schemas/SpantypesSpanMapperOperation'
+        origin:
+          $ref: '#/components/schemas/SpantypesSpanMapperOrigin'
         priority:
           type: integer
       required:
@@ -9699,6 +9729,7 @@ components:
       - context
       - operation
       - priority
+      - enabled
       type: object
     SpantypesSpanMapperTestSpan:
       properties:

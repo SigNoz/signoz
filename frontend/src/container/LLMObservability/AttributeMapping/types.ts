@@ -3,6 +3,7 @@ import {
 	SpantypesSpanMapperDTO,
 	SpantypesSpanMapperGroupDTO,
 	SpantypesSpanMapperOperationDTO,
+	SpantypesSpanMapperOriginDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 export type MapperGroup = SpantypesSpanMapperGroupDTO;
@@ -11,6 +12,16 @@ export const FieldContext = SpantypesFieldContextDTO;
 export type FieldContextValue = SpantypesFieldContextDTO;
 export const MapperOperation = SpantypesSpanMapperOperationDTO;
 export type MapperOperationValue = SpantypesSpanMapperOperationDTO;
+export const MapperOrigin = SpantypesSpanMapperOriginDTO;
+export type MapperOriginValue = SpantypesSpanMapperOriginDTO;
+
+// One condition substring. Shipped (system) keys are read-only apart from
+// `enabled`; user keys are fully editable.
+export interface ConditionKey {
+	value: string;
+	enabled: boolean;
+	origin: MapperOriginValue;
+}
 
 export type MapperDraftMode = 'add' | 'edit';
 
@@ -18,6 +29,8 @@ export interface SourceConfig {
 	key: string;
 	context: SpantypesFieldContextDTO;
 	operation: SpantypesSpanMapperOperationDTO;
+	enabled: boolean;
+	origin: MapperOriginValue;
 }
 
 // Editable form state for a mapper. `sources` is ordered highest priority
@@ -33,8 +46,8 @@ export interface MapperDraft {
 export interface GroupDraft {
 	id: string | null;
 	name: string;
-	attributes: string[];
-	resource: string[];
+	attributes: ConditionKey[];
+	resource: ConditionKey[];
 	enabled: boolean;
 }
 
@@ -51,8 +64,8 @@ export interface DraftGroup {
 	localId: string;
 	serverId: string | null;
 	name: string;
-	attributes: string[];
-	resource: string[];
+	attributes: ConditionKey[];
+	resource: ConditionKey[];
 	enabled: boolean;
 	mappers: DraftMapper[];
 }

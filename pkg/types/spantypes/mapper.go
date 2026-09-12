@@ -1,6 +1,8 @@
 package spantypes
 
 import (
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -11,6 +13,7 @@ import (
 var (
 	ErrCodeMapperNotFound      = errors.MustNewCode("span_attribute_mapper_not_found")
 	ErrCodeMapperAlreadyExists = errors.MustNewCode("span_attribute_mapper_already_exists")
+	ErrCodeMapperNotDeletable  = errors.MustNewCode("span_attribute_mapper_not_deletable")
 	ErrCodeMappingInvalidInput = errors.MustNewCode("span_attribute_mapping_invalid_input")
 )
 
@@ -34,12 +37,25 @@ var (
 	SpanMapperOperationCopy = SpanMapperOperation{valuer.NewString("copy")}
 )
 
+// SpanMapperOrigin tells shipped (system) items apart from user-created ones.
+// System items are read-only apart from their enabled toggle.
+type SpanMapperOrigin struct {
+	valuer.String
+}
+
+var (
+	SpanMapperOriginUser   = SpanMapperOrigin{valuer.NewString("user")}
+	SpanMapperOriginSystem = SpanMapperOrigin{valuer.NewString("system")}
+)
+
 // MapperSource describes one candidate source for a target attribute.
 type SpanMapperSource struct {
 	Key       string              `json:"key" required:"true"`
 	Context   FieldContext        `json:"context" required:"true"`
 	Operation SpanMapperOperation `json:"operation" required:"true"`
 	Priority  int                 `json:"priority" required:"true"`
+	Enabled   bool                `json:"enabled" required:"true"`
+	Origin    SpanMapperOrigin    `json:"origin"`
 }
 
 // MapperConfig holds the mapping logic for a single target attribute.
@@ -59,6 +75,7 @@ type SpanMapper struct {
 	FieldContext FieldContext     `json:"fieldContext"  required:"true"`
 	Config       SpanMapperConfig `json:"config"        required:"true"`
 	Enabled      bool             `json:"enabled"       required:"true"`
+	Origin       SpanMapperOrigin `json:"origin"        required:"true"`
 }
 
 type PostableSpanMapper struct {
@@ -90,6 +107,63 @@ func (SpanMapperOperation) Enum() []any {
 	return []any{SpanMapperOperationMove, SpanMapperOperationCopy}
 }
 
+func (SpanMapperOrigin) Enum() []any {
+	return []any{SpanMapperOriginUser, SpanMapperOriginSystem}
+}
+
+func (p *PostableSpanMapper) Validate() error {
+	if strings.TrimSpace(p.Name) == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeMappingInvalidInput, "mapper name must not be blank")
+	}
+	if err := p.FieldContext.Validate(); err != nil {
+		return err
+	}
+	return p.Config.Validate()
+}
+
+func (f FieldContext) Validate() error {
+	if f != FieldContextSpanAttribute && f != FieldContextResource {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeMappingInvalidInput, "field context must be one of %q or %q, got %q", FieldContextSpanAttribute, FieldContextResource, f.StringValue())
+	}
+	return nil
+}
+
+// Validate checks every source and rejects duplicate priorities within an
+// origin. Shipped and user sources are never compared with each other: a user
+// re-adding a shipped key with another operation is the supported override.
+func (c *SpanMapperConfig) Validate() error {
+	if len(c.Sources) == 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeMappingInvalidInput, "config.sources must contain at least one source")
+	}
+	seen := map[SpanMapperOrigin]map[int]struct{}{}
+	for _, s := range c.Sources {
+		if strings.TrimSpace(s.Key) == "" {
+			return errors.New(errors.TypeInvalidInput, ErrCodeMappingInvalidInput, "source key must not be blank")
+		}
+		if err := s.Context.Validate(); err != nil {
+			return err
+		}
+		if s.Operation != SpanMapperOperationCopy && s.Operation != SpanMapperOperationMove {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeMappingInvalidInput, "source operation must be one of %q or %q, got %q", SpanMapperOperationCopy, SpanMapperOperationMove, s.Operation.StringValue())
+		}
+		if !s.Origin.IsZero() && s.Origin != SpanMapperOriginUser && s.Origin != SpanMapperOriginSystem {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeMappingInvalidInput, "source origin must be one of %q or %q, got %q", SpanMapperOriginUser, SpanMapperOriginSystem, s.Origin.StringValue())
+		}
+		origin := s.Origin
+		if origin.IsZero() {
+			origin = SpanMapperOriginUser
+		}
+		if seen[origin] == nil {
+			seen[origin] = map[int]struct{}{}
+		}
+		if _, dup := seen[origin][s.Priority]; dup {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeMappingInvalidInput, "source priority %d is used more than once", s.Priority)
+		}
+		seen[origin][s.Priority] = struct{}{}
+	}
+	return nil
+}
+
 func NewSpanMapper(groupID valuer.UUID, createdBy string, p *PostableSpanMapper) *SpanMapper {
 	now := time.Now()
 	return &SpanMapper{
@@ -97,8 +171,9 @@ func NewSpanMapper(groupID valuer.UUID, createdBy string, p *PostableSpanMapper)
 		GroupID:      groupID,
 		Name:         p.Name,
 		FieldContext: p.FieldContext,
-		Config:       p.Config,
+		Config:       SpanMapperConfig{Sources: withOrigin(p.Config.Sources, SpanMapperOriginUser)},
 		Enabled:      p.Enabled,
+		Origin:       SpanMapperOriginUser,
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: now,
 			UpdatedAt: now,
@@ -110,16 +185,42 @@ func NewSpanMapper(groupID valuer.UUID, createdBy string, p *PostableSpanMapper)
 	}
 }
 
-func (m *SpanMapper) Update(fieldContext FieldContext, config *SpanMapperConfig, enabled *bool, updatedBy string) {
-	m.FieldContext = fieldContext
+// Update applies a user edit; a zero fieldContext means it was omitted. On a
+// system mapper the field context is fixed and the stored system sources are
+// kept; see nextSources.
+func (m *SpanMapper) Update(fieldContext FieldContext, config *SpanMapperConfig, enabled *bool, updatedBy string) error {
+	if !fieldContext.IsZero() {
+		if m.Origin == SpanMapperOriginSystem && fieldContext != m.FieldContext {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeMappingInvalidInput, "field context of system mapper %q cannot be changed", m.Name)
+		}
+		if err := fieldContext.Validate(); err != nil {
+			return err
+		}
+		m.FieldContext = fieldContext
+	}
 	if config != nil {
-		m.Config = *config
+		sources, err := m.nextSources(config.Sources)
+		if err != nil {
+			return err
+		}
+		m.Config = SpanMapperConfig{Sources: sources}
+		if err := m.Config.Validate(); err != nil {
+			return err
+		}
 	}
 	if enabled != nil {
 		m.Enabled = *enabled
 	}
 	m.UpdatedAt = time.Now()
 	m.UpdatedBy = updatedBy
+	return nil
+}
+
+func (m *SpanMapper) ErrIfNotDeletable() error {
+	if m.Origin == SpanMapperOriginSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeMapperNotDeletable, "system mapper %q cannot be deleted, disable it instead", m.Name)
+	}
+	return nil
 }
 
 func (m *SpanMapper) ToStorable() *StorableSpanMapper {
@@ -132,6 +233,7 @@ func (m *SpanMapper) ToStorable() *StorableSpanMapper {
 		FieldContext:  m.FieldContext,
 		Config:        m.Config,
 		Enabled:       m.Enabled,
+		Origin:        m.Origin,
 	}
 }
 
@@ -145,6 +247,7 @@ func (s *StorableSpanMapper) ToSpanMapper() *SpanMapper {
 		FieldContext:  s.FieldContext,
 		Config:        s.Config,
 		Enabled:       s.Enabled,
+		Origin:        s.Origin,
 	}
 }
 
@@ -158,4 +261,40 @@ func NewSpanMappersFromStorable(ss []*StorableSpanMapper) []*SpanMapper {
 
 func NewGettableSpanMappers(m []*SpanMapper) *GettableSpanMappers {
 	return &GettableSpanMappers{Items: m}
+}
+
+// nextSources builds the source list from an edit: user sources are taken from
+// the edit as sent, system sources stay as stored and the edit can only flip
+// their enabled flag.
+func (m *SpanMapper) nextSources(edit []SpanMapperSource) ([]SpanMapperSource, error) {
+	var systemSources, userSources []SpanMapperSource
+	for _, s := range m.Config.Sources {
+		if s.Origin == SpanMapperOriginSystem {
+			systemSources = append(systemSources, s)
+		}
+	}
+
+	for _, s := range edit {
+		if s.Origin != SpanMapperOriginSystem {
+			s.Origin = SpanMapperOriginUser
+			userSources = append(userSources, s)
+			continue
+		}
+		idx := slices.IndexFunc(systemSources, func(o SpanMapperSource) bool { return o.Key == s.Key && o.Context == s.Context })
+		if idx == -1 {
+			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeMappingInvalidInput, "system source %q does not exist on this mapper; only its enabled flag can change", s.Key)
+		}
+		systemSources[idx].Enabled = s.Enabled
+	}
+
+	return append(systemSources, userSources...), nil
+}
+
+func withOrigin(sources []SpanMapperSource, origin SpanMapperOrigin) []SpanMapperSource {
+	out := make([]SpanMapperSource, len(sources))
+	for i, s := range sources {
+		s.Origin = origin
+		out[i] = s
+	}
+	return out
 }
