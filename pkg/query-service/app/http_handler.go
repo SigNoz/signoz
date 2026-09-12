@@ -66,6 +66,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
@@ -810,46 +811,15 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 			// to get the correct query range
 			start := end.Add(-rule.EvalWindow.Duration() - 3*time.Minute)
 			if rule.AlertType == ruletypes.AlertTypeLogs {
-				// TODO(srikanthccv): re-visit this and support multiple queries
-				var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+				builderQueries, _ := contextlinks.BuilderQueriesForSignal(rule.RuleCondition.CompositeQuery.Queries, telemetrytypes.SignalLogs)
+				whereClauses := contextlinks.PrepareFilterExpressions(lbls, builderQueries)
 
-				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder {
-						switch spec := query.Spec.(type) {
-						case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-							q = spec
-						}
-					}
-				}
-
-				filterExpr := ""
-				if q.Filter != nil && q.Filter.Expression != "" {
-					filterExpr = q.Filter.Expression
-				}
-
-				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-
-				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()
+				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClauses).Encode()
 			} else if rule.AlertType == ruletypes.AlertTypeTraces || rule.AlertType == ruletypes.AlertTypeAITraces {
-				// TODO(srikanthccv): re-visit this and support multiple queries
-				var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
+				builderQueries, _ := contextlinks.BuilderQueriesForSignal(rule.RuleCondition.CompositeQuery.Queries, telemetrytypes.SignalTraces)
+				whereClauses := contextlinks.PrepareFilterExpressions(lbls, builderQueries)
 
-				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder || query.Type == qbtypes.QueryTypeBuilderAI {
-						switch spec := query.Spec.(type) {
-						case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-							q = spec
-						}
-					}
-				}
-
-				filterExpr := ""
-				if q.Filter != nil && q.Filter.Expression != "" {
-					filterExpr = q.Filter.Expression
-				}
-
-				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause, rule.AlertType.BuilderQueryType()).Encode()
+				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClauses, rule.AlertType.BuilderQueryType()).Encode()
 			}
 		}
 	}
