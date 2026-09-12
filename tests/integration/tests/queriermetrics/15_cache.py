@@ -1,0 +1,325 @@
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from http import HTTPStatus
+from uuid import uuid4
+
+from fixtures import types
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.metrics import Metrics
+from fixtures.querier import (
+    assert_results_equal,
+    build_builder_query,
+    get_series_values,
+    make_query_request,
+)
+
+MINUTE_MS = 60_000
+
+
+def test_builder_shortening_the_time_range_at_the_end(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    # the cache outlives the run, so a fixed name would serve the previous run's
+    # points back to this one
+    metric_name = f"cache_end_shortened_{uuid4().hex[:8]}"
+
+    # 40 minutes back clears the flux interval, which holds recent data out of
+    # the cache. Flooring to a multiple of the 5m step makes the base query span
+    # two whole steps, so both its points are complete
+    start_time = datetime.fromtimestamp(int((datetime.now(tz=UTC) - timedelta(minutes=40)).timestamp()) // 300 * 300, tz=UTC)
+    start_time_ms = int(start_time.timestamp() * 1000)
+    end_time_ms_base_query = start_time_ms + 10 * MINUTE_MS
+    end_time_ms_shortened_query = start_time_ms + 7 * MINUTE_MS
+
+    query = [build_builder_query("A", metric_name, "max", "max", step_interval=300)]
+
+    # the 5m step splits the ten minutes into two points, each the max over its
+    # own step: minutes 0-4 and minutes 5-9. The second changes partway through,
+    # 256 until minute 7 and then 4096, so ending the range at minute 7 has to
+    # reach a different value than ending it at minute 10
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=start_time + timedelta(minutes=minute),
+                value=(16, 16, 16, 16, 16, 256, 256, 4096, 4096, 4096)[minute],
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for minute in range(10)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    base_query = make_query_request(signoz, token, start_time_ms, end_time_ms_base_query, query, no_cache=False)
+    assert base_query.status_code == HTTPStatus.OK, base_query.text
+    points = sorted(get_series_values(base_query.json(), "A"), key=lambda point: point["timestamp"])
+    returned_points = [(point["value"], point.get("partial", False)) for point in points]
+    assert returned_points == [(16, False), (4096, False)]
+
+    from_cache = make_query_request(signoz, token, start_time_ms, end_time_ms_shortened_query, query, no_cache=False)
+    assert from_cache.status_code == HTTPStatus.OK, from_cache.text
+
+    uncached = make_query_request(signoz, token, start_time_ms, end_time_ms_shortened_query, query, no_cache=True)
+    assert uncached.status_code == HTTPStatus.OK, uncached.text
+
+    assert_results_equal(from_cache.json(), uncached.json(), "A", "shortened end")
+
+    # the shortened end reaches only minutes 5-6 of the second point, so it comes
+    # back as 256 and partial, where the cached one spans all five minutes
+    for label, response in (("from cache", from_cache), ("uncached", uncached)):
+        points = sorted(get_series_values(response.json(), "A"), key=lambda point: point["timestamp"])
+        returned_points = [(point["value"], point.get("partial", False)) for point in points]
+        assert returned_points == [(16, False), (256, True)], label
+
+
+def test_builder_shortening_the_time_range_at_the_start(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    metric_name = f"cache_start_shortened_{uuid4().hex[:8]}"
+
+    # 40 minutes back clears the flux interval, which holds recent data out of
+    # the cache. Flooring to a multiple of the 5m step makes the base query span
+    # two whole steps, so both its points are complete
+    start_time = datetime.fromtimestamp(int((datetime.now(tz=UTC) - timedelta(minutes=40)).timestamp()) // 300 * 300, tz=UTC)
+    start_time_ms_base_query = int(start_time.timestamp() * 1000)
+    start_time_ms_shortened_query = start_time_ms_base_query + 3 * MINUTE_MS
+    end_time_ms = start_time_ms_base_query + 10 * MINUTE_MS
+
+    query = [build_builder_query("A", metric_name, "max", "max", step_interval=300)]
+
+    # the 5m step splits the ten minutes into two points, each the max over its
+    # own step: minutes 0-4 and minutes 5-9. Only minute 0 holds 65536, so a first
+    # point reaching it says the whole step was read even though the shortened
+    # range opens at minute 3
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=start_time + timedelta(minutes=minute),
+                value=(65536, 16, 16, 16, 16, 4096, 4096, 4096, 4096, 4096)[minute],
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for minute in range(10)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    base_query = make_query_request(signoz, token, start_time_ms_base_query, end_time_ms, query, no_cache=False)
+    assert base_query.status_code == HTTPStatus.OK, base_query.text
+    points = sorted(get_series_values(base_query.json(), "A"), key=lambda point: point["timestamp"])
+    returned_points = [(point["value"], point.get("partial", False)) for point in points]
+    assert returned_points == [(65536, False), (4096, False)]
+
+    from_cache = make_query_request(signoz, token, start_time_ms_shortened_query, end_time_ms, query, no_cache=False)
+    assert from_cache.status_code == HTTPStatus.OK, from_cache.text
+
+    uncached = make_query_request(signoz, token, start_time_ms_shortened_query, end_time_ms, query, no_cache=True)
+    assert uncached.status_code == HTTPStatus.OK, uncached.text
+
+    assert_results_equal(from_cache.json(), uncached.json(), "A", "shortened start")
+
+    # starting inside the first point's step flags that point partial without
+    # clipping its value, which still covers the whole step and so reaches the
+    # 65536 at minute 0
+    for label, response in (("from cache", from_cache), ("uncached", uncached)):
+        points = sorted(get_series_values(response.json(), "A"), key=lambda point: point["timestamp"])
+        returned_points = [(point["value"], point.get("partial", False)) for point in points]
+        assert returned_points == [(65536, True), (4096, False)], label
+
+
+def test_promql_running_the_same_query_twice(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    metric_name = f"cache_repeat_total_{uuid4().hex[:8]}"
+
+    # 40 minutes back clears the flux interval, which holds recent data out of
+    # the cache
+    start_time = datetime.fromtimestamp(int((datetime.now(tz=UTC) - timedelta(minutes=40)).timestamp()) // 60 * 60, tz=UTC)
+    start_time_ms = int(start_time.timestamp() * 1000)
+    end_time_ms = start_time_ms + 2 * MINUTE_MS
+
+    query = [{"type": "promql", "spec": {"name": "A", "query": f"sum(increase({metric_name}[2m]))", "step": 60}}]
+
+    # the counter opens a minute before the query so its first point has something
+    # to increase over, and starts far above its own rise across the range, below
+    # which increase clips its back-extrapolation at the counter's zero point. It
+    # rises by a different amount each minute, so every point is its own number
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=start_time + timedelta(minutes=minute),
+                value=(1000, 1010, 1030, 1060, 1100)[minute + 1],
+                temporality="Cumulative",
+                type_="Sum",
+                is_monotonic=True,
+            )
+            for minute in range(-1, 4)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    first = make_query_request(signoz, token, start_time_ms, end_time_ms, query, no_cache=False)
+    assert first.status_code == HTTPStatus.OK, first.text
+
+    second = make_query_request(signoz, token, start_time_ms, end_time_ms, query, no_cache=False)
+    assert second.status_code == HTTPStatus.OK, second.text
+
+    assert_results_equal(first.json(), second.json(), "A", "the same query twice")
+
+    # promql reports a point at the instant the range closes, and the second run,
+    # answered out of what the first one cached, has to keep it
+    for run, response in (("first", first), ("second", second)):
+        points = sorted(get_series_values(response.json(), "A"), key=lambda point: point["timestamp"])
+        returned_points = [(point["timestamp"], point["value"]) for point in points]
+        ## at each timestamp t, promql looks at points in (t-2minutes, t].
+        assert returned_points == [
+            (start_time_ms, 20),  # t = 0, points taken 1000, 1010. hence diff over 1m is 10, extrapolated to 20.
+            (start_time_ms + MINUTE_MS, 40),  # t = 1m, points taken 1010, 1030. hence diff over 1m is 20, extrapolated to 40.
+            (end_time_ms, 60),  # t = 2m, points taken 1030, 1060. hence diff over 1m is 30, extrapolated to 60.
+        ], f"{run} run"
+
+
+def test_promql_shifting_the_time_range(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    metric_name = f"cache_shift_gauge_{uuid4().hex[:8]}"
+
+    # 40 minutes back clears the flux interval, which holds recent data out of
+    # the cache. Flooring to a whole minute is what makes the first query aligned
+    # to its 1m step, and the unaligned one half a step off it
+    start_time = datetime.fromtimestamp(int((datetime.now(tz=UTC) - timedelta(minutes=40)).timestamp()) // 60 * 60, tz=UTC)
+    aligned_start_time_ms = int(start_time.timestamp() * 1000)
+    aligned_end_time_ms = aligned_start_time_ms + 3 * MINUTE_MS
+    unaligned_start_time_ms = aligned_start_time_ms + MINUTE_MS // 2
+    unaligned_end_time_ms = aligned_end_time_ms + MINUTE_MS // 2
+
+    query = [{"type": "promql", "spec": {"name": "A", "query": f"max_over_time({metric_name}[2m])", "step": 60}}]
+
+    # a sample every 30s, rising by 100 each time. The two queries report 30s
+    # apart, so they land on different samples and share no value between them
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=start_time + timedelta(seconds=30 * half_minute),
+                value=100 * (half_minute + 4),
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for half_minute in range(-3, 8)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    aligned_and_cached = make_query_request(signoz, token, aligned_start_time_ms, aligned_end_time_ms, query, no_cache=False)
+    assert aligned_and_cached.status_code == HTTPStatus.OK, aligned_and_cached.text
+
+    # what the cache now holds, and what the unaligned query must not be served
+    points = sorted(get_series_values(aligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
+    returned_points = [(point["timestamp"], point["value"]) for point in points]
+    ## at each timestamp t, promql takes the highest sample in (t-2minutes, t],
+    ## which is the one at t itself since the gauge only rises.
+    assert returned_points == [
+        (aligned_start_time_ms, 400),  # t = 0
+        (aligned_start_time_ms + MINUTE_MS, 600),  # t = 1m
+        (aligned_start_time_ms + 2 * MINUTE_MS, 800),  # t = 2m
+        (aligned_end_time_ms, 1000),  # t = 3m
+    ]
+
+    unaligned_and_uncached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=True)
+    assert unaligned_and_uncached.status_code == HTTPStatus.OK, unaligned_and_uncached.text
+
+    # promql reports at the range start plus whole steps, so these points sit 30s
+    # off the cached ones. The first run stores them, the second reads them back
+    for run in ("first", "second"):
+        unaligned_and_cached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=False)
+        assert unaligned_and_cached.status_code == HTTPStatus.OK, unaligned_and_cached.text
+        assert_results_equal(unaligned_and_cached.json(), unaligned_and_uncached.json(), "A", f"unaligned query, {run} run")
+
+        points = sorted(get_series_values(unaligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
+        returned_points = [(point["timestamp"], point["value"]) for point in points]
+        ## every point falls on a sample the aligned run never reported, so being
+        ## served the cached run's answer shows up in the values and not only the
+        ## timestamps.
+        assert returned_points == [
+            (unaligned_start_time_ms, 500),  # t = 30s
+            (unaligned_start_time_ms + MINUTE_MS, 700),  # t = 1m30s
+            (unaligned_start_time_ms + 2 * MINUTE_MS, 900),  # t = 2m30s
+            (unaligned_end_time_ms, 1100),  # t = 3m30s
+        ], f"unaligned query, {run} run"
+
+
+def test_builder_refreshing_a_sliding_time_range(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    metric_name = f"cache_sliding_{uuid4().hex[:8]}"
+
+    # 90 minutes back so even the twentieth refresh closes clear of the flux
+    # interval, which holds recent data out of the cache
+    start_time = datetime.fromtimestamp(int((datetime.now(tz=UTC) - timedelta(minutes=90)).timestamp()) // 60 * 60, tz=UTC)
+    start_time_ms = int(start_time.timestamp() * 1000)
+
+    query = [build_builder_query("A", metric_name, "max", "max")]
+
+    # the 1m step gives one point per seeded minute, and a value no other minute
+    # carries, so a point stitched in from the wrong range reads as the wrong minute
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=start_time + timedelta(minutes=minute),
+                value=1000 + minute,
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for minute in range(80)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # a dashboard left open on a one hour range, re-running a minute later each time
+    for refresh in range(20):
+        refresh_start_ms = start_time_ms + refresh * MINUTE_MS
+        from_cache = make_query_request(signoz, token, refresh_start_ms, refresh_start_ms + 60 * MINUTE_MS, query, no_cache=False)
+        assert from_cache.status_code == HTTPStatus.OK, from_cache.text
+
+        # each refresh is stitched out of overlapping cached ranges, so this catches
+        # a point served twice, dropped, or carried over from an earlier refresh
+        points = sorted(get_series_values(from_cache.json(), "A"), key=lambda point: point["timestamp"])
+        returned_points = [(point["timestamp"], point["value"], point.get("partial", False)) for point in points]
+        expected_points = [(start_time_ms + minute * MINUTE_MS, 1000 + minute, False) for minute in range(refresh, refresh + 60)]
+        assert returned_points == expected_points, f"refresh {refresh} did not return the minutes it covers"
+
+    last_refresh_start_ms = start_time_ms + 19 * MINUTE_MS
+    uncached = make_query_request(signoz, token, last_refresh_start_ms, last_refresh_start_ms + 60 * MINUTE_MS, query, no_cache=True)
+    assert uncached.status_code == HTTPStatus.OK, uncached.text
+
+    assert_results_equal(from_cache.json(), uncached.json(), "A", "the twentieth refresh")
