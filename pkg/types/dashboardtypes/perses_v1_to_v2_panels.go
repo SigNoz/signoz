@@ -254,12 +254,24 @@ func (d *v1Decoder) panelFormatting(w map[string]any) PanelFormatting {
 	return PanelFormatting{Unit: d.readString(w, "yAxisUnit"), DecimalPrecision: mapV1Precision(w["decimalPrecision"])}
 }
 
+// axesFromWidget drops the exact softMin/softMax pair 0/0: v1 seeded it into every new
+// widget as its "unset" default, so it carries no user intent, while in v2 an explicit 0
+// is an honoured bound. Any other pair — including a lone 0 — is carried over as-is.
 func (d *v1Decoder) axesFromWidget(w map[string]any) Axes {
+	softMin, softMax := d.readFloatPtr(w, "softMin"), d.readFloatPtr(w, "softMax")
+	if isV1DefaultSoftBounds(softMin, softMax) {
+		softMin, softMax = nil, nil
+	}
+
 	return Axes{
-		SoftMin:    d.readFloatPtr(w, "softMin"),
-		SoftMax:    d.readFloatPtr(w, "softMax"),
+		SoftMin:    softMin,
+		SoftMax:    softMax,
 		IsLogScale: d.readBool(w, "isLogScale"),
 	}
+}
+
+func isV1DefaultSoftBounds(softMin, softMax *float64) bool {
+	return softMin != nil && softMax != nil && *softMin == 0 && *softMax == 0
 }
 
 func (d *v1Decoder) legendFromWidget(w map[string]any) Legend {

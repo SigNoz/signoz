@@ -1,5 +1,6 @@
 import { defaultStyles } from '@visx/tooltip';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { Widgets } from 'types/api/widgets/widget';
 
 export const tooltipStyles = {
 	...defaultStyles,
@@ -103,4 +104,21 @@ export const getTimeRangeFromStepInterval = (
 	const startTime = isApmMetric ? xValue - stepInterval : xValue;
 	const endTime = xValue + stepInterval;
 	return { startTime, endTime };
+};
+
+/**
+ * v1 seeded every new widget with softMin: 0, softMax: 0 as its "unset" default, so that
+ * exact pair carries no user intent and must not reach the chart layer, which honours an
+ * explicit 0. Any other pair — including a lone 0 — is a deliberate bound.
+ */
+export const getWidgetSoftBounds = (
+	widget: Pick<Widgets, 'softMin' | 'softMax'>,
+): { softMin?: number; softMax?: number } => {
+	if (widget.softMin === 0 && widget.softMax === 0) {
+		return {};
+	}
+	return {
+		softMin: widget.softMin ?? undefined,
+		softMax: widget.softMax ?? undefined,
+	};
 };
