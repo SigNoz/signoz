@@ -2,6 +2,7 @@ package signozalertmanager
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	amConfig "github.com/prometheus/alertmanager/config"
@@ -20,6 +21,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+const (
+	// maxConfigRetries is the maximum number of retries for optimistic
+	// concurrency control when a concurrent modification is detected.
+	maxConfigRetries = 3
 )
 
 type provider struct {
@@ -178,22 +185,38 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 		return err
 	}
 
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return err
+	var lastErr error
+
+	for attempt := 0; attempt < maxConfigRetries; attempt++ {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
+
+		expectedHash := config.StoreableConfig().Hash
+
+		if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+			return err
+		}
+
+		if err := config.UpdateReceiver(receiver); err != nil {
+			return err
+		}
+
+		if err := provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+			return provider.configStore.SetIfHash(ctx, config, expectedHash)
+		})); err != nil {
+			if errors.Asc(err, alertmanagertypes.ErrCodeAlertmanagerConfigConflict) {
+				lastErr = err
+				continue
+			}
+			return err
+		}
+
+		return nil
 	}
 
-	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
-		return err
-	}
-
-	if err := config.UpdateReceiver(receiver); err != nil {
-		return err
-	}
-
-	return provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
-		return provider.configStore.Set(ctx, config)
-	}))
+	return fmt.Errorf("failed to update channel after %d attempts due to concurrent modifications: %w", maxConfigRetries, lastErr)
 }
 
 func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, channelID valuer.UUID) error {
@@ -217,47 +240,75 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 			channel.DisplayName, names)
 	}
 
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return err
+	var lastErr error
+
+	for attempt := 0; attempt < maxConfigRetries; attempt++ {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
+
+		expectedHash := config.StoreableConfig().Hash
+
+		if err := config.DeleteReceiver(channel.DisplayName); err != nil {
+			return err
+		}
+
+		if err := provider.configStore.DeleteChannelByID(ctx, orgID, channelID, alertmanagertypes.WithCb(func(ctx context.Context) error {
+			return provider.configStore.SetIfHash(ctx, config, expectedHash)
+		})); err != nil {
+			if errors.Asc(err, alertmanagertypes.ErrCodeAlertmanagerConfigConflict) {
+				lastErr = err
+				continue
+			}
+			return err
+		}
+
+		return nil
 	}
 
-	if err := config.DeleteReceiver(channel.DisplayName); err != nil {
-		return err
-	}
-
-	return provider.configStore.DeleteChannelByID(ctx, orgID, channelID, alertmanagertypes.WithCb(func(ctx context.Context) error {
-		return provider.configStore.Set(ctx, config)
-	}))
+	return fmt.Errorf("failed to delete channel after %d attempts due to concurrent modifications: %w", maxConfigRetries, lastErr)
 }
 
 func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
+	var lastErr error
+
+	for attempt := 0; attempt < maxConfigRetries; attempt++ {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return nil, err
+		}
+
+		expectedHash := config.StoreableConfig().Hash
+
+		if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+			return nil, err
+		}
+
+		if err := config.CreateReceiver(receiver); err != nil {
+			return nil, err
+		}
+
+		channel, err := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
+		if err != nil {
+			return nil, err
+		}
+
+		err = provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+			return provider.configStore.SetIfHash(ctx, config, expectedHash)
+		}))
+		if err != nil {
+			if errors.Asc(err, alertmanagertypes.ErrCodeAlertmanagerConfigConflict) {
+				lastErr = err
+				continue
+			}
+			return nil, err
+		}
+
+		return channel, nil
 	}
 
-	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
-		return nil, err
-	}
-
-	if err := config.CreateReceiver(receiver); err != nil {
-		return nil, err
-	}
-
-	channel, err := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	err = provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
-		return provider.configStore.Set(ctx, config)
-	}))
-	if err != nil {
-		return nil, err
-	}
-
-	return channel, nil
+	return nil, fmt.Errorf("failed to create channel after %d attempts due to concurrent modifications: %w", maxConfigRetries, lastErr)
 }
 
 func (provider *provider) CreateNotificationChannel(ctx context.Context, orgID string, postable alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error) {
@@ -266,32 +317,44 @@ func (provider *provider) CreateNotificationChannel(ctx context.Context, orgID s
 		return nil, err
 	}
 
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
+	var lastErr error
+
+	for attempt := 0; attempt < maxConfigRetries; attempt++ {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return nil, err
+		}
+
+		expectedHash := config.StoreableConfig().Hash
+
+		if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+			return nil, err
+		}
+
+		if err := config.CreateReceiverV2(receiver); err != nil {
+			return nil, err
+		}
+
+		channel, err := alertmanagertypes.NewChannelFromReceiverWithName(receiver, postable.Name, orgID)
+		if err != nil {
+			return nil, err
+		}
+
+		err = provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+			return provider.configStore.SetIfHash(ctx, config, expectedHash)
+		}))
+		if err != nil {
+			if errors.Asc(err, alertmanagertypes.ErrCodeAlertmanagerConfigConflict) {
+				lastErr = err
+				continue
+			}
+			return nil, err
+		}
+
+		return channel, nil
 	}
 
-	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
-		return nil, err
-	}
-
-	if err := config.CreateReceiverV2(receiver); err != nil {
-		return nil, err
-	}
-
-	channel, err := alertmanagertypes.NewChannelFromReceiverWithName(receiver, postable.Name, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	err = provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
-		return provider.configStore.Set(ctx, config)
-	}))
-	if err != nil {
-		return nil, err
-	}
-
-	return channel, nil
+	return nil, fmt.Errorf("failed to create notification channel after %d attempts due to concurrent modifications: %w", maxConfigRetries, lastErr)
 }
 
 // UpdateNotificationChannel replaces the channel's configuration. The display
@@ -312,26 +375,38 @@ func (provider *provider) UpdateNotificationChannel(ctx context.Context, orgID s
 		return nil, err
 	}
 
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
+	var lastErr error
+
+	for attempt := 0; attempt < maxConfigRetries; attempt++ {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return nil, err
+		}
+
+		expectedHash := config.StoreableConfig().Hash
+
+		if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+			return nil, err
+		}
+
+		if err := config.UpdateReceiver(receiver); err != nil {
+			return nil, err
+		}
+
+		if err := provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+			return provider.configStore.SetIfHash(ctx, config, expectedHash)
+		})); err != nil {
+			if errors.Asc(err, alertmanagertypes.ErrCodeAlertmanagerConfigConflict) {
+				lastErr = err
+				continue
+			}
+			return nil, err
+		}
+
+		return channel, nil
 	}
 
-	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
-		return nil, err
-	}
-
-	if err := config.UpdateReceiver(receiver); err != nil {
-		return nil, err
-	}
-
-	if err := provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
-		return provider.configStore.Set(ctx, config)
-	})); err != nil {
-		return nil, err
-	}
-
-	return channel, nil
+	return nil, fmt.Errorf("failed to update notification channel after %d attempts due to concurrent modifications: %w", maxConfigRetries, lastErr)
 }
 
 func (provider *provider) TestNotificationChannel(ctx context.Context, orgID string, testable alertmanagertypes.TestableNotificationChannel) error {
