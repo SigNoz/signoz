@@ -37,6 +37,7 @@ type Service struct {
 
 	// Mutex to protect the servers map
 	serversMtx sync.RWMutex
+	stopped    bool
 
 	notificationManager nfmanager.NotificationManager
 
@@ -68,13 +69,18 @@ func New(
 }
 
 func (service *Service) SyncServers(ctx context.Context) error {
+	service.serversMtx.Lock()
+	defer service.serversMtx.Unlock()
+	if service.stopped {
+		return nil
+	}
+
 	compat.InitFromFlags(service.settings.Logger(), featurecontrol.NoopFlags{})
 	orgs, err := service.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
 		return err
 	}
 
-	service.serversMtx.Lock()
 	for _, org := range orgs {
 		config, _, err := service.getConfig(ctx, org.ID.StringValue())
 		if err != nil {
@@ -104,7 +110,6 @@ func (service *Service) SyncServers(ctx context.Context) error {
 			continue
 		}
 	}
-	service.serversMtx.Unlock()
 
 	return nil
 }
@@ -163,6 +168,14 @@ func (service *Service) TestAlert(ctx context.Context, orgID string, receiversMa
 }
 
 func (service *Service) Stop(ctx context.Context) error {
+	service.serversMtx.Lock()
+	defer service.serversMtx.Unlock()
+	if service.stopped {
+		return nil
+	}
+	// A queued sync must not publish or reconfigure servers after teardown.
+	service.stopped = true
+
 	var errs []error
 	for _, server := range service.servers {
 		if err := server.Stop(ctx); err != nil {
@@ -170,20 +183,13 @@ func (service *Service) Stop(ctx context.Context) error {
 			service.settings.Logger().ErrorContext(ctx, "failed to stop alertmanager server", errors.Attr(err))
 		}
 	}
+	clear(service.servers)
 
 	return errors.Join(errs...)
 }
 
 func (service *Service) newServer(ctx context.Context, orgID string) (*alertmanagerserver.Server, error) {
 	config, storedHash, err := service.getConfig(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	server, err := alertmanagerserver.New(
-		ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID,
-		service.stateStore, service.notificationManager, service.maintenanceStore,
-	)
 	if err != nil {
 		return nil, err
 	}
@@ -199,15 +205,17 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 	// so that other code paths reading directly from the store see the up-to-date config.
 	if storedHash == config.StoreableConfig().Hash {
 		service.settings.Logger().DebugContext(ctx, "skipping config store update for org", slog.String("org_id", orgID), slog.String("hash", config.StoreableConfig().Hash))
-		return server, nil
+	} else {
+		if err := service.configStore.Set(ctx, config); err != nil {
+			return nil, err
+		}
 	}
 
-	err = service.configStore.Set(ctx, config)
-	if err != nil {
-		return nil, err
-	}
-
-	return server, nil
+	// Construction starts workers, so finish fallible reconciliation before handing them to the service.
+	return alertmanagerserver.New(
+		ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID,
+		service.stateStore, service.notificationManager, service.maintenanceStore,
+	)
 }
 
 // getConfig returns the config for the given orgID with overlays applied, along
