@@ -1,9 +1,11 @@
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { billingSuccessResponse } from 'mocks-server/__mockdata__/billing';
 import {
 	licensesSuccessResponse,
 	notOfTrailResponse,
 	trialConvertedToSubscriptionResponse,
 } from 'mocks-server/__mockdata__/licenses';
+import { server } from 'mocks-server/server';
 import { act, render, screen, getAppContextMock } from 'tests/test-utils';
 import APIError from 'types/api/error';
 import {
@@ -14,11 +16,6 @@ import {
 import { getFormattedDate } from 'utils/timeUtils';
 
 import BillingContainer from './BillingContainer';
-
-jest.mock('hooks/useActiveLicenseKey/useActiveLicenseKey', () => ({
-	__esModule: true,
-	default: jest.fn(() => ({ licenseKey: 'test-key', isLoading: false })),
-}));
 
 window.ResizeObserver =
 	window.ResizeObserver ||
@@ -31,14 +28,22 @@ window.ResizeObserver =
 describe('BillingContainer', () => {
 	jest.setTimeout(30000);
 
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
 	it('Component should render', async () => {
 		render(<BillingContainer />);
 
-		const dataInjection = screen.getByRole('columnheader', {
+		const dataInjection = await screen.findByRole('columnheader', {
 			name: /data ingested/i,
 		});
 		expect(dataInjection).toBeInTheDocument();
-		const pricePerUnit = screen.getByRole('columnheader', {
+		const pricePerUnit = await screen.findByRole('columnheader', {
 			name: /price per unit/i,
 		});
 		expect(pricePerUnit).toBeInTheDocument();
@@ -49,13 +54,15 @@ describe('BillingContainer', () => {
 
 		const dayRemainingInBillingPeriod = await screen.findByText(
 			/Please upgrade plan now to retain your data./i,
+			{},
+			{ timeout: 5000 },
 		);
 		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
 
 		const upgradePlanButton = screen.getByTestId('upgrade-plan-button');
 		expect(upgradePlanButton).toBeInTheDocument();
 
-		const dollar = await screen.findByText(/\$1,278.3/i);
+		const dollar = await screen.findByText(/\$1,278.3/i, {}, { timeout: 5000 });
 		expect(dollar).toBeInTheDocument();
 
 		const currentBill = await screen.findByText('billing');
@@ -86,7 +93,9 @@ describe('BillingContainer', () => {
 
 			await expect(screen.findByText('Free Trial')).resolves.toBeInTheDocument();
 			await expect(screen.findByText('billing')).resolves.toBeInTheDocument();
-			await expect(screen.findByText(/\$0/i)).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByText(/\$0/i, {}, { timeout: 5000 }),
+			).resolves.toBeInTheDocument();
 
 			await expect(
 				screen.findByText(
@@ -132,7 +141,7 @@ describe('BillingContainer', () => {
 			const currentBill = await screen.findByText('billing');
 			expect(currentBill).toBeInTheDocument();
 
-			const dollar0 = await screen.findByText(/\$0/i);
+			const dollar0 = await screen.findByText(/\$0/i, {}, { timeout: 5000 });
 			expect(dollar0).toBeInTheDocument();
 
 			const onTrail = await screen.findByText(
@@ -250,7 +259,11 @@ describe('BillingContainer', () => {
 			billingSuccessResponse.data.billingPeriodStart,
 		)} to ${getFormattedDate(billingSuccessResponse.data.billingPeriodEnd)}`;
 
-		const billingPeriod = await findByText(billingPeriodText);
+		const billingPeriod = await findByText(
+			billingPeriodText,
+			{},
+			{ timeout: 5000 },
+		);
 		expect(billingPeriod).toBeInTheDocument();
 
 		const currentBill = await screen.findByText('billing');

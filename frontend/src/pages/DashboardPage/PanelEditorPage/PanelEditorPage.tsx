@@ -10,9 +10,14 @@ import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
+import {
+	buildDashboardDeletePermission,
+	buildDashboardReadPermission,
+	buildDashboardUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 
 import { useDashboardFetch } from '../DashboardContainer/hooks/useDashboardFetch';
-import { useDashboardEditGuard } from '../DashboardContainer/hooks/useDashboardEditGuard';
 import { useResolvedVariables } from '../DashboardContainer/hooks/useResolvedVariables';
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
 import type { PanelEditorHandoffState } from '../DashboardContainer/PanelEditor/panelEditorHandoff';
@@ -47,22 +52,12 @@ function PanelEditorPage(): JSX.Element {
 
 	const { dashboard, isLoading, isError, error, refetch } =
 		useDashboardFetch(dashboardId);
-	// Derived here (not from the store) because the editor route doesn't mount
-	// DashboardContainer, so the store's edit context may be cold on a direct URL.
-	const { isEditable, isLocked, canEditDashboard, editDisabledReason } =
-		useDashboardEditGuard(dashboard);
-
 	// On a refresh/direct URL this route is the only mount, so seed the edit
 	// context the way DashboardContainer does — during render, so the subtree's
 	// first render already sees the id (useDashboardFetchRequired throws without it).
 	const setEditContext = useDashboardStore((s) => s.setEditContext);
 	if (dashboard?.id) {
-		setEditContext({
-			dashboardId: dashboard.id,
-			isLocked,
-			canEditDashboard,
-			refetch,
-		});
+		setEditContext({ dashboardId: dashboard.id, refetch });
 	}
 
 	// No variables bar on this route: seed the selection and publish the resolved
@@ -143,12 +138,21 @@ function PanelEditorPage(): JSX.Element {
 			savedPanel={existingPanel}
 			isNew={!!newKind}
 			layoutIndex={layoutIndex}
-			isEditable={isEditable}
-			editDisabledReason={editDisabledReason}
 			onClose={backToDashboard}
 			onSaved={backToDashboard}
 		/>
 	);
 }
 
-export default PanelEditorPage;
+// Typed explicitly: the route lazy-loads this, and Loadable needs indexable props.
+export default withAuthZPage<Record<string, unknown>>(PanelEditorPage, {
+	checks: (_props, router) => [
+		buildDashboardReadPermission(router.params.dashboardId ?? ''),
+	],
+	// Same batch as `checks`, so the controls below resolve from cache.
+	preloadChecks: (_props, router) => [
+		buildDashboardUpdatePermission(router.params.dashboardId ?? ''),
+		buildDashboardDeletePermission(router.params.dashboardId ?? ''),
+	],
+	fallbackOnLoading: <Spinner tip="Loading dashboard..." />,
+});

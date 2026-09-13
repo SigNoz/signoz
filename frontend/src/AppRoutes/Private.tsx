@@ -169,12 +169,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	// Check for workspace blocked (trial expired)
 	if (!isFetchingActiveLicense && isCloudPlatform && trialInfo?.workSpaceBlock) {
 		const isRouteEnabledForWorkspaceBlockedState =
-			isAdmin &&
-			(pathname === ROUTES.SETTINGS ||
-				pathname === ROUTES.ORG_SETTINGS ||
-				pathname === ROUTES.MEMBERS_SETTINGS ||
-				pathname === ROUTES.BILLING ||
-				pathname === ROUTES.MY_SETTINGS);
+			pathname === ROUTES.SETTINGS ||
+			pathname === ROUTES.BILLING ||
+			(isAdmin &&
+				(pathname === ROUTES.ORG_SETTINGS ||
+					pathname === ROUTES.MEMBERS_SETTINGS ||
+					pathname === ROUTES.MY_SETTINGS));
 
 		if (
 			pathname !== ROUTES.WORKSPACE_LOCKED &&

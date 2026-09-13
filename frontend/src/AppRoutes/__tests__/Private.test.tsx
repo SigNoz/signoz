@@ -739,7 +739,7 @@ describe('PrivateRoute', () => {
 			assertStaysOnRoute(ROUTES.MY_SETTINGS);
 		});
 
-		it('should redirect VIEWER to workspace locked even when trying to access settings', async () => {
+		it('should allow VIEWER to access /settings when workspace is blocked', () => {
 			renderPrivateRoute({
 				initialRoute: ROUTES.SETTINGS,
 				appContext: {
@@ -752,10 +752,10 @@ describe('PrivateRoute', () => {
 				isCloudUser: true,
 			});
 
-			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
+			assertStaysOnRoute(ROUTES.SETTINGS);
 		});
 
-		it('should redirect VIEWER to workspace locked when trying to access billing', async () => {
+		it('should allow VIEWER to access /settings/billing when workspace is blocked', () => {
 			renderPrivateRoute({
 				initialRoute: ROUTES.BILLING,
 				appContext: {
@@ -768,7 +768,7 @@ describe('PrivateRoute', () => {
 				isCloudUser: true,
 			});
 
-			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
+			assertStaysOnRoute(ROUTES.BILLING);
 		});
 
 		it('should redirect VIEWER to workspace locked when trying to access org-settings', async () => {
@@ -819,7 +819,7 @@ describe('PrivateRoute', () => {
 			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
 		});
 
-		it('should redirect EDITOR to workspace locked when trying to access settings', async () => {
+		it('should allow EDITOR to access /settings when workspace is blocked', () => {
 			renderPrivateRoute({
 				initialRoute: ROUTES.SETTINGS,
 				appContext: {
@@ -832,7 +832,7 @@ describe('PrivateRoute', () => {
 				isCloudUser: true,
 			});
 
-			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
+			assertStaysOnRoute(ROUTES.SETTINGS);
 		});
 
 		it('should not redirect when already on workspace locked page', () => {
@@ -1558,6 +1558,18 @@ describe('PrivateRoute', () => {
 			keyof typeof routeWithInitialAuthZSupport,
 			AuthzRouteCase
 		> = {
+			ALL_DASHBOARD: { path: ROUTES.ALL_DASHBOARD, deniedRoles: DENIED_ROLES },
+			DASHBOARD: {
+				path: ROUTES.DASHBOARD.replace(':dashboardId', 'dashboard-id-1'),
+				deniedRoles: DENIED_ROLES,
+			},
+			DASHBOARD_PANEL_EDITOR: {
+				path: ROUTES.DASHBOARD_PANEL_EDITOR.replace(
+					':dashboardId',
+					'dashboard-id-1',
+				).replace(':panelId', 'panel-id-1'),
+				deniedRoles: DENIED_ROLES,
+			},
 			// Everything under /settings resolves to the non-exact SETTINGS route
 			SETTINGS: { path: ROUTES.SETTINGS, deniedRoles: DENIED_ROLES },
 			MY_SETTINGS: { path: ROUTES.MY_SETTINGS, deniedRoles: DENIED_ROLES },
@@ -1626,6 +1638,7 @@ describe('PrivateRoute', () => {
 				path: ROUTES.WORKSPACE_ACCESS_RESTRICTED,
 				deniedRoles: DENIED_ROLES,
 			},
+			BILLING: { path: ROUTES.BILLING, deniedRoles: DENIED_ROLES },
 		};
 
 		const authzRouteRolePairs: [string, string, ROLES][] = Object.entries(

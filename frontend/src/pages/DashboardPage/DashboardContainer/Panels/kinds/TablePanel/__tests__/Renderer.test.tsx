@@ -1,3 +1,4 @@
+import userEvent from '@testing-library/user-event';
 import {
 	type DashboardtypesTablePanelSpecDTO,
 	type QueryRangeV5200,
@@ -10,6 +11,7 @@ import type {
 	PanelOfKind,
 	PanelRendererProps,
 } from '../../../types/rendererProps';
+import { MIN_PAGE_SIZE } from '../../../utils/recordTable';
 import TablePanelRenderer from '../Renderer';
 
 function panelWith(
@@ -127,6 +129,27 @@ describe('TablePanelRenderer', () => {
 
 		expect(getByText('cartservice')).toBeInTheDocument();
 		expect(queryByText('frontend')).not.toBeInTheDocument();
+	});
+
+	it('keeps a page size picked from the size changer', async () => {
+		const rows = Array.from({ length: 60 }, (_, index): [string, number] => [
+			`service-${index}`,
+			index,
+		]);
+		const { container, getByText } = renderPanel({ data: dataWith(rows) });
+
+		const countRows = (): number =>
+			container.querySelectorAll('.ant-table-tbody tr.ant-table-row').length;
+
+		expect(countRows()).toBe(MIN_PAGE_SIZE);
+
+		const sizeChanger = container.querySelector(
+			'.ant-pagination-options .ant-select-selector',
+		) as Element;
+		await userEvent.click(sizeChanger);
+		await userEvent.click(getByText('20 / page'));
+
+		expect(countRows()).toBe(20);
 	});
 
 	it('keeps the table mounted (not No Data) when the search matches no rows', () => {

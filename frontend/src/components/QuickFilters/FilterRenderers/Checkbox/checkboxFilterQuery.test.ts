@@ -11,10 +11,10 @@ import {
 
 import {
 	applyCheckboxToggle,
-	clearFilterFromQuery,
 	deriveCheckboxState,
 	getNotInOperator,
 } from './checkboxFilterQuery';
+import { clearFilterFromQuery } from '../shared/filterQuery';
 import { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
 
@@ -505,7 +505,7 @@ describe('clearFilterFromQuery', () => {
 
 		const result = clearFilterFromQuery({
 			currentQuery: query,
-			filter: { attributeKey: { key: KEY, type: 'tag' } } as never,
+			filterKey: KEY,
 			activeQueryIndex: 0,
 		});
 
@@ -522,5 +522,36 @@ describe('clearFilterFromQuery', () => {
 		const other = result.builder.queryData[1];
 		expect(other.filters?.items).toHaveLength(1);
 		expect(other.filter?.expression).toBe(`${KEY} = 'a'`);
+	});
+
+	it('without an operators list, clears non-managed clauses too (duration >= / <=)', () => {
+		const query = {
+			builder: {
+				queryData: [
+					{
+						filters: {
+							items: [
+								toTagItem({ key: 'durationNano', op: '>=', value: 5000000 }, 0),
+								toTagItem({ key: 'durationNano', op: '<=', value: 9000000 }, 1),
+							],
+							op: 'AND',
+						},
+						filter: {
+							expression: `durationNano >= 5000000 AND durationNano <= 9000000 AND http.method = 'GET'`,
+						},
+					},
+				],
+			},
+		} as unknown as Query;
+
+		const result = clearFilterFromQuery({
+			currentQuery: query,
+			filterKey: 'durationNano',
+			activeQueryIndex: 0,
+		});
+
+		const active = result.builder.queryData[0];
+		expect(active.filters?.items).toStrictEqual([]);
+		expect(active.filter?.expression).toBe(`http.method = 'GET'`);
 	});
 });

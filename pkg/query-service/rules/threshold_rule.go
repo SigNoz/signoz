@@ -132,7 +132,7 @@ func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time
 
 	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, groupBy)
 
-	return contextlinks.PrepareParamsForTracesV5(start, end, whereClause)
+	return contextlinks.PrepareParamsForTracesV5(start, end, whereClause, r.typ.BuilderQueryType())
 }
 
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
@@ -308,10 +308,14 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		// is used alert grouping, and we want to group alerts with the same
 		// label set, but different timestamps, together.
 		switch r.typ {
-		case ruletypes.AlertTypeTraces:
+		case ruletypes.AlertTypeTraces, ruletypes.AlertTypeAITraces:
 			params := r.prepareParamsForTraces(ctx, ts, smpl.Metric)
 			if len(params) > 0 {
-				link := r.ExternalURL("traces-explorer", params)
+				explorerPath := "traces-explorer"
+				if r.typ == ruletypes.AlertTypeAITraces {
+					explorerPath = "ai-observability/explorer"
+				}
+				link := r.ExternalURL(explorerPath, params)
 				r.logger.InfoContext(ctx, "adding traces link to annotations", slog.String("annotation.link", link))
 				annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedTraces, Value: link})
 			}

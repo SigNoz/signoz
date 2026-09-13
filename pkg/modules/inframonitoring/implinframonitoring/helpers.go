@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -18,12 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
-
-// quoteIdentifier wraps s in backticks for use as a ClickHouse identifier,
-// escaping any embedded backticks by doubling them.
-func quoteIdentifier(s string) string {
-	return fmt.Sprintf("`%s`", strings.ReplaceAll(s, "`", "``"))
-}
 
 func isKeyInGroupByAttrs(groupByAttrs []qbtypes.GroupByKey, key string) bool {
 	for _, groupBy := range groupByAttrs {
@@ -241,7 +236,7 @@ func buildPageGroupsFilterExpr(pageGroups []map[string]string) string {
 	for key, values := range groupValues {
 		quoted := make([]string, len(values))
 		for i, v := range values {
-			quoted[i] = fmt.Sprintf("'%s'", v)
+			quoted[i] = querybuilder.FilterStringLiteral(v)
 		}
 		inClauses = append(inClauses, fmt.Sprintf("%s IN (%s)", key, strings.Join(quoted, ", ")))
 	}
@@ -652,7 +647,7 @@ func (m *module) getMetadata(
 	innerSelectCols := make([]string, 0, len(groupByCols)+1)
 	for _, col := range groupByCols {
 		innerSelectCols = append(innerSelectCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", innerSB.Var(col), quoteIdentifier(col)),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", innerSB.Var(col), sqlbuilder.Escape(clickhousesql.Identifier(col))),
 		)
 	}
 
@@ -731,7 +726,7 @@ func (m *module) getMetadata(
 
 	groupByAliases := make([]string, 0, len(groupByCols))
 	for _, col := range groupByCols {
-		groupByAliases = append(groupByAliases, quoteIdentifier(col))
+		groupByAliases = append(groupByAliases, sqlbuilder.Escape(clickhousesql.Identifier(col)))
 	}
 	innerSB.GroupBy(groupByAliases...)
 
@@ -741,11 +736,11 @@ func (m *module) getMetadata(
 	// Outer SELECT columns: groupBy cols directly + tupleElement(latest_attrs, N) for each additionalCol
 	outerSelectCols := make([]string, 0, len(allCols))
 	for _, col := range groupByCols {
-		outerSelectCols = append(outerSelectCols, quoteIdentifier(col))
+		outerSelectCols = append(outerSelectCols, sqlbuilder.Escape(clickhousesql.Identifier(col)))
 	}
 	for i, col := range additionalCols {
 		outerSelectCols = append(outerSelectCols,
-			fmt.Sprintf("tupleElement(latest_attrs, %d) AS %s", i+1, quoteIdentifier(col)),
+			fmt.Sprintf("tupleElement(latest_attrs, %d) AS %s", i+1, sqlbuilder.Escape(clickhousesql.Identifier(col))),
 		)
 	}
 
@@ -858,7 +853,7 @@ func (m *module) getPerGroupDistinctCounts(
 	selectCols := make([]string, 0, len(groupByCols)+len(attrNames))
 	for _, col := range groupByCols {
 		selectCols = append(selectCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", sb.Var(col), quoteIdentifier(col)),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", sb.Var(col), sqlbuilder.Escape(clickhousesql.Identifier(col))),
 		)
 	}
 	for _, attr := range attrNames {
@@ -880,7 +875,7 @@ func (m *module) getPerGroupDistinctCounts(
 		// Prefix the alias so it never collides with a groupBy col alias
 		// (e.g. clusters grouped by k8s.node.name, which is also counted).
 		selectCols = append(selectCols,
-			fmt.Sprintf("uniqExactIf(%s, %s != '') AS %s", valueExpr, extract, quoteIdentifier(fmt.Sprintf("__count_%s", attr))),
+			fmt.Sprintf("uniqExactIf(%s, %s != '') AS %s", valueExpr, extract, sqlbuilder.Escape(clickhousesql.Identifier(fmt.Sprintf("__count_%s", attr)))),
 		)
 	}
 	sb.Select(selectCols...)
@@ -945,7 +940,7 @@ func (m *module) getPerGroupDistinctCounts(
 
 	groupByAliases := make([]string, 0, len(groupByCols))
 	for _, col := range groupByCols {
-		groupByAliases = append(groupByAliases, quoteIdentifier(col))
+		groupByAliases = append(groupByAliases, sqlbuilder.Escape(clickhousesql.Identifier(col)))
 	}
 	sb.GroupBy(groupByAliases...)
 

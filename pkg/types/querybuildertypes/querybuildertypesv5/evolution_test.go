@@ -25,6 +25,7 @@ var (
 		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		ValueType: schema.ColumnTypeString,
 	}}
+	attributes    = &schema.Column{Name: "attributes", Type: schema.JSONColumnType{}}
 	body_v2       = &schema.Column{Name: LogsV2BodyV2Column, Type: schema.JSONColumnType{}}
 	body_promoted = &schema.Column{Name: LogsV2BodyPromotedColumn, Type: schema.JSONColumnType{}}
 )
@@ -375,6 +376,71 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			expectedColumns: []string{LogsV2BodyPromotedColumn},
 			expectedEvols:   []string{LogsV2BodyPromotedColumn},
 		},
+		// The legacy Map column carries no evolution row; it is synthesized as an epoch-0 base.
+		// Without that synthesis a window before the JSON rollout has no base <= tsStart and errors.
+		{
+			name: "Synthesized base only - window before JSON rollout selects the Map base",
+			columns: []*schema.Column{
+				attributes_string,
+				attributes,
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalTraces,
+					ColumnName:   "attributes",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextAttribute,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 10, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 5, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"attributes_string"},
+			expectedEvols:   []string{"attributes_string"},
+		},
+		{
+			name: "Synthesized base and JSON evolution - window straddling rollout selects both",
+			columns: []*schema.Column{
+				attributes_string,
+				attributes,
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalTraces,
+					ColumnName:   "attributes",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextAttribute,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 10, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 20, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"attributes", "attributes_string"}, // sorted by ReleaseTime desc
+			expectedEvols:   []string{"attributes", "attributes_string"},
+		},
+		{
+			name: "Synthesized base rejected - window after rollout selects only JSON",
+			columns: []*schema.Column{
+				attributes_string,
+				attributes,
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalTraces,
+					ColumnName:   "attributes",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextAttribute,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 10, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			tsStart:         uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 20, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"attributes"},
+			expectedEvols:   []string{"attributes"},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -411,4 +477,39 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			}
 		})
 	}
+}
+
+// SelectEvolutionsForColumns synthesizes epoch-0 bases into a fresh slice and sorts that copy;
+// the caller's evolutions slice may be cached and shared, so it must come back untouched.
+func TestSelectEvolutionsForColumnsDoesNotMutateInput(t *testing.T) {
+	evolutions := []*telemetrytypes.EvolutionEntry{
+		{
+			Signal:       telemetrytypes.SignalTraces,
+			ColumnName:   "attributes",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextAttribute,
+			FieldName:    "__all__",
+			ReleaseTime:  time.Date(2024, 2, 10, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			Signal:       telemetrytypes.SignalTraces,
+			ColumnName:   "resource",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
+			ReleaseTime:  time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+	}
+	original := make([]*telemetrytypes.EvolutionEntry, len(evolutions))
+	copy(original, evolutions)
+
+	_, _, err := SelectEvolutionsForColumns(
+		[]*schema.Column{attributes_string, attributes, resource},
+		evolutions,
+		uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+		uint64(time.Date(2024, 2, 20, 0, 0, 0, 0, time.UTC).UnixNano()),
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, original, evolutions, "input evolutions slice must not be reordered or extended")
 }

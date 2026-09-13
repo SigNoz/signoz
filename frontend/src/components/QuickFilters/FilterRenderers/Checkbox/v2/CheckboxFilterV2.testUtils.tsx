@@ -34,6 +34,7 @@ export function mockFieldsValuesAPI(response: {
 	relatedValues?: (string | null)[];
 	stringValues?: (string | null)[];
 	numberValues?: (number | null)[];
+	boolValues?: (boolean | null)[];
 }): void {
 	server.use(
 		rest.get('http://localhost/api/v1/fields/values', (_, res, ctx) =>
@@ -46,6 +47,7 @@ export function mockFieldsValuesAPI(response: {
 							relatedValues: response.relatedValues ?? [],
 							stringValues: response.stringValues ?? [],
 							numberValues: response.numberValues ?? [],
+							boolValues: response.boolValues ?? [],
 						},
 					},
 				}),
@@ -66,6 +68,13 @@ export function setupServer(): void {
 	beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
 	afterEach(() => server.resetHandlers());
 	afterAll(() => server.close());
+}
+
+// Components read currentQuery for the checkbox state and stagedQuery for the
+// values fetch; in the app both are set by the same URL sync, so tests pass one
+// query as both.
+export function buildQueryBuilderOverrides(query: unknown): never {
+	return { currentQuery: query, stagedQuery: query } as unknown as never;
 }
 
 export interface FilterItemConfig {
@@ -99,18 +108,16 @@ export function renderWithFilter(
 		/>,
 		undefined,
 		{
-			queryBuilderOverrides: {
-				currentQuery: {
-					builder: {
-						queryData: [
-							{
-								filters: { items, op: 'AND' },
-								filter: { expression: 'service.name = "api"' },
-							},
-						],
-					},
+			queryBuilderOverrides: buildQueryBuilderOverrides({
+				builder: {
+					queryData: [
+						{
+							filters: { items, op: 'AND' },
+							filter: { expression: 'service.name = "api"' },
+						},
+					],
 				},
-			} as never,
+			}),
 		},
 	);
 }
