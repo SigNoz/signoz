@@ -123,7 +123,7 @@ export function buildUpdatableMapper(
 export const EMPTY_GROUP_DRAFT: GroupDraft = {
 	id: null,
 	name: '',
-	attributes: [''],
+	attributes: [],
 	resource: [],
 	enabled: true,
 };
@@ -170,8 +170,8 @@ export function buildDraftGroup(
 		localId: group.id,
 		serverId: group.id,
 		name: group.name,
-		attributes: group.condition?.attributes ?? [],
-		resource: group.condition?.resource ?? [],
+		attributes: cleanKeys(group.condition?.attributes ?? []),
+		resource: cleanKeys(group.condition?.resource ?? []),
 		enabled: group.enabled,
 		mappers: mappers.map(buildDraftMapper),
 	};
@@ -182,7 +182,7 @@ export function groupDraftFromNode(group: DraftGroup): GroupDraft {
 	return {
 		id: group.localId,
 		name: group.name,
-		attributes: group.attributes.length > 0 ? group.attributes : [''],
+		attributes: group.attributes,
 		resource: group.resource,
 		enabled: group.enabled,
 	};

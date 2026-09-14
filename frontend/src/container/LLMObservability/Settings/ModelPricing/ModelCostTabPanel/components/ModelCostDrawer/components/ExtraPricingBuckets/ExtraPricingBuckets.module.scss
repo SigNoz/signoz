@@ -49,20 +49,19 @@
 	flex-direction: column;
 	align-items: flex-start;
 	gap: var(--spacing-5);
-	padding: var(--spacing-6);
-	border-radius: 6px;
-	border: 1px solid var(--l2-border);
 }
 
 .bucketPickerTitle {
 	font-size: var(--periscope-font-size-small);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	color: var(--l3-foreground);
+	color: var(--l2-foreground);
 }
 
 .bucketPickerChips {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--spacing-4);
+}
+
+.drawerSubLabel {
+	composes: drawerSubLabel from '../../shared.module.scss';
 }

@@ -82,8 +82,8 @@ function GroupMappers({
 				data-testid={`mappers-error-${group.localId}`}
 			>
 				<span className={styles.stateContent}>
-					<TriangleAlert size={14} color="var(--danger-background)" />
-					<Typography.Text as="span" size="base">
+					<TriangleAlert size={12} color="var(--danger-background)" />
+					<Typography.Text as="span" className={styles.stateText}>
 						Failed to load mappings. Please try again.
 					</Typography.Text>
 				</span>
@@ -103,8 +103,8 @@ function GroupMappers({
 				data-testid={`mappers-empty-${group.localId}`}
 			>
 				<span className={styles.stateContent}>
-					<ArrowLeftRight size={14} />
-					<Typography.Text as="span" size="base" color="muted">
+					<ArrowLeftRight size={12} />
+					<Typography.Text as="span" className={styles.stateText} color="muted">
 						No mappings in this group yet.
 					</Typography.Text>
 				</span>
@@ -123,7 +123,7 @@ function GroupMappers({
 					variant="link"
 					color="primary"
 					size="sm"
-					prefix={<Plus size={14} />}
+					prefix={<Plus size={12} />}
 					onClick={(): void => onAddMapper(group.localId)}
 					testId={`add-mapper-${group.localId}`}
 				>

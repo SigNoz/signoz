@@ -2,12 +2,12 @@
 	composes: drawerSection from '../../shared.module.scss';
 }
 
-.drawerSurface {
-	composes: drawerSurface from '../../shared.module.scss';
+.drawerFieldset {
+	composes: drawerFieldset from '../../shared.module.scss';
 }
 
-.drawerSurfaceHead {
-	composes: drawerSurfaceHead from '../../shared.module.scss';
+.drawerFieldsetHead {
+	composes: drawerFieldsetHead from '../../shared.module.scss';
 }
 
 .managedLabel {
@@ -28,4 +28,12 @@
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: var(--spacing-6);
+}
+
+.drawerLabel {
+	composes: drawerLabel from '../../shared.module.scss';
+}
+
+.drawerSubLabel {
+	composes: drawerSubLabel from '../../shared.module.scss';
 }

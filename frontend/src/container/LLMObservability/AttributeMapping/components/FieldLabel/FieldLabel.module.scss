@@ -1,0 +1,19 @@
+.label {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+.labelInfo {
+	display: inline-flex;
+	align-items: center;
+	padding: 0;
+	background: transparent;
+	border: none;
+	color: var(--l2-foreground);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--l1-foreground);
+	}
+}

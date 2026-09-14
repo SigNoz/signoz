@@ -67,9 +67,7 @@ function ExtraPricingBuckets({
 	return (
 		<div className={cx(styles.extraBucketsSection, styles.drawerSection)}>
 			<div className={styles.extraBucketsSectionHead}>
-				<Typography.Text as="span" size="small" color="muted">
-					Extra Pricing Buckets
-				</Typography.Text>
+				<span className={styles.drawerSubLabel}>Extra Pricing Buckets</span>
 				<Typography.Text as="span" size="small" color="muted">
 					Optional
 				</Typography.Text>
@@ -116,7 +114,9 @@ function ExtraPricingBuckets({
 
 			{addedBuckets.length > 0 && (
 				<div className={cx(styles.pricingField, styles.cacheModeField)}>
-					<label htmlFor="cache-mode">Cache mode</label>
+					<label htmlFor="cache-mode" className={styles.drawerSubLabel}>
+						Cache mode
+					</label>
 					<SelectSimple
 						id="cache-mode"
 						value={pricing.cacheMode}

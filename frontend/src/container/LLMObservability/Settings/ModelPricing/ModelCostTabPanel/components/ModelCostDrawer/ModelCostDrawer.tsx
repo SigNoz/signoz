@@ -109,7 +109,7 @@ function ModelCostDrawer({
 			drawerHeaderProps={{ className: styles.title }}
 		>
 			<div className={styles.drawerSection}>
-				<label htmlFor="billing-model-id">
+				<label htmlFor="billing-model-id" className={styles.drawerLabel}>
 					Billing Model ID{' '}
 					<span className={styles.required} aria-hidden="true">
 						*
@@ -144,7 +144,9 @@ function ModelCostDrawer({
 			</div>
 
 			<div className={styles.drawerSection}>
-				<label htmlFor="provider-select">Provider</label>
+				<label htmlFor="provider-select" className={styles.drawerLabel}>
+					Provider
+				</label>
 				<Controller
 					name="provider"
 					control={control}

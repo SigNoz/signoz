@@ -44,7 +44,7 @@ function MapperActionsMenu({
 				aria-label="Mapping actions"
 				testId={`mapper-actions-${mapper.localId}`}
 			>
-				<EllipsisVertical size={16} />
+				<EllipsisVertical size={14} />
 			</Button>
 		</DropdownMenuSimple>
 	);

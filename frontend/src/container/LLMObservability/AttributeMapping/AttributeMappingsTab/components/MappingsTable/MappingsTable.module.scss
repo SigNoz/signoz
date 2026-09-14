@@ -53,6 +53,7 @@
 			gap: var(--spacing-3);
 			background: var(--l2-background);
 			border-radius: 0;
+			border-left: 2px solid var(--accent-primary);
 			padding: var(--spacing-3) var(--spacing-6);
 			color: var(--l3-foreground);
 
@@ -112,6 +113,7 @@
 	padding: var(--spacing-3) var(--spacing-6);
 	background: var(--l2-background);
 	border-top: 1px solid var(--l2-border);
+	border-left: 2px solid var(--accent-primary);
 
 	&:last-child {
 		border-bottom: 1px solid var(--l2-border);
