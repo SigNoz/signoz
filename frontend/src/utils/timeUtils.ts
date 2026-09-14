@@ -1,5 +1,5 @@
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import duration from 'dayjs/plugin/duration';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -220,6 +220,23 @@ export interface TimeRangeValidationResult {
 	endTimeMs?: number;
 }
 
+const safeParseInTimezone = (
+	value: string,
+	format: string,
+	timezone: string,
+): Dayjs | null => {
+	if (!value || !dayjs(value, format).isValid()) {
+		return null;
+	}
+
+	try {
+		const parsed = dayjs.tz(value, format, timezone);
+		return parsed.isValid() ? parsed : null;
+	} catch {
+		return null;
+	}
+};
+
 /**
  * Validates a start and end datetime string.
  *
@@ -243,14 +260,12 @@ export const validateTimeRange = (
 	format: string,
 	timezone: string,
 ): TimeRangeValidationResult => {
-	const start = dayjs.tz(startTime, format, timezone);
-	const end = dayjs.tz(endTime, format, timezone);
+	const start = safeParseInTimezone(startTime, format, timezone);
+	const end = safeParseInTimezone(endTime, format, timezone);
 	const now = dayjs().tz(timezone);
-	const startTimeMs = start.valueOf();
-	const endTimeMs = end.valueOf();
 
 	// Invalid format or parsing failure
-	if (!start.isValid() || !end.isValid()) {
+	if (!start || !end) {
 		return {
 			isValid: false,
 			errorDetails: {
@@ -269,6 +284,9 @@ Shortcuts:
 			},
 		};
 	}
+
+	const startTimeMs = start.valueOf();
+	const endTimeMs = end.valueOf();
 
 	// dates must not be in the future
 	if (start.isAfter(now) || end.isAfter(now)) {
