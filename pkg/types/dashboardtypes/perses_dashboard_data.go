@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"slices"
 	"unicode/utf8"
 
@@ -13,6 +14,12 @@ import (
 	"github.com/perses/spec/go/common"
 	"github.com/perses/spec/go/dashboard"
 )
+
+// dashboardDurationRegexp is narrower than Perses's own duration grammar: the
+// frontend time picker only understands a whole number of minutes, hours, days
+// or weeks, so a spec it cannot apply is rejected on write rather than stored
+// and silently ignored.
+var dashboardDurationRegexp = regexp.MustCompile(`^\d+[mhdw]$`)
 
 // DashboardSpec is the SigNoz dashboard v2 spec shape. It mirrors
 // dashboard.Spec (Perses) field-for-field, except every common.Plugin
@@ -25,7 +32,7 @@ type DashboardSpec struct {
 	Variables       []Variable            `json:"variables" required:"true" nullable:"false"`
 	Panels          map[string]*Panel     `json:"panels" required:"true" nullable:"false"`
 	Layouts         []Layout              `json:"layouts" required:"true" nullable:"false"`
-	Duration        common.DurationString `json:"duration"`
+	Duration        common.DurationString `json:"duration" description:"Default relative time window applied when a viewer opens the dashboard with no time range in the URL and no previously chosen one, e.g. 30m, 1h, 1d, 1w; units m/h/d/w only. Empty keeps the client default."`
 	RefreshInterval common.DurationString `json:"refreshInterval"`
 	Links           []Link                `json:"links,omitzero"`
 }
@@ -60,7 +67,20 @@ func (d *DashboardSpec) Validate() error {
 	if err := d.validatePanels(); err != nil {
 		return err
 	}
+	if err := d.validateDuration(); err != nil {
+		return err
+	}
 	return d.validateLayouts()
+}
+
+func (d *DashboardSpec) validateDuration() error {
+	if d.Duration == "" {
+		return nil
+	}
+	if !dashboardDurationRegexp.MatchString(string(d.Duration)) {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.duration: must be a whole number of minutes, hours, days or weeks (e.g. 30m, 1h, 1d), got %q", string(d.Duration))
+	}
+	return nil
 }
 
 // validateVariables rejects an absent or null list, and duplicate variable names.

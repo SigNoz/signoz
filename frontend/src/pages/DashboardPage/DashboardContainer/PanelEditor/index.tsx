@@ -11,6 +11,7 @@ import {
 	type DashboardtypesPanelDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import {
@@ -22,6 +23,7 @@ import { getBuilderQueries } from 'pages/DashboardPage/DashboardContainer/Panels
 import { useErrorModal } from 'providers/ErrorModalProvider';
 
 import { useDashboardEditContext } from '../hooks/useDashboardEditContext';
+import { useDashboardFetchRequired } from '../hooks/useDashboardFetchRequired';
 import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
 import { useScrollIntoViewStore } from '../store/useScrollIntoViewStore';
@@ -89,6 +91,7 @@ function PanelEditorContainer({
 	// subtree, so it resolves the same context every other consumer does.
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
+	const { dashboard } = useDashboardFetchRequired();
 
 	// Shared editing pipeline (draft + query + staged-query sync + kind switch). A new
 	// panel always serializes its seed query and seeds the builder's default signal.
@@ -313,6 +316,9 @@ function PanelEditorContainer({
 										refetch={refetch}
 										onDragSelect={onDragSelect}
 										pagination={pagination}
+										fallbackRelativeTime={
+											(dashboard.spec.duration as Time | undefined) || undefined
+										}
 									/>
 								)}
 							</ResizablePanel>

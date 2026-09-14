@@ -77,6 +77,7 @@ function DateTimeSelection({
 	showLiveLogs,
 	disableUrlSync = false,
 	showRecentlyUsed = true,
+	fallbackRelativeTime,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 	const { safeNavigate } = useSafeNavigate();
@@ -211,8 +212,15 @@ function DateTimeSelection({
 		}
 	}, [isModalTimeSelection, modalSelectedInterval]);
 
+	// The route's built-in default, unless the caller supplies its own. Reached
+	// only after the URL and this route's persisted time have both come up empty.
+	const resolveDefaultOption = (pathName: string): Time =>
+		fallbackRelativeTime && isValidShortHandDateTimeFormat(fallbackRelativeTime)
+			? fallbackRelativeTime
+			: getDefaultOption(pathName);
+
 	const getDefaultTime = (pathName: string): Time => {
-		const defaultSelectedOption = getDefaultOption(pathName);
+		const defaultSelectedOption = resolveDefaultOption(pathName);
 
 		const routes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 
@@ -485,7 +493,7 @@ function DateTimeSelection({
 			(localstorageEndTime === null || localstorageStartTime === null) &&
 			time === 'custom'
 		) {
-			return getDefaultOption(currentRoute);
+			return resolveDefaultOption(currentRoute);
 		}
 
 		// if not present in the local storage as well then rely on the defaults set for the page
@@ -788,6 +796,12 @@ interface DateTimeSelectionV2Props {
 	disableUrlSync?: boolean;
 	/** When false, hides the "Recently Used" time ranges section in the time picker */
 	showRecentlyUsed?: boolean;
+	/**
+	 * Replaces the route's built-in default when the viewer opens the route with
+	 * no time range in the URL and has not picked one here before. Ignored if
+	 * unparseable.
+	 */
+	fallbackRelativeTime?: Time;
 }
 
 DateTimeSelection.defaultProps = {
@@ -806,6 +820,7 @@ DateTimeSelection.defaultProps = {
 	showLiveLogs: false,
 	disableUrlSync: false,
 	showRecentlyUsed: true,
+	fallbackRelativeTime: undefined,
 };
 interface DispatchProps {
 	updateTimeInterval: (
