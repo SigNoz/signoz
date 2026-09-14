@@ -5,7 +5,6 @@ import {
 	FieldKeysConfig,
 	useFieldKeysSuggestion,
 } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import { mergeStaticFields } from 'utils/staticFields';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -72,10 +71,12 @@ function ListViewOrderBy({
 	const staticKeysSignature = staticFields.map((field) => field.name).join(',');
 
 	useEffect(() => {
-		const keyNames = mergeStaticFields(staticFields, data ?? [], searchInput).map(
-			(field) => field.name,
-		);
-		const uniqueKeys = [...new Set(keyNames)];
+		const keyNames = (data ?? []).map((field) => field.name);
+		const search = searchInput.trim().toLowerCase();
+		const staticMatches = staticKeysSignature
+			.split(',')
+			.filter((key) => key.length > 0 && key.toLowerCase().includes(search));
+		const uniqueKeys = [...new Set([...staticMatches, ...keyNames])];
 
 		setSelectOptions(
 			uniqueKeys.flatMap((key) => [
@@ -83,7 +84,6 @@ function ListViewOrderBy({
 				{ label: `${key} (asc)`, value: `${key}:asc` },
 			]),
 		);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data, searchInput, staticKeysSignature]);
 
 	const handleSearch = (input: string): void => {
