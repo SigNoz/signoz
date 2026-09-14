@@ -108,6 +108,7 @@ jest.mock(
 // importing the whole renderer registry into the test.
 jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: (kind: string): unknown => ({
+		mode: 'query',
 		actions: { drilldown: kind !== 'signoz/ListPanel' },
 	}),
 }));

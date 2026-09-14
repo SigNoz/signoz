@@ -342,6 +342,21 @@ export function removeSectionOp(
 }
 
 /** Remove a panel definition from `spec.panels`. */
+/**
+ * Sets a panel's authored body. `add`, not `replace`: a panel saved before it had
+ * a body carries no `text` member, which `replace` requires to already resolve.
+ */
+export function setPanelTextOp(
+	panelId: string,
+	text: string,
+): DashboardtypesJSONPatchOperationDTO {
+	return {
+		op: add,
+		path: `/spec/panels/${panelId}/spec/plugin/spec/text`,
+		value: text,
+	};
+}
+
 export function removePanelOp(
 	panelId: string,
 ): DashboardtypesJSONPatchOperationDTO {
