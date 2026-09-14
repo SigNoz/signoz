@@ -7,7 +7,6 @@ import {
 import { ErrorType } from 'api/generatedAPIInstance';
 import {
 	RenderErrorResponseDTO,
-	TelemetrytypesFieldContextDTO,
 	TelemetrytypesSignalDTO,
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -16,16 +15,9 @@ import {
 	FieldKeysFilterConfig,
 	FieldKeysResponse,
 } from 'api/querySuggestions/types';
-import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { FieldKeysConfig } from 'types/fieldSuggestions';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
-
-export interface FieldKeysConfig {
-	builderQueryType?: BuilderQueryType;
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	metricName?: string;
-	metricNamespace?: string;
-	signalSource?: TelemetrytypesSourceDTO | '';
-}
 
 /** One entry per (query type, params) pair; the fetcher picks the endpoint. */
 const FIELD_KEYS_QUERY_KEY = 'fieldKeysSuggestion';

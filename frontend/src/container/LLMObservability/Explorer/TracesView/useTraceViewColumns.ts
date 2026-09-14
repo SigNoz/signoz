@@ -16,19 +16,13 @@ import { TracesTableRow } from '../TracesTable/getFieldColumn';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
-import {
-	AI_O11Y_DISPLAY_ONLY_FIELDS,
-	TRACE_VIEW_COLUMN_CONFIG,
-	TRACE_VIEW_FIELD_CONTEXT,
-} from '../constants';
+import { TRACE_VIEW_COLUMN_SUGGESTIONS } from '../constants';
 import { buildTraceViewColumns, TRACE_ID_COLUMN_ID } from './configs';
 
 const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
 
-const COLUMN_KEYS_CONFIG = {
-	...TRACE_VIEW_COLUMN_CONFIG,
-	fieldContext: TRACE_VIEW_FIELD_CONTEXT,
-};
+const { staticFields: COLUMN_STATIC_FIELDS = [], ...COLUMN_KEYS_CONFIG } =
+	TRACE_VIEW_COLUMN_SUGGESTIONS;
 
 /** Matches the id getFieldColumn derives, so fields and columns address alike. */
 const columnIdOf = (field: TelemetryFieldKey): string =>
@@ -51,7 +45,7 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 	);
 
 	const availableFields = useMemo(
-		() => mergeStaticFields(AI_O11Y_DISPLAY_ONLY_FIELDS, fetchedFields, ''),
+		() => mergeStaticFields(COLUMN_STATIC_FIELDS, fetchedFields, ''),
 		[fetchedFields],
 	);
 

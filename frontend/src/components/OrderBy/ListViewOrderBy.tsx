@@ -1,28 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Select, Spin } from 'antd';
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	FieldKeysConfig,
-	useFieldKeysSuggestion,
-} from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { FieldSuggestionsConfig } from 'types/fieldSuggestions';
 import { DataSource } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
-
-const DEFAULT_ORDER_BY_CONFIG: FieldKeysConfig = {};
 
 const DEFAULT_STATIC_FIELDS: TelemetryFieldKey[] = [
 	{ name: 'timestamp' } as TelemetryFieldKey,
 ];
 
+const DEFAULT_FIELD_SUGGESTIONS: FieldSuggestionsConfig = {};
+
 interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;
 	dataSource: DataSource;
-	fieldKeysConfig?: FieldKeysConfig;
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	staticFields?: TelemetryFieldKey[];
+	fieldSuggestions?: FieldSuggestionsConfig;
 }
 
 function Loader({ isLoading }: { isLoading: boolean }): JSX.Element {
@@ -37,21 +32,16 @@ function ListViewOrderBy({
 	value,
 	onChange,
 	dataSource,
-	fieldKeysConfig = DEFAULT_ORDER_BY_CONFIG,
-	fieldContext,
-	staticFields = DEFAULT_STATIC_FIELDS,
+	fieldSuggestions = DEFAULT_FIELD_SUGGESTIONS,
 }: ListViewOrderByProps): JSX.Element {
+	const { staticFields = DEFAULT_STATIC_FIELDS, ...keysConfig } =
+		fieldSuggestions;
 	const [searchInput, setSearchInput] = useState('');
 	const [debouncedInput, setDebouncedInput] = useState('');
 	const [selectOptions, setSelectOptions] = useState<
 		{ label: string; value: string }[]
 	>([]);
 	const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-	const keysConfig = useMemo(
-		() => ({ ...fieldKeysConfig, fieldContext }),
-		[fieldKeysConfig, fieldContext],
-	);
 
 	const { data, isLoading } = useFieldKeysSuggestion(
 		keysConfig,

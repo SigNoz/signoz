@@ -3,7 +3,6 @@ import { Button } from '@signozhq/ui/button';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import {
 	FieldContext,
@@ -13,13 +12,11 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './FieldsSelector.module.scss';
-import {
-	FieldKeysConfig,
-	useFieldKeysSuggestion,
-} from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import { FieldSuggestionsConfig } from 'types/fieldSuggestions';
 import { mergeStaticFields } from 'utils/staticFields';
 
-const EMPTY_FIELD_KEYS_CONFIG: FieldKeysConfig = {};
+const EMPTY_FIELD_SUGGESTIONS: FieldSuggestionsConfig = {};
 
 const EMPTY_STATIC_FIELDS: TelemetryFieldKey[] = [];
 
@@ -30,9 +27,7 @@ interface OtherFieldsProps {
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 	allowCustomFields?: boolean;
-	fieldKeysConfig?: FieldKeysConfig;
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	staticFields?: TelemetryFieldKey[];
+	fieldSuggestions?: FieldSuggestionsConfig;
 }
 
 function OtherFields({
@@ -42,14 +37,9 @@ function OtherFields({
 	onAdd,
 	isAtLimit,
 	allowCustomFields,
-	fieldKeysConfig = EMPTY_FIELD_KEYS_CONFIG,
-	fieldContext,
-	staticFields = EMPTY_STATIC_FIELDS,
+	fieldSuggestions = EMPTY_FIELD_SUGGESTIONS,
 }: OtherFieldsProps): JSX.Element {
-	const keysConfig = useMemo(
-		() => ({ ...fieldKeysConfig, fieldContext }),
-		[fieldKeysConfig, fieldContext],
-	);
+	const { staticFields = EMPTY_STATIC_FIELDS, ...keysConfig } = fieldSuggestions;
 
 	const { data: fetchedFields, isFetching } = useFieldKeysSuggestion(
 		keysConfig,

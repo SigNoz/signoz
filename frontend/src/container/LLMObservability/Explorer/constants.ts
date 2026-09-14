@@ -1,5 +1,5 @@
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { FieldKeysConfig } from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import { FieldSuggestionsConfig } from 'types/fieldSuggestions';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 export const TOOLBAR_VIEWS = {
@@ -57,18 +57,15 @@ export const AI_O11Y_DISPLAY_ONLY_FIELDS: TelemetryFieldKey[] = [
 
 const TRACE_VIEW_KEYS = {
 	builderQueryType: 'builder_ai_query',
+	fieldContext: TelemetrytypesFieldContextDTO.trace,
 } as const;
 
-export const TRACE_VIEW_FIELD_CONTEXT = TelemetrytypesFieldContextDTO.trace;
-
-export const TRACE_VIEW_ORDER_BY_STATIC_FIELDS: TelemetryFieldKey[] = [
-	{ name: 'last_activity_time' } as TelemetryFieldKey,
-];
-
-export const TRACE_VIEW_ORDER_BY_CONFIG: FieldKeysConfig = {
+export const TRACE_VIEW_ORDER_BY_SUGGESTIONS: FieldSuggestionsConfig = {
 	...TRACE_VIEW_KEYS,
+	staticFields: [{ name: 'last_activity_time' } as TelemetryFieldKey],
 };
 
-export const TRACE_VIEW_COLUMN_CONFIG: FieldKeysConfig = {
+export const TRACE_VIEW_COLUMN_SUGGESTIONS: FieldSuggestionsConfig = {
 	...TRACE_VIEW_KEYS,
+	staticFields: AI_O11Y_DISPLAY_ONLY_FIELDS,
 };

@@ -1,10 +1,6 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { ENVIRONMENT } from 'constants/env';
-import {
-	TRACE_VIEW_FIELD_CONTEXT,
-	TRACE_VIEW_ORDER_BY_CONFIG,
-	TRACE_VIEW_ORDER_BY_STATIC_FIELDS,
-} from 'container/LLMObservability/Explorer/constants';
+import { TRACE_VIEW_ORDER_BY_SUGGESTIONS } from 'container/LLMObservability/Explorer/constants';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
@@ -77,9 +73,7 @@ describe('ListViewOrderBy', () => {
 				value="last_activity_time:desc"
 				onChange={jest.fn()}
 				dataSource={DataSource.TRACES}
-				fieldKeysConfig={TRACE_VIEW_ORDER_BY_CONFIG}
-				fieldContext={TRACE_VIEW_FIELD_CONTEXT}
-				staticFields={TRACE_VIEW_ORDER_BY_STATIC_FIELDS}
+				fieldSuggestions={TRACE_VIEW_ORDER_BY_SUGGESTIONS}
 			/>,
 		);
 
@@ -101,9 +95,7 @@ describe('ListViewOrderBy', () => {
 				value="last_activity_time:desc"
 				onChange={jest.fn()}
 				dataSource={DataSource.TRACES}
-				fieldKeysConfig={TRACE_VIEW_ORDER_BY_CONFIG}
-				fieldContext={TRACE_VIEW_FIELD_CONTEXT}
-				staticFields={TRACE_VIEW_ORDER_BY_STATIC_FIELDS}
+				fieldSuggestions={TRACE_VIEW_ORDER_BY_SUGGESTIONS}
 			/>,
 		);
 
@@ -123,9 +115,7 @@ describe('ListViewOrderBy', () => {
 				value="last_activity_time:desc"
 				onChange={jest.fn()}
 				dataSource={DataSource.TRACES}
-				fieldKeysConfig={TRACE_VIEW_ORDER_BY_CONFIG}
-				fieldContext={TRACE_VIEW_FIELD_CONTEXT}
-				staticFields={TRACE_VIEW_ORDER_BY_STATIC_FIELDS}
+				fieldSuggestions={TRACE_VIEW_ORDER_BY_SUGGESTIONS}
 			/>,
 		);
 
