@@ -28,8 +28,7 @@ export function stringsToTags(tagStrings: string[]): TagtypesPostableTagDTO[] {
 // under a sentinel and is mapped back to '' on the way out.
 export const DEFAULT_TIME_RANGE_UNSET = '__unset__';
 
-// `1month` is excluded: the backend validates the window as a Perses duration,
-// which has no month unit.
+// `1month` is excluded: the backend only accepts m/h/d/w units.
 const SELECTABLE_DURATIONS = RelativeDurationOptions.filter(
 	(option) => option.value !== '1month',
 );

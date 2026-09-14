@@ -23,47 +23,110 @@ func specWithDuration(duration string) []byte {
 }
 
 func TestDashboardSpecDuration(t *testing.T) {
-	// Perses rejects what isn't a duration at all; the narrower SigNoz rule
-	// rejects the durations the time picker can't apply.
-	pickerGrammar := []string{"must be a whole number of minutes, hours, days or weeks"}
+	// Decode accepts anything Perses does: a stored dashboard must stay readable
+	// even when its window predates the narrower write-time rule.
+	testCases := []struct {
+		name        string
+		duration    string
+		wantContain string
+	}{
+		{name: "Minutes", duration: "30m"},
+		{name: "Hours", duration: "2h"},
+		{name: "Days", duration: "1d"},
+		{name: "Weeks", duration: "1w"},
+		{name: "Empty_Unset", duration: ""},
+		{name: "CompoundWindow_StoredValueStaysReadable", duration: "1h30m"},
+		{name: "Seconds_StoredValueStaysReadable", duration: "15s"},
+		{name: "Years_StoredValueStaysReadable", duration: "1y"},
+		{name: "Zero_StoredValueStaysReadable", duration: "0m"},
+		{name: "NotADuration", duration: "abc", wantContain: `"abc"`},
+		{name: "UnknownUnit", duration: "30x", wantContain: `"30x"`},
+	}
 
-	tests := []struct {
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			spec, err := unmarshalDashboard(specWithDuration(testCase.duration))
+			if testCase.wantContain != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), testCase.wantContain)
+				assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, testCase.duration, string(spec.Duration))
+
+			raw, err := json.Marshal(spec)
+			require.NoError(t, err)
+			assert.Contains(t, string(raw), fmt.Sprintf(`"duration":%q`, testCase.duration), "duration is serialized without omitempty")
+		})
+	}
+}
+
+func TestPostableDashboardDuration(t *testing.T) {
+	// The write path additionally rejects the durations the time picker can't apply.
+	pickerGrammar := "must be a positive whole number of minutes, hours, days or weeks"
+
+	postable := func(duration string) []byte {
+		return fmt.Appendf(nil, `{"schemaVersion": %q, "name": "durations", "tags": [], "spec": %s}`, SchemaVersion, specWithDuration(duration))
+	}
+
+	testCases := []struct {
 		name        string
 		duration    string
 		wantContain []string
 	}{
-		{name: "minutes", duration: "30m"},
-		{name: "hours", duration: "2h"},
-		{name: "days", duration: "1d"},
-		{name: "weeks", duration: "1w"},
-		{name: "empty means unset", duration: ""},
-		{name: "not a duration", duration: "abc", wantContain: []string{`"abc"`}},
-		{name: "unknown unit", duration: "30x", wantContain: []string{`"30x"`}},
-		{name: "compound window", duration: "1h30m", wantContain: append(pickerGrammar, `got "1h30m"`)},
-		{name: "seconds", duration: "15s", wantContain: append(pickerGrammar, `got "15s"`)},
-		{name: "years", duration: "1y", wantContain: append(pickerGrammar, `got "1y"`)},
+		{name: "Minutes", duration: "30m"},
+		{name: "Hours", duration: "2h"},
+		{name: "Days", duration: "1d"},
+		{name: "Weeks", duration: "1w"},
+		{name: "Empty_Unset", duration: ""},
+		{name: "NotADuration", duration: "abc", wantContain: []string{`"abc"`}},
+		{name: "UnknownUnit", duration: "30x", wantContain: []string{`"30x"`}},
+		{name: "CompoundWindow_PickerCannotApply", duration: "1h30m", wantContain: []string{pickerGrammar, `got "1h30m"`}},
+		{name: "Seconds_PickerCannotApply", duration: "15s", wantContain: []string{pickerGrammar, `got "15s"`}},
+		{name: "Years_PickerCannotApply", duration: "1y", wantContain: []string{pickerGrammar, `got "1y"`}},
+		{name: "Zero_PickerCannotApply", duration: "0m", wantContain: []string{pickerGrammar, `got "0m"`}},
+		{name: "LeadingZero_PickerCannotApply", duration: "01h", wantContain: []string{pickerGrammar, `got "01h"`}},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			spec, err := unmarshalDashboard(specWithDuration(tt.duration))
-			if len(tt.wantContain) > 0 {
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var p PostableDashboardV2
+			err := json.Unmarshal(postable(testCase.duration), &p)
+			if len(testCase.wantContain) > 0 {
 				require.Error(t, err)
-				for _, want := range tt.wantContain {
+				for _, want := range testCase.wantContain {
 					assert.Contains(t, err.Error(), want)
 				}
 				assert.True(t, errors.Ast(err, errors.TypeInvalidInput), "a window the time picker cannot apply is invalid input")
 				return
 			}
-
 			require.NoError(t, err)
-			assert.Equal(t, tt.duration, string(spec.Duration))
-
-			raw, err := json.Marshal(spec)
-			require.NoError(t, err)
-			assert.Contains(t, string(raw), fmt.Sprintf(`"duration":%q`, tt.duration), "duration is serialized without omitempty")
+			assert.Equal(t, testCase.duration, string(p.Spec.Duration))
 		})
 	}
+}
+
+func TestStoredDashboardDurationStaysReadable(t *testing.T) {
+	var p PostableDashboardV2
+	require.NoError(t, json.Unmarshal([]byte(basePostableJSON), &p))
+	d, err := p.NewDashboardV2(valuer.GenerateUUID(), "someone@signoz.io", SourceUser)
+	require.NoError(t, err)
+	d.Spec.Duration = "1h30m"
+
+	storable, err := d.ToStorableDashboard()
+	require.NoError(t, err)
+	out, err := storable.ToDashboardV2(nil)
+	require.NoError(t, err)
+	assert.Equal(t, "1h30m", string(out.Spec.Duration))
+
+	// The dashboard can still be repaired through the patch path.
+	var patch PatchableDashboardV2
+	require.NoError(t, json.Unmarshal([]byte(`[{"op": "replace", "path": "/spec/duration", "value": "1h"}]`), &patch))
+	fixed, err := patch.Apply(out)
+	require.NoError(t, err)
+	assert.Equal(t, "1h", string(fixed.Spec.Duration))
 }
 
 func TestPatchDashboardDuration(t *testing.T) {
@@ -79,25 +142,25 @@ func TestPatchDashboardDuration(t *testing.T) {
 		return patch.Apply(base)
 	}
 
-	t.Run("replace sets the default window", func(t *testing.T) {
+	t.Run("Replace_SetsDefaultWindow", func(t *testing.T) {
 		out, err := apply(t, `[{"op": "replace", "path": "/spec/duration", "value": "1d"}]`)
 		require.NoError(t, err)
 		assert.Equal(t, "1d", string(out.Spec.Duration))
 	})
 
 	// The member always exists in the patched shape, so `replace` also clears it.
-	t.Run("replace clears the default window", func(t *testing.T) {
+	t.Run("Replace_EmptyValue_ClearsDefaultWindow", func(t *testing.T) {
 		out, err := apply(t, `[{"op": "replace", "path": "/spec/duration", "value": ""}]`)
 		require.NoError(t, err)
 		assert.Empty(t, string(out.Spec.Duration))
 	})
 
-	t.Run("reject an unparseable window", func(t *testing.T) {
+	t.Run("Replace_Unparseable_Rejected", func(t *testing.T) {
 		_, err := apply(t, `[{"op": "replace", "path": "/spec/duration", "value": "abc"}]`)
 		assert.Error(t, err)
 	})
 
-	t.Run("reject a window the time picker cannot apply", func(t *testing.T) {
+	t.Run("Replace_PickerCannotApply_Rejected", func(t *testing.T) {
 		_, err := apply(t, `[{"op": "replace", "path": "/spec/duration", "value": "1h30m"}]`)
 		assert.Error(t, err)
 	})

@@ -16,10 +16,10 @@ import (
 )
 
 // dashboardDurationRegexp is narrower than Perses's own duration grammar: the
-// frontend time picker only understands a whole number of minutes, hours, days
-// or weeks, so a spec it cannot apply is rejected on write rather than stored
-// and silently ignored.
-var dashboardDurationRegexp = regexp.MustCompile(`^\d+[mhdw]$`)
+// frontend time picker only understands a positive whole number of minutes,
+// hours, days or weeks. Checked on write only, so a stored Perses-valid value
+// never makes a dashboard unreadable.
+var dashboardDurationRegexp = regexp.MustCompile(`^[1-9]\d*[mhdw]$`)
 
 // DashboardSpec is the SigNoz dashboard v2 spec shape. It mirrors
 // dashboard.Spec (Perses) field-for-field, except every common.Plugin
@@ -67,9 +67,6 @@ func (d *DashboardSpec) Validate() error {
 	if err := d.validatePanels(); err != nil {
 		return err
 	}
-	if err := d.validateDuration(); err != nil {
-		return err
-	}
 	return d.validateLayouts()
 }
 
@@ -78,7 +75,7 @@ func (d *DashboardSpec) validateDuration() error {
 		return nil
 	}
 	if !dashboardDurationRegexp.MatchString(string(d.Duration)) {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.duration: must be a whole number of minutes, hours, days or weeks (e.g. 30m, 1h, 1d), got %q", string(d.Duration))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.duration: must be a positive whole number of minutes, hours, days or weeks (e.g. 30m, 1h, 1d), got %q", string(d.Duration))
 	}
 	return nil
 }
