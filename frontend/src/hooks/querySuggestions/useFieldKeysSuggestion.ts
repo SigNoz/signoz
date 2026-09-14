@@ -1,5 +1,4 @@
 import {
-	QueryClient,
 	QueryKey,
 	useQuery,
 	UseQueryOptions,
@@ -81,21 +80,3 @@ export const useFieldKeysSuggestion = (
 	searchText: string,
 ): UseQueryResult<TelemetryFieldKey[], ErrorType<RenderErrorResponseDTO>> =>
 	useQuery(getFieldKeysQueryOptions(config, dataSource, searchText));
-
-export const fetchFieldKeys = async (
-	queryClient: QueryClient,
-	config: FieldKeysConfig,
-	dataSource: DataSource,
-	searchText: string,
-): Promise<TelemetryFieldKey[]> => {
-	const { select, ...fetchOptions } = getFieldKeysQueryOptions(
-		config,
-		dataSource,
-		searchText,
-	);
-	const response = (await queryClient.fetchQuery(
-		fetchOptions,
-	)) as FieldKeysResponse;
-
-	return select?.(response) ?? toFieldKeys(response);
-};

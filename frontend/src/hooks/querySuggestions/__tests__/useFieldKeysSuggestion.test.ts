@@ -5,11 +5,32 @@ import { rest } from 'msw';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { FieldKeysResponse } from 'api/querySuggestions/types';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+
 import {
-	fetchFieldKeys,
+	FieldKeysConfig,
 	getFieldKeysQueryOptions,
 	toFieldKeys,
 } from '../useFieldKeysSuggestion';
+
+/** Drives the options object the way react-query does, without a client. */
+const fetchKeys = async (
+	config: FieldKeysConfig,
+	dataSource: DataSource,
+	searchText: string,
+): Promise<TelemetryFieldKey[]> => {
+	const { queryFn, select } = getFieldKeysQueryOptions(
+		config,
+		dataSource,
+		searchText,
+	);
+	const response = await (
+		queryFn as (context: { signal: AbortSignal }) => Promise<FieldKeysResponse>
+	)({ signal: new AbortController().signal });
+
+	return select?.(response) ?? [];
+};
 
 const mockKeys = (
 	path: '/api/v1/ai_observability/fields/keys' | '/api/v1/fields/keys',
@@ -52,8 +73,7 @@ describe('useFieldKeysSuggestion', () => {
 			},
 		);
 
-		const keys = await fetchFieldKeys(
-			queryClient,
+		const keys = await fetchKeys(
 			{
 				builderQueryType: 'builder_ai_query',
 				fieldContext: TelemetrytypesFieldContextDTO.trace,
@@ -76,7 +96,7 @@ describe('useFieldKeysSuggestion', () => {
 			seen.push(params);
 		});
 
-		const keys = await fetchFieldKeys(queryClient, {}, DataSource.TRACES, 'svc');
+		const keys = await fetchKeys({}, DataSource.TRACES, 'svc');
 
 		expect(seen).toHaveLength(1);
 		expect(seen[0]?.get('signal')).toBe(DataSource.TRACES);
@@ -94,8 +114,7 @@ describe('useFieldKeysSuggestion', () => {
 			},
 		);
 
-		const keys = await fetchFieldKeys(
-			queryClient,
+		const keys = await fetchKeys(
 			{
 				builderQueryType: 'builder_ai_query',
 				fieldContext: TelemetrytypesFieldContextDTO.trace,
@@ -123,8 +142,13 @@ describe('useFieldKeysSuggestion', () => {
 			fieldContext: TelemetrytypesFieldContextDTO.trace,
 		};
 
-		await fetchFieldKeys(queryClient, config, DataSource.TRACES, '');
-		await fetchFieldKeys(queryClient, config, DataSource.TRACES, '');
+		// Built twice: equal keys must resolve to one cache entry, not two requests.
+		await queryClient.fetchQuery(
+			getFieldKeysQueryOptions(config, DataSource.TRACES, ''),
+		);
+		await queryClient.fetchQuery(
+			getFieldKeysQueryOptions(config, DataSource.TRACES, ''),
+		);
 
 		expect(seen).toHaveLength(1);
 	});
