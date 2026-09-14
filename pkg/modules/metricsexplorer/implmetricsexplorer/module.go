@@ -257,7 +257,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsex
 	if len(metricStats) == 0 {
 		return &metricsexplorertypes.StatsResponse{
 			Metrics: []metricsexplorertypes.Stat{},
-			Total:   0,
+			Total:   total,
 		}, nil
 	}
 
@@ -1080,6 +1080,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 	}
 
 	var finalSB *sqlbuilder.SelectBuilder
+	var countSB *sqlbuilder.SelectBuilder
 	if reductionEnabled {
 		reducedTsSB := sqlbuilder.NewSelectBuilder()
 		reducedTsSB.Select(
@@ -1148,6 +1149,13 @@ func (m *module) fetchMetricsStatsWithSamples(
 		finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "COALESCE(ts.metric_name, rts.metric_name) = s.metric_name")
 		finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__reduced_sample_counts rs", "COALESCE(ts.metric_name, rts.metric_name, s.metric_name) = rs.metric_name")
 		finalSB.Where("(COALESCE(ts.timeseries, 0) + COALESCE(rts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) + COALESCE(rs.samples, 0) > 0)")
+
+		countSB = sqlbuilder.With(ctes...).Select("COUNT(*) AS total")
+		countSB.From("__time_series_counts ts")
+		countSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__reduced_time_series_counts rts", "ts.metric_name = rts.metric_name")
+		countSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "COALESCE(ts.metric_name, rts.metric_name) = s.metric_name")
+		countSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__reduced_sample_counts rs", "COALESCE(ts.metric_name, rts.metric_name, s.metric_name) = rs.metric_name")
+		countSB.Where("(COALESCE(ts.timeseries, 0) + COALESCE(rts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) + COALESCE(rs.samples, 0) > 0)")
 	} else {
 		cteBuilder := sqlbuilder.With(ctes...)
 
@@ -1160,6 +1168,11 @@ func (m *module) fetchMetricsStatsWithSamples(
 		finalSB.From("__time_series_counts ts")
 		finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "ts.metric_name = s.metric_name")
 		finalSB.Where("(COALESCE(ts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) > 0)")
+
+		countSB = sqlbuilder.With(ctes...).Select("COUNT(*) AS total")
+		countSB.From("__time_series_counts ts")
+		countSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "ts.metric_name = s.metric_name")
+		countSB.Where("(COALESCE(ts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) > 0)")
 	}
 
 	finalSB.OrderBy(
@@ -1200,6 +1213,17 @@ func (m *module) fetchMetricsStatsWithSamples(
 
 	if err := rows.Err(); err != nil {
 		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metrics stats rows")
+	}
+	rows.Close()
+
+	if len(metricStats) == 0 && req.Offset > 0 {
+		countQuery, countArgs := countSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+		if reductionEnabled {
+			countQuery += " SETTINGS join_use_nulls = 1"
+		}
+		if err := db.QueryRow(valueCtx, countQuery, countArgs...).Scan(&total); err != nil {
+			return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to count metrics stats")
+		}
 	}
 
 	return metricStats, total, nil
