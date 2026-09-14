@@ -5,7 +5,11 @@ import { rest } from 'msw';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { fetchFieldKeys, toFieldKeys } from '../useFieldKeysSuggestion';
+import {
+	fetchFieldKeys,
+	getFieldKeysQueryOptions,
+	toFieldKeys,
+} from '../useFieldKeysSuggestion';
 
 const mockKeys = (
 	path: '/api/v1/ai_observability/fields/keys' | '/api/v1/fields/keys',
@@ -123,6 +127,24 @@ describe('useFieldKeysSuggestion', () => {
 		await fetchFieldKeys(queryClient, config, DataSource.TRACES, '');
 
 		expect(seen).toHaveLength(1);
+	});
+
+	it('hands the query signal to the fetcher so a superseded search aborts', async () => {
+		server.use(
+			rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/keys`, (_req, res, ctx) =>
+				res(ctx.delay(500), ctx.status(200), ctx.json({ status: 'success' })),
+			),
+		);
+
+		const controller = new AbortController();
+		const { queryFn } = getFieldKeysQueryOptions({}, DataSource.LOGS, 'svc');
+		const pending = (
+			queryFn as (context: { signal: AbortSignal }) => Promise<unknown>
+		)({ signal: controller.signal });
+
+		controller.abort();
+
+		await expect(pending).rejects.toBeDefined();
 	});
 
 	it('treats a null keys map as empty', () => {

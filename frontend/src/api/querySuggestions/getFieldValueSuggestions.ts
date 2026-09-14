@@ -7,7 +7,8 @@ import { FieldValuesFilterConfig, FieldValuesResponse } from './types';
 export const getFieldValueSuggestions = (
 	filterConfig: FieldValuesFilterConfig,
 	builderQueryType?: BuilderQueryType,
+	signal?: AbortSignal,
 ): Promise<FieldValuesResponse> =>
 	builderQueryType === 'builder_ai_query'
-		? getAIObservabilityFieldsValues(filterConfig)
-		: getFieldsValues(filterConfig);
+		? getAIObservabilityFieldsValues(filterConfig, signal)
+		: getFieldsValues(filterConfig, signal);

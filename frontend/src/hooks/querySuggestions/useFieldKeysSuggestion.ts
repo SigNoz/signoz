@@ -5,16 +5,18 @@ import {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { getGetAIObservabilityFieldsKeysQueryOptions } from 'api/generated/services/ai-observability';
-import { getGetFieldsKeysQueryOptions } from 'api/generated/services/fields';
 import { ErrorType } from 'api/generatedAPIInstance';
 import {
-	GetFieldsKeys200,
 	RenderErrorResponseDTO,
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesSignalDTO,
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
+import {
+	FieldKeysFilterConfig,
+	FieldKeysResponse,
+} from 'api/querySuggestions/types';
 import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -26,7 +28,8 @@ export interface FieldKeysConfig {
 	signalSource?: TelemetrytypesSourceDTO | '';
 }
 
-type FieldKeysResponse = GetFieldsKeys200;
+/** One entry per (query type, params) pair; the fetcher picks the endpoint. */
+const FIELD_KEYS_QUERY_KEY = 'fieldKeysSuggestion';
 
 export type FieldKeysQueryOptions = UseQueryOptions<
 	FieldKeysResponse,
@@ -52,31 +55,24 @@ export const getFieldKeysQueryOptions = (
 	dataSource: DataSource,
 	searchText: string,
 ): FieldKeysQueryOptions => {
-	const query = {
+	const filterConfig: FieldKeysFilterConfig = {
+		signal: dataSource as unknown as TelemetrytypesSignalDTO,
+		searchText,
+		fieldContext,
+		metricName,
+		metricNamespace,
+		source: signalSource as TelemetrytypesSourceDTO | undefined,
+	};
+
+	return {
+		queryKey: [FIELD_KEYS_QUERY_KEY, builderQueryType, filterConfig],
+		queryFn: ({ signal }): Promise<FieldKeysResponse> =>
+			getFieldKeySuggestions(filterConfig, builderQueryType, signal),
 		select: toFieldKeys,
 		staleTime: 1000 * 60 * 60 * 24, // 24 hours
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
-	} as const;
-
-	if (builderQueryType === 'builder_ai_query') {
-		return getGetAIObservabilityFieldsKeysQueryOptions<TelemetryFieldKey[]>(
-			{ searchText, fieldContext },
-			{ query },
-		) as FieldKeysQueryOptions;
-	}
-
-	return getGetFieldsKeysQueryOptions<TelemetryFieldKey[]>(
-		{
-			signal: dataSource as unknown as TelemetrytypesSignalDTO,
-			searchText,
-			fieldContext,
-			metricName,
-			metricNamespace,
-			source: signalSource as TelemetrytypesSourceDTO | undefined,
-		},
-		{ query },
-	) as FieldKeysQueryOptions;
+	};
 };
 
 export const useFieldKeysSuggestion = (

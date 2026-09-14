@@ -7,7 +7,8 @@ import { FieldKeysFilterConfig, FieldKeysResponse } from './types';
 export const getFieldKeySuggestions = (
 	filterConfig: FieldKeysFilterConfig,
 	builderQueryType?: BuilderQueryType,
+	signal?: AbortSignal,
 ): Promise<FieldKeysResponse> =>
 	builderQueryType === 'builder_ai_query'
-		? getAIObservabilityFieldsKeys(filterConfig)
-		: getFieldsKeys(filterConfig);
+		? getAIObservabilityFieldsKeys(filterConfig, signal)
+		: getFieldsKeys(filterConfig, signal);
