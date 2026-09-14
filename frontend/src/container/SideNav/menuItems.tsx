@@ -40,6 +40,7 @@ import {
 } from '@signozhq/icons';
 
 import {
+	DropdownSeparator,
 	SecondaryMenuItemKey,
 	SettingsNavSection,
 	SidebarItem,
@@ -437,7 +438,13 @@ export const settingsNavSections: SettingsNavSection[] = [
 	},
 ];
 
-export const helpSupportDropdownMenuItems: SidebarItem[] = [
+// Build the Help & Support dropdown items. The version label is appended
+// at the bottom (informational, non-interactive) so users have a stable,
+// conventional place to read the running SigNoz version when filing a
+// bug report — see https://github.com/SigNoz/signoz/issues/11602.
+export const buildHelpSupportDropdownMenuItems = (
+	currentVersion?: string,
+): (SidebarItem | DropdownSeparator)[] => [
 	{
 		key: 'documentation',
 		label: (
@@ -490,7 +497,37 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 		icon: <Plus size={14} />,
 		itemKey: 'invite-collaborators',
 	},
+	...(currentVersion
+		? [
+				{
+					type: 'divider' as const,
+				},
+				{
+					key: 'version',
+					label: (
+						<div
+							className="help-support-dropdown-version"
+							data-testid="help-support-version"
+						>
+							<span className="help-support-dropdown-version-label">
+								SigNoz
+							</span>
+							<span className="help-support-dropdown-version-value">
+								{currentVersion}
+							</span>
+						</div>
+					),
+					isPinned: false,
+					itemKey: 'version',
+				},
+			]
+		: []),
 ];
+
+// Backwards-compatible default export used in tests and as the seed state
+// when no version has been fetched yet (e.g. before /version resolves).
+export const helpSupportDropdownMenuItems: SidebarItem[] =
+	buildHelpSupportDropdownMenuItems() as SidebarItem[];
 
 export interface UserSettingsMenuItemsParams {
 	userEmail: string;
