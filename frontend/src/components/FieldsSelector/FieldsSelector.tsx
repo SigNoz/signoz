@@ -10,6 +10,8 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import AddedFields from './AddedFields';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { FieldKeysConfig } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import OtherFields from './OtherFields';
 
 import styles from './FieldsSelector.module.scss';
@@ -31,6 +33,9 @@ interface FieldsSelectorProps {
 	// Lets users add a free-typed field which
 	// does not show up in the suggestions
 	allowCustomFields?: boolean;
+	fieldKeysConfig?: FieldKeysConfig;
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	staticFields?: TelemetryFieldKey[];
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
@@ -50,6 +55,9 @@ function FieldsSelectorContent({
 	maxFields,
 	requiredFields,
 	allowCustomFields,
+	fieldKeysConfig,
+	fieldContext,
+	staticFields,
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
@@ -158,6 +166,9 @@ function FieldsSelectorContent({
 					onAdd={handleAdd}
 					isAtLimit={isAtLimit}
 					allowCustomFields={allowCustomFields}
+					fieldKeysConfig={fieldKeysConfig}
+					fieldContext={fieldContext}
+					staticFields={staticFields}
 				/>
 
 				{hasUnsavedChanges && (

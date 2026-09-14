@@ -3,9 +3,8 @@ import { Button } from '@signozhq/ui/button';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import {
 	FieldContext,
 	SignalType,
@@ -14,6 +13,15 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './FieldsSelector.module.scss';
+import {
+	FieldKeysConfig,
+	useFieldKeysSuggestion,
+} from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import { mergeStaticFields } from 'utils/staticFields';
+
+const EMPTY_FIELD_KEYS_CONFIG: FieldKeysConfig = {};
+
+const EMPTY_STATIC_FIELDS: TelemetryFieldKey[] = [];
 
 interface OtherFieldsProps {
 	signal: DataSource;
@@ -22,6 +30,9 @@ interface OtherFieldsProps {
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 	allowCustomFields?: boolean;
+	fieldKeysConfig?: FieldKeysConfig;
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	staticFields?: TelemetryFieldKey[];
 }
 
 function OtherFields({
@@ -31,26 +42,27 @@ function OtherFields({
 	onAdd,
 	isAtLimit,
 	allowCustomFields,
+	fieldKeysConfig = EMPTY_FIELD_KEYS_CONFIG,
+	fieldContext,
+	staticFields = EMPTY_STATIC_FIELDS,
 }: OtherFieldsProps): JSX.Element {
-	const { data, isFetching } = useGetQueryKeySuggestions(
-		{
-			signal,
-			searchText: debouncedInputValue,
-		},
-		{
-			queryKey: [
-				REACT_QUERY_KEY.GET_FIELDS_SELECTOR_SUGGESTIONS,
-				signal,
-				debouncedInputValue,
-			],
-			enabled: true,
-		},
+	const keysConfig = useMemo(
+		() => ({ ...fieldKeysConfig, fieldContext }),
+		[fieldKeysConfig, fieldContext],
+	);
+
+	const { data: fetchedFields, isFetching } = useFieldKeysSuggestion(
+		keysConfig,
+		signal,
+		debouncedInputValue,
 	);
 
 	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
-		const rawSuggestions = Object.values(data?.data.data.keys || {}).flat();
-		// Normalize: synthesize `key` once so downstream reads can trust it.
-		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
+		const suggestions: TelemetryFieldKey[] = mergeStaticFields(
+			staticFields,
+			fetchedFields ?? [],
+			debouncedInputValue,
+		).map((attr) => ({
 			...attr,
 			key: buildCompositeKey(attr.name, attr.fieldContext, attr.fieldDataType),
 			signal: attr.signal as SignalType,
@@ -87,7 +99,13 @@ function OtherFields({
 			key: buildCompositeKey(typed, ''),
 		};
 		return [customField, ...available];
-	}, [data, addedFields, allowCustomFields, debouncedInputValue]);
+	}, [
+		staticFields,
+		fetchedFields,
+		addedFields,
+		allowCustomFields,
+		debouncedInputValue,
+	]);
 
 	if (isFetching) {
 		return (
