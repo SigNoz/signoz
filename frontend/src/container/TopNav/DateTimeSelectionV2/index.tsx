@@ -21,7 +21,10 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSyncTimeOnStagedQueryChange } from 'hooks/queryBuilder/useSyncTimeOnStagedQueryChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
+import {
+	isValidDashboardDuration,
+	isValidShortHandDateTimeFormat,
+} from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import { cloneDeep, isObject } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
@@ -215,7 +218,7 @@ function DateTimeSelection({
 	// The route's built-in default, unless the caller supplies its own. Reached
 	// only after the URL and this route's persisted time have both come up empty.
 	const resolveDefaultOption = (pathName: string): Time =>
-		fallbackRelativeTime && isValidShortHandDateTimeFormat(fallbackRelativeTime)
+		fallbackRelativeTime && isValidDashboardDuration(fallbackRelativeTime)
 			? fallbackRelativeTime
 			: getDefaultOption(pathName);
 

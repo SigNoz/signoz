@@ -110,6 +110,12 @@ describe('DateTimeSelectionV2 - fallbackRelativeTime', () => {
 		expect(url).toContain('relativeTime=30m');
 	});
 
+	// A stored zero window would collapse the query range to a single instant.
+	it('ignores a zero-length fallback', async () => {
+		const url = await renderAndGetNavigatedUrl('', '0m');
+		expect(url).toContain('relativeTime=30m');
+	});
+
 	it('keeps the route default when no fallback is given', async () => {
 		const url = await renderAndGetNavigatedUrl('');
 		expect(url).toContain('relativeTime=30m');
