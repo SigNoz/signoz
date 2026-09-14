@@ -8,7 +8,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { FieldKeysResponse } from 'api/querySuggestions/types';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
-import { FieldKeysConfig } from 'types/fieldSuggestions';
+import { FieldKeysConfig } from 'types/useSuggestionFieldApi';
 
 import {
 	getFieldKeysQueryOptions,

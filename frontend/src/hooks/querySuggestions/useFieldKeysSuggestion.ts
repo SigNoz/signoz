@@ -15,7 +15,7 @@ import {
 	FieldKeysFilterConfig,
 	FieldKeysResponse,
 } from 'api/querySuggestions/types';
-import { FieldKeysConfig } from 'types/fieldSuggestions';
+import { FieldKeysConfig } from 'types/useSuggestionFieldApi';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 

@@ -13,10 +13,10 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './FieldsSelector.module.scss';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import { FieldSuggestionsConfig } from 'types/fieldSuggestions';
+import { UseSuggestionFieldApi } from 'types/useSuggestionFieldApi';
 import { mergeStaticFields } from 'utils/staticFields';
 
-const EMPTY_FIELD_SUGGESTIONS: FieldSuggestionsConfig = {};
+const EMPTY_FIELD_APIS: UseSuggestionFieldApi = {};
 
 const EMPTY_STATIC_FIELDS: TelemetryFieldKey[] = [];
 
@@ -27,7 +27,7 @@ interface OtherFieldsProps {
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 	allowCustomFields?: boolean;
-	fieldSuggestions?: FieldSuggestionsConfig;
+	useFieldApis?: UseSuggestionFieldApi;
 }
 
 function OtherFields({
@@ -37,9 +37,9 @@ function OtherFields({
 	onAdd,
 	isAtLimit,
 	allowCustomFields,
-	fieldSuggestions = EMPTY_FIELD_SUGGESTIONS,
+	useFieldApis = EMPTY_FIELD_APIS,
 }: OtherFieldsProps): JSX.Element {
-	const { staticFields = EMPTY_STATIC_FIELDS, ...keysConfig } = fieldSuggestions;
+	const { staticFields = EMPTY_STATIC_FIELDS, ...keysConfig } = useFieldApis;
 
 	const { data: fetchedFields, isFetching } = useFieldKeysSuggestion(
 		keysConfig,

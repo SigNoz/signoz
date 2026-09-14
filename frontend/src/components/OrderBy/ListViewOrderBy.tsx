@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Select, Spin } from 'antd';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
-import { FieldSuggestionsConfig } from 'types/fieldSuggestions';
+import { UseSuggestionFieldApi } from 'types/useSuggestionFieldApi';
 import { DataSource } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
@@ -11,13 +11,13 @@ const DEFAULT_STATIC_FIELDS: TelemetryFieldKey[] = [
 	{ name: 'timestamp' } as TelemetryFieldKey,
 ];
 
-const DEFAULT_FIELD_SUGGESTIONS: FieldSuggestionsConfig = {};
+const DEFAULT_FIELD_APIS: UseSuggestionFieldApi = {};
 
 interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;
 	dataSource: DataSource;
-	fieldSuggestions?: FieldSuggestionsConfig;
+	useFieldApis?: UseSuggestionFieldApi;
 }
 
 function Loader({ isLoading }: { isLoading: boolean }): JSX.Element {
@@ -32,10 +32,9 @@ function ListViewOrderBy({
 	value,
 	onChange,
 	dataSource,
-	fieldSuggestions = DEFAULT_FIELD_SUGGESTIONS,
+	useFieldApis = DEFAULT_FIELD_APIS,
 }: ListViewOrderByProps): JSX.Element {
-	const { staticFields = DEFAULT_STATIC_FIELDS, ...keysConfig } =
-		fieldSuggestions;
+	const { staticFields = DEFAULT_STATIC_FIELDS, ...keysConfig } = useFieldApis;
 	const [searchInput, setSearchInput] = useState('');
 	const [debouncedInput, setDebouncedInput] = useState('');
 	const [selectOptions, setSelectOptions] = useState<

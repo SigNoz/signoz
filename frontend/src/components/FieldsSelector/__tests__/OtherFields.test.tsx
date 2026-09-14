@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import { FieldSuggestionsConfig } from 'types/fieldSuggestions';
+import { UseSuggestionFieldApi } from 'types/useSuggestionFieldApi';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -123,13 +123,13 @@ describe('OtherFields — custom (free-typed) option', () => {
 	});
 });
 
-describe('OtherFields — fieldSuggestions', () => {
+describe('OtherFields — useFieldApis', () => {
 	const pool: TelemetryFieldKey[] = [
 		{ name: 'total_tokens', fieldContext: 'trace', fieldDataType: 'float64' },
 		{ name: 'llm_call_count', fieldContext: 'trace', fieldDataType: 'float64' },
 	];
 
-	const fieldSuggestions: FieldSuggestionsConfig = {
+	const useFieldApis: UseSuggestionFieldApi = {
 		builderQueryType: 'builder_ai_query',
 		fieldContext: TelemetrytypesFieldContextDTO.trace,
 	};
@@ -147,7 +147,7 @@ describe('OtherFields — fieldSuggestions', () => {
 	});
 
 	it('lists the pool it is handed', () => {
-		renderOtherFields({ fieldSuggestions, allowCustomFields: false });
+		renderOtherFields({ useFieldApis, allowCustomFields: false });
 
 		expect(screen.getByText('total_tokens')).toBeInTheDocument();
 		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
@@ -155,13 +155,13 @@ describe('OtherFields — fieldSuggestions', () => {
 
 	it('forwards the fetch params and search to the shared keys hook', () => {
 		renderOtherFields({
-			fieldSuggestions,
+			useFieldApis,
 			allowCustomFields: false,
 			debouncedInputValue: 'llm',
 		});
 
 		expect(useFieldKeysSuggestion).toHaveBeenCalledWith(
-			fieldSuggestions,
+			useFieldApis,
 			DataSource.LOGS,
 			'llm',
 		);
@@ -171,8 +171,8 @@ describe('OtherFields — fieldSuggestions', () => {
 		mockPool([{ name: 'total_tokens' } as TelemetryFieldKey]);
 
 		renderOtherFields({
-			fieldSuggestions: {
-				...fieldSuggestions,
+			useFieldApis: {
+				...useFieldApis,
 				staticFields: [{ name: 'last_activity_time' } as TelemetryFieldKey],
 			},
 			allowCustomFields: false,
@@ -184,7 +184,7 @@ describe('OtherFields — fieldSuggestions', () => {
 
 	it('omits pool fields that are already added', () => {
 		renderOtherFields({
-			fieldSuggestions,
+			useFieldApis,
 			allowCustomFields: false,
 			addedFields: [
 				{
