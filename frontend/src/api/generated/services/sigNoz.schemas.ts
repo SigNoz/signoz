@@ -507,6 +507,15 @@ export enum AlertmanagertypesChannelKindDTO {
 	jsmops = 'jsmops',
 	incidentio = 'incidentio',
 }
+export enum AlertmanagertypesChannelListOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export enum AlertmanagertypesChannelListSortDTO {
+	updated_at = 'updated_at',
+	created_at = 'created_at',
+	name = 'name',
+}
 export interface ModelLabelSetDTO {
 	[key: string]: string;
 }
@@ -998,6 +1007,44 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	 * @type string
 	 */
 	wont_fix_resolution?: string;
+}
+
+export interface AlertmanagertypesListedNotificationChannelDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	displayName: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	kind: AlertmanagertypesChannelKindDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface AlertmanagertypesListableNotificationChannelDTO {
+	/**
+	 * @type array
+	 */
+	channels: AlertmanagertypesListedNotificationChannelDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	total: number;
 }
 
 export enum AlertmanagertypesMaintenanceKindDTO {
@@ -2389,6 +2436,14 @@ export interface AlertmanagertypesReceiverDTO {
 	 * @type array
 	 */
 	wechat_configs?: ConfigWechatConfigDTO[];
+}
+
+export interface AlertmanagertypesTestableNotificationChannelDTO {
+	config: AlertmanagertypesChannelConfigDTO;
+}
+
+export interface AlertmanagertypesUpdatableNotificationChannelDTO {
+	config: AlertmanagertypesChannelConfigDTO;
 }
 
 export interface AuthtypesAttributeMappingDTO {
@@ -4079,6 +4134,53 @@ export interface Querybuildertypesv5LogAggregationDTO {
 	expression?: string;
 }
 
+export enum Querybuildertypesv5BucketOptionsLinearDTOKind {
+	linear = 'linear',
+}
+export interface Querybuildertypesv5LinearBucketsSpecDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	maxValue: number;
+	/**
+	 * @type integer
+	 */
+	numBuckets?: number;
+}
+
+export interface Querybuildertypesv5BucketOptionsLinearDTO {
+	/**
+	 * @type string
+	 * @enum linear
+	 */
+	kind: Querybuildertypesv5BucketOptionsLinearDTOKind;
+	spec: Querybuildertypesv5LinearBucketsSpecDTO;
+}
+
+export enum Querybuildertypesv5BucketOptionsLogDTOKind {
+	log = 'log',
+}
+export interface Querybuildertypesv5LogBucketsSpecDTO {
+	/**
+	 * @type integer,null
+	 */
+	scale?: number | null;
+}
+
+export interface Querybuildertypesv5BucketOptionsLogDTO {
+	/**
+	 * @type string
+	 * @enum log
+	 */
+	kind: Querybuildertypesv5BucketOptionsLogDTOKind;
+	spec: Querybuildertypesv5LogBucketsSpecDTO;
+}
+
+export type Querybuildertypesv5BucketOptionsDTO =
+	| Querybuildertypesv5BucketOptionsLinearDTO
+	| Querybuildertypesv5BucketOptionsLogDTO;
+
 export interface Querybuildertypesv5FilterDTO {
 	/**
 	 * @type string
@@ -4272,6 +4374,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array,null
 	 */
 	aggregations?: Querybuildertypesv5LogAggregationDTO[] | null;
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
 	 */
@@ -4399,6 +4502,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array,null
 	 */
 	aggregations?: Querybuildertypesv5MetricAggregationDTO[] | null;
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
 	 */
@@ -4474,6 +4578,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type array,null
 	 */
 	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
 	 */
@@ -4914,6 +5019,57 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesListPanelSpecDTO;
 }
 
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind {
+	'signoz/TextPanel' = 'signoz/TextPanel',
+}
+export interface DashboardtypesHeaderOptionsDTO {
+	/**
+	 * @type boolean
+	 */
+	hide?: boolean;
+}
+
+export enum DashboardtypesTextModeDTO {
+	markdown = 'markdown',
+}
+export enum DashboardtypesTextAlignDTO {
+	left = 'left',
+	center = 'center',
+	right = 'right',
+}
+export enum DashboardtypesVerticalAlignDTO {
+	top = 'top',
+	center = 'center',
+	bottom = 'bottom',
+}
+export interface DashboardtypesTextPresentationDTO {
+	/**
+	 * @type string,null
+	 */
+	background?: string | null;
+	textAlign?: DashboardtypesTextAlignDTO;
+	verticalAlign?: DashboardtypesVerticalAlignDTO;
+}
+
+export interface DashboardtypesTextPanelSpecDTO {
+	headerOptions?: DashboardtypesHeaderOptionsDTO;
+	mode?: DashboardtypesTextModeDTO;
+	presentation?: DashboardtypesTextPresentationDTO;
+	/**
+	 * @type string
+	 */
+	text?: string;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO {
+	/**
+	 * @enum signoz/TextPanel
+	 * @type string
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind;
+	spec: DashboardtypesTextPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -4921,7 +5077,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -4929,6 +5086,7 @@ export enum Querybuildertypesv5RequestTypeDTO {
 	raw = 'raw',
 	raw_stream = 'raw_stream',
 	trace = 'trace',
+	heatmap = 'heatmap',
 }
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind {
 	'signoz/BuilderQuery' = 'signoz/BuilderQuery',
@@ -4975,6 +5133,7 @@ export interface Querybuildertypesv5QueryEnvelopeBuilderAIDTO {
 }
 
 export interface Querybuildertypesv5QueryBuilderFormulaDTO {
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type boolean
 	 */
@@ -5844,6 +6003,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TablePanel' = 'signoz/TablePanel',
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
+	'signoz/TextPanel' = 'signoz/TextPanel',
 }
 /**
  * @nullable
@@ -8543,16 +8703,7 @@ export interface Querybuildertypesv5LabelDTO {
 	value?: Querybuildertypesv5LabelDTOValue;
 }
 
-export interface Querybuildertypesv5BucketDTO {
-	/**
-	 * @type number
-	 * @format double
-	 */
-	step?: number;
-}
-
 export interface Querybuildertypesv5TimeSeriesValueDTO {
-	bucket?: Querybuildertypesv5BucketDTO;
 	/**
 	 * @type boolean
 	 */
@@ -9103,12 +9254,16 @@ export interface PromotetypesPromotePathDTO {
 	promote?: boolean;
 }
 
-export type Querybuildertypesv5AggregationBucketDTOMeta = {
+export interface Querybuildertypesv5AggregationMetaDTO {
+	/**
+	 * @type array
+	 */
+	buckets?: number[];
 	/**
 	 * @type string
 	 */
 	unit?: string;
-};
+}
 
 export interface Querybuildertypesv5AggregationBucketDTO {
 	/**
@@ -9127,10 +9282,7 @@ export interface Querybuildertypesv5AggregationBucketDTO {
 	 * @type array
 	 */
 	lowerBoundSeries?: Querybuildertypesv5TimeSeriesDTO[];
-	/**
-	 * @type object
-	 */
-	meta?: Querybuildertypesv5AggregationBucketDTOMeta;
+	meta?: Querybuildertypesv5AggregationMetaDTO;
 	/**
 	 * @type array
 	 */
@@ -9145,6 +9297,10 @@ export interface Querybuildertypesv5AggregationBucketDTO {
 	upperBoundSeries?: Querybuildertypesv5TimeSeriesDTO[];
 }
 
+export enum Querybuildertypesv5BucketsKindDTO {
+	linear = 'linear',
+	log = 'log',
+}
 export type Querybuildertypesv5ColumnDescriptorDTOMeta = {
 	/**
 	 * @type string
@@ -9614,6 +9770,10 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type string
 	 */
+	relatedAITracesLink?: string;
+	/**
+	 * @type string
+	 */
 	relatedLogsLink?: string;
 	/**
 	 * @type string
@@ -9659,6 +9819,10 @@ export interface RulestatehistorytypesGettableRuleStateHistoryContributorDTO {
 	 * @type array,null
 	 */
 	labels: Querybuildertypesv5LabelDTO[] | null;
+	/**
+	 * @type string
+	 */
+	relatedAITracesLink?: string;
 	/**
 	 * @type string
 	 */
@@ -9754,6 +9918,7 @@ export enum RuletypesAlertTypeDTO {
 	TRACES_BASED_ALERT = 'TRACES_BASED_ALERT',
 	LOGS_BASED_ALERT = 'LOGS_BASED_ALERT',
 	EXCEPTIONS_BASED_ALERT = 'EXCEPTIONS_BASED_ALERT',
+	AI_TRACES_BASED_ALERT = 'AI_TRACES_BASED_ALERT',
 }
 export enum RuletypesMatchTypeDTO {
 	at_least_once = 'at_least_once',
@@ -13163,7 +13328,70 @@ export type GetMetricsTreemap200 = {
 	status: string;
 };
 
+export type ListNotificationChannelsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	query?: string;
+	/**
+	 * @description undefined
+	 */
+	kind?: AlertmanagertypesChannelKindDTO;
+	/**
+	 * @description undefined
+	 */
+	sort?: AlertmanagertypesChannelListSortDTO;
+	/**
+	 * @description undefined
+	 */
+	order?: AlertmanagertypesChannelListOrderDTO;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+};
+
+export type ListNotificationChannels200 = {
+	data: AlertmanagertypesListableNotificationChannelDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type CreateNotificationChannel201 = {
+	data: AlertmanagertypesGettableNotificationChannelDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteNotificationChannelPathParameters = {
+	id: string;
+};
+export type GetNotificationChannelPathParameters = {
+	id: string;
+};
+export type GetNotificationChannel200 = {
+	data: AlertmanagertypesGettableNotificationChannelDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateNotificationChannelPathParameters = {
+	id: string;
+};
+export type UpdateNotificationChannel200 = {
 	data: AlertmanagertypesGettableNotificationChannelDTO;
 	/**
 	 * @type string

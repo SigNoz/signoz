@@ -129,7 +129,7 @@ func (b *meterQueryStatementBuilder) buildPipelineStatement(
 	}
 
 	// final SELECT
-	return b.metricsStatementBuilder.BuildFinalSelect(cteFragments, cteArgs, query)
+	return b.metricsStatementBuilder.BuildFinalSelect(cteFragments, cteArgs, qbtypes.RequestTypeTimeSeries, query)
 }
 
 func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
