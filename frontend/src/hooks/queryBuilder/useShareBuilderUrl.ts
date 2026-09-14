@@ -9,11 +9,14 @@ export type UseShareBuilderUrlParams = {
 	defaultValue: Query;
 	/** Force reset the query regardless of URL state */
 	forceReset?: boolean;
+	/** Extra URL params written on initial redirect (e.g. panelTypes) */
+	urlParams?: Record<string, unknown>;
 };
 
 export const useShareBuilderUrl = ({
 	defaultValue,
 	forceReset = false,
+	urlParams,
 }: UseShareBuilderUrlParams): void => {
 	const { resetQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
@@ -23,12 +26,13 @@ export const useShareBuilderUrl = ({
 	useEffect(() => {
 		if (!compositeQuery || forceReset) {
 			resetQuery(defaultValue);
-			redirectWithQueryBuilderData(defaultValue);
+			redirectWithQueryBuilderData(defaultValue, urlParams);
 		}
 	}, [
 		defaultValue,
 		urlQuery,
 		redirectWithQueryBuilderData,
+		urlParams,
 		compositeQuery,
 		resetQuery,
 		forceReset,

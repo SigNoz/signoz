@@ -8,7 +8,7 @@ import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQ
 import { DataSource } from 'types/common/queryBuilder';
 
 function QuerySection(): JSX.Element {
-	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.TRACE);
 
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const isList = panelTypes === PANEL_TYPES.LIST;
