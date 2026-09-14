@@ -17,4 +17,9 @@ func TestThroughput(t *testing.T) {
 	assert.Equal(t, "1M req/s", throughputFormatter.Format(1000000, "{req}/s"))
 	assert.Equal(t, "10 c/m", throughputFormatter.Format(10, "cpm"))
 	assert.Equal(t, "10 c/m", throughputFormatter.Format(10, "{count}/min"))
+
+	// Negative values must be scaled by magnitude just like positive ones.
+	assert.Equal(t, "-10 req/s", throughputFormatter.Format(-10, "reqps"))
+	assert.Equal(t, "-1K req/s", throughputFormatter.Format(-1000, "reqps"))
+	assert.Equal(t, "-1M req/s", throughputFormatter.Format(-1000000, "reqps"))
 }
