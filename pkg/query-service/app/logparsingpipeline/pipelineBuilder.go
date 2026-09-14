@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
 	signozstanzahelper "github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
@@ -179,7 +180,7 @@ func getOperators(ops []pipelinetypes.PipelineOperator) ([]pipelinetypes.Pipelin
 					}
 
 					operator.If = fmt.Sprintf(
-						`%s && %s matches "%s"`, operator.If, operator.ParseFrom, regex,
+						`%s && %s matches %s`, operator.If, operator.ParseFrom, strconv.Quote(regex),
 					)
 				} else if operator.LayoutType == "epoch" {
 					valueRegex := `^\\s*[0-9]+\\s*$`
