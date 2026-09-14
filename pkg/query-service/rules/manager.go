@@ -260,7 +260,7 @@ func (m *Manager) initiate(ctx context.Context) error {
 			return err
 		}
 		if len(storedRules) == 0 {
-			return nil
+			continue
 		}
 
 		for _, rec := range storedRules {
