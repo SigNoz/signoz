@@ -597,11 +597,12 @@ function DateTimeSelection({
 			handleRelativeTimeSync(relativeTimeFromUrl);
 		}
 
-		// set the default relative time for alert history and overview pages if relative time is not specified
+		// set the default relative time for alert pages if relative time is not specified
 		if (
 			!hasTimeParamsInUrl &&
 			(currentRoute === ROUTES.ALERT_OVERVIEW ||
-				currentRoute === ROUTES.ALERT_HISTORY)
+				currentRoute === ROUTES.ALERT_HISTORY ||
+				currentRoute === ROUTES.ALERTS_NEW)
 		) {
 			updateTimeInterval(defaultRelativeTime);
 			const urlQuery = getUnstableCurrentSearchParams();

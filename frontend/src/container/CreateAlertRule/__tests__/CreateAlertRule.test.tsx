@@ -25,9 +25,14 @@ jest.mock('react-router-dom-v5-compat', () => ({
 	useSearchParams: jest.fn(() => [new URLSearchParams(), jest.fn()]),
 }));
 
+const mockDateTimeSelectorProps: Record<string, unknown> = {};
+
 jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	__esModule: true,
-	default: function MockDateTimeSelector(): JSX.Element {
+	default: function MockDateTimeSelector(
+		props: Record<string, unknown>,
+	): JSX.Element {
+		Object.assign(mockDateTimeSelectorProps, props);
 		return <div data-testid="datetime-selector">Mock DateTime Selector</div>;
 	},
 }));
@@ -98,6 +103,13 @@ describe('CreateAlertRule', () => {
 			safeNavigate: mockSafeNavigate,
 		});
 		useAppContextSpy.mockReturnValue(getAppContextMockState());
+	});
+
+	it('should pass defaultRelativeTime of 5m to DateTimeSelector', () => {
+		mockGetUrlQuery.mockReturnValue(null);
+		useCompositeQueryParamSpy.mockReturnValue(null);
+		render(<CreateAlertRule />);
+		expect(mockDateTimeSelectorProps.defaultRelativeTime).toBe('5m');
 	});
 
 	it('should render classic flow when showClassicCreateAlertsPage is true', () => {
