@@ -213,6 +213,11 @@
 		margin-right: -12px;
 	}
 
+	.metrics-treemap-content {
+		width: 100%;
+		min-width: 0;
+	}
+
 	.no-metrics-message-container {
 		display: flex;
 		flex-direction: column;
