@@ -45,15 +45,17 @@ function LegendRow({
 	// a usable CSS colour for the marker.
 	const seriesColor = typeof item.color === 'string' ? item.color : undefined;
 
-	/** Everything showing -> isolate, since there is nothing to exclude yet. */
-	const handleRowClick = useCallback(
-		(): void =>
-			onAction({
-				type: isAllShown ? LegendAction.SHOW_ONLY : LegendAction.TOGGLE,
-				seriesIndex,
-			}),
-		[isAllShown, onAction, seriesIndex],
-	);
+	/** Everything showing -> isolate; showing alone -> restore all. */
+	const handleRowClick = useCallback((): void => {
+		if (isSoleShown) {
+			onAction({ type: LegendAction.SHOW_ALL });
+			return;
+		}
+		onAction({
+			type: isAllShown ? LegendAction.SHOW_ONLY : LegendAction.TOGGLE,
+			seriesIndex,
+		});
+	}, [isSoleShown, isAllShown, onAction, seriesIndex]);
 
 	const handleMarkerClick = useCallback(
 		(event: MouseEvent<HTMLButtonElement>): void => {
