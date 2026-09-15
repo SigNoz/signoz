@@ -31,6 +31,26 @@ import type {
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
+
 /**
  * Returns all LLM pricing rules for the authenticated org, with pagination.
  * @summary List pricing rules
@@ -110,7 +130,7 @@ export function useListLLMPricingRules<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -339,7 +359,7 @@ export const getGetLLMPricingRuleQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getLLMPricingRule>>,
@@ -376,7 +396,7 @@ export function useGetLLMPricingRule<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -461,7 +481,7 @@ export function useListUnmappedLLMModels<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
