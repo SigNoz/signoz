@@ -172,7 +172,12 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 	if !ok || panel == nil {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "panel with key %q doesn't exist", panelKey)
 	}
-	// Validator guarantees exactly one query per panel.
+	// A panel kind that renders from its own plugin spec has no query to execute;
+	// asking for its query range is a client mistake.
+	if panel.Spec.Plugin.Kind.rendersWithoutQuery() {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "panel %q is a %q and has no query to execute", panelKey, panel.Spec.Plugin.Kind)
+	}
+	// Validator guarantees exactly one query for every other panel kind.
 	if len(panel.Spec.Queries) != 1 {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "panel %q must have exactly one query", panelKey)
 	}

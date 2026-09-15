@@ -4,6 +4,7 @@ import {
 	DraftingCompass,
 	FileKey,
 	Gauge,
+	Grid3X3,
 	Key,
 	Logs,
 	Receipt,
@@ -41,6 +42,14 @@ export interface ResourcePanelConfig {
  * not all of them
  */
 export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
+	dashboard: {
+		label: 'Dashboards',
+		description: 'Dashboards and their panels across the workspace.',
+		icon: Grid3X3,
+		selectorPlaceholder:
+			'Type dashboard ID, separate multiple with comma or space',
+		docsAnchor: 'dashboard',
+	},
 	'factor-api-key': {
 		label: 'API Keys',
 		description: 'Programmatic access tokens for the workspace.',
