@@ -72,8 +72,6 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
-	settings["secondary_indices_enable_bulk_filtering"] = h.settings.SecondaryIndicesEnableBulkFiltering
-
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx
 }
