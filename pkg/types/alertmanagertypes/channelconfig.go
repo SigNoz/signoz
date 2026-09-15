@@ -207,7 +207,7 @@ type ChannelSpec interface {
 
 type ChannelSlackConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	APIURL       string                       `json:"apiUrl" required:"true"`
+	APIURL       string                       `json:"apiUrl" required:"true" format:"password"`
 	Channel      string                       `json:"channel"`
 	Title        valuer.UnsetOrNonEmptyString `json:"title"`
 	Text         valuer.UnsetOrNonEmptyString `json:"text"`
@@ -312,7 +312,7 @@ func newChannelEmailConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpe
 // was really a bearer token.
 type ChannelWebhookConfig struct {
 	SendResolved *bool  `json:"sendResolved,omitempty"`
-	URL          string `json:"url" required:"true"`
+	URL          string `json:"url" required:"true" format:"password"`
 	Username     string `json:"username"`
 	Password     string `json:"password" format:"password"`
 	BearerToken  string `json:"bearerToken" format:"password"`
@@ -552,7 +552,7 @@ func newChannelOpsgenieConfigFromReceiver(name string, receiver *Receiver) (Chan
 
 type ChannelMSTeamsConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	WebhookURL   string                       `json:"webhookUrl" required:"true"`
+	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password"`
 	Title        valuer.UnsetOrNonEmptyString `json:"title"`
 	Text         valuer.UnsetOrNonEmptyString `json:"text"`
 }
@@ -600,7 +600,7 @@ func newChannelMSTeamsConfigFromReceiver(name string, receiver *Receiver) (Chann
 
 type ChannelGoogleChatConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	WebhookURL   string                       `json:"webhookUrl" required:"true"`
+	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password"`
 	Title        valuer.UnsetOrNonEmptyString `json:"title"`
 	Text         valuer.UnsetOrNonEmptyString `json:"text"`
 }
