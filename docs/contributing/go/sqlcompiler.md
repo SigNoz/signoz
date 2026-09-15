@@ -57,7 +57,7 @@ Rules for implementing one:
 
 The reference implementation is the dashboards resolver, [pkg/modules/dashboard/impldashboard/listfilter_resolver.go](/pkg/modules/dashboard/impldashboard/listfilter_resolver.go): reserved keys backed by columns and JSON paths, tag keys via `EXISTS` subqueries, free text across name, description and tags.
 
-## How do I wire it in?
+## How to wire it in?
 
 Give the module a thin `Compile` wrapper that maps the error list onto the module's error code, as in [pkg/modules/dashboard/impldashboard/listfilter.go](/pkg/modules/dashboard/impldashboard/listfilter.go):
 
