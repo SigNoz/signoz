@@ -7,6 +7,10 @@
 .slider {
 	flex: 1;
 	min-width: 0;
+	// The design-system slider insets its track by half a thumb on each side so the
+	// fill follows the thumb's centre. Pull that inset back off the row so the track
+	// lines up with the other controls; the thumb never paints past the track edge.
+	margin-inline: calc(var(--slider-thumb-width, 18px) / -2);
 }
 
 .value {
