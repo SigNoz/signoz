@@ -1242,6 +1242,9 @@ const (
 
 	FilterOperatorILike    FilterOperator = "ilike"
 	FilterOperatorNotILike FilterOperator = "notilike"
+
+	FilterOperatorLikeAny  FilterOperator = "like_any"
+	FilterOperatorILikeAny FilterOperator = "ilike_any"
 )
 
 type FilterItem struct {
