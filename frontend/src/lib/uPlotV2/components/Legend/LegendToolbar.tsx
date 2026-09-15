@@ -2,7 +2,7 @@ import { ChangeEvent, useCallback } from 'react';
 import { Input } from 'antd';
 import { Search } from '@signozhq/icons';
 
-import styles from './Legend.module.scss';
+import styles from './LegendToolbar.module.scss';
 
 export interface LegendToolbarProps {
 	visibleCount: number;

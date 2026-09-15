@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import { LegendAction } from 'lib/uPlotV2/components/types';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 import { useLegendActions } from 'lib/uPlotV2/hooks/useLegendActions';
 
@@ -64,7 +65,7 @@ describe('useLegendActions', () => {
 		it('toggles a single series on row click', () => {
 			const { result } = renderHook(() => useLegendActions());
 
-			result.current.onToggleSeries(2);
+			result.current({ type: LegendAction.TOGGLE, seriesIndex: 2 });
 
 			expect(onToggleSeriesOnOff).toHaveBeenCalledWith(2);
 			// The row must never isolate — that is what "Only" is for.
@@ -74,8 +75,8 @@ describe('useLegendActions', () => {
 		it('forwards the Only and All actions to the plot', () => {
 			const { result } = renderHook(() => useLegendActions());
 
-			result.current.onShowOnlySeries(1);
-			result.current.onShowAllSeries();
+			result.current({ type: LegendAction.SHOW_ONLY, seriesIndex: 1 });
+			result.current({ type: LegendAction.SHOW_ALL });
 
 			expect(onShowOnlySeries).toHaveBeenCalledWith(1);
 			expect(onShowAllSeries).toHaveBeenCalled();
@@ -86,7 +87,7 @@ describe('useLegendActions', () => {
 		it('highlights the hovered series', () => {
 			const { result } = renderHook(() => useLegendActions());
 
-			result.current.onHoverSeries(2);
+			result.current({ type: LegendAction.HOVER, seriesIndex: 2 });
 
 			expect(onHighlightSeries).toHaveBeenCalledWith(2);
 		});
@@ -94,7 +95,7 @@ describe('useLegendActions', () => {
 		it('clears the highlight on leave', () => {
 			const { result } = renderHook(() => useLegendActions());
 
-			result.current.onHoverSeries(null);
+			result.current({ type: LegendAction.HOVER, seriesIndex: null });
 
 			expect(onHighlightSeries).toHaveBeenCalledWith(null);
 		});
@@ -102,8 +103,8 @@ describe('useLegendActions', () => {
 		it('coalesces rapid hovers into one frame', () => {
 			const { result } = renderHook(() => useLegendActions());
 
-			result.current.onHoverSeries(1);
-			result.current.onHoverSeries(2);
+			result.current({ type: LegendAction.HOVER, seriesIndex: 1 });
+			result.current({ type: LegendAction.HOVER, seriesIndex: 2 });
 
 			// Each new hover cancels the frame the previous one queued.
 			expect(cancelAnimationFrameSpy).toHaveBeenCalled();
@@ -115,7 +116,7 @@ describe('useLegendActions', () => {
 				.mockImplementation((): number => 7);
 
 			const { result, unmount } = renderHook(() => useLegendActions());
-			result.current.onHoverSeries(1);
+			result.current({ type: LegendAction.HOVER, seriesIndex: 1 });
 			unmount();
 
 			expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(7);

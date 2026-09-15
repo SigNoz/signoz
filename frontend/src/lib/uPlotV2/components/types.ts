@@ -115,6 +115,26 @@ export enum LegendPosition {
 export interface LegendConfig {
 	position: LegendPosition;
 }
+export enum LegendAction {
+	TOGGLE = 'toggle',
+	SHOW_ONLY = 'showOnly',
+	SHOW_ALL = 'showAll',
+	HOVER = 'hover',
+}
+
+/** Everything the legend can ask of its container, as one dispatch. */
+export type LegendActionPayload =
+	/** Row click / Space / Enter / marker click: hide or show that one series. */
+	| { type: LegendAction.TOGGLE; seriesIndex: number }
+	/** Show that series alone. */
+	| { type: LegendAction.SHOW_ONLY; seriesIndex: number }
+	/** Leave the narrowed selection and show every series. */
+	| { type: LegendAction.SHOW_ALL }
+	/** Row hover, for the chart-side highlight; null on leave. */
+	| { type: LegendAction.HOVER; seriesIndex: number | null };
+
+export type OnLegendAction = (payload: LegendActionPayload) => void;
+
 /**
  * Presentational legend props. Source-agnostic: it renders whatever `items`
  * it's given and delegates interaction to the container handlers, so it serves
@@ -127,14 +147,7 @@ export interface LegendProps {
 	averageLegendWidth?: number;
 	/** Series index highlighted by the chart cursor. */
 	focusedSeriesIndex: number | null;
-	/** Row click / Space / Enter: hide or show that one series. */
-	onToggleSeries: (seriesIndex: number) => void;
-	/** "Only": show that series alone. */
-	onShowOnlySeries: (seriesIndex: number) => void;
-	/** "All": leave the narrowed selection and show every series. */
-	onShowAllSeries: () => void;
-	/** Row hover, for the chart-side highlight; null on leave. */
-	onHoverSeries: (seriesIndex: number | null) => void;
+	onAction: OnLegendAction;
 	/** Show the per-item copy button. Default true. */
 	showCopy?: boolean;
 }

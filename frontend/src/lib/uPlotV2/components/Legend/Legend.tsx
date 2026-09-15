@@ -3,7 +3,7 @@ import { VirtuosoGrid } from 'react-virtuoso';
 import cx from 'classnames';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 
-import { LegendPosition, LegendProps } from '../types';
+import { LegendAction, LegendPosition, LegendProps } from '../types';
 
 import { LEGEND_ITEM_EXTRA_WIDTH, MAX_LEGEND_WIDTH } from './constants';
 import LegendRow from './LegendRow';
@@ -21,10 +21,7 @@ export default function Legend({
 	position,
 	averageLegendWidth = MAX_LEGEND_WIDTH,
 	focusedSeriesIndex,
-	onToggleSeries,
-	onShowOnlySeries,
-	onShowAllSeries,
-	onHoverSeries,
+	onAction,
 	showCopy = true,
 }: LegendProps): JSX.Element {
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
@@ -55,23 +52,10 @@ export default function Legend({
 
 	const isAllShown = visibleCount === items.length;
 
-	/** Everything showing -> isolate, since there is nothing to exclude yet. */
-	const handleRowClick = useCallback(
-		(seriesIndex: number): void => {
-			if (isAllShown) {
-				onShowOnlySeries(seriesIndex);
-				return;
-			}
-
-			onToggleSeries(seriesIndex);
-		},
-		[isAllShown, onShowOnlySeries, onToggleSeries],
-	);
-
 	// A row that unmounts under the pointer never fires its own mouseleave.
 	const handleMouseLeave = useCallback(
-		(): void => onHoverSeries(null),
-		[onHoverSeries],
+		(): void => onAction({ type: LegendAction.HOVER, seriesIndex: null }),
+		[onAction],
 	);
 
 	const renderLegendItem = useCallback(
@@ -83,24 +67,10 @@ export default function Legend({
 				isAllShown={isAllShown}
 				isFocused={focusedSeriesIndex === item.seriesIndex}
 				showCopy={showCopy}
-				onRowClick={handleRowClick}
-				onToggleVisibility={onToggleSeries}
-				onShowOnly={onShowOnlySeries}
-				onShowAll={onShowAllSeries}
-				onHover={onHoverSeries}
+				onAction={onAction}
 			/>
 		),
-		[
-			soleShownSeriesIndex,
-			isAllShown,
-			focusedSeriesIndex,
-			showCopy,
-			handleRowClick,
-			onToggleSeries,
-			onShowOnlySeries,
-			onShowAllSeries,
-			onHoverSeries,
-		],
+		[soleShownSeriesIndex, isAllShown, focusedSeriesIndex, showCopy, onAction],
 	);
 
 	return (

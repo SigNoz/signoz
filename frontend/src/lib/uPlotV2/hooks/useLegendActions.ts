@@ -1,21 +1,17 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 
-export interface UseLegendActionsResult {
-	onToggleSeries: (seriesIndex: number) => void;
-	/** Show this series alone. */
-	onShowOnlySeries: (seriesIndex: number) => void;
-	/** Leave the narrowed selection and show every series. */
-	onShowAllSeries: () => void;
-	/** null clears the highlight. */
-	onHoverSeries: (seriesIndex: number | null) => void;
-}
+import {
+	LegendAction,
+	LegendActionPayload,
+	OnLegendAction,
+} from '../components/types';
 
 /**
  * Legend interactions, bound to the plot through PlotContext. Hover is coalesced
  * to one chart redraw per frame.
  */
-export function useLegendActions(): UseLegendActionsResult {
+export function useLegendActions(): OnLegendAction {
 	const {
 		onToggleSeriesOnOff,
 		onShowOnlySeries,
@@ -32,23 +28,39 @@ export function useLegendActions(): UseLegendActionsResult {
 		}
 	}, []);
 
-	const onHoverSeries = useCallback(
-		(seriesIndex: number | null): void => {
-			cancelPendingHighlight();
-			rafIdRef.current = requestAnimationFrame(() => {
-				rafIdRef.current = null;
-				onHighlightSeries(seriesIndex);
-			});
-		},
-		[cancelPendingHighlight, onHighlightSeries],
-	);
-
 	useEffect(() => cancelPendingHighlight, [cancelPendingHighlight]);
 
-	return {
-		onToggleSeries: onToggleSeriesOnOff,
-		onShowOnlySeries,
-		onShowAllSeries,
-		onHoverSeries,
-	};
+	return useCallback(
+		(payload: LegendActionPayload): void => {
+			switch (payload.type) {
+				case LegendAction.TOGGLE:
+					onToggleSeriesOnOff(payload.seriesIndex);
+					break;
+				case LegendAction.SHOW_ONLY:
+					onShowOnlySeries(payload.seriesIndex);
+					break;
+				case LegendAction.SHOW_ALL:
+					onShowAllSeries();
+					break;
+				case LegendAction.HOVER: {
+					const { seriesIndex } = payload;
+					cancelPendingHighlight();
+					rafIdRef.current = requestAnimationFrame(() => {
+						rafIdRef.current = null;
+						onHighlightSeries(seriesIndex);
+					});
+					break;
+				}
+				default:
+					break;
+			}
+		},
+		[
+			cancelPendingHighlight,
+			onHighlightSeries,
+			onShowAllSeries,
+			onShowOnlySeries,
+			onToggleSeriesOnOff,
+		],
+	);
 }

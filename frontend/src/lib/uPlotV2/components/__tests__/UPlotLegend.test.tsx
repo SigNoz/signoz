@@ -7,7 +7,7 @@ import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 
 import { useLegendActions } from '../../hooks/useLegendActions';
 import UPlotLegend from '../Legend/UPlotLegend';
-import { LegendPosition } from '../types';
+import { LegendAction, LegendActionPayload, LegendPosition } from '../types';
 
 jest.mock('react-virtuoso', () => ({
 	VirtuosoGrid: ({
@@ -39,6 +39,15 @@ const mockUseLegendActions = useLegendActions as jest.MockedFunction<
 	typeof useLegendActions
 >;
 
+/** The payloads of one action type, in dispatch order. */
+const dispatched = (
+	onAction: jest.Mock,
+	type: LegendAction,
+): LegendActionPayload[] =>
+	onAction.mock.calls
+		.map(([payload]) => payload as LegendActionPayload)
+		.filter((payload) => payload.type === type);
+
 describe('UPlotLegend', () => {
 	const baseLegendItemsMap = {
 		0: {
@@ -61,16 +70,10 @@ describe('UPlotLegend', () => {
 		},
 	};
 
-	let onToggleSeries: jest.Mock;
-	let onShowOnlySeries: jest.Mock;
-	let onShowAllSeries: jest.Mock;
-	let onHoverSeries: jest.Mock;
+	let onAction: jest.Mock;
 
 	beforeEach(() => {
-		onToggleSeries = jest.fn();
-		onShowOnlySeries = jest.fn();
-		onShowAllSeries = jest.fn();
-		onHoverSeries = jest.fn();
+		onAction = jest.fn();
 
 		mockUseLegendsSync.mockReturnValue({
 			legendItemsMap: baseLegendItemsMap,
@@ -78,12 +81,7 @@ describe('UPlotLegend', () => {
 			setFocusedSeriesIndex: jest.fn(),
 		});
 
-		mockUseLegendActions.mockReturnValue({
-			onToggleSeries,
-			onShowOnlySeries,
-			onShowAllSeries,
-			onHoverSeries,
-		});
+		mockUseLegendActions.mockReturnValue(onAction);
 	});
 
 	afterEach(() => {
@@ -219,8 +217,10 @@ describe('UPlotLegend', () => {
 			await user.click(screen.getByText('A'));
 
 			// Nothing the user can see is there to exclude, so the click means Only.
-			expect(onShowOnlySeries).toHaveBeenCalledWith(0);
-			expect(onToggleSeries).not.toHaveBeenCalled();
+			expect(dispatched(onAction, LegendAction.SHOW_ONLY)).toStrictEqual([
+				{ type: LegendAction.SHOW_ONLY, seriesIndex: 0 },
+			]);
+			expect(dispatched(onAction, LegendAction.TOGGLE)).toHaveLength(0);
 		});
 
 		it('toggles the series once something is already hidden', async () => {
@@ -229,8 +229,10 @@ describe('UPlotLegend', () => {
 
 			await user.click(screen.getByText('A'));
 
-			expect(onToggleSeries).toHaveBeenCalledWith(0);
-			expect(onShowOnlySeries).not.toHaveBeenCalled();
+			expect(dispatched(onAction, LegendAction.TOGGLE)).toStrictEqual([
+				{ type: LegendAction.TOGGLE, seriesIndex: 0 },
+			]);
+			expect(dispatched(onAction, LegendAction.SHOW_ONLY)).toHaveLength(0);
 		});
 
 		it('excludes just that series when its marker is clicked', async () => {
@@ -242,8 +244,10 @@ describe('UPlotLegend', () => {
 
 			// The marker is the one way to exclude a single series while
 			// everything is showing — the row click isolates instead.
-			expect(onToggleSeries).toHaveBeenCalledWith(0);
-			expect(onShowOnlySeries).not.toHaveBeenCalled();
+			expect(dispatched(onAction, LegendAction.TOGGLE)).toStrictEqual([
+				{ type: LegendAction.TOGGLE, seriesIndex: 0 },
+			]);
+			expect(dispatched(onAction, LegendAction.SHOW_ONLY)).toHaveLength(0);
 		});
 
 		it('stops the marker offering to hide the last series showing', () => {
@@ -292,8 +296,10 @@ describe('UPlotLegend', () => {
 			// up rather than moving the isolation.
 			await user.click(screen.getByText('B'));
 
-			expect(onToggleSeries).toHaveBeenCalledWith(1);
-			expect(onShowOnlySeries).not.toHaveBeenCalled();
+			expect(dispatched(onAction, LegendAction.TOGGLE)).toStrictEqual([
+				{ type: LegendAction.TOGGLE, seriesIndex: 1 },
+			]);
+			expect(dispatched(onAction, LegendAction.SHOW_ONLY)).toHaveLength(0);
 		});
 
 		it('toggles the series on Enter and Space', async () => {
@@ -305,8 +311,10 @@ describe('UPlotLegend', () => {
 			await user.keyboard('{Enter}');
 			await user.keyboard(' ');
 
-			expect(onToggleSeries).toHaveBeenCalledTimes(2);
-			expect(onToggleSeries).toHaveBeenCalledWith(0);
+			expect(dispatched(onAction, LegendAction.TOGGLE)).toStrictEqual([
+				{ type: LegendAction.TOGGLE, seriesIndex: 0 },
+				{ type: LegendAction.TOGGLE, seriesIndex: 0 },
+			]);
 		});
 
 		it('reflects visibility on the row for assistive tech', () => {
@@ -329,9 +337,9 @@ describe('UPlotLegend', () => {
 			// Series 0 is shown while B is hidden, so its action is All.
 			await user.click(screen.getByTestId('legend-scope-0'));
 
-			expect(onShowAllSeries).toHaveBeenCalled();
-			expect(onToggleSeries).not.toHaveBeenCalled();
-			expect(onShowOnlySeries).not.toHaveBeenCalled();
+			expect(dispatched(onAction, LegendAction.SHOW_ALL)).toHaveLength(1);
+			expect(dispatched(onAction, LegendAction.TOGGLE)).toHaveLength(0);
+			expect(dispatched(onAction, LegendAction.SHOW_ONLY)).toHaveLength(0);
 		});
 
 		it('isolates the series from Only on a hidden row', async () => {
@@ -340,8 +348,10 @@ describe('UPlotLegend', () => {
 
 			await user.click(screen.getByTestId('legend-scope-1'));
 
-			expect(onShowOnlySeries).toHaveBeenCalledWith(1);
-			expect(onToggleSeries).not.toHaveBeenCalled();
+			expect(dispatched(onAction, LegendAction.SHOW_ONLY)).toStrictEqual([
+				{ type: LegendAction.SHOW_ONLY, seriesIndex: 1 },
+			]);
+			expect(dispatched(onAction, LegendAction.TOGGLE)).toHaveLength(0);
 		});
 
 		it('highlights the hovered series and clears it on leave', async () => {
@@ -350,10 +360,16 @@ describe('UPlotLegend', () => {
 
 			const row = screen.getByTestId('legend-item-0');
 			await user.hover(row);
-			expect(onHoverSeries).toHaveBeenCalledWith(0);
+			expect(onAction).toHaveBeenCalledWith({
+				type: LegendAction.HOVER,
+				seriesIndex: 0,
+			});
 
 			await user.unhover(row);
-			expect(onHoverSeries).toHaveBeenCalledWith(null);
+			expect(onAction).toHaveBeenCalledWith({
+				type: LegendAction.HOVER,
+				seriesIndex: null,
+			});
 		});
 	});
 
@@ -386,7 +402,7 @@ describe('UPlotLegend', () => {
 
 			await user.click(screen.getByTestId('legend-scope-0'));
 
-			expect(onShowAllSeries).toHaveBeenCalled();
+			expect(dispatched(onAction, LegendAction.SHOW_ALL)).toHaveLength(1);
 		});
 	});
 });

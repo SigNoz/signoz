@@ -1,4 +1,9 @@
 import { LegendItem } from 'lib/uPlotV2/config/types';
+import {
+	LegendAction,
+	LegendActionPayload,
+	OnLegendAction,
+} from 'lib/uPlotV2/components/types';
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -18,17 +23,15 @@ export interface UsePieInteractionsResult {
 	legendItems: LegendItem[];
 	/** Index of the active slice for the legend's focus highlight, or null. */
 	focusedSeriesIndex: number | null;
-	onToggleSeries: (sliceIndex: number) => void;
-	onShowOnlySeries: (sliceIndex: number) => void;
-	onShowAllSeries: () => void;
-	onHoverSeries: (sliceIndex: number | null) => void;
+	/** Every legend interaction, dispatched by type. */
+	onLegendAction: OnLegendAction;
 }
 
 /**
  * Pie interaction + derived state: hover/focus, slice hide/show driven by the
  * shared legend's actions, and persistence of the hidden set to localStorage
  * (keyed by `id`, matched by label) so it survives reloads. Returns the visible
- * slices, legend items, focus index, and the legend handlers.
+ * slices, legend items, focus index, and the legend action dispatch.
  */
 export function usePieInteractions(
 	data: PieSlice[],
@@ -93,7 +96,7 @@ export function usePieInteractions(
 		[id, data],
 	);
 
-	const onHoverSeries = useCallback(
+	const hoverSeries = useCallback(
 		(sliceIndex: number | null): void => {
 			// Don't focus/dim for hidden slices — they aren't on the donut.
 			setActive(
@@ -105,7 +108,7 @@ export function usePieInteractions(
 		[data, hiddenIndices],
 	);
 
-	const onToggleSeries = useCallback(
+	const toggleSeries = useCallback(
 		(sliceIndex: number): void => {
 			const next = new Set(hiddenIndices);
 			if (next.has(sliceIndex)) {
@@ -122,7 +125,7 @@ export function usePieInteractions(
 		[data.length, hiddenIndices, applyHidden],
 	);
 
-	const onShowOnlySeries = useCallback(
+	const showOnlySeries = useCallback(
 		(sliceIndex: number): void => {
 			const next = new Set<number>();
 			data.forEach((_, index) => {
@@ -135,9 +138,31 @@ export function usePieInteractions(
 		[data, applyHidden],
 	);
 
-	const onShowAllSeries = useCallback(
+	const showAllSeries = useCallback(
 		(): void => applyHidden(new Set()),
 		[applyHidden],
+	);
+
+	const onLegendAction = useCallback(
+		(payload: LegendActionPayload): void => {
+			switch (payload.type) {
+				case LegendAction.TOGGLE:
+					toggleSeries(payload.seriesIndex);
+					break;
+				case LegendAction.SHOW_ONLY:
+					showOnlySeries(payload.seriesIndex);
+					break;
+				case LegendAction.SHOW_ALL:
+					showAllSeries();
+					break;
+				case LegendAction.HOVER:
+					hoverSeries(payload.seriesIndex);
+					break;
+				default:
+					break;
+			}
+		},
+		[toggleSeries, showOnlySeries, showAllSeries, hoverSeries],
 	);
 
 	const activeIndex = active ? data.indexOf(active) : -1;
@@ -153,9 +178,6 @@ export function usePieInteractions(
 		visibleData,
 		legendItems,
 		focusedSeriesIndex: focusedIndex >= 0 ? focusedIndex : null,
-		onToggleSeries,
-		onShowOnlySeries,
-		onShowAllSeries,
-		onHoverSeries,
+		onLegendAction,
 	};
 }

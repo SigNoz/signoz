@@ -5,8 +5,10 @@ import cx from 'classnames';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
+import { LegendAction, OnLegendAction } from '../types';
+
 import { LEGEND_TOOLTIP_DELAY_MS } from './constants';
-import styles from './Legend.module.scss';
+import styles from './LegendRow.module.scss';
 
 export interface LegendRowProps {
 	item: LegendItem;
@@ -16,13 +18,7 @@ export interface LegendRowProps {
 	isAllShown: boolean;
 	isFocused: boolean;
 	showCopy: boolean;
-	/** Row click, whose meaning depends on how many series are shown. */
-	onRowClick: (seriesIndex: number) => void;
-	/** Marker click: hide or show just this series. */
-	onToggleVisibility: (seriesIndex: number) => void;
-	onShowOnly: (seriesIndex: number) => void;
-	onShowAll: () => void;
-	onHover: (seriesIndex: number | null) => void;
+	onAction: OnLegendAction;
 }
 
 /**
@@ -37,11 +33,7 @@ function LegendRow({
 	isAllShown,
 	isFocused,
 	showCopy,
-	onRowClick,
-	onToggleVisibility,
-	onShowOnly,
-	onShowAll,
-	onHover,
+	onAction,
 }: LegendRowProps): JSX.Element {
 	const { seriesIndex, show } = item;
 	const label = item.label ?? '';
@@ -53,17 +45,22 @@ function LegendRow({
 	// a usable CSS colour for the marker.
 	const seriesColor = typeof item.color === 'string' ? item.color : undefined;
 
+	/** Everything showing -> isolate, since there is nothing to exclude yet. */
 	const handleRowClick = useCallback(
-		(): void => onRowClick(seriesIndex),
-		[onRowClick, seriesIndex],
+		(): void =>
+			onAction({
+				type: isAllShown ? LegendAction.SHOW_ONLY : LegendAction.TOGGLE,
+				seriesIndex,
+			}),
+		[isAllShown, onAction, seriesIndex],
 	);
 
 	const handleMarkerClick = useCallback(
 		(event: MouseEvent<HTMLButtonElement>): void => {
 			event.stopPropagation();
-			onToggleVisibility(seriesIndex);
+			onAction({ type: LegendAction.TOGGLE, seriesIndex });
 		},
-		[onToggleVisibility, seriesIndex],
+		[onAction, seriesIndex],
 	);
 
 	const handleKeyDown = useCallback(
@@ -74,30 +71,33 @@ function LegendRow({
 			}
 			if (event.key === 'Enter' || event.key === ' ') {
 				event.preventDefault();
-				onRowClick(seriesIndex);
+				handleRowClick();
 			}
 		},
-		[onRowClick, seriesIndex],
+		[handleRowClick],
 	);
 
 	const handleScopeClick = useCallback(
 		(event: MouseEvent<HTMLButtonElement>): void => {
 			event.stopPropagation();
 			if (isShowAllAction) {
-				onShowAll();
+				onAction({ type: LegendAction.SHOW_ALL });
 				return;
 			}
-			onShowOnly(seriesIndex);
+			onAction({ type: LegendAction.SHOW_ONLY, seriesIndex });
 		},
-		[isShowAllAction, onShowAll, onShowOnly, seriesIndex],
+		[isShowAllAction, onAction, seriesIndex],
 	);
 
 	const handleMouseEnter = useCallback(
-		(): void => onHover(seriesIndex),
-		[onHover, seriesIndex],
+		(): void => onAction({ type: LegendAction.HOVER, seriesIndex }),
+		[onAction, seriesIndex],
 	);
 
-	const handleMouseLeave = useCallback((): void => onHover(null), [onHover]);
+	const handleMouseLeave = useCallback(
+		(): void => onAction({ type: LegendAction.HOVER, seriesIndex: null }),
+		[onAction],
+	);
 
 	return (
 		<div
