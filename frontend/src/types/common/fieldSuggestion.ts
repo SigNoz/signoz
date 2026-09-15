@@ -15,9 +15,9 @@ export interface FieldKeysConfig {
 
 /**
  * Field-suggestion sources for the pickers: the fetch params plus the manual
- * fields the endpoint never returns. Unrelated to QuickFilters' useFieldApis,
+ * fields the endpoint never returns. Unrelated to QuickFilterCheckboxUseFieldApis,
  * which switches that component between two value APIs.
  */
-export interface UseSuggestionFieldApi extends FieldKeysConfig {
+export interface UseFieldApis extends FieldKeysConfig {
 	staticFields?: TelemetryFieldKey[];
 }

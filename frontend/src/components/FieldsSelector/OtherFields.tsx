@@ -13,10 +13,10 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './FieldsSelector.module.scss';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import { UseSuggestionFieldApi } from 'types/useSuggestionFieldApi';
+import { UseFieldApis } from 'types/common/fieldSuggestion';
 import { mergeStaticFields } from 'utils/staticFields';
 
-const EMPTY_FIELD_APIS: UseSuggestionFieldApi = {};
+const EMPTY_FIELD_APIS: UseFieldApis = {};
 
 const EMPTY_STATIC_FIELDS: TelemetryFieldKey[] = [];
 
@@ -27,7 +27,7 @@ interface OtherFieldsProps {
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 	allowCustomFields?: boolean;
-	useFieldApis?: UseSuggestionFieldApi;
+	useFieldApis?: UseFieldApis;
 }
 
 function OtherFields({
@@ -48,6 +48,7 @@ function OtherFields({
 	);
 
 	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
+		// Normalize: synthesize `key` once so downstream reads can trust it.
 		const suggestions: TelemetryFieldKey[] = mergeStaticFields(
 			staticFields,
 			fetchedFields ?? [],

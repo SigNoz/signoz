@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Settings } from '@signozhq/icons';
 import FieldsSelector from 'components/FieldsSelector';
 import Controls, { ControlsProps } from 'container/Controls';
-import { UseSuggestionFieldApi } from 'types/useSuggestionFieldApi';
+import { UseFieldApis } from 'types/common/fieldSuggestion';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
 import { DataSource } from 'types/common/queryBuilder';
@@ -71,7 +71,7 @@ type TraceExplorerControlsProps = Pick<
 	'isLoading' | 'totalCount' | 'perPageOptions'
 > & {
 	config?: OptionsMenuConfig | null;
-	useFieldApis?: UseSuggestionFieldApi;
+	useFieldApis?: UseFieldApis;
 	requiredFields?: readonly string[];
 };
 

@@ -11,11 +11,12 @@ import {
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
+import { FIELD_SUGGESTION_CACHE_TIME } from 'constants/fieldSuggestions';
 import {
 	FieldKeysFilterConfig,
 	FieldKeysResponse,
 } from 'api/querySuggestions/types';
-import { FieldKeysConfig } from 'types/useSuggestionFieldApi';
+import { FieldKeysConfig } from 'types/common/fieldSuggestion';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -60,7 +61,8 @@ export const getFieldKeysQueryOptions = (
 		queryFn: ({ signal }): Promise<FieldKeysResponse> =>
 			getFieldKeySuggestions(filterConfig, builderQueryType, signal),
 		select: toFieldKeys,
-		staleTime: 1000 * 60 * 60 * 24, // 24 hours
+		staleTime: FIELD_SUGGESTION_CACHE_TIME,
+		cacheTime: FIELD_SUGGESTION_CACHE_TIME,
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 	};

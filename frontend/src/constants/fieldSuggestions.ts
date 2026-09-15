@@ -9,3 +9,5 @@ export const DATA_SOURCE_TO_SIGNAL: Record<
 	[DataSource.TRACES]: TelemetrytypesSignalDTO.traces,
 	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
 };
+
+export const FIELD_SUGGESTION_CACHE_TIME = 60_000;
