@@ -1,6 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from 'react-query';
 import { CircleCheck, Info, TriangleAlert, Filter } from '@signozhq/icons';
 import {
 	autocompletion,
@@ -18,6 +17,7 @@ import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
+import { DATA_SOURCE_TO_SIGNAL } from 'constants/fieldSuggestions';
 import {
 	negationQueryOperatorSuggestions,
 	OPERATORS,
@@ -46,16 +46,20 @@ import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
 import { getRecentQueries } from 'lib/recentQueries/getRecentQueries';
-import type { SignalType, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type {
+	TelemetrytypesGettableFieldKeysDTOKeysAnyOf,
+	TelemetrytypesSourceDTO,
+	TelemetrytypesTelemetryFieldKeyDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
+import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
+import type { SignalType } from 'types/api/v5/queryRange';
 
 import {
 	queryExamples,
 	SUGGESTION_FETCH_DEBOUNCE_MS,
 	SUGGESTIONS_SECTION,
 } from './constants';
-import { fetchFieldValuesForQuery } from './fieldSuggestions';
-import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { fetchFieldKeys } from 'hooks/querySuggestions/useFieldKeys';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
@@ -129,7 +133,6 @@ function QuerySearch({
 	metricNamespace,
 	valueSuggestionsOverride,
 }: QuerySearchProps): JSX.Element {
-	const queryClient = useQueryClient();
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
 	const [activeKey, setActiveKey] = useState<string>('');
@@ -264,15 +267,19 @@ function QuerySearch({
 	const dashboardDynamicVariables = useDynamicVariableSuggestions();
 
 	// Add back the generateOptions function and useEffect
-	const generateOptions = (keys: TelemetryFieldKey[]): any[] =>
-		keys.map(({ name, fieldDataType, fieldContext }) => ({
-			label: name,
-			type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
-			fieldContext,
-			fieldDataType,
-			info: '',
-			details: '',
-		}));
+	const generateOptions = (
+		keys: TelemetrytypesGettableFieldKeysDTOKeysAnyOf,
+	): any[] =>
+		Object.values(keys).flatMap((items: TelemetrytypesTelemetryFieldKeyDTO[]) =>
+			items.map(({ name, fieldDataType, fieldContext }) => ({
+				label: name,
+				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
+				fieldContext,
+				fieldDataType,
+				info: '',
+				details: '',
+			})),
+		);
 
 	// Debounce the metric name to prevent API calls on every keystroke
 	const debouncedMetricName = useDebounce(
@@ -316,19 +323,19 @@ function QuerySearch({
 
 			lastFetchedKeyRef.current = searchText || '';
 
-			const keys = await fetchFieldKeys(
-				queryClient,
+			const response = await getFieldKeySuggestions(
 				{
-					builderQueryType: queryData.builderQueryType,
-					metricName: debouncedMetricName || undefined,
-					signalSource: signalSource as TelemetrytypesSourceDTO | undefined,
+					signal: DATA_SOURCE_TO_SIGNAL[dataSource],
+					searchText: searchText || '',
+					metricName: debouncedMetricName ?? undefined,
+					source: signalSource as TelemetrytypesSourceDTO,
 					metricNamespace,
 				},
-				dataSource,
-				searchText || '',
+				queryData.builderQueryType,
 			);
 
-			if (keys) {
+			if (response.data.keys) {
+				const { keys } = response.data;
 				const options = generateOptions(keys);
 				// Deduplicate by full variant identity (name + context + data type), NOT by
 				// label. deduping by label removes varient which is not expected. If we need
@@ -363,7 +370,6 @@ function QuerySearch({
 			showFilterSuggestionsWithoutMetric,
 			metricNamespace,
 			queryData.builderQueryType,
-			queryClient,
 		],
 	);
 
@@ -497,21 +503,23 @@ function QuerySearch({
 			try {
 				const values = valueSuggestionsOverride
 					? await valueSuggestionsOverride(key, sanitizedSearchText)
-					: await fetchFieldValuesForQuery({
-							builderQueryType: queryData.builderQueryType,
-							dataSource,
-							key,
-							searchText: sanitizedSearchText,
-							signalSource: signalSource as 'meter' | '',
-							metricName: debouncedMetricName ?? undefined,
-						}).then((response) => {
-							const responseData = response.data as any;
-							const data = responseData.data || {};
-							const values = data.values || {};
+					: await getFieldValueSuggestions(
+							{
+								signal: DATA_SOURCE_TO_SIGNAL[dataSource],
+								name: key,
+								searchText: sanitizedSearchText,
+								source: signalSource as TelemetrytypesSourceDTO,
+								metricName: debouncedMetricName ?? undefined,
+							},
+							queryData.builderQueryType,
+						).then((response) => {
+							const responseData = response.data;
+							const responseDataValues = responseData.values;
+
 							return {
-								stringValues: values.stringValues || [],
-								numberValues: values.numberValues || [],
-								complete: data.complete ?? false,
+								stringValues: responseDataValues.stringValues ?? [],
+								numberValues: responseDataValues.numberValues ?? [],
+								complete: responseData.complete ?? false,
 							};
 						});
 

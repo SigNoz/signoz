@@ -70,6 +70,13 @@ export function setupServer(): void {
 	afterAll(() => server.close());
 }
 
+// Components read currentQuery for the checkbox state and stagedQuery for the
+// values fetch; in the app both are set by the same URL sync, so tests pass one
+// query as both.
+export function buildQueryBuilderOverrides(query: unknown): never {
+	return { currentQuery: query, stagedQuery: query } as unknown as never;
+}
+
 export interface FilterItemConfig {
 	op: string;
 	value: string | string[];
@@ -101,18 +108,16 @@ export function renderWithFilter(
 		/>,
 		undefined,
 		{
-			queryBuilderOverrides: {
-				currentQuery: {
-					builder: {
-						queryData: [
-							{
-								filters: { items, op: 'AND' },
-								filter: { expression: 'service.name = "api"' },
-							},
-						],
-					},
+			queryBuilderOverrides: buildQueryBuilderOverrides({
+				builder: {
+					queryData: [
+						{
+							filters: { items, op: 'AND' },
+							filter: { expression: 'service.name = "api"' },
+						},
+					],
 				},
-			} as never,
+			}),
 		},
 	);
 }

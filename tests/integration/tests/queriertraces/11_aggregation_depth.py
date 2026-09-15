@@ -27,11 +27,14 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 
 
 @pytest.mark.parametrize("noise", ["clean", "corrupt", "collision"])
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_aggregate_percentiles(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
     noise: str,
 ) -> None:
     """
@@ -46,6 +49,8 @@ def test_traces_aggregate_percentiles(
     intrinsic column rather than error with ClickHouse NO_COMMON_TYPE (386) — the
     regression behind the span_percentile 500.
     """
+    use_attribute_backend(attribute_backend)
+
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     durations_s = [1, 2, 3, 4, 5]
@@ -90,11 +95,14 @@ def test_traces_aggregate_percentiles(
     ],
 )
 @pytest.mark.parametrize("noise", ["clean", "corrupt"])
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_aggregate_group_by_non_resource(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
     noise: str,
     group_key: str,
     expected: dict[str, int],
@@ -108,6 +116,8 @@ def test_traces_aggregate_group_by_non_resource(
     not just a resource key — buckets by the real value; under the corrupt variant a
     same-named colliding attribute must not divert the grouping.
     """
+    use_attribute_backend(attribute_backend)
+
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     specs = [("op-a", "/a"), ("op-a", "/a"), ("op-b", "/b")]
@@ -141,11 +151,14 @@ def test_traces_aggregate_group_by_non_resource(
 
 
 @pytest.mark.parametrize("noise", ["clean", "corrupt"])
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_aggregate_multi_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
     noise: str,
 ) -> None:
     """
@@ -157,6 +170,8 @@ def test_traces_aggregate_multi_group_by(
     Grouping by two keys (a resource key and an intrinsic column) returns one row per
     present pair with the correct per-pair count.
     """
+    use_attribute_backend(attribute_backend)
+
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     pair_counts = {("svc-1", "op-a"): 2, ("svc-1", "op-b"): 1, ("svc-2", "op-a"): 1}
@@ -203,11 +218,14 @@ def test_traces_aggregate_multi_group_by(
     ],
 )
 @pytest.mark.parametrize("noise", ["clean", "corrupt"])
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_aggregate_having_breadth(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
     noise: str,
     having_expression: str,
     expected_services: set[str],
@@ -221,6 +239,8 @@ def test_traces_aggregate_having_breadth(
     each keep only the qualifying groups — extending the count()-only HAVING in
     02_aggregation.py.
     """
+    use_attribute_backend(attribute_backend)
+
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     specs = [("svc-a", 1), ("svc-a", 1), ("svc-a", 1), ("svc-b", 5)]
@@ -262,11 +282,14 @@ def test_traces_aggregate_having_breadth(
         pytest.param("duration_nano > 2000000000", id="raw_nanoseconds"),
     ],
 )
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_duration_nano_qol_filter_with_collision(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
     duration_filter: str,
 ) -> None:
     """
@@ -280,6 +303,8 @@ def test_traces_duration_nano_qol_filter_with_collision(
     ClickHouse NO_COMMON_TYPE (386). The string attribute is cast; the intrinsic column
     stays a bare comparison.
     """
+    use_attribute_backend(attribute_backend)
+
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     durations_s = [1, 2, 3, 4, 5]
     spans = [

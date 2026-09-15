@@ -79,7 +79,7 @@ describe('buildPluginSpec', () => {
 
 		it('omits the key entirely when a seed produces an empty slice (never key: undefined)', () => {
 			const result = buildPluginSpec([
-				{ kind: SectionKind.Legend, controls: { colors: true } },
+				{ kind: SectionKind.Legend, controls: { colors: (): [] => [] } },
 			]);
 
 			expect(result).toStrictEqual({});
@@ -129,7 +129,7 @@ describe('buildPluginSpec', () => {
 		it('seeds neither when their defaulting controls are absent', () => {
 			const sections: SectionConfig[] = [
 				{ kind: SectionKind.Visualization, controls: { switchPanelKind: true } },
-				{ kind: SectionKind.Legend, controls: { colors: true } },
+				{ kind: SectionKind.Legend, controls: { colors: (): [] => [] } },
 			];
 			expect(buildPluginSpec(sections)).toStrictEqual({});
 		});
@@ -180,7 +180,10 @@ describe('buildPluginSpec', () => {
 
 		it('carries old legend position but never customColors', () => {
 			const sections: SectionConfig[] = [
-				{ kind: SectionKind.Legend, controls: { position: true, colors: true } },
+				{
+					kind: SectionKind.Legend,
+					controls: { position: true, colors: (): [] => [] },
+				},
 			];
 			const oldSpec = oldSpecWith({
 				legend: {

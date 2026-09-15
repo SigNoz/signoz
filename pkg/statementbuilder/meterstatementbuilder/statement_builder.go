@@ -155,7 +155,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		if err != nil {
 			return "", nil, err
 		}
-		sb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(col), metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", col, metricsstatementbuilder.GroupByColumnAlias(i, g.Name))))
 	}
 
 	tbl := metertelemetryschema.WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
@@ -244,7 +244,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 		if err != nil {
 			return "", nil, err
 		}
-		sb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(col), metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", col, metricsstatementbuilder.GroupByColumnAlias(i, g.Name))))
 	}
 
 	tbl := metertelemetryschema.WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
@@ -322,7 +322,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		if err != nil {
 			return "", nil, err
 		}
-		baseSb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(col), metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+		baseSb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", col, metricsstatementbuilder.GroupByColumnAlias(i, g.Name))))
 	}
 
 	tbl := metertelemetryschema.WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
@@ -373,7 +373,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		wrapped := sqlbuilder.NewSelectBuilder()
 		wrapped.Select("ts")
 		for i, g := range query.GroupBy {
-			wrapped.SelectMore(fmt.Sprintf("`%s`", metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+			wrapped.SelectMore(sqlbuilder.Escape(metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
 		}
 		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", metricsstatementbuilder.RateTmpl))
 		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
@@ -384,7 +384,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		wrapped := sqlbuilder.NewSelectBuilder()
 		wrapped.Select("ts")
 		for i, g := range query.GroupBy {
-			wrapped.SelectMore(fmt.Sprintf("`%s`", metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+			wrapped.SelectMore(sqlbuilder.Escape(metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
 		}
 		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", metricsstatementbuilder.IncreaseTmpl))
 		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
@@ -414,7 +414,7 @@ func (b *meterQueryStatementBuilder) buildSpatialAggregationCTE(
 
 	sb.Select("ts")
 	for i, g := range query.GroupBy {
-		sb.SelectMore(fmt.Sprintf("`%s`", metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+		sb.SelectMore(sqlbuilder.Escape(metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
 	}
 	sb.SelectMore(fmt.Sprintf("%s(per_series_value) AS value", query.Aggregations[0].SpaceAggregation.StringValue()))
 	sb.From("__temporal_aggregation_cte")

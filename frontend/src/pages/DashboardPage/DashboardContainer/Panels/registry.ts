@@ -7,21 +7,32 @@ import { definition as Table } from './kinds/TablePanel/definition';
 import { definition as List } from './kinds/ListPanel/definition';
 import { UNSUPPORTED_PANEL } from './kinds/UnsupportedPanel/definition';
 import type {
+	PanelDefinition,
 	PanelRegistry,
 	RenderablePanelDefinition,
 } from './types/panelDefinition';
 import { PanelKind } from './types/panelKind';
 
 // Each kind owns its PanelDefinition; registering a new panel is one entry here.
+// Declaration order is the order kinds are offered in the UI.
 export const PANELS: PanelRegistry = {
 	[TimeSeries.kind]: TimeSeries,
-	[BarChart.kind]: BarChart,
-	[Histogram.kind]: Histogram,
 	[NumberValue.kind]: NumberValue,
-	[PieChart.kind]: PieChart,
 	[Table.kind]: Table,
+	[BarChart.kind]: BarChart,
+	[PieChart.kind]: PieChart,
+	[Histogram.kind]: Histogram,
 	[List.kind]: List,
 };
+
+export type PanelOption = Pick<
+	PanelDefinition,
+	'kind' | 'displayName' | 'icon'
+>;
+
+// Backs both the new-panel picker and the editor's kind switcher; derived from PANELS
+// so a registered kind can't end up unreachable from the UI.
+export const PANEL_OPTIONS: PanelOption[] = Object.values(PANELS);
 
 /**
  * Whether this build can render the kind. `PanelKind` spans every kind the API declares,

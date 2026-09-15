@@ -75,6 +75,19 @@ export type PanelOfKind<K extends PanelKind = PanelKind> = Omit<
 	};
 };
 
+/**
+ * Props a static (query-less) renderer receives: its panel and render context,
+ * nothing of the fetch lifecycle. `dashboardId` scopes store reads (resolved
+ * variables); the editor route seeds the same store, so previews of an unsaved
+ * panel resolve variables the way the grid does.
+ */
+export interface StaticRendererProps<K extends PanelKind = PanelKind> {
+	panelId: string;
+	panel: PanelOfKind<K>;
+	panelMode: PanelMode;
+	dashboardId?: string;
+}
+
 // Renderer props for kind K: the base (with `panel` narrowed to K) plus K's
 // interaction surface (PanelInteractionMap[K]), so a renderer sees its exact spec
 // and only the gestures it supports. The default K = PanelKind is the widest surface.

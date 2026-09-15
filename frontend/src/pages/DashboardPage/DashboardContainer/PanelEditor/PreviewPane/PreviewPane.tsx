@@ -6,7 +6,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import PanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody';
 import PanelHeader from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
 import type { AnyPanelInteractionProps } from 'pages/DashboardPage/DashboardContainer/Panels/types/interactions';
-import type { RenderablePanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
+import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { DashboardPreference } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
 import { getPanelQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getPanelQueryType';
 import type {
@@ -20,8 +20,8 @@ import styles from './PreviewPane.module.scss';
 interface PreviewPaneProps {
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
-	/** Resolved definition for the panel kind; */
-	panelDefinition: RenderablePanelDefinition;
+	/** The kind's definition, narrowed to the query arm — this preview is the query render path. */
+	panelDefinition: RenderableQueryPanelDefinition;
 	data: PanelQueryData;
 	/** Any fetch in flight — drives the header spinner and the body's loading state. */
 	isFetching: boolean;
@@ -107,7 +107,7 @@ function PreviewPane({
 						hideActions
 					/>
 					<PanelBody
-						panelDefinition={panelDefinition}
+						Renderer={panelDefinition.Renderer}
 						panel={panel}
 						panelId={panelId}
 						data={data}

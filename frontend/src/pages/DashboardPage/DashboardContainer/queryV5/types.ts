@@ -17,6 +17,16 @@ export interface PanelQueryData {
 	legendMap: Record<string, string>;
 }
 
+/**
+ * The no-fetch value of `PanelQueryData`, for chrome shared with static panels —
+ * the header renders status/download surfaces off it and shows neither.
+ */
+export const EMPTY_PANEL_QUERY_DATA: PanelQueryData = {
+	response: undefined,
+	requestPayload: undefined,
+	legendMap: {},
+};
+
 /** One data point. `timestamp` is epoch milliseconds (V5 wire native). */
 export interface PanelSeriesPoint {
 	timestamp: number;

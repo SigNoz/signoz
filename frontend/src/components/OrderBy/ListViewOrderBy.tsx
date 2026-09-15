@@ -1,23 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { Select, Spin } from 'antd';
-import {
-	FieldKeysConfig,
-	useFieldKeys,
-} from 'hooks/querySuggestions/useFieldKeys';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { UseSuggestionFieldApi } from 'types/useSuggestionFieldApi';
 import { DataSource } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
 
-const DEFAULT_ORDER_BY_CONFIG: FieldKeysConfig = {
-	staticFields: [{ name: 'timestamp' } as TelemetryFieldKey],
-};
+const DEFAULT_STATIC_FIELDS: TelemetryFieldKey[] = [
+	{ name: 'timestamp' } as TelemetryFieldKey,
+];
+
+const DEFAULT_FIELD_APIS: UseSuggestionFieldApi = {};
 
 interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;
 	dataSource: DataSource;
-	fieldKeysConfig?: FieldKeysConfig;
+	useFieldApis?: UseSuggestionFieldApi;
 }
 
 function Loader({ isLoading }: { isLoading: boolean }): JSX.Element {
@@ -32,8 +32,9 @@ function ListViewOrderBy({
 	value,
 	onChange,
 	dataSource,
-	fieldKeysConfig = DEFAULT_ORDER_BY_CONFIG,
+	useFieldApis = DEFAULT_FIELD_APIS,
 }: ListViewOrderByProps): JSX.Element {
+	const { staticFields = DEFAULT_STATIC_FIELDS, ...keysConfig } = useFieldApis;
 	const [searchInput, setSearchInput] = useState('');
 	const [debouncedInput, setDebouncedInput] = useState('');
 	const [selectOptions, setSelectOptions] = useState<
@@ -41,8 +42,8 @@ function ListViewOrderBy({
 	>([]);
 	const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	const { data, isLoading } = useFieldKeys(
-		fieldKeysConfig,
+	const { data, isLoading } = useFieldKeysSuggestion(
+		keysConfig,
 		dataSource,
 		debouncedInput,
 	);
@@ -56,9 +57,7 @@ function ListViewOrderBy({
 		[],
 	);
 
-	const staticKeysSignature = (fieldKeysConfig.staticFields ?? [])
-		.map((field) => field.name)
-		.join(',');
+	const staticKeysSignature = staticFields.map((field) => field.name).join(',');
 
 	useEffect(() => {
 		const keyNames = (data ?? []).map((field) => field.name);

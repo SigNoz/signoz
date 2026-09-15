@@ -5,7 +5,6 @@ import type {
 	DashboardtypesPanelDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { useDashboardStore } from '../store/useDashboardStore';
 import { layoutsToSections } from '../utils';
 import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import { useViewPanel } from './Panel/hooks/useViewPanel';
@@ -16,6 +15,7 @@ import styles from './PanelsAndSectionsLayout.module.scss';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+import { useDashboardEditContext } from '../hooks/useDashboardEditContext';
 
 interface PanelsAndSectionsLayoutProps {
 	layouts: DashboardtypesLayoutDTO[];
@@ -26,7 +26,7 @@ function PanelsAndSectionsLayout({
 	layouts,
 	panels,
 }: PanelsAndSectionsLayoutProps): JSX.Element {
-	const isEditable = useDashboardStore((s) => s.isEditable);
+	const { isEditable } = useDashboardEditContext();
 
 	// Single View-modal host for the whole dashboard, driven by the URL
 	// (`expandedWidgetId`). One mounted modal beats one-per-panel: no N location

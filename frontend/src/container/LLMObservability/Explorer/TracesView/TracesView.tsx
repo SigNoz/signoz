@@ -33,9 +33,9 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import TraceExplorerControls from '../Controls';
 import {
-	TRACE_VIEW_COLUMN_CONFIG,
+	TRACE_VIEW_COLUMN_FIELDS,
 	TRACE_VIEW_DEFAULT_ORDER_BY,
-	TRACE_VIEW_ORDER_BY_CONFIG,
+	TRACE_VIEW_ORDER_BY_FIELDS,
 } from '../constants';
 import { getListViewQuery } from '../explorerUtils';
 import { PER_PAGE_OPTIONS } from './configs';
@@ -184,7 +184,7 @@ function TracesView({
 							value={orderBy}
 							onChange={handleOrderChange}
 							dataSource={DataSource.TRACES}
-							fieldKeysConfig={TRACE_VIEW_ORDER_BY_CONFIG}
+							useFieldApis={TRACE_VIEW_ORDER_BY_FIELDS}
 						/>
 					</div>
 
@@ -193,7 +193,7 @@ function TracesView({
 						totalCount={rows.length}
 						perPageOptions={PER_PAGE_OPTIONS}
 						config={fieldsSelectorConfig}
-						fieldKeysConfig={TRACE_VIEW_COLUMN_CONFIG}
+						useFieldApis={TRACE_VIEW_COLUMN_FIELDS}
 						requiredFields={requiredFields}
 					/>
 				</div>

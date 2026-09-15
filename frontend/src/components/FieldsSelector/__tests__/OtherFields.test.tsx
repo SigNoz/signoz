@@ -1,16 +1,14 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	FieldKeysConfig,
-	useFieldKeys,
-} from 'hooks/querySuggestions/useFieldKeys';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import { UseSuggestionFieldApi } from 'types/useSuggestionFieldApi';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import OtherFields from '../OtherFields';
 
-jest.mock('hooks/querySuggestions/useFieldKeys', () => ({
-	useFieldKeys: jest.fn(() => ({
+jest.mock('hooks/querySuggestions/useFieldKeysSuggestion', () => ({
+	useFieldKeysSuggestion: jest.fn(() => ({
 		data: undefined,
 		isFetching: false,
 		isFetched: true,
@@ -18,7 +16,7 @@ jest.mock('hooks/querySuggestions/useFieldKeys', () => ({
 }));
 
 const mockSuggestions = (names: string[]): void => {
-	(useFieldKeys as jest.Mock).mockReturnValue({
+	(useFieldKeysSuggestion as jest.Mock).mockReturnValue({
 		data: names.map((name) => ({
 			name,
 			signal: 'logs',
@@ -125,20 +123,19 @@ describe('OtherFields — custom (free-typed) option', () => {
 	});
 });
 
-describe('OtherFields — fieldKeysConfig', () => {
+describe('OtherFields — useFieldApis', () => {
 	const pool: TelemetryFieldKey[] = [
 		{ name: 'total_tokens', fieldContext: 'trace', fieldDataType: 'float64' },
 		{ name: 'llm_call_count', fieldContext: 'trace', fieldDataType: 'float64' },
 	];
 
-	const fieldKeysConfig: FieldKeysConfig = {
+	const useFieldApis: UseSuggestionFieldApi = {
 		builderQueryType: 'builder_ai_query',
 		fieldContext: TelemetrytypesFieldContextDTO.trace,
-		staticFields: pool,
 	};
 
 	const mockPool = (fields: TelemetryFieldKey[]): void => {
-		(useFieldKeys as jest.Mock).mockReturnValue({
+		(useFieldKeysSuggestion as jest.Mock).mockReturnValue({
 			data: fields,
 			isFetching: false,
 			isFetched: true,
@@ -150,29 +147,44 @@ describe('OtherFields — fieldKeysConfig', () => {
 	});
 
 	it('lists the pool it is handed', () => {
-		renderOtherFields({ fieldKeysConfig, allowCustomFields: false });
+		renderOtherFields({ useFieldApis, allowCustomFields: false });
 
 		expect(screen.getByText('total_tokens')).toBeInTheDocument();
 		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
 	});
 
-	it('forwards the config and search to the shared keys hook', () => {
+	it('forwards the fetch params and search to the shared keys hook', () => {
 		renderOtherFields({
-			fieldKeysConfig,
+			useFieldApis,
 			allowCustomFields: false,
 			debouncedInputValue: 'llm',
 		});
 
-		expect(useFieldKeys).toHaveBeenCalledWith(
-			fieldKeysConfig,
+		expect(useFieldKeysSuggestion).toHaveBeenCalledWith(
+			useFieldApis,
 			DataSource.LOGS,
 			'llm',
 		);
 	});
 
+	it('lists static fields the keys endpoint never returns', () => {
+		mockPool([{ name: 'total_tokens' } as TelemetryFieldKey]);
+
+		renderOtherFields({
+			useFieldApis: {
+				...useFieldApis,
+				staticFields: [{ name: 'last_activity_time' } as TelemetryFieldKey],
+			},
+			allowCustomFields: false,
+		});
+
+		expect(screen.getByText('last_activity_time')).toBeInTheDocument();
+		expect(screen.getByText('total_tokens')).toBeInTheDocument();
+	});
+
 	it('omits pool fields that are already added', () => {
 		renderOtherFields({
-			fieldKeysConfig,
+			useFieldApis,
 			allowCustomFields: false,
 			addedFields: [
 				{

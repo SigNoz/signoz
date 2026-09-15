@@ -8,9 +8,14 @@ import VisualizationSection from '../VisualizationSection';
 // the test doesn't pull the whole panel registry (renderers, chart libs).
 jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: jest.fn(() => ({
+		mode: 'query',
 		supportedSignals: ['metrics', 'logs', 'traces'],
 		supportedQueryTypes: ['builder', 'clickhouse_sql', 'promql'],
 	})),
+	PANEL_OPTIONS: [
+		{ kind: 'signoz/TimeSeriesPanel', displayName: 'Time Series' },
+		{ kind: 'signoz/TablePanel', displayName: 'Table' },
+	].map((option) => ({ ...option, icon: (): null => null })),
 }));
 
 // Open the antd Select by clicking its selector, then pick the option by label.

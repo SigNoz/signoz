@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Settings } from '@signozhq/icons';
 import FieldsSelector from 'components/FieldsSelector';
 import Controls, { ControlsProps } from 'container/Controls';
-import { FieldKeysConfig } from 'hooks/querySuggestions/useFieldKeys';
+import { UseSuggestionFieldApi } from 'types/useSuggestionFieldApi';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
 import { DataSource } from 'types/common/queryBuilder';
@@ -15,7 +15,7 @@ function TraceExplorerControls({
 	totalCount,
 	perPageOptions,
 	config,
-	fieldKeysConfig,
+	useFieldApis,
 	requiredFields,
 }: TraceExplorerControlsProps): JSX.Element | null {
 	const { t } = useTranslation(['trace']);
@@ -46,7 +46,7 @@ function TraceExplorerControls({
 						onFieldsChange={config.fieldsSelector.onFieldsChange}
 						onClose={(): void => setIsFieldsSelectorOpen(false)}
 						signal={DataSource.TRACES}
-						fieldKeysConfig={fieldKeysConfig}
+						useFieldApis={useFieldApis}
 						requiredFields={requiredFields}
 					/>
 				</>
@@ -71,13 +71,13 @@ type TraceExplorerControlsProps = Pick<
 	'isLoading' | 'totalCount' | 'perPageOptions'
 > & {
 	config?: OptionsMenuConfig | null;
-	fieldKeysConfig?: FieldKeysConfig;
+	useFieldApis?: UseSuggestionFieldApi;
 	requiredFields?: readonly string[];
 };
 
 TraceExplorerControls.defaultProps = {
 	config: null,
-	fieldKeysConfig: undefined,
+	useFieldApis: undefined,
 	requiredFields: undefined,
 };
 

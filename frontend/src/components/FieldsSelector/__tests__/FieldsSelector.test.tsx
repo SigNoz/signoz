@@ -3,10 +3,10 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSelector from '../FieldsSelector';
-import { useFieldKeys } from 'hooks/querySuggestions/useFieldKeys';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 
-jest.mock('hooks/querySuggestions/useFieldKeys', () => ({
-	useFieldKeys: jest.fn(() => ({
+jest.mock('hooks/querySuggestions/useFieldKeysSuggestion', () => ({
+	useFieldKeysSuggestion: jest.fn(() => ({
 		data: undefined,
 		isFetching: false,
 		isFetched: true,
@@ -27,7 +27,7 @@ jest.mock('periscope/components/FloatingPanel', () => ({
 }));
 
 const mockSuggestions = (names: string[]): void => {
-	(useFieldKeys as jest.Mock).mockReturnValue({
+	(useFieldKeysSuggestion as jest.Mock).mockReturnValue({
 		data: names.map((name) => ({
 			name,
 			signal: 'logs',
