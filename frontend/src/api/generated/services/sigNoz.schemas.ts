@@ -43,6 +43,7 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelSlackConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiUrl: string;
 	/**
@@ -113,10 +114,12 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelWebhookConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	bearerToken?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	password?: string;
 	/**
@@ -125,6 +128,7 @@ export interface AlertmanagertypesChannelWebhookConfigDTO {
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	url: string;
 	/**
@@ -180,6 +184,7 @@ export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	group?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	routingKey: string;
 	/**
@@ -219,6 +224,7 @@ export type AlertmanagertypesChannelOpsgenieConfigDTODetails = {
 export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiKey: string;
 	/**
@@ -278,6 +284,7 @@ export interface AlertmanagertypesChannelMSTeamsConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	webhookUrl: string;
 }
@@ -309,6 +316,7 @@ export interface AlertmanagertypesChannelGoogleChatConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	webhookUrl: string;
 }
@@ -332,6 +340,7 @@ export type AlertmanagertypesChannelJiraConfigDTOCustomFields = {
 export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiToken: string;
 	/**
@@ -407,6 +416,7 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelJSMOpsConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiKey: string;
 	/**
@@ -466,6 +476,7 @@ export interface AlertmanagertypesChannelIncidentIOConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	token: string;
 	/**
