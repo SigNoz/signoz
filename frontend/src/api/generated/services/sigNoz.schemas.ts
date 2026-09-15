@@ -43,6 +43,7 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelSlackConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiUrl: string;
 	/**
@@ -127,6 +128,7 @@ export interface AlertmanagertypesChannelWebhookConfigDTO {
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	url: string;
 	/**
@@ -282,6 +284,7 @@ export interface AlertmanagertypesChannelMSTeamsConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	webhookUrl: string;
 }
@@ -313,6 +316,7 @@ export interface AlertmanagertypesChannelGoogleChatConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	webhookUrl: string;
 }

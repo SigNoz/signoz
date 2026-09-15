@@ -197,6 +197,7 @@ components:
         title:
           type: string
         webhookUrl:
+          format: password
           type: string
       required:
       - webhookUrl
@@ -320,6 +321,7 @@ components:
         title:
           type: string
         webhookUrl:
+          format: password
           type: string
       required:
       - webhookUrl
@@ -385,6 +387,7 @@ components:
     AlertmanagertypesChannelSlackConfig:
       properties:
         apiUrl:
+          format: password
           type: string
         channel:
           type: string
@@ -410,6 +413,7 @@ components:
           nullable: true
           type: boolean
         url:
+          format: password
           type: string
         username:
           type: string
