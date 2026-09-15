@@ -5,9 +5,9 @@ import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 
-import { useLegendActions } from '../../hooks/useLegendActions';
-import UPlotLegend from '../Legend/UPlotLegend';
-import { LegendAction, LegendActionPayload, LegendPosition } from '../types';
+import { useLegendActions } from '../../../hooks/useLegendActions';
+import UPlotLegend from '../UPlotLegend';
+import { LegendAction, LegendActionPayload, LegendPosition } from '../../types';
 
 jest.mock('react-virtuoso', () => ({
 	VirtuosoGrid: ({
@@ -403,6 +403,17 @@ describe('UPlotLegend', () => {
 			await user.click(screen.getByTestId('legend-scope-0'));
 
 			expect(dispatched(onAction, LegendAction.SHOW_ALL)).toHaveLength(1);
+		});
+
+		it('restores everything when the row showing alone is clicked again', async () => {
+			const user = userEvent.setup();
+			renderLegend(LegendPosition.RIGHT);
+
+			await user.click(screen.getByText('A'));
+
+			expect(dispatched(onAction, LegendAction.SHOW_ALL)).toHaveLength(1);
+			expect(dispatched(onAction, LegendAction.TOGGLE)).toHaveLength(0);
+			expect(dispatched(onAction, LegendAction.SHOW_ONLY)).toHaveLength(0);
 		});
 	});
 });
