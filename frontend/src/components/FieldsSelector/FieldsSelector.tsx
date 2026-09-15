@@ -10,7 +10,7 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import AddedFields from './AddedFields';
-import { UseSuggestionFieldApi } from 'types/useSuggestionFieldApi';
+import { UseFieldApis } from 'types/common/fieldSuggestion';
 import OtherFields from './OtherFields';
 
 import styles from './FieldsSelector.module.scss';
@@ -32,7 +32,7 @@ interface FieldsSelectorProps {
 	// Lets users add a free-typed field which
 	// does not show up in the suggestions
 	allowCustomFields?: boolean;
-	useFieldApis?: UseSuggestionFieldApi;
+	useFieldApis?: UseFieldApis;
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };

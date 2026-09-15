@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import { UseSuggestionFieldApi } from 'types/useSuggestionFieldApi';
+import { UseFieldApis } from 'types/common/fieldSuggestion';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -129,7 +129,7 @@ describe('OtherFields — useFieldApis', () => {
 		{ name: 'llm_call_count', fieldContext: 'trace', fieldDataType: 'float64' },
 	];
 
-	const useFieldApis: UseSuggestionFieldApi = {
+	const useFieldApis: UseFieldApis = {
 		builderQueryType: 'builder_ai_query',
 		fieldContext: TelemetrytypesFieldContextDTO.trace,
 	};

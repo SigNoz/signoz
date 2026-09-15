@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Select, Spin } from 'antd';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
-import { UseSuggestionFieldApi } from 'types/useSuggestionFieldApi';
+import { UseFieldApis } from 'types/common/fieldSuggestion';
 import { DataSource } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
@@ -11,13 +11,13 @@ const DEFAULT_STATIC_FIELDS: TelemetryFieldKey[] = [
 	{ name: 'timestamp' } as TelemetryFieldKey,
 ];
 
-const DEFAULT_FIELD_APIS: UseSuggestionFieldApi = {};
+const DEFAULT_FIELD_APIS: UseFieldApis = {};
 
 interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;
 	dataSource: DataSource;
-	useFieldApis?: UseSuggestionFieldApi;
+	useFieldApis?: UseFieldApis;
 }
 
 function Loader({ isLoading }: { isLoading: boolean }): JSX.Element {
