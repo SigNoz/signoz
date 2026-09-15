@@ -5,6 +5,7 @@ import { QuickFiltersSource } from '../../../../types';
 
 import CheckboxFilterV2 from '../CheckboxFilterV2';
 import {
+	buildQueryBuilderOverrides,
 	DEFAULT_FILTER,
 	DEFAULT_USE_FIELD_APIS,
 	mockFieldsValuesAPI,
@@ -14,6 +15,88 @@ import {
 setupServer();
 
 describe('CheckboxFilterV2 - item rules', () => {
+	describe('related values unsupported (existingQuery: null)', () => {
+		it('renders a single flat section even when the api returns related values', async () => {
+			mockFieldsValuesAPI({
+				relatedValues: ['production'],
+				stringValues: ['staging'],
+			});
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+			);
+
+			const productionRow = await screen.findByTestId(
+				'checkbox-value-row-production',
+			);
+			expect(productionRow).toHaveAttribute('data-state', 'checked');
+			expect(screen.getByTestId('checkbox-value-row-staging')).toHaveAttribute(
+				'data-state',
+				'checked',
+			);
+
+			expect(
+				screen.queryByTestId('section-divider-related'),
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('section-divider-all-values'),
+			).not.toBeInTheDocument();
+		});
+
+		it('splits clause values and the rest into selected and all values sections', async () => {
+			mockFieldsValuesAPI({
+				stringValues: ['production', 'staging'],
+			});
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					source={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+				undefined,
+				{
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'in',
+												value: ['production'],
+											},
+										],
+										op: 'AND',
+									},
+								},
+							],
+						},
+					}),
+				},
+			);
+
+			const productionRow = await screen.findByTestId(
+				'checkbox-value-row-production',
+			);
+			expect(productionRow).toHaveAttribute('data-state', 'checked');
+			expect(screen.getByTestId('checkbox-value-row-staging')).toHaveAttribute(
+				'data-state',
+				'unchecked',
+			);
+
+			expect(screen.getByTestId('section-divider-all-values')).toBeInTheDocument();
+			expect(
+				screen.queryByTestId('section-divider-related'),
+			).not.toBeInTheDocument();
+		});
+	});
+
 	describe('no existing query', () => {
 		it('all values show as checked with no badge when no query exists', async () => {
 			mockFieldsValuesAPI({
@@ -65,18 +148,16 @@ describe('CheckboxFilterV2 - item rules', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: { items: [], op: 'AND' },
-										filter: { expression: 'service.name = "api"' },
-									},
-								],
-							},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: { items: [], op: 'AND' },
+									filter: { expression: 'service.name = "api"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -112,18 +193,16 @@ describe('CheckboxFilterV2 - item rules', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: { items: [], op: 'AND' },
-										filter: { expression: 'service.name = "api"' },
-									},
-								],
-							},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: { items: [], op: 'AND' },
+									filter: { expression: 'service.name = "api"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -150,27 +229,25 @@ describe('CheckboxFilterV2 - item rules', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'deployment.environment' },
-													op: 'in',
-													value: ['production'],
-												},
-											],
-											op: 'AND',
-										},
-										filter: { expression: 'service.name = "api"' },
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'in',
+												value: ['production'],
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+									filter: { expression: 'service.name = "api"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -201,26 +278,24 @@ describe('CheckboxFilterV2 - item rules', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'deployment.environment' },
-													op: 'in',
-													value: ['production'],
-												},
-											],
-											op: 'AND',
-										},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'in',
+												value: ['production'],
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -251,29 +326,28 @@ describe('CheckboxFilterV2 - item rules', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'deployment.environment' },
-													op: 'not in',
-													value: ['production'],
-												},
-											],
-											op: 'AND',
-										},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'not in',
+												value: ['production'],
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
+			// The excluded value renders unchecked.
 			const productionRow = await screen.findByTestId(
 				'checkbox-value-row-production',
 			);
@@ -282,8 +356,9 @@ describe('CheckboxFilterV2 - item rules', () => {
 				within(productionRow).queryByTestId(/^badge-/),
 			).not.toBeInTheDocument();
 
+			// The non-excluded value is still included by NOT IN, so it stays checked.
 			const stagingRow = screen.getByTestId('checkbox-value-row-staging');
-			expect(stagingRow).toHaveAttribute('data-state', 'unchecked');
+			expect(stagingRow).toHaveAttribute('data-state', 'checked');
 			expect(within(stagingRow).queryByTestId(/^badge-/)).not.toBeInTheDocument();
 		});
 	});
@@ -306,27 +381,25 @@ describe('CheckboxFilterV2 - item rules', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'deployment.environment' },
-													op: 'in',
-													value: ['selected-value'],
-												},
-											],
-											op: 'AND',
-										},
-										filter: { expression: 'service.name = "api"' },
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'in',
+												value: ['selected-value'],
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+									filter: { expression: 'service.name = "api"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -359,18 +432,16 @@ describe('CheckboxFilterV2 - item rules', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: { items: [], op: 'AND' },
-										filter: { expression: 'service.name = "api"' },
-									},
-								],
-							},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: { items: [], op: 'AND' },
+									filter: { expression: 'service.name = "api"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -403,27 +474,25 @@ describe('CheckboxFilterV2 - item rules', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'deployment.environment' },
-													op: 'in',
-													value: ['selected-env'],
-												},
-											],
-											op: 'AND',
-										},
-										filter: { expression: 'service.name = "api"' },
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'in',
+												value: ['selected-env'],
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+									filter: { expression: 'service.name = "api"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -460,27 +529,25 @@ describe('CheckboxFilterV2 - item rules', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'deployment.environment' },
-													op: 'not in',
-													value: ['excluded-env'],
-												},
-											],
-											op: 'AND',
-										},
-										filter: { expression: 'service.name = "api"' },
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'not in',
+												value: ['excluded-env'],
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+									filter: { expression: 'service.name = "api"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 

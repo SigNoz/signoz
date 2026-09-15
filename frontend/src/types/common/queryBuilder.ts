@@ -211,13 +211,11 @@ export enum QueryFunctionsTypes {
 	FILL_ZERO = 'fillZero',
 }
 
-export type PanelTypeKeys =
-	| 'TIME_SERIES'
-	| 'VALUE'
-	| 'TABLE'
-	| 'LIST'
-	| 'TRACE'
-	| 'EMPTY_WIDGET';
+/**
+ * Key names of {@link PANEL_TYPES}. Derived rather than listed: the hand-written
+ * version had fallen behind the enum by three members (`BAR`, `PIE`, `HISTOGRAM`).
+ */
+export type PanelTypeKeys = keyof typeof PANEL_TYPES;
 
 export enum ReduceOperators {
 	LAST = 'last',

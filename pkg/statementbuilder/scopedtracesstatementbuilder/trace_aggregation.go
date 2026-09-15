@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
@@ -340,7 +341,7 @@ func (b *scopedTraceStatementBuilder) buildQualifiedStatement(
 		return nil, nil, err
 	}
 	sb := sqlbuilder.NewSelectBuilder()
-	maskExpr, resolved, err := b.resolveFor(ctx, orgID, start, end, keys, sb)
+	maskExpr, resolved, err := b.resolveFor(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), keys, sb)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -377,7 +378,7 @@ type groupColumn struct {
 // groupByColumnAlias prefixes the i-th group-by dimension so the alias cannot shadow the
 // span column its expression reads; the querier (stripKeyAlias) strips it back off.
 func groupByColumnAlias(i int, name string) string {
-	return fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name)
+	return clickhousesql.Identifier(fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name))
 }
 
 // orderColumn is the SQL identifier a non-aggregation order key sorts by: the
@@ -388,7 +389,7 @@ func orderColumn(orderKey string, groupBy []qbtypes.GroupByKey) string {
 			return groupByColumnAlias(i, groupBy[i].Name)
 		}
 	}
-	return orderKey
+	return clickhousesql.Identifier(orderKey)
 }
 
 // perTraceScanOpts parametrize one windowed, mask-pruned GROUP BY trace_id scan.
@@ -413,13 +414,13 @@ func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBui
 		selects = append(selects, fmt.Sprintf("toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts", o.stepSeconds))
 	}
 	for _, gc := range o.groupCols {
-		selects = append(selects, fmt.Sprintf("toString(%s) AS `%s`", gc.expr, gc.alias))
+		selects = append(selects, fmt.Sprintf("toString(%s) AS %s", gc.expr, sqlbuilder.Escape(gc.alias)))
 	}
 	for _, rc := range resolved {
 		if _, ok := o.needed[rc.alias]; !ok {
 			continue
 		}
-		selects = append(selects, rc.expr+" AS "+quoteAlias(rc.alias))
+		selects = append(selects, rc.expr+" AS "+sqlbuilder.Escape(quoteAlias(rc.alias)))
 	}
 	sb.Select(selects...)
 	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
@@ -450,7 +451,7 @@ func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBui
 		groupBy = append(groupBy, "ts")
 	}
 	for _, gc := range o.groupCols {
-		groupBy = append(groupBy, "`"+gc.alias+"`")
+		groupBy = append(groupBy, sqlbuilder.Escape(gc.alias))
 	}
 	sb.GroupBy(groupBy...)
 	if strings.TrimSpace(o.havingPred) != "" {
@@ -475,15 +476,15 @@ func groupBySelectors(groupBy []qbtypes.GroupByKey) []*telemetrytypes.FieldKeySe
 	return selectors
 }
 
-// resolveGroupColumns resolves group-by keys through the field mapper for selection
+// resolveGroupColumns resolves group-by keys through the storage for selection
 // inside the per-trace scan; keys must cover the group-by selectors.
-func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, orgID valuer.UUID, start, end uint64, groupBy []qbtypes.GroupByKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]groupColumn, error) {
+func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, q qbtypes.QueryInfo, groupBy []qbtypes.GroupByKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]groupColumn, error) {
 	if len(groupBy) == 0 {
 		return nil, nil
 	}
 	out := make([]groupColumn, 0, len(groupBy))
 	for i := range groupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &groupBy[i].TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, q, b.storage, &groupBy[i].TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -518,12 +519,13 @@ func (b *scopedTraceStatementBuilder) newScanContext(
 ) (*scanContext, error) {
 	sc := &scanContext{sb: sqlbuilder.NewSelectBuilder()}
 	var err error
-	sc.maskExpr, sc.resolved, err = b.resolveFor(ctx, orgID, start, end, keys, sc.sb)
+	q := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
+	sc.maskExpr, sc.resolved, err = b.resolveFor(ctx, q, keys, sc.sb)
 	if err != nil {
 		return nil, err
 	}
 	if strings.TrimSpace(spanExpr) != "" {
-		pred, warns, url, err := b.resolveSpanPredicate(ctx, orgID, start, end, spanExpr, keys, variables, sc.sb)
+		pred, warns, url, err := b.resolveSpanPredicate(ctx, q, spanExpr, keys, variables, sc.sb)
 		if err != nil {
 			return nil, err
 		}
@@ -596,13 +598,13 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		}
 	}
 
-	groupCols, err := b.resolveGroupColumns(ctx, orgID, start, end, query.GroupBy, keys)
+	groupCols, err := b.resolveGroupColumns(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), query.GroupBy, keys)
 	if err != nil {
 		return nil, err
 	}
 	groupNames := make([]string, 0, len(groupCols))
 	for _, gc := range groupCols {
-		groupNames = append(groupNames, "`"+gc.alias+"`")
+		groupNames = append(groupNames, sqlbuilder.Escape(gc.alias))
 	}
 
 	needed := make(map[string]struct{})
@@ -701,7 +703,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		if len(query.Order) != 0 {
 			for _, orderBy := range query.Order {
 				if _, ok := traceAggOrderIndex(orderBy, query); !ok {
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderColumn(orderBy.Key.Name, query.GroupBy), orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderColumn(orderBy.Key.Name, query.GroupBy)), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -711,7 +713,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 			if idx, ok := traceAggOrderIndex(orderBy, query); ok {
 				sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 			} else {
-				sb.OrderBy(fmt.Sprintf("`%s` %s", orderColumn(orderBy.Key.Name, query.GroupBy), orderBy.Direction.StringValue()))
+				sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderColumn(orderBy.Key.Name, query.GroupBy)), orderBy.Direction.StringValue()))
 			}
 		}
 		if len(query.Order) == 0 {
@@ -759,7 +761,7 @@ func outerLimitSQL(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], tr
 		if idx, ok := traceAggOrderIndex(orderBy, query); ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderColumn(orderBy.Key.Name, query.GroupBy), orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderColumn(orderBy.Key.Name, query.GroupBy)), orderBy.Direction.StringValue()))
 		}
 	}
 	if len(query.Order) == 0 {

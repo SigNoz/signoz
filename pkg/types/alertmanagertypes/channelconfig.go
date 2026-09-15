@@ -57,6 +57,28 @@ func (t ChannelKind) IsValid() bool {
 	return slices.ContainsFunc(t.Enum(), func(v any) bool { return v == t })
 }
 
+// ToStoredType returns the Channel.Type a channel of this kind is stored under,
+// which matches the kind for all but msteams.
+func (t ChannelKind) ToStoredType() string {
+	if t == ChannelKindMSTeams {
+		return "msteamsv2"
+	}
+
+	return t.StringValue()
+}
+
+// parseStoredChannelType inverts ToStoredType. It reports false for the notifier
+// kinds v1 accepted but v2 does not model.
+func parseStoredChannelType(stored string) (ChannelKind, bool) {
+	for _, channelKind := range channelKinds {
+		if channelKind.kind.ToStoredType() == stored {
+			return channelKind.kind, true
+		}
+	}
+
+	return ChannelKind{}, false
+}
+
 func ErrUnsupportedChannelKind(s string) error {
 	return errors.Newf(
 		errors.TypeInvalidInput,
@@ -1108,11 +1130,21 @@ func resolveSendResolved(sendResolved *bool, upstreamDefault bool) bool {
 }
 
 func allowedValuesForChannelKind() string {
-	values := make([]string, 0, len(channelKinds))
-	for _, channelKind := range channelKinds {
-		values = append(values, "`"+channelKind.kind.StringValue()+"`")
+	return formatAllowedValues((ChannelKind{}).Enum())
+}
+
+func formatAllowedValues(enum []any) string {
+	values := make([]string, 0, len(enum))
+	for _, value := range enum {
+		stringValuer, ok := value.(interface{ StringValue() string })
+		if !ok {
+			continue
+		}
+
+		values = append(values, "`"+stringValuer.StringValue()+"`")
 	}
 	slices.Sort(values)
+
 	return strings.Join(values, ", ")
 }
 

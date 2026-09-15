@@ -332,6 +332,7 @@ describe('transformTransactionGroupsToResourcePermissions', () => {
 		expect(result).toHaveLength(10);
 		expect(result.map((r) => r.resourceKind)).toStrictEqual([
 			'factor-api-key',
+			'dashboard',
 			'license',
 			'logs',
 			'meter-metrics',
@@ -424,6 +425,7 @@ describe('createEmptyRolePermissions', () => {
 		expect(result).toHaveLength(10);
 		expect(result.map((r) => r.resourceKind)).toStrictEqual([
 			'factor-api-key',
+			'dashboard',
 			'license',
 			'logs',
 			'meter-metrics',

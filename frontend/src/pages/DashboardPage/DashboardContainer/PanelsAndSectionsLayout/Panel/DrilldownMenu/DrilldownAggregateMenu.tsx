@@ -173,7 +173,7 @@ function DrilldownAggregateMenu({
 						void logEvent(DashboardDetailEvents.DrilldownAction, {
 							action: 'contextLink',
 						});
-						openInNewTab(link.url);
+						openInNewTab(link.url, !!link.targetBlank);
 						onClose();
 					}}
 				>

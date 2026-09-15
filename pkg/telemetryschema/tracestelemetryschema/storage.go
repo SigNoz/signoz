@@ -1,0 +1,612 @@
+package tracestelemetryschema
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/huandu/go-sqlbuilder"
+)
+
+var (
+	indexV3Columns = map[string]*schema.Column{
+		"ts_bucket_start":      {Name: "ts_bucket_start", Type: schema.ColumnTypeUInt64},
+		"resource_fingerprint": {Name: "resource_fingerprint", Type: schema.ColumnTypeString},
+
+		// intrinsic columns
+		"timestamp":          {Name: "timestamp", Type: schema.DateTime64ColumnType{Precision: 9, Timezone: "UTC"}},
+		"trace_id":           {Name: "trace_id", Type: schema.FixedStringColumnType{Length: 32}},
+		"span_id":            {Name: "span_id", Type: schema.ColumnTypeString},
+		"trace_state":        {Name: "trace_state", Type: schema.ColumnTypeString},
+		"parent_span_id":     {Name: "parent_span_id", Type: schema.ColumnTypeString},
+		"flags":              {Name: "flags", Type: schema.ColumnTypeUInt32},
+		"name":               {Name: "name", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"kind":               {Name: "kind", Type: schema.ColumnTypeInt8},
+		"kind_string":        {Name: "kind_string", Type: schema.ColumnTypeString},
+		"duration_nano":      {Name: "duration_nano", Type: schema.ColumnTypeUInt64},
+		"status_code":        {Name: "status_code", Type: schema.ColumnTypeInt16},
+		"status_message":     {Name: "status_message", Type: schema.ColumnTypeString},
+		"status_code_string": {Name: "status_code_string", Type: schema.ColumnTypeString},
+
+		// attributes columns
+		"attributes_string": {Name: "attributes_string", Type: schema.MapColumnType{
+			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
+			ValueType: schema.ColumnTypeString,
+		}},
+		"attributes_number": {Name: "attributes_number", Type: schema.MapColumnType{
+			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
+			ValueType: schema.ColumnTypeFloat64,
+		}},
+		"attributes_bool": {Name: "attributes_bool", Type: schema.MapColumnType{
+			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
+			ValueType: schema.ColumnTypeBool,
+		}},
+		"resources_string": {Name: "resources_string", Type: schema.MapColumnType{
+			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
+			ValueType: schema.ColumnTypeString,
+		}},
+		"resource":            {Name: "resource", Type: schema.JSONColumnType{}},
+		"scope":               {Name: "scope", Type: schema.JSONColumnType{}},
+		"attributes":          {Name: "attributes", Type: schema.JSONColumnType{}},
+		"attributes_promoted": {Name: "attributes_promoted", Type: schema.JSONColumnType{}},
+
+		"events": {Name: "events", Type: schema.ArrayColumnType{
+			ElementType: schema.ColumnTypeString,
+		}},
+		"links": {Name: "links", Type: schema.ColumnTypeString},
+		// derived columns
+		"response_status_code": {Name: "response_status_code", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"external_http_url":    {Name: "external_http_url", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"http_url":             {Name: "http_url", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"external_http_method": {Name: "external_http_method", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"http_method":          {Name: "http_method", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"http_host":            {Name: "http_host", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"db_name":              {Name: "db_name", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"db_operation":         {Name: "db_operation", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"has_error":            {Name: "has_error", Type: schema.ColumnTypeBool},
+		"is_remote":            {Name: "is_remote", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		// materialized columns
+		"resource_string_service$$name":         {Name: "resource_string_service$$name", Type: schema.ColumnTypeString},
+		"attribute_string_http$$route":          {Name: "attribute_string_http$$route", Type: schema.ColumnTypeString},
+		"attribute_string_messaging$$system":    {Name: "attribute_string_messaging$$system", Type: schema.ColumnTypeString},
+		"attribute_string_messaging$$operation": {Name: "attribute_string_messaging$$operation", Type: schema.ColumnTypeString},
+		"attribute_string_db$$system":           {Name: "attribute_string_db$$system", Type: schema.ColumnTypeString},
+		"attribute_string_rpc$$system":          {Name: "attribute_string_rpc$$system", Type: schema.ColumnTypeString},
+		"attribute_string_rpc$$service":         {Name: "attribute_string_rpc$$service", Type: schema.ColumnTypeString},
+		"attribute_string_rpc$$method":          {Name: "attribute_string_rpc$$method", Type: schema.ColumnTypeString},
+		"attribute_string_peer$$service":        {Name: "attribute_string_peer$$service", Type: schema.ColumnTypeString},
+
+		// deprecated intrinsic columns
+		"traceID":          {Name: "traceID", Type: schema.FixedStringColumnType{Length: 32}},
+		"spanID":           {Name: "spanID", Type: schema.ColumnTypeString},
+		"parentSpanID":     {Name: "parentSpanID", Type: schema.ColumnTypeString},
+		"spanKind":         {Name: "spanKind", Type: schema.ColumnTypeString},
+		"durationNano":     {Name: "durationNano", Type: schema.ColumnTypeUInt64},
+		"statusCode":       {Name: "statusCode", Type: schema.ColumnTypeInt16},
+		"statusMessage":    {Name: "statusMessage", Type: schema.ColumnTypeString},
+		"statusCodeString": {Name: "statusCodeString", Type: schema.ColumnTypeString},
+
+		// deprecated derived columns
+		"references":         {Name: "references", Type: schema.ColumnTypeString},
+		"responseStatusCode": {Name: "responseStatusCode", Type: schema.ColumnTypeString},
+		"externalHttpUrl":    {Name: "externalHttpUrl", Type: schema.ColumnTypeString},
+		"httpUrl":            {Name: "httpUrl", Type: schema.ColumnTypeString},
+		"externalHttpMethod": {Name: "externalHttpMethod", Type: schema.ColumnTypeString},
+		"httpMethod":         {Name: "httpMethod", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"httpHost":           {Name: "httpHost", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"dbName":             {Name: "dbName", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"dbOperation":        {Name: "dbOperation", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"hasError":           {Name: "hasError", Type: schema.ColumnTypeBool},
+		"isRemote":           {Name: "isRemote", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"serviceName":        {Name: "serviceName", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"httpRoute":          {Name: "httpRoute", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"msgSystem":          {Name: "msgSystem", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"msgOperation":       {Name: "msgOperation", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"dbSystem":           {Name: "dbSystem", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"rpcSystem":          {Name: "rpcSystem", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"rpcService":         {Name: "rpcService", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"rpcMethod":          {Name: "rpcMethod", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+		"peerService":        {Name: "peerService", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+
+		// materialized exists columns
+		"resource_string_service$$name_exists":         {Name: "resource_string_service$$name_exists", Type: schema.ColumnTypeBool},
+		"attribute_string_http$$route_exists":          {Name: "attribute_string_http$$route_exists", Type: schema.ColumnTypeBool},
+		"attribute_string_messaging$$system_exists":    {Name: "attribute_string_messaging$$system_exists", Type: schema.ColumnTypeBool},
+		"attribute_string_messaging$$operation_exists": {Name: "attribute_string_messaging$$operation_exists", Type: schema.ColumnTypeBool},
+		"attribute_string_db$$system_exists":           {Name: "attribute_string_db$$system_exists", Type: schema.ColumnTypeBool},
+		"attribute_string_rpc$$system_exists":          {Name: "attribute_string_rpc$$system_exists", Type: schema.ColumnTypeBool},
+		"attribute_string_rpc$$service_exists":         {Name: "attribute_string_rpc$$service_exists", Type: schema.ColumnTypeBool},
+		"attribute_string_rpc$$method_exists":          {Name: "attribute_string_rpc$$method_exists", Type: schema.ColumnTypeBool},
+		"attribute_string_peer$$service_exists":        {Name: "attribute_string_peer$$service_exists", Type: schema.ColumnTypeBool},
+	}
+
+	// TODO(srikanthccv): remove this mapping.
+	oldToNew = map[string]string{
+		// deprecated intrinsic -> new intrinsic
+		"traceID":          "trace_id",
+		"spanID":           "span_id",
+		"parentSpanID":     "parent_span_id",
+		"spanKind":         "kind_string",
+		"durationNano":     "duration_nano",
+		"statusCode":       "status_code",
+		"statusMessage":    "status_message",
+		"statusCodeString": "status_code_string",
+
+		// deprecated derived -> new derived / materialized
+		"references":         "links",
+		"responseStatusCode": "response_status_code",
+		"externalHttpUrl":    "external_http_url",
+		"httpUrl":            "http_url",
+		"externalHttpMethod": "external_http_method",
+		"httpMethod":         "http_method",
+		"httpHost":           "http_host",
+		"dbName":             "db_name",
+		"dbOperation":        "db_operation",
+		"hasError":           "has_error",
+		"isRemote":           "is_remote",
+		"serviceName":        "resource_string_service$$name",
+		"httpRoute":          "attribute_string_http$$route",
+		"msgSystem":          "attribute_string_messaging$$system",
+		"msgOperation":       "attribute_string_messaging$$operation",
+		"dbSystem":           "attribute_string_db$$system",
+		"rpcSystem":          "attribute_string_rpc$$system",
+		"rpcService":         "attribute_string_rpc$$service",
+		"rpcMethod":          "attribute_string_rpc$$method",
+		"peerService":        "attribute_string_peer$$service",
+	}
+)
+
+type storage struct{}
+
+var _ qbtypes.Storage = (*storage)(nil)
+
+func NewStorage() qbtypes.Storage {
+	return &storage{}
+}
+
+func (m *storage) getColumn(
+	_ context.Context,
+	_, _ uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+) ([]*schema.Column, error) {
+	switch key.FieldContext {
+	case telemetrytypes.FieldContextResource:
+		return []*schema.Column{indexV3Columns["resource"], indexV3Columns["resources_string"]}, nil
+	case telemetrytypes.FieldContextScope:
+		return []*schema.Column{indexV3Columns["scope"]}, nil
+	case telemetrytypes.FieldContextAttribute:
+		var mapCol *schema.Column
+		switch key.FieldDataType {
+		case telemetrytypes.FieldDataTypeString:
+			mapCol = indexV3Columns["attributes_string"]
+		case telemetrytypes.FieldDataTypeInt64,
+			telemetrytypes.FieldDataTypeFloat64,
+			telemetrytypes.FieldDataTypeNumber:
+			mapCol = indexV3Columns["attributes_number"]
+		case telemetrytypes.FieldDataTypeBool:
+			mapCol = indexV3Columns["attributes_bool"]
+		default:
+			return nil, qbtypes.ErrColumnNotFound
+		}
+		// The `attributes` evolution entry is the rollout control.
+		if attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
+			cols := make([]*schema.Column, 0, 3)
+			if attributeColumnEvolutionRegistered(key, SpanAttributesPromotedColumn) {
+				cols = append(cols, indexV3Columns["attributes_promoted"])
+			}
+			return append(cols, indexV3Columns["attributes"], mapCol), nil
+		}
+		return []*schema.Column{mapCol}, nil
+	case telemetrytypes.FieldContextSpan:
+		// Check if this is a span scope field
+		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
+			// The actual SQL will be generated in the condition builder
+			return []*schema.Column{{Name: key.Name, Type: schema.ColumnTypeBool}}, nil
+		}
+		if _, ok := CalculatedFieldsDeprecated[key.Name]; ok {
+			// Check if we have a mapping for the deprecated calculated field
+			if col, ok := indexV3Columns[oldToNew[key.Name]]; ok {
+				return []*schema.Column{col}, nil
+			}
+		}
+		if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
+			// Check if we have a mapping for the deprecated intrinsic field
+			if col, ok := indexV3Columns[oldToNew[key.Name]]; ok {
+				return []*schema.Column{col}, nil
+			}
+		}
+
+		if col, ok := indexV3Columns[key.Name]; ok {
+			return []*schema.Column{col}, nil
+		}
+	}
+	return nil, qbtypes.ErrColumnNotFound
+}
+
+// resolveColumnExprs resolves key to its per-column value expressions and existence guards
+// (after evolution selection); existExprs only carries guards for guardable column types.
+func (m *storage) resolveColumnExprs(
+	ctx context.Context,
+	startNs, endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+) (exprs []string, existExprs []string, columns []*schema.Column, err error) {
+	columns, err = m.getColumn(ctx, startNs, endNs, key)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	for i, column := range newColumns {
+		// Use evolution column name if available, otherwise use the column name
+		columnName := column.Name
+		if evolutionsEntries != nil && evolutionsEntries[i] != nil {
+			columnName = evolutionsEntries[i].ColumnName
+		}
+
+		switch column.Type.GetType() {
+		case schema.ColumnTypeEnumJSON:
+			// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
+			// once clickHouse dependency is updated, we need to check if we can remove it.
+			switch key.FieldContext {
+			case telemetrytypes.FieldContextResource:
+				exprs = append(exprs, fmt.Sprintf("%s.%s::String", columnName, clickhousesql.Identifier(key.Name)))
+				existExprs = append(existExprs, fmt.Sprintf("%s.%s IS NOT NULL", columnName, clickhousesql.Identifier(key.Name)))
+			case telemetrytypes.FieldContextScope:
+				if f, ok := IntrinsicFields[key.Name]; ok && f.FieldContext == telemetrytypes.FieldContextScope {
+					// declared String paths on the scope column read '' for the missing case
+					exprs = append(exprs, fmt.Sprintf("%s::String", key.Name))
+					existExprs = append(existExprs, fmt.Sprintf("%s <> ''", key.Name))
+				} else {
+					attributeName := strings.TrimPrefix(key.Name, "attribute.") // literal "attribute" prefix in attribute keys needs double prefix
+					exprs = append(exprs, fmt.Sprintf("%s.attributes.%s::String", columnName, clickhousesql.Identifier(attributeName)))
+					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.%s IS NOT NULL", columnName, clickhousesql.Identifier(attributeName)))
+				}
+			case telemetrytypes.FieldContextAttribute:
+				path := fmt.Sprintf("%s.%s", columnName, clickhousesql.Identifier(key.Name))
+				expr, existExpr := attributeJSONValueExpr(path, key.FieldDataType)
+				exprs = append(exprs, expr)
+				existExprs = append(existExprs, existExpr)
+			default:
+				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource, scope and attribute context fields are supported for json columns, got %s", key.FieldContext.String)
+			}
+		case schema.ColumnTypeEnumString,
+			schema.ColumnTypeEnumUInt64,
+			schema.ColumnTypeEnumUInt32,
+			schema.ColumnTypeEnumInt8,
+			schema.ColumnTypeEnumInt16,
+			schema.ColumnTypeEnumBool,
+			schema.ColumnTypeEnumDateTime64,
+			schema.ColumnTypeEnumFixedString:
+			exprs = append(exprs, column.Name)
+		case schema.ColumnTypeEnumLowCardinality:
+			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+			case schema.ColumnTypeEnumString:
+				exprs = append(exprs, column.Name)
+			default:
+				return nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for low cardinality column type %s", elementType, column.Type)
+			}
+		case schema.ColumnTypeEnumMap:
+			keyType := column.Type.(schema.MapColumnType).KeyType
+			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+				return nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
+			}
+
+			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFloat64, schema.ColumnTypeEnumBool:
+				// a key could have been materialized, if so return the materialized column name
+				if key.Materialized {
+					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
+					existExprs = append(existExprs, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
+				} else {
+					exprs = append(exprs, fmt.Sprintf("%s[%s]", columnName, clickhousesql.StringLiteral(key.Name)))
+					existExprs = append(existExprs, fmt.Sprintf("mapContains(%s, %s)", columnName, clickhousesql.StringLiteral(key.Name)))
+				}
+			default:
+				return nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type)
+			}
+		}
+	}
+
+	return exprs, existExprs, columns, nil
+}
+
+// attributeColumnEvolutionRegistered reports whether key carries an evolution entry for the given column.
+func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, columnName string) bool {
+	for _, e := range key.Evolutions {
+		if e != nil && e.ColumnName == columnName {
+			return true
+		}
+	}
+	return false
+}
+
+// attributeJSONValueExpr renders the value expression for a span attribute read from the JSON
+// column along with its per-type existence guard.
+// Numeric and bool gate a crash-safe accurateCastOrNull by dynamicType: the cast alone coerces
+// across domains (bool true reads 1, '200' reads 200, 200.5 reads true), so the read is
+// restricted to values stored as that type — the per-type separation the typed maps gave
+// structurally. Being NULL-capable, the gated read itself is the existence guard (present AS
+// THIS TYPE). Other reads are total (::String folds absent to ” on the raw path), so the
+// guard is presence on the raw path.
+func attributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) (string, string) {
+	switch dataType {
+	case telemetrytypes.FieldDataTypeInt64,
+		telemetrytypes.FieldDataTypeFloat64,
+		telemetrytypes.FieldDataTypeNumber:
+		expr := fmt.Sprintf("if(dynamicType(%s) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(%s, 'Float64'), NULL)", path, path) // all numeric types to float64 like attributes_number map.
+		return expr, expr + " IS NOT NULL"
+	case telemetrytypes.FieldDataTypeBool:
+		expr := fmt.Sprintf("if(dynamicType(%s) = 'Bool', accurateCastOrNull(%s, 'Bool'), NULL)", path, path)
+		return expr, expr + " IS NOT NULL"
+	default:
+		return path + "::String", fmt.Sprintf("%s IS NOT NULL", path)
+	}
+}
+
+// columnIsTemporal reports whether key resolves to a single time column, after evolution
+// selection. Multiple columns mean an attribute-map union, which is never temporal.
+func (m *storage) columnIsTemporal(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (bool, error) {
+	columns, err := m.getColumn(ctx, startNs, endNs, key)
+	if err != nil {
+		return false, err
+	}
+	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+	if err != nil {
+		return false, err
+	}
+	return len(newColumns) == 1 && querybuilder.ColumnIsTemporal(newColumns[0]), nil
+}
+
+// scopeJSONExistsExpression renders the existence predicate of a scope key on the scope
+// JSON column, the one signal-specific case the generic querybuilder.ExistsExpression must
+// not carry.
+func scopeJSONExistsExpression(key *telemetrytypes.TelemetryFieldKey, fieldExpression string, exists bool) string {
+	// Declared String paths are non-Nullable (absent reads '' not NULL).
+	if f, ok := IntrinsicFields[key.Name]; ok && f.FieldContext == telemetrytypes.FieldContextScope {
+		if exists {
+			return fieldExpression + " <> ''"
+		}
+		return fieldExpression + " = ''"
+	}
+	// Scope attribute: the value expression casts the JSON path to String, which folds a missing
+	// key's NULL to '', so presence must test the raw path — drop the ::String cast.
+	path := strings.TrimSuffix(fieldExpression, "::String")
+	if exists {
+		return path + " IS NOT NULL"
+	}
+	return path + " IS NULL"
+}
+
+// read returns the bare read of one field key. A span scope key has no
+// column. It compiles to a structural predicate, so its read is its name.
+func (m *storage) read(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	if isSpanSearchScopeField(key.Name) {
+		return key.Name, nil
+	}
+
+	exprs, existExpr, columns, err := m.resolveColumnExprs(ctx, q.StartNs, q.EndNs, key)
+	if err != nil {
+		return "", err
+	}
+
+	if len(exprs) == 1 {
+		return exprs[0], nil
+	} else if len(exprs) > 1 {
+		// Ensure existExpr has the same length as exprs
+		if len(existExpr) != len(exprs) {
+			return "", errors.New(errors.TypeInternal, errors.CodeInternal, "length of exist exprs doesn't match to that of exprs")
+		}
+		finalExprs := []string{}
+		for i, expr := range exprs {
+			finalExprs = append(finalExprs, fmt.Sprintf("%s, %s", existExpr[i], expr))
+		}
+		return "multiIf(" + strings.Join(finalExprs, ", ") + ", NULL)", nil
+	}
+
+	// should not reach here
+	return columns[0].Name, nil
+}
+
+// absentReads tells what a row without the key reads. A multi-era read
+// reads NULL. A map reads its empty value. A JSON path reads the empty
+// string, because its ::String cast folds NULL. Every other column reads a
+// real value.
+func absentReads(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, columns []*schema.Column) (qbtypes.Absent, error) {
+	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
+	if err != nil {
+		return qbtypes.AlwaysPresent, err
+	}
+	if len(newColumns) > 1 {
+		return qbtypes.AbsentIsNull, nil
+	}
+	if len(newColumns) == 0 {
+		return qbtypes.AlwaysPresent, nil
+	}
+	switch newColumns[0].Type.GetType() {
+	case schema.ColumnTypeEnumMap:
+		return qbtypes.AbsentIsSentinel, nil
+	case schema.ColumnTypeEnumJSON:
+		// a numeric or bool attribute reads through a type-gated cast that is
+		// NULL for an absent key, and every other JSON read casts to String
+		if key.FieldContext == telemetrytypes.FieldContextAttribute {
+			switch key.FieldDataType {
+			case telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeFloat64, telemetrytypes.FieldDataTypeNumber, telemetrytypes.FieldDataTypeBool:
+				return qbtypes.AbsentIsNull, nil
+			}
+		}
+		return qbtypes.AbsentIsSentinel, nil
+	}
+	return qbtypes.AlwaysPresent, nil
+}
+
+// Read composes the bare read of one key with its membership test and what
+// an absent row reads. A span scope key is virtual. It is always present,
+// and its read is its name. A time column keeps its native type through the
+// group by, order by, and aggregation cast.
+func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (qbtypes.Read, error) {
+	if isSpanSearchScopeField(key.Name) {
+		return qbtypes.Read{SQL: key.Name, Presence: "true", Absence: "false", WhenAbsent: qbtypes.AlwaysPresent}, nil
+	}
+	exprs, existExprs, columns, err := m.resolveColumnExprs(ctx, q.StartNs, q.EndNs, key)
+	if err != nil {
+		return qbtypes.Read{}, err
+	}
+	sql, err := m.read(ctx, q, key)
+	if err != nil {
+		return qbtypes.Read{}, err
+	}
+	whenAbsent, err := absentReads(q, key, columns)
+	if err != nil {
+		return qbtypes.Read{}, err
+	}
+	temporal, err := m.columnIsTemporal(ctx, q.StartNs, q.EndNs, key)
+	if err != nil {
+		return qbtypes.Read{}, err
+	}
+	read := qbtypes.Read{SQL: sql, WhenAbsent: whenAbsent, KeepType: temporal}
+	switch {
+	case key.FieldContext == telemetrytypes.FieldContextScope:
+		read.Presence = scopeJSONExistsExpression(key, sql, true)
+		read.Absence = scopeJSONExistsExpression(key, sql, false)
+	case len(exprs) == 1 && len(existExprs) == 1:
+		// one column with its own test: a map key, a materialized column, or
+		// a JSON path, where a numeric or bool attribute is present as its
+		// type only
+		read.Presence, read.Absence = existExprs[0], negatePresence(existExprs[0])
+	default:
+		if read.Presence, err = querybuilder.ExistsExpression(columns, key, q.StartNs, q.EndNs, sql, true); err != nil {
+			return qbtypes.Read{}, err
+		}
+		if read.Absence, err = querybuilder.ExistsExpression(columns, key, q.StartNs, q.EndNs, sql, false); err != nil {
+			return qbtypes.Read{}, err
+		}
+	}
+	return read, nil
+}
+
+// negatePresence negates a single column's presence test in its own form.
+func negatePresence(presence string) string {
+	if strings.HasSuffix(presence, " IS NOT NULL") {
+		return strings.TrimSuffix(presence, " IS NOT NULL") + " IS NULL"
+	}
+	return "NOT " + presence
+}
+
+// foldAbsentJSONReadToTypeDefault gives negative operators on a numeric/bool JSON attribute the
+// legacy Map's absent-key semantics. Negative operators carry no guard, so NULL <> x would drop rows
+// lacking the key, whereas the Map defaulted them to the type zero and kept them (0 <> x).
+// String needs no fold: its ::String value already reads absent as the empty string.
+func foldAbsentJSONReadToTypeDefault(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, expr string) string {
+	if !operator.IsNegativeOperator() || operator == qbtypes.FilterOperatorNotExists {
+		return expr
+	}
+	if key.FieldContext != telemetrytypes.FieldContextAttribute {
+		return expr
+	}
+	if !attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
+		return expr
+	}
+	switch key.FieldDataType {
+	case telemetrytypes.FieldDataTypeInt64,
+		telemetrytypes.FieldDataTypeFloat64,
+		telemetrytypes.FieldDataTypeNumber:
+		return fmt.Sprintf("ifNull(%s, 0)", expr)
+	case telemetrytypes.FieldDataTypeBool:
+		return fmt.Sprintf("ifNull(%s, false)", expr)
+	}
+	return expr
+}
+
+// Fallback answers a key metadata does not report. A bare key that names a
+// real column is that column. A span or trace context is kept as written,
+// and corrects to the attribute maps when it names no column. A strict
+// context synthesizes its type variants under the stripped and the literal
+// spelling.
+func (m *storage) Fallback(ctx context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, value any) ([]*telemetrytypes.LogicalField, error) {
+	var keys []*telemetrytypes.TelemetryFieldKey
+	switch key.FieldContext {
+	case telemetrytypes.FieldContextUnspecified:
+		probe := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextSpan, key.FieldDataType)
+		if columns, err := m.getColumn(ctx, 0, 0, probe); err == nil {
+			keys = []*telemetrytypes.TelemetryFieldKey{stampColumnType(probe, columns)}
+		} else {
+			keys = querybuilder.SynthesizeKeys(key, value)
+		}
+	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextTrace:
+		if columns, err := m.getColumn(ctx, 0, 0, key); err == nil {
+			column := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
+			keys = []*telemetrytypes.TelemetryFieldKey{stampColumnType(column, columns)}
+		} else {
+			// the stripped name lives in the attribute maps
+			stripped := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextUnspecified, key.FieldDataType)
+			keys = querybuilder.SynthesizeKeys(stripped, value)
+		}
+	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope:
+		if declared, ok := IntrinsicFields[key.Name]; ok && key.FieldContext == telemetrytypes.FieldContextScope && declared.FieldContext == telemetrytypes.FieldContextScope {
+			keys = []*telemetrytypes.TelemetryFieldKey{&declared}
+			break
+		}
+		// a context can be a legitimate prefix in user data
+		literal := telemetrytypes.NewTelemetryFieldKey(key.FieldContext.StringValue()+"."+key.Name, key.FieldContext, key.FieldDataType)
+		keys = append(querybuilder.SynthesizeKeys(key, value), querybuilder.SynthesizeKeys(literal, value)...)
+	}
+	return querybuilder.WrapAsLogicalFields(key.Name, keys), nil
+}
+
+// stampColumnType gives an untyped column key the data type its column reads
+// as, so the intrinsic-column step can compare it with same-named metadata.
+func stampColumnType(key *telemetrytypes.TelemetryFieldKey, columns []*schema.Column) *telemetrytypes.TelemetryFieldKey {
+	if key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified && len(columns) > 0 {
+		key.FieldDataType = querybuilder.ColumnDataType(columns[0])
+	}
+	return key
+}
+
+func (m *storage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{
+		Split:       qbtypes.MainOfSplit,
+		OwnContexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextTrace},
+	}
+}
+
+// Compile keeps the trace-specific rules ahead of the shared condition: a
+// span scope key compiles to a structural predicate, a duration operand
+// accepts duration syntax, and a negative operator on a numeric or bool JSON
+// attribute reads the absent key as the map's type default.
+func (m *storage) Compile(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (qbtypes.Compiled, error) {
+	if isSpanSearchScopeField(logical.Name) {
+		condition, err := buildSpanScopeCondition(logical.Single(), operator, value, q.StartNs)
+		if err != nil {
+			return qbtypes.Compiled{}, err
+		}
+		return qbtypes.Compiled{Condition: condition}, nil
+	}
+	// TODO(srikanthccv): maybe extend this to every possible attribute
+	if logical.Name == "duration_nano" || logical.Name == "durationNano" { // QoL improvement
+		coerced, err := querybuilder.CoerceDurationValue(value)
+		if err != nil {
+			return qbtypes.Compiled{}, err
+		}
+		value = coerced
+	}
+	read, err := querybuilder.LogicalRead(ctx, q, m, logical)
+	if err != nil {
+		return qbtypes.Compiled{}, err
+	}
+	// Fold the absent read to the Map's type default on the raw numeric/bool read, before the
+	// collision cast: the read is then non-nullable (like a Map column), so a downstream string
+	// cast (numeric member vs a string value) can't pair a Nullable(String) with the numeric
+	// default and raise a type mismatch.
+	read.SQL = foldAbsentJSONReadToTypeDefault(logical.Single(), operator, read.SQL)
+	return querybuilder.SharedConditionForRead(ctx, q, m, logical, read, operator, value, sb)
+}
