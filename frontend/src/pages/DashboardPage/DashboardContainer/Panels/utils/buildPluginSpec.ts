@@ -122,7 +122,8 @@ function isEmptySlice(value: object): boolean {
 
 /**
  * Translates stacking across a Bar↔Area switch rather than dropping it. Area's
- * `percent` has no bar equivalent, so it collapses to stacked-on.
+ * `percent` has no bar equivalent, so it collapses to stacked-on; a stack-mode kind
+ * with nothing to carry starts on `normal`.
  */
 function seedStacking(
 	controls: SectionControls[SectionKind.Visualization],
@@ -151,6 +152,7 @@ function seedStacking(
 					: DashboardtypesStackModeDTO.none,
 			};
 		}
+		return { stack: DashboardtypesStackModeDTO.normal };
 	}
 	return {};
 }

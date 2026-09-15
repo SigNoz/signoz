@@ -217,6 +217,22 @@ describe('buildPluginSpec', () => {
 			).toStrictEqual({ stackedBarChart: false });
 		});
 
+		it('defaults a stack-mode kind to normal when there is nothing to carry', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.Visualization,
+					controls: { switchPanelKind: true, stackMode: true },
+				},
+			];
+
+			expect(buildPluginSpec(sections).visualization).toStrictEqual({
+				stack: DashboardtypesStackModeDTO.normal,
+			});
+			expect(
+				buildPluginSpec(sections, { oldSpec: oldSpecWith({}) }).visualization,
+			).toStrictEqual({ stack: DashboardtypesStackModeDTO.normal });
+		});
+
 		it('carries an Area stack mode unchanged between Area panels', () => {
 			const sections: SectionConfig[] = [
 				{
@@ -713,10 +729,11 @@ describe('buildPluginSpec', () => {
 			});
 		});
 
-		it('seeds the full Area default set, filled solid', () => {
+		it('seeds the full Area default set, filled solid and stacked', () => {
 			expect(buildPluginSpec(areaSections)).toStrictEqual({
 				visualization: {
 					timePreference: DashboardtypesTimePreferenceDTO.global_time,
+					stack: DashboardtypesStackModeDTO.normal,
 				},
 				legend: { position: DashboardtypesLegendPositionDTO.bottom },
 				chartAppearance: {
