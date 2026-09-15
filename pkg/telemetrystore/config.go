@@ -64,6 +64,9 @@ func newConfig() factory.Config {
 		Clickhouse: ClickhouseConfig{
 			DSN:     "tcp://localhost:9000",
 			Cluster: "cluster",
+			QuerySettings: QuerySettings{
+				SecondaryIndicesEnableBulkFiltering: true,
+			},
 		},
 	}
 
