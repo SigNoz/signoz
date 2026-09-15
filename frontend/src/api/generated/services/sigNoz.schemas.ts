@@ -113,10 +113,12 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelWebhookConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	bearerToken?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	password?: string;
 	/**
@@ -180,6 +182,7 @@ export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	group?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	routingKey: string;
 	/**
@@ -219,6 +222,7 @@ export type AlertmanagertypesChannelOpsgenieConfigDTODetails = {
 export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiKey: string;
 	/**
@@ -332,6 +336,7 @@ export type AlertmanagertypesChannelJiraConfigDTOCustomFields = {
 export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiToken: string;
 	/**
@@ -407,6 +412,7 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelJSMOpsConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiKey: string;
 	/**
@@ -466,6 +472,7 @@ export interface AlertmanagertypesChannelIncidentIOConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	token: string;
 	/**
