@@ -48,6 +48,7 @@ function OtherFields({
 	);
 
 	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
+		// Normalize: synthesize `key` once so downstream reads can trust it.
 		const suggestions: TelemetryFieldKey[] = mergeStaticFields(
 			staticFields,
 			fetchedFields ?? [],
