@@ -93,7 +93,7 @@ func MustNewRegistry() featuretypes.Registry {
 			Name:           FeatureResolveSemconvFamilies,
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
-			Description:    "Controls whether trace queries resolve a semantic-convention name to all the spellings of its family",
+			Description:    "Controls whether trace, log, and metric queries resolve a semantic-convention name to all the spellings of its family",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
