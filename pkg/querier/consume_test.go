@@ -220,20 +220,21 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 		assert.False(t, nested, "nested objects must be flattened away, not kept")
 	})
 
-	t.Run("straddle: json paths win over legacy map on collision, union otherwise", func(t *testing.T) {
+	t.Run("straddle: legacy maps win over json paths on collision, json fills gaps", func(t *testing.T) {
 		data := map[string]any{
 			"attributes_string": map[string]string{"http.route": "/old", "only.map": "m"},
 			"attributes_number": map[string]float64{"http.status": 500},
-			"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/new"}},
+			"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/new"}, "only.json": "j"},
 			"resources_string":  map[string]string{"service.name": "api"},
 		}
 
 		mergeSpanAttributeColumns(data)
 
 		attrs := data["attributes"].(map[string]any)
-		assert.Equal(t, "/new", attrs["http.route"], "json home wins on collision")
+		assert.Equal(t, "/old", attrs["http.route"], "map home wins on collision while maps are written")
 		assert.Equal(t, "m", attrs["only.map"], "map-only key survives")
 		assert.Equal(t, float64(500), attrs["http.status"], "number map key survives")
+		assert.Equal(t, "j", attrs["only.json"], "json-only key fills the gap")
 		for _, removed := range []string{"attributes_string", "attributes_number", "attributes_bool"} {
 			_, present := data[removed]
 			assert.False(t, present, "%s should be removed", removed)
@@ -285,8 +286,9 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 		// Divergence from the legacy home, pinned deliberately: a top-level array
 		// attribute lands in attributes_string as the JSON-encoded string
 		// [{"a":1},{"b":2}] (collector: pcommon Value.AsString on a slice), while the
-		// JSON column stores it natively. Reading the JSON home surfaces the typed
-		// array; we do not stringify it to mimic the map home.
+		// JSON column stores it natively. While maps are written the string form
+		// wins on collision; once the JSON column is the only home the typed array
+		// surfaces. We do not stringify it to mimic the map home.
 		data := map[string]any{
 			"attributes":       telemetrystoretypes.JSONValue{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
 			"resources_string": map[string]string{"service.name": "api"},
@@ -302,7 +304,8 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 		// Divergence from the legacy home, pinned deliberately: the collector's
 		// flatten.FlattenJSON descends into arrays nested in a map-valued attribute
 		// using the element index as a path segment (http.items.0.a), while reading
-		// the JSON home keeps the array whole at its dotted key.
+		// the JSON home keeps the array whole at its dotted key. Once the JSON
+		// column is the only home the indexed keys stop appearing.
 		data := map[string]any{
 			"attributes":       telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
 			"resources_string": map[string]string{"service.name": "api"},
@@ -314,6 +317,23 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 		assert.Equal(t, []any{map[string]any{"a": float64(1)}}, attrs["http.items"])
 		_, exploded := attrs["http.items.0.a"]
 		assert.False(t, exploded, "index path segments are a collector flattening artifact and must not appear")
+	})
+
+	t.Run("dual-written nested array surfaces both legacy index keys and the json array", func(t *testing.T) {
+		// Accepted dual-write shape: the maps carry the collector-flattened index
+		// keys and the JSON home adds the native array at the dotted key; the two
+		// coexist until map ingestion stops.
+		data := map[string]any{
+			"attributes_number": map[string]float64{"http.items.0.a": 1},
+			"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
+			"resources_string":  map[string]string{"service.name": "api"},
+		}
+
+		mergeSpanAttributeColumns(data)
+
+		attrs := data["attributes"].(map[string]any)
+		assert.Equal(t, float64(1), attrs["http.items.0.a"], "legacy index key from the maps survives")
+		assert.Equal(t, []any{map[string]any{"a": float64(1)}}, attrs["http.items"], "native array from the json home appears alongside")
 	})
 
 	t.Run("json null is kept as a nil value (never emitted by ClickHouse JSON; defensive pin)", func(t *testing.T) {

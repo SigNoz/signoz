@@ -487,8 +487,8 @@ func jsonAttributeMap(v any) (map[string]any, bool) {
 
 // flattenJSONPaths flattens a decoded JSON document into dotted keys (a nested {"http":{"route":x}}
 // becomes "http.route": x), matching the legacy map representation so the attributes bag has the
-// same flat shape whether it was read from the maps or the JSON column. Existing keys are
-// overwritten, so a JSON path wins over a same-named map entry.
+// same flat shape whether it was read from the maps or the JSON column. It writes into out
+// unconditionally; home precedence is decided by the caller's merge order.
 func flattenJSONPaths(prefix string, m map[string]any, out map[string]any) {
 	for k, v := range m {
 		key := k
@@ -511,7 +511,10 @@ func flattenJSONPaths(prefix string, m map[string]any, out map[string]any) {
 // and `links` columns into structured slices. Raw DB columns are removed.
 //
 // After the JSON rollout the attributes bag is read from the `attributes` JSON column instead of,
-// or alongside, the legacy maps; those paths are flattened in and win over the maps on collision.
+// or alongside, the legacy maps. The JSON document is flattened in first and the legacy maps are
+// merged over it, so a map value wins on collision and the JSON home only contributes keys the
+// maps do not already carry. While the collector dual-writes, the legacy representation is what
+// the response shows; the JSON home only takes over once map ingestion stops.
 func mergeSpanAttributeColumns(data map[string]any) {
 	attrStr, hasStr := data["attributes_string"]
 	attrNum, hasNum := data["attributes_number"]
@@ -521,6 +524,9 @@ func mergeSpanAttributeColumns(data map[string]any) {
 	resStr, hasRes := data["resources_string"]
 	if hasStr || hasNum || hasBool || hasJSON || hasRes {
 		attributes := make(map[string]any)
+		if hasJSON {
+			flattenJSONPaths("", attrJSON, attributes)
+		}
 		if m, ok := attrStr.(map[string]string); ok {
 			for k, v := range m {
 				attributes[k] = v
@@ -535,9 +541,6 @@ func mergeSpanAttributeColumns(data map[string]any) {
 			for k, v := range m {
 				attributes[k] = v
 			}
-		}
-		if hasJSON {
-			flattenJSONPaths("", attrJSON, attributes)
 		}
 		delete(data, "attributes_string")
 		delete(data, "attributes_number")
