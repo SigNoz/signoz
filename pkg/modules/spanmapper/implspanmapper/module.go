@@ -70,13 +70,6 @@ func (module *module) UpdateGroup(ctx context.Context, orgID, id valuer.UUID, na
 }
 
 func (module *module) DeleteGroup(ctx context.Context, orgID, id valuer.UUID) error {
-	group, err := module.store.GetGroup(ctx, orgID, id)
-	if err != nil {
-		return err
-	}
-	if err := group.ErrIfNotDeletable(); err != nil {
-		return err
-	}
 	if err := module.store.DeleteGroup(ctx, orgID, id); err != nil {
 		return err
 	}
@@ -122,15 +115,7 @@ func (module *module) UpdateMapper(ctx context.Context, orgID, groupID, id value
 }
 
 func (module *module) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error {
-	mapper, err := module.store.GetMapper(ctx, orgID, groupID, id)
-	if err != nil {
-		return err
-	}
-	if err := mapper.ErrIfNotDeletable(); err != nil {
-		return err
-	}
-	err = module.store.DeleteMapper(ctx, orgID, groupID, id)
-	if err != nil {
+	if err := module.store.DeleteMapper(ctx, orgID, groupID, id, spantypes.SpanMapperOriginUser); err != nil {
 		return err
 	}
 	agentConf.NotifyConfigUpdate(ctx)

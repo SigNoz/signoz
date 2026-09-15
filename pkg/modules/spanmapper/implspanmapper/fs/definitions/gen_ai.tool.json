@@ -1,7 +1,7 @@
 {
   "version": 1,
   "definition": {
-    "name": "tool",
+    "name": "gen_ai.tool",
     "condition": {
       "attributes": [
         {

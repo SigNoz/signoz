@@ -95,7 +95,7 @@ func (module *module) applyDefinition(ctx context.Context, orgID valuer.UUID, gr
 		}
 		mapper.Config.Sources = mergeShippedSources(mapper.Config.Sources, nil)
 		if len(mapper.Config.Sources) == 0 {
-			if err := module.store.DeleteMapper(ctx, orgID, group.ID, mapper.ID); err != nil {
+			if err := module.store.DeleteMapper(ctx, orgID, group.ID, mapper.ID, spantypes.SpanMapperOriginSystem); err != nil {
 				return err
 			}
 			continue

@@ -126,6 +126,7 @@ func (s *store) DeleteGroup(ctx context.Context, orgID, id valuer.UUID) error {
 			Model((*spantypes.StorableSpanMapperGroup)(nil)).
 			Where("org_id = ?", orgID).
 			Where("id = ?", id).
+			Where("origin = ?", spantypes.SpanMapperOriginUser).
 			Exec(ctx)
 		if err != nil {
 			return err
@@ -136,6 +137,13 @@ func (s *store) DeleteGroup(ctx context.Context, orgID, id valuer.UUID) error {
 			return err
 		}
 		if rowsAffected == 0 {
+			group, err := s.GetGroup(ctx, orgID, id)
+			if err != nil {
+				return err
+			}
+			if err := group.ErrIfNotDeletable(); err != nil {
+				return err
+			}
 			return errors.Newf(errors.TypeNotFound, spantypes.ErrCodeMappingGroupNotFound, "span mapper group %s not found", id)
 		}
 		return nil
@@ -217,7 +225,7 @@ func (s *store) UpdateMapper(ctx context.Context, mapper *spantypes.SpanMapper) 
 	return nil
 }
 
-func (s *store) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error {
+func (s *store) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID, origin spantypes.SpanMapperOrigin) error {
 	if _, err := s.GetGroup(ctx, orgID, groupID); err != nil {
 		return err
 	}
@@ -228,6 +236,7 @@ func (s *store) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID
 		Model((*spantypes.StorableSpanMapper)(nil)).
 		Where("group_id = ?", groupID).
 		Where("id = ?", id).
+		Where("origin = ?", origin).
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -238,6 +247,13 @@ func (s *store) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID
 		return err
 	}
 	if rowsAffected == 0 {
+		mapper, err := s.GetMapper(ctx, orgID, groupID, id)
+		if err != nil {
+			return err
+		}
+		if err := mapper.ErrIfNotDeletable(); err != nil {
+			return err
+		}
 		return errors.Newf(errors.TypeNotFound, spantypes.ErrCodeMapperNotFound, "span mapper %s not found", id)
 	}
 	return nil

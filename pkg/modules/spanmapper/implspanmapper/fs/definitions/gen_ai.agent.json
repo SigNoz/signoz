@@ -1,7 +1,7 @@
 {
   "version": 1,
   "definition": {
-    "name": "agent",
+    "name": "gen_ai.agent",
     "condition": {
       "attributes": [
         {

@@ -35,12 +35,12 @@ def test_default_groups_are_seeded_and_shipped_items_are_toggle_only(
     list_groups = requests.get(signoz.self.host_configs["8080"].get(GROUPS_PATH), timeout=10, headers=headers)
     assert list_groups.status_code == HTTPStatus.OK
     groups = {g["name"]: g for g in list_groups.json()["data"]["items"]}
-    assert {"llm", "agent", "tool"} <= set(groups)
-    for name in ("llm", "agent", "tool"):
+    assert {"gen_ai.llm", "gen_ai.agent", "gen_ai.tool"} <= set(groups)
+    for name in ("gen_ai.llm", "gen_ai.agent", "gen_ai.tool"):
         assert groups[name]["origin"] == "system"
         assert groups[name]["version"] >= 1
         assert groups[name]["createdBy"] == "signoz"
-    llm = groups["llm"]
+    llm = groups["gen_ai.llm"]
     assert llm["condition"]["attributes"] == [{"value": "model", "enabled": True, "origin": "system"}]
 
     list_mappers = requests.get(signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{llm['id']}/span_mappers"), timeout=10, headers=headers)
@@ -56,7 +56,7 @@ def test_default_groups_are_seeded_and_shipped_items_are_toggle_only(
         signoz.self.host_configs["8080"].get(GROUPS_PATH),
         timeout=10,
         headers=headers,
-        json={"name": "tool", "condition": {"attributes": [{"value": "tool", "enabled": True}], "resource": []}, "enabled": True},
+        json={"name": "gen_ai.tool", "condition": {"attributes": [{"value": "tool", "enabled": True}], "resource": []}, "enabled": True},
     )
     assert reserved.status_code == HTTPStatus.BAD_REQUEST
     assert reserved.json()["error"]["code"] == "span_attribute_mapping_group_name_reserved"
@@ -93,7 +93,7 @@ def test_default_groups_are_seeded_and_shipped_items_are_toggle_only(
         headers=headers,
         json={
             "spans": [{"attributes": {"llm.model_name": "gpt-4o"}, "resource": {}}],
-            "groups": [{"name": "llm", "condition": llm["condition"], "enabled": True}],
+            "groups": [{"name": "gen_ai.llm", "condition": llm["condition"], "enabled": True}],
         },
     )
     assert simulate.status_code == HTTPStatus.OK
@@ -127,13 +127,13 @@ def test_default_groups_are_seeded_and_shipped_items_are_toggle_only(
     assert patch_group.status_code == HTTPStatus.NO_CONTENT
 
     list_groups = requests.get(signoz.self.host_configs["8080"].get(GROUPS_PATH), timeout=10, headers=headers)
-    llm_after = {g["name"]: g for g in list_groups.json()["data"]["items"]}["llm"]
+    llm_after = {g["name"]: g for g in list_groups.json()["data"]["items"]}["gen_ai.llm"]
     assert llm_after["condition"]["attributes"] == [
         {"value": "model", "enabled": False, "origin": "system"},
         {"value": "gen_ai.request.model", "enabled": True, "origin": "user"},
     ]
     assert llm_after["origin"] == "system"
-    assert llm_after["name"] == "llm"
+    assert llm_after["name"] == "gen_ai.llm"
 
     # Leave the shipped group as seeded for the other suites.
     restore_group = requests.patch(
