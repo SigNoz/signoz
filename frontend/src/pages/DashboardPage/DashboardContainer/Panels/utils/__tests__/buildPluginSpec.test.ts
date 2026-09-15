@@ -5,12 +5,14 @@ import {
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesPanelSpecDTO,
+	DashboardtypesStackModeDTO,
 	DashboardtypesThresholdFormatDTO,
 	DashboardtypesTimePreferenceDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import { defaultColumnsForSignal } from '../../../PanelEditor/ListColumnsEditor/selectFields';
+import { sections as areaSections } from '../../kinds/AreaChartPanel/sections';
 import { sections as listSections } from '../../kinds/ListPanel/sections';
 import { sections as timeSeriesSections } from '../../kinds/TimeSeriesPanel/sections';
 import {
@@ -178,6 +180,73 @@ describe('buildPluginSpec', () => {
 			});
 		});
 
+		it('translates Bar stacking into an Area stack mode', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.Visualization,
+					controls: { switchPanelKind: true, stackMode: true },
+				},
+			];
+			const oldSpec = oldSpecWith({ visualization: { stackedBarChart: true } });
+
+			expect(buildPluginSpec(sections, { oldSpec }).visualization).toStrictEqual({
+				stack: DashboardtypesStackModeDTO.normal,
+			});
+		});
+
+		it('translates an Area stack mode into Bar stacking, collapsing percent', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.Visualization,
+					controls: { switchPanelKind: true, stacking: true },
+				},
+			];
+
+			const fromPercent = oldSpecWith({
+				visualization: { stack: DashboardtypesStackModeDTO.percent },
+			});
+			expect(
+				buildPluginSpec(sections, { oldSpec: fromPercent }).visualization,
+			).toStrictEqual({ stackedBarChart: true });
+
+			const fromNone = oldSpecWith({
+				visualization: { stack: DashboardtypesStackModeDTO.none },
+			});
+			expect(
+				buildPluginSpec(sections, { oldSpec: fromNone }).visualization,
+			).toStrictEqual({ stackedBarChart: false });
+		});
+
+		it('carries an Area stack mode unchanged between Area panels', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.Visualization,
+					controls: { switchPanelKind: true, stackMode: true },
+				},
+			];
+			const oldSpec = oldSpecWith({
+				visualization: { stack: DashboardtypesStackModeDTO.percent },
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).visualization).toStrictEqual({
+				stack: DashboardtypesStackModeDTO.percent,
+			});
+		});
+
+		it('seeds no stacking field when the target declares neither control', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Visualization, controls: { switchPanelKind: true } },
+			];
+			const oldSpec = oldSpecWith({
+				visualization: {
+					stackedBarChart: true,
+					stack: DashboardtypesStackModeDTO.percent,
+				},
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec })).toStrictEqual({});
+		});
+
 		it('carries old legend position but never customColors', () => {
 			const sections: SectionConfig[] = [
 				{
@@ -262,6 +331,99 @@ describe('buildPluginSpec', () => {
 				},
 			];
 			expect(buildPluginSpec(sections)).toStrictEqual({});
+		});
+
+		it('defaults fillMode to solid for a kind that offers fill opacity', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.ChartAppearance,
+					controls: { fillMode: true, fillOpacity: true },
+				},
+			];
+			expect(buildPluginSpec(sections).chartAppearance).toStrictEqual({
+				fillMode: DashboardtypesFillModeDTO.solid,
+			});
+		});
+
+		// `none` is absent from the AreaFillMode wire enum, so carrying it would fail the save.
+		it('coerces an unfilled source fillMode to solid for a filled kind', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.ChartAppearance,
+					controls: { fillMode: true, fillOpacity: true },
+				},
+			];
+			const oldSpec = oldSpecWith({
+				chartAppearance: { fillMode: DashboardtypesFillModeDTO.none },
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).chartAppearance).toStrictEqual(
+				{
+					fillMode: DashboardtypesFillModeDTO.solid,
+				},
+			);
+		});
+
+		it('carries a filled source fillMode unchanged', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.ChartAppearance,
+					controls: { fillMode: true, fillOpacity: true },
+				},
+			];
+			const oldSpec = oldSpecWith({
+				chartAppearance: { fillMode: DashboardtypesFillModeDTO.gradient },
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).chartAppearance).toStrictEqual(
+				{
+					fillMode: DashboardtypesFillModeDTO.gradient,
+				},
+			);
+		});
+
+		// TimeSeries keeps all three modes, so an Area -> TimeSeries switch needs no coercion.
+		it('leaves fillMode alone for a kind that can be unfilled', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.ChartAppearance, controls: { fillMode: true } },
+			];
+			const oldSpec = oldSpecWith({
+				chartAppearance: { fillMode: DashboardtypesFillModeDTO.none },
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).chartAppearance).toStrictEqual(
+				{
+					fillMode: DashboardtypesFillModeDTO.none,
+				},
+			);
+		});
+
+		it('carries fillOpacity only when the target declares it, including 0', () => {
+			const withOpacity: SectionConfig[] = [
+				{
+					kind: SectionKind.ChartAppearance,
+					controls: { fillMode: true, fillOpacity: true },
+				},
+			];
+			const withoutOpacity: SectionConfig[] = [
+				{ kind: SectionKind.ChartAppearance, controls: { fillMode: true } },
+			];
+			const oldSpec = oldSpecWith({
+				chartAppearance: {
+					fillMode: DashboardtypesFillModeDTO.gradient,
+					fillOpacity: 0,
+				},
+			});
+
+			expect(
+				buildPluginSpec(withOpacity, { oldSpec }).chartAppearance,
+			).toStrictEqual({
+				fillMode: DashboardtypesFillModeDTO.gradient,
+				fillOpacity: 0,
+			});
+			expect(
+				buildPluginSpec(withoutOpacity, { oldSpec }).chartAppearance,
+			).toStrictEqual({ fillMode: DashboardtypesFillModeDTO.gradient });
 		});
 
 		it('carries old values over the defaults, gated by the declared controls', () => {
@@ -547,6 +709,20 @@ describe('buildPluginSpec', () => {
 					lineStyle: DashboardtypesLineStyleDTO.solid,
 					lineInterpolation: DashboardtypesLineInterpolationDTO.spline,
 					fillMode: DashboardtypesFillModeDTO.none,
+				},
+			});
+		});
+
+		it('seeds the full Area default set, filled solid', () => {
+			expect(buildPluginSpec(areaSections)).toStrictEqual({
+				visualization: {
+					timePreference: DashboardtypesTimePreferenceDTO.global_time,
+				},
+				legend: { position: DashboardtypesLegendPositionDTO.bottom },
+				chartAppearance: {
+					lineStyle: DashboardtypesLineStyleDTO.solid,
+					lineInterpolation: DashboardtypesLineInterpolationDTO.spline,
+					fillMode: DashboardtypesFillModeDTO.solid,
 				},
 			});
 		});

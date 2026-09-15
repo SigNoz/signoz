@@ -1,14 +1,17 @@
 import {
+	DashboardtypesAreaFillModeDTO,
 	DashboardtypesFillModeDTO,
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
+	DashboardtypesStackModeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import {
 	FillMode,
 	LineInterpolation,
 	LineStyle,
+	StackMode,
 } from 'lib/uPlotV2/config/types';
 
 /**
@@ -36,6 +39,21 @@ export const FILL_MODE_MAP: Record<DashboardtypesFillModeDTO, FillMode> = {
 	[DashboardtypesFillModeDTO.solid]: FillMode.Solid,
 	[DashboardtypesFillModeDTO.gradient]: FillMode.Gradient,
 	[DashboardtypesFillModeDTO.none]: FillMode.None,
+};
+
+/** Narrower than TimeSeries' — an area panel is always filled, so there is no `none`. */
+export const AREA_FILL_MODE_MAP: Record<
+	DashboardtypesAreaFillModeDTO,
+	FillMode
+> = {
+	[DashboardtypesAreaFillModeDTO.solid]: FillMode.Solid,
+	[DashboardtypesAreaFillModeDTO.gradient]: FillMode.Gradient,
+};
+
+export const STACK_MODE_MAP: Record<DashboardtypesStackModeDTO, StackMode> = {
+	[DashboardtypesStackModeDTO.none]: StackMode.None,
+	[DashboardtypesStackModeDTO.normal]: StackMode.Normal,
+	[DashboardtypesStackModeDTO.percent]: StackMode.Percent,
 };
 
 export const LEGEND_POSITION_MAP: Record<

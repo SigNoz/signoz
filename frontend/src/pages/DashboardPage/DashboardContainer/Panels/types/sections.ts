@@ -1,5 +1,7 @@
 import type {
 	DashboardtypesLinkDTO,
+	DashboardtypesAreaChartAppearanceDTO,
+	DashboardtypesAreaChartVisualizationDTO,
 	DashboardtypesAxesDTO,
 	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesComparisonThresholdDTO,
@@ -87,15 +89,27 @@ export type AnyThreshold =
 export type PanelFormattingSlice = DashboardtypesPanelFormattingDTO &
 	Pick<DashboardtypesTableFormattingDTO, 'columnUnits'>;
 
+// Superset spanning every kind's chart-appearance DTO. Area's `fillMode` is a
+// nominally distinct enum with the same members as TimeSeries', so the TimeSeries one
+// types the shared control.
+export type PanelChartAppearanceSlice =
+	DashboardtypesTimeSeriesChartAppearanceDTO &
+		Pick<DashboardtypesAreaChartAppearanceDTO, 'fillOpacity'>;
+
+// Superset spanning every kind's visualization DTO. Bar and Area express stacking
+// differently (`stackedBarChart` bool vs `stack` enum); a kind declares exactly one.
+export type PanelVisualizationSlice = DashboardtypesBarChartVisualizationDTO &
+	Pick<DashboardtypesAreaChartVisualizationDTO, 'stack'>;
+
 export interface SectionSpecMap {
 	[SectionKind.Formatting]: PanelFormattingSlice; // spec.plugin.spec.formatting
 	[SectionKind.Axes]: DashboardtypesAxesDTO; // spec.plugin.spec.axes
 	[SectionKind.Legend]: DashboardtypesLegendDTO; // spec.plugin.spec.legend
-	[SectionKind.ChartAppearance]: DashboardtypesTimeSeriesChartAppearanceDTO; // spec.plugin.spec.chartAppearance
+	[SectionKind.ChartAppearance]: PanelChartAppearanceSlice; // spec.plugin.spec.chartAppearance
 	[SectionKind.Buckets]: DashboardtypesHistogramBucketsDTO; // spec.plugin.spec.histogramBuckets
-	// spec.plugin.spec.visualization — typed as the Bar shape (widest superset);
+	// spec.plugin.spec.visualization — typed as the superset of every kind's shape;
 	// the `controls` bag gates which fields each kind writes.
-	[SectionKind.Visualization]: DashboardtypesBarChartVisualizationDTO;
+	[SectionKind.Visualization]: PanelVisualizationSlice;
 	[SectionKind.Thresholds]: AnyThreshold[]; // spec.plugin.spec.thresholds (variant picks the editor)
 	[SectionKind.ContextLinks]: DashboardtypesLinkDTO[]; // spec.links (PANEL-level)
 	[SectionKind.Columns]: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
@@ -124,6 +138,11 @@ export interface SectionControls {
 		lineStyle?: boolean;
 		lineInterpolation?: boolean;
 		fillMode?: boolean;
+		/**
+		 * Declaring it also marks the kind always-filled: `fillMode` drops `none` to match
+		 * the narrower `AreaFillMode` wire enum the save API validates against.
+		 */
+		fillOpacity?: boolean;
 		showPoints?: boolean;
 		spanGaps?: boolean;
 	};
@@ -133,12 +152,13 @@ export interface SectionControls {
 		mergeQueries?: boolean;
 	};
 	// switchPanelKind → the visualization-type switcher (every kind, so you can switch
-	// away from any panel); stacking → stackedBarChart (Bar); fillSpans → fill gaps with
-	// 0 (TimeSeries).
+	// away from any panel); stacking → stackedBarChart (Bar); stackMode → stack
+	// (Area); fillSpans → fill gaps with 0 (TimeSeries / Area).
 	[SectionKind.Visualization]: {
 		switchPanelKind: boolean;
 		timePreference?: boolean;
 		stacking?: boolean;
+		stackMode?: boolean;
 		fillSpans?: boolean;
 	};
 	// Editor discriminator (not a spec field): which threshold variant a kind edits.

@@ -1,0 +1,19 @@
+.row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.slider {
+	flex: 1;
+	min-width: 0;
+}
+
+.value {
+	flex-shrink: 0;
+	min-width: 36px;
+	text-align: right;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	color: var(--l3-foreground);
+}

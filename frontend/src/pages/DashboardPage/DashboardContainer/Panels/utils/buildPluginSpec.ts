@@ -5,6 +5,7 @@ import {
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesPanelSpecDTO,
+	DashboardtypesStackModeDTO,
 	DashboardtypesThresholdFormatDTO,
 	DashboardtypesTextAlignDTO,
 	DashboardtypesTimePreferenceDTO,
@@ -119,6 +120,41 @@ function isEmptySlice(value: object): boolean {
 		: Object.keys(value).length === 0;
 }
 
+/**
+ * Translates stacking across a Bar↔Area switch rather than dropping it. Area's
+ * `percent` has no bar equivalent, so it collapses to stacked-on.
+ */
+function seedStacking(
+	controls: SectionControls[SectionKind.Visualization],
+	old: SectionSpecMap[SectionKind.Visualization] | undefined,
+): Pick<
+	SectionSpecMap[SectionKind.Visualization],
+	'stack' | 'stackedBarChart'
+> {
+	if (controls.stacking) {
+		if (old?.stackedBarChart !== undefined) {
+			return { stackedBarChart: old.stackedBarChart };
+		}
+		if (old?.stack !== undefined) {
+			return { stackedBarChart: old.stack !== DashboardtypesStackModeDTO.none };
+		}
+		return {};
+	}
+	if (controls.stackMode) {
+		if (old?.stack !== undefined) {
+			return { stack: old.stack };
+		}
+		if (old?.stackedBarChart !== undefined) {
+			return {
+				stack: old.stackedBarChart
+					? DashboardtypesStackModeDTO.normal
+					: DashboardtypesStackModeDTO.none,
+			};
+		}
+	}
+	return {};
+}
+
 const SECTION_SEEDS: SectionSeeds = {
 	[SectionKind.TextLayout]: {
 		specKey: 'presentation',
@@ -158,10 +194,7 @@ const SECTION_SEEDS: SectionSeeds = {
 					timePreference:
 						old?.timePreference ?? DashboardtypesTimePreferenceDTO.global_time,
 				}),
-				...(controls.stacking &&
-					old?.stackedBarChart !== undefined && {
-						stackedBarChart: old.stackedBarChart,
-					}),
+				...seedStacking(controls, old),
 				...(controls.fillSpans &&
 					old?.fillSpans !== undefined && { fillSpans: old.fillSpans }),
 			};
@@ -204,7 +237,8 @@ const SECTION_SEEDS: SectionSeeds = {
 			const {
 				lineStyle = DashboardtypesLineStyleDTO.solid,
 				lineInterpolation = DashboardtypesLineInterpolationDTO.spline,
-				fillMode = DashboardtypesFillModeDTO.none,
+				fillMode,
+				fillOpacity,
 				showPoints,
 				spanGaps,
 			} = oldPluginSpec?.chartAppearance ?? {};
@@ -216,7 +250,16 @@ const SECTION_SEEDS: SectionSeeds = {
 				appearance.lineInterpolation = lineInterpolation;
 			}
 			if (controls.fillMode) {
-				appearance.fillMode = fillMode;
+				const carried = fillMode ?? DashboardtypesFillModeDTO.none;
+				// An always-filled kind's wire enum has no `none`, so the save API would
+				// reject it. Keyed off the capability, not the kind.
+				appearance.fillMode =
+					controls.fillOpacity && carried === DashboardtypesFillModeDTO.none
+						? DashboardtypesFillModeDTO.solid
+						: carried;
+			}
+			if (controls.fillOpacity && typeof fillOpacity === 'number') {
+				appearance.fillOpacity = fillOpacity;
 			}
 			if (controls.showPoints && showPoints !== undefined) {
 				appearance.showPoints = showPoints;
