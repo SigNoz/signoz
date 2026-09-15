@@ -314,8 +314,8 @@ type ChannelWebhookConfig struct {
 	SendResolved *bool  `json:"sendResolved,omitempty"`
 	URL          string `json:"url" required:"true"`
 	Username     string `json:"username"`
-	Password     string `json:"password"`
-	BearerToken  string `json:"bearerToken"`
+	Password     string `json:"password" format:"password"`
+	BearerToken  string `json:"bearerToken" format:"password"`
 }
 
 func (c ChannelWebhookConfig) Validate() error {
@@ -403,7 +403,7 @@ func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (Chann
 
 type ChannelPagerdutyConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	RoutingKey   string                       `json:"routingKey" required:"true"`
+	RoutingKey   string                       `json:"routingKey" required:"true" format:"password"`
 	URL          string                       `json:"url"`
 	Source       valuer.UnsetOrNonEmptyString `json:"source"`
 	Client       valuer.UnsetOrNonEmptyString `json:"client"`
@@ -488,7 +488,7 @@ func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (Cha
 
 type ChannelOpsgenieConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	APIKey       string                       `json:"apiKey" required:"true"`
+	APIKey       string                       `json:"apiKey" required:"true" format:"password"`
 	APIURL       string                       `json:"apiUrl"`
 	Message      valuer.UnsetOrNonEmptyString `json:"message"`
 	Description  valuer.UnsetOrNonEmptyString `json:"description"`
@@ -664,7 +664,7 @@ type ChannelJiraConfig struct {
 	CustomFields      map[string]any               `json:"customFields,omitempty"`
 
 	Email    string `json:"email" required:"true"`
-	APIToken string `json:"apiToken" required:"true"`
+	APIToken string `json:"apiToken" required:"true" format:"password"`
 }
 
 func (c ChannelJiraConfig) Validate() error {
@@ -785,7 +785,7 @@ func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelS
 // keyed by the integration API key, which the notifier pins itself.
 type ChannelJSMOpsConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	APIKey       string                       `json:"apiKey" required:"true"`
+	APIKey       string                       `json:"apiKey" required:"true" format:"password"`
 	Message      valuer.UnsetOrNonEmptyString `json:"message"`
 	Description  valuer.UnsetOrNonEmptyString `json:"description"`
 	Priority     string                       `json:"priority"`
@@ -836,7 +836,7 @@ func newChannelJSMOpsConfigFromReceiver(name string, receiver *Receiver) (Channe
 type ChannelIncidentIOConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	URL          string                       `json:"url" required:"true"`
-	Token        string                       `json:"token" required:"true"`
+	Token        string                       `json:"token" required:"true" format:"password"`
 	Title        valuer.UnsetOrNonEmptyString `json:"title"`
 	Description  valuer.UnsetOrNonEmptyString `json:"description"`
 	Metadata     map[string]string            `json:"metadata,omitempty"`
