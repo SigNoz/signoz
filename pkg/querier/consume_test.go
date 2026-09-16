@@ -196,177 +196,114 @@ func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
 	}
 }
 
+// Arrays stay native leaves: the collector stringifies top-level arrays and explodes nested ones
+// into indexed keys in the legacy maps; the JSON home keeps them whole and we do not mimic either.
 func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
-	t.Run("json only flattens nested paths and preserves types", func(t *testing.T) {
-		data := map[string]any{
-			"attributes": telemetrystoretypes.JSONValue{
-				"http": map[string]any{
-					"route": "/api/pay",
-					"retry": map[string]any{"count": float64(3)},
+	testCases := []struct {
+		name string
+		data map[string]any
+		want map[string]any
+	}{
+		{
+			name: "JSONOnly_FlattensNestedPaths_PreservesTypes",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{
+					"http":      map[string]any{"route": "/api/pay", "retry": map[string]any{"count": float64(3)}},
+					"cache.hit": true,
 				},
-				"cache.hit": true,
 			},
-			"resources_string": map[string]string{"service.name": "api"},
-		}
+			want: map[string]any{"http.route": "/api/pay", "http.retry.count": float64(3), "cache.hit": true},
+		},
+		{
+			name: "Straddle_MapsWinOnCollision_JSONFillsGaps",
+			data: map[string]any{
+				"attributes_string": map[string]string{"http.route": "/old", "only.map": "m"},
+				"attributes_number": map[string]float64{"http.status": 500},
+				"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/new"}, "only.json": "j"},
+			},
+			want: map[string]any{"http.route": "/old", "only.map": "m", "http.status": float64(500), "only.json": "j"},
+		},
+		{
+			name: "MapOnly_EmptyJSONDoc_KeepsMapValues",
+			data: map[string]any{
+				"attributes_string": map[string]string{"http.route": "/map"},
+				"attributes_number": map[string]float64{"http.status": 200},
+				"attributes_bool":   map[string]bool{"cache.hit": true},
+				"attributes":        telemetrystoretypes.JSONValue{},
+			},
+			want: map[string]any{"http.route": "/map", "http.status": float64(200), "cache.hit": true},
+		},
+		{
+			name: "MapOnly_NilJSON_BehavesAsAbsent",
+			data: map[string]any{
+				"attributes_string": map[string]string{"http.route": "/map"},
+				"attributes":        telemetrystoretypes.JSONValue(nil),
+			},
+			want: map[string]any{"http.route": "/map"},
+		},
+		{
+			name: "Arrays_StayLeafValues",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"tags": []any{"a", "b"}, "codes": []any{float64(1), float64(2)}}},
+			},
+			want: map[string]any{"http.tags": []any{"a", "b"}, "http.codes": []any{float64(1), float64(2)}},
+		},
+		{
+			name: "TopLevelArrayOfMaps_StaysNativeLeaf",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
+			},
+			want: map[string]any{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
+		},
+		{
+			name: "NestedArrayOfMaps_StaysNativeLeaf_NoIndexPaths",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
+			},
+			want: map[string]any{"http.items": []any{map[string]any{"a": float64(1)}}},
+		},
+		{
+			name: "DualWritten_NestedArray_IndexKeysAndJSONArrayCoexist",
+			data: map[string]any{
+				"attributes_number": map[string]float64{"http.items.0.a": 1},
+				"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
+			},
+			want: map[string]any{"http.items.0.a": float64(1), "http.items": []any{map[string]any{"a": float64(1)}}},
+		},
+		{
+			name: "JSONNull_KeptAsNil",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"k": nil},
+			},
+			want: map[string]any{"k": nil},
+		},
+		{
+			name: "KeyIsLeafValue_NotFlattened",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"http": "plaintext"},
+			},
+			want: map[string]any{"http": "plaintext"},
+		},
+		{
+			name: "KeyIsParent_FlattensToDottedPath",
+			data: map[string]any{
+				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/a"}},
+			},
+			want: map[string]any{"http.route": "/a"},
+		},
+	}
 
-		mergeSpanAttributeColumns(data)
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			mergeSpanAttributeColumns(testCase.data)
 
-		attrs, ok := data["attributes"].(map[string]any)
-		require.True(t, ok, "attributes should be flattened to map[string]any, got %T", data["attributes"])
-		assert.Equal(t, "/api/pay", attrs["http.route"])
-		assert.Equal(t, float64(3), attrs["http.retry.count"])
-		assert.Equal(t, true, attrs["cache.hit"])
-		_, nested := attrs["http"]
-		assert.False(t, nested, "nested objects must be flattened away, not kept")
-	})
-
-	t.Run("straddle: legacy maps win over json paths on collision, json fills gaps", func(t *testing.T) {
-		data := map[string]any{
-			"attributes_string": map[string]string{"http.route": "/old", "only.map": "m"},
-			"attributes_number": map[string]float64{"http.status": 500},
-			"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/new"}, "only.json": "j"},
-			"resources_string":  map[string]string{"service.name": "api"},
-		}
-
-		mergeSpanAttributeColumns(data)
-
-		attrs := data["attributes"].(map[string]any)
-		assert.Equal(t, "/old", attrs["http.route"], "map home wins on collision while maps are written")
-		assert.Equal(t, "m", attrs["only.map"], "map-only key survives")
-		assert.Equal(t, float64(500), attrs["http.status"], "number map key survives")
-		assert.Equal(t, "j", attrs["only.json"], "json-only key fills the gap")
-		for _, removed := range []string{"attributes_string", "attributes_number", "attributes_bool"} {
-			_, present := data[removed]
-			assert.False(t, present, "%s should be removed", removed)
-		}
-	})
-
-	t.Run("map only row with empty json doc keeps every map value", func(t *testing.T) {
-		data := map[string]any{
-			"attributes_string": map[string]string{"http.route": "/map"},
-			"attributes_number": map[string]float64{"http.status": 200},
-			"attributes_bool":   map[string]bool{"cache.hit": true},
-			"attributes":        telemetrystoretypes.JSONValue{},
-			"resources_string":  map[string]string{"service.name": "api"},
-		}
-
-		mergeSpanAttributeColumns(data)
-
-		attrs := data["attributes"].(map[string]any)
-		assert.Equal(t, map[string]any{"http.route": "/map", "http.status": float64(200), "cache.hit": true}, attrs)
-	})
-
-	t.Run("map only row with nil json value behaves as absent", func(t *testing.T) {
-		data := map[string]any{
-			"attributes_string": map[string]string{"http.route": "/map"},
-			"attributes":        telemetrystoretypes.JSONValue(nil),
-			"resources_string":  map[string]string{"service.name": "api"},
-		}
-
-		mergeSpanAttributeColumns(data)
-
-		attrs := data["attributes"].(map[string]any)
-		assert.Equal(t, map[string]any{"http.route": "/map"}, attrs)
-	})
-
-	t.Run("arrays stay leaf values", func(t *testing.T) {
-		data := map[string]any{
-			"attributes":       telemetrystoretypes.JSONValue{"http": map[string]any{"tags": []any{"a", "b"}, "codes": []any{float64(1), float64(2)}}},
-			"resources_string": map[string]string{"service.name": "api"},
-		}
-
-		mergeSpanAttributeColumns(data)
-
-		attrs := data["attributes"].(map[string]any)
-		assert.Equal(t, []any{"a", "b"}, attrs["http.tags"])
-		assert.Equal(t, []any{float64(1), float64(2)}, attrs["http.codes"])
-	})
-
-	t.Run("array of maps stays a native leaf, not the collector's string form", func(t *testing.T) {
-		// Divergence from the legacy home, pinned deliberately: a top-level array
-		// attribute lands in attributes_string as the JSON-encoded string
-		// [{"a":1},{"b":2}] (collector: pcommon Value.AsString on a slice), while the
-		// JSON column stores it natively. While maps are written the string form
-		// wins on collision; once the JSON column is the only home the typed array
-		// surfaces. We do not stringify it to mimic the map home.
-		data := map[string]any{
-			"attributes":       telemetrystoretypes.JSONValue{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
-			"resources_string": map[string]string{"service.name": "api"},
-		}
-
-		mergeSpanAttributeColumns(data)
-
-		attrs := data["attributes"].(map[string]any)
-		assert.Equal(t, []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}, attrs["key"])
-	})
-
-	t.Run("array of maps nested inside a map stays a native leaf, not the collector's index paths", func(t *testing.T) {
-		// Divergence from the legacy home, pinned deliberately: the collector's
-		// flatten.FlattenJSON descends into arrays nested in a map-valued attribute
-		// using the element index as a path segment (http.items.0.a), while reading
-		// the JSON home keeps the array whole at its dotted key. Once the JSON
-		// column is the only home the indexed keys stop appearing.
-		data := map[string]any{
-			"attributes":       telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
-			"resources_string": map[string]string{"service.name": "api"},
-		}
-
-		mergeSpanAttributeColumns(data)
-
-		attrs := data["attributes"].(map[string]any)
-		assert.Equal(t, []any{map[string]any{"a": float64(1)}}, attrs["http.items"])
-		_, exploded := attrs["http.items.0.a"]
-		assert.False(t, exploded, "index path segments are a collector flattening artifact and must not appear")
-	})
-
-	t.Run("dual-written nested array surfaces both legacy index keys and the json array", func(t *testing.T) {
-		// Accepted dual-write shape: the maps carry the collector-flattened index
-		// keys and the JSON home adds the native array at the dotted key; the two
-		// coexist until map ingestion stops.
-		data := map[string]any{
-			"attributes_number": map[string]float64{"http.items.0.a": 1},
-			"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
-			"resources_string":  map[string]string{"service.name": "api"},
-		}
-
-		mergeSpanAttributeColumns(data)
-
-		attrs := data["attributes"].(map[string]any)
-		assert.Equal(t, float64(1), attrs["http.items.0.a"], "legacy index key from the maps survives")
-		assert.Equal(t, []any{map[string]any{"a": float64(1)}}, attrs["http.items"], "native array from the json home appears alongside")
-	})
-
-	t.Run("json null is kept as a nil value (never emitted by ClickHouse JSON; defensive pin)", func(t *testing.T) {
-		data := map[string]any{
-			"attributes":       telemetrystoretypes.JSONValue{"k": nil},
-			"resources_string": map[string]string{"service.name": "api"},
-		}
-
-		mergeSpanAttributeColumns(data)
-
-		attrs := data["attributes"].(map[string]any)
-		v, present := attrs["k"]
-		assert.True(t, present)
-		assert.Nil(t, v)
-	})
-
-	t.Run("same key is a leaf in one row and a parent in another", func(t *testing.T) {
-		leafRow := map[string]any{
-			"attributes":       telemetrystoretypes.JSONValue{"http": "plaintext"},
-			"resources_string": map[string]string{"service.name": "api"},
-		}
-		parentRow := map[string]any{
-			"attributes":       telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/a"}},
-			"resources_string": map[string]string{"service.name": "api"},
-		}
-
-		mergeSpanAttributeColumns(leafRow)
-		mergeSpanAttributeColumns(parentRow)
-
-		assert.Equal(t, "plaintext", leafRow["attributes"].(map[string]any)["http"])
-		parentAttrs := parentRow["attributes"].(map[string]any)
-		assert.Equal(t, "/a", parentAttrs["http.route"])
-		_, collapsed := parentAttrs["http"]
-		assert.False(t, collapsed, "the parent key must flatten away, not shadow the dotted leaf")
-	})
+			attrs, ok := testCase.data["attributes"].(map[string]any)
+			require.True(t, ok, "attributes should be map[string]any, got %T", testCase.data["attributes"])
+			assert.Equal(t, testCase.want, attrs)
+			for _, removed := range []string{"attributes_string", "attributes_number", "attributes_bool"} {
+				_, present := testCase.data[removed]
+				assert.False(t, present, "%s should be removed", removed)
+			}
+		})
+	}
 }

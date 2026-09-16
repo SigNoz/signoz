@@ -19,15 +19,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// jsonAttrColRe matches the raw `attributes` JSON column in the SELECT list (a bare column, not
-// the `attributes_string`/`_number`/`_bool` maps), mid-list or as the last column before FROM.
+// jsonAttrColRe matches the bare `attributes` JSON column in the SELECT list, not the legacy maps.
 var jsonAttrColRe = regexp.MustCompile(`,\s*attributes\s*(,| FROM )`)
 
 func newBulkTestBuilder(t *testing.T, releaseTime time.Time) *traceQueryStatementBuilder {
 	t.Helper()
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper(fl)
-	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+	storage := tracestelemetryschema.NewStorage()
 	store := telemetrytypestest.NewMockMetadataStore()
 	store.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	store.KeysMap["http.route"] = []*telemetrytypes.TelemetryFieldKey{{
@@ -38,16 +36,14 @@ func newBulkTestBuilder(t *testing.T, releaseTime time.Time) *traceQueryStatemen
 	}}
 	store.ColumnEvolutionMetadataMap["traces:attribute:__all__"] = tracestelemetryschema.MockAttributeEvolutionData(releaseTime)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
 	return NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
-		store, fm, cb, aggExprRewriter, nil, fl, false, 100000,
+		store, storage, aggExprRewriter, nil, fl, false, 100000,
 	)
 }
 
-// TestListQuerySelectsAllAttributeHomes: the empty-selectFields list query scans every
-// attributes-bag home (the three legacy maps and the JSON column) in any window, with no
-// evolution lookup.
+// TestListQuerySelectsAllAttributeHomes: every bag home is scanned in any window, with no evolution lookup.
 func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	rel := releaseTime.UnixMilli()
@@ -55,7 +51,7 @@ func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 
 	b := newBulkTestBuilder(t, releaseTime)
 
-	cases := []struct {
+	testCases := []struct {
 		name    string
 		startMs uint64
 		endMs   uint64
@@ -65,10 +61,10 @@ func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 		{"straddling rollout", uint64(rel - day), uint64(rel + day)},
 	}
 
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
 			stmt, err := b.Build(
-				context.Background(), valuer.UUID{}, tt.startMs, tt.endMs,
+				context.Background(), valuer.UUID{}, testCase.startMs, testCase.endMs,
 				qbtypes.RequestTypeRaw,
 				qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Signal: telemetrytypes.SignalTraces},
 				nil,
@@ -84,9 +80,7 @@ func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 	}
 }
 
-// TestGroupByAttributeAfterRolloutReadsJSON pins the post-dual-write guarantee at the statement
-// level: a group-by on an attribute key in a window fully after the rollout reads the JSON column,
-// never the legacy map — so aggregations keep working once map dual-write stops.
+// TestGroupByAttributeAfterRolloutReadsJSON: post-rollout group-bys read the JSON column, never the legacy map.
 func TestGroupByAttributeAfterRolloutReadsJSON(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	rel := releaseTime.UnixMilli()

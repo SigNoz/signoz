@@ -447,10 +447,8 @@ var (
 		{Name: SpanIsRemoteColumn, FieldContext: telemetrytypes.FieldContextSpan},
 	}
 
-	// ContextualSpanColumns lists the bag columns selected raw (rather than via
-	// ColumnExpressionFor) so that consume.go can merge them into unified
-	// "attributes" and "resource" maps: the legacy maps plus the attributes
-	// JSON column, merged per row with the legacy maps winning on collision.
+	// ContextualSpanColumns lists the bag columns selected raw so consume.go can merge
+	// them into unified "attributes" and "resource" maps, legacy maps winning on collision.
 	ContextualSpanColumns = []string{
 		SpanAttributesStringColumn,
 		SpanAttributesNumberColumn,

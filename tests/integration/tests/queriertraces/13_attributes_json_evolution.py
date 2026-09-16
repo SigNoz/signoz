@@ -342,11 +342,8 @@ def test_traces_attributes_json_list_view(
     insert_traces: Callable[[list[Traces]], None],
     seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
-    """The empty-selectFields list view reads every attribute home per row: the span before
-    the evolution carries attributes only in the legacy maps, the span past the map-write
-    cutoff carries them only in the `attributes` JSON column, and the dual-written span
-    carries both. One straddling raw query must surface each row's bag from its own home,
-    flattened to the legacy dotted-key shape with native types."""
+    """One straddling list query surfaces each row's attributes bag from its own home
+    (legacy maps / dual-written / JSON-only), flattened to dotted keys with native types."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
@@ -411,6 +408,5 @@ def test_traces_attributes_json_list_view(
     ]
     for row, (name, attributes) in zip(rows, expected, strict=True):
         assert row["data"]["name"] == name
-        # int/float compare equal in Python, so the map-sourced float64 and the
-        # JSON-sourced number both match the inserted values here.
+        # int/float compare equal in Python, so map-sourced float64 and JSON-sourced numbers both match.
         assert row["data"]["attributes"] == attributes, name

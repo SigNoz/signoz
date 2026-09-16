@@ -566,29 +566,19 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	}, nil
 }
 
-// jsonAttributeMap returns the decoded document of a scanned JSON attributes column (the driver
-// scans it into telemetrystoretypes.JSONValue) and whether one was present.
-func jsonAttributeMap(v any) (map[string]any, bool) {
+// jsonAttributeMap returns the decoded JSON attributes document, or nil if absent.
+func jsonAttributeMap(v any) map[string]any {
 	switch m := v.(type) {
 	case telemetrystoretypes.JSONValue:
-		if m == nil {
-			return nil, false
-		}
-		return m, true
+		return m
 	case map[string]any:
-		if m == nil {
-			return nil, false
-		}
-		return m, true
+		return m
 	default:
-		return nil, false
+		return nil
 	}
 }
 
-// flattenJSONPaths flattens a decoded JSON document into dotted keys (a nested {"http":{"route":x}}
-// becomes "http.route": x), matching the legacy map representation so the attributes bag has the
-// same flat shape whether it was read from the maps or the JSON column. It writes into out
-// unconditionally; home precedence is decided by the caller's merge order.
+// flattenJSONPaths flattens a decoded JSON document into dotted keys, overwriting existing keys in out.
 func flattenJSONPaths(prefix string, m map[string]any, out map[string]any) {
 	for k, v := range m {
 		key := k
@@ -610,21 +600,17 @@ func flattenJSONPaths(prefix string, m map[string]any, out map[string]any) {
 // unified "attributes" and "resource" keys, and parses the stringified `events`
 // and `links` columns into structured slices. Raw DB columns are removed.
 //
-// After the JSON rollout the attributes bag is read from the `attributes` JSON column instead of,
-// or alongside, the legacy maps. The JSON document is flattened in first and the legacy maps are
-// merged over it, so a map value wins on collision and the JSON home only contributes keys the
-// maps do not already carry. While the collector dual-writes, the legacy representation is what
-// the response shows; the JSON home only takes over once map ingestion stops.
+// The `attributes` JSON column is flattened in first and the legacy maps merged over it, so maps win on collision.
 func mergeSpanAttributeColumns(data map[string]any) {
 	attrStr, hasStr := data["attributes_string"]
 	attrNum, hasNum := data["attributes_number"]
 	attrBool, hasBool := data["attributes_bool"]
-	attrJSON, hasJSON := jsonAttributeMap(data["attributes"])
+	attrJSON := jsonAttributeMap(data["attributes"])
 	// todo(nitya): move to resource json
 	resStr, hasRes := data["resources_string"]
-	if hasStr || hasNum || hasBool || hasJSON || hasRes {
+	if hasStr || hasNum || hasBool || attrJSON != nil || hasRes {
 		attributes := make(map[string]any)
-		if hasJSON {
+		if attrJSON != nil {
 			flattenJSONPaths("", attrJSON, attributes)
 		}
 		if m, ok := attrStr.(map[string]string); ok {
