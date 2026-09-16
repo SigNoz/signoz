@@ -1,11 +1,12 @@
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings } from '@signozhq/icons';
+import { FieldKeysConfigProp } from 'api/querySuggestions/types';
 import FieldsSelector from 'components/FieldsSelector';
 import Controls, { ControlsProps } from 'container/Controls';
-import { UseFieldApis } from 'types/common/fieldSuggestion';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
+import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './Controls.module.scss';
@@ -15,7 +16,9 @@ function TraceExplorerControls({
 	totalCount,
 	perPageOptions,
 	config,
-	useFieldApis,
+	fieldKeysConfig,
+	builderQueryType,
+	extraFields,
 	requiredFields,
 }: TraceExplorerControlsProps): JSX.Element | null {
 	const { t } = useTranslation(['trace']);
@@ -46,7 +49,9 @@ function TraceExplorerControls({
 						onFieldsChange={config.fieldsSelector.onFieldsChange}
 						onClose={(): void => setIsFieldsSelectorOpen(false)}
 						signal={DataSource.TRACES}
-						useFieldApis={useFieldApis}
+						fieldKeysConfig={fieldKeysConfig}
+						builderQueryType={builderQueryType}
+						extraFields={extraFields}
 						requiredFields={requiredFields}
 					/>
 				</>
@@ -71,13 +76,17 @@ type TraceExplorerControlsProps = Pick<
 	'isLoading' | 'totalCount' | 'perPageOptions'
 > & {
 	config?: OptionsMenuConfig | null;
-	useFieldApis?: UseFieldApis;
+	fieldKeysConfig?: FieldKeysConfigProp;
+	builderQueryType?: BuilderQueryType;
+	extraFields?: TelemetryFieldKey[];
 	requiredFields?: readonly string[];
 };
 
 TraceExplorerControls.defaultProps = {
 	config: null,
-	useFieldApis: undefined,
+	fieldKeysConfig: undefined,
+	builderQueryType: undefined,
+	extraFields: undefined,
 	requiredFields: undefined,
 };
 

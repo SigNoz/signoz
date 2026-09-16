@@ -6,11 +6,11 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import AddedFields from './AddedFields';
-import { UseFieldApis } from 'types/common/fieldSuggestion';
 import OtherFields from './OtherFields';
 
 import styles from './FieldsSelector.module.scss';
@@ -32,7 +32,9 @@ interface FieldsSelectorProps {
 	// Lets users add a free-typed field which
 	// does not show up in the suggestions
 	allowCustomFields?: boolean;
-	useFieldApis?: UseFieldApis;
+	fieldKeysConfig?: FieldKeysConfigProp;
+	builderQueryType?: BuilderQueryType;
+	extraFields?: TelemetryFieldKey[];
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
@@ -52,7 +54,9 @@ function FieldsSelectorContent({
 	maxFields,
 	requiredFields,
 	allowCustomFields,
-	useFieldApis,
+	fieldKeysConfig,
+	builderQueryType,
+	extraFields,
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
@@ -161,7 +165,9 @@ function FieldsSelectorContent({
 					onAdd={handleAdd}
 					isAtLimit={isAtLimit}
 					allowCustomFields={allowCustomFields}
-					useFieldApis={useFieldApis}
+					fieldKeysConfig={fieldKeysConfig}
+					builderQueryType={builderQueryType}
+					extraFields={extraFields}
 				/>
 
 				{hasUnsavedChanges && (

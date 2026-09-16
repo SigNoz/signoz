@@ -1,6 +1,5 @@
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { UseFieldApis } from 'types/common/fieldSuggestion';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 export const DEFAULT_PANEL_TYPE = PANEL_TYPES.TRACE;
@@ -45,7 +44,7 @@ export const TOOLBAR_VIEWS = {
 export const TRACE_VIEW_DEFAULT_ORDER_BY = 'last_activity_time:desc';
 
 /** Display-only: ordering or filtering on one is an error, so the keys endpoint omits them. */
-export const AI_O11Y_DISPLAY_ONLY_FIELDS: TelemetryFieldKey[] = [
+export const TRACE_VIEW_COLUMN_EXTRA_FIELDS: TelemetryFieldKey[] = [
 	{ name: 'service.name', fieldContext: 'resource' },
 	{ name: 'root_span_name' },
 	{ name: 'trace_duration_nano' },
@@ -58,17 +57,12 @@ export const AI_O11Y_DISPLAY_ONLY_FIELDS: TelemetryFieldKey[] = [
 	{ name: 'output' },
 ] as TelemetryFieldKey[];
 
-const TRACE_VIEW_KEYS = {
-	builderQueryType: 'builder_ai_query',
+export const TRACE_VIEW_FIELD_KEYS = {
 	fieldContext: TelemetrytypesFieldContextDTO.trace,
 } as const;
 
-export const TRACE_VIEW_ORDER_BY_FIELDS: UseFieldApis = {
-	...TRACE_VIEW_KEYS,
-	staticFields: [{ name: 'last_activity_time' } as TelemetryFieldKey],
-};
+export const TRACE_VIEW_BUILDER_QUERY_TYPE = 'builder_ai_query' as const;
 
-export const TRACE_VIEW_COLUMN_FIELDS: UseFieldApis = {
-	...TRACE_VIEW_KEYS,
-	staticFields: AI_O11Y_DISPLAY_ONLY_FIELDS,
-};
+export const TRACE_VIEW_ORDER_BY_EXTRA_FIELDS: TelemetryFieldKey[] = [
+	{ name: 'last_activity_time' } as TelemetryFieldKey,
+];
