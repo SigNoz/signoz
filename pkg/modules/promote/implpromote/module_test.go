@@ -2,8 +2,12 @@ package implpromote
 
 import (
 	"context"
+	"regexp"
 	"testing"
 
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
@@ -97,6 +101,65 @@ func TestPromotePaths(t *testing.T) {
 				require.NoError(t, m.PromotePaths(ctx, testCase.target, testCase.paths...))
 				assert.Len(t, store.PromotedPathsMap, len(testCase.wantPromoted))
 			}
+		})
+	}
+}
+
+func TestPromotePathsCreatesIndexes(t *testing.T) {
+	ctx := context.Background()
+
+	testCases := []struct {
+		name          string
+		promoted      map[string]bool
+		path          *promotetypes.PromotePath
+		wantDDLColumn string
+	}{
+		{
+			name: "NewPromotion_IndexesPromotedColumn",
+			path: &promotetypes.PromotePath{
+				Path:    "body.user.name",
+				Promote: true,
+				Indexes: []promotetypes.WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+				},
+			},
+			wantDDLColumn: "dynamicElement(body_promoted.user.name",
+		},
+		{
+			name:     "AlreadyPromoted_IndexesPromotedColumn",
+			promoted: map[string]bool{"user.name": true},
+			path: &promotetypes.PromotePath{
+				Path: "body.user.name",
+				Indexes: []promotetypes.WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+				},
+			},
+			wantDDLColumn: "dynamicElement(body_promoted.user.name",
+		},
+		{
+			name: "UnpromotedPath_IndexesBaseColumn",
+			path: &promotetypes.PromotePath{
+				Path: "body.user.name",
+				Indexes: []promotetypes.WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+				},
+			},
+			wantDDLColumn: "dynamicElement(body_v2.user.name",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
+			store := telemetrytypestest.NewMockMetadataStore()
+			if testCase.promoted != nil {
+				store.PromotedPathsMap = testCase.promoted
+			}
+			m := NewModule(store, ts)
+
+			ts.Mock().ExpectExec("ADD INDEX (.+)" + regexp.QuoteMeta(testCase.wantDDLColumn)).WillReturnError(nil)
+			require.NoError(t, m.PromotePaths(ctx, promotetypes.NewLogsBodyTarget(), testCase.path))
+			assert.NoError(t, ts.Mock().ExpectationsWereMet())
 		})
 	}
 }
