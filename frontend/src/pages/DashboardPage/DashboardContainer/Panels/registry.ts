@@ -5,6 +5,7 @@ import { definition as PieChart } from './kinds/PieChartPanel/definition';
 import { definition as TimeSeries } from './kinds/TimeSeriesPanel/definition';
 import { definition as Table } from './kinds/TablePanel/definition';
 import { definition as List } from './kinds/ListPanel/definition';
+import { definition as Text } from './kinds/TextPanel/definition';
 import { UNSUPPORTED_PANEL } from './kinds/UnsupportedPanel/definition';
 import type {
 	PanelDefinition,
@@ -23,6 +24,7 @@ export const PANELS: PanelRegistry = {
 	[PieChart.kind]: PieChart,
 	[Histogram.kind]: Histogram,
 	[List.kind]: List,
+	[Text.kind]: Text,
 };
 
 export type PanelOption = Pick<

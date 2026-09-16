@@ -74,6 +74,15 @@ const PANELS: Record<string, DashboardtypesPanelDTO> = {
 	B: makePanel('Panel B', "service = 'bravo'"),
 };
 
+const TEXT_PANEL = {
+	kind: 'Panel',
+	spec: {
+		display: { name: 'Notes' },
+		plugin: { kind: 'signoz/TextPanel', spec: { text: '# hi' } },
+		queries: [],
+	},
+} as unknown as DashboardtypesPanelDTO;
+
 const panelOf = (json: string): string => {
 	if (json.includes('alpha')) {
 		return 'A';
@@ -164,12 +173,23 @@ function Harness(): JSX.Element {
 			>
 				drilldown B
 			</button>
+			<button
+				type="button"
+				data-testid="open-text"
+				onClick={(): void => openView('T', TEXT_PANEL)}
+			>
+				open text
+			</button>
 			<button type="button" data-testid="close" onClick={closeView}>
 				close
 			</button>
 			<StagedQueryProbe />
 			<SearchProbe />
-			{expandedPanelId && <ModalBody panelId={expandedPanelId} />}
+			{/* The production shell forks on the kind's mode; the static arm never
+			    mounts the query session this body mirrors. */}
+			{expandedPanelId && expandedPanelId !== 'T' && (
+				<ModalBody panelId={expandedPanelId} />
+			)}
 		</>
 	);
 }
@@ -224,6 +244,20 @@ describe('useViewPanel', () => {
 		const carried = search.get(QueryParams.compositeQuery);
 		expect(panelOf(decodeURIComponent(carried as string))).toBe('B');
 		expect(search.get(QueryParams.graphType)).toBeNull();
+	});
+
+	it('carries no query in the URL and stages nothing for a static kind', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderHarness();
+
+		await user.click(screen.getByTestId('open-text'));
+
+		const search = new URLSearchParams(
+			screen.getByTestId('search').textContent ?? '',
+		);
+		expect(search.get(QueryParams.expandedWidgetId)).toBe('T');
+		expect(search.get(QueryParams.compositeQuery)).toBeNull();
+		expect(stagedIds.every((id) => id === undefined)).toBe(true);
 	});
 
 	// The edit session commits any staged query on mount, so a staged query left over

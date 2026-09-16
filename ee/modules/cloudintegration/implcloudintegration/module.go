@@ -583,7 +583,7 @@ func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UU
 			return err
 		}
 
-		if err := module.dashboardModule.DeleteUnsafe(ctx, orgID, dashID); err != nil {
+		if err := module.dashboardModule.DeleteUnsafeV2(ctx, orgID, dashID); err != nil {
 			return err
 		}
 	}
