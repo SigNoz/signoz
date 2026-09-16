@@ -491,7 +491,7 @@ func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began ti
 }
 
 func (q *promqlQuery) toResultForHeatmap(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
-	tsData, err := foldMatrixAsHeatmap(matrix, &q.tr, uint64(q.query.Step.Milliseconds()), q.query.Name)
+	tsData, err := foldMatrixAsHeatmap(matrix, q.query.Name)
 	if err != nil {
 		return nil, err
 	}

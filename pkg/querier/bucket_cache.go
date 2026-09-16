@@ -95,8 +95,7 @@ func (bc *bucketCache) GetMissRanges(
 	// Merge buckets into a single result
 	mergedResult := bc.mergeBuckets(ctx, relevantBuckets, data.Warnings)
 
-	_, isPromQL := q.(*promqlQuery)
-	mergedResult = bc.filterResultToTimeRange(mergedResult, startMs, endMs, stepMs, isPromQL)
+	mergedResult = bc.filterResultToTimeRange(mergedResult, q, startMs, endMs, stepMs)
 
 	return mergedResult, missing
 }
@@ -823,12 +822,14 @@ func max(a, b uint64) uint64 {
 	return b
 }
 
-// filterResultToTimeRange filters the result to only include values within the requested time range.
-func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, endMs, stepMs uint64, isPromQL bool) *qbtypes.Result {
+// filterResultToTimeRange narrows the cached result to the requested window, both
+// the values in it and the heatmap axis under them.
+func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, q qbtypes.Query, startMs, endMs, stepMs uint64) *qbtypes.Result {
 	if result == nil || result.Value == nil {
 		return result
 	}
 
+	_, isPromQL := q.(*promqlQuery)
 	maxTimestampMs := endMs
 	// A promql value at T is the query evaluated at T, so T == endMs is inside the
 	// requested range. For every other query type the value at T aggregates
@@ -880,6 +881,8 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 				}
 			}
 
+			bc.trimHeatmapAxisToTheWindow(q, filteredData)
+
 			// Create a new result with the filtered data
 			return &qbtypes.Result{
 				Type:     result.Type,
@@ -892,4 +895,21 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 
 	// For non-time series data, return as is
 	return result
+}
+
+// a cached range covers more than the window now being asked for, so its axis
+// carries buckets only the dropped columns reached. Left there, they show as
+// empty rows the same window never has when the cache did not answer it.
+func (bc *bucketCache) trimHeatmapAxisToTheWindow(q qbtypes.Query, tsData *qbtypes.TimeSeriesData) {
+	// promql and clickhouse name their own buckets, and an empty one of theirs
+	// still belongs on the axis
+	switch q.(type) {
+	case *builderQuery[qbtypes.MetricAggregation], *builderQuery[qbtypes.LogAggregation], *builderQuery[qbtypes.TraceAggregation]:
+	default:
+		return
+	}
+
+	for _, aggBucket := range tsData.Aggregations {
+		aggBucket.TrimAxisToCountedBuckets()
+	}
 }

@@ -327,7 +327,7 @@ func BenchmarkBucketCache_FilterResultToTimeRange(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				filtered := bc.filterResultToTimeRange(result, startMs, endMs, 0, true)
+				filtered := bc.filterResultToTimeRange(result, &promqlQuery{}, startMs, endMs, 0)
 				_ = filtered
 			}
 		})
