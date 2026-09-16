@@ -55,11 +55,8 @@ function TracesTable({
 	const isDataAbsent =
 		!isLoading && !isFetching && !isError && data.length === 0;
 
-	// TanStackTable initialises the column store on mount. If that happens with
-	// columns=[] (rows can land before field keys), empty hiddenColumnIds is
-	// persisted and default-hidden columns stay visible forever.
-	const canMountTable =
-		!isError && !isLoading && columns.length > 0 && data.length !== 0;
+	// Rows can land before the field keys, and mounting then renders a partial column set.
+	const canMountTable = !isError && !isLoading && data.length !== 0;
 
 	const handleRowClick = useCallback(
 		(row: TracesTableRow): void => {
