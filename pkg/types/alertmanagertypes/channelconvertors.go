@@ -29,6 +29,22 @@ func (p *PostableNotificationChannel) ToReceiver() (*Receiver, error) {
 	return newDefaultedReceiver(receiver)
 }
 
+// ToReceiver builds the upstream receiver for an existing channel, whose display
+// name the caller supplies because the update body cannot carry it.
+func (u *UpdatableNotificationChannel) ToReceiver(displayName string) (*Receiver, error) {
+	postable := PostableNotificationChannel{DisplayName: displayName, Config: u.Config}
+	return postable.ToReceiver()
+}
+
+const testReceiverName = "test-receiver"
+
+// ToReceiver builds a throwaway receiver for a test send. The name is never
+// stored, so it only has to be something the notifier accepts.
+func (t *TestableNotificationChannel) ToReceiver() (*Receiver, error) {
+	postable := PostableNotificationChannel{DisplayName: testReceiverName, Config: t.Config}
+	return postable.ToReceiver()
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // Storage -> API
 // ════════════════════════════════════════════════════════════════════════
@@ -44,10 +60,7 @@ func (c *Channel) toPostableNotificationChannel() (*PostableNotificationChannel,
 	}
 
 	if total := countNotifierConfigs(receiver); total > 1 {
-		return nil, errors.NewInvalidInputf(
-			ErrCodeAlertmanagerChannelInvalid,
-			"channel %q carries %d notifier configurations; only one per channel is supported", c.DisplayName, total,
-		)
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q carries %d notifier configurations; only one per channel is supported", c.DisplayName, total)
 	}
 
 	for _, channelKind := range channelKinds {
@@ -67,10 +80,7 @@ func (c *Channel) toPostableNotificationChannel() (*PostableNotificationChannel,
 		}, nil
 	}
 
-	return nil, errors.NewNotFoundf(
-		ErrCodeChannelUnsupportedKind,
-		"channel %q carries no supported notifier configuration", c.DisplayName,
-	)
+	return nil, errors.NewInvalidInputf(ErrCodeChannelUnsupportedKind, "channel %q carries no supported notifier configuration", c.DisplayName)
 }
 
 // countNotifierConfigs totals every *_configs entry on the receiver, including
@@ -114,4 +124,20 @@ func (c *Channel) ToGettableNotificationChannel() (*GettableNotificationChannel,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
 	}, nil
+}
+
+// ToListedNotificationChannel reports an empty Kind for a row whose stored type
+// no ChannelKind models, which v1 allowed because it accepted every upstream
+// notifier kind. One such row must not fail the whole page.
+func (c *Channel) ToListedNotificationChannel() *ListedNotificationChannel {
+	channelKind, _ := parseStoredChannelType(c.Type)
+
+	return &ListedNotificationChannel{
+		ID:          c.ID,
+		Name:        c.Name,
+		DisplayName: c.DisplayName,
+		Kind:        channelKind,
+		CreatedAt:   c.CreatedAt,
+		UpdatedAt:   c.UpdatedAt,
+	}
 }

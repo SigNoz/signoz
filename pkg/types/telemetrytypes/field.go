@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -202,19 +203,19 @@ func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("`%s_%s_%s`",
+	return clickhousesql.Identifier(fmt.Sprintf("%s_%s_%s",
 		key.FieldContext.String,
 		fieldDataTypes[key.FieldDataType.StringValue()].StringValue(),
 		strings.ReplaceAll(key.Name, ".", "$$"),
-	)
+	))
 }
 
 func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("`%s_%s_%s_exists`",
+	return clickhousesql.Identifier(fmt.Sprintf("%s_%s_%s_exists",
 		key.FieldContext.String,
 		fieldDataTypes[key.FieldDataType.StringValue()].StringValue(),
 		strings.ReplaceAll(key.Name, ".", "$$"),
-	)
+	))
 }
 
 type TelemetryFieldValues struct {

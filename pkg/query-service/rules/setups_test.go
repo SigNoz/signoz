@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/aistatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/logsstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/tracesstatementbuilder"
@@ -116,6 +117,43 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 		nil, // promV2
 		traceStmtBuilder,
 		nil, // aiTraceStmtBuilder
+		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
+		nil, // metricStmtBuilder
+		nil, // meterStmtBuilder
+		nil, // traceOperatorStmtBuilder
+		nil, // bucketCache
+		fl,
+		0,
+		0, // maxConcurrentQueries (0 means default)
+	)
+}
+
+func prepareQuerierForAITraces(t *testing.T, telemetryStore telemetrystore.TelemetryStore, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) querier.Querier {
+	t.Helper()
+
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	metadataStore := telemetrytypestest.NewMockMetadataStore()
+
+	for _, keys := range keysMap {
+		for _, key := range keys {
+			key.Signal = telemetrytypes.SignalTraces
+		}
+	}
+	metadataStore.KeysMap = keysMap
+
+	fl := flaggertest.New(t)
+	aiTraceStmtBuilder, err := aistatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(context.Background(), providerSettings, statementbuilder.Config{})
+	require.NoError(t, err)
+
+	return querier.New(
+		providerSettings,
+		telemetryStore,
+		metadataStore,
+		nil, // prometheus
+		nil, // promV2
+		nil, // traceStmtBuilder
+		aiTraceStmtBuilder,
 		nil, // logStmtBuilder
 		nil, // auditStmtBuilder
 		nil, // metricStmtBuilder

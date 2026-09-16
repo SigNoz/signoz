@@ -3,7 +3,7 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 8px 12px;
-	border-bottom: 1px solid var(--l2-border);
+	border-bottom: 1px solid var(--text-panel-border, var(--l2-border));
 	cursor: grab;
 	min-height: 32px;
 }
@@ -20,6 +20,7 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	color: var(--text-panel-ink, inherit);
 }
 
 .badge {

@@ -1,7 +1,13 @@
 import { useMemo } from 'react';
 import { useGetFieldsValues } from 'api/generated/services/fields';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import { IQuickFiltersConfig } from 'components/QuickFilters/types';
+import {
+	TelemetrytypesSignalDTO,
+	TelemetrytypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	IQuickFiltersConfig,
+	QuickFiltersSource,
+} from 'components/QuickFilters/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 
@@ -10,6 +16,7 @@ interface UseFieldValuesProps {
 	searchText: string;
 	existingQuery?: string;
 	metricNamespace?: string;
+	source?: QuickFiltersSource;
 	startUnixMilli?: number;
 	endUnixMilli?: number;
 	enabled: boolean;
@@ -31,11 +38,18 @@ export const DATA_SOURCE_TO_SIGNAL: Record<
 	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
 };
 
+const QUICK_FILTERS_SOURCE_TO_SOURCE: Partial<
+	Record<QuickFiltersSource, TelemetrytypesSourceDTO>
+> = {
+	[QuickFiltersSource.METER_EXPLORER]: TelemetrytypesSourceDTO.meter,
+};
+
 export function useFieldValues({
 	filter,
 	searchText,
 	existingQuery,
 	metricNamespace,
+	source,
 	startUnixMilli,
 	endUnixMilli,
 	enabled,
@@ -49,6 +63,7 @@ export function useFieldValues({
 			searchText,
 			existingQuery,
 			metricNamespace,
+			source: source ? QUICK_FILTERS_SOURCE_TO_SOURCE[source] : undefined,
 			startUnixMilli,
 			// This field does not affect the backend but I wanted to keep it here
 			// in case we add the support in the future

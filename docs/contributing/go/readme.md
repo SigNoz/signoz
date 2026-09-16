@@ -12,6 +12,7 @@ We **recommend** (almost enforce) reviewing these guides before contributing to 
 
 - [Abstractions](abstractions.md) - When to introduce new types and intermediate representations
 - [Authz](authz.md) - Authorization, roles, and access control
+- [ClickHouse SQL](clickhousesql.md) - Quoting names and values in generated ClickHouse queries
 - [Errors](errors.md) - Structured error handling
 - [Endpoint](endpoint.md) - HTTP endpoint patterns
 - [Flagger](flagger.md) - Feature flag patterns
