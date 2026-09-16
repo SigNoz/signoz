@@ -275,7 +275,7 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	})
 
 	services := []string{}
-	rows, err := r.db.Query(ctx, fmt.Sprintf(`SELECT DISTINCT resource_string_service$$name FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName))
+	rows, err := r.db.Query(ctx, "SELECT DISTINCT resource_string_service$$name FROM " + r.TraceDB + "." + r.traceTableName + " WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY")
 	if err != nil {
 		return nil, fmt.Errorf("error in processing sql query")
 	}
