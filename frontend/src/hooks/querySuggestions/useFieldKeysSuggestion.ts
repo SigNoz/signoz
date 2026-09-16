@@ -12,6 +12,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	FieldKeysFilterConfig,
 	FieldKeysResponse,
@@ -19,9 +20,6 @@ import {
 import { FieldKeysConfig } from 'types/common/fieldSuggestion';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
-
-/** One entry per (query type, params) pair; the fetcher picks the endpoint. */
-const FIELD_KEYS_QUERY_KEY = 'fieldKeysSuggestion';
 
 export type FieldKeysQueryOptions = UseQueryOptions<
 	FieldKeysResponse,
@@ -57,7 +55,11 @@ export const getFieldKeysQueryOptions = (
 	};
 
 	return {
-		queryKey: [FIELD_KEYS_QUERY_KEY, builderQueryType, filterConfig],
+		queryKey: [
+			REACT_QUERY_KEY.FIELD_KEYS_SUGGESTION,
+			builderQueryType,
+			filterConfig,
+		],
 		queryFn: ({ signal }): Promise<FieldKeysResponse> =>
 			getFieldKeySuggestions(filterConfig, builderQueryType, signal),
 		select: toFieldKeys,

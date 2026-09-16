@@ -106,6 +106,9 @@ export const REACT_QUERY_KEY = {
 	// Dashboard Grid Card Query Keys
 	DASHBOARD_GRID_CARD_QUERY_RANGE: 'DASHBOARD_GRID_CARD_QUERY_RANGE',
 
+	// Field Keys Suggestion Query Keys
+	FIELD_KEYS_SUGGESTION: 'FIELD_KEYS_SUGGESTION',
+
 	// AI Assistant Query Keys
 	AI_ASSISTANT_EMPTY_STATE_CHIPS: 'AI_ASSISTANT_EMPTY_STATE_CHIPS',
 } as const;
