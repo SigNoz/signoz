@@ -1,6 +1,7 @@
 package promotetypes
 
 import (
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -90,4 +91,41 @@ func TargetFor(signal telemetrytypes.Signal, context telemetrytypes.FieldContext
 		}
 	}
 	return Target{}, false
+}
+
+// PathParams carries the raw {telemetry_signal} and {context} path variables
+// of the promote paths API.
+type PathParams struct {
+	Signal  string
+	Context string
+}
+
+// Validate ensures the path variables are known values naming a supported
+// promotion domain.
+func (p *PathParams) Validate() error {
+	signal, ok := telemetrytypes.SignalFromText(p.Signal)
+	if !ok {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", p.Signal)
+	}
+	context, ok := telemetrytypes.FieldContextFromText(p.Context)
+	if !ok {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid context: %s", p.Context)
+	}
+	if _, ok := TargetFor(signal, context); !ok {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "promotion is not supported for %s %s", signal.StringValue(), context.StringValue())
+	}
+	return nil
+}
+
+// NewTargetFromPath validates the {telemetry_signal} and {context} path
+// variables and returns their promotion domain.
+func NewTargetFromPath(signal, context string) (Target, error) {
+	params := &PathParams{Signal: signal, Context: context}
+	if err := params.Validate(); err != nil {
+		return Target{}, err
+	}
+	parsedSignal, _ := telemetrytypes.SignalFromText(params.Signal)
+	parsedContext, _ := telemetrytypes.FieldContextFromText(params.Context)
+	target, _ := TargetFor(parsedSignal, parsedContext)
+	return target, nil
 }
