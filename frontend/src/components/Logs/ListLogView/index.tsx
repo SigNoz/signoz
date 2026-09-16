@@ -6,7 +6,10 @@ import { Typography } from 'antd';
 import cx from 'classnames';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
-import { unescapeString } from 'container/LogDetailedView/utils';
+import {
+	MAX_SAFE_STRING_LENGTH,
+	unescapeString,
+} from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
@@ -54,16 +57,35 @@ function LogGeneralField({
 	linesPerRow = 1,
 	fontSize,
 }: LogFieldProps): JSX.Element {
-	const html = useMemo(
-		() => ({
-			__html: convert.toHtml(
-				dompurify.sanitize(unescapeString(fieldValue), {
+	const html = useMemo(() => {
+		const rawValue = fieldValue || '';
+		if (!rawValue) {
+			return { __html: '' };
+		}
+		if (rawValue.length > MAX_SAFE_STRING_LENGTH) {
+			return {
+				__html: dompurify.sanitize(rawValue, {
 					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 				}),
-			),
-		}),
-		[fieldValue],
-	);
+			};
+		}
+		try {
+			return {
+				__html: convert.toHtml(
+					dompurify.sanitize(unescapeString(rawValue), {
+						FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+					}),
+				),
+			};
+		} catch (error) {
+			console.error('Failed to parse log general field to HTML:', error);
+			return {
+				__html: dompurify.sanitize(rawValue, {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
+			};
+		}
+	}, [fieldValue]);
 
 	return (
 		<TextContainer>

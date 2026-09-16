@@ -14,6 +14,7 @@ import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
 import {
 	aggregateAttributesResourcesToString,
+	MAX_SAFE_STRING_LENGTH,
 	removeEscapeCharacters,
 	unescapeString,
 } from 'container/LogDetailedView/utils';
@@ -101,16 +102,35 @@ function LogDetail({
 		}
 	};
 
-	const htmlBody = useMemo(
-		() => ({
-			__html: convert.toHtml(
-				dompurify.sanitize(unescapeString(log?.body || ''), {
+	const htmlBody = useMemo(() => {
+		const rawBody = log?.body || '';
+		if (!rawBody) {
+			return { __html: '' };
+		}
+		if (rawBody.length > MAX_SAFE_STRING_LENGTH) {
+			return {
+				__html: dompurify.sanitize(rawBody, {
 					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 				}),
-			),
-		}),
-		[log?.body],
-	);
+			};
+		}
+		try {
+			return {
+				__html: convert.toHtml(
+					dompurify.sanitize(unescapeString(rawBody), {
+						FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+					}),
+				),
+			};
+		} catch (error) {
+			console.error('Failed to parse log body into HTML', error);
+			return {
+				__html: dompurify.sanitize(rawBody, {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
+			};
+		}
+	}, [log?.body]);
 
 	const handleJSONCopy = (): void => {
 		copyToClipboard(LogJsonData);
@@ -150,7 +170,14 @@ function LogDetail({
 		>
 			<div className="log-detail-drawer__log">
 				<Divider type="vertical" className={cx('log-type-indicator', logType)} />
-				<Tooltip title={removeEscapeCharacters(log?.body)} placement="left">
+				<Tooltip
+					title={
+						(log?.body?.length || 0) > MAX_SAFE_STRING_LENGTH
+							? undefined
+							: removeEscapeCharacters(log?.body || '')
+					}
+					placement="left"
+				>
 					<div className="log-body" dangerouslySetInnerHTML={htmlBody} />
 				</Tooltip>
 

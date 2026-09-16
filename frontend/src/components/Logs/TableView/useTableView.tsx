@@ -4,7 +4,10 @@ import Convert from 'ansi-to-html';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import cx from 'classnames';
-import { unescapeString } from 'container/LogDetailedView/utils';
+import {
+	MAX_SAFE_STRING_LENGTH,
+	unescapeString,
+} from 'container/LogDetailedView/utils';
 import dompurify from 'dompurify';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -108,25 +111,45 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				title: 'body',
 				dataIndex: 'body',
 				key: 'body',
-				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
-					props: {
-						style: defaultTableStyle,
-					},
-					children: (
-						<TableBodyContent
-							dangerouslySetInnerHTML={{
-								__html: convert.toHtml(
-									dompurify.sanitize(unescapeString(field), {
-										FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
-									}),
-								),
-							}}
-							fontSize={fontSize}
-							linesPerRow={linesPerRow}
-							isDarkMode={isDarkMode}
-						/>
-					),
-				}),
+				render: (field): ColumnTypeRender<Record<string, unknown>> => {
+					const rawField =
+						typeof field === 'string' ? field : String(field || '');
+					let formattedHtml = '';
+					if (rawField.length > MAX_SAFE_STRING_LENGTH) {
+						formattedHtml = dompurify.sanitize(rawField, {
+							FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+						});
+					} else {
+						try {
+							formattedHtml = convert.toHtml(
+								dompurify.sanitize(unescapeString(rawField), {
+									FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+								}),
+							);
+						} catch (error) {
+							console.error('Failed to format log body table cell:', error);
+							formattedHtml = dompurify.sanitize(rawField, {
+								FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+							});
+						}
+					}
+
+					return {
+						props: {
+							style: defaultTableStyle,
+						},
+						children: (
+							<TableBodyContent
+								dangerouslySetInnerHTML={{
+									__html: formattedHtml,
+								}}
+								fontSize={fontSize}
+								linesPerRow={linesPerRow}
+								isDarkMode={isDarkMode}
+							/>
+						),
+					};
+				},
 			},
 			...(appendTo === 'end' ? fieldColumns : []),
 		];
