@@ -35,11 +35,12 @@ describe('getFieldValueSuggestions', () => {
 		mockedAIValues.mockResolvedValue(response);
 
 		const filterConfig = { name: 'gen_ai.request.model', searchText: 'gpt' };
+		const { signal } = new AbortController();
 
 		await expect(
-			getFieldValueSuggestions(filterConfig, 'builder_ai_query'),
+			getFieldValueSuggestions(filterConfig, 'builder_ai_query', signal),
 		).resolves.toBe(response);
-		expect(mockedAIValues).toHaveBeenCalledWith(filterConfig);
+		expect(mockedAIValues).toHaveBeenCalledWith(filterConfig, signal);
 		expect(mockedGenericValues).not.toHaveBeenCalled();
 	});
 
@@ -60,11 +61,12 @@ describe('getFieldValueSuggestions', () => {
 			name: 'service.name',
 			searchText: 'front',
 		};
+		const { signal } = new AbortController();
 
 		await expect(
-			getFieldValueSuggestions(filterConfig, builderQueryType),
+			getFieldValueSuggestions(filterConfig, builderQueryType, signal),
 		).resolves.toBe(response);
-		expect(mockedGenericValues).toHaveBeenCalledWith(filterConfig);
+		expect(mockedGenericValues).toHaveBeenCalledWith(filterConfig, signal);
 		expect(mockedAIValues).not.toHaveBeenCalled();
 	});
 });
