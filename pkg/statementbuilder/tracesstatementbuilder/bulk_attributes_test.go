@@ -56,9 +56,9 @@ func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 		startMs uint64
 		endMs   uint64
 	}{
-		{"before rollout", uint64(rel - 2*day), uint64(rel - day)},
-		{"after rollout", uint64(rel + day), uint64(rel + 2*day)},
-		{"straddling rollout", uint64(rel - day), uint64(rel + day)},
+		{"BeforeRollout", uint64(rel - 2*day), uint64(rel - day)},
+		{"AfterRollout", uint64(rel + day), uint64(rel + 2*day)},
+		{"StraddlingRollout", uint64(rel - day), uint64(rel + day)},
 	}
 
 	for _, testCase := range testCases {
