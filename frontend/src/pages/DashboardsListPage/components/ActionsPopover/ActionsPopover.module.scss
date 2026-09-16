@@ -43,6 +43,11 @@
 	pointer-events: none;
 }
 
+/* With the button's pointer events off, the wrapper paints the cursor. */
+.menuItemWrap:has(button:disabled) {
+	cursor: not-allowed;
+}
+
 .deleteName {
 	color: var(--danger-background);
 	font-weight: var(--font-weight-medium);

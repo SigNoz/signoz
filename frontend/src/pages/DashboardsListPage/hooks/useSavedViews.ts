@@ -49,11 +49,15 @@ export interface UseSavedViewsResult {
 	deleteView: (id: string) => Promise<void>;
 }
 
-// Org-shared saved views, backed by the Views API. Exposes the list plus
-// create/update/delete that invalidate the list on success.
-export function useSavedViews(): UseSavedViewsResult {
+/**
+ * Org-shared saved views, backed by the Views API. `enabled` is the caller's
+ * `list` grant: the backend gates view CRUD on `dashboard:list`.
+ */
+export function useSavedViews({
+	enabled = true,
+}: { enabled?: boolean } = {}): UseSavedViewsResult {
 	const queryClient = useQueryClient();
-	const { data, isLoading } = useListDashboardViews();
+	const { data, isLoading } = useListDashboardViews({ query: { enabled } });
 
 	const views = useMemo<SavedView[]>(
 		() => (data?.data?.views ?? []).map(toSavedView),

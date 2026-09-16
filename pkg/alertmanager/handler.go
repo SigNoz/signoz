@@ -19,7 +19,17 @@ type Handler interface {
 
 	DeleteChannelByID(http.ResponseWriter, *http.Request)
 
+	ListNotificationChannels(http.ResponseWriter, *http.Request)
+
+	GetNotificationChannel(http.ResponseWriter, *http.Request)
+
 	CreateNotificationChannel(http.ResponseWriter, *http.Request)
+
+	UpdateNotificationChannel(http.ResponseWriter, *http.Request)
+
+	DeleteNotificationChannel(http.ResponseWriter, *http.Request)
+
+	TestNotificationChannel(http.ResponseWriter, *http.Request)
 
 	GetAllRoutePolicies(http.ResponseWriter, *http.Request)
 

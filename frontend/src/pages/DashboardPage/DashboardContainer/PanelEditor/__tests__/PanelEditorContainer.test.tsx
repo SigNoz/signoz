@@ -3,9 +3,30 @@ import userEvent from '@testing-library/user-event';
 import { toast } from '@signozhq/ui/sonner';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { getSupportedSignals } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import PanelEditorContainer from '../index';
+
+// The editor reads its edit context from the loaded dashboard subtree, which
+// these composition cases don't stand up; the derivation has its own suite.
+const mockEditContext = {
+	isEditable: true,
+	editChecks: [],
+	areOtherPermissionsLoading: false,
+	deleteChecks: [],
+	isLocked: false,
+	canEditDashboard: true,
+	canDeleteDashboard: true,
+	editDisabledTooltip: '',
+	deleteDisabledTooltip: '',
+};
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext',
+	() => ({
+		useDashboardEditContext: (): typeof mockEditContext => mockEditContext,
+	}),
+);
 import { useScrollIntoViewStore } from '../../store/useScrollIntoViewStore';
 
 /**
@@ -172,8 +193,6 @@ function makePanel(
 const baseProps = {
 	dashboardId: 'dash-1',
 	panelId: 'panel-1',
-	isEditable: true,
-	editDisabledReason: '',
 	onClose: jest.fn(),
 	onSaved: jest.fn(),
 };
@@ -232,7 +251,12 @@ describe('PanelEditorContainer composition', () => {
 			}),
 		);
 		expect(mockQbProps).toHaveBeenCalledWith(
-			expect.objectContaining({ panelKind: 'signoz/TimeSeriesPanel' }),
+			expect.objectContaining({
+				panelDefinition: expect.objectContaining({
+					kind: 'signoz/TimeSeriesPanel',
+					mode: 'query',
+				}),
+			}),
 		);
 		expect(mockConfigProps).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -256,7 +280,7 @@ describe('PanelEditorContainer composition', () => {
 				setSpec: mockSetSpec,
 				refetch: mockRefetch,
 				alwaysSerializeQuery: false,
-				signal: getPanelDefinition('signoz/TimeSeriesPanel').supportedSignals[0],
+				signal: getSupportedSignals('signoz/TimeSeriesPanel')[0],
 			}),
 		);
 		expect(mockUseTypeSwitch).toHaveBeenCalledWith(
