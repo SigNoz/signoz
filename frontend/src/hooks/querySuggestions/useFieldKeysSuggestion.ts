@@ -11,7 +11,7 @@ import {
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
-import { FIELD_SUGGESTION_CACHE_TIME } from 'constants/fieldSuggestions';
+import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import {
 	FieldKeysFilterConfig,
 	FieldKeysResponse,
@@ -61,8 +61,8 @@ export const getFieldKeysQueryOptions = (
 		queryFn: ({ signal }): Promise<FieldKeysResponse> =>
 			getFieldKeySuggestions(filterConfig, builderQueryType, signal),
 		select: toFieldKeys,
-		staleTime: FIELD_SUGGESTION_CACHE_TIME,
-		cacheTime: FIELD_SUGGESTION_CACHE_TIME,
+		staleTime: FIELD_API_CACHE_TIME,
+		cacheTime: FIELD_API_CACHE_TIME,
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 	};
