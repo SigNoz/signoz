@@ -1,6 +1,11 @@
 import { LegendItem } from 'lib/uPlotV2/config/types';
-import type { Dispatch, MouseEvent, SetStateAction } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	LegendAction,
+	LegendActionPayload,
+	OnLegendAction,
+} from 'lib/uPlotV2/components/types';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
 	getStoredSeriesVisibility,
@@ -18,27 +23,15 @@ export interface UsePieInteractionsResult {
 	legendItems: LegendItem[];
 	/** Index of the active slice for the legend's focus highlight, or null. */
 	focusedSeriesIndex: number | null;
-	onLegendClick: (e: MouseEvent<HTMLDivElement>) => void;
-	onLegendMouseMove: (e: MouseEvent<HTMLDivElement>) => void;
-	onLegendMouseLeave: () => void;
-}
-
-// Reads the slice index off the nearest `[data-legend-item-id]` ancestor of the
-// event target (the shared Legend tags each item with its seriesIndex).
-function getLegendIndex(e: MouseEvent<HTMLDivElement>): number | null {
-	const el = (e.target as HTMLElement | null)?.closest<HTMLElement>(
-		'[data-legend-item-id]',
-	);
-	const id = el?.dataset.legendItemId;
-	return id != null ? Number(id) : null;
+	/** Every legend interaction, dispatched by type. */
+	onLegendAction: OnLegendAction;
 }
 
 /**
- * Pie interaction + derived state: hover/focus, slice hide/unhide (mirroring the
- * uPlot legend — marker toggles one, label isolates), and persistence of the
- * hidden set to localStorage (keyed by `id`, matched by label) so it survives
- * reloads. Returns the visible slices, legend items, focus index, and the
- * legend container handlers.
+ * Pie interaction + derived state: hover/focus, slice hide/show driven by the
+ * shared legend's actions, and persistence of the hidden set to localStorage
+ * (keyed by `id`, matched by label) so it survives reloads. Returns the visible
+ * slices, legend items, focus index, and the legend action dispatch.
  */
 export function usePieInteractions(
 	data: PieSlice[],
@@ -48,7 +41,6 @@ export function usePieInteractions(
 	const [hiddenIndices, setHiddenIndices] = useState<Set<number>>(
 		() => new Set(),
 	);
-	const isolatedIndexRef = useRef<number | null>(null);
 
 	const legendItems = useMemo<LegendItem[]>(
 		() =>
@@ -104,65 +96,88 @@ export function usePieInteractions(
 		[id, data],
 	);
 
-	const onLegendMouseMove = useCallback(
-		(e: MouseEvent<HTMLDivElement>): void => {
-			const index = getLegendIndex(e);
+	const hoverSeries = useCallback(
+		(sliceIndex: number | null): void => {
 			// Don't focus/dim for hidden slices — they aren't on the donut.
-			setActive(index != null && !hiddenIndices.has(index) ? data[index] : null);
+			setActive(
+				sliceIndex != null && !hiddenIndices.has(sliceIndex)
+					? data[sliceIndex]
+					: null,
+			);
 		},
 		[data, hiddenIndices],
 	);
 
-	// Marker click toggles just that slice on/off; label click isolates it
-	// (clicking the isolated one again resets to all) — mirrors the uPlot legend.
-	const onLegendClick = useCallback(
-		(e: MouseEvent<HTMLDivElement>): void => {
-			const index = getLegendIndex(e);
-			if (index == null) {
-				return;
-			}
-			const isMarker = (e.target as HTMLElement).dataset.isLegendMarker;
-
-			if (isMarker) {
-				const next = new Set(hiddenIndices);
-				if (next.has(index)) {
-					next.delete(index);
-				} else {
-					next.add(index);
+	const toggleSeries = useCallback(
+		(sliceIndex: number): void => {
+			const next = new Set(hiddenIndices);
+			if (next.has(sliceIndex)) {
+				next.delete(sliceIndex);
+			} else {
+				// An empty donut is never worth reaching.
+				if (data.length - next.size <= 1) {
+					return;
 				}
-				applyHidden(next);
-				return;
+				next.add(sliceIndex);
 			}
+			applyHidden(next);
+		},
+		[data.length, hiddenIndices, applyHidden],
+	);
 
-			const isReset = isolatedIndexRef.current === index;
-			isolatedIndexRef.current = isReset ? null : index;
-			if (isReset) {
-				applyHidden(new Set());
-				return;
-			}
+	const showOnlySeries = useCallback(
+		(sliceIndex: number): void => {
 			const next = new Set<number>();
-			data.forEach((_, i) => {
-				if (i !== index) {
-					next.add(i);
+			data.forEach((_, index) => {
+				if (index !== sliceIndex) {
+					next.add(index);
 				}
 			});
 			applyHidden(next);
 		},
-		[data, hiddenIndices, applyHidden],
+		[data, applyHidden],
 	);
 
-	const onLegendMouseLeave = useCallback((): void => setActive(null), []);
+	const showAllSeries = useCallback(
+		(): void => applyHidden(new Set()),
+		[applyHidden],
+	);
 
-	const focusedIndex = active ? data.indexOf(active) : -1;
+	const onLegendAction = useCallback(
+		(payload: LegendActionPayload): void => {
+			switch (payload.type) {
+				case LegendAction.TOGGLE:
+					toggleSeries(payload.seriesIndex);
+					break;
+				case LegendAction.SHOW_ONLY:
+					showOnlySeries(payload.seriesIndex);
+					break;
+				case LegendAction.SHOW_ALL:
+					showAllSeries();
+					break;
+				case LegendAction.HOVER:
+					hoverSeries(payload.seriesIndex);
+					break;
+				default:
+					break;
+			}
+		},
+		[toggleSeries, showOnlySeries, showAllSeries, hoverSeries],
+	);
+
+	const activeIndex = active ? data.indexOf(active) : -1;
+	// Left active, a hidden slice keeps every other arc dimmed, which reads as an
+	// isolation rather than as one slice being excluded.
+	const effectiveActive =
+		activeIndex >= 0 && !hiddenIndices.has(activeIndex) ? active : null;
+	const focusedIndex = effectiveActive ? activeIndex : -1;
 
 	return {
-		active,
+		active: effectiveActive,
 		setActive,
 		visibleData,
 		legendItems,
 		focusedSeriesIndex: focusedIndex >= 0 ? focusedIndex : null,
-		onLegendClick,
-		onLegendMouseMove,
-		onLegendMouseLeave,
+		onLegendAction,
 	};
 }
