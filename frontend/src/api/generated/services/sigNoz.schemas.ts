@@ -43,6 +43,7 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelSlackConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiUrl: string;
 	/**
@@ -113,10 +114,12 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelWebhookConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	bearerToken?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	password?: string;
 	/**
@@ -125,6 +128,7 @@ export interface AlertmanagertypesChannelWebhookConfigDTO {
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	url: string;
 	/**
@@ -180,6 +184,7 @@ export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	group?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	routingKey: string;
 	/**
@@ -219,6 +224,7 @@ export type AlertmanagertypesChannelOpsgenieConfigDTODetails = {
 export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiKey: string;
 	/**
@@ -278,6 +284,7 @@ export interface AlertmanagertypesChannelMSTeamsConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	webhookUrl: string;
 }
@@ -309,6 +316,7 @@ export interface AlertmanagertypesChannelGoogleChatConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	webhookUrl: string;
 }
@@ -332,6 +340,7 @@ export type AlertmanagertypesChannelJiraConfigDTOCustomFields = {
 export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiToken: string;
 	/**
@@ -407,6 +416,7 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelJSMOpsConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiKey: string;
 	/**
@@ -466,6 +476,7 @@ export interface AlertmanagertypesChannelIncidentIOConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	token: string;
 	/**
@@ -3220,33 +3231,30 @@ export interface CloudintegrationtypesAWSServiceConfigDTO {
 	metrics?: CloudintegrationtypesAWSServiceMetricsConfigDTO;
 }
 
-export type CloudintegrationtypesAgentReportDTOAnyOfDataAnyOf = {
+export type CloudintegrationtypesAgentReportDTODataAnyOf = {
 	[key: string]: unknown;
 };
 
 /**
  * @nullable
  */
-export type CloudintegrationtypesAgentReportDTOAnyOfData =
-	CloudintegrationtypesAgentReportDTOAnyOfDataAnyOf | null;
+export type CloudintegrationtypesAgentReportDTOData =
+	CloudintegrationtypesAgentReportDTODataAnyOf | null;
 
-export type CloudintegrationtypesAgentReportDTOAnyOf = {
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesAgentReportDTO = {
 	/**
 	 * @type object,null
 	 */
-	data: CloudintegrationtypesAgentReportDTOAnyOfData;
+	data: CloudintegrationtypesAgentReportDTOData;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
 	timestampMillis: number;
-};
-
-/**
- * @nullable
- */
-export type CloudintegrationtypesAgentReportDTO =
-	CloudintegrationtypesAgentReportDTOAnyOf | null;
+} | null;
 
 export interface CloudintegrationtypesAzureAccountConfigDTO {
 	/**
@@ -3445,7 +3453,10 @@ export enum CloudintegrationtypesServiceIDDTO {
 	cloudstorage = 'cloudstorage',
 	cloudsql_mysql = 'cloudsql_mysql',
 }
-export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesCloudIntegrationServiceDTO = {
 	/**
 	 * @type string
 	 */
@@ -3466,13 +3477,7 @@ export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	 * @format date-time
 	 */
 	updatedAt?: string;
-};
-
-/**
- * @nullable
- */
-export type CloudintegrationtypesCloudIntegrationServiceDTO =
-	CloudintegrationtypesCloudIntegrationServiceDTOAnyOf | null;
+} | null;
 
 export interface CloudintegrationtypesCollectedLogAttributeDTO {
 	/**
@@ -3626,19 +3631,16 @@ export interface CloudintegrationtypesOldAWSCollectionStrategyDTO {
 	s3_buckets?: CloudintegrationtypesOldAWSCollectionStrategyDTOS3Buckets;
 }
 
-export type CloudintegrationtypesIntegrationConfigDTOAnyOf = {
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesIntegrationConfigDTO = {
 	/**
 	 * @type array
 	 */
 	enabled_regions: string[];
 	telemetry: CloudintegrationtypesOldAWSCollectionStrategyDTO;
-};
-
-/**
- * @nullable
- */
-export type CloudintegrationtypesIntegrationConfigDTO =
-	CloudintegrationtypesIntegrationConfigDTOAnyOf | null;
+} | null;
 
 export interface CloudintegrationtypesProviderIntegrationConfigDTO {
 	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
@@ -9459,7 +9461,10 @@ export interface TelemetrystoretypesMergeTreeReadDTO {
 	table: string;
 }
 
-export type TelemetrystoretypesGranulesDTOAnyOf = {
+/**
+ * @nullable
+ */
+export type TelemetrystoretypesGranulesDTO = {
 	/**
 	 * @type integer
 	 * @format int64
@@ -9479,13 +9484,7 @@ export type TelemetrystoretypesGranulesDTOAnyOf = {
 	 * @format int64
 	 */
 	skipped: number;
-};
-
-/**
- * @nullable
- */
-export type TelemetrystoretypesGranulesDTO =
-	TelemetrystoretypesGranulesDTOAnyOf | null;
+} | null;
 
 export interface Querybuildertypesv5PreviewStatementDTO {
 	/**
@@ -10699,7 +10698,10 @@ export interface SpantypesSpanMapperGroupConditionKeyDTO {
 	value: string;
 }
 
-export type SpantypesSpanMapperGroupConditionDTOAnyOf = {
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperGroupConditionDTO = {
 	/**
 	 * @type array,null
 	 */
@@ -10708,13 +10710,7 @@ export type SpantypesSpanMapperGroupConditionDTOAnyOf = {
 	 * @type array,null
 	 */
 	resource: SpantypesSpanMapperGroupConditionKeyDTO[] | null;
-};
-
-/**
- * @nullable
- */
-export type SpantypesSpanMapperGroupConditionDTO =
-	SpantypesSpanMapperGroupConditionDTOAnyOf | null;
+} | null;
 
 export interface SpantypesSpanMapperGroupDTO {
 	condition: SpantypesSpanMapperGroupConditionDTO | null;
