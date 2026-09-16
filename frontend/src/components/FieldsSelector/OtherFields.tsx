@@ -4,21 +4,20 @@ import { Skeleton } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
+import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import {
+	BuilderQueryType,
 	FieldContext,
 	SignalType,
 	TelemetryFieldKey,
 } from 'types/api/v5/queryRange';
-import { DataSource } from 'types/common/queryBuilder';
+import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
+import { mergeExtraFields } from 'utils/extraFields';
 
 import styles from './FieldsSelector.module.scss';
-import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import { UseFieldApis } from 'types/common/fieldSuggestion';
-import { mergeStaticFields } from 'utils/staticFields';
 
-const EMPTY_FIELD_APIS: UseFieldApis = {};
-
-const EMPTY_STATIC_FIELDS: TelemetryFieldKey[] = [];
+const EMPTY_EXTRA_FIELDS: TelemetryFieldKey[] = [];
 
 interface OtherFieldsProps {
 	signal: DataSource;
@@ -27,7 +26,9 @@ interface OtherFieldsProps {
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 	allowCustomFields?: boolean;
-	useFieldApis?: UseFieldApis;
+	fieldKeysConfig?: FieldKeysConfigProp;
+	builderQueryType?: BuilderQueryType;
+	extraFields?: TelemetryFieldKey[];
 }
 
 function OtherFields({
@@ -37,22 +38,25 @@ function OtherFields({
 	onAdd,
 	isAtLimit,
 	allowCustomFields,
-	useFieldApis = EMPTY_FIELD_APIS,
+	fieldKeysConfig,
+	builderQueryType,
+	extraFields = EMPTY_EXTRA_FIELDS,
 }: OtherFieldsProps): JSX.Element {
-	const { staticFields = EMPTY_STATIC_FIELDS, ...keysConfig } = useFieldApis;
-
 	const { data: fetchedFields, isFetching } = useFieldKeysSuggestion(
-		keysConfig,
-		signal,
-		debouncedInputValue,
+		{
+			...fieldKeysConfig,
+			signal: DATA_SOURCE_TO_SIGNAL[signal],
+			searchText: debouncedInputValue,
+		},
+		builderQueryType,
 	);
 
 	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
+		const search = debouncedInputValue.trim().toLowerCase();
 		// Normalize: synthesize `key` once so downstream reads can trust it.
-		const suggestions: TelemetryFieldKey[] = mergeStaticFields(
-			staticFields,
+		const suggestions: TelemetryFieldKey[] = mergeExtraFields(
+			extraFields.filter((field) => field.name.toLowerCase().includes(search)),
 			fetchedFields ?? [],
-			debouncedInputValue,
 		).map((attr) => ({
 			...attr,
 			key: buildCompositeKey(attr.name, attr.fieldContext, attr.fieldDataType),
@@ -91,7 +95,7 @@ function OtherFields({
 		};
 		return [customField, ...available];
 	}, [
-		staticFields,
+		extraFields,
 		fetchedFields,
 		addedFields,
 		allowCustomFields,

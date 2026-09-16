@@ -1,23 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { Select, Spin } from 'antd';
+import { FieldKeysConfigProp } from 'api/querySuggestions/types';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
-import { UseFieldApis } from 'types/common/fieldSuggestion';
-import { DataSource } from 'types/common/queryBuilder';
+import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
 
-const DEFAULT_STATIC_FIELDS: TelemetryFieldKey[] = [
+const DEFAULT_EXTRA_FIELDS: TelemetryFieldKey[] = [
 	{ name: 'timestamp' } as TelemetryFieldKey,
 ];
-
-const DEFAULT_FIELD_APIS: UseFieldApis = {};
 
 interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;
 	dataSource: DataSource;
-	useFieldApis?: UseFieldApis;
+	fieldKeysConfig?: FieldKeysConfigProp;
+	builderQueryType?: BuilderQueryType;
+	extraFields?: TelemetryFieldKey[];
 }
 
 // Loader component for the dropdown when loading or no results
@@ -33,9 +33,10 @@ function ListViewOrderBy({
 	value,
 	onChange,
 	dataSource,
-	useFieldApis = DEFAULT_FIELD_APIS,
+	fieldKeysConfig,
+	builderQueryType,
+	extraFields = DEFAULT_EXTRA_FIELDS,
 }: ListViewOrderByProps): JSX.Element {
-	const { staticFields = DEFAULT_STATIC_FIELDS, ...keysConfig } = useFieldApis;
 	const [searchInput, setSearchInput] = useState('');
 	const [debouncedInput, setDebouncedInput] = useState('');
 	const [selectOptions, setSelectOptions] = useState<
@@ -43,11 +44,13 @@ function ListViewOrderBy({
 	>([]);
 	const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	// Fetch key suggestions based on debounced input
 	const { data, isLoading } = useFieldKeysSuggestion(
-		keysConfig,
-		dataSource,
-		debouncedInput,
+		{
+			...fieldKeysConfig,
+			signal: DATA_SOURCE_TO_SIGNAL[dataSource],
+			searchText: debouncedInput,
+		},
+		builderQueryType,
 	);
 
 	useEffect(
@@ -59,16 +62,16 @@ function ListViewOrderBy({
 		[],
 	);
 
-	const staticKeysSignature = staticFields.map((field) => field.name).join(',');
+	const extraKeysSignature = extraFields.map((field) => field.name).join(',');
 
 	// Update options when API data changes
 	useEffect(() => {
 		const keyNames = (data ?? []).map((field) => field.name);
 		const search = searchInput.trim().toLowerCase();
-		const staticMatches = staticKeysSignature
+		const extraMatches = extraKeysSignature
 			.split(',')
 			.filter((key) => key.length > 0 && key.toLowerCase().includes(search));
-		const uniqueKeys = [...new Set([...staticMatches, ...keyNames])];
+		const uniqueKeys = [...new Set([...extraMatches, ...keyNames])];
 
 		setSelectOptions(
 			uniqueKeys.flatMap((key) => [
@@ -76,7 +79,7 @@ function ListViewOrderBy({
 				{ label: `${key} (asc)`, value: `${key}:asc` },
 			]),
 		);
-	}, [data, searchInput, staticKeysSignature]);
+	}, [data, searchInput, extraKeysSignature]);
 
 	// Handle search input with debounce
 	const handleSearch = (input: string): void => {

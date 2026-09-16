@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { FieldKeysConfigProp } from 'api/querySuggestions/types';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import { UseFieldApis } from 'types/common/fieldSuggestion';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
-import { DataSource } from 'types/common/queryBuilder';
+import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 
 import OtherFields from '../OtherFields';
 
@@ -123,16 +123,16 @@ describe('OtherFields — custom (free-typed) option', () => {
 	});
 });
 
-describe('OtherFields — useFieldApis', () => {
+describe('OtherFields — field keys config', () => {
 	const pool: TelemetryFieldKey[] = [
 		{ name: 'total_tokens', fieldContext: 'trace', fieldDataType: 'float64' },
 		{ name: 'llm_call_count', fieldContext: 'trace', fieldDataType: 'float64' },
 	];
 
-	const useFieldApis: UseFieldApis = {
-		builderQueryType: 'builder_ai_query',
+	const fieldKeysConfig: FieldKeysConfigProp = {
 		fieldContext: TelemetrytypesFieldContextDTO.trace,
 	};
+	const builderQueryType: BuilderQueryType = 'builder_ai_query';
 
 	const mockPool = (fields: TelemetryFieldKey[]): void => {
 		(useFieldKeysSuggestion as jest.Mock).mockReturnValue({
@@ -147,7 +147,11 @@ describe('OtherFields — useFieldApis', () => {
 	});
 
 	it('lists the pool it is handed', () => {
-		renderOtherFields({ useFieldApis, allowCustomFields: false });
+		renderOtherFields({
+			fieldKeysConfig,
+			builderQueryType,
+			allowCustomFields: false,
+		});
 
 		expect(screen.getByText('total_tokens')).toBeInTheDocument();
 		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
@@ -155,26 +159,29 @@ describe('OtherFields — useFieldApis', () => {
 
 	it('forwards the fetch params and search to the shared keys hook', () => {
 		renderOtherFields({
-			useFieldApis,
+			fieldKeysConfig,
+			builderQueryType,
 			allowCustomFields: false,
 			debouncedInputValue: 'llm',
 		});
 
 		expect(useFieldKeysSuggestion).toHaveBeenCalledWith(
-			useFieldApis,
-			DataSource.LOGS,
-			'llm',
+			{
+				...fieldKeysConfig,
+				signal: DATA_SOURCE_TO_SIGNAL[DataSource.LOGS],
+				searchText: 'llm',
+			},
+			builderQueryType,
 		);
 	});
 
-	it('lists static fields the keys endpoint never returns', () => {
+	it('lists extra fields the keys endpoint never returns', () => {
 		mockPool([{ name: 'total_tokens' } as TelemetryFieldKey]);
 
 		renderOtherFields({
-			useFieldApis: {
-				...useFieldApis,
-				staticFields: [{ name: 'last_activity_time' } as TelemetryFieldKey],
-			},
+			fieldKeysConfig,
+			builderQueryType,
+			extraFields: [{ name: 'last_activity_time' } as TelemetryFieldKey],
 			allowCustomFields: false,
 		});
 
@@ -182,9 +189,41 @@ describe('OtherFields — useFieldApis', () => {
 		expect(screen.getByText('total_tokens')).toBeInTheDocument();
 	});
 
+	it('filters extra fields by search text', () => {
+		mockPool([]);
+
+		renderOtherFields({
+			fieldKeysConfig,
+			builderQueryType,
+			extraFields: [
+				{ name: 'last_activity_time' } as TelemetryFieldKey,
+				{ name: 'timestamp' } as TelemetryFieldKey,
+			],
+			debouncedInputValue: 'activity',
+			allowCustomFields: false,
+		});
+
+		expect(screen.getByText('last_activity_time')).toBeInTheDocument();
+		expect(screen.queryByText('timestamp')).not.toBeInTheDocument();
+	});
+
+	it('keeps a fetched key whose name does not contain the search text', () => {
+		mockPool([
+			{ name: 'service.name', fieldContext: 'resource' } as TelemetryFieldKey,
+		]);
+
+		renderOtherFields({
+			debouncedInputValue: 'resource.service',
+			allowCustomFields: false,
+		});
+
+		expect(screen.getByText('service.name')).toBeInTheDocument();
+	});
+
 	it('omits pool fields that are already added', () => {
 		renderOtherFields({
-			useFieldApis,
+			fieldKeysConfig,
+			builderQueryType,
 			allowCustomFields: false,
 			addedFields: [
 				{

@@ -3,12 +3,9 @@ import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { DataSource } from 'types/common/queryBuilder';
-
-import { FieldKeysResponse } from 'api/querySuggestions/types';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
-
-import { FieldKeysConfig } from 'types/common/fieldSuggestion';
+import { FieldKeysConfig, FieldKeysResponse } from 'api/querySuggestions/types';
+import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 
 import {
 	getFieldKeysQueryOptions,
@@ -17,14 +14,12 @@ import {
 
 /** Drives the options object the way react-query does, without a client. */
 const fetchKeys = async (
-	config: FieldKeysConfig,
-	dataSource: DataSource,
-	searchText: string,
+	fieldKeysConfig: FieldKeysConfig,
+	builderQueryType?: BuilderQueryType,
 ): Promise<TelemetryFieldKey[]> => {
 	const { queryFn, select } = getFieldKeysQueryOptions(
-		config,
-		dataSource,
-		searchText,
+		fieldKeysConfig,
+		builderQueryType,
 	);
 	const response = await (
 		queryFn as (context: { signal: AbortSignal }) => Promise<FieldKeysResponse>
@@ -76,11 +71,11 @@ describe('useFieldKeysSuggestion', () => {
 
 		const keys = await fetchKeys(
 			{
-				builderQueryType: 'builder_ai_query',
+				signal: DATA_SOURCE_TO_SIGNAL[DataSource.TRACES],
+				searchText: 'llm',
 				fieldContext: TelemetrytypesFieldContextDTO.trace,
 			},
-			DataSource.TRACES,
-			'llm',
+			'builder_ai_query',
 		);
 
 		expect(seen).toHaveLength(1);
@@ -97,7 +92,10 @@ describe('useFieldKeysSuggestion', () => {
 			seen.push(params);
 		});
 
-		const keys = await fetchKeys({}, DataSource.TRACES, 'svc');
+		const keys = await fetchKeys({
+			signal: DATA_SOURCE_TO_SIGNAL[DataSource.TRACES],
+			searchText: 'svc',
+		});
 
 		expect(seen).toHaveLength(1);
 		expect(seen[0]?.get('signal')).toBe(DataSource.TRACES);
@@ -117,11 +115,11 @@ describe('useFieldKeysSuggestion', () => {
 
 		const keys = await fetchKeys(
 			{
-				builderQueryType: 'builder_ai_query',
+				signal: DATA_SOURCE_TO_SIGNAL[DataSource.TRACES],
+				searchText: '',
 				fieldContext: TelemetrytypesFieldContextDTO.trace,
 			},
-			DataSource.TRACES,
-			'',
+			'builder_ai_query',
 		);
 
 		expect(seen[0]?.get('searchText')).toBe('');
@@ -138,17 +136,18 @@ describe('useFieldKeysSuggestion', () => {
 			},
 		);
 
-		const config = {
-			builderQueryType: 'builder_ai_query' as const,
+		const fieldKeysConfig = {
+			signal: DATA_SOURCE_TO_SIGNAL[DataSource.TRACES],
+			searchText: '',
 			fieldContext: TelemetrytypesFieldContextDTO.trace,
 		};
 
 		// Built twice: equal keys must resolve to one cache entry, not two requests.
 		await queryClient.fetchQuery(
-			getFieldKeysQueryOptions(config, DataSource.TRACES, ''),
+			getFieldKeysQueryOptions(fieldKeysConfig, 'builder_ai_query'),
 		);
 		await queryClient.fetchQuery(
-			getFieldKeysQueryOptions(config, DataSource.TRACES, ''),
+			getFieldKeysQueryOptions(fieldKeysConfig, 'builder_ai_query'),
 		);
 
 		expect(seen).toHaveLength(1);
@@ -162,7 +161,10 @@ describe('useFieldKeysSuggestion', () => {
 		);
 
 		const controller = new AbortController();
-		const { queryFn } = getFieldKeysQueryOptions({}, DataSource.LOGS, 'svc');
+		const { queryFn } = getFieldKeysQueryOptions({
+			signal: DATA_SOURCE_TO_SIGNAL[DataSource.LOGS],
+			searchText: 'svc',
+		});
 		const pending = (
 			queryFn as (context: { signal: AbortSignal }) => Promise<unknown>
 		)({ signal: controller.signal });

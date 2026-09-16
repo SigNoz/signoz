@@ -1,21 +1,20 @@
 import type {
 	GetAIObservabilityFieldsKeys200,
-	GetAIObservabilityFieldsKeysParams,
 	GetAIObservabilityFieldsValues200,
-	GetAIObservabilityFieldsValuesParams,
 	GetFieldsKeys200,
 	GetFieldsKeysParams,
 	GetFieldsValues200,
 	GetFieldsValuesParams,
 } from 'api/generated/services/sigNoz.schemas';
 
-export type FieldKeysFilterConfig =
-	| GetFieldsKeysParams
-	| GetAIObservabilityFieldsKeysParams;
+export type FieldKeysConfig = GetFieldsKeysParams;
 
-export type FieldValuesFilterConfig =
-	| GetFieldsValuesParams
-	| GetAIObservabilityFieldsValuesParams;
+export type FieldValuesConfig = GetFieldsValuesParams;
+
+export type FieldKeysConfigProp = Omit<
+	FieldKeysConfig,
+	'signal' | 'searchText'
+>;
 
 export type FieldKeysResponse =
 	| GetFieldsKeys200

@@ -1,6 +1,10 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { ENVIRONMENT } from 'constants/env';
-import { TRACE_VIEW_ORDER_BY_FIELDS } from 'container/LLMObservability/Explorer/constants';
+import {
+	TRACE_VIEW_BUILDER_QUERY_TYPE,
+	TRACE_VIEW_FIELD_KEYS,
+	TRACE_VIEW_ORDER_BY_EXTRA_FIELDS,
+} from 'container/LLMObservability/Explorer/constants';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
@@ -73,7 +77,9 @@ describe('ListViewOrderBy', () => {
 				value="last_activity_time:desc"
 				onChange={jest.fn()}
 				dataSource={DataSource.TRACES}
-				useFieldApis={TRACE_VIEW_ORDER_BY_FIELDS}
+				fieldKeysConfig={TRACE_VIEW_FIELD_KEYS}
+				builderQueryType={TRACE_VIEW_BUILDER_QUERY_TYPE}
+				extraFields={TRACE_VIEW_ORDER_BY_EXTRA_FIELDS}
 			/>,
 		);
 
@@ -87,7 +93,7 @@ describe('ListViewOrderBy', () => {
 		expect(seenGeneric).toHaveLength(0);
 	});
 
-	it('offers the static keys alongside the ones the endpoint reports', async () => {
+	it('offers the extra keys alongside the ones the endpoint reports', async () => {
 		mockAIKeys(['total_tokens']);
 
 		render(
@@ -95,7 +101,9 @@ describe('ListViewOrderBy', () => {
 				value="last_activity_time:desc"
 				onChange={jest.fn()}
 				dataSource={DataSource.TRACES}
-				useFieldApis={TRACE_VIEW_ORDER_BY_FIELDS}
+				fieldKeysConfig={TRACE_VIEW_FIELD_KEYS}
+				builderQueryType={TRACE_VIEW_BUILDER_QUERY_TYPE}
+				extraFields={TRACE_VIEW_ORDER_BY_EXTRA_FIELDS}
 			/>,
 		);
 
@@ -107,7 +115,7 @@ describe('ListViewOrderBy', () => {
 		expect(getOptionLabels()).toContain('last_activity_time (asc)');
 	});
 
-	it('keeps a matching static key while searching', async () => {
+	it('keeps a matching extra key while searching', async () => {
 		mockAIKeys([]);
 
 		render(
@@ -115,7 +123,9 @@ describe('ListViewOrderBy', () => {
 				value="last_activity_time:desc"
 				onChange={jest.fn()}
 				dataSource={DataSource.TRACES}
-				useFieldApis={TRACE_VIEW_ORDER_BY_FIELDS}
+				fieldKeysConfig={TRACE_VIEW_FIELD_KEYS}
+				builderQueryType={TRACE_VIEW_BUILDER_QUERY_TYPE}
+				extraFields={TRACE_VIEW_ORDER_BY_EXTRA_FIELDS}
 			/>,
 		);
 
