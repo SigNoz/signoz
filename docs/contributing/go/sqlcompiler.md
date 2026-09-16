@@ -26,9 +26,14 @@ The grammar lives at [grammar/FilterQuery.g4](/grammar/FilterQuery.g4) (see its 
 
 ```go
 compiled, errs := sqlcompiler.Compile(query, formatter, resolver)
+
+type Compiled struct {
+	SQL  string
+	Args []any
+}
 ```
 
-`Compile` returns either a non-nil `*Compiled` or a list of human-readable errors. An empty query compiles to an empty `Compiled`; callers gate on `IsEmpty()`, not nil. The package handles:
+`Compile` returns either a non-nil `*Compiled` or a list of human-readable errors. `Compiled.SQL` is the WHERE clause with `?` placeholders and `Compiled.Args` holds the bind arguments in placeholder order; the store passes both to bun. An empty query compiles to an empty `Compiled`; callers gate on `IsEmpty()`, not nil. The package handles:
 
 - Parsing, with syntax errors collected at line/column positions instead of failing on the first one.
 - The boolean tree: `AND`/`OR`/`NOT`, parentheses, implicit `AND`, and pruning of empty conditions.
@@ -66,35 +71,71 @@ The `*Visitor` passed in provides everything needed to build predicates. Use the
 | `ExtractSingleStringValue`, `ExtractStringValueList` | typed value extraction when building a custom predicate |
 | `AddError` | report a problem; errors accumulate |
 
-In the simplest case, keys map straight to columns and the resolver is a switch. Trimmed from the dashboards resolver:
+In the simplest case, keys map straight to columns and the resolver is a switch. A dummy resolver for an imaginary `sample_entity` table:
 
 ```go
-func (r dashboardFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, key string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string {
+func (r sampleEntityFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, key string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string {
 	switch key {
 	case "created_by":
-		return v.BuildStringOperation(v.Sb, ctx, operation, "dashboard.created_by", key)
+		return v.BuildStringOperation(v.Sb, ctx, operation, "sample_entity.created_by", key)
 	case "created_at":
-		return v.BuildTimestampComparison(ctx, operation, "dashboard.created_at")
+		return v.BuildTimestampComparison(ctx, operation, "sample_entity.created_at")
 	case "locked":
-		return v.BuildBoolComparison(ctx, operation, "dashboard.locked")
+		return v.BuildBoolComparison(ctx, operation, "sample_entity.locked")
 	}
 	v.AddError("unknown key %q", key)
 	return ""
 }
 
-func (dashboardFieldResolver) ResolveFreeText(v *sqlcompiler.Visitor, value string) string {
-	nameColumn := string(v.Formatter.JSONExtractString("dashboard.data", "$.spec.display.name"))
-	return v.BuildFreeTextContains(v.Sb, nameColumn, value)
+func (sampleEntityFieldResolver) ResolveFreeText(v *sqlcompiler.Visitor, value string) string {
+	return v.BuildFreeTextContains(v.Sb, "sample_entity.name", value)
 }
 ```
 
 ### Special cases
 
-Each entity decides its own key policy; the full dashboards resolver, [pkg/modules/dashboard/impldashboard/listfilter_resolver.go](/pkg/modules/dashboard/impldashboard/listfilter_resolver.go), shows the patterns seen so far:
+Each entity decides its own key policy; the full dashboards resolver, [pkg/modules/dashboard/impldashboard/listfilter_resolver.go](/pkg/modules/dashboard/impldashboard/listfilter_resolver.go), shows the patterns seen so far.
 
-- Operator allowlists: dashboards declares `DSLKey` constants and a `ReservedOps` map of key to allowed operators in `pkg/types/dashboardtypes`, and rejects a disallowed operator with `AddError`. If the entity has reserved keys, the list API can advertise them (e.g. as `reservedKeywords`) so frontend suggestions never go stale.
-- JSON columns: name and description live inside `dashboard.data`, extracted with `v.Formatter.JSONExtractString`.
-- Relation tables (dashboard tags, rule labels): build an `EXISTS` subquery on a fresh `sqlbuilder.SelectBuilder` and pass that builder into `BuildStringOperation`, so its arguments thread through the compile. For a negative operator, build the positive predicate and toggle `NotExists` on the outer builder.
+#### Operator allowlists
+
+Not every operator makes sense on every key (`name BETWEEN ...` does not). Dashboards declares its keys and the operators each accepts in `pkg/types/dashboardtypes` and checks the map before building:
+
+```go
+var ReservedOps = map[DSLKey]map[qbtypesv5.FilterOperator]struct{}{
+	DSLKeyName:      stringSearchOps(),
+	DSLKeyCreatedAt: numericRangeOps(),
+	DSLKeyLocked:    boolOps(),
+}
+
+if _, allowed := allowedOperations[operation]; !allowed {
+	v.AddError("operator %s is not allowed for key %q", sqlcompiler.OperationName(operation), key)
+	return ""
+}
+```
+
+If the entity has reserved keys like these, the list API can also advertise them (dashboards and rules return `reservedKeywords`) so frontend suggestions never go stale.
+
+#### JSON columns
+
+Dashboard name and description live inside the `dashboard.data` JSON column, so the resolver builds the column expression with `v.Formatter.JSONExtractString`, which renders correctly on both dialects. `name CONTAINS cpu` compiles (SQLite flavor) to:
+
+```sql
+json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'
+-- args: ["%cpu%"]
+```
+
+#### Relation tables
+
+Dashboard tags live in the shared `tag`/`tag_relation` tables, so a tag term becomes an `EXISTS` subquery. Build it on a fresh `sqlbuilder.SelectBuilder` and pass that builder into `BuildStringOperation`, so its arguments thread through the compile. `team = infra` compiles to:
+
+```sql
+EXISTS (SELECT 1 FROM tag_relation tr JOIN tag t ON t.id = tr.tag_id
+	WHERE tr.kind = ? AND tr.resource_id = dashboard.id
+	AND LOWER(t.key) = LOWER(?) AND t.value = ?)
+-- args: ["\"dashboard\"", "team", "infra"]
+```
+
+For a negative operator (`team != infra`), build the positive predicate and toggle `NotExists` on the outer builder, so rows without the tag at all also match.
 
 ## How to wire it in?
 
@@ -116,4 +157,5 @@ The store then appends `compiled.SQL` with `compiled.Args` to its list query whe
 ## Caveats
 
 - This compiler is for the relational store only. Telemetry filters are a different pipeline; they stay on querybuilder's ClickHouse visitor.
-- It compiles a subset of the grammar: `has(...)` function calls and `search(...)` are not implemented and fall through to `ResolveFreeText` as literal text, and `REGEXP` is rejected by `BuildStringOperation`.
+- A `key REGEXP value` term parses, but no predicate builder implements it: `BuildStringOperation` rejects it with an error, since SQLite has no portable `REGEXP` (Postgres spells it `~`). A resolver may implement it itself for a dialect it controls.
+- `has(...)` function calls and `search(...)` from the telemetry grammar are not implemented; they fall through to `ResolveFreeText` as literal text.
