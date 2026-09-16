@@ -12814,108 +12814,6 @@ paths:
       summary: List unmapped models
       tags:
       - llmpricingrules
-  /api/v1/logs/promote_paths:
-    get:
-      deprecated: false
-      description: This endpoints promotes and indexes paths
-      operationId: ListPromotedAndIndexedPaths
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/PromotetypesPromotePath'
-                    nullable: true
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Promote and index paths
-      tags:
-      - logs
-    post:
-      deprecated: false
-      description: This endpoints promotes and indexes paths
-      operationId: HandlePromoteAndIndexPaths
-      requestBody:
-        content:
-          application/json:
-            schema:
-              items:
-                $ref: '#/components/schemas/PromotetypesPromotePath'
-              nullable: true
-              type: array
-      responses:
-        "201":
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - EDITOR
-      - tokenizer:
-        - EDITOR
-      summary: Promote and index paths
-      tags:
-      - logs
   /api/v1/org/preferences:
     get:
       deprecated: false
@@ -13084,6 +12982,134 @@ paths:
       summary: Update org preference
       tags:
       - preferences
+  /api/v1/promote_paths/{telemetry_signal}/{context}:
+    get:
+      deprecated: false
+      description: This endpoint lists the promoted paths of a JSON column. The promotion
+        domain is identified by the telemetry_signal and context path variables, e.g.
+        traces/attribute.
+      operationId: ListPromotedPaths
+      parameters:
+      - in: path
+        name: telemetry_signal
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: context
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/PromotetypesPromotePath'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List promoted paths
+      tags:
+      - promote
+    post:
+      deprecated: false
+      description: This endpoint promotes paths of a JSON column to its promoted column.
+        The promotion domain is identified by the telemetry_signal and context path
+        variables, e.g. traces/attribute.
+      operationId: PromotePaths
+      parameters:
+      - in: path
+        name: telemetry_signal
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: context
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/PromotetypesPromotePath'
+              nullable: true
+              type: array
+      responses:
+        "201":
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Promote paths
+      tags:
+      - promote
   /api/v1/public/dashboards/{id}:
     get:
       deprecated: false

@@ -12227,17 +12227,6 @@ export type ListUnmappedLLMModels200 = {
 	status: string;
 };
 
-export type ListPromotedAndIndexedPaths200 = {
-	/**
-	 * @type array,null
-	 */
-	data: PromotetypesPromotePathDTO[] | null;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListOrgPreferences200 = {
 	/**
 	 * @type array
@@ -12262,6 +12251,25 @@ export type GetOrgPreference200 = {
 
 export type UpdateOrgPreferencePathParameters = {
 	name: string;
+};
+export type ListPromotedPathsPathParameters = {
+	telemetrySignal: string;
+	context: string;
+};
+export type ListPromotedPaths200 = {
+	/**
+	 * @type array,null
+	 */
+	data: PromotetypesPromotePathDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type PromotePathsPathParameters = {
+	telemetrySignal: string;
+	context: string;
 };
 export type GetPublicDashboardDataPathParameters = {
 	id: string;
