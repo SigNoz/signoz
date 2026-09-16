@@ -14,7 +14,7 @@ import (
 func TestPromoteAttributes(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("promotes new attributes and is idempotent", func(t *testing.T) {
+	t.Run("PromotesNewAttributes_Idempotent", func(t *testing.T) {
 		store := telemetrytypestest.NewMockMetadataStore()
 		m := NewModule(store, nil)
 
@@ -31,7 +31,7 @@ func TestPromoteAttributes(t *testing.T) {
 		assert.Len(t, store.PromotedPathsMap, 2)
 	})
 
-	t.Run("non-promote entries are not recorded", func(t *testing.T) {
+	t.Run("NonPromoteEntries_NotRecorded", func(t *testing.T) {
 		store := telemetrytypestest.NewMockMetadataStore()
 		m := NewModule(store, nil)
 
@@ -39,7 +39,7 @@ func TestPromoteAttributes(t *testing.T) {
 		assert.Empty(t, store.PromotedPathsMap)
 	})
 
-	t.Run("indexes are rejected for trace attributes", func(t *testing.T) {
+	t.Run("IndexesOnTraceAttributes_Rejected", func(t *testing.T) {
 		store := telemetrytypestest.NewMockMetadataStore()
 		m := NewModule(store, nil)
 
@@ -54,7 +54,7 @@ func TestPromoteAttributes(t *testing.T) {
 		assert.Empty(t, store.PromotedPathsMap)
 	})
 
-	t.Run("column prefixed and empty paths are rejected", func(t *testing.T) {
+	t.Run("ColumnPrefixedAndEmptyPaths_Rejected", func(t *testing.T) {
 		store := telemetrytypestest.NewMockMetadataStore()
 		m := NewModule(store, nil)
 
@@ -63,7 +63,7 @@ func TestPromoteAttributes(t *testing.T) {
 		assert.Empty(t, store.PromotedPathsMap)
 	})
 
-	t.Run("empty request is rejected", func(t *testing.T) {
+	t.Run("EmptyRequest_Rejected", func(t *testing.T) {
 		store := telemetrytypestest.NewMockMetadataStore()
 		m := NewModule(store, nil)
 
@@ -88,7 +88,7 @@ func TestListPromotedAttributes(t *testing.T) {
 func TestPromoteAndIndexPaths(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("promotes body path with prefix stripped", func(t *testing.T) {
+	t.Run("PromotesBodyPath_PrefixStripped", func(t *testing.T) {
 		store := telemetrytypestest.NewMockMetadataStore()
 		m := NewModule(store, nil)
 
