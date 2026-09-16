@@ -1,4 +1,4 @@
-import { MouseEventHandler, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PrecisionOption } from 'components/Graph/types';
 import uPlot from 'uplot';
@@ -131,26 +131,39 @@ export enum LegendPosition {
 export interface LegendConfig {
 	position: LegendPosition;
 }
+export enum LegendAction {
+	TOGGLE = 'toggle',
+	SHOW_ONLY = 'showOnly',
+	SHOW_ALL = 'showAll',
+	HOVER = 'hover',
+}
+
+/** Everything the legend can ask of its container, as one dispatch. */
+export type LegendActionPayload =
+	/** Row click / Space / Enter / marker click: hide or show that one series. */
+	| { type: LegendAction.TOGGLE; seriesIndex: number }
+	/** Show that series alone. */
+	| { type: LegendAction.SHOW_ONLY; seriesIndex: number }
+	/** Leave the narrowed selection and show every series. */
+	| { type: LegendAction.SHOW_ALL }
+	/** Row hover, for the chart-side highlight; null on leave. */
+	| { type: LegendAction.HOVER; seriesIndex: number | null };
+
+export type OnLegendAction = (payload: LegendActionPayload) => void;
+
 /**
  * Presentational legend props. Source-agnostic: it renders whatever `items`
  * it's given and delegates interaction to the container handlers, so it serves
- * both uPlot charts (via UPlotLegend) and non-uPlot charts (Pie). The search
- * box is intrinsic to the RIGHT position (derived from `position`, not a flag).
+ * both uPlot charts (via UPlotLegend) and non-uPlot charts (Pie).
  */
 export interface LegendProps {
 	items: LegendItem[];
 	/** Legend placement; always supplied by the container. */
 	position: LegendPosition;
 	averageLegendWidth?: number;
-	/** Series index to highlight (hovered/focused). */
+	/** Series index highlighted by the chart cursor. */
 	focusedSeriesIndex: number | null;
-	/**
-	 * Container-delegated handlers. Items carry `data-legend-item-id`, so the
-	 * handler reads the target's id rather than binding per item.
-	 */
-	onClick: MouseEventHandler<HTMLDivElement>;
-	onMouseMove: MouseEventHandler<HTMLDivElement>;
-	onMouseLeave: () => void;
+	onAction: OnLegendAction;
 	/** Show the per-item copy button. Default true. */
 	showCopy?: boolean;
 }

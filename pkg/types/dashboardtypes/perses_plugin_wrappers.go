@@ -35,6 +35,7 @@ func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 		string(PanelKindTable):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec"),
 		string(PanelKindHistogram):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec"),
 		string(PanelKindList):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec"),
+		string(PanelKindText):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec"),
 		string(PanelKindHeatmap):    schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec"),
 	})
 }
@@ -66,6 +67,7 @@ func (PanelPlugin) JSONSchemaOneOf() []any {
 		PanelPluginVariant[TablePanelSpec]{Kind: string(PanelKindTable)},
 		PanelPluginVariant[HistogramPanelSpec]{Kind: string(PanelKindHistogram)},
 		PanelPluginVariant[ListPanelSpec]{Kind: string(PanelKindList)},
+		PanelPluginVariant[TextPanelSpec]{Kind: string(PanelKindText)},
 		PanelPluginVariant[HeatmapPanelSpec]{Kind: string(PanelKindHeatmap)},
 	}
 }
@@ -230,6 +232,7 @@ var (
 		PanelKindTable:      func() any { return new(TablePanelSpec) },
 		PanelKindHistogram:  func() any { return new(HistogramPanelSpec) },
 		PanelKindList:       func() any { return new(ListPanelSpec) },
+		PanelKindText:       func() any { return new(TextPanelSpec) },
 		PanelKindHeatmap:    func() any { return new(HeatmapPanelSpec) },
 	}
 	queryPluginSpecs = map[QueryPluginKind]func() any{
@@ -253,6 +256,7 @@ var (
 		PanelKindPieChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
 		PanelKindTable:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
 		PanelKindList:       {QueryKindBuilder},
+		PanelKindText:       {},
 		PanelKindHeatmap:    {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
 	}
 )

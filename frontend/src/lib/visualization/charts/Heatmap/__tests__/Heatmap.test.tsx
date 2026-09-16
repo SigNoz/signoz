@@ -88,7 +88,9 @@ describe('Heatmap', () => {
 		renderHeatmap();
 
 		const bar = screen.getByTestId('color-bar');
-		const legend = screen.getByText('service.name=cart').closest('.legend-item');
+		const legend = screen
+			.getByText('service.name=cart')
+			.closest('[data-legend-item-id]');
 		// The bar is the scale key for the grid, so it reads before the controls.
 		expect(
 			bar.compareDocumentPosition(legend as Node) &
@@ -136,11 +138,7 @@ describe('Heatmap group legend', () => {
 	const CHECKOUT = 'service.name=checkout';
 
 	function legendItem(label: string): HTMLElement {
-		const item = screen.getByText(label).closest('.legend-item');
-		if (!item) {
-			throw new Error(`no legend item for ${label}`);
-		}
-		return item as HTMLElement;
+		return screen.getByRole('switch', { name: label });
 	}
 
 	function marker(label: string): HTMLElement {
@@ -164,8 +162,8 @@ describe('Heatmap group legend', () => {
 	it('enables every group to begin with', () => {
 		renderHeatmap();
 
-		expect(legendItem(CART)).not.toHaveClass('legend-item-off');
-		expect(legendItem(CHECKOUT)).not.toHaveClass('legend-item-off');
+		expect(legendItem(CART)).toHaveAttribute('aria-checked', 'true');
+		expect(legendItem(CHECKOUT)).toHaveAttribute('aria-checked', 'true');
 	});
 
 	it('isolates a group when its label is clicked', async () => {
@@ -173,8 +171,8 @@ describe('Heatmap group legend', () => {
 
 		await userEvent.click(screen.getByText(CART));
 
-		expect(legendItem(CART)).not.toHaveClass('legend-item-off');
-		expect(legendItem(CHECKOUT)).toHaveClass('legend-item-off');
+		expect(legendItem(CART)).toHaveAttribute('aria-checked', 'true');
+		expect(legendItem(CHECKOUT)).toHaveAttribute('aria-checked', 'false');
 	});
 
 	it('restores every group when the isolated label is clicked again', async () => {
@@ -183,7 +181,7 @@ describe('Heatmap group legend', () => {
 		await userEvent.click(screen.getByText(CART));
 		await userEvent.click(screen.getByText(CART));
 
-		expect(legendItem(CHECKOUT)).not.toHaveClass('legend-item-off');
+		expect(legendItem(CHECKOUT)).toHaveAttribute('aria-checked', 'true');
 	});
 
 	it('excludes just one group when its marker is clicked', async () => {
@@ -191,8 +189,8 @@ describe('Heatmap group legend', () => {
 
 		await userEvent.click(marker(CHECKOUT));
 
-		expect(legendItem(CHECKOUT)).toHaveClass('legend-item-off');
-		expect(legendItem(CART)).not.toHaveClass('legend-item-off');
+		expect(legendItem(CHECKOUT)).toHaveAttribute('aria-checked', 'false');
+		expect(legendItem(CART)).toHaveAttribute('aria-checked', 'true');
 	});
 
 	/** The ramp the cells and colour bar are drawn from, for the default options. */

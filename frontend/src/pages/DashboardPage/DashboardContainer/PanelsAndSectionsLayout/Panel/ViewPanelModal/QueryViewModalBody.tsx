@@ -124,7 +124,7 @@ function QueryViewModalBody({
 
 	const onSwitchToEdit = (): void => {
 		// Carry the drilldown edits so the editor opens on them, not the saved panel.
-		logEvent(DashboardEvents.SWITCH_TO_EDIT_MODE, {
+		void logEvent(DashboardEvents.SWITCH_TO_EDIT_MODE, {
 			panelId: panelId,
 		});
 		openPanelEditor(panelId, {
@@ -135,6 +135,7 @@ function QueryViewModalBody({
 	return (
 		<div className={styles.content} data-testid="view-panel-modal-content">
 			<ViewPanelModalHeader
+				mode="query"
 				selectedInterval={selectedInterval}
 				startMs={timeOverride.startMs}
 				endMs={timeOverride.endMs}
@@ -170,6 +171,7 @@ function QueryViewModalBody({
 			</div>
 			<div className={styles.body}>
 				<PreviewPane
+					mode="query"
 					panelId={panelId}
 					panel={draft}
 					panelDefinition={panelDefinition}

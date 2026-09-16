@@ -1,9 +1,11 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+import { useTextBackground } from 'pages/DashboardPage/DashboardContainer/Panels/hooks/useTextBackground';
 
 import type { DashboardSection } from '../../utils';
-import QueryPanel from './QueryPanel';
-import StaticPanel from './StaticPanel';
+import QueryPanelContent from './QueryPanelContent';
+import StaticPanelContent from './StaticPanelContent';
+import styles from './Panel.module.scss';
 
 /**
  * Layout context for the panel actions menu — present only in editable mode. No
@@ -24,8 +26,9 @@ interface PanelProps {
 }
 
 /**
- * A single dashboard panel. Forks on the kind's mode before any query machinery
- * exists, so a static kind never mounts a fetch — not even a disabled one.
+ * A single dashboard panel: the card shell, forking on the kind's mode before any
+ * query machinery exists, so a static kind never mounts a fetch — not even a
+ * disabled one.
  */
 function Panel({
 	panel,
@@ -34,27 +37,34 @@ function Panel({
 	panelActions,
 }: PanelProps): JSX.Element {
 	const panelDefinition = getPanelDefinition(panel.spec.plugin.kind);
-
-	if (panelDefinition.mode === 'static') {
-		return (
-			<StaticPanel
-				panel={panel}
-				panelId={panelId}
-				panelDefinition={panelDefinition}
-				isVisible={isVisible}
-				panelActions={panelActions}
-			/>
-		);
-	}
+	const background = useTextBackground(panel.spec);
 
 	return (
-		<QueryPanel
-			panel={panel}
-			panelId={panelId}
-			panelDefinition={panelDefinition}
-			isVisible={isVisible}
-			panelActions={panelActions}
-		/>
+		<div
+			className={styles.panel}
+			style={background.style}
+			data-panel-visible={isVisible === false ? 'false' : 'true'}
+			// Stable locator so the "Download as PNG" action can find this node to
+			// capture, without threading a ref through the header/actions chain.
+			data-panel-root={panelId}
+		>
+			{panelDefinition.mode === 'static' ? (
+				<StaticPanelContent
+					panel={panel}
+					panelId={panelId}
+					panelDefinition={panelDefinition}
+					panelActions={panelActions}
+				/>
+			) : (
+				<QueryPanelContent
+					panel={panel}
+					panelId={panelId}
+					panelDefinition={panelDefinition}
+					isVisible={isVisible}
+					panelActions={panelActions}
+				/>
+			)}
+		</div>
 	);
 }
 

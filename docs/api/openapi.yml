@@ -197,6 +197,7 @@ components:
         title:
           type: string
         webhookUrl:
+          format: password
           type: string
       required:
       - webhookUrl
@@ -215,6 +216,7 @@ components:
         title:
           type: string
         token:
+          format: password
           type: string
         url:
           type: string
@@ -225,6 +227,7 @@ components:
     AlertmanagertypesChannelJSMOpsConfig:
       properties:
         apiKey:
+          format: password
           type: string
         description:
           type: string
@@ -243,6 +246,7 @@ components:
     AlertmanagertypesChannelJiraConfig:
       properties:
         apiToken:
+          format: password
           type: string
         customFields:
           additionalProperties: {}
@@ -317,6 +321,7 @@ components:
         title:
           type: string
         webhookUrl:
+          format: password
           type: string
       required:
       - webhookUrl
@@ -324,6 +329,7 @@ components:
     AlertmanagertypesChannelOpsgenieConfig:
       properties:
         apiKey:
+          format: password
           type: string
         apiUrl:
           type: string
@@ -364,6 +370,7 @@ components:
         group:
           type: string
         routingKey:
+          format: password
           type: string
         sendResolved:
           nullable: true
@@ -380,6 +387,7 @@ components:
     AlertmanagertypesChannelSlackConfig:
       properties:
         apiUrl:
+          format: password
           type: string
         channel:
           type: string
@@ -396,13 +404,16 @@ components:
     AlertmanagertypesChannelWebhookConfig:
       properties:
         bearerToken:
+          format: password
           type: string
         password:
+          format: password
           type: string
         sendResolved:
           nullable: true
           type: boolean
         url:
+          format: password
           type: string
         username:
           type: string
@@ -3536,6 +3547,11 @@ components:
       - tags
       - spec
       type: object
+    DashboardtypesHeaderOptions:
+      properties:
+        hide:
+          type: boolean
+      type: object
     DashboardtypesHeatmapAxes:
       properties:
         yScale:
@@ -3967,6 +3983,7 @@ components:
           signoz/NumberPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
           signoz/PieChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
           signoz/TablePanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
+          signoz/TextPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
           signoz/TimeSeriesPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
         propertyName: kind
       oneOf:
@@ -3977,6 +3994,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
@@ -3988,6 +4006,7 @@ components:
       - signoz/TablePanel
       - signoz/HistogramPanel
       - signoz/ListPanel
+      - signoz/TextPanel
       - signoz/HeatmapPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec:
@@ -4070,6 +4089,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesTablePanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/TextPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesTextPanelSpec'
       required:
       - kind
       - spec
@@ -4365,6 +4396,37 @@ components:
       - color
       - columnName
       type: object
+    DashboardtypesTextAlign:
+      enum:
+      - left
+      - center
+      - right
+      type: string
+    DashboardtypesTextMode:
+      enum:
+      - markdown
+      type: string
+    DashboardtypesTextPanelSpec:
+      properties:
+        headerOptions:
+          $ref: '#/components/schemas/DashboardtypesHeaderOptions'
+        mode:
+          $ref: '#/components/schemas/DashboardtypesTextMode'
+        presentation:
+          $ref: '#/components/schemas/DashboardtypesTextPresentation'
+        text:
+          type: string
+      type: object
+    DashboardtypesTextPresentation:
+      properties:
+        background:
+          nullable: true
+          type: string
+        textAlign:
+          $ref: '#/components/schemas/DashboardtypesTextAlign'
+        verticalAlign:
+          $ref: '#/components/schemas/DashboardtypesVerticalAlign'
+      type: object
     DashboardtypesTextVariableSpec:
       properties:
         constant:
@@ -4574,6 +4636,12 @@ components:
       - kind
       - spec
       type: object
+    DashboardtypesVerticalAlign:
+      enum:
+      - top
+      - center
+      - bottom
+      type: string
     ErrorsJSON:
       properties:
         code:

@@ -97,13 +97,8 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 		seriesColor: resolvedSeriesColor,
 	});
 
-	const {
-		visibleGroups,
-		focusedSeriesIndex,
-		onLegendClick,
-		onLegendMouseMove,
-		onLegendMouseLeave,
-	} = useHeatmapGroupLegend({ groups });
+	const { visibleGroups, focusedSeriesIndex, onLegendAction } =
+		useHeatmapGroupLegend({ groups });
 
 	const grid = useMemo(
 		() => resolveHeatmapGrid({ buckets, step, series, visibleGroups }),
@@ -251,19 +246,10 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				position={legendPosition}
 				averageLegendWidth={averageLegendWidth}
 				focusedSeriesIndex={focusedSeriesIndex}
-				onClick={onLegendClick}
-				onMouseMove={onLegendMouseMove}
-				onMouseLeave={onLegendMouseLeave}
+				onAction={onLegendAction}
 			/>
 		),
-		[
-			legendItems,
-			legendPosition,
-			focusedSeriesIndex,
-			onLegendClick,
-			onLegendMouseMove,
-			onLegendMouseLeave,
-		],
+		[legendItems, legendPosition, focusedSeriesIndex, onLegendAction],
 	);
 
 	const visualMap = useMemo(() => {
