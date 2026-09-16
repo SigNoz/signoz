@@ -1,0 +1,35 @@
+.toolbar {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-5, 10px);
+	padding: 0 var(--spacing-4) var(--spacing-5, 10px);
+	flex-shrink: 0;
+
+	> * {
+		flex: 0 1 auto;
+	}
+}
+
+.status {
+	// Wraps rather than losing the count at its end.
+	min-width: 0;
+	font-family: var(--font-mono);
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
+}
+
+.searchContainer {
+	flex-shrink: 0;
+	width: 100%;
+	padding-right: var(--spacing-4);
+	padding-bottom: var(--spacing-5, 10px);
+}
+
+.searchInput {
+	font-size: var(--font-size-xs);
+}
+
+.searchIcon {
+	color: var(--l3-foreground);
+}

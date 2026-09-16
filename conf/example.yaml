@@ -144,6 +144,12 @@ apiserver:
   read_timeout: 60s
   # Keep at 0; any value cuts off streaming endpoints (livetail, SSE, export_raw_data).
   write_timeout: 0
+  # tls:
+  #   enabled: true
+  #   cert_file: /path/to/server.crt
+  #   key_file: /path/to/server.key
+  #   # Minimum TLS version: "1.2" or "1.3". Defaults to "1.2".
+  #   min_version: "1.2"
   timeout:
     # Default request timeout.
     default: 60s

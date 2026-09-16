@@ -1558,6 +1558,18 @@ describe('PrivateRoute', () => {
 			keyof typeof routeWithInitialAuthZSupport,
 			AuthzRouteCase
 		> = {
+			ALL_DASHBOARD: { path: ROUTES.ALL_DASHBOARD, deniedRoles: DENIED_ROLES },
+			DASHBOARD: {
+				path: ROUTES.DASHBOARD.replace(':dashboardId', 'dashboard-id-1'),
+				deniedRoles: DENIED_ROLES,
+			},
+			DASHBOARD_PANEL_EDITOR: {
+				path: ROUTES.DASHBOARD_PANEL_EDITOR.replace(
+					':dashboardId',
+					'dashboard-id-1',
+				).replace(':panelId', 'panel-id-1'),
+				deniedRoles: DENIED_ROLES,
+			},
 			// Everything under /settings resolves to the non-exact SETTINGS route
 			SETTINGS: { path: ROUTES.SETTINGS, deniedRoles: DENIED_ROLES },
 			MY_SETTINGS: { path: ROUTES.MY_SETTINGS, deniedRoles: DENIED_ROLES },

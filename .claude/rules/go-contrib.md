@@ -7,6 +7,7 @@ paths:
 
 - When making Go changes, always ensure they follow the contributing guildelines in [`docs/contributing/go/`](../../docs/contributing/go/).
 - Look for existing patterns in the codebase for any change before implementing the changes.
+- Any ClickHouse identifier or literal built from a name or a value goes through `pkg/clickhousesql`; compiled sqlbuilder text is wrapped with `sqlbuilder.Escape` once. See [`docs/contributing/go/clickhousesql.md`](../../docs/contributing/go/clickhousesql.md).
 - If any API contract is modified, generate the OpenAPI specs with `make gen-openapi-specs`.
 - Always keep the OpenAPI spec generated in a separate commit, so the whole commit can be dropped in case of conflicts during merge. Do not try to resolve conflict in generated files, instead just generate them again.
 - Avoid breaking function calls unncessarily into multilines for couple of arguments.
