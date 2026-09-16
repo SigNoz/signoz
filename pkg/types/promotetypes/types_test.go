@@ -8,102 +8,173 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var (
-	testLogsBodyTarget         = NewLogsBodyTarget()
-	testTracesAttributesTarget = NewTracesAttributesTarget()
-)
-
 func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
-	t.Run("valid path gets body prefix stripped", func(t *testing.T) {
-		p := &PromotePath{Path: "body.user.name", Promote: true}
-		require.NoError(t, p.ValidateAndSetDefaults(testLogsBodyTarget))
-		assert.Equal(t, "user.name", p.Path)
-	})
+	target := NewLogsBodyTarget()
 
-	t.Run("path without body prefix is rejected", func(t *testing.T) {
-		p := &PromotePath{Path: "user.name", Promote: true}
-		require.Error(t, p.ValidateAndSetDefaults(testLogsBodyTarget))
-	})
-
-	t.Run("column prefixes are rejected", func(t *testing.T) {
-		for _, path := range []string{"body_v2.user.name", "body_promoted.user.name"} {
-			p := &PromotePath{Path: path, Promote: true}
-			require.Error(t, p.ValidateAndSetDefaults(testLogsBodyTarget), path)
-		}
-	})
-
-	t.Run("empty, spaced and array paths are rejected", func(t *testing.T) {
-		for _, path := range []string{"", "body.my path", "body.users[].id", "body.users[*].id"} {
-			p := &PromotePath{Path: path, Promote: true}
-			require.Error(t, p.ValidateAndSetDefaults(testLogsBodyTarget), path)
-		}
-	})
-
-	t.Run("cardinal paths are rejected", func(t *testing.T) {
-		p := &PromotePath{Path: "body.request.550e8400-e29b-41d4-a716-446655440000", Promote: true}
-		require.Error(t, p.ValidateAndSetDefaults(testLogsBodyTarget))
-	})
-
-	t.Run("valid index gets json data type default", func(t *testing.T) {
-		p := &PromotePath{
-			Path: "body.user.name",
-			Indexes: []WrappedIndex{
-				{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+	testCases := []struct {
+		name             string
+		path             *PromotePath
+		wantErr          bool
+		wantPath         string
+		wantJSONDataType telemetrytypes.JSONDataType
+	}{
+		{
+			name:     "ValidPath_BodyPrefixStripped",
+			path:     &PromotePath{Path: "body.user.name", Promote: true},
+			wantPath: "user.name",
+		},
+		{
+			name:    "PathWithoutBodyPrefix_Rejected",
+			path:    &PromotePath{Path: "user.name", Promote: true},
+			wantErr: true,
+		},
+		{
+			name:    "BodyV2PrefixedPath_Rejected",
+			path:    &PromotePath{Path: "body_v2.user.name", Promote: true},
+			wantErr: true,
+		},
+		{
+			name:    "BodyPromotedPrefixedPath_Rejected",
+			path:    &PromotePath{Path: "body_promoted.user.name", Promote: true},
+			wantErr: true,
+		},
+		{
+			name:    "EmptyPath_Rejected",
+			path:    &PromotePath{Path: "", Promote: true},
+			wantErr: true,
+		},
+		{
+			name:    "SpacedPath_Rejected",
+			path:    &PromotePath{Path: "body.my path", Promote: true},
+			wantErr: true,
+		},
+		{
+			name:    "ArrayIndexPath_Rejected",
+			path:    &PromotePath{Path: "body.users[].id", Promote: true},
+			wantErr: true,
+		},
+		{
+			name:    "ArrayWildcardPath_Rejected",
+			path:    &PromotePath{Path: "body.users[*].id", Promote: true},
+			wantErr: true,
+		},
+		{
+			name:    "CardinalPath_Rejected",
+			path:    &PromotePath{Path: "body.request.550e8400-e29b-41d4-a716-446655440000", Promote: true},
+			wantErr: true,
+		},
+		{
+			name: "ValidIndex_JSONDataTypeDefaulted",
+			path: &PromotePath{
+				Path: "body.user.name",
+				Indexes: []WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+				},
 			},
-		}
-		require.NoError(t, p.ValidateAndSetDefaults(testLogsBodyTarget))
-		assert.Equal(t, telemetrytypes.String, p.Indexes[0].JSONDataType)
-	})
+			wantPath:         "user.name",
+			wantJSONDataType: telemetrytypes.String,
+		},
+		{
+			name: "UnsupportedColumnTypeIndex_Rejected",
+			path: &PromotePath{
+				Path:    "body.user.active",
+				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeBool, Type: "minmax", Granularity: 1}},
+			},
+			wantErr: true,
+		},
+		{
+			name: "IndexWithoutType_Rejected",
+			path: &PromotePath{
+				Path:    "body.user.name",
+				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Granularity: 1}},
+			},
+			wantErr: true,
+		},
+		{
+			name: "IndexWithoutGranularity_Rejected",
+			path: &PromotePath{
+				Path:    "body.user.name",
+				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "minmax"}},
+			},
+			wantErr: true,
+		},
+	}
 
-	t.Run("index with unsupported column type is rejected", func(t *testing.T) {
-		p := &PromotePath{
-			Path:    "body.user.active",
-			Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeBool, Type: "minmax", Granularity: 1}},
-		}
-		require.Error(t, p.ValidateAndSetDefaults(testLogsBodyTarget))
-	})
-
-	t.Run("index without type or granularity is rejected", func(t *testing.T) {
-		p := &PromotePath{
-			Path:    "body.user.name",
-			Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Granularity: 1}},
-		}
-		require.Error(t, p.ValidateAndSetDefaults(testLogsBodyTarget))
-
-		p = &PromotePath{
-			Path:    "body.user.name",
-			Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "minmax"}},
-		}
-		require.Error(t, p.ValidateAndSetDefaults(testLogsBodyTarget))
-	})
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := testCase.path.ValidateAndSetDefaults(target)
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, testCase.wantPath, testCase.path.Path)
+			if testCase.wantJSONDataType != (telemetrytypes.JSONDataType{}) {
+				require.Len(t, testCase.path.Indexes, 1)
+				assert.Equal(t, testCase.wantJSONDataType, testCase.path.Indexes[0].JSONDataType)
+			}
+		})
+	}
 }
 
 func TestValidateAndSetDefaultsTracesAttributes(t *testing.T) {
-	t.Run("bare attribute name is kept as is", func(t *testing.T) {
-		p := &PromotePath{Path: "http.method", Promote: true}
-		require.NoError(t, p.ValidateAndSetDefaults(testTracesAttributesTarget))
-		assert.Equal(t, "http.method", p.Path)
-	})
+	target := NewTracesAttributesTarget()
 
-	t.Run("column prefixes are rejected", func(t *testing.T) {
-		for _, path := range []string{"attributes.http.method", "attributes_promoted.http.method"} {
-			p := &PromotePath{Path: path, Promote: true}
-			require.Error(t, p.ValidateAndSetDefaults(testTracesAttributesTarget), path)
-		}
-	})
+	testCases := []struct {
+		name     string
+		path     *PromotePath
+		wantErr  bool
+		wantPath string
+	}{
+		{
+			name:     "BareAttributeName_KeptAsIs",
+			path:     &PromotePath{Path: "http.method", Promote: true},
+			wantPath: "http.method",
+		},
+		{
+			name:    "AttributesPrefixedPath_Rejected",
+			path:    &PromotePath{Path: "attributes.http.method", Promote: true},
+			wantErr: true,
+		},
+		{
+			name:    "AttributesPromotedPrefixedPath_Rejected",
+			path:    &PromotePath{Path: "attributes_promoted.http.method", Promote: true},
+			wantErr: true,
+		},
+		{
+			name:    "EmptyPath_Rejected",
+			path:    &PromotePath{Path: "", Promote: true},
+			wantErr: true,
+		},
+		{
+			name:    "SpacedPath_Rejected",
+			path:    &PromotePath{Path: "my attr", Promote: true},
+			wantErr: true,
+		},
+		{
+			name:    "ArrayIndexPath_Rejected",
+			path:    &PromotePath{Path: "tags[].id", Promote: true},
+			wantErr: true,
+		},
+		{
+			name: "IndexesWithoutSupport_Rejected",
+			path: &PromotePath{
+				Path:    "http.method",
+				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1}},
+			},
+			wantErr: true,
+		},
+	}
 
-	t.Run("empty, spaced and array paths are rejected", func(t *testing.T) {
-		for _, path := range []string{"", "my attr", "tags[].id"} {
-			p := &PromotePath{Path: path, Promote: true}
-			require.Error(t, p.ValidateAndSetDefaults(testTracesAttributesTarget), path)
-		}
-	})
-
-	t.Run("indexes are rejected for a target without index support", func(t *testing.T) {
-		p := &PromotePath{
-			Path:    "http.method",
-			Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1}},
-		}
-		require.Error(t, p.ValidateAndSetDefaults(testTracesAttributesTarget))
-	})
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := testCase.path.ValidateAndSetDefaults(target)
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, testCase.wantPath, testCase.path.Path)
+		})
+	}
 }

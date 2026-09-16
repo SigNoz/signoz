@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/gorilla/mux"
 )
 
@@ -22,7 +21,8 @@ func NewHandler(module promote.Module) promote.Handler {
 }
 
 func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
-	target, err := targetFromPath(r)
+	vars := mux.Vars(r)
+	target, err := promotetypes.NewTargetFromPath(vars["telemetry_signal"], vars["context"])
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -51,7 +51,8 @@ func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
-	target, err := targetFromPath(r)
+	vars := mux.Vars(r)
+	target, err := promotetypes.NewTargetFromPath(vars["telemetry_signal"], vars["context"])
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -71,23 +72,4 @@ func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, http.StatusOK, paths)
-}
-
-// targetFromPath resolves the promotion domain from the {telemetry_signal}
-// and {context} path variables.
-func targetFromPath(r *http.Request) (promotetypes.Target, error) {
-	vars := mux.Vars(r)
-	signal, ok := telemetrytypes.SignalFromText(vars["telemetry_signal"])
-	if !ok {
-		return promotetypes.Target{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid signal: %s", vars["telemetry_signal"])
-	}
-	context, ok := telemetrytypes.FieldContextFromText(vars["context"])
-	if !ok {
-		return promotetypes.Target{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid context: %s", vars["context"])
-	}
-	target, ok := promotetypes.TargetFor(signal, context)
-	if !ok {
-		return promotetypes.Target{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "promotion is not supported for %s %s", signal.StringValue(), context.StringValue())
-	}
-	return target, nil
 }
