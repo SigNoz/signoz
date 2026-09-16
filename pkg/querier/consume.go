@@ -566,18 +566,6 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	}, nil
 }
 
-// jsonAttributeMap returns the decoded JSON attributes document, or nil if absent.
-func jsonAttributeMap(v any) map[string]any {
-	switch m := v.(type) {
-	case telemetrystoretypes.JSONValue:
-		return m
-	case map[string]any:
-		return m
-	default:
-		return nil
-	}
-}
-
 // flattenJSONPaths flattens a decoded JSON document into dotted keys, overwriting existing keys in out.
 func flattenJSONPaths(prefix string, m map[string]any, out map[string]any) {
 	for k, v := range m {
@@ -605,14 +593,12 @@ func mergeSpanAttributeColumns(data map[string]any) {
 	attrStr, hasStr := data["attributes_string"]
 	attrNum, hasNum := data["attributes_number"]
 	attrBool, hasBool := data["attributes_bool"]
-	attrJSON := jsonAttributeMap(data["attributes"])
+	attrJSON, _ := data["attributes"].(telemetrystoretypes.JSONValue)
 	// todo(nitya): move to resource json
 	resStr, hasRes := data["resources_string"]
 	if hasStr || hasNum || hasBool || attrJSON != nil || hasRes {
 		attributes := make(map[string]any)
-		if attrJSON != nil {
-			flattenJSONPaths("", attrJSON, attributes)
-		}
+		flattenJSONPaths("", attrJSON, attributes)
 		if m, ok := attrStr.(map[string]string); ok {
 			for k, v := range m {
 				attributes[k] = v

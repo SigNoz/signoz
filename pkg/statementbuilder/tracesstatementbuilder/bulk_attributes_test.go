@@ -80,31 +80,70 @@ func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 	}
 }
 
-// TestGroupByAttributeAfterRolloutReadsJSON: post-rollout group-bys read the JSON column, never the legacy map.
-func TestGroupByAttributeAfterRolloutReadsJSON(t *testing.T) {
+// TestGroupByAttributeHomeAcrossRollout: the group-by home follows the window — legacy map
+// before the rollout, JSON with legacy fallback while straddling, JSON only after it.
+func TestGroupByAttributeHomeAcrossRollout(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	rel := releaseTime.UnixMilli()
 	day := int64(24 * time.Hour / time.Millisecond)
 
 	b := newBulkTestBuilder(t, releaseTime)
 
-	stmt, err := b.Build(
-		context.Background(), valuer.UUID{}, uint64(rel+day), uint64(rel+2*day),
-		qbtypes.RequestTypeTimeSeries,
-		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Signal:       telemetrytypes.SignalTraces,
-			StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-			Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
-			GroupBy: []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "http.route",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			}}},
-			Limit: 10,
+	testCases := []struct {
+		name            string
+		startMs         uint64
+		endMs           uint64
+		wantContains    []string
+		wantNotContains []string
+	}{
+		{
+			name:            "BeforeRollout_ReadsLegacyMap",
+			startMs:         uint64(rel - 2*day),
+			endMs:           uint64(rel - day),
+			wantContains:    []string{"mapContains(attributes_string, 'http.route')", "attributes_string['http.route']"},
+			wantNotContains: []string{"attributes.`http.route`"},
 		},
-		nil,
-	)
-	require.NoError(t, err)
-	assert.Contains(t, stmt.Query, "attributes.`http.route`::String")
-	assert.NotContains(t, stmt.Query, "attributes_string", "post-rollout group-by must not read the legacy map")
+		{
+			name:            "StraddlingRollout_JSONThenLegacyFallback",
+			startMs:         uint64(rel - day),
+			endMs:           uint64(rel + day),
+			wantContains:    []string{"attributes.`http.route` IS NOT NULL", "attributes.`http.route`::String", "attributes_string['http.route']"},
+			wantNotContains: nil,
+		},
+		{
+			name:            "AfterRollout_ReadsJSONOnly",
+			startMs:         uint64(rel + day),
+			endMs:           uint64(rel + 2*day),
+			wantContains:    []string{"attributes.`http.route`::String"},
+			wantNotContains: []string{"attributes_string"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			stmt, err := b.Build(
+				context.Background(), valuer.UUID{}, testCase.startMs, testCase.endMs,
+				qbtypes.RequestTypeTimeSeries,
+				qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+					Signal:       telemetrytypes.SignalTraces,
+					StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+					Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
+					GroupBy: []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name:          "http.route",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					}}},
+					Limit: 10,
+				},
+				nil,
+			)
+			require.NoError(t, err)
+			for _, want := range testCase.wantContains {
+				assert.Contains(t, stmt.Query, want)
+			}
+			for _, unwanted := range testCase.wantNotContains {
+				assert.NotContains(t, stmt.Query, unwanted)
+			}
+		})
+	}
 }
