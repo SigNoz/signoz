@@ -17,7 +17,6 @@ import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
-import { DATA_SOURCE_TO_SIGNAL } from 'constants/fieldSuggestions';
 import {
 	negationQueryOperatorSuggestions,
 	OPERATORS,
@@ -37,7 +36,7 @@ import {
 } from 'types/antlrQueryTypes';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
-import { DataSource } from 'types/common/queryBuilder';
+import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 import {
 	getCurrentValueIndexAtCursor,
 	getQueryContextAtCursor,

@@ -5,8 +5,8 @@ import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { DATA_SOURCE_TO_SIGNAL } from 'constants/fieldSuggestions';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
+import { DATA_SOURCE_TO_SIGNAL } from 'types/common/queryBuilder';
 
 interface UseFieldValuesProps {
 	filter: IQuickFiltersConfig;
