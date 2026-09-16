@@ -1,4 +1,4 @@
-# SQL Compiler
+# DSL Filtering to SQL
 
 To support search on any entity's list page (dashboards, alert rules, ...), use [pkg/parser/filterquery/sqlcompiler](/pkg/parser/filterquery/sqlcompiler/compiler.go). It compiles a filter DSL string into a WHERE clause for the relational store: `?`-placeholder SQL plus bind arguments, ready for bun on both SQLite and Postgres. This doc explains what the compiler already does and what an adopting module supplies: a `FieldResolver` that says which keys exist and what each maps to.
 
@@ -96,9 +96,11 @@ func (sampleEntityFieldResolver) ResolveFreeText(v *sqlcompiler.Visitor, value s
 
 Each entity decides its own key policy; the full dashboards resolver, [pkg/modules/dashboard/impldashboard/listfilter_resolver.go](/pkg/modules/dashboard/impldashboard/listfilter_resolver.go), shows the patterns seen so far.
 
-#### Operator allowlists
+#### Reserved keys and operator allowlists
 
-Not every operator makes sense on every key (`name BETWEEN ...` does not). Dashboards declares its keys and the operators each accepts in `pkg/types/dashboardtypes` and checks the map before building:
+An entity usually claims a fixed set of column-level keys for its DSL: the reserved keys. For dashboards these are `name`, `description`, `created_at`, `updated_at`, `created_by`, `locked` and `source`, declared as `DSLKey` constants in [pkg/types/dashboardtypes](/pkg/types/dashboardtypes/perses_dashboard.go). A reserved key always resolves to the entity's own data; anything else (a tag key like `team`) is resolved differently or rejected. The list API can also advertise the set (dashboards and rules return `reservedKeywords`) so frontend suggestions never go stale.
+
+Not every operator makes sense on every reserved key (`name BETWEEN ...` does not), so dashboards pairs each reserved key with the operators it accepts and checks the map before building:
 
 ```go
 var ReservedOps = map[DSLKey]map[qbtypesv5.FilterOperator]struct{}{
@@ -112,8 +114,6 @@ if _, allowed := allowedOperations[operation]; !allowed {
 	return ""
 }
 ```
-
-If the entity has reserved keys like these, the list API can also advertise them (dashboards and rules return `reservedKeywords`) so frontend suggestions never go stale.
 
 #### JSON columns
 
