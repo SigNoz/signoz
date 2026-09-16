@@ -1086,7 +1086,7 @@ func TestInvalidatePanelWithoutQueries(t *testing.T) {
 	}`)
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected panel-without-queries to be rejected")
-	assert.Contains(t, err.Error(), "panel must have one query")
+	assert.Contains(t, err.Error(), "spec.queries: is required and must not be null")
 }
 
 func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
@@ -1134,6 +1134,198 @@ func TestInvalidatePanelWithMultipleDirectQueries(t *testing.T) {
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected panel with two top-level queries to be rejected")
 	assert.Contains(t, err.Error(), "panel must have one query")
+}
+
+func TestValidateTextPanel(t *testing.T) {
+	wrapPanel := func(panelSpec, queries string) []byte {
+		return []byte(`{
+			"variables": [],
+			"panels": {
+				"p1": {
+					"kind": "Panel",
+					"spec": {
+						"links": [],
+						"plugin": {"kind": "signoz/TextPanel", "spec": ` + panelSpec + `},
+						"queries": ` + queries + `
+					}
+				}
+			},
+			"links": [],
+			"layouts": []
+		}`)
+	}
+
+	type specCase struct {
+		panelSpec              string
+		expectedMarshalledSpec string
+		expectedError          string
+	}
+
+	testCases := []struct {
+		description string
+		queries     string
+		specCases   []specCase
+	}{
+		{
+			description: "fully specified text panel validates",
+			queries:     "[]",
+			specCases: []specCase{{
+				panelSpec: `{
+					"mode": "markdown",
+					"text": "# Runbook\n\nSee the [oncall doc](https://example.com).",
+					"presentation": {"textAlign": "center", "verticalAlign": "bottom", "background": "#1A2b3C"},
+					"headerOptions": {"hide": true}
+				}`,
+				expectedMarshalledSpec: `{
+					"mode": "markdown",
+					"text": "# Runbook\n\nSee the [oncall doc](https://example.com).",
+					"presentation": {"textAlign": "center", "verticalAlign": "bottom", "background": "#1A2b3C"},
+					"headerOptions": {"hide": true}
+				}`,
+			}},
+		},
+		// The header shows unless explicitly hidden, so the zero value must round-trip
+		// as a shown header. Background has no default: omitted stays omitted.
+		{
+			description: "omitted fields marshal back as their defaults",
+			queries:     "[]",
+			specCases: []specCase{{
+				panelSpec: `{}`,
+				expectedMarshalledSpec: `{
+					"mode": "markdown",
+					"text": "",
+					"presentation": {"textAlign": "left", "verticalAlign": "top"},
+					"headerOptions": {"hide": false}
+				}`,
+			}},
+		},
+		{
+			description: "a text panel carrying a query is rejected",
+			queries:     `[{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "metrics"}}}}]`,
+			specCases: []specCase{{
+				panelSpec:     `{"text": "hi"}`,
+				expectedError: "renders without a query and must have queries: [], found 1",
+			}},
+		},
+		{
+			description: "a text panel with null queries is rejected",
+			queries:     "null",
+			specCases: []specCase{{
+				panelSpec:     `{"text": "hi"}`,
+				expectedError: "spec.queries: is required and must not be null",
+			}},
+		},
+		{
+			description: "hex background colours validate",
+			queries:     "[]",
+			specCases: []specCase{
+				{
+					panelSpec:              `{"presentation": {"background": "#abc"}}`,
+					expectedMarshalledSpec: `{"mode": "markdown", "text": "", "presentation": {"textAlign": "left", "verticalAlign": "top", "background": "#abc"}, "headerOptions": {"hide": false}}`,
+				},
+				{
+					panelSpec:              `{"presentation": {"background": "#abcd"}}`,
+					expectedMarshalledSpec: `{"mode": "markdown", "text": "", "presentation": {"textAlign": "left", "verticalAlign": "top", "background": "#abcd"}, "headerOptions": {"hide": false}}`,
+				},
+				{
+					panelSpec:              `{"presentation": {"background": "#aabbcc"}}`,
+					expectedMarshalledSpec: `{"mode": "markdown", "text": "", "presentation": {"textAlign": "left", "verticalAlign": "top", "background": "#aabbcc"}, "headerOptions": {"hide": false}}`,
+				},
+				{
+					panelSpec:              `{"presentation": {"background": "#aabbccdd"}}`,
+					expectedMarshalledSpec: `{"mode": "markdown", "text": "", "presentation": {"textAlign": "left", "verticalAlign": "top", "background": "#aabbccdd"}, "headerOptions": {"hide": false}}`,
+				},
+				{
+					panelSpec:              `{"presentation": {"background": "#AABBCC"}}`,
+					expectedMarshalledSpec: `{"mode": "markdown", "text": "", "presentation": {"textAlign": "left", "verticalAlign": "top", "background": "#AABBCC"}, "headerOptions": {"hide": false}}`,
+				},
+			},
+		},
+		{
+			description: "unknown enum values are rejected",
+			queries:     "[]",
+			specCases: []specCase{
+				{
+					panelSpec:     `{"mode": "html"}`,
+					expectedError: `invalid text mode "html"`,
+				},
+				{
+					panelSpec:     `{"presentation": {"textAlign": "justify"}}`,
+					expectedError: `invalid text align "justify"`,
+				},
+				{
+					panelSpec:     `{"presentation": {"verticalAlign": "middle"}}`,
+					expectedError: `invalid vertical align "middle"`,
+				},
+			},
+		},
+		{
+			description: "invalid background colours are rejected",
+			queries:     "[]",
+			specCases: []specCase{
+				{
+					panelSpec:     `{"presentation": {"background": ""}}`,
+					expectedError: "failed on the 'hexcolor' tag",
+				},
+				{
+					panelSpec:     `{"presentation": {"background": "aabbcc"}}`,
+					expectedError: "failed on the 'hexcolor' tag",
+				},
+				{
+					panelSpec:     `{"presentation": {"background": "red"}}`,
+					expectedError: "failed on the 'hexcolor' tag",
+				},
+				{
+					panelSpec:     `{"presentation": {"background": "#abcde"}}`,
+					expectedError: "failed on the 'hexcolor' tag",
+				},
+				{
+					panelSpec:     `{"presentation": {"background": "#gggggg"}}`,
+					expectedError: "failed on the 'hexcolor' tag",
+				},
+			},
+		},
+		{
+			description: "unknown spec fields are rejected",
+			queries:     "[]",
+			specCases: []specCase{
+				{
+					panelSpec:     `{"markdown": "hi"}`,
+					expectedError: `json: unknown field "markdown"`,
+				},
+				{
+					panelSpec:     `{"presentation": {"horizontalAlign": "left"}}`,
+					expectedError: `json: unknown field "horizontalAlign"`,
+				},
+				{
+					panelSpec:     `{"headerOptions": {"show": true}}`,
+					expectedError: `json: unknown field "show"`,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			for _, specCase := range testCase.specCases {
+				d, err := unmarshalDashboard(wrapPanel(specCase.panelSpec, testCase.queries))
+
+				if specCase.expectedError != "" {
+					require.Error(t, err, "expected %s to be rejected", specCase.panelSpec)
+					assert.Contains(t, err.Error(), specCase.expectedError)
+					continue
+				}
+				require.NoError(t, err, "expected %s to validate", specCase.panelSpec)
+
+				spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TextPanelSpec)
+				require.True(t, ok, "expected the panel spec to decode as *TextPanelSpec")
+
+				out, err := json.Marshal(spec)
+				require.NoError(t, err, "marshalling the decoded text panel spec")
+				assert.JSONEq(t, specCase.expectedMarshalledSpec, string(out))
+			}
+		})
+	}
 }
 
 func TestValidateRequiredFields(t *testing.T) {

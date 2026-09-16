@@ -5,10 +5,12 @@ import type {
 	DashboardtypesPanelSpecDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+import { SectionKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
+import { getSupportedSignals } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
 import type { EQueryType } from 'types/common/dashboard';
 
-import type { LegendSeries } from '../utils/legendSeries';
+import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
 import ConfigActions from './ConfigActions/ConfigActions';
 import SectionSlot from './SectionSlot/SectionSlot';
@@ -65,9 +67,16 @@ function ConfigPane({
 }: ConfigPaneProps): JSX.Element {
 	const panelKind = spec.plugin.kind;
 	const definition = getPanelDefinition(panelKind);
-	const sections = definition.sections;
+	// The header toggle belongs with the title and description it hides, so the kind's
+	// declaration still gates it but it renders above, out of the display options.
+	const headerSection = definition.sections.find(
+		(config) => config.kind === SectionKind.PanelHeader,
+	);
+	const sections = definition.sections.filter(
+		(config) => config.kind !== SectionKind.PanelHeader,
+	);
 
-	const signal = resolveSignal(spec.queries, definition.supportedSignals[0]);
+	const signal = resolveSignal(spec.queries, getSupportedSignals(panelKind)[0]);
 
 	// Title/description are just a slice of the spec — edit them through the same
 	// onChangeSpec path the sections use, so there's a single editing surface.
@@ -104,6 +113,23 @@ function ConfigPane({
 						onChange={(e): void => setDisplayField('description', e.target.value)}
 					/>
 				</div>
+
+				{headerSection && (
+					<SectionSlot
+						bare
+						config={headerSection}
+						spec={spec}
+						onChangeSpec={onChangeSpec}
+						legendSeries={legendSeries}
+						tableColumns={tableColumns}
+						signal={signal}
+						panelKind={panelKind}
+						onChangePanelKind={onChangePanelKind}
+						queryType={queryType}
+						stepInterval={stepInterval}
+						metricUnit={metricUnit}
+					/>
+				)}
 			</div>
 
 			{sections.length > 0 && (

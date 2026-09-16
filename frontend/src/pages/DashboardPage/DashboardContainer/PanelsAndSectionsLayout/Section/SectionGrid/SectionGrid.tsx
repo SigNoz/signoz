@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 import GridLayout, { WidthProvider, type Layout } from 'react-grid-layout';
 
 import type { DashboardSection } from '../../../utils';
-import { useDashboardStore } from '../../../store/useDashboardStore';
 import { usePersistLayout } from '../hooks/usePersistLayout';
 import SectionGridItem from './SectionGridItem';
 import styles from './SectionGrid.module.scss';
+import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 const ResponsiveGridLayout = WidthProvider(GridLayout);
 
@@ -21,7 +21,7 @@ function SectionGrid({
 	layoutIndex,
 	sections,
 }: SectionGridProps): JSX.Element {
-	const isEditable = useDashboardStore((s) => s.isEditable);
+	const { isEditable } = useDashboardEditContext();
 
 	const rglLayout = useMemo<Layout[]>(
 		() =>

@@ -11,7 +11,15 @@ import {
 	AlertThresholdOperator,
 	Threshold,
 } from 'container/CreateAlertV2/context/types';
-import { THRESHOLD_COLOR_DANGER_ORDER } from 'pages/DashboardPage/DashboardContainer/Panels/types/threshold';
+import {
+	SectionKind,
+	ThresholdVariant,
+} from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
+import {
+	THRESHOLD_COLOR_DANGER_ORDER,
+	type ComparisonThresholdShape,
+} from 'pages/DashboardPage/DashboardContainer/Panels/types/threshold';
+import { getSectionControls } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getSectionControls';
 import type { MetricAggregation } from 'types/api/v5/queryRange';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ReduceOperators } from 'types/common/queryBuilder';
@@ -64,27 +72,35 @@ export function uniformReduceTo(query: Query): ReduceOperators | undefined {
 		: undefined;
 }
 
+/**
+ * The panel's thresholds, normalized for alert prefill, read through the variant the
+ * kind declares. A `table` variant contributes nothing: per-column thresholds have no
+ * meaning for a panel-wide alert condition.
+ */
 function readPanelThresholds(
 	plugin: DashboardtypesPanelPluginDTO,
 ): NormalizedPanelThreshold[] {
-	switch (plugin.kind) {
-		case 'signoz/TimeSeriesPanel':
-		case 'signoz/BarChartPanel':
-			return (plugin.spec.thresholds ?? []).map((t) => ({
-				color: t.color,
-				value: t.value,
-				unit: t.unit,
-			}));
-		case 'signoz/NumberPanel':
-			return (plugin.spec.thresholds ?? []).map((t) => ({
-				color: t.color,
-				value: t.value,
-				unit: t.unit,
-				operator: t.operator,
-			}));
-		default:
-			return [];
+	const variant = getSectionControls(
+		plugin.kind,
+		SectionKind.Thresholds,
+	)?.variant;
+	if (
+		variant !== ThresholdVariant.LABEL &&
+		variant !== ThresholdVariant.COMPARISON
+	) {
+		return [];
 	}
+	const thresholds =
+		(plugin.spec as { thresholds?: ComparisonThresholdShape[] }).thresholds ?? [];
+	return thresholds.map((threshold) => ({
+		color: threshold.color,
+		value: threshold.value,
+		unit: threshold.unit,
+		// Only comparison thresholds carry an operator.
+		...(variant === ThresholdVariant.COMPARISON && {
+			operator: threshold.operator,
+		}),
+	}));
 }
 
 // Match case-insensitively (picker emits lowercase hex); unknown colors sort last.
