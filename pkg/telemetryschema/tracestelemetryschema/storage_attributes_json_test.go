@@ -54,15 +54,15 @@ func TestFieldForAttributeJSONEvolution(t *testing.T) {
 		expected string
 	}{
 		{"string before -> map", telemetrytypes.FieldDataTypeString, attrWindowBefore, "attributes_string['user.id']"},
-		{"string after -> json", telemetrytypes.FieldDataTypeString, attrWindowAfter, "attributes.`user.id`::String"},
-		{"string straddle -> dual", telemetrytypes.FieldDataTypeString, attrWindowStraddle, "multiIf(attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, mapContains(attributes_string, 'user.id'), attributes_string['user.id'], NULL)"},
+		{"string after -> json", telemetrytypes.FieldDataTypeString, attrWindowAfter, "attributes.`user%2Eid`::String"},
+		{"string straddle -> dual", telemetrytypes.FieldDataTypeString, attrWindowStraddle, "multiIf(attributes.`user%2Eid` IS NOT NULL, attributes.`user%2Eid`::String, mapContains(attributes_string, 'user.id'), attributes_string['user.id'], NULL)"},
 		{"number before -> map", telemetrytypes.FieldDataTypeNumber, attrWindowBefore, "attributes_number['user.id']"},
-		{"number after -> json", telemetrytypes.FieldDataTypeNumber, attrWindowAfter, "if(dynamicType(attributes.`user.id`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`user.id`, 'Float64'), NULL)"},
-		{"number straddle -> dual", telemetrytypes.FieldDataTypeNumber, attrWindowStraddle, "multiIf(if(dynamicType(attributes.`user.id`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`user.id`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`user.id`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`user.id`, 'Float64'), NULL), mapContains(attributes_number, 'user.id'), attributes_number['user.id'], NULL)"},
-		{"int64 after -> json", telemetrytypes.FieldDataTypeInt64, attrWindowAfter, "if(dynamicType(attributes.`user.id`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`user.id`, 'Float64'), NULL)"},
+		{"number after -> json", telemetrytypes.FieldDataTypeNumber, attrWindowAfter, "if(dynamicType(attributes.`user%2Eid`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`user%2Eid`, 'Float64'), NULL)"},
+		{"number straddle -> dual", telemetrytypes.FieldDataTypeNumber, attrWindowStraddle, "multiIf(if(dynamicType(attributes.`user%2Eid`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`user%2Eid`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`user%2Eid`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`user%2Eid`, 'Float64'), NULL), mapContains(attributes_number, 'user.id'), attributes_number['user.id'], NULL)"},
+		{"int64 after -> json", telemetrytypes.FieldDataTypeInt64, attrWindowAfter, "if(dynamicType(attributes.`user%2Eid`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`user%2Eid`, 'Float64'), NULL)"},
 		{"bool before -> map", telemetrytypes.FieldDataTypeBool, attrWindowBefore, "attributes_bool['user.id']"},
-		{"bool after -> json", telemetrytypes.FieldDataTypeBool, attrWindowAfter, "if(dynamicType(attributes.`user.id`) = 'Bool', accurateCastOrNull(attributes.`user.id`, 'Bool'), NULL)"},
-		{"bool straddle -> dual", telemetrytypes.FieldDataTypeBool, attrWindowStraddle, "multiIf(if(dynamicType(attributes.`user.id`) = 'Bool', accurateCastOrNull(attributes.`user.id`, 'Bool'), NULL) IS NOT NULL, if(dynamicType(attributes.`user.id`) = 'Bool', accurateCastOrNull(attributes.`user.id`, 'Bool'), NULL), mapContains(attributes_bool, 'user.id'), attributes_bool['user.id'], NULL)"},
+		{"bool after -> json", telemetrytypes.FieldDataTypeBool, attrWindowAfter, "if(dynamicType(attributes.`user%2Eid`) = 'Bool', accurateCastOrNull(attributes.`user%2Eid`, 'Bool'), NULL)"},
+		{"bool straddle -> dual", telemetrytypes.FieldDataTypeBool, attrWindowStraddle, "multiIf(if(dynamicType(attributes.`user%2Eid`) = 'Bool', accurateCastOrNull(attributes.`user%2Eid`, 'Bool'), NULL) IS NOT NULL, if(dynamicType(attributes.`user%2Eid`) = 'Bool', accurateCastOrNull(attributes.`user%2Eid`, 'Bool'), NULL), mapContains(attributes_bool, 'user.id'), attributes_bool['user.id'], NULL)"},
 	}
 
 	for _, tc := range testCases {
@@ -115,49 +115,49 @@ func TestConditionForAttributeJSON(t *testing.T) {
 			name:     "equal string",
 			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
 			operator: qbtypes.FilterOperatorEqual, value: "admin",
-			expected: "(attributes.`user.id`::String = ? AND attributes.`user.id` IS NOT NULL)",
+			expected: "(attributes.`user%2Eid`::String = ? AND attributes.`user%2Eid` IS NOT NULL)",
 		},
 		{
 			name:     "not equal string has no exists guard",
 			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
 			operator: qbtypes.FilterOperatorNotEqual, value: "admin",
-			expected: "attributes.`user.id`::String <> ?",
+			expected: "attributes.`user%2Eid`::String <> ?",
 		},
 		{
 			name:     "greater than number",
 			key:      attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo),
 			operator: qbtypes.FilterOperatorGreaterThan, value: float64(200),
-			expected: "toFloat64(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)) > ?",
+			expected: "toFloat64(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL)) > ?",
 		},
 		{
 			name:     "ilike string",
 			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
 			operator: qbtypes.FilterOperatorILike, value: "%adm%",
-			expected: "LOWER(attributes.`user.id`::String) LIKE LOWER(?)",
+			expected: "LOWER(attributes.`user%2Eid`::String) LIKE LOWER(?)",
 		},
 		{
 			name:     "exists uses raw path",
 			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
 			operator: qbtypes.FilterOperatorExists, value: nil,
-			expected: "attributes.`user.id` IS NOT NULL",
+			expected: "attributes.`user%2Eid` IS NOT NULL",
 		},
 		{
 			name:     "not exists uses raw path",
 			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
 			operator: qbtypes.FilterOperatorNotExists, value: nil,
-			expected: "attributes.`user.id` IS NULL",
+			expected: "attributes.`user%2Eid` IS NULL",
 		},
 		{
 			name:     "in string",
 			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
 			operator: qbtypes.FilterOperatorIn, value: []any{"a", "b"},
-			expected: "((attributes.`user.id`::String = ? OR attributes.`user.id`::String = ?) AND attributes.`user.id` IS NOT NULL)",
+			expected: "((attributes.`user%2Eid`::String = ? OR attributes.`user%2Eid`::String = ?) AND attributes.`user%2Eid` IS NOT NULL)",
 		},
 		{
 			name:     "not in string has no exists guard",
 			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
 			operator: qbtypes.FilterOperatorNotIn, value: []any{"a", "b"},
-			expected: "(attributes.`user.id`::String <> ? AND attributes.`user.id`::String <> ?)",
+			expected: "(attributes.`user%2Eid`::String <> ? AND attributes.`user%2Eid`::String <> ?)",
 		},
 		{
 			name:     "between number",
@@ -195,7 +195,7 @@ func TestConditionForAttributeJSONNotExistsDualRead(t *testing.T) {
 	sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	// the value multiIf resolves the row's home; NOT EXISTS negates the whole thing to IS NULL
 	assert.Contains(t, sql, "IS NULL")
-	assert.Contains(t, sql, "attributes.`user.id` IS NOT NULL")
+	assert.Contains(t, sql, "attributes.`user%2Eid` IS NOT NULL")
 	assert.Contains(t, sql, "mapContains(attributes_string, 'user.id')")
 }
 
@@ -211,7 +211,7 @@ func TestColumnExpressionForAttributeJSON(t *testing.T) {
 		key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
 		got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1]}, storage, &key, telemetrytypes.FieldDataTypeString, nil)
 		require.NoError(t, err)
-		assert.Equal(t, "multiIf(attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, mapContains(attributes_string, 'attribute.user.id'), attributes_string['attribute.user.id'], NULL)", got)
+		assert.Equal(t, "multiIf(attributes.`user%2Eid` IS NOT NULL, attributes.`user%2Eid`::String, mapContains(attributes_string, 'attribute.user.id'), attributes_string['attribute.user.id'], NULL)", got)
 	})
 
 	t.Run("aggregation numeric", func(t *testing.T) {
@@ -260,9 +260,9 @@ func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
 
 	sb.Where(sb.Or(conds...))
 	sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	assert.Contains(t, sql, "toFloat64OrNull(attributes.`http.status_code`::String) = ?")
-	assert.Contains(t, sql, "toFloat64(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)) = ?")
-	assert.Contains(t, sql, "attributes.`http.status_code` IS NOT NULL")
+	assert.Contains(t, sql, "toFloat64OrNull(attributes.`http%2Estatus_code`::String) = ?")
+	assert.Contains(t, sql, "toFloat64(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL)) = ?")
+	assert.Contains(t, sql, "attributes.`http%2Estatus_code` IS NOT NULL")
 	assert.NotEmpty(t, warnings, "a colliding name must surface the ambiguity warning")
 }
 
@@ -286,7 +286,7 @@ func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1]}, storage, &ref, telemetrytypes.FieldDataTypeString, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
-		"multiIf(attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL) IS NOT NULL, toString(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)), NULL)",
+		"multiIf(attributes.`http%2Estatus_code` IS NOT NULL, attributes.`http%2Estatus_code`::String, if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL) IS NOT NULL, toString(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL)), NULL)",
 		got)
 }
 
@@ -310,7 +310,7 @@ func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
 	got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1]}, storage, &ref, telemetrytypes.FieldDataTypeFloat64, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
-		"multiIf(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL) IS NOT NULL, toFloat64(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)), attributes.`http.status_code` IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), NULL)",
+		"multiIf(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL) IS NOT NULL, toFloat64(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL)), attributes.`http%2Estatus_code` IS NOT NULL, toFloat64OrNull(attributes.`http%2Estatus_code`::String), NULL)",
 		got)
 }
 
@@ -379,13 +379,13 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	t.Run("not equal number after -> NULL folded to 0", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, float64(200))
-		assert.Contains(t, sql, "toFloat64(ifNull(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), 0)) <> ?")
+		assert.Contains(t, sql, "toFloat64(ifNull(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL), 0)) <> ?")
 	})
 
 	t.Run("not equal bool after -> NULL folded to false", func(t *testing.T) {
 		key := attrKey("http.cache.hit", telemetrytypes.FieldDataTypeBool, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, true)
-		assert.Contains(t, sql, "ifNull(if(dynamicType(attributes.`http.cache.hit`) = 'Bool', accurateCastOrNull(attributes.`http.cache.hit`, 'Bool'), NULL), false) <> ?")
+		assert.Contains(t, sql, "ifNull(if(dynamicType(attributes.`http%2Ecache%2Ehit`) = 'Bool', accurateCastOrNull(attributes.`http%2Ecache%2Ehit`, 'Bool'), NULL), false) <> ?")
 	})
 
 	// A numeric key compared to a non-numeric string is string-cast; the fold runs on the raw
@@ -394,27 +394,27 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	t.Run("not equal number after, string value -> string cast over folded read, no type mismatch", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, "teapot")
-		assert.Contains(t, sql, "toString(ifNull(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), 0)) <> ?")
+		assert.Contains(t, sql, "toString(ifNull(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL), 0)) <> ?")
 		assert.NotContains(t, sql, "ifNull(toString(")
 	})
 
 	t.Run("equal number after -> not folded, exists guard excludes absent", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorEqual, float64(0))
-		assert.Contains(t, sql, "toFloat64(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL)) = ?")
+		assert.Contains(t, sql, "toFloat64(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL)) = ?")
 		assert.NotContains(t, sql, "ifNull")
 	})
 
 	t.Run("not in number after -> each operand folded to 0", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotIn, []any{float64(200), float64(404)})
-		assert.Contains(t, sql, "(toFloat64(ifNull(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), 0)) <> ? AND toFloat64(ifNull(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), 0)) <> ?)")
+		assert.Contains(t, sql, "(toFloat64(ifNull(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL), 0)) <> ? AND toFloat64(ifNull(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL), 0)) <> ?)")
 	})
 
 	t.Run("not equal number straddle -> whole multiIf folded", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowStraddle, qbtypes.FilterOperatorNotEqual, float64(200))
-		assert.Contains(t, sql, "toFloat64(ifNull(multiIf(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL), 0)) <> ?")
+		assert.Contains(t, sql, "toFloat64(ifNull(multiIf(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL), 0)) <> ?")
 	})
 
 	t.Run("not equal number before -> harmless fold over the map read", func(t *testing.T) {
@@ -433,7 +433,7 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	t.Run("not equal string after -> '' default, never folded", func(t *testing.T) {
 		key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, "admin")
-		assert.Contains(t, sql, "attributes.`user.id`::String <> ?")
+		assert.Contains(t, sql, "attributes.`user%2Eid`::String <> ?")
 		assert.NotContains(t, sql, "ifNull")
 	})
 }
@@ -456,7 +456,7 @@ func TestConditionForAttributeJSONStraddleAbsentKeyExclusion(t *testing.T) {
 		return sql
 	}
 
-	guard := "multiIf(if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`http.status_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http.status_code`, 'Float64'), NULL), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL) IS NOT NULL"
+	guard := "multiIf(if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`http%2Estatus_code`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`http%2Estatus_code`, 'Float64'), NULL), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL) IS NOT NULL"
 
 	t.Run("equal zero takes no guard: the absent read is NULL", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)

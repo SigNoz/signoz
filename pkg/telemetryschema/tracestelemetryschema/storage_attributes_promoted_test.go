@@ -39,10 +39,10 @@ func TestFieldForAttributePromotedEvolution(t *testing.T) {
 		expected string
 	}{
 		{"before json rollout -> map", win("2024-01-01", "2024-06-01"), "attributes_string['span.operation']"},
-		{"between json and promotion -> attributes", win("2025-02-01", "2025-04-01"), "attributes.`span.operation`::String"},
-		{"after promotion -> promoted only", win("2025-07-01", "2025-08-01"), "attributes_promoted.`span.operation`::String"},
-		{"straddle promotion -> attributes_promoted + attributes", win("2025-04-01", "2025-08-01"), "multiIf(attributes_promoted.`span.operation` IS NOT NULL, attributes_promoted.`span.operation`::String, attributes.`span.operation` IS NOT NULL, attributes.`span.operation`::String, NULL)"},
-		{"straddle json rollout -> attributes + map", win("2024-06-01", "2025-03-01"), "multiIf(attributes.`span.operation` IS NOT NULL, attributes.`span.operation`::String, mapContains(attributes_string, 'span.operation'), attributes_string['span.operation'], NULL)"},
+		{"between json and promotion -> attributes", win("2025-02-01", "2025-04-01"), "attributes.`span%2Eoperation`::String"},
+		{"after promotion -> promoted only", win("2025-07-01", "2025-08-01"), "attributes_promoted.`span%2Eoperation`::String"},
+		{"straddle promotion -> attributes_promoted + attributes", win("2025-04-01", "2025-08-01"), "multiIf(attributes_promoted.`span%2Eoperation` IS NOT NULL, attributes_promoted.`span%2Eoperation`::String, attributes.`span%2Eoperation` IS NOT NULL, attributes.`span%2Eoperation`::String, NULL)"},
+		{"straddle json rollout -> attributes + map", win("2024-06-01", "2025-03-01"), "multiIf(attributes.`span%2Eoperation` IS NOT NULL, attributes.`span%2Eoperation`::String, mapContains(attributes_string, 'span.operation'), attributes_string['span.operation'], NULL)"},
 	}
 
 	for _, tc := range testCases {
@@ -85,8 +85,8 @@ func TestConditionForAttributePromoted(t *testing.T) {
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-		assert.Contains(t, sql, "(attributes_promoted.`span.operation`::String = ? AND attributes_promoted.`span.operation` IS NOT NULL)")
-		assert.NotContains(t, sql, "attributes.`span.operation`")
+		assert.Contains(t, sql, "(attributes_promoted.`span%2Eoperation`::String = ? AND attributes_promoted.`span%2Eoperation` IS NOT NULL)")
+		assert.NotContains(t, sql, "attributes.`span%2Eoperation`")
 	})
 
 	t.Run("exists uses promoted raw path", func(t *testing.T) {
@@ -95,6 +95,6 @@ func TestConditionForAttributePromoted(t *testing.T) {
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-		assert.Contains(t, sql, "attributes_promoted.`span.operation` IS NOT NULL")
+		assert.Contains(t, sql, "attributes_promoted.`span%2Eoperation` IS NOT NULL")
 	})
 }

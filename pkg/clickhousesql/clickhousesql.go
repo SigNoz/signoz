@@ -16,6 +16,15 @@ func Identifier(value string) string {
 	return quote(value, '`')
 }
 
+// JSONKeyIdentifier renders one key of a ClickHouse native JSON path. A dot is the path
+// separator there, so a literal dot in an OTel key (e.g. the whole key "db.function") is
+// percent-encoded to %2E to keep the key a single atomic path, matching how it is stored under
+// json_type_escape_dots_in_keys. Use it only for a key addressed as a JSON sub-column, never for
+// a map key or a column name.
+func JSONKeyIdentifier(value string) string {
+	return Identifier(strings.ReplaceAll(value, ".", "%2E"))
+}
+
 // LikePattern escapes value so LIKE matches it verbatim; the caller adds the wildcards.
 func LikePattern(value string) string {
 	return likePatternEscaper.Replace(value)

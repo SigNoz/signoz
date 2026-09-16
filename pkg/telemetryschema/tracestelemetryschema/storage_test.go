@@ -68,7 +68,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				FieldContext: telemetrytypes.FieldContextResource,
 				Evolutions:   mockEvolution,
 			},
-			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedResult: "multiIf(resource.`service%2Ename` IS NOT NULL, resource.`service%2Ename`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 			expectedError:  nil,
 		},
 		{
@@ -80,7 +80,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				Materialized:  true,
 				Evolutions:    mockEvolution,
 			},
-			expectedResult: "multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, `resource_string_deployment$$environment_exists`, `resource_string_deployment$$environment`, NULL)",
+			expectedResult: "multiIf(resource.`deployment%2Eenvironment` IS NOT NULL, resource.`deployment%2Eenvironment`::String, `resource_string_deployment$$environment_exists`, `resource_string_deployment$$environment`, NULL)",
 			expectedError:  nil,
 		},
 		{
@@ -107,7 +107,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				Name:         "custom.attr",
 				FieldContext: telemetrytypes.FieldContextScope,
 			},
-			expectedResult: "scope.attributes.`custom.attr`::String",
+			expectedResult: "scope.attributes.`custom%2Eattr`::String",
 			expectedError:  nil,
 		},
 		{
@@ -180,7 +180,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 			},
 			tsStart:        uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:          uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
+			expectedResult: "multiIf(resource.`service%2Ename` IS NOT NULL, resource.`service%2Ename`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)",
 		},
 		{
 			name: "Window fully after release - JSON column only",
@@ -191,7 +191,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 			},
 			tsStart:        uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:          uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedResult: "resource.`service.name`::String",
+			expectedResult: "resource.`service%2Ename`::String",
 		},
 		{
 			name: "Window fully before release - map column only",
@@ -215,7 +215,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 			},
 			tsStart:        uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:          uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedResult: "resource.`deployment.environment`::String",
+			expectedResult: "resource.`deployment%2Eenvironment`::String",
 		},
 		{
 			name: "Window straddles release - materialized resource",
@@ -228,7 +228,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 			},
 			tsStart:        uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:          uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedResult: "multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, `resource_string_deployment$$environment_exists`, `resource_string_deployment$$environment`, NULL)",
+			expectedResult: "multiIf(resource.`deployment%2Eenvironment` IS NOT NULL, resource.`deployment%2Eenvironment`::String, `resource_string_deployment$$environment_exists`, `resource_string_deployment$$environment`, NULL)",
 		},
 	}
 
@@ -402,7 +402,7 @@ func TestColumnExpressionForScopeDeclaredPath(t *testing.T) {
 			name:           "attribute prefix reaches the named scope attribute",
 			key:            telemetrytypes.TelemetryFieldKey{Name: "attribute.name", FieldContext: telemetrytypes.FieldContextScope},
 			keys:           withAttr,
-			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, scope.attributes.`scope.attribute.name` IS NOT NULL, scope.attributes.`scope.attribute.name`::String, NULL)",
+			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, scope.attributes.`scope%2Eattribute%2Ename` IS NOT NULL, scope.attributes.`scope%2Eattribute%2Ename`::String, NULL)",
 		},
 		{
 			// the caller supplied the context, so `scope.` is part of the name rather than a
@@ -411,7 +411,7 @@ func TestColumnExpressionForScopeDeclaredPath(t *testing.T) {
 			name:           "explicit context keeps a scope-prefixed name intact",
 			key:            telemetrytypes.TelemetryFieldKey{Name: "scope.testing.env", FieldContext: telemetrytypes.FieldContextScope},
 			keys:           declaredOnly,
-			expectedResult: "multiIf(scope.attributes.`scope.testing.env` IS NOT NULL, scope.attributes.`scope.testing.env`::String, scope.attributes.`scope.scope.testing.env` IS NOT NULL, scope.attributes.`scope.scope.testing.env`::String, NULL)",
+			expectedResult: "multiIf(scope.attributes.`scope%2Etesting%2Eenv` IS NOT NULL, scope.attributes.`scope%2Etesting%2Eenv`::String, scope.attributes.`scope%2Escope%2Etesting%2Eenv` IS NOT NULL, scope.attributes.`scope%2Escope%2Etesting%2Eenv`::String, NULL)",
 		},
 		{
 			// metadata knows both homes under this name, so the short spelling coalesces

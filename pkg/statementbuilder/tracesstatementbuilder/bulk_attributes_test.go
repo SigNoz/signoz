@@ -101,20 +101,20 @@ func TestGroupByAttributeHomeAcrossRollout(t *testing.T) {
 			startMs:         uint64(rel - 2*day),
 			endMs:           uint64(rel - day),
 			wantContains:    []string{"mapContains(attributes_string, 'http.route')", "attributes_string['http.route']"},
-			wantNotContains: []string{"attributes.`http.route`"},
+			wantNotContains: []string{"attributes.`http%2Eroute`"},
 		},
 		{
 			name:            "StraddlingRollout_JSONThenLegacyFallback",
 			startMs:         uint64(rel - day),
 			endMs:           uint64(rel + day),
-			wantContains:    []string{"attributes.`http.route` IS NOT NULL", "attributes.`http.route`::String", "attributes_string['http.route']"},
+			wantContains:    []string{"attributes.`http%2Eroute` IS NOT NULL", "attributes.`http%2Eroute`::String", "attributes_string['http.route']"},
 			wantNotContains: nil,
 		},
 		{
 			name:            "AfterRollout_ReadsJSONOnly",
 			startMs:         uint64(rel + day),
 			endMs:           uint64(rel + 2*day),
-			wantContains:    []string{"attributes.`http.route`::String"},
+			wantContains:    []string{"attributes.`http%2Eroute`::String"},
 			wantNotContains: []string{"attributes_string"},
 		},
 	}

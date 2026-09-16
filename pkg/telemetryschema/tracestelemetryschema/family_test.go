@@ -63,7 +63,7 @@ func TestConditionForFamilyMergesMembersCurrentFirst(t *testing.T) {
 
 	sb.Where(conds...)
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	require.Equal(t, "WHERE (COALESCE(NULLIF(multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL), ''), NULLIF(multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), ''), '') = ? AND (multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) IS NOT NULL OR multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL))", sql)
+	require.Equal(t, "WHERE (COALESCE(NULLIF(multiIf(resource.`deployment%2Eenvironment%2Ename` IS NOT NULL, resource.`deployment%2Eenvironment%2Ename`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL), ''), NULLIF(multiIf(resource.`deployment%2Eenvironment` IS NOT NULL, resource.`deployment%2Eenvironment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), ''), '') = ? AND (multiIf(resource.`deployment%2Eenvironment%2Ename` IS NOT NULL, resource.`deployment%2Eenvironment%2Ename`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) IS NOT NULL OR multiIf(resource.`deployment%2Eenvironment` IS NOT NULL, resource.`deployment%2Eenvironment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL))", sql)
 	require.Equal(t, []any{"production"}, args)
 }
 
@@ -98,7 +98,7 @@ func TestConditionForFamilyNegativeKeepsKeylessRows(t *testing.T) {
 	// semantics), so `!=` keeps including them; no exists filter is added.
 	sb.Where(conds...)
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	require.Equal(t, "WHERE COALESCE(NULLIF(multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL), ''), NULLIF(multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), ''), '') <> ?", sql)
+	require.Equal(t, "WHERE COALESCE(NULLIF(multiIf(resource.`deployment%2Eenvironment%2Ename` IS NOT NULL, resource.`deployment%2Eenvironment%2Ename`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL), ''), NULLIF(multiIf(resource.`deployment%2Eenvironment` IS NOT NULL, resource.`deployment%2Eenvironment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), ''), '') <> ?", sql)
 	require.Equal(t, []any{"production"}, args)
 }
 
@@ -131,7 +131,7 @@ func TestConditionForFamilyExists(t *testing.T) {
 
 	sb.Where(conds...)
 	sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	require.Equal(t, "WHERE NOT (multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) IS NOT NULL OR multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL)", sql)
+	require.Equal(t, "WHERE NOT (multiIf(resource.`deployment%2Eenvironment%2Ename` IS NOT NULL, resource.`deployment%2Eenvironment%2Ename`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) IS NOT NULL OR multiIf(resource.`deployment%2Eenvironment` IS NOT NULL, resource.`deployment%2Eenvironment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL)", sql)
 }
 
 // With the flag off, both spellings can be in the metadata map and the
@@ -166,7 +166,7 @@ func TestConditionForFamilyOffByDefault(t *testing.T) {
 
 	sb.Where(conds...)
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	require.Equal(t, "WHERE multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) = ?", sql)
+	require.Equal(t, "WHERE multiIf(resource.`deployment%2Eenvironment%2Ename` IS NOT NULL, resource.`deployment%2Eenvironment%2Ename`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) = ?", sql)
 	require.Equal(t, []any{"production"}, args)
 }
 
@@ -202,7 +202,7 @@ func TestConditionForSingleMemberIsUnchanged(t *testing.T) {
 
 	sb.Where(conds...)
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	require.Equal(t, "WHERE multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) = ?", sql)
+	require.Equal(t, "WHERE multiIf(resource.`deployment%2Eenvironment%2Ename` IS NOT NULL, resource.`deployment%2Eenvironment%2Ename`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) = ?", sql)
 	require.Equal(t, []any{"production"}, args)
 }
 
@@ -230,5 +230,5 @@ func TestColumnExpressionForFamilyGroupBy(t *testing.T) {
 
 	expr, err := querybuilder.ResolveColumn(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, telemetrytypes.FieldDataTypeString, fieldKeys)
 	require.NoError(t, err)
-	require.Equal(t, "multiIf((multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) IS NOT NULL OR multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL), COALESCE(NULLIF(multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL), ''), NULLIF(multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), ''), ''), NULL)", expr)
+	require.Equal(t, "multiIf((multiIf(resource.`deployment%2Eenvironment%2Ename` IS NOT NULL, resource.`deployment%2Eenvironment%2Ename`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) IS NOT NULL OR multiIf(resource.`deployment%2Eenvironment` IS NOT NULL, resource.`deployment%2Eenvironment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL), COALESCE(NULLIF(multiIf(resource.`deployment%2Eenvironment%2Ename` IS NOT NULL, resource.`deployment%2Eenvironment%2Ename`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL), ''), NULLIF(multiIf(resource.`deployment%2Eenvironment` IS NOT NULL, resource.`deployment%2Eenvironment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), ''), ''), NULL)", expr)
 }

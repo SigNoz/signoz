@@ -259,8 +259,8 @@ func (m *storage) resolveColumnExprs(
 			// once clickHouse dependency is updated, we need to check if we can remove it.
 			switch key.FieldContext {
 			case telemetrytypes.FieldContextResource:
-				exprs = append(exprs, fmt.Sprintf("%s.%s::String", columnName, clickhousesql.Identifier(key.Name)))
-				existExprs = append(existExprs, fmt.Sprintf("%s.%s IS NOT NULL", columnName, clickhousesql.Identifier(key.Name)))
+				exprs = append(exprs, fmt.Sprintf("%s.%s::String", columnName, clickhousesql.JSONKeyIdentifier(key.Name)))
+				existExprs = append(existExprs, fmt.Sprintf("%s.%s IS NOT NULL", columnName, clickhousesql.JSONKeyIdentifier(key.Name)))
 			case telemetrytypes.FieldContextScope:
 				if f, ok := IntrinsicFields[key.Name]; ok && f.FieldContext == telemetrytypes.FieldContextScope {
 					// declared String paths on the scope column read '' for the missing case
@@ -268,11 +268,11 @@ func (m *storage) resolveColumnExprs(
 					existExprs = append(existExprs, fmt.Sprintf("%s <> ''", key.Name))
 				} else {
 					attributeName := strings.TrimPrefix(key.Name, "attribute.") // literal "attribute" prefix in attribute keys needs double prefix
-					exprs = append(exprs, fmt.Sprintf("%s.attributes.%s::String", columnName, clickhousesql.Identifier(attributeName)))
-					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.%s IS NOT NULL", columnName, clickhousesql.Identifier(attributeName)))
+					exprs = append(exprs, fmt.Sprintf("%s.attributes.%s::String", columnName, clickhousesql.JSONKeyIdentifier(attributeName)))
+					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.%s IS NOT NULL", columnName, clickhousesql.JSONKeyIdentifier(attributeName)))
 				}
 			case telemetrytypes.FieldContextAttribute:
-				path := fmt.Sprintf("%s.%s", columnName, clickhousesql.Identifier(key.Name))
+				path := fmt.Sprintf("%s.%s", columnName, clickhousesql.JSONKeyIdentifier(key.Name))
 				expr, existExpr := attributeJSONValueExpr(path, key.FieldDataType)
 				exprs = append(exprs, expr)
 				existExprs = append(existExprs, existExpr)

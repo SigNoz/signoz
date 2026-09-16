@@ -21,7 +21,7 @@ func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
 	switch fieldKey.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		// String cast required — Variant/Dynamic is rejected by GROUP BY.
-		return sqlbuilder.Escape(fmt.Sprintf("resource.%s::String", clickhousesql.Identifier(fieldKey.Name))), nil
+		return sqlbuilder.Escape(fmt.Sprintf("resource.%s::String", clickhousesql.JSONKeyIdentifier(fieldKey.Name))), nil
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported field context: %v", fieldKey.FieldContext)
 }

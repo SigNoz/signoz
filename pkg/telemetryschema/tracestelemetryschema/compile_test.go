@@ -220,7 +220,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
+			expectedSQL:   "WHERE multiIf(resource.`service%2Ename` IS NOT NULL, resource.`service%2Ename`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
 			expectedError: nil,
 		},
 		{
@@ -233,7 +233,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NULL",
+			expectedSQL:   "WHERE multiIf(resource.`service%2Ename` IS NOT NULL, resource.`service%2Ename`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NULL",
 			expectedError: nil,
 		},
 		{
@@ -331,7 +331,7 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 			operator:    qbtypes.FilterOperatorExists,
 			tsStart:     uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:       uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedSQL: "WHERE resource.`service.name` IS NOT NULL",
+			expectedSQL: "WHERE resource.`service%2Ename` IS NOT NULL",
 		},
 		{
 			name: "NotExists - window after release - JSON only",
@@ -344,7 +344,7 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 			operator:    qbtypes.FilterOperatorNotExists,
 			tsStart:     uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:       uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedSQL: "WHERE resource.`service.name` IS NULL",
+			expectedSQL: "WHERE resource.`service%2Ename` IS NULL",
 		},
 		{
 			name: "Exists - window before release - map only",
@@ -370,7 +370,7 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 			operator:    qbtypes.FilterOperatorExists,
 			tsStart:     uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:       uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedSQL: "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
+			expectedSQL: "WHERE multiIf(resource.`service%2Ename` IS NOT NULL, resource.`service%2Ename`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
 		},
 	}
 
@@ -507,10 +507,10 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 		assert.NotEmpty(t, warnings)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-		assert.Contains(t, sql, "scope.attributes.`custom.attr`")
+		assert.Contains(t, sql, "scope.attributes.`custom%2Eattr`")
 		// `scope.` can be part of the attribute's own name, so the literal spelling is a
 		// candidate too — the caller ORs the two.
-		assert.Contains(t, sql, "scope.attributes.`scope.custom.attr`")
+		assert.Contains(t, sql, "scope.attributes.`scope%2Ecustom%2Eattr`")
 	})
 
 	t.Run("bare key with number operand -> attribute number", func(t *testing.T) {

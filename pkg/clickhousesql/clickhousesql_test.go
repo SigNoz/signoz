@@ -55,6 +55,27 @@ func TestIdentifier(t *testing.T) {
 	}
 }
 
+func TestJSONKeyIdentifier(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{name: "NoDot", input: "http_status_code", expected: "`http_status_code`"},
+		{name: "SingleDot", input: "db.function", expected: "`db%2Efunction`"},
+		{name: "MultipleDots", input: "db.function.arg_count", expected: "`db%2Efunction%2Earg_count`"},
+		{name: "ResourceKey", input: "service.name", expected: "`service%2Ename`"},
+		{name: "Backtick", input: "a.`b", expected: "`a%2E\\`b`"},
+		{name: "Empty", input: "", expected: "``"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, JSONKeyIdentifier(testCase.input))
+		})
+	}
+}
+
 func TestLikePattern(t *testing.T) {
 	testCases := []struct {
 		name     string

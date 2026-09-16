@@ -99,6 +99,10 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	options.DialTimeout = config.Connection.DialTimeout
 	// This is to avoid the driver decoding issues with JSON columns
 	options.Settings["output_format_native_write_json_as_string"] = 1
+	// Attribute keys are ingested with dots escaped to %2E so a dotted key (e.g. "db.function")
+	// stays one JSON path instead of splitting into nested paths; unescape them back to dotted
+	// keys when a JSON column is serialized to a document on read.
+	options.Settings["json_type_escape_dots_in_keys"] = 1
 
 	chConn, err := clickhouse.Open(options)
 	if err != nil {
