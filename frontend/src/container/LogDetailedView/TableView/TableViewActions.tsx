@@ -21,6 +21,7 @@ import { DataType } from '../TableView';
 import {
 	filterKeyForField,
 	jsonToDataNodes,
+	MAX_SAFE_STRING_LENGTH,
 	recursiveParseJSON,
 	removeEscapeCharacters,
 	unescapeString,
@@ -79,16 +80,35 @@ export function TableViewActions(
 			);
 		}
 	}
-	const bodyHtml =
-		record.field === 'body'
-			? {
-					__html: convert.toHtml(
-						dompurify.sanitize(unescapeString(record.value), {
-							FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
-						}),
-					),
-			  }
-			: { __html: '' };
+	const bodyHtml = useMemo(() => {
+		if (record.field !== 'body') {
+			return { __html: '' };
+		}
+		const rawValue = record.value || '';
+		if (rawValue.length > MAX_SAFE_STRING_LENGTH) {
+			return {
+				__html: dompurify.sanitize(rawValue, {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
+			};
+		}
+		try {
+			return {
+				__html: convert.toHtml(
+					dompurify.sanitize(unescapeString(rawValue), {
+						FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+					}),
+				),
+			};
+		} catch (error) {
+			console.error('Failed to format log body HTML in table view:', error);
+			return {
+				__html: dompurify.sanitize(rawValue, {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
+			};
+		}
+	}, [record.field, record.value]);
 
 	const fieldFilterKey = filterKeyForField(fieldData.field);
 	let textToCopy = fieldData.value;
@@ -103,9 +123,13 @@ export function TableViewActions(
 		);
 	}
 
-	let cleanTimestamp: string;
+	let cleanTimestamp = fieldData.value;
 	if (record.field === 'timestamp') {
-		cleanTimestamp = fieldData.value.replace(/^["']|["']$/g, '');
+		try {
+			cleanTimestamp = fieldData.value.replace(/^["']|["']$/g, '');
+		} catch (error) {
+			cleanTimestamp = fieldData.value;
+		}
 	}
 
 	const renderFieldContent = (): JSX.Element => {

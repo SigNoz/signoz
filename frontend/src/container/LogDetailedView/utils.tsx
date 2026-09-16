@@ -8,18 +8,33 @@ import BodyTitleRenderer from './BodyTitleRenderer';
 import { typeToArrayTypeMapper } from './config';
 import { AnyObject, IFieldAttributes } from './LogDetailedView.types';
 
-export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
+export const MAX_SAFE_STRING_LENGTH = 50000;
+export const MAX_RECURSIVE_DEPTH = 10;
+
+export const recursiveParseJSON = (
+	obj: string,
+	depth = 0,
+): Record<string, unknown> => {
+	if (
+		!obj ||
+		typeof obj !== 'string' ||
+		obj.length > MAX_SAFE_STRING_LENGTH ||
+		depth > MAX_RECURSIVE_DEPTH
+	) {
+		return {};
+	}
+
 	try {
 		const value = JSON.parse(obj);
 		if (typeof value === 'string') {
-			return recursiveParseJSON(value);
+			return recursiveParseJSON(value, depth + 1);
 		}
-		if (typeof value === 'object') {
+		if (typeof value === 'object' && value !== null) {
 			Object.entries(value).forEach(([key, val]) => {
 				if (typeof val === 'string') {
 					value[key] = val.trim();
-				} else if (typeof val === 'object') {
-					value[key] = recursiveParseJSON(JSON.stringify(val));
+				} else if (typeof val === 'object' && val !== null) {
+					value[key] = recursiveParseJSON(JSON.stringify(val), depth + 1);
 				}
 			});
 		}
@@ -129,8 +144,20 @@ export const generateFieldKeyForArray = (
 	return `body.${newResultNodeKey}`;
 };
 
-export const removeObjectFromString = (str: string): string =>
-	str.replace(/\[object Object\]./g, '');
+export const removeObjectFromString = (str: string): string => {
+	if (!str || typeof str !== 'string') {
+		return '';
+	}
+	if (str.length > MAX_SAFE_STRING_LENGTH) {
+		return str;
+	}
+	try {
+		return str.replace(/\[object Object\]./g, '');
+	} catch (error) {
+		console.error('Failed to remove object from string:', error);
+		return str;
+	}
+};
 
 // Split `str` on the first occurrence of `delimiter`
 // For example, will return `['a', 'b.c']` when splitting `'a.b.c'` at dots
@@ -261,38 +288,73 @@ export const getDataTypes = (value: unknown): DataTypes => {
 
 // now we do not want to render colors everywhere like in tooltip and monaco editor hence we remove such codes to make
 // the log line readable
-export const removeEscapeCharacters = (str: string): string =>
-	str
-		.replace(/\\x1[bB][[0-9;]*m/g, '')
-		.replace(/\\u001[bB][[0-9;]*m/g, '')
-		.replace(/\\x[0-9A-Fa-f]{2}/g, '')
-		.replace(/\\u[0-9A-Fa-f]{4}/g, '')
-		.replace(/\\[btnfrv0'"\\]/g, '');
+export const removeEscapeCharacters = (str: string): string => {
+	if (!str || typeof str !== 'string') {
+		return '';
+	}
+	if (str.length > MAX_SAFE_STRING_LENGTH) {
+		return str;
+	}
+	try {
+		return str
+			.replace(/\\x1[bB][[0-9;]*m/g, '')
+			.replace(/\\u001[bB][[0-9;]*m/g, '')
+			.replace(/\\x[0-9A-Fa-f]{2}/g, '')
+			.replace(/\\u[0-9A-Fa-f]{4}/g, '')
+			.replace(/\\[btnfrv0'"\\]/g, '');
+	} catch (error) {
+		console.error('Failed to remove escape characters:', error);
+		return str;
+	}
+};
 
 // we need to remove the escape from the escaped characters as some recievers like file log escape the unicode escape characters.
 // example: Log [\u001B[32;1mThis is bright green\u001B[0m] is being sent as [\\u001B[32;1mThis is bright green\\u001B[0m]
 //
 // so we need to remove this escapes to render the color properly
-export const unescapeString = (str: string): string =>
-	str
-		.replace(/\\n/g, '\n') // Replaces escaped newlines
-		.replace(/\\r/g, '\r') // Replaces escaped carriage returns
-		.replace(/\\t/g, '\t') // Replaces escaped tabs
-		.replace(/\\b/g, '\b') // Replaces escaped backspaces
-		.replace(/\\f/g, '\f') // Replaces escaped form feeds
-		.replace(/\\v/g, '\v') // Replaces escaped vertical tabs
-		.replace(/\\'/g, "'") // Replaces escaped single quotes
-		.replace(/\\"/g, '"') // Replaces escaped double quotes
-		.replace(/\\\\/g, '\\') // Replaces escaped backslashes
-		.replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) =>
-			String.fromCharCode(parseInt(hex, 16)),
-		) // Replaces hexadecimal escape sequences
-		.replace(/\\u([0-9A-Fa-f]{4})/g, (_, hex) =>
-			String.fromCharCode(parseInt(hex, 16)),
-		); // Replaces Unicode escape sequences
+export const unescapeString = (str: string): string => {
+	if (!str || typeof str !== 'string') {
+		return '';
+	}
+	if (str.length > MAX_SAFE_STRING_LENGTH) {
+		return str;
+	}
+	try {
+		return str
+			.replace(/\\n/g, '\n') // Replaces escaped newlines
+			.replace(/\\r/g, '\r') // Replaces escaped carriage returns
+			.replace(/\\t/g, '\t') // Replaces escaped tabs
+			.replace(/\\b/g, '\b') // Replaces escaped backspaces
+			.replace(/\\f/g, '\f') // Replaces escaped form feeds
+			.replace(/\\v/g, '\v') // Replaces escaped vertical tabs
+			.replace(/\\'/g, "'") // Replaces escaped single quotes
+			.replace(/\\"/g, '"') // Replaces escaped double quotes
+			.replace(/\\\\/g, '\\') // Replaces escaped backslashes
+			.replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) =>
+				String.fromCharCode(parseInt(hex, 16)),
+			) // Replaces hexadecimal escape sequences
+			.replace(/\\u([0-9A-Fa-f]{4})/g, (_, hex) =>
+				String.fromCharCode(parseInt(hex, 16)),
+			); // Replaces Unicode escape sequences
+	} catch (error) {
+		console.error('Failed to unescape string:', error);
+		return str;
+	}
+};
 
 export function removeExtraSpaces(input: string): string {
-	return input.replace(/\s+/g, ' ').trim();
+	if (!input || typeof input !== 'string') {
+		return '';
+	}
+	if (input.length > MAX_SAFE_STRING_LENGTH) {
+		return input.trim();
+	}
+	try {
+		return input.replace(/\s+/g, ' ').trim();
+	} catch (error) {
+		console.error('Failed to remove extra spaces:', error);
+		return input.trim();
+	}
 }
 
 export function findKeyPath(

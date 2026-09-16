@@ -4,7 +4,10 @@ import Convert from 'ansi-to-html';
 import { DrawerProps } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
-import { unescapeString } from 'container/LogDetailedView/utils';
+import {
+	MAX_SAFE_STRING_LENGTH,
+	unescapeString,
+} from 'container/LogDetailedView/utils';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
@@ -151,16 +154,35 @@ function RawLogView({
 		[data, onSetActiveLog],
 	);
 
-	const html = useMemo(
-		() => ({
-			__html: convert.toHtml(
-				dompurify.sanitize(unescapeString(text), {
+	const html = useMemo(() => {
+		const rawText = text || '';
+		if (!rawText) {
+			return { __html: '' };
+		}
+		if (rawText.length > MAX_SAFE_STRING_LENGTH) {
+			return {
+				__html: dompurify.sanitize(rawText, {
 					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
 				}),
-			),
-		}),
-		[text],
-	);
+			};
+		}
+		try {
+			return {
+				__html: convert.toHtml(
+					dompurify.sanitize(unescapeString(rawText), {
+						FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+					}),
+				),
+			};
+		} catch (error) {
+			console.error('Failed to parse raw log text to HTML:', error);
+			return {
+				__html: dompurify.sanitize(rawText, {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
+			};
+		}
+	}, [text]);
 
 	return (
 		<RawLogViewContainer
