@@ -67,6 +67,7 @@ function TracesView({
 		onFieldsChange,
 		requiredFields,
 		isLoading: isColumnsLoading,
+		hasCompleteColumnSet,
 	} = useTraceViewColumns();
 
 	const {
@@ -168,9 +169,22 @@ function TracesView({
 		setOrderBy(value);
 	}, []);
 
+	// Without the full column set there is no pool to pick from, so the control is dropped.
 	const fieldsSelectorConfig = useMemo(
-		() => ({ fieldsSelector: { value: selectedFields, onFieldsChange } }),
-		[selectedFields, onFieldsChange],
+		() =>
+			hasCompleteColumnSet
+				? { fieldsSelector: { value: selectedFields, onFieldsChange } }
+				: null,
+		[hasCompleteColumnSet, selectedFields, onFieldsChange],
+	);
+
+	// Rendering the pool unfiltered would surface columns the defaults keep hidden.
+	const tableColumns = useMemo(
+		() =>
+			hasCompleteColumnSet
+				? columns
+				: columns.filter((column) => column.defaultVisibility !== false),
+		[hasCompleteColumnSet, columns],
 	);
 
 	return (
@@ -207,8 +221,12 @@ function TracesView({
 
 			<TracesTable
 				data={rows}
-				columns={columns}
-				columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS}
+				columns={tableColumns}
+				columnStorageKey={
+					hasCompleteColumnSet
+						? LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS
+						: undefined
+				}
 				respectColumnOrder
 				panelType="TRACE"
 				getRowHref={getTraceLink}
