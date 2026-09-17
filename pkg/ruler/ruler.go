@@ -49,4 +49,9 @@ type Ruler interface {
 	// TODO: expose downtime CRUD as methods on Ruler directly instead of leaking the
 	// store interface. The handler should not call store methods directly.
 	MaintenanceStore() alertmanagertypes.MaintenanceStore
+
+	CreateRuleView(ctx context.Context, orgID valuer.UUID, postable ruletypes.PostableRuleView) (*ruletypes.RuleView, error)
+	ListRuleViews(ctx context.Context, orgID valuer.UUID) (*ruletypes.ListableRuleViews, error)
+	UpdateRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable ruletypes.UpdatableRuleView) (*ruletypes.RuleView, error)
+	DeleteRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }

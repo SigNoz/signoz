@@ -10133,6 +10133,56 @@ export interface RuletypesListableRuleDTO {
 	updatedBy?: string;
 }
 
+export interface RuletypesRuleViewDataDTO {
+	order?: RuletypesListOrderDTO;
+	/**
+	 * @type string
+	 */
+	query?: string;
+	sort?: RuletypesListSortDTO;
+	/**
+	 * @type array
+	 */
+	states?: string[];
+	/**
+	 * @type string
+	 */
+	version: string;
+}
+
+export interface RuletypesRuleViewDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	data: RuletypesRuleViewDataDTO;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
+export interface RuletypesListableRuleViewsDTO {
+	/**
+	 * @type array
+	 */
+	views: RuletypesRuleViewDTO[];
+}
+
 export interface RuletypesListableRulesDTO {
 	/**
 	 * @type array
@@ -10299,6 +10349,14 @@ export interface RuletypesPostableRuleDTO {
 	 * @type string
 	 */
 	version?: string;
+}
+
+export interface RuletypesPostableRuleViewDTO {
+	data: RuletypesRuleViewDataDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
 }
 
 export type RuletypesRuleDTOAnnotations = { [key: string]: string };
@@ -13575,6 +13633,36 @@ export type GetUsersByRoleID200 = {
 	 * @type array
 	 */
 	data: TypesUserDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListRuleViews200 = {
+	data: RuletypesListableRuleViewsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateRuleView201 = {
+	data: RuletypesRuleViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteRuleViewPathParameters = {
+	id: string;
+};
+export type UpdateRuleViewPathParameters = {
+	id: string;
+};
+export type UpdateRuleView200 = {
+	data: RuletypesRuleViewDTO;
 	/**
 	 * @type string
 	 */
