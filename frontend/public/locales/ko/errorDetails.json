@@ -1,0 +1,9 @@
+{
+	"see_trace_graph": "트레이스 그래프에서 이 오류의 전후 상황을 확인하세요",
+	"see_error_in_trace_graph": "트레이스 그래프에서 오류를 확인하세요",
+	"stack_trace": "스택 트레이스",
+	"older": "이전",
+	"newer": "다음",
+	"something_went_wrong": "이런! 문제가 발생했습니다",
+	"contact_if_issue_exists": "걱정하지 마세요. 저희 팀이 도와드리겠습니다. 문제가 계속되면 지원팀에 문의해 주세요."
+}

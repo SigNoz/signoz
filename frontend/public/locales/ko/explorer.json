@@ -1,0 +1,4 @@
+{
+	"name_of_the_view": "뷰 이름",
+	"delete_confirm_message": "{{viewName}} 뷰를 삭제하시겠습니까? 뷰 삭제는 되돌릴 수 없습니다."
+}
