@@ -37,12 +37,13 @@ describe('getFieldKeySuggestions', () => {
 		const response = keysResponse();
 		mockedAIKeys.mockResolvedValue(response);
 
-		const filterConfig = { searchText: 'llm' };
+		const fieldKeysConfig = { searchText: 'llm' };
+		const abortSignal = new AbortController().signal;
 
 		await expect(
-			getFieldKeySuggestions(filterConfig, 'builder_ai_query'),
+			getFieldKeySuggestions(fieldKeysConfig, 'builder_ai_query', abortSignal),
 		).resolves.toBe(response);
-		expect(mockedAIKeys).toHaveBeenCalledWith(filterConfig);
+		expect(mockedAIKeys).toHaveBeenCalledWith(fieldKeysConfig, abortSignal);
 		expect(mockedGenericKeys).not.toHaveBeenCalled();
 	});
 
@@ -58,15 +59,16 @@ describe('getFieldKeySuggestions', () => {
 		const response = keysResponse();
 		mockedGenericKeys.mockResolvedValue(response);
 
-		const filterConfig = {
+		const fieldKeysConfig = {
 			signal: TelemetrytypesSignalDTO.traces,
 			searchText: 'svc',
 		};
+		const abortSignal = new AbortController().signal;
 
 		await expect(
-			getFieldKeySuggestions(filterConfig, builderQueryType),
+			getFieldKeySuggestions(fieldKeysConfig, builderQueryType, abortSignal),
 		).resolves.toBe(response);
-		expect(mockedGenericKeys).toHaveBeenCalledWith(filterConfig);
+		expect(mockedGenericKeys).toHaveBeenCalledWith(fieldKeysConfig, abortSignal);
 		expect(mockedAIKeys).not.toHaveBeenCalled();
 	});
 });

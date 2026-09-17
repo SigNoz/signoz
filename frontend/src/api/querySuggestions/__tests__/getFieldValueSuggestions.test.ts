@@ -34,12 +34,13 @@ describe('getFieldValueSuggestions', () => {
 		const response = valuesResponse();
 		mockedAIValues.mockResolvedValue(response);
 
-		const filterConfig = { name: 'gen_ai.request.model', searchText: 'gpt' };
+		const fieldValuesConfig = { name: 'gen_ai.request.model', searchText: 'gpt' };
+		const abortSignal = new AbortController().signal;
 
 		await expect(
-			getFieldValueSuggestions(filterConfig, 'builder_ai_query'),
+			getFieldValueSuggestions(fieldValuesConfig, 'builder_ai_query', abortSignal),
 		).resolves.toBe(response);
-		expect(mockedAIValues).toHaveBeenCalledWith(filterConfig);
+		expect(mockedAIValues).toHaveBeenCalledWith(fieldValuesConfig, abortSignal);
 		expect(mockedGenericValues).not.toHaveBeenCalled();
 	});
 
@@ -55,16 +56,20 @@ describe('getFieldValueSuggestions', () => {
 		const response = valuesResponse();
 		mockedGenericValues.mockResolvedValue(response);
 
-		const filterConfig = {
+		const fieldValuesConfig = {
 			signal: TelemetrytypesSignalDTO.traces,
 			name: 'service.name',
 			searchText: 'front',
 		};
+		const abortSignal = new AbortController().signal;
 
 		await expect(
-			getFieldValueSuggestions(filterConfig, builderQueryType),
+			getFieldValueSuggestions(fieldValuesConfig, builderQueryType, abortSignal),
 		).resolves.toBe(response);
-		expect(mockedGenericValues).toHaveBeenCalledWith(filterConfig);
+		expect(mockedGenericValues).toHaveBeenCalledWith(
+			fieldValuesConfig,
+			abortSignal,
+		);
 		expect(mockedAIValues).not.toHaveBeenCalled();
 	});
 });
