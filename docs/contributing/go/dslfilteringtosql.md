@@ -71,7 +71,7 @@ The `*Visitor` passed in provides everything needed to build predicates. Use the
 | `ExtractSingleStringValue`, `ExtractStringValueList` | typed value extraction when building a custom predicate |
 | `AddError` | report a problem; errors accumulate |
 
-In the simplest case, keys map straight to columns and the resolver is a switch. A dummy resolver for an imaginary `sample_entity` table:
+In the simplest case, keys map straight to columns and the resolver is a switch. The doc's running example, an imaginary `sample_entity` table:
 
 ```go
 func (r sampleEntityFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, key string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string {
@@ -94,19 +94,33 @@ func (sampleEntityFieldResolver) ResolveFreeText(v *sqlcompiler.Visitor, value s
 
 ### Special cases
 
-Each entity decides its own key policy; the full dashboards resolver, [pkg/modules/dashboard/impldashboard/listfilter_resolver.go](/pkg/modules/dashboard/impldashboard/listfilter_resolver.go), shows the patterns seen so far.
+Each entity decides its own key policy. The sections below grow the `sample_entity` resolver; the full real-world adopter to read alongside is dashboards' resolver, [pkg/modules/dashboard/impldashboard/listfilter_resolver.go](/pkg/modules/dashboard/impldashboard/listfilter_resolver.go).
 
-#### Reserved keys and operator allowlists
+#### Reserved and non-reserved keys
 
-An entity usually claims a fixed set of column-level keys for its DSL: the reserved keys. For dashboards these are `name`, `description`, `created_at`, `updated_at`, `created_by`, `locked` and `source`, declared as `DSLKey` constants in [pkg/types/dashboardtypes](/pkg/types/dashboardtypes/perses_dashboard.go). A reserved key always resolves to the entity's own data; anything else (a tag key like `team`) is resolved differently or rejected. The list API can also advertise the set (dashboards and rules return `reservedKeywords`) so frontend suggestions never go stale.
+A resolver splits the key space in two:
 
-Not every operator makes sense on every reserved key (`name BETWEEN ...` does not), so dashboards pairs each reserved key with the operators it accepts and checks the map before building:
+- Reserved keys are the fixed set the entity claims for itself, each mapping to the entity's own data: for `sample_entity` that is `name`, `created_by`, `created_at` and `locked`. The list API can advertise the set (dashboards and rules return `reservedKeywords`) so frontend suggestions never go stale.
+- Every other key is non-reserved, and the entity picks what it means. The resolver above picked the strictest policy: reject with `v.AddError`. Suppose `sample_entity` rows instead carry labels; then any non-reserved key can be treated as a label key, so `team = infra` matches entities labeled `team: infra` (built out under [Relation tables](#relation-tables)). Dashboards works exactly this way: its `DSLKey` constants are the reserved set, and every other key is a tag key.
+
+So the first thing `ResolveComparison` does is route the key:
 
 ```go
-var ReservedOps = map[DSLKey]map[qbtypesv5.FilterOperator]struct{}{
-	DSLKeyName:      stringSearchOps(),
-	DSLKeyCreatedAt: numericRangeOps(),
-	DSLKeyLocked:    boolOps(),
+if allowedOperations, isReserved := ReservedOps[key]; isReserved {
+	return r.resolveReservedKey(v, ctx, operation, key, allowedOperations)
+}
+return r.buildLabelComparison(v, ctx, operation, key)
+```
+
+#### Operator allowlists
+
+Not every operator makes sense on every key, reserved or not (`name BETWEEN ...` does not). Declare what each accepts and check before building. `sample_entity` pairs each reserved key with its allowed operators:
+
+```go
+var ReservedOps = map[string]map[qbtypesv5.FilterOperator]struct{}{
+	"name":       stringSearchOps(),
+	"created_at": numericRangeOps(),
+	"locked":     boolOps(),
 }
 
 if _, allowed := allowedOperations[operation]; !allowed {
@@ -115,42 +129,48 @@ if _, allowed := allowedOperations[operation]; !allowed {
 }
 ```
 
+Non-reserved keys get allowlists too, usually one shared list since they are all shaped alike: a label lookup is a string match, so `created_at > '2025-01-01T00:00:00Z'` is fine but `team > infra` is rejected with an `AddError`. Dashboards' real instances of both are `ReservedOps` and `TagKeyOps` in [pkg/types/dashboardtypes](/pkg/types/dashboardtypes/list_filter.go).
+
 #### JSON columns
 
-Dashboard name and description live inside the `dashboard.data` JSON column, so the resolver builds the column expression with `v.Formatter.JSONExtractString`, which renders correctly on both dialects. `name CONTAINS cpu` compiles (SQLite flavor) to:
+Suppose `sample_entity` keeps `name` inside a `data` JSON column instead of a plain column. The resolver then builds the column expression with `v.Formatter.JSONExtractString`, which renders correctly on both dialects, and `name CONTAINS cpu` compiles (SQLite flavor) to:
 
 ```sql
-json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'
+json_extract("sample_entity"."data", '$.name') LIKE ? ESCAPE '\'
 -- args: ["%cpu%"]
 ```
 
+Dashboards stores name and description this way inside `dashboard.data`.
+
 #### Relation tables
 
-Dashboard tags live in the shared `tag`/`tag_relation` tables, so a tag term becomes an `EXISTS` subquery. Build it on a fresh `sqlbuilder.SelectBuilder` and pass that builder into `BuildStringOperation`, so its arguments thread through the compile. `team = infra` compiles to:
+The label policy from above: say `sample_entity` labels live in `label`/`label_relation` join tables, so a label term becomes an `EXISTS` subquery. Build it on a fresh `sqlbuilder.SelectBuilder` and pass that builder into `BuildStringOperation`, so its arguments thread through the compile. `team = infra` compiles to:
 
 ```sql
-EXISTS (SELECT 1 FROM tag_relation tr JOIN tag t ON t.id = tr.tag_id
-	WHERE tr.kind = ? AND tr.resource_id = dashboard.id
-	AND LOWER(t.key) = LOWER(?) AND t.value = ?)
--- args: ["\"dashboard\"", "team", "infra"]
+EXISTS (SELECT 1 FROM label_relation lr JOIN label l ON l.id = lr.label_id
+	WHERE lr.entity_id = sample_entity.id
+	AND LOWER(l.key) = LOWER(?) AND l.value = ?)
+-- args: ["team", "infra"]
 ```
 
-For a negative operator (`team != infra`), build the positive predicate and toggle `NotExists` on the outer builder, so rows without the tag at all also match.
+For a negative operator (`team != infra`), build the positive predicate and toggle `NotExists` on the outer builder, so rows without the label at all also match. Dashboards' tags follow this exact pattern over the shared `tag`/`tag_relation` tables.
 
 ## How to wire it in?
 
-Give the module a thin `Compile` wrapper that maps the error list onto the module's error code, as in [pkg/modules/dashboard/impldashboard/listfilter.go](/pkg/modules/dashboard/impldashboard/listfilter.go):
+Give the module a thin `Compile` wrapper that maps the error list onto the module's error code:
 
 ```go
 func Compile(query string, formatter sqlstore.SQLFormatter) (*sqlcompiler.Compiled, error) {
-	compiled, errs := sqlcompiler.Compile(query, formatter, dashboardFieldResolver{})
+	compiled, errs := sqlcompiler.Compile(query, formatter, sampleEntityFieldResolver{})
 	if len(errs) > 0 {
-		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardListFilterInvalid,
+		return nil, errors.NewInvalidInputf(sampleentitytypes.ErrCodeSampleEntityListFilterInvalid,
 			"invalid filter query: %s", strings.Join(errs, "; "))
 	}
 	return compiled, nil
 }
 ```
+
+Dashboards' real wrapper is [pkg/modules/dashboard/impldashboard/listfilter.go](/pkg/modules/dashboard/impldashboard/listfilter.go).
 
 The store then appends `compiled.SQL` with `compiled.Args` to its list query when `!compiled.IsEmpty()`.
 
