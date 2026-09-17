@@ -3217,6 +3217,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
