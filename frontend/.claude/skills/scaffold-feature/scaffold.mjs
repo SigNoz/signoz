@@ -34,6 +34,24 @@ const ROUTE_FILES = {
 	topNav: join(SRC, 'container', 'TopNav', 'DateTimeSelectionV2', 'constants.ts'),
 };
 const ROUTE_ROLES = "['ADMIN', 'EDITOR', 'VIEWER']";
+// Port is fixed in vite.config.ts; the base path comes from VITE_BASE_PATH like vite does.
+const DEV_SERVER_ORIGIN = 'http://localhost:3301';
+
+function devServerUrl(path) {
+	const base = process.env.VITE_BASE_PATH ?? envFileValue('VITE_BASE_PATH') ?? '/';
+	return `${DEV_SERVER_ORIGIN}${base.replace(/\/+$/, '')}${path}`;
+}
+
+function envFileValue(name) {
+	const envFile = join(FRONTEND, '.env');
+	if (!existsSync(envFile)) {
+		return undefined;
+	}
+	const match = readFileSync(envFile, 'utf8').match(
+		new RegExp(`^\\s*${name}\\s*=\\s*["']?([^"'\\n#]*)`, 'm'),
+	);
+	return match?.[1].trim() || undefined;
+}
 
 // Created empty, so the folder exists before it has a file to justify it.
 const FEATURE_DIRS = ['components', 'hooks', 'store'];
@@ -118,6 +136,7 @@ function parseArgs(argv) {
 const created = [];
 const skipped = [];
 let targetExisted = false;
+let pagePath = '';
 
 function writeFile(target, contents, flags) {
 	const rel = relative(FRONTEND, target);
@@ -420,7 +439,9 @@ function scaffoldPage(name, flags) {
 	targetExisted = existsSync(targetDir);
 	// Shared files land before the page folder so a watching type-checker never sees a
 	// page that references ROUTES keys that do not exist yet.
-	commitRouteEdits(planRouteEdits(routeSpec(segments, flags.views)), flags);
+	const spec = routeSpec(segments, flags.views);
+	commitRouteEdits(planRouteEdits(spec), flags);
+	pagePath = spec.keys[0].path;
 
 	if (flags.views.length) {
 		renderTree(
@@ -534,6 +555,10 @@ function report(kind, targetDir, flags) {
 					'delete the placeholders you do not need (empty types/utils/constants, unused folders)',
 					`verify: pnpm tsgo --noEmit && pnpm oxlint ${rel} && pnpm jest ${rel}`,
 				];
+
+	if (pagePath) {
+		process.stdout.write(`\nopen: ${devServerUrl(pagePath)}\n`);
+	}
 
 	process.stdout.write('\nnext:\n');
 	steps.forEach((step, index) => {
