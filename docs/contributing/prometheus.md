@@ -305,6 +305,18 @@ selector without a static `__name__` runs the series lookup first, to learn
 the concrete metric names. A step of 0 is an instant query: a single
 evaluation at `end`.
 
+The engine path enforces fetch budgets in ClickHouse
+(`prometheus::clickhousev2::max_fetched_series` and
+`::max_fetched_samples`; 0 disables). The series lookup and the samples
+query carry `max_result_rows` with `result_overflow_mode = 'throw'`, so an
+over-budget query stops in the database instead of streaming into the
+service. The client maps the refusal (`TOO_MANY_ROWS_OR_BYTES`) to a typed
+invalid-input error. The error pierces the
+engine's `promql.ErrStorage` wrapper (`prometheus.TypedStorageError`), so
+the APIs report a user error, not an internal one. Transpiled statements
+carry no result budget: their result rows are output series, which the
+querier fleet caps by other means.
+
 A note on the window sliver: when the window is narrower than the step, the
 grid windows cover only `window/step` of the timeline. A sample in a gap
 belongs to no window. It cannot move any grid point, but the grid aggregate
