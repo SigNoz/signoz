@@ -1,11 +1,15 @@
 import { FontSize } from 'container/OptionsMenu/types';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
 
+import type { Mock } from 'vitest';
+
 import LogsFormatOptionsMenu from '../LogsFormatOptionsMenu';
 
-const mockUpdateFormatting = jest.fn();
+const { mockUpdateFormatting } = vi.hoisted(() => ({
+	mockUpdateFormatting: vi.fn(),
+}));
 
-jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
+vi.mock('providers/preferences/sync/usePreferenceSync', () => ({
 	usePreferenceSync: (): any => ({
 		preferences: {
 			columns: [],
@@ -18,7 +22,7 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 		},
 		loading: false,
 		error: null,
-		updateColumns: jest.fn(),
+		updateColumns: vi.fn(),
 		updateFormatting: mockUpdateFormatting,
 	}),
 }));
@@ -31,9 +35,9 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	function setup(): {
 		getByTestId: ReturnType<typeof render>['getByTestId'];
 		findItemByLabel: (label: string) => Element | undefined;
-		formatOnChange: jest.Mock<any, any>;
-		maxLinesOnChange: jest.Mock<any, any>;
-		fontSizeOnChange: jest.Mock<any, any>;
+		formatOnChange: Mock;
+		maxLinesOnChange: Mock;
+		fontSizeOnChange: Mock;
 	} {
 		const items = [
 			{ key: 'raw', label: 'Raw', data: { title: 'max lines per row' } },
@@ -41,9 +45,9 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 			{ key: 'table', label: 'Column', data: { title: 'columns' } },
 		];
 
-		const formatOnChange = jest.fn();
-		const maxLinesOnChange = jest.fn();
-		const fontSizeOnChange = jest.fn();
+		const formatOnChange = vi.fn();
+		const maxLinesOnChange = vi.fn();
+		const fontSizeOnChange = vi.fn();
 
 		const { getByTestId } = render(
 			<LogsFormatOptionsMenu
@@ -57,12 +61,12 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 						isFetching: false,
 						value: [],
 						options: [],
-						onFocus: jest.fn(),
-						onBlur: jest.fn(),
-						onSearch: jest.fn(),
-						onSelect: jest.fn(),
-						onRemove: jest.fn(),
-						onReorder: jest.fn(),
+						onFocus: vi.fn(),
+						onBlur: vi.fn(),
+						onSearch: vi.fn(),
+						onSelect: vi.fn(),
+						onRemove: vi.fn(),
+						onReorder: vi.fn(),
 					},
 				}}
 			/>,
@@ -157,7 +161,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	});
 
 	function renderWithOnOpen(
-		onOpenColumns?: jest.Mock,
+		onOpenColumns?: Mock,
 		selectedOptionFormat: 'table' | 'raw' | 'list' = 'table',
 	): { getByTestId: ReturnType<typeof render>['getByTestId'] } {
 		const items = [
@@ -171,9 +175,9 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 				items={items}
 				selectedOptionFormat={selectedOptionFormat}
 				config={{
-					format: { value: selectedOptionFormat, onChange: jest.fn() },
-					maxLines: { value: 1, onChange: jest.fn() },
-					fontSize: { value: FontSize.SMALL, onChange: jest.fn() },
+					format: { value: selectedOptionFormat, onChange: vi.fn() },
+					maxLines: { value: 1, onChange: vi.fn() },
+					fontSize: { value: FontSize.SMALL, onChange: vi.fn() },
 				}}
 				onOpenColumns={onOpenColumns}
 			/>,
@@ -183,7 +187,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	}
 
 	it('renders "Edit columns" row when format=table and onOpenColumns provided', () => {
-		const onOpenColumns = jest.fn();
+		const onOpenColumns = vi.fn();
 		const { getByTestId } = renderWithOnOpen(onOpenColumns, 'table');
 
 		expect(getByTestId('periscope-btn-edit-columns')).toBeInTheDocument();
@@ -198,7 +202,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	});
 
 	it('does not render "Edit columns" row when format is not table', () => {
-		renderWithOnOpen(jest.fn(), 'raw');
+		renderWithOnOpen(vi.fn(), 'raw');
 
 		expect(
 			document.querySelector('[data-testid="periscope-btn-edit-columns"]'),
@@ -206,7 +210,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	});
 
 	it('fires onOpenColumns and closes the popover when "Edit columns" is clicked', async () => {
-		const onOpenColumns = jest.fn();
+		const onOpenColumns = vi.fn();
 		const { getByTestId } = renderWithOnOpen(onOpenColumns, 'table');
 
 		fireEvent.click(getByTestId('periscope-btn-edit-columns'));

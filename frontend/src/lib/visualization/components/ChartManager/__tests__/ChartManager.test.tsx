@@ -1,25 +1,30 @@
+import type { Mock } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { render, screen } from 'tests/test-utils';
 
 import ChartManager from 'lib/visualization/components/ChartManager/ChartManager';
 
-const mockSyncSeriesVisibilityToLocalStorage = jest.fn();
-const mockToastSuccess = jest.fn();
+const { mockSyncSeriesVisibilityToLocalStorage, mockToastSuccess } = vi.hoisted(
+	() => ({
+		mockSyncSeriesVisibilityToLocalStorage: vi.fn(),
+		mockToastSuccess: vi.fn(),
+	}),
+);
 
-jest.mock('lib/uPlotV2/context/PlotContext', () => ({
+vi.mock('lib/uPlotV2/context/PlotContext', () => ({
 	usePlotContext: (): {
-		onToggleSeriesOnOff: jest.Mock;
-		onToggleSeriesVisibility: jest.Mock;
-		syncSeriesVisibilityToLocalStorage: jest.Mock;
+		onToggleSeriesOnOff: Mock;
+		onToggleSeriesVisibility: Mock;
+		syncSeriesVisibilityToLocalStorage: Mock;
 	} => ({
-		onToggleSeriesOnOff: jest.fn(),
-		onToggleSeriesVisibility: jest.fn(),
+		onToggleSeriesOnOff: vi.fn(),
+		onToggleSeriesVisibility: vi.fn(),
 		syncSeriesVisibilityToLocalStorage: mockSyncSeriesVisibilityToLocalStorage,
 	}),
 }));
 
-jest.mock('lib/uPlotV2/hooks/useLegendsSync', () => ({
+vi.mock('lib/uPlotV2/hooks/useLegendsSync', () => ({
 	__esModule: true,
 	default: (): {
 		legendItemsMap: { [key: number]: { show: boolean; label: string } };
@@ -32,14 +37,14 @@ jest.mock('lib/uPlotV2/hooks/useLegendsSync', () => ({
 	}),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
 	},
 }));
 
-jest.mock('components/ResizeTable', () => {
+vi.mock('components/ResizeTable', () => {
 	const MockTable = ({
 		dataSource,
 		columns,
@@ -80,10 +85,10 @@ const createAlignedData = (): uPlot.AlignedData => [
 ];
 
 describe('ChartManager', () => {
-	const mockOnCancel = jest.fn();
+	const mockOnCancel = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders filter input and action buttons', () => {

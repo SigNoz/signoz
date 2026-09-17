@@ -1,24 +1,8 @@
-import { render } from 'tests/test-utils';
+import { render } from 'tests/test-utils-full';
 import { Pipeline } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
 import PipelinePageLayout from '../Layouts/Pipeline';
-
-beforeAll(() => {
-	Object.defineProperty(window, 'matchMedia', {
-		writable: true,
-		value: jest.fn().mockImplementation((query) => ({
-			matches: false,
-			media: query,
-			onchange: null,
-			addListener: jest.fn(),
-			removeListener: jest.fn(),
-			addEventListener: jest.fn(),
-			removeEventListener: jest.fn(),
-			dispatchEvent: jest.fn(),
-		})),
-	});
-});
 
 describe('PipelinePage container test', () => {
 	it('should render PipelinePageLayout section', () => {
@@ -38,7 +22,7 @@ describe('PipelinePage container test', () => {
 			version: 1,
 		};
 
-		const refetchPipelineLists = jest.fn();
+		const refetchPipelineLists = vi.fn();
 
 		const { asFragment } = render(
 			<PipelinePageLayout

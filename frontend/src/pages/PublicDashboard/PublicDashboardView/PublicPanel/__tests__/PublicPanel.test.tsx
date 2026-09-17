@@ -5,21 +5,22 @@ import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panel
 
 import { usePublicPanelQuery } from '../../hooks/usePublicPanelQuery';
 import PublicPanel from '../PublicPanel';
+import type { Mock } from 'vitest';
 
-jest.mock('../../hooks/usePublicPanelQuery', () => ({
-	usePublicPanelQuery: jest.fn(),
+vi.mock('../../hooks/usePublicPanelQuery', () => ({
+	usePublicPanelQuery: vi.fn(),
 }));
 
 // Real registry by default; individual tests override to a static definition.
-jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => {
-	const actual = jest.requireActual(
-		'pages/DashboardPage/DashboardContainer/Panels/registry',
-	);
-	return { ...actual, getPanelDefinition: jest.fn(actual.getPanelDefinition) };
+vi.mock('pages/DashboardPage/DashboardContainer/Panels/registry', async () => {
+	const actual = await vi.importActual<
+		typeof import('pages/DashboardPage/DashboardContainer/Panels/registry')
+	>('pages/DashboardPage/DashboardContainer/Panels/registry');
+	return { ...actual, getPanelDefinition: vi.fn(actual.getPanelDefinition) };
 });
 
 // Stub the reused V2 renderers so the test targets PublicPanel's own wiring, not uPlot/timezone.
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader',
 	() => ({
 		__esModule: true,
@@ -28,7 +29,7 @@ jest.mock(
 		),
 	}),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody',
 	() => ({
 		__esModule: true,
@@ -48,7 +49,7 @@ jest.mock(
 	}),
 );
 
-const mockQuery = usePublicPanelQuery as jest.Mock;
+const mockQuery = usePublicPanelQuery as Mock;
 
 const queryResult = {
 	data: { response: undefined, requestPayload: undefined, legendMap: {} },
@@ -56,8 +57,8 @@ const queryResult = {
 	isFetching: false,
 	isPreviousData: false,
 	error: null,
-	refetch: jest.fn(),
-	cancelQuery: jest.fn(),
+	refetch: vi.fn(),
+	cancelQuery: vi.fn(),
 	pagination: undefined,
 };
 
@@ -111,7 +112,7 @@ describe('PublicPanel', () => {
 		const StaticRenderer = (): JSX.Element => (
 			<div data-testid="fake-static-renderer" />
 		);
-		(getPanelDefinition as jest.Mock).mockReturnValueOnce({
+		(getPanelDefinition as Mock).mockReturnValueOnce({
 			kind: 'signoz/TimeSeriesPanel',
 			displayName: 'Static',
 			sections: [],
@@ -135,7 +136,7 @@ describe('PublicPanel', () => {
 		const StaticRenderer = (): JSX.Element => (
 			<div data-testid="fake-static-renderer" />
 		);
-		(getPanelDefinition as jest.Mock).mockReturnValueOnce({
+		(getPanelDefinition as Mock).mockReturnValueOnce({
 			kind: 'signoz/TimeSeriesPanel',
 			displayName: 'Static',
 			sections: [],

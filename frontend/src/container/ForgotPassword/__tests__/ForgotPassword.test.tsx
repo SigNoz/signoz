@@ -1,3 +1,4 @@
+import type { MockedFunction } from 'vitest';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import {
@@ -12,19 +13,17 @@ import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 import ForgotPassword, { ForgotPasswordRouteState } from '../index';
 
 // Mock dependencies
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
-		push: jest.fn(),
+		push: vi.fn(),
 		location: {
 			search: '',
 		},
 	},
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockHistoryPush = history.push as MockedFunction<typeof history.push>;
 
 const FORGOT_PASSWORD_ENDPOINT = '*/api/v2/factor_password/forgot';
 
@@ -59,7 +58,7 @@ const mockMultipleOrgs: OrgSessionContext[] = [
 	},
 ];
 
-const TEST_EMAIL = 'jest.test@signoz.io';
+const TEST_EMAIL = 'vi.test@signoz.io';
 
 const defaultProps: ForgotPasswordRouteState = {
 	email: TEST_EMAIL,
@@ -73,7 +72,7 @@ const multiOrgProps: ForgotPasswordRouteState = {
 
 describe('ForgotPassword Component', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {

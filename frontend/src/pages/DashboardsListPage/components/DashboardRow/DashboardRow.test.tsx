@@ -1,33 +1,36 @@
-import { render, screen, userEvent } from 'tests/test-utils';
+import type { Mock } from 'vitest';
+import { render, screen, userEvent } from 'tests/test-utils-full';
 
 import type { DashboardListItem } from '../../utils/helpers';
 
 import DashboardRow from './DashboardRow';
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+const { mockSafeNavigate, mockTogglePin } = vi.hoisted(() => ({
+	mockSafeNavigate: vi.fn(),
+	mockTogglePin: vi.fn(),
+}));
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
-const mockTogglePin = jest.fn();
-jest.mock('../../hooks/usePinDashboard', () => ({
-	usePinDashboard: (): { togglePin: jest.Mock; isUpdating: boolean } => ({
+vi.mock('../../hooks/usePinDashboard', () => ({
+	usePinDashboard: (): { togglePin: Mock; isUpdating: boolean } => ({
 		togglePin: mockTogglePin,
 		isUpdating: false,
 	}),
 }));
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
 // Stub the actions menu so this suite stays focused on the row; the isLegacy
 // wiring is asserted via the recorded prop, and the menu itself is covered by
 // ActionsPopover's own tests.
-jest.mock('../ActionsPopover/ActionsPopover', () => ({
+vi.mock('../ActionsPopover/ActionsPopover', () => ({
 	__esModule: true,
 	default: ({ isLegacy }: { isLegacy?: boolean }): JSX.Element => (
 		<div data-testid="actions-popover" data-legacy={String(!!isLegacy)} />
@@ -65,7 +68,7 @@ const renderRow = (dashboard: DashboardListItem): void => {
 
 describe('DashboardRow', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	describe('a v2 dashboard', () => {

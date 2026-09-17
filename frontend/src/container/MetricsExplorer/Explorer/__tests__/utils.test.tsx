@@ -18,6 +18,11 @@ import {
 } from '../utils';
 import { MOCK_METRIC_METADATA } from './testUtils';
 
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('hooks/metricsExplorer/useGetMultipleMetrics', { spy: true });
+
 const MOCK_QUERY_DATA_1: IBuilderQuery = {
 	...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
 	aggregateAttribute: {
@@ -88,18 +93,16 @@ describe('splitQueryIntoOneChartPerQuery', () => {
 
 describe('useGetMetrics', () => {
 	beforeEach(() => {
-		jest
-			.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics')
-			.mockReturnValue([
-				{
-					isLoading: false,
-					isError: false,
-					data: {
-						data: MOCK_METRIC_METADATA,
-						status: 'success',
-					},
-				} as UseQueryResult<GetMetricMetadata200, Error>,
-			]);
+		vi.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics').mockReturnValue([
+			{
+				isLoading: false,
+				isError: false,
+				data: {
+					data: MOCK_METRIC_METADATA,
+					status: 'success',
+				},
+			} as UseQueryResult<GetMetricMetadata200, Error>,
+		]);
 	});
 
 	it('should return the correct metrics data', () => {
@@ -112,15 +115,13 @@ describe('useGetMetrics', () => {
 	});
 
 	it('should return array of undefined values of correct length when metrics data is not yet loaded', () => {
-		jest
-			.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics')
-			.mockReturnValue([
-				{
-					isLoading: true,
-					isError: false,
-					data: undefined,
-				} as UseQueryResult<GetMetricMetadata200, Error>,
-			]);
+		vi.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics').mockReturnValue([
+			{
+				isLoading: true,
+				isError: false,
+				data: undefined,
+			} as UseQueryResult<GetMetricMetadata200, Error>,
+		]);
 		const { result } = renderHook(() => useGetMetrics(['metric1']));
 		expect(result.current.metrics).toHaveLength(1);
 		expect(result.current.metrics[0]).toBeUndefined();

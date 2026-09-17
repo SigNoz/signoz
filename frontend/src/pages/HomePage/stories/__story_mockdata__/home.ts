@@ -120,7 +120,7 @@ const ALERT_NAMES = [
 ];
 
 /**
- * Cycles the jest fixtures so the list keeps their severity and firing spread.
+ * Cycles the test fixtures so the list keeps their severity and firing spread.
  * `updatedAt` descends because that is the order the page sorts on.
  */
 export const buildAlertRules = (count: number): RuletypesRuleDTO[] =>

@@ -55,12 +55,12 @@ function timeIntervalActions(
 
 describe('AutoRefreshTicker', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		localStorage.clear();
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('advances the global time window on the interval persisted for the route', () => {
@@ -69,7 +69,7 @@ describe('AutoRefreshTicker', () => {
 		const store = renderTicker(createGlobalTimeState());
 
 		act(() => {
-			jest.advanceTimersByTime(10_000);
+			vi.advanceTimersByTime(10_000);
 		});
 
 		expect(timeIntervalActions(store)).toHaveLength(2);
@@ -79,7 +79,7 @@ describe('AutoRefreshTicker', () => {
 		const store = renderTicker(createGlobalTimeState());
 
 		act(() => {
-			jest.advanceTimersByTime(60_000);
+			vi.advanceTimersByTime(60_000);
 		});
 
 		expect(timeIntervalActions(store)).toHaveLength(0);
@@ -93,7 +93,7 @@ describe('AutoRefreshTicker', () => {
 		);
 
 		act(() => {
-			jest.advanceTimersByTime(60_000);
+			vi.advanceTimersByTime(60_000);
 		});
 
 		expect(timeIntervalActions(store)).toHaveLength(0);
@@ -105,7 +105,7 @@ describe('AutoRefreshTicker', () => {
 		const store = renderTicker(createGlobalTimeState({ selectedTime: 'custom' }));
 
 		act(() => {
-			jest.advanceTimersByTime(60_000);
+			vi.advanceTimersByTime(60_000);
 		});
 
 		expect(timeIntervalActions(store)).toHaveLength(0);
@@ -115,12 +115,12 @@ describe('AutoRefreshTicker', () => {
 // Mirrors DashboardContainer's swap: exactly one of the two must be ticking.
 describe('AutoRefresh full screen handover', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		localStorage.clear();
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('keeps a single timer running across entering and leaving full screen', () => {
@@ -143,19 +143,19 @@ describe('AutoRefresh full screen handover', () => {
 		const { rerender } = render(renderHarness(false));
 
 		act(() => {
-			jest.advanceTimersByTime(10_000);
+			vi.advanceTimersByTime(10_000);
 		});
 		expect(timeIntervalActions(store)).toHaveLength(2);
 
 		rerender(renderHarness(true));
 		act(() => {
-			jest.advanceTimersByTime(10_000);
+			vi.advanceTimersByTime(10_000);
 		});
 		expect(timeIntervalActions(store)).toHaveLength(4);
 
 		rerender(renderHarness(false));
 		act(() => {
-			jest.advanceTimersByTime(10_000);
+			vi.advanceTimersByTime(10_000);
 		});
 		expect(timeIntervalActions(store)).toHaveLength(6);
 	});

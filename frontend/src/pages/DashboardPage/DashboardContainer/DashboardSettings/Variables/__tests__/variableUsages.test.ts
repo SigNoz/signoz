@@ -11,7 +11,7 @@ import {
 } from '../utils/variableUsages';
 
 // Identity adapter so `spec.variables` can be plain form models in the test.
-jest.mock('../variableAdapters', () => ({
+vi.mock('../variableAdapters', () => ({
 	dtoToFormModel: (dto: unknown): unknown => dto,
 }));
 

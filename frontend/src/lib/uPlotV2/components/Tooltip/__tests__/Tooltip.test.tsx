@@ -1,10 +1,11 @@
+import type { MockedFunction } from 'vitest';
 import React from 'react';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import userEvent from '@testing-library/user-event';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { render, RenderResult, screen } from 'tests/test-utils';
+import { render, RenderResult, screen } from 'tests/test-utils-full';
 import uPlot from 'uplot';
 
 import { IRenderTooltipFooterArgs, TooltipContentItem } from '../../types';
@@ -21,8 +22,8 @@ type MockVirtuosoProps = {
 
 let mockTotalListHeight = 200;
 
-jest.mock('react-virtuoso', () => {
-	const actual = jest.requireActual('react-virtuoso');
+vi.mock('react-virtuoso', async () => {
+	const actual = await vi.importActual('react-virtuoso');
 
 	return {
 		...actual,
@@ -50,13 +51,11 @@ jest.mock('react-virtuoso', () => {
 	};
 });
 
-jest.mock('hooks/useDarkMode', () => ({
-	useIsDarkMode: jest.fn(),
+vi.mock('hooks/useDarkMode', () => ({
+	useIsDarkMode: vi.fn(),
 }));
 
-const mockUseIsDarkMode = useIsDarkMode as jest.MockedFunction<
-	typeof useIsDarkMode
->;
+const mockUseIsDarkMode = useIsDarkMode as MockedFunction<typeof useIsDarkMode>;
 
 type TooltipTestProps = React.ComponentProps<typeof Tooltip>;
 
@@ -92,7 +91,7 @@ function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {
 		dataIndexes: [],
 		seriesIndex: null,
 		isPinned: false,
-		dismiss: jest.fn(),
+		dismiss: vi.fn(),
 		viaSync: false,
 	} as TooltipTestProps;
 
@@ -105,7 +104,7 @@ function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {
 
 describe('Tooltip', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseIsDarkMode.mockReturnValue(false);
 		mockTotalListHeight = 200;
 	});
@@ -196,7 +195,7 @@ describe('Tooltip', () => {
 
 describe('Tooltip renderTooltipFooter', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseIsDarkMode.mockReturnValue(false);
 	});
 
@@ -207,7 +206,7 @@ describe('Tooltip renderTooltipFooter', () => {
 	});
 
 	it('renders content returned by renderTooltipFooter', () => {
-		const renderTooltipFooter = jest.fn(
+		const renderTooltipFooter = vi.fn(
 			(): JSX.Element => <div data-testid="custom-tooltip-footer">Footer</div>,
 		);
 
@@ -217,7 +216,7 @@ describe('Tooltip renderTooltipFooter', () => {
 	});
 
 	it('calls renderTooltipFooter with isPinned=false when tooltip is not pinned', () => {
-		const renderTooltipFooter = jest.fn(() => null);
+		const renderTooltipFooter = vi.fn(() => null);
 
 		renderTooltip({ renderTooltipFooter, isPinned: false });
 
@@ -227,7 +226,7 @@ describe('Tooltip renderTooltipFooter', () => {
 	});
 
 	it('calls renderTooltipFooter with isPinned=true when tooltip is pinned', () => {
-		const renderTooltipFooter = jest.fn(() => null);
+		const renderTooltipFooter = vi.fn(() => null);
 
 		renderTooltip({ renderTooltipFooter, isPinned: true });
 
@@ -237,8 +236,8 @@ describe('Tooltip renderTooltipFooter', () => {
 	});
 
 	it('calls renderTooltipFooter with the dismiss callback', () => {
-		const dismiss = jest.fn();
-		const renderTooltipFooter = jest.fn(() => null);
+		const dismiss = vi.fn();
+		const renderTooltipFooter = vi.fn(() => null);
 
 		renderTooltip({ renderTooltipFooter, dismiss });
 
@@ -248,7 +247,7 @@ describe('Tooltip renderTooltipFooter', () => {
 	});
 
 	it('footer content reflects pinned state via renderTooltipFooter args', () => {
-		const renderTooltipFooter = jest.fn(
+		const renderTooltipFooter = vi.fn(
 			({ isPinned }: IRenderTooltipFooterArgs): JSX.Element => (
 				<div data-testid="footer-state">{isPinned ? 'Pinned' : 'Not pinned'}</div>
 			),
@@ -260,8 +259,8 @@ describe('Tooltip renderTooltipFooter', () => {
 	});
 
 	it('dismiss is callable when invoked from renderTooltipFooter', async () => {
-		const dismiss = jest.fn();
-		const renderTooltipFooter = jest.fn(
+		const dismiss = vi.fn();
+		const renderTooltipFooter = vi.fn(
 			({ dismiss: onDismiss }: IRenderTooltipFooterArgs): JSX.Element => (
 				<button data-testid="dismiss-btn" onClick={onDismiss}>
 					Dismiss
@@ -280,7 +279,7 @@ describe('Tooltip renderTooltipFooter', () => {
 
 describe('Tooltip header status pill', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseIsDarkMode.mockReturnValue(false);
 	});
 

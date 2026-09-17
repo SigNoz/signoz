@@ -8,19 +8,19 @@ import { SpanDetailVariant } from '../constants';
 import SpanDetailsPanel from '../SpanDetailsPanel';
 
 // Mock window.open for the Open in Logs Explorer footer redirect.
-const mockWindowOpen = jest.fn();
+const mockWindowOpen = vi.fn();
 Object.defineProperty(window, 'open', {
 	value: mockWindowOpen,
 	writable: true,
 });
 
 // Placement is width-driven via useMeasure (jsdom reports 0), so we control the
-// reported width per test. `mock` prefix lets the jest.mock factory reference it.
+// reported width per test. `mock` prefix lets the vi.mock factory reference it.
 let mockWidth = 0;
-jest.mock('react-use', () => ({
-	...jest.requireActual('react-use'),
+vi.mock('react-use', async () => ({
+	...(await vi.importActual('react-use')),
 	useMeasure: (): [() => void, { width: number }] => [
-		jest.fn(),
+		vi.fn(),
 		{ width: mockWidth },
 	],
 }));
@@ -28,11 +28,11 @@ jest.mock('react-use', () => ({
 // SpanSummary is rendered for REAL so we assert the actual summary is visible and
 // correctly placed. Only its external data source (percentile fetch via
 // react-query) is mocked; the badge/panel are presentational off this data.
-jest.mock('../SpanPercentile/useSpanPercentile', () => ({
+vi.mock('../SpanPercentile/useSpanPercentile', () => ({
 	__esModule: true,
 	default: () => ({
 		isOpen: false,
-		toggleOpen: jest.fn(),
+		toggleOpen: vi.fn(),
 		loading: false,
 		percentileValue: 0,
 		duration: '',
@@ -43,25 +43,25 @@ jest.mock('../SpanPercentile/useSpanPercentile', () => ({
 
 // Stub the OTHER tabs' heavy content. Each gets a testid so tab-level tests can
 // be added here later by clicking the tab and asserting its stub appears.
-jest.mock('../Events/Events', () => ({
+vi.mock('../Events/Events', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="events-tab" />,
 }));
-jest.mock('../SpanLogs/SpanLogs', () => ({
+vi.mock('../SpanLogs/SpanLogs', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="logs-tab" />,
 }));
-jest.mock('periscope/components/DataViewer', () => ({
+vi.mock('periscope/components/DataViewer', () => ({
 	__esModule: true,
 	DataViewer: (): JSX.Element => <div data-testid="overview-content" />,
 }));
-jest.mock('container/LogDetailedView/InfraMetrics/InfraMetrics', () => ({
+vi.mock('container/LogDetailedView/InfraMetrics/InfraMetrics', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="metrics-tab" />,
 }));
 
 // Hooks with stores / API / side effects.
-jest.mock('../SpanLogs/useSpanContextLogs', () => ({
+vi.mock('../SpanLogs/useSpanContextLogs', () => ({
 	useSpanContextLogs: () => ({
 		logs: [],
 		isLoading: false,
@@ -105,7 +105,7 @@ const createMockSpan = (): SpanV3 => ({
 	trace_state: '',
 });
 
-const panelState = { isOpen: true, open: jest.fn(), close: jest.fn() };
+const panelState = { isOpen: true, open: vi.fn(), close: vi.fn() };
 
 function renderPanel(width: number): ReturnType<typeof render> {
 	mockWidth = width;

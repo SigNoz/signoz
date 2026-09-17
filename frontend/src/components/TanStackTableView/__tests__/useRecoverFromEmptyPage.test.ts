@@ -1,5 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
+import type { Mock } from 'vitest';
+
 import {
 	useRecoverFromEmptyPage,
 	UseRecoverFromEmptyPageParams,
@@ -9,8 +11,8 @@ const REPLACE = { history: 'replace' };
 
 function renderRecovery(
 	overrides: Partial<UseRecoverFromEmptyPageParams> = {},
-): { setPage: jest.Mock; rerender: (next?: unknown) => void } {
-	const setPage = jest.fn();
+): { setPage: Mock; rerender: (next?: unknown) => void } {
+	const setPage = vi.fn();
 	const props: UseRecoverFromEmptyPageParams = {
 		page: 1,
 		pageSize: 10,
@@ -258,7 +260,7 @@ describe('useRecoverFromEmptyPage', () => {
 	it('does not re-run the correction when setPage is a fresh function each render', () => {
 		// The hook reads setPage through a ref, so an inline arrow must not turn the
 		// ungated `page < 1` clamp into a per-render history rewrite.
-		const setPage = jest.fn();
+		const setPage = vi.fn();
 		const { rerender } = renderHook(
 			() =>
 				useRecoverFromEmptyPage({

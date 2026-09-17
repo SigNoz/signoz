@@ -272,47 +272,49 @@ describe('CreateAlertV2 utils', () => {
 	});
 
 	describe('getThresholdStateFromAlertDef', () => {
-		const args: PostableAlertRuleV2 = {
-			...defaultPostableAlertRuleV2,
-			annotations: {
-				summary: 'test summary',
-				description: 'test description',
-			},
-			condition: {
-				...defaultPostableAlertRuleV2.condition,
-				thresholds: {
-					kind: 'basic',
-					spec: [
-						{
-							name: 'critical',
-							target: 1,
-							targetUnit: UniversalYAxisUnit.MINUTES,
-							channels: ['email'],
-							matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
-							op: AlertThresholdOperator.IS_ABOVE,
-						},
-					],
+		it('should return the correct threshold state for the given alert def', () => {
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				annotations: {
+					summary: 'test summary',
+					description: 'test description',
 				},
-				selectedQueryName: 'test',
-			},
-		};
-		const props = getThresholdStateFromAlertDef(args);
-		expect(props).toBeDefined();
-		expect(props).toMatchObject({
-			selectedQuery: 'test',
-			operator: AlertThresholdOperator.IS_ABOVE,
-			matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
-			thresholds: [
-				{
-					id: expect.any(String),
-					label: 'critical',
-					thresholdValue: 1,
-					recoveryThresholdValue: null,
-					unit: UniversalYAxisUnit.MINUTES,
-					color: Color.BG_SAKURA_500,
-					channels: ['email'],
+				condition: {
+					...defaultPostableAlertRuleV2.condition,
+					thresholds: {
+						kind: 'basic',
+						spec: [
+							{
+								name: 'critical',
+								target: 1,
+								targetUnit: UniversalYAxisUnit.MINUTES,
+								channels: ['email'],
+								matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
+								op: AlertThresholdOperator.IS_ABOVE,
+							},
+						],
+					},
+					selectedQueryName: 'test',
 				},
-			],
+			};
+			const props = getThresholdStateFromAlertDef(args);
+			expect(props).toBeDefined();
+			expect(props).toMatchObject({
+				selectedQuery: 'test',
+				operator: AlertThresholdOperator.IS_ABOVE,
+				matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
+				thresholds: [
+					{
+						id: expect.any(String),
+						label: 'critical',
+						thresholdValue: 1,
+						recoveryThresholdValue: null,
+						unit: UniversalYAxisUnit.MINUTES,
+						color: Color.BG_SAKURA_500,
+						channels: ['email'],
+					},
+				],
+			});
 		});
 	});
 

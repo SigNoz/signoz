@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils-full';
 import { rest, server } from 'mocks-server/server';
 
 import CreateEdit from '../CreateEdit/CreateEdit';
@@ -13,8 +13,8 @@ import {
 // The real @signozhq/ui/button has internal effects that prevent form.validateFields()
 // from resolving inside act(). Mirror the pattern from SSOEnforcementToggle.test.tsx
 // which mocks @signozhq/ui/switch for the same reason.
-jest.mock('@signozhq/ui/button', () => ({
-	...jest.requireActual('@signozhq/ui/button'),
+vi.mock('@signozhq/ui/button', async () => ({
+	...(await vi.importActual('@signozhq/ui/button')),
 	Button: ({
 		children,
 		onClick,
@@ -64,7 +64,7 @@ describe('CreateEdit — save payload correctness', () => {
 			<CreateEdit
 				isCreate={false}
 				record={mockDomainWithRoleMapping}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 
@@ -130,7 +130,7 @@ describe('CreateEdit — save payload correctness', () => {
 			<CreateEdit
 				isCreate={false}
 				record={mockGoogleAuthWithWorkspaceGroups}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 

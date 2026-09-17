@@ -134,7 +134,7 @@ describe('toQueryEnvelopes', () => {
 	});
 
 	it('drops invalid top-level Formula with a warning instead of crashing', () => {
-		const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const formula = [
 			{
 				kind: 'TimeSeriesQuery',

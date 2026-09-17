@@ -1,13 +1,14 @@
 import React from 'react';
-import { render, screen } from 'tests/test-utils';
+import { buildTooltipContent } from 'lib/uPlotV2/components/Tooltip/utils';
+import { render, screen } from 'tests/test-utils-full';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
 import { BillingBarChartTooltip } from '../BillingBarChartTooltip';
 
 // Mock buildTooltipContent so tests don't depend on uPlot stacking math
-jest.mock('lib/uPlotV2/components/Tooltip/utils', () => ({
-	buildTooltipContent: jest.fn().mockReturnValue([
+vi.mock('lib/uPlotV2/components/Tooltip/utils', () => ({
+	buildTooltipContent: vi.fn().mockReturnValue([
 		{
 			label: 'Logs',
 			value: 100,
@@ -27,8 +28,8 @@ jest.mock('lib/uPlotV2/components/Tooltip/utils', () => ({
 	]),
 }));
 
-jest.mock('hooks/useDarkMode', () => ({
-	useIsDarkMode: jest.fn().mockReturnValue(false),
+vi.mock('hooks/useDarkMode', () => ({
+	useIsDarkMode: vi.fn().mockReturnValue(false),
 }));
 
 function makeUPlotInstance(seriesLabels: string[]): uPlot {
@@ -71,7 +72,7 @@ function makeBillingApiResponse(
 
 const baseTooltipArgs = {
 	isPinned: false,
-	dismiss: jest.fn(),
+	dismiss: vi.fn(),
 	viaSync: false,
 	seriesIndex: 1,
 	dataIndexes: [null, 0, 0],
@@ -119,10 +120,7 @@ describe('BillingBarChartTooltip', () => {
 
 	it('formats dollar value via getToolTipValue — strips trailing zeros (0.3076 → $0.3)', () => {
 		const uPlotInstance = makeUPlotInstance(['Logs']);
-		const { buildTooltipContent } = jest.requireMock(
-			'lib/uPlotV2/components/Tooltip/utils',
-		) as { buildTooltipContent: jest.Mock };
-		buildTooltipContent.mockReturnValueOnce([
+		vi.mocked(buildTooltipContent).mockReturnValueOnce([
 			{
 				label: 'Logs',
 				value: 0.3076171875,

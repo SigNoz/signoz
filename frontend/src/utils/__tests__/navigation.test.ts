@@ -1,19 +1,35 @@
 import { isModifierKeyPressed } from '../app';
+import { openInNewTab } from '../navigation';
 
-type NavigationModule = typeof import('../navigation');
+// utils/basePath is memoized at module init and vi.resetModules() does not
+// re-evaluate modules in browser mode, so per-path state is driven through a
+// utils/basePath mock (mirrors the real prefix logic) instead of re-importing
+// navigation with a fresh DOM state.
+const { mockBasePath } = vi.hoisted(() => ({ mockBasePath: { value: '/' } }));
 
-function loadNavigationModule(href?: string): NavigationModule {
-	if (href !== undefined) {
-		const base = document.createElement('base');
-		base.setAttribute('href', href);
-		document.head.append(base);
-	}
-	let mod!: NavigationModule;
-	jest.isolateModules(() => {
-		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
-		mod = require('../navigation');
-	});
-	return mod;
+vi.mock('utils/basePath', async () => {
+	const actual =
+		await vi.importActual<typeof import('utils/basePath')>('utils/basePath');
+	return {
+		...actual,
+		withBasePath: (path: string): string => {
+			const prefix = mockBasePath.value;
+			if (!path.startsWith('/')) {
+				return path;
+			}
+			if (prefix === '/') {
+				return path;
+			}
+			if (path.startsWith(prefix) || path === prefix.slice(0, -1)) {
+				return path;
+			}
+			return prefix + path.slice(1);
+		},
+	};
+});
+
+function setBasePath(href: string): void {
+	mockBasePath.value = href.endsWith('/') ? href : `${href}/`;
 }
 
 const createMouseEvent = (overrides: Partial<MouseEvent> = {}): MouseEvent =>
@@ -29,9 +45,6 @@ describe('navigation utilities', () => {
 
 	afterEach(() => {
 		window.open = originalWindowOpen;
-		for (const el of document.head.querySelectorAll('base')) {
-			el.remove();
-		}
 	});
 
 	describe('isModifierKeyPressed', () => {
@@ -71,19 +84,18 @@ describe('navigation utilities', () => {
 
 	describe('openInNewTab', () => {
 		describe('at basePath="/"', () => {
-			let m: NavigationModule;
 			beforeEach(() => {
-				jest.spyOn(window, 'open').mockImplementation();
-				m = loadNavigationModule('/');
+				vi.spyOn(window, 'open').mockImplementation(() => null);
+				setBasePath('/');
 			});
 
 			it('passes internal path through unchanged', () => {
-				m.openInNewTab('/dashboard');
+				openInNewTab('/dashboard');
 				expect(window.open).toHaveBeenCalledWith('/dashboard', '_blank');
 			});
 
 			it('passes through external URLs unchanged', () => {
-				m.openInNewTab('https://example.com/page');
+				openInNewTab('https://example.com/page');
 				expect(window.open).toHaveBeenCalledWith(
 					'https://example.com/page',
 					'_blank',
@@ -91,7 +103,7 @@ describe('navigation utilities', () => {
 			});
 
 			it('handles paths with query strings', () => {
-				m.openInNewTab('/alerts?tab=AlertRules&relativeTime=30m');
+				openInNewTab('/alerts?tab=AlertRules&relativeTime=30m');
 				expect(window.open).toHaveBeenCalledWith(
 					'/alerts?tab=AlertRules&relativeTime=30m',
 					'_blank',
@@ -100,19 +112,18 @@ describe('navigation utilities', () => {
 		});
 
 		describe('at basePath="/signoz/"', () => {
-			let m: NavigationModule;
 			beforeEach(() => {
-				jest.spyOn(window, 'open').mockImplementation();
-				m = loadNavigationModule('/signoz/');
+				vi.spyOn(window, 'open').mockImplementation(() => null);
+				setBasePath('/signoz/');
 			});
 
 			it('prepends base path to internal paths', () => {
-				m.openInNewTab('/dashboard');
+				openInNewTab('/dashboard');
 				expect(window.open).toHaveBeenCalledWith('/signoz/dashboard', '_blank');
 			});
 
 			it('passes through external URLs unchanged', () => {
-				m.openInNewTab('https://example.com/page');
+				openInNewTab('https://example.com/page');
 				expect(window.open).toHaveBeenCalledWith(
 					'https://example.com/page',
 					'_blank',
@@ -120,7 +131,7 @@ describe('navigation utilities', () => {
 			});
 
 			it('is idempotent — does not double-prefix an already-prefixed path', () => {
-				m.openInNewTab('/signoz/dashboard');
+				openInNewTab('/signoz/dashboard');
 				expect(window.open).toHaveBeenCalledWith('/signoz/dashboard', '_blank');
 			});
 		});

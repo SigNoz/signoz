@@ -1,20 +1,21 @@
+import type { Mock, MockedFunction } from 'vitest';
 import { toPng, toSvg } from 'html-to-image';
 import { DownloadFormat } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 
 import { downloadElementAsImage } from '../downloadPanelImage';
 
-jest.mock('html-to-image', () => ({ toPng: jest.fn(), toSvg: jest.fn() }));
+vi.mock('html-to-image', () => ({ toPng: vi.fn(), toSvg: vi.fn() }));
 
-const mockToPng = toPng as jest.MockedFunction<typeof toPng>;
-const mockToSvg = toSvg as jest.MockedFunction<typeof toSvg>;
+const mockToPng = toPng as MockedFunction<typeof toPng>;
+const mockToSvg = toSvg as MockedFunction<typeof toSvg>;
 
 describe('downloadElementAsImage', () => {
 	let node: HTMLElement;
 	let fakeLink: {
 		href: string;
 		download: string;
-		click: jest.Mock;
-		remove: jest.Mock;
+		click: Mock;
+		remove: Mock;
 	};
 
 	beforeEach(() => {
@@ -23,11 +24,11 @@ describe('downloadElementAsImage', () => {
 		mockToSvg.mockReset();
 		mockToSvg.mockResolvedValue('data:image/svg+xml;base64,BBBB');
 
-		fakeLink = { href: '', download: '', click: jest.fn(), remove: jest.fn() };
+		fakeLink = { href: '', download: '', click: vi.fn(), remove: vi.fn() };
 		// Only stub the anchor used for the download; let every other tag (the
 		// elements the filter test builds) fall through to the real DOM.
 		const realCreateElement = document.createElement.bind(document);
-		jest
+		vi
 			.spyOn(document, 'createElement')
 			.mockImplementation((tag: string) =>
 				tag === 'a'
@@ -39,7 +40,7 @@ describe('downloadElementAsImage', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('captures a PNG via the png encoder, named after the panel', async () => {

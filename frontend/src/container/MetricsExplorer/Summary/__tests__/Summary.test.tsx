@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as metricsHooks from 'api/generated/services/metrics';
 import { initialQueriesMap } from 'constants/queryBuilder';
@@ -8,45 +9,46 @@ import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import Summary from '../Summary';
 
-jest.mock('d3-hierarchy', () => ({
-	stratify: jest.fn().mockReturnValue({
-		id: jest.fn().mockReturnValue({
-			parentId: jest.fn().mockReturnValue(
-				jest.fn().mockReturnValue({
-					sum: jest.fn().mockReturnValue({
-						descendants: jest.fn().mockReturnValue([]),
-						eachBefore: jest.fn().mockReturnValue([]),
+vi.mock('d3-hierarchy', () => ({
+	stratify: vi.fn().mockReturnValue({
+		id: vi.fn().mockReturnValue({
+			parentId: vi.fn().mockReturnValue(
+				vi.fn().mockReturnValue({
+					sum: vi.fn().mockReturnValue({
+						descendants: vi.fn().mockReturnValue([]),
+						eachBefore: vi.fn().mockReturnValue([]),
 					}),
 				}),
 			),
 		}),
 	}),
-	treemapBinary: jest.fn(),
+	treemapBinary: vi.fn(),
 }));
-jest.mock('react-use', () => ({
-	useWindowSize: jest.fn().mockReturnValue({ width: 1000, height: 1000 }),
+vi.mock('react-use', async () => ({
+	...(await vi.importActual('react-use')),
+	useWindowSize: vi.fn().mockReturnValue({ width: 1000, height: 1000 }),
 }));
-jest.mock('react-router-dom-v5-compat', () => {
-	const actual = jest.requireActual('react-router-dom-v5-compat');
+vi.mock('react-router-dom-v5-compat', async () => {
+	const actual = await vi.importActual('react-router-dom-v5-compat');
 	return {
 		...actual,
-		useSearchParams: jest.fn(),
+		useSearchParams: vi.fn(),
 		useNavigationType: (): any => 'PUSH',
 	};
 });
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
 	}),
 }));
-jest.mock('hooks/queryBuilder/useShareBuilderUrl', () => ({
-	useShareBuilderUrl: jest.fn(),
+vi.mock('hooks/queryBuilder/useShareBuilderUrl', () => ({
+	useShareBuilderUrl: vi.fn(),
 }));
 
 // so filter expression assertions easy
-jest.mock('../MetricsSearch', () => {
-	return function MockMetricsSearch(props: {
+vi.mock('../MetricsSearch', () => ({
+	default: function MockMetricsSearch(props: {
 		currentQueryFilterExpression: string;
 	}): JSX.Element {
 		return (
@@ -54,42 +56,42 @@ jest.mock('../MetricsSearch', () => {
 				{props.currentQueryFilterExpression}
 			</div>
 		);
-	};
-});
+	},
+}));
 
-const mockSetSearchParams = jest.fn();
-const mockGetMetricsStats = jest.fn();
-const mockGetMetricsTreemap = jest.fn();
+const mockSetSearchParams = vi.fn();
+const mockGetMetricsStats = vi.fn();
+const mockGetMetricsTreemap = vi.fn();
 
 const mockUseQueryBuilderData = {
-	handleRunQuery: jest.fn(),
+	handleRunQuery: vi.fn(),
 	stagedQuery: initialQueriesMap[DataSource.METRICS],
-	updateAllQueriesOperators: jest.fn(),
+	updateAllQueriesOperators: vi.fn(),
 	currentQuery: initialQueriesMap[DataSource.METRICS],
-	resetQuery: jest.fn(),
-	redirectWithQueryBuilderData: jest.fn(),
-	isStagedQueryUpdated: jest.fn(),
-	handleSetQueryData: jest.fn(),
-	handleSetFormulaData: jest.fn(),
-	handleSetQueryItemData: jest.fn(),
-	handleSetConfig: jest.fn(),
-	removeQueryBuilderEntityByIndex: jest.fn(),
-	removeQueryTypeItemByIndex: jest.fn(),
-	isDefaultQuery: jest.fn(),
+	resetQuery: vi.fn(),
+	redirectWithQueryBuilderData: vi.fn(),
+	isStagedQueryUpdated: vi.fn(),
+	handleSetQueryData: vi.fn(),
+	handleSetFormulaData: vi.fn(),
+	handleSetQueryItemData: vi.fn(),
+	handleSetConfig: vi.fn(),
+	removeQueryBuilderEntityByIndex: vi.fn(),
+	removeQueryTypeItemByIndex: vi.fn(),
+	isDefaultQuery: vi.fn(),
 };
 
-const useGetMetricsStatsSpy = jest.spyOn(metricsHooks, 'useGetMetricsStats');
-const useGetMetricsTreemapSpy = jest.spyOn(
-	metricsHooks,
-	'useGetMetricsTreemap',
-);
-const useQueryBuilderSpy = jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder');
+vi.mock('api/generated/services/metrics', { spy: true });
+vi.mock('hooks/queryBuilder/useQueryBuilder', { spy: true });
+
+const useGetMetricsStatsSpy = vi.mocked(metricsHooks.useGetMetricsStats);
+const useGetMetricsTreemapSpy = vi.mocked(metricsHooks.useGetMetricsTreemap);
+const useQueryBuilderSpy = vi.mocked(useQueryBuilderHooks.useQueryBuilder);
 
 describe('Summary', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
-		(useSearchParams as jest.Mock).mockReturnValue([
+		(useSearchParams as Mock).mockReturnValue([
 			new URLSearchParams(),
 			mockSetSearchParams,
 		]);
@@ -102,7 +104,7 @@ describe('Summary', () => {
 			error: null,
 			isIdle: true,
 			isSuccess: false,
-			reset: jest.fn(),
+			reset: vi.fn(),
 			status: 'idle',
 		} as any);
 
@@ -114,7 +116,7 @@ describe('Summary', () => {
 			error: null,
 			isIdle: true,
 			isSuccess: false,
-			reset: jest.fn(),
+			reset: vi.fn(),
 			status: 'idle',
 		} as any);
 
@@ -170,7 +172,7 @@ describe('Summary', () => {
 	});
 
 	it('persists inspect modal open state across page refresh', () => {
-		(useSearchParams as jest.Mock).mockReturnValue([
+		(useSearchParams as Mock).mockReturnValue([
 			new URLSearchParams({
 				isInspectModalOpen: 'true',
 				selectedMetricName: 'test-metric',
@@ -184,7 +186,7 @@ describe('Summary', () => {
 	});
 
 	it('persists metric details modal state across page refresh', () => {
-		(useSearchParams as jest.Mock).mockReturnValue([
+		(useSearchParams as Mock).mockReturnValue([
 			new URLSearchParams({
 				isMetricDetailsOpen: 'true',
 				selectedMetricName: 'test-metric',

@@ -6,20 +6,21 @@ import {
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 
 import AllEndPoints from '../Explorer/Domains/DomainDetails/AllEndPoints';
+import type { Mock } from 'vitest';
 import {
 	SPAN_ATTRIBUTES,
 	VIEWS,
 } from '../Explorer/Domains/DomainDetails/constants';
 
 // Mock the dependencies
-jest.mock('container/ApiMonitoring/utils', () => ({
-	getAllEndpointsWidgetData: jest.fn(),
-	getGroupByFiltersFromGroupByValues: jest.fn(),
+vi.mock('container/ApiMonitoring/utils', () => ({
+	getAllEndpointsWidgetData: vi.fn(),
+	getGroupByFiltersFromGroupByValues: vi.fn(),
 }));
 
-jest.mock('container/WidgetCard/Card', () => ({
+vi.mock('container/WidgetCard/Card', () => ({
 	__esModule: true,
-	default: jest.fn().mockImplementation(({ customOnRowClick }) => (
+	default: vi.fn().mockImplementation(({ customOnRowClick }) => (
 		<div data-testid="grid-card-mock">
 			<button
 				type="button"
@@ -34,11 +35,11 @@ jest.mock('container/WidgetCard/Card', () => ({
 	)),
 }));
 
-jest.mock(
+vi.mock(
 	'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2',
 	() => ({
 		__esModule: true,
-		default: jest.fn().mockImplementation(({ onChange }) => (
+		default: vi.fn().mockImplementation(({ onChange }) => (
 			<div data-testid="query-builder-mock">
 				<button
 					type="button"
@@ -57,15 +58,15 @@ jest.mock(
 	}),
 );
 
-jest.mock('hooks/queryBuilder/useGetAggregateKeys', () => ({
-	useGetAggregateKeys: jest.fn(),
+vi.mock('hooks/queryBuilder/useGetAggregateKeys', () => ({
+	useGetAggregateKeys: vi.fn(),
 }));
 
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
+vi.mock('antd', async () => {
+	const originalModule = await vi.importActual<typeof import('antd')>('antd');
 	return {
 		...originalModule,
-		Select: jest.fn().mockImplementation(({ onChange }) => (
+		Select: vi.fn().mockImplementation(({ onChange }) => (
 			<div data-testid="select-mock">
 				<button
 					data-testid="select-change-button"
@@ -80,8 +81,8 @@ jest.mock('antd', () => {
 });
 
 // Mock useApiMonitoringParams hook
-jest.mock('container/ApiMonitoring/queryParams', () => ({
-	useApiMonitoringParams: jest.fn().mockReturnValue([
+vi.mock('container/ApiMonitoring/queryParams', () => ({
+	useApiMonitoringParams: vi.fn().mockReturnValue([
 		{
 			showIP: true,
 			selectedDomain: '',
@@ -93,30 +94,30 @@ jest.mock('container/ApiMonitoring/queryParams', () => ({
 			modalTimeRange: undefined,
 			selectedInterval: undefined,
 		},
-		jest.fn(),
+		vi.fn(),
 	]),
 }));
 
 describe('AllEndPoints', () => {
 	const mockProps = {
 		domainName: 'test-domain',
-		setSelectedEndPointName: jest.fn(),
-		setSelectedView: jest.fn(),
+		setSelectedEndPointName: vi.fn(),
+		setSelectedView: vi.fn(),
 		groupBy: [],
-		setGroupBy: jest.fn(),
+		setGroupBy: vi.fn(),
 		timeRange: {
 			startTime: 1609459200000,
 			endTime: 1609545600000,
 		},
 		initialFilters: { op: 'AND', items: [] },
-		setInitialFiltersEndPointStats: jest.fn(),
+		setInitialFiltersEndPointStats: vi.fn(),
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		// Setup mock implementations
-		(useGetAggregateKeys as jest.Mock).mockReturnValue({
+		(useGetAggregateKeys as Mock).mockReturnValue({
 			data: {
 				payload: {
 					attributeKeys: [
@@ -131,7 +132,7 @@ describe('AllEndPoints', () => {
 			isLoading: false,
 		});
 
-		(getAllEndpointsWidgetData as jest.Mock).mockReturnValue({
+		(getAllEndpointsWidgetData as Mock).mockReturnValue({
 			id: 'test-widget',
 			title: 'Endpoint Overview',
 			description: 'Endpoint Overview',
@@ -139,7 +140,7 @@ describe('AllEndPoints', () => {
 			queryData: [],
 		});
 
-		(getGroupByFiltersFromGroupByValues as jest.Mock).mockReturnValue({
+		(getGroupByFiltersFromGroupByValues as Mock).mockReturnValue({
 			items: [{ id: 'group-filter', key: 'status', op: '=', value: '200' }],
 			op: 'AND',
 		});

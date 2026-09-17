@@ -4,11 +4,13 @@ import {
 	OrderByPayload,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import type { Mock } from 'vitest';
+
 import { getParsedAggregationOptionsForOrderBy } from 'utils/aggregationConverter';
 import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 
-jest.mock('utils/aggregationConverter', () => ({
-	getParsedAggregationOptionsForOrderBy: jest.fn(),
+vi.mock('utils/aggregationConverter', () => ({
+	getParsedAggregationOptionsForOrderBy: vi.fn(),
 }));
 
 const buildQuery = (overrides: Partial<IBuilderQuery> = {}): IBuilderQuery => ({
@@ -36,11 +38,11 @@ const buildQuery = (overrides: Partial<IBuilderQuery> = {}): IBuilderQuery => ({
 
 describe('sanitizeOrderByForExplorer', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('keeps only orderBy items that are present in groupBy keys or aggregation keys (including alias)', () => {
-		(getParsedAggregationOptionsForOrderBy as jest.Mock).mockReturnValue([
+		(getParsedAggregationOptionsForOrderBy as Mock).mockReturnValue([
 			{
 				key: 'count()',
 				dataType: DataTypes.Float64,
@@ -97,7 +99,7 @@ describe('sanitizeOrderByForExplorer', () => {
 	});
 
 	it('returns empty when none of the orderBy items are allowed', () => {
-		(getParsedAggregationOptionsForOrderBy as jest.Mock).mockReturnValue([
+		(getParsedAggregationOptionsForOrderBy as Mock).mockReturnValue([
 			{
 				key: 'count()',
 				dataType: DataTypes.Float64,
@@ -120,7 +122,7 @@ describe('sanitizeOrderByForExplorer', () => {
 	});
 
 	it('handles missing orderBy by returning an empty array', () => {
-		(getParsedAggregationOptionsForOrderBy as jest.Mock).mockReturnValue([]);
+		(getParsedAggregationOptionsForOrderBy as Mock).mockReturnValue([]);
 
 		const query = buildQuery({ orderBy: [] });
 		const result = sanitizeOrderByForExplorer(query);

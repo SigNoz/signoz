@@ -4,8 +4,8 @@ const buildConfig = (
 	overrides: Partial<Parameters<typeof getBaseContextConfig>[0]> = {},
 ): ReturnType<typeof getBaseContextConfig> =>
 	getBaseContextConfig({
-		handleBaseDrilldown: jest.fn(),
-		setSubMenu: jest.fn(),
+		handleBaseDrilldown: vi.fn(),
+		setSubMenu: vi.fn(),
 		showBreakoutOption: true,
 		...overrides,
 	});
@@ -38,7 +38,7 @@ describe('getBaseContextConfig', () => {
 	});
 
 	it('routes view actions through handleBaseDrilldown', () => {
-		const handleBaseDrilldown = jest.fn();
+		const handleBaseDrilldown = vi.fn();
 		const config = buildConfig({ handleBaseDrilldown });
 
 		config.find((item) => item.key === 'view_logs')?.onClick();

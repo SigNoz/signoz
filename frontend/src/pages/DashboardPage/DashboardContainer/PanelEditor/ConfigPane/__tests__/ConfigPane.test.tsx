@@ -10,7 +10,7 @@ import ConfigPane from '../ConfigPane';
 
 // ConfigActions seeds alerts from the panel, which reads the loaded dashboard for
 // analytics context — always present under the real editor route.
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEventMeta',
 	() => ({
 		useDashboardEventMeta: (): {
@@ -47,8 +47,8 @@ function renderConfigPane(
 ): React.ComponentProps<typeof ConfigPane> {
 	const props: React.ComponentProps<typeof ConfigPane> = {
 		spec: spec(),
-		onChangeSpec: jest.fn(),
-		onChangePanelKind: jest.fn(),
+		onChangeSpec: vi.fn(),
+		onChangePanelKind: vi.fn(),
 		queryType: EQueryType.QUERY_BUILDER,
 		legendSeries: [],
 		tableColumns: [],

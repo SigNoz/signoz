@@ -8,86 +8,83 @@ import MetricDetails from '../MetricDetails';
 import { getMockMetricMetadataData } from './testUtlls';
 
 const mockMetricName = 'test-metric';
-const mockOpenInspectModal = jest.fn();
-const mockOnClose = jest.fn();
+const mockOpenInspectModal = vi.fn();
+const mockOnClose = vi.fn();
 
-const mockHandleExplorerTabChange = jest.fn();
-jest
-	.spyOn(useHandleExplorerTabChange, 'useHandleExplorerTabChange')
+const mockHandleExplorerTabChange = vi.fn();
+vi.mock('hooks/useHandleExplorerTabChange', { spy: true });
+vi.mock('api/generated/services/metrics', { spy: true });
+vi
+	.mocked(useHandleExplorerTabChange.useHandleExplorerTabChange)
 	.mockReturnValue({
 		handleExplorerTabChange: mockHandleExplorerTabChange,
 	});
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.METRICS_EXPLORER}`,
 	}),
 }));
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
-	useSelector: jest.fn().mockReturnValue({
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
+	useSelector: vi.fn().mockReturnValue({
 		maxTime: 1700000000000000000,
 		minTime: 1699900000000000000,
 	}),
 }));
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
+vi.mock('react-query', async () => ({
+	...(await vi.importActual('react-query')),
 	useQueryClient: (): { invalidateQueries: () => void } => ({
-		invalidateQueries: jest.fn(),
+		invalidateQueries: vi.fn(),
 	}),
 }));
 
-jest.mock(
-	'container/MetricsExplorer/MetricDetails/AllAttributes',
-	() =>
-		function MockAllAttributes(): JSX.Element {
-			return <div data-testid="all-attributes">All Attributes</div>;
-		},
-);
-jest.mock(
+vi.mock('container/MetricsExplorer/MetricDetails/AllAttributes', () => ({
+	default: function MockAllAttributes(): JSX.Element {
+		return <div data-testid="all-attributes">All Attributes</div>;
+	},
+}));
+vi.mock(
 	'container/MetricsExplorer/MetricDetails/DashboardsAndAlertsPopover',
-	() =>
-		function MockDashboardsAndAlertsPopover(): JSX.Element {
+	() => ({
+		default: function MockDashboardsAndAlertsPopover(): JSX.Element {
 			return (
 				<div data-testid="dashboards-and-alerts-popover">
 					Dashboards and Alerts Popover
 				</div>
 			);
 		},
+	}),
 );
-jest.mock(
-	'container/MetricsExplorer/MetricDetails/Highlights',
-	() =>
-		function MockHighlights(): JSX.Element {
-			return <div data-testid="highlights">Highlights</div>;
-		},
-);
+vi.mock('container/MetricsExplorer/MetricDetails/Highlights', () => ({
+	default: function MockHighlights(): JSX.Element {
+		return <div data-testid="highlights">Highlights</div>;
+	},
+}));
 
-jest.mock(
-	'container/MetricsExplorer/MetricDetails/Metadata',
-	() =>
-		function MockMetadata(): JSX.Element {
-			return <div data-testid="metadata">Metadata</div>;
-		},
-);
+vi.mock('container/MetricsExplorer/MetricDetails/Metadata', () => ({
+	default: function MockMetadata(): JSX.Element {
+		return <div data-testid="metadata">Metadata</div>;
+	},
+}));
 
-jest.mock(
+vi.mock(
 	'container/MetricsExplorer/VolumeControl/components/VolumeControlSection/VolumeControlSection',
-	() =>
-		function MockVolumeControlSection(): JSX.Element {
+	() => ({
+		default: function MockVolumeControlSection(): JSX.Element {
 			return <div data-testid="volume-control-section-mock">Volume Control</div>;
 		},
+	}),
 );
 
-const useGetMetricMetadataMock = jest.spyOn(
-	metricsExplorerHooks,
-	'useGetMetricMetadata',
+const useGetMetricMetadataMock = vi.mocked(
+	metricsExplorerHooks.useGetMetricMetadata,
 );
 
 describe('MetricDetails', () => {

@@ -4,7 +4,7 @@ import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import { expandResourceCard, renderCreateRolePage } from './testUtils';
 
-jest.setTimeout(15_000);
+vi.setConfig({ testTimeout: 15_000 });
 
 beforeEach(() => {
 	server.use(setupAuthzAdmin());

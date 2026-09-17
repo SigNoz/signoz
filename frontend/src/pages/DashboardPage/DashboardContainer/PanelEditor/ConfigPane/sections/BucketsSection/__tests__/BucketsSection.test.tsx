@@ -8,7 +8,7 @@ describe('BucketsSection', () => {
 			<BucketsSection
 				value={undefined}
 				controls={{ count: true }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -25,7 +25,7 @@ describe('BucketsSection', () => {
 
 	it('toggles merge-active-queries through onChange', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<BucketsSection
 				value={{ mergeAllActiveQueries: false }}

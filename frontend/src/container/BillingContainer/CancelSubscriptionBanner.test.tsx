@@ -7,8 +7,9 @@ import { server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CancelSubscriptionBanner from './CancelSubscriptionBanner';
+import type { Mock, MockInstance } from 'vitest';
 
-jest.mock('utils/basePath', () => ({
+vi.mock('utils/basePath', () => ({
 	getBasePath: (): string => '/',
 	withBasePath: (path: string): string => path,
 	getAbsoluteUrl: (path: string): string => `https://test.signoz.io${path}`,
@@ -16,16 +17,16 @@ jest.mock('utils/basePath', () => ({
 }));
 
 function mockMailto(): {
-	mockClick: jest.Mock;
-	appendSpy: jest.SpyInstance;
-	removeSpy: jest.SpyInstance;
+	mockClick: Mock;
+	appendSpy: MockInstance;
+	removeSpy: MockInstance;
 } {
-	const mockClick = jest.fn();
+	const mockClick = vi.fn();
 	const realCreateElement = document.createElement.bind(document);
 
 	// Create a real anchor so JSDOM's appendChild/removeChild accept it.
 	// Override its click() so no navigation occurs.
-	jest
+	vi
 		.spyOn(document, 'createElement')
 		.mockImplementation((tag: string, options?: ElementCreationOptions) => {
 			if (tag === 'a') {
@@ -36,8 +37,8 @@ function mockMailto(): {
 			return realCreateElement(tag, options);
 		});
 
-	const appendSpy = jest.spyOn(document.body, 'appendChild');
-	const removeSpy = jest.spyOn(document.body, 'removeChild');
+	const appendSpy = vi.spyOn(document.body, 'appendChild');
+	const removeSpy = vi.spyOn(document.body, 'removeChild');
 	return { mockClick, appendSpy, removeSpy };
 }
 
@@ -48,7 +49,7 @@ describe('CancelSubscriptionBanner', () => {
 
 	afterEach(() => {
 		server.resetHandlers();
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('disables Cancel Subscription when subscription delete is denied', async () => {

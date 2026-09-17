@@ -11,7 +11,7 @@
     "typescript",
     "jsx-a11y",
     "import",
-    "jest",
+    "vitest",
     "promise",
     "jsdoc"
   ],
@@ -23,8 +23,13 @@
     "builtin": true,
     "es2021": true,
     "browser": true,
+    // The globals set named for jest: describe/it/expect/beforeEach, which
+    // vitest provides under `globals: true`. There is no vitest-named set.
     "jest": true,
     "node": true
+  },
+  "globals": {
+    "vi": "readonly"
   },
   "options": {
     "typeAware": true,
@@ -250,12 +255,15 @@
     "import/no-duplicates": "warn",
     // TODO: Changed to warn during oxlint migration, should be changed to error
     "arrow-body-style": "off",
-    "jest/no-disabled-tests": "warn",
+    // Would ask for an explicit signature on every `vi.fn()` in the suite;
+    // 2393 of them, and the jest plugin this replaced had no equivalent.
+    "vitest/require-mock-type-parameters": "off",
+    "vitest/no-disabled-tests": "warn",
     // Jest test rules
-    "jest/no-focused-tests": "error",
-    "jest/no-identical-title": "warn",
-    "jest/prefer-to-have-length": "warn",
-    "jest/valid-expect": "warn",
+    "vitest/no-focused-tests": "error",
+    "vitest/no-identical-title": "warn",
+    "vitest/prefer-to-have-length": "warn",
+    "vitest/valid-expect": "warn",
     // TODO: Change to error after migration to oxlint
     // TODO: Change to error after migration to oxlint
     "react-hooks/rules-of-hooks": "warn",
@@ -358,37 +366,33 @@
     "oxc/number-arg-out-of-range": "error",
     "oxc/only-used-in-recursion": "warn",
     "oxc/uninvoked-array-callback": "error",
-    "jest/consistent-test-it": [
+    "vitest/consistent-test-it": [
       "warn",
       {
         "fn": "it"
       }
     ],
-    "jest/expect-expect": "warn",
-    "jest/no-alias-methods": "warn",
-    "jest/no-commented-out-tests": "warn",
-    "jest/no-conditional-expect": "warn",
-    "jest/no-deprecated-functions": "warn",
-    "jest/no-done-callback": "warn",
-    "jest/no-duplicate-hooks": "warn",
-    "jest/no-export": "warn",
-    "jest/no-jasmine-globals": "warn",
-    "jest/no-mocks-import": "warn",
-    "jest/no-standalone-expect": "warn",
-    "jest/no-test-prefixes": "warn",
-    "jest/no-test-return-statement": "warn",
-    "jest/prefer-called-with": "off", // The auto-fix for this can break the tests when the function has args
-    "jest/prefer-comparison-matcher": "warn",
-    "jest/prefer-equality-matcher": "warn",
-    "jest/prefer-expect-resolves": "warn",
-    "jest/prefer-hooks-on-top": "warn",
-    "jest/prefer-spy-on": "warn",
-    "jest/prefer-strict-equal": "warn",
-    "jest/prefer-to-be": "warn",
-    "jest/prefer-to-contain": "warn",
-    "jest/prefer-todo": "warn",
-    "jest/valid-describe-callback": "warn",
-    "jest/valid-title": "warn",
+    "vitest/expect-expect": "warn",
+    "vitest/no-alias-methods": "warn",
+    "vitest/no-commented-out-tests": "warn",
+    "vitest/no-conditional-expect": "warn",
+    "vitest/no-duplicate-hooks": "warn",
+    "vitest/no-mocks-import": "warn",
+    "vitest/no-standalone-expect": "warn",
+    "vitest/no-test-prefixes": "warn",
+    "vitest/no-test-return-statement": "warn",
+    "vitest/prefer-called-with": "off", // The auto-fix for this can break the tests when the function has args
+    "vitest/prefer-comparison-matcher": "warn",
+    "vitest/prefer-equality-matcher": "warn",
+    "vitest/prefer-expect-resolves": "warn",
+    "vitest/prefer-hooks-on-top": "warn",
+    "vitest/prefer-spy-on": "warn",
+    "vitest/prefer-strict-equal": "warn",
+    "vitest/prefer-to-be": "warn",
+    "vitest/prefer-to-contain": "warn",
+    "vitest/prefer-todo": "warn",
+    "vitest/valid-describe-callback": "warn",
+    "vitest/valid-title": "warn",
     "promise/catch-or-return": "warn",
     "promise/no-return-wrap": "error",
     "promise/param-names": "warn",

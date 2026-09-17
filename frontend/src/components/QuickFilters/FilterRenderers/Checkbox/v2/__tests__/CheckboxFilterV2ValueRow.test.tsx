@@ -12,13 +12,13 @@ describe('CheckboxFilterV2ValueRow', () => {
 		disabled: false,
 		title: 'Environment',
 		onlyButtonLabel: 'Only',
-		onCheckboxChange: jest.fn(),
-		onOnlyOrAllClick: jest.fn(),
+		onCheckboxChange: vi.fn(),
+		onOnlyOrAllClick: vi.fn(),
 		badge: null as BadgeConfig | null,
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	describe('checked states', () => {
@@ -111,7 +111,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 
 		it('does not call onOnlyOrAllClick when disabled + clicked', async () => {
 			const user = userEvent.setup();
-			const onOnlyOrAllClick = jest.fn();
+			const onOnlyOrAllClick = vi.fn();
 			render(
 				<CheckboxFilterV2ValueRow
 					{...defaultProps}
@@ -127,7 +127,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 
 		it('does not call onOnlyOrAllClick on keydown when disabled', async () => {
 			const user = userEvent.setup();
-			const onOnlyOrAllClick = jest.fn();
+			const onOnlyOrAllClick = vi.fn();
 			render(
 				<CheckboxFilterV2ValueRow
 					{...defaultProps}
@@ -181,7 +181,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 
 		it('calls onOnlyOrAllClick on value text click', async () => {
 			const user = userEvent.setup();
-			const onOnlyOrAllClick = jest.fn();
+			const onOnlyOrAllClick = vi.fn();
 			render(
 				<CheckboxFilterV2ValueRow
 					{...defaultProps}
@@ -196,7 +196,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 
 		it('calls onOnlyOrAllClick on Enter key', async () => {
 			const user = userEvent.setup();
-			const onOnlyOrAllClick = jest.fn();
+			const onOnlyOrAllClick = vi.fn();
 			render(
 				<CheckboxFilterV2ValueRow
 					{...defaultProps}
@@ -218,7 +218,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 
 		it('calls onOnlyOrAllClick on Space key', async () => {
 			const user = userEvent.setup();
-			const onOnlyOrAllClick = jest.fn();
+			const onOnlyOrAllClick = vi.fn();
 			render(
 				<CheckboxFilterV2ValueRow
 					{...defaultProps}

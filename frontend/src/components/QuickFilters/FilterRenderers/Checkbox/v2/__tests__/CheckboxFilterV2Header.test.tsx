@@ -8,13 +8,13 @@ describe('CheckboxFilterV2Header', () => {
 	const defaultProps = {
 		title: 'Environment',
 		isOpen: false,
-		onToggleOpen: jest.fn(),
-		onToggleSearch: jest.fn(),
-		onClear: jest.fn(),
+		onToggleOpen: vi.fn(),
+		onToggleSearch: vi.fn(),
+		onClear: vi.fn(),
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	describe('collapsed state', () => {
@@ -64,7 +64,7 @@ describe('CheckboxFilterV2Header', () => {
 	describe('interactions', () => {
 		it('calls onToggleOpen on header click', async () => {
 			const user = userEvent.setup();
-			const onToggleOpen = jest.fn();
+			const onToggleOpen = vi.fn();
 			render(
 				<CheckboxFilterV2Header {...defaultProps} onToggleOpen={onToggleOpen} />,
 			);
@@ -76,7 +76,7 @@ describe('CheckboxFilterV2Header', () => {
 
 		it('calls onToggleOpen on Enter key', async () => {
 			const user = userEvent.setup();
-			const onToggleOpen = jest.fn();
+			const onToggleOpen = vi.fn();
 			render(
 				<CheckboxFilterV2Header {...defaultProps} onToggleOpen={onToggleOpen} />,
 			);
@@ -89,7 +89,7 @@ describe('CheckboxFilterV2Header', () => {
 
 		it('calls onToggleOpen on Space key', async () => {
 			const user = userEvent.setup();
-			const onToggleOpen = jest.fn();
+			const onToggleOpen = vi.fn();
 			render(
 				<CheckboxFilterV2Header {...defaultProps} onToggleOpen={onToggleOpen} />,
 			);
@@ -102,8 +102,8 @@ describe('CheckboxFilterV2Header', () => {
 
 		it('calls onToggleSearch on search click without toggling open', async () => {
 			const user = userEvent.setup();
-			const onToggleSearch = jest.fn();
-			const onToggleOpen = jest.fn();
+			const onToggleSearch = vi.fn();
+			const onToggleOpen = vi.fn();
 			render(
 				<CheckboxFilterV2Header
 					{...defaultProps}
@@ -121,8 +121,8 @@ describe('CheckboxFilterV2Header', () => {
 
 		it('calls onClear on reset click without toggling open', async () => {
 			const user = userEvent.setup();
-			const onClear = jest.fn();
-			const onToggleOpen = jest.fn();
+			const onClear = vi.fn();
+			const onToggleOpen = vi.fn();
 			render(
 				<CheckboxFilterV2Header
 					{...defaultProps}
@@ -143,16 +143,16 @@ describe('CheckboxFilterV2Header', () => {
 		// jsdom has no layout, so truncation is simulated at the prototype level
 		// before mount (the component measures in a layout effect).
 		function mockTitleWidths(scrollWidth: number, clientWidth: number): void {
-			jest
+			vi
 				.spyOn(HTMLElement.prototype, 'scrollWidth', 'get')
 				.mockReturnValue(scrollWidth);
-			jest
+			vi
 				.spyOn(HTMLElement.prototype, 'clientWidth', 'get')
 				.mockReturnValue(clientWidth);
 		}
 
 		afterEach(() => {
-			jest.restoreAllMocks();
+			vi.restoreAllMocks();
 		});
 
 		it('shows the full name on hover when the title is truncated', async () => {

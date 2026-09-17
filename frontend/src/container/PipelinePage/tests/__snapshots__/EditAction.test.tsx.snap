@@ -1,10 +1,26 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`PipelinePage container test should render EditAction section 1`] = `
+exports[`PipelinePage container test > should render EditAction section 1`] = `
 <DocumentFragment>
   <svg
+    class="signoz-icon"
     data-testid="pipeline-edit-action"
+    fill="none"
+    height="16"
+    stroke="currentColor"
+    stroke-width="1.33"
     style="font-size: 1rem;"
-  />
+    viewBox="0 0 16 16"
+    width="16"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M8 13.333h6m-4-10 2 2m-1.082-2.918a1.415 1.415 0 0 1 2.001 2.001l-8.007 8.007a1.333 1.333 0 0 1-.57.338l-1.914.558a.332.332 0 0 1-.417-.237.334.334 0 0 1 .003-.176l.559-1.915c.063-.215.179-.41.337-.569l8.008-8.007Z"
+      stroke="inherit"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.33"
+    />
+  </svg>
 </DocumentFragment>
 `;

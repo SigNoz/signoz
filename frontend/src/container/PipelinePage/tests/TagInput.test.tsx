@@ -14,7 +14,7 @@ describe('Pipeline Page', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<TagInput setTagsListData={jest.fn()} tagsListData={[]} placeHolder="" />
+						<TagInput setTagsListData={vi.fn()} tagsListData={[]} placeHolder="" />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
@@ -8,25 +9,25 @@ import {
 	GlobalTimeStoreApi,
 	NANO_SECOND_MULTIPLIER,
 } from 'store/globalTime';
-import { act, render } from 'tests/test-utils';
+import { act, render } from 'tests/test-utils-full';
 
 import { buildEntityMetricsChartConfig } from '../configBuilder';
 import EntityMetrics from '../EntityMetrics';
 
-jest.mock('../configBuilder', () => ({
-	buildEntityMetricsChartConfig: jest.fn().mockReturnValue({
-		getId: jest.fn().mockReturnValue('mock-id'),
+vi.mock('../configBuilder', () => ({
+	buildEntityMetricsChartConfig: vi.fn().mockReturnValue({
+		getId: vi.fn().mockReturnValue('mock-id'),
 	}),
 }));
 
-jest.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
+vi.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="date-time-selection">Date Time</div>
 	),
 }));
 
-const mockBuildChartConfig = buildEntityMetricsChartConfig as jest.Mock;
+const mockBuildChartConfig = buildEntityMetricsChartConfig as Mock;
 
 const START_MS = 1705315200000; // 2024-01-15T10:40:00Z
 const END_MS = 1705318800000; // 2024-01-15T11:40:00Z
@@ -54,8 +55,8 @@ function createStoreWithCustomRange(): GlobalTimeStoreApi {
 	return store;
 }
 
-function renderEntityMetrics(store: GlobalTimeStoreApi): jest.Mock {
-	const getEntityQueryPayload = jest.fn().mockReturnValue([queryPayload]);
+function renderEntityMetrics(store: GlobalTimeStoreApi): Mock {
+	const getEntityQueryPayload = vi.fn().mockReturnValue([queryPayload]);
 	render(
 		<GlobalTimeContext.Provider value={store}>
 			<EntityMetrics

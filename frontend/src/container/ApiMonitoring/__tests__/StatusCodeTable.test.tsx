@@ -5,8 +5,8 @@ import '@testing-library/jest-dom';
 import StatusCodeTable from '../Explorer/Domains/DomainDetails/components/StatusCodeTable';
 
 // Mock the ErrorState component
-jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () =>
-	jest.fn().mockImplementation(({ refetch }) => (
+vi.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
+	default: vi.fn().mockImplementation(({ refetch }) => (
 		<div
 			data-testid="error-state-mock"
 			onClick={refetch}
@@ -21,14 +21,14 @@ jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () =>
 			Error state
 		</div>
 	)),
-);
+}));
 
 // Mock antd components
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
+vi.mock('antd', async () => {
+	const originalModule = await vi.importActual('antd');
 	return {
 		...originalModule,
-		Table: jest
+		Table: vi
 			.fn()
 			.mockImplementation(({ loading, dataSource, columns, locale }) => (
 				<div data-testid="table-mock">
@@ -47,7 +47,7 @@ jest.mock('antd', () => {
 				</div>
 			)),
 		Typography: {
-			Text: jest.fn().mockImplementation(({ children, className }) => (
+			Text: vi.fn().mockImplementation(({ children, className }) => (
 				<div data-testid="typography-text" className={className}>
 					{children}
 				</div>
@@ -67,7 +67,7 @@ interface MockQueryResult {
 }
 
 describe('StatusCodeTable', () => {
-	const refetchFn = jest.fn();
+	const refetchFn = vi.fn();
 
 	it('renders loading state correctly', () => {
 		// Arrange

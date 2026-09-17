@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { render, screen, userEvent } from 'tests/test-utils';
@@ -11,6 +10,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 import '@testing-library/jest-dom';
+import type { MockedFunction } from 'vitest';
 
 import { QueryBuilderV2 } from '../QueryBuilderV2';
 import {
@@ -19,45 +19,39 @@ import {
 } from '../QueryV2/previousQuery.utils';
 
 // Local mocks for domain-specific heavy child components
-jest.mock(
-	'../QueryV2/QueryAggregation/QueryAggregation',
-	() =>
-		function QueryAggregation(): JSX.Element {
-			return <div>QueryAggregation</div>;
-		},
-);
-jest.mock(
-	'../QueryV2/MerticsAggregateSection/MetricsAggregateSection',
-	() =>
-		function MetricsAggregateSection(): JSX.Element {
-			return <div>MetricsAggregateSection</div>;
-		},
-);
+vi.mock('../QueryV2/QueryAggregation/QueryAggregation', () => ({
+	default: function QueryAggregation(): JSX.Element {
+		return <div>QueryAggregation</div>;
+	},
+}));
+vi.mock('../QueryV2/MerticsAggregateSection/MetricsAggregateSection', () => ({
+	default: function MetricsAggregateSection(): JSX.Element {
+		return <div>MetricsAggregateSection</div>;
+	},
+}));
 // Mock networked children to avoid axios during unit tests
-jest.mock(
-	'../QueryV2/QuerySearch/QuerySearch',
-	() =>
-		function QuerySearch(): JSX.Element {
-			return <div>QuerySearch</div>;
-		},
-);
-jest.mock('container/QueryBuilder/filters', () => ({
+vi.mock('../QueryV2/QuerySearch/QuerySearch', () => ({
+	default: function QuerySearch(): JSX.Element {
+		return <div>QuerySearch</div>;
+	},
+}));
+vi.mock('container/QueryBuilder/filters', () => ({
 	AggregatorFilter: (): JSX.Element => <div />,
 	MetricNameSelector: (): JSX.Element => <div />,
 }));
 // Mock hooks
-jest.mock('hooks/queryBuilder/useQueryBuilder');
+vi.mock('hooks/queryBuilder/useQueryBuilder');
 
-const mockedUseQueryBuilder = jest.mocked(useQueryBuilder);
+const mockedUseQueryBuilder = vi.mocked(useQueryBuilder);
 
 describe('MetricsSelect - signal source switching (standalone)', () => {
-	let handleSetQueryDataMock: jest.MockedFunction<
+	let handleSetQueryDataMock: MockedFunction<
 		(index: number, q: IBuilderQuery) => void
 	>;
 
 	beforeEach(() => {
 		clearPreviousQuery();
-		handleSetQueryDataMock = jest.fn() as unknown as jest.MockedFunction<
+		handleSetQueryDataMock = vi.fn() as unknown as MockedFunction<
 			(index: number, q: IBuilderQuery) => void
 		>;
 
@@ -109,40 +103,40 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 			currentQuery: currentQueryObj,
 			stagedQuery: null,
 			lastUsedQuery: null,
-			setLastUsedQuery: jest.fn(),
+			setLastUsedQuery: vi.fn(),
 			supersetQuery: currentQueryObj,
-			setSupersetQuery: jest.fn(),
+			setSupersetQuery: vi.fn(),
 			initialDataSource: null,
 			panelType: PANEL_TYPES.TABLE,
 			isEnabledQuery: true,
 			handleSetQueryData: handleSetQueryDataMock,
-			handleSetTraceOperatorData: jest.fn(),
-			handleSetFormulaData: jest.fn(),
-			handleSetQueryItemData: jest.fn(),
-			handleSetConfig: jest.fn(),
-			removeQueryBuilderEntityByIndex: jest.fn(),
-			removeAllQueryBuilderEntities: jest.fn(),
-			removeQueryTypeItemByIndex: jest.fn(),
-			addNewBuilderQuery: jest.fn(),
-			addNewFormula: jest.fn(),
-			removeTraceOperator: jest.fn(),
-			addTraceOperator: jest.fn(),
-			cloneQuery: jest.fn(),
-			addNewQueryItem: jest.fn(),
-			redirectWithQueryBuilderData: jest.fn(),
-			handleRunQuery: jest.fn(),
-			resetQuery: jest.fn(),
-			handleOnUnitsChange: jest.fn(),
+			handleSetTraceOperatorData: vi.fn(),
+			handleSetFormulaData: vi.fn(),
+			handleSetQueryItemData: vi.fn(),
+			handleSetConfig: vi.fn(),
+			removeQueryBuilderEntityByIndex: vi.fn(),
+			removeAllQueryBuilderEntities: vi.fn(),
+			removeQueryTypeItemByIndex: vi.fn(),
+			addNewBuilderQuery: vi.fn(),
+			addNewFormula: vi.fn(),
+			removeTraceOperator: vi.fn(),
+			addTraceOperator: vi.fn(),
+			cloneQuery: vi.fn(),
+			addNewQueryItem: vi.fn(),
+			redirectWithQueryBuilderData: vi.fn(),
+			handleRunQuery: vi.fn(),
+			resetQuery: vi.fn(),
+			handleOnUnitsChange: vi.fn(),
 			updateAllQueriesOperators: ((q: any) => q) as any,
 			updateQueriesData: ((q: any) => q) as any,
-			initQueryBuilderData: jest.fn(),
-			isStagedQueryUpdated: jest.fn(() => false),
-			isDefaultQuery: jest.fn(() => false),
+			initQueryBuilderData: vi.fn(),
+			isStagedQueryUpdated: vi.fn(() => false),
+			isDefaultQuery: vi.fn(() => false),
 		});
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		clearPreviousQuery();
 	});
 
@@ -216,13 +210,13 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 });
 
 describe('DataSource change - Logs to Traces', () => {
-	let handleSetQueryDataMock: jest.MockedFunction<
+	let handleSetQueryDataMock: MockedFunction<
 		(index: number, q: IBuilderQuery) => void
 	>;
 
 	beforeEach(() => {
 		clearPreviousQuery();
-		handleSetQueryDataMock = jest.fn() as unknown as jest.MockedFunction<
+		handleSetQueryDataMock = vi.fn() as unknown as MockedFunction<
 			(i: number, q: IBuilderQuery) => void
 		>;
 
@@ -266,40 +260,40 @@ describe('DataSource change - Logs to Traces', () => {
 			currentQuery: logsCurrentQuery,
 			stagedQuery: null,
 			lastUsedQuery: null,
-			setLastUsedQuery: jest.fn(),
+			setLastUsedQuery: vi.fn(),
 			supersetQuery: logsCurrentQuery,
-			setSupersetQuery: jest.fn(),
+			setSupersetQuery: vi.fn(),
 			initialDataSource: null,
 			panelType: PANEL_TYPES.TABLE,
 			isEnabledQuery: true,
 			handleSetQueryData: handleSetQueryDataMock,
-			handleSetTraceOperatorData: jest.fn(),
-			handleSetFormulaData: jest.fn(),
-			handleSetQueryItemData: jest.fn(),
-			handleSetConfig: jest.fn(),
-			removeQueryBuilderEntityByIndex: jest.fn(),
-			removeAllQueryBuilderEntities: jest.fn(),
-			removeQueryTypeItemByIndex: jest.fn(),
-			addNewBuilderQuery: jest.fn(),
-			addNewFormula: jest.fn(),
-			removeTraceOperator: jest.fn(),
-			addTraceOperator: jest.fn(),
-			cloneQuery: jest.fn(),
-			addNewQueryItem: jest.fn(),
-			redirectWithQueryBuilderData: jest.fn(),
-			handleRunQuery: jest.fn(),
-			resetQuery: jest.fn(),
-			handleOnUnitsChange: jest.fn(),
+			handleSetTraceOperatorData: vi.fn(),
+			handleSetFormulaData: vi.fn(),
+			handleSetQueryItemData: vi.fn(),
+			handleSetConfig: vi.fn(),
+			removeQueryBuilderEntityByIndex: vi.fn(),
+			removeAllQueryBuilderEntities: vi.fn(),
+			removeQueryTypeItemByIndex: vi.fn(),
+			addNewBuilderQuery: vi.fn(),
+			addNewFormula: vi.fn(),
+			removeTraceOperator: vi.fn(),
+			addTraceOperator: vi.fn(),
+			cloneQuery: vi.fn(),
+			addNewQueryItem: vi.fn(),
+			redirectWithQueryBuilderData: vi.fn(),
+			handleRunQuery: vi.fn(),
+			resetQuery: vi.fn(),
+			handleOnUnitsChange: vi.fn(),
 			updateAllQueriesOperators: ((q: any) => q) as any,
 			updateQueriesData: ((q: any) => q) as any,
-			initQueryBuilderData: jest.fn(),
-			isStagedQueryUpdated: jest.fn(() => false),
-			isDefaultQuery: jest.fn(() => false),
+			initQueryBuilderData: vi.fn(),
+			isStagedQueryUpdated: vi.fn(() => false),
+			isDefaultQuery: vi.fn(() => false),
 		});
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		clearPreviousQuery();
 	});
 

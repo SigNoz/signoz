@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { fireEvent, screen } from '@testing-library/react';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { render } from 'tests/test-utils';
@@ -6,7 +7,7 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 import SpanLineActionButtons from '../index';
 
 // Mock the useCopySpanLink hook
-jest.mock('hooks/trace/useCopySpanLink');
+vi.mock('hooks/trace/useCopySpanLink');
 
 const mockSpan: SpanV3 = {
 	span_id: 'test-span-id',
@@ -45,12 +46,12 @@ const mockSpan: SpanV3 = {
 describe('SpanLineActionButtons', () => {
 	beforeEach(() => {
 		// Clear mock before each test
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders copy link button with correct icon', () => {
-		(useCopySpanLink as jest.Mock).mockReturnValue({
-			onSpanCopy: jest.fn(),
+		(useCopySpanLink as Mock).mockReturnValue({
+			onSpanCopy: vi.fn(),
 		});
 
 		render(<SpanLineActionButtons span={mockSpan} />);
@@ -65,8 +66,8 @@ describe('SpanLineActionButtons', () => {
 	});
 
 	it('calls onSpanCopy when copy button is clicked', () => {
-		const mockOnSpanCopy = jest.fn();
-		(useCopySpanLink as jest.Mock).mockReturnValue({
+		const mockOnSpanCopy = vi.fn();
+		(useCopySpanLink as Mock).mockReturnValue({
 			onSpanCopy: mockOnSpanCopy,
 		});
 
@@ -81,25 +82,18 @@ describe('SpanLineActionButtons', () => {
 	});
 
 	it('copies span link to clipboard when copy button is clicked', () => {
-		const mockSetCopy = jest.fn();
+		const mockSetCopy = vi.fn();
 		const mockUrlQuery = {
-			delete: jest.fn(),
-			set: jest.fn(),
-			toString: jest.fn().mockReturnValue('spanId=test-span-id'),
+			delete: vi.fn(),
+			set: vi.fn(),
+			toString: vi.fn().mockReturnValue('spanId=test-span-id'),
 		};
 		const mockPathname = '/test-path';
-		const mockLocation = {
-			origin: 'http://localhost:3000',
-		};
-
-		// Mock window.location
-		Object.defineProperty(window, 'location', {
-			value: mockLocation,
-			writable: true,
-		});
+		// No window.location stub: browsers refuse to redefine `location`
+		// (§6.5), so build the expectation from the live origin instead.
 
 		// Mock useCopySpanLink hook
-		(useCopySpanLink as jest.Mock).mockReturnValue({
+		(useCopySpanLink as Mock).mockReturnValue({
 			onSpanCopy: (event: React.MouseEvent) => {
 				event.preventDefault();
 				event.stopPropagation();
@@ -120,7 +114,7 @@ describe('SpanLineActionButtons', () => {
 
 		// Verify the copy function was called with correct link
 		expect(mockSetCopy).toHaveBeenCalledWith(
-			'http://localhost:3000/test-path?spanId=test-span-id',
+			`${window.location.origin}/test-path?spanId=test-span-id`,
 		);
 	});
 });

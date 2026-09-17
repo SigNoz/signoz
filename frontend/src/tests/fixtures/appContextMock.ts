@@ -11,7 +11,7 @@ import { ROLES, USER_ROLES } from 'types/roles';
 
 /**
  * Factory for the spies assigned to the callable members of `IAppContext`.
- * Jest passes `jest.fn`, Storybook passes `fn` from `storybook/test`; the
+ * Vitest passes `vi.fn`, Storybook passes `fn` from `storybook/test`; the
  * fixture itself stays free of any test-runner import so both can consume it.
  */
 export type SpyFactory = () => (...args: unknown[]) => void;

@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { History } from 'history';
 import type { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
@@ -15,26 +16,46 @@ import appStore from 'store';
 import ViewPanelModal from '../ViewPanelModal/ViewPanelModal';
 import { useViewPanel } from '../hooks/useViewPanel';
 
-// jest.config maps the real hook to a no-op mock; this suite needs real navigation.
-jest.mock('hooks/useSafeNavigate', () =>
-	jest
-		.requireActual('tests/browser-history-safe-navigate')
-		.createBrowserHistorySafeNavigateMock(),
-);
+// vitest.config maps the real hook to a no-op mock; this suite needs real navigation.
+// MemoryRouter never touches window, so the mock writes both window.history and
+// the router history (inlined from tests/browser-history-safe-navigate).
+vi.mock('hooks/useSafeNavigate', async () => {
+	const { useHistory } = await vi.importActual<{
+		useHistory: () => History;
+	}>('react-router-dom');
+	return {
+		useSafeNavigate: (): {
+			safeNavigate: (to: string, options?: { replace?: boolean }) => void;
+		} => {
+			const history = useHistory();
+			return {
+				safeNavigate: (to: string, options?: { replace?: boolean }): void => {
+					if (options?.replace) {
+						window.history.replaceState(null, '', to);
+						history.replace(to);
+					} else {
+						window.history.pushState(null, '', to);
+						history.push(to);
+					}
+				},
+			};
+		},
+	};
+});
 
-jest.mock('pages/DashboardPage/DashboardContainer/hooks/usePanelQuery', () => ({
+vi.mock('pages/DashboardPage/DashboardContainer/hooks/usePanelQuery', () => ({
 	usePanelQuery: (): unknown => ({
 		data: undefined,
 		isFetching: false,
 		isPreviousData: false,
 		error: null,
-		refetch: jest.fn(),
-		cancelQuery: jest.fn(),
+		refetch: vi.fn(),
+		cancelQuery: vi.fn(),
 		pagination: undefined,
 	}),
 }));
 
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/store/useDashboardStore',
 	() => ({
 		useDashboardStore: (selector: (s: unknown) => unknown): unknown =>
@@ -42,41 +63,40 @@ jest.mock(
 	}),
 );
 
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/PanelEditor/PreviewPane/PreviewPane',
-	() =>
-		function MockPreviewPane(): ReactElement {
+	() => ({
+		default: function MockPreviewPane(): ReactElement {
 			return <div data-testid="preview-pane" />;
 		},
+	}),
 );
 
-jest.mock('../hooks/useDrilldown', () => ({
+vi.mock('../hooks/useDrilldown', () => ({
 	useDrilldown: (): unknown => ({
 		enableDrillDown: false,
-		onPanelClick: jest.fn(),
+		onPanelClick: vi.fn(),
 		contextMenuProps: {
 			coordinates: null,
 			popoverPosition: null,
 			items: null,
-			onClose: jest.fn(),
+			onClose: vi.fn(),
 		},
 	}),
 }));
 
-jest.mock('../hooks/usePanelInteractions', () => ({
+vi.mock('../hooks/usePanelInteractions', () => ({
 	usePanelInteractions: (): unknown => ({
-		onDragSelect: jest.fn(),
+		onDragSelect: vi.fn(),
 		dashboardPreference: { syncMode: 0 },
 	}),
 }));
 
-jest.mock(
-	'../ViewPanelModal/ViewPanelModalHeader',
-	() =>
-		function MockViewPanelModalHeader(): ReactElement {
-			return <div data-testid="view-panel-header" />;
-		},
-);
+vi.mock('../ViewPanelModal/ViewPanelModalHeader', () => ({
+	default: function MockViewPanelModalHeader(): ReactElement {
+		return <div data-testid="view-panel-header" />;
+	},
+}));
 
 function makePromPanel(name: string, promql: string): DashboardtypesPanelDTO {
 	return {

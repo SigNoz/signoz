@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils-full';
 import { rest, server } from 'mocks-server/server';
 import {
 	AuthtypesAuthDomainConfigGoogleDTO,
@@ -17,8 +17,8 @@ import {
 } from './mocks';
 
 // @signozhq/ui/button internal effects block form.validateFields() in tests
-jest.mock('@signozhq/ui/button', () => ({
-	...jest.requireActual('@signozhq/ui/button'),
+vi.mock('@signozhq/ui/button', async () => ({
+	...(await vi.importActual('@signozhq/ui/button')),
 	Button: ({
 		children,
 		onClick,
@@ -69,7 +69,7 @@ async function submitForm(
 		}),
 	);
 
-	render(<CreateEdit isCreate={false} record={record} onClose={jest.fn()} />);
+	render(<CreateEdit isCreate={false} record={record} onClose={vi.fn()} />);
 	fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
 	await waitFor(() => expect(requests).toHaveLength(1));
 

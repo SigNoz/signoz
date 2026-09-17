@@ -17,8 +17,8 @@ describe('PipelinePage container test', () => {
 					<I18nextProvider i18n={i18n}>
 						<PipelineActions
 							pipeline={pipelineMockData[0]}
-							editAction={jest.fn()}
-							deleteAction={jest.fn()}
+							editAction={vi.fn()}
+							deleteAction={vi.fn()}
 						/>
 					</I18nextProvider>
 				</Provider>

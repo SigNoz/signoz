@@ -53,7 +53,7 @@ describe('ChartAppearanceSection', () => {
 			<ChartAppearanceSection
 				value={undefined}
 				controls={ALL_CONTROLS}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -71,7 +71,7 @@ describe('ChartAppearanceSection', () => {
 			<ChartAppearanceSection
 				value={undefined}
 				controls={{ lineStyle: true, fillMode: true }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -87,7 +87,7 @@ describe('ChartAppearanceSection', () => {
 
 	it('writes the chosen fill mode through the segmented control', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ChartAppearanceSection
 				value={{ lineStyle: DashboardtypesLineStyleDTO.solid }}
@@ -105,7 +105,7 @@ describe('ChartAppearanceSection', () => {
 	});
 
 	it('writes the chosen line interpolation through the dropdown', async () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ChartAppearanceSection
 				value={undefined}
@@ -121,7 +121,7 @@ describe('ChartAppearanceSection', () => {
 
 	it('toggles show points through onChange', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ChartAppearanceSection
 				value={{ showPoints: false }}
@@ -140,7 +140,7 @@ describe('ChartAppearanceSection', () => {
 			<ChartAppearanceSection
 				value={undefined}
 				controls={{ spanGaps: true }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -152,7 +152,7 @@ describe('ChartAppearanceSection', () => {
 
 	it('switching to "Threshold" seeds the default 1m threshold', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ChartAppearanceSection
 				value={undefined}
@@ -170,7 +170,7 @@ describe('ChartAppearanceSection', () => {
 
 	it('stores the threshold as a duration string (not seconds)', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ChartAppearanceSection
 				value={{ spanGaps: { fillLessThan: '1m' } }}
@@ -193,7 +193,7 @@ describe('ChartAppearanceSection', () => {
 
 	it('stores the entry verbatim (bare number kept as typed, not converted)', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ChartAppearanceSection
 				value={{ spanGaps: { fillLessThan: '1m' } }}
@@ -214,7 +214,7 @@ describe('ChartAppearanceSection', () => {
 
 	it('switching back to "Never" clears the threshold', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ChartAppearanceSection
 				value={{ spanGaps: { fillLessThan: '1m' } }}
@@ -235,7 +235,7 @@ describe('ChartAppearanceSection', () => {
 			<ChartAppearanceSection
 				value={{ spanGaps: { fillOnlyBelow: false, fillLessThan: '1m' } }}
 				controls={{ spanGaps: true }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -247,7 +247,7 @@ describe('ChartAppearanceSection', () => {
 
 	it('shows an error and does not commit an invalid duration', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ChartAppearanceSection
 				value={{ spanGaps: { fillLessThan: '1m' } }}
@@ -267,7 +267,7 @@ describe('ChartAppearanceSection', () => {
 
 	it('rejects a threshold below the query step interval', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ChartAppearanceSection
 				value={{ spanGaps: { fillLessThan: '2m' } }}
@@ -289,7 +289,7 @@ describe('ChartAppearanceSection', () => {
 
 	it('seeds the threshold from the step interval when switching to Threshold', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ChartAppearanceSection
 				value={undefined}
@@ -308,7 +308,7 @@ describe('ChartAppearanceSection', () => {
 
 	it('seeds from the step interval even when it arrives after mount', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		// The step interval is undefined until the query response carries step metadata,
 		// so the panel first renders without it and receives it on a later render.
 		const { rerender } = render(
@@ -341,7 +341,7 @@ describe('ChartAppearanceSection', () => {
 			<ChartAppearanceSection
 				value={{ spanGaps: { fillLessThan: '1m' } }}
 				controls={{ spanGaps: true }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -355,7 +355,7 @@ describe('ChartAppearanceSection', () => {
 
 	it('does not re-commit the threshold when blurred without a change', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ChartAppearanceSection
 				value={{ spanGaps: { fillLessThan: '1m' } }}

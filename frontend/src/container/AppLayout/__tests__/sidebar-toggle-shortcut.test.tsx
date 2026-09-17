@@ -10,7 +10,7 @@ import {
 } from 'hooks/hotkeys/useKeyboardHotkeys';
 
 // Mock dependencies
-jest.mock('providers/cmdKProvider', () => ({
+vi.mock('providers/cmdKProvider', () => ({
 	useCmdK: (): {
 		open: boolean;
 		setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -18,19 +18,19 @@ jest.mock('providers/cmdKProvider', () => ({
 		closeCmdK: () => void;
 	} => ({
 		open: false,
-		setOpen: jest.fn(),
-		openCmdK: jest.fn(),
-		closeCmdK: jest.fn(),
+		setOpen: vi.fn(),
+		openCmdK: vi.fn(),
+		closeCmdK: vi.fn(),
 	}),
 }));
 
 // Mock the AppContext
-const mockUpdateUserPreferenceInContext = jest.fn();
+const mockUpdateUserPreferenceInContext = vi.fn();
 
 const SHIFT_B_KEYBOARD_SHORTCUT = '{Shift>}b{/Shift}';
 
-jest.mock('providers/App/App', () => ({
-	useAppContext: jest.fn(() => ({
+vi.mock('providers/App/App', () => ({
+	useAppContext: vi.fn(() => ({
 		userPreferences: [
 			{
 				name: USER_PREFERENCES.SIDENAV_PINNED,
@@ -66,11 +66,11 @@ describe('Sidebar Toggle Shortcut', () => {
 			},
 		});
 
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	describe('Global Shortcuts Constants', () => {
@@ -82,7 +82,7 @@ describe('Sidebar Toggle Shortcut', () => {
 	describe('Keyboard Shortcut Registration', () => {
 		it('should register the sidebar toggle shortcut correctly', async () => {
 			const user = userEvent.setup();
-			const mockHandleShortcut = jest.fn();
+			const mockHandleShortcut = vi.fn();
 
 			render(
 				<QueryClientProvider client={queryClient}>
@@ -100,7 +100,7 @@ describe('Sidebar Toggle Shortcut', () => {
 
 		it('should not trigger shortcut in input fields', async () => {
 			const user = userEvent.setup();
-			const mockHandleShortcut = jest.fn();
+			const mockHandleShortcut = vi.fn();
 
 			function TestComponent(): JSX.Element {
 				const { registerShortcut } = useKeyboardHotkeys();
@@ -136,7 +136,7 @@ describe('Sidebar Toggle Shortcut', () => {
 	describe('Sidebar Toggle Functionality', () => {
 		it('should log the toggle event with correct parameters', async () => {
 			const user = userEvent.setup();
-			const mockHandleShortcut = jest.fn(() => {
+			const mockHandleShortcut = vi.fn(() => {
 				logEventMock('Global Shortcut: Sidebar Toggle', {
 					previousState: false,
 					newState: true,
@@ -164,7 +164,7 @@ describe('Sidebar Toggle Shortcut', () => {
 
 		it('should update user preference in context', async () => {
 			const user = userEvent.setup();
-			const mockHandleShortcut = jest.fn(() => {
+			const mockHandleShortcut = vi.fn(() => {
 				const save = {
 					name: USER_PREFERENCES.SIDENAV_PINNED,
 					value: true,

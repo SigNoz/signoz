@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import {
 	act,
 	fireEvent,
@@ -13,14 +14,14 @@ import {
 } from 'utils/getUnstableCurrentSearchParams';
 import { queryClient, TestWrapper, createMockMoment } from './testUtils';
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+const mockSafeNavigate = vi.fn();
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
-jest.mock('container/NewExplorerCTA', () => ({
+vi.mock('container/NewExplorerCTA', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
@@ -30,7 +31,7 @@ let mockOnCustomDateHandler: ((range: [unknown, unknown]) => void) | null =
 let mockOnValidCustomDateChange: ((data: { timeStr: string }) => void) | null =
 	null;
 
-jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
+vi.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 	__esModule: true,
 	default: ({
 		onSelect,
@@ -76,7 +77,7 @@ describe('DateTimeSelectionV2 - Time Selection', () => {
 	let currentSearchParams: URLSearchParams;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockSafeNavigate.mockClear();
 		queryClient.clear();
 		mockOnCustomDateHandler = null;

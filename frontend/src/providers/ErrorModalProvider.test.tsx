@@ -5,7 +5,7 @@ import APIError from 'types/api/error';
 import { ErrorModalProvider, useErrorModal } from './ErrorModalProvider';
 
 // Mock the heavy modal so the test only asserts which error it receives.
-jest.mock('components/ErrorModal/ErrorModal', () => ({
+vi.mock('components/ErrorModal/ErrorModal', () => ({
 	__esModule: true,
 	default: ({ error }: { error: APIError }): JSX.Element => (
 		<div data-testid="error-message">{error.getErrorMessage()}</div>

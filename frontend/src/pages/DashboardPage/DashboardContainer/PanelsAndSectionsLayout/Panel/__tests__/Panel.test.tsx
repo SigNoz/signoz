@@ -8,58 +8,59 @@ import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panel
 import { usePanelQuery } from 'pages/DashboardPage/DashboardContainer/hooks/usePanelQuery';
 
 import Panel from '../Panel';
+import type { Mock } from 'vitest';
 
 // Real registry by default; the static cases override per render.
-jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => {
-	const actual = jest.requireActual(
-		'pages/DashboardPage/DashboardContainer/Panels/registry',
-	);
-	return { ...actual, getPanelDefinition: jest.fn(actual.getPanelDefinition) };
+vi.mock('pages/DashboardPage/DashboardContainer/Panels/registry', async () => {
+	const actual = await vi.importActual<
+		typeof import('pages/DashboardPage/DashboardContainer/Panels/registry')
+	>('pages/DashboardPage/DashboardContainer/Panels/registry');
+	return { ...actual, getPanelDefinition: vi.fn(actual.getPanelDefinition) };
 });
-jest.mock('pages/DashboardPage/DashboardContainer/hooks/usePanelQuery', () => ({
-	usePanelQuery: jest.fn(),
+vi.mock('pages/DashboardPage/DashboardContainer/hooks/usePanelQuery', () => ({
+	usePanelQuery: vi.fn(),
 }));
 
 // Chrome + query-path collaborators stubbed: this file tests the mode fork, not them.
-jest.mock('../PanelHeader/PanelHeader', () => ({
+vi.mock('../PanelHeader/PanelHeader', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="panel-header" />,
 }));
-jest.mock('../PanelBody/PanelBody', () => ({
+vi.mock('../PanelBody/PanelBody', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="query-panel-body" />,
 }));
-jest.mock('../PanelActionsMenu/PanelActionsMenu', () => ({
+vi.mock('../PanelActionsMenu/PanelActionsMenu', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="panel-actions-menu" />,
 }));
-jest.mock('../hooks/useDrilldown', () => ({
+vi.mock('../hooks/useDrilldown', () => ({
 	useDrilldown: (): unknown => ({
-		onPanelClick: jest.fn(),
+		onPanelClick: vi.fn(),
 		enableDrillDown: false,
 		contextMenuProps: {},
 	}),
 }));
-jest.mock('../hooks/usePanelInteractions', () => ({
+vi.mock('../hooks/usePanelInteractions', () => ({
 	usePanelInteractions: (): unknown => ({
-		onDragSelect: jest.fn(),
+		onDragSelect: vi.fn(),
 		dashboardPreference: undefined,
 	}),
 }));
-jest.mock('periscope/components/ContextMenu', () => ({
+vi.mock('periscope/components/ContextMenu', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
 // Reaches react-query for the dashboard patch; this file renders without providers.
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/Panels/hooks/useUpdatePanelText',
 	() => ({
 		useUpdatePanelText: (): undefined => undefined,
 	}),
 );
 
-const mockUsePanelQuery = usePanelQuery as jest.Mock;
-const mockGetPanelDefinition = getPanelDefinition as jest.Mock;
+const mockUsePanelQuery = usePanelQuery as Mock;
+const mockGetPanelDefinition = getPanelDefinition as Mock;
 
 const panel = {
 	kind: 'Panel',
@@ -92,7 +93,7 @@ describe('Panel — authoring-mode fork', () => {
 			isFetching: false,
 			isPreviousData: false,
 			error: null,
-			refetch: jest.fn(),
+			refetch: vi.fn(),
 			pagination: undefined,
 		});
 	});

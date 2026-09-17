@@ -1,6 +1,6 @@
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { server } from 'mocks-server/server';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils-full';
 import {
 	setupAuthzAdmin,
 	setupAuthzDenyAll,
@@ -16,7 +16,7 @@ const dashboard = {
 } as unknown as DashboardtypesGettableDashboardV2DTO;
 
 let isCloudUser = true;
-jest.mock('hooks/useGetTenantLicense', () => ({
+vi.mock('hooks/useGetTenantLicense', () => ({
 	useGetTenantLicense: (): {
 		isCloudUser: boolean;
 		isEnterpriseSelfHostedUser: boolean;
@@ -29,7 +29,7 @@ describe('DashboardSettings - AuthZ', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 

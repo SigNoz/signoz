@@ -6,30 +6,31 @@ import { userEvent } from 'tests/test-utils';
 
 import AlertNotFound from '../AlertNotFound';
 
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
-		push: jest.fn(),
+		push: vi.fn(),
 	},
 }));
 
 import history from 'lib/history';
 
-const mockSafeNavigate = jest.fn();
-const useGetTenantLicenseSpy = jest.spyOn(
-	useGetTenantLicense,
-	'useGetTenantLicense',
-);
-const useSafeNavigateSpy = jest.spyOn(useSafeNavigate, 'useSafeNavigate');
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('hooks/useGetTenantLicense', { spy: true });
+vi.mock('hooks/useSafeNavigate', { spy: true });
+
+const mockSafeNavigate = vi.fn();
 
 describe('AlertNotFound', () => {
 	beforeEach(() => {
 		mockSafeNavigate.mockClear();
-		window.open = jest.fn();
-		useGetTenantLicenseSpy.mockReturnValue({
+		window.open = vi.fn();
+		vi.mocked(useGetTenantLicense.useGetTenantLicense).mockReturnValue({
 			isCloudUser: false,
 		} as ReturnType<typeof useGetTenantLicense.useGetTenantLicense>);
-		useSafeNavigateSpy.mockReturnValue({
+		vi.mocked(useSafeNavigate.useSafeNavigate).mockReturnValue({
 			safeNavigate: mockSafeNavigate,
 		});
 	});
@@ -76,7 +77,7 @@ describe('AlertNotFound', () => {
 
 	it('should navigate to the correct support page for cloud users when button is clicked', async () => {
 		const user = userEvent.setup();
-		useGetTenantLicenseSpy.mockReturnValueOnce({
+		vi.mocked(useGetTenantLicense.useGetTenantLicense).mockReturnValueOnce({
 			isCloudUser: true,
 		} as ReturnType<typeof useGetTenantLicense.useGetTenantLicense>);
 

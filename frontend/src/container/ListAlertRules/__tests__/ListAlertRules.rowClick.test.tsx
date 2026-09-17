@@ -6,7 +6,7 @@ import { renderListAlertRules } from './_helpers';
 
 describe('ListAlertRules — row click navigation', () => {
 	beforeEach(() => {
-		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		vi.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 	});
 
 	it('clicking a row calls safeNavigate to alerts/overview with composite query + ruleId', async () => {

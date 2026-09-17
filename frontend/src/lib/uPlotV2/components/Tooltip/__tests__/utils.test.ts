@@ -1,3 +1,4 @@
+import type { MockedFunction } from 'vitest';
 import { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import uPlot, { AlignedData, Series } from 'uplot';
@@ -10,11 +11,11 @@ import {
 	resolveSeriesColor,
 } from '../utils';
 
-jest.mock('components/Graph/yAxisConfig', () => ({
-	getToolTipValue: jest.fn(),
+vi.mock('components/Graph/yAxisConfig', () => ({
+	getToolTipValue: vi.fn(),
 }));
 
-const mockGetToolTipValue = getToolTipValue as jest.MockedFunction<
+const mockGetToolTipValue = getToolTipValue as MockedFunction<
 	typeof getToolTipValue
 >;
 

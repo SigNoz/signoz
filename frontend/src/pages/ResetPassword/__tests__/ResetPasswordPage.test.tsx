@@ -1,29 +1,28 @@
+import type { MockedFunction } from 'vitest';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { createErrorResponse, rest, server } from 'mocks-server/server';
-import { render, screen, waitFor, fireEvent } from 'tests/test-utils';
+import { render, screen, waitFor, fireEvent } from 'tests/test-utils-full';
 
 import ResetPassword from '../index';
 
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
-		push: jest.fn(),
+		push: vi.fn(),
 		location: { search: '' },
 	},
 }));
 
-jest.mock('api/utils', () => ({
-	Logout: jest.fn().mockResolvedValue(undefined),
+vi.mock('api/utils', () => ({
+	Logout: vi.fn().mockResolvedValue(undefined),
 }));
 
 const VERIFY_TOKEN_ENDPOINT = '*/api/v2/reset_password_tokens/verify';
 const VERSION_ENDPOINT = '*/version';
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockHistoryPush = history.push as MockedFunction<typeof history.push>;
 
 const successVerifyResponse = {
 	data: { id: 'token-id', token: 'valid-token' },
@@ -37,7 +36,7 @@ const successVersionResponse = {
 
 describe('ResetPassword Page', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			rest.get(VERSION_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(successVersionResponse)),

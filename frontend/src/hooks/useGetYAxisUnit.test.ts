@@ -1,3 +1,4 @@
+import type { MockedFunction } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
@@ -9,18 +10,16 @@ import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
 import useGetYAxisUnit from './useGetYAxisUnit';
 
-jest.mock('./queryBuilder/useQueryBuilder');
-jest.mock('container/MetricsExplorer/Explorer/utils', () => ({
-	...jest.requireActual('container/MetricsExplorer/Explorer/utils'),
-	useGetMetrics: jest.fn(),
+vi.mock('./queryBuilder/useQueryBuilder');
+vi.mock('container/MetricsExplorer/Explorer/utils', async () => ({
+	...(await vi.importActual('container/MetricsExplorer/Explorer/utils')),
+	useGetMetrics: vi.fn(),
 }));
 
-const mockUseQueryBuilder = useQueryBuilder as jest.MockedFunction<
+const mockUseQueryBuilder = useQueryBuilder as MockedFunction<
 	typeof useQueryBuilder
 >;
-const mockUseGetMetrics = useGetMetrics as jest.MockedFunction<
-	typeof useGetMetrics
->;
+const mockUseGetMetrics = useGetMetrics as MockedFunction<typeof useGetMetrics>;
 
 const MOCK_METRIC_1 = {
 	unit: UniversalYAxisUnit.BYTES,
@@ -51,7 +50,7 @@ function createMockCurrentQuery(
 
 describe('useGetYAxisUnit', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseGetMetrics.mockReturnValue({
 			isLoading: false,
 			isError: false,

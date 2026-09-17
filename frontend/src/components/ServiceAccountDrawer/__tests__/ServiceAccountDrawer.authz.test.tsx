@@ -4,7 +4,7 @@ import {
 } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils-full';
 import {
 	setupAuthzAdmin,
 	setupAuthzDeny,
@@ -46,7 +46,7 @@ function renderDrawer(
 ): ReturnType<typeof render> {
 	return render(
 		<NuqsTestingAdapter searchParams={searchParams} hasMemory>
-			<ServiceAccountDrawer onSuccess={jest.fn()} />
+			<ServiceAccountDrawer onSuccess={vi.fn()} />
 		</NuqsTestingAdapter>,
 	);
 }
@@ -80,7 +80,7 @@ function setupBaseHandlers(): void {
 
 describe('ServiceAccountDrawer — permissions', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		setupBaseHandlers();
 	});
 

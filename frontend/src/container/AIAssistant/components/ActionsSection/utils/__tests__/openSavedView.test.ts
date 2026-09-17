@@ -13,6 +13,7 @@ import { AllViewsProps, ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { AxiosResponse } from 'axios';
 import type { History } from 'history';
+import type { MockedFunction } from 'vitest';
 
 import {
 	buildExplorerNavigationUrl,
@@ -31,29 +32,22 @@ import {
 } from '../resolveOpenResource';
 import { resourceRoute, ResourceType } from '../resourceRoute';
 
-jest.mock('api/saveView/getAllViews');
-jest.mock('api/saveView/getViewById');
+vi.mock('api/saveView/getAllViews');
+vi.mock('api/saveView/getViewById');
 
-jest.mock(
-	'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi',
-	() => ({
-		mapQueryDataFromApi: jest.fn(() => ({
-			queryType: 'builder',
-			builder: {
-				queryData: [{ id: 'A' }],
-				queryFormulas: [],
-				queryTraceOperator: [],
-			},
-		})),
-	}),
-);
+vi.mock('lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi', () => ({
+	mapQueryDataFromApi: vi.fn(() => ({
+		queryType: 'builder',
+		builder: {
+			queryData: [{ id: 'A' }],
+			queryFormulas: [],
+			queryTraceOperator: [],
+		},
+	})),
+}));
 
-const mockedGetAllViews = getAllViews as jest.MockedFunction<
-	typeof getAllViews
->;
-const mockedGetViewById = getViewById as jest.MockedFunction<
-	typeof getViewById
->;
+const mockedGetAllViews = getAllViews as MockedFunction<typeof getAllViews>;
+const mockedGetViewById = getViewById as MockedFunction<typeof getViewById>;
 
 function makeView(id: string, sourcePage: DataSource): ViewProps {
 	return {
@@ -225,7 +219,7 @@ describe('buildExplorerNavigationUrl', () => {
 
 describe('openSavedView', () => {
 	it('navigates with history.push and view query params', () => {
-		const push = jest.fn();
+		const push = vi.fn();
 		const history = { push } as unknown as History;
 		const view = makeView('view-logs', DataSource.LOGS);
 
@@ -247,7 +241,7 @@ describe('openSavedViewByKey', () => {
 	it('prefers the direct view lookup endpoint', async () => {
 		const view = makeView('view-logs', DataSource.LOGS);
 		mockedGetViewById.mockResolvedValueOnce(mockViewByIdResponse(view));
-		const push = jest.fn();
+		const push = vi.fn();
 		const history = { push } as unknown as History;
 
 		await openSavedViewByKey('view-logs', DataSource.LOGS, history);
@@ -261,7 +255,7 @@ describe('openSavedViewByKey', () => {
 		const view = makeView('view-traces', DataSource.TRACES);
 		mockedGetViewById.mockRejectedValueOnce(new Error('not found'));
 		mockedGetAllViews.mockResolvedValueOnce(mockViewsResponse([view]));
-		const push = jest.fn();
+		const push = vi.fn();
 		const history = { push } as unknown as History;
 
 		await openSavedViewByKey('view-traces', DataSource.TRACES, history);
@@ -276,7 +270,7 @@ describe('openSavedViewByKey', () => {
 
 		await expect(
 			openSavedViewByKey('missing', DataSource.LOGS, {
-				push: jest.fn(),
+				push: vi.fn(),
 			} as unknown as History),
 		).rejects.toThrow('Saved view not found');
 	});

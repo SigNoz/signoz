@@ -28,11 +28,11 @@ describe('getChartManagerColumns', () => {
 		createMockDataset(2),
 	];
 	const graphVisibilityState = [true, true, false];
-	const onToggleSeriesOnOff = jest.fn();
-	const onToggleSeriesVisibility = jest.fn();
+	const onToggleSeriesOnOff = vi.fn();
+	const onToggleSeriesVisibility = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('returns columns with expected structure', () => {

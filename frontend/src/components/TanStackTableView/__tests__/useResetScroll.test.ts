@@ -2,26 +2,28 @@ import { RefObject } from 'react';
 import { renderHook } from '@testing-library/react';
 import type { TableVirtuosoHandle } from 'react-virtuoso';
 
+import type { Mock } from 'vitest';
+
 import { useResetScroll } from '../useResetScroll';
 
-function createMockRef(scrollTo: jest.Mock): RefObject<TableVirtuosoHandle> {
+function createMockRef(scrollTo: Mock): RefObject<TableVirtuosoHandle> {
 	return {
 		current: {
-			scrollToIndex: jest.fn(),
-			scrollIntoView: jest.fn(),
+			scrollToIndex: vi.fn(),
+			scrollIntoView: vi.fn(),
 			scrollTo,
-			scrollBy: jest.fn(),
+			scrollBy: vi.fn(),
 		},
 	};
 }
 
 describe('useResetScroll', () => {
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('does not call scrollTo on initial mount', () => {
-		const scrollTo = jest.fn();
+		const scrollTo = vi.fn();
 		const ref = createMockRef(scrollTo);
 
 		renderHook(() => useResetScroll(ref, 'initial-key'));
@@ -30,7 +32,7 @@ describe('useResetScroll', () => {
 	});
 
 	it('calls scrollTo when key changes', () => {
-		const scrollTo = jest.fn();
+		const scrollTo = vi.fn();
 		const ref = createMockRef(scrollTo);
 
 		const { rerender } = renderHook(
@@ -46,7 +48,7 @@ describe('useResetScroll', () => {
 	});
 
 	it('calls scrollTo once per key change', () => {
-		const scrollTo = jest.fn();
+		const scrollTo = vi.fn();
 		const ref = createMockRef(scrollTo);
 
 		const { rerender } = renderHook(
@@ -62,7 +64,7 @@ describe('useResetScroll', () => {
 	});
 
 	it('does not call scrollTo when key unchanged', () => {
-		const scrollTo = jest.fn();
+		const scrollTo = vi.fn();
 		const ref = createMockRef(scrollTo);
 
 		const { rerender } = renderHook(
@@ -88,7 +90,7 @@ describe('useResetScroll', () => {
 	});
 
 	it('calls scrollTo when changing from undefined to defined', () => {
-		const scrollTo = jest.fn();
+		const scrollTo = vi.fn();
 		const ref = createMockRef(scrollTo);
 
 		const { rerender } = renderHook(

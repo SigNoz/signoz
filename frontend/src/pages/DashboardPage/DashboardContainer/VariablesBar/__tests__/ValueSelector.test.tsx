@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
@@ -5,9 +6,9 @@ import { TooltipProvider } from '@signozhq/ui/tooltip';
 import type { VariableSelection } from '../selectionTypes';
 import ValueSelector from '../components/selectors/ValueSelector';
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
 const VALUES = ['checkout-service-prod', 'payments-service-prod'];
@@ -27,7 +28,7 @@ function renderSelector(
 				multiSelect={multiSelect}
 				showAllOption
 				selection={selection}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 				emptyFallback={{ value: [], allSelected: false }}
 				testId="variable-select-env"
 			/>
@@ -37,20 +38,20 @@ function renderSelector(
 
 /** Hovers an element and lets the tooltip's open delay elapse. */
 async function hover(element: HTMLElement): Promise<void> {
-	const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+	const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 	await user.hover(element);
 	act(() => {
-		jest.advanceTimersByTime(500);
+		vi.advanceTimersByTime(500);
 	});
 }
 
 describe('ValueSelector', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it("reveals a tag's full value on hovering that tag", async () => {
@@ -118,7 +119,7 @@ describe('ValueSelector', () => {
 		}
 
 		async function openDropdown(): Promise<void> {
-			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 			const control = screen.getByTestId('variable-select-env');
 			await user.click(control.querySelector('input') as HTMLInputElement);
 		}
@@ -148,8 +149,8 @@ describe('ValueSelector', () => {
 		});
 
 		it('empties the list and commits nothing until it closes', async () => {
-			const onChange = jest.fn();
-			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			const onChange = vi.fn();
+			const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 			render(
 				<TooltipProvider>
 					<ValueSelector
@@ -184,11 +185,8 @@ describe('ValueSelector', () => {
 	});
 
 	describe('opening and closing without touching the list', () => {
-		function renderWith(
-			selection: VariableSelection,
-			options: string[],
-		): jest.Mock {
-			const onChange = jest.fn();
+		function renderWith(selection: VariableSelection, options: string[]): Mock {
+			const onChange = vi.fn();
 			render(
 				<TooltipProvider>
 					<ValueSelector
@@ -207,7 +205,7 @@ describe('ValueSelector', () => {
 		}
 
 		async function openThenClose(): Promise<void> {
-			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 			const control = screen.getByTestId('variable-select-env');
 			await user.click(control.querySelector('input') as HTMLInputElement);
 			await user.keyboard('{Escape}');

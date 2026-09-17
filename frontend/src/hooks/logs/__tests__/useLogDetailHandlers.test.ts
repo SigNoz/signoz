@@ -5,14 +5,14 @@ import { ILog } from 'types/api/logs/log';
 
 import useLogDetailHandlers from '../useLogDetailHandlers';
 
-jest.mock('hooks/logs/useActiveLog');
-jest.mock('hooks/useIsTextSelected');
+vi.mock('hooks/logs/useActiveLog');
+vi.mock('hooks/useIsTextSelected');
 
-const mockOnSetActiveLog = jest.fn();
-const mockOnClearActiveLog = jest.fn();
-const mockOnAddToQuery = jest.fn();
-const mockOnGroupByAttribute = jest.fn();
-const mockIsTextSelected = jest.fn();
+const mockOnSetActiveLog = vi.fn();
+const mockOnClearActiveLog = vi.fn();
+const mockOnAddToQuery = vi.fn();
+const mockOnGroupByAttribute = vi.fn();
+const mockIsTextSelected = vi.fn();
 
 const mockLog: ILog = {
 	id: 'log-1',
@@ -35,11 +35,11 @@ const mockLog: ILog = {
 };
 
 beforeEach(() => {
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 
-	jest.mocked(useIsTextSelected).mockReturnValue(mockIsTextSelected);
+	vi.mocked(useIsTextSelected).mockReturnValue(mockIsTextSelected);
 
-	jest.mocked(useActiveLog).mockReturnValue({
+	vi.mocked(useActiveLog).mockReturnValue({
 		activeLog: null,
 		onSetActiveLog: mockOnSetActiveLog,
 		onClearActiveLog: mockOnClearActiveLog,
@@ -75,7 +75,7 @@ it('should open log detail when no text is selected', () => {
 it('should toggle off when clicking the same active log', () => {
 	mockIsTextSelected.mockReturnValue(false);
 
-	jest.mocked(useActiveLog).mockReturnValue({
+	vi.mocked(useActiveLog).mockReturnValue({
 		activeLog: mockLog,
 		onSetActiveLog: mockOnSetActiveLog,
 		onClearActiveLog: mockOnClearActiveLog,

@@ -11,10 +11,14 @@ import {
 	DEFAULT_USE_FIELD_APIS,
 	mockFieldsValuesAPI,
 	mockFieldsValuesAPILoading,
-	setupServer,
 } from '../CheckboxFilterV2.testUtils';
 
-setupServer();
+// tests/test-utils freezes Date via vi.setSystemTime, which stalls lodash
+// debounce (it derives remaining wait from Date.now). Search tests use real
+// timers, so restore the real clock.
+beforeEach(() => {
+	vi.useRealTimers();
+});
 
 describe('CheckboxFilterV2 - states', () => {
 	describe('loading states', () => {
@@ -77,11 +81,13 @@ describe('CheckboxFilterV2 - states', () => {
 		it('shows search spinner when fetching after initial load', async () => {
 			const user = userEvent.setup();
 
-			let requestCount = 0;
+			// Succeed every unsearched (initial) request; delay only the search
+			// request. Branching on searchText instead of request count because
+			// the component can fire the initial fetch twice in the same tick
+			// and a count-based branch hangs the wrong one in browser mode.
 			server.use(
 				rest.get('http://localhost/api/v1/fields/values', (req, res, ctx) => {
-					requestCount += 1;
-					if (requestCount === 1) {
+					if (!req.url.searchParams.get('searchText')) {
 						return res(
 							ctx.status(200),
 							ctx.json({

@@ -4,30 +4,31 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSelector from '../FieldsSelector';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import type { Mock } from 'vitest';
 
-jest.mock('hooks/querySuggestions/useFieldKeysSuggestion', () => ({
-	useFieldKeysSuggestion: jest.fn(() => ({
+vi.mock('hooks/querySuggestions/useFieldKeysSuggestion', () => ({
+	useFieldKeysSuggestion: vi.fn(() => ({
 		data: undefined,
 		isFetching: false,
 		isFetched: true,
 	})),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 // FloatingPanel is a react-rnd/portal shell — presentation only. Render its
 // children directly so the test exercises the column-editing behavior.
-jest.mock('periscope/components/FloatingPanel', () => ({
+vi.mock('periscope/components/FloatingPanel', () => ({
 	FloatingPanel: ({ children }: { children: React.ReactNode }): JSX.Element => (
 		<div>{children}</div>
 	),
 }));
 
 const mockSuggestions = (names: string[]): void => {
-	(useFieldKeysSuggestion as jest.Mock).mockReturnValue({
+	(useFieldKeysSuggestion as Mock).mockReturnValue({
 		data: names.map((name) => ({
 			name,
 			signal: 'logs',
@@ -48,15 +49,15 @@ const field = (name: string, fieldContext = 'log'): TelemetryFieldKey => ({
 
 const renderPanel = (
 	props: Partial<React.ComponentProps<typeof FieldsSelector>> = {},
-): { onFieldsChange: jest.Mock } => {
-	const onFieldsChange = jest.fn();
+): { onFieldsChange: Mock } => {
+	const onFieldsChange = vi.fn();
 	render(
 		<FieldsSelector
 			isOpen
 			title="Edit columns"
 			fields={props.fields ?? []}
 			onFieldsChange={onFieldsChange}
-			onClose={jest.fn()}
+			onClose={vi.fn()}
 			signal={DataSource.LOGS}
 			allowCustomFields
 			{...props}
@@ -73,19 +74,19 @@ const typeSearch = (value: string): void => {
 		fireEvent.change(input, { target: { value } });
 	});
 	act(() => {
-		jest.advanceTimersByTime(400);
+		vi.advanceTimersByTime(400);
 	});
 };
 
 describe('FieldsSelector — edit columns (integration)', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		mockSuggestions([]);
 	});
 
 	afterEach(() => {
-		jest.runOnlyPendingTimers();
-		jest.useRealTimers();
+		vi.runOnlyPendingTimers();
+		vi.useRealTimers();
 	});
 
 	it('adds a free-typed field end to end and saves the synthesized key', () => {

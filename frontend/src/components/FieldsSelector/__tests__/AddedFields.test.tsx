@@ -19,7 +19,7 @@ describe('AddedFields — requiredFields', () => {
 		const fields = [makeField('a'), makeField('b'), makeField('c')];
 
 		render(
-			<AddedFields inputValue="" fields={fields} onFieldsChange={jest.fn()} />,
+			<AddedFields inputValue="" fields={fields} onFieldsChange={vi.fn()} />,
 		);
 
 		expect(screen.getAllByRole('button', { name: /remove/i })).toHaveLength(3);
@@ -32,7 +32,7 @@ describe('AddedFields — requiredFields', () => {
 			<AddedFields
 				inputValue=""
 				fields={fields}
-				onFieldsChange={jest.fn()}
+				onFieldsChange={vi.fn()}
 				requiredFields={['log:a', 'log:c']}
 			/>,
 		);
@@ -49,7 +49,7 @@ describe('AddedFields — requiredFields', () => {
 			<AddedFields
 				inputValue=""
 				fields={fields}
-				onFieldsChange={jest.fn()}
+				onFieldsChange={vi.fn()}
 				requiredFields={['log:a']}
 			/>,
 		);
@@ -67,7 +67,7 @@ describe('AddedFields — requiredFields', () => {
 			<AddedFields
 				inputValue=""
 				fields={fields}
-				onFieldsChange={jest.fn()}
+				onFieldsChange={vi.fn()}
 				requiredFields={['log:body']}
 			/>,
 		);
@@ -84,7 +84,7 @@ describe('AddedFields — requiredFields', () => {
 			<AddedFields
 				inputValue=""
 				fields={fields}
-				onFieldsChange={jest.fn()}
+				onFieldsChange={vi.fn()}
 				requiredFields={['body']}
 			/>,
 		);
@@ -100,7 +100,7 @@ describe('AddedFields — requiredFields', () => {
 			<AddedFields
 				inputValue=""
 				fields={fields}
-				onFieldsChange={jest.fn()}
+				onFieldsChange={vi.fn()}
 				requiredFields={['log:body']}
 			/>,
 		);

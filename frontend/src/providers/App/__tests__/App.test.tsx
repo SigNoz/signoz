@@ -19,7 +19,7 @@ const MY_USER_URL = 'http://localhost/api/v2/users/me';
 const MY_ORG_URL = 'http://localhost/api/v2/orgs/me';
 const GLOBAL_CONFIG_URL = 'http://localhost/api/v1/global/config';
 
-jest.mock('constants/env', () => ({
+vi.mock('constants/env', () => ({
 	ENVIRONMENT: { baseURL: 'http://localhost', wsURL: '' },
 }));
 

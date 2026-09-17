@@ -9,31 +9,23 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import tracesLoaderConfig from '../configs/tracesLoaderConfig';
 
 // Mock localStorage
-const mockLocalStorage: Record<string, string> = {};
+const { mockLocalStorage } = vi.hoisted(() => ({
+	mockLocalStorage: {} as Record<string, string>,
+}));
 
-jest.mock('api/browser/localstorage/get', () => ({
+vi.mock('api/browser/localstorage/get', () => ({
 	__esModule: true,
-	default: jest.fn((key: string) => mockLocalStorage[key] || null),
+	default: vi.fn((key: string) => mockLocalStorage[key] || null),
 }));
 
 describe('tracesLoaderConfig', () => {
-	// Save original location object
-	const originalWindowLocation = window.location;
-	let mockedLocation: Partial<Location>;
+	// Save original URL
+	const originalUrl = window.location.href;
 
 	beforeEach(() => {
-		// Setup a mocked location object
-		mockedLocation = {
-			...originalWindowLocation,
-			search: '',
-		};
-
-		// Mock the window.location property
-		Object.defineProperty(window, 'location', {
-			configurable: true,
-			value: mockedLocation,
-			writable: true,
-		});
+		// Reset the URL query string without redefining window.location
+		// (redefining location is refused in browser mode)
+		window.history.pushState({}, '', window.location.pathname);
 
 		// Clear mocked localStorage
 		Object.keys(mockLocalStorage).forEach((key) => {
@@ -42,13 +34,17 @@ describe('tracesLoaderConfig', () => {
 	});
 
 	afterEach(() => {
-		// Restore original location
-		Object.defineProperty(window, 'location', {
-			configurable: true,
-			value: originalWindowLocation,
-			writable: true,
-		});
+		// Restore original URL
+		window.history.pushState({}, '', originalUrl);
 	});
+
+	function setUrlOptions(value: unknown): void {
+		window.history.pushState(
+			{},
+			'',
+			`?options=${encodeURIComponent(JSON.stringify(value))}`,
+		);
+	}
 
 	it('should have priority order: local, url, default', () => {
 		expect(tracesLoaderConfig.priority).toStrictEqual([
@@ -71,7 +67,7 @@ describe('tracesLoaderConfig', () => {
 			selectColumns: mockColumns,
 		});
 
-		const result = await tracesLoaderConfig.local();
+		const result = tracesLoaderConfig.local();
 
 		expect(result).toStrictEqual({
 			columns: mockColumns,
@@ -82,7 +78,7 @@ describe('tracesLoaderConfig', () => {
 		// Set up invalid localStorage mock data
 		mockLocalStorage[LOCALSTORAGE.TRACES_LIST_OPTIONS] = 'invalid-json';
 
-		const result = await tracesLoaderConfig.local();
+		const result = tracesLoaderConfig.local();
 
 		expect(result).toStrictEqual({
 			columns: [] as BaseAutocompleteData[],
@@ -99,13 +95,11 @@ describe('tracesLoaderConfig', () => {
 		];
 
 		// Set up URL search params
-		mockedLocation.search = `?options=${encodeURIComponent(
-			JSON.stringify({
-				selectColumns: mockColumns,
-			}),
-		)}`;
+		setUrlOptions({
+			selectColumns: mockColumns,
+		});
 
-		const result = await tracesLoaderConfig.url();
+		const result = tracesLoaderConfig.url();
 
 		expect(result).toStrictEqual({
 			columns: mockColumns,
@@ -114,9 +108,9 @@ describe('tracesLoaderConfig', () => {
 
 	it('should handle invalid URL data gracefully', async () => {
 		// Set up invalid URL search params
-		mockedLocation.search = '?options=invalid-json';
+		window.history.pushState({}, '', '?options=invalid-json');
 
-		const result = await tracesLoaderConfig.url();
+		const result = tracesLoaderConfig.url();
 
 		expect(result).toStrictEqual({
 			columns: [] as BaseAutocompleteData[],
@@ -124,7 +118,7 @@ describe('tracesLoaderConfig', () => {
 	});
 
 	it('should provide default values when no other source is available', async () => {
-		const result = await tracesLoaderConfig.default();
+		const result = tracesLoaderConfig.default();
 
 		expect(result).toStrictEqual({
 			columns: defaultTraceSelectedColumns as TelemetryFieldKey[],
@@ -138,13 +132,11 @@ describe('tracesLoaderConfig', () => {
 				{ name: 'body', signal: 'logs', fieldContext: 'log' },
 			];
 
-			mockedLocation.search = `?options=${encodeURIComponent(
-				JSON.stringify({
-					selectColumns: logsColumns,
-				}),
-			)}`;
+			setUrlOptions({
+				selectColumns: logsColumns,
+			});
 
-			const result = await tracesLoaderConfig.url();
+			const result = tracesLoaderConfig.url();
 
 			// Should filter out all Logs columns
 			expect(result.columns).toStrictEqual([]);
@@ -156,13 +148,11 @@ describe('tracesLoaderConfig', () => {
 				{ name: 'service.name', signal: 'traces', fieldContext: 'resource' },
 			];
 
-			mockedLocation.search = `?options=${encodeURIComponent(
-				JSON.stringify({
-					selectColumns: mixedColumns,
-				}),
-			)}`;
+			setUrlOptions({
+				selectColumns: mixedColumns,
+			});
 
-			const result = await tracesLoaderConfig.url();
+			const result = tracesLoaderConfig.url();
 
 			// Should only keep trace columns
 			expect(result.columns).toStrictEqual([
@@ -180,7 +170,7 @@ describe('tracesLoaderConfig', () => {
 				selectColumns: logsColumns,
 			});
 
-			const result = await tracesLoaderConfig.local();
+			const result = tracesLoaderConfig.local();
 
 			// Should filter out all Logs columns
 			expect(result.columns).toStrictEqual([]);
@@ -192,11 +182,9 @@ describe('tracesLoaderConfig', () => {
 				{ name: 'name', signal: 'traces', fieldContext: 'span' },
 			];
 
-			mockedLocation.search = `?options=${encodeURIComponent(
-				JSON.stringify({
-					selectColumns: traceColumns,
-				}),
-			)}`;
+			setUrlOptions({
+				selectColumns: traceColumns,
+			});
 
 			const result = tracesLoaderConfig.url();
 
@@ -206,11 +194,9 @@ describe('tracesLoaderConfig', () => {
 		it('should fall back to defaults when all columns are filtered out from URL', async () => {
 			const logsColumns = [{ name: 'body', signal: 'logs' }];
 
-			mockedLocation.search = `?options=${encodeURIComponent(
-				JSON.stringify({
-					selectColumns: logsColumns,
-				}),
-			)}`;
+			setUrlOptions({
+				selectColumns: logsColumns,
+			});
 
 			const result = tracesLoaderConfig.url();
 
@@ -224,11 +210,9 @@ describe('tracesLoaderConfig', () => {
 				{ name: 'body', fieldContext: 'log' },
 			];
 
-			mockedLocation.search = `?options=${encodeURIComponent(
-				JSON.stringify({
-					selectColumns: columnsWithoutSignal,
-				}),
-			)}`;
+			setUrlOptions({
+				selectColumns: columnsWithoutSignal,
+			});
 
 			const result = tracesLoaderConfig.url();
 

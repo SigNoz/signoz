@@ -1,15 +1,15 @@
 import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas';
 import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
-import { fireEvent, render, screen } from 'tests/test-utils';
+import { fireEvent, render, screen } from 'tests/test-utils-full';
 
 import MembersSettings from '../MembersSettings';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
 	toast: {
-		success: jest.fn(),
-		error: jest.fn(),
+		success: vi.fn(),
+		error: vi.fn(),
 	},
 }));
 
@@ -52,7 +52,7 @@ const mockUsers: TypesUserDTO[] = [
 
 describe('MembersSettings (integration)', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			rest.get(USERS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: mockUsers })),

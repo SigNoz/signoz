@@ -38,7 +38,7 @@ describe('NoResultsEmptyState', () => {
 	});
 
 	it('should render clear button when onClear is provided', () => {
-		const onClear = jest.fn();
+		const onClear = vi.fn();
 
 		render(<NoResultsEmptyState onClear={onClear} />);
 
@@ -49,9 +49,7 @@ describe('NoResultsEmptyState', () => {
 	});
 
 	it('should render custom clear button text', () => {
-		render(
-			<NoResultsEmptyState onClear={jest.fn()} clearButtonText="Reset All" />,
-		);
+		render(<NoResultsEmptyState onClear={vi.fn()} clearButtonText="Reset All" />);
 
 		expect(screen.getByTestId('no-results-clear-button')).toHaveTextContent(
 			'Reset All',
@@ -60,7 +58,7 @@ describe('NoResultsEmptyState', () => {
 
 	it('should call onClear when clear button is clicked', async () => {
 		const user = userEvent.setup();
-		const onClear = jest.fn();
+		const onClear = vi.fn();
 
 		render(<NoResultsEmptyState onClear={onClear} />);
 

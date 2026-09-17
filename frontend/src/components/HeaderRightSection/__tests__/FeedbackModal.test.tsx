@@ -1,3 +1,5 @@
+import type { Mock, Mocked } from 'vitest';
+
 // Mock dependencies before imports
 import { useLocation } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
@@ -9,33 +11,33 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import FeedbackModal from '../FeedbackModal';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn(),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
+	useLocation: vi.fn(),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
 	toast: {
-		success: jest.fn(),
-		error: jest.fn(),
+		success: vi.fn(),
+		error: vi.fn(),
 	},
 }));
 
-jest.mock('hooks/useGetTenantLicense', () => ({
-	useGetTenantLicense: jest.fn(),
+vi.mock('hooks/useGetTenantLicense', () => ({
+	useGetTenantLicense: vi.fn(),
 }));
 
-jest.mock('container/Integrations/utils', () => ({
-	handleContactSupport: jest.fn(),
+vi.mock('container/Integrations/utils', () => ({
+	handleContactSupport: vi.fn(),
 }));
 
-const mockUseLocation = useLocation as jest.Mock;
-const mockUseGetTenantLicense = useGetTenantLicense as jest.Mock;
-const mockHandleContactSupport = handleContactSupport as jest.Mock;
-const mockToast = toast as jest.Mocked<typeof toast>;
+const mockUseLocation = useLocation as Mock;
+const mockUseGetTenantLicense = useGetTenantLicense as Mock;
+const mockHandleContactSupport = handleContactSupport as Mock;
+const mockToast = toast as Mocked<typeof toast>;
 
-const mockOnClose = jest.fn();
+const mockOnClose = vi.fn();
 
 const mockLocation = {
 	pathname: '/test-path',
@@ -43,7 +45,7 @@ const mockLocation = {
 
 describe('FeedbackModal', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		logEventMock.mockReturnValue(Promise.resolve() as never);
 		mockUseLocation.mockReturnValue(mockLocation);
 		mockUseGetTenantLicense.mockReturnValue({

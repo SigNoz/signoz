@@ -31,12 +31,12 @@ function renderRail(
 			customViewsLoading={false}
 			isCustomActive
 			isModified
-			onSelect={jest.fn()}
-			onSave={jest.fn()}
-			onSaveChanges={jest.fn()}
-			onReset={jest.fn()}
-			onDelete={jest.fn()}
-			onRename={jest.fn()}
+			onSelect={vi.fn()}
+			onSave={vi.fn()}
+			onSaveChanges={vi.fn()}
+			onReset={vi.fn()}
+			onDelete={vi.fn()}
+			onRename={vi.fn()}
 			{...props}
 		/>,
 	);
@@ -44,7 +44,7 @@ function renderRail(
 
 describe('ViewsRail - AuthZ', () => {
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 

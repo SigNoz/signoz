@@ -15,7 +15,7 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<PipelinesSearchSection setPipelineSearchValue={jest.fn()} />
+						<PipelinesSearchSection setPipelineSearchValue={vi.fn()} />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,
@@ -24,7 +24,7 @@ describe('PipelinePage container test', () => {
 	});
 
 	it.skip('should handle search', async () => {
-		const setPipelineValue = jest.fn();
+		const setPipelineValue = vi.fn();
 		const { getByPlaceholderText, container } = render(
 			<MemoryRouter>
 				<Provider store={store}>
@@ -40,11 +40,11 @@ describe('PipelinePage container test', () => {
 		// Type into the search input
 		userEvent.type(searchInput, 'sample_pipeline');
 
-		jest.advanceTimersByTime(299);
+		vi.advanceTimersByTime(299);
 		expect(setPipelineValue).not.toHaveBeenCalled();
 
 		// Fast-forward time by 1ms to reach the debounce delay
-		jest.advanceTimersByTime(1);
+		vi.advanceTimersByTime(1);
 
 		// Wait for the debounce delay to pass and expect the callback to be called
 		await waitFor(() => {

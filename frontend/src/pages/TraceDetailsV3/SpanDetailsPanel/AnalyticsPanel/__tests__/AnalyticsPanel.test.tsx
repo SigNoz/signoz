@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { screen } from '@testing-library/react';
 import useGetTraceAggregations from 'hooks/trace/useGetTraceAggregations';
 import { render } from 'tests/test-utils';
@@ -6,33 +7,33 @@ import { DEFAULT_COLOR_BY_FIELD } from '../../../constants';
 import { useTraceStore } from '../../../stores/traceStore';
 import AnalyticsPanel from '../AnalyticsPanel';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useParams: (): { id: string } => ({ id: 'trace-123' }),
 }));
 
-jest.mock('hooks/trace/useGetTraceAggregations', () => ({
+vi.mock('hooks/trace/useGetTraceAggregations', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
 // Isolate the panel's own logic from the floating-panel chrome.
-jest.mock('periscope/components/FloatingPanel', () => ({
+vi.mock('periscope/components/FloatingPanel', () => ({
 	__esModule: true,
 	FloatingPanel: ({ children }: { children: React.ReactNode }): JSX.Element => (
 		<div>{children}</div>
 	),
 }));
-jest.mock('components/DetailsPanel', () => ({
+vi.mock('components/DetailsPanel', () => ({
 	__esModule: true,
 	DetailsHeader: (): JSX.Element => <div data-testid="details-header" />,
 }));
-jest.mock('components/Spinner', () => ({
+vi.mock('components/Spinner', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="spinner" />,
 }));
 
-const mockHook = useGetTraceAggregations as jest.Mock;
+const mockHook = useGetTraceAggregations as Mock;
 
 const noop = (): void => undefined;
 

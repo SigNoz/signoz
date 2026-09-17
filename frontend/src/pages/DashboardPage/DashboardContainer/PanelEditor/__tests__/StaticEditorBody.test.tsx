@@ -5,13 +5,14 @@ import type { RenderableStaticPanelDefinition } from 'pages/DashboardPage/Dashbo
 import StaticEditorBody from '../StaticEditorBody';
 import type { PanelEditorDraftApi } from '../types';
 import { usePanelEditorSave } from '../hooks/usePanelEditorSave';
+import type { Mock } from 'vitest';
 
-jest.mock('../hooks/usePanelEditorSave', () => ({
-	usePanelEditorSave: jest.fn(),
+vi.mock('../hooks/usePanelEditorSave', () => ({
+	usePanelEditorSave: vi.fn(),
 }));
 // Chrome + collaborators stubbed: this suite asserts the static body's wiring —
 // the save shape above all — not their internals.
-jest.mock('../Header/Header', () => ({
+vi.mock('../Header/Header', () => ({
 	__esModule: true,
 	default: ({ onSave }: { onSave: () => void }): JSX.Element => (
 		<button type="button" data-testid="header-save" onClick={onSave}>
@@ -19,36 +20,36 @@ jest.mock('../Header/Header', () => ({
 		</button>
 	),
 }));
-jest.mock('../ConfigPane/ConfigPane', () => ({
+vi.mock('../ConfigPane/ConfigPane', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="config-pane" />,
 }));
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader',
 	() => ({ __esModule: true, default: (): null => null }),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/StaticPanelBody/StaticPanelBody',
 	() => ({
 		__esModule: true,
 		default: (): JSX.Element => <div data-testid="static-preview-body" />,
 	}),
 );
-jest.mock('@signozhq/ui/sonner', () => ({ toast: { success: jest.fn() } }));
-jest.mock('providers/ErrorModalProvider', () => ({
-	useErrorModal: (): unknown => ({ showErrorModal: jest.fn() }),
+vi.mock('@signozhq/ui/sonner', () => ({ toast: { success: vi.fn() } }));
+vi.mock('providers/ErrorModalProvider', () => ({
+	useErrorModal: (): unknown => ({ showErrorModal: vi.fn() }),
 }));
 // The derivation has its own suite (useDashboardEditContext.authz); these cases are
 // about what the static body does with a given edit context, so control it directly.
 let editContext = { isEditable: true, editChecks: [], editDisabledTooltip: '' };
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext',
 	() => ({
 		useDashboardEditContext: (): typeof editContext => editContext,
 	}),
 );
 
-const mockUseSave = usePanelEditorSave as jest.Mock;
+const mockUseSave = usePanelEditorSave as Mock;
 
 // The draft deliberately carries a stray query: Save must strip it — the API
 // rejects anything but [] for a static kind.
@@ -64,9 +65,9 @@ const draft = {
 const draftApi: PanelEditorDraftApi = {
 	draft,
 	spec: draft.spec,
-	setSpec: jest.fn(),
+	setSpec: vi.fn(),
 	isSpecDirty: false,
-	reset: jest.fn(),
+	reset: vi.fn(),
 };
 
 const definition = {
@@ -85,11 +86,11 @@ function renderBody(): void {
 			dashboardId="d1"
 			panelId="p1"
 			panel={draft}
-			onClose={jest.fn()}
-			onSaved={jest.fn()}
+			onClose={vi.fn()}
+			onSaved={vi.fn()}
 			draftApi={draftApi}
 			panelDefinition={definition}
-			onChangePanelKind={jest.fn()}
+			onChangePanelKind={vi.fn()}
 		/>,
 	);
 }
@@ -99,7 +100,7 @@ describe('StaticEditorBody', () => {
 		mockUseSave.mockReset();
 		editContext = { isEditable: true, editChecks: [], editDisabledTooltip: '' };
 		mockUseSave.mockReturnValue({
-			save: jest.fn().mockResolvedValue('p1'),
+			save: vi.fn().mockResolvedValue('p1'),
 			isSaving: false,
 		});
 	});
@@ -115,7 +116,7 @@ describe('StaticEditorBody', () => {
 	});
 
 	it('saves the spec with queries forced to [] — the only shape the API accepts', async () => {
-		const save = jest.fn().mockResolvedValue('p1');
+		const save = vi.fn().mockResolvedValue('p1');
 		mockUseSave.mockReturnValue({ save, isSaving: false });
 		renderBody();
 
@@ -126,7 +127,7 @@ describe('StaticEditorBody', () => {
 	});
 
 	it('does not save when the dashboard is not editable', () => {
-		const save = jest.fn();
+		const save = vi.fn();
 		mockUseSave.mockReturnValue({ save, isSaving: false });
 		editContext = {
 			isEditable: false,

@@ -1,21 +1,22 @@
 // Mock factory for suites that need `useSafeNavigate` to navigate for real.
 //
-// `jest.config.ts` maps every `hooks/useSafeNavigate` import to the no-op
+// `vitest.config.ts` maps every `hooks/useSafeNavigate` import to the no-op
 // `__tests__/safeNavigateMock.ts`, so a suite that drives navigation has to opt
-// out with its own `jest.mock`.
+// out with its own `vi.mock`.
 //
 // In production `safeNavigate` goes through `createBrowserHistory`, which writes
 // `window.location` as well as notifying the router. `MemoryRouter` never touches
 // `window`, so anything reading `getUnstableCurrentSearchParams()` sees an empty
 // search and drops the params the test just navigated with. This mock writes both.
 //
-// The `jest.mock` factory is hoisted above imports, so require it inside:
+// The `vi.mock` factory is hoisted above imports, so import it inside:
 //
-//   jest.mock('hooks/useSafeNavigate', () =>
-//     jest
-//       .requireActual('tests/browser-history-safe-navigate')
-//       .createBrowserHistorySafeNavigateMock(),
-//   );
+//   vi.mock('hooks/useSafeNavigate', async () => {
+//     const { createBrowserHistorySafeNavigateMock } = await vi.importActual<
+//       typeof import('tests/browser-history-safe-navigate')
+//     >('tests/browser-history-safe-navigate');
+//     return createBrowserHistorySafeNavigateMock();
+//   });
 
 import type { History } from 'history';
 
@@ -29,8 +30,8 @@ interface UseSafeNavigateModule {
 	};
 }
 
-export function createBrowserHistorySafeNavigateMock(): UseSafeNavigateModule {
-	const { useHistory } = jest.requireActual<{ useHistory: () => History }>(
+export async function createBrowserHistorySafeNavigateMock(): Promise<UseSafeNavigateModule> {
+	const { useHistory } = await vi.importActual<{ useHistory: () => History }>(
 		'react-router-dom',
 	);
 

@@ -45,21 +45,22 @@ beforeAll(() => {
 	Element.prototype.getBoundingClientRect = (): DOMRect => rect;
 });
 
-// jest.config maps the real hook to a no-op mock; this suite needs real navigation.
-jest.mock('hooks/useSafeNavigate', () =>
-	jest
-		.requireActual('tests/browser-history-safe-navigate')
-		.createBrowserHistorySafeNavigateMock(),
-);
+// vitest.config maps the real hook to a no-op mock; this suite needs real navigation.
+vi.mock('hooks/useSafeNavigate', async () => {
+	const { createBrowserHistorySafeNavigateMock } = await vi.importActual<
+		typeof import('tests/browser-history-safe-navigate')
+	>('tests/browser-history-safe-navigate');
+	return createBrowserHistorySafeNavigateMock();
+});
 
-jest.mock('api/querySuggestions/getFieldKeySuggestions', () => ({
-	getFieldKeySuggestions: jest.fn().mockResolvedValue({
+vi.mock('api/querySuggestions/getFieldKeySuggestions', () => ({
+	getFieldKeySuggestions: vi.fn().mockResolvedValue({
 		status: 'success',
 		data: { complete: true, keys: {} },
 	}),
 }));
-jest.mock('api/querySuggestions/getFieldValueSuggestions', () => ({
-	getFieldValueSuggestions: jest.fn().mockResolvedValue({
+vi.mock('api/querySuggestions/getFieldValueSuggestions', () => ({
+	getFieldValueSuggestions: vi.fn().mockResolvedValue({
 		status: 'success',
 		data: {
 			complete: true,
@@ -73,19 +74,19 @@ jest.mock('api/querySuggestions/getFieldValueSuggestions', () => ({
 	}),
 }));
 
-jest.mock('pages/DashboardPage/DashboardContainer/hooks/usePanelQuery', () => ({
+vi.mock('pages/DashboardPage/DashboardContainer/hooks/usePanelQuery', () => ({
 	usePanelQuery: (): unknown => ({
 		data: undefined,
 		isFetching: false,
 		isPreviousData: false,
 		error: null,
-		refetch: jest.fn(),
-		cancelQuery: jest.fn(),
+		refetch: vi.fn(),
+		cancelQuery: vi.fn(),
 		pagination: undefined,
 	}),
 }));
 
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/store/useDashboardStore',
 	() => ({
 		useDashboardStore: (selector: (s: unknown) => unknown): unknown =>
@@ -93,41 +94,42 @@ jest.mock(
 	}),
 );
 
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/PanelEditor/PreviewPane/PreviewPane',
-	() =>
-		function MockPreviewPane(): ReactElement {
+	() => ({
+		__esModule: true,
+		default: function MockPreviewPane(): ReactElement {
 			return <div data-testid="preview-pane" />;
 		},
+	}),
 );
 
-jest.mock('../hooks/useDrilldown', () => ({
+vi.mock('../hooks/useDrilldown', () => ({
 	useDrilldown: (): unknown => ({
 		enableDrillDown: false,
-		onPanelClick: jest.fn(),
+		onPanelClick: vi.fn(),
 		contextMenuProps: {
 			coordinates: null,
 			popoverPosition: null,
 			items: null,
-			onClose: jest.fn(),
+			onClose: vi.fn(),
 		},
 	}),
 }));
 
-jest.mock('../hooks/usePanelInteractions', () => ({
+vi.mock('../hooks/usePanelInteractions', () => ({
 	usePanelInteractions: (): unknown => ({
-		onDragSelect: jest.fn(),
+		onDragSelect: vi.fn(),
 		dashboardPreference: { syncMode: 0 },
 	}),
 }));
 
-jest.mock(
-	'../ViewPanelModal/ViewPanelModalHeader',
-	() =>
-		function MockViewPanelModalHeader(): ReactElement {
-			return <div data-testid="view-panel-header" />;
-		},
-);
+vi.mock('../ViewPanelModal/ViewPanelModalHeader', () => ({
+	__esModule: true,
+	default: function MockViewPanelModalHeader(): ReactElement {
+		return <div data-testid="view-panel-header" />;
+	},
+}));
 
 function makePanel(
 	name: string,

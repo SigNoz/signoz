@@ -1,4 +1,5 @@
 import { render, screen, userEvent } from 'tests/test-utils';
+import type { Mock } from 'vitest';
 
 import { ContextCategory } from '../contextPicker';
 import ContextPickerEmptyState from '../ContextPickerEmptyState';
@@ -6,8 +7,8 @@ import ContextPickerEmptyState from '../ContextPickerEmptyState';
 function renderEmptyState(
 	category: ContextCategory,
 	query: string,
-	onPrefill = jest.fn(),
-): { onPrefill: jest.Mock; container: HTMLElement } {
+	onPrefill = vi.fn(),
+): { onPrefill: Mock; container: HTMLElement } {
 	const { container } = render(
 		<ContextPickerEmptyState
 			category={category}

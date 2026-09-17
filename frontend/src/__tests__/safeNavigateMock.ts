@@ -1,8 +1,10 @@
 // Shared mock for `hooks/useSafeNavigate`.
-// Wired into jest.config.ts moduleNameMapper, so any import of
+// Wired into the runner's module aliases, so any import of
 // `hooks/useSafeNavigate` in test code resolves to this file.
 // Tests can import `safeNavigateMock` to assert navigation calls — Jest's
 // `clearMocks: true` resets call history between tests.
+
+import type { Mock } from 'vitest';
 
 interface SafeNavigateOptions {
 	replace?: boolean;
@@ -18,9 +20,9 @@ interface SafeNavigateTo {
 
 type SafeNavigateToType = string | SafeNavigateTo;
 
-export const safeNavigateMock: jest.MockedFunction<
+export const safeNavigateMock: Mock<
 	(to: SafeNavigateToType, options?: SafeNavigateOptions) => void
-> = jest.fn();
+> = vi.fn();
 
 export const useSafeNavigate = (): {
 	safeNavigate: typeof safeNavigateMock;

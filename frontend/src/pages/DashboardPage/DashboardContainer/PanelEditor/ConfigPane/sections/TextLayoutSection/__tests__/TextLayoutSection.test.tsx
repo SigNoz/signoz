@@ -30,7 +30,7 @@ function render(ui: ReactElement): RenderResult {
 // The theme context defaults to dark, so the swatches paint the dark pairs.
 describe('TextLayoutSection', () => {
 	it('changes horizontal alignment', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
 		fireEvent.click(screen.getByText('Center'));
@@ -42,7 +42,7 @@ describe('TextLayoutSection', () => {
 	});
 
 	it('changes vertical alignment', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
 		fireEvent.click(screen.getByText('Bottom'));
@@ -54,7 +54,7 @@ describe('TextLayoutSection', () => {
 	});
 
 	it('stores the surface of the theme a preset was picked in', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
 		fireEvent.click(screen.getByRole('radio', { name: 'Amber' }));
@@ -66,7 +66,7 @@ describe('TextLayoutSection', () => {
 	});
 
 	it('stores a zero-alpha colour for transparent', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
 		fireEvent.click(screen.getByRole('radio', { name: 'Transparent' }));
@@ -78,7 +78,7 @@ describe('TextLayoutSection', () => {
 	});
 
 	it('unsets the background for the default panel surface', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<TextLayoutSection
 				value={{ ...value, background: TRANSPARENT_BACKGROUND }}
@@ -95,7 +95,7 @@ describe('TextLayoutSection', () => {
 		render(
 			<TextLayoutSection
 				value={{ ...value, background: TEXT_BACKGROUND_PAIRS.sakura.light.surface }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -103,7 +103,7 @@ describe('TextLayoutSection', () => {
 	});
 
 	it('stores a custom colour straight from the picker', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
 		fireEvent.click(screen.getByTestId('text-layout-background-custom'));
@@ -121,7 +121,7 @@ describe('TextLayoutSection', () => {
 		render(
 			<TextLayoutSection
 				value={{ ...value, background: '#3A2A64' }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -136,7 +136,7 @@ describe('TextLayoutSection', () => {
 	});
 
 	it('selects the default surface when nothing is stored', () => {
-		render(<TextLayoutSection value={undefined} onChange={jest.fn()} />);
+		render(<TextLayoutSection value={undefined} onChange={vi.fn()} />);
 
 		expect(screen.getByRole('radio', { name: 'Default panel' })).toBeChecked();
 		expect(screen.getByRole('radio', { name: 'Transparent' })).not.toBeChecked();

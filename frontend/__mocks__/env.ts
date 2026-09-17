@@ -1,4 +1,9 @@
+// Handlers in src/mocks-server are pinned to absolute `http://localhost/...`
+// URLs. Under jsdom the page origin already is that, but vitest browser mode
+// serves the page from a random port, so relative request URLs would resolve
+// somewhere msw is not listening. Make the base URL absolute instead, which
+// resolves to the same request URL under both environments.
 export const ENVIRONMENT = {
-	baseURL: process.env.VITE_FRONTEND_API_ENDPOINT || '',
-	wsURL: process.env.VITE_WEBSOCKET_API_ENDPOINT || '',
+	baseURL: 'http://localhost',
+	wsURL: '',
 };

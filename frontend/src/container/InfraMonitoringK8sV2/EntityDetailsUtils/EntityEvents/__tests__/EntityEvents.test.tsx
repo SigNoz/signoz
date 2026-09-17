@@ -1,7 +1,8 @@
+import type { Mock } from 'vitest';
 import { mockQueryRangeV5WithEventsResponse } from '__tests__/query_range_v5.util';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { act, render, screen, waitFor } from 'tests/test-utils';
+import { act, render, screen, waitFor } from 'tests/test-utils-full';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import EntityEvents from '../EntityEvents';
@@ -29,22 +30,22 @@ function verifyEntityEventsV5Request({
 	expect(orderKeys).toContain('timestamp');
 }
 
-jest.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
+vi.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="mock-datetime-selection">Date Time</div>
 	),
 }));
 
-jest.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
+vi.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
 	useEntityDetailsTime: (): {
 		timeRange: { startTime: number; endTime: number };
 		selectedInterval: string;
-		handleTimeChange: jest.Mock;
+		handleTimeChange: Mock;
 	} => ({
 		timeRange: { startTime: 1, endTime: 2 },
 		selectedInterval: '5m',
-		handleTimeChange: jest.fn(),
+		handleTimeChange: vi.fn(),
 	}),
 }));
 

@@ -1,46 +1,43 @@
 /**
  * localstorage/get — lazy migration tests.
  *
- * basePath is memoized at module init, so each describe block re-imports the
- * module with a fresh DOM state via jest.isolateModules.
+ * getBasePath() is memoized at module init, and vi.resetModules() does not
+ * re-evaluate modules in browser mode, so per-path state is driven through a
+ * utils/basePath mock instead of re-importing with a fresh DOM state.
  */
 
-type GetModule = typeof import('../get');
+import { getBasePath } from 'utils/basePath';
 
-function loadGetModule(href: string): GetModule {
-	const base = document.createElement('base');
-	base.setAttribute('href', href);
-	document.head.append(base);
+import get from '../get';
 
-	let mod!: GetModule;
-	jest.isolateModules(() => {
-		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
-		mod = require('../get');
-	});
-	return mod;
+vi.mock('utils/basePath', async () => {
+	const actual =
+		await vi.importActual<typeof import('utils/basePath')>('utils/basePath');
+	return { ...actual, getBasePath: vi.fn(() => '/') };
+});
+
+function setBasePath(href: string): void {
+	vi.mocked(getBasePath).mockReturnValue(href.endsWith('/') ? href : `${href}/`);
 }
 
 afterEach(() => {
-	for (const el of document.head.querySelectorAll('base')) {
-		el.remove();
-	}
 	localStorage.clear();
 });
 
 describe('get — root path "/"', () => {
 	it('reads the bare key', () => {
-		const { default: get } = loadGetModule('/');
+		setBasePath('/');
 		localStorage.setItem('AUTH_TOKEN', 'tok');
 		expect(get('AUTH_TOKEN')).toBe('tok');
 	});
 
 	it('returns null when key is absent', () => {
-		const { default: get } = loadGetModule('/');
+		setBasePath('/');
 		expect(get('MISSING')).toBeNull();
 	});
 
 	it('does NOT promote bare keys (no-op at root)', () => {
-		const { default: get } = loadGetModule('/');
+		setBasePath('/');
 		localStorage.setItem('THEME', 'light');
 		get('THEME');
 		// bare key must still be present — no migration at root
@@ -50,18 +47,18 @@ describe('get — root path "/"', () => {
 
 describe('get — prefixed path "/signoz/"', () => {
 	it('reads an already-scoped key directly', () => {
-		const { default: get } = loadGetModule('/signoz/');
+		setBasePath('/signoz/');
 		localStorage.setItem('/signoz/AUTH_TOKEN', 'scoped-tok');
 		expect(get('AUTH_TOKEN')).toBe('scoped-tok');
 	});
 
 	it('returns null when neither scoped nor bare key exists', () => {
-		const { default: get } = loadGetModule('/signoz/');
+		setBasePath('/signoz/');
 		expect(get('MISSING')).toBeNull();
 	});
 
 	it('lazy-migrates bare key to scoped key on first read', () => {
-		const { default: get } = loadGetModule('/signoz/');
+		setBasePath('/signoz/');
 		localStorage.setItem('AUTH_TOKEN', 'old-tok');
 
 		const result = get('AUTH_TOKEN');
@@ -72,7 +69,7 @@ describe('get — prefixed path "/signoz/"', () => {
 	});
 
 	it('scoped key takes precedence over bare key', () => {
-		const { default: get } = loadGetModule('/signoz/');
+		setBasePath('/signoz/');
 		localStorage.setItem('AUTH_TOKEN', 'bare-tok');
 		localStorage.setItem('/signoz/AUTH_TOKEN', 'scoped-tok');
 
@@ -82,7 +79,7 @@ describe('get — prefixed path "/signoz/"', () => {
 	});
 
 	it('subsequent reads after migration use scoped key (no double-write)', () => {
-		const { default: get } = loadGetModule('/signoz/');
+		setBasePath('/signoz/');
 		localStorage.setItem('THEME', 'dark');
 
 		get('THEME'); // triggers migration
@@ -95,33 +92,16 @@ describe('get — prefixed path "/signoz/"', () => {
 
 describe('get — two-prefix isolation', () => {
 	it('/signoz/ and /testing/ do not share migrated values', () => {
+		setBasePath('/signoz/');
 		localStorage.setItem('THEME', 'light');
 
-		const base1 = document.createElement('base');
-		base1.setAttribute('href', '/signoz/');
-		document.head.append(base1);
-		let getSignoz!: GetModule['default'];
-		jest.isolateModules(() => {
-			// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
-			getSignoz = require('../get').default;
-		});
-		base1.remove();
-
 		// migrate bare → /signoz/THEME
-		getSignoz('THEME');
+		get('THEME');
 
-		const base2 = document.createElement('base');
-		base2.setAttribute('href', '/testing/');
-		document.head.append(base2);
-		let getTesting!: GetModule['default'];
-		jest.isolateModules(() => {
-			// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
-			getTesting = require('../get').default;
-		});
-		base2.remove();
+		setBasePath('/testing/');
 
 		// /testing/ prefix: bare key already gone, scoped key does not exist
-		expect(getTesting('THEME')).toBeNull();
+		expect(get('THEME')).toBeNull();
 		expect(localStorage.getItem('/signoz/THEME')).toBe('light');
 		expect(localStorage.getItem('/testing/THEME')).toBeNull();
 	});

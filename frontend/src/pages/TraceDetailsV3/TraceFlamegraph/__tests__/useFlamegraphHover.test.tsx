@@ -14,7 +14,7 @@ function createMockCanvas(): HTMLCanvasElement {
 	const canvas = document.createElement('canvas');
 	canvas.width = 800;
 	canvas.height = 400;
-	jest.spyOn(canvas, 'getBoundingClientRect').mockImplementation(
+	vi.spyOn(canvas, 'getBoundingClientRect').mockImplementation(
 		(): DOMRect =>
 			({
 				left: 0,
@@ -48,7 +48,7 @@ const defaultArgs = {
 	viewStartTs: MOCK_TRACE_METADATA.startTime,
 	viewEndTs: MOCK_TRACE_METADATA.endTime,
 	isDraggingRef: { current: false },
-	onSpanClick: jest.fn(),
+	onSpanClick: vi.fn(),
 	isDarkMode: false,
 };
 
@@ -58,7 +58,7 @@ describe('useFlamegraphHover', () => {
 			configurable: true,
 			value: 1,
 		});
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		defaultArgs.spanRectsRef.current = [spanRect];
 		defaultArgs.isDraggingRef.current = false;
 	});

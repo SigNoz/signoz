@@ -2,15 +2,17 @@ import { renderHook } from '@testing-library/react';
 import { FontSize } from 'container/OptionsMenu/types';
 import { IField } from 'types/api/logs/fields';
 
+import type { Mock } from 'vitest';
+
 import { useLogsTableColumns } from '../useLogsTableColumns';
 
-jest.mock('providers/Timezone', () => ({
-	useTimezone: (): { formatTimezoneAdjustedTimestamp: jest.Mock } => ({
-		formatTimezoneAdjustedTimestamp: jest.fn(() => 'TS'),
+vi.mock('providers/Timezone', () => ({
+	useTimezone: (): { formatTimezoneAdjustedTimestamp: Mock } => ({
+		formatTimezoneAdjustedTimestamp: vi.fn(() => 'TS'),
 	}),
 }));
 
-jest.mock('providers/App/App', () => ({
+vi.mock('providers/App/App', () => ({
 	useAppContext: (): { featureFlags: [] } => ({ featureFlags: [] }),
 }));
 

@@ -1,3 +1,4 @@
+import { completionStatus, startCompletion } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
@@ -14,6 +15,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import QuerySearch from '../QuerySearch/QuerySearch';
 import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
+import type { MockedFunction } from 'vitest';
 
 const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
 
@@ -22,12 +24,19 @@ beforeAll(() => {
 	mockCodeMirrorDomApis();
 });
 
-jest.mock('hooks/useDarkMode', () => ({
+// test-utils freezes Date via vi.setSystemTime while leaving real timers in
+// place, which stalls lodash debounce indefinitely; restore real timers so the
+// suggestion fetches fire.
+beforeEach(() => {
+	vi.useRealTimers();
+});
+
+vi.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
-	const handleRunQuery = jest.fn();
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => {
+	const handleRunQuery = vi.fn();
 	return {
 		__esModule: true,
 		useQueryBuilder: (): { handleRunQuery: () => void } => ({ handleRunQuery }),
@@ -35,15 +44,15 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
 	};
 });
 
-jest.mock('api/querySuggestions/getFieldKeySuggestions', () => ({
-	getFieldKeySuggestions: jest.fn().mockResolvedValue({
+vi.mock('api/querySuggestions/getFieldKeySuggestions', () => ({
+	getFieldKeySuggestions: vi.fn().mockResolvedValue({
 		status: 'success',
 		data: { complete: true, keys: {} },
 	}),
 }));
 
-jest.mock('api/querySuggestions/getFieldValueSuggestions', () => ({
-	getFieldValueSuggestions: jest.fn().mockResolvedValue({
+vi.mock('api/querySuggestions/getFieldValueSuggestions', () => ({
+	getFieldValueSuggestions: vi.fn().mockResolvedValue({
 		status: 'success',
 		data: {
 			complete: true,
@@ -64,11 +73,35 @@ const SAMPLE_KEY_TYPING = 'http.';
 const SAMPLE_VALUE_TYPING_INCOMPLETE = "service.name = '";
 const SAMPLE_STATUS_QUERY = "http.status_code = '200'";
 
+// The dropdown is opened by CodeMirror, which needs a layout roundtrip to settle
+// in a real browser, and the async fetches can close it again. Re-request it
+// while waiting, but at most every 750ms: restarting on every poll aborts the
+// in-flight open and pins it in 'pending'.
+let lastCompletionRequest = 0;
+
+function waitForCompletionText(text: string): Promise<HTMLElement> {
+	return waitFor(
+		() => {
+			const root = document.querySelector<HTMLElement>('.cm-editor');
+			const view = root ? EditorView.findFromDOM(root) : null;
+			if (view && completionStatus(view.state) !== 'active') {
+				const now = Date.now();
+				if (now - lastCompletionRequest >= 750) {
+					lastCompletionRequest = now;
+					startCompletion(view);
+				}
+			}
+			return screen.getByText(text);
+		},
+		{ timeout: 5000 },
+	);
+}
+
 describe('QuerySearch (Integration with Real CodeMirror)', () => {
 	it('renders with placeholder', () => {
 		render(
 			<QuerySearch
-				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				onChange={vi.fn() as MockedFunction<(v: string) => void>}
 				queryData={initialQueriesMap.logs.builder.queryData[0]}
 				dataSource={DataSource.LOGS}
 			/>,
@@ -81,14 +114,14 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 
 	it('fetches key suggestions when typing a key (debounced)', async () => {
 		// Use real timers for CodeMirror integration tests
-		const mockedGetKeys = getFieldKeySuggestions as jest.MockedFunction<
+		const mockedGetKeys = getFieldKeySuggestions as MockedFunction<
 			typeof getFieldKeySuggestions
 		>;
 		mockedGetKeys.mockClear();
 
 		render(
 			<QuerySearch
-				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				onChange={vi.fn() as MockedFunction<(v: string) => void>}
 				queryData={initialQueriesMap.logs.builder.queryData[0]}
 				dataSource={DataSource.LOGS}
 			/>,
@@ -115,11 +148,13 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 
 	it('fetches value suggestions when editing value context', async () => {
 		// Use real timers for CodeMirror integration tests
-		const mockedGetValues = getFieldValueSuggestions as jest.MockedFunction<
+		const mockedGetValues = getFieldValueSuggestions as MockedFunction<
 			typeof getFieldValueSuggestions
 		>;
 		mockedGetValues.mockClear();
-		mockedGetValues.mockResolvedValueOnce({
+		// Not `Once`: typing debounces into more than one fetch here, and the first
+		// of them would otherwise consume the only response carrying the values.
+		mockedGetValues.mockResolvedValue({
 			status: 'success',
 			data: {
 				complete: true,
@@ -134,7 +169,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 
 		render(
 			<QuerySearch
-				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				onChange={vi.fn() as MockedFunction<(v: string) => void>}
 				queryData={initialQueriesMap.logs.builder.queryData[0]}
 				dataSource={DataSource.LOGS}
 			/>,
@@ -156,22 +191,23 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		});
 
 		// the string and number values off the response both reach the dropdown
+		lastCompletionRequest = 0;
 		await expect(
-			screen.findByText('payment-service'),
+			waitForCompletionText('payment-service'),
 		).resolves.toBeInTheDocument();
-		await expect(screen.findByText('200')).resolves.toBeInTheDocument();
+		await expect(waitForCompletionText('200')).resolves.toBeInTheDocument();
 	});
 
 	it('fetches key suggestions on mount for LOGS', async () => {
 		// Use real timers for CodeMirror integration tests
-		const mockedGetKeysOnMount = getFieldKeySuggestions as jest.MockedFunction<
+		const mockedGetKeysOnMount = getFieldKeySuggestions as MockedFunction<
 			typeof getFieldKeySuggestions
 		>;
 		mockedGetKeysOnMount.mockClear();
 
 		render(
 			<QuerySearch
-				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				onChange={vi.fn() as MockedFunction<(v: string) => void>}
 				queryData={initialQueriesMap.logs.builder.queryData[0]}
 				dataSource={DataSource.LOGS}
 			/>,
@@ -191,11 +227,11 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 	});
 
 	it('calls provided onRun on Mod-Enter', async () => {
-		const onRun = jest.fn() as jest.MockedFunction<(q: string) => void>;
+		const onRun = vi.fn() as MockedFunction<(q: string) => void>;
 
 		render(
 			<QuerySearch
-				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				onChange={vi.fn() as MockedFunction<(v: string) => void>}
 				queryData={initialQueriesMap.logs.builder.queryData[0]}
 				dataSource={DataSource.LOGS}
 				onRun={onRun}
@@ -236,7 +272,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 
 		render(
 			<QuerySearch
-				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				onChange={vi.fn() as MockedFunction<(v: string) => void>}
 				queryData={queryDataWithExpression}
 				dataSource={DataSource.LOGS}
 			/>,
@@ -262,11 +298,11 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 	it('handles queryData.filter.expression changes without triggering onChange', async () => {
 		// Spy on CodeMirror's EditorView.dispatch, which is invoked when updateEditorValue
 		// applies a programmatic change to the editor.
-		const dispatchSpy = jest.spyOn(EditorView.prototype, 'dispatch');
+		const dispatchSpy = vi.spyOn(EditorView.prototype, 'dispatch');
 		const initialExpression = "service.name = 'frontend'";
 		const updatedExpression = "service.name = 'backend'";
 
-		const onChange = jest.fn() as jest.MockedFunction<(v: string) => void>;
+		const onChange = vi.fn() as MockedFunction<(v: string) => void>;
 
 		const initialQueryData = {
 			...initialQueriesMap.logs.builder.queryData[0],
@@ -329,8 +365,8 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 	});
 
 	it('does not crash when the expression contains CRLF line breaks (issue #5869)', async () => {
-		const dispatchSpy = jest.spyOn(EditorView.prototype, 'dispatch');
-		const onChange = jest.fn() as jest.MockedFunction<(v: string) => void>;
+		const dispatchSpy = vi.spyOn(EditorView.prototype, 'dispatch');
+		const onChange = vi.fn() as MockedFunction<(v: string) => void>;
 		const initialExpression = "service.name = 'frontend'";
 		// Filtering on a multi-line log value (CRLF) used to throw
 		// "RangeError: Selection points outside of document".
@@ -389,7 +425,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 	});
 
 	it('fetches key suggestions for metrics even without aggregateAttribute.key when showFilterSuggestionsWithoutMetric is true', async () => {
-		const mockedGetKeys = getFieldKeySuggestions as jest.MockedFunction<
+		const mockedGetKeys = getFieldKeySuggestions as MockedFunction<
 			typeof getFieldKeySuggestions
 		>;
 		mockedGetKeys.mockClear();
@@ -405,7 +441,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 
 		render(
 			<QuerySearch
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 				queryData={queryData}
 				dataSource={DataSource.METRICS}
 				showFilterSuggestionsWithoutMetric

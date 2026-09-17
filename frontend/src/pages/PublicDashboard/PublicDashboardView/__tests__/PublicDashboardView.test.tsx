@@ -3,20 +3,20 @@ import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generat
 
 import PublicDashboardView from '../PublicDashboardView';
 
-const mockGrid = jest.fn();
+const { mockGrid } = vi.hoisted(() => ({ mockGrid: vi.fn() }));
 
-jest.mock('../PublicSectionGrid/PublicSectionGrid', () => ({
+vi.mock('../PublicSectionGrid/PublicSectionGrid', () => ({
 	__esModule: true,
 	default: (props: unknown): JSX.Element => {
 		mockGrid(props);
 		return <div data-testid="public-section-grid" />;
 	},
 }));
-jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
+vi.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="datetime-selection" />,
 }));
-jest.mock('../PublicAutoRefresh/PublicAutoRefresh', () => ({
+vi.mock('../PublicAutoRefresh/PublicAutoRefresh', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="auto-refresh" />,
 }));

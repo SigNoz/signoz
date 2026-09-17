@@ -9,13 +9,15 @@ import {
 	MOCK_ROUTING_POLICY_1,
 } from './testUtils';
 
-jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
+vi.mock('providers/App/App', { spy: true });
 
-const mockHandlePolicyDetailsModalAction = jest.fn();
-const mockCloseModal = jest.fn();
+vi.mocked(appHooks.useAppContext).mockReturnValue(getAppContextMockState());
+
+const mockHandlePolicyDetailsModalAction = vi.fn();
+const mockCloseModal = vi.fn();
 const mockChannels = [MOCK_CHANNEL_1, MOCK_CHANNEL_2];
 const mockRoutingPolicy = MOCK_ROUTING_POLICY_1;
-const mockRefreshChannels = jest.fn();
+const mockRefreshChannels = vi.fn();
 
 const NEW_NAME = 'New Name';
 const NEW_EXPRESSION = 'New Expression';
@@ -373,8 +375,8 @@ describe('RoutingPolicyDetails', () => {
 	});
 
 	it('should show admin message for non-admin users in empty state', () => {
-		jest
-			.spyOn(appHooks, 'useAppContext')
+		vi
+			.mocked(appHooks.useAppContext)
 			.mockReturnValue(getAppContextMockState({ role: 'VIEWER' }));
 
 		render(

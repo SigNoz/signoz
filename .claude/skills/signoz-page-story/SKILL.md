@@ -68,7 +68,7 @@ process on top of it.
   `src/storybook/`, and builders typed from `src/api/generated` where the endpoint
   has types, so a contract change is a compile error instead of a mock that lies.
 - **Reuse fixtures** from `src/mocks-server/` and `src/tests/fixtures/` where they
-  exist. An endpoint jest needs too belongs in `src/mocks-server/handlers.ts`.
+  exist. An endpoint the tests need too belongs in `src/mocks-server/handlers.ts`.
 - **Shared response builders live in `src/storybook/msw/__story_mockdata__/`**: typed
   helpers like `queryRangeV5ScalarResponse` that multiple pages need. Before
   writing a response shape inline, check if a builder exists; if not and the

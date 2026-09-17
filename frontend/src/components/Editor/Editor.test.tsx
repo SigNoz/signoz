@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import type { Mock } from 'vitest';
 
 import Editor from './index';
 
-jest.mock('hooks/useDarkMode', () => ({
-	useIsDarkMode: jest.fn(),
+vi.mock('hooks/useDarkMode', () => ({
+	useIsDarkMode: vi.fn(),
 }));
 
 describe('Editor', () => {
@@ -34,7 +35,7 @@ describe('Editor', () => {
 	});
 
 	it('renders with dark mode theme', () => {
-		(useIsDarkMode as jest.Mock).mockImplementation(() => true);
+		(useIsDarkMode as Mock).mockImplementation(() => true);
 
 		const { container } = render(<Editor value="dark mode text" />);
 
@@ -42,7 +43,7 @@ describe('Editor', () => {
 	});
 
 	it('renders with light mode theme', () => {
-		(useIsDarkMode as jest.Mock).mockImplementation(() => false);
+		(useIsDarkMode as Mock).mockImplementation(() => false);
 
 		const { container } = render(<Editor value="light mode text" />);
 

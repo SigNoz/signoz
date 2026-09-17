@@ -5,7 +5,7 @@ import { renderListAlertRules } from './_helpers';
 
 describe('ListAlertRules — permissions', () => {
 	beforeEach(() => {
-		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		vi.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 	});
 
 	it('VIEWER role hides "New Alert" button and "Actions" column', async () => {

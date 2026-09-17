@@ -1,6 +1,6 @@
 import { render, RenderResult, screen, waitFor } from '@testing-library/react';
 import { IntegrationType } from 'container/Integrations/types';
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { QueryClient, QueryClientProvider } from 'react-query';
 
 import ServiceDetails from '../ServiceDetails/ServiceDetails';
 import { accountsResponse } from './mockData';
@@ -8,17 +8,29 @@ import { accountsResponse } from './mockData';
 /**
  * Renders ServiceDetails (inline config form). Tests must register MSW handlers
  * for GET accounts and GET service details, and mock useUrlQuery (cloudAccountId, service).
+ *
+ * Uses a fresh QueryClient per render: the shared MockQueryClientProvider
+ * client outlives a single test, so stale service-details data from an earlier
+ * test wins the first render and the form resets onto it instead of the
+ * handlers the current test registered.
  */
 const renderServiceDetails = (
 	_initialConfigLogsS3Buckets: Record<string, string[]> = {},
 	_serviceId = 's3sync',
 	type: IntegrationType = IntegrationType.AWS_SERVICES,
-): RenderResult =>
-	render(
-		<MockQueryClientProvider>
+): RenderResult => {
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: { refetchOnWindowFocus: false, retry: false },
+			mutations: { retry: false },
+		},
+	});
+	return render(
+		<QueryClientProvider client={queryClient}>
 			<ServiceDetails type={type} />
-		</MockQueryClientProvider>,
+		</QueryClientProvider>,
 	);
+};
 
 /**
  * Asserts generic UI elements of the ServiceDetails config form (Overview tab).

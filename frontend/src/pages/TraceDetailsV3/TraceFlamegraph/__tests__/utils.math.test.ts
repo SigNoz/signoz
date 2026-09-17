@@ -6,7 +6,7 @@ import {
 } from '../utils';
 import { MOCK_SPANS } from './testUtils';
 
-jest.mock('container/TraceDetail/utils', () => ({
+vi.mock('container/TraceDetail/utils', () => ({
 	convertTimeToRelevantUnit: (
 		valueMs: number,
 	): { time: number; timeUnitName: string } => {

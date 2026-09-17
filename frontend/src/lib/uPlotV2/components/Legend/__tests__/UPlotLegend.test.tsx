@@ -8,8 +8,9 @@ import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 import { useLegendActions } from '../../../hooks/useLegendActions';
 import UPlotLegend from '../UPlotLegend';
 import { LegendAction, LegendActionPayload, LegendPosition } from '../../types';
+import type { Mock, MockedFunction } from 'vitest';
 
-jest.mock('react-virtuoso', () => ({
+vi.mock('react-virtuoso', () => ({
 	VirtuosoGrid: ({
 		data,
 		itemContent,
@@ -29,24 +30,35 @@ jest.mock('react-virtuoso', () => ({
 	),
 }));
 
-jest.mock('lib/uPlotV2/hooks/useLegendsSync');
-jest.mock('lib/uPlotV2/hooks/useLegendActions');
+vi.mock('lib/uPlotV2/hooks/useLegendsSync');
+vi.mock('lib/uPlotV2/hooks/useLegendActions');
 
-const mockUseLegendsSync = useLegendsSync as jest.MockedFunction<
+const mockUseLegendsSync = useLegendsSync as MockedFunction<
 	typeof useLegendsSync
 >;
-const mockUseLegendActions = useLegendActions as jest.MockedFunction<
+const mockUseLegendActions = useLegendActions as MockedFunction<
 	typeof useLegendActions
 >;
 
 /** The payloads of one action type, in dispatch order. */
 const dispatched = (
-	onAction: jest.Mock,
+	onAction: Mock,
 	type: LegendAction,
 ): LegendActionPayload[] =>
 	onAction.mock.calls
 		.map(([payload]) => payload as LegendActionPayload)
 		.filter((payload) => payload.type === type);
+
+// The row actions are a hover affordance: the real stylesheet keeps them at
+// `pointer-events: none` until the row is hovered. userEvent asserts
+// pointer-events before the hover it is about to perform can apply them, so the
+// check is off here and the hover is what puts the row in the right state.
+async function clickScopeAction(index: number): Promise<void> {
+	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const button = screen.getByTestId(`legend-scope-${index}`);
+	await user.hover(button.closest('[data-legend-item-id]') as HTMLElement);
+	await user.click(button);
+}
 
 describe('UPlotLegend', () => {
 	const baseLegendItemsMap = {
@@ -70,22 +82,22 @@ describe('UPlotLegend', () => {
 		},
 	};
 
-	let onAction: jest.Mock;
+	let onAction: Mock;
 
 	beforeEach(() => {
-		onAction = jest.fn();
+		onAction = vi.fn();
 
 		mockUseLegendsSync.mockReturnValue({
 			legendItemsMap: baseLegendItemsMap,
 			focusedSeriesIndex: 1,
-			setFocusedSeriesIndex: jest.fn(),
+			setFocusedSeriesIndex: vi.fn(),
 		});
 
 		mockUseLegendActions.mockReturnValue(onAction);
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	const renderLegend = (position?: LegendPosition): RenderResult =>
@@ -132,7 +144,7 @@ describe('UPlotLegend', () => {
 				document.querySelector(
 					'[data-legend-item-id="1"] [data-is-legend-marker="true"]',
 				),
-			).toHaveStyle({ 'background-color': 'transparent' });
+			).toHaveStyle({ 'background-color': 'rgba(0, 0, 0, 0)' });
 		});
 
 		it('renders all legend items in the grid by default', () => {
@@ -205,7 +217,7 @@ describe('UPlotLegend', () => {
 			mockUseLegendsSync.mockReturnValue({
 				legendItemsMap: allShownItemsMap,
 				focusedSeriesIndex: null,
-				setFocusedSeriesIndex: jest.fn(),
+				setFocusedSeriesIndex: vi.fn(),
 			});
 		};
 
@@ -258,7 +270,7 @@ describe('UPlotLegend', () => {
 					2: { ...baseLegendItemsMap[2], show: false },
 				},
 				focusedSeriesIndex: null,
-				setFocusedSeriesIndex: jest.fn(),
+				setFocusedSeriesIndex: vi.fn(),
 			});
 			renderLegend(LegendPosition.RIGHT);
 
@@ -288,7 +300,7 @@ describe('UPlotLegend', () => {
 					2: { ...baseLegendItemsMap[2], show: false },
 				},
 				focusedSeriesIndex: null,
-				setFocusedSeriesIndex: jest.fn(),
+				setFocusedSeriesIndex: vi.fn(),
 			});
 			renderLegend(LegendPosition.RIGHT);
 
@@ -331,11 +343,10 @@ describe('UPlotLegend', () => {
 		});
 
 		it('restores every series from All without also toggling the row', async () => {
-			const user = userEvent.setup();
 			renderLegend(LegendPosition.RIGHT);
 
 			// Series 0 is shown while B is hidden, so its action is All.
-			await user.click(screen.getByTestId('legend-scope-0'));
+			await clickScopeAction(0);
 
 			expect(dispatched(onAction, LegendAction.SHOW_ALL)).toHaveLength(1);
 			expect(dispatched(onAction, LegendAction.TOGGLE)).toHaveLength(0);
@@ -343,10 +354,9 @@ describe('UPlotLegend', () => {
 		});
 
 		it('isolates the series from Only on a hidden row', async () => {
-			const user = userEvent.setup();
 			renderLegend(LegendPosition.RIGHT);
 
-			await user.click(screen.getByTestId('legend-scope-1'));
+			await clickScopeAction(1);
 
 			expect(dispatched(onAction, LegendAction.SHOW_ONLY)).toStrictEqual([
 				{ type: LegendAction.SHOW_ONLY, seriesIndex: 1 },
@@ -384,7 +394,7 @@ describe('UPlotLegend', () => {
 			mockUseLegendsSync.mockReturnValue({
 				legendItemsMap: soleShownItemsMap,
 				focusedSeriesIndex: null,
-				setFocusedSeriesIndex: jest.fn(),
+				setFocusedSeriesIndex: vi.fn(),
 			});
 		});
 
@@ -397,10 +407,9 @@ describe('UPlotLegend', () => {
 		});
 
 		it('restores everything from All', async () => {
-			const user = userEvent.setup();
 			renderLegend(LegendPosition.RIGHT);
 
-			await user.click(screen.getByTestId('legend-scope-0'));
+			await clickScopeAction(0);
 
 			expect(dispatched(onAction, LegendAction.SHOW_ALL)).toHaveLength(1);
 		});

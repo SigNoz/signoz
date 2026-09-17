@@ -1,18 +1,20 @@
+import type { Mock } from 'vitest';
+
 // Mock dependencies before imports
 import { useLocation } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { logEventMock } from '__tests__/logEventMock';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import HeaderRightSection from '../HeaderRightSection';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn(),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
+	useLocation: vi.fn(),
 }));
 
-jest.mock('../FeedbackModal', () => ({
+vi.mock('../FeedbackModal', () => ({
 	__esModule: true,
 	default: ({ onClose }: { onClose: () => void }): JSX.Element => (
 		<div data-testid="feedback-modal">
@@ -23,30 +25,30 @@ jest.mock('../FeedbackModal', () => ({
 	),
 }));
 
-jest.mock('../ShareURLModal', () => ({
+vi.mock('../ShareURLModal', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="share-modal">Share URL Modal</div>
 	),
 }));
 
-jest.mock('../AnnouncementsModal', () => ({
+vi.mock('../AnnouncementsModal', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="announcements-modal">Announcements Modal</div>
 	),
 }));
 
-jest.mock('hooks/useGetTenantLicense', () => ({
-	useGetTenantLicense: jest.fn(),
+vi.mock('hooks/useGetTenantLicense', () => ({
+	useGetTenantLicense: vi.fn(),
 }));
 
-jest.mock('hooks/useIsAIAssistantEnabled', () => ({
+vi.mock('hooks/useIsAIAssistantEnabled', () => ({
 	useIsAIAssistantEnabled: (): boolean => false,
 }));
 
-const mockUseLocation = useLocation as jest.Mock;
-const mockUseGetTenantLicense = useGetTenantLicense as jest.Mock;
+const mockUseLocation = useLocation as Mock;
+const mockUseGetTenantLicense = useGetTenantLicense as Mock;
 
 const defaultProps = {
 	enableAnnouncements: true,
@@ -60,7 +62,7 @@ const mockLocation = {
 
 describe('HeaderRightSection', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseLocation.mockReturnValue(mockLocation);
 		// Default to licensed user (Enterprise or Cloud)
 		mockUseGetTenantLicense.mockReturnValue({
@@ -163,7 +165,10 @@ describe('HeaderRightSection', () => {
 		// Close feedback modal
 		const closeFeedbackButton = screen.getByText('Close Feedback');
 		await user.click(closeFeedbackButton);
-		expect(screen.queryByTestId('feedback-modal')).not.toBeInTheDocument();
+		// Popover exit animation outlives the state flip in a real browser
+		await waitFor(() => {
+			expect(screen.queryByTestId('feedback-modal')).not.toBeInTheDocument();
+		});
 	});
 
 	it('should close other modals when opening feedback modal', async () => {
@@ -181,7 +186,10 @@ describe('HeaderRightSection', () => {
 
 		await user.click(feedbackButton!);
 		expect(screen.getByTestId('feedback-modal')).toBeInTheDocument();
-		expect(screen.queryByTestId('share-modal')).not.toBeInTheDocument();
+		// Popover exit animation outlives the state flip in a real browser
+		await waitFor(() => {
+			expect(screen.queryByTestId('share-modal')).not.toBeInTheDocument();
+		});
 	});
 
 	it('should show feedback button for Cloud users when feedback is enabled', () => {

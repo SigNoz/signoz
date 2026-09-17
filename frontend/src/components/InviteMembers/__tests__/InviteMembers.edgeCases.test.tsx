@@ -154,7 +154,7 @@ describe('InviteMembers - Edge Cases', () => {
 	describe('empty submission', () => {
 		it('does not submit when no rows are touched', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const onSuccess = jest.fn();
+			const onSuccess = vi.fn();
 
 			render(
 				<InviteMembers

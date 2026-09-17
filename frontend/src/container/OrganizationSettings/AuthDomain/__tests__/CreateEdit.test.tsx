@@ -4,7 +4,7 @@ import {
 	screen,
 	userEvent,
 	waitFor,
-} from 'tests/test-utils';
+} from 'tests/test-utils-full';
 
 import CreateEdit from '../CreateEdit/CreateEdit';
 import {
@@ -17,11 +17,11 @@ import {
 	mockSamlWithAttributeMapping,
 } from './mocks';
 
-const mockOnClose = jest.fn();
+const mockOnClose = vi.fn();
 
 describe('CreateEdit Modal', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	describe('Provider Selection (Create Mode)', () => {

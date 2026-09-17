@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { mockQueryRangeV5WithLogsResponse } from '__tests__/query_range_v5.util';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
@@ -9,7 +10,7 @@ import {
 	RenderResult,
 	screen,
 	waitFor,
-} from 'tests/test-utils';
+} from 'tests/test-utils-full';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import EntityLogs from '../EntityLogs';
@@ -38,34 +39,32 @@ function verifyEntityLogsV5Request({
 	expect(orderKeys).toContain('id');
 }
 
-jest.mock(
-	'components/OverlayScrollbar/OverlayScrollbar',
-	() =>
-		function MockOverlayScrollbar({
-			children,
-		}: {
-			children: React.ReactNode;
-		}): JSX.Element {
-			return <div>{children}</div>;
-		},
-);
+vi.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
+	default: function MockOverlayScrollbar({
+		children,
+	}: {
+		children: React.ReactNode;
+	}): JSX.Element {
+		return <div>{children}</div>;
+	},
+}));
 
-jest.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
+vi.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="mock-datetime-selection">Date Time</div>
 	),
 }));
 
-jest.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
+vi.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
 	useEntityDetailsTime: (): {
 		timeRange: { startTime: number; endTime: number };
 		selectedInterval: string;
-		handleTimeChange: jest.Mock;
+		handleTimeChange: Mock;
 	} => ({
 		timeRange: { startTime: 1, endTime: 2 },
 		selectedInterval: '5m',
-		handleTimeChange: jest.fn(),
+		handleTimeChange: vi.fn(),
 	}),
 }));
 
@@ -85,7 +84,6 @@ describe('EntityLogs', () => {
 	});
 	it('should check if k8s logs pagination flows work properly', async () => {
 		let renderResult: RenderResult;
-		let scrollableElement: HTMLElement;
 
 		act(() => {
 			renderResult = render(
@@ -114,23 +112,23 @@ describe('EntityLogs', () => {
 			expect(capturedQueryRangePayloads).toHaveLength(1);
 		});
 
-		await waitFor(async () => {
-			scrollableElement = renderResult.container.querySelector(
+		// Retry the scroll until the next page request fires. A scroll that
+		// lands while the previous page is still fetching is ignored by the
+		// hook's isFetchingNextPage guard, and real browser layout turns that
+		// lost update into a timeout instead of a pass.
+		await waitFor(() => {
+			const scroller = renderResult.container.querySelector(
 				'[data-test-id="virtuoso-scroller"]',
 			) as HTMLElement;
 
-			expect(scrollableElement).not.toBeNull();
+			expect(scroller).not.toBeNull();
 
-			if (scrollableElement) {
-				scrollableElement.scrollTop = 99 * itemHeight;
+			scroller.scrollTop = 99 * itemHeight;
 
-				act(() => {
-					fireEvent.scroll(scrollableElement);
-				});
-			}
-		});
+			act(() => {
+				fireEvent.scroll(scroller);
+			});
 
-		await waitFor(() => {
 			expect(capturedQueryRangePayloads).toHaveLength(2);
 		});
 
@@ -152,23 +150,19 @@ describe('EntityLogs', () => {
 			initialTimeRange,
 		});
 
-		await waitFor(async () => {
-			scrollableElement = renderResult.container.querySelector(
+		await waitFor(() => {
+			const scroller = renderResult.container.querySelector(
 				'[data-test-id="virtuoso-scroller"]',
 			) as HTMLElement;
 
-			expect(scrollableElement).not.toBeNull();
+			expect(scroller).not.toBeNull();
 
-			if (scrollableElement) {
-				scrollableElement.scrollTop = 199 * itemHeight;
+			scroller.scrollTop = 199 * itemHeight;
 
-				act(() => {
-					fireEvent.scroll(scrollableElement);
-				});
-			}
-		});
+			act(() => {
+				fireEvent.scroll(scroller);
+			});
 
-		await waitFor(() => {
 			expect(capturedQueryRangePayloads.length).toBeGreaterThanOrEqual(3);
 		});
 

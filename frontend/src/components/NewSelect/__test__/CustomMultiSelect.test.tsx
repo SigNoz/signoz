@@ -10,9 +10,6 @@ import userEvent from '@testing-library/user-event';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 
-// Mock scrollIntoView which isn't available in JSDOM
-window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
 // Helper function to render with VirtuosoMockContext
 const renderWithVirtuoso = (component: React.ReactElement): RenderResult =>
 	render(
@@ -49,7 +46,7 @@ const mockGroupedOptions = [
 
 describe('CustomMultiSelect Component', () => {
 	it('renders with placeholder', () => {
-		const handleChange = jest.fn();
+		const handleChange = vi.fn();
 		renderWithVirtuoso(
 			<CustomMultiSelect
 				placeholder="Select multiple options"
@@ -64,7 +61,7 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('opens dropdown when clicked', async () => {
-		const handleChange = jest.fn();
+		const handleChange = vi.fn();
 		renderWithVirtuoso(
 			<CustomMultiSelect options={mockOptions} onChange={handleChange} />,
 		);
@@ -83,7 +80,7 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('selects multiple options', async () => {
-		const handleChange = jest.fn();
+		const handleChange = vi.fn();
 
 		// Start with option1 already selected
 		renderWithVirtuoso(
@@ -112,7 +109,7 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('selects ALL options when ALL is clicked', async () => {
-		const handleChange = jest.fn();
+		const handleChange = vi.fn();
 		renderWithVirtuoso(
 			<CustomMultiSelect
 				options={mockOptions}
@@ -156,7 +153,7 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('removes a tag when clicked', async () => {
-		const handleChange = jest.fn();
+		const handleChange = vi.fn();
 		renderWithVirtuoso(
 			<CustomMultiSelect
 				options={mockOptions}

@@ -7,46 +7,51 @@ import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import ViewPanelModal from '../ViewPanelModal/ViewPanelModal';
+import type { Mock } from 'vitest';
 
 // The preview reuses the edit page's PreviewPane (chart + header + heavy render
 // path); stub it (capturing props) so this suite asserts the modal shell + what it
 // threads down, not the preview internals (PreviewPane/PanelHeader own those).
-const mockPreviewPaneRender = jest.fn();
-jest.mock(
+const mockPreviewPaneRender = vi.fn();
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/PanelEditor/PreviewPane/PreviewPane',
-	() =>
-		function MockPreviewPane(props: Record<string, unknown>): ReactElement {
+	() => ({
+		__esModule: true,
+		default: function MockPreviewPane(
+			props: Record<string, unknown>,
+		): ReactElement {
 			mockPreviewPaneRender(props);
 			return <div data-testid="preview-pane" />;
 		},
+	}),
 );
 
 // Isolate from the draft/query-builder plumbing (its own suite covers it).
 // Real registry by default; the static-fork test overrides one kind.
-jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => {
-	const actual = jest.requireActual(
-		'pages/DashboardPage/DashboardContainer/Panels/registry',
-	);
-	return { ...actual, getPanelDefinition: jest.fn(actual.getPanelDefinition) };
+vi.mock('pages/DashboardPage/DashboardContainer/Panels/registry', async () => {
+	const actual = await vi.importActual<
+		typeof import('pages/DashboardPage/DashboardContainer/Panels/registry')
+	>('pages/DashboardPage/DashboardContainer/Panels/registry');
+	return { ...actual, getPanelDefinition: vi.fn(actual.getPanelDefinition) };
 });
 
 // The shell reads the URL seed + kind switch itself; stub its collaborators so
 // the suite needs no router and keeps asserting through the mocked mode hook.
-jest.mock('hooks/queryBuilder/useGetCompositeQueryParam', () => ({
+vi.mock('hooks/queryBuilder/useGetCompositeQueryParam', () => ({
 	useGetCompositeQueryParam: (): null => null,
 }));
-jest.mock('hooks/useUrlQuery', () => ({
+vi.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: (): URLSearchParams => new URLSearchParams(),
 }));
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelTypeSwitch',
 	() => ({
-		usePanelTypeSwitch: (): unknown => ({ onChangePanelKind: jest.fn() }),
+		usePanelTypeSwitch: (): unknown => ({ onChangePanelKind: vi.fn() }),
 	}),
 );
 
-jest.mock('../ViewPanelModal/useViewPanelMode', () => ({
+vi.mock('../ViewPanelModal/useViewPanelMode', () => ({
 	useViewPanelMode: (args: {
 		panel: { spec: { plugin: { kind: string } } };
 	}): unknown => {
@@ -69,16 +74,16 @@ jest.mock('../ViewPanelModal/useViewPanelMode', () => ({
 				isLoading: false,
 				isFetching: false,
 				error: null,
-				refetch: jest.fn(),
-				cancelQuery: jest.fn(),
+				refetch: vi.fn(),
+				cancelQuery: vi.fn(),
 				pagination: undefined,
 			},
-			runQuery: jest.fn(),
-			onChangePanelKind: jest.fn(),
-			resetQuery: jest.fn(),
+			runQuery: vi.fn(),
+			onChangePanelKind: vi.fn(),
+			resetQuery: vi.fn(),
 			signal: 'logs',
 			buildSaveSpec: (spec: unknown): unknown => spec,
-			applyDrilldownQuery: jest.fn(),
+			applyDrilldownQuery: vi.fn(),
 		};
 	},
 }));
@@ -86,8 +91,8 @@ jest.mock('../ViewPanelModal/useViewPanelMode', () => ({
 // Drill-down orchestration (popover, submenus, View-in-X) has its own suite
 // (useDrilldown.test.tsx) and pulls in router/redux/react-query; stub it so this
 // suite only asserts that the modal arms the preview and renders the menu host.
-const mockOnPanelClick = jest.fn();
-jest.mock('../hooks/useDrilldown', () => ({
+const mockOnPanelClick = vi.fn();
+vi.mock('../hooks/useDrilldown', () => ({
 	useDrilldown: (): unknown => ({
 		enableDrillDown: true,
 		onPanelClick: mockOnPanelClick,
@@ -95,54 +100,55 @@ jest.mock('../hooks/useDrilldown', () => ({
 			coordinates: null,
 			popoverPosition: null,
 			items: null,
-			onClose: jest.fn(),
+			onClose: vi.fn(),
 		},
 	}),
 }));
 
 // The View modal reuses the edit page's query builder, which reads the global
 // QueryBuilder context and pulls in the ClickHouse/PromQL editors; stub it here.
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/PanelEditorQueryBuilder',
-	() =>
-		function MockPanelEditorQueryBuilder(): ReactElement {
+	() => ({
+		__esModule: true,
+		default: function MockPanelEditorQueryBuilder(): ReactElement {
 			return <div data-testid="panel-editor-v2-query-builder" />;
 		},
+	}),
 );
 
-jest.mock('../hooks/usePanelInteractions', () => ({
+vi.mock('../hooks/usePanelInteractions', () => ({
 	usePanelInteractions: (): unknown => ({
-		onDragSelect: jest.fn(),
+		onDragSelect: vi.fn(),
 		dashboardPreference: { syncMode: 0 },
 	}),
 }));
 
 // The header mounts DateTimeSelectionV2 (redux + router + heavy deps); stub it so
 // this suite asserts the modal body, not the toolbar internals.
-jest.mock(
-	'../ViewPanelModal/ViewPanelModalHeader',
-	() =>
-		function MockViewPanelModalHeader(): ReactElement {
-			return <div data-testid="view-panel-header" />;
-		},
-);
+vi.mock('../ViewPanelModal/ViewPanelModalHeader', () => ({
+	__esModule: true,
+	default: function MockViewPanelModalHeader(): ReactElement {
+		return <div data-testid="view-panel-header" />;
+	},
+}));
 
-jest.mock('../ViewPanelModal/useViewPanelTimeWindow', () => ({
+vi.mock('../ViewPanelModal/useViewPanelTimeWindow', () => ({
 	useViewPanelTimeWindow: (): unknown => ({
 		timeOverride: { startMs: 0, endMs: 0 },
 		selectedInterval: '5m',
-		onTimeChange: jest.fn(),
-		refreshWindow: jest.fn(),
-		onDragSelect: jest.fn(),
-		extendWindow: { canExtend: false, actionLabel: null, extend: jest.fn() },
+		onTimeChange: vi.fn(),
+		refreshWindow: vi.fn(),
+		onDragSelect: vi.fn(),
+		extendWindow: { canExtend: false, actionLabel: null, extend: vi.fn() },
 	}),
 }));
 
-const mockOpenEditor = jest.fn();
-jest.mock(
+const mockOpenEditor = vi.fn();
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useOpenPanelEditor',
 	() => ({
-		useOpenPanelEditor: (): jest.Mock => mockOpenEditor,
+		useOpenPanelEditor: (): Mock => mockOpenEditor,
 	}),
 );
 
@@ -167,7 +173,7 @@ describe('ViewPanelModal', () => {
 				panel={makePanel('signoz/TimeSeriesPanel')}
 				panelId="p1"
 				open={false}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 		expect(
@@ -181,7 +187,7 @@ describe('ViewPanelModal', () => {
 				panel={makePanel('signoz/TimeSeriesPanel', 'CPU usage')}
 				panelId="p1"
 				open
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 		expect(screen.getByTestId('view-panel-modal-content')).toBeInTheDocument();
@@ -193,7 +199,7 @@ describe('ViewPanelModal', () => {
 	});
 
 	it('invokes onClose when the modal is dismissed', () => {
-		const onClose = jest.fn();
+		const onClose = vi.fn();
 		renderWithProvider(
 			<ViewPanelModal
 				panel={makePanel('signoz/TimeSeriesPanel')}
@@ -209,11 +215,11 @@ describe('ViewPanelModal', () => {
 		expect(onClose).toHaveBeenCalled();
 	});
 
-	it('mounts the static body — editor pane, no query builder slot — for a static kind', () => {
+	it('mounts the static body — editor pane, no query builder slot — for a static kind', async () => {
 		mockPreviewPaneRender.mockClear();
-		const actual = jest.requireActual(
-			'pages/DashboardPage/DashboardContainer/Panels/registry',
-		);
+		const actual = await vi.importActual<
+			typeof import('pages/DashboardPage/DashboardContainer/Panels/registry')
+		>('pages/DashboardPage/DashboardContainer/Panels/registry');
 		const staticDefinition = {
 			kind: 'signoz/TimeSeriesPanel',
 			displayName: 'Static',
@@ -223,10 +229,11 @@ describe('ViewPanelModal', () => {
 			Renderer: (): null => null,
 			EditorPane: (): JSX.Element => <div data-testid="static-editor-pane" />,
 		};
-		(getPanelDefinition as jest.Mock).mockImplementation((kind: string) =>
-			kind === 'signoz/TimeSeriesPanel'
-				? staticDefinition
-				: actual.getPanelDefinition(kind),
+		(getPanelDefinition as Mock).mockImplementation(
+			(kind: Parameters<typeof actual.getPanelDefinition>[0]) =>
+				kind === 'signoz/TimeSeriesPanel'
+					? staticDefinition
+					: actual.getPanelDefinition(kind),
 		);
 
 		renderWithProvider(
@@ -234,7 +241,7 @@ describe('ViewPanelModal', () => {
 				panel={makePanel('signoz/TimeSeriesPanel')}
 				panelId="p1"
 				open
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 
@@ -248,9 +255,7 @@ describe('ViewPanelModal', () => {
 			expect.objectContaining({ mode: 'static' }),
 		);
 
-		(getPanelDefinition as jest.Mock).mockImplementation(
-			actual.getPanelDefinition,
-		);
+		(getPanelDefinition as Mock).mockImplementation(actual.getPanelDefinition);
 	});
 
 	// Charts share one global cursor-sync key and uPlot replays drag across the
@@ -262,7 +267,7 @@ describe('ViewPanelModal', () => {
 				panel={makePanel('signoz/TimeSeriesPanel')}
 				panelId="p1"
 				open
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 		const props = mockPreviewPaneRender.mock.calls.at(-1)?.[0] as {
@@ -279,7 +284,7 @@ describe('ViewPanelModal', () => {
 				panel={makePanel('signoz/TimeSeriesPanel')}
 				panelId="p1"
 				open
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 		const props = mockPreviewPaneRender.mock.calls.at(-1)?.[0] as {

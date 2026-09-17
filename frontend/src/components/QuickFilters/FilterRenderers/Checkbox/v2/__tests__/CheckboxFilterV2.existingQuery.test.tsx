@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { server, rest } from 'mocks-server/server';
-import { render } from 'tests/test-utils';
+import { render } from 'tests/test-utils-full';
 
 import { QuickFiltersSource } from '../../../../types';
 
@@ -9,15 +9,12 @@ import {
 	buildQueryBuilderOverrides,
 	DEFAULT_FILTER,
 	DEFAULT_USE_FIELD_APIS,
-	setupServer,
 } from '../CheckboxFilterV2.testUtils';
 
 const USE_FIELD_APIS_AUTO_DERIVE = {
 	...DEFAULT_USE_FIELD_APIS,
 	existingQuery: undefined,
 };
-
-setupServer();
 
 describe('CheckboxFilterV2 - existingQuery calculation', () => {
 	const captureExistingQuery = (): Promise<string | null> =>

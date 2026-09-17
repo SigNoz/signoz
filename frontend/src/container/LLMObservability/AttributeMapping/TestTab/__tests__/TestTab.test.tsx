@@ -1,3 +1,4 @@
+import type { MockedFunction } from 'vitest';
 import { rest, server } from 'mocks-server/server';
 import get from 'api/browser/localstorage/get';
 import remove from 'api/browser/localstorage/remove';
@@ -7,7 +8,7 @@ import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
-jest.mock('@monaco-editor/react', () => ({
+vi.mock('@monaco-editor/react', () => ({
 	__esModule: true,
 	default: ({
 		value,
@@ -25,8 +26,8 @@ jest.mock('@monaco-editor/react', () => ({
 	),
 }));
 
-jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
+vi.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+const mockedUseAuthZ = useAuthZ as MockedFunction<typeof useAuthZ>;
 
 import LLMObservabilityAttributeMapping from '../../LLMObservabilityAttributeMapping';
 import { SAMPLE_SPAN_JSON } from '../spanInputStorage';
@@ -67,6 +68,11 @@ const SPAN_INPUT_KEY = LOCALSTORAGE.LLM_ATTRIBUTE_MAPPING_TEST_SPAN;
 
 describe('TestTab — sample-span flow', () => {
 	beforeEach(() => {
+		// tests/test-utils freezes Date via vi.setSystemTime while leaving real
+		// timers in place, which stalls the lodash debounce that persists the
+		// span input (it derives the remaining wait from Date.now). Restore the
+		// real clock; no test here depends on the frozen date.
+		vi.useRealTimers();
 		window.history.pushState(null, '', '/');
 		remove(SPAN_INPUT_KEY);
 		server.use(

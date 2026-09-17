@@ -60,9 +60,7 @@ function Harness({
 
 describe('ComparisonThresholdsSection', () => {
 	it('renders only the add button when there are no thresholds', () => {
-		render(
-			<ComparisonThresholdsSection value={undefined} onChange={jest.fn()} />,
-		);
+		render(<ComparisonThresholdsSection value={undefined} onChange={vi.fn()} />);
 
 		expect(
 			screen.getByTestId('panel-editor-v2-add-comparison-threshold'),
@@ -73,9 +71,7 @@ describe('ComparisonThresholdsSection', () => {
 	});
 
 	it('shows an existing threshold in view mode (no form until Edit)', () => {
-		render(
-			<ComparisonThresholdsSection value={THRESHOLDS} onChange={jest.fn()} />,
-		);
+		render(<ComparisonThresholdsSection value={THRESHOLDS} onChange={vi.fn()} />);
 
 		expect(screen.getByTestId('comparison-threshold-edit-0')).toBeInTheDocument();
 		// Operator symbol + value render in the summary.
@@ -97,7 +93,7 @@ describe('ComparisonThresholdsSection', () => {
 						unit: 'currencyUSD',
 					},
 				]}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -109,7 +105,7 @@ describe('ComparisonThresholdsSection', () => {
 
 	it('edits a threshold value and commits it on Save', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ComparisonThresholdsSection value={THRESHOLDS} onChange={onChange} />,
 		);
@@ -135,9 +131,7 @@ describe('ComparisonThresholdsSection', () => {
 
 	it('lets the value input be cleared instead of snapping back to 0', async () => {
 		const user = userEvent.setup();
-		render(
-			<ComparisonThresholdsSection value={THRESHOLDS} onChange={jest.fn()} />,
-		);
+		render(<ComparisonThresholdsSection value={THRESHOLDS} onChange={vi.fn()} />);
 
 		await user.click(screen.getByTestId('comparison-threshold-edit-0'));
 		const valueInput = screen.getByTestId('comparison-threshold-value-0');
@@ -153,8 +147,11 @@ describe('ComparisonThresholdsSection', () => {
 	});
 
 	it('reflects edits live (before Save) so the preview can react', async () => {
+		// The shared render freezes system time, which stalls lodash debounce's
+		// trailing edge; restore the live clock so the debounced push can fire.
+		vi.useRealTimers();
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ComparisonThresholdsSection value={THRESHOLDS} onChange={onChange} />,
 		);
@@ -196,7 +193,7 @@ describe('ComparisonThresholdsSection', () => {
 
 	it('removes a threshold from view mode', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<ComparisonThresholdsSection value={THRESHOLDS} onChange={onChange} />,
 		);
@@ -241,7 +238,7 @@ describe('ComparisonThresholdsSection', () => {
 					},
 				]}
 				yAxisUnit="bytes"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 

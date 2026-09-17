@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { jest } from '@jest/globals';
 import { fireEvent, waitFor } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -18,48 +17,43 @@ import {
 	QueryBuilderContextType,
 	QueryFunctionsTypes,
 } from 'types/common/queryBuilder';
+import type { MockedFunction } from 'vitest';
 
 import '@testing-library/jest-dom';
 
 import { QueryBuilderV2 } from '../../QueryBuilderV2';
 
 // Local mocks for domain-specific heavy child components
-jest.mock(
-	'../QueryAggregation/QueryAggregation',
-	() =>
-		function QueryAggregation() {
-			return <div>QueryAggregation</div>;
-		},
-);
-jest.mock(
-	'../MerticsAggregateSection/MetricsAggregateSection',
-	() =>
-		function MetricsAggregateSection() {
-			return <div>MetricsAggregateSection</div>;
-		},
-);
+vi.mock('../QueryAggregation/QueryAggregation', () => ({
+	default: function QueryAggregation(): JSX.Element {
+		return <div>QueryAggregation</div>;
+	},
+}));
+vi.mock('../MerticsAggregateSection/MetricsAggregateSection', () => ({
+	default: function MetricsAggregateSection(): JSX.Element {
+		return <div>MetricsAggregateSection</div>;
+	},
+}));
 // Mock hooks
-jest.mock('hooks/queryBuilder/useQueryBuilder');
-jest.mock('hooks/queryBuilder/useQueryBuilderOperations');
+vi.mock('hooks/queryBuilder/useQueryBuilder');
+vi.mock('hooks/queryBuilder/useQueryBuilderOperations');
 
-const mockedUseQueryBuilder = jest.mocked(useQueryBuilder);
-const mockedUseQueryOperations = jest.mocked(
+const mockedUseQueryBuilder = vi.mocked(useQueryBuilder);
+const mockedUseQueryOperations = vi.mocked(
 	useQueryOperations,
-) as jest.MockedFunction<UseQueryOperations>;
+) as MockedFunction<UseQueryOperations>;
 
 describe('QueryBuilderV2 + QueryV2 - base render', () => {
-	let handleRunQueryMock: jest.MockedFunction<() => void>;
-	let handleQueryFunctionsUpdatesMock: jest.MockedFunction<() => void>;
+	let handleRunQueryMock: MockedFunction<() => void>;
+	let handleQueryFunctionsUpdatesMock: MockedFunction<() => void>;
 	let baseQBContext: QueryBuilderContextType;
 
 	beforeEach(() => {
-		const mockCloneQuery = jest.fn() as jest.MockedFunction<
+		const mockCloneQuery = vi.fn() as MockedFunction<
 			(type: string, q: IBuilderQuery) => void
 		>;
-		handleRunQueryMock = jest.fn() as jest.MockedFunction<() => void>;
-		handleQueryFunctionsUpdatesMock = jest.fn() as jest.MockedFunction<
-			() => void
-		>;
+		handleRunQueryMock = vi.fn() as MockedFunction<() => void>;
+		handleQueryFunctionsUpdatesMock = vi.fn() as MockedFunction<() => void>;
 		const baseQuery: IBuilderQuery = {
 			queryName: 'A',
 			dataSource: DataSource.LOGS,
@@ -103,35 +97,35 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			currentQuery: currentQueryObj,
 			stagedQuery: null,
 			lastUsedQuery: null,
-			setLastUsedQuery: jest.fn(),
+			setLastUsedQuery: vi.fn(),
 			supersetQuery: currentQueryObj,
-			setSupersetQuery: jest.fn(),
+			setSupersetQuery: vi.fn(),
 			initialDataSource: null,
 			panelType: PANEL_TYPES.TABLE,
 			isEnabledQuery: true,
-			handleSetQueryData: jest.fn(),
-			handleSetTraceOperatorData: jest.fn(),
-			handleSetFormulaData: jest.fn(),
-			handleSetQueryItemData: jest.fn(),
-			handleSetConfig: jest.fn(),
-			removeQueryBuilderEntityByIndex: jest.fn(),
-			removeAllQueryBuilderEntities: jest.fn(),
-			removeQueryTypeItemByIndex: jest.fn(),
-			addNewBuilderQuery: jest.fn(),
-			addNewFormula: jest.fn(),
-			removeTraceOperator: jest.fn(),
-			addTraceOperator: jest.fn(),
+			handleSetQueryData: vi.fn(),
+			handleSetTraceOperatorData: vi.fn(),
+			handleSetFormulaData: vi.fn(),
+			handleSetQueryItemData: vi.fn(),
+			handleSetConfig: vi.fn(),
+			removeQueryBuilderEntityByIndex: vi.fn(),
+			removeAllQueryBuilderEntities: vi.fn(),
+			removeQueryTypeItemByIndex: vi.fn(),
+			addNewBuilderQuery: vi.fn(),
+			addNewFormula: vi.fn(),
+			removeTraceOperator: vi.fn(),
+			addTraceOperator: vi.fn(),
 			cloneQuery: mockCloneQuery,
-			addNewQueryItem: jest.fn(),
-			redirectWithQueryBuilderData: jest.fn(),
+			addNewQueryItem: vi.fn(),
+			redirectWithQueryBuilderData: vi.fn(),
 			handleRunQuery: handleRunQueryMock,
-			resetQuery: jest.fn(),
-			handleOnUnitsChange: jest.fn(),
+			resetQuery: vi.fn(),
+			handleOnUnitsChange: vi.fn(),
 			updateAllQueriesOperators,
 			updateQueriesData,
-			initQueryBuilderData: jest.fn(),
-			isStagedQueryUpdated: jest.fn(() => false),
-			isDefaultQuery: jest.fn(() => false),
+			initQueryBuilderData: vi.fn(),
+			isStagedQueryUpdated: vi.fn(() => false),
+			isDefaultQuery: vi.fn(() => false),
 		} as unknown as QueryBuilderContextType;
 
 		baseQBContext = baseContext;
@@ -143,21 +137,21 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			operators: [],
 			spaceAggregationOptions: [],
 			listOfAdditionalFilters: [],
-			handleChangeOperator: jest.fn(),
-			handleSpaceAggregationChange: jest.fn(),
-			handleChangeAggregatorAttribute: jest.fn(),
-			handleChangeDataSource: jest.fn(),
-			handleDeleteQuery: jest.fn(),
+			handleChangeOperator: vi.fn(),
+			handleSpaceAggregationChange: vi.fn(),
+			handleChangeAggregatorAttribute: vi.fn(),
+			handleChangeDataSource: vi.fn(),
+			handleDeleteQuery: vi.fn(),
 			handleChangeQueryData:
-				jest.fn() as unknown as ReturnType<UseQueryOperations>['handleChangeQueryData'],
-			handleChangeFormulaData: jest.fn(),
+				vi.fn() as unknown as ReturnType<UseQueryOperations>['handleChangeQueryData'],
+			handleChangeFormulaData: vi.fn(),
 			handleQueryFunctionsUpdates: handleQueryFunctionsUpdatesMock,
 			listOfAdditionalFormulaFilters: [],
 		});
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders limit input when dataSource is logs', () => {
@@ -238,7 +232,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('fx button is disabled when functions already exist', () => {
+	it('fx button is disabled when functions already exist', async () => {
 		const currentQueryBase = baseQBContext.currentQuery as Query;
 		const supersetQueryBase = baseQBContext.supersetQuery as Query;
 
@@ -284,8 +278,8 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			'.query-function-delete-btn',
 		) as HTMLButtonElement;
 		expect(deleteButton).toBeInTheDocument();
-		userEvent.click(deleteButton);
-		waitFor(() => {
+		await userEvent.click(deleteButton);
+		await waitFor(() => {
 			expect(fxButton).not.toBeDisabled();
 		});
 	});

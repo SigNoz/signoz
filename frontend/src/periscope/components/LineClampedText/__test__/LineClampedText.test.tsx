@@ -5,7 +5,7 @@ import LineClampedText from '../LineClampedText';
 describe('LineClampedText', () => {
 	// Reset all mocks after each test
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders string text correctly', () => {

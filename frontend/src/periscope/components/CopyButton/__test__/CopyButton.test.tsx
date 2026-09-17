@@ -1,29 +1,30 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { Mock } from 'vitest';
 
 import CopyButton from '../CopyButton';
 
-const mockCopy = jest.fn();
+const { mockCopy } = vi.hoisted(() => ({ mockCopy: vi.fn() }));
 
 // Exercise the real useCopyButton — stub only react-use's underlying copy so the
 // click doesn't hit copy-to-clipboard's jsdom fallback (window.prompt).
-jest.mock('react-use', () => ({
-	...jest.requireActual('react-use'),
-	useCopyToClipboard: (): [unknown, jest.Mock] => [null, mockCopy],
+vi.mock('react-use', async () => ({
+	...(await vi.importActual('react-use')),
+	useCopyToClipboard: (): [unknown, Mock] => [null, mockCopy],
 }));
 
 describe('CopyButton', () => {
 	let user: ReturnType<typeof userEvent.setup>;
 
 	beforeEach(() => {
-		jest.useFakeTimers();
-		user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+		vi.useFakeTimers();
+		user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 		mockCopy.mockClear();
 	});
 
 	afterEach(() => {
-		jest.runOnlyPendingTimers();
-		jest.useRealTimers();
+		vi.runOnlyPendingTimers();
+		vi.useRealTimers();
 	});
 
 	it('copies its value on click', async () => {
@@ -35,7 +36,7 @@ describe('CopyButton', () => {
 	});
 
 	it('does not trigger parent click handlers (stops propagation)', async () => {
-		const onParentClick = jest.fn();
+		const onParentClick = vi.fn();
 		render(
 			// oxlint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
 			<div onClick={onParentClick}>
@@ -58,7 +59,7 @@ describe('CopyButton', () => {
 		expect(iconStack).toHaveAttribute('data-copied', 'true');
 
 		act(() => {
-			jest.runOnlyPendingTimers();
+			vi.runOnlyPendingTimers();
 		});
 		expect(iconStack).toHaveAttribute('data-copied', 'false');
 	});

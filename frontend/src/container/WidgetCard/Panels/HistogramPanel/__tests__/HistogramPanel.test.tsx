@@ -11,31 +11,31 @@ import {
 
 import HistogramPanel from 'container/WidgetCard/Panels/HistogramPanel/HistogramPanel';
 
-jest.mock('hooks/useDimensions', () => ({
-	useResizeObserver: jest.fn().mockReturnValue({ width: 800, height: 400 }),
+vi.mock('hooks/useDimensions', () => ({
+	useResizeObserver: vi.fn().mockReturnValue({ width: 800, height: 400 }),
 }));
 
-jest.mock('hooks/useDarkMode', () => ({
-	useIsDarkMode: jest.fn().mockReturnValue(false),
+vi.mock('hooks/useDarkMode', () => ({
+	useIsDarkMode: vi.fn().mockReturnValue(false),
 }));
 
-jest.mock('providers/Timezone', () => ({
+vi.mock('providers/Timezone', () => ({
 	__esModule: true,
 	// Provide a no-op provider component so AllTheProviders can render
 	default: ({ children }: { children: React.ReactNode }): JSX.Element => (
 		<>{children}</>
 	),
 	// And mock the hook used by HistogramPanel
-	useTimezone: jest.fn().mockReturnValue({
+	useTimezone: vi.fn().mockReturnValue({
 		timezone: { value: 'UTC' },
 	}),
 }));
 
-jest.mock('lib/visualization/hooks/useScrollWidgetIntoView', () => ({
-	useScrollWidgetIntoView: jest.fn(),
+vi.mock('lib/visualization/hooks/useScrollWidgetIntoView', () => ({
+	useScrollWidgetIntoView: vi.fn(),
 }));
 
-jest.mock('lib/visualization/charts/Histogram/Histogram', () => ({
+vi.mock('lib/visualization/charts/Histogram/Histogram', () => ({
 	__esModule: true,
 	default: (props: HistogramChartProps): JSX.Element => (
 		<div data-testid="histogram-chart">
@@ -52,7 +52,7 @@ jest.mock('lib/visualization/charts/Histogram/Histogram', () => ({
 	),
 }));
 
-jest.mock('lib/visualization/components/ChartManager/ChartManager', () => ({
+vi.mock('lib/visualization/components/ChartManager/ChartManager', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="chart-manager">ChartManager</div>
@@ -128,8 +128,8 @@ describe('HistogramPanel', () => {
 				widget={widget}
 				queryResponse={queryResponse}
 				isFullViewMode={false}
-				onToggleModelHandler={jest.fn()}
-				onDragSelect={jest.fn()}
+				onToggleModelHandler={vi.fn()}
+				onDragSelect={vi.fn()}
 			/>,
 		);
 
@@ -151,8 +151,8 @@ describe('HistogramPanel', () => {
 				widget={widget}
 				queryResponse={queryResponse}
 				isFullViewMode={false}
-				onToggleModelHandler={jest.fn()}
-				onDragSelect={jest.fn()}
+				onToggleModelHandler={vi.fn()}
+				onDragSelect={vi.fn()}
 			/>,
 		);
 
@@ -179,8 +179,8 @@ describe('HistogramPanel', () => {
 				widget={widget}
 				queryResponse={queryResponse}
 				isFullViewMode
-				onToggleModelHandler={jest.fn()}
-				onDragSelect={jest.fn()}
+				onToggleModelHandler={vi.fn()}
+				onDragSelect={vi.fn()}
 			/>,
 		);
 
@@ -202,8 +202,8 @@ describe('HistogramPanel', () => {
 				widget={widget}
 				queryResponse={queryResponse}
 				isFullViewMode
-				onToggleModelHandler={jest.fn()}
-				onDragSelect={jest.fn()}
+				onToggleModelHandler={vi.fn()}
+				onDragSelect={vi.fn()}
 			/>,
 		);
 

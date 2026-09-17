@@ -1,7 +1,7 @@
 // Maps every SVG/PNG under `src/assets/Icons` and `src/assets/Logos` by file name
 // to its bundled reference, so any `/assets/Icons/<name>` or `/assets/Logos/<name>`
 // in dashboard JSON resolves without a hand-maintained list. `import.meta.glob` is
-// Vite-only, so it lives in this tiny module that jest mocks (see the test).
+// Vite-only, so it lives in this tiny module that the tests mock (see the test).
 //
 // Icons are the always-present set (shown in the picker), so we let Vite inline the
 // small ones as data URIs — they ship in the bundle and render with no network

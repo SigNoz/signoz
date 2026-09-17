@@ -4,30 +4,39 @@ import ROUTES from 'constants/routes';
 import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
+import {
+	fireEvent,
+	queryClient,
+	render,
+	screen,
+	waitFor,
+	within,
+} from 'tests/test-utils-full';
 
 import SaveView from '..';
 
-const handleExplorerTabChangeTest = jest.fn();
-jest.mock('hooks/useHandleExplorerTabChange', () => ({
+const { handleExplorerTabChangeTest } = vi.hoisted(() => ({
+	handleExplorerTabChangeTest: vi.fn(),
+}));
+vi.mock('hooks/useHandleExplorerTabChange', () => ({
 	useHandleExplorerTabChange: () => ({
 		handleExplorerTabChange: handleExplorerTabChangeTest,
 	}),
 }));
 
-jest.mock('react-router-dom', () => {
-	const ROUTES = jest.requireActual('constants/routes').default;
-	return {
-		...jest.requireActual('react-router-dom'),
-		useLocation: jest.fn().mockReturnValue({
-			pathname: ROUTES.TRACES_SAVE_VIEWS,
-		}),
-	};
-});
-
 describe('SaveView', () => {
+	// The edit and delete mutations invalidate the views query. Letting that
+	// refetch finish stops the wrapper's own `queryClient.clear()` from
+	// cancelling it, which rejects with no reason and fails the run.
+	afterEach(async () => {
+		await waitFor(() => {
+			expect(queryClient.isFetching()).toBe(0);
+			expect(queryClient.isMutating()).toBe(0);
+		});
+	});
+
 	it('should render the SaveView component', async () => {
-		render(<SaveView />);
+		render(<SaveView />, {}, { initialRoute: ROUTES.TRACES_SAVE_VIEWS });
 		await expect(screen.findByText('Table View')).resolves.toBeInTheDocument();
 
 		const savedViews = screen.getAllByRole('row');
@@ -71,7 +80,7 @@ describe('SaveView', () => {
 	});
 
 	it('should render the SaveView component with a search input', async () => {
-		render(<SaveView />);
+		render(<SaveView />, {}, { initialRoute: ROUTES.TRACES_SAVE_VIEWS });
 		const searchInput = screen.getByPlaceholderText('Search for views...');
 		await expect(screen.findByText('Table View')).resolves.toBeInTheDocument();
 
@@ -112,7 +121,7 @@ describe('SaveView', () => {
 					),
 			),
 		);
-		render(<SaveView />);
+		render(<SaveView />, {}, { initialRoute: ROUTES.TRACES_SAVE_VIEWS });
 
 		const editButton = await screen.findAllByTestId('edit-view');
 		fireEvent.click(editButton[0]);
@@ -141,7 +150,7 @@ describe('SaveView', () => {
 			),
 		);
 
-		render(<SaveView />);
+		render(<SaveView />, {}, { initialRoute: ROUTES.TRACES_SAVE_VIEWS });
 
 		const deleteButton = await screen.findAllByTestId('delete-view');
 		fireEvent.click(deleteButton[0]);
@@ -168,8 +177,8 @@ describe('SaveView', () => {
 				),
 			),
 		);
-		render(<SaveView />);
+		render(<SaveView />, {}, { initialRoute: ROUTES.TRACES_SAVE_VIEWS });
 
-		expect(screen.getByText('No data')).toBeInTheDocument();
+		await expect(screen.findByText('No data')).resolves.toBeInTheDocument();
 	});
 });

@@ -27,7 +27,7 @@ function Harness({
 
 describe('ThresholdsSection', () => {
 	it('renders only the add button when there are no thresholds', () => {
-		render(<ThresholdsSection value={undefined} onChange={jest.fn()} />);
+		render(<ThresholdsSection value={undefined} onChange={vi.fn()} />);
 
 		expect(
 			screen.getByTestId('panel-editor-v2-add-threshold'),
@@ -36,7 +36,7 @@ describe('ThresholdsSection', () => {
 	});
 
 	it('shows an existing threshold in view mode (no form until Edit)', () => {
-		render(<ThresholdsSection value={THRESHOLDS} onChange={jest.fn()} />);
+		render(<ThresholdsSection value={THRESHOLDS} onChange={vi.fn()} />);
 
 		expect(screen.getByTestId('threshold-edit-0')).toBeInTheDocument();
 		expect(screen.getByText('High')).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe('ThresholdsSection', () => {
 
 	it('edits a threshold value and commits it on Save', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<ThresholdsSection value={THRESHOLDS} onChange={onChange} />);
 
 		await user.click(screen.getByTestId('threshold-edit-0'));
@@ -63,7 +63,7 @@ describe('ThresholdsSection', () => {
 
 	it('persists an empty-string label when none is provided', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		// Label absent (e.g. a pre-existing spec); spec requires a string, so save
 		// must send '' not undefined.
 		const noLabel = [{ value: 50, color: '#F1575F' }] as AnyThreshold[];
@@ -79,7 +79,7 @@ describe('ThresholdsSection', () => {
 
 	it('reflects edits live (before Save) so the preview can react', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<ThresholdsSection value={THRESHOLDS} onChange={onChange} />);
 
 		await user.click(screen.getByTestId('threshold-edit-0'));
@@ -111,7 +111,7 @@ describe('ThresholdsSection', () => {
 
 	it('removes a threshold from view mode', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<ThresholdsSection value={THRESHOLDS} onChange={onChange} />);
 
 		await user.click(screen.getByTestId('threshold-remove-0'));
@@ -138,7 +138,7 @@ describe('ThresholdsSection', () => {
 			<ThresholdsSection
 				value={[{ value: 80, color: '#F5B225', label: '', unit: 'ms' }]}
 				yAxisUnit="bytes"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -152,7 +152,7 @@ describe('ThresholdsSection', () => {
 			<ThresholdsSection
 				value={[{ value: 80, color: '#F5B225', label: '', unit: 'ms' }]}
 				yAxisUnit="s"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 

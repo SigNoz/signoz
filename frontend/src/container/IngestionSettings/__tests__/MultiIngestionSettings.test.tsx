@@ -7,7 +7,7 @@ import {
 	screen,
 	userEvent,
 	waitFor,
-} from 'tests/test-utils';
+} from 'tests/test-utils-full';
 
 import MultiIngestionSettings from '../MultiIngestionSettings';
 
@@ -18,9 +18,11 @@ interface TestGatewayIngestionKeysResponse {
 }
 
 // Mock useHistory.push to capture navigation URL used by MultiIngestionSettings
-const mockPush = jest.fn() as jest.MockedFunction<(path: string) => void>;
-jest.mock('react-router-dom', () => {
-	const actual = jest.requireActual('react-router-dom');
+const { mockPush } = vi.hoisted(() => ({
+	mockPush: vi.fn<(path: string) => void>(),
+}));
+vi.mock('react-router-dom', async () => {
+	const actual = await vi.importActual('react-router-dom');
 	return {
 		...actual,
 		useHistory: (): { push: typeof mockPush } => ({ push: mockPush }),
@@ -44,11 +46,16 @@ const GLOBAL_CONFIG_RESPONSE = {
 
 describe('MultiIngestionSettings Page', () => {
 	beforeEach(() => {
+		// tests/test-utils freezes Date via vi.setSystemTime while leaving real
+		// timers in place, which stalls lodash debounce indefinitely (it derives
+		// the remaining wait from Date.now) and breaks the search test below.
+		// Restore the real clock; no test here depends on the frozen date.
+		vi.useRealTimers();
 		mockPush.mockClear();
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders MultiIngestionSettings page without crashing', () => {
@@ -333,8 +340,8 @@ describe('MultiIngestionSettings Page', () => {
 			},
 		};
 
-		const getHandler = jest.fn();
-		const searchHandler = jest.fn();
+		const getHandler = vi.fn();
+		const searchHandler = vi.fn();
 
 		server.use(
 			rest.get('*/api/v1/global/config*', (_req, res, ctx) =>

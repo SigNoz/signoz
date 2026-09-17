@@ -8,10 +8,10 @@ import { render, screen, userEvent } from 'tests/test-utils';
 
 import InviteTeamMembers from '../InviteTeamMembers';
 
-const mockNotificationSuccess = jest.fn();
-const mockNotificationWarning = jest.fn();
+const mockNotificationSuccess = vi.fn();
+const mockNotificationWarning = vi.fn();
 
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	useNotifications: (): any => ({
 		notifications: {
 			success: mockNotificationSuccess,
@@ -20,9 +20,12 @@ jest.mock('hooks/useNotifications', () => ({
 	}),
 }));
 
-jest.mock('api/common/logEvent', () => jest.fn());
+vi.mock('api/common/logEvent', () => ({
+	__esModule: true,
+	default: vi.fn(),
+}));
 
-jest.mock('components/RolesSelect/RolesSelect', () => ({
+vi.mock('components/RolesSelect/RolesSelect', () => ({
 	useRoles: (): any => ({
 		roles: [
 			{ id: 'role-viewer-id', name: 'VIEWER' },
@@ -32,35 +35,39 @@ jest.mock('components/RolesSelect/RolesSelect', () => ({
 		isLoading: false,
 		isError: false,
 		error: undefined,
-		refetch: jest.fn(),
+		refetch: vi.fn(),
 	}),
 }));
 
-jest.mock('utils/basePath', () => ({
-	...jest.requireActual('utils/basePath'),
+vi.mock('utils/basePath', async () => ({
+	...(await vi.importActual<typeof import('utils/basePath')>('utils/basePath')),
 	getBaseUrl: (): string => 'http://localhost:3301',
 }));
 
 let mockInviteMembersProps: InviteMembersProps | null = null;
 
-jest.mock('components/InviteMembers/InviteMembers', () => {
-	return function MockInviteMembers(props: InviteMembersProps): JSX.Element {
+vi.mock('components/InviteMembers/InviteMembers', () => {
+	function MockInviteMembers(props: InviteMembersProps): JSX.Element {
 		mockInviteMembersProps = props;
 		return (
 			<div data-testid="mock-invite-members">
 				{props.renderFooter?.({
-					submit: jest.fn().mockResolvedValue([]),
-					reset: jest.fn(),
+					submit: vi.fn().mockResolvedValue([]),
+					reset: vi.fn(),
 					canSubmit: true,
 					isSubmitting: false,
 					touchedCount: 0,
 				})}
 			</div>
 		);
+	}
+	return {
+		__esModule: true,
+		default: MockInviteMembers,
 	};
 });
 
-const mockOnNext = jest.fn();
+const mockOnNext = vi.fn();
 
 function renderComponent({
 	isLoading = false,
@@ -70,13 +77,13 @@ function renderComponent({
 
 describe('InviteTeamMembers', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		jest.useFakeTimers();
+		vi.clearAllMocks();
+		vi.useFakeTimers();
 		mockInviteMembersProps = null;
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	describe('rendering', () => {
@@ -126,8 +133,8 @@ describe('InviteTeamMembers', () => {
 
 			const { getByTestId } = render(
 				mockInviteMembersProps?.renderFooter?.({
-					submit: jest.fn().mockResolvedValue([]),
-					reset: jest.fn(),
+					submit: vi.fn().mockResolvedValue([]),
+					reset: vi.fn(),
 					canSubmit: false,
 					isSubmitting: false,
 					touchedCount: 0,
@@ -144,8 +151,8 @@ describe('InviteTeamMembers', () => {
 
 			const { getByTestId } = render(
 				mockInviteMembersProps?.renderFooter?.({
-					submit: jest.fn().mockResolvedValue([]),
-					reset: jest.fn(),
+					submit: vi.fn().mockResolvedValue([]),
+					reset: vi.fn(),
 					canSubmit: true,
 					isSubmitting: true,
 					touchedCount: 0,
@@ -197,7 +204,7 @@ describe('InviteTeamMembers', () => {
 			});
 
 			expect(mockOnNext).not.toHaveBeenCalled();
-			jest.advanceTimersByTime(1000);
+			vi.advanceTimersByTime(1000);
 			expect(mockOnNext).toHaveBeenCalledTimes(1);
 		});
 	});
@@ -283,7 +290,7 @@ describe('InviteTeamMembers', () => {
 
 	describe('handleDoLater', () => {
 		it('logs event and calls onNext immediately', async () => {
-			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 			renderComponent();
 
 			await user.click(

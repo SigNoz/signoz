@@ -29,29 +29,30 @@ import { SelectedItemParams } from '../../hooks';
 
 window.ResizeObserver =
 	window.ResizeObserver ||
-	jest.fn().mockImplementation(() => ({
-		disconnect: jest.fn(),
-		observe: jest.fn(),
-		unobserve: jest.fn(),
+	vi.fn().mockImplementation(() => ({
+		disconnect: vi.fn(),
+		observe: vi.fn(),
+		unobserve: vi.fn(),
 	}));
 
 import { K8sBaseList, K8sBaseListProps, K8sEntityData } from '../K8sBaseList';
+import type { Mock } from 'vitest';
 
-jest.mock('utils/navigation', () => ({
-	...jest.requireActual('utils/navigation'),
-	openInNewTab: jest.fn(),
+vi.mock('utils/navigation', async () => ({
+	...(await vi.importActual('utils/navigation')),
+	openInNewTab: vi.fn(),
 }));
 
-const openInNewTabMock = openInNewTab as jest.Mock;
+const openInNewTabMock = openInNewTab as Mock;
 
 // Mock Date.now to prevent flaky tests due to time-dependent values
 const MOCK_NOW = 1700000000000; // Fixed timestamp
-jest.spyOn(Date, 'now').mockReturnValue(MOCK_NOW);
+vi.spyOn(Date, 'now').mockReturnValue(MOCK_NOW);
 
 // Mock DrawerWrapper to avoid CSS issues with jsdom
 // SyntaxError: 'div#radix-:rbv,,._dialog__content_qf8bf_22 :focus' is not a valid selector
-jest.mock('@signozhq/ui/drawer', () => {
-	const actual = jest.requireActual('@signozhq/ui/drawer');
+vi.mock('@signozhq/ui/drawer', async () => {
+	const actual = await vi.importActual('@signozhq/ui/drawer');
 	return {
 		...actual,
 		DrawerWrapper: ({
@@ -225,13 +226,9 @@ describe('K8sBaseList', () => {
 	describe('with items in the list', () => {
 		const itemId = Math.random().toString(36).slice(7);
 		const itemId2 = Math.random().toString(36).slice(7);
-		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
-		const fetchListDataMock = jest.fn<
-			ReturnType<
-				NonNullable<K8sBaseListProps<TestItemWithTitle>['fetchListData']>
-			>,
-			Parameters<NonNullable<K8sBaseListProps<TestItemWithTitle>['fetchListData']>>
-		>();
+		const onUrlUpdateMock = vi.fn<(event: UrlUpdateEvent) => void>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItemWithTitle>['fetchListData']>>();
 
 		beforeEach(() => {
 			onUrlUpdateMock.mockClear();
@@ -446,11 +443,9 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with URL params (orderBy, groupBy old format, pagination)', () => {
-		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
-		>();
+		const onUrlUpdateMock = vi.fn<(event: UrlUpdateEvent) => void>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>();
 		const groupByValue = [
 			{ key: 'k8s.namespace.name', dataType: 'string', type: 'resource' },
 		];
@@ -523,11 +518,9 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with URL params (groupBy new format - string array)', () => {
-		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
-		>();
+		const onUrlUpdateMock = vi.fn<(event: UrlUpdateEvent) => void>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>();
 		const groupByValue = ['k8s.namespace.name'];
 
 		beforeEach(() => {
@@ -591,11 +584,9 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with empty data', () => {
-		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
-		>();
+		const onUrlUpdateMock = vi.fn<(event: UrlUpdateEvent) => void>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>();
 
 		beforeEach(() => {
 			onUrlUpdateMock.mockClear();
@@ -643,11 +634,9 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with a page beyond the end of the list', () => {
-		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
-		>();
+		const onUrlUpdateMock = vi.fn<(event: UrlUpdateEvent) => void>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>();
 
 		// 25 rows exist, so pages 1-3 serve data and page 7 of 10 comes back empty.
 		const rows: TestItem[] = Array.from({ length: 25 }, (_, index) => ({
@@ -710,11 +699,9 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with a page below the first one', () => {
-		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
-		>();
+		const onUrlUpdateMock = vi.fn<(event: UrlUpdateEvent) => void>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>();
 
 		beforeEach(() => {
 			onUrlUpdateMock.mockClear();
@@ -802,10 +789,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with error response', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
-		>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -847,10 +832,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with end time before retention (endTimeBeforeRetention=true)', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
-		>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -884,10 +867,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('column visibility based on TanStack columns', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItemWithName>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItemWithName>['fetchListData']>>
-		>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItemWithName>['fetchListData']>>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -923,12 +904,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('column behavior with groupBy (expanded/collapsed)', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<
-				NonNullable<K8sBaseListProps<TestItemWithGroup>['fetchListData']>
-			>,
-			Parameters<NonNullable<K8sBaseListProps<TestItemWithGroup>['fetchListData']>>
-		>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItemWithGroup>['fetchListData']>>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -996,10 +973,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('column visibility in expanded row (nested table)', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
-		>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>();
 		const groupByValue = [
 			{ key: 'k8s.namespace.name', dataType: 'string', type: 'resource' },
 		];
@@ -1041,10 +1016,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('TanStack table column rendering', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItemWithName>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItemWithName>['fetchListData']>>
-		>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItemWithName>['fetchListData']>>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -1101,10 +1074,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with warnings from API', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
-		>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -1138,13 +1109,9 @@ describe('K8sBaseList', () => {
 
 	describe('with object itemKey (selectedItem + cluster + namespace params)', () => {
 		const itemId = 'obj-item';
-		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
-		const fetchListDataMock = jest.fn<
-			ReturnType<
-				NonNullable<K8sBaseListProps<TestItemWithTitle>['fetchListData']>
-			>,
-			Parameters<NonNullable<K8sBaseListProps<TestItemWithTitle>['fetchListData']>>
-		>();
+		const onUrlUpdateMock = vi.fn<(event: UrlUpdateEvent) => void>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItemWithTitle>['fetchListData']>>();
 
 		const getLatestParam = (key: string): string | undefined =>
 			onUrlUpdateMock.mock.calls
@@ -1246,10 +1213,8 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('instrumentation checks callout', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
-		>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>();
 
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
@@ -1546,11 +1511,9 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('groupBy change clears orderBy', () => {
-		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
-		const fetchListDataMock = jest.fn<
-			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
-			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
-		>();
+		const onUrlUpdateMock = vi.fn<(event: UrlUpdateEvent) => void>();
+		const fetchListDataMock =
+			vi.fn<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>();
 
 		beforeEach(() => {
 			onUrlUpdateMock.mockClear();

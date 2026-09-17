@@ -2,12 +2,32 @@ import { act, renderHook } from '@testing-library/react';
 
 import useScrollToTop from './index';
 
-// Mocking window.scrollTo method
-global.scrollTo = jest.fn();
+// window.scrollTo / window.pageYOffset are read-only accessors in the browser,
+// so stub them with spies instead of assigning (global does not exist here).
+function stubScrollPosition(yOffset: number): void {
+	vi.spyOn(window, 'pageYOffset', 'get').mockReturnValue(yOffset);
+}
+
+function dispatchScroll(): void {
+	window.dispatchEvent(new Event('scroll'));
+	vi.advanceTimersByTime(300);
+}
 
 describe('useScrollToTop hook', () => {
 	beforeAll(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
+	});
+
+	afterAll(() => {
+		vi.useRealTimers();
+	});
+
+	beforeEach(() => {
+		vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
 	});
 
 	it('should change visibility and scroll to top on call', () => {
@@ -15,11 +35,9 @@ describe('useScrollToTop hook', () => {
 
 		// Simulate scrolling 150px down
 		act(() => {
-			global.pageYOffset = 150;
-			global.dispatchEvent(new Event('scroll'));
-			jest.advanceTimersByTime(300);
+			stubScrollPosition(150);
+			dispatchScroll();
 		});
-
 		expect(result.current.isVisible).toBe(true);
 
 		// Simulate scrolling to top
@@ -27,7 +45,7 @@ describe('useScrollToTop hook', () => {
 			result.current.scrollToTop();
 		});
 
-		expect(global.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+		expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
 	});
 
 	it('should be invisible when scrolled less than offset', () => {
@@ -35,9 +53,8 @@ describe('useScrollToTop hook', () => {
 
 		// Simulate scrolling 50px down
 		act(() => {
-			global.pageYOffset = 50;
-			global.dispatchEvent(new Event('scroll'));
-			jest.advanceTimersByTime(300);
+			stubScrollPosition(50);
+			dispatchScroll();
 		});
 
 		expect(result.current.isVisible).toBe(false);
@@ -48,9 +65,8 @@ describe('useScrollToTop hook', () => {
 
 		// Simulate scrolling 50px down
 		act(() => {
-			global.pageYOffset = 200;
-			global.dispatchEvent(new Event('scroll'));
-			jest.advanceTimersByTime(300);
+			stubScrollPosition(200);
+			dispatchScroll();
 		});
 
 		expect(result.current.isVisible).toBe(true);

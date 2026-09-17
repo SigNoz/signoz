@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from 'tests/test-utils';
@@ -6,23 +7,23 @@ import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 
 import Header from '../Header';
 
-jest.mock('hooks/useIsAIAssistantEnabled', () => ({
-	useIsAIAssistantEnabled: jest.fn(),
+vi.mock('hooks/useIsAIAssistantEnabled', () => ({
+	useIsAIAssistantEnabled: vi.fn(),
 }));
 
-jest.mock('hooks/useGetTenantLicense', () => ({
+vi.mock('hooks/useGetTenantLicense', () => ({
 	useGetTenantLicense: (): unknown => ({
 		isCloudUser: true,
 		isEnterpriseSelfHostedUser: false,
 	}),
 }));
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-const mockUseIsAIAssistantEnabled = useIsAIAssistantEnabled as jest.Mock;
+const mockUseIsAIAssistantEnabled = useIsAIAssistantEnabled as Mock;
 
 function renderHeader(
 	props: Partial<ComponentProps<typeof Header>> = {},
@@ -34,8 +35,8 @@ function renderHeader(
 				<Header
 					isDirty={false}
 					isSaving={false}
-					onSave={jest.fn()}
-					onClose={jest.fn()}
+					onSave={vi.fn()}
+					onClose={vi.fn()}
 					{...props}
 				/>
 			</TooltipProvider>

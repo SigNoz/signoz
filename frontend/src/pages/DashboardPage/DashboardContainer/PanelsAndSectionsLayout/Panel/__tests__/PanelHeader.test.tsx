@@ -15,13 +15,11 @@ const renderWithProvider = (ui: ReactElement): ReturnType<typeof render> =>
 
 // Stub the actions menu (its gating logic is tested separately) so this asserts
 // only whether the menu mounts, per the `hideActions` switch.
-jest.mock(
-	'../PanelActionsMenu/PanelActionsMenu',
-	() =>
-		function MockPanelActionsMenu(): ReactElement {
-			return <div data-testid="panel-actions-menu" />;
-		},
-);
+vi.mock('../PanelActionsMenu/PanelActionsMenu', () => ({
+	default: function MockPanelActionsMenu(): ReactElement {
+		return <div data-testid="panel-actions-menu" />;
+	},
+}));
 
 // The header reads its name/description/kind off the panel itself.
 function makePanel(overrides?: {
@@ -193,7 +191,7 @@ describe('PanelHeader search', () => {
 
 	it('expands the collapsed trigger into an input and reports changes', async () => {
 		const user = userEvent.setup();
-		const onSearchChange = jest.fn();
+		const onSearchChange = vi.fn();
 		renderWithProvider(
 			<PanelHeader
 				{...baseProps}
@@ -214,7 +212,7 @@ describe('PanelHeader search', () => {
 
 	it('clears the term and collapses when the clear button is pressed', async () => {
 		const user = userEvent.setup();
-		const onSearchChange = jest.fn();
+		const onSearchChange = vi.fn();
 		renderWithProvider(
 			<PanelHeader
 				{...baseProps}

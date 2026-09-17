@@ -1,27 +1,26 @@
+import type { Mock } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import RunQueryBtn from '../RunQueryBtn';
 
 // Mock OS util
-jest.mock('utils/getUserOS', () => ({
-	getUserOperatingSystem: jest.fn(),
+vi.mock('utils/getUserOS', () => ({
+	getUserOperatingSystem: vi.fn(),
 	UserOperatingSystem: { MACOS: 'mac', WINDOWS: 'win', LINUX: 'linux' },
 }));
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 describe('RunQueryBtn', () => {
 	beforeEach(() => {
-		jest.resetAllMocks();
-		(getUserOperatingSystem as jest.Mock).mockReturnValue(
-			UserOperatingSystem.MACOS,
-		);
+		vi.resetAllMocks();
+		(getUserOperatingSystem as Mock).mockReturnValue(UserOperatingSystem.MACOS);
 	});
 
 	it('renders run state and triggers on click', async () => {
 		const user = userEvent.setup();
-		const onRun = jest.fn();
-		const onCancel = jest.fn();
+		const onRun = vi.fn();
+		const onCancel = vi.fn();
 		render(
 			<RunQueryBtn
 				onStageRunQuery={onRun}
@@ -37,8 +36,8 @@ describe('RunQueryBtn', () => {
 
 	it('shows cancel state and calls handleCancelQuery', async () => {
 		const user = userEvent.setup();
-		const onRun = jest.fn();
-		const onCancel = jest.fn();
+		const onRun = vi.fn();
+		const onCancel = vi.fn();
 		render(
 			<RunQueryBtn
 				onStageRunQuery={onRun}
@@ -66,8 +65,8 @@ describe('RunQueryBtn', () => {
 	it('shows Command + CornerDownLeft on mac', () => {
 		render(
 			<RunQueryBtn
-				onStageRunQuery={jest.fn()}
-				handleCancelQuery={jest.fn()}
+				onStageRunQuery={vi.fn()}
+				handleCancelQuery={vi.fn()}
 				isLoadingQueries={false}
 			/>,
 		);
@@ -76,13 +75,11 @@ describe('RunQueryBtn', () => {
 	});
 
 	it('shows ChevronUp + CornerDownLeft on non-mac', () => {
-		(getUserOperatingSystem as jest.Mock).mockReturnValue(
-			UserOperatingSystem.WINDOWS,
-		);
+		(getUserOperatingSystem as Mock).mockReturnValue(UserOperatingSystem.WINDOWS);
 		render(
 			<RunQueryBtn
-				onStageRunQuery={jest.fn()}
-				handleCancelQuery={jest.fn()}
+				onStageRunQuery={vi.fn()}
+				handleCancelQuery={vi.fn()}
 				isLoadingQueries={false}
 			/>,
 		);
@@ -94,8 +91,8 @@ describe('RunQueryBtn', () => {
 	it('renders custom label when provided', () => {
 		render(
 			<RunQueryBtn
-				onStageRunQuery={jest.fn()}
-				handleCancelQuery={jest.fn()}
+				onStageRunQuery={vi.fn()}
+				handleCancelQuery={vi.fn()}
 				isLoadingQueries={false}
 				label="Stage & Run Query"
 			/>,

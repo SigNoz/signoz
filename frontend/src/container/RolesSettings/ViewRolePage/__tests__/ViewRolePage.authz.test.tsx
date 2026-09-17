@@ -13,7 +13,7 @@ import {
 	setupAuthzDenyAll,
 	setupAuthzGrantByPrefix,
 } from 'lib/authz/utils/authz-test-utils';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils-full';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 import ViewRolePage from '../ViewRolePage';
@@ -27,9 +27,12 @@ import {
 	mockPermissionsData,
 } from './testUtils';
 
+vi.mock('api/generated/services/role', { spy: true });
+vi.mock('../../hooks/useRolePermissions', { spy: true });
+
 describe('ViewRolePage - AuthZ', () => {
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
@@ -37,7 +40,7 @@ describe('ViewRolePage - AuthZ', () => {
 		it('shows inline permission denial when read permission denied but keeps header visible', async () => {
 			server.use(setupAuthzDenyAll());
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: undefined,
 				isLoading: false,
 				isError: false,
@@ -66,14 +69,14 @@ describe('ViewRolePage - AuthZ', () => {
 		it('hides the role content when read permission denied', async () => {
 			server.use(setupAuthzDenyAll());
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: customRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: mockPermissionsData,
 				isLoading: false,
 				isError: false,
@@ -98,14 +101,14 @@ describe('ViewRolePage - AuthZ', () => {
 		it('renders the role content instead of denying it', async () => {
 			server.use(setupAuthzAdmin());
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: customRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: mockPermissionsData,
 				isLoading: false,
 				isError: false,
@@ -128,14 +131,14 @@ describe('ViewRolePage - AuthZ', () => {
 		it('leaves the action buttons enabled instead of gating them on an empty selector', async () => {
 			server.use(setupAuthzAdmin());
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: customRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: mockPermissionsData,
 				isLoading: false,
 				isError: false,
@@ -163,14 +166,14 @@ describe('ViewRolePage - AuthZ', () => {
 				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
 			);
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: customRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: mockPermissionsData,
 				isLoading: false,
 				isError: false,
@@ -194,14 +197,14 @@ describe('ViewRolePage - AuthZ', () => {
 		it('enables Update button when update permission granted', async () => {
 			server.use(setupAuthzAdmin());
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: customRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: mockPermissionsData,
 				isLoading: false,
 				isError: false,
@@ -226,14 +229,14 @@ describe('ViewRolePage - AuthZ', () => {
 		it('disables Update button when update permission denied', async () => {
 			server.use(setupAuthzGrantByPrefix('read', 'delete'));
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: customRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: mockPermissionsData,
 				isLoading: false,
 				isError: false,
@@ -258,14 +261,14 @@ describe('ViewRolePage - AuthZ', () => {
 		it('disables Update button when role is managed', async () => {
 			server.use(setupAuthzAdmin());
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: managedRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: {
 					...mockPermissionsData,
 					roleId: MANAGED_ROLE_ID,
@@ -292,18 +295,20 @@ describe('ViewRolePage - AuthZ', () => {
 		});
 
 		it('shows managed role tooltip when update button hovered on managed role', async () => {
-			const user = userEvent.setup();
+			// Disabled buttons have pointer-events: none in real CSS; skip the
+			// hit-test so hover reaches the tooltip trigger as it did under jsdom.
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			server.use(setupAuthzAdmin());
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: managedRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: {
 					...mockPermissionsData,
 					roleId: MANAGED_ROLE_ID,
@@ -337,14 +342,14 @@ describe('ViewRolePage - AuthZ', () => {
 		it('disables and shows denial attribute when update permission denied', async () => {
 			server.use(setupAuthzGrantByPrefix('read', 'delete'));
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: customRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: mockPermissionsData,
 				isLoading: false,
 				isError: false,
@@ -373,14 +378,14 @@ describe('ViewRolePage - AuthZ', () => {
 		it('disables Delete button when delete permission denied', async () => {
 			server.use(setupAuthzGrantByPrefix('read', 'update'));
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: customRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: mockPermissionsData,
 				isLoading: false,
 				isError: false,
@@ -405,14 +410,14 @@ describe('ViewRolePage - AuthZ', () => {
 		it('enables Delete button when delete permission granted', async () => {
 			server.use(setupAuthzAdmin());
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: customRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: mockPermissionsData,
 				isLoading: false,
 				isError: false,
@@ -437,14 +442,14 @@ describe('ViewRolePage - AuthZ', () => {
 		it('disables and shows denial attribute when delete permission denied', async () => {
 			server.use(setupAuthzGrantByPrefix('read', 'update'));
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: customRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: mockPermissionsData,
 				isLoading: false,
 				isError: false,
@@ -473,14 +478,14 @@ describe('ViewRolePage - AuthZ', () => {
 
 			server.use(setupAuthzAdmin());
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: managedRoleResponse,
 				isLoading: false,
 				isError: false,
 				error: null,
 			} as ReturnType<typeof roleApi.useGetRole>);
 
-			jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+			vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 				data: {
 					...mockPermissionsData,
 					roleId: MANAGED_ROLE_ID,
@@ -518,7 +523,7 @@ describe('ViewRolePage - AuthZ', () => {
 				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.delay('infinite'))),
 			);
 
-			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			vi.mocked(roleApi.useGetRole).mockReturnValue({
 				data: undefined,
 				isLoading: false,
 				isError: false,

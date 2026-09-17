@@ -5,7 +5,7 @@ import EvaluationWindowDetails from '../EvaluationWindowPopover/EvaluationWindow
 import { createMockEvaluationWindowState } from './testUtils';
 
 const mockEvaluationWindowState = createMockEvaluationWindowState();
-const mockSetEvaluationWindow = jest.fn();
+const mockSetEvaluationWindow = vi.fn();
 
 describe('EvaluationWindowDetails', () => {
 	it('should render the evaluation window details for rolling mode with custom timeframe', () => {

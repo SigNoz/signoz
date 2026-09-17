@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import {
 	type DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
@@ -7,16 +8,15 @@ import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panel
 import { defaultColumnsForSignal } from '../ListColumnsEditor/selectFields';
 import { getSwitchedPluginSpec } from '../getSwitchedPluginSpec';
 
-jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
-	getPanelDefinition: jest.fn(),
+vi.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
+	getPanelDefinition: vi.fn(),
 }));
-jest.mock('../ListColumnsEditor/selectFields', () => ({
-	defaultColumnsForSignal: jest.fn(),
+vi.mock('../ListColumnsEditor/selectFields', () => ({
+	defaultColumnsForSignal: vi.fn(),
 }));
 
-const mockGetPanelDefinition = getPanelDefinition as unknown as jest.Mock;
-const mockDefaultColumnsForSignal =
-	defaultColumnsForSignal as unknown as jest.Mock;
+const mockGetPanelDefinition = getPanelDefinition as unknown as Mock;
+const mockDefaultColumnsForSignal = defaultColumnsForSignal as unknown as Mock;
 
 function specWith(pluginSpec: unknown): DashboardtypesPanelSpecDTO {
 	return {
@@ -29,7 +29,7 @@ function specWith(pluginSpec: unknown): DashboardtypesPanelSpecDTO {
 // Thin wrapper — only prove delegation; seeding rules are covered in buildPluginSpec.test.ts.
 describe('getSwitchedPluginSpec', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockDefaultColumnsForSignal.mockReturnValue([]);
 	});
 

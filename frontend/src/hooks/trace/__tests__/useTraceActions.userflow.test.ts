@@ -4,18 +4,18 @@ import ROUTES from 'constants/routes';
 import { useTraceActions } from '../useTraceActions';
 
 // Mock external dependencies
-const mockRedirectWithQueryBuilderData = jest.fn();
+const mockRedirectWithQueryBuilderData = vi.fn();
 const mockNotifications = {
-	success: jest.fn(),
-	error: jest.fn(),
+	success: vi.fn(),
+	error: vi.fn(),
 };
-const mockSetCopy = jest.fn();
+const mockSetCopy = vi.fn();
 const mockQueryClient = {
-	fetchQuery: jest.fn(),
+	fetchQuery: vi.fn(),
 };
 
 // Mock the hooks and dependencies
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): any => ({
 		currentQuery: {
 			builder: {
@@ -34,17 +34,17 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	useNotifications: (): any => ({ notifications: mockNotifications }),
 }));
 
-jest.mock('react-use', () => ({
-	...jest.requireActual('react-use'),
+vi.mock('react-use', async () => ({
+	...(await vi.importActual('react-use')),
 	useCopyToClipboard: (): any => [{ value: '' }, mockSetCopy],
 }));
 
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
+vi.mock('react-query', async () => ({
+	...(await vi.importActual('react-query')),
 	useQueryClient: (): any => mockQueryClient,
 }));
 
@@ -63,7 +63,7 @@ const mockAggregateKeysResponse = {
 };
 
 beforeEach(() => {
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 	mockQueryClient.fetchQuery.mockResolvedValue(mockAggregateKeysResponse);
 });
 

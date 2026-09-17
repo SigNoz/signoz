@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import {
 	PublicDashboardSchema,
@@ -6,21 +7,21 @@ import {
 
 import PublicDashboardPage from '..';
 
-jest.mock('react-router-dom', () => ({
+vi.mock('react-router-dom', () => ({
 	useParams: (): { dashboardId: string } => ({ dashboardId: 'dash-1' }),
 }));
 
-jest.mock('hooks/dashboard/useGetResolvedPublicDashboard', () => ({
+vi.mock('hooks/dashboard/useGetResolvedPublicDashboard', () => ({
 	PublicDashboardSchema: { Legacy: 'legacy', V2: 'v2' },
-	useGetResolvedPublicDashboard: jest.fn(),
+	useGetResolvedPublicDashboard: vi.fn(),
 }));
 
-jest.mock('../PublicDashboardView/PublicDashboardView', () => ({
+vi.mock('../PublicDashboardView/PublicDashboardView', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="public-dashboard-view" />,
 }));
 
-const mockResolved = useGetResolvedPublicDashboard as jest.Mock;
+const mockResolved = useGetResolvedPublicDashboard as Mock;
 
 const resolvedAs = (
 	overrides: Record<string, unknown>,

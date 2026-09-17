@@ -51,9 +51,9 @@ describe('useScrollToSpan', () => {
 	});
 
 	it('does not update when firstSpanAtFetchLevel is empty', async () => {
-		const setViewStartTs = jest.fn();
-		const setViewEndTs = jest.fn();
-		const setScrollTop = jest.fn();
+		const setViewStartTs = vi.fn();
+		const setViewEndTs = vi.fn();
+		const setScrollTop = vi.fn();
 
 		render(
 			<TestWrapper
@@ -74,9 +74,9 @@ describe('useScrollToSpan', () => {
 	});
 
 	it('does not update when spans are empty', async () => {
-		const setViewStartTs = jest.fn();
-		const setViewEndTs = jest.fn();
-		const setScrollTop = jest.fn();
+		const setViewStartTs = vi.fn();
+		const setViewEndTs = vi.fn();
+		const setScrollTop = vi.fn();
 
 		render(
 			<TestWrapper
@@ -97,9 +97,9 @@ describe('useScrollToSpan', () => {
 	});
 
 	it('does not update when target span not found', async () => {
-		const setViewStartTs = jest.fn();
-		const setViewEndTs = jest.fn();
-		const setScrollTop = jest.fn();
+		const setViewStartTs = vi.fn();
+		const setViewEndTs = vi.fn();
+		const setScrollTop = vi.fn();
 
 		render(
 			<TestWrapper
@@ -120,9 +120,9 @@ describe('useScrollToSpan', () => {
 	});
 
 	it('calls setters when target span found', async () => {
-		const setViewStartTs = jest.fn();
-		const setViewEndTs = jest.fn();
-		const setScrollTop = jest.fn();
+		const setViewStartTs = vi.fn();
+		const setViewEndTs = vi.fn();
+		const setScrollTop = vi.fn();
 
 		const { getByTestId } = render(
 			<TestWrapper
@@ -154,7 +154,7 @@ describe('useScrollToSpan', () => {
 	});
 
 	it('centers span vertically (scrollTop centers span row)', async () => {
-		const setScrollTop = jest.fn();
+		const setScrollTop = vi.fn();
 
 		await act(async () => {
 			render(
@@ -162,8 +162,8 @@ describe('useScrollToSpan', () => {
 					firstSpanAtFetchLevel="grandchild"
 					spans={MOCK_SPANS}
 					traceMetadata={MOCK_TRACE_METADATA}
-					setViewStartTs={jest.fn()}
-					setViewEndTs={jest.fn()}
+					setViewStartTs={vi.fn()}
+					setViewEndTs={vi.fn()}
 					setScrollTop={setScrollTop}
 				/>,
 			);
@@ -181,8 +181,8 @@ describe('useScrollToSpan', () => {
 	});
 
 	it('zooms horizontally to span with 2x duration padding', async () => {
-		const setViewStartTs = jest.fn();
-		const setViewEndTs = jest.fn();
+		const setViewStartTs = vi.fn();
+		const setViewEndTs = vi.fn();
 
 		await act(async () => {
 			render(
@@ -192,7 +192,7 @@ describe('useScrollToSpan', () => {
 					traceMetadata={MOCK_TRACE_METADATA}
 					setViewStartTs={setViewStartTs}
 					setViewEndTs={setViewEndTs}
-					setScrollTop={jest.fn()}
+					setScrollTop={vi.fn()}
 				/>,
 			);
 		});

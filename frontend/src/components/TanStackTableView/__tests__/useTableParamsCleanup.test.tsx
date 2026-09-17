@@ -72,17 +72,17 @@ function useTableParamsWithCleanup(
 
 describe('URL cleanup pattern (simulating ListAlertRules behavior)', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		localStorage.clear();
 		usePreferredPageSizeStore.setState({ tables: {} });
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('setTableQueryParams with null values should clear URL params', async () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 
 		const { result } = renderHook(
@@ -93,7 +93,7 @@ describe('URL cleanup pattern (simulating ListAlertRules behavior)', () => {
 		// Set limit to 100
 		await act(async () => {
 			result.current.setLimit(100);
-			jest.runAllTimers();
+			vi.runAllTimers();
 			await Promise.resolve();
 		});
 
@@ -113,7 +113,7 @@ describe('URL cleanup pattern (simulating ListAlertRules behavior)', () => {
 				page: null,
 				limit: null,
 			});
-			jest.runAllTimers();
+			vi.runAllTimers();
 			await Promise.resolve();
 		});
 
@@ -130,7 +130,7 @@ describe('URL cleanup pattern (simulating ListAlertRules behavior)', () => {
 			'100',
 		);
 
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 
 		const { result } = renderHook(
@@ -139,7 +139,7 @@ describe('URL cleanup pattern (simulating ListAlertRules behavior)', () => {
 		);
 
 		await act(async () => {
-			jest.runAllTimers();
+			vi.runAllTimers();
 			await Promise.resolve();
 		});
 
@@ -153,7 +153,7 @@ describe('URL cleanup pattern (simulating ListAlertRules behavior)', () => {
 				page: null,
 				limit: null,
 			});
-			jest.runAllTimers();
+			vi.runAllTimers();
 			await Promise.resolve();
 		});
 
@@ -164,7 +164,7 @@ describe('URL cleanup pattern (simulating ListAlertRules behavior)', () => {
 	});
 
 	it('demonstrates the bug: component without cleanup leaves limit in URL', async () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 
 		// Mount TriggeredAlerts-like component (no cleanup)
@@ -182,7 +182,7 @@ describe('URL cleanup pattern (simulating ListAlertRules behavior)', () => {
 		// Set limit to 100
 		await act(async () => {
 			result.current.setLimit(100);
-			jest.runAllTimers();
+			vi.runAllTimers();
 			await Promise.resolve();
 		});
 

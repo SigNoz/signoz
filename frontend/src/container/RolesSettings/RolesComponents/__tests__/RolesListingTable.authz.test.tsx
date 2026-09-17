@@ -6,7 +6,7 @@ import {
 	setupAuthzAdmin,
 	setupAuthzDenyAll,
 } from 'lib/authz/utils/authz-test-utils';
-import { render, screen } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils-full';
 
 import RolesListingTable from '../RolesListingTable';
 

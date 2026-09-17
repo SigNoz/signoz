@@ -28,20 +28,20 @@ function renderSelect(): void {
 
 /** Hovers an element and lets the tooltip's open delay elapse. */
 async function hover(element: HTMLElement): Promise<void> {
-	const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+	const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 	await user.hover(element);
 	act(() => {
-		jest.advanceTimersByTime(500);
+		vi.advanceTimersByTime(500);
 	});
 }
 
 describe('CustomMultiSelect tag tooltip', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it("reveals a tag's untruncated value on hover", async () => {

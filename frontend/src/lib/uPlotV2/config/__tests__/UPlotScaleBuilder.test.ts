@@ -5,6 +5,8 @@ import type { ScaleProps } from '../types';
 import { DistributionType } from '../types';
 import { UPlotScaleBuilder } from '../UPlotScaleBuilder';
 
+vi.mock('../../utils/scale', { spy: true });
+
 const createScaleProps = (overrides: Partial<ScaleProps> = {}): ScaleProps => ({
 	scaleKey: 'y',
 	time: false,
@@ -18,13 +20,10 @@ const createScaleProps = (overrides: Partial<ScaleProps> = {}): ScaleProps => ({
 });
 
 describe('UPlotScaleBuilder', () => {
-	const getFallbackMinMaxSpy = jest.spyOn(
-		scaleUtils,
-		'getFallbackMinMaxTimeStamp',
-	);
+	const getFallbackMinMaxSpy = vi.mocked(scaleUtils.getFallbackMinMaxTimeStamp);
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('initializes softMin/softMax correctly when both are 0 (treated as unset)', () => {
@@ -37,7 +36,7 @@ describe('UPlotScaleBuilder', () => {
 
 		// Non-time scale so config path uses thresholds pipeline; we just care that
 		// adjustSoftLimitsWithThresholds receives null soft limits instead of 0/0.
-		const adjustSpy = jest.spyOn(scaleUtils, 'adjustSoftLimitsWithThresholds');
+		const adjustSpy = vi.mocked(scaleUtils.adjustSoftLimitsWithThresholds);
 
 		builder.getConfig();
 
@@ -107,9 +106,9 @@ describe('UPlotScaleBuilder', () => {
 	});
 
 	it('pipes limits through soft-limit adjustment and log-scale normalization before range config', () => {
-		const adjustSpy = jest.spyOn(scaleUtils, 'adjustSoftLimitsWithThresholds');
-		const normalizeSpy = jest.spyOn(scaleUtils, 'normalizeLogScaleLimits');
-		const getRangeConfigSpy = jest.spyOn(scaleUtils, 'getRangeConfig');
+		const adjustSpy = vi.mocked(scaleUtils.adjustSoftLimitsWithThresholds);
+		const normalizeSpy = vi.mocked(scaleUtils.normalizeLogScaleLimits);
+		const getRangeConfigSpy = vi.mocked(scaleUtils.getRangeConfig);
 
 		const thresholds = {
 			scaleKey: 'y',
@@ -148,7 +147,7 @@ describe('UPlotScaleBuilder', () => {
 	});
 
 	it('computes distribution config for non-time scales and wires range function when range is not provided', () => {
-		const createRangeFnSpy = jest.spyOn(scaleUtils, 'createRangeFunction');
+		const createRangeFnSpy = vi.mocked(scaleUtils.createRangeFunction);
 
 		const builder = new UPlotScaleBuilder(
 			createScaleProps({
@@ -172,9 +171,9 @@ describe('UPlotScaleBuilder', () => {
 	});
 
 	it('respects explicit range function when provided on props', () => {
-		const explicitRange: uPlot.Scale.Range = jest.fn(() => [
+		const explicitRange: uPlot.Scale.Range = vi.fn(() => [
 			0, 10,
-		]) as uPlot.Scale.Range;
+		]) as unknown as uPlot.Scale.Range;
 
 		const builder = new UPlotScaleBuilder(
 			createScaleProps({
@@ -190,7 +189,7 @@ describe('UPlotScaleBuilder', () => {
 	});
 
 	it('derives auto flag when not explicitly provided, based on hasFixedRange and time', () => {
-		const getRangeConfigSpy = jest.spyOn(scaleUtils, 'getRangeConfig');
+		const getRangeConfigSpy = vi.mocked(scaleUtils.getRangeConfig);
 
 		const builder = new UPlotScaleBuilder(
 			createScaleProps({

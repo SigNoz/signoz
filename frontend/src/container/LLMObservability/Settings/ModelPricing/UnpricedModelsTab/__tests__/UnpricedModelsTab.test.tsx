@@ -11,10 +11,12 @@ import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import UnpricedModelsTab from '../UnpricedModelsTab';
 
-const toastSuccess = jest.fn();
-const toastError = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+const { toastSuccess, toastError } = vi.hoisted(() => ({
+	toastSuccess: vi.fn(),
+	toastError: vi.fn(),
+}));
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
 	toast: {
 		success: (...args: unknown[]): void => toastSuccess(...args),
 		error: (...args: unknown[]): void => toastError(...args),

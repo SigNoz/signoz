@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
@@ -15,6 +16,7 @@ import { EQueryType } from 'types/common/dashboard';
 
 import { CreateAlertProvider } from '../../context';
 import ChartPreview from '../ChartPreview/ChartPreview';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 const REQUESTS_PER_SEC = 'requests/sec';
 const QUERY_TYPE_TEST_ID = 'query-type';
@@ -23,44 +25,40 @@ const CHART_PREVIEW_COMPONENT_TEST_ID = 'chart-preview-component';
 const PLOT_QUERY_TYPE_TEST_ID = 'plot-query-type';
 const PLOT_PANEL_TYPE_TEST_ID = 'plot-panel-type';
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
-jest.mock(
-	'container/FormAlertRules/ChartPreview',
-	() =>
-		function MockChartPreviewComponent(props: any): JSX.Element {
-			return (
-				<div data-testid={CHART_PREVIEW_COMPONENT_TEST_ID}>
-					<div data-testid="headline">{props.headline}</div>
-					<div data-testid={QUERY_TYPE_TEST_ID}>{props.query?.queryType}</div>
-					<div data-testid="selected-interval">
-						{props.selectedInterval?.startTime}
-					</div>
-					<div data-testid="y-axis-unit">{props.yAxisUnit}</div>
-					<div data-testid={GRAPH_TYPE_TEST_ID}>{props.graphType}</div>
+vi.mock('container/FormAlertRules/ChartPreview', () => ({
+	default: function MockChartPreviewComponent(props: any): JSX.Element {
+		return (
+			<div data-testid={CHART_PREVIEW_COMPONENT_TEST_ID}>
+				<div data-testid="headline">{props.headline}</div>
+				<div data-testid={QUERY_TYPE_TEST_ID}>{props.query?.queryType}</div>
+				<div data-testid="selected-interval">
+					{props.selectedInterval?.startTime}
 				</div>
-			);
-		},
-);
-jest.mock(
-	'components/PlotTag/PlotTag',
-	() =>
-		function MockPlotTag(props: any): JSX.Element {
-			return (
-				<div data-testid="plot-tag">
-					<div data-testid={PLOT_QUERY_TYPE_TEST_ID}>{props.queryType}</div>
-					<div data-testid={PLOT_PANEL_TYPE_TEST_ID}>{props.panelType}</div>
-				</div>
-			);
-		},
-);
-jest.mock('uplot', () => {
+				<div data-testid="y-axis-unit">{props.yAxisUnit}</div>
+				<div data-testid={GRAPH_TYPE_TEST_ID}>{props.graphType}</div>
+			</div>
+		);
+	},
+}));
+vi.mock('components/PlotTag/PlotTag', () => ({
+	default: function MockPlotTag(props: any): JSX.Element {
+		return (
+			<div data-testid="plot-tag">
+				<div data-testid={PLOT_QUERY_TYPE_TEST_ID}>{props.queryType}</div>
+				<div data-testid={PLOT_PANEL_TYPE_TEST_ID}>{props.panelType}</div>
+			</div>
+		);
+	},
+}));
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock = jest.fn(() => ({
+	const uplotMock = vi.fn(() => ({
 		paths,
 	}));
 	return {
@@ -70,8 +68,8 @@ jest.mock('uplot', () => {
 });
 
 // Mock react-redux
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
 	useSelector: (): any => ({
 		globalTime: {
 			selectedTime: {
@@ -113,16 +111,16 @@ const mockUseQueryBuilder = {
 
 const mockAlertDef = buildInitialAlertDef(AlertTypes.METRICS_BASED_ALERT);
 
-jest.mock('../../context', () => ({
-	...jest.requireActual('../../context'),
+vi.mock('../../context', async () => ({
+	...(await vi.importActual('../../context')),
 	useCreateAlertState: (): any => ({
 		alertState: {
 			...INITIAL_ALERT_STATE,
 			yAxisUnit: REQUESTS_PER_SEC,
 		},
 		thresholdState: INITIAL_ALERT_THRESHOLD_STATE,
-		setAlertState: jest.fn(),
-		setThresholdState: jest.fn(),
+		setAlertState: vi.fn(),
+		setThresholdState: vi.fn(),
 	}),
 }));
 
@@ -140,13 +138,11 @@ const renderChartPreview = (): ReturnType<typeof render> =>
 	);
 
 describe('ChartPreview', () => {
-	const { useQueryBuilder } = jest.requireMock(
-		'hooks/queryBuilder/useQueryBuilder',
-	);
+	const mockedUseQueryBuilder: Mock = vi.mocked(useQueryBuilder);
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		useQueryBuilder.mockReturnValue(mockUseQueryBuilder);
+		vi.clearAllMocks();
+		mockedUseQueryBuilder.mockReturnValue(mockUseQueryBuilder as any);
 	});
 
 	it('renders the component with correct container class', () => {
@@ -188,7 +184,7 @@ describe('ChartPreview', () => {
 	});
 
 	it('renders PromQL chart preview when query type is PROM', () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			...mockUseQueryBuilder,
 			currentQuery: {
 				...mockUseQueryBuilder.currentQuery,
@@ -211,7 +207,7 @@ describe('ChartPreview', () => {
 	});
 
 	it('renders ClickHouse chart preview when query type is CLICKHOUSE', () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			...mockUseQueryBuilder,
 			currentQuery: {
 				...mockUseQueryBuilder.currentQuery,
@@ -234,7 +230,7 @@ describe('ChartPreview', () => {
 	});
 
 	it('uses default panel type when panelType is not provided', () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			...mockUseQueryBuilder,
 			panelType: undefined,
 		});
@@ -253,7 +249,7 @@ describe('ChartPreview', () => {
 	});
 
 	it('uses custom panel type when provided', () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			...mockUseQueryBuilder,
 			panelType: PANEL_TYPES.BAR,
 		});

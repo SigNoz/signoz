@@ -22,7 +22,7 @@ function run(
 	useDashboardStore.setState({
 		variableCycleReasons: cycleReason ? { [variable.name]: cycleReason } : {},
 	});
-	const onAutoSelect = jest.fn();
+	const onAutoSelect = vi.fn();
 	renderHook(() => useAutoSelect(variable, options, selection, onAutoSelect));
 	return onAutoSelect.mock.calls[0]?.[0];
 }

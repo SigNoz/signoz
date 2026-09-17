@@ -4,7 +4,7 @@ import { renderTriggeredAlerts } from './_helpers';
 
 describe('TriggeredAlerts — list rendering', () => {
 	beforeEach(() => {
-		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		vi.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 	});
 
 	it('renders alerts from the API', async () => {

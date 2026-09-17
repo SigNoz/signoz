@@ -11,18 +11,21 @@ import {
 	CUSTOM_ROLE_NAME,
 } from './testUtils';
 
+vi.mock('api/generated/services/role', { spy: true });
+vi.mock('../../hooks/useRolePermissions', { spy: true });
+
 describe('ViewRolePage - Loading State', () => {
 	beforeEach(() => {
 		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
 	it('shows skeleton while fetching role', () => {
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: undefined,
 			isLoading: true,
 			isError: false,
@@ -37,7 +40,7 @@ describe('ViewRolePage - Loading State', () => {
 	});
 
 	it('keeps the header visible with delete disabled while fetching role', async () => {
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: undefined,
 			isLoading: true,
 			isError: false,
@@ -55,7 +58,7 @@ describe('ViewRolePage - Loading State', () => {
 	});
 
 	it('does not fetch when roleId is missing from URL', () => {
-		const getRole = jest.spyOn(roleApi, 'useGetRole');
+		const getRole = vi.mocked(roleApi.useGetRole);
 
 		render(<ViewRolePage />, undefined, {
 			initialRoute: '/settings/roles',

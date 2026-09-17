@@ -5,33 +5,30 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import useUpdatedQuery from 'container/WidgetCard/hooks/useResolveQuery';
 
-const mockGetSubstituteVars = jest.fn();
+const mockGetSubstituteVars = vi.fn();
 const mockDynamicVariables: unknown[] = [];
 
-jest.mock('api/dashboard/substitute_vars', () => ({
+vi.mock('api/dashboard/substitute_vars', () => ({
 	getSubstituteVars: (...args: unknown[]): unknown =>
 		mockGetSubstituteVars(...args),
 }));
 
-jest.mock('api/v5/v5', () => ({
+vi.mock('api/v5/v5', () => ({
 	prepareQueryRangePayloadV5: (): { queryPayload: unknown } => ({
 		queryPayload: { start: 0, end: 1 },
 	}),
 }));
 
-jest.mock(
-	'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi',
-	() => ({
-		mapQueryDataFromApi: (): Query => ({ resolved: true }) as unknown as Query,
-	}),
-);
+vi.mock('lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi', () => ({
+	mapQueryDataFromApi: (): Query => ({ resolved: true }) as unknown as Query,
+}));
 
-jest.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
+vi.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
 	useDynamicVariableSuggestions: (): unknown[] => mockDynamicVariables,
 }));
 
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
+vi.mock('react-redux', () => ({
+	...vi.importActual('react-redux'),
 	useSelector: (): unknown => ({
 		selectedTime: 'GLOBAL_TIME',
 	}),
@@ -47,7 +44,7 @@ const WIDGET_CONFIG = {
 
 describe('useResolveQuery', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockDynamicVariables.length = 0;
 	});
 

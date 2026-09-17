@@ -4,11 +4,11 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 
 import ConfigActions from '../ConfigActions';
 
-const mockCreateAlert = jest.fn();
-jest.mock(
+const { mockCreateAlert } = vi.hoisted(() => ({ mockCreateAlert: vi.fn() }));
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/hooks/useCreateAlertFromPanel',
 	() => ({
-		useCreateAlertFromPanel: jest.fn(() => mockCreateAlert),
+		useCreateAlertFromPanel: vi.fn(() => mockCreateAlert),
 	}),
 );
 
@@ -24,7 +24,7 @@ function makePanel(kind: string): DashboardtypesPanelDTO {
 }
 
 describe('ConfigActions', () => {
-	beforeEach(() => jest.clearAllMocks());
+	beforeEach(() => vi.clearAllMocks());
 
 	it('offers "Create alert rule" for a create-alert-capable kind and seeds from the panel', async () => {
 		const user = userEvent.setup();

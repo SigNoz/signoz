@@ -6,12 +6,16 @@ import { render } from 'tests/test-utils';
 
 import TraceDetailsHeader from '../TraceDetailsHeader';
 
-const mockGoBack = jest.fn();
-const mockPush = jest.fn();
-const mockReplace = jest.fn();
-const mockHasInAppHistory = jest.fn();
+const { mockGoBack, mockPush, mockReplace, mockHasInAppHistory } = vi.hoisted(
+	() => ({
+		mockGoBack: vi.fn(),
+		mockPush: vi.fn(),
+		mockReplace: vi.fn(),
+		mockHasInAppHistory: vi.fn(),
+	}),
+);
 
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
 		goBack: (): void => mockGoBack(),
@@ -23,12 +27,12 @@ jest.mock('lib/history', () => ({
 	hasInAppHistory: (): boolean => mockHasInAppHistory(),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useParams: (): { id: string } => ({ id: 'trace-123' }),
 }));
 
-jest.mock(
+vi.mock(
 	'../../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters',
 	() => ({
 		__esModule: true,
@@ -36,14 +40,14 @@ jest.mock(
 	}),
 );
 
-jest.mock('../../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel', () => ({
+vi.mock('../../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel', () => ({
 	__esModule: true,
 	default: ({ isOpen }: { isOpen: boolean }): JSX.Element => (
 		<div data-testid="analytics-panel" data-open={isOpen ? 'true' : 'false'} />
 	),
 }));
 
-jest.mock('components/FieldsSelector', () => ({
+vi.mock('components/FieldsSelector', () => ({
 	__esModule: true,
 	default: ({ isOpen }: { isOpen: boolean }): JSX.Element => (
 		<div data-testid="fields-selector" data-open={isOpen ? 'true' : 'false'} />
@@ -56,7 +60,7 @@ const baseProps = {
 		endTime: 1,
 		traceId: 'trace-123',
 	},
-	onFilteredSpansChange: jest.fn(),
+	onFilteredSpansChange: vi.fn(),
 	isDataLoaded: false,
 };
 

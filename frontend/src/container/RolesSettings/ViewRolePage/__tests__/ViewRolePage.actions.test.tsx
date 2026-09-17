@@ -1,7 +1,7 @@
 import { Route, Switch } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import * as roleApi from 'api/generated/services/role';
-import { render, screen, waitFor, within } from 'tests/test-utils';
+import { render, screen, waitFor, within } from 'tests/test-utils-full';
 
 import ViewRolePage from '../ViewRolePage';
 
@@ -12,13 +12,16 @@ import {
 	mockHooksForCustomRole,
 } from './testUtils';
 
+vi.mock('api/generated/services/role', { spy: true });
+vi.mock('../../hooks/useRolePermissions', { spy: true });
+
 describe('ViewRolePage - Actions', () => {
 	beforeEach(() => {
 		mockHooksForCustomRole();
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('navigates to roles list when Cancel clicked', async () => {
@@ -93,8 +96,8 @@ describe('ViewRolePage - Actions', () => {
 	it('calls delete API and redirects on successful delete', async () => {
 		const user = userEvent.setup();
 
-		const mockDeleteRole = jest.fn().mockResolvedValue({});
-		jest.spyOn(roleApi, 'useDeleteRole').mockReturnValue({
+		const mockDeleteRole = vi.fn().mockResolvedValue({});
+		vi.mocked(roleApi.useDeleteRole).mockReturnValue({
 			mutateAsync: mockDeleteRole,
 		} as unknown as ReturnType<typeof roleApi.useDeleteRole>);
 

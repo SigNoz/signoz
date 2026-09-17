@@ -9,7 +9,7 @@ describe('TooltipFooter', () => {
 	const defaultProps = {
 		id: 'panel-123',
 		isPinned: false,
-		dismiss: jest.fn(),
+		dismiss: vi.fn(),
 	};
 
 	describe('when not pinned', () => {
@@ -72,7 +72,7 @@ describe('TooltipFooter', () => {
 
 		it('calls dismiss and logs the unpin event when the unpin button is clicked', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const dismiss = jest.fn();
+			const dismiss = vi.fn();
 
 			render(<TooltipFooter {...defaultProps} dismiss={dismiss} isPinned />);
 

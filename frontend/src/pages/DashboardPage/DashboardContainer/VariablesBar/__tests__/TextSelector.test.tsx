@@ -1,18 +1,19 @@
+import type { Mock } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import type { VariableSelection } from '../selectionTypes';
 import TextSelector from '../components/selectors/TextSelector';
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
 function renderSelector(
 	selection: VariableSelection,
-	onChange = jest.fn(),
-): { rerender: (selection: VariableSelection) => void; onChange: jest.Mock } {
+	onChange = vi.fn(),
+): { rerender: (selection: VariableSelection) => void; onChange: Mock } {
 	const { rerender } = render(
 		<TextSelector
 			selection={selection}

@@ -1,3 +1,4 @@
+import type { MockedFunction } from 'vitest';
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Router } from 'react-router-dom';
@@ -11,17 +12,17 @@ import { encode } from 'js-base64';
 
 import ResourceAttributesFilter from '../ResourceAttributesFilter';
 
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
-		push: jest.fn(),
+		push: vi.fn(),
 		location: { search: '', pathname: '/' },
 	},
 }));
 
-jest.mock('api/metrics/getResourceAttributes', () => ({
-	getResourceAttributesTagKeys: jest.fn(),
-	getResourceAttributesTagValues: jest.fn(),
+vi.mock('api/metrics/getResourceAttributes', () => ({
+	getResourceAttributesTagKeys: vi.fn(),
+	getResourceAttributesTagValues: vi.fn(),
 }));
 
 // eslint-disable-next-line import/first, import/order
@@ -33,10 +34,10 @@ import {
 // eslint-disable-next-line import/first, import/order
 import history from 'lib/history';
 
-const mockTagKeys = getResourceAttributesTagKeys as jest.MockedFunction<
+const mockTagKeys = getResourceAttributesTagKeys as MockedFunction<
 	typeof getResourceAttributesTagKeys
 >;
-const mockTagValues = getResourceAttributesTagValues as jest.MockedFunction<
+const mockTagValues = getResourceAttributesTagValues as MockedFunction<
 	typeof getResourceAttributesTagValues
 >;
 

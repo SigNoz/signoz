@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable vitest/no-mocks-import -- ./__mocks__ holds fixture data imported directly, not automocks */
 import getSeries from '../getSeriesData';
 import {
 	seriesBarChartData,
 	seriesLineChartData,
 } from './__mocks__/seriesData';
 
-jest.mock('../getRenderer', () => jest.fn().mockImplementation(() => () => {}));
+vi.mock('../getRenderer', () => ({
+	default: vi.fn().mockImplementation(() => () => {}),
+}));
 
 describe('Get Series Data', () => {
 	it('Should return series data for uplot chart', () => {
@@ -19,13 +22,13 @@ describe('Get Series Data', () => {
 
 	it('Should return series drawline bar chart for panel type barchart', () => {
 		const seriesData = getSeries(seriesBarChartData);
-		// @ts-expect-error
+		// @ts-expect-error: drawStyle is a custom runtime prop, not part of uPlot.Series
 		expect(seriesData[1].drawStyle).toBe('bars');
 	});
 
 	it('Should return seris drawline line chart for panel type time series', () => {
 		const seriesData = getSeries(seriesLineChartData);
-		// @ts-expect-error
+		// @ts-expect-error: drawStyle is a custom runtime prop, not part of uPlot.Series
 
 		expect(seriesData[1].drawStyle).toBe('line');
 	});

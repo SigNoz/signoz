@@ -144,7 +144,7 @@ describe('CreateRolePage', () => {
 
 	describe('create success flow', () => {
 		it('calls create API with form data and redirects', async () => {
-			const createSpy = jest.fn();
+			const createSpy = vi.fn();
 
 			server.use(
 				rest.post(rolesApiBase, async (req, res, ctx) => {
@@ -188,7 +188,7 @@ describe('CreateRolePage', () => {
 
 	describe('create error flows', () => {
 		it('does not call API when name is empty', async () => {
-			const createSpy = jest.fn();
+			const createSpy = vi.fn();
 			server.use(
 				rest.post(rolesApiBase, async (req, res, ctx) => {
 					createSpy();

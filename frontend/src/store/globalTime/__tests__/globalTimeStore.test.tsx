@@ -194,8 +194,8 @@ describe('globalTimeStore', () => {
 		});
 
 		it('should return fresh custom time values after switching from relative time', () => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
 
 			const wrapper = createIsolatedWrapper({
 				selectedTime: '15m',
@@ -226,18 +226,18 @@ describe('globalTimeStore', () => {
 			expect(returned.maxTime).toBe(customMaxTime);
 			expect(returned).not.toStrictEqual(relativeMinMax);
 
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 	});
 
 	describe('getMinMaxTime', () => {
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
 		});
 
 		afterEach(() => {
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('should return min/max time for custom time range', () => {
@@ -314,7 +314,7 @@ describe('globalTimeStore', () => {
 			const first = result.current.getMinMaxTime();
 
 			act(() => {
-				jest.advanceTimersByTime(59000);
+				vi.advanceTimersByTime(59000);
 			});
 
 			const second = result.current.getMinMaxTime();
@@ -334,7 +334,7 @@ describe('globalTimeStore', () => {
 			const first = result.current.getMinMaxTime();
 
 			act(() => {
-				jest.advanceTimersByTime(60000);
+				vi.advanceTimersByTime(60000);
 			});
 
 			// Without refresh enabled, getMinMaxTime returns cached values
@@ -364,7 +364,7 @@ describe('globalTimeStore', () => {
 
 			// Advance time by 5 seconds
 			act(() => {
-				jest.advanceTimersByTime(5000);
+				vi.advanceTimersByTime(5000);
 			});
 
 			// getMinMaxTime should return stored values, not fresh computation
@@ -374,7 +374,7 @@ describe('globalTimeStore', () => {
 
 		describe('with isRefreshEnabled (isolated store)', () => {
 			it('should compute fresh values when isRefreshEnabled is true (5s rounding)', () => {
-				jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
+				vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
 
 				const wrapper = createIsolatedWrapper({
 					selectedTime: '15m',
@@ -387,7 +387,7 @@ describe('globalTimeStore', () => {
 
 				// Advance time by 5 seconds to cross 5s boundary
 				act(() => {
-					jest.advanceTimersByTime(5000);
+					vi.advanceTimersByTime(5000);
 				});
 
 				// getMinMaxTime should return fresh values, not cached
@@ -402,7 +402,7 @@ describe('globalTimeStore', () => {
 			});
 
 			it('should update lastComputedMinMax when values change (5s rounding)', () => {
-				jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
+				vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
 
 				const wrapper = createIsolatedWrapper({
 					selectedTime: '15m',
@@ -415,7 +415,7 @@ describe('globalTimeStore', () => {
 
 				// Advance time by 5 seconds to cross 5s boundary
 				act(() => {
-					jest.advanceTimersByTime(5000);
+					vi.advanceTimersByTime(5000);
 				});
 
 				// Call getMinMaxTime - should update lastComputedMinMax
@@ -446,7 +446,7 @@ describe('globalTimeStore', () => {
 
 				// Advance time past minute boundary
 				act(() => {
-					jest.advanceTimersByTime(60000);
+					vi.advanceTimersByTime(60000);
 				});
 
 				// Call getMinMaxTime - should update timestamp
@@ -460,7 +460,7 @@ describe('globalTimeStore', () => {
 			});
 
 			it('should NOT update lastComputedMinMax when values have not changed (same 5s window)', () => {
-				jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
+				vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
 
 				const wrapper = createIsolatedWrapper({
 					selectedTime: '15m',
@@ -476,7 +476,7 @@ describe('globalTimeStore', () => {
 
 				// Advance time but stay within same 5-second window
 				act(() => {
-					jest.advanceTimersByTime(4000);
+					vi.advanceTimersByTime(4000);
 				});
 
 				// Call getMinMaxTime - should NOT update store (same 5s boundary)
@@ -504,7 +504,7 @@ describe('globalTimeStore', () => {
 
 				// Advance time past minute boundary
 				act(() => {
-					jest.advanceTimersByTime(60000);
+					vi.advanceTimersByTime(60000);
 				});
 
 				// getMinMaxTime should return cached values since refresh is disabled
@@ -535,7 +535,7 @@ describe('globalTimeStore', () => {
 
 				// Advance time past minute boundary
 				act(() => {
-					jest.advanceTimersByTime(60000);
+					vi.advanceTimersByTime(60000);
 				});
 
 				// Should still return the same fixed values (custom range doesn't drift)
@@ -545,7 +545,7 @@ describe('globalTimeStore', () => {
 			});
 
 			it('should handle multiple consecutive refetch intervals correctly (5s rounding)', () => {
-				jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
+				vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
 
 				const wrapper = createIsolatedWrapper({
 					selectedTime: '15m',
@@ -559,7 +559,7 @@ describe('globalTimeStore', () => {
 				// Simulate 3 refetch intervals crossing 5-second boundaries
 				for (let i = 1; i <= 3; i++) {
 					act(() => {
-						jest.advanceTimersByTime(5000);
+						vi.advanceTimersByTime(5000);
 					});
 
 					act(() => {
@@ -576,12 +576,12 @@ describe('globalTimeStore', () => {
 
 	describe('computeAndStoreMinMax', () => {
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
 		});
 
 		afterEach(() => {
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('should compute and store min/max values', () => {
@@ -673,12 +673,12 @@ describe('globalTimeStore', () => {
 
 	describe('updateRefreshTimestamp', () => {
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
 		});
 
 		afterEach(() => {
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('should update lastRefreshTimestamp to current time', () => {
@@ -701,7 +701,7 @@ describe('globalTimeStore', () => {
 			const beforeMinMax = { ...result.current.lastComputedMinMax };
 
 			act(() => {
-				jest.advanceTimersByTime(5000);
+				vi.advanceTimersByTime(5000);
 				result.current.updateRefreshTimestamp();
 			});
 
@@ -726,12 +726,12 @@ describe('globalTimeStore', () => {
 
 	describe('setSelectedTime (min/max computation)', () => {
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
 		});
 
 		afterEach(() => {
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('should compute and store min/max for relative time on setSelectedTime', () => {
@@ -801,7 +801,7 @@ describe('globalTimeStore', () => {
 
 			// Advance time
 			act(() => {
-				jest.advanceTimersByTime(1000);
+				vi.advanceTimersByTime(1000);
 			});
 
 			// Try to set same values again
@@ -816,12 +816,12 @@ describe('globalTimeStore', () => {
 
 	describe('computeAndStoreMinMax (refresh behavior)', () => {
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
 		});
 
 		afterEach(() => {
-			jest.useRealTimers();
+			vi.useRealTimers();
 		});
 
 		it('should skip computation and return lastComputedMinMax when refresh is enabled', () => {
@@ -836,7 +836,7 @@ describe('globalTimeStore', () => {
 
 			// Advance time
 			act(() => {
-				jest.advanceTimersByTime(60000);
+				vi.advanceTimersByTime(60000);
 			});
 
 			// computeAndStoreMinMax should skip computation when refresh is enabled
@@ -864,7 +864,7 @@ describe('globalTimeStore', () => {
 
 			// Advance time past minute boundary
 			act(() => {
-				jest.advanceTimersByTime(60000);
+				vi.advanceTimersByTime(60000);
 			});
 
 			// computeAndStoreMinMax should compute fresh values

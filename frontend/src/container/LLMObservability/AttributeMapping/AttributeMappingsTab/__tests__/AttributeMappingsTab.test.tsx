@@ -1,3 +1,4 @@
+import type { Mock, MockedFunction } from 'vitest';
 import {
 	SpantypesFieldContextDTO as FieldContext,
 	SpantypesSpanMapperOperationDTO as MapperOperation,
@@ -6,12 +7,12 @@ import { toast } from '@signozhq/ui/sonner';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
 	toast: {
-		success: jest.fn(),
-		error: jest.fn(),
-		warning: jest.fn(),
+		success: vi.fn(),
+		error: vi.fn(),
+		warning: vi.fn(),
 	},
 }));
 
@@ -24,8 +25,8 @@ import {
 // Admin gating on the write controls flows through useAuthZ. Mock it directly
 // (synchronous) so the functional tests stay synchronous; the read-only block
 // below flips it to deny-all.
-jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
+vi.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+const mockedUseAuthZ = useAuthZ as MockedFunction<typeof useAuthZ>;
 
 import {
 	GROUPS_ENDPOINT,
@@ -82,8 +83,8 @@ function AttributeMappingsTabWithStore({
 	return (
 		<AttributeMappingsTab
 			editor={editor}
-			onEditGroup={onEditGroup ?? jest.fn()}
-			onAddGroup={onAddGroup ?? jest.fn()}
+			onEditGroup={onEditGroup ?? vi.fn()}
+			onAddGroup={onAddGroup ?? vi.fn()}
 		/>
 	);
 }
@@ -103,8 +104,8 @@ function SaveableHarness(): JSX.Element {
 			</button>
 			<AttributeMappingsTab
 				editor={editor}
-				onEditGroup={jest.fn()}
-				onAddGroup={jest.fn()}
+				onEditGroup={vi.fn()}
+				onAddGroup={vi.fn()}
 			/>
 		</>
 	);
@@ -190,7 +191,7 @@ describe('AttributeMappingsTab (integration)', () => {
 
 	it('invokes onAddGroup from the toolbar button', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onAddGroup = jest.fn();
+		const onAddGroup = vi.fn();
 		setupGroups();
 		render(<AttributeMappingsTabWithStore onAddGroup={onAddGroup} />);
 
@@ -202,7 +203,7 @@ describe('AttributeMappingsTab (integration)', () => {
 
 	it('invokes onEditGroup with the group when Edit is chosen from the actions menu', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onEditGroup = jest.fn();
+		const onEditGroup = vi.fn();
 		setupGroups();
 		render(<AttributeMappingsTabWithStore onEditGroup={onEditGroup} />);
 
@@ -394,8 +395,8 @@ describe('AttributeMappingsTab (integration)', () => {
 
 	it('warns and keeps the working copy when the post-save refresh fails', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		(toast.success as jest.Mock).mockClear();
-		(toast.warning as jest.Mock).mockClear();
+		(toast.success as Mock).mockClear();
+		(toast.warning as Mock).mockClear();
 
 		let failRefresh = false;
 		server.use(

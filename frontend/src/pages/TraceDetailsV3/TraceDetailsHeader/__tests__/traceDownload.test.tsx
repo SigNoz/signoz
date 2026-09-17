@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import 'tests/blob-polyfill';
 
 import { screen, waitFor } from '@testing-library/react';
@@ -12,24 +13,22 @@ import { MAX_EXPORT_SPANS } from '../useDownloadTrace';
 
 // Integration suite: menu → hook → store → runner → stitchers → panel all run
 // for real; only the true boundaries are mocked (HTTP + file save).
-jest.mock('api/v1/download/downloadExportData', () => ({
-	fetchExportData: jest.fn(),
+vi.mock('api/v1/download/downloadExportData', () => ({
+	fetchExportData: vi.fn(),
 }));
 
-jest.mock('lib/exportData/downloadFile', () => ({
-	downloadFile: jest.fn(),
-	getTimestampedFileName: jest.fn(
-		(base: string, ext: string) => `${base}.${ext}`,
-	),
+vi.mock('lib/exportData/downloadFile', () => ({
+	downloadFile: vi.fn(),
+	getTimestampedFileName: vi.fn((base: string, ext: string) => `${base}.${ext}`),
 }));
 
-const mockFetch = fetchExportData as jest.Mock;
-const mockDownloadFile = downloadFile as jest.Mock;
+const mockFetch = fetchExportData as Mock;
+const mockDownloadFile = downloadFile as Mock;
 
 const baseProps = {
 	showTraceDetails: true,
-	onToggleTraceDetails: jest.fn(),
-	onOpenPreviewFields: jest.fn(),
+	onToggleTraceDetails: vi.fn(),
+	onOpenPreviewFields: vi.fn(),
 	traceId: 'trace-123',
 	startTime: 1_000,
 	endTime: 2_000,
@@ -77,7 +76,7 @@ async function savedFileText(): Promise<string> {
 
 describe('trace download flow', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('downloads a multi-page trace as one stitched CSV', async () => {

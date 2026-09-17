@@ -1,15 +1,17 @@
 import { render, screen } from '@testing-library/react';
 
+import type { Mock } from 'vitest';
+
 import getLocal from '../../../api/browser/localstorage/get';
 import AppLoading from '../AppLoading';
 
-jest.mock('../../../api/browser/localstorage/get', () => ({
+vi.mock('../../../api/browser/localstorage/get', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
 // Access the mocked function
-const mockGet = getLocal as unknown as jest.Mock;
+const mockGet = getLocal as unknown as Mock;
 
 describe('AppLoading', () => {
 	const SIGNOZ_TEXT = 'SigNoz';
@@ -18,7 +20,7 @@ describe('AppLoading', () => {
 	const CONTAINER_SELECTOR = '.app-loading-container';
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should render loading screen with dark theme by default', () => {

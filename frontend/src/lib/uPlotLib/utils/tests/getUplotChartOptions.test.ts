@@ -1,15 +1,18 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 
+/* eslint-disable vitest/no-mocks-import -- ./__mocks__ holds fixture data imported directly, not automocks */
 import {
 	inputPropsTimeSeries,
 	seriesDataBarChart,
 	seriesDataTimeSeries,
 } from './__mocks__/uplotChartOptionsData';
 
-jest.mock('../../plugins/tooltipPlugin', () => jest.fn().mockReturnValue({}));
-jest.mock('../getSeriesData', () =>
-	jest.fn().mockImplementation((props) => {
+vi.mock('../../plugins/tooltipPlugin', () => ({
+	default: vi.fn().mockReturnValue({}),
+}));
+vi.mock('../getSeriesData', () => ({
+	default: vi.fn().mockImplementation((props) => {
 		const { panelType } = props;
 
 		if (panelType === PANEL_TYPES.TIME_SERIES) {
@@ -17,7 +20,7 @@ jest.mock('../getSeriesData', () =>
 		}
 		return seriesDataBarChart;
 	}),
-);
+}));
 
 describe('getUPlotChartOptions', () => {
 	it('should return uPlot options', () => {
@@ -64,9 +67,9 @@ describe('getUPlotChartOptions', () => {
 
 	it('Should return line chart as drawStyle for time series', () => {
 		const options = getUPlotChartOptions(inputPropsTimeSeries);
-		// @ts-expect-error
+		// @ts-expect-error: drawStyle is a custom runtime prop, not part of uPlot.Series
 		expect(options.series[1].drawStyle).toBe('line');
-		// @ts-expect-error
+		// @ts-expect-error: lineInterpolation is a custom runtime prop, not part of uPlot.Series
 		expect(options.series[1].lineInterpolation).toBe('spline');
 		expect(options.series[1].show).toBe(true);
 		expect(options.series[1].label).toBe('A');
@@ -81,9 +84,9 @@ describe('getUPlotChartOptions', () => {
 			...inputPropsTimeSeries,
 			panelType: PANEL_TYPES.BAR,
 		});
-		// @ts-expect-error
+		// @ts-expect-error: drawStyle is a custom runtime prop, not part of uPlot.Series
 		expect(options.series[1].drawStyle).toBe('bars');
-		// @ts-expect-error
+		// @ts-expect-error: lineInterpolation is a custom runtime prop, not part of uPlot.Series
 		expect(options.series[1].lineInterpolation).toBeNull();
 		expect(options.series[1].show).toBe(true);
 		expect(options.series[1].label).toBe('A');

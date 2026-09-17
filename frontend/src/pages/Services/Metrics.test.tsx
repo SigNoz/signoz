@@ -1,4 +1,4 @@
-import { render, screen } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils-full';
 
 import Metrics from '.';
 

@@ -3,13 +3,14 @@ import { getFormattedEndPointDropDownData } from 'container/ApiMonitoring/utils'
 
 import EndPointsDropDown from '../Explorer/Domains/DomainDetails/components/EndPointsDropDown';
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
+import type { Mock } from 'vitest';
 
 // Mock the Select component from antd
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
+vi.mock('antd', async () => {
+	const originalModule = await vi.importActual<typeof import('antd')>('antd');
 	return {
 		...originalModule,
-		Select: jest
+		Select: vi
 			.fn()
 			.mockImplementation(({ value, loading, onChange, options, onClear }) => (
 				<div data-testid="mock-select">
@@ -38,8 +39,8 @@ jest.mock('antd', () => {
 });
 
 // Mock the utilities
-jest.mock('container/ApiMonitoring/utils', () => ({
-	getFormattedEndPointDropDownData: jest.fn(),
+vi.mock('container/ApiMonitoring/utils', () => ({
+	getFormattedEndPointDropDownData: vi.fn(),
 }));
 
 describe('EndPointsDropDown Component', () => {
@@ -48,7 +49,7 @@ describe('EndPointsDropDown Component', () => {
 		{ key: '2', value: '/api/endpoint2', label: '/api/endpoint2' },
 	];
 
-	const mockSetSelectedEndPointName = jest.fn();
+	const mockSetSelectedEndPointName = vi.fn();
 
 	// Create a mock that satisfies the UseQueryResult interface
 	const createMockQueryResult = (overrides: any = {}): any => ({
@@ -82,8 +83,8 @@ describe('EndPointsDropDown Component', () => {
 		isRefetching: false,
 		isStale: false,
 		isSuccess: true,
-		refetch: jest.fn(),
-		remove: jest.fn(),
+		refetch: vi.fn(),
+		remove: vi.fn(),
 		status: 'success',
 		...overrides,
 	});
@@ -95,10 +96,8 @@ describe('EndPointsDropDown Component', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		(getFormattedEndPointDropDownData as jest.Mock).mockReturnValue(
-			mockEndPoints,
-		);
+		vi.clearAllMocks();
+		(getFormattedEndPointDropDownData as Mock).mockReturnValue(mockEndPoints);
 	});
 
 	it('renders the component correctly', () => {

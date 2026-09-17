@@ -26,7 +26,7 @@ const valueWithAttributeAndOperator: IBuilderQuery = {
 
 describe('Having filter behaviour', () => {
 	it('Having filter render is rendered', () => {
-		const mockFn = jest.fn();
+		const mockFn = vi.fn();
 		const { unmount } = render(
 			<HavingFilter
 				query={initialQueryBuilderFormValuesMap.metrics}
@@ -45,7 +45,7 @@ describe('Having filter behaviour', () => {
 	});
 
 	it('Having render is disabled initially', () => {
-		const mockFn = jest.fn();
+		const mockFn = vi.fn();
 		const { unmount } = render(
 			<HavingFilter
 				query={initialQueryBuilderFormValuesMap.metrics}
@@ -62,7 +62,7 @@ describe('Having filter behaviour', () => {
 	});
 
 	it('Is having filter is enable', () => {
-		const mockFn = jest.fn();
+		const mockFn = vi.fn();
 		const { unmount } = render(
 			<HavingFilter
 				query={valueWithAttributeAndOperator}
@@ -79,7 +79,7 @@ describe('Having filter behaviour', () => {
 	});
 
 	it('Autocomplete in the having filter', async () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		const user = userEvent.setup();
 
 		const constructedAttribute = 'SUM(bytes)';

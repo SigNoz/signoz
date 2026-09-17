@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
@@ -8,11 +9,11 @@ import TableViewActions from '../TableViewActions';
 import useAsyncJSONProcessing from '../useAsyncJSONProcessing';
 
 // Mock data for tests
-let mockCopyToClipboard: jest.Mock;
-let mockNotificationsSuccess: jest.Mock;
+let mockCopyToClipboard: Mock;
+let mockNotificationsSuccess: Mock;
 
 // Mock the components and hooks
-jest.mock('components/Logs/CopyClipboardHOC', () => ({
+vi.mock('components/Logs/CopyClipboardHOC', () => ({
 	__esModule: true,
 	default: ({
 		children,
@@ -46,13 +47,13 @@ jest.mock('components/Logs/CopyClipboardHOC', () => ({
 	),
 }));
 
-jest.mock('../useAsyncJSONProcessing', () => ({
+vi.mock('../useAsyncJSONProcessing', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock('antd', () => {
-	const antd = jest.requireActual('antd');
+vi.mock('antd', async () => {
+	const antd = await vi.importActual('antd');
 	return {
 		...antd,
 		// Render popover content inline to make its children testable
@@ -65,7 +66,7 @@ jest.mock('antd', () => {
 	};
 });
 
-jest.mock('providers/Timezone', () => ({
+vi.mock('providers/Timezone', () => ({
 	useTimezone: (): {
 		formatTimezoneAdjustedTimestamp: (timestamp: string) => string;
 	} => ({
@@ -73,7 +74,8 @@ jest.mock('providers/Timezone', () => ({
 	}),
 }));
 
-jest.mock('react-router-dom', () => ({
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): {
 		pathname: string;
 		search: string;
@@ -87,8 +89,8 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
-jest.mock('hooks/queryBuilder/useQueryBuilder');
-jest.mock('hooks/saveViews/useGetSavedViewParams');
+vi.mock('hooks/queryBuilder/useQueryBuilder');
+vi.mock('hooks/saveViews/useGetSavedViewParams');
 
 describe('TableViewActions', () => {
 	const TEST_VALUE = 'test value';
@@ -107,18 +109,18 @@ describe('TableViewActions', () => {
 		isListViewPanel: false,
 		isfilterInLoading: false,
 		isfilterOutLoading: false,
-		onClickHandler: jest.fn(),
-		handleChangeSelectedView: jest.fn(),
+		onClickHandler: vi.fn(),
+		handleChangeSelectedView: vi.fn(),
 	};
 
 	beforeEach(() => {
-		mockCopyToClipboard = jest.fn();
-		mockNotificationsSuccess = jest.fn();
-		defaultProps.onClickHandler = jest.fn();
-		defaultProps.handleChangeSelectedView = jest.fn();
+		mockCopyToClipboard = vi.fn();
+		mockNotificationsSuccess = vi.fn();
+		defaultProps.onClickHandler = vi.fn();
+		defaultProps.handleChangeSelectedView = vi.fn();
 
 		// Default mock for useAsyncJSONProcessing
-		const mockUseAsyncJSONProcessing = jest.mocked(useAsyncJSONProcessing);
+		const mockUseAsyncJSONProcessing = vi.mocked(useAsyncJSONProcessing);
 		mockUseAsyncJSONProcessing.mockReturnValue({
 			isLoading: false,
 			treeData: null,
@@ -126,9 +128,9 @@ describe('TableViewActions', () => {
 		});
 
 		// Default mock for useQueryBuilder
-		jest.mocked(useQueryBuilder).mockReturnValue({
+		vi.mocked(useQueryBuilder).mockReturnValue({
 			stagedQuery: null,
-			updateQueriesData: jest.fn((query, type, callback) => {
+			updateQueriesData: vi.fn((query, type, callback) => {
 				const updatedBuilder = {
 					...query.builder,
 					[type]: query.builder[type].map(callback),
@@ -141,7 +143,7 @@ describe('TableViewActions', () => {
 		} as any);
 
 		// Default mock for useGetSavedViewParams
-		jest
+		vi
 			.mocked(useGetSavedViewParams)
 			.mockReturnValue({ viewName: '', viewKey: '' });
 	});
@@ -232,7 +234,7 @@ describe('TableViewActions', () => {
 			clickhouse_sql: [],
 		};
 
-		const mockUpdateQueriesData = jest.fn((query, type, callback) => {
+		const mockUpdateQueriesData = vi.fn((query, type, callback) => {
 			const section = query.builder?.[type];
 			if (!Array.isArray(section)) {
 				return query;
@@ -246,12 +248,12 @@ describe('TableViewActions', () => {
 			};
 		});
 
-		jest.mocked(useQueryBuilder).mockReturnValue({
+		vi.mocked(useQueryBuilder).mockReturnValue({
 			stagedQuery: mockStagedQuery,
 			updateQueriesData: mockUpdateQueriesData,
 		} as any);
 
-		jest
+		vi
 			.mocked(useGetSavedViewParams)
 			.mockReturnValue({ viewName: '', viewKey: '' });
 
@@ -328,8 +330,8 @@ describe('TableViewActions', () => {
 			isListViewPanel: false,
 			isfilterInLoading: false,
 			isfilterOutLoading: false,
-			onClickHandler: jest.fn(),
-			handleChangeSelectedView: jest.fn(),
+			onClickHandler: vi.fn(),
+			handleChangeSelectedView: vi.fn(),
 		};
 
 		// Render component with body field

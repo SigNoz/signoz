@@ -6,16 +6,19 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { CreateAlertProvider } from '../../context';
 import AlertCondition from '../AlertCondition';
 
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock: any = jest.fn(() => ({
+	const uplotMock: any = vi.fn(() => ({
 		paths,
 	}));
 	uplotMock.paths = paths;
-	return uplotMock;
+	return {
+		paths,
+		default: uplotMock,
+	};
 });
 
 const STEPPER_TEST_ID = 'stepper';
@@ -28,7 +31,7 @@ const THRESHOLD_TAB_TEXT = 'Threshold';
 const ACTIVE_TAB_CLASS = '.active-tab';
 
 // Mock the Stepper component
-jest.mock('../../Stepper', () => ({
+vi.mock('../../Stepper', () => ({
 	__esModule: true,
 	default: function MockStepper({
 		stepNumber,
@@ -44,7 +47,7 @@ jest.mock('../../Stepper', () => ({
 }));
 
 // Mock the AlertThreshold component
-jest.mock('../AlertThreshold', () => ({
+vi.mock('../AlertThreshold', () => ({
 	__esModule: true,
 	default: function MockAlertThreshold(): JSX.Element {
 		return (
@@ -54,7 +57,7 @@ jest.mock('../AlertThreshold', () => ({
 }));
 
 // Mock the AnomalyThreshold component
-jest.mock('../AnomalyThreshold', () => ({
+vi.mock('../AnomalyThreshold', () => ({
 	__esModule: true,
 	default: function MockAnomalyThreshold(): JSX.Element {
 		return (
@@ -66,7 +69,7 @@ jest.mock('../AnomalyThreshold', () => ({
 }));
 
 // Mock useQueryBuilder hook
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): {
 		currentQuery: {
 			builder: { queryData: unknown[]; queryFormulas: unknown[] };
@@ -83,7 +86,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 				queryFormulas: [],
 			},
 		},
-		redirectWithQueryBuilderData: jest.fn(),
+		redirectWithQueryBuilderData: vi.fn(),
 	}),
 }));
 

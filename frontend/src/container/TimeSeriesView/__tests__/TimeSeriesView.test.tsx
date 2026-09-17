@@ -8,58 +8,58 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import TimeSeriesView from '../TimeSeriesView';
 
-jest.mock('components/Uplot', () => ({
+vi.mock('components/Uplot', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="uplot-chart" />,
 }));
 
-jest.mock('components/ExportMenu/ExportMenu', () => ({
+vi.mock('components/ExportMenu/ExportMenu', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="timeseries-export-menu" />,
 }));
 
-jest.mock('container/QueryBuilder/filters/BuilderUnitsFilter', () => ({
+vi.mock('container/QueryBuilder/filters/BuilderUnitsFilter', () => ({
 	BuilderUnitsFilter: (): JSX.Element => (
 		<div data-testid="builder-units-filter" />
 	),
 }));
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): unknown => ({ currentQuery: null }),
 }));
 
-jest.mock('lib/uPlotLib/getUplotChartOptions', () => ({
+vi.mock('lib/uPlotLib/getUplotChartOptions', () => ({
 	getUPlotChartOptions: (): unknown => ({}),
 }));
 
-jest.mock('lib/uPlotLib/utils/getUplotChartData', () => ({
+vi.mock('lib/uPlotLib/utils/getUplotChartData', () => ({
 	getUPlotChartData: (): number[][] => [
 		[1, 2],
 		[3, 4],
 	],
 }));
 
-jest.mock('lib/visualization/charts/utils/stackSeriesUtils', () => ({
+vi.mock('lib/visualization/charts/utils/stackSeriesUtils', () => ({
 	stackSeries: (): unknown => ({ data: [], bands: [] }),
 }));
 
-jest.mock('container/WidgetCard/Card/utils', () => ({
+vi.mock('container/WidgetCard/Card/utils', () => ({
 	getLocalStorageGraphVisibilityState: (): unknown => ({
 		graphVisibilityStates: [],
 	}),
 }));
 
-jest.mock('providers/Timezone', () => ({
+vi.mock('providers/Timezone', () => ({
 	useTimezone: (): unknown => ({ timezone: { value: 'UTC' } }),
 }));
 
-jest.mock('hooks/useDimensions', () => ({
+vi.mock('hooks/useDimensions', () => ({
 	useResizeObserver: (): unknown => ({ width: 800, height: 400 }),
 }));
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
 const mockStore = configureStore([])({ ...store.getState() });
@@ -120,7 +120,7 @@ describe('TimeSeriesView header gating', () => {
 	});
 
 	it('renders the unit selector only when onYAxisUnitChange is passed', () => {
-		const withUnit = renderView({ onYAxisUnitChange: jest.fn() });
+		const withUnit = renderView({ onYAxisUnitChange: vi.fn() });
 		expect(withUnit.queryByTestId('builder-units-filter')).toBeInTheDocument();
 		withUnit.unmount();
 

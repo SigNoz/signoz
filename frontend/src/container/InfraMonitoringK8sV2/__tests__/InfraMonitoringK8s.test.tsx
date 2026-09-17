@@ -11,32 +11,33 @@ import { AppProvider } from 'providers/App/App';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
+import type { Mock } from 'vitest';
 
 import { K8sCategories } from '../constants';
 import InfraMonitoringK8s from '../InfraMonitoringK8s';
 
 // Quick filters fire their own field APIs and are irrelevant to pagination.
-jest.mock('components/QuickFilters/QuickFilters', () => ({
+vi.mock('components/QuickFilters/QuickFilters', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="quick-filters" />,
 }));
 
 // The list owns its own page recovery; stubbing it keeps the page param under the
 // sole control of the category handler being tested here.
-jest.mock('../Base/K8sDynamicList', () => ({
+vi.mock('../Base/K8sDynamicList', () => ({
 	__esModule: true,
 	K8sDynamicList: (): JSX.Element => <div data-testid="k8s-dynamic-list" />,
 	default: (): JSX.Element => <div data-testid="k8s-dynamic-list" />,
 }));
 
 // Analytics only; jsdom lacks the Performance navigation entries it reads.
-jest.mock('lib/navigation', () => ({
+vi.mock('lib/navigation', () => ({
 	getNavigationReferrer: (): string => 'direct',
 }));
 
 function renderPage(
 	queryParams: Record<string, string>,
-	onUrlUpdate: jest.Mock<void, [UrlUpdateEvent]>,
+	onUrlUpdate: Mock<(event: UrlUpdateEvent) => void>,
 ): void {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
@@ -70,7 +71,7 @@ function renderPage(
 
 describe('InfraMonitoringK8s', () => {
 	describe('when the category changes from a page other than the first', () => {
-		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdateMock = vi.fn<(event: UrlUpdateEvent) => void>();
 
 		beforeEach(async () => {
 			onUrlUpdateMock.mockClear();

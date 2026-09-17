@@ -2,7 +2,7 @@ import type { PanelTableColumn } from 'pages/DashboardPage/DashboardContainer/qu
 
 import { formatTableCellText } from '../tableColumns';
 
-jest.mock('../../../utils/formatPanelValue', () => ({
+vi.mock('../../../utils/formatPanelValue', () => ({
 	formatPanelValue: (value: number, unit?: string): string =>
 		`${value}${unit ?? ''}`,
 }));

@@ -9,8 +9,8 @@ import { EQueryType } from 'types/common/dashboard';
 
 import { useGetQueryLabels } from './useGetQueryLabels';
 
-jest.mock('components/QueryBuilderV2/utils', () => ({
-	getQueryLabelWithAggregation: jest.fn(() => []),
+vi.mock('components/QueryBuilderV2/utils', () => ({
+	getQueryLabelWithAggregation: vi.fn(() => []),
 }));
 
 function buildQuery(overrides: Partial<Query> = {}): Query {

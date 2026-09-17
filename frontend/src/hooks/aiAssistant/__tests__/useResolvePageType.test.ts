@@ -5,15 +5,17 @@ import ROUTES from 'constants/routes';
 
 import { useResolvePageType } from '../useResolvePageType';
 
-const mockUseLocation = jest.fn();
-const mockUseVariant = jest.fn();
+const { mockUseLocation, mockUseVariant } = vi.hoisted(() => ({
+	mockUseLocation: vi.fn(),
+	mockUseVariant: vi.fn(),
+}));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): unknown => mockUseLocation(),
 }));
 
-jest.mock('container/AIAssistant/VariantContext', () => ({
+vi.mock('container/AIAssistant/VariantContext', () => ({
 	useVariant: (): unknown => mockUseVariant(),
 }));
 
@@ -30,7 +32,7 @@ function setup(
 
 describe('useResolvePageType', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('returns other for the standalone "page" assistant surface', () => {

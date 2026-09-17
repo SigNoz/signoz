@@ -292,7 +292,7 @@ describe('EditRolePage', () => {
 		});
 
 		it('calls update API when save clicked', async () => {
-			const updateSpy = jest.fn();
+			const updateSpy = vi.fn();
 
 			server.use(
 				rest.put(`${rolesApiBase}/:id`, async (req, res, ctx) => {

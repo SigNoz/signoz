@@ -29,6 +29,9 @@ e2e/test-plan/service-map/
 e2e/test-plan/services/
 e2e/test-plan/traces/
 e2e/test-plan/user-preferences/
+**/__screenshots__
+**/.vitest-attachments
+**/.vitest
 
 # Storybook
 /storybook-static/

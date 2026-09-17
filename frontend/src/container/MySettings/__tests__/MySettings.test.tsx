@@ -1,3 +1,4 @@
+import type { MockedFunction } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import MySettingsContainer from 'container/MySettings';
 import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
@@ -14,30 +15,44 @@ import {
 	screen,
 	waitFor,
 	within,
-} from 'tests/test-utils';
+} from 'tests/test-utils-full';
 import APIError from 'types/api/error';
 import { toast } from '@signozhq/ui/sonner';
 
-jest.mock('hooks/useActiveLicenseKey/useActiveLicenseKey');
-const mockUseActiveLicenseKey = useActiveLicenseKey as jest.MockedFunction<
+vi.mock('hooks/useActiveLicenseKey/useActiveLicenseKey');
+const mockUseActiveLicenseKey = useActiveLicenseKey as MockedFunction<
 	typeof useActiveLicenseKey
 >;
 
-const toggleThemeFunction = jest.fn();
-const copyToClipboardFn = jest.fn();
-const editUserFn = jest.fn();
-const updateMyPasswordFn = jest.fn();
-const showErrorModalFn = jest.fn();
+const {
+	toggleThemeFunction,
+	copyToClipboardFn,
+	editUserFn,
+	updateMyPasswordFn,
+	showErrorModalFn,
+	errorNotification,
+	successNotification,
+} = vi.hoisted(() => ({
+	toggleThemeFunction: vi.fn(),
+	copyToClipboardFn: vi.fn(),
+	editUserFn: vi.fn(),
+	updateMyPasswordFn: vi.fn(),
+	showErrorModalFn: vi.fn(),
+	errorNotification: vi.fn(),
+	successNotification: vi.fn(),
+}));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual<typeof import('@signozhq/ui/sonner')>(
+		'@signozhq/ui/sonner',
+	)),
 	toast: {
-		success: jest.fn(),
-		error: jest.fn(),
+		success: vi.fn(),
+		error: vi.fn(),
 	},
 }));
 
-jest.mock('react-use', () => ({
+vi.mock('react-use', () => ({
 	__esModule: true,
 	useCopyToClipboard: (): [unknown, (text: string) => void] => [
 		null,
@@ -45,39 +60,41 @@ jest.mock('react-use', () => ({
 	],
 }));
 
-jest.mock('api/generated/services/users', () => ({
-	...jest.requireActual('api/generated/services/users'),
+vi.mock('api/generated/services/users', async () => ({
+	...(await vi.importActual<typeof import('api/generated/services/users')>(
+		'api/generated/services/users',
+	)),
 	updateMyPassword: (...args: unknown[]): Promise<unknown> =>
 		updateMyPasswordFn(...args),
-	useUpdateMyUserV2: jest.fn(() => ({
+	useUpdateMyUserV2: vi.fn(() => ({
 		mutateAsync: (...args: unknown[]): Promise<unknown> => editUserFn(...args),
 		isLoading: false,
 	})),
 }));
 
-jest.mock('providers/ErrorModalProvider', () => ({
-	...jest.requireActual('providers/ErrorModalProvider'),
-	useErrorModal: jest.fn(() => ({
+vi.mock('providers/ErrorModalProvider', async () => ({
+	...(await vi.importActual<typeof import('providers/ErrorModalProvider')>(
+		'providers/ErrorModalProvider',
+	)),
+	useErrorModal: vi.fn(() => ({
 		showErrorModal: showErrorModalFn,
 	})),
 }));
 
-jest.mock('hooks/useDarkMode', () => ({
+vi.mock('hooks/useDarkMode', () => ({
 	__esModule: true,
-	useIsDarkMode: jest.fn(() => true),
-	useSystemTheme: jest.fn(() => 'dark'),
-	default: jest.fn(() => ({
+	useIsDarkMode: vi.fn(() => true),
+	useSystemTheme: vi.fn(() => 'dark'),
+	default: vi.fn(() => ({
 		toggleTheme: toggleThemeFunction,
 		autoSwitch: false,
-		setAutoSwitch: jest.fn(),
+		setAutoSwitch: vi.fn(),
 	})),
 }));
 
-const errorNotification = jest.fn();
-const successNotification = jest.fn();
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	__esModule: true,
-	useNotifications: jest.fn(() => ({
+	useNotifications: vi.fn(() => ({
 		notifications: {
 			error: errorNotification,
 			success: successNotification,
@@ -93,9 +110,23 @@ const UPDATE_NAME_BUTTON_TEST_ID = 'update-name-btn';
 const RESET_PASSWORD_BUTTON_TEST_ID = 'reset-password-btn';
 const UPDATE_NAME_BUTTON_TEXT = 'Update name';
 
+/**
+ * Fire the events that end antd's modal leave motion on the reset-password
+ * dialog. Closing starts an rc-motion leave animation that only finishes on a
+ * transition/animation event; jsdom runs no CSS so that event never fires
+ * there (in a real browser the motion is already over and the synthetic events
+ * are a no-op).
+ */
+function finishResetPasswordModalLeave(): void {
+	const dialog = document.querySelector('.reset-password-modal');
+	for (const name of ['transitionend', 'animationend', 'webkitAnimationEnd']) {
+		dialog?.dispatchEvent(new Event(name, { bubbles: false }));
+	}
+}
+
 describe('MySettings Flows', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		editUserFn.mockResolvedValue({});
 		updateMyPasswordFn.mockResolvedValue({});
 		mockUseActiveLicenseKey.mockReturnValue({
@@ -294,6 +325,7 @@ describe('MySettings Flows', () => {
 
 			await waitFor(() => {
 				expect(toast.success).toHaveBeenCalledWith('Password updated successfully');
+				finishResetPasswordModalLeave();
 				expect(
 					screen.queryByTestId(CURRENT_PASSWORD_TEST_ID),
 				).not.toBeInTheDocument();
@@ -325,6 +357,7 @@ describe('MySettings Flows', () => {
 
 			// Reopen the modal
 			await waitFor(() => {
+				finishResetPasswordModalLeave();
 				expect(
 					screen.queryByTestId(CURRENT_PASSWORD_TEST_ID),
 				).not.toBeInTheDocument();

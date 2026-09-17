@@ -6,13 +6,14 @@ import {
 	usePlotContext,
 } from 'lib/uPlotV2/context/PlotContext';
 import type uPlot from 'uplot';
+import type { Mock, MockedFunction } from 'vitest';
 
-jest.mock('lib/visualization/panels/utils/legendVisibilityUtils', () => ({
-	updateSeriesVisibilityToLocalStorage: jest.fn(),
+vi.mock('lib/visualization/panels/utils/legendVisibilityUtils', () => ({
+	updateSeriesVisibilityToLocalStorage: vi.fn(),
 }));
 
 const mockUpdateSeriesVisibilityToLocalStorage =
-	updateSeriesVisibilityToLocalStorage as jest.MockedFunction<
+	updateSeriesVisibilityToLocalStorage as MockedFunction<
 		typeof updateSeriesVisibilityToLocalStorage
 	>;
 
@@ -24,9 +25,9 @@ interface MockSeries extends Partial<uPlot.Series> {
 const createMockPlot = (series: MockSeries[] = []): uPlot =>
 	({
 		series,
-		batch: jest.fn((fn: () => void) => fn()),
-		setSeries: jest.fn(),
-		redraw: jest.fn(),
+		batch: vi.fn((fn: () => void) => fn()),
+		setSeries: vi.fn(),
+		redraw: vi.fn(),
 	}) as unknown as uPlot;
 
 interface TestComponentProps {
@@ -143,7 +144,7 @@ const TestComponent = ({
 
 describe('PlotContext', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('throws when usePlotContext is used outside provider', () => {
@@ -237,7 +238,7 @@ describe('PlotContext', () => {
 			await user.click(screen.getByTestId('init'));
 			await user.click(screen.getByTestId('toggle-visibility'));
 
-			const setSeries = (plot.setSeries as jest.Mock).mock.calls;
+			const setSeries = (plot.setSeries as Mock).mock.calls;
 
 			// index 0 is skipped, so we expect calls for 1 and 2
 			expect(setSeries).toStrictEqual([
@@ -278,11 +279,11 @@ describe('PlotContext', () => {
 			await user.click(screen.getByTestId('init'));
 			await user.click(screen.getByTestId('toggle-visibility'));
 
-			(plot.setSeries as jest.Mock).mockClear();
+			(plot.setSeries as Mock).mockClear();
 
 			await user.click(screen.getByTestId('toggle-visibility'));
 
-			const setSeries = (plot.setSeries as jest.Mock).mock.calls;
+			const setSeries = (plot.setSeries as Mock).mock.calls;
 
 			// After reset, all non-zero series should be shown
 			expect(setSeries).toStrictEqual([
@@ -587,7 +588,7 @@ describe('PlotContext', () => {
 			const user = userEvent.setup();
 			const plot = createMockPlot(series());
 			// The mock's setSeries doesn't mutate, so mirror what uPlot would do.
-			(plot.setSeries as jest.Mock).mockImplementation(
+			(plot.setSeries as Mock).mockImplementation(
 				(index: number, opts: { show?: boolean }) => {
 					if (typeof opts.show === 'boolean') {
 						(plot.series[index] as MockSeries).show = opts.show;
@@ -614,7 +615,7 @@ describe('PlotContext', () => {
 		it('keeps the dim when a different series is hidden', async () => {
 			const user = userEvent.setup();
 			const plot = createMockPlot(series());
-			(plot.setSeries as jest.Mock).mockImplementation(
+			(plot.setSeries as Mock).mockImplementation(
 				(index: number, opts: { show?: boolean }) => {
 					if (typeof opts.show === 'boolean') {
 						(plot.series[index] as MockSeries).show = opts.show;

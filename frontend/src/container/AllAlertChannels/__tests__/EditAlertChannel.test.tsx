@@ -8,11 +8,13 @@ import { render, screen } from 'tests/test-utils';
 
 import { testLabelInputAndHelpValue } from './testUtils';
 
-const successNotification = jest.fn();
-const errorNotification = jest.fn();
-jest.mock('hooks/useNotifications', () => ({
+const { successNotification, errorNotification } = vi.hoisted(() => ({
+	successNotification: vi.fn(),
+	errorNotification: vi.fn(),
+}));
+vi.mock('hooks/useNotifications', () => ({
 	__esModule: true,
-	useNotifications: jest.fn(() => ({
+	useNotifications: vi.fn(() => ({
 		notifications: {
 			success: successNotification,
 			error: errorNotification,
@@ -20,8 +22,8 @@ jest.mock('hooks/useNotifications', () => ({
 	})),
 }));
 
-jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
-	MarkdownRenderer: jest.fn(() => <div>Mocked MarkdownRenderer</div>),
+vi.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+	MarkdownRenderer: vi.fn(() => <div>Mocked MarkdownRenderer</div>),
 }));
 
 describe('Should check if the edit alert channel is properly displayed', () => {
@@ -34,7 +36,7 @@ describe('Should check if the edit alert channel is properly displayed', () => {
 		);
 	});
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 	it('Should check if the title is "Edit Notification Channels"', () => {
 		expect(screen.getByText('page_title_edit')).toBeInTheDocument();

@@ -1,18 +1,19 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
 
 import { useExportDashboards } from '../useExportDashboards';
 
-jest.mock('api/generated/services/dashboard', () => ({
-	useListDashboardsForUserV2: jest.fn(),
+vi.mock('api/generated/services/dashboard', () => ({
+	useListDashboardsForUserV2: vi.fn(),
 }));
 
-const mockUseListV2 = useListDashboardsForUserV2 as jest.Mock;
+const mockUseListV2 = useListDashboardsForUserV2 as Mock;
 
-const v2Refetch = jest.fn();
+const v2Refetch = vi.fn();
 
 beforeEach(() => {
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 	mockUseListV2.mockReturnValue({
 		data: {
 			data: {

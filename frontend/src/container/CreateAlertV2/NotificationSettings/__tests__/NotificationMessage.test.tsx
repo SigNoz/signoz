@@ -5,12 +5,12 @@ import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationS
 
 import NotificationMessage from '../NotificationMessage';
 
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock = jest.fn(() => ({
+	const uplotMock = vi.fn(() => ({
 		paths,
 	}));
 	return {
@@ -19,10 +19,16 @@ jest.mock('uplot', () => {
 	};
 });
 
-const mockSetNotificationSettings = jest.fn();
+const mockSetNotificationSettings = vi.fn();
 const initialNotificationSettingsState =
 	createMockAlertContextState().notificationSettings;
-jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('container/CreateAlertV2/context', { spy: true });
+
+vi.mocked(createAlertContext.useCreateAlertState).mockReturnValue(
 	createMockAlertContextState({
 		notificationSettings: {
 			...initialNotificationSettingsState,
@@ -34,7 +40,7 @@ jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 
 describe('NotificationMessage', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders textarea with message and placeholder', () => {
@@ -56,7 +62,7 @@ describe('NotificationMessage', () => {
 	});
 
 	it('displays existing description value', () => {
-		jest.spyOn(createAlertContext, 'useCreateAlertState').mockImplementation(
+		vi.mocked(createAlertContext.useCreateAlertState).mockImplementation(
 			() =>
 				({
 					notificationSettings: {

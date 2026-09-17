@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
@@ -5,12 +6,12 @@ import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
 import type { TableColumnOption } from '../useTableColumns';
 import { useSeedMetricUnit } from '../useSeedMetricUnit';
 
-jest.mock('hooks/useGetYAxisUnit', () => ({
+vi.mock('hooks/useGetYAxisUnit', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-const mockUseGetYAxisUnit = useGetYAxisUnit as unknown as jest.Mock;
+const mockUseGetYAxisUnit = useGetYAxisUnit as unknown as Mock;
 
 function mockMetricUnit(
 	yAxisUnit: string | undefined,
@@ -46,12 +47,12 @@ const COLUMNS: TableColumnOption[] = [
 const NO_COLUMNS: TableColumnOption[] = [];
 
 describe('useSeedMetricUnit', () => {
-	beforeEach(() => jest.clearAllMocks());
+	beforeEach(() => vi.clearAllMocks());
 
 	describe('panel-wide unit (controls.unit)', () => {
 		it('seeds formatting.unit from the metric on a new panel', () => {
 			mockMetricUnit('bytes');
-			const onChangeSpec = jest.fn();
+			const onChangeSpec = vi.fn();
 
 			renderHook(() =>
 				useSeedMetricUnit({
@@ -68,7 +69,7 @@ describe('useSeedMetricUnit', () => {
 
 		it('does not seed when not a new panel', () => {
 			mockMetricUnit('bytes');
-			const onChangeSpec = jest.fn();
+			const onChangeSpec = vi.fn();
 
 			renderHook(() =>
 				useSeedMetricUnit({
@@ -85,7 +86,7 @@ describe('useSeedMetricUnit', () => {
 
 		it('does not seed when the unit already matches the metric', () => {
 			mockMetricUnit('bytes');
-			const onChangeSpec = jest.fn();
+			const onChangeSpec = vi.fn();
 
 			renderHook(() =>
 				useSeedMetricUnit({
@@ -102,7 +103,7 @@ describe('useSeedMetricUnit', () => {
 
 		it('re-seeds when the resolved metric unit changes', () => {
 			mockMetricUnit('bytes');
-			const onChangeSpec = jest.fn();
+			const onChangeSpec = vi.fn();
 
 			const { rerender } = renderHook(
 				(props: { spec: DashboardtypesPanelSpecDTO }) =>
@@ -128,7 +129,7 @@ describe('useSeedMetricUnit', () => {
 	describe('per-column units (controls.columnUnits)', () => {
 		it('seeds every value column with the metric unit once columns resolve', () => {
 			mockMetricUnit('bytes');
-			const onChangeSpec = jest.fn();
+			const onChangeSpec = vi.fn();
 
 			const { rerender } = renderHook(
 				(props: { columns: TableColumnOption[] }) =>
@@ -153,7 +154,7 @@ describe('useSeedMetricUnit', () => {
 
 		it('never writes formatting.unit for a Table', () => {
 			mockMetricUnit('bytes');
-			const onChangeSpec = jest.fn();
+			const onChangeSpec = vi.fn();
 
 			renderHook(() =>
 				useSeedMetricUnit({
@@ -170,7 +171,7 @@ describe('useSeedMetricUnit', () => {
 
 		it('only fills columns without a unit yet, keeping the user-set one', () => {
 			mockMetricUnit('bytes');
-			const onChangeSpec = jest.fn();
+			const onChangeSpec = vi.fn();
 
 			renderHook(() =>
 				useSeedMetricUnit({
@@ -190,7 +191,7 @@ describe('useSeedMetricUnit', () => {
 
 		it('does not write when every column already has a unit', () => {
 			mockMetricUnit('bytes');
-			const onChangeSpec = jest.fn();
+			const onChangeSpec = vi.fn();
 
 			renderHook(() =>
 				useSeedMetricUnit({
@@ -207,7 +208,7 @@ describe('useSeedMetricUnit', () => {
 
 		it('seeds once and does not re-run after the metric unit changes', () => {
 			mockMetricUnit('bytes');
-			const onChangeSpec = jest.fn();
+			const onChangeSpec = vi.fn();
 
 			const { rerender } = renderHook(
 				(props: { metric: string }) => {
@@ -231,7 +232,7 @@ describe('useSeedMetricUnit', () => {
 
 	it('seeds nothing when the kind has no unit control (Histogram/List)', () => {
 		mockMetricUnit('bytes');
-		const onChangeSpec = jest.fn();
+		const onChangeSpec = vi.fn();
 
 		renderHook(() =>
 			useSeedMetricUnit({
@@ -255,7 +256,7 @@ describe('useSeedMetricUnit', () => {
 				formattingControls: { unit: true },
 				columns: NO_COLUMNS,
 				spec: makeSpec(),
-				onChangeSpec: jest.fn(),
+				onChangeSpec: vi.fn(),
 			}),
 		);
 

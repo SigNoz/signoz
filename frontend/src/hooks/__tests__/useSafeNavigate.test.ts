@@ -2,7 +2,7 @@
  * Tests for useSafeNavigate's mock contract.
  *
  * The real useSafeNavigate hook is globally replaced by a mock via
- * jest.config.ts moduleNameMapper, so we cannot test the real
+ * vitest.config.ts aliases it, so we cannot test the real
  * implementation here. Instead we verify:
  *
  * 1. The mock accepts the newTab option without type errors — ensuring

@@ -1,17 +1,35 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import type { Mock } from 'vitest';
+
 import CustomSelect from '../CustomSelect';
 
-// Mock scrollIntoView which isn't available in JSDOM
-window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
 // Mock clipboard API
-Object.assign(navigator, {
-	clipboard: {
-		writeText: jest.fn(() => Promise.resolve()),
+Object.defineProperty(navigator, 'clipboard', {
+	configurable: true,
+	value: {
+		writeText: vi.fn(() => Promise.resolve()),
 	},
 });
+
+/**
+ * Wait for the antd dropdown to reach its hidden state. Closing starts an
+ * rc-motion leave animation that only finishes on an animation event; jsdom
+ * runs no CSS so that event never fires there (in this jsdom the motion
+ * listens for the prefixed `webkitAnimationEnd`). Firing it manually ends the
+ * motion exactly as the browser's own event would; in a real browser the
+ * motion is already over and the synthetic event is a no-op.
+ */
+async function waitForDropdownHidden(): Promise<void> {
+	await waitFor(() => {
+		const dropdown = document.querySelector('.ant-select-dropdown');
+		for (const name of ['animationend', 'webkitAnimationEnd']) {
+			dropdown?.dispatchEvent(new Event(name, { bubbles: false }));
+		}
+		expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
+	});
+}
 
 // Test data
 const mockOptions = [
@@ -40,12 +58,12 @@ const mockGroupedOptions = [
 
 describe('CustomSelect - Comprehensive Tests', () => {
 	let user: ReturnType<typeof userEvent.setup>;
-	let mockOnChange: jest.Mock;
+	let mockOnChange: Mock;
 
 	beforeEach(() => {
 		user = userEvent.setup();
-		mockOnChange = jest.fn();
-		jest.clearAllMocks();
+		mockOnChange = vi.fn();
+		vi.clearAllMocks();
 	});
 
 	// ===== 1. CUSTOM VALUES SUPPORT =====
@@ -678,10 +696,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await user.click(document.body);
 
 			// Dropdown should close
-			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
-			});
+			await waitForDropdownHidden();
 		});
 
 		it('AKN-02: TAB navigation from input to dropdown', async () => {
@@ -831,7 +846,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 	// ===== 13. ADVANCED CLEAR ACTIONS =====
 	describe('Advanced Clear Actions (ACA)', () => {
 		it('ACA-01: Clear action waiting behavior', async () => {
-			const mockOnChangeWithDelay = jest.fn().mockImplementation(
+			const mockOnChangeWithDelay = vi.fn().mockImplementation(
 				() =>
 					new Promise((resolve) => {
 						setTimeout(resolve, 100);
@@ -1075,10 +1090,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await user.click(backendOption);
 
 			// Dropdown should close after selection in single select
-			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
-			});
+			await waitForDropdownHidden();
 		});
 	});
 });

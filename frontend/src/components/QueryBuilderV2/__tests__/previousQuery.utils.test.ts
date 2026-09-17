@@ -43,7 +43,7 @@ describe('previousQuery.utils', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('getQueryKey normalizes non-meter signal to empty string', () => {
@@ -150,7 +150,7 @@ describe('previousQuery.utils', () => {
 	});
 
 	it('write errors (e.g., quota) are caught and do not throw', () => {
-		const spy = jest
+		const spy = vi
 			.spyOn(window.sessionStorage.__proto__, 'setItem')
 			.mockImplementation(() => {
 				throw new Error('quota exceeded');

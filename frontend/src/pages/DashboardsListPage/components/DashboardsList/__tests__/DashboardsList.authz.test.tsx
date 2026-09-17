@@ -2,7 +2,7 @@ import { server } from 'mocks-server/server';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, waitFor, within } from 'tests/test-utils';
+import { render, screen, waitFor, within } from 'tests/test-utils-full';
 import {
 	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
@@ -13,6 +13,7 @@ import {
 	DashboardCreatePermission,
 	DashboardListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+import { SINGLE_FLIGHT_WAIT_TIME_MS } from 'lib/authz/hooks/useAuthZ/constants';
 
 import DashboardsList from '../DashboardsList';
 
@@ -36,9 +37,15 @@ describe('DashboardsList - AuthZ', () => {
 		);
 	});
 
-	afterEach(() => {
-		jest.restoreAllMocks();
+	afterEach(async () => {
+		vi.restoreAllMocks();
 		server.resetHandlers();
+		// useAuthZ batches its checks behind a module-level single-flight window.
+		// Draining it here stops the next test from joining the previous test's
+		// batch and reading its grants.
+		await new Promise((resolve) => {
+			setTimeout(resolve, SINGLE_FLIGHT_WAIT_TIME_MS * 2);
+		});
 	});
 
 	describe('create permission', () => {
@@ -90,7 +97,7 @@ describe('DashboardsList - AuthZ', () => {
 
 	describe('list permission', () => {
 		it('blocks the table and never fires the list request when list is denied', async () => {
-			const onList = jest.fn();
+			const onList = vi.fn();
 			server.use(
 				// Create is still granted — the CTA must stay usable (authz guide list pattern).
 				setupAuthzAllow(DashboardCreatePermission),
@@ -186,7 +193,7 @@ describe('DashboardsList - AuthZ', () => {
 
 		// Saved-view CRUD is gated on `dashboard:list`, so firing this only 403s.
 		it('never fetches saved views when list is denied', async () => {
-			const onViews = jest.fn();
+			const onViews = vi.fn();
 			server.use(
 				setupAuthzAllow(DashboardCreatePermission),
 				rest.get(VIEWS_URL, (_req, res, ctx) => {
@@ -213,7 +220,7 @@ describe('DashboardsList - AuthZ', () => {
 		// An unanswered check is not a grant, and the table is gated on the same
 		// signal as the request, so it explains itself instead of rendering empty.
 		it('blocks the table when the permission check fails', async () => {
-			const onList = jest.fn();
+			const onList = vi.fn();
 			server.use(
 				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
 				rest.get(LIST_URL, (_req, res, ctx) => {

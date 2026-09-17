@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
@@ -17,39 +18,38 @@ import {
 	TimeAggregationOptions,
 } from '../types';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
 	}),
 }));
 
-jest.mock('api/generated/services/metrics', () => ({
-	useListMetrics: jest.fn().mockReturnValue({
+vi.mock('providers/App/App', { spy: true });
+
+vi.mock('api/generated/services/metrics', () => ({
+	useListMetrics: vi.fn().mockReturnValue({
 		isFetching: false,
 		isError: false,
 		data: { data: { metrics: [] } },
 	}),
-	useUpdateMetricMetadata: jest.fn().mockReturnValue({
-		mutate: jest.fn(),
+	useUpdateMetricMetadata: vi.fn().mockReturnValue({
+		mutate: vi.fn(),
 		isLoading: false,
 	}),
 }));
 
-jest.mock('hooks/useDebounce', () => ({
+vi.mock('hooks/useDebounce', () => ({
 	__esModule: true,
 	default: <T,>(value: T): T => value,
 }));
 
-jest.mock(
-	'container/QueryBuilder/filters/OptionRenderer/OptionRenderer',
-	() => ({
-		__esModule: true,
-		default: ({ value }: { value: string }): JSX.Element => <span>{value}</span>,
-	}),
-);
+vi.mock('container/QueryBuilder/filters/OptionRenderer/OptionRenderer', () => ({
+	__esModule: true,
+	default: ({ value }: { value: string }): JSX.Element => <span>{value}</span>,
+}));
 
-jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
+vi.mocked(appContextHooks.useAppContext).mockReturnValue({
 	user: {
 		role: 'admin',
 	},
@@ -75,8 +75,8 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 
 const queryClient = new QueryClient();
 
-const mockSetCurrentMetricName = jest.fn();
-const mockSetAppliedMetricName = jest.fn();
+const mockSetCurrentMetricName = vi.fn();
+const mockSetAppliedMetricName = vi.fn();
 
 describe('QueryBuilder', () => {
 	const defaultProps = {
@@ -91,7 +91,7 @@ describe('QueryBuilder', () => {
 			spaceAggregationOption: SpaceAggregationOptions.AVG_BY,
 			filterExpression: '',
 		},
-		dispatchMetricInspectionOptions: jest.fn(),
+		dispatchMetricInspectionOptions: vi.fn(),
 		metricType: MetrictypesTypeDTO.sum,
 		inspectionStep: InspectionStep.TIME_AGGREGATION,
 		inspectMetricsTimeSeries: [],
@@ -102,13 +102,13 @@ describe('QueryBuilder', () => {
 			},
 			filterExpression: '',
 		} as any,
-		setCurrentQuery: jest.fn(),
+		setCurrentQuery: vi.fn(),
 		isLoadingQueries: false,
-		handleCancelQuery: jest.fn(),
+		handleCancelQuery: vi.fn(),
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders query builder with all components', () => {
@@ -128,7 +128,7 @@ describe('QueryBuilder', () => {
 
 	it('should call setCurrentMetricName when metric name is selected', async () => {
 		const user = userEvent.setup();
-		(metricsService.useListMetrics as jest.Mock).mockReturnValue({
+		(metricsService.useListMetrics as Mock).mockReturnValue({
 			isFetching: false,
 			isError: false,
 			data: {

@@ -2,7 +2,7 @@ import userEvent from '@testing-library/user-event';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils-full';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
@@ -44,7 +44,7 @@ const mockServiceAccountsAPI = [
 
 describe('ServiceAccountsSettings (integration)', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			setupAuthzAdmin(),
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) =>
@@ -140,8 +140,8 @@ describe('ServiceAccountsSettings (integration)', () => {
 	});
 
 	it('saving changes in the drawer refetches the list', async () => {
-		const listRefetchSpy = jest.fn();
-		const putSpy = jest.fn();
+		const listRefetchSpy = vi.fn();
+		const putSpy = vi.fn();
 
 		server.use(
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) => {

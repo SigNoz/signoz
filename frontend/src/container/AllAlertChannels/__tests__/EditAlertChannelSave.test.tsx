@@ -4,15 +4,15 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	__esModule: true,
-	useNotifications: jest.fn(() => ({
-		notifications: { success: jest.fn(), error: jest.fn() },
+	useNotifications: vi.fn(() => ({
+		notifications: { success: vi.fn(), error: vi.fn() },
 	})),
 }));
 
-jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
-	MarkdownRenderer: jest.fn(() => <div>Mocked MarkdownRenderer</div>),
+vi.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+	MarkdownRenderer: vi.fn(() => <div>Mocked MarkdownRenderer</div>),
 }));
 
 interface EditRequest {
@@ -40,7 +40,7 @@ function mockEditChannel(): { calls: EditRequest[] } {
 }
 
 describe('EditAlertChannels save', () => {
-	afterEach(() => jest.clearAllMocks());
+	afterEach(() => vi.clearAllMocks());
 
 	it('sends the channelId in the edit request (regression: empty id)', async () => {
 		const edit = mockEditChannel();

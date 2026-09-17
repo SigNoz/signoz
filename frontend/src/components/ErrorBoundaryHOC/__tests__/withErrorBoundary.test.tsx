@@ -6,8 +6,8 @@ import withErrorBoundary, {
 } from '../withErrorBoundary';
 
 // Mock dependencies before imports
-jest.mock('@sentry/react', () => {
-	const ReactMock = jest.requireActual('react');
+vi.mock('@sentry/react', async () => {
+	const ReactMock = await vi.importActual<typeof import('react')>('react');
 
 	class MockErrorBoundary extends ReactMock.Component<
 		{
@@ -34,8 +34,8 @@ jest.mock('@sentry/react', () => {
 			const { beforeCapture, onError } = this.props;
 			if (beforeCapture) {
 				const mockScope = {
-					setTag: jest.fn(),
-					setLevel: jest.fn(),
+					setTag: vi.fn(),
+					setLevel: vi.fn(),
 				};
 				beforeCapture(mockScope);
 			}
@@ -64,15 +64,11 @@ jest.mock('@sentry/react', () => {
 	};
 });
 
-jest.mock(
-	'../../../pages/ErrorBoundaryFallback/ErrorBoundaryFallback',
-	() =>
-		function MockErrorBoundaryFallback(): JSX.Element {
-			return (
-				<div data-testid="default-error-fallback">Default Error Fallback</div>
-			);
-		},
-);
+vi.mock('../../../pages/ErrorBoundaryFallback/ErrorBoundaryFallback', () => ({
+	default: function MockErrorBoundaryFallback(): JSX.Element {
+		return <div data-testid="default-error-fallback">Default Error Fallback</div>;
+	},
+}));
 
 // Test component that can throw errors
 interface TestComponentProps {
@@ -105,7 +101,7 @@ describe('withErrorBoundary', () => {
 	// Suppress console errors for cleaner test output
 	const originalError = console.error;
 	beforeAll(() => {
-		console.error = jest.fn();
+		console.error = vi.fn();
 	});
 
 	afterAll(() => {
@@ -113,7 +109,7 @@ describe('withErrorBoundary', () => {
 	});
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should wrap component with ErrorBoundary and render successfully', () => {
@@ -162,7 +158,7 @@ describe('withErrorBoundary', () => {
 
 	it('should call custom error handler when error occurs', () => {
 		// Arrange
-		const mockErrorHandler = jest.fn();
+		const mockErrorHandler = vi.fn();
 		const options: WithErrorBoundaryOptions = {
 			onError: mockErrorHandler,
 		};

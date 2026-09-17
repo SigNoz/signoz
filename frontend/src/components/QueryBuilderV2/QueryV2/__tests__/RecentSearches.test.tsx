@@ -27,19 +27,19 @@ beforeAll(() => {
 	mockCodeMirrorDomApis();
 });
 
-jest.mock('hooks/useDarkMode', () => ({
+vi.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('api/querySuggestions/getFieldKeySuggestions', () => ({
-	getFieldKeySuggestions: jest.fn().mockResolvedValue({
+vi.mock('api/querySuggestions/getFieldKeySuggestions', () => ({
+	getFieldKeySuggestions: vi.fn().mockResolvedValue({
 		status: 'success',
 		data: { complete: true, keys: {} },
 	}),
 }));
 
-jest.mock('api/querySuggestions/getFieldValueSuggestions', () => ({
-	getFieldValueSuggestions: jest.fn().mockResolvedValue({
+vi.mock('api/querySuggestions/getFieldValueSuggestions', () => ({
+	getFieldValueSuggestions: vi.fn().mockResolvedValue({
 		status: 'success',
 		data: {
 			complete: true,
@@ -53,7 +53,7 @@ jest.mock('api/querySuggestions/getFieldValueSuggestions', () => ({
 	}),
 }));
 
-function renderLogsSearch(onChange: (value: string) => void = jest.fn()): void {
+function renderLogsSearch(onChange: (value: string) => void = vi.fn()): void {
 	render(
 		<QuerySearch
 			onChange={onChange}
@@ -94,7 +94,7 @@ function getRecentLabels(): string[] {
 }
 
 async function renderAndFocus(
-	onChange: (value: string) => void = jest.fn(),
+	onChange: (value: string) => void = vi.fn(),
 ): Promise<HTMLElement> {
 	renderLogsSearch(onChange);
 
@@ -111,6 +111,20 @@ async function renderAndFocus(
 	return editor;
 }
 
+// Restart at most every 750ms: in a real browser each startCompletion needs a
+// layout roundtrip to settle, and re-requesting on every waitFor poll (interval
+// + MutationObserver) aborts the in-flight open, pinning it in 'pending'.
+let lastCompletionRequest = 0;
+
+function requestCompletion(view: EditorView): void {
+	const now = Date.now();
+	if (now - lastCompletionRequest < 750) {
+		return;
+	}
+	lastCompletionRequest = now;
+	startCompletion(view);
+}
+
 // Re-requests completions while waiting: typing and the async fetches can close the popup.
 function waitForRecents(
 	assertLabels: (labels: string[]) => void,
@@ -119,7 +133,7 @@ function waitForRecents(
 		() => {
 			const view = getEditorView();
 			if (view && !isCompletionOpen()) {
-				startCompletion(view);
+				requestCompletion(view);
 			}
 			assertLabels(getRecentLabels());
 		},
@@ -138,7 +152,7 @@ function waitForPopupElement(
 		() => {
 			const view = getEditorView();
 			if (view && !isCompletionOpen()) {
-				startCompletion(view);
+				requestCompletion(view);
 			}
 			const node = find();
 			expect(node).toBeTruthy();
@@ -150,6 +164,10 @@ function waitForPopupElement(
 
 describe('QuerySearch recent searches', () => {
 	beforeEach(() => {
+		// test-utils freezes Date via vi.setSystemTime while leaving real timers in
+		// place; restore real timers for store timestamps and dayjs labels.
+		vi.useRealTimers();
+		lastCompletionRequest = 0;
 		recentQueriesStore.useRecentQueriesStore.setState({ buckets: {} });
 		localStorage.clear();
 	});
@@ -230,7 +248,7 @@ describe('QuerySearch recent searches', () => {
 	it('applies the full expression to the editor when a recent is clicked', async () => {
 		saveLogsRecent(FRONTEND_FILTER);
 
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		await renderAndFocus(onChange);
 		await openRecents();
 

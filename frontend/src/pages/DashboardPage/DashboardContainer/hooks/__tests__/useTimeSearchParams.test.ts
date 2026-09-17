@@ -8,7 +8,7 @@ let mockGlobalTime = {
 	minTime: 0,
 	maxTime: 0,
 };
-jest.mock('react-redux', () => ({
+vi.mock('react-redux', () => ({
 	useSelector: (selector: (state: unknown) => unknown): unknown =>
 		selector({ globalTime: mockGlobalTime }),
 }));

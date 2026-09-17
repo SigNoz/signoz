@@ -32,11 +32,11 @@ function createNuqsWrapper(
 
 describe('useTableParams (local mode — enableQueryParams not set)', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('returns default page=1 and limit=50', () => {
@@ -90,11 +90,11 @@ describe('useTableParams (local mode — enableQueryParams not set)', () => {
 
 describe('useTableParams (URL mode — enableQueryParams set)', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('uses nuqs state when enableQueryParams=true', () => {
@@ -103,7 +103,7 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 		expect(result.current.page).toBe(1);
 		act(() => {
 			result.current.setPage(5);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.page).toBe(5);
 	});
@@ -116,7 +116,7 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 		expect(result.current.page).toBe(2);
 		act(() => {
 			result.current.setPage(4);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.page).toBe(4);
 	});
@@ -157,13 +157,13 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 	});
 
 	it('updates URL when setPage is called', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(() => useTableParams(true), { wrapper });
 
 		act(() => {
 			result.current.setPage(5);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		const lastPage = onUrlUpdate.mock.calls
@@ -174,13 +174,13 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 	});
 
 	it('updates URL when setOrderBy is called', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(() => useTableParams(true), { wrapper });
 
 		act(() => {
 			result.current.setOrderBy({ columnName: 'value', order: 'asc' });
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		const lastOrderBy = onUrlUpdate.mock.calls
@@ -209,7 +209,7 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 	});
 
 	it('manages expanded state for row expansion', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(() => useTableParams(true), { wrapper });
 
@@ -221,7 +221,7 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 	});
 
 	it('toggles sort order correctly: null → asc → desc → null', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(() => useTableParams(true), { wrapper });
 
@@ -256,15 +256,15 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 
 describe('useTableParams (selective URL mode — partial config object)', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('syncs only page to URL when only page is configured', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(() => useTableParams({ page: 'myPage' }), {
 			wrapper,
@@ -273,7 +273,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		// Update page - should sync to URL
 		act(() => {
 			result.current.setPage(5);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.page).toBe(5);
 		const lastPage = onUrlUpdate.mock.calls
@@ -285,7 +285,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		// Update limit - should stay local (not in URL)
 		act(() => {
 			result.current.setLimit(100);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.limit).toBe(100);
 		const limitInUrl = onUrlUpdate.mock.calls.some(
@@ -296,7 +296,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		// Update orderBy - should stay local (not in URL)
 		act(() => {
 			result.current.setOrderBy({ columnName: 'test', order: 'asc' });
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.orderBy).toStrictEqual({
 			columnName: 'test',
@@ -309,7 +309,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 	});
 
 	it('syncs only orderBy to URL when only orderBy is configured', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(() => useTableParams({ orderBy: 'mySort' }), {
 			wrapper,
@@ -318,7 +318,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		// Update orderBy - should sync to URL
 		act(() => {
 			result.current.setOrderBy({ columnName: 'cpu', order: 'desc' });
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.orderBy).toStrictEqual({
 			columnName: 'cpu',
@@ -337,7 +337,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		// Update page - should stay local
 		act(() => {
 			result.current.setPage(3);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.page).toBe(3);
 		const pageInUrl = onUrlUpdate.mock.calls.some(
@@ -347,7 +347,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 	});
 
 	it('syncs only limit to URL when only limit is configured', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(() => useTableParams({ limit: 'myLimit' }), {
 			wrapper,
@@ -356,7 +356,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		// Update limit - should sync to URL
 		act(() => {
 			result.current.setLimit(25);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.limit).toBe(25);
 		const lastLimit = onUrlUpdate.mock.calls
@@ -368,7 +368,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		// Update page - should stay local
 		act(() => {
 			result.current.setPage(2);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.page).toBe(2);
 		const pageInUrl = onUrlUpdate.mock.calls.some(
@@ -378,7 +378,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 	});
 
 	it('syncs only expanded to URL when only expanded is configured', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(
 			() => useTableParams({ expanded: 'myExpanded' }),
@@ -388,7 +388,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		// Update expanded - should sync to URL
 		act(() => {
 			result.current.setExpanded({ 'row-1': true, 'row-2': true });
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.expanded).toStrictEqual({
 			'row-1': true,
@@ -406,7 +406,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		// Update page - should stay local
 		act(() => {
 			result.current.setPage(4);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 		expect(result.current.page).toBe(4);
 		const pageInUrl = onUrlUpdate.mock.calls.some(
@@ -416,7 +416,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 	});
 
 	it('syncs page and orderBy to URL but keeps limit and expanded local', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(
 			() => useTableParams({ page: 'p', orderBy: 'sort' }),
@@ -427,7 +427,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		act(() => {
 			result.current.setLimit(75);
 			result.current.setExpanded({ 'row-5': true });
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		expect(result.current.limit).toBe(75);
@@ -436,7 +436,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		// Update page (should sync to URL)
 		act(() => {
 			result.current.setPage(2);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		expect(result.current.page).toBe(2);
@@ -449,7 +449,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 		// Update orderBy (should sync to URL, and resets page to default)
 		act(() => {
 			result.current.setOrderBy({ columnName: 'name', order: 'asc' });
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		expect(result.current.orderBy).toStrictEqual({
@@ -547,17 +547,17 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 
 describe('useTableParams (cleanupOnUnmount option)', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		localStorage.clear();
 		usePreferredPageSizeStore.setState({ tables: {} });
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('clears URL params on unmount when cleanupOnUnmount is true', async () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 
 		const { result, unmount } = renderHook(
@@ -577,7 +577,7 @@ describe('useTableParams (cleanupOnUnmount option)', () => {
 		await act(async () => {
 			result.current.setLimit(50);
 			result.current.setPage(3);
-			jest.runAllTimers();
+			vi.runAllTimers();
 			await Promise.resolve();
 		});
 
@@ -589,7 +589,7 @@ describe('useTableParams (cleanupOnUnmount option)', () => {
 		unmount();
 
 		await act(async () => {
-			jest.runAllTimers();
+			vi.runAllTimers();
 			await Promise.resolve();
 		});
 
@@ -600,7 +600,7 @@ describe('useTableParams (cleanupOnUnmount option)', () => {
 	});
 
 	it('does not clear URL params on unmount when cleanupOnUnmount is false', async () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 
 		const { result, unmount } = renderHook(
@@ -618,7 +618,7 @@ describe('useTableParams (cleanupOnUnmount option)', () => {
 
 		await act(async () => {
 			result.current.setLimit(50);
-			jest.runAllTimers();
+			vi.runAllTimers();
 			await Promise.resolve();
 		});
 
@@ -627,7 +627,7 @@ describe('useTableParams (cleanupOnUnmount option)', () => {
 		unmount();
 
 		await act(async () => {
-			jest.runAllTimers();
+			vi.runAllTimers();
 			await Promise.resolve();
 		});
 
@@ -637,7 +637,7 @@ describe('useTableParams (cleanupOnUnmount option)', () => {
 	});
 
 	it('defaults cleanupOnUnmount to false', async () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 
 		const { result, unmount } = renderHook(
@@ -648,14 +648,14 @@ describe('useTableParams (cleanupOnUnmount option)', () => {
 
 		await act(async () => {
 			result.current.setLimit(50);
-			jest.runAllTimers();
+			vi.runAllTimers();
 			await Promise.resolve();
 		});
 
 		unmount();
 
 		await act(async () => {
-			jest.runAllTimers();
+			vi.runAllTimers();
 			await Promise.resolve();
 		});
 
@@ -667,13 +667,13 @@ describe('useTableParams (cleanupOnUnmount option)', () => {
 
 describe('useTableParams (auto page size with storageKey)', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		localStorage.clear();
 		usePreferredPageSizeStore.setState({ tables: {} });
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('uses explicit default when no URL, no calculated, no preferred', () => {
@@ -767,7 +767,7 @@ describe('useTableParams (auto page size with storageKey)', () => {
 	});
 
 	it('persists user selection when different from calculated', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({}, onUrlUpdate);
 		const { result } = renderHook(
 			() =>
@@ -786,7 +786,7 @@ describe('useTableParams (auto page size with storageKey)', () => {
 		// User selects 30 (different from calculated 42)
 		act(() => {
 			result.current.setLimit(30);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		expect(result.current.limit).toBe(30);
@@ -821,7 +821,7 @@ describe('useTableParams (auto page size with storageKey)', () => {
 		// User selects 42 (same as calculated)
 		act(() => {
 			result.current.setLimit(42);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		expect(result.current.limit).toBe(42);
@@ -853,7 +853,7 @@ describe('useTableParams (auto page size with storageKey)', () => {
 	});
 
 	it('does not override URL when it already has a value', () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		const wrapper = createNuqsWrapper({ limit: '30' }, onUrlUpdate);
 
 		const { result } = renderHook(
@@ -871,7 +871,7 @@ describe('useTableParams (auto page size with storageKey)', () => {
 		);
 
 		act(() => {
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		// Limit should stay at 30 (from URL), not change to 42
@@ -902,7 +902,7 @@ describe('useTableParams (auto page size with storageKey)', () => {
 		rerender({ calculated: 42 });
 
 		act(() => {
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		// Limit should now be 42
@@ -931,7 +931,7 @@ describe('useTableParams (auto page size with storageKey)', () => {
 		// User selects 30
 		act(() => {
 			result.current.setLimit(30);
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		expect(result.current.limit).toBe(30);
@@ -940,7 +940,7 @@ describe('useTableParams (auto page size with storageKey)', () => {
 		rerender({ calculated: 50 });
 
 		act(() => {
-			jest.runAllTimers();
+			vi.runAllTimers();
 		});
 
 		// Should keep user's selection (30), not change to new calculated (50)

@@ -6,7 +6,7 @@ import { UniversalYAxisUnit, YAxisSource } from '../types';
 import YAxisUnitSelector from '../YAxisUnitSelector';
 
 describe('YAxisUnitSelector', () => {
-	const mockOnChange = jest.fn();
+	const mockOnChange = vi.fn();
 	// antd injects its `pointer-events` styles via cssinjs in jsdom, but the SCSS
 	// overrides aren't loaded — skip the pointer-events check so hovers/clicks register.
 	let user: ReturnType<typeof userEvent.setup>;

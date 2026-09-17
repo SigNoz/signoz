@@ -4,11 +4,12 @@ import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/service
 
 import JsonEditorDrawer from '../JsonEditorDrawer';
 import { useJsonEditor } from '../useJsonEditor';
+import type { Mock } from 'vitest';
 
-jest.mock('../useJsonEditor', () => ({ useJsonEditor: jest.fn() }));
+vi.mock('../useJsonEditor', () => ({ useJsonEditor: vi.fn() }));
 
 // Editable by default so the drawer renders in its editable (non-read-only) mode.
-jest.mock('../../../store/useDashboardStore', () => ({
+vi.mock('../../../store/useDashboardStore', () => ({
 	useDashboardStore: (
 		selector: (s: {
 			isEditable: boolean;
@@ -27,7 +28,7 @@ jest.mock('../../../store/useDashboardStore', () => ({
 		}),
 }));
 
-jest.mock('@monaco-editor/react', () => ({
+vi.mock('@monaco-editor/react', () => ({
 	__esModule: true,
 	default: ({
 		value,
@@ -45,15 +46,15 @@ jest.mock('@monaco-editor/react', () => ({
 	),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui/sonner', () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-jest.mock('react-use', () => ({
-	useCopyToClipboard: (): [unknown, jest.Mock] => [{}, jest.fn()],
+vi.mock('react-use', () => ({
+	useCopyToClipboard: (): [unknown, Mock] => [{}, vi.fn()],
 }));
 
-const mockUseJsonEditor = useJsonEditor as jest.Mock;
+const mockUseJsonEditor = useJsonEditor as Mock;
 
 const dashboard = {
 	id: 'dash-1',
@@ -65,15 +66,15 @@ function hookValue(
 ): ReturnType<typeof useJsonEditor> {
 	return {
 		draft: '{\n  "a": 1\n}',
-		setDraft: jest.fn(),
+		setDraft: vi.fn(),
 		validity: { valid: true, lineCount: 3 },
 		isDirty: true,
 		isSaving: false,
 		danglingPanelIds: [],
 		missingPanelRefs: [],
-		format: jest.fn(),
-		reset: jest.fn(),
-		apply: jest.fn().mockResolvedValue(undefined),
+		format: vi.fn(),
+		reset: vi.fn(),
+		apply: vi.fn().mockResolvedValue(undefined),
 		...overrides,
 	} as ReturnType<typeof useJsonEditor>;
 }
@@ -91,7 +92,7 @@ const mockEditContext = {
 	editDisabledTooltip: '',
 	deleteDisabledTooltip: '',
 };
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext',
 	() => ({
 		useDashboardEditContext: (): typeof mockEditContext => mockEditContext,
@@ -99,11 +100,11 @@ jest.mock(
 );
 
 describe('JsonEditorDrawer', () => {
-	beforeEach(() => jest.clearAllMocks());
+	beforeEach(() => vi.clearAllMocks());
 
 	it('renders the toolbar, editor and footer actions when open', () => {
 		mockUseJsonEditor.mockReturnValue(hookValue());
-		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />);
+		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={vi.fn()} />);
 
 		expect(screen.getByTestId('json-editor-format')).toBeInTheDocument();
 		expect(screen.getByTestId('json-editor-copy')).toBeInTheDocument();
@@ -117,7 +118,7 @@ describe('JsonEditorDrawer', () => {
 		mockUseJsonEditor.mockReturnValue(
 			hookValue({ validity: { valid: true, lineCount: 12 } }),
 		);
-		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />);
+		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={vi.fn()} />);
 
 		expect(screen.getByTestId('json-editor-validation')).toHaveTextContent(
 			'Valid JSON · 12 lines',
@@ -130,7 +131,7 @@ describe('JsonEditorDrawer', () => {
 		);
 		const { unmount } = render(
 			<TooltipProvider>
-				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />
+				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={vi.fn()} />
 			</TooltipProvider>,
 		);
 		expect(screen.getByTestId('json-editor-dangling-warning')).toHaveTextContent(
@@ -143,7 +144,7 @@ describe('JsonEditorDrawer', () => {
 		mockUseJsonEditor.mockReturnValue(hookValue({ danglingPanelIds: [] }));
 		render(
 			<TooltipProvider>
-				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />
+				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={vi.fn()} />
 			</TooltipProvider>,
 		);
 		expect(
@@ -155,7 +156,7 @@ describe('JsonEditorDrawer', () => {
 		mockUseJsonEditor.mockReturnValue(hookValue({ missingPanelRefs: ['ghost'] }));
 		render(
 			<TooltipProvider>
-				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />
+				<JsonEditorDrawer dashboard={dashboard} isOpen onClose={vi.fn()} />
 			</TooltipProvider>,
 		);
 		expect(
@@ -174,7 +175,7 @@ describe('JsonEditorDrawer', () => {
 				},
 			}),
 		);
-		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />);
+		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={vi.fn()} />);
 
 		expect(screen.getByTestId('json-editor-validation')).toHaveTextContent(
 			'Line 3 · Unexpected token',
@@ -184,29 +185,25 @@ describe('JsonEditorDrawer', () => {
 	it('disables Apply when not dirty, invalid, or saving', () => {
 		mockUseJsonEditor.mockReturnValue(hookValue({ isDirty: false }));
 		const { rerender } = render(
-			<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />,
+			<JsonEditorDrawer dashboard={dashboard} isOpen onClose={vi.fn()} />,
 		);
 		expect(screen.getByTestId('json-editor-apply')).toBeDisabled();
 
 		mockUseJsonEditor.mockReturnValue(
 			hookValue({ validity: { valid: false, lineCount: 1 } }),
 		);
-		rerender(
-			<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />,
-		);
+		rerender(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={vi.fn()} />);
 		expect(screen.getByTestId('json-editor-apply')).toBeDisabled();
 
 		mockUseJsonEditor.mockReturnValue(hookValue({ isSaving: true }));
-		rerender(
-			<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />,
-		);
+		rerender(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={vi.fn()} />);
 		expect(screen.getByTestId('json-editor-apply')).toBeDisabled();
 	});
 
 	it('wires toolbar and footer buttons to the hook callbacks', () => {
 		const value = hookValue();
 		mockUseJsonEditor.mockReturnValue(value);
-		const onClose = jest.fn();
+		const onClose = vi.fn();
 		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={onClose} />);
 
 		fireEvent.click(screen.getByTestId('json-editor-format'));
@@ -225,7 +222,7 @@ describe('JsonEditorDrawer', () => {
 	it('forwards editor changes to setDraft', () => {
 		const value = hookValue();
 		mockUseJsonEditor.mockReturnValue(value);
-		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />);
+		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={vi.fn()} />);
 
 		fireEvent.change(screen.getByTestId('monaco'), {
 			target: { value: '{"b":2}' },
@@ -236,7 +233,7 @@ describe('JsonEditorDrawer', () => {
 	it('applies on Cmd/Ctrl+Enter', () => {
 		const value = hookValue();
 		mockUseJsonEditor.mockReturnValue(value);
-		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />);
+		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={vi.fn()} />);
 
 		fireEvent.keyDown(screen.getByTestId('monaco'), {
 			key: 'Enter',

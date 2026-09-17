@@ -1,3 +1,4 @@
+import type { Mock, MockedFunction } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
@@ -9,94 +10,101 @@ import uPlot from 'uplot';
 import EntityMetrics from '../EntityMetrics';
 import { useEntityMetrics } from '../hooks';
 
-jest.mock('../hooks', () => ({
-	useEntityMetrics: jest.fn(),
+vi.mock('../hooks', () => ({
+	useEntityMetrics: vi.fn(),
 }));
 
-const mockUseEntityMetrics = useEntityMetrics as jest.MockedFunction<
+const mockUseEntityMetrics = useEntityMetrics as MockedFunction<
 	typeof useEntityMetrics
 >;
 
-jest.mock('../configBuilder', () => ({
-	buildEntityMetricsChartConfig: jest.fn().mockReturnValue({
-		getId: jest.fn().mockReturnValue('mock-id'),
+vi.mock('../configBuilder', () => ({
+	buildEntityMetricsChartConfig: vi.fn().mockReturnValue({
+		getId: vi.fn().mockReturnValue('mock-id'),
 	}),
 }));
 
-jest.mock('lib/uPlotV2/utils/dataUtils', () => ({
-	prepareChartData: jest.fn().mockReturnValue([]),
-	hasSingleVisiblePoint: jest.fn().mockReturnValue(false),
+vi.mock('lib/uPlotV2/utils/dataUtils', () => ({
+	prepareChartData: vi.fn().mockReturnValue([]),
+	hasSingleVisiblePoint: vi.fn().mockReturnValue(false),
 }));
 
-jest.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
+vi.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="date-time-selection">Date Time</div>
 	),
 }));
 
-const mockTimeRange = { startTime: 1705315200, endTime: 1705318800 };
-let mockSelectedInterval = '5m';
+const { mockTimeRange, mockState } = vi.hoisted(() => ({
+	mockTimeRange: { startTime: 1705315200, endTime: 1705318800 },
+	mockState: { selectedInterval: '5m' },
+}));
 
-jest.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
+vi.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
 	useEntityDetailsTime: (): {
 		timeRange: { startTime: number; endTime: number };
 		selectedInterval: string;
-		handleTimeChange: jest.Mock;
+		handleTimeChange: Mock;
 	} => ({
 		timeRange: mockTimeRange,
-		selectedInterval: mockSelectedInterval,
-		handleTimeChange: jest.fn(),
+		selectedInterval: mockState.selectedInterval,
+		handleTimeChange: vi.fn(),
 	}),
 }));
 
-jest.mock('lib/visualization/charts/TimeSeries/TimeSeries', () => ({
+vi.mock('lib/visualization/charts/TimeSeries/TimeSeries', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="uplot-chart">TimeSeries Chart</div>
 	),
 }));
 
-jest.mock('providers/Timezone', () => ({
+vi.mock('providers/Timezone', () => ({
 	useTimezone: (): { timezone: { value: string } } => ({
 		timezone: { value: 'UTC' },
 	}),
 }));
 
-jest.mock('../MetricsTable', () => ({
+vi.mock('../MetricsTable', () => ({
 	__esModule: true,
-	MetricsTable: jest
+	MetricsTable: vi
 		.fn()
 		.mockImplementation(
 			(): JSX.Element => <div data-testid="metrics-table">Metrics Table</div>,
 		),
 }));
 
-const mockUseQuery = jest.fn();
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
+const { mockUseQuery } = vi.hoisted(() => ({ mockUseQuery: vi.fn() }));
+vi.mock('react-query', async () => ({
+	...(await vi.importActual('react-query')),
 	useQuery: (config: any): any => mockUseQuery(config),
 }));
 
-jest.mock('hooks/useDarkMode', () => ({
+vi.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('hooks/useDimensions', () => ({
+vi.mock('hooks/useDimensions', () => ({
 	useResizeObserver: (): { width: number; height: number } => ({
 		width: 800,
 		height: 600,
 	}),
 }));
 
-jest.mock('hooks/useMultiIntersectionObserver', () => ({
+vi.mock('hooks/useMultiIntersectionObserver', () => ({
 	useMultiIntersectionObserver: (count: number): any => ({
 		visibilities: new Array(count).fill(true),
-		setElement: jest.fn(),
+		setElement: vi.fn(),
 	}),
 }));
 
-jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('providers/App/App', { spy: true });
+
+vi.mocked(appContextHooks.useAppContext).mockReturnValue({
 	user: {
 		role: 'admin',
 	},
@@ -137,7 +145,7 @@ const mockEntityWidgetInfo = [
 	},
 ];
 
-const mockGetEntityQueryPayload = jest.fn().mockReturnValue([
+const mockGetEntityQueryPayload = vi.fn().mockReturnValue([
 	{
 		query: 'cpu_usage',
 		start: 1705315200,
@@ -337,8 +345,8 @@ const mockQueryPayloads = [
 
 describe('EntityMetrics', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		mockSelectedInterval = '5m';
+		vi.clearAllMocks();
+		mockState.selectedInterval = '5m';
 		mockUseEntityMetrics.mockReturnValue({
 			queries: mockQueries as any,
 			chartData: mockChartData,
@@ -357,7 +365,7 @@ describe('EntityMetrics', () => {
 			},
 			isLoading: false,
 			isError: false,
-			refetch: jest.fn(),
+			refetch: vi.fn(),
 		});
 	});
 
@@ -449,7 +457,7 @@ describe('EntityMetrics', () => {
 	});
 
 	it('builds metrics explorer link with relativeTime when a relative interval is selected', () => {
-		mockSelectedInterval = '5m';
+		mockState.selectedInterval = '5m';
 		renderEntityMetrics();
 		const href = screen
 			.getByTestId('open-metrics-explorer-0')
@@ -460,7 +468,7 @@ describe('EntityMetrics', () => {
 	});
 
 	it('builds metrics explorer link with absolute time range in milliseconds for custom interval', () => {
-		mockSelectedInterval = 'custom';
+		mockState.selectedInterval = 'custom';
 		renderEntityMetrics();
 		const href = screen
 			.getByTestId('open-metrics-explorer-0')

@@ -3,14 +3,14 @@ import { render, screen, userEvent } from 'tests/test-utils';
 import ClientTabs from './ClientTabs';
 import { MCP_CLIENTS } from '../clients';
 
-jest.mock('utils/navigation', () => ({
-	openInNewTab: jest.fn(),
+vi.mock('utils/navigation', () => ({
+	openInNewTab: vi.fn(),
 }));
 
-const mockOnTabChange = jest.fn();
-const mockOnCopySnippet = jest.fn();
-const mockOnInstallClick = jest.fn();
-const mockOnDocsLinkClick = jest.fn();
+const mockOnTabChange = vi.fn();
+const mockOnCopySnippet = vi.fn();
+const mockOnInstallClick = vi.fn();
+const mockOnDocsLinkClick = vi.fn();
 
 const MCP_ENDPOINT = 'https://mcp.us.signoz.cloud/mcp';
 
@@ -25,7 +25,7 @@ const defaultProps = {
 
 describe('ClientTabs', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders a tab for each MCP client', () => {

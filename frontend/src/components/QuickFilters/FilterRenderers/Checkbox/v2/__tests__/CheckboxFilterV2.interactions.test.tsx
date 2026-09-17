@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { server, rest } from 'mocks-server/server';
-import { render } from 'tests/test-utils';
+import { render } from 'tests/test-utils-full';
 
 import { QuickFiltersSource } from '../../../../types';
 
@@ -13,10 +13,19 @@ import {
 	getFilterFromCall,
 	mockFieldsValuesAPI,
 	renderWithFilter,
-	setupServer,
 } from '../CheckboxFilterV2.testUtils';
 
-setupServer();
+// tests/test-utils freezes Date via vi.setSystemTime, which stalls lodash
+// debounce (it derives remaining wait from Date.now). Search tests use real
+// timers, so restore the real clock.
+beforeEach(() => {
+	vi.useRealTimers();
+});
+
+// CheckboxFilterV2.testUtils still types its helpers with Mock, so bridge
+// the vitest mock to that type until the helper is ported. Type-only cast.
+const mockFilterChange = (): Parameters<typeof renderWithFilter>[0] =>
+	vi.fn() as unknown as Parameters<typeof renderWithFilter>[0];
 
 describe('CheckboxFilterV2 - interactions', () => {
 	describe('search functionality', () => {
@@ -542,7 +551,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 		it('does not dispatch on clear when the key has no filter', async () => {
 			const user = userEvent.setup();
-			const onFilterChange = jest.fn();
+			const onFilterChange = vi.fn();
 
 			mockFieldsValuesAPI({
 				stringValues: ['production'],
@@ -578,7 +587,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 		it('calls onFilterChange when clear clicked', async () => {
 			const user = userEvent.setup();
-			const onFilterChange = jest.fn();
+			const onFilterChange = mockFilterChange();
 
 			mockFieldsValuesAPI({
 				stringValues: ['production'],
@@ -625,7 +634,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 	describe('value row interactions', () => {
 		it('calls onFilterChange when checkbox value clicked', async () => {
 			const user = userEvent.setup();
-			const onFilterChange = jest.fn();
+			const onFilterChange = mockFilterChange();
 
 			mockFieldsValuesAPI({
 				stringValues: ['production', 'staging'],
@@ -651,7 +660,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 		it('creates NOT IN filter when unchecking related item with no existing filter', async () => {
 			const user = userEvent.setup();
-			const onFilterChange = jest.fn();
+			const onFilterChange = mockFilterChange();
 
 			mockFieldsValuesAPI({
 				relatedValues: ['valueA'],
@@ -675,7 +684,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 		it('adds to NOT IN when unchecking a non-excluded (other) item', async () => {
 			const user = userEvent.setup();
-			const onFilterChange = jest.fn();
+			const onFilterChange = mockFilterChange();
 
 			mockFieldsValuesAPI({
 				relatedValues: ['valueA'],
@@ -699,7 +708,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 		it('adds to NOT IN when unchecking a non-excluded item without related values', async () => {
 			const user = userEvent.setup();
-			const onFilterChange = jest.fn();
+			const onFilterChange = vi.fn();
 
 			mockFieldsValuesAPI({
 				stringValues: ['valueA', 'valueB'],
@@ -750,7 +759,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 		it('accumulates both values in IN when toggling checked (related) then unchecked (other)', async () => {
 			const user = userEvent.setup();
-			const onFilterChange = jest.fn();
+			const onFilterChange = mockFilterChange();
 
 			mockFieldsValuesAPI({
 				relatedValues: ['valueA'],
@@ -777,7 +786,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 		it('adds to NOT IN when toggling checked (related) with existing NOT IN filter', async () => {
 			const user = userEvent.setup();
-			const onFilterChange = jest.fn();
+			const onFilterChange = mockFilterChange();
 
 			mockFieldsValuesAPI({
 				relatedValues: ['valueA'],
@@ -802,7 +811,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 		it('creates NOT IN for single value when toggling related item with existing IN filter', async () => {
 			const user = userEvent.setup();
-			const onFilterChange = jest.fn();
+			const onFilterChange = mockFilterChange();
 
 			mockFieldsValuesAPI({
 				relatedValues: ['relatedValue'],

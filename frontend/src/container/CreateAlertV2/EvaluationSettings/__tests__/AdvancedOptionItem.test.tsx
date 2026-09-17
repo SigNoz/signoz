@@ -24,7 +24,7 @@ describe('AdvancedOptionItem', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should render title, description and switch', () => {

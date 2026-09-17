@@ -28,7 +28,7 @@ describe('PanelMessage', () => {
 	});
 
 	it('renders the action button and fires onClick when pressed', () => {
-		const onClick = jest.fn();
+		const onClick = vi.fn();
 		render(
 			<PanelMessage
 				icon={null}
@@ -45,8 +45,8 @@ describe('PanelMessage', () => {
 	});
 
 	it('renders both actions side by side and wires each onClick', () => {
-		const onPrimary = jest.fn();
-		const onSecondary = jest.fn();
+		const onPrimary = vi.fn();
+		const onSecondary = vi.fn();
 		render(
 			<PanelMessage
 				icon={null}

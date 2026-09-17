@@ -7,23 +7,23 @@ import store from 'store';
 
 import MetricsTreemap from '../MetricsTreemap';
 
-jest.mock('d3-hierarchy', () => ({
-	stratify: jest.fn().mockReturnValue({
-		id: jest.fn().mockReturnValue({
-			parentId: jest.fn().mockReturnValue(
-				jest.fn().mockReturnValue({
-					sum: jest.fn().mockReturnValue({
-						descendants: jest.fn().mockReturnValue([]),
-						eachBefore: jest.fn().mockReturnValue([]),
+vi.mock('d3-hierarchy', () => ({
+	stratify: vi.fn().mockReturnValue({
+		id: vi.fn().mockReturnValue({
+			parentId: vi.fn().mockReturnValue(
+				vi.fn().mockReturnValue({
+					sum: vi.fn().mockReturnValue({
+						descendants: vi.fn().mockReturnValue([]),
+						eachBefore: vi.fn().mockReturnValue([]),
 					}),
 				}),
 			),
 		}),
 	}),
-	treemapBinary: jest.fn(),
+	treemapBinary: vi.fn(),
 }));
-jest.mock('react-use', () => ({
-	useWindowSize: jest.fn().mockReturnValue({ width: 1000, height: 1000 }),
+vi.mock('react-use', () => ({
+	useWindowSize: vi.fn().mockReturnValue({ width: 1000, height: 1000 }),
 }));
 
 const mockData = [
@@ -51,9 +51,9 @@ describe('MetricsTreemap', () => {
 							timeseries: [mockData[0]],
 							samples: [mockData[1]],
 						}}
-						openMetricDetails={jest.fn()}
+						openMetricDetails={vi.fn()}
 						viewType={MetricsexplorertypesTreemapModeDTO.samples}
-						setHeatmapView={jest.fn()}
+						setHeatmapView={vi.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -73,9 +73,9 @@ describe('MetricsTreemap', () => {
 							timeseries: [mockData[0]],
 							samples: [mockData[1]],
 						}}
-						openMetricDetails={jest.fn()}
+						openMetricDetails={vi.fn()}
 						viewType={MetricsexplorertypesTreemapModeDTO.samples}
-						setHeatmapView={jest.fn()}
+						setHeatmapView={vi.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -97,9 +97,9 @@ describe('MetricsTreemap', () => {
 							timeseries: [mockData[0]],
 							samples: [mockData[1]],
 						}}
-						openMetricDetails={jest.fn()}
+						openMetricDetails={vi.fn()}
 						viewType={MetricsexplorertypesTreemapModeDTO.samples}
-						setHeatmapView={jest.fn()}
+						setHeatmapView={vi.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -121,9 +121,9 @@ describe('MetricsTreemap', () => {
 						isLoading={false}
 						isError={false}
 						data={undefined}
-						openMetricDetails={jest.fn()}
+						openMetricDetails={vi.fn()}
 						viewType={MetricsexplorertypesTreemapModeDTO.samples}
-						setHeatmapView={jest.fn()}
+						setHeatmapView={vi.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,

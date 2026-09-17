@@ -8,28 +8,28 @@ import { usePanelContextMenu } from 'container/WidgetCard/Panels/hooks/usePanelC
 // The hook composes `useCoordinates` (popover state) and `useGraphContextMenu`
 // (menu items). We mock both so the test focuses on the `enableDrillDown` gate
 // rather than the implementation of the menu wiring itself.
-const onClickMock = jest.fn();
-jest.mock('periscope/components/ContextMenu', () => ({
+const { onClickMock } = vi.hoisted(() => ({ onClickMock: vi.fn() }));
+vi.mock('periscope/components/ContextMenu', () => ({
 	useCoordinates: (): unknown => ({
 		coordinates: null,
 		popoverPosition: null,
 		clickedData: null,
-		onClose: jest.fn(),
+		onClose: vi.fn(),
 		subMenu: null,
 		onClick: onClickMock,
-		setSubMenu: jest.fn(),
+		setSubMenu: vi.fn(),
 	}),
 }));
 
-jest.mock('container/QueryTable/Drilldown/useGraphContextMenu', () => ({
+vi.mock('container/QueryTable/Drilldown/useGraphContextMenu', () => ({
 	__esModule: true,
 	default: (): { menuItemsConfig: { header: string; items: string } } => ({
 		menuItemsConfig: { header: 'menu-header', items: 'menu-items' },
 	}),
 }));
 
-jest.mock('container/QueryTable/Drilldown/drilldownUtils', () => ({
-	getUplotClickData: jest.fn(() => ({
+vi.mock('container/QueryTable/Drilldown/drilldownUtils', () => ({
+	getUplotClickData: vi.fn(() => ({
 		coord: { x: 1, y: 2 },
 		record: { queryName: 'A', filters: [] },
 		label: 'lbl',
@@ -37,9 +37,9 @@ jest.mock('container/QueryTable/Drilldown/drilldownUtils', () => ({
 	})),
 }));
 
-jest.mock('container/WidgetCard/Panels/utils', () => ({
-	isApmMetric: jest.fn(() => false),
-	getTimeRangeFromStepInterval: jest.fn(() => ({ start: 0, end: 0 })),
+vi.mock('container/WidgetCard/Panels/utils', () => ({
+	isApmMetric: vi.fn(() => false),
+	getTimeRangeFromStepInterval: vi.fn(() => ({ start: 0, end: 0 })),
 }));
 
 const mockWidget = { id: 'w-1', query: {} } as unknown as Widgets;

@@ -26,9 +26,10 @@ const DataTypes = {
 };
 
 // Mock the external utils dependencies that are used within our tested functions
-jest.mock('../utils', () => {
+vi.mock('../utils', async () => {
 	// Import the actual module to partial mock
-	const originalModule = jest.requireActual('../utils');
+	const originalModule =
+		await vi.importActual<typeof import('../utils')>('../utils');
 
 	// Return a mocked version
 	return {
@@ -571,7 +572,7 @@ describe('API Monitoring Utils', () => {
 
 	describe('getFormattedEndPointStatusCodeChartData', () => {
 		afterEach(() => {
-			jest.resetAllMocks();
+			vi.resetAllMocks();
 		});
 
 		it('should format status code chart data correctly with sum aggregation', () => {
@@ -654,20 +655,7 @@ describe('API Monitoring Utils', () => {
 		});
 
 		it('should handle undefined input', () => {
-			// Setup a mock
-			jest
-				.spyOn(
-					jest.requireActual('../utils'),
-					'getFormattedEndPointStatusCodeChartData',
-				)
-				.mockReturnValue({
-					data: {
-						result: [],
-						resultType: 'matrix',
-					},
-				});
-
-			// Act
+			// Act - the real implementation returns an empty result for undefined input
 			const result = getFormattedEndPointStatusCodeChartData(
 				undefined as any,
 				'sum',

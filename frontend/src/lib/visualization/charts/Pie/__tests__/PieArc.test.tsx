@@ -1,24 +1,25 @@
+import type { Mock } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { PieSlice } from 'lib/visualization/charts/types';
 import PieArc from 'lib/visualization/charts/Pie/PieArc';
 
-jest.mock('components/Graph/yAxisConfig', () => ({
+vi.mock('components/Graph/yAxisConfig', () => ({
 	// Echo the raw value so assertions are deterministic.
-	getYAxisFormattedValue: jest.fn((value: string) => value),
+	getYAxisFormattedValue: vi.fn((value: string) => value),
 }));
 
 const SLICE: PieSlice = { label: 'frontend', value: 50, color: '#f00' };
 
 function renderArc(props: Partial<React.ComponentProps<typeof PieArc>> = {}): {
-	onEnter: jest.Mock;
-	onLeave: jest.Mock;
-	onClick: jest.Mock;
+	onEnter: Mock;
+	onLeave: Mock;
+	onClick: Mock;
 	container: HTMLElement;
 } {
-	const onEnter = jest.fn();
-	const onLeave = jest.fn();
-	const onClick = jest.fn();
+	const onEnter = vi.fn();
+	const onLeave = vi.fn();
+	const onClick = vi.fn();
 	const { container } = render(
 		<svg>
 			<PieArc

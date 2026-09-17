@@ -73,7 +73,7 @@ describe('drilldown on a numeric group-by column (V2 table panel)', () => {
 			query: v1Query,
 			clickedData,
 			panelType: PANEL_TYPES.TABLE,
-			onColumnClick: jest.fn(),
+			onColumnClick: vi.fn(),
 		});
 		render(<div>{items}</div>);
 

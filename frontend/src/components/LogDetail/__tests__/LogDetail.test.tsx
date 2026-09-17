@@ -1,25 +1,25 @@
 import { toast } from '@signozhq/ui/sonner';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils-full';
 import { ILog } from 'types/api/logs/log';
 
 import LogDetail from '..';
 import { VIEW_TYPES } from '../constants';
 import { LogDetailProps } from '../LogDetail.interfaces';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui/sonner', () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 // DataViewer pulls in react-json-tree (ESM) + Monaco; mock it (as trace's tests
 // do). These drawer tests assert the header/highlights, not the Overview body.
-jest.mock('periscope/components/DataViewer', () => ({
+vi.mock('periscope/components/DataViewer', () => ({
 	__esModule: true,
 	DataViewer: (): JSX.Element => <div data-testid="overview-data-viewer" />,
 }));
 
 // Force v2 for these tests regardless of route.
-jest.mock('../useIsLogDetailsV2', () => ({
+vi.mock('../useIsLogDetailsV2', () => ({
 	useIsLogDetailsV2: (): boolean => true,
 }));
 
@@ -50,9 +50,9 @@ function renderDrawer(props: Partial<LogDetailProps> = {}): void {
 		<LogDetail
 			log={mockLog}
 			selectedTab={VIEW_TYPES.OVERVIEW}
-			onAddToQuery={jest.fn()}
-			onClickActionItem={jest.fn()}
-			onClose={jest.fn()}
+			onAddToQuery={vi.fn()}
+			onClickActionItem={vi.fn()}
+			onClose={vi.fn()}
 			{...props}
 		/>,
 	);
@@ -60,7 +60,7 @@ function renderDrawer(props: Partial<LogDetailProps> = {}): void {
 
 describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		localStorage.clear();
 	});
 
@@ -134,7 +134,7 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 	});
 
 	it('shows "Open in Explorer" when a handleOpenInExplorer handler is provided', () => {
-		renderDrawer({ handleOpenInExplorer: jest.fn() });
+		renderDrawer({ handleOpenInExplorer: vi.fn() });
 
 		expect(screen.getByText('Open in Explorer')).toBeInTheDocument();
 	});
@@ -187,8 +187,8 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 	it('navigates to the next / previous log with the Down / Up arrow keys', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const logs = [makeLog('log-0'), makeLog('log-1'), makeLog('log-2')];
-		const onNavigateLog = jest.fn();
-		const onScrollToLog = jest.fn();
+		const onNavigateLog = vi.fn();
+		const onScrollToLog = vi.fn();
 
 		// Active log is the middle one so both directions are available.
 		renderDrawer({ log: logs[1], logs, onNavigateLog, onScrollToLog });
@@ -205,7 +205,7 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 	it('does not navigate past the first log on ArrowUp', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const logs = [makeLog('log-0'), makeLog('log-1')];
-		const onNavigateLog = jest.fn();
+		const onNavigateLog = vi.fn();
 
 		renderDrawer({ log: logs[0], logs, onNavigateLog });
 
@@ -216,7 +216,7 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 	it('navigates via the header up / down buttons and disables them at boundaries', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const logs = [makeLog('log-0'), makeLog('log-1')];
-		const onNavigateLog = jest.fn();
+		const onNavigateLog = vi.fn();
 
 		// Active log is the first one.
 		renderDrawer({ log: logs[0], logs, onNavigateLog });

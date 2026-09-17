@@ -7,7 +7,7 @@ import type {
 	PanelPagination,
 	PanelQueryData,
 } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
-import { fireEvent, render } from 'tests/test-utils';
+import { fireEvent, render } from 'tests/test-utils-full';
 
 import type {
 	PanelOfKind,
@@ -119,16 +119,16 @@ describe('ListPanelRenderer', () => {
 		pageIndex: 0,
 		canPrev: false,
 		canNext: false,
-		goPrev: jest.fn(),
-		goNext: jest.fn(),
+		goPrev: vi.fn(),
+		goNext: vi.fn(),
 		pageSize: 10,
 		pageSizeOptions: [10, 25, 50],
-		setPageSize: jest.fn(),
+		setPageSize: vi.fn(),
 		...overrides,
 	});
 
 	it('shows the pager and calls goNext when Next is clicked', () => {
-		const goNext = jest.fn();
+		const goNext = vi.fn();
 		const { getByTestId } = renderPanel({
 			data: dataWith([{ data: { body: 'x' } }]),
 			pagination: makePagination({

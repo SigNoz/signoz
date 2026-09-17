@@ -3,6 +3,8 @@ import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
+import type { MockedFunction } from 'vitest';
+
 import set from 'api/browser/localstorage/set';
 
 import { GlobalTimeProvider } from '../GlobalTimeContext';
@@ -10,7 +12,7 @@ import { useGlobalTime } from '../hooks';
 import { GlobalTimeProviderOptions } from '../types';
 import { createCustomTimeRange, NANO_SECOND_MULTIPLIER } from '../utils';
 
-jest.mock('api/browser/localstorage/set');
+vi.mock('api/browser/localstorage/set');
 
 const createTestQueryClient = (): QueryClient =>
 	new QueryClient({
@@ -525,7 +527,7 @@ describe('GlobalTimeProvider', () => {
 	});
 
 	describe('localStorage persistence', () => {
-		const mockSet = set as jest.MockedFunction<typeof set>;
+		const mockSet = set as MockedFunction<typeof set>;
 
 		beforeEach(() => {
 			localStorage.clear();

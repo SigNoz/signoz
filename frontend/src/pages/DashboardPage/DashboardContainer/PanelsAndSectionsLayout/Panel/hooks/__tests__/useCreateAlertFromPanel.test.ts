@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import logEvent from 'api/common/logEvent';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
@@ -7,12 +8,12 @@ import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/
 
 import { useCreateAlertFromPanel } from '../useCreateAlertFromPanel';
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEventMeta',
 	() => ({
 		useDashboardEventMeta: (): {
@@ -25,35 +26,40 @@ jest.mock(
 	}),
 );
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+const { mockSafeNavigate } = vi.hoisted(() => ({ mockSafeNavigate: vi.fn() }));
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
-const mockToastError = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
+const { mockToastError } = vi.hoisted(() => ({ mockToastError: vi.fn() }));
+vi.mock('@signozhq/ui/sonner', () => ({
 	toast: { error: (...args: unknown[]): void => mockToastError(...args) },
 }));
 
-jest.mock('react-redux', () => ({
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
 	useSelector: (selector: (state: unknown) => unknown): unknown =>
 		selector({ globalTime: { minTime: 1_000_000, maxTime: 2_000_000 } }),
 }));
 
-const mockSubstituteVars = jest.fn();
-jest.mock('api/generated/services/querier', () => ({
-	useReplaceVariables: (): { mutate: jest.Mock } => ({
+const { mockSubstituteVars } = vi.hoisted(() => ({
+	mockSubstituteVars: vi.fn(),
+}));
+vi.mock('api/generated/services/querier', () => ({
+	useReplaceVariables: (): { mutate: Mock } => ({
 		mutate: mockSubstituteVars,
 	}),
 }));
 
 // Stub the builders so this asserts only the hook's orchestration.
-const mockBuildAlertUrl = jest.fn(
-	(..._args: unknown[]) => '/alerts/new?composite=substituted',
-);
-jest.mock('../../utils/buildCreateAlertUrl', () => ({
+const { mockBuildAlertUrl } = vi.hoisted(() => ({
+	mockBuildAlertUrl: vi.fn(
+		(..._args: unknown[]) => '/alerts/new?composite=substituted',
+	),
+}));
+vi.mock('../../utils/buildCreateAlertUrl', () => ({
 	buildCreateAlertUrl: (): string => '/alerts/new?composite=sync',
 	buildAlertUrl: (...args: unknown[]): string => mockBuildAlertUrl(...args),
 	readPanelUnit: (): string | undefined => undefined,
@@ -61,37 +67,41 @@ jest.mock('../../utils/buildCreateAlertUrl', () => ({
 
 // Prefill derivation has its own coverage; return a sentinel so the hook test can
 // assert it is threaded into the resolved-alert URL.
-const mockPrefill = { matchType: 'in_total' };
-jest.mock('../../utils/deriveAlertPrefill', () => ({
+const { mockPrefill } = vi.hoisted(() => ({
+	mockPrefill: { matchType: 'in_total' },
+}));
+vi.mock('../../utils/deriveAlertPrefill', () => ({
 	deriveAlertPrefill: (): unknown => mockPrefill,
 }));
 
 // Keep the real exports (getPanelQueryType reads them); stub only the builder.
-const mockBuildQueryRangeRequest = jest.fn((_args?: unknown) => ({
-	request: 'payload',
+const { mockBuildQueryRangeRequest } = vi.hoisted(() => ({
+	mockBuildQueryRangeRequest: vi.fn((_args?: unknown) => ({
+		request: 'payload',
+	})),
 }));
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/queryV5/buildQueryRangeRequest',
-	() => ({
-		...jest.requireActual(
+	async () => ({
+		...(await vi.importActual(
 			'pages/DashboardPage/DashboardContainer/queryV5/buildQueryRangeRequest',
-		),
+		)),
 		buildQueryRangeRequest: (args: unknown): unknown =>
 			mockBuildQueryRangeRequest(args),
 	}),
 );
 
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters',
-	() => ({
-		...jest.requireActual(
+	async () => ({
+		...(await vi.importActual(
 			'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters',
-		),
+		)),
 		envelopesToQuery: (): unknown => ({ resolved: 'query' }),
 	}),
 );
 
-const mockLogEvent = logEvent as jest.Mock;
+const mockLogEvent = logEvent as Mock;
 
 const panel = {
 	kind: 'Panel',
@@ -104,7 +114,7 @@ const panel = {
 
 describe('useCreateAlertFromPanel', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		useDashboardStore.setState({ dashboardId: 'dash-1', resolvedVariables: {} });
 	});
 

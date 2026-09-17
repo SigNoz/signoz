@@ -2,30 +2,30 @@ import { renderHook } from '@testing-library/react';
 
 import { useUpdatePanelText } from '../useUpdatePanelText';
 
-const patchAsync = jest.fn<Promise<unknown>, [unknown]>(() =>
+const patchAsync = vi.fn<(arg: unknown) => Promise<unknown>>(() =>
 	Promise.resolve(undefined),
 );
-const showErrorModal = jest.fn();
+const showErrorModal = vi.fn();
 let store = { dashboardId: 'dash-1' };
 let editContext = { isEditable: true };
 
-jest.mock('../../../hooks/useOptimisticPatch', () => ({
+vi.mock('../../../hooks/useOptimisticPatch', () => ({
 	useOptimisticPatch: (): unknown => ({ patchAsync }),
 }));
-jest.mock('providers/ErrorModalProvider', () => ({
+vi.mock('providers/ErrorModalProvider', () => ({
 	useErrorModal: (): unknown => ({ showErrorModal }),
 }));
-jest.mock('../../../store/useDashboardStore', () => ({
+vi.mock('../../../store/useDashboardStore', () => ({
 	useDashboardStore: (select: (s: typeof store) => unknown): unknown =>
 		select(store),
 }));
-jest.mock('../../../hooks/useDashboardEditContext', () => ({
+vi.mock('../../../hooks/useDashboardEditContext', () => ({
 	useDashboardEditContext: (): typeof editContext => editContext,
 }));
 
 describe('useUpdatePanelText', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		store = { dashboardId: 'dash-1' };
 		editContext = { isEditable: true };
 	});

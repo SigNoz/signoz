@@ -1,4 +1,4 @@
-import { act, screen } from 'tests/test-utils';
+import { act, screen } from 'tests/test-utils-full';
 
 import { renderEntityTraces } from './testUtils';
 import {

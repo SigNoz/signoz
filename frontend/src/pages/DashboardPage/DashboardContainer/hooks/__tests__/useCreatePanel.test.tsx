@@ -1,11 +1,12 @@
+import type { Mock } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
 
 import { useCreatePanel } from '../useCreatePanel';
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+const mockSafeNavigate = vi.fn();
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
@@ -15,19 +16,20 @@ let mockGlobalTime = {
 	minTime: 0,
 	maxTime: 0,
 };
-jest.mock('react-redux', () => ({
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
 	useSelector: (selector: (state: unknown) => unknown): unknown =>
 		selector({ globalTime: mockGlobalTime }),
 }));
 
-jest.mock('../../store/useDashboardStore', () => ({
+vi.mock('../../store/useDashboardStore', () => ({
 	useDashboardStore: (selector: (state: unknown) => unknown): unknown =>
 		selector({ dashboardId: 'dash-1' }),
 }));
 
 describe('useCreatePanel', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockGlobalTime = { selectedTime: '30m', minTime: 0, maxTime: 0 };
 	});
 

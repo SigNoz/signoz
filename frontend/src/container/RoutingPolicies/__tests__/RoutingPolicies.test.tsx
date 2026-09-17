@@ -14,16 +14,21 @@ import {
 const ROUTING_POLICY_DETAILS_TEST_ID = 'routing-policy-details';
 const SEARCH_PLACEHOLDER = 'Search for a routing policy...';
 
-jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
+vi.mock('providers/App/App', { spy: true });
+vi.mock('../useRoutingPolicies', { spy: true });
 
-jest.mock('hooks/useUrlQuery', () => ({
+vi.mocked(appHooks.useAppContext).mockReturnValue(getAppContextMockState());
+
+vi.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: (): URLSearchParams => mockQueryParams({}),
 }));
 
-const mockHistoryReplace = jest.fn();
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+const { mockHistoryReplace } = vi.hoisted(() => ({
+	mockHistoryReplace: vi.fn(),
+}));
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useHistory: (): any => ({
 		replace: mockHistoryReplace,
 	}),
@@ -35,28 +40,28 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
-jest.mock('../RoutingPolicyList', () => ({
+vi.mock('../RoutingPolicyList', () => ({
 	__esModule: true,
-	default: jest.fn(() => (
+	default: vi.fn(() => (
 		<div data-testid="routing-policy-list">RoutingPolicyList</div>
 	)),
 }));
-jest.mock('../RoutingPolicyDetails', () => ({
+vi.mock('../RoutingPolicyDetails', () => ({
 	__esModule: true,
-	default: jest.fn(() => (
+	default: vi.fn(() => (
 		<div data-testid="routing-policy-details">RoutingPolicyDetails</div>
 	)),
 }));
-jest.mock('../DeleteRoutingPolicy', () => ({
+vi.mock('../DeleteRoutingPolicy', () => ({
 	__esModule: true,
-	default: jest.fn(() => (
+	default: vi.fn(() => (
 		<div data-testid="delete-routing-policy">DeleteRoutingPolicy</div>
 	)),
 }));
 
-const mockHandleSearch = jest.fn();
-const mockHandlePolicyDetailsModalOpen = jest.fn();
-jest.spyOn(routingPoliciesHooks, 'default').mockReturnValue(
+const mockHandleSearch = vi.fn();
+const mockHandlePolicyDetailsModalOpen = vi.fn();
+vi.mocked(routingPoliciesHooks.default).mockReturnValue(
 	getUseRoutingPoliciesMockData({
 		setSearchTerm: mockHandleSearch,
 		handlePolicyDetailsModalOpen: mockHandlePolicyDetailsModalOpen,
@@ -65,7 +70,7 @@ jest.spyOn(routingPoliciesHooks, 'default').mockReturnValue(
 
 describe('RoutingPolicies', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockQueryParams({});
 		mockLocation('/alerts');
 	});
@@ -95,8 +100,8 @@ describe('RoutingPolicies', () => {
 	});
 
 	it('should disable the "New routing policy" button for users with VIEWER role', () => {
-		jest
-			.spyOn(appHooks, 'useAppContext')
+		vi
+			.mocked(appHooks.useAppContext)
 			.mockReturnValueOnce(getAppContextMockState({ role: 'VIEWER' }));
 		render(<RoutingPolicies />);
 		expect(
@@ -124,7 +129,7 @@ describe('RoutingPolicies', () => {
 	});
 
 	it('policy details modal is open based on modal state', () => {
-		jest.spyOn(routingPoliciesHooks, 'default').mockReturnValue(
+		vi.mocked(routingPoliciesHooks.default).mockReturnValue(
 			getUseRoutingPoliciesMockData({
 				policyDetailsModalState: {
 					mode: 'create',
@@ -139,7 +144,7 @@ describe('RoutingPolicies', () => {
 	});
 
 	it('delete modal is open based on modal state', () => {
-		jest.spyOn(routingPoliciesHooks, 'default').mockReturnValue(
+		vi.mocked(routingPoliciesHooks.default).mockReturnValue(
 			getUseRoutingPoliciesMockData({
 				isDeleteModalOpen: true,
 			}),
@@ -151,7 +156,7 @@ describe('RoutingPolicies', () => {
 	it('should load with search term from URL query params', () => {
 		const searchTerm = 'existing search';
 		mockQueryParams({ search: searchTerm });
-		jest.spyOn(routingPoliciesHooks, 'default').mockReturnValue(
+		vi.mocked(routingPoliciesHooks.default).mockReturnValue(
 			getUseRoutingPoliciesMockData({
 				searchTerm,
 			}),
@@ -167,7 +172,7 @@ describe('RoutingPolicies', () => {
 
 	it('should initialize with empty search when no search param is in URL', () => {
 		mockQueryParams({});
-		jest.spyOn(routingPoliciesHooks, 'default').mockReturnValue(
+		vi.mocked(routingPoliciesHooks.default).mockReturnValue(
 			getUseRoutingPoliciesMockData({
 				searchTerm: '',
 			}),

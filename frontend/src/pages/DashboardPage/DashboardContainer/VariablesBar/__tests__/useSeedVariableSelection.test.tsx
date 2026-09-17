@@ -8,17 +8,17 @@ import {
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { useSeedVariableSelection } from '../hooks/useSeedVariableSelection';
 
-const mockSetUrlValues = jest.fn();
+const mockSetUrlValues = vi.fn();
 let mockUrlValues: Record<string, unknown> | null = null;
 
-jest.mock('nuqs', () => ({
+vi.mock('nuqs', () => ({
 	parseAsJson: (): unknown => ({ withOptions: (): unknown => ({}) }),
 	useQueryState: (): unknown => [mockUrlValues, mockSetUrlValues],
 }));
 
 // The hook maps spec DTOs through dtoToFormModel; identity lets tests pass form
 // models directly as `spec.variables`.
-jest.mock('../../DashboardSettings/Variables/variableAdapters', () => ({
+vi.mock('../../DashboardSettings/Variables/variableAdapters', () => ({
 	dtoToFormModel: (dto: unknown): unknown => dto,
 }));
 

@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router-dom';
@@ -35,14 +36,14 @@ const queryClient = new QueryClient({
 
 const mockStore = configureStore([thunk]);
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+const mockSafeNavigate = vi.fn();
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
-jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
+vi.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 	__esModule: true,
 	default: ({
 		onSelect,
@@ -61,7 +62,7 @@ jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 	),
 }));
 
-jest.mock('container/NewExplorerCTA', () => ({
+vi.mock('container/NewExplorerCTA', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
@@ -147,7 +148,7 @@ describe('REGRESSION: DateTimeSelectionV2 preserves nuqs query params on time ch
 	let currentSearchParams: URLSearchParams;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockSafeNavigate.mockClear();
 		queryClient.clear();
 

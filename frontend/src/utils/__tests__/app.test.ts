@@ -1,16 +1,17 @@
+import history from 'lib/history';
+
 import { buildAbsolutePath } from '../app';
 
 // buildAbsolutePath reads history.location.pathname (basename-relative) rather than
 // window.location.pathname, so we mock lib/history instead of utils/getLocation.
-jest.mock('lib/history', () => ({
+vi.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
 		location: { pathname: '/' },
 	},
 }));
 
-// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
-const mockHistory = require('lib/history').default as {
+const mockHistory = history as unknown as {
 	location: { pathname: string };
 };
 

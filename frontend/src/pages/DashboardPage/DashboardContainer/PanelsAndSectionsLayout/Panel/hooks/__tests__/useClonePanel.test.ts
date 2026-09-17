@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
 import { useDashboardStore } from '../../../../store/useDashboardStore';
@@ -5,22 +6,27 @@ import { useScrollIntoViewStore } from '../../../../store/useScrollIntoViewStore
 import type { DashboardSection } from '../../../../utils';
 import { useClonePanel } from '../useClonePanel';
 
-const mockPatchAsync = jest.fn().mockResolvedValue(undefined);
-jest.mock('../../../../hooks/useOptimisticPatch', () => ({
-	useOptimisticPatch: (): { patchAsync: jest.Mock; isPatching: boolean } => ({
+const { mockPatchAsync } = vi.hoisted(() => ({
+	mockPatchAsync: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('../../../../hooks/useOptimisticPatch', () => ({
+	useOptimisticPatch: (): { patchAsync: Mock; isPatching: boolean } => ({
 		patchAsync: mockPatchAsync,
 		isPatching: false,
 	}),
 }));
 
-const mockToastPromise = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
+const { mockToastPromise } = vi.hoisted(() => ({ mockToastPromise: vi.fn() }));
+vi.mock('@signozhq/ui/sonner', () => ({
 	toast: { promise: (...args: unknown[]): unknown => mockToastPromise(...args) },
 }));
 
-jest.mock('uuid', () => ({ v4: (): string => 'cloned-id' }));
+// NOTE: no vi.mock('uuid') here. Once the optimizer bundles uuid into a vendor
+// chunk the mock no longer intercepts in browser mode (same finding as
+// QuerySection.test.tsx), so the tests below read the generated id back out of
+// the patch and assert it is threaded through consistently instead.
 
-jest.mock('../../../../hooks/useDashboardEventMeta', () => ({
+vi.mock('../../../../hooks/useDashboardEventMeta', () => ({
 	useDashboardEventMeta: (): { dashboardId: string; dashboardName: string } => ({
 		dashboardId: 'dash-1',
 		dashboardName: 'Infra overview',
@@ -53,7 +59,7 @@ function sections(): DashboardSection[] {
 
 describe('useClonePanel', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		useDashboardStore.setState({ dashboardId: 'dash-1' });
 		useScrollIntoViewStore.setState({ scrollTargetId: null });
 	});
@@ -63,10 +69,12 @@ describe('useClonePanel', () => {
 
 		await result.current({ panelId: 'p1', layoutIndex: 0 });
 
+		const ops = mockPatchAsync.mock.calls[0][0];
+		const newPanelId = (ops[0].path as string).split('/').pop();
 		expect(mockPatchAsync).toHaveBeenCalledWith([
 			{
 				op: 'add',
-				path: '/spec/panels/cloned-id',
+				path: `/spec/panels/${newPanelId}`,
 				value: sourcePanel,
 			},
 			{
@@ -80,7 +88,7 @@ describe('useClonePanel', () => {
 					y: 5,
 					width: 8,
 					height: 5,
-					content: { $ref: '#/spec/panels/cloned-id' },
+					content: { $ref: `#/spec/panels/${newPanelId}` },
 				},
 			},
 		]);
@@ -153,7 +161,10 @@ describe('useClonePanel', () => {
 		};
 		onAutoClose();
 
-		expect(useScrollIntoViewStore.getState().scrollTargetId).toBe('cloned-id');
+		const newPanelId = (mockPatchAsync.mock.calls[0][0][0].path as string)
+			.split('/')
+			.pop();
+		expect(useScrollIntoViewStore.getState().scrollTargetId).toBe(newPanelId);
 	});
 
 	it('swallows a patch rejection (toast owns the error UX) — does not throw', async () => {

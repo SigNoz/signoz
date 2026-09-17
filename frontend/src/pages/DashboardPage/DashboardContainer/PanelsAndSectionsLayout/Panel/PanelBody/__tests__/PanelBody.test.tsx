@@ -24,8 +24,8 @@ const baseProps = {
 	data: {} as PanelQueryData,
 	isFetching: false,
 	error: null,
-	refetch: jest.fn(),
-	onDragSelect: jest.fn(),
+	refetch: vi.fn(),
+	onDragSelect: vi.fn(),
 };
 
 describe('PanelBody', () => {

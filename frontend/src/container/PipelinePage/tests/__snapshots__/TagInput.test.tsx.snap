@@ -1,21 +1,13 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Pipeline Page should render TagInput section 1`] = `
+exports[`Pipeline Page > should render TagInput section 1`] = `
 <DocumentFragment>
-  .c0 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  width: 100%;
-}
-
-<div
-    class="c0"
+  <div
+    class="sc-hmdomO jlTjZR"
   >
     <span
       class="ant-input-affix-wrapper css-dev-only-do-not-override-2i2tap"
-      style="width: 78px; vertical-align: top; flex: 1;"
+      style="width: 78px; vertical-align: top; flex: 1 1 0%;"
     >
       <span
         class="ant-input-prefix"

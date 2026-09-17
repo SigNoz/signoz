@@ -14,16 +14,16 @@ import {
 	MOCK_METRIC_NAME,
 } from './testUtlls';
 
-const mockWindowOpen = jest.fn();
+const mockWindowOpen = vi.fn();
 Object.defineProperty(window, 'open', { value: mockWindowOpen });
 
-const useGetMetricAlertsMock = jest.spyOn(
-	metricsExplorerHooks,
-	'useGetMetricAlerts',
+vi.mock('api/generated/services/metrics', { spy: true });
+
+const useGetMetricAlertsMock = vi.mocked(
+	metricsExplorerHooks.useGetMetricAlerts,
 );
-const useGetMetricDashboardsMock = jest.spyOn(
-	metricsExplorerHooks,
-	'useGetMetricDashboardsV2',
+const useGetMetricDashboardsMock = vi.mocked(
+	metricsExplorerHooks.useGetMetricDashboardsV2,
 );
 
 describe('DashboardsAndAlertsPopover', () => {

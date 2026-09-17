@@ -6,13 +6,18 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import SelectAlertType from '..';
 
-const useAppContextSpy = jest.spyOn(appHooks, 'useAppContext');
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('providers/App/App', { spy: true });
+
+const useAppContextSpy = vi.mocked(appHooks.useAppContext);
 
 describe('SelectAlertType', () => {
-	const mockOnSelect = jest.fn();
+	const mockOnSelect = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		useAppContextSpy.mockReturnValue(getAppContextMockState());
 	});
 

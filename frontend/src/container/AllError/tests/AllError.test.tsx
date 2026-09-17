@@ -14,24 +14,30 @@ import '@testing-library/jest-dom';
 import * as appContextHooks from '../../../providers/App/App';
 import { LicenseEvent } from '../../../types/api/licensesV3/getActive';
 import AllErrors from '../index';
+import type { Mock } from 'vitest';
 import {
 	INIT_URL_WITH_COMMON_QUERY,
 	MOCK_ERROR_LIST,
 	TAG_FROM_QUERY,
 } from './constants';
 
-jest.mock('hooks/useResourceAttribute', () =>
-	jest.fn(() => ({
+vi.mock('hooks/useResourceAttribute', () => ({
+	default: vi.fn(() => ({
 		queries: [],
 	})),
-);
-
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
-	useSelector: jest.fn(),
 }));
 
-jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
+	useSelector: vi.fn(),
+}));
+
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('../../../providers/App/App', { spy: true });
+
+vi.mocked(appContextHooks.useAppContext).mockReturnValue({
 	user: {
 		role: 'admin',
 	},
@@ -77,11 +83,11 @@ const BASE_URL = ENVIRONMENT.baseURL;
 const listErrorsURL = `${BASE_URL}/api/v1/listErrors`;
 const countErrorsURL = `${BASE_URL}/api/v1/countErrors`;
 
-const postListErrorsSpy = jest.fn();
+const postListErrorsSpy = vi.fn();
 
 describe('Exceptions - All Errors', () => {
 	beforeEach(() => {
-		(useSelector as jest.Mock).mockReturnValue({
+		(useSelector as Mock).mockReturnValue({
 			maxTime: 1000,
 			minTime: 0,
 			loading: false,

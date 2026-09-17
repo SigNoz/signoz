@@ -1,40 +1,44 @@
 import ROUTES from 'constants/routes';
 import * as usePrefillAlertConditions from 'container/FormAlertRules/usePrefillAlertConditions';
 import CreateAlertPage from 'pages/CreateAlert';
-import { act, fireEvent, render } from 'tests/test-utils';
+import { act, fireEvent, render } from 'tests/test-utils-full';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { ALERT_TYPE_TO_TITLE, ALERT_TYPE_URL_MAP } from './constants';
+import type { Mock } from 'vitest';
 
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useNavigationType: jest.fn(() => 'PUSH'),
-	useLocation: jest.fn(() => ({
+vi.mock('react-router-dom-v5-compat', async () => ({
+	...(await vi.importActual('react-router-dom-v5-compat')),
+	useNavigationType: vi.fn(() => 'PUSH'),
+	useLocation: vi.fn(() => ({
 		pathname: '/alerts/new',
 		search: '',
 		hash: '',
 		state: null,
 	})),
-	useSearchParams: jest.fn(() => [new URLSearchParams(), jest.fn()]),
+	useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
 }));
 
-jest
-	.spyOn(usePrefillAlertConditions, 'usePrefillAlertConditions')
-	.mockReturnValue({
-		matchType: '3',
-		op: '1',
-		target: 100,
-		targetUnit: 'rpm',
-	});
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('container/FormAlertRules/usePrefillAlertConditions', { spy: true });
 
-let mockWindowOpen: jest.Mock;
+vi.mocked(usePrefillAlertConditions.usePrefillAlertConditions).mockReturnValue({
+	matchType: '3',
+	op: '1',
+	target: 100,
+	targetUnit: 'rpm',
+});
+
+let mockWindowOpen: Mock;
 
 window.ResizeObserver =
 	window.ResizeObserver ||
-	jest.fn().mockImplementation(() => ({
-		disconnect: jest.fn(),
-		observe: jest.fn(),
-		unobserve: jest.fn(),
+	vi.fn().mockImplementation(() => ({
+		disconnect: vi.fn(),
+		observe: vi.fn(),
+		unobserve: vi.fn(),
 	}));
 
 function findLinkForAlertType(
@@ -61,7 +65,7 @@ describe('Alert rule documentation redirection', () => {
 	let renderResult: ReturnType<typeof render>;
 
 	beforeAll(() => {
-		mockWindowOpen = jest.fn();
+		mockWindowOpen = vi.fn();
 		window.open = mockWindowOpen;
 	});
 

@@ -1,31 +1,9 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`PipelinePage should render PipelineExpandView section 1`] = `
+exports[`PipelinePage > should render PipelineExpandView section 1`] = `
 <DocumentFragment>
-  .c1 {
-  margin: 0.125rem;
-  padding: 0.313rem;
-  border: none;
-  font-style: normal;
-  font-weight: 400;
-  font-size: 0.75rem;
-  line-height: 1.25rem;
-}
-
-.c0 .ant-table-tbody > tr > td {
-  border: none;
-}
-
-.c0 .ant-table-tbody > tr:last-child > td {
-  border: none;
-}
-
-.c0 .ant-table-content {
-  background: #1d1d1d;
-}
-
-<div
-    class="ant-table-wrapper c0 css-dev-only-do-not-override-2i2tap"
+  <div
+    class="ant-table-wrapper sc-koXPp hLmOAj css-dev-only-do-not-override-2i2tap"
   >
     <div
       class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
@@ -77,7 +55,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: left;"
                     >
                       <div
-                        class="c1"
+                        class="sc-eeDRCY cNOJZR"
                       >
                         grok use common asd
                       </div>
@@ -107,7 +85,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: left;"
                     >
                       <div
-                        class="c1"
+                        class="sc-eeDRCY cNOJZR"
                       >
                         rename auth
                       </div>
@@ -137,7 +115,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: left;"
                     >
                       <div
-                        class="c1"
+                        class="sc-eeDRCY cNOJZR"
                       >
                         json parser
                       </div>

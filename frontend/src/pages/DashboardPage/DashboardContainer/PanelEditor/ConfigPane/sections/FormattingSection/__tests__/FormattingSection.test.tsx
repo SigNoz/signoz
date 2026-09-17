@@ -20,7 +20,7 @@ describe('FormattingSection', () => {
 			<FormattingSection
 				value={undefined}
 				controls={{ unit: true, decimals: true }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -33,7 +33,7 @@ describe('FormattingSection', () => {
 			<FormattingSection
 				value={undefined}
 				controls={{ decimals: true }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -42,7 +42,7 @@ describe('FormattingSection', () => {
 	});
 
 	it('writes the chosen decimal precision through onChange', async () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<FormattingSection
 				value={undefined}
@@ -57,7 +57,7 @@ describe('FormattingSection', () => {
 	});
 
 	it('merges the edit into the existing formatting slice', async () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<FormattingSection
 				value={{ unit: 'bytes' }}
@@ -81,7 +81,7 @@ describe('FormattingSection', () => {
 				value={{ unit: 'By' }}
 				controls={{ unit: true }}
 				metricUnit="s"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -94,7 +94,7 @@ describe('FormattingSection', () => {
 				value={{ unit: 's' }}
 				controls={{ unit: true }}
 				metricUnit="s"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -109,7 +109,7 @@ describe('FormattingSection', () => {
 				controls={{ columnUnits: true }}
 				tableColumns={[{ key: 'A', label: 'A' }]}
 				metricUnit="s"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -123,7 +123,7 @@ describe('FormattingSection', () => {
 				controls={{ columnUnits: true }}
 				tableColumns={[{ key: 'A', label: 'A' }]}
 				metricUnit="s"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 

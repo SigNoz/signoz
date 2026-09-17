@@ -85,7 +85,7 @@ describe('StatusFilter', () => {
 	});
 
 	it('updates URL to "active" when Active clicked', async () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		renderStatusFilter({ onUrlUpdate });
 
 		const activeButton = screen.getByRole('radio', { name: 'Active' });
@@ -101,7 +101,7 @@ describe('StatusFilter', () => {
 	});
 
 	it('updates URL to "inactive" when Inactive clicked', async () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		renderStatusFilter({ onUrlUpdate });
 
 		const inactiveButton = screen.getByRole('radio', { name: 'Inactive' });
@@ -117,7 +117,7 @@ describe('StatusFilter', () => {
 	});
 
 	it('removes statusFilter from URL when All clicked', async () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		renderStatusFilter({
 			searchParams: { statusFilter: 'active' },
 			onUrlUpdate,
@@ -133,7 +133,7 @@ describe('StatusFilter', () => {
 	});
 
 	it('resets page when filter changes', async () => {
-		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 		renderStatusFilter({
 			searchParams: { page: '3' },
 			onUrlUpdate,

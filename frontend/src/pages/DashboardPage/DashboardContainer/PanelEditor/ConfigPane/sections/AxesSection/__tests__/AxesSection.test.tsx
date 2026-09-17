@@ -8,7 +8,7 @@ describe('AxesSection', () => {
 			<AxesSection
 				value={undefined}
 				controls={{ minMax: true, logScale: true }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -22,7 +22,7 @@ describe('AxesSection', () => {
 			<AxesSection
 				value={undefined}
 				controls={{ logScale: true }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -34,7 +34,7 @@ describe('AxesSection', () => {
 
 	it('writes a numeric soft min through onChange', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<AxesSection
 				value={undefined}
@@ -50,7 +50,7 @@ describe('AxesSection', () => {
 
 	it('clears a soft bound to null when the field is emptied', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<AxesSection
 				value={{ softMax: 100 }}
@@ -66,7 +66,7 @@ describe('AxesSection', () => {
 
 	it('toggles the logarithmic scale through onChange', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<AxesSection
 				value={{ isLogScale: false }}

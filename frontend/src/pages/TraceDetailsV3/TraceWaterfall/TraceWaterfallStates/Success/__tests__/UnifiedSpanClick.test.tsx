@@ -1,3 +1,4 @@
+import type { Mock, MockedFunction } from 'vitest';
 import React from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
@@ -5,17 +6,16 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 // Local identity-proxy mock for this module so `styles.foo` resolves to
 // `'foo'` in test assertions. The global `__mocks__/cssMock.ts` stays as
 // `export default {}`; we override resolution for this specific file only.
-jest.mock(
-	'../Success.module.scss',
-	() =>
-		new Proxy(
-			{},
-			{
-				get: (_target, prop): string | undefined =>
-					typeof prop === 'string' && prop !== '__esModule' ? prop : undefined,
-			},
-		),
-);
+vi.mock('../Success.module.scss', () => ({
+	__esModule: true,
+	default: new Proxy(
+		{},
+		{
+			get: (_target, prop): string | undefined =>
+				typeof prop === 'string' && prop !== '__esModule' ? prop : undefined,
+		},
+	),
+}));
 
 import Success from '../Success';
 import successStyles from '../Success.module.scss';
@@ -24,61 +24,64 @@ const renderWithTraceProvider: typeof render = (ui, options, customOptions) =>
 	render(ui, options, customOptions);
 
 // Mock the required hooks with proper typing
-const mockSafeNavigate = jest.fn() as jest.MockedFunction<
+const mockSafeNavigate = vi.fn() as MockedFunction<
 	(params: { search: string }) => void
 >;
 const mockUrlQuery = new URLSearchParams();
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): { safeNavigate: typeof mockSafeNavigate } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
-jest.mock('hooks/useUrlQuery', () => (): URLSearchParams => mockUrlQuery);
+vi.mock('hooks/useUrlQuery', () => ({
+	__esModule: true,
+	default: (): URLSearchParams => mockUrlQuery,
+}));
 
 // App provider is already handled by test-utils
 
 // React Router is already globally mocked
 
 // Mock the Filters component that's causing React Query issues
-jest.mock('../Filters/Filters', () => {
+vi.mock('../Filters/Filters', () => {
 	function Filters(): null {
 		return null;
 	}
 	Filters.displayName = 'Filters';
-	return Filters;
+	return { __esModule: true, default: Filters };
 });
 
 // Mock other potential dependencies
-jest.mock(
+vi.mock(
 	'pages/TraceDetailsV3/TraceWaterfall/AddSpanToFunnelModal/AddSpanToFunnelModal',
 	() => {
 		function AddSpanToFunnelModal(): null {
 			return null;
 		}
 		AddSpanToFunnelModal.displayName = 'AddSpanToFunnelModal';
-		return AddSpanToFunnelModal;
+		return { __esModule: true, default: AddSpanToFunnelModal };
 	},
 );
 
-jest.mock('pages/TraceDetailsV3/TraceWaterfall/SpanLineActionButtons', () => {
+vi.mock('pages/TraceDetailsV3/TraceWaterfall/SpanLineActionButtons', () => {
 	function SpanLineActionButtons(): null {
 		return null;
 	}
 	SpanLineActionButtons.displayName = 'SpanLineActionButtons';
-	return SpanLineActionButtons;
+	return { __esModule: true, default: SpanLineActionButtons };
 });
 
-jest.mock('components/HttpStatusBadge/HttpStatusBadge', () => {
+vi.mock('components/HttpStatusBadge/HttpStatusBadge', () => {
 	function HttpStatusBadge(): null {
 		return null;
 	}
 	HttpStatusBadge.displayName = 'HttpStatusBadge';
-	return HttpStatusBadge;
+	return { __esModule: true, default: HttpStatusBadge };
 });
 
-jest.mock('components/TimelineV3/TimelineV3', () => {
+vi.mock('components/TimelineV3/TimelineV3', () => {
 	function TimelineV3(): null {
 		return null;
 	}
@@ -87,13 +90,13 @@ jest.mock('components/TimelineV3/TimelineV3', () => {
 });
 
 // Mock other utilities that might cause issues
-jest.mock('lib/uPlotLib/utils/generateColor', () => ({
+vi.mock('lib/uPlotLib/utils/generateColor', () => ({
 	generateColor: (): string => '#1890ff',
 	colorToRgb: (): string => '24, 144, 255',
 	hashFn: (): number => 0,
 }));
 
-jest.mock('container/TraceDetail/utils', () => ({
+vi.mock('container/TraceDetail/utils', () => ({
 	convertTimeToRelevantUnit: (
 		value: number,
 	): { time: number; timeUnitName: string } => ({
@@ -102,12 +105,12 @@ jest.mock('container/TraceDetail/utils', () => ({
 	}),
 }));
 
-jest.mock('utils/toFixed', () => ({
+vi.mock('utils/toFixed', () => ({
 	toFixed: (value: number, decimals: number): string => value.toFixed(decimals),
 }));
 
 // Mock useVirtualizer to render all items without actual virtualization
-jest.mock('@tanstack/react-virtual', () => ({
+vi.mock('@tanstack/react-virtual', () => ({
 	useVirtualizer: ({
 		count,
 	}: {
@@ -120,7 +123,7 @@ jest.mock('@tanstack/react-virtual', () => ({
 			size: number;
 		}>;
 		getTotalSize: () => number;
-		scrollToIndex: jest.Mock;
+		scrollToIndex: Mock;
 	} => ({
 		getVirtualItems: (): Array<{
 			index: number;
@@ -135,9 +138,9 @@ jest.mock('@tanstack/react-virtual', () => ({
 				size: 54,
 			})),
 		getTotalSize: (): number => count * 54,
-		scrollToIndex: jest.fn(),
+		scrollToIndex: vi.fn(),
 	}),
-	Virtualizer: jest.fn(),
+	Virtualizer: vi.fn(),
 }));
 
 const mockTraceMetadata = {
@@ -203,8 +206,8 @@ function TestComponent(): JSX.Element {
 			uncollapsedNodes={mockSpans.map((s) => s.span_id)}
 			isFullDataLoaded={false}
 			localUncollapsedNodes={new Set()}
-			setLocalUncollapsedNodes={jest.fn()}
-			setInterestedSpanId={jest.fn()}
+			setLocalUncollapsedNodes={vi.fn()}
+			setInterestedSpanId={vi.fn()}
 			selectedSpan={selectedSpan}
 			setSelectedSpan={setSelectedSpan}
 			filteredSpanIds={[]}
@@ -223,7 +226,7 @@ describe('Span Click User Flows', () => {
 	const INTERESTED_SPAN_CLASS = successStyles.isInterested;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		// Clear all URL parameters
 		Array.from(mockUrlQuery.keys()).forEach((key) => mockUrlQuery.delete(key));
 	});
@@ -239,10 +242,10 @@ describe('Span Click User Flows', () => {
 				uncollapsedNodes={mockSpans.map((s) => s.span_id)}
 				isFullDataLoaded={false}
 				localUncollapsedNodes={new Set()}
-				setLocalUncollapsedNodes={jest.fn()}
-				setInterestedSpanId={jest.fn()}
+				setLocalUncollapsedNodes={vi.fn()}
+				setInterestedSpanId={vi.fn()}
 				selectedSpan={undefined}
-				setSelectedSpan={jest.fn()}
+				setSelectedSpan={vi.fn()}
 				filteredSpanIds={[]}
 				isFilterActive={false}
 			/>,
@@ -410,10 +413,10 @@ describe('Span Click User Flows', () => {
 				uncollapsedNodes={mockSpans.map((s) => s.span_id)}
 				isFullDataLoaded={false}
 				localUncollapsedNodes={new Set()}
-				setLocalUncollapsedNodes={jest.fn()}
-				setInterestedSpanId={jest.fn()}
+				setLocalUncollapsedNodes={vi.fn()}
+				setInterestedSpanId={vi.fn()}
 				selectedSpan={undefined}
-				setSelectedSpan={jest.fn()}
+				setSelectedSpan={vi.fn()}
 				filteredSpanIds={[]}
 				isFilterActive={false}
 			/>,

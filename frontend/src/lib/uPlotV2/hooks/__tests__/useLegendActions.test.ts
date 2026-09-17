@@ -2,50 +2,51 @@ import { renderHook } from '@testing-library/react';
 import { LegendAction } from 'lib/uPlotV2/components/types';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 import { useLegendActions } from 'lib/uPlotV2/hooks/useLegendActions';
+import type { Mock, MockInstance, MockedFunction } from 'vitest';
 
-jest.mock('lib/uPlotV2/context/PlotContext');
+vi.mock('lib/uPlotV2/context/PlotContext');
 
-const mockUsePlotContext = usePlotContext as jest.MockedFunction<
+const mockUsePlotContext = usePlotContext as MockedFunction<
 	typeof usePlotContext
 >;
 
 describe('useLegendActions', () => {
-	let onToggleSeriesVisibility: jest.Mock;
-	let onToggleSeriesOnOff: jest.Mock;
-	let onShowOnlySeries: jest.Mock;
-	let onShowAllSeries: jest.Mock;
-	let onFocusSeries: jest.Mock;
-	let onHighlightSeries: jest.Mock;
-	let setPlotContextInitialState: jest.Mock;
-	let syncSeriesVisibilityToLocalStorage: jest.Mock;
-	let cancelAnimationFrameSpy: jest.SpyInstance<void, [handle: number]>;
+	let onToggleSeriesVisibility: Mock;
+	let onToggleSeriesOnOff: Mock;
+	let onShowOnlySeries: Mock;
+	let onShowAllSeries: Mock;
+	let onFocusSeries: Mock;
+	let onHighlightSeries: Mock;
+	let setPlotContextInitialState: Mock;
+	let syncSeriesVisibilityToLocalStorage: Mock;
+	let cancelAnimationFrameSpy: MockInstance<(handle: number) => void>;
 
 	beforeAll(() => {
-		jest
-			.spyOn(global, 'requestAnimationFrame')
+		vi
+			.spyOn(globalThis, 'requestAnimationFrame')
 			.mockImplementation((cb: FrameRequestCallback): number => {
 				cb(0);
 				return 1;
 			});
 
-		cancelAnimationFrameSpy = jest
-			.spyOn(global, 'cancelAnimationFrame')
+		cancelAnimationFrameSpy = vi
+			.spyOn(globalThis, 'cancelAnimationFrame')
 			.mockImplementation(() => {});
 	});
 
 	afterAll(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	beforeEach(() => {
-		onToggleSeriesVisibility = jest.fn();
-		onToggleSeriesOnOff = jest.fn();
-		onShowOnlySeries = jest.fn();
-		onShowAllSeries = jest.fn();
-		onFocusSeries = jest.fn();
-		onHighlightSeries = jest.fn();
-		setPlotContextInitialState = jest.fn();
-		syncSeriesVisibilityToLocalStorage = jest.fn();
+		onToggleSeriesVisibility = vi.fn();
+		onToggleSeriesOnOff = vi.fn();
+		onShowOnlySeries = vi.fn();
+		onShowAllSeries = vi.fn();
+		onFocusSeries = vi.fn();
+		onHighlightSeries = vi.fn();
+		setPlotContextInitialState = vi.fn();
+		syncSeriesVisibilityToLocalStorage = vi.fn();
 
 		mockUsePlotContext.mockReturnValue({
 			onToggleSeriesVisibility,
@@ -111,8 +112,8 @@ describe('useLegendActions', () => {
 		});
 
 		it('cancels a pending highlight frame on unmount', () => {
-			jest
-				.spyOn(global, 'requestAnimationFrame')
+			vi
+				.spyOn(globalThis, 'requestAnimationFrame')
 				.mockImplementation((): number => 7);
 
 			const { result, unmount } = renderHook(() => useLegendActions());

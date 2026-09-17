@@ -8,7 +8,7 @@ import { renderListAlertRules } from './_helpers';
 
 describe('ListAlertRules — new alert button', () => {
 	beforeEach(() => {
-		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		vi.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 	});
 
 	it('plain click navigates to ALERTS_NEW with newTab:false', async () => {

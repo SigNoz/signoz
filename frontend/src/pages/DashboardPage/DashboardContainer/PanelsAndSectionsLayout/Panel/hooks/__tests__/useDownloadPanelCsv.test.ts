@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { getTableCsvRows } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TablePanel/tableCsv';
@@ -6,17 +7,17 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 
 import { useDownloadPanelCsv } from '../useDownloadPanelCsv';
 
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/Panels/kinds/TablePanel/tableCsv',
-	() => ({ getTableCsvRows: jest.fn() }),
+	() => ({ getTableCsvRows: vi.fn() }),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/Panels/utils/downloadCsv',
-	() => ({ downloadCsv: jest.fn() }),
+	() => ({ downloadCsv: vi.fn() }),
 );
 
-const mockGetTableCsvRows = getTableCsvRows as jest.Mock;
-const mockDownloadCsv = downloadCsv as jest.Mock;
+const mockGetTableCsvRows = getTableCsvRows as Mock;
+const mockDownloadCsv = downloadCsv as Mock;
 
 const data = {} as PanelQueryData;
 const panelOf = (kind: string): DashboardtypesPanelDTO =>
@@ -25,7 +26,7 @@ const panelOf = (kind: string): DashboardtypesPanelDTO =>
 	}) as DashboardtypesPanelDTO;
 
 describe('useDownloadPanelCsv', () => {
-	beforeEach(() => jest.clearAllMocks());
+	beforeEach(() => vi.clearAllMocks());
 
 	it('exports the table rows as CSV named after the panel', () => {
 		mockGetTableCsvRows.mockReturnValue([{ service: 'frontend', p99: '1ms' }]);

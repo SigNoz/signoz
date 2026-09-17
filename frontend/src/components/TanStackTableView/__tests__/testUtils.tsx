@@ -8,7 +8,7 @@ import TanStackTable from '../index';
 import type { TableColumnDef, TanStackTableProps } from '../types';
 
 // NOTE: Test files importing this utility must add this mock at the top of their file:
-// jest.mock('hooks/useDarkMode', () => ({ useIsDarkMode: (): boolean => false }));
+// vi.mock('hooks/useDarkMode', () => ({ useIsDarkMode: (): boolean => false }));
 
 // Default test data types
 export type TestRow = { id: string; name: string; value: number };

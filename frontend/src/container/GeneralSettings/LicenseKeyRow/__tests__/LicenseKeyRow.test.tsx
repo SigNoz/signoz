@@ -1,24 +1,31 @@
+import type { MockedFunction } from 'vitest';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
 
 import LicenseKeyRow from '../LicenseKeyRow';
 
-jest.mock('hooks/useActiveLicenseKey/useActiveLicenseKey');
-const mockUseActiveLicenseKey = useActiveLicenseKey as jest.MockedFunction<
+vi.mock('hooks/useActiveLicenseKey/useActiveLicenseKey');
+const mockUseActiveLicenseKey = useActiveLicenseKey as MockedFunction<
 	typeof useActiveLicenseKey
 >;
 
-const mockCopyToClipboard = jest.fn();
-
-jest.mock('react-use', () => ({
-	__esModule: true,
-	useCopyToClipboard: (): [unknown, jest.Mock] => [null, mockCopyToClipboard],
+const { mockCopyToClipboard } = vi.hoisted(() => ({
+	mockCopyToClipboard: vi.fn(),
 }));
 
-const mockToastSuccess = jest.fn();
+vi.mock('react-use', () => ({
+	useCopyToClipboard: (): [unknown, typeof mockCopyToClipboard] => [
+		null,
+		mockCopyToClipboard,
+	],
+}));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+const { mockToastSuccess } = vi.hoisted(() => ({
+	mockToastSuccess: vi.fn(),
+}));
+
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
 	},
@@ -26,7 +33,7 @@ jest.mock('@signozhq/ui/sonner', () => ({
 
 describe('LicenseKeyRow', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders nothing when the license key is absent', () => {

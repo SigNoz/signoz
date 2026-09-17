@@ -5,14 +5,14 @@ import { useConfirmableAction } from '../useConfirmableAction';
 describe('useConfirmableAction', () => {
 	it('starts closed and idle', () => {
 		const { result } = renderHook(() =>
-			useConfirmableAction(jest.fn().mockResolvedValue(undefined)),
+			useConfirmableAction(vi.fn().mockResolvedValue(undefined)),
 		);
 		expect(result.current.open).toBe(false);
 		expect(result.current.isPending).toBe(false);
 	});
 
 	it('request() opens the prompt without running the action', () => {
-		const action = jest.fn().mockResolvedValue(undefined);
+		const action = vi.fn().mockResolvedValue(undefined);
 		const { result } = renderHook(() => useConfirmableAction(action));
 
 		act(() => result.current.request());
@@ -22,7 +22,7 @@ describe('useConfirmableAction', () => {
 	});
 
 	it('confirm() runs the action and closes on success', async () => {
-		const action = jest.fn().mockResolvedValue(undefined);
+		const action = vi.fn().mockResolvedValue(undefined);
 		const { result } = renderHook(() => useConfirmableAction(action));
 
 		act(() => result.current.request());
@@ -36,7 +36,7 @@ describe('useConfirmableAction', () => {
 	});
 
 	it('keeps the prompt open and resets pending when the action rejects', async () => {
-		const action = jest.fn().mockRejectedValue(new Error('boom'));
+		const action = vi.fn().mockRejectedValue(new Error('boom'));
 		const { result } = renderHook(() => useConfirmableAction(action));
 
 		act(() => result.current.request());
@@ -49,7 +49,7 @@ describe('useConfirmableAction', () => {
 	});
 
 	it('cancel() closes the prompt without running the action', () => {
-		const action = jest.fn().mockResolvedValue(undefined);
+		const action = vi.fn().mockResolvedValue(undefined);
 		const { result } = renderHook(() => useConfirmableAction(action));
 
 		act(() => result.current.request());

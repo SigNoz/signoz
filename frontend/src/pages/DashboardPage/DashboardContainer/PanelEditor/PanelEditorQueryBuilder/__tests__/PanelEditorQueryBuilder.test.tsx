@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
@@ -10,40 +11,42 @@ import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/ty
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder';
 
 // Capture the props the (real-guard-fed) QueryBuilderV2 receives without rendering it.
-const mockQueryBuilderV2 = jest.fn();
-
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+const { mockQueryBuilderV2 } = vi.hoisted(() => ({
+	mockQueryBuilderV2: vi.fn(),
 }));
-jest.mock('hooks/useDarkMode', () => ({ useIsDarkMode: (): boolean => false }));
-jest.mock('components/QueryBuilderV2/QueryBuilderV2', () => ({
+
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
+}));
+vi.mock('hooks/useDarkMode', () => ({ useIsDarkMode: (): boolean => false }));
+vi.mock('components/QueryBuilderV2/QueryBuilderV2', () => ({
 	QueryBuilderV2: (props: unknown): null => {
 		mockQueryBuilderV2(props);
 		return null;
 	},
 }));
-jest.mock('container/QueryBuilder/rawQueryEditors/ClickHouse', () => ({
+vi.mock('container/QueryBuilder/rawQueryEditors/ClickHouse', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
-jest.mock('container/QueryBuilder/rawQueryEditors/PromQL', () => ({
+vi.mock('container/QueryBuilder/rawQueryEditors/PromQL', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
-jest.mock('container/QueryBuilder/components/RunQueryBtn/RunQueryBtn', () => ({
+vi.mock('container/QueryBuilder/components/RunQueryBtn/RunQueryBtn', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
-jest.mock('components/TextToolTip', () => ({
+vi.mock('components/TextToolTip', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
-jest.mock('assets/Dashboard/PromQl', () => ({
+vi.mock('assets/Dashboard/PromQl', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
 
-const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
+const mockUseQueryBuilder = useQueryBuilder as unknown as Mock;
 
 function renderBuilder(
 	panelKind: string,
@@ -54,8 +57,8 @@ function renderBuilder(
 			panelDefinition={requireQueryPanelDefinition(panelKind as PanelKind)}
 			signal={signal}
 			isLoadingQueries={false}
-			onStageRunQuery={jest.fn()}
-			onCancelQuery={jest.fn()}
+			onStageRunQuery={vi.fn()}
+			onCancelQuery={vi.fn()}
 		/>,
 	);
 }
@@ -72,10 +75,10 @@ function lastQueryBuilderProps(): {
 
 describe('PanelEditorQueryBuilder query-type tabs (driven by the capabilities guard)', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseQueryBuilder.mockReturnValue({
 			currentQuery: { queryType: EQueryType.QUERY_BUILDER },
-			redirectWithQueryBuilderData: jest.fn(),
+			redirectWithQueryBuilderData: vi.fn(),
 		});
 	});
 
@@ -106,10 +109,10 @@ describe('PanelEditorQueryBuilder query-type tabs (driven by the capabilities gu
 
 describe('PanelEditorQueryBuilder field visibility (driven by the capabilities guard)', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseQueryBuilder.mockReturnValue({
 			currentQuery: { queryType: EQueryType.QUERY_BUILDER },
-			redirectWithQueryBuilderData: jest.fn(),
+			redirectWithQueryBuilderData: vi.fn(),
 		});
 	});
 

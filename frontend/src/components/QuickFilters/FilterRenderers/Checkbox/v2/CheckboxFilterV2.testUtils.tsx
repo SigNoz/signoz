@@ -1,4 +1,4 @@
-import { render, RenderResult } from 'tests/test-utils';
+import { render, RenderResult } from 'tests/test-utils-full';
 import { server, rest } from 'mocks-server/server';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
@@ -11,6 +11,7 @@ import {
 	QuickFiltersSource,
 } from '../../../types';
 import CheckboxFilterV2 from './CheckboxFilterV2';
+import type { Mock } from 'vitest';
 
 export const DEFAULT_FILTER: IQuickFiltersConfig = {
 	type: FiltersType.CHECKBOX,
@@ -64,12 +65,6 @@ export function mockFieldsValuesAPILoading(): void {
 	);
 }
 
-export function setupServer(): void {
-	beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
-	afterEach(() => server.resetHandlers());
-	afterAll(() => server.close());
-}
-
 // Components read currentQuery for the checkbox state and stagedQuery for the
 // values fetch; in the app both are set by the same URL sync, so tests pass one
 // query as both.
@@ -83,7 +78,7 @@ export interface FilterItemConfig {
 }
 
 export function renderWithFilter(
-	onFilterChange: jest.Mock,
+	onFilterChange: Mock,
 	filterItem?: FilterItemConfig,
 ): RenderResult {
 	const items: TagFilterItem[] = filterItem
@@ -123,7 +118,7 @@ export function renderWithFilter(
 }
 
 export function getFilterFromCall(
-	onFilterChange: jest.Mock,
+	onFilterChange: Mock,
 	callIndex = 0,
 ): TagFilterItem | undefined {
 	const query = onFilterChange.mock.calls[callIndex]?.[0] as Query | undefined;

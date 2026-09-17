@@ -1,4 +1,4 @@
-import { render, screen } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils-full';
 
 import ViewRolePage from '../ViewRolePage';
 
@@ -9,13 +9,16 @@ import {
 	mockHooksForCustomRole,
 } from './testUtils';
 
+vi.mock('api/generated/services/role', { spy: true });
+vi.mock('../../hooks/useRolePermissions', { spy: true });
+
 describe('ViewRolePage - Custom Role', () => {
 	beforeEach(() => {
 		mockHooksForCustomRole();
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('renders role name in page title', async () => {

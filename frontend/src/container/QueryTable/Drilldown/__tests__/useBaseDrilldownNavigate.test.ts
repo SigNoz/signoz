@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -9,20 +10,22 @@ import useBaseDrilldownNavigate, {
 	getRoute,
 } from '../useBaseDrilldownNavigate';
 
-const mockSafeNavigate = jest.fn();
+const { mockSafeNavigate } = vi.hoisted(() => ({
+	mockSafeNavigate: vi.fn(),
+}));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): { safeNavigate: typeof mockSafeNavigate } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
-jest.mock('../drilldownUtils', () => ({
-	...jest.requireActual('../drilldownUtils'),
-	getViewQuery: jest.fn(),
+vi.mock('../drilldownUtils', async () => ({
+	...(await vi.importActual('../drilldownUtils')),
+	getViewQuery: vi.fn(),
 }));
 
-const mockGetViewQuery = getViewQuery as jest.Mock;
+const mockGetViewQuery = getViewQuery as Mock;
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -95,7 +98,7 @@ describe('buildDrilldownUrl', () => {
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('returns null for an unknown drilldown key', () => {
@@ -187,7 +190,7 @@ describe('useBaseDrilldownNavigate', () => {
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('calls safeNavigate with the built URL on a valid key', () => {
@@ -222,7 +225,7 @@ describe('useBaseDrilldownNavigate', () => {
 	});
 
 	it('calls callback after successful navigation', () => {
-		const callback = jest.fn();
+		const callback = vi.fn();
 		const { result } = renderHook(() =>
 			useBaseDrilldownNavigate({
 				resolvedQuery: MOCK_QUERY,
@@ -250,7 +253,7 @@ describe('useBaseDrilldownNavigate', () => {
 	});
 
 	it('still calls callback when the key is unknown', () => {
-		const callback = jest.fn();
+		const callback = vi.fn();
 		const { result } = renderHook(() =>
 			useBaseDrilldownNavigate({
 				resolvedQuery: MOCK_QUERY,
@@ -267,7 +270,7 @@ describe('useBaseDrilldownNavigate', () => {
 
 	it('still calls callback when getViewQuery returns null', () => {
 		mockGetViewQuery.mockReturnValue(null);
-		const callback = jest.fn();
+		const callback = vi.fn();
 		const { result } = renderHook(() =>
 			useBaseDrilldownNavigate({
 				resolvedQuery: MOCK_QUERY,

@@ -13,56 +13,61 @@ const ROUTING_POLICIES_TEXT = 'Routing Policies';
 const PLANNED_DOWNTIME_SUB_TAB = 'planned-downtime';
 const ROUTING_POLICIES_SUB_TAB = 'routing-policies';
 
-const mockUseLocation = jest.fn();
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+const { mockUseLocation, mockSafeNavigate, mockUrlQueryState } = vi.hoisted(
+	() => ({
+		mockUseLocation: vi.fn(),
+		mockSafeNavigate: vi.fn(),
+		mockUrlQueryState: { current: new URLSearchParams() },
+	}),
+);
+
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): unknown => mockUseLocation(),
 }));
 
-let mockUrlQuery: URLSearchParams;
-jest.mock('hooks/useUrlQuery', () => ({
+vi.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
-	default: (): URLSearchParams => mockUrlQuery,
+	default: (): URLSearchParams => mockUrlQueryState.current,
 }));
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): unknown => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
 // Mock components
-jest.mock('components/HeaderRightSection/HeaderRightSection', () => ({
+vi.mock('components/HeaderRightSection/HeaderRightSection', () => ({
 	__esModule: true,
 	default: function MockHeaderRightSection(): JSX.Element {
 		return <div>Header Right Section</div>;
 	},
 }));
-jest.mock('pages/AlertDetails', () => ({
+vi.mock('pages/AlertDetails', () => ({
 	__esModule: true,
 	default: function MockAlertDetails(): JSX.Element {
 		return <div>Alert Details Component</div>;
 	},
 }));
-jest.mock('container/PlannedDowntime/PlannedDowntime', () => ({
+vi.mock('container/PlannedDowntime/PlannedDowntime', () => ({
 	PlannedDowntime: function MockPlannedDowntime(): JSX.Element {
 		return <div>Planned Downtime Component</div>;
 	},
 }));
-jest.mock('container/RoutingPolicies', () => ({
+vi.mock('container/RoutingPolicies', () => ({
 	__esModule: true,
 	default: function MockRoutingPolicies(): JSX.Element {
 		return <div>Routing Policies Component</div>;
 	},
 }));
-jest.mock('container/TriggeredAlerts', () => ({
+vi.mock('container/TriggeredAlerts', () => ({
 	__esModule: true,
 	default: function MockTriggeredAlerts(): JSX.Element {
 		return <div>Triggered Alerts Component</div>;
 	},
 }));
-jest.mock('container/ListAlertRules', () => ({
+vi.mock('container/ListAlertRules', () => ({
 	__esModule: true,
 	default: function MockListAlertRules(): JSX.Element {
 		return <div>List Alert Rules Component</div>;
@@ -76,10 +81,10 @@ const mockLocation = (pathname: string): void => {
 };
 
 const mockQueryParams = (params: Record<string, string | null>): void => {
-	mockUrlQuery = new URLSearchParams();
+	mockUrlQueryState.current = new URLSearchParams();
 	Object.entries(params).forEach(([key, value]) => {
 		if (value !== null) {
-			mockUrlQuery.set(key, value);
+			mockUrlQueryState.current.set(key, value);
 		}
 	});
 };
@@ -93,7 +98,7 @@ const clickTab = (tabText: string): void => {
 
 describe('AlertList', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	describe('Default Rendering', () => {

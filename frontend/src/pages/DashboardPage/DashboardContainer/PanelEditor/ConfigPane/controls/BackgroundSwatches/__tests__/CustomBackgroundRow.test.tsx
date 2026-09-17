@@ -1,9 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import CustomBackgroundRow from '../CustomBackgroundRow';
+import type { Mock } from 'vitest';
 
-function renderRow(value?: string): jest.Mock {
-	const onChange = jest.fn();
+function renderRow(value?: string): Mock {
+	const onChange = vi.fn();
 	render(
 		<CustomBackgroundRow testId="custom" value={value} onChange={onChange} />,
 	);

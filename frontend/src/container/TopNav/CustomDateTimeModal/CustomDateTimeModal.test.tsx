@@ -3,8 +3,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import CustomDateTimeModal from './index';
 
 describe('CustomDateTimeModal', () => {
-	const handleCreate = jest.fn();
-	const handleCancel = jest.fn();
+	const handleCreate = vi.fn();
+	const handleCancel = vi.fn();
 
 	beforeEach(() => {
 		render(
@@ -12,13 +12,13 @@ describe('CustomDateTimeModal', () => {
 				visible
 				onCreate={handleCreate}
 				onCancel={handleCancel}
-				setCustomDTPickerVisible={jest.fn()}
+				setCustomDTPickerVisible={vi.fn()}
 			/>,
 		);
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders the modal with title and buttons', () => {

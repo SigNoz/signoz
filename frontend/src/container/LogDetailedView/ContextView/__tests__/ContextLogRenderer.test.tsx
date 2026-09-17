@@ -31,9 +31,9 @@ import {
 } from './mockData';
 
 // Mock the useContextLogData hook
-const mockHandleRunQuery = jest.fn();
+const mockHandleRunQuery = vi.fn();
 
-jest.mock('container/OptionsMenu', () => ({
+vi.mock('container/OptionsMenu', () => ({
 	useOptionsMenu: (): any => ({
 		options: {
 			fontSize: 'medium',
@@ -42,23 +42,22 @@ jest.mock('container/OptionsMenu', () => ({
 	}),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
-jest.mock(
-	'components/OverlayScrollbar/OverlayScrollbar',
-	() =>
-		function MockOverlayScrollbar({
-			children,
-		}: {
-			children: React.ReactNode;
-		}): JSX.Element {
-			return <div>{children}</div>;
-		},
-);
+vi.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
+	__esModule: true,
+	default: function MockOverlayScrollbar({
+		children,
+	}: {
+		children: React.ReactNode;
+	}): JSX.Element {
+		return <div>{children}</div>;
+	},
+}));
 
 // Common wrapper component for tests
 const renderContextLogRenderer = (): RenderResult => {
@@ -176,13 +175,19 @@ describe('ContextLogRenderer', () => {
 			expect(screen.getByText(/Test log message/)).toBeInTheDocument();
 		});
 
-		const loadMoreButtons = screen.getAllByText('Load more');
+		const loadMoreButtons = screen.getAllByRole('button', {
+			name: /load more/i,
+		});
 
-		// Check if buttons are enabled and clickable
-		expect(loadMoreButtons[1]).not.toBeDisabled();
+		// Wait for the initial fetch to settle so the buttons leave their
+		// loading (disabled, pointer-events: none) state before clicking.
+		await waitFor(() => {
+			expect(loadMoreButtons[1]).not.toBeDisabled();
+		});
 
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		await act(async () => {
-			await userEvent.click(loadMoreButtons[1]);
+			await user.click(loadMoreButtons[1]);
 		});
 
 		// Verify that the button click triggered an API call
@@ -214,10 +219,26 @@ describe('ContextLogRenderer', () => {
 				expect(screen.getByText(/Test log message/)).toBeInTheDocument();
 			});
 
-			loadMoreButtons = screen.getAllByText('Load more');
+			// The buttons render immediately in their loading (disabled,
+			// pointer-events: none) state; wait for the initial fetch to
+			// settle and grab the real button elements before clicking.
+			await waitFor(() => {
+				const buttons = screen.getAllByRole('button', {
+					name: /load more/i,
+				});
+				expect(buttons).toHaveLength(2);
+				expect(buttons[0]).not.toBeDisabled();
+				expect(buttons[1]).not.toBeDisabled();
+			});
+
+			loadMoreButtons = screen.getAllByRole('button', {
+				name: /load more/i,
+			});
 
 			// Capture initial query payload
-			expect(capturedQueryRangePayload).toBeDefined();
+			await waitFor(() => {
+				expect(capturedQueryRangePayload).toBeDefined();
+			});
 			const { start, end, ...rest } = capturedQueryRangePayload;
 			initialPayload = {
 				start,
@@ -238,8 +259,17 @@ describe('ContextLogRenderer', () => {
 			const initialQuery = (initialPayload.compositeQuery as any).queries[0].spec;
 
 			// Click the load more button (previous or next)
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			await act(async () => {
-				await userEvent.click(loadMoreButtons[buttonIndex]);
+				await user.click(loadMoreButtons[buttonIndex]);
+			});
+
+			// Wait for the paginated request to land (real network in browser mode)
+			await waitFor(() => {
+				const pendingQuery = (capturedQueryRangePayload.compositeQuery as any)
+					.queries[0].spec;
+				expect(pendingQuery.offset).toBe(10);
+				expect(pendingQuery.filter.expression).toContain(expectedOpChange.after);
 			});
 
 			// Extract and verify the updated query

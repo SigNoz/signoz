@@ -3,7 +3,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils-full';
 
 import TracesView from './index';
 
@@ -61,8 +61,8 @@ const renderTracesView = (
 		<VirtuosoMockContext.Provider value={{ viewportHeight: 500, itemHeight: 54 }}>
 			<TracesView
 				isFilterApplied={false}
-				setWarning={jest.fn()}
-				setIsLoadingQueries={jest.fn()}
+				setWarning={vi.fn()}
+				setIsLoadingQueries={vi.fn()}
 				{...props}
 			/>
 		</VirtuosoMockContext.Provider>,

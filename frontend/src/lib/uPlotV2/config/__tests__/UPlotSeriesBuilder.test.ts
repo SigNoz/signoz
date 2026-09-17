@@ -123,7 +123,7 @@ describe('UPlotSeriesBuilder', () => {
 	});
 
 	it('passes through a custom pathBuilder when provided', () => {
-		const customPaths = jest.fn() as unknown as uPlot.Series.PathBuilder;
+		const customPaths = vi.fn() as unknown as uPlot.Series.PathBuilder;
 
 		const builder = new UPlotSeriesBuilder(
 			createBaseProps({
@@ -179,7 +179,7 @@ describe('UPlotSeriesBuilder', () => {
 	});
 
 	it('uses pointsBuilder when provided instead of default visibility logic', () => {
-		const pointsBuilder: uPlot.Series.Points.Show = jest.fn(
+		const pointsBuilder: uPlot.Series.Points.Show = vi.fn(
 			() => true,
 		) as uPlot.Series.Points.Show;
 
@@ -301,7 +301,7 @@ describe('UPlotSeriesBuilder', () => {
 	});
 
 	it('passes through pointsFilter when provided', () => {
-		const pointsFilter: uPlot.Series.Points.Filter = jest.fn(
+		const pointsFilter: uPlot.Series.Points.Filter = vi.fn(
 			(_self, _seriesIdx, _show) => null,
 		);
 
@@ -333,7 +333,7 @@ describe('UPlotSeriesBuilder', () => {
 	});
 
 	it('does not assign isolatedPointFilter when a custom pointsFilter is provided alongside numeric spanGaps', () => {
-		const customFilter: uPlot.Series.Points.Filter = jest.fn(() => null);
+		const customFilter: uPlot.Series.Points.Filter = vi.fn(() => null);
 
 		const builder = new UPlotSeriesBuilder(
 			createBaseProps({

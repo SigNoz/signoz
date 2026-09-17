@@ -4,21 +4,20 @@ import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { getFieldKeySuggestions } from '../getFieldKeySuggestions';
 import { FieldKeysResponse } from '../types';
+import type { MockedFunction } from 'vitest';
 
-jest.mock('api/generated/services/ai-observability', () => ({
-	getAIObservabilityFieldsKeys: jest.fn(),
+vi.mock('api/generated/services/ai-observability', () => ({
+	getAIObservabilityFieldsKeys: vi.fn(),
 }));
 
-jest.mock('api/generated/services/fields', () => ({
-	getFieldsKeys: jest.fn(),
+vi.mock('api/generated/services/fields', () => ({
+	getFieldsKeys: vi.fn(),
 }));
 
-const mockedAIKeys = getAIObservabilityFieldsKeys as jest.MockedFunction<
+const mockedAIKeys = getAIObservabilityFieldsKeys as MockedFunction<
 	typeof getAIObservabilityFieldsKeys
 >;
-const mockedGenericKeys = getFieldsKeys as jest.MockedFunction<
-	typeof getFieldsKeys
->;
+const mockedGenericKeys = getFieldsKeys as MockedFunction<typeof getFieldsKeys>;
 
 const keysResponse = (): FieldKeysResponse => ({
 	status: 'success',
@@ -30,7 +29,7 @@ const keysResponse = (): FieldKeysResponse => ({
 
 describe('getFieldKeySuggestions', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('reads the ai_observability endpoint for a builder_ai_query', async () => {

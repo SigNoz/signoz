@@ -2,6 +2,7 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import { rest, server } from 'mocks-server/server';
 import { render, userEvent, waitFor } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
+import type { MockedFunction } from 'vitest';
 
 import QuerySearch from '../QuerySearch/QuerySearch';
 import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
@@ -13,19 +14,19 @@ beforeAll(() => {
 	mockCodeMirrorDomApis();
 });
 
-jest.mock('hooks/useDarkMode', () => ({
+vi.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
 // Shrink the suggestion-fetch debounce (300ms in prod) so these integration
 // tests aren't paced by it; coalescing semantics stay intact.
-jest.mock('../QuerySearch/constants', () => ({
-	...jest.requireActual('../QuerySearch/constants'),
+vi.mock('../QuerySearch/constants', async () => ({
+	...(await vi.importActual('../QuerySearch/constants')),
 	SUGGESTION_FETCH_DEBOUNCE_MS: 30,
 }));
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
-	const handleRunQuery = jest.fn();
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => {
+	const handleRunQuery = vi.fn();
 	return {
 		__esModule: true,
 		useQueryBuilder: (): { handleRunQuery: () => void } => ({ handleRunQuery }),
@@ -77,6 +78,10 @@ const KEYS_FIXTURE = {
 const fetchedSearchTexts: string[] = [];
 
 beforeEach(() => {
+	// test-utils freezes Date via vi.setSystemTime while leaving real timers in
+	// place, which stalls lodash debounce indefinitely; restore real timers so
+	// the suggestion fetches fire. (Shared-file fix reported to the coordinator.)
+	vi.useRealTimers();
 	fetchedSearchTexts.length = 0;
 	server.use(
 		rest.get('http://localhost/api/v1/fields/keys', (req, res, ctx) => {
@@ -104,7 +109,7 @@ beforeEach(() => {
 async function renderAndType(text: string): Promise<HTMLElement> {
 	render(
 		<QuerySearch
-			onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+			onChange={vi.fn() as MockedFunction<(v: string) => void>}
 			queryData={initialQueriesMap.logs.builder.queryData[0]}
 			dataSource={DataSource.LOGS}
 		/>,

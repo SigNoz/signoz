@@ -2,7 +2,7 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 // The prefill flow only depends on the context-picker data hooks resolving to
 // empty lists (so the empty state renders) — mock them to skip real fetches.
-jest.mock('api/generated/services/dashboard', () => ({
+vi.mock('api/generated/services/dashboard', () => ({
 	useListDashboardsForUserV2: (): unknown => ({
 		data: undefined,
 		isLoading: false,
@@ -11,12 +11,12 @@ jest.mock('api/generated/services/dashboard', () => ({
 	getListDashboardsForUserV2QueryKey: (): string[] => ['dashboards'],
 }));
 
-jest.mock('api/generated/services/rules', () => ({
+vi.mock('api/generated/services/rules', () => ({
 	useListRules: (): unknown => ({ data: [], isLoading: false, isError: false }),
 	getListRulesQueryKey: (): string[] => ['rules'],
 }));
 
-jest.mock('hooks/useQueryService', () => ({
+vi.mock('hooks/useQueryService', () => ({
 	useQueryService: (): unknown => ({
 		data: [],
 		isLoading: false,
@@ -27,17 +27,17 @@ jest.mock('hooks/useQueryService', () => ({
 
 // Irrelevant to the prefill flow and otherwise require browser APIs / extra
 // context providers, so stub them out.
-jest.mock('../../../hooks/useSpeechRecognition', () => ({
+vi.mock('../../../hooks/useSpeechRecognition', () => ({
 	useSpeechRecognition: (): unknown => ({
 		isListening: false,
 		isSupported: false,
 		permission: 'prompt',
-		start: jest.fn(),
-		discard: jest.fn(),
+		start: vi.fn(),
+		discard: vi.fn(),
 	}),
 }));
 
-jest.mock('../../../hooks/useAIAssistantAnalyticsContext', () => ({
+vi.mock('../../../hooks/useAIAssistantAnalyticsContext', () => ({
 	useAIAssistantAnalyticsContext: (): unknown => ({
 		threadId: undefined,
 		page: '/',
@@ -53,7 +53,7 @@ import ChatInput from '../ChatInput';
 function renderChatInput(): void {
 	render(
 		<TooltipProvider>
-			<ChatInput onSend={jest.fn()} />
+			<ChatInput onSend={vi.fn()} />
 		</TooltipProvider>,
 	);
 }

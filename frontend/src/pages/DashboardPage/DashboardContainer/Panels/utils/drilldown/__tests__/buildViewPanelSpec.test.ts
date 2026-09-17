@@ -9,13 +9,13 @@ import { buildViewPanelSpec } from '../buildViewPanelSpec';
 
 // The query conversion + kind-switch spec builder are tested in their own suites; here we
 // isolate buildViewPanelSpec's branching (same kind vs. kind switch).
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters',
-	() => ({ toPerses: jest.fn(() => [{ kind: 'mock-query' }]) }),
+	() => ({ toPerses: vi.fn(() => [{ kind: 'mock-query' }]) }),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/PanelEditor/getSwitchedPluginSpec',
-	() => ({ getSwitchedPluginSpec: jest.fn(() => ({ switched: true })) }),
+	() => ({ getSwitchedPluginSpec: vi.fn(() => ({ switched: true })) }),
 );
 
 const query = {} as Query;
@@ -41,7 +41,7 @@ describe('PANEL_TYPE_TO_PANEL_KIND', () => {
 });
 
 describe('buildViewPanelSpec', () => {
-	beforeEach(() => jest.clearAllMocks());
+	beforeEach(() => vi.clearAllMocks());
 
 	it('keeps the kind and only swaps the queries when the target type matches', () => {
 		const spec = specOfKind('signoz/TimeSeriesPanel');

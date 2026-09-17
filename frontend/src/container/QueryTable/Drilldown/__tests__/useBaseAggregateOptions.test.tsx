@@ -3,10 +3,12 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import useBaseAggregateOptions from '../useBaseAggregateOptions';
 
-const mockGetUpdatedQuery = jest.fn();
-const mockNotificationsError = jest.fn();
+const { mockGetUpdatedQuery, mockNotificationsError } = vi.hoisted(() => ({
+	mockGetUpdatedQuery: vi.fn(),
+	mockNotificationsError: vi.fn(),
+}));
 
-jest.mock('container/WidgetCard/hooks/useResolveQuery', () => ({
+vi.mock('container/WidgetCard/hooks/useResolveQuery', () => ({
 	__esModule: true,
 	default: (): unknown => ({
 		getUpdatedQuery: mockGetUpdatedQuery,
@@ -14,23 +16,24 @@ jest.mock('container/WidgetCard/hooks/useResolveQuery', () => ({
 	}),
 }));
 
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	useNotifications: (): unknown => ({
 		notifications: { error: mockNotificationsError },
 	}),
 }));
 
-jest.mock('hooks/dashboard/useContextVariables', () => ({
+vi.mock('hooks/dashboard/useContextVariables', async () => ({
+	...(await vi.importActual('hooks/dashboard/useContextVariables')),
 	__esModule: true,
 	default: (): unknown => ({ processedVariables: {} }),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): unknown => ({ safeNavigate: jest.fn() }),
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): unknown => ({ safeNavigate: vi.fn() }),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): { pathname: string } => ({ pathname: '/services/socky-api' }),
 }));
 
@@ -46,9 +49,9 @@ const renderOptions = (): ReturnType<typeof renderHook> =>
 	renderHook(() =>
 		useBaseAggregateOptions({
 			query: QUERY,
-			onClose: jest.fn(),
+			onClose: vi.fn(),
 			subMenu: '',
-			setSubMenu: jest.fn(),
+			setSubMenu: vi.fn(),
 			aggregateData: AGGREGATE_DATA,
 			fieldVariables: {},
 		}),
@@ -56,7 +59,7 @@ const renderOptions = (): ReturnType<typeof renderHook> =>
 
 describe('useBaseAggregateOptions', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('notifies and keeps the unresolved query when variable resolution fails', async () => {

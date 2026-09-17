@@ -7,7 +7,7 @@ const COLUMN_STORAGE_KEY = '@signoz/table-columns/alert-rules-columns';
 
 describe('ListAlertRules — columns selector', () => {
 	beforeEach(() => {
-		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		vi.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 		localStorage.clear();
 	});
 

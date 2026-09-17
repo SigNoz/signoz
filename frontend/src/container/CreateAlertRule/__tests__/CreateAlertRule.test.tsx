@@ -13,26 +13,26 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import CreateAlertRule from '../index';
 
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useNavigationType: jest.fn(() => 'PUSH'),
-	useLocation: jest.fn(() => ({
+vi.mock('react-router-dom-v5-compat', async () => ({
+	...(await vi.importActual('react-router-dom-v5-compat')),
+	useNavigationType: vi.fn(() => 'PUSH'),
+	useLocation: vi.fn(() => ({
 		pathname: '/alerts/new',
 		search: '',
 		hash: '',
 		state: null,
 	})),
-	useSearchParams: jest.fn(() => [new URLSearchParams(), jest.fn()]),
+	useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
 }));
 
-jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
+vi.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	__esModule: true,
 	default: function MockDateTimeSelector(): JSX.Element {
 		return <div data-testid="datetime-selector">Mock DateTime Selector</div>;
 	},
 }));
 
-jest.mock('container/FormAlertRules', () => ({
+vi.mock('container/FormAlertRules', () => ({
 	__esModule: true,
 	default: function MockFormAlertRules({
 		alertType,
@@ -51,7 +51,7 @@ jest.mock('container/FormAlertRules', () => ({
 		ANOMALY_DETECTION_ALERT: 'anomaly_rule',
 	},
 }));
-jest.mock('container/CreateAlertV2', () => ({
+vi.mock('container/CreateAlertV2', () => ({
 	__esModule: true,
 	default: function MockCreateAlertV2({
 		alertType,
@@ -67,26 +67,33 @@ jest.mock('container/CreateAlertV2', () => ({
 	},
 }));
 
-const useCompositeQueryParamSpy = jest.spyOn(
-	useCompositeQueryParamHooks,
-	'useGetCompositeQueryParam',
-);
-const useUrlQuerySpy = jest.spyOn(useUrlQueryHooks, 'default');
-const useSafeNavigateSpy = jest.spyOn(navigateHooks, 'useSafeNavigate');
-const useAppContextSpy = jest.spyOn(appHooks, 'useAppContext');
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('hooks/queryBuilder/useGetCompositeQueryParam', { spy: true });
+vi.mock('hooks/useUrlQuery', { spy: true });
+vi.mock('hooks/useSafeNavigate', { spy: true });
+vi.mock('providers/App/App', { spy: true });
 
-const mockSetUrlQuery = jest.fn();
-const mockToString = jest.fn();
-const mockGetUrlQuery = jest.fn();
-const mockSafeNavigate = jest.fn();
-const mockDeleteUrlQuery = jest.fn();
+const useCompositeQueryParamSpy = vi.mocked(
+	useCompositeQueryParamHooks.useGetCompositeQueryParam,
+);
+const useUrlQuerySpy = vi.mocked(useUrlQueryHooks.default);
+const useSafeNavigateSpy = vi.mocked(navigateHooks.useSafeNavigate);
+const useAppContextSpy = vi.mocked(appHooks.useAppContext);
+
+const mockSetUrlQuery = vi.fn();
+const mockToString = vi.fn();
+const mockGetUrlQuery = vi.fn();
+const mockSafeNavigate = vi.fn();
+const mockDeleteUrlQuery = vi.fn();
 
 const FORM_ALERT_RULES_TEXT = 'Form Alert Rules';
 const CREATE_ALERT_V2_TEXT = 'Create Alert V2';
 
 describe('CreateAlertRule', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		useUrlQuerySpy.mockReturnValue({
 			set: mockSetUrlQuery,
 			toString: mockToString,

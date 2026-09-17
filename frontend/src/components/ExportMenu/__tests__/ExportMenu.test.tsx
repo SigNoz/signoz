@@ -4,12 +4,14 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import ExportMenu from '../ExportMenu';
 
-const mockHandleExport = jest.fn();
-let mockIsExporting = false;
+const { mockHandleExport, mockExportState } = vi.hoisted(() => ({
+	mockHandleExport: vi.fn(),
+	mockExportState: { isExporting: false },
+}));
 
-jest.mock('hooks/useExportData/useClientExport', () => ({
+vi.mock('hooks/useExportData/useClientExport', () => ({
 	useClientExport: (): unknown => ({
-		isExporting: mockIsExporting,
+		isExporting: mockExportState.isExporting,
 		handleExport: mockHandleExport,
 	}),
 }));
@@ -36,7 +38,7 @@ function renderMenu(): void {
 describe('ExportMenu', () => {
 	beforeEach(() => {
 		mockHandleExport.mockReset();
-		mockIsExporting = false;
+		mockExportState.isExporting = false;
 	});
 
 	it('renders the download trigger button', () => {
@@ -77,7 +79,7 @@ describe('ExportMenu', () => {
 	});
 
 	it('disables the trigger while an export is in progress', () => {
-		mockIsExporting = true;
+		mockExportState.isExporting = true;
 		renderMenu();
 
 		expect(screen.getByTestId(TEST_ID)).toBeDisabled();

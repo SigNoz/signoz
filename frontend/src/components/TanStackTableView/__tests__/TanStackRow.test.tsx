@@ -4,10 +4,12 @@ import userEvent from '@testing-library/user-event';
 import TanStackRowCells from '../TanStackRow';
 import type { TableRowContext } from '../types';
 
-const flexRenderMock = jest.fn((def: unknown) =>
-	typeof def === 'function' ? def({}) : def,
-);
-jest.mock('@tanstack/react-table', () => ({
+const { flexRenderMock } = vi.hoisted(() => ({
+	flexRenderMock: vi.fn((def: unknown) =>
+		typeof def === 'function' ? (def as (ctx: unknown) => unknown)({}) : def,
+	),
+}));
+vi.mock('@tanstack/react-table', () => ({
 	flexRender: (def: unknown, _ctx?: unknown): unknown => flexRenderMock(def),
 }));
 
@@ -58,7 +60,7 @@ describe('TanStackRowCells', () => {
 
 	it('calls onRowClick when a cell is clicked', async () => {
 		const user = userEvent.setup();
-		const onRowClick = jest.fn();
+		const onRowClick = vi.fn();
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			onRowClick,
@@ -93,7 +95,7 @@ describe('TanStackRowCells', () => {
 	it('fires onRowClick with empty itemKey when getRowKeyData is not provided', async () => {
 		// Mirrors Logs Explorer / Live Logs, which set onRowClick but no getRowKey.
 		const user = userEvent.setup();
-		const onRowClick = jest.fn();
+		const onRowClick = vi.fn();
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			onRowClick,
@@ -128,7 +130,7 @@ describe('TanStackRowCells', () => {
 		// The table no longer owns open/close — it reports the active state and the
 		// consumer routes the click. An active row must still fire onRowClick.
 		const user = userEvent.setup();
-		const onRowClick = jest.fn();
+		const onRowClick = vi.fn();
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			onRowClick,
@@ -163,7 +165,7 @@ describe('TanStackRowCells', () => {
 
 	it('calls onRowClick with isActive: false when the row is not active', async () => {
 		const user = userEvent.setup();
-		const onRowClick = jest.fn();
+		const onRowClick = vi.fn();
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			onRowClick,
@@ -261,8 +263,8 @@ describe('TanStackRowCells', () => {
 
 	describe('new tab click', () => {
 		it('calls onRowClickNewTab on ctrl+click', () => {
-			const onRowClick = jest.fn();
-			const onRowClickNewTab = jest.fn();
+			const onRowClick = vi.fn();
+			const onRowClickNewTab = vi.fn();
 			const ctx: TableRowContext<Row> = {
 				colCount: 1,
 				onRowClick,
@@ -295,8 +297,8 @@ describe('TanStackRowCells', () => {
 		});
 
 		it('calls onRowClickNewTab on meta+click (cmd)', () => {
-			const onRowClick = jest.fn();
-			const onRowClickNewTab = jest.fn();
+			const onRowClick = vi.fn();
+			const onRowClickNewTab = vi.fn();
 			const ctx: TableRowContext<Row> = {
 				colCount: 1,
 				onRowClick,
@@ -329,8 +331,8 @@ describe('TanStackRowCells', () => {
 		});
 
 		it('does not call onRowClick when modifier key is pressed', () => {
-			const onRowClick = jest.fn();
-			const onRowClickNewTab = jest.fn();
+			const onRowClick = vi.fn();
+			const onRowClickNewTab = vi.fn();
 			const ctx: TableRowContext<Row> = {
 				colCount: 1,
 				onRowClick,

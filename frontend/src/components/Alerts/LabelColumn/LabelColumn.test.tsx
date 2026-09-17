@@ -10,9 +10,9 @@ class MockResizeObserver {
 		resizeCallback = callback;
 	}
 
-	observe = jest.fn();
-	unobserve = jest.fn();
-	disconnect = jest.fn();
+	observe = vi.fn();
+	unobserve = vi.fn();
+	disconnect = vi.fn();
 }
 
 function triggerResize(width: number): void {
@@ -27,7 +27,8 @@ function triggerResize(width: number): void {
 }
 
 beforeAll(() => {
-	global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+	globalThis.ResizeObserver =
+		MockResizeObserver as unknown as typeof ResizeObserver;
 });
 
 afterEach(() => {

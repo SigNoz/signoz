@@ -1,39 +1,36 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlertV2/constants';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
-import * as useSafeNavigateHook from 'hooks/useSafeNavigate';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import * as rulesHook from '../../../../api/generated/services/rules';
 import { CreateAlertProvider } from '../../context';
 import CreateAlertHeader from '../CreateAlertHeader';
 
-const mockSafeNavigate = jest.fn();
-jest.spyOn(useSafeNavigateHook, 'useSafeNavigate').mockReturnValue({
-	safeNavigate: mockSafeNavigate,
-});
+vi.mock('../../../../api/generated/services/rules', { spy: true });
 
-jest.spyOn(rulesHook, 'useCreateRule').mockReturnValue({
-	mutate: jest.fn(),
+vi.mocked(rulesHook.useCreateRule).mockReturnValue({
+	mutate: vi.fn(),
 	isLoading: false,
 } as any);
-jest.spyOn(rulesHook, 'useTestRule').mockReturnValue({
-	mutate: jest.fn(),
+vi.mocked(rulesHook.useTestRule).mockReturnValue({
+	mutate: vi.fn(),
 	isLoading: false,
 } as any);
-jest.spyOn(rulesHook, 'useUpdateRuleByID').mockReturnValue({
-	mutate: jest.fn(),
+vi.mocked(rulesHook.useUpdateRuleByID).mockReturnValue({
+	mutate: vi.fn(),
 	isLoading: false,
 } as any);
 
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock = jest.fn(() => ({
+	const uplotMock = vi.fn(() => ({
 		paths,
 	}));
 	return {
@@ -42,8 +39,8 @@ jest.mock('uplot', () => {
 	};
 });
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): { search: string } => ({
 		search: '',
 	}),
@@ -116,7 +113,7 @@ describe('CreateAlertHeader', () => {
 
 		const params = new URLSearchParams();
 		params.set(QueryParams.showClassicCreateAlertsPage, 'true');
-		expect(mockSafeNavigate).toHaveBeenCalledWith(
+		expect(safeNavigateMock).toHaveBeenCalledWith(
 			`${ROUTES.ALERTS_NEW}?${params.toString()}`,
 			{ replace: true },
 		);

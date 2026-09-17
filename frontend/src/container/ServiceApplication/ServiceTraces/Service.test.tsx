@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils-full';
 
 import { services } from './__mocks__/getServices';
 import ServiceTraceTable from './ServiceTracesTable';

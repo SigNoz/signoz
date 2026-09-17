@@ -1,15 +1,8 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`MessageTip custom action 1`] = `
-.c0 {
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-}
-
+exports[`MessageTip > custom action 1`] = `
 <div
-  class="ant-alert ant-alert-info ant-alert-with-description c0 css-dev-only-do-not-override-2i2tap"
+  class="ant-alert ant-alert-info ant-alert-with-description sc-aXZVg bzzGSj css-dev-only-do-not-override-2i2tap"
   data-show="true"
   role="alert"
 >

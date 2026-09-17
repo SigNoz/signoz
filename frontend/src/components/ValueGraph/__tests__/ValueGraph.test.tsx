@@ -1,19 +1,20 @@
 import { screen } from '@testing-library/react';
 import { render } from 'tests/test-utils';
+import type { MockedFunction } from 'vitest';
 
 import ValueGraph from '../index';
 import { getBackgroundColorAndThresholdCheck } from '../utils';
 
 // Mock the utils module
-jest.mock('../utils', () => ({
-	getBackgroundColorAndThresholdCheck: jest.fn(() => ({
+vi.mock('../utils', () => ({
+	getBackgroundColorAndThresholdCheck: vi.fn(() => ({
 		threshold: {} as any,
 		isConflictingThresholds: false,
 	})),
 }));
 
 const mockGetBackgroundColorAndThresholdCheck =
-	getBackgroundColorAndThresholdCheck as jest.MockedFunction<
+	getBackgroundColorAndThresholdCheck as MockedFunction<
 		typeof getBackgroundColorAndThresholdCheck
 	>;
 
@@ -23,7 +24,7 @@ const TEST_ID_VALUE_GRAPH_SUFFIX_UNIT = 'value-graph-suffix-unit';
 
 describe('ValueGraph', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders the numeric value correctly', () => {
@@ -83,7 +84,7 @@ describe('ValueGraph', () => {
 			<ValueGraph value="42" rawValue={42} thresholds={[]} />,
 		);
 
-		expect(getByTestId(TEST_ID_VALUE_GRAPH_TEXT)).toHaveStyle({ color: 'red' });
+		expect(getByTestId(TEST_ID_VALUE_GRAPH_TEXT).style.color).toBe('red');
 	});
 
 	it('applies background color when threshold format is Background', () => {
@@ -99,8 +100,10 @@ describe('ValueGraph', () => {
 			<ValueGraph value="42" rawValue={42} thresholds={[]} />,
 		);
 
-		const containerElement = container.querySelector('.value-graph-container');
-		expect(containerElement).toHaveStyle({ backgroundColor: 'blue' });
+		const containerElement = container.querySelector<HTMLElement>(
+			'.value-graph-container',
+		);
+		expect(containerElement?.style.backgroundColor).toBe('blue');
 	});
 
 	it('displays conflicting thresholds indicator when multiple thresholds match', () => {
@@ -144,7 +147,7 @@ describe('ValueGraph', () => {
 		render(<ValueGraph value="42ms" rawValue={42} thresholds={[]} />);
 
 		const unitElement = screen.getByText('ms');
-		expect(unitElement).toHaveStyle({ color: 'green' });
+		expect(unitElement.style.color).toBe('green');
 	});
 
 	it('renders decimal values correctly', () => {

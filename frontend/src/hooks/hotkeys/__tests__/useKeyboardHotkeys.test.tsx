@@ -7,7 +7,7 @@ import {
 	useKeyboardHotkeys,
 } from '../useKeyboardHotkeys';
 
-jest.mock('../../../providers/cmdKProvider', () => ({
+vi.mock('../../../providers/cmdKProvider', () => ({
 	useCmdK: (): { open: boolean } => ({
 		open: false,
 	}),
@@ -44,7 +44,7 @@ function TestComponentWithDeRegister({
 
 describe('KeyboardHotkeysProvider', () => {
 	it('registers and triggers shortcuts correctly', async () => {
-		const handleShortcut = jest.fn();
+		const handleShortcut = vi.fn();
 		const user = userEvent.setup();
 
 		render(
@@ -60,7 +60,7 @@ describe('KeyboardHotkeysProvider', () => {
 	});
 
 	it('does not trigger deregistered shortcuts', async () => {
-		const handleShortcut = jest.fn();
+		const handleShortcut = vi.fn();
 		const user = userEvent.setup();
 
 		render(

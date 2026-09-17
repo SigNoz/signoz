@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { useQueries } from 'react-query';
 import { renderHook } from '@testing-library/react';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
@@ -9,29 +10,29 @@ import { DataSource } from 'types/common/queryBuilder';
 import useOptionsMenu from '../useOptionsMenu';
 
 // Mock all dependencies
-jest.mock('hooks/useNotifications');
-jest.mock('providers/preferences/context/PreferenceContextProvider');
-jest.mock('hooks/useUrlQueryData');
-jest.mock('hooks/querySuggestions/useGetQueryKeySuggestions');
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
-	useQueries: jest.fn(),
+vi.mock('hooks/useNotifications');
+vi.mock('providers/preferences/context/PreferenceContextProvider');
+vi.mock('hooks/useUrlQueryData');
+vi.mock('hooks/querySuggestions/useGetQueryKeySuggestions');
+vi.mock('react-query', async () => ({
+	...(await vi.importActual<typeof import('react-query')>('react-query')),
+	useQueries: vi.fn(),
 }));
 
 describe('useOptionsMenu', () => {
-	const mockNotifications = { error: jest.fn(), success: jest.fn() };
-	const mockUpdateColumns = jest.fn();
-	const mockUpdateFormatting = jest.fn();
-	const mockRedirectWithQuery = jest.fn();
+	const mockNotifications = { error: vi.fn(), success: vi.fn() };
+	const mockUpdateColumns = vi.fn();
+	const mockUpdateFormatting = vi.fn();
+	const mockRedirectWithQuery = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
-		(useNotifications as jest.Mock).mockReturnValue({
+		(useNotifications as Mock).mockReturnValue({
 			notifications: mockNotifications,
 		});
 
-		(usePreferenceContext as jest.Mock).mockReturnValue({
+		(usePreferenceContext as Mock).mockReturnValue({
 			traces: {
 				preferences: {
 					columns: [],
@@ -58,17 +59,17 @@ describe('useOptionsMenu', () => {
 			},
 		});
 
-		(useUrlQueryData as jest.Mock).mockReturnValue({
+		(useUrlQueryData as Mock).mockReturnValue({
 			query: null,
 			redirectWithQuery: mockRedirectWithQuery,
 		});
 
-		(useQueries as jest.Mock).mockReturnValue([]);
+		(useQueries as Mock).mockReturnValue([]);
 	});
 
 	it('does not show isRoot or isEntryPoint in column options when dataSource is TRACES', () => {
 		// Mock the query key suggestions to return data including isRoot and isEntryPoint
-		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+		(useGetQueryKeySuggestions as Mock).mockReturnValue({
 			data: {
 				data: {
 					data: {
@@ -129,7 +130,7 @@ describe('useOptionsMenu', () => {
 
 	it('does not show body in column options when dataSource is METRICS', () => {
 		// Mock the query key suggestions to return data including body
-		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+		(useGetQueryKeySuggestions as Mock).mockReturnValue({
 			data: {
 				data: {
 					data: {
@@ -182,7 +183,7 @@ describe('useOptionsMenu', () => {
 
 	it('does not show body in column options when dataSource is LOGS', () => {
 		// Mock the query key suggestions to return data including body
-		(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+		(useGetQueryKeySuggestions as Mock).mockReturnValue({
 			data: {
 				data: {
 					data: {
@@ -270,11 +271,11 @@ describe('useOptionsMenu', () => {
 		];
 
 		beforeEach(() => {
-			(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+			(useGetQueryKeySuggestions as Mock).mockReturnValue({
 				data: { data: { data: { keys: {} } } },
 				isFetching: false,
 			});
-			(usePreferenceContext as jest.Mock).mockReturnValue({
+			(usePreferenceContext as Mock).mockReturnValue({
 				traces: {
 					preferences: { columns: [], formatting: baseFormatting },
 					updateColumns: mockUpdateColumns,
@@ -390,11 +391,11 @@ describe('useOptionsMenu', () => {
 
 	describe('fieldsSelector.value drops legacy columns without a name', () => {
 		it('excludes entries missing name while keeping valid columns', () => {
-			(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+			(useGetQueryKeySuggestions as Mock).mockReturnValue({
 				data: { data: { data: { keys: {} } } },
 				isFetching: false,
 			});
-			(usePreferenceContext as jest.Mock).mockReturnValue({
+			(usePreferenceContext as Mock).mockReturnValue({
 				traces: {
 					preferences: {
 						columns: [

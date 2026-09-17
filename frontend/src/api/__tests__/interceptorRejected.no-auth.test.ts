@@ -1,39 +1,38 @@
+import type { Mock } from 'vitest';
+
 import axios from 'axios';
+import post from 'api/v2/sessions/rotate/post';
 import { getIsNoAuthMode } from 'utils/noAuthMode';
 
+import { Logout } from '../utils';
 import { interceptorRejected } from '../index';
 
-jest.mock('utils/noAuthMode', () => ({
-	getIsNoAuthMode: jest.fn(),
+vi.mock('utils/noAuthMode', () => ({
+	getIsNoAuthMode: vi.fn(),
 }));
 
-jest.mock('api/v2/sessions/rotate/post', () => ({
+vi.mock('api/v2/sessions/rotate/post', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock('AppRoutes/utils', () => ({
+vi.mock('AppRoutes/utils', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock('../utils', () => ({
-	Logout: jest.fn(),
+vi.mock('../utils', () => ({
+	Logout: vi.fn(),
 }));
-
-// oxlint-disable-next-line typescript/no-require-imports typescript/no-var-requires
-const post = require('api/v2/sessions/rotate/post').default;
-// oxlint-disable-next-line typescript/no-require-imports typescript/no-var-requires
-const { Logout } = require('../utils');
 
 describe('interceptorRejected — no-auth mode', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		jest.spyOn(axios, 'isAxiosError').mockReturnValue(true);
+		vi.clearAllMocks();
+		vi.spyOn(axios, 'isAxiosError').mockReturnValue(true);
 	});
 
 	it('does NOT call rotate or Logout when no-auth mode is enabled on 401', async () => {
-		(getIsNoAuthMode as jest.Mock).mockReturnValue(true);
+		vi.mocked(getIsNoAuthMode).mockReturnValue(true);
 
 		const error = {
 			isAxiosError: true,
@@ -51,8 +50,8 @@ describe('interceptorRejected — no-auth mode', () => {
 	});
 
 	it('DOES attempt rotate when no-auth mode is disabled on 401', async () => {
-		(getIsNoAuthMode as jest.Mock).mockReturnValue(false);
-		(post as jest.Mock).mockResolvedValue({
+		vi.mocked(getIsNoAuthMode).mockReturnValue(false);
+		(post as unknown as Mock).mockResolvedValue({
 			data: { accessToken: 'a', refreshToken: 'b' },
 		});
 

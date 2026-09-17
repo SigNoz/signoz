@@ -3,33 +3,17 @@ import { render } from 'tests/test-utils';
 import { pipelineMockData } from '../mocks/pipeline';
 import PipelineExpandView from '../PipelineListsView/PipelineExpandView';
 
-beforeAll(() => {
-	Object.defineProperty(window, 'matchMedia', {
-		writable: true,
-		value: jest.fn().mockImplementation((query) => ({
-			matches: false,
-			media: query,
-			onchange: null,
-			addListener: jest.fn(),
-			removeListener: jest.fn(),
-			addEventListener: jest.fn(),
-			removeEventListener: jest.fn(),
-			dispatchEvent: jest.fn(),
-		})),
-	});
-});
-
 describe('PipelinePage', () => {
 	it('should render PipelineExpandView section', () => {
 		const { asFragment } = render(
 			<PipelineExpandView
-				handleAlert={jest.fn()}
-				setActionType={jest.fn()}
-				processorEditAction={jest.fn()}
+				handleAlert={vi.fn()}
+				setActionType={vi.fn()}
+				processorEditAction={vi.fn()}
 				isActionMode="viewing-mode"
-				setShowSaveButton={jest.fn()}
+				setShowSaveButton={vi.fn()}
 				expandedPipelineData={pipelineMockData[0]}
-				setExpandedPipelineData={jest.fn()}
+				setExpandedPipelineData={vi.fn()}
 				prevPipelineData={pipelineMockData}
 			/>,
 		);

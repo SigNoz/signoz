@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { updateDashboardV2 } from 'api/generated/services/dashboard';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
@@ -5,30 +6,32 @@ import { toast } from '@signozhq/ui/sonner';
 
 import { useJsonEditor } from '../useJsonEditor';
 
-const mockRefetch = jest.fn();
-const mockShowErrorModal = jest.fn();
+const { mockRefetch, mockShowErrorModal } = vi.hoisted(() => ({
+	mockRefetch: vi.fn(),
+	mockShowErrorModal: vi.fn(),
+}));
 
-jest.mock('../../../store/useDashboardStore', () => ({
+vi.mock('../../../store/useDashboardStore', () => ({
 	useDashboardStore: (selector: (state: unknown) => unknown): unknown =>
 		selector({ dashboardId: 'dash-1', refetch: mockRefetch }),
 }));
 
-jest.mock('providers/ErrorModalProvider', () => ({
-	useErrorModal: (): { showErrorModal: jest.Mock } => ({
+vi.mock('providers/ErrorModalProvider', () => ({
+	useErrorModal: (): { showErrorModal: Mock } => ({
 		showErrorModal: mockShowErrorModal,
 	}),
 }));
 
-jest.mock('api/generated/services/dashboard', () => ({
-	updateDashboardV2: jest.fn(),
+vi.mock('api/generated/services/dashboard', () => ({
+	updateDashboardV2: vi.fn(),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui/sonner', () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-const mockUpdate = updateDashboardV2 as jest.Mock;
-const mockToastSuccess = toast.success as jest.Mock;
+const mockUpdate = updateDashboardV2 as Mock;
+const mockToastSuccess = toast.success as Mock;
 
 const dashboard = {
 	id: 'dash-1',
@@ -54,13 +57,13 @@ const serialized = JSON.stringify(redacted, null, 2);
 
 describe('useJsonEditor', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUpdate.mockResolvedValue({});
 	});
 
 	it('seeds the draft from the dashboard and reports valid, non-dirty state', () => {
 		const { result } = renderHook(() =>
-			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+			useJsonEditor({ dashboard, isOpen: true, onApplied: vi.fn() }),
 		);
 
 		expect(result.current.draft).toBe(serialized);
@@ -71,7 +74,7 @@ describe('useJsonEditor', () => {
 
 	it('exposes spec/tags/image (in order) and redacts server-owned keys', () => {
 		const { result } = renderHook(() =>
-			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+			useJsonEditor({ dashboard, isOpen: true, onApplied: vi.fn() }),
 		);
 
 		const parsed = JSON.parse(result.current.draft);
@@ -85,7 +88,7 @@ describe('useJsonEditor', () => {
 
 	it('flags invalid JSON with a line number and marks the draft dirty', () => {
 		const { result } = renderHook(() =>
-			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+			useJsonEditor({ dashboard, isOpen: true, onApplied: vi.fn() }),
 		);
 
 		act(() => result.current.setDraft('{\n  "name": ,\n}'));
@@ -97,7 +100,7 @@ describe('useJsonEditor', () => {
 
 	it('format() pretty-prints valid JSON and leaves invalid JSON untouched', () => {
 		const { result } = renderHook(() =>
-			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+			useJsonEditor({ dashboard, isOpen: true, onApplied: vi.fn() }),
 		);
 
 		act(() => result.current.setDraft('{"a":1}'));
@@ -111,7 +114,7 @@ describe('useJsonEditor', () => {
 
 	it('reset() restores the last-applied text', () => {
 		const { result } = renderHook(() =>
-			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+			useJsonEditor({ dashboard, isOpen: true, onApplied: vi.fn() }),
 		);
 
 		act(() => result.current.setDraft('edited'));
@@ -124,7 +127,7 @@ describe('useJsonEditor', () => {
 
 	it('apply() is a no-op when the draft is unchanged or invalid', async () => {
 		const { result } = renderHook(() =>
-			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+			useJsonEditor({ dashboard, isOpen: true, onApplied: vi.fn() }),
 		);
 
 		await act(async () => {
@@ -140,7 +143,7 @@ describe('useJsonEditor', () => {
 	});
 
 	it('apply() PUTs the edited spec/tags while preserving redacted keys, toasts, refetches and calls onApplied', async () => {
-		const onApplied = jest.fn();
+		const onApplied = vi.fn();
 		const { result } = renderHook(() =>
 			useJsonEditor({ dashboard, isOpen: true, onApplied }),
 		);
@@ -181,7 +184,7 @@ describe('useJsonEditor', () => {
 	it('apply() surfaces errors through the error modal', async () => {
 		mockUpdate.mockRejectedValueOnce(new Error('boom'));
 		const { result } = renderHook(() =>
-			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+			useJsonEditor({ dashboard, isOpen: true, onApplied: vi.fn() }),
 		);
 
 		act(() =>
@@ -195,7 +198,7 @@ describe('useJsonEditor', () => {
 	});
 
 	it('re-seeds the draft when the drawer re-opens', () => {
-		const onApplied = jest.fn();
+		const onApplied = vi.fn();
 		const { result, rerender } = renderHook(
 			(props: { isOpen: boolean }) =>
 				useJsonEditor({ dashboard, isOpen: props.isOpen, onApplied }),
@@ -218,7 +221,7 @@ describe('useJsonEditor', () => {
 			useJsonEditor({
 				dashboard: withDangling,
 				isOpen: true,
-				onApplied: jest.fn(),
+				onApplied: vi.fn(),
 			}),
 		);
 
@@ -244,7 +247,7 @@ describe('useJsonEditor', () => {
 			useJsonEditor({
 				dashboard: withMissing,
 				isOpen: true,
-				onApplied: jest.fn(),
+				onApplied: vi.fn(),
 			}),
 		);
 

@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`PipelinePage container test should render Tags section 1`] = `
+exports[`PipelinePage container test > should render Tags section 1`] = `
 <DocumentFragment>
   <span>
     <span

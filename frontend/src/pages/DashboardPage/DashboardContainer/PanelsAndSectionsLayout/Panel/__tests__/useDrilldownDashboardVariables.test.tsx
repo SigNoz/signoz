@@ -18,24 +18,24 @@ let mockVariables: Array<{
 let mockSelectionMap: Record<string, { value: unknown; allSelected: boolean }> =
 	{};
 
-const mockSetVariableValue = jest.fn();
-const mockPatchAsync = jest.fn().mockResolvedValue(undefined);
+const mockSetVariableValue = vi.fn();
+const mockPatchAsync = vi.fn().mockResolvedValue(undefined);
 
 const DYNAMIC_KIND = 'signoz/DynamicVariable';
 const QUERY_KIND = 'signoz/QueryVariable';
 
-jest.mock('api/generated/services/dashboard', () => ({
+vi.mock('api/generated/services/dashboard', () => ({
 	useGetDashboardV2: (): unknown => ({
 		data: { data: { spec: { variables: mockVariables } } },
 	}),
 }));
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useOptimisticPatch',
 	() => ({
 		useOptimisticPatch: (): unknown => ({ patchAsync: mockPatchAsync }),
 	}),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/store/useDashboardStore',
 	() => ({
 		useDashboardStore: (selector: (state: unknown) => unknown): unknown =>
@@ -46,7 +46,7 @@ jest.mock(
 			}),
 	}),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/DashboardSettings/Variables/variableAdapters',
 	() => ({
 		dtoToFormModel: (dto: {
@@ -59,20 +59,20 @@ jest.mock(
 		formModelToDto: (model: { name: string }): unknown => ({ dto: model.name }),
 	}),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/DashboardSettings/Variables/variableFormModel',
 	() => ({
 		emptyVariableFormModel: (): unknown => ({}),
 	}),
 );
-jest.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
+vi.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
 	__esModule: true,
 	default: ({ children }: { children: React.ReactNode }): JSX.Element => (
 		<div>{children}</div>
 	),
 }));
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui/sonner', () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 const filters: FilterData[] = [
@@ -84,32 +84,32 @@ function renderItems(): void {
 		useDrilldownDashboardVariables({
 			filters,
 			signal: DashboardtypesDynamicVariableSignalDTO.metrics,
-			onClose: jest.fn(),
+			onClose: vi.fn(),
 		}),
 	);
 	render(
 		<DrilldownDashboardVariablesMenu
 			actions={result.current.actions}
-			onBack={jest.fn()}
+			onBack={vi.fn()}
 		/>,
 	);
 }
 
 describe('useDrilldownDashboardVariables', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockVariables = [];
 		mockSelectionMap = {};
 	});
 
 	it('hasFieldVariables reflects the clicked point group-by fields', () => {
 		const withFields = renderHook(() =>
-			useDrilldownDashboardVariables({ filters, onClose: jest.fn() }),
+			useDrilldownDashboardVariables({ filters, onClose: vi.fn() }),
 		);
 		expect(withFields.result.current.hasFieldVariables).toBe(true);
 
 		const noFields = renderHook(() =>
-			useDrilldownDashboardVariables({ filters: [], onClose: jest.fn() }),
+			useDrilldownDashboardVariables({ filters: [], onClose: vi.fn() }),
 		);
 		expect(noFields.result.current.hasFieldVariables).toBe(false);
 	});

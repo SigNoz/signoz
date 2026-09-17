@@ -1,29 +1,39 @@
+import type { MockedFunction } from 'vitest';
+
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { getBaseUrl } from 'utils/basePath';
 
 import { getSigNozInstanceUrl } from './signozInstanceUrl';
 
-jest.mock('api/browser/localstorage/get');
-jest.mock('constants/env', () => ({
+vi.mock('api/browser/localstorage/get', () => ({
+	__esModule: true,
+	default: vi.fn(),
+}));
+vi.mock('constants/env', () => ({
 	ENVIRONMENT: { baseURL: '' },
 }));
+// window.location.origin cannot be redefined in a real browser (§6.5), so the
+// origin is driven through the getBaseUrl() seam the unit under test uses.
+vi.mock('utils/basePath', async () => {
+	const actual =
+		await vi.importActual<typeof import('utils/basePath')>('utils/basePath');
+	return { ...actual, getBaseUrl: vi.fn(() => 'http://localhost') };
+});
 
-const mockedGet = getLocalStorageApi as jest.MockedFunction<
+const mockedGet = getLocalStorageApi as MockedFunction<
 	typeof getLocalStorageApi
 >;
 
 function setOrigin(origin: string): void {
-	Object.defineProperty(window, 'location', {
-		value: { origin },
-		writable: true,
-		configurable: true,
-	});
+	vi.mocked(getBaseUrl).mockReturnValue(origin);
 }
 
 describe('getSigNozInstanceUrl', () => {
 	beforeEach(() => {
 		mockedGet.mockReset();
+		vi.mocked(getBaseUrl).mockReset();
 		ENVIRONMENT.baseURL = '';
 		setOrigin('http://localhost');
 	});

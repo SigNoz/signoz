@@ -15,18 +15,18 @@ import { DataSource } from 'types/common/queryBuilder';
 import CheckboxFilter from './Checkbox';
 
 // Mock the query builder hook
-jest.mock('hooks/queryBuilder/useQueryBuilder');
-const mockUseQueryBuilder = jest.mocked(useQueryBuilder);
+vi.mock('hooks/queryBuilder/useQueryBuilder');
+const mockUseQueryBuilder = vi.mocked(useQueryBuilder);
 
 // Mock the aggregate values hook
-jest.mock('hooks/queryBuilder/useGetAggregateValues');
+vi.mock('hooks/queryBuilder/useGetAggregateValues');
 
-const mockUseGetAggregateValues = jest.mocked(useGetAggregateValues);
+const mockUseGetAggregateValues = vi.mocked(useGetAggregateValues);
 
 // Mock the key value suggestions hook
-jest.mock('hooks/querySuggestions/useGetQueryKeyValueSuggestions');
+vi.mock('hooks/querySuggestions/useGetQueryKeyValueSuggestions');
 
-const mockUseGetQueryKeyValueSuggestions = jest.mocked(
+const mockUseGetQueryKeyValueSuggestions = vi.mocked(
 	useGetQueryKeyValueSuggestions,
 );
 
@@ -90,13 +90,13 @@ const createMockQueryBuilderData = (hasActiveFilters = false): any => ({
 			],
 		},
 	},
-	redirectWithQueryBuilderData: jest.fn(),
+	redirectWithQueryBuilderData: vi.fn(),
 });
 
 describe('CheckboxFilter - User Flows', () => {
 	beforeEach(() => {
 		// Reset all mocks
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		// Default mock implementations for useGetAggregateValues
 		mockUseGetAggregateValues.mockReturnValue({
@@ -106,7 +106,7 @@ describe('CheckboxFilter - User Flows', () => {
 				},
 			},
 			isLoading: false,
-			refetch: jest.fn(),
+			refetch: vi.fn(),
 		} as unknown as UseQueryResult<SuccessResponse<IAttributeValuesResponse>>);
 
 		// Default mock implementations for useGetQueryKeyValueSuggestions
@@ -123,7 +123,7 @@ describe('CheckboxFilter - User Flows', () => {
 				},
 			},
 			isLoading: false,
-			refetch: jest.fn(),
+			refetch: vi.fn(),
 		} as any);
 
 		// Setup MSW server for API calls
@@ -205,7 +205,7 @@ describe('CheckboxFilter - User Flows', () => {
 	});
 
 	it('should update query filters when a checkbox is clicked', async () => {
-		const redirectWithQueryBuilderData = jest.fn();
+		const redirectWithQueryBuilderData = vi.fn();
 
 		// Start with no active filters so clicking a checkbox creates one
 		mockUseQueryBuilder.mockReturnValue({
@@ -246,7 +246,7 @@ describe('CheckboxFilter - User Flows', () => {
 	});
 
 	it('should set an IN filter with only the clicked value when using Only', async () => {
-		const redirectWithQueryBuilderData = jest.fn();
+		const redirectWithQueryBuilderData = vi.fn();
 
 		// Existing filter: service.name IN ['mq-kafka', 'otel-demo']
 		mockUseQueryBuilder.mockReturnValue({
@@ -304,7 +304,7 @@ describe('CheckboxFilter - User Flows', () => {
 	});
 
 	it('should clear filters for the attribute when using All', async () => {
-		const redirectWithQueryBuilderData = jest.fn();
+		const redirectWithQueryBuilderData = vi.fn();
 
 		// Existing filter: service.name IN ['mq-kafka']
 		mockUseQueryBuilder.mockReturnValue({
@@ -389,7 +389,7 @@ describe('CheckboxFilter - User Flows', () => {
 					],
 				},
 			},
-			redirectWithQueryBuilderData: jest.fn(),
+			redirectWithQueryBuilderData: vi.fn(),
 		} as any);
 
 		const mockFilter = createMockFilter({ defaultOpen: false });
@@ -414,7 +414,7 @@ describe('CheckboxFilter - User Flows', () => {
 	});
 
 	it('should extend an existing IN filter when checking an additional value', async () => {
-		const redirectWithQueryBuilderData = jest.fn();
+		const redirectWithQueryBuilderData = vi.fn();
 
 		// Existing filter: service.name IN 'mq-kafka'
 		mockUseQueryBuilder.mockReturnValue({

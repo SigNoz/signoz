@@ -10,13 +10,16 @@ import {
 	mockHooksForManagedRole,
 } from './testUtils';
 
+vi.mock('api/generated/services/role', { spy: true });
+vi.mock('../../hooks/useRolePermissions', { spy: true });
+
 describe('ViewRolePage - Managed Role', () => {
 	beforeEach(() => {
 		mockHooksForManagedRole();
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('disables Delete button for managed roles', async () => {

@@ -1,4 +1,5 @@
 import React, { MutableRefObject } from 'react';
+import type { Mock } from 'vitest';
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
@@ -83,36 +84,43 @@ const render = (ui: React.ReactElement): ReturnType<typeof rtlRender> =>
 		</MemoryRouter>,
 	);
 
-jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
+vi.mock('hooks/queryBuilder/useCreateAlerts', () => ({
 	__esModule: true,
-	default: jest.fn(() => jest.fn()),
+	default: vi.fn(() => vi.fn()),
 }));
 
-jest.mock('hooks/dashboard/useGetResolvedText', () => {
+vi.mock('hooks/dashboard/useGetResolvedText', () => {
 	const TEST_WIDGET_TITLE_RESOLVED = 'Test Widget Title';
 	return {
 		__esModule: true,
-		default: jest.fn(() => ({
+		default: vi.fn(() => ({
 			truncatedText: TEST_WIDGET_TITLE_RESOLVED,
 			fullText: TEST_WIDGET_TITLE_RESOLVED,
 		})),
 	};
 });
 
-jest.mock('@signozhq/icons', () => {
-	const { createIconsMock } = jest.requireActual<
+vi.mock('@signozhq/icons', async () => {
+	const actual =
+		await vi.importActual<typeof import('@signozhq/icons')>('@signozhq/icons');
+	const { createIconsMock } = await vi.importActual<
 		typeof import('test-mocks/createIconsMock')
 	>('test-mocks/createIconsMock');
-	return createIconsMock({
-		CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
-		TriangleAlert: (): JSX.Element => <svg data-testid="lucide-triangle-alert" />,
-		SquareArrowOutUpRight: (): JSX.Element => (
-			<svg data-testid="lucide-square-arrow-out-up-right" />
-		),
-	});
+	return {
+		...actual,
+		...createIconsMock({
+			CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
+			TriangleAlert: (): JSX.Element => (
+				<svg data-testid="lucide-triangle-alert" />
+			),
+			SquareArrowOutUpRight: (): JSX.Element => (
+				<svg data-testid="lucide-square-arrow-out-up-right" />
+			),
+		}),
+	};
 });
-jest.mock('antd', () => ({
-	...jest.requireActual('antd'),
+vi.mock('antd', async () => ({
+	...(await vi.importActual('antd')),
 	Spin: (): JSX.Element => <div data-testid="antd-spin" />,
 }));
 
@@ -167,8 +175,8 @@ const mockQueryResponse = {
 >;
 
 describe('WidgetHeader', () => {
-	const mockOnView = jest.fn();
-	const mockSetSearchTerm = jest.fn();
+	const mockOnView = vi.fn();
+	const mockSetSearchTerm = vi.fn();
 	const tableProcessedDataRef: MutableRefObject<RowData[]> = {
 		current: [
 			{
@@ -181,7 +189,7 @@ describe('WidgetHeader', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders widget header with title', () => {
@@ -496,11 +504,11 @@ describe('WidgetHeader', () => {
 
 		it('Create Alerts menu item is enabled and clickable', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const mockCreateAlertsHandler = jest.fn();
-			const useCreateAlerts = jest.requireMock(
+			const mockCreateAlertsHandler = vi.fn();
+			const { default: useCreateAlerts } = await vi.importMock(
 				'hooks/queryBuilder/useCreateAlerts',
-			).default;
-			useCreateAlerts.mockReturnValue(mockCreateAlertsHandler);
+			);
+			(useCreateAlerts as Mock).mockReturnValue(mockCreateAlertsHandler);
 
 			render(
 				<WidgetHeader

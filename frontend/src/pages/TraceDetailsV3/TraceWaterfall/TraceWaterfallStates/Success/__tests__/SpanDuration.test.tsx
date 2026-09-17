@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
@@ -5,17 +6,16 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 // Local identity-proxy mock for this module so `styles.foo` resolves to
 // `'foo'` in test assertions. The global `__mocks__/cssMock.ts` stays as
 // `export default {}`; we override resolution for this specific file only.
-jest.mock(
-	'../Success.module.scss',
-	() =>
-		new Proxy(
-			{},
-			{
-				get: (_target, prop): string | undefined =>
-					typeof prop === 'string' && prop !== '__esModule' ? prop : undefined,
-			},
-		),
-);
+vi.mock('../Success.module.scss', () => ({
+	__esModule: true,
+	default: new Proxy(
+		{},
+		{
+			get: (_target, prop): string | undefined =>
+				typeof prop === 'string' && prop !== '__esModule' ? prop : undefined,
+		},
+	),
+}));
 
 import { SpanDuration } from '../Success';
 import successStyles from '../Success.module.scss';
@@ -30,16 +30,13 @@ const HIGHLIGHTED_SPAN_CLASS = successStyles.isHighlighted;
 const DIMMED_SPAN_CLASS = successStyles.isDimmed;
 const SELECTED_NON_MATCHING_SPAN_CLASS = successStyles.isSelectedNonMatching;
 
-jest.mock('components/TimelineV3/TimelineV3', () => ({
+vi.mock('components/TimelineV3/TimelineV3', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
 
 // Mock the hooks
-jest.mock('hooks/useUrlQuery');
-jest.mock('@signozhq/ui', () => ({
-	Badge: jest.fn(),
-}));
+vi.mock('hooks/useUrlQuery');
 
 const mockSpan: SpanV3 = {
 	span_id: 'test-span-id',
@@ -82,24 +79,24 @@ const mockTraceMetadata = {
 	hasMissingSpans: false,
 };
 
-const mockSafeNavigate = jest.fn();
+const mockSafeNavigate = vi.fn();
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
 describe('SpanDuration', () => {
-	const mockSetSelectedSpan = jest.fn();
-	const mockUrlQuerySet = jest.fn();
-	const mockUrlQueryGet = jest.fn();
+	const mockSetSelectedSpan = vi.fn();
+	const mockUrlQuerySet = vi.fn();
+	const mockUrlQueryGet = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		// Mock URL query hook
-		(useUrlQuery as jest.Mock).mockReturnValue({
+		(useUrlQuery as Mock).mockReturnValue({
 			set: mockUrlQuerySet,
 			get: mockUrlQueryGet,
 			toString: () => 'spanId=test-span-id',
@@ -107,7 +104,7 @@ describe('SpanDuration', () => {
 	});
 
 	it('calls handleSpanClick when clicked', () => {
-		const mockHandleSpanClick = jest.fn();
+		const mockHandleSpanClick = vi.fn();
 
 		renderWithTraceProvider(
 			<SpanDuration

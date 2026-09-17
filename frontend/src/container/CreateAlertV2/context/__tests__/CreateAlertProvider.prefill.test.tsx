@@ -8,18 +8,21 @@ import { CreateAlertProvider, useCreateAlertState } from '../index';
 import { AlertThresholdMatchType } from '../types';
 
 // The provider only needs a query with a unit + empty builder for these assertions.
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): unknown => ({
 		currentQuery: {
 			unit: 'bytes',
 			builder: { queryData: [], queryFormulas: [] },
 		},
-		redirectWithQueryBuilderData: jest.fn(),
+		redirectWithQueryBuilderData: vi.fn(),
 	}),
 }));
 
-const mutation = { mutate: jest.fn(), isLoading: false };
-jest.mock('api/generated/services/rules', () => ({
+const { mutation } = vi.hoisted(() => ({
+	mutation: { mutate: vi.fn(), isLoading: false },
+}));
+vi.mock('api/generated/services/rules', async () => ({
+	...(await vi.importActual('api/generated/services/rules')),
 	useCreateRule: (): unknown => mutation,
 	useTestRule: (): unknown => mutation,
 	useUpdateRuleByID: (): unknown => mutation,

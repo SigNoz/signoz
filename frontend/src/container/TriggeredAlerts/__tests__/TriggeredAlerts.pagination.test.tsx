@@ -25,10 +25,14 @@ describe('TriggeredAlerts — pagination', () => {
 	// Default sort is duration ascending = newest startsAt first. Fixture indices
 	// 0..14 use startsAt 2023-10-01..15, so index 14 (newest) appears first and
 	// index 0 (oldest) appears last. Page 1 (limit 10) = items 14..5. Page 2 = 4..0.
+	// limit=10 is pinned via the URL: in a real browser useCalculatedPageSize
+	// measures the container through ResizeObserver and would otherwise override
+	// the default limit (under jsdom the container measures 0px so the default
+	// holds). These tests cover pagination mechanics, not auto page sizing.
 
 	it('shows the first 10 rows on page 1 by default', async () => {
 		usePaginationHandler();
-		renderTriggeredAlerts();
+		renderTriggeredAlerts({ initialRoute: '/?limit=10' });
 
 		await screen.findByText('Pag Alert 14');
 
@@ -39,7 +43,7 @@ describe('TriggeredAlerts — pagination', () => {
 
 	it('renders a "page 2" pagination button reflecting total=15 with pageSize=10', async () => {
 		usePaginationHandler();
-		renderTriggeredAlerts();
+		renderTriggeredAlerts({ initialRoute: '/?limit=10' });
 
 		await screen.findByText('Pag Alert 14');
 
@@ -53,7 +57,7 @@ describe('TriggeredAlerts — pagination', () => {
 	it('navigates to page 2 and shows the next batch of alerts', async () => {
 		usePaginationHandler();
 		const user = userEvent.setup({ delay: null });
-		renderTriggeredAlerts();
+		renderTriggeredAlerts({ initialRoute: '/?limit=10' });
 
 		await screen.findByText('Pag Alert 14');
 

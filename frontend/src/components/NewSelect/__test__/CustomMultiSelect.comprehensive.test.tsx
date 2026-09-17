@@ -1,11 +1,9 @@
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { Mock } from 'vitest';
 
 import CustomMultiSelect from '../CustomMultiSelect';
-
-// Mock scrollIntoView which isn't available in JSDOM
-window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
 // Helper function to render with VirtuosoMockContext
 const renderWithVirtuoso = (
@@ -17,10 +15,29 @@ const renderWithVirtuoso = (
 		</VirtuosoMockContext.Provider>,
 	);
 
+/**
+ * Wait for the antd dropdown to reach its hidden state. Closing starts an
+ * rc-motion leave animation that only finishes on an animation event; jsdom
+ * runs no CSS so that event never fires there (in this jsdom the motion
+ * listens for the prefixed `webkitAnimationEnd`). Firing it manually ends the
+ * motion exactly as the browser's own event would; in a real browser the
+ * motion is already over and the synthetic event is a no-op.
+ */
+async function waitForDropdownHidden(): Promise<void> {
+	await waitFor(() => {
+		const dropdown = document.querySelector('.ant-select-dropdown');
+		for (const name of ['animationend', 'webkitAnimationEnd']) {
+			dropdown?.dispatchEvent(new Event(name, { bubbles: false }));
+		}
+		expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
+	});
+}
+
 // Mock clipboard API
-Object.assign(navigator, {
-	clipboard: {
-		writeText: jest.fn(() => Promise.resolve()),
+Object.defineProperty(navigator, 'clipboard', {
+	configurable: true,
+	value: {
+		writeText: vi.fn(() => Promise.resolve()),
 	},
 });
 
@@ -51,12 +68,12 @@ const mockGroupedOptions = [
 
 describe('CustomMultiSelect - Comprehensive Tests', () => {
 	let user: ReturnType<typeof userEvent.setup>;
-	let mockOnChange: jest.Mock;
+	let mockOnChange: Mock;
 
 	beforeEach(() => {
 		user = userEvent.setup();
-		mockOnChange = jest.fn();
-		jest.clearAllMocks();
+		mockOnChange = vi.fn();
+		vi.clearAllMocks();
 	});
 
 	// ===== 1. CUSTOM VALUES SUPPORT =====
@@ -827,7 +844,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 	// ===== 7. SAVE AND SELECTION TRIGGERS =====
 	describe('Save and Selection Triggers (ST)', () => {
 		it('ST-01: ESC triggers save action', async () => {
-			const mockDropdownChange = jest.fn();
+			const mockDropdownChange = vi.fn();
 
 			renderWithVirtuoso(
 				<CustomMultiSelect
@@ -850,6 +867,8 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			// Verify dropdown is closed after Escape
 			expect(mockDropdownChange).toHaveBeenCalledWith(false);
+
+			await waitForDropdownHidden();
 
 			await waitFor(() => {
 				// Dropdown should be hidden (not completely removed from DOM)
@@ -944,6 +963,8 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			await user.keyboard('{Escape}');
 
 			// Dropdown should close and search text should be cleared
+			await waitForDropdownHidden();
+
 			await waitFor(() => {
 				const dropdown = document.querySelector('.ant-select-dropdown');
 				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
@@ -1176,11 +1197,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			await user.click(document.body);
 
 			// Dropdown should close - check for hidden state
-			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				// The dropdown should be hidden with the hidden class
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
-			});
+			await waitForDropdownHidden();
 		});
 	});
 
@@ -1290,7 +1307,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 	// ===== 11. ADVANCED CLEAR ACTIONS =====
 	describe('Advanced Clear Actions (ACA)', () => {
 		it('ACA-01: Clear action waiting behavior', async () => {
-			const mockOnChangeWithDelay = jest.fn().mockImplementation(
+			const mockOnChangeWithDelay = vi.fn().mockImplementation(
 				() =>
 					new Promise<void>((resolve) => {
 						setTimeout(() => resolve(), 100);
@@ -1511,10 +1528,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			// Only ESC should close the dropdown
 			await user.keyboard('{Escape}');
 
-			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
-			});
+			await waitForDropdownHidden();
 		});
 	});
 });
