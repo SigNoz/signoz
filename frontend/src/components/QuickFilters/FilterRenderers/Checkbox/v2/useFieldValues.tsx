@@ -11,10 +11,10 @@ import { DATA_SOURCE_TO_SIGNAL } from 'types/common/queryBuilder';
 
 interface UseFieldValuesProps {
 	filter: IQuickFiltersConfig;
-	source: QuickFiltersSource;
 	searchText: string;
 	existingQuery?: string;
 	metricNamespace?: string;
+	source?: QuickFiltersSource;
 	startUnixMilli?: number;
 	endUnixMilli?: number;
 	enabled: boolean;
@@ -66,7 +66,7 @@ export function useFieldValues({
 				searchText,
 				existingQuery,
 				metricNamespace,
-				source: QUICK_FILTERS_SOURCE_TO_SOURCE[source],
+				source: source ? QUICK_FILTERS_SOURCE_TO_SOURCE[source] : undefined,
 				startUnixMilli,
 				// This field does not affect the backend but I wanted to keep it here
 				// in case we add the support in the future
