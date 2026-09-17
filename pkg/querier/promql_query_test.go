@@ -461,6 +461,37 @@ func TestFingerprint_PinnedProviderBypassesCache(t *testing.T) {
 	assert.Empty(t, q.Fingerprint())
 }
 
+// promql reports at the window start and every step after it, so a window
+// starting later inside the step describes instants the earlier one never does.
+func TestFingerprintSeparatesWindowsInsideAStep(t *testing.T) {
+	minuteStep := qbv5.Step{Duration: time.Minute}
+
+	onTheMinute := (&promqlQuery{
+		logger:      slog.Default(),
+		query:       qbv5.PromQuery{Query: "up", Step: minuteStep},
+		tr:          qbv5.TimeRange{From: 600_000, To: 1_200_000},
+		requestType: qbv5.RequestTypeTimeSeries,
+	}).Fingerprint()
+
+	halfAStepLater := (&promqlQuery{
+		logger:      slog.Default(),
+		query:       qbv5.PromQuery{Query: "up", Step: minuteStep},
+		tr:          qbv5.TimeRange{From: 630_000, To: 1_230_000},
+		requestType: qbv5.RequestTypeTimeSeries,
+	}).Fingerprint()
+
+	aWholeMinuteLater := (&promqlQuery{
+		logger:      slog.Default(),
+		query:       qbv5.PromQuery{Query: "up", Step: minuteStep},
+		tr:          qbv5.TimeRange{From: 900_000, To: 1_500_000},
+		requestType: qbv5.RequestTypeTimeSeries,
+	}).Fingerprint()
+
+	require.NotEmpty(t, onTheMinute)
+	assert.NotEqual(t, onTheMinute, halfAStepLater, "windows half a step apart share no instants")
+	assert.Equal(t, onTheMinute, aWholeMinuteLater, "windows whole steps apart report at the same instants")
+}
+
 func TestToResultDropsNonFiniteValues(t *testing.T) {
 	tests := []struct {
 		description        string
