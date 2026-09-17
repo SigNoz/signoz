@@ -9,6 +9,7 @@ var (
 	FeaturePutMetersInZeus           = featuretypes.MustNewName("put_meters_in_zeus")
 	FeatureUseMeterReporter          = featuretypes.MustNewName("use_meter_reporter")
 	FeatureUseJSONBody               = featuretypes.MustNewName("use_json_body")
+	FeatureJSONBodyDualIngestion     = featuretypes.MustNewName("json_body_dual_ingestion")
 	FeatureEnableAIObservability     = featuretypes.MustNewName("enable_ai_observability")
 	FeatureEnableMetricsReduction    = featuretypes.MustNewName("enable_metrics_reduction")
 	FeatureUsePrometheusClickhouseV2 = featuretypes.MustNewName("use_prometheus_clickhouse_v2")
@@ -62,6 +63,14 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether body JSON querying is enabled",
+			DefaultVariant: featuretypes.MustNewName("disabled"),
+			Variants:       featuretypes.NewBooleanVariants(),
+		},
+		&featuretypes.Feature{
+			Name:           FeatureJSONBodyDualIngestion,
+			Kind:           featuretypes.KindBoolean,
+			Stage:          featuretypes.StageExperimental,
+			Description:    "Controls whether the collector's normalize operator keeps the original log body so it is ingested into both the legacy body and the JSON body columns",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
