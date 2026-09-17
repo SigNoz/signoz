@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/no-small-switch */
-import { Action, ActionTypes, UsageDataItem } from 'store/actions';
+import { Action, ActionTypes } from 'store/actions/types';
+import type { UsageDataItem } from 'store/actions/usage';
 
 export const usageDataReducer = (
 	state: UsageDataItem[] = [{ timestamp: 0, count: 0 }],

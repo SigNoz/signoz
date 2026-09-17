@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react';
 import {
 	IBuilderQuery,
 	OrderByPayload,
@@ -23,11 +22,15 @@ export function sanitizeOrderByForExplorer(
 	const hasInvalidOrderBy = current.some((o) => !allowed.has(o.columnName));
 
 	if (hasInvalidOrderBy) {
-		Sentry.captureEvent({
-			message: `Invalid orderBy: current: ${JSON.stringify(
-				current,
-			)} - allowed: ${JSON.stringify(Array.from(allowed))}`,
-			level: 'warning',
+		// Loaded on demand: a static import puts all of @sentry/react (~273
+		// modules) in the graph of every module that reaches this file.
+		void import('@sentry/react').then((Sentry) => {
+			Sentry.captureEvent({
+				message: `Invalid orderBy: current: ${JSON.stringify(
+					current,
+				)} - allowed: ${JSON.stringify(Array.from(allowed))}`,
+				level: 'warning',
+			});
 		});
 	}
 	return current.filter((o) => allowed.has(o.columnName));
