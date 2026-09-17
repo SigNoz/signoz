@@ -14,6 +14,7 @@ import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ENTITY_VERSION_V5 } from 'constants/app';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -66,7 +67,7 @@ function TracesView({
 		onFieldsChange,
 		requiredFields,
 		isLoading: isColumnsLoading,
-		columnStorageKey,
+		canPersistColumns,
 	} = useTraceViewColumns();
 
 	const {
@@ -169,8 +170,6 @@ function TracesView({
 	}, []);
 
 	// Without the full column set there is no pool to pick from, so the control is dropped.
-	const canPersistColumns = Boolean(columnStorageKey);
-
 	const fieldsSelectorConfig = useMemo(
 		() =>
 			canPersistColumns
@@ -223,7 +222,11 @@ function TracesView({
 			<TracesTable
 				data={rows}
 				columns={tableColumns}
-				columnStorageKey={columnStorageKey}
+				columnStorageKey={
+					canPersistColumns
+						? LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS
+						: undefined
+				}
 				respectColumnOrder
 				panelType="TRACE"
 				getRowHref={getTraceLink}

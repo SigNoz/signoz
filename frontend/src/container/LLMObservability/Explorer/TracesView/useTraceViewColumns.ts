@@ -35,8 +35,8 @@ interface UseTraceViewColumns {
 	onFieldsChange: (next: TelemetryFieldKey[]) => void;
 	requiredFields: readonly string[];
 	isLoading: boolean;
-	/** Set once the keys fetch lands; without it nothing can reach the persisted store. */
-	columnStorageKey?: string;
+	/** False until the keys fetch lands; a partial set must not reach the persisted store. */
+	canPersistColumns: boolean;
 }
 
 // TODO(ai-explorer): browser-local only, unlike the list views' `?options=` columns.
@@ -65,13 +65,11 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 	);
 
 	// Defaults from a partial column set would persist as the user's own choice.
-	const columnStorageKey = isSuccess ? STORAGE_KEY : undefined;
-
 	useEffect(() => {
-		if (columnStorageKey) {
-			initializeFromDefaults(columnStorageKey, columns);
+		if (isSuccess) {
+			initializeFromDefaults(STORAGE_KEY, columns);
 		}
-	}, [columnStorageKey, columns]);
+	}, [isSuccess, columns]);
 
 	const hiddenColumnIds = useHiddenColumnIds(STORAGE_KEY);
 	const columnOrder = useColumnOrder(STORAGE_KEY);
@@ -91,7 +89,7 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 
 	const onFieldsChange = useCallback(
 		(next: TelemetryFieldKey[]): void => {
-			if (!columnStorageKey) {
+			if (!isSuccess) {
 				return;
 			}
 
@@ -99,16 +97,16 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 
 			columns.forEach((column) => {
 				if (keptIds.has(column.id) || column.id === TRACE_ID_COLUMN_ID) {
-					showColumn(columnStorageKey, column.id);
+					showColumn(STORAGE_KEY, column.id);
 				} else {
-					hideColumn(columnStorageKey, column.id);
+					hideColumn(STORAGE_KEY, column.id);
 				}
 			});
 
 			// Columns missing from the order sort last, so the visible ones suffice.
-			setColumnOrder(columnStorageKey, next.map(columnIdOf));
+			setColumnOrder(STORAGE_KEY, next.map(columnIdOf));
 		},
-		[columns, columnStorageKey],
+		[columns, isSuccess],
 	);
 
 	return {
@@ -117,6 +115,6 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 		onFieldsChange,
 		requiredFields: [TRACE_ID_COLUMN_ID],
 		isLoading: !isFetched,
-		columnStorageKey,
+		canPersistColumns: isSuccess,
 	};
 }
