@@ -22,6 +22,15 @@ export type QueryBuilderFieldRule = {
 	default?: FilterConfigsPartial;
 } & Partial<Record<TelemetrytypesSignalDTO, FilterConfigsPartial>>;
 
+/** The kind's `default` rule with its per-signal overrides merged over it (signal wins). */
+export function mergeQueryBuilderFieldRule(
+	rule: QueryBuilderFieldRule,
+	signal: TelemetrytypesSignalDTO,
+): FilterConfigsPartial {
+	const perSignal = signal ? rule[signal] : undefined;
+	return { ...rule.default, ...perSignal };
+}
+
 /**
  * How a kind's query-range request is shaped. Declared per-kind in
  * `kinds/<Kind>/definition.ts` and read through the capabilities guard, so no V2 code

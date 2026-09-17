@@ -6,7 +6,6 @@ import AutoRefreshTicker from 'container/TopNav/AutoRefreshV2/AutoRefreshTicker'
 
 import DashboardPageToolbar from './DashboardPageToolbar';
 import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
-import { useDashboardEditGuard } from './hooks/useDashboardEditGuard';
 import { useResolvedVariables } from './hooks/useResolvedVariables';
 import { useSyncVariablesForSuggestions } from './hooks/useSyncVariablesForSuggestions';
 import { useDashboardStore } from './store/useDashboardStore';
@@ -50,17 +49,13 @@ function DashboardContainer({
 
 	const fullScreenHandle = useFullScreenHandle();
 
-	const { isLocked, canEditDashboard } = useDashboardEditGuard(dashboard);
-
 	// Seed during render (not an effect) so the first Panel render already sees the id —
 	// useDashboardFetchRequired throws on a missing id. setEditContext self-guards.
 	const setEditContext = useDashboardStore((s) => s.setEditContext);
-
 	setEditContext({
 		dashboardId: dashboard.id,
-		isLocked,
-		canEditDashboard: canEditDashboardOverride ?? canEditDashboard,
 		refetch,
+		canEditDashboardOverride,
 	});
 
 	// Resolve the variable selection into the V5 query payload and publish it to
@@ -88,7 +83,7 @@ function DashboardContainer({
 					</>
 				)}
 				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
-				{isLocked && <LockedIndicator />}
+				{!!dashboard.locked && <LockedIndicator />}
 				<DashboardChangedDialog
 					open={staleCheck.showPrompt}
 					onReload={staleCheck.reload}

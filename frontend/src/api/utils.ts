@@ -20,7 +20,6 @@ export const Logout = async (): Promise<void> => {
 	deleteLocalStorageKey(LOCALSTORAGE.LOGGED_IN_USER_NAME);
 	deleteLocalStorageKey(LOCALSTORAGE.CHAT_SUPPORT);
 	deleteLocalStorageKey(LOCALSTORAGE.USER_ID);
-	deleteLocalStorageKey(LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT);
 	window.dispatchEvent(new CustomEvent('LOGOUT'));
 	history.push(ROUTES.LOGIN);
 };
