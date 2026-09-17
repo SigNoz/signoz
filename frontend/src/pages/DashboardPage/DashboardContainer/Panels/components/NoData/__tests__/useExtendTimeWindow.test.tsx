@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { ReactNode } from 'react';
 // eslint-disable-next-line no-restricted-imports
@@ -10,9 +11,9 @@ import thunk from 'redux-thunk';
 
 import { useExtendTimeWindow } from '../useExtendTimeWindow';
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+const mockSafeNavigate = vi.fn();
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));

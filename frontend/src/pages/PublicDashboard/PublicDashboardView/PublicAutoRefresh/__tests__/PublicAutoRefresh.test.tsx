@@ -6,13 +6,13 @@ import PublicAutoRefresh from '../PublicAutoRefresh';
 const props = {
 	enabled: false,
 	interval: '30s',
-	onToggle: jest.fn(),
-	onIntervalChange: jest.fn(),
-	onRefresh: jest.fn(),
+	onToggle: vi.fn(),
+	onIntervalChange: vi.fn(),
+	onRefresh: vi.fn(),
 };
 
 describe('PublicAutoRefresh', () => {
-	beforeEach(() => jest.clearAllMocks());
+	beforeEach(() => vi.clearAllMocks());
 
 	it('renders the refresh and auto-refresh controls', () => {
 		render(<PublicAutoRefresh {...props} />);

@@ -67,7 +67,7 @@
 				"name": "typescript-plugin-css-modules"
 			}
 		],
-		"types": ["vite/client", "node", "jest", "testing-library__jest-dom"]
+		"types": ["vite/client", "node", "testing-library__jest-dom", "vitest/globals"]
 	},
 	"exclude": [
 		"node_modules",
@@ -79,9 +79,7 @@
 		"./src",
 		"./.storybook",
 		"./__mocks__",
-		"./babel.config.cjs",
-		"./jest.config.ts",
-		"./jest.setup.ts",
+		"./vitest*.ts",
 		"./vite.config.ts",
 		"./commitlint.config.ts"
 	]

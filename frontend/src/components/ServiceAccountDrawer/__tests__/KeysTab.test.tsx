@@ -3,11 +3,11 @@ import { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/servic
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils-full';
 
 import KeysTab from '../KeysTab';
 
-jest.mock('lib/authz/components/AuthZTooltip/AuthZTooltip', () => ({
+vi.mock('lib/authz/components/AuthZTooltip/AuthZTooltip', () => ({
 	__esModule: true,
 	default: ({
 		children,
@@ -16,12 +16,12 @@ jest.mock('lib/authz/components/AuthZTooltip/AuthZTooltip', () => ({
 	}): React.ReactElement => children,
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-const mockToast = jest.mocked(toast);
+const mockToast = vi.mocked(toast);
 
 const SA_KEY_ENDPOINT = '*/api/v1/service_accounts/sa-1/keys/:fid';
 
@@ -48,7 +48,7 @@ const defaultProps = {
 	isDisabled: false,
 	currentPage: 1,
 	pageSize: 10,
-	onPageChange: jest.fn(),
+	onPageChange: vi.fn(),
 };
 
 function renderKeysTab(
@@ -64,7 +64,7 @@ function renderKeysTab(
 
 describe('KeysTab', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			rest.delete(SA_KEY_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
@@ -87,7 +87,7 @@ describe('KeysTab', () => {
 
 	it('renders empty state when no keys and clicking add sets add-key param', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onUrlUpdate = jest.fn();
+		const onUrlUpdate = vi.fn();
 		render(
 			<NuqsTestingAdapter
 				searchParams={{ account: 'sa-1' }}
@@ -122,7 +122,7 @@ describe('KeysTab', () => {
 
 	it('clicking a row sets the edit-key URL param', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onUrlUpdate = jest.fn();
+		const onUrlUpdate = vi.fn();
 
 		render(
 			<NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>
@@ -146,7 +146,7 @@ describe('KeysTab', () => {
 
 	it('clicking revoke icon sets revoke-key URL param', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onUrlUpdate = jest.fn();
+		const onUrlUpdate = vi.fn();
 
 		render(
 			<NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>

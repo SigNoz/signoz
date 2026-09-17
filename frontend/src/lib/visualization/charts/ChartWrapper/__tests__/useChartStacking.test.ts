@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { StackMode } from 'lib/uPlotV2/config/types';
@@ -10,27 +11,31 @@ type Hooks = Record<string, (...args: unknown[]) => void>;
 function createConfig(stack: StackMode): {
 	config: UPlotConfigBuilder;
 	hooks: Hooks;
+	addHook: Mock;
 } {
 	const hooks: Hooks = {};
+	const addHook: Mock = vi.fn(
+		(type: string, hook: (...args: unknown[]) => void) => {
+			hooks[type] = hook;
+			return vi.fn();
+		},
+	);
 	const config = {
 		getStackMode: (): StackMode => stack,
-		addHook: jest.fn((type: string, hook: (...args: unknown[]) => void) => {
-			hooks[type] = hook;
-			return jest.fn();
-		}),
+		addHook,
 	} as unknown as UPlotConfigBuilder;
-	return { config, hooks };
+	return { config, hooks, addHook };
 }
 
 const data = [[1], [30], [10]] as unknown as uPlot.AlignedData;
 
 describe('useChartStacking', () => {
 	it('returns the data untouched and registers nothing when the config says `none`', () => {
-		const { config } = createConfig(StackMode.None);
+		const { config, addHook } = createConfig(StackMode.None);
 		const { result } = renderHook(() => useChartStacking({ data, config }));
 
 		expect(result.current).toBe(data);
-		expect(config.addHook).not.toHaveBeenCalled();
+		expect(addHook).not.toHaveBeenCalled();
 	});
 
 	it('treats a missing config as unstacked', () => {
@@ -54,12 +59,13 @@ describe('useChartStacking', () => {
 	});
 
 	it('registers the uPlot hooks that re-stack on data and visibility changes', () => {
-		const { config } = createConfig(StackMode.Normal);
+		const { config, addHook } = createConfig(StackMode.Normal);
 		renderHook(() => useChartStacking({ data, config }));
 
-		expect(
-			(config.addHook as jest.Mock).mock.calls.map(([type]) => type),
-		).toStrictEqual(['setData', 'setSeries']);
+		expect(addHook.mock.calls.map(([type]) => type)).toStrictEqual([
+			'setData',
+			'setSeries',
+		]);
 	});
 
 	it('re-stacks from the raw values when the legend hides a series', () => {
@@ -69,9 +75,9 @@ describe('useChartStacking', () => {
 		const plot = {
 			data: [[1]],
 			series: [{}, { show: true }, { show: false }],
-			delBand: jest.fn(),
-			addBand: jest.fn(),
-			setData: jest.fn(),
+			delBand: vi.fn(),
+			addBand: vi.fn(),
+			setData: vi.fn(),
 		};
 		hooks.setSeries(plot, 2, { show: false });
 
@@ -87,9 +93,9 @@ describe('useChartStacking', () => {
 		const plot = {
 			data: [[1]],
 			series: [{}, { show: true }, { show: true }],
-			delBand: jest.fn(),
-			addBand: jest.fn(),
-			setData: jest.fn(),
+			delBand: vi.fn(),
+			addBand: vi.fn(),
+			setData: vi.fn(),
 		};
 		hooks.setSeries(plot, 1, { focus: true });
 

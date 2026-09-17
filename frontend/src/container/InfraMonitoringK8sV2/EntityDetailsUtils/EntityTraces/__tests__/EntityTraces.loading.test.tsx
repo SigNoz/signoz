@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from 'tests/test-utils';
+import { act, screen, waitFor } from 'tests/test-utils-full';
 
 import { renderEntityTraces } from './testUtils';
 import { mockQueryRangeV5WithTracesResponse } from '__tests__/query_range_v5.util';

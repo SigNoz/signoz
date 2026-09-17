@@ -4,7 +4,7 @@ import * as roleApi from 'api/generated/services/role';
 import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
-import { render, screen } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils-full';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 import ViewRolePage from '../ViewRolePage';
@@ -16,25 +16,28 @@ import {
 	mockPermissionsData,
 } from './testUtils';
 
+vi.mock('api/generated/services/role', { spy: true });
+vi.mock('../../hooks/useRolePermissions', { spy: true });
+
 describe('ViewRolePage - Error State', () => {
 	beforeEach(() => {
 		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
 	it('displays error component when API has error but role data exists', async () => {
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: customRoleResponse,
 			isLoading: false,
 			isError: true,
 			error: new Error('Failed to fetch'),
 		} as ReturnType<typeof roleApi.useGetRole>);
 
-		jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+		vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 			data: mockPermissionsData,
 			isLoading: false,
 			isError: false,
@@ -51,7 +54,7 @@ describe('ViewRolePage - Error State', () => {
 	});
 
 	it('displays error state when API fails without role data', async () => {
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: undefined,
 			isLoading: false,
 			isError: true,
@@ -69,7 +72,7 @@ describe('ViewRolePage - Error State', () => {
 	});
 
 	it('shows back button on error state', async () => {
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: undefined,
 			isLoading: false,
 			isError: true,
@@ -88,7 +91,7 @@ describe('ViewRolePage - Error State', () => {
 	it('navigates to roles list when back button clicked on error state', async () => {
 		const user = userEvent.setup();
 
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: undefined,
 			isLoading: false,
 			isError: true,

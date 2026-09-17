@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
 import type { GraphVisibilityState } from 'lib/visualization/panels/types';
@@ -11,12 +12,12 @@ describe('legendVisibilityUtils', () => {
 
 	beforeEach(() => {
 		localStorage.clear();
-		jest.spyOn(window.localStorage.__proto__, 'getItem');
-		jest.spyOn(window.localStorage.__proto__, 'setItem');
+		vi.spyOn(window.localStorage.__proto__, 'getItem');
+		vi.spyOn(window.localStorage.__proto__, 'setItem');
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	describe('getStoredSeriesVisibility', () => {
@@ -250,7 +251,7 @@ describe('legendVisibilityUtils', () => {
 				storageKey,
 				expect.any(String),
 			);
-			const [_, value] = (localStorage.setItem as jest.Mock).mock.calls[0];
+			const [_, value] = (localStorage.setItem as Mock).mock.calls[0];
 			expect((): void => JSON.parse(value)).not.toThrow();
 			expect(JSON.parse(value)).toStrictEqual([
 				{ name: 'widget-1', dataIndex: [{ label: 'CPU', show: true }] },

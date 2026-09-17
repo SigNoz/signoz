@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -5,22 +6,22 @@ import { UpdateTimeInterval } from 'store/actions';
 
 import { useSyncTimeOnStagedQueryChange } from '../useSyncTimeOnStagedQueryChange';
 
-const mockDispatch = jest.fn();
+const mockDispatch = vi.fn();
 
-jest.mock('react-redux', () => ({
-	useDispatch: (): jest.Mock => mockDispatch,
-	useSelector: jest.fn(),
+vi.mock('react-redux', () => ({
+	useDispatch: (): Mock => mockDispatch,
+	useSelector: vi.fn(),
 }));
 
-jest.mock('store/actions', () => ({
-	UpdateTimeInterval: jest.fn((time: string) => ({
+vi.mock('store/actions', () => ({
+	UpdateTimeInterval: vi.fn((time: string) => ({
 		type: 'UPDATE_TIME_INTERVAL_THUNK',
 		payload: time,
 	})),
 }));
 
-const mockedUseSelector = useSelector as jest.Mock;
-const mockedUpdateTimeInterval = UpdateTimeInterval as unknown as jest.Mock;
+const mockedUseSelector = useSelector as Mock;
+const mockedUpdateTimeInterval = UpdateTimeInterval as unknown as Mock;
 
 const setSelectedTime = (value: string): void => {
 	mockedUseSelector.mockImplementation(
@@ -31,7 +32,7 @@ const setSelectedTime = (value: string): void => {
 
 describe('useSyncTimeOnStagedQueryChange', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		setSelectedTime('1h');
 	});
 

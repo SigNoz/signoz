@@ -2,17 +2,23 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import { EntityMetadataItem } from '../EntityMetadataItem';
 
-const mockCopyToClipboard = jest.fn();
-
-jest.mock('react-use', () => ({
-	__esModule: true,
-	useCopyToClipboard: (): [unknown, jest.Mock] => [null, mockCopyToClipboard],
+const { mockCopyToClipboard } = vi.hoisted(() => ({
+	mockCopyToClipboard: vi.fn(),
 }));
 
-const mockToastSuccess = jest.fn();
+vi.mock('react-use', () => ({
+	useCopyToClipboard: (): [unknown, typeof mockCopyToClipboard] => [
+		null,
+		mockCopyToClipboard,
+	],
+}));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+const { mockToastSuccess } = vi.hoisted(() => ({
+	mockToastSuccess: vi.fn(),
+}));
+
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
 	},
@@ -20,7 +26,7 @@ jest.mock('@signozhq/ui/sonner', () => ({
 
 describe('EntityMetadataItem', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders the label and its value', () => {

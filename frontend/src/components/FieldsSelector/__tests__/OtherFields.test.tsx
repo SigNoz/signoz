@@ -6,9 +6,10 @@ import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 
 import OtherFields from '../OtherFields';
+import type { Mock } from 'vitest';
 
-jest.mock('hooks/querySuggestions/useFieldKeysSuggestion', () => ({
-	useFieldKeysSuggestion: jest.fn(() => ({
+vi.mock('hooks/querySuggestions/useFieldKeysSuggestion', () => ({
+	useFieldKeysSuggestion: vi.fn(() => ({
 		data: undefined,
 		isFetching: false,
 		isFetched: true,
@@ -16,7 +17,7 @@ jest.mock('hooks/querySuggestions/useFieldKeysSuggestion', () => ({
 }));
 
 const mockSuggestions = (names: string[]): void => {
-	(useFieldKeysSuggestion as jest.Mock).mockReturnValue({
+	(useFieldKeysSuggestion as Mock).mockReturnValue({
 		data: names.map((name) => ({
 			name,
 			signal: 'logs',
@@ -30,8 +31,8 @@ const mockSuggestions = (names: string[]): void => {
 
 const renderOtherFields = (
 	props: Partial<React.ComponentProps<typeof OtherFields>> = {},
-): { onAdd: jest.Mock } => {
-	const onAdd = jest.fn();
+): { onAdd: Mock } => {
+	const onAdd = vi.fn();
 	render(
 		<OtherFields
 			signal={DataSource.LOGS}
@@ -135,7 +136,7 @@ describe('OtherFields — field keys config', () => {
 	const builderQueryType: BuilderQueryType = 'builder_ai_query';
 
 	const mockPool = (fields: TelemetryFieldKey[]): void => {
-		(useFieldKeysSuggestion as jest.Mock).mockReturnValue({
+		(useFieldKeysSuggestion as Mock).mockReturnValue({
 			data: fields,
 			isFetching: false,
 			isFetched: true,

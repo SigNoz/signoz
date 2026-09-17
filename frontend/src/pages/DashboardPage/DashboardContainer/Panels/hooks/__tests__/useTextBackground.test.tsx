@@ -10,9 +10,9 @@ import {
 } from '../../kinds/TextPanel/background/presets';
 import { useTextBackground } from '../useTextBackground';
 
-const isDarkMode = jest.fn<boolean, []>(() => true);
+const isDarkMode = vi.fn<() => boolean>(() => true);
 
-jest.mock('hooks/useDarkMode', () => ({
+vi.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => isDarkMode(),
 }));
 

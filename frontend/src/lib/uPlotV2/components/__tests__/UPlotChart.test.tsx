@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
@@ -10,33 +11,33 @@ import UPlotChart from '../UPlotChart/UPlotChart';
 // Mocks
 // ---------------------------------------------------------------------------
 
-jest.mock('lib/visualization/panels/utils/legendVisibilityUtils', () => ({
-	getStoredSeriesVisibility: jest.fn(),
-	updateSeriesVisibilityToLocalStorage: jest.fn(),
+vi.mock('lib/visualization/panels/utils/legendVisibilityUtils', () => ({
+	getStoredSeriesVisibility: vi.fn(),
+	updateSeriesVisibilityToLocalStorage: vi.fn(),
 }));
 
-jest.mock('@sentry/react', () => ({
+vi.mock('@sentry/react', () => ({
 	ErrorBoundary: ({ children }: { children: ReactNode }): JSX.Element => (
 		<>{children}</>
 	),
 }));
 
-jest.mock('pages/ErrorBoundaryFallback/ErrorBoundaryFallback', () => ({
+vi.mock('pages/ErrorBoundaryFallback/ErrorBoundaryFallback', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div>Error Fallback</div>,
 }));
 
 interface MockUPlotInstance {
 	root: HTMLDivElement;
-	setData: jest.Mock;
-	setSize: jest.Mock;
-	destroy: jest.Mock;
+	setData: Mock;
+	setSize: Mock;
+	destroy: Mock;
 }
 
 let instances: MockUPlotInstance[] = [];
-const mockUPlotConstructor = jest.fn();
+const mockUPlotConstructor = vi.fn();
 
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	function MockUPlot(
 		opts: Record<string, unknown>,
 		data: unknown,
@@ -49,21 +50,21 @@ jest.mock('uplot', () => {
 
 		const inst: MockUPlotInstance = {
 			root: rootEl,
-			setData: jest.fn(),
-			setSize: jest.fn(),
-			destroy: jest.fn(),
+			setData: vi.fn(),
+			setSize: vi.fn(),
+			destroy: vi.fn(),
 		};
 		instances.push(inst);
 		return inst;
 	}
 
 	MockUPlot.paths = {
-		spline: jest.fn(() => jest.fn()),
-		bars: jest.fn(() => jest.fn()),
-		linear: jest.fn(() => jest.fn()),
-		stepped: jest.fn(() => jest.fn()),
+		spline: vi.fn(() => vi.fn()),
+		bars: vi.fn(() => vi.fn()),
+		linear: vi.fn(() => vi.fn()),
+		stepped: vi.fn(() => vi.fn()),
 	};
-	MockUPlot.tzDate = jest.fn();
+	MockUPlot.tzDate = vi.fn();
 
 	return { __esModule: true, default: MockUPlot };
 });
@@ -74,16 +75,16 @@ jest.mock('uplot', () => {
 
 const createMockConfig = (): UPlotConfigBuilder => {
 	return {
-		getConfig: jest.fn().mockReturnValue({
+		getConfig: vi.fn().mockReturnValue({
 			series: [{ value: (): string => '' }],
 			axes: [],
 			scales: {},
 			hooks: {},
 			cursor: {},
 		}),
-		getId: jest.fn().mockReturnValue(undefined),
-		getShouldSaveSelectionPreference: jest.fn().mockReturnValue(false),
-		getSeriesSpanGapsOptions: jest.fn().mockReturnValue([]),
+		getId: vi.fn().mockReturnValue(undefined),
+		getShouldSaveSelectionPreference: vi.fn().mockReturnValue(false),
+		getSeriesSpanGapsOptions: vi.fn().mockReturnValue([]),
 	} as unknown as UPlotConfigBuilder;
 };
 
@@ -196,7 +197,7 @@ describe('UPlotChart', () => {
 
 		it('merges config builder output into the uPlot options', () => {
 			const config = createMockConfig();
-			config.getConfig = jest.fn().mockReturnValue({
+			config.getConfig = vi.fn().mockReturnValue({
 				series: [{ value: (): string => '' }],
 				axes: [{ scale: 'y' }],
 				scales: { y: {} },
@@ -238,7 +239,7 @@ describe('UPlotChart', () => {
 
 	describe('lifecycle callbacks', () => {
 		it('invokes plotRef with the uPlot instance after creation', () => {
-			const plotRef = jest.fn();
+			const plotRef = vi.fn();
 
 			render(
 				<UPlotChart
@@ -256,8 +257,8 @@ describe('UPlotChart', () => {
 		});
 
 		it('destroys the instance and notifies callbacks when data becomes empty', () => {
-			const plotRef = jest.fn();
-			const onDestroy = jest.fn();
+			const plotRef = vi.fn();
+			const onDestroy = vi.fn();
 			const config = createMockConfig();
 
 			const { rerender } = render(
@@ -293,7 +294,7 @@ describe('UPlotChart', () => {
 		});
 
 		it('destroys the previous instance before creating a new one on config change', () => {
-			const onDestroy = jest.fn();
+			const onDestroy = vi.fn();
 			const config1 = createMockConfig();
 			const config2 = createMockConfig();
 
@@ -326,8 +327,8 @@ describe('UPlotChart', () => {
 		});
 
 		it('destroys the instance and notifies callbacks on unmount', () => {
-			const plotRef = jest.fn();
-			const onDestroy = jest.fn();
+			const plotRef = vi.fn();
+			const onDestroy = vi.fn();
 
 			const { unmount } = render(
 				<UPlotChart
@@ -356,7 +357,7 @@ describe('UPlotChart', () => {
 		it('inserts null break points before passing data to uPlot when a gap exceeds the numeric threshold', () => {
 			const config = createMockConfig();
 			// gap 0→100 = 100 > threshold 50 → null inserted at midpoint x=50
-			(config.getSeriesSpanGapsOptions as jest.Mock).mockReturnValue([
+			(config.getSeriesSpanGapsOptions as Mock).mockReturnValue([
 				{ spanGaps: 50 },
 			]);
 			const data: AlignedData = [
@@ -376,7 +377,7 @@ describe('UPlotChart', () => {
 		it('passes data through unchanged when no gap exceeds the numeric threshold', () => {
 			const config = createMockConfig();
 			// all gaps = 10, threshold = 50 → no insertions, same reference returned
-			(config.getSeriesSpanGapsOptions as jest.Mock).mockReturnValue([
+			(config.getSeriesSpanGapsOptions as Mock).mockReturnValue([
 				{ spanGaps: 50 },
 			]);
 			const data: AlignedData = [
@@ -394,7 +395,7 @@ describe('UPlotChart', () => {
 
 		it('transforms data passed to setData when data updates and a new gap exceeds the threshold', () => {
 			const config = createMockConfig();
-			(config.getSeriesSpanGapsOptions as jest.Mock).mockReturnValue([
+			(config.getSeriesSpanGapsOptions as Mock).mockReturnValue([
 				{ spanGaps: 50 },
 			]);
 

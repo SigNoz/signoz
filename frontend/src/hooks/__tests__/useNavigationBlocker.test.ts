@@ -2,14 +2,18 @@ import { act, renderHook } from '@testing-library/react';
 
 import { useNavigationBlocker } from '../useNavigationBlocker';
 
-const mockUnblock = jest.fn();
-const mockBlock = jest.fn().mockReturnValue(mockUnblock);
-const mockPush = jest.fn();
-const mockReplace = jest.fn();
-const mockGoBack = jest.fn();
+const { mockUnblock, mockBlock, mockPush, mockReplace, mockGoBack } =
+	vi.hoisted(() => ({
+		mockUnblock: vi.fn(),
+		mockBlock: vi.fn(),
+		mockPush: vi.fn(),
+		mockReplace: vi.fn(),
+		mockGoBack: vi.fn(),
+	}));
+mockBlock.mockReturnValue(mockUnblock);
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useHistory: (): object => ({
 		block: mockBlock,
 		push: mockPush,
@@ -28,7 +32,7 @@ describe('useNavigationBlocker', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockBlock.mockReturnValue(mockUnblock);
 	});
 
@@ -294,12 +298,12 @@ describe('useNavigationBlocker', () => {
 	});
 
 	describe('beforeunload event', () => {
-		let addEventListenerSpy: jest.SpyInstance;
-		let removeEventListenerSpy: jest.SpyInstance;
+		let addEventListenerSpy: ReturnType<typeof vi.spyOn>;
+		let removeEventListenerSpy: ReturnType<typeof vi.spyOn>;
 
 		beforeEach(() => {
-			addEventListenerSpy = jest.spyOn(window, 'addEventListener');
-			removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
+			addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+			removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 		});
 
 		afterEach(() => {
@@ -354,11 +358,11 @@ describe('useNavigationBlocker', () => {
 			renderHook(() => useNavigationBlocker(true));
 
 			const beforeUnloadHandler = addEventListenerSpy.mock.calls.find(
-				(call) => call[0] === 'beforeunload',
-			)?.[1];
+				(call: unknown[]) => call[0] === 'beforeunload',
+			)?.[1] as (event: { preventDefault: () => void }) => void;
 
 			const mockEvent = {
-				preventDefault: jest.fn(),
+				preventDefault: vi.fn(),
 			};
 
 			const result = beforeUnloadHandler(mockEvent);

@@ -22,10 +22,10 @@ import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContai
 
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 
-// jest.config maps the real hook to a no-op mock; this suite needs real navigation.
-jest.mock('hooks/useSafeNavigate', () => {
+// vitest.config maps the real hook to a no-op mock; this suite needs real navigation.
+vi.mock('hooks/useSafeNavigate', async () => {
 	const { useHistory: useRouterHistory } =
-		jest.requireActual('react-router-dom');
+		await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
 	return {
 		useSafeNavigate: (): unknown => {
 			const history = useRouterHistory();
@@ -36,7 +36,7 @@ jest.mock('hooks/useSafeNavigate', () => {
 	};
 });
 
-jest.mock('../../store/useDashboardStore', () => ({
+vi.mock('../../store/useDashboardStore', () => ({
 	useDashboardStore: (selector: (s: unknown) => unknown): unknown =>
 		selector({ dashboardId: 'dash-1' }),
 }));

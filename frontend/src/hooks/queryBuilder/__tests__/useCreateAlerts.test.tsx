@@ -1,3 +1,4 @@
+import type { Mock, MockedFunction } from 'vitest';
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -9,48 +10,45 @@ import { EQueryType } from 'types/common/dashboard';
 
 import useCreateAlerts from '../useCreateAlerts';
 
-jest.mock('react-query', () => ({
-	useMutation: jest.fn(),
+vi.mock('react-query', () => ({
+	useMutation: vi.fn(),
 }));
 
-jest.mock('react-redux', () => ({
-	useSelector: jest.fn(),
+vi.mock('react-redux', () => ({
+	useSelector: vi.fn(),
 }));
 
-jest.mock('api/dashboard/substitute_vars', () => ({
-	getSubstituteVars: jest.fn(),
+vi.mock('api/dashboard/substitute_vars', () => ({
+	getSubstituteVars: vi.fn(),
 }));
 
-jest.mock('api/v5/v5', () => ({
-	prepareQueryRangePayloadV5: jest.fn().mockReturnValue({ queryPayload: {} }),
+vi.mock('api/v5/v5', () => ({
+	prepareQueryRangePayloadV5: vi.fn().mockReturnValue({ queryPayload: {} }),
 }));
 
-jest.mock(
-	'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi',
-	() => ({
-		mapQueryDataFromApi: jest.fn(),
-	}),
-);
+vi.mock('lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi', () => ({
+	mapQueryDataFromApi: vi.fn(),
+}));
 
-jest.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
+vi.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
 	useDynamicVariableSuggestions: (): unknown[] => [],
 }));
 
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	useNotifications: (): unknown => ({
-		notifications: { error: jest.fn() },
+		notifications: { error: vi.fn() },
 	}),
 }));
 
-jest.mock('utils/getGraphType', () => ({
-	getGraphType: jest.fn().mockReturnValue('time_series'),
+vi.mock('utils/getGraphType', () => ({
+	getGraphType: vi.fn().mockReturnValue('time_series'),
 }));
 
-const mockMapQueryDataFromApi = mapQueryDataFromApi as jest.MockedFunction<
+const mockMapQueryDataFromApi = mapQueryDataFromApi as MockedFunction<
 	typeof mapQueryDataFromApi
 >;
-const mockUseMutation = useMutation as jest.MockedFunction<typeof useMutation>;
-const mockUseSelector = useSelector as jest.MockedFunction<typeof useSelector>;
+const mockUseMutation = useMutation as MockedFunction<typeof useMutation>;
+const mockUseSelector = useSelector as MockedFunction<typeof useSelector>;
 
 const buildWidget = (queryType: EQueryType | undefined): Widgets =>
 	({
@@ -68,7 +66,7 @@ const buildWidget = (queryType: EQueryType | undefined): Widgets =>
 	}) as unknown as Widgets;
 
 const getCompositeQueryFromLastOpen = (): Record<string, unknown> => {
-	const [url] = (window.open as jest.Mock).mock.calls[0];
+	const [url] = (window.open as Mock).mock.calls[0];
 	const query = new URLSearchParams((url as string).split('?')[1]);
 	const raw = query.get(QueryParams.compositeQuery);
 	if (!raw) {
@@ -83,19 +81,19 @@ describe('useCreateAlerts', () => {
 		| null = null;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		capturedOnSuccess = null;
 
 		mockUseSelector.mockReturnValue({ selectedTime: '1h' });
 
 		mockUseMutation.mockReturnValue({
-			mutate: jest.fn((_payload, opts) => {
+			mutate: vi.fn((_payload, opts) => {
 				capturedOnSuccess = opts?.onSuccess ?? null;
 			}),
 		} as unknown as ReturnType<typeof useMutation>);
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(window as any).open = jest.fn();
+		(window as any).open = vi.fn();
 	});
 
 	it('preserves widget queryType when the API response maps to a different queryType', () => {
@@ -174,7 +172,7 @@ describe('useCreateAlerts', () => {
 
 		const mutateCalls = (
 			mockUseMutation.mock.results[0].value as ReturnType<typeof useMutation>
-		).mutate as jest.Mock;
+		).mutate as Mock;
 		expect(mutateCalls).not.toHaveBeenCalled();
 	});
 });

@@ -1,12 +1,29 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`PipelinePage container test should render TableExpandIcon section 1`] = `
+exports[`PipelinePage container test > should render TableExpandIcon section 1`] = `
 <DocumentFragment>
   <div
     class="ant-flex css-dev-only-do-not-override-2i2tap ant-flex-align-center ant-flex-justify-center"
     data-testid="pipeline-row-collapse"
   >
-    <svg />
+    <svg
+      class="signoz-icon"
+      fill="none"
+      height="20"
+      stroke="currentColor"
+      stroke-width="1.67"
+      viewBox="0 0 16 16"
+      width="20"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="m4 6 4 4 4-4"
+        stroke="inherit"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.33"
+      />
+    </svg>
   </div>
 </DocumentFragment>
 `;

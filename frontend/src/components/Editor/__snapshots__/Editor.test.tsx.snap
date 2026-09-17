@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Editor renders correctly with custom props 1`] = `
+exports[`Editor > renders correctly with custom props 1`] = `
 <div>
   <section
     style="display: flex; position: relative; text-align: initial; width: 100%; height: 50vh;"
@@ -17,7 +17,7 @@ exports[`Editor renders correctly with custom props 1`] = `
 </div>
 `;
 
-exports[`Editor renders correctly with default props 1`] = `
+exports[`Editor > renders correctly with default props 1`] = `
 <div>
   <section
     style="display: flex; position: relative; text-align: initial; width: 100%; height: 40vh;"
@@ -34,7 +34,7 @@ exports[`Editor renders correctly with default props 1`] = `
 </div>
 `;
 
-exports[`Editor renders with dark mode theme 1`] = `
+exports[`Editor > renders with dark mode theme 1`] = `
 <div>
   <section
     style="display: flex; position: relative; text-align: initial; width: 100%; height: 40vh;"
@@ -51,7 +51,7 @@ exports[`Editor renders with dark mode theme 1`] = `
 </div>
 `;
 
-exports[`Editor renders with light mode theme 1`] = `
+exports[`Editor > renders with light mode theme 1`] = `
 <div>
   <section
     style="display: flex; position: relative; text-align: initial; width: 100%; height: 40vh;"

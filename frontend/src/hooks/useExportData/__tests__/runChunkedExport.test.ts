@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import 'tests/blob-polyfill';
 
 import { fetchExportData } from 'api/v1/download/downloadExportData';
@@ -8,24 +9,22 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { runChunkedExport } from '../runChunkedExport';
 
-jest.mock('api/v1/download/downloadExportData', () => ({
-	fetchExportData: jest.fn(),
+vi.mock('api/v1/download/downloadExportData', () => ({
+	fetchExportData: vi.fn(),
 }));
 
-jest.mock('api/v5/v5', () => ({
-	prepareQueryRangePayloadV5: jest.fn(),
+vi.mock('api/v5/v5', () => ({
+	prepareQueryRangePayloadV5: vi.fn(),
 }));
 
-jest.mock('lib/exportData/downloadFile', () => ({
-	downloadFile: jest.fn(),
-	getTimestampedFileName: jest.fn(
-		(base: string, ext: string) => `${base}.${ext}`,
-	),
+vi.mock('lib/exportData/downloadFile', () => ({
+	downloadFile: vi.fn(),
+	getTimestampedFileName: vi.fn((base: string, ext: string) => `${base}.${ext}`),
 }));
 
-const mockFetch = fetchExportData as jest.Mock;
-const mockPreparePayload = prepareQueryRangePayloadV5 as jest.Mock;
-const mockDownloadFile = downloadFile as jest.Mock;
+const mockFetch = fetchExportData as Mock;
+const mockPreparePayload = prepareQueryRangePayloadV5 as Mock;
+const mockDownloadFile = downloadFile as Mock;
 
 // Minimal query shape — the runner only maps over builder.queryData.
 const query = {
@@ -37,7 +36,7 @@ const baseArgs = {
 	timeRange: { start: 100, end: 200 },
 	fileNameBase: 'trace-x',
 	format: ExportFormat.Csv,
-	onProgress: jest.fn(),
+	onProgress: vi.fn(),
 };
 
 // EXPORT_PAGE_SIZE is 50_000; rows → parts: 120k → 3, 40k → 1, etc.
@@ -50,7 +49,7 @@ function runArgs(
 		...baseArgs,
 		totalRows: rowsForParts(1),
 		signal: new AbortController().signal,
-		onProgress: jest.fn(),
+		onProgress: vi.fn(),
 		...overrides,
 	};
 }
@@ -63,7 +62,7 @@ async function savedFileText(): Promise<string> {
 
 describe('runChunkedExport', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockPreparePayload.mockImplementation(({ query: pageQuery }) => ({
 			// Echo the page offset so fetch calls can be asserted per page.
 			queryPayload: { offset: pageQuery.builder.queryData[0].offset },
@@ -72,7 +71,7 @@ describe('runChunkedExport', () => {
 
 	it('fetches one page for small exports and saves the file', async () => {
 		mockFetch.mockResolvedValueOnce(new Blob(['h\na,b\n']));
-		const onProgress = jest.fn();
+		const onProgress = vi.fn();
 
 		await runChunkedExport(runArgs({ totalRows: 40_000, onProgress }));
 
@@ -172,7 +171,7 @@ describe('runChunkedExport', () => {
 		mockFetch.mockImplementation(({ body }) =>
 			Promise.resolve(new Blob([`h\nrow-${body.offset}\n`])),
 		);
-		const onProgress = jest.fn();
+		const onProgress = vi.fn();
 
 		await runChunkedExport(runArgs({ totalRows: rowsForParts(3), onProgress }));
 

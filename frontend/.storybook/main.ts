@@ -6,30 +6,30 @@ import type { Plugin, PluginOption } from 'vite';
 const srcPath = resolve(dirname(fileURLToPath(import.meta.url)), '../src');
 
 /**
- * Modules replaced for every story. Same idea as `moduleNameMapper` in
- * `jest.config.ts`: the app keeps importing its own paths, Storybook resolves
+ * Modules replaced for every story. Same idea as `resolve.alias` in
+ * `vitest.config.ts`: the app keeps importing its own paths, Storybook resolves
  * them to a mock. Regexes so only exact specifiers match: `lib/history` must
  * not catch `lib/historyUtils`.
  *
  * Each replacement is typed as the module it stands in for, so drift is a
- * compile error rather than a story that fails at render. The `jest` note on
- * each entry is where the same import lands under the other runner. The two
+ * compile error rather than a story that fails at render. The `vitest` note on
+ * each entry is where the same import lands under the test runner. The two
  * only diverge where the runner needs them to.
  */
 const mockAliases = [
 	{
-		// jest: not replaced, jsdom drives a real browser history.
+		// vitest: not replaced, browser mode drives a real browser history.
 		find: /^(?:src\/)?lib\/history$/,
 		replacement: `${srcPath}/storybook/navigation/history.alias.ts`,
 	},
 	{
-		// jest: src/__tests__/logEventMock.ts
+		// vitest: src/__tests__/logEventMock.ts
 		find: /^(?:src\/)?api\/common\/logEvent$/,
 		replacement: `${srcPath}/storybook/mocks/logEvent.mock.ts`,
 	},
 	{
-		// jest: __mocks__/env.ts, which leaves `baseURL` empty because jsdom already
-		// resolves a relative `/api/...` against `http://localhost`.
+		// vitest: __mocks__/env.ts, which leaves `baseURL` empty because the test
+		// page already resolves a relative `/api/...` against its own origin.
 		find: /^(?:src\/)?constants\/env$/,
 		replacement: `${srcPath}/storybook/mocks/env.mock.ts`,
 	},

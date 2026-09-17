@@ -7,17 +7,17 @@ import { LegendItem } from 'lib/uPlotV2/config/types';
 import { PieSlice } from 'lib/visualization/charts/types';
 import Pie from 'lib/visualization/charts/Pie/Pie';
 
-jest.mock('hooks/useDimensions', () => ({
-	useResizeObserver: jest.fn().mockReturnValue({ width: 400, height: 300 }),
+vi.mock('hooks/useDimensions', () => ({
+	useResizeObserver: vi.fn().mockReturnValue({ width: 400, height: 300 }),
 }));
 
-jest.mock('components/Graph/yAxisConfig', () => ({
-	getYAxisFormattedValue: jest.fn((value: string) => value),
+vi.mock('components/Graph/yAxisConfig', () => ({
+	getYAxisFormattedValue: vi.fn((value: string) => value),
 }));
 
 // VirtuosoGrid only renders a window in jsdom; render every item so we can
 // assert on legend entries.
-jest.mock('react-virtuoso', () => ({
+vi.mock('react-virtuoso', () => ({
 	VirtuosoGrid: ({
 		data,
 		itemContent,

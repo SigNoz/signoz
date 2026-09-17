@@ -525,7 +525,10 @@ describe('Footer utils', () => {
 				},
 				ruleType: 'threshold_rule',
 				schemaVersion: 'v2alpha1',
-				source: 'http://localhost/',
+				// The payload records the page it was built on. jsdom serves the
+				// test at http://localhost/ while browser mode uses the dev server
+				// URL, so assert the mechanism (current page URL), not one origin.
+				source: window.location.toString(),
 				version: 'v5',
 			});
 		});

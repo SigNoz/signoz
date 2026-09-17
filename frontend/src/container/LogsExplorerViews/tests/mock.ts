@@ -99,7 +99,7 @@ export const mockQueryBuilderContextValue = {
 			],
 		},
 	},
-	setSupersetQuery: jest.fn(),
+	setSupersetQuery: vi.fn(),
 	supersetQuery: {
 		...initialQueriesMap.logs,
 		builder: {

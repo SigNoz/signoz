@@ -19,16 +19,16 @@ import {
 import { WidgetGraphComponentProps } from 'container/WidgetCard/Card/types';
 import WidgetGraphComponent from 'container/WidgetCard/Card/WidgetGraphComponent';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD}/624652db-6097-42f5-bbca-e9012901db00`,
 	}),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
@@ -140,8 +140,8 @@ const mockProps: WidgetGraphComponentProps = {
 		isRefetchError: false,
 		isStale: true,
 		data: undefined,
-		refetch: jest.fn(),
-		remove: jest.fn(),
+		refetch: vi.fn(),
+		remove: vi.fn(),
 	},
 	errorMessage: '',
 	version: 'v4',
@@ -154,11 +154,11 @@ const mockProps: WidgetGraphComponentProps = {
 	],
 	isWarning: false,
 	isFetchingResponse: false,
-	setRequestData: jest.fn(),
-	onClickHandler: jest.fn(),
-	onDragSelect: jest.fn(),
+	setRequestData: vi.fn(),
+	onClickHandler: vi.fn(),
+	onDragSelect: vi.fn(),
 	openTracesButton: false,
-	onOpenTraceBtnClick: jest.fn(),
+	onOpenTraceBtnClick: vi.fn(),
 };
 
 describe('WidgetGraphComponent', () => {

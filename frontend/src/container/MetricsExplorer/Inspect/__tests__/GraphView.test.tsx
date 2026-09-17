@@ -7,20 +7,12 @@ import store from 'store';
 import { AlignedData } from 'uplot';
 
 import GraphView from '../GraphView';
-import { InspectMetricsSeries } from '../types';
 import {
+	InspectMetricsSeries,
 	InspectionStep,
 	SpaceAggregationOptions,
 	TimeAggregationOptions,
 } from '../types';
-
-const mockResizeObserver = jest.fn();
-mockResizeObserver.mockImplementation(() => ({
-	observe: (): void => undefined,
-	unobserve: (): void => undefined,
-	disconnect: (): void => undefined,
-}));
-window.ResizeObserver = mockResizeObserver;
 
 describe('GraphView', () => {
 	const mockTimeSeries: InspectMetricsSeries[] = [
@@ -46,11 +38,11 @@ describe('GraphView', () => {
 		metricType: MetrictypesTypeDTO.gauge,
 		spaceAggregationSeriesMap: new Map(),
 		inspectionStep: InspectionStep.COMPLETED,
-		setPopoverOptions: jest.fn(),
+		setPopoverOptions: vi.fn(),
 		popoverOptions: null,
-		setShowExpandedView: jest.fn(),
-		setExpandedViewOptions: jest.fn(),
-		resetInspection: jest.fn(),
+		setShowExpandedView: vi.fn(),
+		setExpandedViewOptions: vi.fn(),
+		resetInspection: vi.fn(),
 		showExpandedView: false,
 		metricInspectionAppliedOptions: {
 			timeAggregationInterval: 60,
@@ -63,7 +55,7 @@ describe('GraphView', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders graph view by default', () => {

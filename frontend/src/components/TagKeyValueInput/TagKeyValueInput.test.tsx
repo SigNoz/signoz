@@ -15,7 +15,7 @@ const startEditingFirstChip = async (user: User): Promise<HTMLElement> => {
 describe('TagKeyValueInput — inline chip edit', () => {
 	it('shows an error and stays in edit mode when Enter commits an invalid value', async () => {
 		const user = userEvent.setup();
-		const onTagsChange = jest.fn();
+		const onTagsChange = vi.fn();
 		render(<TagKeyValueInput tags={['env:prod']} onTagsChange={onTagsChange} />);
 
 		const input = await startEditingFirstChip(user);
@@ -32,7 +32,7 @@ describe('TagKeyValueInput — inline chip edit', () => {
 
 	it('shows a duplicate error when Enter commits an existing tag', async () => {
 		const user = userEvent.setup();
-		const onTagsChange = jest.fn();
+		const onTagsChange = vi.fn();
 		render(
 			<TagKeyValueInput
 				tags={['env:prod', 'team:pulse']}
@@ -52,7 +52,7 @@ describe('TagKeyValueInput — inline chip edit', () => {
 
 	it('commits a valid edit on Enter', async () => {
 		const user = userEvent.setup();
-		const onTagsChange = jest.fn();
+		const onTagsChange = vi.fn();
 		render(<TagKeyValueInput tags={['env:prod']} onTagsChange={onTagsChange} />);
 
 		const input = await startEditingFirstChip(user);
@@ -65,7 +65,7 @@ describe('TagKeyValueInput — inline chip edit', () => {
 
 	it('reverts silently (no error) when blurring an invalid edit', async () => {
 		const user = userEvent.setup();
-		const onTagsChange = jest.fn();
+		const onTagsChange = vi.fn();
 		render(<TagKeyValueInput tags={['env:prod']} onTagsChange={onTagsChange} />);
 
 		const input = await startEditingFirstChip(user);
@@ -82,7 +82,7 @@ describe('TagKeyValueInput — inline chip edit', () => {
 describe('TagKeyValueInput — backend-rule validation', () => {
 	it('rejects a key containing a space on inline edit', async () => {
 		const user = userEvent.setup();
-		const onTagsChange = jest.fn();
+		const onTagsChange = vi.fn();
 		render(<TagKeyValueInput tags={['env:prod']} onTagsChange={onTagsChange} />);
 
 		const input = await startEditingFirstChip(user);
@@ -98,7 +98,7 @@ describe('TagKeyValueInput — backend-rule validation', () => {
 
 	it('rejects a value containing a space in the new-tag input', async () => {
 		const user = userEvent.setup();
-		const onTagsChange = jest.fn();
+		const onTagsChange = vi.fn();
 		render(<TagKeyValueInput tags={[]} onTagsChange={onTagsChange} />);
 
 		const input = screen.getByTestId(TID);

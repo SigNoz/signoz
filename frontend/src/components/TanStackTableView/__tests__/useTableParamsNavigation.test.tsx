@@ -32,18 +32,18 @@ function createNuqsWrapper(
 
 describe('useTableParams navigation scenarios', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		localStorage.clear();
 		usePreferredPageSizeStore.setState({ tables: {} });
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	describe('Tab navigation: Alert Rules -> Configuration -> Routing Policies', () => {
 		it('preferred value from one table should NOT leak to URL when navigating away', () => {
-			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 			const wrapper = createNuqsWrapper({}, onUrlUpdate);
 
 			// Simulate Alert Rules: user sets limit=100
@@ -64,7 +64,7 @@ describe('useTableParams navigation scenarios', () => {
 			// User selects limit=100
 			act(() => {
 				alertRules.result.current.setLimit(100);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			expect(alertRules.result.current.limit).toBe(100);
@@ -84,7 +84,7 @@ describe('useTableParams navigation scenarios', () => {
 		});
 
 		it('different tables with different storageKeys maintain separate preferences', () => {
-			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 			const wrapper = createNuqsWrapper({}, onUrlUpdate);
 
 			// Alert Rules sets limit=100
@@ -114,7 +114,7 @@ describe('useTableParams navigation scenarios', () => {
 			);
 
 			act(() => {
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			// Should use triggered-alerts preference (25), NOT alert-rules (100)
@@ -122,7 +122,7 @@ describe('useTableParams navigation scenarios', () => {
 		});
 
 		it('table without storageKey should NOT write preference to URL from another table', () => {
-			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 
 			// Pre-set alert-rules preference
 			localStorage.setItem(
@@ -149,7 +149,7 @@ describe('useTableParams navigation scenarios', () => {
 			);
 
 			act(() => {
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			// Should use calculated (42), not alert-rules preference (100)
@@ -159,7 +159,7 @@ describe('useTableParams navigation scenarios', () => {
 
 	describe('URL cleanup on unmount', () => {
 		it('URL params should be cleanable by consumer on unmount', () => {
-			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 			const wrapper = createNuqsWrapper({}, onUrlUpdate);
 
 			const { result, unmount } = renderHook(
@@ -180,7 +180,7 @@ describe('useTableParams navigation scenarios', () => {
 			act(() => {
 				result.current.setLimit(50);
 				result.current.setPage(3);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			// Verify URL was updated
@@ -253,7 +253,7 @@ describe('useTableParams navigation scenarios', () => {
 			);
 
 			act(() => {
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			expect(table1.result.current.limit).toBe(42);
@@ -261,7 +261,7 @@ describe('useTableParams navigation scenarios', () => {
 			// Table1 sets limit to 100
 			act(() => {
 				table1.result.current.setLimit(100);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			expect(table1.result.current.limit).toBe(100);
@@ -274,7 +274,7 @@ describe('useTableParams navigation scenarios', () => {
 
 	describe('URL state initialization race conditions', () => {
 		it('should not write preferred value to URL if URL already has value', () => {
-			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 
 			// Pre-set preference
 			localStorage.setItem(
@@ -300,7 +300,7 @@ describe('useTableParams navigation scenarios', () => {
 			);
 
 			act(() => {
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			// Should use URL (30), not preferred (100)
@@ -314,7 +314,7 @@ describe('useTableParams navigation scenarios', () => {
 		});
 
 		it('URL init effect should write calculated value when URL empty', async () => {
-			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 			const wrapper = createNuqsWrapper({}, onUrlUpdate);
 
 			// Mount with no URL params
@@ -334,7 +334,7 @@ describe('useTableParams navigation scenarios', () => {
 
 			// Effects run after render, need to flush
 			await act(async () => {
-				jest.runAllTimers();
+				vi.runAllTimers();
 				await Promise.resolve();
 			});
 
@@ -349,7 +349,7 @@ describe('useTableParams navigation scenarios', () => {
 			// This test documents that useTableParams does NOT auto-cleanup URL
 			// Consumer components (like ListAlertRules) must use useEffect cleanup
 			// to clear URL params when unmounting
-			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
 			const wrapper = createNuqsWrapper({}, onUrlUpdate);
 
 			const { result, unmount } = renderHook(
@@ -368,7 +368,7 @@ describe('useTableParams navigation scenarios', () => {
 
 			act(() => {
 				result.current.setLimit(100);
-				jest.runAllTimers();
+				vi.runAllTimers();
 			});
 
 			expect(result.current.limit).toBe(100);

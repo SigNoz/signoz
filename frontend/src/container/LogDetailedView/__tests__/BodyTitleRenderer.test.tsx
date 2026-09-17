@@ -1,39 +1,40 @@
+import type { Mock } from 'vitest';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import BodyTitleRenderer from '../BodyTitleRenderer';
 
-let mockSetCopy: jest.Mock;
-const mockNotification = jest.fn();
+let mockSetCopy: Mock;
+const mockNotification = vi.fn();
 
-jest.mock('hooks/logs/useActiveLog', () => ({
+vi.mock('hooks/logs/useActiveLog', () => ({
 	useActiveLog: (): any => ({
-		onAddToQuery: jest.fn(),
+		onAddToQuery: vi.fn(),
 	}),
 }));
 
-jest.mock('react-use', () => ({
+vi.mock('react-use', () => ({
 	useCopyToClipboard: (): any => {
-		mockSetCopy = jest.fn();
+		mockSetCopy = vi.fn();
 		return [{ value: null }, mockSetCopy];
 	},
 }));
 
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	useNotifications: (): any => ({
 		notifications: {
 			success: mockNotification,
-			error: jest.fn(),
-			info: jest.fn(),
-			warning: jest.fn(),
-			open: jest.fn(),
-			destroy: jest.fn(),
+			error: vi.fn(),
+			info: vi.fn(),
+			warning: vi.fn(),
+			open: vi.fn(),
+			destroy: vi.fn(),
 		},
 	}),
 }));
 
 describe('BodyTitleRenderer', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should copy primitive value when node is clicked', async () => {

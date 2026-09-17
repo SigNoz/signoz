@@ -10,17 +10,17 @@ import {
 	slackDescriptionDefaultValue,
 	slackTitleDefaultValue,
 } from 'mocks-server/__mockdata__/alerts';
-import { render, screen } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils-full';
 
 import { testLabelInputAndHelpValue } from './testUtils';
 
-jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
-	MarkdownRenderer: jest.fn(() => <div>Mocked MarkdownRenderer</div>),
+vi.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+	MarkdownRenderer: vi.fn(() => <div>Mocked MarkdownRenderer</div>),
 }));
 
 describe('Create Alert Channel (Normal User)', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 	describe('Should check if the new alert channel is properly displayed with the cascading fields of slack channel', () => {
 		beforeEach(() => {

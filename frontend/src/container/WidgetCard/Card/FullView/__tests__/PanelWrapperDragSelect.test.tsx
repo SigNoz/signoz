@@ -10,7 +10,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 // Mock dependencies
-jest.mock('container/WidgetCard/Panels/constants', () => ({
+vi.mock('container/WidgetCard/Panels/constants', () => ({
 	PanelTypeVsPanelWrapper: {
 		[PANEL_TYPES.TIME_SERIES]: ({
 			onDragSelect,
@@ -140,18 +140,18 @@ const mockQueryResponse: any = {
 	isError: false,
 	error: null,
 	isFetching: false,
-	refetch: jest.fn(),
+	refetch: vi.fn(),
 };
 
 describe('PanelWrapper with DragSelect', () => {
 	const tableProcessedDataRef = { current: [] } as MutableRefObject<RowData[]>;
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('simulates drag select on uPlot canvas', async () => {
-		const mockOnDragSelect = jest.fn();
+		const mockOnDragSelect = vi.fn();
 
 		render(
 			<PanelWrapper

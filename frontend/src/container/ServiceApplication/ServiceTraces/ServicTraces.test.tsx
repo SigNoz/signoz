@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from 'tests/test-utils';
+import { act, fireEvent, render, screen } from 'tests/test-utils-full';
 
 import ServiceTraces from '.';
 

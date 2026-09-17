@@ -1,11 +1,12 @@
+import type { Mock } from 'vitest';
 import { useQueries } from 'react-query';
 import { render, screen } from 'tests/test-utils';
 
 import GeneralSettings from '../index';
 
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
-	useQueries: jest.fn(),
+vi.mock('react-query', async () => ({
+	...(await vi.importActual('react-query')),
+	useQueries: vi.fn(),
 }));
 
 const baseQueryResult = {
@@ -15,12 +16,12 @@ const baseQueryResult = {
 	isSuccess: true,
 	data: undefined,
 	error: null,
-	refetch: jest.fn(),
+	refetch: vi.fn(),
 };
 
 describe('GeneralSettings index', () => {
 	it('renders fallback message when logs query fails with a non-APIError', () => {
-		(useQueries as jest.Mock).mockReturnValue([
+		(useQueries as Mock).mockReturnValue([
 			{ ...baseQueryResult },
 			{ ...baseQueryResult },
 			{

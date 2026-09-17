@@ -4,6 +4,7 @@ import { SuccessResponse } from 'types/api';
 
 import DependentServices from '../Explorer/Domains/DomainDetails/components/DependentServices';
 import ErrorState from '../Explorer/Domains/DomainDetails/components/ErrorState';
+import type { Mock } from 'vitest';
 
 // Create a partial mock of the UseQueryResult interface for testing
 interface MockQueryResult {
@@ -15,8 +16,8 @@ interface MockQueryResult {
 }
 
 // Mock the utility function
-jest.mock('container/ApiMonitoring/utils', () => ({
-	getFormattedDependentServicesData: jest.fn(),
+vi.mock('container/ApiMonitoring/utils', () => ({
+	getFormattedDependentServicesData: vi.fn(),
 	dependentServicesColumns: [
 		{ title: 'Dependent Services', dataIndex: 'serviceData', key: 'serviceData' },
 		{ title: 'AVG. LATENCY', dataIndex: 'latency', key: 'latency' },
@@ -26,9 +27,9 @@ jest.mock('container/ApiMonitoring/utils', () => ({
 }));
 
 // Mock the ErrorState component
-jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
+vi.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
 	__esModule: true,
-	default: jest.fn().mockImplementation(({ refetch }) => (
+	default: vi.fn().mockImplementation(({ refetch }) => (
 		<div data-testid="error-state-mock">
 			<button type="button" data-testid="refetch-button" onClick={refetch}>
 				Retry
@@ -38,11 +39,11 @@ jest.mock('../Explorer/Domains/DomainDetails/components/ErrorState', () => ({
 }));
 
 // Mock antd components
-jest.mock('antd', () => {
-	const originalModule = jest.requireActual('antd');
+vi.mock('antd', async () => {
+	const originalModule = await vi.importActual<typeof import('antd')>('antd');
 	return {
 		...originalModule,
-		Table: jest
+		Table: vi
 			.fn()
 			.mockImplementation(({ dataSource, loading, pagination, onRow }) => (
 				<div data-testid="table-mock">
@@ -70,7 +71,7 @@ jest.mock('antd', () => {
 				</div>
 			)),
 		Typography: {
-			Text: jest
+			Text: vi
 				.fn()
 				.mockImplementation(({ children }) => (
 					<div data-testid="typography-text">{children}</div>
@@ -112,11 +113,11 @@ describe('DependentServices', () => {
 		endTime: 1609545600000,
 	};
 
-	const refetchFn = jest.fn();
+	const refetchFn = vi.fn();
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		(getFormattedDependentServicesData as jest.Mock).mockReturnValue(
+		vi.clearAllMocks();
+		(getFormattedDependentServicesData as Mock).mockReturnValue(
 			mockDependentServicesData,
 		);
 	});
@@ -250,7 +251,7 @@ describe('DependentServices', () => {
 	it('handles row click correctly', () => {
 		// Mock window.open
 		const originalOpen = window.open;
-		window.open = jest.fn();
+		window.open = vi.fn();
 
 		// Arrange
 		const mockData = {
@@ -322,7 +323,7 @@ describe('DependentServices', () => {
 				errorPercentage: '1',
 			}));
 
-		(getFormattedDependentServicesData as jest.Mock).mockReturnValue(moreItems);
+		(getFormattedDependentServicesData as Mock).mockReturnValue(moreItems);
 
 		const mockData = {
 			payload: { data: { result: [{ table: { rows: [] } }] } },

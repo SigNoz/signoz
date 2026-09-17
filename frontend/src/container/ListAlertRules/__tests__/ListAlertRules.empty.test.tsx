@@ -10,7 +10,7 @@ import { renderListAlertRules } from './_helpers';
 
 describe('ListAlertRules — empty states', () => {
 	beforeEach(() => {
-		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		vi.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 	});
 
 	it('renders AlertsEmptyState when API returns no rules', async () => {

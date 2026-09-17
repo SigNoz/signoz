@@ -8,9 +8,10 @@ import type {
 } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import AuthZTooltip from './AuthZTooltip';
+import type { MockedFunction } from 'vitest';
 
-jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
+vi.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+const mockUseAuthZ = useAuthZ as MockedFunction<typeof useAuthZ>;
 
 // Builds a full UseAuthZResult so `isGranted` stays consistent with `permissions`
 // rather than being a stub that could drift from it.
@@ -23,7 +24,7 @@ function authZResult(overrides: Partial<UseAuthZResult> = {}): UseAuthZResult {
 		allowed: false,
 		deniedPermissions: [] as BrandedPermission[],
 		isGranted: (): boolean => false,
-		refetchPermissions: jest.fn(),
+		refetchPermissions: vi.fn(),
 		...overrides,
 	};
 	return {

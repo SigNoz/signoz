@@ -3,7 +3,7 @@ import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/service
 import { buildVariableImpactPatch } from '../utils/variableImpactPatch';
 import type { VariableUsage } from '../utils/variableUsages';
 
-jest.mock('../variableAdapters', () => ({
+vi.mock('../variableAdapters', () => ({
 	formModelToDto: (model: unknown): unknown => model,
 }));
 

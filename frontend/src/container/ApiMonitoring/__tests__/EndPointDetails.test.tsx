@@ -19,16 +19,17 @@ import {
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 import EndPointDetails from '../Explorer/Domains/DomainDetails/EndPointDetails';
+import type { Mock } from 'vitest';
 
 // Mock dependencies
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
-	useQueries: jest.fn(),
+vi.mock('react-query', async () => ({
+	...(await vi.importActual<typeof import('react-query')>('react-query')),
+	useQueries: vi.fn(),
 }));
 
 // Mock useApiMonitoringParams hook
-jest.mock('container/ApiMonitoring/queryParams', () => ({
-	useApiMonitoringParams: jest.fn().mockReturnValue([
+vi.mock('container/ApiMonitoring/queryParams', () => ({
+	useApiMonitoringParams: vi.fn().mockReturnValue([
 		{
 			showIP: true,
 			selectedDomain: '',
@@ -40,11 +41,11 @@ jest.mock('container/ApiMonitoring/queryParams', () => ({
 			modalTimeRange: undefined,
 			selectedInterval: undefined,
 		},
-		jest.fn(),
+		vi.fn(),
 	]),
 }));
 
-jest.mock('container/ApiMonitoring/utils', () => ({
+vi.mock('container/ApiMonitoring/utils', () => ({
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY: [
 		'endPointMetricsData',
 		'endPointStatusCodeData',
@@ -53,17 +54,17 @@ jest.mock('container/ApiMonitoring/utils', () => ({
 		'endPointStatusCodeBarChartsData',
 		'endPointStatusCodeLatencyBarChartsData',
 	],
-	extractPortAndEndpoint: jest.fn(),
-	getEndPointDetailsQueryPayload: jest.fn(),
-	getLatencyOverTimeWidgetData: jest.fn(),
-	getRateOverTimeWidgetData: jest.fn(),
+	extractPortAndEndpoint: vi.fn(),
+	getEndPointDetailsQueryPayload: vi.fn(),
+	getLatencyOverTimeWidgetData: vi.fn(),
+	getRateOverTimeWidgetData: vi.fn(),
 }));
 
-jest.mock(
+vi.mock(
 	'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2',
 	() => ({
 		__esModule: true,
-		default: jest.fn().mockImplementation(({ onChange }) => (
+		default: vi.fn().mockImplementation(({ onChange }) => (
 			<div data-testid="query-builder-search">
 				<button
 					type="button"
@@ -94,23 +95,20 @@ jest.mock(
 );
 
 // Mock all child components to simplify testing
-jest.mock(
-	'../Explorer/Domains/DomainDetails/components/EndPointMetrics',
-	() => ({
-		__esModule: true,
-		default: jest
-			.fn()
-			.mockImplementation(() => (
-				<div data-testid="endpoint-metrics">EndPoint Metrics</div>
-			)),
-	}),
-);
+vi.mock('../Explorer/Domains/DomainDetails/components/EndPointMetrics', () => ({
+	__esModule: true,
+	default: vi
+		.fn()
+		.mockImplementation(() => (
+			<div data-testid="endpoint-metrics">EndPoint Metrics</div>
+		)),
+}));
 
-jest.mock(
+vi.mock(
 	'../Explorer/Domains/DomainDetails/components/EndPointsDropDown',
 	() => ({
 		__esModule: true,
-		default: jest.fn().mockImplementation(({ setSelectedEndPointName }) => (
+		default: vi.fn().mockImplementation(({ setSelectedEndPointName }) => (
 			<div data-testid="endpoints-dropdown">
 				<button
 					type="button"
@@ -124,11 +122,11 @@ jest.mock(
 	}),
 );
 
-jest.mock(
+vi.mock(
 	'../Explorer/Domains/DomainDetails/components/DependentServices',
 	() => ({
 		__esModule: true,
-		default: jest
+		default: vi
 			.fn()
 			.mockImplementation(() => (
 				<div data-testid="dependent-services">Dependent Services</div>
@@ -136,11 +134,11 @@ jest.mock(
 	}),
 );
 
-jest.mock(
+vi.mock(
 	'../Explorer/Domains/DomainDetails/components/StatusCodeBarCharts',
 	() => ({
 		__esModule: true,
-		default: jest
+		default: vi
 			.fn()
 			.mockImplementation(() => (
 				<div data-testid="status-code-bar-charts">Status Code Bar Charts</div>
@@ -148,23 +146,20 @@ jest.mock(
 	}),
 );
 
-jest.mock(
-	'../Explorer/Domains/DomainDetails/components/StatusCodeTable',
-	() => ({
-		__esModule: true,
-		default: jest
-			.fn()
-			.mockImplementation(() => (
-				<div data-testid="status-code-table">Status Code Table</div>
-			)),
-	}),
-);
+vi.mock('../Explorer/Domains/DomainDetails/components/StatusCodeTable', () => ({
+	__esModule: true,
+	default: vi
+		.fn()
+		.mockImplementation(() => (
+			<div data-testid="status-code-table">Status Code Table</div>
+		)),
+}));
 
-jest.mock(
+vi.mock(
 	'../Explorer/Domains/DomainDetails/components/MetricOverTimeGraph',
 	() => ({
 		__esModule: true,
-		default: jest
+		default: vi
 			.fn()
 			.mockImplementation(({ widget }) => (
 				<div data-testid={`metric-graph-${widget.title}`}>{widget.title} Graph</div>
@@ -183,27 +178,27 @@ describe('EndPointDetails Component', () => {
 	const mockProps = {
 		domainName: 'test-domain',
 		endPointName: '/api/test',
-		setSelectedEndPointName: jest.fn(),
+		setSelectedEndPointName: vi.fn(),
 		initialFilters: { items: [], op: 'AND' } as TagFilter,
 		timeRange: {
 			startTime: 1609459200000,
 			endTime: 1609545600000,
 		},
-		handleTimeChange: jest.fn() as (
+		handleTimeChange: vi.fn() as (
 			interval: Time | CustomTimeType,
 			dateTimeRange?: [number, number],
 		) => void,
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
-		(extractPortAndEndpoint as jest.Mock).mockReturnValue({
+		(extractPortAndEndpoint as Mock).mockReturnValue({
 			port: '8080',
 			endpoint: '/api/test',
 		});
 
-		(getEndPointDetailsQueryPayload as jest.Mock).mockReturnValue([
+		(getEndPointDetailsQueryPayload as Mock).mockReturnValue([
 			{ id: 'query1', label: 'Query 1' },
 			{ id: 'query2', label: 'Query 2' },
 			{ id: 'query3', label: 'Query 3' },
@@ -212,17 +207,17 @@ describe('EndPointDetails Component', () => {
 			{ id: 'query6', label: 'Query 6' },
 		]);
 
-		(getRateOverTimeWidgetData as jest.Mock).mockReturnValue({
+		(getRateOverTimeWidgetData as Mock).mockReturnValue({
 			title: 'Rate Over Time',
 			id: 'rate-widget',
 		});
 
-		(getLatencyOverTimeWidgetData as jest.Mock).mockReturnValue({
+		(getLatencyOverTimeWidgetData as Mock).mockReturnValue({
 			title: 'Latency Over Time',
 			id: 'latency-widget',
 		});
 
-		(useQueries as jest.Mock).mockReturnValue(mockQueryResults);
+		(useQueries as Mock).mockReturnValue(mockQueryResults);
 	});
 
 	it('renders the component correctly', () => {

@@ -3,14 +3,15 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, screen } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils-full';
 
 import ListView from './index';
 
 // globalTime starts with loading:true, which gates the list query. Force just that
 // slice's loading to false so the query fires; every other selector is untouched.
-jest.mock('react-redux', () => {
-	const actual = jest.requireActual('react-redux');
+vi.mock('react-redux', async () => {
+	const actual =
+		await vi.importActual<typeof import('react-redux')>('react-redux');
 	return {
 		...actual,
 		useSelector: (selector: (state: unknown) => unknown): unknown => {
@@ -25,7 +26,7 @@ jest.mock('react-redux', () => {
 
 // List columns come from the options menu (server-synced preferences). Pin them
 // so the query fires and the expected columns render, independent of that API.
-jest.mock('container/OptionsMenu/useOptionsMenu', () => ({
+vi.mock('container/OptionsMenu/useOptionsMenu', () => ({
 	__esModule: true,
 	default: (): unknown => ({
 		options: {
@@ -37,7 +38,7 @@ jest.mock('container/OptionsMenu/useOptionsMenu', () => ({
 				{ name: 'response_status_code', fieldContext: 'span' },
 			],
 		},
-		config: { addColumn: { onRemove: jest.fn() } },
+		config: { addColumn: { onRemove: vi.fn() } },
 	}),
 }));
 
@@ -89,8 +90,8 @@ const renderListView = (): ReturnType<typeof render> =>
 		<VirtuosoMockContext.Provider value={{ viewportHeight: 500, itemHeight: 54 }}>
 			<ListView
 				isFilterApplied={false}
-				setWarning={jest.fn()}
-				setIsLoadingQueries={jest.fn()}
+				setWarning={vi.fn()}
+				setIsLoadingQueries={vi.fn()}
 			/>
 		</VirtuosoMockContext.Provider>,
 		{},
@@ -100,7 +101,7 @@ const renderListView = (): ReturnType<typeof render> =>
 				panelType: PANEL_TYPES.LIST,
 				stagedQuery: initialQueriesMap.traces,
 				currentQuery: initialQueriesMap.traces,
-				redirectWithQueryBuilderData: jest.fn(),
+				redirectWithQueryBuilderData: vi.fn(),
 			} as any,
 		},
 	);

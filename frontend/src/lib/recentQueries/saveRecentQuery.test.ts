@@ -1,3 +1,4 @@
+import type { MockedFunction } from 'vitest';
 import { DataSource } from 'types/common/queryBuilder';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { validateQuery } from 'utils/queryValidationUtils';
@@ -5,11 +6,11 @@ import { validateQuery } from 'utils/queryValidationUtils';
 import * as store from './recentQueriesStore';
 import { saveRecentQuery } from './saveRecentQuery';
 
-jest.mock('utils/queryValidationUtils', () => ({
-	validateQuery: jest.fn(),
+vi.mock('utils/queryValidationUtils', () => ({
+	validateQuery: vi.fn(),
 }));
 
-const mockedValidateQuery = validateQuery as jest.MockedFunction<
+const mockedValidateQuery = validateQuery as MockedFunction<
 	typeof validateQuery
 >;
 

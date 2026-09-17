@@ -1,38 +1,9 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Value panel wrappper tests should render tooltip when there are conflicting thresholds 1`] = `
-.c1 {
-  height: 100%;
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-pack: center;
-  -webkit-justify-content: center;
-  -ms-flex-pack: center;
-  justify-content: center;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
-  flex-direction: column;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  cursor: default;
-}
-
-.c0 {
-  text-align: center;
-  padding-top: 1rem;
-}
-
+exports[`Value panel wrappper tests > should render tooltip when there are conflicting thresholds 1`] = `
 <div>
   <div
-    class="c0"
+    class="sc-gEvEer lcijYt"
   >
     <p
       class="_typography_j4pmm_1"
@@ -41,7 +12,7 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
     />
   </div>
   <div
-    class="c1"
+    class="sc-aXZVg bHVvBF"
   >
     <div
       class="value-graph-container"
@@ -54,7 +25,7 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
           data-slot="typography"
           data-testid="value-graph-text"
           data-variant="text"
-          style="color: Blue; font-size: 16px;"
+          style="color: blue; font-size: 16px;"
         >
           295.43
         </p>
@@ -63,7 +34,7 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
           data-slot="typography"
           data-testid="value-graph-suffix-unit"
           data-variant="text"
-          style="color: Blue; font-size: calc(16px * 0.7);"
+          style="color: blue; font-size: calc(11.2px);"
         >
           ms
         </p>
@@ -72,9 +43,38 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
         class="value-graph-textconflict"
       >
         <svg
-          class="value-graph-icon"
+          class="signoz-icon value-graph-icon"
           data-testid="conflicting-thresholds"
-        />
+          fill="none"
+          height="14"
+          stroke="currentColor"
+          stroke-width="1.17"
+          viewBox="0 0 16 16"
+          width="14"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <g
+            clip-path="url(#circle-alert_svg__a)"
+          >
+            <path
+              d="M8 5.333V8m0 2.667h.006M14.666 8A6.667 6.667 0 1 1 1.333 8a6.667 6.667 0 0 1 13.333 0Z"
+              stroke="inherit"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.33"
+            />
+          </g>
+          <defs>
+            <clippath
+              id="circle-alert_svg__a"
+            >
+              <path
+                d="M0 0h16v16H0z"
+                fill="#fff"
+              />
+            </clippath>
+          </defs>
+        </svg>
       </div>
     </div>
   </div>

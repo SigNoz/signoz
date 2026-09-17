@@ -3,7 +3,7 @@ import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 
 import { useUrlSearchState } from './useUrlSearchState';
 
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 const DEFAULT_DEBOUNCE_MS = 300;
 
@@ -23,7 +23,7 @@ function createWrapper(searchParams?: string) {
 
 describe('useUrlSearchState', () => {
 	afterEach(() => {
-		jest.clearAllTimers();
+		vi.clearAllTimers();
 	});
 
 	describe('initialization', () => {
@@ -86,7 +86,7 @@ describe('useUrlSearchState', () => {
 			expect(result.current.debouncedSearch).toBe('');
 
 			act(() => {
-				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
+				vi.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
 			});
 
 			expect(result.current.debouncedSearch).toBe('delayed');
@@ -104,13 +104,13 @@ describe('useUrlSearchState', () => {
 			});
 
 			act(() => {
-				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
+				vi.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
 			});
 
 			expect(result.current.debouncedSearch).toBe('');
 
 			act(() => {
-				jest.advanceTimersByTime(customDelay - DEFAULT_DEBOUNCE_MS);
+				vi.advanceTimersByTime(customDelay - DEFAULT_DEBOUNCE_MS);
 			});
 
 			expect(result.current.debouncedSearch).toBe('custom');
@@ -129,7 +129,7 @@ describe('useUrlSearchState', () => {
 
 			// Advance less than debounce time
 			act(() => {
-				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS - 50);
+				vi.advanceTimersByTime(DEFAULT_DEBOUNCE_MS - 50);
 			});
 
 			expect(result.current.debouncedSearch).toBe('');
@@ -145,7 +145,7 @@ describe('useUrlSearchState', () => {
 			});
 
 			act(() => {
-				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
+				vi.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
 			});
 
 			expect(result.current.debouncedSearch).toBe('urltest');
@@ -161,7 +161,7 @@ describe('useUrlSearchState', () => {
 			});
 
 			act(() => {
-				jest.advanceTimersByTime(200);
+				vi.advanceTimersByTime(200);
 			});
 
 			act(() => {
@@ -169,14 +169,14 @@ describe('useUrlSearchState', () => {
 			});
 
 			act(() => {
-				jest.advanceTimersByTime(200);
+				vi.advanceTimersByTime(200);
 			});
 
 			// Still hasn't debounced because timer reset
 			expect(result.current.debouncedSearch).toBe('');
 
 			act(() => {
-				jest.advanceTimersByTime(100);
+				vi.advanceTimersByTime(100);
 			});
 
 			// Now it should have debounced
@@ -211,7 +211,7 @@ describe('useUrlSearchState', () => {
 			expect(result.current.debouncedSearch).toBe('toclear');
 
 			act(() => {
-				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
+				vi.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
 			});
 
 			expect(result.current.debouncedSearch).toBe('');
@@ -232,7 +232,7 @@ describe('useUrlSearchState', () => {
 			});
 
 			act(() => {
-				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
+				vi.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
 			});
 
 			expect(result.current.searchText).toBe('second');
@@ -248,7 +248,7 @@ describe('useUrlSearchState', () => {
 
 	describe('onDebouncedChange callback', () => {
 		it('calls onDebouncedChange when debounced value changes', () => {
-			const onDebouncedChange = jest.fn();
+			const onDebouncedChange = vi.fn();
 			const { result } = renderHook(
 				() => useUrlSearchState('search', { onDebouncedChange }),
 				{ wrapper: createWrapper() },
@@ -261,7 +261,7 @@ describe('useUrlSearchState', () => {
 			expect(onDebouncedChange).not.toHaveBeenCalled();
 
 			act(() => {
-				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
+				vi.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
 			});
 
 			expect(onDebouncedChange).toHaveBeenCalledWith('test');
@@ -269,7 +269,7 @@ describe('useUrlSearchState', () => {
 		});
 
 		it('does not call onDebouncedChange if value unchanged', () => {
-			const onDebouncedChange = jest.fn();
+			const onDebouncedChange = vi.fn();
 			renderHook(() => useUrlSearchState('search', { onDebouncedChange }), {
 				wrapper: createWrapper('?search=existing'),
 			});
@@ -279,7 +279,7 @@ describe('useUrlSearchState', () => {
 		});
 
 		it('calls onDebouncedChange on each distinct change', () => {
-			const onDebouncedChange = jest.fn();
+			const onDebouncedChange = vi.fn();
 			const { result } = renderHook(
 				() => useUrlSearchState('search', { onDebouncedChange }),
 				{ wrapper: createWrapper() },
@@ -290,7 +290,7 @@ describe('useUrlSearchState', () => {
 			});
 
 			act(() => {
-				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
+				vi.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
 			});
 
 			expect(onDebouncedChange).toHaveBeenCalledWith('first');
@@ -300,7 +300,7 @@ describe('useUrlSearchState', () => {
 			});
 
 			act(() => {
-				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
+				vi.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
 			});
 
 			expect(onDebouncedChange).toHaveBeenCalledWith('second');
@@ -308,7 +308,7 @@ describe('useUrlSearchState', () => {
 		});
 
 		it('calls onDebouncedChange immediately when search is cleared', () => {
-			const onDebouncedChange = jest.fn();
+			const onDebouncedChange = vi.fn();
 			const { result } = renderHook(
 				() => useUrlSearchState('search', { onDebouncedChange }),
 				{ wrapper: createWrapper('?search=existing') },

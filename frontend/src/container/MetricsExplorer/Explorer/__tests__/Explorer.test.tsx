@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
@@ -24,64 +25,64 @@ import Explorer from '../Explorer';
 import * as useGetMetricsHooks from '../utils';
 import { MOCK_METRIC_METADATA } from './testUtils';
 
-const mockSetSearchParams = jest.fn();
+const mockSetSearchParams = vi.fn();
 const queryClient = new QueryClient();
-const mockUpdateAllQueriesOperators = jest
+const mockUpdateAllQueriesOperators = vi
 	.fn()
 	.mockReturnValue(initialQueriesMap[DataSource.METRICS]);
-const mockHandleSetConfig = jest.fn();
-const mockHandleExplorerTabChange = jest.fn();
+const mockHandleSetConfig = vi.fn();
+const mockHandleExplorerTabChange = vi.fn();
 const mockUseQueryBuilderData = {
-	handleRunQuery: jest.fn(),
+	handleRunQuery: vi.fn(),
 	stagedQuery: initialQueriesMap[DataSource.METRICS],
 	updateAllQueriesOperators: mockUpdateAllQueriesOperators,
 	currentQuery: initialQueriesMap[DataSource.METRICS],
-	resetQuery: jest.fn(),
-	redirectWithQueryBuilderData: jest.fn(),
-	isStagedQueryUpdated: jest.fn(),
-	handleSetQueryData: jest.fn(),
-	handleSetFormulaData: jest.fn(),
-	handleSetQueryItemData: jest.fn(),
+	resetQuery: vi.fn(),
+	redirectWithQueryBuilderData: vi.fn(),
+	isStagedQueryUpdated: vi.fn(),
+	handleSetQueryData: vi.fn(),
+	handleSetFormulaData: vi.fn(),
+	handleSetQueryItemData: vi.fn(),
 	handleSetConfig: mockHandleSetConfig,
-	removeQueryBuilderEntityByIndex: jest.fn(),
-	removeQueryTypeItemByIndex: jest.fn(),
-	isDefaultQuery: jest.fn(),
+	removeQueryBuilderEntityByIndex: vi.fn(),
+	removeQueryTypeItemByIndex: vi.fn(),
+	isDefaultQuery: vi.fn(),
 };
 
-jest.mock('react-router-dom-v5-compat', () => {
-	const actual = jest.requireActual('react-router-dom-v5-compat');
+vi.mock('react-router-dom-v5-compat', async () => {
+	const actual = await vi.importActual('react-router-dom-v5-compat');
 	return {
 		...actual,
-		useSearchParams: jest.fn(),
+		useSearchParams: vi.fn(),
 		useNavigationType: (): any => 'PUSH',
 	};
 });
-jest.mock('hooks/useDimensions', () => ({
+vi.mock('hooks/useDimensions', () => ({
 	useResizeObserver: (): { width: number; height: number } => ({
 		width: 800,
 		height: 400,
 	}),
 }));
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
-	useQueryClient: jest.fn().mockReturnValue({
-		getQueriesData: jest.fn(),
+vi.mock('react-query', async () => ({
+	...(await vi.importActual('react-query')),
+	useQueryClient: vi.fn().mockReturnValue({
+		getQueriesData: vi.fn(),
 	}),
 }));
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	useNotifications: (): any => ({
 		notifications: {
-			error: jest.fn(),
+			error: vi.fn(),
 		},
 	}),
 }));
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
 	useSelector: (): any => ({
 		globalTime: {
 			selectedTime: {
@@ -94,12 +95,22 @@ jest.mock('react-redux', () => ({
 	}),
 }));
 
-jest.spyOn(useOptionsMenuHooks, 'useOptionsMenu').mockReturnValue({
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('container/OptionsMenu', { spy: true });
+vi.mock('hooks/queryBuilder/useQueryBuilder', { spy: true });
+vi.mock('hooks/useHandleExplorerTabChange', { spy: true });
+vi.mock('providers/App/App', { spy: true });
+vi.mock('providers/Timezone', { spy: true });
+vi.mock('../utils', { spy: true });
+
+vi.spyOn(useOptionsMenuHooks, 'useOptionsMenu').mockReturnValue({
 	options: {
 		selectColumns: [],
 	},
 } as any);
-jest.spyOn(timezoneHooks, 'useTimezone').mockReturnValue({
+vi.spyOn(timezoneHooks, 'useTimezone').mockReturnValue({
 	timezone: {
 		offset: 0,
 	},
@@ -107,7 +118,7 @@ jest.spyOn(timezoneHooks, 'useTimezone').mockReturnValue({
 		offset: 0,
 	},
 } as any);
-jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
+vi.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	user: {
 		role: 'admin',
 	},
@@ -130,10 +141,10 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 		},
 	},
 } as any);
-jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+vi.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 	...mockUseQueryBuilderData,
 } as any);
-jest
+vi
 	.spyOn(useHandleExplorerTabChangeHooks, 'useHandleExplorerTabChange')
 	.mockReturnValue({
 		handleExplorerTabChange: mockHandleExplorerTabChange,
@@ -157,15 +168,15 @@ function renderExplorer(): void {
 
 describe('Explorer', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should enable one chart per query toggle when oneChartPerQuery=true in URL', () => {
-		(useSearchParams as jest.Mock).mockReturnValue([
+		(useSearchParams as Mock).mockReturnValue([
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
 			mockSetSearchParams,
 		]);
-		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+		vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [MOCK_METRIC_METADATA, MOCK_METRIC_METADATA],
@@ -178,11 +189,11 @@ describe('Explorer', () => {
 	});
 
 	it('should disable one chart per query toggle when oneChartPerQuery=false in URL', () => {
-		(useSearchParams as jest.Mock).mockReturnValue([
+		(useSearchParams as Mock).mockReturnValue([
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'false' }),
 			mockSetSearchParams,
 		]);
-		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+		vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [MOCK_METRIC_METADATA, MOCK_METRIC_METADATA],
@@ -195,7 +206,7 @@ describe('Explorer', () => {
 	});
 
 	it('should not render y axis unit selector for single metric which has a unit', () => {
-		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+		vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [MOCK_METRIC_METADATA],
@@ -208,11 +219,11 @@ describe('Explorer', () => {
 	});
 
 	it('should not render y axis unit selector for mutliple metrics with same unit', () => {
-		(useSearchParams as jest.Mock).mockReturnValueOnce([
+		(useSearchParams as Mock).mockReturnValueOnce([
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
 			mockSetSearchParams,
 		]);
-		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+		vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [MOCK_METRIC_METADATA, MOCK_METRIC_METADATA],
@@ -241,12 +252,12 @@ describe('Explorer', () => {
 			},
 		};
 
-		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+		vi.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 			...mockUseQueryBuilderData,
 			stagedQuery: mockStagedQueryWithMultipleQueries,
 		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
-		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+		vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [
@@ -255,7 +266,7 @@ describe('Explorer', () => {
 			],
 		});
 
-		(useSearchParams as jest.Mock).mockReturnValue([
+		(useSearchParams as Mock).mockReturnValue([
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'false' }),
 			mockSetSearchParams,
 		]);
@@ -268,7 +279,7 @@ describe('Explorer', () => {
 	});
 
 	it('should render empty y axis unit selector for a single metric with no unit', () => {
-		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+		vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [
@@ -290,7 +301,7 @@ describe('Explorer', () => {
 	});
 
 	it('one chart per query should be off and disabled when there is only one query', () => {
-		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+		vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [MOCK_METRIC_METADATA],
@@ -320,12 +331,12 @@ describe('Explorer', () => {
 			},
 		};
 
-		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+		vi.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 			...mockUseQueryBuilderData,
 			stagedQuery: mockStagedQueryWithMultipleQueries,
 		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
-		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+		vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [MOCK_METRIC_METADATA, MOCK_METRIC_METADATA],
@@ -361,18 +372,18 @@ describe('Explorer', () => {
 			},
 		};
 
-		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+		vi.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 			...mockUseQueryBuilderData,
 			stagedQuery: mockStagedQueryWithMultipleQueries,
 		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
-		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+		vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [metricWithNoUnit, metricWithNoUnit],
 		});
 
-		(useSearchParams as jest.Mock).mockReturnValue([
+		(useSearchParams as Mock).mockReturnValue([
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'false' }),
 			mockSetSearchParams,
 		]);
@@ -390,16 +401,16 @@ describe('Explorer', () => {
 		const EMPTY_STATE_TEXT = 'Select a metric and run a query to see the results';
 
 		it('should show empty state when no metric is selected', () => {
-			(useSearchParams as jest.Mock).mockReturnValue([
+			(useSearchParams as Mock).mockReturnValue([
 				new URLSearchParams({}),
 				mockSetSearchParams,
 			]);
-			jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+			vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 				isLoading: false,
 				isError: false,
 				metrics: [],
 			});
-			jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+			vi.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 				...mockUseQueryBuilderData,
 			} as any);
 
@@ -409,11 +420,11 @@ describe('Explorer', () => {
 		});
 
 		it('should not show empty state when saved view has v5 aggregations format', () => {
-			(useSearchParams as jest.Mock).mockReturnValue([
+			(useSearchParams as Mock).mockReturnValue([
 				new URLSearchParams({}),
 				mockSetSearchParams,
 			]);
-			jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+			vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 				isLoading: false,
 				isError: false,
 				metrics: [MOCK_METRIC_METADATA],
@@ -439,7 +450,7 @@ describe('Explorer', () => {
 					},
 				],
 			};
-			jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+			vi.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 				...mockUseQueryBuilderData,
 				stagedQuery: {
 					...initialQueriesMap[DataSource.METRICS],
@@ -456,11 +467,11 @@ describe('Explorer', () => {
 		});
 
 		it('should not show empty state when query uses v3 aggregateAttribute format', () => {
-			(useSearchParams as jest.Mock).mockReturnValue([
+			(useSearchParams as Mock).mockReturnValue([
 				new URLSearchParams({}),
 				mockSetSearchParams,
 			]);
-			jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+			vi.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 				isLoading: false,
 				isError: false,
 				metrics: [MOCK_METRIC_METADATA],
@@ -474,7 +485,7 @@ describe('Explorer', () => {
 					key: 'system_cpu_usage',
 				},
 			};
-			jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+			vi.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 				...mockUseQueryBuilderData,
 				stagedQuery: {
 					...initialQueriesMap[DataSource.METRICS],

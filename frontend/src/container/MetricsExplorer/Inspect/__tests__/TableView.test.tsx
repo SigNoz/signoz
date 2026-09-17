@@ -34,8 +34,8 @@ describe('TableView', () => {
 	const defaultProps = {
 		inspectionStep: InspectionStep.COMPLETED,
 		inspectMetricsTimeSeries: mockTimeSeries,
-		setShowExpandedView: jest.fn(),
-		setExpandedViewOptions: jest.fn(),
+		setShowExpandedView: vi.fn(),
+		setExpandedViewOptions: vi.fn(),
 		metricInspectionAppliedOptions: {
 			timeAggregationInterval: 60,
 			timeAggregationOption: TimeAggregationOptions.MAX,
@@ -47,7 +47,7 @@ describe('TableView', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders table with correct columns', () => {

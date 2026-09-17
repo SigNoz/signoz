@@ -1,3 +1,4 @@
+import type { Mock, MockedFunction } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { toast } from '@signozhq/ui/sonner';
 import { DownloadFormat } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
@@ -5,19 +6,19 @@ import { DownloadFormat } from 'pages/DashboardPage/DashboardContainer/Panels/ty
 import { downloadElementAsImage } from '../../utils/downloadPanelImage';
 import { useDownloadPanelImage } from '../useDownloadPanelImage';
 
-jest.mock('../../utils/downloadPanelImage', () => ({
-	downloadElementAsImage: jest.fn(),
+vi.mock('../../utils/downloadPanelImage', () => ({
+	downloadElementAsImage: vi.fn(),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { error: jest.fn(), dismiss: jest.fn() },
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
+	toast: { error: vi.fn(), dismiss: vi.fn() },
 }));
 
-const mockCapture = downloadElementAsImage as jest.MockedFunction<
+const mockCapture = downloadElementAsImage as MockedFunction<
 	typeof downloadElementAsImage
 >;
-const mockToastError = toast.error as jest.Mock;
+const mockToastError = toast.error as Mock;
 
 function mountPanel(panelId: string): HTMLElement {
 	const node = document.createElement('div');
@@ -28,7 +29,7 @@ function mountPanel(panelId: string): HTMLElement {
 
 describe('useDownloadPanelImage', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		document.body.innerHTML = '';
 	});
 

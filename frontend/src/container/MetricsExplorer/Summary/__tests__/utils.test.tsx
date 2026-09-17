@@ -9,7 +9,7 @@ import { formatDataForMetricsTable, getMetricsTableColumns } from '../utils';
 const mockQueryExpression: Filter = {
 	expression: '',
 };
-const mockOnChange = jest.fn();
+const mockOnChange = vi.fn();
 
 describe('metricsTableColumns', () => {
 	it('should have correct column definitions', () => {

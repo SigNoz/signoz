@@ -7,7 +7,7 @@ import {
 	DrilldownVariableActionKind,
 } from '../hooks/useDrilldownDashboardVariables';
 
-jest.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
+vi.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
 	__esModule: true,
 	default: ({ children }: { children: React.ReactNode }): JSX.Element => (
 		<div>{children}</div>
@@ -21,19 +21,19 @@ function action(
 		fieldName: 'service.name',
 		fieldValue: 'frontend',
 		kind: DrilldownVariableActionKind.Set,
-		onClick: jest.fn(),
+		onClick: vi.fn(),
 		...overrides,
 	};
 }
 
 describe('DrilldownDashboardVariablesMenu', () => {
 	it('renders each kind with its own label and fires its onClick', async () => {
-		const onSet = jest.fn();
-		const onUnset = jest.fn();
-		const onCreate = jest.fn();
+		const onSet = vi.fn();
+		const onUnset = vi.fn();
+		const onCreate = vi.fn();
 		render(
 			<DrilldownDashboardVariablesMenu
-				onBack={jest.fn()}
+				onBack={vi.fn()}
 				actions={[
 					action({
 						fieldName: 'a',
@@ -63,7 +63,7 @@ describe('DrilldownDashboardVariablesMenu', () => {
 	});
 
 	it('returns to the base menu when the back arrow is clicked', async () => {
-		const onBack = jest.fn();
+		const onBack = vi.fn();
 		render(
 			<DrilldownDashboardVariablesMenu onBack={onBack} actions={[action()]} />,
 		);

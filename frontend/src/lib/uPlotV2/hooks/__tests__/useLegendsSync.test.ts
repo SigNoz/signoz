@@ -1,35 +1,35 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
+import type { MockInstance } from 'vitest';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
 import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 
 describe('useLegendsSync', () => {
-	let requestAnimationFrameSpy: jest.SpyInstance<
-		number,
-		[callback: FrameRequestCallback]
+	let requestAnimationFrameSpy: MockInstance<
+		(callback: FrameRequestCallback) => number
 	>;
-	let cancelAnimationFrameSpy: jest.SpyInstance<void, [handle: number]>;
+	let cancelAnimationFrameSpy: MockInstance<(handle: number) => void>;
 
 	beforeAll(() => {
-		requestAnimationFrameSpy = jest
-			.spyOn(global, 'requestAnimationFrame')
+		requestAnimationFrameSpy = vi
+			.spyOn(window, 'requestAnimationFrame')
 			.mockImplementation((cb: FrameRequestCallback): number => {
 				cb(0);
 				return 1;
 			});
 
-		cancelAnimationFrameSpy = jest
-			.spyOn(global, 'cancelAnimationFrame')
+		cancelAnimationFrameSpy = vi
+			.spyOn(window, 'cancelAnimationFrame')
 			.mockImplementation(() => {});
 	});
 
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		cleanup();
 	});
 
 	afterAll(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	const createMockConfig = (
@@ -47,8 +47,8 @@ describe('useLegendsSync', () => {
 			| null = null;
 
 		const config = {
-			getLegendItems: jest.fn(() => legendItems),
-			addHook: jest.fn(
+			getLegendItems: vi.fn(() => legendItems),
+			addHook: vi.fn(
 				(
 					hookName: string,
 					handler: (

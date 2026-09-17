@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 
 import {
@@ -9,26 +10,26 @@ import {
 
 // Mock localStorage
 const localStorageMock = {
-	getItem: jest.fn(),
-	setItem: jest.fn(),
-	clear: jest.fn(),
+	getItem: vi.fn(),
+	setItem: vi.fn(),
+	clear: vi.fn(),
 };
 Object.defineProperty(window, 'localStorage', {
 	value: localStorageMock,
 });
 
 // Helper function to create matchMedia mock
-const createMatchMediaMock = (prefersDark: boolean): jest.Mock =>
-	jest.fn().mockImplementation((query: string) => ({
+const createMatchMediaMock = (prefersDark: boolean): Mock =>
+	vi.fn().mockImplementation((query: string) => ({
 		matches:
 			query === '(prefers-color-scheme: dark)' ? prefersDark : !prefersDark,
 		media: query,
 		onchange: null,
-		addListener: jest.fn(),
-		removeListener: jest.fn(),
-		addEventListener: jest.fn(),
-		removeEventListener: jest.fn(),
-		dispatchEvent: jest.fn(),
+		addListener: vi.fn(),
+		removeListener: vi.fn(),
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+		dispatchEvent: vi.fn(),
 	}));
 
 // Mock matchMedia
@@ -39,7 +40,7 @@ Object.defineProperty(window, 'matchMedia', {
 
 describe('useDarkMode', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		localStorageMock.getItem.mockReturnValue(null);
 	});
 

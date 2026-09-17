@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
@@ -16,16 +17,16 @@ import { useQueryBuilder } from '../useQueryBuilder';
 import { useQueryOperations } from '../useQueryBuilderOperations';
 
 // Mock the useQueryBuilder hook
-jest.mock('../useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('../useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
 
 describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
-	const mockHandleSetQueryData = jest.fn();
-	const mockHandleSetFormulaData = jest.fn();
-	const mockRemoveQueryBuilderEntityByIndex = jest.fn();
-	const mockSetLastUsedQuery = jest.fn();
-	const mockRedirectWithQueryBuilderData = jest.fn();
+	const mockHandleSetQueryData = vi.fn();
+	const mockHandleSetFormulaData = vi.fn();
+	const mockRemoveQueryBuilderEntityByIndex = vi.fn();
+	const mockSetLastUsedQuery = vi.fn();
+	const mockRedirectWithQueryBuilderData = vi.fn();
 
 	const defaultMockQuery: IBuilderQuery = {
 		dataSource: DataSource.METRICS,
@@ -63,7 +64,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 	};
 
 	const setupMockQueryBuilder = (): void => {
-		(useQueryBuilder as jest.Mock).mockReturnValue({
+		(useQueryBuilder as Mock).mockReturnValue({
 			handleSetQueryData: mockHandleSetQueryData,
 			handleSetFormulaData: mockHandleSetFormulaData,
 			removeQueryBuilderEntityByIndex: mockRemoveQueryBuilderEntityByIndex,
@@ -93,7 +94,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		setupMockQueryBuilder();
 	});
 

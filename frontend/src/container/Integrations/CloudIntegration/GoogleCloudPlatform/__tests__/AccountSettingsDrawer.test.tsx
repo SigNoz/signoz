@@ -17,23 +17,23 @@ import {
 } from './mockData';
 
 // `useAccountSettingsDrawer` imports logEvent by relative path, which the
-// jest.config moduleNameMapper (keyed on the `api/common/logEvent` alias) does
+// vitest.config alias (keyed on the `api/common/logEvent` alias) does
 // not intercept — so mock the resolved module directly.
-jest.mock('../../../../../api/common/logEvent', () => ({
+vi.mock('../../../../../api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
 	toast: {
-		success: jest.fn(),
-		error: jest.fn(),
+		success: vi.fn(),
+		error: vi.fn(),
 	},
 }));
 
-const onClose = jest.fn();
-const setActiveAccount = jest.fn();
+const onClose = vi.fn();
+const setActiveAccount = vi.fn();
 
 const renderDrawer = (): void => {
 	render(
@@ -224,7 +224,11 @@ describe('GCP AccountSettingsDrawer', () => {
 		await waitFor(() => {
 			expect(disconnectedId).toBe(GCP_ACCOUNT_ID);
 		});
-		expect(setActiveAccount).toHaveBeenCalledWith(null);
+		// The delete mutation's onSuccess (setActiveAccount + close) lands a
+		// tick after the worker responds in browser mode; wait for it.
+		await waitFor(() => {
+			expect(setActiveAccount).toHaveBeenCalledWith(null);
+		});
 		expect(onClose).toHaveBeenCalledTimes(1);
 	});
 });

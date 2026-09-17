@@ -1,3 +1,4 @@
+import { SINGLE_FLIGHT_WAIT_TIME_MS } from 'lib/authz/hooks/useAuthZ/constants';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { billingSuccessResponse } from 'mocks-server/__mockdata__/billing';
 import {
@@ -19,21 +20,34 @@ import BillingContainer from './BillingContainer';
 
 window.ResizeObserver =
 	window.ResizeObserver ||
-	jest.fn().mockImplementation(() => ({
-		disconnect: jest.fn(),
-		observe: jest.fn(),
-		unobserve: jest.fn(),
+	vi.fn().mockImplementation(() => ({
+		disconnect: vi.fn(),
+		observe: vi.fn(),
+		unobserve: vi.fn(),
 	}));
 
+// The hook fetches the active license key on mount; stub it so the billing
+// request is the only one this suite waits on.
+vi.mock('hooks/useActiveLicenseKey/useActiveLicenseKey', () => ({
+	__esModule: true,
+	default: vi.fn(() => ({ licenseKey: 'test-key', isLoading: false })),
+}));
+
 describe('BillingContainer', () => {
-	jest.setTimeout(30000);
+	vi.setConfig({ testTimeout: 30000 });
 
 	beforeEach(() => {
 		server.use(setupAuthzAdmin());
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		server.resetHandlers();
+		// useAuthZ batches its checks behind a module-level single-flight window.
+		// Draining it here stops the next test from joining the previous test's
+		// batch and reading its grants.
+		await new Promise((resolve) => {
+			setTimeout(resolve, SINGLE_FLIGHT_WAIT_TIME_MS * 2);
+		});
 	});
 
 	it('Component should render', async () => {
@@ -71,12 +85,9 @@ describe('BillingContainer', () => {
 
 	describe('Trial scenarios', () => {
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2023-10-20'));
-		});
-
-		afterEach(() => {
-			jest.useRealTimers();
+			// Date only, no fake timers: `findBy*` polls on the real clock and would
+			// never resolve against a frozen one.
+			vi.setSystemTime(new Date('2023-10-20'));
 		});
 
 		it('OnTrail', async () => {
@@ -87,9 +98,6 @@ describe('BillingContainer', () => {
 				{},
 				{ appContextOverrides: { trialInfo: licensesSuccessResponse.data } },
 			);
-
-			// If the component schedules any setTimeout on mount, flush them:
-			jest.runOnlyPendingTimers();
 
 			await expect(screen.findByText('Free Trial')).resolves.toBeInTheDocument();
 			await expect(screen.findByText('billing')).resolves.toBeInTheDocument();

@@ -81,7 +81,7 @@ describe('useResizableColumns', () => {
 	});
 
 	it('updates the width on resize and persists it (debounced)', () => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		try {
 			const { result } = renderHook(() =>
 				useResizableColumns<Row>({ panelId: 'p1', columns: COLUMNS }),
@@ -93,10 +93,12 @@ describe('useResizableColumns', () => {
 			// Not yet flushed to storage.
 			expect(readColumnWidths('p1')).toStrictEqual({});
 
-			act(() => jest.advanceTimersByTime(400));
+			act(() => {
+				void vi.advanceTimersByTime(400);
+			});
 			expect(readColumnWidths('p1')).toStrictEqual({ name: 321 });
 		} finally {
-			jest.useRealTimers();
+			vi.useRealTimers();
 		}
 	});
 });

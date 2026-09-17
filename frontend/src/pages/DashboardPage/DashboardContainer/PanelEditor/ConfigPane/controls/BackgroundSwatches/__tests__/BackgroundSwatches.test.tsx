@@ -8,11 +8,12 @@ import {
 } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/types';
 
 import BackgroundSwatches from '../BackgroundSwatches';
+import type { Mock } from 'vitest';
 
 function renderRow(
 	props: Partial<React.ComponentProps<typeof BackgroundSwatches>> = {},
-): jest.Mock {
-	const onChange = jest.fn();
+): Mock {
+	const onChange = vi.fn();
 	render(
 		<TooltipProvider>
 			<BackgroundSwatches
@@ -75,8 +76,10 @@ describe('BackgroundSwatches', () => {
 	it('paints each preset in the given theme', () => {
 		renderRow({ theme: PanelTheme.Light });
 
+		// backgroundColor, not the `background` shorthand the component sets: a real
+		// browser expands the shorthand to eight longhands and the comparison fails.
 		expect(screen.getByTestId('background-amber')).toHaveStyle({
-			background: TEXT_BACKGROUND_PAIRS.amber.light.surface,
+			backgroundColor: TEXT_BACKGROUND_PAIRS.amber.light.surface,
 			color: TEXT_BACKGROUND_PAIRS.amber.light.ink,
 		});
 	});

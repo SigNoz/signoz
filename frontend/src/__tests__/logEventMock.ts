@@ -1,11 +1,13 @@
 // Shared mock for `api/common/logEvent`.
-// Wired into jest.config.ts moduleNameMapper, so any import of
+// Wired into the runner's module aliases, so any import of
 // `api/common/logEvent` in test code resolves to this file.
 // Tests can import `logEventMock` to assert analytics calls — Jest's
 // `clearMocks: true` resets call history between tests.
 
-export const logEventMock: jest.MockedFunction<
+import type { Mock } from 'vitest';
+
+export const logEventMock: Mock<
 	(eventName: string, attributes?: Record<string, unknown>) => void
-> = jest.fn();
+> = vi.fn();
 
 export default logEventMock;

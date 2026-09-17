@@ -1,4 +1,4 @@
-import React, { ComponentType, Suspense } from 'react';
+import { ComponentType, lazy, Suspense } from 'react';
 import {
 	render,
 	screen,
@@ -6,6 +6,9 @@ import {
 } from '@testing-library/react';
 
 import Loadable from './index';
+
+// ESM namespace is frozen in browser mode, so spy through the module mock
+vi.mock('react', { spy: true });
 
 // Sample component to be loaded lazily
 function SampleComponent(): JSX.Element {
@@ -38,7 +41,7 @@ describe('Loadable', () => {
 	});
 
 	it('should call lazy with the provided import path', () => {
-		const reactLazySpy = jest.spyOn(React, 'lazy');
+		const reactLazySpy = vi.mocked(lazy);
 		Loadable(loadSampleComponent);
 
 		expect(reactLazySpy).toHaveBeenCalledTimes(1);

@@ -1,5 +1,5 @@
 import { screen, within } from '@testing-library/react';
-import { render } from 'tests/test-utils';
+import { render } from 'tests/test-utils-full';
 
 import { QuickFiltersSource } from '../../../../types';
 
@@ -9,10 +9,7 @@ import {
 	DEFAULT_FILTER,
 	DEFAULT_USE_FIELD_APIS,
 	mockFieldsValuesAPI,
-	setupServer,
 } from '../CheckboxFilterV2.testUtils';
-
-setupServer();
 
 describe('CheckboxFilterV2 - item rules', () => {
 	describe('related values unsupported (existingQuery: null)', () => {

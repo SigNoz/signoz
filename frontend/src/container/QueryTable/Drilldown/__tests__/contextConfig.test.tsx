@@ -34,7 +34,7 @@ const renderGroupMenu = (query: Query): void => {
 		query,
 		clickedData,
 		panelType: PANEL_TYPES.TABLE,
-		onColumnClick: jest.fn(),
+		onColumnClick: vi.fn(),
 	});
 	render(<div>{items}</div>);
 };
@@ -74,7 +74,7 @@ describe('getGroupContextMenuConfig', () => {
 			query: makeQuery('number'),
 			clickedData,
 			panelType: PANEL_TYPES.TIME_SERIES,
-			onColumnClick: jest.fn(),
+			onColumnClick: vi.fn(),
 		});
 
 		expect(config.items).toBeUndefined();

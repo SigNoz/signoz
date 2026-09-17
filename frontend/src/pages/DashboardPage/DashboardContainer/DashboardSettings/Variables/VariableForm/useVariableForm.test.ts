@@ -10,7 +10,7 @@ import { useVariableForm, type UseVariableForm } from './useVariableForm';
 
 // Mock the store (its full slice graph is huge to transform and irrelevant here;
 // the hook only reads dashboardId + variableValues for the Test-Run payload).
-jest.mock('../../../store/useDashboardStore', () => ({
+vi.mock('../../../store/useDashboardStore', () => ({
 	useDashboardStore: (selector: (state: unknown) => unknown): unknown =>
 		selector({ dashboardId: undefined, variableValues: {} }),
 }));
@@ -31,7 +31,7 @@ const args = (
 	initial: init,
 	siblings: [],
 	isNew: false,
-	onSave: jest.fn(),
+	onSave: vi.fn(),
 });
 
 // The hook resets its form state whenever the `initial` reference changes (open a

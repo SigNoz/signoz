@@ -7,6 +7,7 @@ import { getSupportedSignals } from 'pages/DashboardPage/DashboardContainer/Pane
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import PanelEditorContainer from '../index';
+import type { Mock } from 'vitest';
 
 // The editor reads its edit context from the loaded dashboard subtree, which
 // these composition cases don't stand up; the derivation has its own suite.
@@ -21,7 +22,7 @@ const mockEditContext = {
 	editDisabledTooltip: '',
 	deleteDisabledTooltip: '',
 };
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext',
 	() => ({
 		useDashboardEditContext: (): typeof mockEditContext => mockEditContext,
@@ -37,73 +38,73 @@ import { useScrollIntoViewStore } from '../../store/useScrollIntoViewStore';
  * shared edit-session hook, since the mocks intercept the leaf hooks either way.
  */
 
-const mockSetSpec = jest.fn();
-const mockRefetch = jest.fn();
-const mockCancelQuery = jest.fn();
-const mockBuildSaveSpec = jest.fn((spec: unknown) => spec);
-const mockOnChangePanelKind = jest.fn();
-const mockSave = jest.fn().mockResolvedValue('panel-1');
+const mockSetSpec = vi.fn();
+const mockRefetch = vi.fn();
+const mockCancelQuery = vi.fn();
+const mockBuildSaveSpec = vi.fn((spec: unknown) => spec);
+const mockOnChangePanelKind = vi.fn();
+const mockSave = vi.fn().mockResolvedValue('panel-1');
 
-const mockUseDraft = jest.fn();
-jest.mock('../hooks/usePanelEditorDraft', () => ({
+const mockUseDraft = vi.fn();
+vi.mock('../hooks/usePanelEditorDraft', () => ({
 	usePanelEditorDraft: (panel: unknown): unknown => mockUseDraft(panel),
 }));
 
-const mockUseQuery = jest.fn();
-jest.mock('../../hooks/usePanelQuery', () => ({
+const mockUseQuery = vi.fn();
+vi.mock('../../hooks/usePanelQuery', () => ({
 	usePanelQuery: (args: unknown): unknown => mockUseQuery(args),
 }));
 
-const mockUseQuerySync = jest.fn();
-jest.mock('../hooks/usePanelEditorQuerySync', () => ({
+const mockUseQuerySync = vi.fn();
+vi.mock('../hooks/usePanelEditorQuerySync', () => ({
 	usePanelEditorQuerySync: (args: unknown): unknown => mockUseQuerySync(args),
 }));
 
-const mockUseTypeSwitch = jest.fn();
-jest.mock('../hooks/usePanelTypeSwitch', () => ({
+const mockUseTypeSwitch = vi.fn();
+vi.mock('../hooks/usePanelTypeSwitch', () => ({
 	usePanelTypeSwitch: (args: unknown): unknown => mockUseTypeSwitch(args),
 }));
 
-jest.mock('../hooks/usePanelEditorSave', () => ({
+vi.mock('../hooks/usePanelEditorSave', () => ({
 	usePanelEditorSave: (): unknown => ({ save: mockSave, isSaving: false }),
 }));
 
-jest.mock('../hooks/useSwitchColumnsOnSignalChange', () => ({
-	useSwitchColumnsOnSignalChange: jest.fn(),
+vi.mock('../hooks/useSwitchColumnsOnSignalChange', () => ({
+	useSwitchColumnsOnSignalChange: vi.fn(),
 }));
-const mockOnSwitchToView = jest.fn();
-jest.mock('../hooks/useSwitchToViewMode', () => ({
+const mockOnSwitchToView = vi.fn();
+vi.mock('../hooks/useSwitchToViewMode', () => ({
 	useSwitchToViewMode: (): (() => void) => mockOnSwitchToView,
 }));
-jest.mock('../hooks/useSeedNewListColumns', () => ({
-	useSeedNewListColumns: jest.fn(),
+vi.mock('../hooks/useSeedNewListColumns', () => ({
+	useSeedNewListColumns: vi.fn(),
 }));
-jest.mock('../hooks/useLegendSeries', () => ({
+vi.mock('../hooks/useLegendSeries', () => ({
 	useLegendSeries: (): [] => [],
 }));
-jest.mock('../hooks/useTableColumns', () => ({
+vi.mock('../hooks/useTableColumns', () => ({
 	useTableColumns: (): [] => [],
 }));
-jest.mock('../hooks/useSeedMetricUnit', () => ({
+vi.mock('../hooks/useSeedMetricUnit', () => ({
 	useSeedMetricUnit: (): unknown => ({
 		metricUnit: undefined,
 		isLoading: false,
 	}),
 }));
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): unknown => ({ currentQuery: { queryType: 'builder' } }),
 }));
-jest.mock(
+vi.mock(
 	'../../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions',
 	() => ({
 		usePanelInteractions: (): unknown => ({
-			onDragSelect: jest.fn(),
+			onDragSelect: vi.fn(),
 			dashboardPreference: {},
 		}),
 	}),
 );
 
-jest.mock('@signozhq/ui/resizable', () => ({
+vi.mock('@signozhq/ui/resizable', () => ({
 	__esModule: true,
 	ResizablePanelGroup: ({
 		children,
@@ -116,22 +117,22 @@ jest.mock('@signozhq/ui/resizable', () => ({
 	ResizableHandle: (): null => null,
 	useDefaultLayout: (): unknown => ({
 		defaultLayout: undefined,
-		onLayoutChanged: jest.fn(),
+		onLayoutChanged: vi.fn(),
 	}),
 }));
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui/sonner', () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
-const mockShowErrorModal = jest.fn();
-jest.mock('providers/ErrorModalProvider', () => ({
-	useErrorModal: (): { showErrorModal: jest.Mock } => ({
+const mockShowErrorModal = vi.fn();
+vi.mock('providers/ErrorModalProvider', () => ({
+	useErrorModal: (): { showErrorModal: Mock } => ({
 		showErrorModal: mockShowErrorModal,
 	}),
 }));
 
 // Children mocked to capture props (and expose a Save trigger / footer slot).
-const mockHeaderProps = jest.fn();
-jest.mock('../Header/Header', () => ({
+const mockHeaderProps = vi.fn();
+vi.mock('../Header/Header', () => ({
 	__esModule: true,
 	default: (props: { onSave: () => void; onClose: () => void }): JSX.Element => {
 		mockHeaderProps(props);
@@ -147,31 +148,31 @@ jest.mock('../Header/Header', () => ({
 		);
 	},
 }));
-const mockPreviewProps = jest.fn();
-jest.mock('../PreviewPane/PreviewPane', () => ({
+const mockPreviewProps = vi.fn();
+vi.mock('../PreviewPane/PreviewPane', () => ({
 	__esModule: true,
 	default: (props: unknown): JSX.Element => {
 		mockPreviewProps(props);
 		return <div data-testid="preview" />;
 	},
 }));
-const mockQbProps = jest.fn();
-jest.mock('../PanelEditorQueryBuilder/PanelEditorQueryBuilder', () => ({
+const mockQbProps = vi.fn();
+vi.mock('../PanelEditorQueryBuilder/PanelEditorQueryBuilder', () => ({
 	__esModule: true,
 	default: (props: { footer?: React.ReactNode }): JSX.Element => {
 		mockQbProps(props);
 		return <div data-testid="qb">{props.footer}</div>;
 	},
 }));
-const mockConfigProps = jest.fn();
-jest.mock('../ConfigPane/ConfigPane', () => ({
+const mockConfigProps = vi.fn();
+vi.mock('../ConfigPane/ConfigPane', () => ({
 	__esModule: true,
 	default: (props: unknown): JSX.Element => {
 		mockConfigProps(props);
 		return <div data-testid="config" />;
 	},
 }));
-jest.mock('../ListColumnsEditor/ListColumnsEditor', () => ({
+vi.mock('../ListColumnsEditor/ListColumnsEditor', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="list-columns" />,
 }));
@@ -193,8 +194,8 @@ function makePanel(
 const baseProps = {
 	dashboardId: 'dash-1',
 	panelId: 'panel-1',
-	onClose: jest.fn(),
-	onSaved: jest.fn(),
+	onClose: vi.fn(),
+	onSaved: vi.fn(),
 };
 
 function setup(
@@ -219,7 +220,7 @@ function setup(
 		pagination: undefined,
 	});
 	mockUseQuerySync.mockReturnValue({
-		runQuery: jest.fn(),
+		runQuery: vi.fn(),
 		isQueryDirty: false,
 		buildSaveSpec: mockBuildSaveSpec,
 	});
@@ -231,7 +232,7 @@ function setup(
 
 describe('PanelEditorContainer composition', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		useScrollIntoViewStore.setState({ scrollTargetId: null });
 	});
 

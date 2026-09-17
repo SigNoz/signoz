@@ -2,9 +2,11 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import CodeBlock from './CodeBlock';
 
-const mockCopyToClipboard = jest.fn();
+const { mockCopyToClipboard } = vi.hoisted(() => ({
+	mockCopyToClipboard: vi.fn(),
+}));
 
-jest.mock('react-use', () => ({
+vi.mock('react-use', () => ({
 	useCopyToClipboard: (): [unknown, (text: string) => void] => [
 		undefined,
 		mockCopyToClipboard,
@@ -33,7 +35,7 @@ describe('CodeBlock', () => {
 	});
 
 	it('copies code and triggers callback', async () => {
-		const onCopy = jest.fn();
+		const onCopy = vi.fn();
 		render(<CodeBlock code="SELECT * FROM logs;" onCopy={onCopy} />);
 
 		fireEvent.click(screen.getByRole('button', { name: /copy code/i }));

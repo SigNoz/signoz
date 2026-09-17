@@ -1,6 +1,6 @@
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils-full';
 import {
 	setupAuthzAdmin,
 	setupAuthzAllow,
@@ -48,7 +48,7 @@ function setEditContextMock(next: Partial<typeof mockEditContext>): void {
 		...next,
 	});
 }
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext',
 	() => ({
 		useDashboardEditContext: (): typeof mockEditContext => mockEditContext,
@@ -68,22 +68,22 @@ function renderActions(): ReturnType<typeof render> {
 			handle={
 				{
 					active: false,
-					enter: jest.fn(),
-					exit: jest.fn(),
+					enter: vi.fn(),
+					exit: vi.fn(),
 					node: { current: null },
 				} as never
 			}
 			isDashboardLocked={false}
-			onAddPanel={jest.fn()}
-			onLockToggle={jest.fn()}
-			onOpenRename={jest.fn()}
+			onAddPanel={vi.fn()}
+			onLockToggle={vi.fn()}
+			onOpenRename={vi.fn()}
 		/>,
 	);
 }
 
 describe('DashboardActions - AuthZ', () => {
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 

@@ -8,19 +8,19 @@ import {
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { useVariableSelection } from '../hooks/useVariableSelection';
 
-jest.mock('nuqs', () => ({
+vi.mock('nuqs', () => ({
 	parseAsJson: (): unknown => ({ withOptions: (): unknown => ({}) }),
-	useQueryState: (): unknown => [null, jest.fn()],
+	useQueryState: (): unknown => [null, vi.fn()],
 }));
 
 const mockGlobalTime = { minTime: 1, maxTime: 2, selectedTime: '5m' };
 
-jest.mock('react-redux', () => ({
+vi.mock('react-redux', () => ({
 	useSelector: (selector: (state: unknown) => unknown): unknown =>
 		selector({ globalTime: mockGlobalTime }),
 }));
 
-jest.mock('../../DashboardSettings/Variables/variableAdapters', () => ({
+vi.mock('../../DashboardSettings/Variables/variableAdapters', () => ({
 	dtoToFormModel: (dto: unknown): unknown => dto,
 }));
 
@@ -160,7 +160,7 @@ describe('useVariableSelection — what a time-range change enqueues', () => {
 	}
 
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		mockGlobalTime.selectedTime = '5m';
 		useDashboardStore.setState({
 			variableValues: {},
@@ -175,7 +175,7 @@ describe('useVariableSelection — what a time-range change enqueues', () => {
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	// The tag is what stops the reconcile re-defaulting a user's selection.
@@ -185,7 +185,7 @@ describe('useVariableSelection — what a time-range change enqueues', () => {
 		);
 
 		act(() => {
-			jest.advanceTimersByTime(PAST_DEBOUNCE);
+			vi.advanceTimersByTime(PAST_DEBOUNCE);
 		});
 		expect(reasons()).toStrictEqual({ env: 'full-cycle', svc: 'full-cycle' });
 
@@ -198,7 +198,7 @@ describe('useVariableSelection — what a time-range change enqueues', () => {
 		mockGlobalTime.selectedTime = '30m';
 		rerender();
 		act(() => {
-			jest.advanceTimersByTime(PAST_DEBOUNCE);
+			vi.advanceTimersByTime(PAST_DEBOUNCE);
 		});
 
 		expect(reasons()).toStrictEqual({ env: 'full-cycle', svc: 'full-cycle' });

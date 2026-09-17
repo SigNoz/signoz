@@ -14,28 +14,26 @@ import {
 import useInitialQuery from '../useInitialQuery';
 
 // Mock the queryBuilder hook
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
 
 // Mock the convertFiltersToExpression utility
-jest.mock('components/QueryBuilderV2/utils', () => ({
-	convertFiltersToExpression: jest.fn(),
+vi.mock('components/QueryBuilderV2/utils', () => ({
+	convertFiltersToExpression: vi.fn(),
 }));
 
 // Mock uuid for consistent testing
-jest.mock('uuid', () => ({
-	v4: jest.fn(() => 'test-uuid'),
+vi.mock('uuid', () => ({
+	v4: vi.fn(() => 'test-uuid'),
 }));
 
 // Type the mocked functions
-const mockedUseQueryBuilder = jest.mocked(useQueryBuilder);
-const mockedConvertFiltersToExpression = jest.mocked(
-	convertFiltersToExpression,
-);
+const mockedUseQueryBuilder = vi.mocked(useQueryBuilder);
+const mockedConvertFiltersToExpression = vi.mocked(convertFiltersToExpression);
 
 describe('useInitialQuery - Priority-Based Resource Filtering', () => {
-	const mockUpdateAllQueriesOperators = jest.fn();
+	const mockUpdateAllQueriesOperators = vi.fn();
 	const mockBaseQuery: Query = {
 		id: 'test-query',
 		queryType: EQueryType.QUERY_BUILDER,
@@ -78,7 +76,7 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		// Setup useQueryBuilder mock - only mock what we need
 		mockedUseQueryBuilder.mockReturnValue({

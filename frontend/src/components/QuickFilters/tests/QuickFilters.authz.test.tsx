@@ -26,13 +26,14 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import QuickFilters from '../QuickFilters';
 import { QuickFiltersSource, SignalType } from '../types';
 import { QuickFiltersConfig } from './constants';
+import type { Mock } from 'vitest';
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
-jest.mock('container/ApiMonitoring/queryParams');
+vi.mock('container/ApiMonitoring/queryParams');
 
-const mockUseApiMonitoringParams = jest.mocked(useApiMonitoringParams);
+const mockUseApiMonitoringParams = vi.mocked(useApiMonitoringParams);
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const SIGNAL = SignalType.LOGS;
@@ -46,7 +47,7 @@ const FILTER_SERVICE_NAME = 'Service Name';
 const SETTINGS_CONTAINER_TEST_ID = 'settings-icon-container';
 
 beforeEach(() => {
-	(useQueryBuilder as jest.Mock).mockReturnValue({
+	(useQueryBuilder as Mock).mockReturnValue({
 		currentQuery: {
 			builder: {
 				queryData: [
@@ -58,11 +59,11 @@ beforeEach(() => {
 			},
 		},
 		lastUsedQuery: 0,
-		redirectWithQueryBuilderData: jest.fn(),
+		redirectWithQueryBuilderData: vi.fn(),
 	});
 	mockUseApiMonitoringParams.mockReturnValue([
 		{ showIP: true } as ApiMonitoringParams,
-		jest.fn(),
+		vi.fn(),
 	]);
 	server.use(
 		rest.get(quickFiltersListURL, (_req, res, ctx) =>
@@ -82,7 +83,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	server.resetHandlers();
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 });
 
 function renderWithSignal(): void {
@@ -90,7 +91,7 @@ function renderWithSignal(): void {
 		<QuickFilters
 			source={QuickFiltersSource.LOGS_EXPLORER}
 			signal={SIGNAL}
-			handleFilterVisibilityChange={jest.fn()}
+			handleFilterVisibilityChange={vi.fn()}
 		/>,
 	);
 }
@@ -100,7 +101,7 @@ function renderStaticConfig(): void {
 		<QuickFilters
 			source={QuickFiltersSource.EXCEPTIONS}
 			config={QuickFiltersConfig}
-			handleFilterVisibilityChange={jest.fn()}
+			handleFilterVisibilityChange={vi.fn()}
 		/>,
 	);
 }

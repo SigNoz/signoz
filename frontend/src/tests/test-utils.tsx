@@ -1,3 +1,7 @@
+// The default wrapper mounts the providers nearly every test needs. The heavier
+// ones (query builder, preferences, resource attributes, timezone, error modal)
+// are in `test-utils-full`, because a test file pays for the whole graph of
+// whatever this module imports whether it renders it or not.
 import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
@@ -5,36 +9,16 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { NuqsAdapter } from 'nuqs/adapters/react';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
-import { ErrorModalProvider } from 'providers/ErrorModalProvider';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import {
-	QueryBuilderContext,
-	QueryBuilderProvider,
-} from 'providers/QueryBuilder';
-import TimezoneProvider from 'providers/Timezone';
 import configureStore from 'redux-mock-store';
 import { createAppContextMock } from 'tests/fixtures/appContextMock';
 import thunk from 'redux-thunk';
 import store from 'store';
-import { QueryBuilderContextType } from 'types/common/queryBuilder';
 // import { MemoryRouter as V5MemoryRouter } from 'react-router-dom-v5-compat';
 
-// Mock ResizeObserver
-class ResizeObserverMock {
-	observe(): void {}
-
-	unobserve(): void {}
-
-	disconnect(): void {}
-}
-
-global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
-
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
 			refetchOnWindowFocus: false,
@@ -47,13 +31,13 @@ const queryClient = new QueryClient({
 });
 
 beforeEach(() => {
-	// jest.useFakeTimers();
-	jest.setSystemTime(new Date('2023-10-20'));
+	// vi.useFakeTimers();
+	vi.setSystemTime(new Date('2023-10-20'));
 });
 
 afterEach(() => {
 	queryClient.clear();
-	// jest.useRealTimers();
+	// vi.useRealTimers();
 });
 
 const mockStore = configureStore([thunk]);
@@ -84,7 +68,7 @@ const mockStored = (role?: string): any =>
 		},
 	});
 
-jest.mock('react-i18next', () => ({
+vi.mock('react-i18next', async () => ({
 	useTranslation: (): {
 		t: (str: string) => string;
 		i18n: {
@@ -104,36 +88,24 @@ export function getAppContextMock(
 	role: string,
 	appContextOverrides?: Partial<IAppContext>,
 ): IAppContext {
-	return createAppContextMock(role, appContextOverrides, () => jest.fn());
+	return createAppContextMock(role, appContextOverrides, () => vi.fn());
 }
 
 export function AllTheProviders({
 	children,
 	role,
 	appContextOverrides,
-	queryBuilderOverrides,
 	initialRoute,
 }: {
 	children: React.ReactNode;
 	role?: string;
 	appContextOverrides?: Partial<IAppContext>;
-	queryBuilderOverrides?: Partial<QueryBuilderContextType>;
 	initialRoute?: string;
 }): ReactElement {
 	// Set default values
 	const roleValue = role || 'ADMIN';
 	const appContextOverridesValue = appContextOverrides || {};
 	const initialRouteValue = initialRoute || '/';
-
-	const queryBuilderContent = queryBuilderOverrides ? (
-		<QueryBuilderContext.Provider
-			value={queryBuilderOverrides as QueryBuilderContextType}
-		>
-			{children}
-		</QueryBuilderContext.Provider>
-	) : (
-		<QueryBuilderProvider>{children}</QueryBuilderProvider>
-	);
 
 	const appContextValue = getAppContextMock(roleValue, appContextOverridesValue);
 
@@ -143,17 +115,7 @@ export function AllTheProviders({
 				<QueryClientProvider client={queryClient}>
 					<Provider store={mockStored(roleValue)}>
 						<AppContext.Provider value={appContextValue}>
-							<ResourceProvider>
-								<ErrorModalProvider>
-									<TimezoneProvider>
-										<TooltipProvider>
-											<PreferenceContextProvider>
-												{queryBuilderContent}
-											</PreferenceContextProvider>
-										</TooltipProvider>
-									</TimezoneProvider>
-								</ErrorModalProvider>
-							</ResourceProvider>
+							<TooltipProvider>{children}</TooltipProvider>
 						</AppContext.Provider>
 					</Provider>
 				</QueryClientProvider>
@@ -165,14 +127,12 @@ export function AllTheProviders({
 AllTheProviders.defaultProps = {
 	role: 'ADMIN',
 	appContextOverrides: {},
-	queryBuilderOverrides: undefined,
 	initialRoute: '/',
 };
 
-interface ProviderProps {
+export interface ProviderProps {
 	role?: string;
 	appContextOverrides?: Partial<IAppContext>;
-	queryBuilderOverrides?: Partial<QueryBuilderContextType>;
 	initialRoute?: string;
 }
 
@@ -184,7 +144,6 @@ const customRender = (
 	const {
 		role = 'ADMIN',
 		appContextOverrides = {},
-		queryBuilderOverrides,
 		initialRoute = '/',
 	} = providerProps;
 
@@ -193,7 +152,6 @@ const customRender = (
 			<AllTheProviders
 				role={role}
 				appContextOverrides={appContextOverrides}
-				queryBuilderOverrides={queryBuilderOverrides}
 				initialRoute={initialRoute}
 			>
 				{ui}

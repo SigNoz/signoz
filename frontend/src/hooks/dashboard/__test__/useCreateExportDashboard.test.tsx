@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -5,16 +6,16 @@ import { createDashboardV2 } from 'api/generated/services/dashboard';
 
 import { useCreateExportDashboard } from '../useCreateExportDashboard';
 
-jest.mock('api/generated/services/dashboard', () => ({
-	createDashboardV2: jest.fn(),
+vi.mock('api/generated/services/dashboard', () => ({
+	createDashboardV2: vi.fn(),
 }));
-jest.mock('providers/ErrorModalProvider', () => ({
-	useErrorModal: (): { showErrorModal: jest.Mock } => ({
-		showErrorModal: jest.fn(),
+vi.mock('providers/ErrorModalProvider', () => ({
+	useErrorModal: (): { showErrorModal: Mock } => ({
+		showErrorModal: vi.fn(),
 	}),
 }));
 
-const mockCreateV2 = createDashboardV2 as jest.Mock;
+const mockCreateV2 = createDashboardV2 as Mock;
 
 function wrapper({ children }: { children: ReactNode }): JSX.Element {
 	const client = new QueryClient({
@@ -26,13 +27,13 @@ function wrapper({ children }: { children: ReactNode }): JSX.Element {
 const TITLE = 'My dashboard';
 
 beforeEach(() => {
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 });
 
 describe('useCreateExportDashboard', () => {
 	it('creates via the V2 Perses endpoint and normalizes the response', async () => {
 		mockCreateV2.mockResolvedValue({ data: { id: 'v2-new' } });
-		const onCreated = jest.fn();
+		const onCreated = vi.fn();
 
 		const { result } = renderHook(
 			() => useCreateExportDashboard({ title: TITLE, onCreated }),

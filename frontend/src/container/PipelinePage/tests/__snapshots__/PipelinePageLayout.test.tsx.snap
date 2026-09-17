@@ -1,55 +1,78 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`PipelinePage container test should render PipelinePageLayout section 1`] = `
+exports[`PipelinePage container test > should render PipelinePageLayout section 1`] = `
 <DocumentFragment>
-  .c0.c0.c0 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-pack: end;
-  -webkit-justify-content: flex-end;
-  -ms-flex-pack: end;
-  justify-content: flex-end;
-  margin-bottom: 2rem;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-}
-
-.c1.c1.c1 {
-  margin-left: 1rem;
-}
-
-<div
-    class="c0"
+  <div
+    class="sc-eldPxv ilYzmC"
   >
     <svg
       aria-label="Help"
+      class="signoz-icon"
+      fill="none"
+      height="16"
       role="img"
+      stroke="currentColor"
+      stroke-width="1.33"
       style="font-size: 1rem; color: rgba(255, 255, 255, 0.835);"
-    />
+      viewBox="0 0 16 16"
+      width="16"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <g
+        clip-path="url(#circle-help_svg__a)"
+      >
+        <path
+          d="M6.06 6a2 2 0 0 1 3.886.667c0 1.333-2 2-2 2M8 11.333h.006M14.666 8A6.667 6.667 0 1 1 1.333 8a6.667 6.667 0 0 1 13.333 0Z"
+          stroke="inherit"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.33"
+        />
+      </g>
+      <defs>
+        <clippath
+          id="circle-help_svg__a"
+        >
+          <path
+            d="M0 0h16v16H0z"
+            fill="#fff"
+          />
+        </clippath>
+      </defs>
+    </svg>
     <button
-      class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-primary c1"
+      class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-primary sc-fPXMVe eGbUda"
       type="button"
     >
       <span
         class="ant-btn-icon"
       >
-        <svg />
+        <svg
+          class="signoz-icon"
+          fill="none"
+          height="10"
+          stroke="currentColor"
+          stroke-width="0.83"
+          viewBox="0 0 16 16"
+          width="10"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M3.333 8h9.333M8 3.333v9.334"
+            stroke="inherit"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.33"
+          />
+        </svg>
       </span>
       <span>
         new_pipeline
       </span>
     </button>
   </div>
-  .c0 {
-  margin-top: 3rem;
-}
-
-<div
-    class="c0"
+  <div
+    class="sc-kAyceB bxlzGW"
   >
     <div
       class="logs-pipelines-empty-state-centered-container"

@@ -26,7 +26,7 @@ async function clickMenuItem(label: string): Promise<void> {
 
 describe('ListAlertRules — actions menu', () => {
 	beforeEach(() => {
-		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		vi.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 	});
 
 	it('renders Enable/Disable/Edit/Edit in New Tab/Clone/Delete items after opening the menu', async () => {

@@ -1,3 +1,4 @@
+import type { MockedFunction } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { LegendAction } from 'lib/uPlotV2/components/types';
 import {
@@ -8,15 +9,14 @@ import {
 import { PieSlice } from 'lib/visualization/charts/types';
 import { usePieInteractions } from 'lib/visualization/hooks/usePieInteractions';
 
-jest.mock('lib/visualization/panels/utils/legendVisibilityUtils');
+vi.mock('lib/visualization/panels/utils/legendVisibilityUtils');
 
-const mockGetStored = getStoredSeriesVisibility as jest.MockedFunction<
+const mockGetStored = getStoredSeriesVisibility as MockedFunction<
 	typeof getStoredSeriesVisibility
 >;
-const mockUpdateStored =
-	updateSeriesVisibilityToLocalStorage as jest.MockedFunction<
-		typeof updateSeriesVisibilityToLocalStorage
-	>;
+const mockUpdateStored = updateSeriesVisibilityToLocalStorage as MockedFunction<
+	typeof updateSeriesVisibilityToLocalStorage
+>;
 
 const DATA: PieSlice[] = [
 	{ label: 'frontend', value: 100, color: '#a' },

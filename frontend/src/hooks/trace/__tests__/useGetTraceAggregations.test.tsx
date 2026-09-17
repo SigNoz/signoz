@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { getTraceAggregations } from 'api/generated/services/tracedetail';
 import { ReactNode } from 'react';
@@ -5,14 +6,14 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 
 import useGetTraceAggregations from '../useGetTraceAggregations';
 
-jest.mock('api/generated/services/tracedetail', () => ({
+vi.mock('api/generated/services/tracedetail', () => ({
 	__esModule: true,
-	getTraceAggregations: jest
+	getTraceAggregations: vi
 		.fn()
 		.mockResolvedValue({ status: 'success', data: { aggregations: [] } }),
 }));
 
-const mockApi = getTraceAggregations as jest.Mock;
+const mockApi = getTraceAggregations as Mock;
 
 const wrapper = ({ children }: { children: ReactNode }): JSX.Element => {
 	const client = new QueryClient({

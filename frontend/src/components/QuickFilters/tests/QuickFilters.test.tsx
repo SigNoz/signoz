@@ -18,19 +18,20 @@ import '@testing-library/jest-dom';
 import QuickFilters from '../QuickFilters';
 import { IQuickFiltersConfig, QuickFiltersSource, SignalType } from '../types';
 import { QuickFiltersConfig } from './constants';
+import type { Mock, MockedFunction } from 'vitest';
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
-jest.mock('container/ApiMonitoring/queryParams');
+vi.mock('container/ApiMonitoring/queryParams');
 
-const handleFilterVisibilityChange = jest.fn();
-const redirectWithQueryBuilderData = jest.fn();
-const putHandler = jest.fn();
-const mockSetApiMonitoringParams = jest.fn() as jest.MockedFunction<
+const handleFilterVisibilityChange = vi.fn();
+const redirectWithQueryBuilderData = vi.fn();
+const putHandler = vi.fn();
+const mockSetApiMonitoringParams = vi.fn() as MockedFunction<
 	(newParams: Partial<ApiMonitoringParams>, replace?: boolean) => void
 >;
-const mockUseApiMonitoringParams = jest.mocked(useApiMonitoringParams);
+const mockUseApiMonitoringParams = vi.mocked(useApiMonitoringParams);
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const SIGNAL = SignalType.LOGS;
@@ -115,21 +116,16 @@ TestQuickFiltersApiMonitoring.defaultProps = {
 	config: QuickFiltersConfig,
 };
 
-beforeAll(() => {
-	server.listen();
-});
-
 afterEach(() => {
 	server.resetHandlers();
-	jest.clearAllMocks();
-});
-
-afterAll(() => {
-	server.close();
+	vi.clearAllMocks();
+	// One test below swaps in fake timers. Restoring them here rather than at the
+	// end of that test keeps a failure there from hanging every test after it.
+	vi.useRealTimers();
 });
 
 beforeEach(() => {
-	(useQueryBuilder as jest.Mock).mockReturnValue({
+	(useQueryBuilder as Mock).mockReturnValue({
 		currentQuery: {
 			builder: {
 				queryData: [
@@ -158,10 +154,10 @@ describe('Quick Filters', () => {
 	});
 
 	it('should display and allow selection from query dropdown when multiple queries exist', async () => {
-		const setLastUsedQuery = jest.fn();
+		const setLastUsedQuery = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		(useQueryBuilder as jest.Mock).mockReturnValue({
+		(useQueryBuilder as Mock).mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -213,7 +209,7 @@ describe('Quick Filters', () => {
 	});
 
 	it('should not display query dropdown in ListView', () => {
-		(useQueryBuilder as jest.Mock).mockReturnValue({
+		(useQueryBuilder as Mock).mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -316,8 +312,9 @@ describe('Quick Filters with custom filters', () => {
 		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
 
 		await screen.findByText(FILTER_SERVICE_NAME);
-		const allByText = await screen.findAllByText('otel-demo');
-		expect(allByText).toHaveLength(2);
+		// findAllBy* resolves on the first match, and the second occurrence only
+		// arrives with the values fetch.
+		await waitFor(() => expect(screen.getAllByText('otel-demo')).toHaveLength(2));
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
 		const settingsButton = icon.closest('button') ?? icon;
@@ -520,10 +517,16 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('should render duration slider for duration_nono filter', async () => {
-		// Use fake timers only in this test (for debounce), and wire them to userEvent
-		jest.useFakeTimers();
+		// Fake timers cover the debounce only. `findBy*` does not advance vitest's
+		// fake clock, so the initial fetch has to settle on real timers first.
 		const user = userEvent.setup({
-			advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+			// userEvent calls this for its own inter-event delay too, which happens
+			// before the clock is faked below.
+			advanceTimers: (ms) => {
+				if (vi.isFakeTimers()) {
+					vi.advanceTimersByTime(ms);
+				}
+			},
 			pointerEventsCheck: 0,
 		});
 
@@ -543,11 +546,13 @@ describe('Quick Filters with custom filters', () => {
 		expect(maxDuration).toHaveProperty('placeholder', '100000000');
 
 		// Type values and advance debounce
+		vi.useFakeTimers();
 		await user.clear(minDuration);
 		await user.type(minDuration, '10000');
 		await user.clear(maxDuration);
 		await user.type(maxDuration, '20000');
-		jest.advanceTimersByTime(2000);
+		vi.advanceTimersByTime(2000);
+		vi.useRealTimers();
 
 		await waitFor(() => {
 			expect(redirectWithQueryBuilderData).toHaveBeenCalledWith(
@@ -575,8 +580,6 @@ describe('Quick Filters with custom filters', () => {
 				}),
 			);
 		});
-
-		jest.useRealTimers();
 	});
 });
 

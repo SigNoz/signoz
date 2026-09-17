@@ -10,36 +10,40 @@ import { getBuilderQueries } from '../../../Panels/utils/getBuilderQueries';
 import { toPerses } from '../../../queryV5/persesQueryAdapters';
 import { getSwitchedPluginSpec } from '../../getSwitchedPluginSpec';
 import { usePanelTypeSwitch } from '../usePanelTypeSwitch';
+import type { Mock } from 'vitest';
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
-jest.mock('lib/query/panelQuery', () => ({
-	handleQueryChange: jest.fn(),
+vi.mock('lib/query/panelQuery', () => ({
+	handleQueryChange: vi.fn(),
 }));
-jest.mock('../../../Panels/capabilities', () => ({
-	resolveQueryType: jest.fn(),
+vi.mock('../../../Panels/capabilities', async () => ({
+	resolveQueryType: vi.fn(),
 	// Real predicate: these specs use real (query) kinds and the static path is
 	// exercised through its own cases below.
-	isStaticPanelKind: jest.requireActual('../../../Panels/capabilities')
-		.isStaticPanelKind,
+	isStaticPanelKind: (
+		await vi.importActual<typeof import('../../../Panels/capabilities')>(
+			'../../../Panels/capabilities',
+		)
+	).isStaticPanelKind,
 }));
-jest.mock('../../../queryV5/persesQueryAdapters', () => ({
-	toPerses: jest.fn(),
+vi.mock('../../../queryV5/persesQueryAdapters', () => ({
+	toPerses: vi.fn(),
 }));
-jest.mock('../../getSwitchedPluginSpec', () => ({
-	getSwitchedPluginSpec: jest.fn(),
+vi.mock('../../getSwitchedPluginSpec', () => ({
+	getSwitchedPluginSpec: vi.fn(),
 }));
-jest.mock('../../../Panels/utils/getBuilderQueries', () => ({
-	getBuilderQueries: jest.fn(),
+vi.mock('../../../Panels/utils/getBuilderQueries', () => ({
+	getBuilderQueries: vi.fn(),
 }));
 
-const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
-const mockHandleQueryChange = handleQueryChange as unknown as jest.Mock;
-const mockResolveQueryType = resolveQueryType as unknown as jest.Mock;
-const mockToPerses = toPerses as unknown as jest.Mock;
-const mockGetSwitchedPluginSpec = getSwitchedPluginSpec as unknown as jest.Mock;
-const mockGetBuilderQueries = getBuilderQueries as unknown as jest.Mock;
+const mockUseQueryBuilder = useQueryBuilder as unknown as Mock;
+const mockHandleQueryChange = handleQueryChange as unknown as Mock;
+const mockResolveQueryType = resolveQueryType as unknown as Mock;
+const mockToPerses = toPerses as unknown as Mock;
+const mockGetSwitchedPluginSpec = getSwitchedPluginSpec as unknown as Mock;
+const mockGetBuilderQueries = getBuilderQueries as unknown as Mock;
 
 // Opaque sentinels — the leaf utilities are mocked, so only identity matters.
 const TABLE_PLUGIN_SPEC = { table: true } as unknown;
@@ -81,14 +85,14 @@ const listSpec = makeSpec('signoz/ListPanel', LIST_PLUGIN_SPEC, LIST_QUERIES);
 
 function builderState(currentQuery: Query): {
 	currentQuery: Query;
-	redirectWithQueryBuilderData: jest.Mock;
+	redirectWithQueryBuilderData: Mock;
 } {
-	return { currentQuery, redirectWithQueryBuilderData: jest.fn() };
+	return { currentQuery, redirectWithQueryBuilderData: vi.fn() };
 }
 
 describe('usePanelTypeSwitch', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockHandleQueryChange.mockReturnValue(TRANSFORMED);
 		mockToPerses.mockReturnValue(CONVERTED);
 		mockGetSwitchedPluginSpec.mockReturnValue(SWITCHED_SPEC);
@@ -99,7 +103,7 @@ describe('usePanelTypeSwitch', () => {
 	});
 
 	it('does nothing when switching to the current kind', () => {
-		const setSpec = jest.fn();
+		const setSpec = vi.fn();
 		const state = builderState({ id: 'q', queryType: 'builder' } as Query);
 		mockUseQueryBuilder.mockReturnValue(state);
 
@@ -117,7 +121,7 @@ describe('usePanelTypeSwitch', () => {
 	});
 
 	it('on first visit: transforms the query and resets the spec to the new kind', () => {
-		const setSpec = jest.fn();
+		const setSpec = vi.fn();
 		const tableQuery = { id: 'table-current', queryType: 'builder' } as Query;
 		const state = builderState(tableQuery);
 		mockUseQueryBuilder.mockReturnValue(state);
@@ -144,7 +148,7 @@ describe('usePanelTypeSwitch', () => {
 	});
 
 	it('seeds timestamp-desc Order By on every query when switching to a List panel', () => {
-		const setSpec = jest.fn();
+		const setSpec = vi.fn();
 		mockUseQueryBuilder.mockReturnValue(
 			builderState({ id: 'ts-current', queryType: 'builder' } as Query),
 		);
@@ -172,7 +176,7 @@ describe('usePanelTypeSwitch', () => {
 	});
 
 	it('coerces the query type when the new kind disallows it (promql → List)', () => {
-		const setSpec = jest.fn();
+		const setSpec = vi.fn();
 		const promQuery = { id: 'prom', queryType: 'promql' } as Query;
 		mockUseQueryBuilder.mockReturnValue(builderState(promQuery));
 
@@ -196,7 +200,7 @@ describe('usePanelTypeSwitch', () => {
 	});
 
 	it('restores the original kind verbatim on switch-back (reversibility)', () => {
-		const setSpec = jest.fn();
+		const setSpec = vi.fn();
 		const tableQuery = { id: 'table-current', queryType: 'builder' } as Query;
 		const listQuery = { id: 'list-current', queryType: 'builder' } as Query;
 		let state = builderState(tableQuery);

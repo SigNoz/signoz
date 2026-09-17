@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ALL_SELECTED_VALUE } from 'container/CreateAlertV2/constants';
@@ -9,13 +10,14 @@ import {
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 
 import MultipleNotifications from '../MultipleNotifications';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock = jest.fn(() => ({
+	const uplotMock = vi.fn(() => ({
 		paths,
 	}));
 	return {
@@ -23,8 +25,8 @@ jest.mock('uplot', () => {
 		default: uplotMock,
 	};
 });
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
 
 const TEST_QUERY = 'test-query';
@@ -34,7 +36,7 @@ const TRUE = 'true';
 const FALSE = 'false';
 const COMBOBOX_ROLE = 'combobox';
 const ARIA_DISABLED_ATTR = 'aria-disabled';
-const mockSetNotificationSettings = jest.fn();
+const mockSetNotificationSettings = vi.fn();
 const mockUseQueryBuilder = {
 	currentQuery: {
 		builder: {
@@ -49,7 +51,13 @@ const mockUseQueryBuilder = {
 };
 
 const initialAlertThresholdState = createMockAlertContextState().thresholdState;
-jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('container/CreateAlertV2/context', { spy: true });
+
+vi.mocked(createAlertContext.useCreateAlertState).mockReturnValue(
 	createMockAlertContextState({
 		thresholdState: {
 			...initialAlertThresholdState,
@@ -60,13 +68,11 @@ jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 );
 
 describe('MultipleNotifications', () => {
-	const { useQueryBuilder } = jest.requireMock(
-		'hooks/queryBuilder/useQueryBuilder',
-	);
+	const mockedUseQueryBuilder: Mock = vi.mocked(useQueryBuilder);
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		useQueryBuilder.mockReturnValue(mockUseQueryBuilder);
+		vi.clearAllMocks();
+		mockedUseQueryBuilder.mockReturnValue(mockUseQueryBuilder as any);
 	});
 
 	it('should render the multiple notifications component with no grouping fields and disabled input by default', () => {
@@ -83,7 +89,7 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('should render the multiple notifications component with grouping fields and enabled input when space aggregation options are set', () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -107,7 +113,7 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('should render the multiple notifications component with grouping fields and enabled input when space aggregation options are set and multiple notifications are enabled', () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -119,7 +125,7 @@ describe('MultipleNotifications', () => {
 				},
 			},
 		});
-		jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+		vi.mocked(createAlertContext.useCreateAlertState).mockReturnValue(
 			createMockAlertContextState({
 				thresholdState: {
 					...INITIAL_ALERT_THRESHOLD_STATE,
@@ -143,7 +149,7 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('should render unique group by options from all queries', async () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -171,7 +177,7 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('selecting the "all" option shows correct group by description', () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -183,7 +189,7 @@ describe('MultipleNotifications', () => {
 				},
 			},
 		});
-		jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+		vi.mocked(createAlertContext.useCreateAlertState).mockReturnValue(
 			createMockAlertContextState({
 				notificationSettings: {
 					...INITIAL_NOTIFICATION_SETTINGS_STATE,
@@ -200,7 +206,7 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('selecting "all" option should disable selection of other options', async () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -227,7 +233,7 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('selecting "all" option should remove all other selected options', async () => {
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			currentQuery: {
 				builder: {
 					queryData: [
@@ -239,7 +245,7 @@ describe('MultipleNotifications', () => {
 				},
 			},
 		});
-		jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+		vi.mocked(createAlertContext.useCreateAlertState).mockReturnValue(
 			createMockAlertContextState({
 				notificationSettings: {
 					...INITIAL_NOTIFICATION_SETTINGS_STATE,

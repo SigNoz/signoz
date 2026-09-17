@@ -110,7 +110,7 @@ describe('InviteMembers - Submission', () => {
 	describe('callbacks', () => {
 		it('calls onSuccess when all invites succeed', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const onSuccess = jest.fn();
+			const onSuccess = vi.fn();
 
 			render(
 				<InviteMembers
@@ -137,7 +137,7 @@ describe('InviteMembers - Submission', () => {
 
 		it('calls onAllFailed when all invites fail', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const onAllFailed = jest.fn();
+			const onAllFailed = vi.fn();
 
 			server.use(createErrorHandler('already_exists', 'User already exists'));
 
@@ -174,9 +174,9 @@ describe('InviteMembers - Submission', () => {
 
 		it('calls onPartialSuccess when some invites succeed and some fail', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const onPartialSuccess = jest.fn();
-			const onSuccess = jest.fn();
-			const onAllFailed = jest.fn();
+			const onPartialSuccess = vi.fn();
+			const onSuccess = vi.fn();
+			const onAllFailed = vi.fn();
 			const apiCalls: string[] = [];
 			let callCount = 0;
 
@@ -233,19 +233,21 @@ describe('InviteMembers - Submission', () => {
 			});
 
 			expect(apiCalls).toStrictEqual(['alice@signoz.io', 'bob@signoz.io']);
+			await waitFor(() => {
+				expect(onPartialSuccess).toHaveBeenCalledWith(
+					expect.arrayContaining([
+						expect.objectContaining({ email: 'alice@signoz.io', success: true }),
+						expect.objectContaining({
+							email: 'bob@signoz.io',
+							success: false,
+							error: 'User already exists',
+						}),
+					]),
+					expect.any(Array),
+				);
+			});
 			expect(onSuccess).not.toHaveBeenCalled();
 			expect(onAllFailed).not.toHaveBeenCalled();
-			expect(onPartialSuccess).toHaveBeenCalledWith(
-				expect.arrayContaining([
-					expect.objectContaining({ email: 'alice@signoz.io', success: true }),
-					expect.objectContaining({
-						email: 'bob@signoz.io',
-						success: false,
-						error: 'User already exists',
-					}),
-				]),
-				expect.any(Array),
-			);
 
 			await expect(
 				screen.findByTestId('invite-api-error'),

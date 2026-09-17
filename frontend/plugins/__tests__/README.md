@@ -6,9 +6,9 @@ Tests for the custom oxlint rules in `plugins/rules/`.
 pnpm test:plugins
 ```
 
-Runs on `node --test` rather than jest. The jest config is built for application
-code — jsdom, ts-jest ESM transforms, a large `transformIgnorePatterns` wall —
-and none of it applies to a suite whose only job is to shell out to the linter.
+Runs on `node --test` rather than the app's test runner. `vitest.config.ts` is
+built for application code (a browser page, app aliases, msw) and none of it
+applies to a suite whose only job is to shell out to the linter.
 
 ## Why it drives the real binary
 

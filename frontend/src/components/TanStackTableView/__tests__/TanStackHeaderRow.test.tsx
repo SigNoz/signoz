@@ -1,15 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import type { Mock } from 'vitest';
+
 import TanStackHeaderRow from '../TanStackHeaderRow';
 import type { TableColumnDef } from '../types';
 
-jest.mock('@dnd-kit/sortable', () => ({
+vi.mock('@dnd-kit/sortable', () => ({
 	useSortable: (): any => ({
 		attributes: {},
 		listeners: {},
-		setNodeRef: jest.fn(),
-		setActivatorNodeRef: jest.fn(),
+		setNodeRef: vi.fn(),
+		setActivatorNodeRef: vi.fn(),
 		transform: null,
 		transition: null,
 		isDragging: false,
@@ -33,7 +35,7 @@ const header = {
 		getIsResizing: () => false,
 		columnDef: { header: 'col' },
 	},
-	getResizeHandler: () => jest.fn(),
+	getResizeHandler: () => vi.fn(),
 	getContext: () => ({}),
 } as never;
 
@@ -98,7 +100,7 @@ describe('TanStackHeaderRow', () => {
 
 	it('shows remove button when enableRemove and canRemoveColumn are true', async () => {
 		const user = userEvent.setup();
-		const onRemoveColumn = jest.fn();
+		const onRemoveColumn = vi.fn();
 		render(
 			<table>
 				<thead>
@@ -131,7 +133,7 @@ describe('TanStackHeaderRow', () => {
 							isDarkMode={false}
 							hasSingleColumn={false}
 							canRemoveColumn
-							onRemoveColumn={jest.fn()}
+							onRemoveColumn={vi.fn()}
 						/>
 					</tr>
 				</thead>
@@ -152,13 +154,13 @@ describe('TanStackHeaderRow', () => {
 				getIsResizing: (): boolean => false,
 				columnDef: { header: 'Sortable', enableSort: true },
 			},
-			getResizeHandler: (): jest.Mock => jest.fn(),
+			getResizeHandler: (): Mock => vi.fn(),
 			getContext: (): Record<string, unknown> => ({}),
 		} as never;
 
 		it('calls onSort with asc when clicking unsorted column', async () => {
 			const user = userEvent.setup();
-			const onSort = jest.fn();
+			const onSort = vi.fn();
 			render(
 				<table>
 					<thead>
@@ -185,7 +187,7 @@ describe('TanStackHeaderRow', () => {
 
 		it('calls onSort with desc when clicking asc-sorted column', async () => {
 			const user = userEvent.setup();
-			const onSort = jest.fn();
+			const onSort = vi.fn();
 			render(
 				<table>
 					<thead>
@@ -212,7 +214,7 @@ describe('TanStackHeaderRow', () => {
 
 		it('calls onSort with null when clicking desc-sorted column', async () => {
 			const user = userEvent.setup();
-			const onSort = jest.fn();
+			const onSort = vi.fn();
 			render(
 				<table>
 					<thead>
@@ -244,7 +246,7 @@ describe('TanStackHeaderRow', () => {
 								header={sortableHeader}
 								isDarkMode={false}
 								hasSingleColumn={false}
-								onSort={jest.fn()}
+								onSort={vi.fn()}
 								orderBy={{ columnName: 'sortable', order: 'asc' }}
 							/>
 						</tr>
@@ -265,7 +267,7 @@ describe('TanStackHeaderRow', () => {
 								header={sortableHeader}
 								isDarkMode={false}
 								hasSingleColumn={false}
-								onSort={jest.fn()}
+								onSort={vi.fn()}
 								orderBy={{ columnName: 'sortable', order: 'desc' }}
 							/>
 						</tr>

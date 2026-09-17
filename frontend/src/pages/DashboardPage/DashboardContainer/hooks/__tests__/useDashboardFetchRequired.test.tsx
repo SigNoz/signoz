@@ -2,9 +2,9 @@ import { renderHook } from '@testing-library/react';
 
 import { useDashboardFetchRequired } from '../useDashboardFetchRequired';
 
-const mockUseGetDashboardV2 = jest.fn();
+const mockUseGetDashboardV2 = vi.fn();
 
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/store/useDashboardStore',
 	() => ({
 		useDashboardStore: (
@@ -13,7 +13,7 @@ jest.mock(
 	}),
 );
 
-jest.mock('api/generated/services/dashboard', () => ({
+vi.mock('api/generated/services/dashboard', () => ({
 	useGetDashboardV2: (): unknown => mockUseGetDashboardV2(),
 }));
 
@@ -45,7 +45,7 @@ describe('useDashboardFetchRequired', () => {
 		mockUseGetDashboardV2.mockReturnValue({ data: undefined });
 
 		// Suppress React's expected render-error logging for this case.
-		const consoleError = jest
+		const consoleError = vi
 			.spyOn(console, 'error')
 			.mockImplementation(() => undefined);
 

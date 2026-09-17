@@ -31,40 +31,40 @@ import {
 
 import { testLabelInputAndHelpValue } from './testUtils';
 
-const successNotification = jest.fn();
-const errorNotification = jest.fn();
-jest.mock('hooks/useNotifications', () => ({
+const successNotification = vi.fn();
+const errorNotification = vi.fn();
+vi.mock('hooks/useNotifications', () => ({
 	__esModule: true,
-	useNotifications: jest.fn(() => ({
+	useNotifications: vi.fn(() => ({
 		notifications: {
 			success: successNotification,
 			error: errorNotification,
 		},
 	})),
 }));
-const showErrorModal = jest.fn();
-jest.mock('providers/ErrorModalProvider', () => ({
+const showErrorModal = vi.fn();
+vi.mock('providers/ErrorModalProvider', async () => ({
 	__esModule: true,
-	...jest.requireActual('providers/ErrorModalProvider'),
-	useErrorModal: jest.fn(() => ({
+	...(await vi.importActual('providers/ErrorModalProvider')),
+	useErrorModal: vi.fn(() => ({
 		showErrorModal,
 	})),
 }));
 
-jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
-	MarkdownRenderer: jest.fn(() => <div>Mocked MarkdownRenderer</div>),
+vi.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+	MarkdownRenderer: vi.fn(() => <div>Mocked MarkdownRenderer</div>),
 }));
 
 describe('Create Alert Channel', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 	describe('Should check if the new alert channel is properly displayed with the cascading fields of slack channel', () => {
 		beforeEach(() => {
 			render(<CreateAlertChannels preType={ChannelType.Slack} />);
 		});
 		afterEach(() => {
-			jest.clearAllMocks();
+			vi.clearAllMocks();
 		});
 		it('Should check if the title is "New Notification Channels"', () => {
 			expect(screen.getByText('page_title_create')).toBeInTheDocument();
@@ -443,7 +443,7 @@ describe('Create Alert Channel', () => {
 			});
 
 			// paste instead of type: a per-keystroke re-render of the whole form
-			// pushes these tests past the 5s jest timeout on slower CI runners
+			// pushes these tests past the 5s default timeout on slower CI runners
 			async function fillField(
 				user: ReturnType<typeof userEvent.setup>,
 				testId: string,

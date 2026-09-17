@@ -14,12 +14,14 @@ import {
 	QuerySearchV2ProviderProps,
 } from '../QuerySearchV2.provider';
 
-const mockSetQueryState = jest.fn();
-let mockUrlValue: string | null = null;
+const { mockSetQueryState, mockUrlState } = vi.hoisted(() => ({
+	mockSetQueryState: vi.fn(),
+	mockUrlState: { value: null as string | null },
+}));
 
-jest.mock('nuqs', () => ({
+vi.mock('nuqs', () => ({
 	parseAsString: {},
-	useQueryState: jest.fn(() => [mockUrlValue, mockSetQueryState]),
+	useQueryState: vi.fn(() => [mockUrlState.value, mockSetQueryState]),
 }));
 
 function createWrapper(
@@ -54,8 +56,8 @@ function useTestHooks(): {
 
 describe('QuerySearchExpressionProvider', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		mockUrlValue = null;
+		vi.clearAllMocks();
+		mockUrlState.value = null;
 	});
 
 	it('should provide initial context values', () => {
@@ -100,7 +102,7 @@ describe('QuerySearchExpressionProvider', () => {
 	});
 
 	it('should initialize from URL value on mount', () => {
-		mockUrlValue = 'status = 500';
+		mockUrlState.value = 'status = 500';
 
 		const { result } = renderHook(() => useTestHooks(), {
 			wrapper: createWrapper(),

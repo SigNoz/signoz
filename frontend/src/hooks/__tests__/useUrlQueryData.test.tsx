@@ -7,8 +7,8 @@ import { createMemoryHistory } from 'history';
 import useUrlQueryData from '../useUrlQueryData';
 
 // Mock the useSafeNavigate hook
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
+const { mockSafeNavigate } = vi.hoisted(() => ({ mockSafeNavigate: vi.fn() }));
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: () => ({
 		safeNavigate: mockSafeNavigate,
 	}),
@@ -16,7 +16,7 @@ jest.mock('hooks/useSafeNavigate', () => ({
 
 describe('useUrlQueryData', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	const renderHookWithRouter = (
@@ -26,15 +26,13 @@ describe('useUrlQueryData', () => {
 	) => {
 		const history = createMemoryHistory({ initialEntries });
 
-		// Mock window.location.search to match the current route
-		Object.defineProperty(window, 'location', {
-			value: {
-				search: history.location.search,
-				pathname: history.location.pathname,
-				origin: 'http://localhost',
-			},
-			writable: true,
-		});
+		// redirectWithQuery reads window.location.search, which browsers refuse
+		// to redefine — sync the real page URL with the memory route instead.
+		window.history.replaceState(
+			null,
+			'',
+			history.location.pathname + history.location.search,
+		);
 
 		return renderHook(() => useUrlQueryData(queryKey, defaultData), {
 			wrapper: ({ children }) => <Router history={history}>{children}</Router>,
@@ -72,7 +70,7 @@ describe('useUrlQueryData', () => {
 
 		it('should handle invalid JSON and return default data', () => {
 			const defaultData = { default: 'value' };
-			const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 			const { result } = renderHookWithRouter('testKey', defaultData, [
 				'/test?testKey=invalid-json',
@@ -91,7 +89,7 @@ describe('useUrlQueryData', () => {
 
 		it('should handle malformed JSON and return default data', () => {
 			const defaultData = { default: 'value' };
-			const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 			const { result } = renderHookWithRouter(
 				'testKey',

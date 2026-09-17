@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -5,7 +6,7 @@ import ContextLinksSection from '../ContextLinksSection';
 
 // The variable-source hook reads the query-builder provider + store; stub it so the
 // editor can be exercised in isolation (its own suite covers the sourcing logic).
-jest.mock('../useContextLinkVariables', () => ({
+vi.mock('../useContextLinkVariables', () => ({
 	useContextLinkVariables: (): unknown => [
 		{ name: 'timestamp_start', source: 'Global timestamp' },
 		{ name: 'env', source: 'Dashboard variable' },
@@ -16,19 +17,19 @@ const LINKS: DashboardtypesLinkDTO[] = [
 	{ name: 'Docs', url: 'https://signoz.io', targetBlank: true },
 ];
 
-const lastCall = (fn: jest.Mock): DashboardtypesLinkDTO[] =>
+const lastCall = (fn: Mock): DashboardtypesLinkDTO[] =>
 	fn.mock.calls[fn.mock.calls.length - 1][0];
 
 describe('ContextLinksSection', () => {
 	it('renders only the add button when there are no links', () => {
-		render(<ContextLinksSection value={undefined} onChange={jest.fn()} />);
+		render(<ContextLinksSection value={undefined} onChange={vi.fn()} />);
 
 		expect(screen.getByTestId('panel-editor-v2-add-link')).toBeInTheDocument();
 		expect(screen.queryByTestId('context-link-item-0')).not.toBeInTheDocument();
 	});
 
 	it('renders existing links as list items showing the label', () => {
-		render(<ContextLinksSection value={LINKS} onChange={jest.fn()} />);
+		render(<ContextLinksSection value={LINKS} onChange={vi.fn()} />);
 
 		expect(screen.getByTestId('context-link-item-0')).toHaveTextContent('Docs');
 		// The editor is a modal — no inline fields until it's opened.
@@ -36,7 +37,7 @@ describe('ContextLinksSection', () => {
 	});
 
 	it('adds a link through the dialog (Save gated on a valid URL)', async () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<ContextLinksSection value={[]} onChange={onChange} />);
 
 		fireEvent.click(screen.getByTestId('panel-editor-v2-add-link'));
@@ -64,7 +65,7 @@ describe('ContextLinksSection', () => {
 	});
 
 	it('edits an existing link through the dialog', async () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<ContextLinksSection value={LINKS} onChange={onChange} />);
 
 		fireEvent.click(screen.getByTestId('context-link-edit-0'));
@@ -89,7 +90,7 @@ describe('ContextLinksSection', () => {
 	});
 
 	it('removes a link from the list', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<ContextLinksSection value={LINKS} onChange={onChange} />);
 
 		fireEvent.click(screen.getByTestId('context-link-remove-0'));
@@ -98,7 +99,7 @@ describe('ContextLinksSection', () => {
 	});
 
 	it('shows a validation error only for a malformed URL', async () => {
-		render(<ContextLinksSection value={[]} onChange={jest.fn()} />);
+		render(<ContextLinksSection value={[]} onChange={vi.fn()} />);
 		fireEvent.click(screen.getByTestId('panel-editor-v2-add-link'));
 
 		const urlInput = await screen.findByTestId('context-link-url');
@@ -114,7 +115,7 @@ describe('ContextLinksSection', () => {
 	});
 
 	it('adds a URL parameter and writes it into the URL query string', async () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(<ContextLinksSection value={[]} onChange={onChange} />);
 		fireEvent.click(screen.getByTestId('panel-editor-v2-add-link'));
 
@@ -133,7 +134,7 @@ describe('ContextLinksSection', () => {
 	});
 
 	it('inserts a {{variable}} into the URL from the autocomplete popover', async () => {
-		render(<ContextLinksSection value={[]} onChange={jest.fn()} />);
+		render(<ContextLinksSection value={[]} onChange={vi.fn()} />);
 		fireEvent.click(screen.getByTestId('panel-editor-v2-add-link'));
 
 		const urlInput = await screen.findByTestId('context-link-url');

@@ -18,7 +18,7 @@ import {
 import QueryBuilderSearchV2 from '../QueryBuilderSearchV2';
 import SpanScopeSelector from '../SpanScopeSelector';
 
-const mockRedirectWithQueryBuilderData = jest.fn();
+const mockRedirectWithQueryBuilderData = vi.fn();
 
 const SCOPE_KEYS = ['isRoot', 'isEntryPoint'];
 const isScopeFilter = (filter: TagFilterItem): boolean =>
@@ -129,7 +129,7 @@ const selectOption = async (optionText: string): Promise<void> => {
 
 describe('SpanScopeSelector', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should render with default ALL_SPANS selected', () => {
@@ -229,7 +229,7 @@ describe('SpanScopeSelector', () => {
 	});
 
 	describe('when onChange and query props are provided', () => {
-		const mockOnChange = jest.fn();
+		const mockOnChange = vi.fn();
 
 		const createLocalQuery = (
 			filterItems: TagFilterItem[] = [],

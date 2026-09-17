@@ -23,7 +23,7 @@ import { render, screen, waitFor } from 'tests/test-utils';
 
 describe('ComponentName - AuthZ', () => {
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     server.resetHandlers();  // reset MSW handlers after each test
   });
 

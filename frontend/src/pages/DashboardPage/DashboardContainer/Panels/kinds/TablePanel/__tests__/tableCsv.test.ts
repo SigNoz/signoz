@@ -1,3 +1,4 @@
+import type { MockedFunction } from 'vitest';
 import type {
 	PanelQueryData,
 	PanelTable,
@@ -8,19 +9,19 @@ import { prepareScalarTables } from '../../../../queryV5/prepareScalarTables';
 import { buildTableCsvRows, getTableCsvRows } from '../tableCsv';
 
 // Stub number/unit formatting so assertions cover only the row-building.
-jest.mock('../../../utils/formatPanelValue', () => ({
+vi.mock('../../../utils/formatPanelValue', () => ({
 	formatPanelValue: (value: number, unit?: string): string =>
 		`${value}${unit ?? ''}`,
 }));
 
-jest.mock('../../../../queryV5/prepareScalarTables', () => ({
-	prepareScalarTables: jest.fn(),
+vi.mock('../../../../queryV5/prepareScalarTables', () => ({
+	prepareScalarTables: vi.fn(),
 }));
-jest.mock('../../../../queryV5/v5ResponseData', () => ({
-	getScalarResults: jest.fn(() => []),
+vi.mock('../../../../queryV5/v5ResponseData', () => ({
+	getScalarResults: vi.fn(() => []),
 }));
 
-const mockPrepareScalarTables = prepareScalarTables as jest.MockedFunction<
+const mockPrepareScalarTables = prepareScalarTables as MockedFunction<
 	typeof prepareScalarTables
 >;
 
@@ -85,7 +86,7 @@ describe('getTableCsvRows', () => {
 	} as unknown as PanelOfKind<'signoz/TablePanel'>;
 	const data = {} as PanelQueryData;
 
-	beforeEach(() => jest.clearAllMocks());
+	beforeEach(() => vi.clearAllMocks());
 
 	it('prepares the scalar table and flattens the first non-empty one to rows', () => {
 		mockPrepareScalarTables.mockReturnValue([table]);

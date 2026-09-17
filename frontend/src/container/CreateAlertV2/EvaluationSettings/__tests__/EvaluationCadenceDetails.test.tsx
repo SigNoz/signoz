@@ -2,30 +2,40 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import * as alertState from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
 import { AdvancedOptionsState } from 'container/CreateAlertV2/context/types';
+import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 
 import EvaluationCadenceDetails from '../EvaluationCadence/EvaluationCadenceDetails';
 import { createMockAlertContextState } from './testUtils';
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 const ENTER_RRULE_PLACEHOLDER = 'Enter RRule';
 
-jest.mock('dayjs', () => {
-	const actualDayjs = jest.requireActual('dayjs');
-	const mockDayjs = (date?: any): any => {
-		if (date) {
-			return actualDayjs(date);
-		}
-		// 21 Jan 2025
-		return actualDayjs('2025-01-21T16:31:36.982Z');
-	};
-	Object.keys(actualDayjs).forEach((key) => {
-		if (typeof (actualDayjs as any)[key] === 'function') {
-			(mockDayjs as any)[key] = (actualDayjs as any)[key];
-		}
-	});
-	(mockDayjs as any).tz = {
-		guess: (): string => 'Asia/Saigon',
-	};
-	return mockDayjs;
+// Frozen "now" for this file (21 Jan 2025). See the note below on why time is
+// frozen with fake timers instead of a dayjs module mock.
+const FROZEN_NOW = new Date('2025-01-21T16:31:36.982Z');
+
+// Freezing "now" at 21 Jan 2025 by mocking the 'dayjs' module does not work
+// here, nor does pinning `dayjs.tz.guess()` that way: in browser
+// mode the default import of a mocked pre-bundled (CJS) dependency lands on
+// the whole factory record instead of its `default` export (verified with a
+// probe: jsdom reads `.default`, browser reads the record), so the component
+// would receive a non-callable. Freeze time with fake timers and stub `guess`
+// (a plain-object method, safe for `vi.spyOn`) instead — same observable
+// behaviour in both environments.
+vi.spyOn(dayjs.tz, 'guess').mockReturnValue('Asia/Saigon');
+
+beforeEach(() => {
+	vi.useFakeTimers();
+	// 21 Jan 2025
+	vi.setSystemTime(FROZEN_NOW);
+});
+
+afterEach(() => {
+	vi.useRealTimers();
 });
 
 const INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE: AdvancedOptionsState =
@@ -37,16 +47,20 @@ const INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE: AdvancedOptionsState 
 		},
 	};
 
-const mockSetAdvancedOptions = jest.fn();
-jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
+const mockSetAdvancedOptions = vi.fn();
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('container/CreateAlertV2/context', { spy: true });
+vi.mocked(alertState.useCreateAlertState).mockReturnValue(
 	createMockAlertContextState({
 		advancedOptions: INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
 		setAdvancedOptions: mockSetAdvancedOptions,
 	}),
 );
 
-const mockSetIsOpen = jest.fn();
-const mockSetIsCustomScheduleButtonVisible = jest.fn();
+const mockSetIsOpen = vi.fn();
+const mockSetIsCustomScheduleButtonVisible = vi.fn();
 
 const SCHEDULE_PREVIEW_TEST_ID = 'schedule-preview';
 const NO_SCHEDULE_TEST_ID = 'no-schedule';
@@ -105,7 +119,7 @@ describe('EvaluationCadenceDetails', () => {
 	});
 
 	it('when showing weekly occurence, the occurence options should be rendered', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.mocked(alertState.useCreateAlertState).mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
@@ -137,7 +151,7 @@ describe('EvaluationCadenceDetails', () => {
 	});
 
 	it('render schedule preview in weekly occurence when days are selected', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.mocked(alertState.useCreateAlertState).mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
@@ -167,7 +181,7 @@ describe('EvaluationCadenceDetails', () => {
 	});
 
 	it('when showing monthly occurence, the occurence options should be rendered', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.mocked(alertState.useCreateAlertState).mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
@@ -199,7 +213,7 @@ describe('EvaluationCadenceDetails', () => {
 	});
 
 	it('render schedule preview in monthly occurence when days are selected', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.mocked(alertState.useCreateAlertState).mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE,
@@ -251,6 +265,12 @@ describe('EvaluationCadenceDetails', () => {
 		);
 		fireEvent.click(screen.getByText(SAVE_CUSTOM_SCHEDULE_TEXT));
 		expect(mockSetAdvancedOptions).toHaveBeenCalledTimes(2);
+		// The component stamps `startAt` from `dayjs()` at render time, which is
+		// the frozen clock here, while INITIAL_*_STATE was built at import time
+		// from the real clock — so the expected payload pins both `startAt`
+		// fields to the frozen instant (rendered in the local timezone, exactly
+		// as the component formats it) instead of spreading INITIAL's.
+		const expectedStartAt = dayjs(FROZEN_NOW).format('HH:mm:ss');
 		expect(mockSetAdvancedOptions).toHaveBeenCalledWith({
 			type: 'SET_EVALUATION_CADENCE',
 			payload: {
@@ -258,8 +278,14 @@ describe('EvaluationCadenceDetails', () => {
 				custom: {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE.evaluationCadence
 						.custom,
+					startAt: expectedStartAt,
 					// today selected by default
 					occurence: [new Date().getDate().toString()],
+				},
+				rrule: {
+					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE.evaluationCadence
+						.rrule,
+					startAt: expectedStartAt,
 				},
 			},
 		});

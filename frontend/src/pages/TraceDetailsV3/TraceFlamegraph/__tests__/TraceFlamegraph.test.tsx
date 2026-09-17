@@ -1,3 +1,4 @@
+import type { MockedFunction } from 'vitest';
 import { render } from '@testing-library/react';
 import useGetTraceFlamegraphV3 from 'hooks/trace/useGetTraceFlamegraphV3';
 import { AllTheProviders } from 'tests/test-utils';
@@ -6,10 +7,10 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { FLAMEGRAPH_SPAN_LIMIT } from '../constants';
 import TraceFlamegraph from '../TraceFlamegraph';
 
-jest.mock('hooks/trace/useGetTraceFlamegraphV3');
+vi.mock('hooks/trace/useGetTraceFlamegraphV3');
 
 // Short-circuit the worker so the test doesn't depend on layout computation.
-jest.mock('../hooks/useVisualLayoutWorker', () => ({
+vi.mock('../hooks/useVisualLayoutWorker', () => ({
 	useVisualLayoutWorker: (): unknown => ({
 		layout: { totalVisualRows: 0, visualRows: [] },
 		isComputing: false,
@@ -17,8 +18,9 @@ jest.mock('../hooks/useVisualLayoutWorker', () => ({
 	}),
 }));
 
-const mockUseGetTraceFlamegraph =
-	useGetTraceFlamegraphV3 as jest.MockedFunction<typeof useGetTraceFlamegraphV3>;
+const mockUseGetTraceFlamegraph = useGetTraceFlamegraphV3 as MockedFunction<
+	typeof useGetTraceFlamegraphV3
+>;
 
 function renderFlamegraph(props: {
 	selectedSpan: SpanV3 | undefined;

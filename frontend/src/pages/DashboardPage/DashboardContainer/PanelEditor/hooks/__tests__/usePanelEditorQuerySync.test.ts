@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import type {
 	DashboardtypesPanelDTO,
@@ -12,31 +13,31 @@ import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { fromPerses, toPerses } from '../../../queryV5/persesQueryAdapters';
 import { usePanelEditorQuerySync } from '../usePanelEditorQuerySync';
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
-jest.mock('hooks/queryBuilder/useShareBuilderUrl', () => ({
-	useShareBuilderUrl: jest.fn(),
+vi.mock('hooks/queryBuilder/useShareBuilderUrl', () => ({
+	useShareBuilderUrl: vi.fn(),
 }));
-jest.mock('lib/query/panelQuery', () => ({
-	getIsQueryModified: jest.fn(),
+vi.mock('lib/query/panelQuery', () => ({
+	getIsQueryModified: vi.fn(),
 }));
-jest.mock('../../../queryV5/persesQueryAdapters', () => ({
-	fromPerses: jest.fn(),
-	toPerses: jest.fn(),
+vi.mock('../../../queryV5/persesQueryAdapters', () => ({
+	fromPerses: vi.fn(),
+	toPerses: vi.fn(),
 }));
 // commitQuery's no-op guard compares queries at the envelope level; with the
 // adapters mocked, unwrap identity-style so the opaque fixtures stay distinct
 // (CONVERTED vs SAVED) and the commit decisions are what's under test.
-jest.mock('../../../queryV5/buildQueryRangeRequest', () => ({
-	toQueryEnvelopes: jest.fn((queries: unknown) => queries),
+vi.mock('../../../queryV5/buildQueryRangeRequest', () => ({
+	toQueryEnvelopes: vi.fn((queries: unknown) => queries),
 }));
 
-const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
-const mockUseShareBuilderUrl = useShareBuilderUrl as unknown as jest.Mock;
-const mockGetIsQueryModified = getIsQueryModified as unknown as jest.Mock;
-const mockFromPerses = fromPerses as unknown as jest.Mock;
-const mockToPerses = toPerses as unknown as jest.Mock;
+const mockUseQueryBuilder = useQueryBuilder as unknown as Mock;
+const mockUseShareBuilderUrl = useShareBuilderUrl as unknown as Mock;
+const mockGetIsQueryModified = getIsQueryModified as unknown as Mock;
+const mockFromPerses = fromPerses as unknown as Mock;
+const mockToPerses = toPerses as unknown as Mock;
 
 // Opaque fixtures — the adapters are mocked, so only identity matters here.
 const SAVED_QUERIES = [{ id: 'saved' }] as unknown as NonNullable<
@@ -66,24 +67,24 @@ function builderState(
 	overrides: Partial<{
 		currentQuery: Query;
 		stagedQuery: Query | null;
-		handleRunQuery: jest.Mock;
+		handleRunQuery: Mock;
 	}> = {},
 ): {
 	currentQuery: Query;
 	stagedQuery: Query | null;
-	handleRunQuery: jest.Mock;
+	handleRunQuery: Mock;
 } {
 	return {
 		currentQuery: { id: 'current', queryType: 'builder' } as unknown as Query,
 		stagedQuery: STAGED_V1,
-		handleRunQuery: jest.fn(),
+		handleRunQuery: vi.fn(),
 		...overrides,
 	};
 }
 
 describe('usePanelEditorQuerySync', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockFromPerses.mockReturnValue(SEED_V1);
 		mockToPerses.mockReturnValue(CONVERTED_QUERIES);
 		mockGetIsQueryModified.mockReturnValue(false);
@@ -93,8 +94,8 @@ describe('usePanelEditorQuerySync', () => {
 	function setup(
 		opts: {
 			draft?: DashboardtypesPanelDTO;
-			setSpec?: jest.Mock;
-			refetch?: jest.Mock;
+			setSpec?: Mock;
+			refetch?: Mock;
 			savedQueries?: DashboardtypesPanelSpecDTO['queries'];
 		} = {},
 	): {
@@ -107,12 +108,12 @@ describe('usePanelEditorQuerySync', () => {
 				) => DashboardtypesPanelSpecDTO;
 			};
 		};
-		setSpec: jest.Mock;
-		refetch: jest.Mock;
+		setSpec: Mock;
+		refetch: Mock;
 		rerender: () => void;
 	} {
-		const setSpec = opts.setSpec ?? jest.fn();
-		const refetch = opts.refetch ?? jest.fn();
+		const setSpec = opts.setSpec ?? vi.fn();
+		const refetch = opts.refetch ?? vi.fn();
 		const draft = opts.draft ?? makeDraft();
 		const { result, rerender } = renderHook(() =>
 			usePanelEditorQuerySync({
@@ -160,7 +161,7 @@ describe('usePanelEditorQuerySync', () => {
 
 	describe('runQuery', () => {
 		it('stages the query (handleRunQuery)', () => {
-			const handleRunQuery = jest.fn();
+			const handleRunQuery = vi.fn();
 			mockUseQueryBuilder.mockReturnValue(builderState({ handleRunQuery }));
 			const { result } = setup();
 

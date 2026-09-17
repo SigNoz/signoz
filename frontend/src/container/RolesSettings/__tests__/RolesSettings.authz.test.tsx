@@ -4,7 +4,7 @@ import {
 } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils-full';
 import {
 	invalidLicense,
 	setupAuthzAdmin,

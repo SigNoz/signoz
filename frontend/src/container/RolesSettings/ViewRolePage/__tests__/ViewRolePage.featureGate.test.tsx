@@ -14,11 +14,14 @@ import {
 	CUSTOM_ROLE_NAME,
 } from './testUtils';
 
+vi.mock('api/generated/services/role', { spy: true });
+vi.mock('../../hooks/useRolePermissions', { spy: true });
+
 describe('ViewRolePage - Feature Gate', () => {
 	beforeEach(() => {
 		server.use(setupAuthzAdmin());
 
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: undefined,
 			isLoading: false,
 			isError: false,
@@ -27,7 +30,7 @@ describe('ViewRolePage - Feature Gate', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 

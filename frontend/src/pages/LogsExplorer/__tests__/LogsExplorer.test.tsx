@@ -13,56 +13,54 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { fireEvent, render, waitFor } from 'tests/test-utils';
+import { fireEvent, render, waitFor } from 'tests/test-utils-full';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import LogsExplorer from '../index';
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.LOGS_EXPLORER}`,
 	}),
 }));
 
 // mocking the graph components in this test as this should be handled separately
-jest.mock(
-	'container/TimeSeriesView/TimeSeriesView',
-	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		function TimeSeriesView() {
-			return <div>Time Series Chart</div>;
-		},
-);
+vi.mock('container/TimeSeriesView/TimeSeriesView', () => ({
+	__esModule: true,
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	default: function TimeSeriesView() {
+		return <div>Time Series Chart</div>;
+	},
+}));
 
 const frequencyChartContent = 'Frequency chart content';
-jest.mock(
-	'container/LogsExplorerChart',
-	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		function LogsExplorerChart() {
-			return <div>{frequencyChartContent}</div>;
-		},
-);
+vi.mock('container/LogsExplorerChart', () => ({
+	__esModule: true,
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	default: function LogsExplorerChart() {
+		return <div>{frequencyChartContent}</div>;
+	},
+}));
 
-jest.mock('constants/panelTypes', () => ({
+vi.mock('constants/panelTypes', () => ({
 	AVAILABLE_EXPORT_PANEL_TYPES: ['graph', 'table'],
 }));
 
-jest.mock('d3-interpolate', () => ({
-	interpolate: jest.fn(),
+vi.mock('d3-interpolate', () => ({
+	interpolate: vi.fn(),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
 // Mock usePreferenceSync
-jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
+vi.mock('providers/preferences/sync/usePreferenceSync', () => ({
 	usePreferenceSync: (): any => ({
 		preferences: {
 			columns: [],
@@ -75,8 +73,8 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 		},
 		loading: false,
 		error: null,
-		updateColumns: jest.fn(),
-		updateFormatting: jest.fn(),
+		updateColumns: vi.fn(),
+		updateFormatting: vi.fn(),
 	}),
 }));
 
@@ -189,7 +187,7 @@ describe('Logs Explorer Tests', () => {
 								queryTraceOperator: [],
 							},
 						},
-						setSupersetQuery: jest.fn(),
+						setSupersetQuery: vi.fn(),
 						supersetQuery: initialQueriesMap.metrics,
 						stagedQuery: initialQueriesMap.metrics,
 						initialDataSource: null,

@@ -75,7 +75,7 @@ describe('ListViewOrderBy', () => {
 		render(
 			<ListViewOrderBy
 				value="last_activity_time:desc"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 				dataSource={DataSource.TRACES}
 				fieldKeysConfig={TRACE_VIEW_FIELD_KEYS}
 				builderQueryType={TRACE_VIEW_BUILDER_QUERY_TYPE}
@@ -99,7 +99,7 @@ describe('ListViewOrderBy', () => {
 		render(
 			<ListViewOrderBy
 				value="last_activity_time:desc"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 				dataSource={DataSource.TRACES}
 				fieldKeysConfig={TRACE_VIEW_FIELD_KEYS}
 				builderQueryType={TRACE_VIEW_BUILDER_QUERY_TYPE}
@@ -121,7 +121,7 @@ describe('ListViewOrderBy', () => {
 		render(
 			<ListViewOrderBy
 				value="last_activity_time:desc"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 				dataSource={DataSource.TRACES}
 				fieldKeysConfig={TRACE_VIEW_FIELD_KEYS}
 				builderQueryType={TRACE_VIEW_BUILDER_QUERY_TYPE}
@@ -149,7 +149,7 @@ describe('ListViewOrderBy', () => {
 		render(
 			<ListViewOrderBy
 				value="timestamp:desc"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 				dataSource={DataSource.TRACES}
 			/>,
 		);

@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { ReactElement } from 'react';
 import { render, screen } from 'tests/test-utils';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -9,8 +10,8 @@ import AuthZButton from './AuthZButton';
 // AuthZButton is a thin composition over AuthZTooltip + Button. The denial
 // tooltip / disabled-on-deny UX is owned and tested by AuthZTooltip; here we
 // assert AuthZButton forwards the right props and renders a Button child.
-jest.mock('lib/authz/components/AuthZTooltip/AuthZTooltip');
-const mockTooltip = AuthZTooltip as unknown as jest.Mock;
+vi.mock('lib/authz/components/AuthZTooltip/AuthZTooltip');
+const mockTooltip = AuthZTooltip as unknown as Mock;
 
 const createPerm = buildPermission(
 	'create',

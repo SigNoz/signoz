@@ -75,7 +75,7 @@ describe('RouteTab component', () => {
 	});
 
 	it('calls onChangeHandler on tab change', () => {
-		const onChangeHandler = jest.fn();
+		const onChangeHandler = vi.fn();
 		const history = createMemoryHistory();
 		render(
 			<Router history={history}>

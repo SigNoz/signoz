@@ -4,7 +4,7 @@ import {
 } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils-full';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
@@ -47,14 +47,14 @@ function renderDrawer(
 ): ReturnType<typeof render> {
 	return render(
 		<NuqsTestingAdapter searchParams={searchParams} hasMemory>
-			<ServiceAccountDrawer onSuccess={jest.fn()} />
+			<ServiceAccountDrawer onSuccess={vi.fn()} />
 		</NuqsTestingAdapter>,
 	);
 }
 
 describe('ServiceAccountDrawer', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
@@ -97,8 +97,8 @@ describe('ServiceAccountDrawer', () => {
 	});
 
 	it('editing name enables Save; clicking Save sends correct payload and calls onSuccess', async () => {
-		const onSuccess = jest.fn();
-		const updateSpy = jest.fn();
+		const onSuccess = vi.fn();
+		const updateSpy = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
@@ -133,8 +133,8 @@ describe('ServiceAccountDrawer', () => {
 	});
 
 	it('adding a role fires POST for the new role and no DELETE for existing roles', async () => {
-		const roleSpy = jest.fn();
-		const deleteSpy = jest.fn();
+		const roleSpy = vi.fn();
+		const deleteSpy = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
@@ -175,8 +175,8 @@ describe('ServiceAccountDrawer', () => {
 	});
 
 	it('removing a role fires DELETE for the removed role and no POST', async () => {
-		const roleSpy = jest.fn();
-		const deleteSpy = jest.fn();
+		const roleSpy = vi.fn();
+		const deleteSpy = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
@@ -215,7 +215,7 @@ describe('ServiceAccountDrawer', () => {
 	});
 
 	it('"Delete Service Account" opens confirm dialog; confirming sends delete request', async () => {
-		const deleteSpy = jest.fn();
+		const deleteSpy = vi.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
@@ -281,7 +281,7 @@ describe('ServiceAccountDrawer', () => {
 
 		await user.click(screen.getByRole('radio', { name: /Keys/i }));
 
-		await screen.findByText(/No keys/i);
+		await expect(screen.findByText(/No keys/i)).resolves.toBeInTheDocument();
 	});
 
 	it('shows error state when account fetch fails', async () => {
@@ -303,7 +303,7 @@ describe('ServiceAccountDrawer', () => {
 
 describe('ServiceAccountDrawer – save-error UX', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),

@@ -44,7 +44,7 @@ What stays with the app and never reaches a story: Sentry, posthog, `AppProvider
 (Storybook has no user, license or flags to fetch), `PrivateRoute` and the route
 switch.
 
-`tests/test-utils` mounts its own, smaller tree for jest and does not go through
+`tests/test-utils` mounts its own, smaller tree for the tests and does not go through
 them: the suite has ~20 files that mock `hooks/useDarkMode`,
 `hooks/useNotifications` or `providers/cmdKProvider` down to a single export, so
 the providers those modules also carry would come back `undefined`. A provider
@@ -52,7 +52,7 @@ added to the app therefore still needs adding in both places.
 
 Storybook fills the seams with:
 
-- `AppContext` from `tests/fixtures/appContextMock`, the same fixture the jest
+- `AppContext` from `tests/fixtures/appContextMock`, the same fixture the test
   suite uses, so a story and a test see the same user, license and flags.
 - A fresh react-query client and redux store per story: no cache or state bleed.
 - `nuqs` on its testing adapter, so query-param state lives in memory and never
@@ -78,9 +78,9 @@ Handlers resolve first-match-wins, in this order:
 2. the page's control-driven handlers;
 3. the global mocks' handlers (access);
 4. `msw/appShellHandlers.ts`, the endpoints the shell hits on every route, and
-   the ones whose jest fixture is too thin to show it doing its job;
-5. `src/mocks-server/handlers.ts`, the jest handlers verbatim. An endpoint both
-   runners need belongs here so jest gets it too;
+   the ones whose test fixture is too thin to show it doing its job;
+5. `src/mocks-server/handlers.ts`, the test handlers verbatim. An endpoint both
+   runners need belongs here so the tests get it too;
 6. a catch-all for `http://localhost/api/*` that logs and answers 501, so an
    endpoint nobody mocked fails loudly instead of hanging on a refused
    connection.
@@ -259,7 +259,7 @@ controls, and the arg values, it was built with.
 
 ## Module mocks
 
-Aliased for every story in `.storybook/main.ts`, the same way `jest.config.ts`
+Aliased for every story in `.storybook/main.ts`, the same way `vitest.config.ts`
 does it through `moduleNameMapper`. Each replacement is typed as the module it
 stands in for, so an export added to the real module is a compile error here
 rather than a story that fails at render:

@@ -1,7 +1,16 @@
 // Mocks the DOM measurement APIs CodeMirror needs to render in jsdom
 // (Range client rects + element bounding rects). Call from a beforeAll in
 // specs that render the real CodeMirror editor.
+//
+// jsdom-only: a real browser already provides working Range rects, and
+// overriding Element.prototype.getBoundingClientRect there with a plain object
+// breaks Chromium's EditContext integration (updateControlBounds requires a
+// genuine DOMRect), aborting CodeMirror updates. Feature-detect and leave the
+// native implementations alone when they exist.
 export function mockCodeMirrorDomApis(): void {
+	if (typeof document.createRange().getClientRects === 'function') {
+		return;
+	}
 	const mockRect: DOMRect = {
 		width: 100,
 		height: 20,

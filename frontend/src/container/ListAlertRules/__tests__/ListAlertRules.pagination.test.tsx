@@ -8,8 +8,12 @@ import { getCurrentNuqsQueryString } from 'tests/nuqs-helpers';
 import { renderListAlertRules } from './_helpers';
 
 describe('ListAlertRules — pagination', () => {
+	// limit=10 is pinned via the URL: in a real browser useCalculatedPageSize
+	// measures the container through ResizeObserver and would otherwise override
+	// the default limit (under jsdom the container measures 0px so the default
+	// holds). These tests cover pagination mechanics, not auto page sizing.
 	beforeEach(() => {
-		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		vi.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 		server.use(
 			rest.get('http://localhost/api/v2/rules', (_, res, ctx) =>
 				res(
@@ -21,7 +25,7 @@ describe('ListAlertRules — pagination', () => {
 	});
 
 	it('shows first 10 rows on page 1 (default limit)', async () => {
-		renderListAlertRules();
+		renderListAlertRules({ initialRoute: '/?limit=10' });
 
 		await screen.findByText('Pag Rule 0');
 
@@ -33,7 +37,7 @@ describe('ListAlertRules — pagination', () => {
 	});
 
 	it('shows total count when showTotalCount is enabled', async () => {
-		renderListAlertRules();
+		renderListAlertRules({ initialRoute: '/?limit=10' });
 
 		await screen.findByText('Pag Rule 0');
 
@@ -44,7 +48,7 @@ describe('ListAlertRules — pagination', () => {
 
 	it('navigates to page 2 and shows remaining rows', async () => {
 		const user = userEvent.setup({ delay: null });
-		renderListAlertRules();
+		renderListAlertRules({ initialRoute: '/?limit=10' });
 
 		await screen.findByText('Pag Rule 0');
 

@@ -7,17 +7,17 @@ import {
 	type VariableFormModel,
 } from '../variableFormModel';
 
-jest.mock('../../../store/useDashboardStore', () => ({
+vi.mock('../../../store/useDashboardStore', () => ({
 	useDashboardStore: (
 		selector: (s: { dashboardId: string }) => unknown,
 	): unknown => selector({ dashboardId: 'd1' }),
 }));
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn(), info: jest.fn() },
+vi.mock('@signozhq/ui/sonner', () => ({
+	toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
 function builderPanel(name: string, expression: string): unknown {
@@ -60,11 +60,11 @@ function renderActions(
 		useVariableListActions({
 			dashboard: dash,
 			variables,
-			setVariables: jest.fn(),
+			setVariables: vi.fn(),
 			isEditing: null,
-			setIsEditing: jest.fn(),
-			save: jest.fn().mockResolvedValue(true),
-			patchAsync: jest.fn().mockResolvedValue(undefined),
+			setIsEditing: vi.fn(),
+			save: vi.fn().mockResolvedValue(true),
+			patchAsync: vi.fn().mockResolvedValue(undefined),
 		}),
 	);
 }

@@ -18,9 +18,9 @@ describe('PipelinePage container test', () => {
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<CreatePipelineButton
-							setActionType={jest.fn()}
+							setActionType={vi.fn()}
 							isActionMode="viewing-mode"
-							setActionMode={jest.fn()}
+							setActionMode={vi.fn()}
 							pipelineData={pipelineApiResponseMockData}
 						/>
 					</I18nextProvider>
@@ -36,9 +36,9 @@ describe('PipelinePage container test', () => {
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<CreatePipelineButton
-							setActionType={jest.fn()}
+							setActionType={vi.fn()}
 							isActionMode="viewing-mode"
-							setActionMode={jest.fn()}
+							setActionMode={vi.fn()}
 							pipelineData={pipelineApiResponseMockData}
 						/>
 					</I18nextProvider>
@@ -65,9 +65,9 @@ describe('PipelinePage container test', () => {
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<CreatePipelineButton
-							setActionType={jest.fn()}
+							setActionType={vi.fn()}
 							isActionMode="viewing-mode"
-							setActionMode={jest.fn()}
+							setActionMode={vi.fn()}
 							pipelineData={{ ...pipelineApiResponseMockData, pipelines: [] }}
 						/>
 					</I18nextProvider>

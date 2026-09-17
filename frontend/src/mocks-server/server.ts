@@ -1,11 +1,11 @@
-// src/mocks/server.js
-import { rest } from 'msw';
-import { setupServer } from 'msw/node';
+import { rest, setupWorker } from 'msw';
 
 import { handlers } from './handlers';
 
-// This configures a request mocking server with the given request handlers.
-export const server = setupServer(...handlers);
+// Browser mode runs the tests inside a real page, where `msw/node` cannot
+// intercept. `setupWorker` exposes the same `use` and `resetHandlers` surface
+// the suites call; only the bootstrap in `vitest.setup.ts` differs.
+export const server = setupWorker(...handlers);
 
 export * from './utils';
 

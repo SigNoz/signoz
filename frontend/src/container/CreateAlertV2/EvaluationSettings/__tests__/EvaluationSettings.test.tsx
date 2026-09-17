@@ -4,12 +4,17 @@ import * as alertState from 'container/CreateAlertV2/context';
 import EvaluationSettings from '../EvaluationSettings';
 import { createMockAlertContextState } from './testUtils';
 
-jest.mock('container/CreateAlertV2/utils', () => ({
-	...jest.requireActual('container/CreateAlertV2/utils'),
+vi.mock('container/CreateAlertV2/utils', async () => ({
+	...(await vi.importActual('container/CreateAlertV2/utils')),
 }));
 
-const mockSetEvaluationWindow = jest.fn();
-jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('container/CreateAlertV2/context', { spy: true });
+
+const mockSetEvaluationWindow = vi.fn();
+vi.mocked(alertState.useCreateAlertState).mockReturnValue(
 	createMockAlertContextState({
 		setEvaluationWindow: mockSetEvaluationWindow,
 	}),

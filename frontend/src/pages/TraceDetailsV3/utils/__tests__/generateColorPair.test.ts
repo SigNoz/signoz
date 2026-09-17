@@ -61,7 +61,7 @@ describe('reserved status colors', () => {
 
 // Visual inspection table: each palette color paired with its darkenHex(0.22)
 // variant. Confirms the darkening produces a distinct, non-collapsed hex per
-// entry. Run with `yarn jest generateColorPair --verbose` to see the table.
+// entry. Run with `pnpm test generateColorPair --reporter=verbose` to see the table.
 describe('PALETTE_V3 darken-pair table', () => {
 	const PALETTE_NAMES = [
 		'Slate blue',

@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { getPublicDashboardPanelQueryRangeV2 } from 'api/generated/services/dashboard';
 import {
@@ -9,11 +10,11 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { usePublicPanelQuery } from '../usePublicPanelQuery';
 
-jest.mock('api/generated/services/dashboard', () => ({
-	getPublicDashboardPanelQueryRangeV2: jest.fn(),
+vi.mock('api/generated/services/dashboard', () => ({
+	getPublicDashboardPanelQueryRangeV2: vi.fn(),
 }));
 
-const mockFetch = getPublicDashboardPanelQueryRangeV2 as jest.Mock;
+const mockFetch = getPublicDashboardPanelQueryRangeV2 as Mock;
 
 const wrapper = ({ children }: { children: ReactNode }): JSX.Element => {
 	const client = new QueryClient({

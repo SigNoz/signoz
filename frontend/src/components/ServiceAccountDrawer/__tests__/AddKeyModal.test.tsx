@@ -7,26 +7,28 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils-full';
 
 import AddKeyModal from '../AddKeyModal';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-const mockCopyToClipboard = jest.fn();
-const mockCopyState = { value: undefined, error: undefined };
+const { mockCopyToClipboard, mockCopyState } = vi.hoisted(() => ({
+	mockCopyToClipboard: vi.fn(),
+	mockCopyState: { value: undefined, error: undefined },
+}));
 
-jest.mock('react-use', () => ({
+vi.mock('react-use', () => ({
 	useCopyToClipboard: (): [typeof mockCopyState, typeof mockCopyToClipboard] => [
 		mockCopyState,
 		mockCopyToClipboard,
 	],
 }));
 
-const mockToast = jest.mocked(toast);
+const mockToast = vi.mocked(toast);
 
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/sa-1/keys';
 
@@ -53,7 +55,7 @@ function renderModal(): ReturnType<typeof render> {
 
 describe('AddKeyModal', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockCopyToClipboard.mockClear();
 		server.use(
 			rest.post(SA_KEYS_ENDPOINT, (_, res, ctx) =>

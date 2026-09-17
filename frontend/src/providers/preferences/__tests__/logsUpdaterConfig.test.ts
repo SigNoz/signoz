@@ -16,30 +16,26 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';
 
 // Mock localStorage
-const mockLocalStorage: Record<string, string> = {};
+const { mockLocalStorage } = vi.hoisted(() => ({
+	mockLocalStorage: {} as Record<string, string>,
+}));
 
-jest.mock('api/browser/localstorage/set', () => ({
+vi.mock('api/browser/localstorage/get', () => ({
 	__esModule: true,
-	default: jest.fn((key: string, value: string) => {
+	default: vi.fn((key: string) => mockLocalStorage[key] || null),
+}));
+
+vi.mock('api/browser/localstorage/set', () => ({
+	__esModule: true,
+	default: vi.fn((key: string, value: string) => {
 		mockLocalStorage[key] = value;
 	}),
 }));
 
-// Mock localStorage.getItem
-Object.defineProperty(window, 'localStorage', {
-	value: {
-		getItem: jest.fn((key: string) => mockLocalStorage[key] || null),
-		setItem: jest.fn((key: string, value: string) => {
-			mockLocalStorage[key] = value;
-		}),
-	},
-	writable: true,
-});
-
 describe('logsUpdaterConfig', () => {
 	// Mock redirectWithOptionsData and setSavedViewPreferences
-	const redirectWithOptionsData = jest.fn();
-	const setSavedViewPreferences = jest.fn();
+	const redirectWithOptionsData = vi.fn();
+	const setSavedViewPreferences = vi.fn();
 
 	const mockPreferences: Preferences = {
 		columns: [],
@@ -52,7 +48,7 @@ describe('logsUpdaterConfig', () => {
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		// Clear mocked localStorage
 		Object.keys(mockLocalStorage).forEach((key) => {
 			delete mockLocalStorage[key];

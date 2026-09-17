@@ -18,6 +18,10 @@ import {
 } from '../types';
 import * as useInspectMetricsModule from '../useInspectMetrics';
 
+vi.mock('providers/App/App', { spy: true });
+vi.mock('api/generated/services/metrics', { spy: true });
+vi.mock('../useInspectMetrics', { spy: true });
+
 const queryClient = new QueryClient();
 const mockTimeSeries: InspectMetricsSeries[] = [
 	{
@@ -31,7 +35,7 @@ const mockTimeSeries: InspectMetricsSeries[] = [
 	},
 ];
 
-jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
+vi.mocked(appContextHooks.useAppContext).mockReturnValue({
 	user: {
 		role: 'admin',
 	},
@@ -55,7 +59,7 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	},
 } as any);
 
-jest.spyOn(metricsGeneratedAPI, 'useGetMetricMetadata').mockReturnValue({
+vi.mocked(metricsGeneratedAPI.useGetMetricMetadata).mockReturnValue({
 	data: {
 		data: {
 			type: MetrictypesTypeDTO.gauge,
@@ -68,20 +72,12 @@ jest.spyOn(metricsGeneratedAPI, 'useGetMetricMetadata').mockReturnValue({
 	},
 } as any);
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
 	}),
 }));
-
-const mockResizeObserver = jest.fn();
-mockResizeObserver.mockImplementation(() => ({
-	observe: (): void => undefined,
-	unobserve: (): void => undefined,
-	disconnect: (): void => undefined,
-}));
-window.ResizeObserver = mockResizeObserver;
 
 const baseHookReturn: UseInspectMetricsReturnData = {
 	inspectMetricsTimeSeries: [],
@@ -90,28 +86,28 @@ const baseHookReturn: UseInspectMetricsReturnData = {
 	formattedInspectMetricsTimeSeries: [[], []],
 	spaceAggregationLabels: [],
 	metricInspectionOptions: INITIAL_INSPECT_METRICS_OPTIONS,
-	dispatchMetricInspectionOptions: jest.fn(),
+	dispatchMetricInspectionOptions: vi.fn(),
 	inspectionStep: InspectionStep.COMPLETED,
 	isInspectMetricsRefetching: false,
 	spaceAggregatedSeriesMap: new Map(),
 	aggregatedTimeSeries: [],
 	timeAggregatedSeriesMap: new Map(),
-	reset: jest.fn(),
+	reset: vi.fn(),
 };
 
 describe('Inspect', () => {
 	const defaultProps = {
 		metricName: 'test_metric',
 		isOpen: true,
-		onClose: jest.fn(),
+		onClose: vi.fn(),
 	};
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders all components', () => {
-		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
+		vi.mocked(useInspectMetricsModule.useInspectMetrics).mockReturnValue({
 			...baseHookReturn,
 			inspectMetricsTimeSeries: mockTimeSeries,
 			aggregatedTimeSeries: mockTimeSeries,
@@ -131,7 +127,7 @@ describe('Inspect', () => {
 	});
 
 	it('renders loading state', () => {
-		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
+		vi.mocked(useInspectMetricsModule.useInspectMetrics).mockReturnValue({
 			...baseHookReturn,
 			isInspectMetricsLoading: true,
 		});
@@ -148,7 +144,7 @@ describe('Inspect', () => {
 	});
 
 	it('renders empty state', () => {
-		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
+		vi.mocked(useInspectMetricsModule.useInspectMetrics).mockReturnValue({
 			...baseHookReturn,
 			inspectMetricsTimeSeries: [],
 		});
@@ -165,7 +161,7 @@ describe('Inspect', () => {
 	});
 
 	it('renders error state', () => {
-		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
+		vi.mocked(useInspectMetricsModule.useInspectMetrics).mockReturnValue({
 			...baseHookReturn,
 			isInspectMetricsError: true,
 		});

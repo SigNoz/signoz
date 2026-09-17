@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 /* eslint-disable no-restricted-syntax */
 import { act, renderHook } from '@testing-library/react';
 import { TableColumnDef, useColumnStore } from 'components/TanStackTableView';
@@ -7,11 +8,11 @@ import { useInfraMonitoringTablePreferencesStore } from '../useInfraMonitoringTa
 import { useLogEventForColumnCustomized } from '../useLogEventForColumnCustomized';
 import { logInfraColumnCustomizedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
-jest.mock('container/InfraMonitoringK8sV2/Base/events', () => ({
-	logInfraColumnCustomizedEvent: jest.fn(),
+vi.mock('container/InfraMonitoringK8sV2/Base/events', () => ({
+	logInfraColumnCustomizedEvent: vi.fn(),
 }));
 
-const mockLogEvent = logInfraColumnCustomizedEvent as jest.Mock;
+const mockLogEvent = logInfraColumnCustomizedEvent as Mock;
 
 type TestRow = { id: string; name: string };
 

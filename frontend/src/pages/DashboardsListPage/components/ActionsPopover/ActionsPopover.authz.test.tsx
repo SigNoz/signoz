@@ -1,6 +1,6 @@
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils-full';
 import {
 	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
@@ -26,7 +26,7 @@ const baseProps = {
 	source: DashboardtypesSourceDTO.user,
 	isLocked: false,
 	tags: [],
-	onView: jest.fn(),
+	onView: vi.fn(),
 };
 
 async function openMenu(): Promise<void> {
@@ -41,13 +41,13 @@ function deniedScopes(testId: string): string | null {
 
 describe('ActionsPopover - AuthZ', () => {
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
 	describe('laziness', () => {
 		it('fires no permission check until the menu is opened', async () => {
-			const onCheck = jest.fn();
+			const onCheck = vi.fn();
 			server.use(
 				rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
 					onCheck();
@@ -127,8 +127,6 @@ describe('ActionsPopover - AuthZ', () => {
 			expect(screen.getByTestId('dashboard-action-duplicate')).toBeDisabled();
 		});
 	});
-
-	describe('lock', () => {});
 
 	describe('locked dashboard', () => {
 		// Access before state: without the permission, the lock is the wrong thing

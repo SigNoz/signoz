@@ -2,19 +2,21 @@ import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
 import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
-const successNotification = jest.fn();
-jest.mock('hooks/useNotifications', () => ({
+const { successNotification } = vi.hoisted(() => ({
+	successNotification: vi.fn(),
+}));
+vi.mock('hooks/useNotifications', () => ({
 	__esModule: true,
-	useNotifications: jest.fn(() => ({
+	useNotifications: vi.fn(() => ({
 		notifications: {
 			success: successNotification,
-			error: jest.fn(),
+			error: vi.fn(),
 		},
 	})),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALL_CHANNELS}`,
 	}),
@@ -22,16 +24,19 @@ jest.mock('react-router-dom', () => ({
 
 describe('Alert Channels Settings List page', () => {
 	beforeEach(async () => {
-		jest.useFakeTimers();
-		jest.setSystemTime(new Date('2023-10-20'));
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2023-10-20'));
 		render(<AlertChannels />);
 		await waitFor(() =>
 			expect(screen.getByText('sending_channels_note')).toBeInTheDocument(),
 		);
+		// ResizeTable populates its columns in an effect after the data commit,
+		// so wait for the settled table before the sync assertions below.
+		await screen.findByText('column_channel_name');
 	});
 	afterEach(() => {
-		jest.restoreAllMocks();
-		jest.useRealTimers();
+		vi.restoreAllMocks();
+		vi.useRealTimers();
 	});
 	describe('Should display the Alert Channels page properly', () => {
 		it('Should check if "The alerts will be sent to all the configured channels." is visible', () => {
@@ -44,6 +49,9 @@ describe('Alert Channels Settings List page', () => {
 			const helpIcon = screen.getByRole('img', { name: /help/i });
 
 			fireEvent.mouseOver(helpIcon);
+			// antd Tooltip shows after a hover delay driven by setTimeout,
+			// which stays frozen while fake timers are enabled.
+			vi.advanceTimersByTime(1000);
 
 			await waitFor(() => {
 				const tooltip = screen.getByText('tooltip_notification_channels');

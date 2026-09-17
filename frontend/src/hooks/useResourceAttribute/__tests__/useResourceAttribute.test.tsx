@@ -9,9 +9,9 @@ import useResourceAttribute from '../useResourceAttribute';
 
 const queryClient = new QueryClient();
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 

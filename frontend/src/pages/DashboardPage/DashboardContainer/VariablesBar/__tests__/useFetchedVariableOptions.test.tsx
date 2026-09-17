@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -12,14 +13,14 @@ import { VariableFetchState } from '../../store/slices/variableFetchSlice';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { useFetchedVariableOptions } from '../hooks/useFetchedVariableOptions';
 
-jest.mock('react-redux', () => ({ useSelector: jest.fn() }));
+vi.mock('react-redux', () => ({ useSelector: vi.fn() }));
 
-jest.mock('api/dynamicVariables/getFieldValues', () => ({
-	getFieldValues: jest.fn(),
+vi.mock('api/dynamicVariables/getFieldValues', () => ({
+	getFieldValues: vi.fn(),
 }));
 
-const mockUseSelector = useSelector as unknown as jest.Mock;
-const mockGetFieldValues = getFieldValues as unknown as jest.Mock;
+const mockUseSelector = useSelector as unknown as Mock;
+const mockGetFieldValues = getFieldValues as unknown as Mock;
 
 function fieldValues(values: string[]): unknown {
 	return { data: { normalizedValues: values, complete: true } };

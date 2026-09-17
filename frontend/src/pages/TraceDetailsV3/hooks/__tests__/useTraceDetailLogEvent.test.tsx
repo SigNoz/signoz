@@ -3,9 +3,9 @@ import { act, renderHook } from '@testing-library/react';
 import { TraceDetailEvents } from '../../events';
 import { useTraceDetailLogEvent } from '../useTraceDetailLogEvent';
 
-const logEventMock = jest.fn();
+const logEventMock = vi.fn();
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
 	default: (...args: unknown[]): void => logEventMock(...args),
 }));

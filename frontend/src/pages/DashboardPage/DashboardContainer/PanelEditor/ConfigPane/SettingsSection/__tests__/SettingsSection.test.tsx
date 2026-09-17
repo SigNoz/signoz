@@ -35,7 +35,7 @@ describe('SettingsSection', () => {
 
 	it('defers to onOpenChange when open is controlled', async () => {
 		const user = userEvent.setup();
-		const onOpenChange = jest.fn();
+		const onOpenChange = vi.fn();
 		const { rerender } = render(
 			<SettingsSection title="Thresholds" open={false} onOpenChange={onOpenChange}>
 				<div data-testid="body">body</div>

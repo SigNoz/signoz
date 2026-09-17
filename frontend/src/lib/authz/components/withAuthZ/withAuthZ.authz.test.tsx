@@ -20,11 +20,13 @@ import { withAuthZ, RouterContext } from './withAuthZ';
 import { withAuthZContent } from './withAuthZContent';
 import { withAuthZPage } from './withAuthZPage';
 
-const mockUseParams = jest.fn();
-const mockUseLocation = jest.fn();
+const { mockUseParams, mockUseLocation } = vi.hoisted(() => ({
+	mockUseParams: vi.fn(),
+	mockUseLocation: vi.fn(),
+}));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useParams: (): Record<string, string> => mockUseParams(),
 	useLocation: (): { pathname: string; search: string } => mockUseLocation(),
 }));

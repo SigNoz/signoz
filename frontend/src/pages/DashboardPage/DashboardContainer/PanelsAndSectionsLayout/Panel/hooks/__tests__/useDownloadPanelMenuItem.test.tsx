@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { PanelActionCapabilities } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
@@ -5,14 +6,16 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 
 import { useDownloadPanelMenuItem } from '../useDownloadPanelMenuItem';
 
-const mockDownloadCsv = jest.fn();
-jest.mock('../useDownloadPanelCsv', () => ({
-	useDownloadPanelCsv: (): jest.Mock => mockDownloadCsv,
+const { mockDownloadCsv } = vi.hoisted(() => ({ mockDownloadCsv: vi.fn() }));
+vi.mock('../useDownloadPanelCsv', () => ({
+	useDownloadPanelCsv: (): Mock => mockDownloadCsv,
 }));
 
-const mockDownloadImage = jest.fn();
-jest.mock('../useDownloadPanelImage', () => ({
-	useDownloadPanelImage: (): { downloadPanelImage: jest.Mock } => ({
+const { mockDownloadImage } = vi.hoisted(() => ({
+	mockDownloadImage: vi.fn(),
+}));
+vi.mock('../useDownloadPanelImage', () => ({
+	useDownloadPanelImage: (): { downloadPanelImage: Mock } => ({
 		downloadPanelImage: mockDownloadImage,
 	}),
 }));
@@ -43,7 +46,7 @@ function render(actions: PanelActionCapabilities): { current: unknown } {
 }
 
 describe('useDownloadPanelMenuItem', () => {
-	beforeEach(() => jest.clearAllMocks());
+	beforeEach(() => vi.clearAllMocks());
 
 	it('returns null when the kind supports no download format', () => {
 		const result = render(download({ csv: false, png: false, svg: false }));

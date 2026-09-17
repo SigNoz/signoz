@@ -14,21 +14,11 @@ import {
 	renderServiceDetails,
 } from './utils';
 
-// --- RESIZE OBSERVER (required by @radix-ui in Tabs/Switch) ---
-class ResizeObserverMock {
-	observe(): void {}
-
-	unobserve(): void {}
-
-	disconnect(): void {}
-}
-global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
-
 // --- MOCKS ---
-jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+vi.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
 	MarkdownRenderer: (): JSX.Element => <div data-testid="markdown-renderer" />,
 }));
-jest.mock(
+vi.mock(
 	'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards',
 	() => ({
 		__esModule: true,
@@ -36,9 +26,17 @@ jest.mock(
 	}),
 );
 
+const { mockGet } = vi.hoisted(() => ({
+	mockGet: vi.fn((_param: string): string | null => null),
+}));
+vi.mock('hooks/useUrlQuery', () => ({
+	__esModule: true,
+	default: (): { get: (param: string) => string | null } => ({ get: mockGet }),
+}));
+
 let testServiceId = 's3sync';
 let testInitialBuckets: Record<string, string[]> = {};
-const mockGet = jest.fn((param: string) => {
+mockGet.mockImplementation((param: string) => {
 	if (param === 'cloudAccountId') {
 		return CLOUD_ACCOUNT_ID;
 	}
@@ -47,14 +45,10 @@ const mockGet = jest.fn((param: string) => {
 	}
 	return null;
 });
-jest.mock('hooks/useUrlQuery', () => ({
-	__esModule: true,
-	default: (): { get: (param: string) => string | null } => ({ get: mockGet }),
-}));
 
 // --- TEST SUITE ---
 describe('ServiceDetails for S3 Sync service', () => {
-	jest.setTimeout(10000);
+	vi.setConfig({ testTimeout: 10000 });
 	beforeEach(() => {
 		testServiceId = 's3sync';
 		testInitialBuckets = {};

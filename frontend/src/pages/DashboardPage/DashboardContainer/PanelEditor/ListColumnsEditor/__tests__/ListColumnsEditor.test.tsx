@@ -11,13 +11,15 @@ import { readSelectFields } from '../selectFields';
 
 // The add-dropdown fetches field-key suggestions; stub the generated hook so the
 // editor renders without a query client. Each test can override the return value.
-const mockUseGetFieldsKeys = jest.fn(
-	(..._args: unknown[]): { data: unknown; isFetching: boolean } => ({
-		data: undefined,
-		isFetching: false,
-	}),
-);
-jest.mock('api/generated/services/fields', () => ({
+const { mockUseGetFieldsKeys } = vi.hoisted(() => ({
+	mockUseGetFieldsKeys: vi.fn(
+		(..._args: unknown[]): { data: unknown; isFetching: boolean } => ({
+			data: undefined,
+			isFetching: false,
+		}),
+	),
+}));
+vi.mock('api/generated/services/fields', () => ({
 	useGetFieldsKeys: (
 		...args: unknown[]
 	): { data: unknown; isFetching: boolean } => mockUseGetFieldsKeys(...args),
@@ -46,7 +48,7 @@ describe('ListColumnsEditor', () => {
 		render(
 			<ListColumnsEditor
 				spec={specWith(FIELDS)}
-				onChangeSpec={jest.fn()}
+				onChangeSpec={vi.fn()}
 				signal={TelemetrytypesSignalDTO.logs}
 			/>,
 		);
@@ -59,7 +61,7 @@ describe('ListColumnsEditor', () => {
 		render(
 			<ListColumnsEditor
 				spec={specWith([])}
-				onChangeSpec={jest.fn()}
+				onChangeSpec={vi.fn()}
 				signal={TelemetrytypesSignalDTO.logs}
 			/>,
 		);
@@ -73,7 +75,7 @@ describe('ListColumnsEditor', () => {
 		render(
 			<ListColumnsEditor
 				spec={specWith(FIELDS)}
-				onChangeSpec={jest.fn()}
+				onChangeSpec={vi.fn()}
 				signal={TelemetrytypesSignalDTO.traces}
 			/>,
 		);
@@ -86,7 +88,7 @@ describe('ListColumnsEditor', () => {
 
 	it('removing a chip writes the spec without that column', async () => {
 		const user = userEvent.setup();
-		const onChangeSpec = jest.fn();
+		const onChangeSpec = vi.fn();
 		render(
 			<ListColumnsEditor
 				spec={specWith(FIELDS)}
@@ -109,7 +111,7 @@ describe('ListColumnsEditor', () => {
 			data: { data: { keys: { group: [{ name: 'status' }] } } },
 			isFetching: false,
 		});
-		const onChangeSpec = jest.fn();
+		const onChangeSpec = vi.fn();
 		render(
 			<ListColumnsEditor
 				spec={specWith(FIELDS)}

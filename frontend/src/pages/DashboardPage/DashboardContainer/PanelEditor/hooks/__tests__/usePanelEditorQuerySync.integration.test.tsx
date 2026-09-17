@@ -8,7 +8,7 @@ import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { AllTheProviders } from 'tests/test-utils';
+import { AllTheProviders } from 'tests/test-utils-full';
 
 import { fromPerses, toPerses } from '../../../queryV5/persesQueryAdapters';
 import { usePanelEditorQuerySync } from '../usePanelEditorQuerySync';
@@ -76,8 +76,8 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 				usePanelEditorQuerySync({
 					draft: makePanel(saved),
 					panelType,
-					setSpec: jest.fn(),
-					refetch: jest.fn(),
+					setSpec: vi.fn(),
+					refetch: vi.fn(),
 					savedQueries: saved,
 				}),
 			{ wrapper: AllTheProviders },
@@ -103,8 +103,8 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 					usePanelEditorQuerySync({
 						draft: makePanel([]),
 						panelType: pt,
-						setSpec: jest.fn(),
-						refetch: jest.fn(),
+						setSpec: vi.fn(),
+						refetch: vi.fn(),
 						alwaysSerializeQuery: true,
 						signal: ds as unknown as TelemetrytypesSignalDTO,
 						// savedQueries omitted — new panel.
@@ -140,8 +140,8 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 				usePanelEditorQuerySync({
 					draft: makePanel(draftQueries),
 					panelType,
-					setSpec: jest.fn(),
-					refetch: jest.fn(),
+					setSpec: vi.fn(),
+					refetch: vi.fn(),
 					alwaysSerializeQuery: true,
 					signal: DataSource.METRICS as unknown as TelemetrytypesSignalDTO,
 					// savedQueries omitted — new panel.
@@ -194,8 +194,8 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 				usePanelEditorQuerySync({
 					draft: makePanel(minimalSaved),
 					panelType,
-					setSpec: jest.fn(),
-					refetch: jest.fn(),
+					setSpec: vi.fn(),
+					refetch: vi.fn(),
 					savedQueries: minimalSaved,
 				}),
 			{ wrapper: AllTheProviders },
@@ -268,8 +268,8 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 				usePanelEditorQuerySync({
 					draft: makePanel(savedNoHaving),
 					panelType,
-					setSpec: jest.fn(),
-					refetch: jest.fn(),
+					setSpec: vi.fn(),
+					refetch: vi.fn(),
 					savedQueries: savedNoHaving,
 				}),
 			{ wrapper: makeUrlWrapper(seededInUrl) },
@@ -297,7 +297,7 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 				],
 			},
 		};
-		const setSpec = jest.fn();
+		const setSpec = vi.fn();
 
 		const { result } = renderHook(
 			() =>
@@ -306,7 +306,7 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 					draft: makePanel(saved),
 					panelType,
 					setSpec,
-					refetch: jest.fn(),
+					refetch: vi.fn(),
 					savedQueries: saved,
 				}),
 			{ wrapper: makeUrlWrapper(editedInUrl) },
@@ -340,8 +340,8 @@ describe('usePanelEditorQuerySync (real query builder)', () => {
 					// The builder seeds from the draft (the handed-off edit)…
 					draft: makePanel(editedQueries),
 					panelType,
-					setSpec: jest.fn(),
-					refetch: jest.fn(),
+					setSpec: vi.fn(),
+					refetch: vi.fn(),
 					// …but the baseline is the persisted panel.
 					savedQueries: saved,
 				}),

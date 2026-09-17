@@ -3,11 +3,11 @@ import { render, screen, userEvent } from 'tests/test-utils';
 
 import InviteMembersModal from '../InviteMembersModal';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
 	toast: {
-		success: jest.fn(),
-		warning: jest.fn(),
+		success: vi.fn(),
+		warning: vi.fn(),
 	},
 }));
 
@@ -24,25 +24,27 @@ interface MockInviteMembersProps {
 
 let mockInviteMembersProps: MockInviteMembersProps | null = null;
 
-jest.mock('components/InviteMembers/InviteMembers', () => {
-	return function MockInviteMembers(props: MockInviteMembersProps): JSX.Element {
+vi.mock('components/InviteMembers/InviteMembers', () => ({
+	default: function MockInviteMembers(
+		props: MockInviteMembersProps,
+	): JSX.Element {
 		mockInviteMembersProps = props;
 		return (
 			<div data-testid="mock-invite-members">
 				{props.renderFooter({
-					submit: jest.fn(),
+					submit: vi.fn(),
 					canSubmit: true,
 					isSubmitting: false,
 				})}
 			</div>
 		);
-	};
-});
+	},
+}));
 
 const defaultProps = {
 	open: true,
-	onClose: jest.fn(),
-	onComplete: jest.fn(),
+	onClose: vi.fn(),
+	onComplete: vi.fn(),
 };
 
 function renderComponent(
@@ -53,7 +55,7 @@ function renderComponent(
 
 describe('InviteMembersModal', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockInviteMembersProps = null;
 	});
 
@@ -91,7 +93,7 @@ describe('InviteMembersModal', () => {
 
 			const { getByRole } = render(
 				mockInviteMembersProps?.renderFooter({
-					submit: jest.fn(),
+					submit: vi.fn(),
 					canSubmit: false,
 					isSubmitting: false,
 				}) as JSX.Element,
@@ -106,7 +108,7 @@ describe('InviteMembersModal', () => {
 
 			const { getByRole } = render(
 				mockInviteMembersProps?.renderFooter({
-					submit: jest.fn(),
+					submit: vi.fn(),
 					canSubmit: true,
 					isSubmitting: true,
 				}) as JSX.Element,
@@ -117,7 +119,7 @@ describe('InviteMembersModal', () => {
 
 		it('calls onClose when Cancel is clicked', async () => {
 			const user = userEvent.setup();
-			const onClose = jest.fn();
+			const onClose = vi.fn();
 			renderComponent({ onClose });
 
 			await user.click(screen.getByRole('button', { name: /cancel/i }));
@@ -127,7 +129,7 @@ describe('InviteMembersModal', () => {
 
 		it('calls submit when Invite button is clicked', async () => {
 			const user = userEvent.setup();
-			const mockSubmit = jest.fn();
+			const mockSubmit = vi.fn();
 
 			const { unmount } = renderComponent();
 			unmount();
@@ -148,8 +150,8 @@ describe('InviteMembersModal', () => {
 
 	describe('handleSuccess callback', () => {
 		it('shows success toast, calls onClose and onComplete', () => {
-			const onClose = jest.fn();
-			const onComplete = jest.fn();
+			const onClose = vi.fn();
+			const onComplete = vi.fn();
 			renderComponent({ onClose, onComplete });
 
 			mockInviteMembersProps?.onSuccess();
@@ -162,7 +164,7 @@ describe('InviteMembersModal', () => {
 		});
 
 		it('works without onComplete prop', () => {
-			const onClose = jest.fn();
+			const onClose = vi.fn();
 			renderComponent({ onClose, onComplete: undefined });
 
 			mockInviteMembersProps?.onSuccess();
@@ -174,7 +176,7 @@ describe('InviteMembersModal', () => {
 
 	describe('handlePartialSuccess callback', () => {
 		it('shows warning toast and calls onComplete', () => {
-			const onComplete = jest.fn();
+			const onComplete = vi.fn();
 			renderComponent({ onComplete });
 
 			mockInviteMembersProps?.onPartialSuccess();
@@ -186,7 +188,7 @@ describe('InviteMembersModal', () => {
 		});
 
 		it('does not call onClose on partial success', () => {
-			const onClose = jest.fn();
+			const onClose = vi.fn();
 			renderComponent({ onClose });
 
 			mockInviteMembersProps?.onPartialSuccess();
@@ -198,7 +200,7 @@ describe('InviteMembersModal', () => {
 	describe('dialog close behavior', () => {
 		it('calls onClose when dialog is closed via close button', async () => {
 			const user = userEvent.setup();
-			const onClose = jest.fn();
+			const onClose = vi.fn();
 			renderComponent({ onClose });
 
 			const closeButton = screen.getByRole('button', { name: /close/i });

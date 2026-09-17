@@ -10,10 +10,10 @@ import { EQueryType } from 'types/common/dashboard';
 
 import { useDrilldown } from '../hooks/useDrilldown';
 
-const mockOpenViewWithQuery = jest.fn();
-const mockNavigate = jest.fn();
-const mockGetBuilderQueries = jest.fn();
-const mockGetPanelQueryType = jest.fn();
+const mockOpenViewWithQuery = vi.fn();
+const mockNavigate = vi.fn();
+const mockGetBuilderQueries = vi.fn();
+const mockGetPanelQueryType = vi.fn();
 let mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
 let mockDashboardVariables: {
 	hasFieldVariables: boolean;
@@ -25,39 +25,39 @@ let mockDashboardVariables: {
 
 // Boundaries tested elsewhere / needing external context — mocked so this suite isolates
 // useDrilldown's orchestration (gating, which menu shows, the View-modal handoff).
-jest.mock('../hooks/useViewPanel', () => ({
+vi.mock('../hooks/useViewPanel', () => ({
 	useViewPanel: (): unknown => ({ openViewWithQuery: mockOpenViewWithQuery }),
 }));
 // Variable-substitution boundary (redux/store/react-query) — its own logic is out of scope here.
-jest.mock('../hooks/useResolvedDrilldownQuery', () => ({
+vi.mock('../hooks/useResolvedDrilldownQuery', () => ({
 	useResolvedDrilldownQuery: (): unknown => mockResolved,
 }));
-jest.mock('../hooks/useDrilldownBreakout', () => ({
+vi.mock('../hooks/useDrilldownBreakout', () => ({
 	useDrilldownBreakout: (): unknown => ({
 		queryData: { queryName: 'A' },
-		onBreakout: jest.fn(),
+		onBreakout: vi.fn(),
 	}),
 }));
-jest.mock('../DrilldownMenu/DrilldownBreakoutMenu', () => ({
+vi.mock('../DrilldownMenu/DrilldownBreakoutMenu', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="breakout-submenu" />,
 }));
-jest.mock('../hooks/useDrilldownDashboardVariables', () => ({
+vi.mock('../hooks/useDrilldownDashboardVariables', () => ({
 	useDrilldownDashboardVariables: (): unknown => mockDashboardVariables,
 }));
-jest.mock('../DrilldownMenu/DrilldownDashboardVariablesMenu', () => ({
+vi.mock('../DrilldownMenu/DrilldownDashboardVariablesMenu', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="dashboard-variables-submenu" />,
 }));
 // Context-link variable map (redux global time + store) — out of scope for this suite.
-jest.mock('../hooks/useDrilldownContextVariables', () => ({
+vi.mock('../hooks/useDrilldownContextVariables', () => ({
 	useDrilldownContextVariables: (): unknown => ({}),
 }));
-jest.mock('container/QueryTable/Drilldown/useBaseDrilldownNavigate', () => ({
+vi.mock('container/QueryTable/Drilldown/useBaseDrilldownNavigate', () => ({
 	__esModule: true,
 	default: (): unknown => mockNavigate,
 }));
-jest.mock('container/QueryTable/Drilldown/contextConfig', () => ({
+vi.mock('container/QueryTable/Drilldown/contextConfig', () => ({
 	getGroupContextMenuConfig: ({
 		onColumnClick,
 	}: {
@@ -74,8 +74,8 @@ jest.mock('container/QueryTable/Drilldown/contextConfig', () => ({
 		),
 	}),
 }));
-jest.mock('container/QueryTable/Drilldown/drilldownUtils', () => ({
-	addFilterToQuery: jest.fn(() => 'REFINED_QUERY'),
+vi.mock('container/QueryTable/Drilldown/drilldownUtils', () => ({
+	addFilterToQuery: vi.fn(() => 'REFINED_QUERY'),
 	getAggregateColumnHeader: (): unknown => ({
 		aggregations: 'sum(x)',
 		dataSource: 'metrics',
@@ -83,21 +83,21 @@ jest.mock('container/QueryTable/Drilldown/drilldownUtils', () => ({
 	getBaseMeta: (): unknown => undefined,
 	isNumberDataType: (): boolean => false,
 }));
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters',
 	() => ({
 		fromPerses: (): string => 'V1_QUERY',
-		toPerses: jest.fn(() => [{ kind: 'REFINED' }]),
+		toPerses: vi.fn(() => [{ kind: 'REFINED' }]),
 	}),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries',
 	() => ({
 		getBuilderQueries: (...args: unknown[]): unknown =>
 			mockGetBuilderQueries(...args),
 	}),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/Panels/utils/getPanelQueryType',
 	() => ({
 		getPanelQueryType: (...args: unknown[]): unknown =>
@@ -106,7 +106,7 @@ jest.mock(
 );
 // Capability lookup mocked (its per-kind values are data in the definitions); avoids
 // importing the whole renderer registry into the test.
-jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
+vi.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: (kind: string): unknown => ({
 		mode: 'query',
 		actions: { drilldown: kind !== 'signoz/ListPanel' },
@@ -141,7 +141,7 @@ const groupContext: DrilldownContext = {
 
 describe('useDrilldown', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockGetBuilderQueries.mockReturnValue([{ name: 'A' }]);
 		mockGetPanelQueryType.mockReturnValue(EQueryType.QUERY_BUILDER);
 		mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: false };
@@ -213,7 +213,9 @@ describe('useDrilldown', () => {
 
 		it('disables navigation while dashboard variables resolve', async () => {
 			mockResolved = { resolvedQuery: 'RESOLVED_QUERY', isResolving: true };
-			const user = userEvent.setup();
+			// The disabled menu item sets pointer-events: none (real CSS); switch
+			// the check off so the click dispatches against the disabled button.
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
 			act(() =>
 				result.current.onPanelClick({

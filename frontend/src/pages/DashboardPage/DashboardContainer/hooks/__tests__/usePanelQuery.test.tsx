@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { act, renderHook } from '@testing-library/react';
@@ -14,24 +15,24 @@ import {
 import { usePanelQuery } from '../usePanelQuery';
 import { useGetQueryRangeV5 } from '../useGetQueryRangeV5';
 
-jest.mock('react-redux', () => ({
-	useSelector: jest.fn(),
+vi.mock('react-redux', () => ({
+	useSelector: vi.fn(),
 }));
 
 // usePanelQuery reads the query client only to cancel in-flight fetches; the
 // fetch hook itself is mocked, so a stub client is enough.
-jest.mock('react-query', () => ({
-	useQueryClient: (): { cancelQueries: jest.Mock } => ({
-		cancelQueries: jest.fn(),
+vi.mock('react-query', () => ({
+	useQueryClient: (): { cancelQueries: Mock } => ({
+		cancelQueries: vi.fn(),
 	}),
 }));
 
-jest.mock('../useGetQueryRangeV5', () => ({
-	useGetQueryRangeV5: jest.fn(),
+vi.mock('../useGetQueryRangeV5', () => ({
+	useGetQueryRangeV5: vi.fn(),
 }));
 
-const mockUseSelector = useSelector as unknown as jest.Mock;
-const mockUseGetQueryRangeV5 = useGetQueryRangeV5 as unknown as jest.Mock;
+const mockUseSelector = useSelector as unknown as Mock;
+const mockUseGetQueryRangeV5 = useGetQueryRangeV5 as unknown as Mock;
 
 // ---- helpers ---------------------------------------------------------------
 
@@ -102,7 +103,7 @@ const DEFAULT_GLOBAL_TIME = {
 };
 
 beforeEach(() => {
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 	mockUseSelector.mockImplementation((selector: unknown) => {
 		// usePanelQuery passes a selector `(state) => state.globalTime`.
 		return (

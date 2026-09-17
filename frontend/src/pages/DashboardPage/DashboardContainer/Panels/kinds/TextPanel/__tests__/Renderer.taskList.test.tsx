@@ -32,7 +32,7 @@ describe('Text panel task lists', () => {
 	});
 
 	it('reports the rewritten body when a host can save it', () => {
-		const onChangeText = jest.fn();
+		const onChangeText = vi.fn();
 		render(
 			<Renderer
 				panelId="p1"
@@ -51,7 +51,7 @@ describe('Text panel task lists', () => {
 	});
 
 	it('edits the authored body, not the interpolated one', () => {
-		const onChangeText = jest.fn();
+		const onChangeText = vi.fn();
 		render(
 			<Renderer
 				panelId="p1"

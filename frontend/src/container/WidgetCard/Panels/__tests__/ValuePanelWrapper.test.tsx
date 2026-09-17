@@ -9,14 +9,6 @@ import {
 	valuePanelWidget,
 } from 'container/WidgetCard/Panels/__tests__/valuePanelWrapperHelper';
 
-window.ResizeObserver =
-	window.ResizeObserver ||
-	jest.fn().mockImplementation(() => ({
-		disconnect: jest.fn(),
-		observe: jest.fn(),
-		unobserve: jest.fn(),
-	}));
-
 describe('Value panel wrappper tests', () => {
 	it('should render value panel correctly with yaxis unit', () => {
 		const { getByText } = render(

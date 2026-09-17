@@ -2,7 +2,7 @@
  * Replaces `constants/env` in Storybook (aliased in `.storybook/main.ts`).
  *
  * The base URL must stay `http://localhost` so the msw handlers shared with
- * jest (`src/mocks-server/handlers.ts`), which are declared against that
+ * the tests (`src/mocks-server/handlers.ts`), which are declared against that
  * origin, match requests issued from the Storybook iframe. msw intercepts
  * before the request leaves the page, so the cross-origin URL never hits the
  * network and CORS never applies.

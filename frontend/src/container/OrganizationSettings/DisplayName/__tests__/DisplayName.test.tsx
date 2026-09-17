@@ -6,15 +6,15 @@ import {
 	screen,
 	userEvent,
 	waitFor,
-} from 'tests/test-utils';
+} from 'tests/test-utils-full';
 
 import DisplayName from '../index';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
 	toast: {
-		success: jest.fn(),
-		error: jest.fn(),
+		success: vi.fn(),
+		error: vi.fn(),
 	},
 }));
 
@@ -24,7 +24,7 @@ const defaultProps = { index: 0, id: 'does-not-matter-id' };
 
 describe('DisplayName', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {

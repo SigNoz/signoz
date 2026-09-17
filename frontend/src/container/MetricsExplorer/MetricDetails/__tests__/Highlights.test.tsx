@@ -17,9 +17,10 @@ function renderHighlights(metricName: string): ReturnType<typeof render> {
 	);
 }
 
-const useGetMetricHighlightsMock = jest.spyOn(
-	metricsExplorerHooks,
-	'useGetMetricHighlights',
+vi.mock('api/generated/services/metrics', { spy: true });
+
+const useGetMetricHighlightsMock = vi.mocked(
+	metricsExplorerHooks.useGetMetricHighlights,
 );
 
 describe('Highlights', () => {

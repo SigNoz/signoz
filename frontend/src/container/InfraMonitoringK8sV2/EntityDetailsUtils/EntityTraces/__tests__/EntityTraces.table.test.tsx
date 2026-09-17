@@ -1,4 +1,4 @@
-import { act, screen, within } from 'tests/test-utils';
+import { act, screen, within } from 'tests/test-utils-full';
 
 import { renderEntityTraces } from './testUtils';
 import { mockQueryRangeV5WithTracesResponse } from '__tests__/query_range_v5.util';
@@ -6,17 +6,17 @@ import { mockQueryRangeV5WithTracesResponse } from '__tests__/query_range_v5.uti
 // Trace list columns are hidden below the antd `md` breakpoint. The global
 // matchMedia mock reports `matches: false`, which drops every column, so make
 // all breakpoints match for these rendering tests.
-jest.spyOn(window, 'matchMedia').mockImplementation(
+vi.spyOn(window, 'matchMedia').mockImplementation(
 	(query: string) =>
 		({
 			matches: true,
 			media: query,
 			onchange: null,
-			addListener: jest.fn(),
-			removeListener: jest.fn(),
-			addEventListener: jest.fn(),
-			removeEventListener: jest.fn(),
-			dispatchEvent: jest.fn(),
+			addListener: vi.fn(),
+			removeListener: vi.fn(),
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+			dispatchEvent: vi.fn(),
 		}) as unknown as MediaQueryList,
 );
 

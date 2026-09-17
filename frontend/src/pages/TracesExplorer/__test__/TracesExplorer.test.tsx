@@ -24,7 +24,7 @@ import {
 	screen,
 	waitFor,
 	within,
-} from 'tests/test-utils';
+} from 'tests/test-utils-full';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import TracesExplorer from '..';
@@ -45,9 +45,9 @@ import {
 const currentTestUrl =
 	'/traces-explorer/?panelType=list&selectedExplorerView=list';
 
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useSearchParams: jest.fn(() => {
+vi.mock('react-router-dom-v5-compat', async () => ({
+	...(await vi.importActual('react-router-dom-v5-compat')),
+	useSearchParams: vi.fn(() => {
 		const searchParams = new URLSearchParams();
 
 		// Parse the current test URL
@@ -59,94 +59,94 @@ jest.mock('react-router-dom-v5-compat', () => ({
 		searchParams.set('panelType', panelType);
 		searchParams.set('selectedExplorerView', selectedExplorerView);
 
-		return [searchParams, jest.fn()];
+		return [searchParams, vi.fn()];
 	}),
 }));
 
 // Mock useGetPanelTypesQueryParam to return the correct panel type
-jest.mock('hooks/queryBuilder/useGetPanelTypesQueryParam', () => ({
-	useGetPanelTypesQueryParam: jest.fn(() => {
+vi.mock('hooks/queryBuilder/useGetPanelTypesQueryParam', () => ({
+	useGetPanelTypesQueryParam: vi.fn(() => {
 		const url = new URL(currentTestUrl, 'http://localhost');
 		return url.searchParams.get('panelType') || 'list';
 	}),
 }));
 
-const historyPush = jest.fn();
+const { historyPush } = vi.hoisted(() => ({ historyPush: vi.fn() }));
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const FILTER_SERVICE_NAME = 'Service Name';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): {
-		pathname: string;
-		search: string;
-		hash: string;
-		state: any;
-	} => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/`,
-		search: '',
-		hash: '',
-		state: null,
-	}),
-	useHistory: (): any => ({
-		...jest.requireActual('react-router-dom').useHistory(),
-		push: historyPush,
-	}),
+vi.mock('react-router-dom', async () => {
+	const actual = (await vi.importActual(
+		'react-router-dom',
+	)) as typeof import('react-router-dom');
+	return {
+		...actual,
+		useLocation: (): {
+			pathname: string;
+			search: string;
+			hash: string;
+			state: any;
+		} => ({
+			pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/`,
+			search: '',
+			hash: '',
+			state: null,
+		}),
+		useHistory: (): any => ({
+			...actual.useHistory(),
+			push: historyPush,
+		}),
+	};
+});
+
+vi.mock('components/Uplot/Uplot', () => ({
+	__esModule: true,
+	default: function MockUplot(): JSX.Element {
+		return <div>MockUplot</div>;
+	},
 }));
 
-jest.mock(
-	'components/Uplot/Uplot',
-	() =>
-		function MockUplot(): JSX.Element {
-			return <div>MockUplot</div>;
-		},
-);
-
-window.ResizeObserver =
-	window.ResizeObserver ||
-	jest.fn().mockImplementation(() => ({
-		disconnect: jest.fn(),
-		observe: jest.fn(),
-		unobserve: jest.fn(),
-	}));
-
-const successNotification = jest.fn();
-jest.mock('hooks/useNotifications', () => ({
+const successNotification = vi.fn();
+vi.mock('hooks/useNotifications', () => ({
 	__esModule: true,
-	useNotifications: jest.fn(() => ({
+	useNotifications: vi.fn(() => ({
 		notifications: {
 			success: successNotification,
-			error: jest.fn(),
+			error: vi.fn(),
 		},
 	})),
 }));
 
-jest.mock(
-	'container/TopNav/DateTimeSelectionV2/index.tsx',
-	() =>
-		function MockDateTimeSelection(): JSX.Element {
-			return <div>MockDateTimeSelection</div>;
-		},
-);
+vi.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
+	__esModule: true,
+	default: function MockDateTimeSelection(): JSX.Element {
+		return <div>MockDateTimeSelection</div>;
+	},
+}));
 
-jest.mock('container/OptionsMenu/useOptionsMenu', () => ({
+vi.mock('container/OptionsMenu/useOptionsMenu', () => ({
 	__esModule: true,
 	default: (): any => optionMenuReturn,
 }));
 
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
 	useSelector: (): any => ({
 		loading: false,
 	}),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
+
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('hooks/queryBuilder/useGetCompositeQueryParam', { spy: true });
 
 const checkFilterValues = (
 	getByText: (text: string) => HTMLElement,
@@ -182,7 +182,7 @@ describe('TracesExplorer - Filters', () => {
 	// Test the initial state like which filters section are opened, default state of duration slider, etc.
 	it('should render the Trace filter', async () => {
 		const { getByText, getAllByText, getByTestId } =
-			renderWithTracesExplorerRouter(<Filter setOpen={jest.fn()} />, [
+			renderWithTracesExplorerRouter(<Filter setOpen={vi.fn()} />, [
 				`${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/?panelType=list&selectedExplorerView=list`,
 			]);
 
@@ -227,7 +227,7 @@ describe('TracesExplorer - Filters', () => {
 	it('filter panel actions', async () => {
 		const { getByTestId } = render(
 			<MemoryRouter>
-				<Filter setOpen={jest.fn()} />,
+				<Filter setOpen={vi.fn()} />,
 			</MemoryRouter>,
 			{},
 			{
@@ -258,7 +258,7 @@ describe('TracesExplorer - Filters', () => {
 
 	it('checking filters should update the query', async () => {
 		const { getByText } = render(
-			<Filter setOpen={jest.fn()} />,
+			<Filter setOpen={vi.fn()} />,
 			{},
 			{
 				queryBuilderOverrides: {
@@ -319,11 +319,11 @@ describe('TracesExplorer - Filters', () => {
 	});
 
 	it('should render the trace filter with the given query', async () => {
-		jest
-			.spyOn(compositeQueryHook, 'useGetCompositeQueryParam')
+		vi
+			.mocked(compositeQueryHook.useGetCompositeQueryParam)
 			.mockReturnValue(compositeQuery);
 
-		const { findByText, getByTestId } = render(<Filter setOpen={jest.fn()} />);
+		const { findByText, getByTestId } = render(<Filter setOpen={vi.fn()} />);
 
 		// check if the default query is applied - composite query has filters - serviceName : demo-app and name : HTTP GET /customer
 		await expect(findByText('demo-app')).resolves.toBeInTheDocument();
@@ -337,7 +337,7 @@ describe('TracesExplorer - Filters', () => {
 	});
 
 	it('test edge cases of undefined filters', async () => {
-		jest.spyOn(compositeQueryHook, 'useGetCompositeQueryParam').mockReturnValue({
+		vi.mocked(compositeQueryHook.useGetCompositeQueryParam).mockReturnValue({
 			...compositeQuery,
 			builder: {
 				...compositeQuery.builder,
@@ -352,7 +352,7 @@ describe('TracesExplorer - Filters', () => {
 		});
 
 		const { getByText, getAllByText } = render(
-			<Filter setOpen={jest.fn()} />,
+			<Filter setOpen={vi.fn()} />,
 			{},
 			{
 				initialRoute: '/traces-explorer/?panelType=list&selectedExplorerView=list',
@@ -363,7 +363,7 @@ describe('TracesExplorer - Filters', () => {
 	});
 
 	it('test edge cases of undefined filters - items', async () => {
-		jest.spyOn(compositeQueryHook, 'useGetCompositeQueryParam').mockReturnValue({
+		vi.mocked(compositeQueryHook.useGetCompositeQueryParam).mockReturnValue({
 			...compositeQuery,
 			builder: {
 				...compositeQuery.builder,
@@ -380,14 +380,14 @@ describe('TracesExplorer - Filters', () => {
 			},
 		});
 
-		const { getByText, getAllByText } = render(<Filter setOpen={jest.fn()} />);
+		const { getByText, getAllByText } = render(<Filter setOpen={vi.fn()} />);
 
 		checkFilterValues(getByText, getAllByText);
 	});
 
 	it('should clear filter on clear & reset button click', async () => {
 		const { getByText, getByTestId } = render(
-			<Filter setOpen={jest.fn()} />,
+			<Filter setOpen={vi.fn()} />,
 			{},
 			{
 				initialRoute: '/traces-explorer/?panelType=list&selectedExplorerView=list',
@@ -494,9 +494,11 @@ describe('TracesExplorer - Filters', () => {
 	});
 });
 
-const handleExplorerTabChangeTest = jest.fn();
-jest.mock('hooks/useHandleExplorerTabChange', () => ({
-	useHandleExplorerTabChange: jest.fn(() => ({
+const { handleExplorerTabChangeTest } = vi.hoisted(() => ({
+	handleExplorerTabChangeTest: vi.fn(),
+}));
+vi.mock('hooks/useHandleExplorerTabChange', () => ({
+	useHandleExplorerTabChange: vi.fn(() => ({
 		handleExplorerTabChange: handleExplorerTabChangeTest,
 	})),
 }));
@@ -528,7 +530,6 @@ describe('TracesExplorer -', () => {
 	});
 
 	afterAll(() => {
-		server.close();
 		cleanup();
 	});
 
@@ -720,8 +721,13 @@ describe('TracesExplorer -', () => {
 			screen.findByRole('option', { name: 'R-test panel' }),
 		).resolves.toBeInTheDocument();
 
-		// save this view
-		fireEvent.click(await screen.findByText('Save this view'));
+		// save this view (the button stays disabled while the views query is
+		// loading or background-refetching, which varies with shared cache state)
+		const saveViewButton = await screen.findByText('Save this view');
+		await waitFor(() =>
+			expect(saveViewButton.closest('button')).not.toBeDisabled(),
+		);
+		fireEvent.click(saveViewButton);
 
 		const saveViewModalInput = await screen.findByPlaceholderText(
 			'e.g. External http method view',

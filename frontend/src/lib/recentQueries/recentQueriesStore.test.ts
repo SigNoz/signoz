@@ -218,7 +218,7 @@ describe('recentQueries store', () => {
 
 	describe('reactive subscription via zustand', () => {
 		it('notifies zustand subscribers on save', () => {
-			const cb = jest.fn();
+			const cb = vi.fn();
 			const unsubscribe = store.useRecentQueriesStore.subscribe(cb);
 			store.save(baseInput({ filter: { expression: "severity_text = 'ERROR'" } }));
 			expect(cb).toHaveBeenCalledTimes(1);
@@ -229,7 +229,7 @@ describe('recentQueries store', () => {
 			const saved = saveOrThrow(
 				baseInput({ filter: { expression: "severity_text = 'ERROR'" } }),
 			);
-			const cb = jest.fn();
+			const cb = vi.fn();
 			const unsubscribe = store.useRecentQueriesStore.subscribe(cb);
 			store.remove(saved.id, 'logs');
 			expect(cb).toHaveBeenCalledTimes(1);
@@ -237,7 +237,7 @@ describe('recentQueries store', () => {
 		});
 
 		it('stops notifying after unsubscribe', () => {
-			const cb = jest.fn();
+			const cb = vi.fn();
 			const unsubscribe = store.useRecentQueriesStore.subscribe(cb);
 			unsubscribe();
 			store.save(baseInput({ filter: { expression: "severity_text = 'ERROR'" } }));

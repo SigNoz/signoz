@@ -10,7 +10,7 @@ import {
 } from './__story_mockdata__/appShell';
 
 /**
- * Endpoints the app shell hits on every route that the jest handlers in
+ * Endpoints the app shell hits on every route that the test handlers in
  * `src/mocks-server/handlers.ts` either do not cover or answer with fixtures
  * too thin to show the shell doing its job. Resolved ahead of the shared set,
  * and a page's own control-driven handlers are resolved ahead of these.

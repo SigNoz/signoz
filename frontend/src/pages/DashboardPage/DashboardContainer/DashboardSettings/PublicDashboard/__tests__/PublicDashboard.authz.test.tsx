@@ -1,7 +1,7 @@
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils-full';
 import {
 	setupAuthzAdmin,
 	setupAuthzDeny,
@@ -29,7 +29,7 @@ describe('PublicDashboard - AuthZ', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 

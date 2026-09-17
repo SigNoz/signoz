@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import { InfraMonitoringEvents } from 'constants/events';
 import userEvent from '@testing-library/user-event';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { act, render, waitFor } from 'tests/test-utils';
+import { act, render, waitFor } from 'tests/test-utils-full';
 
 import {
 	InfraMonitoringEntity,
@@ -12,7 +12,7 @@ import {
 } from '../../constants';
 import K8sBaseDetails from '../K8sBaseDetails';
 
-jest.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
+vi.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="mock-datetime" />,
 }));
@@ -34,9 +34,7 @@ function createBaseProps() {
 		category: InfraMonitoringEntity.PODS,
 		eventCategory: InfraMonitoringEvents.Pod,
 		getSelectedItemExpression: (): string => 'k8s.pod.name = "test-pod"',
-		fetchEntityData: jest
-			.fn()
-			.mockResolvedValue({ data: mockEntity, error: null }),
+		fetchEntityData: vi.fn().mockResolvedValue({ data: mockEntity, error: null }),
 		getEntityName: (e: TestEntity): string => e.name,
 		getInitialLogTracesExpression: (): string => 'k8s.pod.name = "test-pod"',
 		getInitialEventsExpression: (): string => 'k8s.pod.name = "test-pod"',
@@ -44,7 +42,7 @@ function createBaseProps() {
 			{ label: 'Name', getValue: (e: TestEntity): string => e.name },
 		],
 		entityWidgetInfo: [{ title: 'CPU', yAxisUnit: 'percent' }],
-		getEntityQueryPayload: jest.fn().mockReturnValue([]),
+		getEntityQueryPayload: vi.fn().mockReturnValue([]),
 		queryKeyPrefix: 'testPod',
 	};
 }

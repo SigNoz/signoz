@@ -27,7 +27,7 @@ describe('resolveUrlAlertPrefill', () => {
 	});
 
 	it('ignores malformed or non-array thresholds without throwing', () => {
-		const consoleError = jest
+		const consoleError = vi
 			.spyOn(console, 'error')
 			.mockImplementation(() => undefined);
 

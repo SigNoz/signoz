@@ -1,25 +1,9 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`PipelinePage container test should render DragAction section 1`] = `
+exports[`PipelinePage container test > should render DragAction section 1`] = `
 <DocumentFragment>
-  .c0 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-pack: center;
-  -webkit-justify-content: center;
-  -ms-flex-pack: center;
-  justify-content: center;
-  gap: 1.25rem;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-}
-
-<div
-    class="c0"
+  <div
+    class="sc-kOHTFB dRVeIL"
   >
     <div
       class="_switch-wrapper_1a8sn_6"
@@ -41,8 +25,24 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
       </button>
     </div>
     <svg
+      class="signoz-icon"
+      fill="none"
+      height="16"
+      stroke="currentColor"
+      stroke-width="1.33"
       style="font-size: 1rem; cursor: move;"
-    />
+      viewBox="0 0 16 16"
+      width="16"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M6 8.667a.667.667 0 1 0 0-1.334.667.667 0 0 0 0 1.334ZM6 4a.667.667 0 1 0 0-1.333A.667.667 0 0 0 6 4ZM6 13.333A.667.667 0 1 0 6 12a.667.667 0 0 0 0 1.333ZM10 8.667a.667.667 0 1 0 0-1.334.667.667 0 0 0 0 1.334ZM10 4a.667.667 0 1 0 0-1.333A.667.667 0 0 0 10 4ZM10 13.333A.667.667 0 1 0 10 12a.667.667 0 0 0 0 1.333Z"
+        stroke="inherit"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.33"
+      />
+    </svg>
   </div>
 </DocumentFragment>
 `;

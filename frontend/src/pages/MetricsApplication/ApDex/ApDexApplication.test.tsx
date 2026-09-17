@@ -4,27 +4,29 @@ import { APPLICATION_SETTINGS } from '../constants';
 import { thresholdMockData } from './__mock__/thresholdMockData';
 import ApDexApplication from './ApDexApplication';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual<typeof import('react-router-dom')>(
+		'react-router-dom',
+	)),
 	useParams: (): {
 		servicename: string;
 	} => ({ servicename: 'mockServiceName' }),
 }));
 
-jest.mock('hooks/apDex/useGetApDexSettings', () => ({
+vi.mock('hooks/apDex/useGetApDexSettings', () => ({
 	__esModule: true,
-	useGetApDexSettings: jest.fn().mockReturnValue({
+	useGetApDexSettings: vi.fn().mockReturnValue({
 		data: thresholdMockData,
 		isLoading: false,
 		error: null,
-		refetch: jest.fn(),
+		refetch: vi.fn(),
 	}),
 }));
 
-jest.mock('hooks/apDex/useSetApDexSettings', () => ({
+vi.mock('hooks/apDex/useSetApDexSettings', () => ({
 	__esModule: true,
-	useSetApDexSettings: jest.fn().mockReturnValue({
-		mutateAsync: jest.fn(),
+	useSetApDexSettings: vi.fn().mockReturnValue({
+		mutateAsync: vi.fn(),
 		isLoading: false,
 		error: null,
 	}),

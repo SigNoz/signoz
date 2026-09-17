@@ -19,8 +19,8 @@ import { transformMetricMetadata } from '../utils';
 import { getMockMetricMetadataData, MOCK_METRIC_NAME } from './testUtlls';
 
 // Mock antd select for testing
-jest.mock('antd', () => ({
-	...jest.requireActual('antd'),
+vi.mock('antd', async () => ({
+	...(await vi.importActual('antd')),
 	Select: ({
 		children,
 		onChange,
@@ -48,59 +48,59 @@ jest.mock('antd', () => ({
 		</select>
 	),
 }));
-jest.mock(
-	'components/YAxisUnitSelector',
-	() =>
-		function MockYAxisUnitSelector({
-			onChange,
-			value,
-			'data-testid': dataTestId,
-		}: YAxisUnitSelectorProps): JSX.Element {
-			return (
-				<select
-					data-testid={dataTestId}
-					value={value}
-					onChange={(e): void => onChange?.(e.target.value as UniversalYAxisUnit)}
-				>
-					<option value="">Please select a unit</option>
-					<option value="By">Bytes (B)</option>
-					<option value="s">Seconds (s)</option>
-					<option value="ms">Milliseconds (ms)</option>
-				</select>
-			);
-		},
-);
+vi.mock('components/YAxisUnitSelector', () => ({
+	default: function MockYAxisUnitSelector({
+		onChange,
+		value,
+		'data-testid': dataTestId,
+	}: YAxisUnitSelectorProps): JSX.Element {
+		return (
+			<select
+				data-testid={dataTestId}
+				value={value}
+				onChange={(e): void => onChange?.(e.target.value as UniversalYAxisUnit)}
+			>
+				<option value="">Please select a unit</option>
+				<option value="By">Bytes (B)</option>
+				<option value="s">Seconds (s)</option>
+				<option value="ms">Milliseconds (ms)</option>
+			</select>
+		);
+	},
+}));
 
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
+vi.mock('react-query', async () => ({
+	...(await vi.importActual('react-query')),
 	useQueryClient: (): { invalidateQueries: () => void } => ({
-		invalidateQueries: jest.fn(),
+		invalidateQueries: vi.fn(),
 	}),
 }));
 
-const mockUseUpdateMetricMetadataHook = jest.spyOn(
-	metricsExplorerHooks,
-	'useUpdateMetricMetadata',
+vi.mock('api/generated/services/metrics', { spy: true });
+vi.mock('hooks/useNotifications', { spy: true });
+
+const mockUseUpdateMetricMetadataHook = vi.mocked(
+	metricsExplorerHooks.useUpdateMetricMetadata,
 );
 type UseUpdateMetricMetadataResult = ReturnType<
 	typeof metricsExplorerHooks.useUpdateMetricMetadata
 >;
-const mockUseUpdateMetricMetadata = jest.fn();
+const mockUseUpdateMetricMetadata = vi.fn();
 
 const mockMetricMetadata = transformMetricMetadata(
 	getMockMetricMetadataData().data as GetMetricMetadata200,
 ) as MetricMetadata;
 
-const mockErrorNotification = jest.fn();
-const mockSuccessNotification = jest.fn();
-jest.spyOn(useNotificationsHooks, 'useNotifications').mockReturnValue({
+const mockErrorNotification = vi.fn();
+const mockSuccessNotification = vi.fn();
+vi.mocked(useNotificationsHooks.useNotifications).mockReturnValue({
 	notifications: {
 		error: mockErrorNotification,
 		success: mockSuccessNotification,
 	},
 } as any);
 
-const mockRefetchMetricMetadata = jest.fn();
+const mockRefetchMetricMetadata = vi.fn();
 
 describe('Metadata', () => {
 	beforeEach(() => {

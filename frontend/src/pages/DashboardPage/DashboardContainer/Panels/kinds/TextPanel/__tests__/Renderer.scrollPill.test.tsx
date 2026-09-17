@@ -13,10 +13,18 @@ const panel = {
 	},
 } as unknown as PanelOfKind<'signoz/TextPanel'>;
 
-/** jsdom has no layout: stub the scroll geometry the hook reads. */
+/**
+ * The panel is never given a height that overflows here, so the scroll geometry
+ * the hook reads is stubbed. `scrollTop` is stubbed with the rest: assigning it
+ * on an element that does not actually overflow clamps back to 0.
+ */
 function setScrollGeometry(
 	el: HTMLElement,
-	{ scrollHeight, clientHeight }: { scrollHeight: number; clientHeight: number },
+	{
+		scrollHeight,
+		clientHeight,
+		scrollTop = 0,
+	}: { scrollHeight: number; clientHeight: number; scrollTop?: number },
 ): void {
 	Object.defineProperty(el, 'scrollHeight', {
 		configurable: true,
@@ -25,6 +33,11 @@ function setScrollGeometry(
 	Object.defineProperty(el, 'clientHeight', {
 		configurable: true,
 		value: clientHeight,
+	});
+	Object.defineProperty(el, 'scrollTop', {
+		configurable: true,
+		writable: true,
+		value: scrollTop,
 	});
 }
 
@@ -54,7 +67,7 @@ describe('Text panel scroll-to-bottom pill', () => {
 		});
 
 		const pill = screen.getByTestId('text-panel-scroll-more');
-		const scrollTo = jest.fn();
+		const scrollTo = vi.fn();
 		scroller.scrollTo = scrollTo;
 		fireEvent.click(pill);
 
@@ -69,7 +82,11 @@ describe('Text panel scroll-to-bottom pill', () => {
 		});
 		expect(screen.getByTestId('text-panel-scroll-more')).toBeInTheDocument();
 
-		scroller.scrollTop = 300;
+		setScrollGeometry(scroller, {
+			scrollHeight: 400,
+			clientHeight: 100,
+			scrollTop: 300,
+		});
 		act(() => {
 			fireEvent.scroll(scroller);
 		});

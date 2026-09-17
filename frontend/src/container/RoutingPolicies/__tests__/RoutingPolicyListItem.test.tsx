@@ -5,18 +5,20 @@ import { ROLES, USER_ROLES } from 'types/roles';
 import RoutingPolicyListItem from '../RoutingPolicyListItem';
 import { getAppContextMockState, MOCK_ROUTING_POLICY_1 } from './testUtils';
 
-const mockFormatTimezoneAdjustedTimestamp = jest.fn();
-jest.mock('providers/Timezone', () => ({
+const mockFormatTimezoneAdjustedTimestamp = vi.fn();
+vi.mock('providers/Timezone', () => ({
 	useTimezone: (): any => ({
 		formatTimezoneAdjustedTimestamp: mockFormatTimezoneAdjustedTimestamp,
 	}),
 }));
 
-jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
+vi.mock('providers/App/App', { spy: true });
+
+vi.mocked(appHooks.useAppContext).mockReturnValue(getAppContextMockState());
 
 const mockRoutingPolicy = MOCK_ROUTING_POLICY_1;
-const mockHandlePolicyDetailsModalOpen = jest.fn();
-const mockHandleDeleteModalOpen = jest.fn();
+const mockHandlePolicyDetailsModalOpen = vi.fn();
+const mockHandleDeleteModalOpen = vi.fn();
 
 const EDIT_ROUTING_POLICY_TEST_ID = 'edit-routing-policy';
 const DELETE_ROUTING_POLICY_TEST_ID = 'delete-routing-policy';
@@ -85,8 +87,8 @@ describe('RoutingPolicyListItem', () => {
 	});
 
 	it('edit and delete buttons should not be rendered for viewer role', () => {
-		jest
-			.spyOn(appHooks, 'useAppContext')
+		vi
+			.mocked(appHooks.useAppContext)
 			.mockReturnValue(
 				getAppContextMockState({ role: USER_ROLES.VIEWER as ROLES }),
 			);

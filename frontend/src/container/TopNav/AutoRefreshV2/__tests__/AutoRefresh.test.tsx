@@ -54,12 +54,12 @@ function tickCount(store: MockStoreEnhanced<Partial<AppState>>): number {
 
 describe('AutoRefresh', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		localStorage.clear();
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('renders the trigger and ticks on the persisted interval', () => {
@@ -70,7 +70,7 @@ describe('AutoRefresh', () => {
 		expect(screen.getByTitle('Set auto refresh')).toBeInTheDocument();
 
 		act(() => {
-			jest.advanceTimersByTime(15_000);
+			vi.advanceTimersByTime(15_000);
 		});
 
 		expect(tickCount(store)).toBe(3);
@@ -80,7 +80,7 @@ describe('AutoRefresh', () => {
 		const store = renderAutoRefresh(createGlobalTimeState());
 
 		act(() => {
-			jest.advanceTimersByTime(60_000);
+			vi.advanceTimersByTime(60_000);
 		});
 
 		expect(tickCount(store)).toBe(0);
@@ -92,7 +92,7 @@ describe('AutoRefresh', () => {
 		const store = renderAutoRefresh(createGlobalTimeState(), { disabled: true });
 
 		act(() => {
-			jest.advanceTimersByTime(60_000);
+			vi.advanceTimersByTime(60_000);
 		});
 
 		expect(tickCount(store)).toBe(0);
@@ -108,7 +108,7 @@ describe('AutoRefresh', () => {
 		expect(screen.queryByTitle('Set auto refresh')).not.toBeInTheDocument();
 
 		act(() => {
-			jest.advanceTimersByTime(60_000);
+			vi.advanceTimersByTime(60_000);
 		});
 
 		expect(tickCount(store)).toBe(0);

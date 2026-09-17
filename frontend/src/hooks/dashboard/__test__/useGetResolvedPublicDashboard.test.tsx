@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { getPublicDashboardDataV2 } from 'api/generated/services/dashboard';
 import { ReactNode } from 'react';
@@ -8,11 +9,11 @@ import {
 	useGetResolvedPublicDashboard,
 } from '../useGetResolvedPublicDashboard';
 
-jest.mock('api/generated/services/dashboard', () => ({
-	getPublicDashboardDataV2: jest.fn(),
+vi.mock('api/generated/services/dashboard', () => ({
+	getPublicDashboardDataV2: vi.fn(),
 }));
 
-const mockV2 = getPublicDashboardDataV2 as jest.Mock;
+const mockV2 = getPublicDashboardDataV2 as Mock;
 
 const wrapper = ({ children }: { children: ReactNode }): JSX.Element => {
 	const client = new QueryClient({

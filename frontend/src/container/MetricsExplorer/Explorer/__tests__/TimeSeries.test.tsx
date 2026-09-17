@@ -6,8 +6,12 @@ import TimeSeries from '../TimeSeries';
 import { TimeSeriesProps } from '../types';
 import { MOCK_METRIC_METADATA } from './testUtils';
 
-const mockUpdateMetricMetadata = jest.fn();
-const updateMetricMetadataSpy = jest.spyOn(
+const mockUpdateMetricMetadata = vi.fn();
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('api/generated/services/metrics', { spy: true });
+const updateMetricMetadataSpy = vi.spyOn(
 	metricsExplorerHooks,
 	'useUpdateMetricMetadata',
 );
@@ -15,21 +19,25 @@ type UseUpdateMetricMetadataReturnType = ReturnType<
 	typeof metricsExplorerHooks.useUpdateMetricMetadata
 >;
 
-jest.mock('container/TimeSeriesView/TimeSeriesView', () => ({
+vi.mock('container/TimeSeriesView/TimeSeriesView', () => ({
 	__esModule: true,
-	default: jest.fn().mockReturnValue(
+	// NOTE: mockImplementation, not mockReturnValue — the JSX must be created
+	// lazily. Eager JSX inside a hoisted factory references the module-scope
+	// jsx-runtime binding, which browser mode rejects ("no top level variables
+	// inside" a vi.mock factory).
+	default: vi.fn().mockImplementation(() => (
 		<div role="img" aria-label="warning">
 			TimeSeriesView
-		</div>,
-	),
+		</div>
+	)),
 }));
 
-jest.mock('react-query', () => ({
-	...jest.requireActual('react-query'),
-	useQueryClient: jest.fn().mockReturnValue({
-		invalidateQueries: jest.fn(),
+vi.mock('react-query', async () => ({
+	...(await vi.importActual('react-query')),
+	useQueryClient: vi.fn().mockReturnValue({
+		invalidateQueries: vi.fn(),
 	}),
-	useQueries: jest.fn().mockImplementation((queries: any[]) =>
+	useQueries: vi.fn().mockImplementation((queries: any[]) =>
 		queries.map(() => ({
 			data: undefined,
 			isLoading: false,
@@ -39,9 +47,9 @@ jest.mock('react-query', () => ({
 	),
 }));
 
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
-	useSelector: jest.fn().mockReturnValue({
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
+	useSelector: vi.fn().mockReturnValue({
 		globalTime: {
 			selectedTime: '5min',
 			maxTime: 1713738000000,
@@ -50,9 +58,9 @@ jest.mock('react-redux', () => ({
 	}),
 }));
 
-const mockSetWarning = jest.fn();
-const mockSetIsMetricDetailsOpen = jest.fn();
-const mockSetYAxisUnit = jest.fn();
+const mockSetWarning = vi.fn();
+const mockSetIsMetricDetailsOpen = vi.fn();
+const mockSetYAxisUnit = vi.fn();
 
 function renderTimeSeries(
 	overrides: Partial<TimeSeriesProps> = {},

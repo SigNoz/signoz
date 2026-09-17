@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { History } from 'history';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
@@ -15,26 +16,46 @@ import { usePanelEditorDraft } from 'pages/DashboardPage/DashboardContainer/Pane
 import { useViewPanelMode } from '../ViewPanelModal/useViewPanelMode';
 import { useViewPanel } from '../hooks/useViewPanel';
 
-// jest.config maps the real hook to a no-op mock; this suite needs real navigation.
-jest.mock('hooks/useSafeNavigate', () =>
-	jest
-		.requireActual('tests/browser-history-safe-navigate')
-		.createBrowserHistorySafeNavigateMock(),
-);
+// vitest.config maps the real hook to a no-op mock; this suite needs real navigation.
+// MemoryRouter never touches window, so the mock writes both window.history and
+// the router history (inlined from tests/browser-history-safe-navigate).
+vi.mock('hooks/useSafeNavigate', async () => {
+	const { useHistory } = await vi.importActual<{
+		useHistory: () => History;
+	}>('react-router-dom');
+	return {
+		useSafeNavigate: (): {
+			safeNavigate: (to: string, options?: { replace?: boolean }) => void;
+		} => {
+			const history = useHistory();
+			return {
+				safeNavigate: (to: string, options?: { replace?: boolean }): void => {
+					if (options?.replace) {
+						window.history.replaceState(null, '', to);
+						history.replace(to);
+					} else {
+						window.history.pushState(null, '', to);
+						history.push(to);
+					}
+				},
+			};
+		},
+	};
+});
 
-jest.mock('pages/DashboardPage/DashboardContainer/hooks/usePanelQuery', () => ({
+vi.mock('pages/DashboardPage/DashboardContainer/hooks/usePanelQuery', () => ({
 	usePanelQuery: (): unknown => ({
 		data: undefined,
 		isFetching: false,
 		isPreviousData: false,
 		error: null,
-		refetch: jest.fn(),
-		cancelQuery: jest.fn(),
+		refetch: vi.fn(),
+		cancelQuery: vi.fn(),
 		pagination: undefined,
 	}),
 }));
 
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/store/useDashboardStore',
 	() => ({
 		useDashboardStore: (selector: (s: unknown) => unknown): unknown =>

@@ -45,7 +45,7 @@ function makeFakePlot(
 		root,
 		series,
 		cursor: { event: cursorEvent, left: 50 },
-		setSeries: jest.fn(),
+		setSeries: vi.fn(),
 	} as unknown as uPlot;
 }
 

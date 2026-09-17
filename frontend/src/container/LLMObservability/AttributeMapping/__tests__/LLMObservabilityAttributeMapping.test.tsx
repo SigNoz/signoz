@@ -1,3 +1,4 @@
+import type { MockedFunction } from 'vitest';
 import { rest, server } from 'mocks-server/server';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
@@ -5,11 +6,11 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 // The header's Save/Discard and the group toggle are Admin-gated via useAuthZ;
 // render as an admin so those controls are present.
-jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
+vi.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+const mockedUseAuthZ = useAuthZ as MockedFunction<typeof useAuthZ>;
 
 // Monaco can't run in jsdom — stand in a textarea so the span input is editable.
-jest.mock('@monaco-editor/react', () => ({
+vi.mock('@monaco-editor/react', () => ({
 	__esModule: true,
 	default: ({
 		value,

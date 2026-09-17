@@ -10,7 +10,7 @@ const SERIES: LegendSeries[] = [
 
 describe('LegendColors', () => {
 	it('shows a hint when there are no resolved series', () => {
-		render(<LegendColors series={[]} value={undefined} onChange={jest.fn()} />);
+		render(<LegendColors series={[]} value={undefined} onChange={vi.fn()} />);
 
 		expect(
 			screen.queryByTestId('panel-editor-v2-legend-colors'),
@@ -19,9 +19,7 @@ describe('LegendColors', () => {
 	});
 
 	it('renders the search box once series are present', () => {
-		render(
-			<LegendColors series={SERIES} value={undefined} onChange={jest.fn()} />,
-		);
+		render(<LegendColors series={SERIES} value={undefined} onChange={vi.fn()} />);
 
 		expect(
 			screen.getByTestId('panel-editor-v2-legend-search'),
@@ -29,9 +27,7 @@ describe('LegendColors', () => {
 	});
 
 	it('shows a no-match message when the search filters everything out', () => {
-		render(
-			<LegendColors series={SERIES} value={undefined} onChange={jest.fn()} />,
-		);
+		render(<LegendColors series={SERIES} value={undefined} onChange={vi.fn()} />);
 
 		fireEvent.change(screen.getByTestId('panel-editor-v2-legend-search'), {
 			target: { value: 'zzz' },

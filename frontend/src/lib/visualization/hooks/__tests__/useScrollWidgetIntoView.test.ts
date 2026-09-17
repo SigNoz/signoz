@@ -1,31 +1,30 @@
+import type { Mock, MockedFunction } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useScrollToWidgetIdStore } from 'providers/Dashboard/helpers/scrollToWidgetIdHelper';
 
 import { useScrollWidgetIntoView } from 'lib/visualization/hooks/useScrollWidgetIntoView';
 
-jest.mock('providers/Dashboard/helpers/scrollToWidgetIdHelper');
+vi.mock('providers/Dashboard/helpers/scrollToWidgetIdHelper');
 
 type MockHTMLElement = {
-	scrollIntoView: jest.Mock;
-	focus: jest.Mock;
+	scrollIntoView: Mock;
+	focus: Mock;
 };
 
 function createMockElement(): MockHTMLElement {
 	return {
-		scrollIntoView: jest.fn(),
-		focus: jest.fn(),
+		scrollIntoView: vi.fn(),
+		focus: vi.fn(),
 	};
 }
 
 describe('useScrollWidgetIntoView', () => {
 	const mockedUseScrollToWidgetIdStore =
-		useScrollToWidgetIdStore as jest.MockedFunction<
-			typeof useScrollToWidgetIdStore
-		>;
+		useScrollToWidgetIdStore as MockedFunction<typeof useScrollToWidgetIdStore>;
 
 	let mockElement: MockHTMLElement;
 	let ref: React.RefObject<HTMLDivElement>;
-	let setToScrollWidgetId: jest.Mock;
+	let setToScrollWidgetId: Mock;
 
 	function mockStore(toScrollWidgetId: string): void {
 		const storeState = { toScrollWidgetId, setToScrollWidgetId };
@@ -38,12 +37,12 @@ describe('useScrollWidgetIntoView', () => {
 	}
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockElement = createMockElement();
 		ref = {
 			current: mockElement,
 		} as unknown as React.RefObject<HTMLDivElement>;
-		setToScrollWidgetId = jest.fn();
+		setToScrollWidgetId = vi.fn();
 	});
 
 	it('scrolls into view and focuses when toScrollWidgetId matches widget id', () => {

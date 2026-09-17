@@ -12,8 +12,8 @@ import DashboardPage from '../DashboardPage';
 const DASHBOARD_ID = 'dash-1';
 const DASHBOARD_URL = `http://localhost/api/v2/dashboards/${DASHBOARD_ID}`;
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useParams: (): { dashboardId: string } => ({ dashboardId: DASHBOARD_ID }),
 }));
 
@@ -23,7 +23,7 @@ describe('DashboardPage - AuthZ', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 

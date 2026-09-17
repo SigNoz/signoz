@@ -96,8 +96,8 @@ describe('useLastComputedMinMax', () => {
 	});
 
 	it('should update when store changes', () => {
-		jest.useFakeTimers();
-		jest.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
 
 		const contextStore = createGlobalTimeStore({ selectedTime: '15m' });
 		contextStore.getState().computeAndStoreMinMax();
@@ -114,24 +114,24 @@ describe('useLastComputedMinMax', () => {
 
 		// Change time and recompute
 		act(() => {
-			jest.advanceTimersByTime(60000); // Advance 1 minute
+			vi.advanceTimersByTime(60000); // Advance 1 minute
 			contextStore.getState().computeAndStoreMinMax();
 		});
 
 		expect(result.current).not.toStrictEqual(firstValue);
 
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 });
 
 describe('useComputedMinMaxSync', () => {
 	beforeEach(() => {
-		jest.useFakeTimers();
-		jest.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('should have computed min/max on store creation (no longer needs mount sync)', () => {
@@ -156,7 +156,7 @@ describe('useComputedMinMaxSync', () => {
 		const initialMinMax = { ...contextStore.getState().lastComputedMinMax };
 		const initialTimestamp = contextStore.getState().lastRefreshTimestamp;
 
-		jest.advanceTimersByTime(60000);
+		vi.advanceTimersByTime(60000);
 
 		renderHook(() => useComputedMinMaxSync(contextStore));
 
@@ -175,7 +175,7 @@ describe('useComputedMinMaxSync', () => {
 		const afterMountMinMax = { ...contextStore.getState().lastComputedMinMax };
 		const afterMountTimestamp = contextStore.getState().lastRefreshTimestamp;
 
-		jest.advanceTimersByTime(60000);
+		vi.advanceTimersByTime(60000);
 
 		rerender();
 

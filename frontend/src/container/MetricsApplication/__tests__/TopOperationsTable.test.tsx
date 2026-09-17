@@ -1,3 +1,4 @@
+import type { Mock, MockedFunction } from 'vitest';
 import { QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
@@ -9,8 +10,7 @@ import {
 	waitFor,
 } from '@testing-library/react';
 import useResourceAttribute from 'hooks/useResourceAttribute';
-import { server } from 'mocks-server/server';
-import { rest } from 'msw';
+import { rest, server } from 'mocks-server/server';
 
 import {
 	createMockStore,
@@ -22,26 +22,27 @@ import {
 import TopOperation from '../Tabs/Overview/TopOperation';
 
 // Mock dependencies
-jest.mock('hooks/useResourceAttribute');
-jest.mock('hooks/useResourceAttribute/utils', () => ({
+vi.mock('hooks/useResourceAttribute');
+vi.mock('hooks/useResourceAttribute/utils', async () => ({
+	...(await vi.importActual('hooks/useResourceAttribute/utils')),
 	convertRawQueriesToTraceSelectedTags: (): any[] => [],
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
-		safeNavigate: jest.fn(),
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
+		safeNavigate: vi.fn(),
 	}),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+vi.mock('react-router-dom', async () => ({
+	...(await vi.importActual('react-router-dom')),
 	useParams: (): { servicename: string } => ({
 		servicename: encodeURIComponent('test-service'),
 	}),
 }));
 
 // Mock the util functions that TopOperationsTable uses
-jest.mock('../Tabs/util', () => ({
+vi.mock('../Tabs/util', () => ({
 	useGetAPMToTracesQueries: (): any => ({
 		builder: {
 			queryData: [
@@ -56,11 +57,11 @@ jest.mock('../Tabs/util', () => ({
 }));
 
 // Mock the resourceAttributesToTracesFilterItems function
-jest.mock('container/TraceDetail/utils', () => ({
+vi.mock('container/TraceDetail/utils', () => ({
 	resourceAttributesToTracesFilterItems: (): any[] => [],
 }));
 
-const mockedUseResourceAttribute = useResourceAttribute as jest.MockedFunction<
+const mockedUseResourceAttribute = useResourceAttribute as MockedFunction<
 	typeof useResourceAttribute
 >;
 
@@ -85,6 +86,12 @@ const waitForInitialRender = async (): Promise<void> => {
 	await waitFor(() => {
 		expect(screen.getByText(KEY_OPERATIONS_TEXT)).toBeInTheDocument();
 	});
+
+	// Wait for the top-operations response to render. The title above is static
+	// and settles before the request resolves; ending the test on the title
+	// alone leaves the request in flight and its msw resolver can run inside the
+	// next test, inflating that test's apiCalls.
+	await screen.findByText('GET /api/users');
 };
 
 // Helper function to click toggle and wait for data to load
@@ -99,6 +106,9 @@ const clickToggleAndWaitForDataLoad = async (): Promise<HTMLElement> => {
 		expect(screen.getByText(KEY_ENTRY_POINT_OPERATIONS_TEXT)).toBeInTheDocument();
 	});
 
+	// Same settlement guarantee as above, for the entry-point request.
+	await screen.findByText('GET /api/health');
+
 	return toggleSwitch;
 };
 
@@ -106,7 +116,7 @@ describe('TopOperation API Integration', () => {
 	let apiCalls: { endpoint: string; body: any }[] = [];
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		queryClient.clear();
 		apiCalls = [];
 
@@ -270,6 +280,9 @@ describe('TopOperation API Integration', () => {
 		expect(apiCalls).toHaveLength(3);
 		expect(apiCalls[2].endpoint).toBe(TOP_OPERATIONS_ENDPOINT);
 
+		// Settle the toggled-back request so it cannot leak past the test.
+		await screen.findByText('GET /api/users');
+
 		expect(toggleSwitch).not.toBeChecked();
 	});
 
@@ -279,6 +292,9 @@ describe('TopOperation API Integration', () => {
 		await waitFor(() => {
 			expect(screen.getByText(ENTRY_POINT_SPANS_TEXT)).toBeInTheDocument();
 		});
+
+		// Settle the initial request before finishing.
+		await screen.findByText('GET /api/users');
 
 		const toggleSwitch = screen.getByRole('switch');
 		expect(toggleSwitch).toBeInTheDocument();
@@ -303,6 +319,10 @@ describe('TopOperation API Integration', () => {
 		await waitFor(() => {
 			expect(screen.getByText(KEY_OPERATIONS_TEXT)).toBeInTheDocument();
 		});
+
+		// Settle the toggled-back request; this is the last test but keeps the
+		// file hermetic if tests are reordered.
+		await screen.findByText('GET /api/users');
 
 		expect(toggleSwitch).not.toBeChecked();
 	});

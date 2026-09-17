@@ -3,7 +3,7 @@ import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import userEvent from '@testing-library/user-event';
-import { render, screen, within } from 'tests/test-utils';
+import { render, screen, within } from 'tests/test-utils-full';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 import ViewRolePage from '../ViewRolePage';
@@ -16,6 +16,9 @@ import {
 	mockHooksWithPermissions,
 	mockPermissionsData,
 } from './testUtils';
+
+vi.mock('api/generated/services/role', { spy: true });
+vi.mock('../../hooks/useRolePermissions', { spy: true });
 
 async function waitForPageReady(): Promise<void> {
 	// Wait for content to render (after authz check passes)
@@ -37,7 +40,7 @@ describe('ViewRolePage - Permission Overview', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
@@ -93,19 +96,19 @@ describe('ViewRolePage - Permission Overview Loading State', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
 	it('shows skeleton when permissions are loading', async () => {
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: customRoleResponse,
 			isLoading: false,
 			isError: false,
 			error: null,
 		} as ReturnType<typeof roleApi.useGetRole>);
 
-		jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+		vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 			data: undefined,
 			isLoading: true,
 			isError: false,
@@ -127,19 +130,19 @@ describe('ViewRolePage - Permission Overview Error State', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
 	it('shows error when permissions fail to load', async () => {
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: customRoleResponse,
 			isLoading: false,
 			isError: false,
 			error: null,
 		} as ReturnType<typeof roleApi.useGetRole>);
 
-		jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+		vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 			data: undefined,
 			isLoading: false,
 			isError: true,
@@ -161,7 +164,7 @@ describe('ViewRolePage - Scope: ALL permissions', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
@@ -229,7 +232,7 @@ describe('ViewRolePage - Scope: NONE permissions', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
@@ -298,7 +301,7 @@ describe('ViewRolePage - Scope: ONLY_SELECTED permissions', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
@@ -437,7 +440,7 @@ describe('ViewRolePage - Mixed permission scopes', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
@@ -550,7 +553,7 @@ describe('ViewRolePage - Unknown resources', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
@@ -647,7 +650,7 @@ describe('ViewRolePage - View mode toggle', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
@@ -684,7 +687,7 @@ describe('ViewRolePage - JSON Viewer Copy Button', () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 

@@ -1,10 +1,11 @@
+import type { Mock, Mocked } from 'vitest';
 import { DASHED_BORDER_LINE_DASH, MIN_WIDTH_FOR_NAME } from '../constants';
 import type { FlamegraphRowMetrics } from '../utils';
 import { getFlamegraphRowMetrics } from '../utils';
 import { drawEventDot, drawSpanBar, getEventDotColor } from '../utils';
 import { MOCK_SPAN } from './testUtils';
 
-jest.mock('container/TraceDetail/utils', () => ({
+vi.mock('container/TraceDetail/utils', () => ({
 	convertTimeToRelevantUnit: (): { time: number; timeUnitName: string } => ({
 		time: 50,
 		timeUnitName: 'ms',
@@ -13,10 +14,10 @@ jest.mock('container/TraceDetail/utils', () => ({
 
 /** Minimal 2D context for createStripePattern's internal canvas (jsdom getContext often returns null) */
 const mockPatternCanvasCtx = {
-	beginPath: jest.fn(),
-	moveTo: jest.fn(),
-	lineTo: jest.fn(),
-	stroke: jest.fn(),
+	beginPath: vi.fn(),
+	moveTo: vi.fn(),
+	lineTo: vi.fn(),
+	stroke: vi.fn(),
 	globalAlpha: 1,
 };
 
@@ -32,26 +33,26 @@ document.createElement = function (
 	return el;
 };
 
-function createMockCtx(): jest.Mocked<CanvasRenderingContext2D> {
+function createMockCtx(): Mocked<CanvasRenderingContext2D> {
 	return {
-		beginPath: jest.fn(),
-		roundRect: jest.fn(),
-		fill: jest.fn(),
-		stroke: jest.fn(),
-		save: jest.fn(),
-		restore: jest.fn(),
-		translate: jest.fn(),
-		rotate: jest.fn(),
-		fillRect: jest.fn(),
-		strokeRect: jest.fn(),
-		setLineDash: jest.fn(),
-		measureText: jest.fn(
+		beginPath: vi.fn(),
+		roundRect: vi.fn(),
+		fill: vi.fn(),
+		stroke: vi.fn(),
+		save: vi.fn(),
+		restore: vi.fn(),
+		translate: vi.fn(),
+		rotate: vi.fn(),
+		fillRect: vi.fn(),
+		strokeRect: vi.fn(),
+		setLineDash: vi.fn(),
+		measureText: vi.fn(
 			(text: string) => ({ width: text.length * 6 }) as TextMetrics,
 		),
-		createPattern: jest.fn(() => ({}) as CanvasPattern),
-		clip: jest.fn(),
-		rect: jest.fn(),
-		fillText: jest.fn(),
+		createPattern: vi.fn(() => ({}) as CanvasPattern),
+		clip: vi.fn(),
+		rect: vi.fn(),
+		fillText: vi.fn(),
 		font: '',
 		fillStyle: '',
 		strokeStyle: '',
@@ -59,7 +60,7 @@ function createMockCtx(): jest.Mocked<CanvasRenderingContext2D> {
 		textBaseline: '',
 		lineWidth: 0,
 		globalAlpha: 1,
-	} as unknown as jest.Mocked<CanvasRenderingContext2D>;
+	} as unknown as Mocked<CanvasRenderingContext2D>;
 }
 
 const METRICS: FlamegraphRowMetrics = getFlamegraphRowMetrics(24);
@@ -248,7 +249,7 @@ describe('Canvas Draw Utils', () => {
 
 		it('draws name only when width >= MIN_WIDTH_FOR_NAME but < MIN_WIDTH_FOR_NAME_AND_DURATION', () => {
 			const ctx = createMockCtx();
-			ctx.measureText = jest.fn(
+			ctx.measureText = vi.fn(
 				(t: string) => ({ width: t.length * 6 }) as TextMetrics,
 			);
 
@@ -274,7 +275,7 @@ describe('Canvas Draw Utils', () => {
 
 		it('draws name + duration when width >= MIN_WIDTH_FOR_NAME_AND_DURATION', () => {
 			const ctx = createMockCtx();
-			ctx.measureText = jest.fn(
+			ctx.measureText = vi.fn(
 				(t: string) => ({ width: t.length * 6 }) as TextMetrics,
 			);
 
@@ -310,7 +311,7 @@ describe('Canvas Draw Utils', () => {
 	describe('truncateText (via drawSpanBar)', () => {
 		it('uses full text when it fits', () => {
 			const ctx = createMockCtx();
-			ctx.measureText = jest.fn(
+			ctx.measureText = vi.fn(
 				(t: string) => ({ width: t.length * 4 }) as TextMetrics,
 			);
 
@@ -338,7 +339,7 @@ describe('Canvas Draw Utils', () => {
 
 		it('truncates text when it exceeds available width', () => {
 			const ctx = createMockCtx();
-			ctx.measureText = jest.fn(
+			ctx.measureText = vi.fn(
 				(t: string) =>
 					({
 						width: t.includes('...') ? 24 : t.length * 10,
@@ -360,7 +361,7 @@ describe('Canvas Draw Utils', () => {
 				metrics: METRICS,
 			});
 
-			const fillTextCalls = (ctx.fillText as jest.Mock).mock.calls;
+			const fillTextCalls = (ctx.fillText as Mock).mock.calls;
 			const nameArg = fillTextCalls.find((c) => c[0] !== '50ms')?.[0];
 			expect(nameArg).toBeDefined();
 			expect(nameArg).toMatch(/\.\.\.$/);

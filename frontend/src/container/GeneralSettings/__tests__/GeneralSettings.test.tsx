@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
@@ -11,36 +12,35 @@ import {
 import GeneralSettings from '../GeneralSettings';
 
 // Mock dependencies
-jest.mock('api/settings/setRetentionV2');
+vi.mock('api/settings/setRetentionV2');
 
-const mockNotifications = {
-	error: jest.fn(),
-	success: jest.fn(),
-};
+const { mockNotifications } = vi.hoisted(() => ({
+	mockNotifications: { error: vi.fn(), success: vi.fn() },
+}));
 
-jest.mock('hooks/useNotifications', () => ({
+vi.mock('hooks/useNotifications', () => ({
 	useNotifications: (): { notifications: typeof mockNotifications } => ({
 		notifications: mockNotifications,
 	}),
 }));
 
-jest.mock('hooks/useComponentPermission', () => ({
+vi.mock('hooks/useComponentPermission', () => ({
 	__esModule: true,
-	default: jest.fn(() => [true]),
+	default: vi.fn(() => [true]),
 }));
 
-jest.mock('hooks/useGetTenantLicense', () => ({
-	useGetTenantLicense: jest.fn(() => ({
+vi.mock('hooks/useGetTenantLicense', () => ({
+	useGetTenantLicense: vi.fn(() => ({
 		isCloudUser: false,
 	})),
 }));
 
-jest.mock('container/GeneralSettingsCloud', () => ({
+vi.mock('container/GeneralSettingsCloud', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="general-settings-cloud" />,
 }));
 
-jest.mock('container/CustomDomainSettings', () => ({
+vi.mock('container/CustomDomainSettings', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="custom-domain-settings" />,
 }));
@@ -100,8 +100,8 @@ const getLogsRow = (): HTMLElement => {
 
 describe('GeneralSettings - S3 Logs Retention', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		(setRetentionApiV2 as jest.Mock).mockResolvedValue({
+		vi.clearAllMocks();
+		(setRetentionApiV2 as Mock).mockResolvedValue({
 			httpStatusCode: 200,
 			data: { message: 'success' },
 		});
@@ -115,9 +115,9 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 					tracesTtlValuesPayload={mockTracesRetention}
 					logsTtlValuesPayload={mockLogsRetentionWithS3}
 					getAvailableDiskPayload={mockDisksWithS3}
-					metricsTtlValuesRefetch={jest.fn()}
-					tracesTtlValuesRefetch={jest.fn()}
-					logsTtlValuesRefetch={jest.fn()}
+					metricsTtlValuesRefetch={vi.fn()}
+					tracesTtlValuesRefetch={vi.fn()}
+					logsTtlValuesRefetch={vi.fn()}
 				/>,
 			);
 
@@ -193,9 +193,9 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 					tracesTtlValuesPayload={mockTracesRetention}
 					logsTtlValuesPayload={mockLogsRetentionWithS3}
 					getAvailableDiskPayload={mockDisksWithObjectStorage}
-					metricsTtlValuesRefetch={jest.fn()}
-					tracesTtlValuesRefetch={jest.fn()}
-					logsTtlValuesRefetch={jest.fn()}
+					metricsTtlValuesRefetch={vi.fn()}
+					tracesTtlValuesRefetch={vi.fn()}
+					logsTtlValuesRefetch={vi.fn()}
 				/>,
 			);
 
@@ -214,9 +214,9 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 					tracesTtlValuesPayload={mockTracesRetention}
 					logsTtlValuesPayload={mockLogsRetentionWithoutS3}
 					getAvailableDiskPayload={mockDisksWithoutS3}
-					metricsTtlValuesRefetch={jest.fn()}
-					tracesTtlValuesRefetch={jest.fn()}
-					logsTtlValuesRefetch={jest.fn()}
+					metricsTtlValuesRefetch={vi.fn()}
+					tracesTtlValuesRefetch={vi.fn()}
+					logsTtlValuesRefetch={vi.fn()}
 				/>,
 			);
 
@@ -295,9 +295,9 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 					tracesTtlValuesPayload={mockTracesRetention}
 					logsTtlValuesPayload={mockLogsRetentionWithS3}
 					getAvailableDiskPayload={mockDisksWithS3}
-					metricsTtlValuesRefetch={jest.fn()}
-					tracesTtlValuesRefetch={jest.fn()}
-					logsTtlValuesRefetch={jest.fn()}
+					metricsTtlValuesRefetch={vi.fn()}
+					tracesTtlValuesRefetch={vi.fn()}
+					logsTtlValuesRefetch={vi.fn()}
 				/>,
 			);
 
@@ -327,9 +327,9 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 					tracesTtlValuesPayload={mockTracesRetention}
 					logsTtlValuesPayload={mockLogsRetentionWithoutS3}
 					getAvailableDiskPayload={mockDisksWithS3}
-					metricsTtlValuesRefetch={jest.fn()}
-					tracesTtlValuesRefetch={jest.fn()}
-					logsTtlValuesRefetch={jest.fn()}
+					metricsTtlValuesRefetch={vi.fn()}
+					tracesTtlValuesRefetch={vi.fn()}
+					logsTtlValuesRefetch={vi.fn()}
 				/>,
 			);
 
@@ -370,7 +370,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 	describe('Cloud User Rendering', () => {
 		beforeEach(() => {
-			(useGetTenantLicense as jest.Mock).mockReturnValue({
+			(useGetTenantLicense as Mock).mockReturnValue({
 				isCloudUser: true,
 			});
 		});
@@ -382,9 +382,9 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 					tracesTtlValuesPayload={mockTracesRetention}
 					logsTtlValuesPayload={mockLogsRetentionWithS3}
 					getAvailableDiskPayload={mockDisksWithS3}
-					metricsTtlValuesRefetch={jest.fn()}
-					tracesTtlValuesRefetch={jest.fn()}
-					logsTtlValuesRefetch={jest.fn()}
+					metricsTtlValuesRefetch={vi.fn()}
+					tracesTtlValuesRefetch={vi.fn()}
+					logsTtlValuesRefetch={vi.fn()}
 				/>,
 			);
 
@@ -395,7 +395,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 	describe('Non-cloud user rendering', () => {
 		beforeEach(() => {
-			(useGetTenantLicense as jest.Mock).mockReturnValue({
+			(useGetTenantLicense as Mock).mockReturnValue({
 				isCloudUser: false,
 			});
 		});
@@ -407,9 +407,9 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 					tracesTtlValuesPayload={mockTracesRetention}
 					logsTtlValuesPayload={mockLogsRetentionWithS3}
 					getAvailableDiskPayload={mockDisksWithS3}
-					metricsTtlValuesRefetch={jest.fn()}
-					tracesTtlValuesRefetch={jest.fn()}
-					logsTtlValuesRefetch={jest.fn()}
+					metricsTtlValuesRefetch={vi.fn()}
+					tracesTtlValuesRefetch={vi.fn()}
+					logsTtlValuesRefetch={vi.fn()}
 				/>,
 			);
 

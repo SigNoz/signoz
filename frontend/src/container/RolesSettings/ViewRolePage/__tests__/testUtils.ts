@@ -12,6 +12,14 @@ import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 
+// NOTE: no vi.mock() calls here. Every test file that imports this helper
+// registers vi.mock('api/generated/services/role', { spy: true }) and
+// vi.mock('../../hooks/useRolePermissions', { spy: true }) itself. A second
+// spy:true registration from this helper re-creates the automock under
+// jsdom (vite-node SSR) and orphans the spies the test files captured,
+// so the mockReturnValue below silently stops applying. Browser mode
+// tolerates the duplicate; jsdom does not.
+
 export const CUSTOM_ROLE_ID = '019c24aa-3333-0001-aaaa-111111111111';
 export const CUSTOM_ROLE_NAME = 'billing-manager';
 export const MANAGED_ROLE_ID = '019c24aa-2248-756f-9833-984f1ab63819';
@@ -81,14 +89,14 @@ export const mockPermissionsData = {
 export function mockHooksForCustomRole(): void {
 	server.use(setupAuthzAdmin());
 
-	jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+	vi.mocked(roleApi.useGetRole).mockReturnValue({
 		data: customRoleResponse,
 		isLoading: false,
 		isError: false,
 		error: null,
 	} as ReturnType<typeof roleApi.useGetRole>);
 
-	jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+	vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 		data: mockPermissionsData,
 		isLoading: false,
 		isError: false,
@@ -99,14 +107,14 @@ export function mockHooksForCustomRole(): void {
 export function mockHooksWithPermissions(permissions: unknown): void {
 	server.use(setupAuthzAdmin());
 
-	jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+	vi.mocked(roleApi.useGetRole).mockReturnValue({
 		data: customRoleResponse,
 		isLoading: false,
 		isError: false,
 		error: null,
 	} as ReturnType<typeof roleApi.useGetRole>);
 
-	jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+	vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 		data: permissions,
 		isLoading: false,
 		isError: false,
@@ -117,14 +125,14 @@ export function mockHooksWithPermissions(permissions: unknown): void {
 export function mockHooksForManagedRole(): void {
 	server.use(setupAuthzAdmin());
 
-	jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+	vi.mocked(roleApi.useGetRole).mockReturnValue({
 		data: managedRoleResponse,
 		isLoading: false,
 		isError: false,
 		error: null,
 	} as ReturnType<typeof roleApi.useGetRole>);
 
-	jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+	vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 		data: {
 			...mockPermissionsData,
 			roleId: MANAGED_ROLE_ID,

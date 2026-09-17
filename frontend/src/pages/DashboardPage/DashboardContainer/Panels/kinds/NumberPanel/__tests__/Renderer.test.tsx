@@ -22,10 +22,10 @@ const NumberPanelRenderer =
 // ValueDisplay observes its container to size the font.
 window.ResizeObserver =
 	window.ResizeObserver ||
-	jest.fn().mockImplementation(() => ({
-		disconnect: jest.fn(),
-		observe: jest.fn(),
-		unobserve: jest.fn(),
+	vi.fn().mockImplementation(() => ({
+		disconnect: vi.fn(),
+		observe: vi.fn(),
+		unobserve: vi.fn(),
 	}));
 
 function panelWith(

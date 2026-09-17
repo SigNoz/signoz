@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`utils/spanToTree should return a single tree on valid trace data 1`] = `
+exports[`utils/spanToTree > should return a single tree on valid trace data 1`] = `
 {
   "missingSpanTree": [],
   "spanTree": [
@@ -129,7 +129,7 @@ exports[`utils/spanToTree should return a single tree on valid trace data 1`] = 
 }
 `;
 
-exports[`utils/spanToTree should return a single tree on valid trace data 2`] = `
+exports[`utils/spanToTree > should return a single tree on valid trace data 2`] = `
 {
   "missingSpanTree": [
     {

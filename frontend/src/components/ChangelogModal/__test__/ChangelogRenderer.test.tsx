@@ -10,19 +10,17 @@ import ChangelogRenderer from '../components/ChangelogRenderer';
 
 // Mock react-markdown to render children as plain text and a sample
 // anchor through the `components.a` override
-jest.mock(
-	'react-markdown',
-	() =>
-		function ReactMarkdown({ children, components }: any) {
-			const Anchor = components?.a;
-			return (
-				<div>
-					{children}
-					{Anchor && <Anchor href="https://signoz.io/docs">docs</Anchor>}
-				</div>
-			);
-		},
-);
+vi.mock('react-markdown', () => ({
+	default: function ReactMarkdown({ children, components }: any) {
+		const Anchor = components?.a;
+		return (
+			<div>
+				{children}
+				{Anchor && <Anchor href="https://signoz.io/docs">docs</Anchor>}
+			</div>
+		);
+	},
+}));
 
 const mockChangelog: ChangelogSchema = {
 	id: 1,

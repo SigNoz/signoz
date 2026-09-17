@@ -23,7 +23,7 @@ let lockedDashboard = false;
 // The hook reads the dashboard from the loaded subtree, which a bare renderHook
 // has no root page to establish — stand in for it so these cases stay about the
 // permissions and the derivation.
-jest.mock('../useDashboardFetchRequired', () => ({
+vi.mock('../useDashboardFetchRequired', () => ({
 	useDashboardFetchRequired: (): { dashboard: unknown } => ({
 		dashboard: { id: DASHBOARD_ID, locked: lockedDashboard },
 	}),
@@ -42,7 +42,7 @@ function renderGuard(
 
 describe('useDashboardEditContext - AuthZ', () => {
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 

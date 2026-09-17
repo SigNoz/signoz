@@ -8,22 +8,22 @@ import { useViewPanelStore } from '../../../../store/useViewPanelStore';
 import { ExtendTimeWindow } from '../extendWindow';
 import NoData from '../NoData';
 
-const mockUseExtendTimeWindow = jest.fn();
-jest.mock('../useExtendTimeWindow', () => ({
+const mockUseExtendTimeWindow = vi.fn();
+vi.mock('../useExtendTimeWindow', () => ({
 	useExtendTimeWindow: (): ExtendTimeWindow => mockUseExtendTimeWindow(),
 }));
 
 const inert: ExtendTimeWindow = {
 	canExtend: false,
 	actionLabel: null,
-	extend: jest.fn(),
+	extend: vi.fn(),
 };
 
 function extender(over?: Partial<ExtendTimeWindow>): ExtendTimeWindow {
 	return {
 		canExtend: true,
 		actionLabel: 'Extend time range',
-		extend: jest.fn(),
+		extend: vi.fn(),
 		...over,
 	};
 }
@@ -71,7 +71,7 @@ describe('NoData', () => {
 	});
 
 	it('renders both Extend (primary) and Retry (secondary) when a retry handler is given', () => {
-		const onRetry = jest.fn();
+		const onRetry = vi.fn();
 		mockUseExtendTimeWindow.mockReturnValue(extender());
 		render(<NoData onRetry={onRetry} panel={panelWith()} />);
 
@@ -86,7 +86,7 @@ describe('NoData', () => {
 	});
 
 	it('falls back to Retry as the sole action when the window cannot be widened', () => {
-		const onRetry = jest.fn();
+		const onRetry = vi.fn();
 		render(<NoData onRetry={onRetry} panel={panelWith()} />);
 
 		const action = screen.getByTestId('panel-no-data-action');
@@ -100,8 +100,8 @@ describe('NoData', () => {
 	});
 
 	it('prefers the View modal extender (store) over the global one', () => {
-		const globalExtend = jest.fn();
-		const storeExtend = jest.fn();
+		const globalExtend = vi.fn();
+		const storeExtend = vi.fn();
 		mockUseExtendTimeWindow.mockReturnValue(extender({ extend: globalExtend }));
 		useViewPanelStore.setState({
 			viewPanelExtendWindow: extender({ extend: storeExtend }),
@@ -139,7 +139,7 @@ describe('NoData', () => {
 	});
 
 	it('hides the global extend action for a panel with a fixed time preference', () => {
-		const onRetry = jest.fn();
+		const onRetry = vi.fn();
 		mockUseExtendTimeWindow.mockReturnValue(extender());
 		render(
 			<NoData
@@ -168,7 +168,7 @@ describe('NoData', () => {
 	});
 
 	it('keeps the View modal extender even when the panel has a fixed time preference', () => {
-		const storeExtend = jest.fn();
+		const storeExtend = vi.fn();
 		mockUseExtendTimeWindow.mockReturnValue(extender());
 		useViewPanelStore.setState({
 			viewPanelExtendWindow: extender({ extend: storeExtend }),

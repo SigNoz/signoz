@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
@@ -14,8 +15,8 @@ const attributeKeysURL = `${BASE_URL}/api/v3/autocomplete/attribute_keys`;
 
 function setup(
 	overrides?: Partial<React.ComponentProps<typeof GroupByFilter>>,
-): { onChange: jest.Mock } {
-	const onChange = jest.fn();
+): { onChange: Mock } {
+	const onChange = vi.fn();
 	const query = {
 		dataSource: DataSource.METRICS,
 		aggregateAttribute: { key: 'service.name' },
@@ -38,17 +39,11 @@ describe('GroupByFilter', () => {
 	const dataSourceCalls: string[] = [];
 	let callCount = 0;
 
-	beforeAll(() => {
-		server.listen();
-	});
 	afterEach(() => {
 		server.resetHandlers();
 		dataSourceCalls.length = 0;
 		callCount = 0;
-		jest.clearAllMocks();
-	});
-	afterAll(() => {
-		server.close();
+		vi.clearAllMocks();
 	});
 
 	it('uses meter datasource for suggestions and normalization', async () => {
@@ -93,7 +88,7 @@ describe('GroupByFilter', () => {
 		const option = await screen.findByRole('option', { name: 'custom.attr' });
 		await user.click(option);
 
-		expect(onChange).toHaveBeenCalled();
+		await waitFor(() => expect(onChange).toHaveBeenCalled());
 		expect(dataSourceCalls[dataSourceCalls.length - 1]).toBe('meter');
 
 		const emitted = onChange.mock.calls[0][0][0];

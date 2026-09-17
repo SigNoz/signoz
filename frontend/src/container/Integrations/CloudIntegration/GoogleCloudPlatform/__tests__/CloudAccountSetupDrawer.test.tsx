@@ -18,14 +18,14 @@ import {
 } from './mockData';
 
 // `useCloudAccountSetupDrawer` imports logEvent by relative path, which the
-// jest.config moduleNameMapper (keyed on the `api/common/logEvent` alias) does
+// vitest.config alias (keyed on the `api/common/logEvent` alias) does
 // not intercept — so mock the resolved module directly.
-jest.mock('../../../../../api/common/logEvent', () => ({
+vi.mock('../../../../../api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-const onClose = jest.fn();
+const onClose = vi.fn();
 
 const renderDrawer = (): void => {
 	render(

@@ -4,7 +4,7 @@ import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationS
 
 import NotificationSettings from '../NotificationSettings';
 
-jest.mock(
+vi.mock(
 	'container/CreateAlertV2/NotificationSettings/MultipleNotifications',
 	() => ({
 		__esModule: true,
@@ -13,7 +13,7 @@ jest.mock(
 		),
 	}),
 );
-jest.mock(
+vi.mock(
 	'container/CreateAlertV2/NotificationSettings/NotificationMessage',
 	() => ({
 		__esModule: true,
@@ -23,14 +23,19 @@ jest.mock(
 	}),
 );
 
-jest.mock('container/CreateAlertV2/utils', () => ({
-	...jest.requireActual('container/CreateAlertV2/utils'),
+vi.mock('container/CreateAlertV2/utils', async () => ({
+	...(await vi.importActual('container/CreateAlertV2/utils')),
 }));
+
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('container/CreateAlertV2/context', { spy: true });
 
 const initialNotificationSettings =
 	createMockAlertContextState().notificationSettings;
-const mockSetNotificationSettings = jest.fn();
-jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+const mockSetNotificationSettings = vi.fn();
+vi.mocked(createAlertContext.useCreateAlertState).mockReturnValue(
 	createMockAlertContextState({
 		setNotificationSettings: mockSetNotificationSettings,
 	}),
@@ -80,7 +85,7 @@ describe('NotificationSettings', () => {
 		});
 
 		it('updates state when the repeat notifications input is changed', () => {
-			jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
+			vi.mocked(createAlertContext.useCreateAlertState).mockReturnValue(
 				createMockAlertContextState({
 					setNotificationSettings: mockSetNotificationSettings,
 					notificationSettings: {

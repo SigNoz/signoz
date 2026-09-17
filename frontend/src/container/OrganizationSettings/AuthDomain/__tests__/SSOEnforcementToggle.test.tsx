@@ -1,8 +1,8 @@
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils-full';
 
-jest.mock('@signozhq/ui/switch', () => ({
-	...jest.requireActual('@signozhq/ui/switch'),
+vi.mock('@signozhq/ui/switch', async () => ({
+	...(await vi.importActual('@signozhq/ui/switch')),
 	Switch: ({
 		value,
 		onChange,
@@ -33,7 +33,7 @@ import {
 
 describe('SSOEnforcementToggle', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
@@ -69,7 +69,7 @@ describe('SSOEnforcementToggle', () => {
 
 	it('calls update API when toggle is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockUpdateAPI = jest.fn();
+		const mockUpdateAPI = vi.fn();
 
 		server.use(
 			rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, async (req, res, ctx) => {
@@ -93,7 +93,9 @@ describe('SSOEnforcementToggle', () => {
 			expect(switchElement).not.toBeChecked();
 		});
 
-		expect(mockUpdateAPI).toHaveBeenCalledTimes(1);
+		await waitFor(() => {
+			expect(mockUpdateAPI).toHaveBeenCalledTimes(1);
+		});
 		expect(mockUpdateAPI).toHaveBeenCalledWith(
 			expect.objectContaining({
 				enabled: false,
@@ -106,7 +108,7 @@ describe('SSOEnforcementToggle', () => {
 	// dropped from the domain — role mappings included.
 	it('echoes the existing role mapping when toggling enforcement', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockUpdateAPI = jest.fn();
+		const mockUpdateAPI = vi.fn();
 
 		server.use(
 			rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, async (req, res, ctx) => {

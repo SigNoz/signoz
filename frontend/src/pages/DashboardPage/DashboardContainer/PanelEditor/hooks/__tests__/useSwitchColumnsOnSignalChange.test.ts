@@ -50,7 +50,7 @@ function selectFieldsOf(spec: DashboardtypesPanelSpecDTO): unknown[] {
 
 describe('useSwitchColumnsOnSignalChange', () => {
 	it('switches to the trace defaults when going logs → traces', () => {
-		const onChangeSpec = jest.fn();
+		const onChangeSpec = vi.fn();
 		const spec = makeSpec([{ name: 'body' }]);
 		const { rerender } = renderWith({
 			enabled: true,
@@ -83,7 +83,7 @@ describe('useSwitchColumnsOnSignalChange', () => {
 		// Mirror the real parent: persist the spec so the next switch stashes the
 		// columns the previous one applied.
 		let spec = makeSpec(original);
-		const onChangeSpec = jest.fn((next: DashboardtypesPanelSpecDTO) => {
+		const onChangeSpec = vi.fn((next: DashboardtypesPanelSpecDTO) => {
 			spec = next;
 		});
 		const { rerender } = renderWith({
@@ -112,7 +112,7 @@ describe('useSwitchColumnsOnSignalChange', () => {
 	});
 
 	it('switches to the log defaults when going traces → logs', () => {
-		const onChangeSpec = jest.fn();
+		const onChangeSpec = vi.fn();
 		const spec = makeSpec([{ name: 'service.name' }]);
 		const { rerender } = renderWith({
 			enabled: true,
@@ -134,7 +134,7 @@ describe('useSwitchColumnsOnSignalChange', () => {
 	});
 
 	it('does nothing when the signal is unchanged', () => {
-		const onChangeSpec = jest.fn();
+		const onChangeSpec = vi.fn();
 		const spec = makeSpec([{ name: 'body' }]);
 		const { rerender } = renderWith({
 			enabled: true,
@@ -153,7 +153,7 @@ describe('useSwitchColumnsOnSignalChange', () => {
 	});
 
 	it('does nothing when disabled (non-List kinds)', () => {
-		const onChangeSpec = jest.fn();
+		const onChangeSpec = vi.fn();
 		const spec = makeSpec([{ name: 'body' }]);
 		const { rerender } = renderWith({
 			enabled: false,

@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import GetMinMax from 'lib/getMinMax';
 
@@ -6,29 +7,34 @@ import { useViewPanelTimeWindow } from '../ViewPanelModal/useViewPanelTimeWindow
 const NS_PER_MS = 1e6;
 
 // Global time is stored in nanoseconds; the hook must surface milliseconds.
-const mockState = {
-	globalTime: {
-		selectedTime: '6h',
-		minTime: 6_000_000 * NS_PER_MS,
-		maxTime: 7_000_000 * NS_PER_MS,
+const { mockState } = vi.hoisted(() => ({
+	mockState: {
+		globalTime: {
+			selectedTime: '6h',
+			minTime: 6_000_000 * 1e6,
+			maxTime: 7_000_000 * 1e6,
+		},
 	},
-};
+}));
 
-jest.mock('react-redux', () => ({
+vi.mock('react-redux', () => ({
 	useSelector: (selector: (s: unknown) => unknown): unknown =>
 		selector(mockState),
 }));
 
-jest.mock('lib/getMinMax', () => ({
+vi.mock('lib/getMinMax', async () => ({
+	// Other modules in the graph import the named exports; keep them real and
+	// stub only the default the hook calls.
+	...(await vi.importActual('lib/getMinMax')),
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-const mockGetMinMax = GetMinMax as unknown as jest.Mock;
+const mockGetMinMax = GetMinMax as unknown as Mock;
 
 describe('useViewPanelTimeWindow', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('seeds the window from global time, converting ns → ms', () => {

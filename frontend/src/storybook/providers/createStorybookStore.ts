@@ -9,7 +9,7 @@ import reducers, { AppState } from 'store/reducers';
 
 /**
  * A fresh store per story, seeded with the real reducers so dispatches keep
- * working, unlike the mock store used in jest. Nothing leaks between stories.
+ * working, unlike the mock store used in the tests. Nothing leaks between stories.
  */
 export const createStorybookStore = (reduxState?: Partial<AppState>): Store =>
 	createStore(

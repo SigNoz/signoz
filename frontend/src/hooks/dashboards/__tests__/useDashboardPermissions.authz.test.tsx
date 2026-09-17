@@ -18,7 +18,7 @@ const DASHBOARD_ID = 'dash-1';
 
 describe('useDashboardPermissions - AuthZ', () => {
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
@@ -114,7 +114,7 @@ describe('useDashboardPermissions - AuthZ', () => {
 
 	describe('disabled', () => {
 		it('fires no check when disabled', async () => {
-			const onCheck = jest.fn();
+			const onCheck = vi.fn();
 			server.use(
 				rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
 					onCheck();

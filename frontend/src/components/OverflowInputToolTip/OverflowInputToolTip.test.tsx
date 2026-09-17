@@ -41,7 +41,7 @@ function queryTooltipInner(): HTMLElement | null {
 
 describe('OverflowInputToolTip', () => {
 	beforeEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it('shows tooltip when content overflows and input is clamped at maxAutoWidth', async () => {

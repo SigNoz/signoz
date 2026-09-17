@@ -30,7 +30,7 @@ describe('Span scope selector', () => {
 						dataSource: DataSource.TRACES,
 					}}
 					hideSpanScopeSelector={false}
-					onChange={jest.fn()}
+					onChange={vi.fn()}
 				/>
 			</QueryClientProvider>,
 		);
@@ -46,7 +46,7 @@ describe('Span scope selector', () => {
 						...initialQueryBuilderFormValues,
 						dataSource: DataSource.METRICS,
 					}}
-					onChange={jest.fn()}
+					onChange={vi.fn()}
 				/>
 			</QueryClientProvider>,
 		);
@@ -55,8 +55,8 @@ describe('Span scope selector', () => {
 	});
 });
 
-const mockOnChange = jest.fn();
-const mockHandleRunQuery = jest.fn();
+const mockOnChange = vi.fn();
+const mockHandleRunQuery = vi.fn();
 const defaultProps = {
 	query: {
 		...initialQueriesMap.traces.builder.queryData[0],
@@ -122,8 +122,8 @@ const mockAggregateKeysData = {
 	},
 };
 
-jest.mock('hooks/queryBuilder/useGetAggregateKeys', () => ({
-	useGetAggregateKeys: jest.fn(() => ({
+vi.mock('hooks/queryBuilder/useGetAggregateKeys', () => ({
+	useGetAggregateKeys: vi.fn(() => ({
 		data: mockAggregateKeysData,
 		isFetching: false,
 	})),
@@ -136,16 +136,16 @@ const mockAggregateValuesData = {
 	},
 };
 
-jest.mock('hooks/queryBuilder/useGetAggregateValues', () => ({
-	useGetAggregateValues: jest.fn(() => ({
+vi.mock('hooks/queryBuilder/useGetAggregateValues', () => ({
+	useGetAggregateValues: vi.fn(() => ({
 		data: mockAggregateValuesData,
 		isFetching: false,
 	})),
 }));
 
-jest.mock('hooks/useSafeNavigate', () => ({
+vi.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
-		safeNavigate: jest.fn(),
+		safeNavigate: vi.fn(),
 	}),
 }));
 
@@ -154,7 +154,7 @@ const dynamicVariableSuggestions = [
 	{ name: 'service', attribute: 'service.name' },
 ];
 
-jest.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
+vi.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
 	useDynamicVariableSuggestions: (): DynamicVariableSuggestion[] =>
 		dynamicVariableSuggestions,
 }));

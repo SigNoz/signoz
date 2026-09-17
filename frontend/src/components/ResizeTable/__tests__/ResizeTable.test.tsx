@@ -3,7 +3,7 @@ import { render, screen, userEvent } from 'tests/test-utils';
 
 import ResizeTable from '../ResizeTable';
 
-jest.mock('react-resizable', () => ({
+vi.mock('react-resizable', () => ({
 	Resizable: ({
 		children,
 		onResize,
@@ -28,8 +28,8 @@ jest.mock('react-resizable', () => ({
 }));
 
 // Make debounce synchronous so onColumnWidthsChange fires immediately
-jest.mock('lodash-es', () => ({
-	...jest.requireActual('lodash-es'),
+vi.mock('lodash-es', async () => ({
+	...(await vi.importActual('lodash-es')),
 	debounce: (fn: (...args: any[]) => any): ((...args: any[]) => any) => fn,
 }));
 
@@ -60,7 +60,7 @@ describe('ResizeTable', () => {
 	});
 
 	it('overrides column widths from columnWidths prop and reports them via onColumnWidthsChange', () => {
-		const onColumnWidthsChange = jest.fn();
+		const onColumnWidthsChange = vi.fn();
 
 		act(() => {
 			render(
@@ -80,7 +80,7 @@ describe('ResizeTable', () => {
 	});
 
 	it('reports original column widths via onColumnWidthsChange when columnWidths prop is not provided', () => {
-		const onColumnWidthsChange = jest.fn();
+		const onColumnWidthsChange = vi.fn();
 
 		act(() => {
 			render(
@@ -112,7 +112,7 @@ describe('ResizeTable', () => {
 	});
 
 	it('only overrides the column that has a stored width, leaving others at their original width', () => {
-		const onColumnWidthsChange = jest.fn();
+		const onColumnWidthsChange = vi.fn();
 
 		act(() => {
 			render(
@@ -132,7 +132,7 @@ describe('ResizeTable', () => {
 	});
 
 	it('does not call onColumnWidthsChange on re-render when widths have not changed', () => {
-		const onColumnWidthsChange = jest.fn();
+		const onColumnWidthsChange = vi.fn();
 
 		const { rerender } = render(
 			<ResizeTable
@@ -159,7 +159,7 @@ describe('ResizeTable', () => {
 	});
 
 	it('does not call onColumnWidthsChange when no column has a defined width', () => {
-		const onColumnWidthsChange = jest.fn();
+		const onColumnWidthsChange = vi.fn();
 
 		render(
 			<ResizeTable
@@ -178,7 +178,7 @@ describe('ResizeTable', () => {
 
 	it('calls onColumnWidthsChange with the new width after a column is resized', async () => {
 		const user = userEvent.setup();
-		const onColumnWidthsChange = jest.fn();
+		const onColumnWidthsChange = vi.fn();
 
 		render(
 			<ResizeTable
@@ -202,7 +202,7 @@ describe('ResizeTable', () => {
 
 	it('does not affect other columns when only one column is resized', async () => {
 		const user = userEvent.setup();
-		const onColumnWidthsChange = jest.fn();
+		const onColumnWidthsChange = vi.fn();
 
 		render(
 			<ResizeTable
@@ -225,7 +225,7 @@ describe('ResizeTable', () => {
 	});
 
 	it('wraps column titles in drag handler spans when onDragColumn is provided', () => {
-		const onDragColumn = jest.fn();
+		const onDragColumn = vi.fn();
 
 		render(
 			<ResizeTable

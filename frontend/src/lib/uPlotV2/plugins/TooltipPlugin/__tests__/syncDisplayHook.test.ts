@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import uPlot from 'uplot';
 
@@ -9,20 +10,20 @@ import {
 	type TooltipSyncMetadata,
 } from '../types';
 
-jest.mock('../syncCursorRegistry', () => ({
+vi.mock('../syncCursorRegistry', () => ({
 	syncCursorRegistry: {
-		setMetadata: jest.fn(),
-		getMetadata: jest.fn(),
-		setActiveSeriesMetric: jest.fn(),
-		getActiveSeriesMetric: jest.fn(),
+		setMetadata: vi.fn(),
+		getMetadata: vi.fn(),
+		setActiveSeriesMetric: vi.fn(),
+		getActiveSeriesMetric: vi.fn(),
 	},
 }));
 
 const mockRegistry = syncCursorRegistry as {
-	setMetadata: jest.Mock;
-	getMetadata: jest.Mock;
-	setActiveSeriesMetric: jest.Mock;
-	getActiveSeriesMetric: jest.Mock;
+	setMetadata: Mock;
+	getMetadata: Mock;
+	setActiveSeriesMetric: Mock;
+	getActiveSeriesMetric: Mock;
 };
 
 const SYNC_KEY = 'test-sync-key';
@@ -63,7 +64,7 @@ function makeFakeUPlot(opts: {
 			{ metric: { host: 'server1' } },
 			{ metric: { host: 'server2' } },
 		],
-		setSeries: jest.fn(),
+		setSeries: vi.fn(),
 	} as unknown as uPlot;
 }
 
@@ -77,8 +78,8 @@ function makeController(
 }
 
 // Convenience cast used throughout assertions.
-function mockSetSeries(u: uPlot): jest.Mock {
-	return (u as unknown as { setSeries: jest.Mock }).setSeries;
+function mockSetSeries(u: uPlot): Mock {
+	return (u as unknown as { setSeries: Mock }).setSeries;
 }
 
 function getCrosshair(u: uPlot): HTMLElement {
@@ -93,7 +94,7 @@ function getCrosshair(u: uPlot): HTMLElement {
 
 describe('createSyncDisplayHook', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	// ── guard ────────────────────────────────────────────────────────────────
@@ -579,7 +580,7 @@ describe('createSyncDisplayHook', () => {
 					makeController(),
 				);
 				const u = makeFakeUPlot({ cursorEvent: null });
-				const spy = jest.spyOn(u.root, 'querySelector');
+				const spy = vi.spyOn(u.root, 'querySelector');
 				hook(u);
 				hook(u);
 				hook(u);
@@ -610,7 +611,7 @@ describe('createSyncDisplayHook', () => {
 				hook(u);
 				expect(mockSetSeries(u)).toHaveBeenCalledWith(1, { focus: true });
 
-				jest.clearAllMocks();
+				vi.clearAllMocks();
 
 				// Second call: source now groups by service → matches series 2.
 				mockRegistry.getMetadata.mockReturnValue({

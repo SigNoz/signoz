@@ -4,11 +4,11 @@ import { getPanelTimeRange } from '../getPanelTimeRange';
 
 // Fallback path reads the redux global-time selection; stub both so the no-payload branch
 // is deterministic.
-jest.mock('store', () => ({
+vi.mock('store', () => ({
 	__esModule: true,
 	default: { getState: (): unknown => ({ globalTime: { selectedTime: '5m' } }) },
 }));
-jest.mock('lib/getStartEndRangeTime', () => ({
+vi.mock('lib/getStartEndRangeTime', () => ({
 	__esModule: true,
 	default: (): { start: string; end: string } => ({
 		start: '1700',

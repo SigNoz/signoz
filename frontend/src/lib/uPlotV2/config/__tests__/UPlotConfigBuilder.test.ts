@@ -1,4 +1,6 @@
 import uPlot from 'uplot';
+import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
+import { getStoredSeriesVisibility } from 'lib/visualization/panels/utils/legendVisibilityUtils';
 
 import {
 	DEFAULT_HOVER_PROXIMITY_VALUE,
@@ -9,27 +11,25 @@ import { DrawStyle, SelectionPreferencesSource, StackMode } from '../types';
 import { UPlotConfigBuilder } from '../UPlotConfigBuilder';
 
 // Mock only the real boundary that hits localStorage
-jest.mock('lib/visualization/panels/utils/legendVisibilityUtils', () => ({
-	getStoredSeriesVisibility: jest.fn(),
+vi.mock('lib/visualization/panels/utils/legendVisibilityUtils', () => ({
+	getStoredSeriesVisibility: vi.fn(),
 }));
 
-jest.mock('lib/uPlotV2/utils', () => ({
-	calculateWidthBasedOnStepInterval: jest.fn(),
+vi.mock('lib/uPlotV2/utils', () => ({
+	calculateWidthBasedOnStepInterval: vi.fn(),
 }));
 
-const calculateWidthBasedOnStepIntervalMock = jest.requireMock(
-	'lib/uPlotV2/utils',
-).calculateWidthBasedOnStepInterval as jest.Mock;
+const calculateWidthBasedOnStepIntervalMock = vi.mocked(
+	calculateWidthBasedOnStepInterval,
+);
 
-const getStoredSeriesVisibilityMock = jest.requireMock(
-	'lib/visualization/panels/utils/legendVisibilityUtils',
-) as {
-	getStoredSeriesVisibility: jest.Mock;
+const getStoredSeriesVisibilityMock = {
+	getStoredSeriesVisibility: vi.mocked(getStoredSeriesVisibility),
 };
 
 describe('UPlotConfigBuilder', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	const createSeriesProps = (
@@ -67,7 +67,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('does not call onDragSelect for click without drag (width === 0)', () => {
-		const onDragSelect = jest.fn();
+		const onDragSelect = vi.fn();
 		const builder = new UPlotConfigBuilder({ id: 'widget-123', onDragSelect });
 
 		const config = builder.getConfig();
@@ -76,7 +76,7 @@ describe('UPlotConfigBuilder', () => {
 
 		const uplotInstance = {
 			select: { left: 10, width: 0 },
-			posToVal: jest.fn(),
+			posToVal: vi.fn(),
 		} as unknown as uPlot;
 
 		// Simulate uPlot calling the hook
@@ -88,14 +88,14 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('calls onDragSelect with start and end times in milliseconds for a drag selection', () => {
-		const onDragSelect = jest.fn();
+		const onDragSelect = vi.fn();
 		const builder = new UPlotConfigBuilder({ id: 'widget-123', onDragSelect });
 
 		const config = builder.getConfig();
 		const setSelectHooks = config.hooks?.setSelect ?? [];
 		expect(setSelectHooks).toHaveLength(1);
 
-		const posToVal = jest
+		const posToVal = vi
 			.fn()
 			// left position
 			.mockReturnValueOnce(100)
@@ -118,7 +118,7 @@ describe('UPlotConfigBuilder', () => {
 
 	it('adds and removes hooks via addHook, and exposes them through getConfig', () => {
 		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
-		const drawHook = jest.fn();
+		const drawHook = vi.fn();
 
 		const remove = builder.addHook('draw', drawHook as uPlot.Hooks.Defs['draw']);
 
@@ -496,7 +496,7 @@ describe('UPlotConfigBuilder', () => {
 
 describe('UPlotConfigBuilder stacking', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue([]);
 	});
 
@@ -508,7 +508,7 @@ describe('UPlotConfigBuilder stacking', () => {
 		builder: UPlotConfigBuilder,
 		scaleKey: string,
 	): { min: number; max: number } {
-		const rangeNum = jest.fn().mockReturnValue([0, 0]);
+		const rangeNum = vi.fn().mockReturnValue([0, 0]);
 		(uPlot as unknown as { rangeNum: unknown }).rangeNum = rangeNum;
 
 		const range = builder.getConfig().scales?.[scaleKey]?.range as (

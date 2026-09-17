@@ -3,9 +3,9 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { getFlamegraphSpanGroupValue, getSpanColor } from '../utils';
 import { MOCK_SPAN } from './testUtils';
 
-const mockGenerateColorPair = jest.fn();
+const mockGenerateColorPair = vi.fn();
 
-jest.mock('pages/TraceDetailsV3/utils/generateColorPair', () => ({
+vi.mock('pages/TraceDetailsV3/utils/generateColorPair', () => ({
 	generateColorPair: (name: string): { color: string; colorDark: string } =>
 		mockGenerateColorPair(name),
 	RESERVED_ERROR: '#FC4E4E',
@@ -25,7 +25,7 @@ const HOST_FIELD: TelemetryFieldKey = {
 
 describe('Presentation / Styling Utils', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockGenerateColorPair.mockReturnValue({
 			color: '#2F80ED',
 			colorDark: '#1a4d99',

@@ -6,7 +6,7 @@ import { MOCK_TRACE_METADATA } from './testUtils';
 
 function createMockCanvas(): HTMLCanvasElement {
 	const canvas = document.createElement('canvas');
-	canvas.getBoundingClientRect = jest.fn(
+	canvas.getBoundingClientRect = vi.fn(
 		(): DOMRect =>
 			({
 				left: 0,
@@ -35,16 +35,16 @@ const defaultArgs = {
 	traceMetadata: MOCK_TRACE_METADATA,
 	viewStartRef: { current: 0 },
 	viewEndRef: { current: 1000 },
-	setViewStartTs: jest.fn(),
-	setViewEndTs: jest.fn(),
+	setViewStartTs: vi.fn(),
+	setViewEndTs: vi.fn(),
 	scrollTopRef: { current: 0 },
-	setScrollTop: jest.fn(),
+	setScrollTop: vi.fn(),
 	totalHeight: 1000,
 };
 
 describe('useFlamegraphDrag', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		defaultArgs.viewStartRef.current = 0;
 		defaultArgs.viewEndRef.current = 1000;
 		defaultArgs.scrollTopRef.current = 0;
@@ -58,7 +58,7 @@ describe('useFlamegraphDrag', () => {
 				button: 0,
 				clientX: 100,
 				clientY: 50,
-				preventDefault: jest.fn(),
+				preventDefault: vi.fn(),
 			} as unknown as React.MouseEvent);
 		});
 
@@ -73,7 +73,7 @@ describe('useFlamegraphDrag', () => {
 				button: 1,
 				clientX: 100,
 				clientY: 50,
-				preventDefault: jest.fn(),
+				preventDefault: vi.fn(),
 			} as unknown as React.MouseEvent);
 		});
 
@@ -88,7 +88,7 @@ describe('useFlamegraphDrag', () => {
 				button: 0,
 				clientX: 100,
 				clientY: 50,
-				preventDefault: jest.fn(),
+				preventDefault: vi.fn(),
 			} as unknown as React.MouseEvent);
 		});
 
@@ -112,7 +112,7 @@ describe('useFlamegraphDrag', () => {
 				button: 0,
 				clientX: 100,
 				clientY: 50,
-				preventDefault: jest.fn(),
+				preventDefault: vi.fn(),
 			} as unknown as React.MouseEvent);
 		});
 
@@ -131,7 +131,7 @@ describe('useFlamegraphDrag', () => {
 				button: 0,
 				clientX: 100,
 				clientY: 50,
-				preventDefault: jest.fn(),
+				preventDefault: vi.fn(),
 			} as unknown as React.MouseEvent);
 		});
 

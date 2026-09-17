@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -9,15 +10,15 @@ import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useSwitchToViewMode } from '../useSwitchToViewMode';
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+const mockSafeNavigate = vi.fn();
+vi.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: Mock } => ({
 		safeNavigate: mockSafeNavigate,
 	}),
 }));
 
 let mockSearch = '';
-jest.mock('hooks/useUrlQuery', () => ({
+vi.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: (): URLSearchParams => new URLSearchParams(mockSearch),
 }));
@@ -30,7 +31,7 @@ const spec = {
 
 describe('useSwitchToViewMode', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockSearch = '';
 		clearViewPanelHandoff();
 	});

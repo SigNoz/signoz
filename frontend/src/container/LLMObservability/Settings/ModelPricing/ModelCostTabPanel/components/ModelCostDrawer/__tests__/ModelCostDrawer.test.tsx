@@ -20,8 +20,8 @@ describe('ModelCostDrawer (integration)', () => {
 				isOpen
 				mode="add"
 				initialDraft={EMPTY_DRAFT}
-				onClose={jest.fn()}
-				onSave={jest.fn()}
+				onClose={vi.fn()}
+				onSave={vi.fn()}
 				isSaving={false}
 				saveError={null}
 				canManage
@@ -39,8 +39,8 @@ describe('ModelCostDrawer (integration)', () => {
 				isOpen
 				mode="add"
 				initialDraft={EMPTY_DRAFT}
-				onClose={jest.fn()}
-				onSave={jest.fn()}
+				onClose={vi.fn()}
+				onSave={vi.fn()}
 				isSaving={false}
 				saveError={null}
 				canManage
@@ -58,13 +58,13 @@ describe('ModelCostDrawer (integration)', () => {
 
 	it('shows the model id required error and does not call onSave when the name is empty', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onSave = jest.fn();
+		const onSave = vi.fn();
 		render(
 			<ModelCostDrawer
 				isOpen
 				mode="add"
 				initialDraft={EMPTY_DRAFT}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 				onSave={onSave}
 				isSaving={false}
 				saveError={null}
@@ -89,13 +89,13 @@ describe('ModelCostDrawer (integration)', () => {
 
 	it('calls onSave once on the happy path with valid model id and pricing', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onSave = jest.fn();
+		const onSave = vi.fn();
 		render(
 			<ModelCostDrawer
 				isOpen
 				mode="add"
 				initialDraft={EMPTY_DRAFT}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 				onSave={onSave}
 				isSaving={false}
 				saveError={null}
@@ -118,8 +118,8 @@ describe('ModelCostDrawer (integration)', () => {
 				isOpen
 				mode="edit"
 				initialDraft={editDraft}
-				onClose={jest.fn()}
-				onSave={jest.fn()}
+				onClose={vi.fn()}
+				onSave={vi.fn()}
 				isSaving={false}
 				saveError={null}
 				canManage
@@ -141,8 +141,8 @@ describe('ModelCostDrawer (integration)', () => {
 				isOpen
 				mode="edit"
 				initialDraft={editDraft}
-				onClose={jest.fn()}
-				onSave={jest.fn()}
+				onClose={vi.fn()}
+				onSave={vi.fn()}
 				isSaving={false}
 				saveError={null}
 				canManage={false}
@@ -160,8 +160,8 @@ describe('ModelCostDrawer (integration)', () => {
 				isOpen
 				mode="add"
 				initialDraft={EMPTY_DRAFT}
-				onClose={jest.fn()}
-				onSave={jest.fn()}
+				onClose={vi.fn()}
+				onSave={vi.fn()}
 				isSaving={false}
 				saveError="boom"
 				canManage
@@ -178,8 +178,8 @@ describe('ModelCostDrawer (integration)', () => {
 				isOpen
 				mode="add"
 				initialDraft={EMPTY_DRAFT}
-				onClose={jest.fn()}
-				onSave={jest.fn()}
+				onClose={vi.fn()}
+				onSave={vi.fn()}
 				isSaving={false}
 				saveError={null}
 				canManage
@@ -207,8 +207,8 @@ describe('ModelCostDrawer (integration)', () => {
 				isOpen
 				mode="add"
 				initialDraft={EMPTY_DRAFT}
-				onClose={jest.fn()}
-				onSave={jest.fn()}
+				onClose={vi.fn()}
+				onSave={vi.fn()}
 				isSaving={false}
 				saveError={null}
 				canManage
@@ -230,13 +230,13 @@ describe('ModelCostDrawer (integration)', () => {
 
 	it('blocks save with a pricing error when an override rule has no input cost', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onSave = jest.fn();
+		const onSave = vi.fn();
 		render(
 			<ModelCostDrawer
 				isOpen
 				mode="add"
 				initialDraft={EMPTY_DRAFT}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 				onSave={onSave}
 				isSaving={false}
 				saveError={null}
@@ -263,8 +263,8 @@ describe('ModelCostDrawer (integration)', () => {
 				isOpen
 				mode="edit"
 				initialDraft={editDraft}
-				onClose={jest.fn()}
-				onSave={jest.fn()}
+				onClose={vi.fn()}
+				onSave={vi.fn()}
 				isSaving={false}
 				saveError={null}
 				canManage

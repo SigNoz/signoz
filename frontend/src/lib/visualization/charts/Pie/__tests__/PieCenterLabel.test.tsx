@@ -1,13 +1,14 @@
+import type { MockedFunction } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 
 import PieCenterLabel from 'lib/visualization/charts/Pie/PieCenterLabel';
 
-jest.mock('components/Graph/yAxisConfig', () => ({
-	getYAxisFormattedValue: jest.fn(),
+vi.mock('components/Graph/yAxisConfig', () => ({
+	getYAxisFormattedValue: vi.fn(),
 }));
 
-const mockFormat = getYAxisFormattedValue as jest.MockedFunction<
+const mockFormat = getYAxisFormattedValue as MockedFunction<
 	typeof getYAxisFormattedValue
 >;
 

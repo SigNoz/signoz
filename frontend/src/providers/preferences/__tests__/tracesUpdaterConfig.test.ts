@@ -6,30 +6,31 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import getTracesUpdaterConfig from '../configs/tracesUpdaterConfig';
 import { PreferenceMode } from '../types';
 
-// Mock setLocalStorageKey
-const mockSetLocalStorageKey = jest.fn();
-jest.mock('api/browser/localstorage/set', () => ({
-	__esModule: true,
-	default: (key: string, value: string): void =>
-		mockSetLocalStorageKey(key, value),
+// Mock localStorage via the get/set modules (no window.localStorage stub:
+// redefining it breaks in browser mode and `global` does not exist there)
+const { mockLocalStorage, mockSetLocalStorageKey } = vi.hoisted(() => ({
+	mockLocalStorage: {} as Record<string, string>,
+	mockSetLocalStorageKey: vi.fn(),
 }));
 
-// Mock localStorage
-let mockLocalStorage: Record<string, string> = {};
-Object.defineProperty(global, 'localStorage', {
-	value: {
-		getItem: jest.fn((key: string) => mockLocalStorage[key] || null),
-		setItem: jest.fn((key: string, value: string) => {
-			mockLocalStorage[key] = value;
-		}),
+vi.mock('api/browser/localstorage/get', () => ({
+	__esModule: true,
+	default: vi.fn((key: string) => mockLocalStorage[key] || null),
+}));
+
+// Mock setLocalStorageKey
+vi.mock('api/browser/localstorage/set', () => ({
+	__esModule: true,
+	default: (key: string, value: string): void => {
+		mockLocalStorage[key] = value;
+		mockSetLocalStorageKey(key, value);
 	},
-	writable: true,
-});
+}));
 
 describe('tracesUpdaterConfig', () => {
 	// Mock functions
-	const mockRedirectWithOptionsData = jest.fn();
-	const mockSetSavedViewPreferences = jest.fn();
+	const mockRedirectWithOptionsData = vi.fn();
+	const mockSetSavedViewPreferences = vi.fn();
 
 	// Test data
 	const mockColumns: TelemetryFieldKey[] = [
@@ -41,9 +42,11 @@ describe('tracesUpdaterConfig', () => {
 	];
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		// Reset mockLocalStorage
-		mockLocalStorage = {};
+		Object.keys(mockLocalStorage).forEach((key) => {
+			delete mockLocalStorage[key];
+		});
 	});
 
 	it('should update columns in localStorage and redirect with options in direct mode', () => {

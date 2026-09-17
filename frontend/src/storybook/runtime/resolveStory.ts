@@ -123,7 +123,7 @@ const resolveWorld = (context: StoryRuntimeContext): StoryWorld => {
 		...members.flatMap(
 			(mocks, index) => mocks.handlers?.(values[index], response) ?? [],
 		),
-		// Shell endpoints, the jest handlers, then the catch-all that logs.
+		// Shell endpoints, the test handlers, then the catch-all that logs.
 		...storybookHandlers,
 	];
 

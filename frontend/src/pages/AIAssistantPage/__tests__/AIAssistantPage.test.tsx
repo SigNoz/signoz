@@ -4,27 +4,27 @@ import { render } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 
-jest.mock('api/common/logEvent', () => ({
+vi.mock('api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: vi.fn(),
 }));
 
-jest.mock('container/AIAssistant/ConversationView', () => ({
+vi.mock('container/AIAssistant/ConversationView', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="conversation-view" />,
 }));
 
-jest.mock('container/AIAssistant/components/ConversationsList', () => ({
+vi.mock('container/AIAssistant/components/ConversationsList', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="conversations-list" />,
 }));
 
-jest.mock('components/Noz/Noz', () => ({
+vi.mock('components/Noz/Noz', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="noz" />,
 }));
 
-jest.mock('container/AIAssistant/hooks/useAIAssistantAnalyticsContext', () => ({
+vi.mock('container/AIAssistant/hooks/useAIAssistantAnalyticsContext', () => ({
 	normalizePage: (page: string): string => page,
 	useAIAssistantAnalyticsContext: (): unknown => ({ mode: 'page' }),
 }));

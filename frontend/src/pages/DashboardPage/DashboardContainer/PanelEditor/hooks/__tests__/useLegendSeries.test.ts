@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -9,44 +10,47 @@ import { flattenTimeSeries } from 'pages/DashboardPage/DashboardContainer/queryV
 
 import { useLegendSeries } from '../useLegendSeries';
 
-jest.mock('hooks/useDarkMode', () => ({ useIsDarkMode: jest.fn() }));
-jest.mock('lib/getLabelName', () => jest.fn(() => 'base'));
-jest.mock('lib/uPlotLib/utils/generateColor', () => ({
-	generateColor: jest.fn((label: string) => `color:${label}`),
+vi.mock('hooks/useDarkMode', () => ({ useIsDarkMode: vi.fn() }));
+vi.mock('lib/getLabelName', () => ({ default: vi.fn(() => 'base') }));
+vi.mock('lib/uPlotLib/utils/generateColor', () => ({
+	generateColor: vi.fn((label: string) => `color:${label}`),
 }));
-jest.mock('constants/theme', () => ({
+vi.mock('constants/theme', () => ({
 	themeColors: { chartcolors: ['dark'], lightModeColor: ['light'] },
 }));
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries',
-	() => ({ getBuilderQueries: jest.fn(() => []) }),
+	() => ({ getBuilderQueries: vi.fn(() => []) }),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel',
-	() => ({ resolveSeriesLabelV5: jest.fn() }),
+	() => ({ resolveSeriesLabelV5: vi.fn() }),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData',
-	() => ({
-		flattenTimeSeries: jest.fn(),
-		getTimeSeriesResults: jest.fn(() => []),
-		getScalarResults: jest.fn(() => []),
+	async (importOriginal) => ({
+		...(await importOriginal<
+			typeof import('pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData')
+		>()),
+		flattenTimeSeries: vi.fn(),
+		getTimeSeriesResults: vi.fn(() => []),
+		getScalarResults: vi.fn(() => []),
 	}),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables',
-	() => ({ prepareScalarTables: jest.fn(() => []) }),
+	() => ({ prepareScalarTables: vi.fn(() => []) }),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/Panels/kinds/PieChartPanel/prepareData',
-	() => ({ preparePieData: jest.fn(() => []) }),
+	() => ({ preparePieData: vi.fn(() => []) }),
 );
 
-const mockUseIsDarkMode = useIsDarkMode as unknown as jest.Mock;
-const mockFlatten = flattenTimeSeries as unknown as jest.Mock;
-const mockResolveLabel = resolveSeriesLabelV5 as unknown as jest.Mock;
-const mockGenerateColor = generateColor as unknown as jest.Mock;
-const mockPreparePie = preparePieData as unknown as jest.Mock;
+const mockUseIsDarkMode = useIsDarkMode as unknown as Mock;
+const mockFlatten = flattenTimeSeries as unknown as Mock;
+const mockResolveLabel = resolveSeriesLabelV5 as unknown as Mock;
+const mockGenerateColor = generateColor as unknown as Mock;
+const mockPreparePie = preparePieData as unknown as Mock;
 
 const PANEL = {
 	kind: 'Panel',
@@ -69,7 +73,7 @@ function seriesWithLabels(labels: string[]): { __label: string }[] {
 
 describe('useLegendSeries', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseIsDarkMode.mockReturnValue(true);
 		mockResolveLabel.mockImplementation((s: { __label: string }) => s.__label);
 	});

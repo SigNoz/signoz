@@ -1,4 +1,9 @@
-jest.mock('../TanStackTable.module.scss', () => ({
+const { mockSetRowHovered, mockClearRowHovered } = vi.hoisted(() => ({
+	mockSetRowHovered: vi.fn(),
+	mockClearRowHovered: vi.fn(),
+}));
+
+vi.mock('../TanStackTable.module.scss', () => ({
 	__esModule: true,
 	default: {
 		tableRow: 'tableRow',
@@ -7,17 +12,14 @@ jest.mock('../TanStackTable.module.scss', () => ({
 	},
 }));
 
-jest.mock('../TanStackRow', () => ({
+vi.mock('../TanStackRow', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<td data-testid="mocked-row-cells">mocked cells</td>
 	),
 }));
 
-const mockSetRowHovered = jest.fn();
-const mockClearRowHovered = jest.fn();
-
-jest.mock('../TanStackTableStateContext', () => ({
+vi.mock('../TanStackTableStateContext', () => ({
 	useSetRowHovered: (_rowId: string): (() => void) => mockSetRowHovered,
 	useClearRowHovered: (_rowId: string): (() => void) => mockClearRowHovered,
 }));
@@ -229,7 +231,9 @@ describe('TanStackCustomTableRow', () => {
 				</table>,
 			);
 			const row = container.querySelector('tr')!;
-			expect(row).toHaveStyle({ backgroundColor: 'red' });
+			// toHaveStyle is unreliable under vitest here (jest-dom v5 +
+			// patched/real getComputedStyle); assert the inline style landed.
+			expect(row.style.backgroundColor).toBe('red');
 		});
 
 		it('applies custom className from getRowClassName in context', () => {

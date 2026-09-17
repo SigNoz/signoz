@@ -4,8 +4,13 @@ import * as alertState from 'container/CreateAlertV2/context';
 import AdvancedOptions from '../AdvancedOptions';
 import { createMockAlertContextState } from './testUtils';
 
-const mockSetAdvancedOptions = jest.fn();
-jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('container/CreateAlertV2/context', { spy: true });
+
+const mockSetAdvancedOptions = vi.fn();
+vi.mocked(alertState.useCreateAlertState).mockReturnValue(
 	createMockAlertContextState({
 		setAdvancedOptions: mockSetAdvancedOptions,
 	}),

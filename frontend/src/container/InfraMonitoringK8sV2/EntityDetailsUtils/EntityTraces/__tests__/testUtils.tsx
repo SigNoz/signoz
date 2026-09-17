@@ -1,8 +1,9 @@
 import { mockFieldsAPIsWithEmptyResponse } from '__tests__/fields_api.util';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, RenderResult } from 'tests/test-utils';
+import { render, RenderResult } from 'tests/test-utils-full';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { Mock } from 'vitest';
 
 import EntityTraces from '../EntityTraces';
 import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../hooks';
@@ -76,21 +77,21 @@ export function verifyQueryPayload({
 	expect(orderKeys).toContain('timestamp');
 }
 
-jest.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
+vi.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="mock-datetime-selection">Date Time</div>
 	),
 }));
 
-jest.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
+vi.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
 	useEntityDetailsTime: (): {
 		timeRange: { startTime: number; endTime: number };
 		selectedInterval: string;
-		handleTimeChange: jest.Mock;
+		handleTimeChange: Mock;
 	} => ({
 		timeRange: { startTime: 1, endTime: 2 },
 		selectedInterval: '5m',
-		handleTimeChange: jest.fn(),
+		handleTimeChange: vi.fn(),
 	}),
 }));

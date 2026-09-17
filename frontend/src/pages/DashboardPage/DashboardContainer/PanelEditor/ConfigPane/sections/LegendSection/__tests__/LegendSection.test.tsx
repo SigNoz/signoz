@@ -9,7 +9,7 @@ describe('LegendSection', () => {
 			<LegendSection
 				value={undefined}
 				controls={{ position: true }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -21,9 +21,7 @@ describe('LegendSection', () => {
 	});
 
 	it('renders nothing when position is not enabled', () => {
-		render(
-			<LegendSection value={undefined} controls={{}} onChange={jest.fn()} />,
-		);
+		render(<LegendSection value={undefined} controls={{}} onChange={vi.fn()} />);
 
 		expect(
 			screen.queryByTestId('panel-editor-v2-legend-position'),
@@ -31,7 +29,7 @@ describe('LegendSection', () => {
 	});
 
 	it('writes the chosen position through onChange', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<LegendSection
 				value={{ position: undefined }}
@@ -46,7 +44,7 @@ describe('LegendSection', () => {
 	});
 
 	it('preserves other legend fields when changing position', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<LegendSection
 				value={{

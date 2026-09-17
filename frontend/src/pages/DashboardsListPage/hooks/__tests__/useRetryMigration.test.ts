@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useQueryClient } from 'react-query';
 import { toast } from '@signozhq/ui/sonner';
@@ -8,22 +9,22 @@ import {
 
 import { useRetryMigration } from '../useRetryMigration';
 
-jest.mock('react-query', () => ({
-	useQueryClient: jest.fn(),
+vi.mock('react-query', () => ({
+	useQueryClient: vi.fn(),
 }));
 
-jest.mock('api/generated/services/dashboard', () => ({
-	useMigrateDashboardV2: jest.fn(),
-	invalidateListDashboardsForUserV2: jest.fn().mockResolvedValue(undefined),
+vi.mock('api/generated/services/dashboard', () => ({
+	useMigrateDashboardV2: vi.fn(),
+	invalidateListDashboardsForUserV2: vi.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui/sonner', () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-const queryClient = { invalidateQueries: jest.fn() };
-const mockMutate = jest.fn();
-const onMigrated = jest.fn();
+const queryClient = { invalidateQueries: vi.fn() };
+const mockMutate = vi.fn();
+const onMigrated = vi.fn();
 
 type MutationHandlers = {
 	onSuccess: () => Promise<void>;
@@ -38,7 +39,7 @@ function setup(isLoading = false): {
 	retryMigration: (id: string) => void;
 	isMigrating: boolean;
 } {
-	(useMigrateDashboardV2 as jest.Mock).mockImplementation(
+	(useMigrateDashboardV2 as Mock).mockImplementation(
 		(options: { mutation: MutationHandlers }) => {
 			captured = options.mutation;
 			return { mutate: mockMutate, isLoading };
@@ -66,8 +67,8 @@ const bodylessError = {
 
 describe('useRetryMigration', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		(useQueryClient as jest.Mock).mockReturnValue(queryClient);
+		vi.clearAllMocks();
+		(useQueryClient as Mock).mockReturnValue(queryClient);
 	});
 
 	it('sends the dashboard id as a path parameter', () => {

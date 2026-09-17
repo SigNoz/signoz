@@ -28,12 +28,27 @@ jobs:
       github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
-    uses: signoz/primus.workflows/.github/workflows/js-test.yaml@main
-    secrets: inherit
-    with:
-      PRIMUS_REF: main
-      JS_SRC: frontend
-      JS_PKG_MANAGER: pnpm
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: mcr.microsoft.com/playwright:v1.57.0-noble
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: install-frontend
+        run: cd frontend && pnpm install
+      - name: test
+        run: cd frontend && pnpm test
   fmt:
     if: |
       github.event_name == 'merge_group' ||

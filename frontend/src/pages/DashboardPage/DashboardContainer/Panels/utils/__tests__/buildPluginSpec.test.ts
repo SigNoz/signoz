@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import {
 	DashboardtypesComparisonOperatorDTO,
 	DashboardtypesFillModeDTO,
@@ -20,12 +21,11 @@ import {
 } from '../../types/sections';
 import { buildPluginSpec } from '../buildPluginSpec';
 
-jest.mock('../../../PanelEditor/ListColumnsEditor/selectFields', () => ({
-	defaultColumnsForSignal: jest.fn(),
+vi.mock('../../../PanelEditor/ListColumnsEditor/selectFields', () => ({
+	defaultColumnsForSignal: vi.fn(),
 }));
 
-const mockDefaultColumnsForSignal =
-	defaultColumnsForSignal as unknown as jest.Mock;
+const mockDefaultColumnsForSignal = defaultColumnsForSignal as unknown as Mock;
 
 /** A panel spec carrying the plugin.spec a seed reads; the rest of the shape is irrelevant. */
 function oldSpecWith(
@@ -59,7 +59,7 @@ function compositeQueryWith(envelopes: unknown[]): unknown {
 }
 
 beforeEach(() => {
-	jest.clearAllMocks();
+	vi.clearAllMocks();
 	mockDefaultColumnsForSignal.mockReturnValue([]);
 });
 

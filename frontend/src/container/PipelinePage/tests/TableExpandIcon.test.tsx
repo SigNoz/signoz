@@ -16,7 +16,7 @@ describe('PipelinePage container test', () => {
 					<I18nextProvider i18n={i18n}>
 						<TableExpandIcon
 							expanded
-							onExpand={jest.fn()}
+							onExpand={vi.fn()}
 							record={pipelineMockData[0]}
 						/>
 					</I18nextProvider>

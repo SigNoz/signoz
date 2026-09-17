@@ -6,7 +6,7 @@ import { useCrosshair } from '../useCrosshair';
 // Container spanning [left, left+width]; getBoundingClientRect is all the hook reads.
 function mockContainer(left: number, width: number): RefObject<HTMLElement> {
 	const el = document.createElement('div');
-	el.getBoundingClientRect = jest.fn(
+	el.getBoundingClientRect = vi.fn(
 		(): DOMRect =>
 			({
 				left,

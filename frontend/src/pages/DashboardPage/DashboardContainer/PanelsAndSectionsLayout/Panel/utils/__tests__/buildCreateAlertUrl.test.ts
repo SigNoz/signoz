@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
@@ -11,14 +12,14 @@ import { buildCreateAlertUrl } from '../buildCreateAlertUrl';
 
 // The V5→V1 translation has its own coverage; stub it so this asserts only the
 // URL assembly (params, encoding, unit) buildCreateAlertUrl owns.
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters',
 	() => ({
-		fromPerses: jest.fn(),
+		fromPerses: vi.fn(),
 	}),
 );
 
-const mockFromPerses = fromPerses as jest.Mock;
+const mockFromPerses = fromPerses as Mock;
 
 const translatedQuery: Query = {
 	queryType: EQueryType.QUERY_BUILDER,

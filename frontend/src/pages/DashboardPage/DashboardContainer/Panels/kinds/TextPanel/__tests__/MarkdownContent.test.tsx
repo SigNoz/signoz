@@ -224,7 +224,7 @@ describe('MarkdownContent — interactive task lists', () => {
 
 	it('renders them enabled, and checked to match the source', () => {
 		render(
-			<MarkdownContent interactive={{ source, onChangeSource: jest.fn() }}>
+			<MarkdownContent interactive={{ source, onChangeSource: vi.fn() }}>
 				{source}
 			</MarkdownContent>,
 		);
@@ -238,7 +238,7 @@ describe('MarkdownContent — interactive task lists', () => {
 	it('warns on hover that a tick edits the panel', async () => {
 		const user = userEvent.setup();
 		render(
-			<MarkdownContent interactive={{ source, onChangeSource: jest.fn() }}>
+			<MarkdownContent interactive={{ source, onChangeSource: vi.fn() }}>
 				{source}
 			</MarkdownContent>,
 		);
@@ -253,7 +253,7 @@ describe('MarkdownContent — interactive task lists', () => {
 	});
 
 	it('checking one rewrites its marker in the source', () => {
-		const onChangeSource = jest.fn();
+		const onChangeSource = vi.fn();
 		render(
 			<MarkdownContent interactive={{ source, onChangeSource }}>
 				{source}
@@ -268,7 +268,7 @@ describe('MarkdownContent — interactive task lists', () => {
 	});
 
 	it('unchecking one rewrites only that marker', () => {
-		const onChangeSource = jest.fn();
+		const onChangeSource = vi.fn();
 		render(
 			<MarkdownContent interactive={{ source, onChangeSource }}>
 				{source}
@@ -283,7 +283,7 @@ describe('MarkdownContent — interactive task lists', () => {
 	});
 
 	it('maps a click back through an expanded variable', () => {
-		const onChangeSource = jest.fn();
+		const onChangeSource = vi.fn();
 		const withVariable = ['- [ ] $env first', '- [ ] second'].join('\n');
 		render(
 			<MarkdownContent interactive={{ source: withVariable, onChangeSource }}>
@@ -299,7 +299,7 @@ describe('MarkdownContent — interactive task lists', () => {
 	});
 
 	it('saves nothing when a variable injected a marker of its own', () => {
-		const onChangeSource = jest.fn();
+		const onChangeSource = vi.fn();
 		render(
 			<MarkdownContent interactive={{ source: '- [ ] $tasks', onChangeSource }}>
 				{['- [ ] one', '- [ ] two'].join('\n')}
@@ -312,7 +312,7 @@ describe('MarkdownContent — interactive task lists', () => {
 	});
 
 	it('ignores a task marker inside a fence', () => {
-		const onChangeSource = jest.fn();
+		const onChangeSource = vi.fn();
 		const fenced = ['```', '- [ ] fenced', '```', '', '- [ ] real'].join('\n');
 		render(
 			<MarkdownContent interactive={{ source: fenced, onChangeSource }}>

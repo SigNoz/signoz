@@ -8,13 +8,13 @@ import {
 	GlobalTimeContext,
 	NANO_SECOND_MULTIPLIER,
 } from 'store/globalTime';
-import { act, render, waitFor } from 'tests/test-utils';
+import { act, render, waitFor } from 'tests/test-utils-full';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import EntityTraces from '../EntityTraces';
 import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../hooks';
 
-jest.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
+vi.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="mock-datetime-selection">Date Time</div>

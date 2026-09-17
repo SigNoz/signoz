@@ -6,7 +6,7 @@ import {
 	defaultTraceSelectedColumns,
 } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils-full';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceContext } from '../context/PreferenceContextProvider';
@@ -71,8 +71,15 @@ function Consumer({
 }
 
 describe('PreferencesProvider integration', () => {
+	const originalUrl = window.location.href;
+
 	beforeEach(() => {
 		localStorage.clear();
+		window.history.pushState({}, '', window.location.pathname);
+	});
+
+	afterEach(() => {
+		window.history.pushState({}, '', originalUrl);
 	});
 
 	describe('Logs', () => {
@@ -165,14 +172,13 @@ describe('PreferencesProvider integration', () => {
 				fontSize: 'large',
 				version: 2,
 			};
-			const originalLocation = window.location;
-			Object.defineProperty(window, 'location', {
-				writable: true,
-				value: {
-					...originalLocation,
-					search: `?options=${encodeURIComponent(JSON.stringify(options))}`,
-				},
-			});
+			// Set the query string via history (redefining window.location is
+			// refused in browser mode); the loader reads window.location.search.
+			window.history.pushState(
+				{},
+				'',
+				`?options=${encodeURIComponent(JSON.stringify(options))}`,
+			);
 
 			render(
 				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
@@ -181,12 +187,6 @@ describe('PreferencesProvider integration', () => {
 					initialRoute: ROUTE_LOGS,
 				},
 			);
-
-			// restore
-			Object.defineProperty(window, 'location', {
-				writable: true,
-				value: originalLocation,
-			});
 
 			// Loader's ensureLogsRequiredColumns prepends timestamp + body, so the
 			// URL's 1 column becomes 3 in preferences.
@@ -328,25 +328,17 @@ describe('PreferencesProvider integration', () => {
 			const options = {
 				selectColumns: [{ name: 'trace.url.col' }],
 			};
-			const originalLocation = window.location;
-			Object.defineProperty(window, 'location', {
-				writable: true,
-				value: {
-					...originalLocation,
-					search: `?options=${encodeURIComponent(JSON.stringify(options))}`,
-				},
-			});
+			window.history.pushState(
+				{},
+				'',
+				`?options=${encodeURIComponent(JSON.stringify(options))}`,
+			);
 
 			render(
 				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
 				undefined,
 				{ initialRoute: ROUTE_TRACES },
 			);
-
-			Object.defineProperty(window, 'location', {
-				writable: true,
-				value: originalLocation,
-			});
 
 			expect(Number(screen.getByTestId('traces-columns-len').textContent)).toBe(1);
 		});

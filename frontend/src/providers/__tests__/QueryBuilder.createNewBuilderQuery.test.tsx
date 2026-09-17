@@ -3,7 +3,7 @@ import {
 	initialQueryAIWithType,
 } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { act, AllTheProviders, renderHook } from 'tests/test-utils';
+import { act, AllTheProviders, renderHook } from 'tests/test-utils-full';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 const renderQueryBuilder = (

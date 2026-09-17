@@ -2,9 +2,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import CustomSelect from '../CustomSelect';
 
-// Mock scrollIntoView which isn't available in JSDOM
-window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
 // Mock options data
 const mockOptions = [
 	{ label: 'Option 1', value: 'option1' },
@@ -31,7 +28,7 @@ const mockGroupedOptions = [
 
 describe('CustomSelect Component', () => {
 	it('renders with placeholder and options', () => {
-		const handleChange = jest.fn();
+		const handleChange = vi.fn();
 		render(
 			<CustomSelect
 				placeholder="Test placeholder"
@@ -46,7 +43,7 @@ describe('CustomSelect Component', () => {
 	});
 
 	it('opens dropdown when clicked', async () => {
-		const handleChange = jest.fn();
+		const handleChange = vi.fn();
 		render(<CustomSelect options={mockOptions} onChange={handleChange} />);
 
 		// Click to open the dropdown
@@ -62,7 +59,7 @@ describe('CustomSelect Component', () => {
 	});
 
 	it('calls onChange when option is selected', async () => {
-		const handleChange = jest.fn();
+		const handleChange = vi.fn();
 		render(<CustomSelect options={mockOptions} onChange={handleChange} />);
 
 		// Open dropdown
@@ -114,7 +111,7 @@ describe('CustomSelect Component', () => {
 	});
 
 	it('renders grouped options correctly', async () => {
-		const handleChange = jest.fn();
+		const handleChange = vi.fn();
 		render(<CustomSelect options={mockGroupedOptions} onChange={handleChange} />);
 
 		// Open dropdown
@@ -168,7 +165,7 @@ describe('CustomSelect Component', () => {
 	});
 
 	it('supports keyboard navigation', async () => {
-		const handleChange = jest.fn();
+		const handleChange = vi.fn();
 		render(<CustomSelect options={mockOptions} onChange={handleChange} />);
 
 		// Open dropdown using keyboard
@@ -185,7 +182,7 @@ describe('CustomSelect Component', () => {
 	});
 
 	it('handles selection via keyboard', async () => {
-		const handleChange = jest.fn();
+		const handleChange = vi.fn();
 		render(<CustomSelect options={mockOptions} onChange={handleChange} />);
 
 		// Open dropdown

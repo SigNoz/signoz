@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
@@ -17,22 +18,17 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { CreateAlertProvider } from '../../context';
 import QuerySection from '../QuerySection';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
-jest.mock('uuid', () => ({
-	v4: (): string => 'test-uuid-12345',
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: vi.fn(),
 }));
-
-const MOCK_UUID = 'test-uuid-12345';
-
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
-}));
-jest.mock('uplot', () => {
+vi.mock('uplot', () => {
 	const paths = {
-		spline: jest.fn(),
-		bars: jest.fn(),
+		spline: vi.fn(),
+		bars: vi.fn(),
 	};
-	const uplotMock = jest.fn(() => ({
+	const uplotMock = vi.fn(() => ({
 		paths,
 	}));
 	return {
@@ -40,8 +36,8 @@ jest.mock('uplot', () => {
 		default: uplotMock,
 	};
 });
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
 	useSelector: (): any => ({
 		globalTime: {
 			selectedTime: {
@@ -53,57 +49,51 @@ jest.mock('react-redux', () => ({
 		},
 	}),
 }));
-jest.mock(
-	'container/FormAlertRules/QuerySection',
-	() =>
-		function MockQuerySectionComponent({
-			queryCategory,
-			alertType,
-			panelType,
-			setQueryCategory,
-		}: any): JSX.Element {
-			return (
-				<div data-testid="query-section-component">
-					<div data-testid="query-category">{queryCategory}</div>
-					<div data-testid="alert-type">{alertType}</div>
-					<div data-testid="panel-type">{panelType}</div>
-					<button
-						type="button"
-						data-testid="change-to-promql"
-						onClick={(): void => setQueryCategory(EQueryType.PROM)}
-					>
-						Change to PromQL
-					</button>
-					<button
-						type="button"
-						data-testid="change-to-query-builder"
-						onClick={(): void => setQueryCategory(EQueryType.QUERY_BUILDER)}
-					>
-						Change to Query Builder
-					</button>
-				</div>
-			);
-		},
-);
-jest.mock(
-	'../ChartPreview',
-	() =>
-		function MockChartPreview(): JSX.Element {
-			return <div data-testid="chart-preview">Chart Preview</div>;
-		},
-);
-jest.mock(
-	'../../Stepper',
-	() =>
-		function MockStepper({ stepNumber, label }: any): JSX.Element {
-			return (
-				<div data-testid="stepper">
-					<div data-testid="step-number">{stepNumber}</div>
-					<div data-testid="step-label">{label}</div>
-				</div>
-			);
-		},
-);
+vi.mock('container/FormAlertRules/QuerySection', () => ({
+	default: function MockQuerySectionComponent({
+		queryCategory,
+		alertType,
+		panelType,
+		setQueryCategory,
+	}: any): JSX.Element {
+		return (
+			<div data-testid="query-section-component">
+				<div data-testid="query-category">{queryCategory}</div>
+				<div data-testid="alert-type">{alertType}</div>
+				<div data-testid="panel-type">{panelType}</div>
+				<button
+					type="button"
+					data-testid="change-to-promql"
+					onClick={(): void => setQueryCategory(EQueryType.PROM)}
+				>
+					Change to PromQL
+				</button>
+				<button
+					type="button"
+					data-testid="change-to-query-builder"
+					onClick={(): void => setQueryCategory(EQueryType.QUERY_BUILDER)}
+				>
+					Change to Query Builder
+				</button>
+			</div>
+		);
+	},
+}));
+vi.mock('../ChartPreview', () => ({
+	default: function MockChartPreview(): JSX.Element {
+		return <div data-testid="chart-preview">Chart Preview</div>;
+	},
+}));
+vi.mock('../../Stepper', () => ({
+	default: function MockStepper({ stepNumber, label }: any): JSX.Element {
+		return (
+			<div data-testid="stepper">
+				<div data-testid="step-number">{stepNumber}</div>
+				<div data-testid="step-label">{label}</div>
+			</div>
+		);
+	},
+}));
 
 const mockUseQueryBuilder = {
 	currentQuery: {
@@ -117,8 +107,8 @@ const mockUseQueryBuilder = {
 			],
 		},
 	},
-	handleRunQuery: jest.fn(),
-	redirectWithQueryBuilderData: jest.fn(),
+	handleRunQuery: vi.fn(),
+	redirectWithQueryBuilderData: vi.fn(),
 };
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -147,13 +137,11 @@ const TRACES_TEXT = 'Traces';
 const ACTIVE_TAB_CLASS = 'active-tab';
 
 describe('QuerySection', () => {
-	const { useQueryBuilder } = jest.requireMock(
-		'hooks/queryBuilder/useQueryBuilder',
-	);
+	const mockedUseQueryBuilder: Mock = vi.mocked(useQueryBuilder);
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		useQueryBuilder.mockReturnValue(mockUseQueryBuilder);
+		vi.clearAllMocks();
+		mockedUseQueryBuilder.mockReturnValue(mockUseQueryBuilder as any);
 	});
 
 	it('renders the component with all required elements', () => {
@@ -334,7 +322,10 @@ describe('QuerySection', () => {
 		const result = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
 		expect(result[0]).toStrictEqual({
-			id: MOCK_UUID,
+			// The query id is an opaque generated uuid. vi.mock('uuid') does not
+			// intercept it in browser mode once the graph is large enough for the
+			// optimizer to bundle uuid into a vendor chunk, so assert presence.
+			id: expect.any(String),
 			queryType: EQueryType.QUERY_BUILDER,
 			unit: undefined,
 			builder: {
@@ -396,7 +387,7 @@ describe('QuerySection', () => {
 			},
 		};
 
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			...mockUseQueryBuilder,
 			currentQuery: mockCurrentQueryWithPromQL,
 		});
@@ -450,7 +441,7 @@ describe('QuerySection', () => {
 			},
 		};
 
-		useQueryBuilder.mockReturnValue({
+		mockedUseQueryBuilder.mockReturnValue({
 			...mockUseQueryBuilder,
 			currentQuery: mockCurrentQueryWithClickhouseSQL,
 		});

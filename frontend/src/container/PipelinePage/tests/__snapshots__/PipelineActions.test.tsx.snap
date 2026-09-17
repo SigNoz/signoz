@@ -1,34 +1,77 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`PipelinePage container test should render PipelineActions section 1`] = `
+exports[`PipelinePage container test > should render PipelineActions section 1`] = `
 <DocumentFragment>
-  .c0 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  gap: 1rem;
-  -webkit-box-pack: end;
-  -webkit-justify-content: flex-end;
-  -ms-flex-pack: end;
-  justify-content: flex-end;
-}
-
-<div
-    class="c0"
+  <div
+    class="sc-gEvEer jtUZqF"
   >
     <svg
+      class="signoz-icon"
       data-testid="pipeline-preview-action"
+      fill="none"
+      height="18"
+      stroke="currentColor"
+      stroke-width="1.5"
       style="font-size: 1rem;"
-    />
+      viewBox="0 0 16 16"
+      width="18"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M1.333 9.333s2-4.666 6.667-4.666c4.666 0 6.666 4.666 6.666 4.666"
+        stroke="inherit"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.333"
+      />
+      <path
+        d="M8 11.333a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
+        stroke="inherit"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.333"
+      />
+    </svg>
     <svg
+      class="signoz-icon"
       data-testid="pipeline-edit-action"
+      fill="none"
+      height="16"
+      stroke="currentColor"
+      stroke-width="1.33"
       style="font-size: 1rem;"
-    />
+      viewBox="0 0 16 16"
+      width="16"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M8 13.333h6m-4-10 2 2m-1.082-2.918a1.415 1.415 0 0 1 2.001 2.001l-8.007 8.007a1.333 1.333 0 0 1-.57.338l-1.914.558a.332.332 0 0 1-.417-.237.334.334 0 0 1 .003-.176l.559-1.915c.063-.215.179-.41.337-.569l8.008-8.007Z"
+        stroke="inherit"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.33"
+      />
+    </svg>
     <svg
+      class="signoz-icon"
       data-testid="pipeline-delete-action"
+      fill="none"
+      height="16"
+      stroke="currentColor"
+      stroke-width="1.33"
       style="font-size: 1rem;"
-    />
+      viewBox="0 0 16 16"
+      width="16"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M2 4h12m-1.333 0v9.333c0 .667-.667 1.334-1.334 1.334H4.667c-.667 0-1.334-.667-1.334-1.334V4m2 0V2.667C5.333 2 6 1.333 6.667 1.333h2.666c.667 0 1.334.667 1.334 1.334V4m-4 3.333v4m2.666-4v4"
+        stroke="inherit"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.33"
+      />
+    </svg>
   </div>
 </DocumentFragment>
 `;

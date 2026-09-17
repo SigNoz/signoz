@@ -24,7 +24,7 @@ const unmockedApiGuard = [
 
 /**
  * Default handler set for every story, resolved first match wins: the
- * Storybook-only shell handlers override the jest ones where the shell needs
+ * Storybook-only shell handlers override the test ones where the shell needs
  * richer data, and both a page's control-driven handlers and a story's own
  * `parameters.msw.handlers` are layered on top at render time. An endpoint both
  * runners need belongs in `src/mocks-server/handlers.ts` instead.

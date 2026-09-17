@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import {
 	downloadFile,
@@ -9,21 +10,22 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useClientExport } from '../useClientExport';
 
-jest.mock('lib/exportData/downloadFile', () => ({
-	...jest.requireActual('lib/exportData/downloadFile'),
-	downloadFile: jest.fn(),
+const { mockMessageError } = vi.hoisted(() => ({ mockMessageError: vi.fn() }));
+
+vi.mock('lib/exportData/downloadFile', async () => ({
+	...(await vi.importActual('lib/exportData/downloadFile')),
+	downloadFile: vi.fn(),
 }));
 
-const mockMessageError = jest.fn();
-jest.mock('antd', () => {
-	const actual = jest.requireActual('antd');
+vi.mock('antd', async () => {
+	const actual = await vi.importActual('antd');
 	return {
 		...actual,
 		message: { error: (...args: unknown[]): void => mockMessageError(...args) },
 	};
 });
 
-const mockDownloadFile = downloadFile as jest.Mock;
+const mockDownloadFile = downloadFile as Mock;
 
 const query = {
 	queryType: 'builder',
@@ -110,15 +112,15 @@ function scalarData(): MetricQueryRangeSuccessResponse {
 
 describe('useClientExport', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		// Freeze the clock so filenames are deterministic — asserted against the
 		// real getTimestampedFileName (the format itself is pinned by an exact
 		// string in downloadFile.test).
-		jest.useFakeTimers().setSystemTime(new Date(2026, 6, 13, 14, 32, 5));
+		vi.useFakeTimers().setSystemTime(new Date(2026, 6, 13, 14, 32, 5));
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it('dispatches timeseries data to the timeseries serializer (csv)', () => {

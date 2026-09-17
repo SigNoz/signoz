@@ -9,22 +9,24 @@ import {
 	BaseConfigBuilderProps,
 	buildBaseConfig,
 } from 'lib/visualization/panels/utils/baseConfigBuilder';
+import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
+import onClickPlugin from 'lib/uPlotLib/plugins/onClickPlugin';
 
-jest.mock('lib/visualization/panels/utils/legendVisibilityUtils', () => ({
-	getStoredSeriesVisibility: jest.fn(),
+vi.mock('lib/visualization/panels/utils/legendVisibilityUtils', () => ({
+	getStoredSeriesVisibility: vi.fn(),
 }));
 
-jest.mock('lib/uPlotV2/utils', () => ({
-	calculateWidthBasedOnStepInterval: jest.fn(),
+vi.mock('lib/uPlotV2/utils', () => ({
+	calculateWidthBasedOnStepInterval: vi.fn(),
 }));
 
-const calculateWidthBasedOnStepIntervalMock = jest.requireMock(
-	'lib/uPlotV2/utils',
-).calculateWidthBasedOnStepInterval as jest.Mock;
+const calculateWidthBasedOnStepIntervalMock = vi.mocked(
+	calculateWidthBasedOnStepInterval,
+);
 
-jest.mock('lib/uPlotLib/plugins/onClickPlugin', () => ({
+vi.mock('lib/uPlotLib/plugins/onClickPlugin', () => ({
 	__esModule: true,
-	default: jest.fn().mockReturnValue({ name: 'onClickPlugin' }),
+	default: vi.fn().mockReturnValue({ name: 'onClickPlugin' }),
 }));
 
 const createBaseConfigBuilderProps = (
@@ -145,10 +147,8 @@ describe('buildBaseConfig', () => {
 	});
 
 	it('adds onClick plugin when onClick is a function', () => {
-		const onClickPlugin = jest.requireMock(
-			'lib/uPlotLib/plugins/onClickPlugin',
-		).default;
-		const onClick = jest.fn();
+		const onClickPluginMock = vi.mocked(onClickPlugin);
+		const onClick = vi.fn();
 
 		buildBaseConfig({
 			...baseProps,
@@ -156,16 +156,14 @@ describe('buildBaseConfig', () => {
 			apiResponse: createApiResponse(),
 		});
 
-		expect(onClickPlugin).toHaveBeenCalledWith({
+		expect(onClickPluginMock).toHaveBeenCalledWith({
 			onClick,
 			apiResponse: expect.any(Object),
 		});
 	});
 
 	it('does not add onClick plugin when onClick is not a function', () => {
-		const onClickPlugin = jest.requireMock(
-			'lib/uPlotLib/plugins/onClickPlugin',
-		).default;
+		const onClickPluginMock = vi.mocked(onClickPlugin);
 
 		const builder = buildBaseConfig({
 			...baseProps,
@@ -176,7 +174,7 @@ describe('buildBaseConfig', () => {
 		expect(
 			plugins.some((p) => (p as { name?: string }).name === 'onClickPlugin'),
 		).toBe(false);
-		expect(onClickPlugin).not.toHaveBeenCalled();
+		expect(onClickPluginMock).not.toHaveBeenCalled();
 	});
 
 	it('adds thresholds from widget', () => {
@@ -232,7 +230,7 @@ describe('buildBaseConfig', () => {
 	});
 
 	it('register setSelect hook when onDragSelect is provided', () => {
-		const onDragSelect = jest.fn();
+		const onDragSelect = vi.fn();
 		const builder = buildBaseConfig({
 			...baseProps,
 			onDragSelect,

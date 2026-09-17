@@ -6,8 +6,8 @@ import VisualizationSection from '../VisualizationSection';
 
 // The type switcher resolves each kind's supported signals + query types; stub it so
 // the test doesn't pull the whole panel registry (renderers, chart libs).
-jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
-	getPanelDefinition: jest.fn(() => ({
+vi.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
+	getPanelDefinition: vi.fn(() => ({
 		mode: 'query',
 		supportedSignals: ['metrics', 'logs', 'traces'],
 		supportedQueryTypes: ['builder', 'clickhouse_sql', 'promql'],
@@ -37,7 +37,7 @@ describe('VisualizationSection', () => {
 					stacking: true,
 					fillSpans: true,
 				}}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -58,7 +58,7 @@ describe('VisualizationSection', () => {
 					switchPanelKind: true,
 					timePreference: true,
 				}}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -74,7 +74,7 @@ describe('VisualizationSection', () => {
 	});
 
 	it('writes the chosen time preference through the dropdown', async () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<VisualizationSection
 				value={undefined}
@@ -92,7 +92,7 @@ describe('VisualizationSection', () => {
 	});
 
 	it('toggles bar stacking through onChange, preserving other fields', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<VisualizationSection
 				value={{
@@ -116,7 +116,7 @@ describe('VisualizationSection', () => {
 	});
 
 	it('toggles fill spans through onChange', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<VisualizationSection
 				value={{ fillSpans: false }}
@@ -134,12 +134,12 @@ describe('VisualizationSection', () => {
 	});
 
 	it('renders the type switcher and switches kind when switchPanelKind is set', async () => {
-		const onChangePanelKind = jest.fn();
+		const onChangePanelKind = vi.fn();
 		render(
 			<VisualizationSection
 				value={undefined}
 				controls={{ switchPanelKind: true }}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 				panelKind="signoz/TimeSeriesPanel"
 				onChangePanelKind={onChangePanelKind}
 			/>,
@@ -161,9 +161,9 @@ describe('VisualizationSection', () => {
 					switchPanelKind: false,
 					timePreference: true,
 				}}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 				panelKind="signoz/TimeSeriesPanel"
-				onChangePanelKind={jest.fn()}
+				onChangePanelKind={vi.fn()}
 			/>,
 		);
 

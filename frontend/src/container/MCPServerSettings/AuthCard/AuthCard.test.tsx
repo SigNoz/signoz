@@ -2,8 +2,8 @@ import { render, screen, userEvent } from 'tests/test-utils';
 
 import AuthCard from './AuthCard';
 
-const mockOnCopyInstanceUrl = jest.fn();
-const mockOnCreateServiceAccount = jest.fn();
+const mockOnCopyInstanceUrl = vi.fn();
+const mockOnCreateServiceAccount = vi.fn();
 
 const defaultProps = {
 	instanceUrl: 'http://localhost',
@@ -13,7 +13,7 @@ const defaultProps = {
 
 describe('AuthCard', () => {
 	afterEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders the instance URL', () => {

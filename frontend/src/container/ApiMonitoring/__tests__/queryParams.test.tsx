@@ -4,14 +4,15 @@ import {
 	getApiMonitoringParams,
 	setApiMonitoringParams,
 } from 'container/ApiMonitoring/queryParams';
+import { useHistory, useLocation } from 'react-router-dom';
 
 // Mock react-router-dom hooks
-jest.mock('react-router-dom', () => {
-	const originalModule = jest.requireActual('react-router-dom');
+vi.mock('react-router-dom', async () => {
+	const originalModule = await vi.importActual('react-router-dom');
 	return {
 		...originalModule,
-		useLocation: jest.fn(),
-		useHistory: jest.fn(),
+		useLocation: vi.fn(),
+		useHistory: vi.fn(),
 	};
 });
 
@@ -59,8 +60,8 @@ describe('API Monitoring Query Params', () => {
 	describe('setApiMonitoringParams', () => {
 		it('updates URL with new params (push mode)', () => {
 			const history = {
-				push: jest.fn(),
-				replace: jest.fn(),
+				push: vi.fn(),
+				replace: vi.fn(),
 			};
 			const search = '';
 			const newParams: Partial<ApiMonitoringParams> = {
@@ -89,8 +90,8 @@ describe('API Monitoring Query Params', () => {
 
 		it('updates URL with new params (replace mode)', () => {
 			const history = {
-				push: jest.fn(),
-				replace: jest.fn(),
+				push: vi.fn(),
+				replace: vi.fn(),
 			};
 			const search = '';
 			const newParams: Partial<ApiMonitoringParams> = {
@@ -108,8 +109,8 @@ describe('API Monitoring Query Params', () => {
 
 		it('merges new params with existing params', () => {
 			const history = {
-				push: jest.fn(),
-				replace: jest.fn(),
+				push: vi.fn(),
+				replace: vi.fn(),
 			};
 
 			// Start with some existing params
@@ -163,11 +164,11 @@ describe('API Monitoring Query Params', () => {
 
 			// Create mock history object
 			const history = {
-				push: jest.fn((args) => {
+				push: vi.fn((args: any) => {
 					// Simulate updating the location search
 					location.search = args.search;
 				}),
-				replace: jest.fn((args) => {
+				replace: vi.fn((args: any) => {
 					location.search = args.search;
 				}),
 				length: 1,
@@ -175,11 +176,11 @@ describe('API Monitoring Query Params', () => {
 			};
 
 			// Set up mocks for useLocation and useHistory
-			const useLocationMock = jest.requireMock('react-router-dom').useLocation;
-			const useHistoryMock = jest.requireMock('react-router-dom').useHistory;
+			const useLocationMock = vi.mocked(useLocation);
+			const useHistoryMock = vi.mocked(useHistory);
 
-			useLocationMock.mockReturnValue(location);
-			useHistoryMock.mockReturnValue(history);
+			useLocationMock.mockReturnValue(location as any);
+			useHistoryMock.mockReturnValue(history as any);
 
 			return { location, history };
 		};

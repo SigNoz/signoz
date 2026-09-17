@@ -17,7 +17,7 @@ beforeAll(() => {
 	mockCodeMirrorDomApis();
 });
 
-jest.mock('hooks/useDarkMode', () => ({
+vi.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => true,
 }));
 
@@ -187,7 +187,7 @@ describe('MarkdownEditor', () => {
 		});
 
 		it('reports every keystroke to the caller', () => {
-			const onChange = jest.fn();
+			const onChange = vi.fn();
 			render(<MarkdownEditor value="ab" onChange={onChange} />);
 
 			type(2, 'c');
@@ -196,7 +196,7 @@ describe('MarkdownEditor', () => {
 		});
 
 		it('does not report the seed back as a change', () => {
-			const onChange = jest.fn();
+			const onChange = vi.fn();
 			render(<MarkdownEditor value="seeded" onChange={onChange} />);
 
 			expect(documentText()).toBe('seeded');
@@ -223,7 +223,7 @@ describe('MarkdownEditor', () => {
 		});
 
 		it('counts characters from the document, not from the lagging value', async () => {
-			render(<MarkdownEditor value="ab" onChange={jest.fn()} />);
+			render(<MarkdownEditor value="ab" onChange={vi.fn()} />);
 
 			type(2, 'cde');
 
@@ -250,7 +250,7 @@ describe('MarkdownEditor', () => {
 		render(
 			<MarkdownEditor
 				value="body"
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 				variables={VARIABLES}
 				readOnly
 			/>,

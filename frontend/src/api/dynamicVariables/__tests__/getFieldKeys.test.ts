@@ -1,15 +1,17 @@
+import type { Mock } from 'vitest';
+
 import axios from 'api';
 
 import { getFieldKeys } from '../getFieldKeys';
 
-// Mock the API instance
-jest.mock('api', () => ({
-	get: jest.fn(),
+// Mock the API instance (default export is the axios instance)
+vi.mock('api', () => ({
+	default: { get: vi.fn() },
 }));
 
 describe('getFieldKeys API', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	const mockSuccessResponse = {
@@ -28,7 +30,7 @@ describe('getFieldKeys API', () => {
 
 	it('should call API with correct parameters when no args provided', async () => {
 		// Mock successful API response
-		(axios.get as jest.Mock).mockResolvedValueOnce(mockSuccessResponse);
+		(axios.get as Mock).mockResolvedValueOnce(mockSuccessResponse);
 
 		// Call function with no parameters
 		await getFieldKeys();
@@ -41,7 +43,7 @@ describe('getFieldKeys API', () => {
 
 	it('should call API with signal parameter when provided', async () => {
 		// Mock successful API response
-		(axios.get as jest.Mock).mockResolvedValueOnce(mockSuccessResponse);
+		(axios.get as Mock).mockResolvedValueOnce(mockSuccessResponse);
 
 		// Call function with signal parameter
 		await getFieldKeys('traces');
@@ -54,7 +56,7 @@ describe('getFieldKeys API', () => {
 
 	it('should call API with name parameter when provided', async () => {
 		// Mock successful API response
-		(axios.get as jest.Mock).mockResolvedValueOnce({
+		(axios.get as Mock).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -76,7 +78,7 @@ describe('getFieldKeys API', () => {
 
 	it('should call API with both signal and name when provided', async () => {
 		// Mock successful API response
-		(axios.get as jest.Mock).mockResolvedValueOnce({
+		(axios.get as Mock).mockResolvedValueOnce({
 			status: 200,
 			data: {
 				status: 'success',
@@ -98,7 +100,7 @@ describe('getFieldKeys API', () => {
 
 	it('should return properly formatted response', async () => {
 		// Mock API to return our response
-		(axios.get as jest.Mock).mockResolvedValueOnce(mockSuccessResponse);
+		(axios.get as Mock).mockResolvedValueOnce(mockSuccessResponse);
 
 		// Call the function
 		const result = await getFieldKeys('traces');

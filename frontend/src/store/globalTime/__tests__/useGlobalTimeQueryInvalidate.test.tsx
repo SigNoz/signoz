@@ -41,12 +41,12 @@ describe('useGlobalTimeQueryInvalidate', () => {
 
 	beforeEach(() => {
 		queryClient = createTestQueryClient();
-		jest.useFakeTimers();
-		jest.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 		queryClient.clear();
 	});
 
@@ -80,7 +80,7 @@ describe('useGlobalTimeQueryInvalidate', () => {
 
 		// Advance time past minute boundary
 		act(() => {
-			jest.advanceTimersByTime(60000);
+			vi.advanceTimersByTime(60000);
 		});
 
 		// Call invalidate - should compute fresh values when refresh is disabled
@@ -95,7 +95,11 @@ describe('useGlobalTimeQueryInvalidate', () => {
 	});
 
 	it('should invalidate queries with AUTO_REFRESH_QUERY key', async () => {
-		const mockQueryFn = jest.fn().mockResolvedValue({ data: 'test' });
+		// waitFor (testing-library/dom v8) does not advance vitest's fake timers, so a
+		// genuine async wait under vi fake timers hangs until the test timeout.
+		// This test asserts invalidation, not time, so it runs on real timers.
+		vi.useRealTimers();
+		const mockQueryFn = vi.fn().mockResolvedValue({ data: 'test' });
 
 		const wrapper = createWrapper({ initialTime: '15m' }, queryClient);
 
@@ -133,8 +137,10 @@ describe('useGlobalTimeQueryInvalidate', () => {
 	});
 
 	it('should NOT invalidate queries without AUTO_REFRESH_QUERY key', async () => {
-		const autoRefreshQueryFn = jest.fn().mockResolvedValue({ data: 'auto' });
-		const regularQueryFn = jest.fn().mockResolvedValue({ data: 'regular' });
+		// Same as above: genuine async waitFor needs real timers (see comment).
+		vi.useRealTimers();
+		const autoRefreshQueryFn = vi.fn().mockResolvedValue({ data: 'auto' });
+		const regularQueryFn = vi.fn().mockResolvedValue({ data: 'regular' });
 
 		const wrapper = createWrapper({ initialTime: '15m' }, queryClient);
 
@@ -222,9 +228,9 @@ describe('useGlobalTimeQueryInvalidate', () => {
 	});
 
 	it('should invalidate multiple AUTO_REFRESH_QUERY queries at once', async () => {
-		const queryFn1 = jest.fn().mockResolvedValue({ data: 'query1' });
-		const queryFn2 = jest.fn().mockResolvedValue({ data: 'query2' });
-		const queryFn3 = jest.fn().mockResolvedValue({ data: 'query3' });
+		const queryFn1 = vi.fn().mockResolvedValue({ data: 'query1' });
+		const queryFn2 = vi.fn().mockResolvedValue({ data: 'query2' });
+		const queryFn3 = vi.fn().mockResolvedValue({ data: 'query3' });
 
 		const wrapper = createWrapper({ initialTime: '15m' }, queryClient);
 
@@ -282,8 +288,8 @@ describe('useGlobalTimeQueryInvalidate', () => {
 
 	describe('scoped invalidation with store name', () => {
 		it('should only invalidate queries matching store name', async () => {
-			const namedQueryFn = jest.fn().mockResolvedValue({ data: 'named' });
-			const unnamedQueryFn = jest.fn().mockResolvedValue({ data: 'unnamed' });
+			const namedQueryFn = vi.fn().mockResolvedValue({ data: 'named' });
+			const unnamedQueryFn = vi.fn().mockResolvedValue({ data: 'unnamed' });
 
 			const wrapper = createWrapper(
 				{ name: 'drawer', initialTime: '15m' },
@@ -334,8 +340,8 @@ describe('useGlobalTimeQueryInvalidate', () => {
 		});
 
 		it('should invalidate all queries for unnamed store (backward compatible)', async () => {
-			const queryFn1 = jest.fn().mockResolvedValue({ data: 'query1' });
-			const queryFn2 = jest.fn().mockResolvedValue({ data: 'query2' });
+			const queryFn1 = vi.fn().mockResolvedValue({ data: 'query1' });
+			const queryFn2 = vi.fn().mockResolvedValue({ data: 'query2' });
 
 			// Unnamed store (no name prop)
 			const wrapper = createWrapper({ initialTime: '15m' }, queryClient);

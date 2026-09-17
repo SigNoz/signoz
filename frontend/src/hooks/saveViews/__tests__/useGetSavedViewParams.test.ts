@@ -1,11 +1,12 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import useUrlQuery from 'hooks/useUrlQuery';
 
 import { useGetSavedViewParams } from '../useGetSavedViewParams';
 
-jest.mock('hooks/useUrlQuery');
+vi.mock('hooks/useUrlQuery');
 
-const mockedUseUrlQuery = useUrlQuery as jest.Mock;
+const mockedUseUrlQuery = useUrlQuery as Mock;
 
 const setSearch = (search: string): void => {
 	mockedUseUrlQuery.mockReturnValue(new URLSearchParams(search));
@@ -13,7 +14,7 @@ const setSearch = (search: string): void => {
 
 describe('useGetSavedViewParams', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('returns empty strings when no params are present', () => {

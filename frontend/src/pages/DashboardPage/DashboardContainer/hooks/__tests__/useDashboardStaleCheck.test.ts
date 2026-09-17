@@ -1,18 +1,19 @@
+import type { Mock } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { getDashboardV2 } from 'api/generated/services/dashboard';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
 import { useDashboardStaleCheck } from '../useDashboardStaleCheck';
 
-const mockUseIsMutating = jest.fn();
-jest.mock('react-query', () => ({
+const mockUseIsMutating = vi.fn();
+vi.mock('react-query', () => ({
 	useIsMutating: (): number => mockUseIsMutating(),
 }));
-jest.mock('api/generated/services/dashboard', () => ({
-	getDashboardV2: jest.fn(),
+vi.mock('api/generated/services/dashboard', () => ({
+	getDashboardV2: vi.fn(),
 }));
 
-const mockGetDashboard = getDashboardV2 as jest.Mock;
+const mockGetDashboard = getDashboardV2 as Mock;
 
 const SPEC_A = { panels: { p1: {} } };
 const SPEC_B = { panels: { p1: {}, p2: {} } };
@@ -67,14 +68,14 @@ async function comeBack(
 
 describe('useDashboardStaleCheck', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockUseIsMutating.mockReturnValue(0);
 		setVisibility('visible');
 	});
 
 	it('does not fetch on first load — only when the tab/window returns', async () => {
 		renderHook(() =>
-			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), vi.fn()),
 		);
 		expect(mockGetDashboard).not.toHaveBeenCalled();
 
@@ -84,7 +85,7 @@ describe('useDashboardStaleCheck', () => {
 
 	it('also probes on window focus (returning from another app)', async () => {
 		renderHook(() =>
-			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), vi.fn()),
 		);
 		await comeBack('2026-07-08T09:00:00Z', {}, 'focus');
 		expect(mockGetDashboard).toHaveBeenCalledTimes(1);
@@ -92,7 +93,7 @@ describe('useDashboardStaleCheck', () => {
 
 	it('prompts when newer and the spec differs', async () => {
 		const { result } = renderHook(() =>
-			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), vi.fn()),
 		);
 		await comeBack('2026-07-08T10:00:00Z', { spec: SPEC_B });
 		await waitFor(() => expect(result.current.showPrompt).toBe(true));
@@ -102,7 +103,7 @@ describe('useDashboardStaleCheck', () => {
 		const { result } = renderHook(() =>
 			useDashboardStaleCheck(
 				loaded('2026-07-08T09:00:00Z', { locked: false }),
-				jest.fn(),
+				vi.fn(),
 			),
 		);
 		await comeBack('2026-07-08T10:00:00Z', { locked: true });
@@ -113,7 +114,7 @@ describe('useDashboardStaleCheck', () => {
 		const { result } = renderHook(() =>
 			useDashboardStaleCheck(
 				loaded('2026-07-08T09:00:00Z', { tags: [] }),
-				jest.fn(),
+				vi.fn(),
 			),
 		);
 		await comeBack('2026-07-08T10:00:00Z', {
@@ -124,7 +125,7 @@ describe('useDashboardStaleCheck', () => {
 
 	it('does NOT prompt when newer but content (spec/tags/locked) is unchanged', async () => {
 		const { result } = renderHook(() =>
-			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), vi.fn()),
 		);
 		// updatedAt bumped but every content field matches — e.g. our own lock, already
 		// reflected in the render cache.
@@ -134,7 +135,7 @@ describe('useDashboardStaleCheck', () => {
 
 	it('does not prompt when the loaded copy is newer (own edit)', async () => {
 		const { result } = renderHook(() =>
-			useDashboardStaleCheck(loaded('2026-07-08T10:00:00Z'), jest.fn()),
+			useDashboardStaleCheck(loaded('2026-07-08T10:00:00Z'), vi.fn()),
 		);
 		await comeBack('2026-07-08T09:00:00Z', { spec: SPEC_B });
 		expect(result.current.showPrompt).toBe(false);
@@ -143,7 +144,7 @@ describe('useDashboardStaleCheck', () => {
 	it('does not prompt while a mutation is in flight (optimistic save)', async () => {
 		mockUseIsMutating.mockReturnValue(1);
 		const { result } = renderHook(() =>
-			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), vi.fn()),
 		);
 		await comeBack('2026-07-08T10:00:00Z', { spec: SPEC_B });
 		expect(result.current.showPrompt).toBe(false);
@@ -151,7 +152,7 @@ describe('useDashboardStaleCheck', () => {
 
 	it('does not probe while the tab is hidden', async () => {
 		renderHook(() =>
-			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), vi.fn()),
 		);
 		setVisibility('hidden');
 		await act(async () => {
@@ -162,7 +163,7 @@ describe('useDashboardStaleCheck', () => {
 
 	it('stops prompting for a version once dismissed', async () => {
 		const { result } = renderHook(() =>
-			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), vi.fn()),
 		);
 		await comeBack('2026-07-08T10:00:00Z', { spec: SPEC_B });
 		await waitFor(() => expect(result.current.showPrompt).toBe(true));
@@ -171,7 +172,7 @@ describe('useDashboardStaleCheck', () => {
 	});
 
 	it('reload refetches and closes the prompt immediately', async () => {
-		const refetch = jest.fn();
+		const refetch = vi.fn();
 		const { result } = renderHook(() =>
 			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), refetch),
 		);
@@ -184,7 +185,7 @@ describe('useDashboardStaleCheck', () => {
 
 	it('re-prompts when a newer, different version appears after a reload', async () => {
 		const { result } = renderHook(() =>
-			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), jest.fn()),
+			useDashboardStaleCheck(loaded('2026-07-08T09:00:00Z'), vi.fn()),
 		);
 		await comeBack('2026-07-08T10:00:00Z', { spec: SPEC_B });
 		act(() => result.current.reload());

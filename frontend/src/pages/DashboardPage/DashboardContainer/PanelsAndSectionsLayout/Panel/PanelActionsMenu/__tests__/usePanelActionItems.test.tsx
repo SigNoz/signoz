@@ -4,6 +4,7 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 
 import type { DashboardSection } from '../../../../utils';
 import { usePanelActionItems } from '../usePanelActionItems';
+import type { Mock } from 'vitest';
 
 /** Keys of the disabled items, in order. */
 // The derivation has its own suite (useDashboardEditContext.authz); these cases are
@@ -30,7 +31,7 @@ function setEditContextMock(next: Partial<typeof mockEditContext>): void {
 		...next,
 	});
 }
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext',
 	() => ({
 		useDashboardEditContext: (): typeof mockEditContext => mockEditContext,
@@ -45,50 +46,50 @@ function disabledKeys(
 		.map((item) => ('key' in item ? item.key : undefined));
 }
 
-const mockOpenEditor = jest.fn();
-jest.mock(
+const mockOpenEditor = vi.fn();
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useOpenPanelEditor',
 	() => ({
-		useOpenPanelEditor: (): jest.Mock => mockOpenEditor,
+		useOpenPanelEditor: (): Mock => mockOpenEditor,
 	}),
 );
 
-const mockOpenView = jest.fn();
-jest.mock('../../hooks/useViewPanel', () => ({
+const mockOpenView = vi.fn();
+vi.mock('../../hooks/useViewPanel', () => ({
 	useViewPanel: (): {
-		openView: jest.Mock;
-		closeView: jest.Mock;
+		openView: Mock;
+		closeView: Mock;
 		expandedPanelId: string | null;
 	} => ({
 		openView: mockOpenView,
-		closeView: jest.fn(),
+		closeView: vi.fn(),
 		expandedPanelId: null,
 	}),
 }));
 
-const mockMovePanel = jest.fn();
-jest.mock('../../hooks/useMovePanelToSection', () => ({
-	useMovePanelToSection: (): jest.Mock => mockMovePanel,
+const mockMovePanel = vi.fn();
+vi.mock('../../hooks/useMovePanelToSection', () => ({
+	useMovePanelToSection: (): Mock => mockMovePanel,
 }));
 
-const mockDeletePanel = jest.fn();
-jest.mock('../../hooks/useDeletePanel', () => ({
-	useDeletePanel: (): jest.Mock => mockDeletePanel,
+const mockDeletePanel = vi.fn();
+vi.mock('../../hooks/useDeletePanel', () => ({
+	useDeletePanel: (): Mock => mockDeletePanel,
 }));
 
-const mockClonePanel = jest.fn();
-jest.mock('../../hooks/useClonePanel', () => ({
-	useClonePanel: (): jest.Mock => mockClonePanel,
+const mockClonePanel = vi.fn();
+vi.mock('../../hooks/useClonePanel', () => ({
+	useClonePanel: (): Mock => mockClonePanel,
 }));
 
-const mockCreateAlert = jest.fn();
-jest.mock('../../hooks/useCreateAlertFromPanel', () => ({
-	useCreateAlertFromPanel: (): jest.Mock => mockCreateAlert,
+const mockCreateAlert = vi.fn();
+vi.mock('../../hooks/useCreateAlertFromPanel', () => ({
+	useCreateAlertFromPanel: (): Mock => mockCreateAlert,
 }));
 
-const mockDownloadImage = jest.fn();
-jest.mock('../../hooks/useDownloadPanelImage', () => ({
-	useDownloadPanelImage: (): { downloadPanelImage: jest.Mock } => ({
+const mockDownloadImage = vi.fn();
+vi.mock('../../hooks/useDownloadPanelImage', () => ({
+	useDownloadPanelImage: (): { downloadPanelImage: Mock } => ({
 		downloadPanelImage: mockDownloadImage,
 	}),
 }));
@@ -152,7 +153,7 @@ function itemKeys(result: ReturnType<typeof usePanelActionItems>): unknown[] {
 
 describe('usePanelActionItems', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		setEditContextMock({});
 	});
 

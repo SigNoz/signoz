@@ -3,6 +3,7 @@ import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import ServiceAccountsTable from '../ServiceAccountsTable';
+import type { MockedFunction } from 'vitest';
 
 const mockActiveAccount: ServiceAccountRow = {
 	id: 'sa-1',
@@ -24,12 +25,12 @@ const mockDisabledAccount: ServiceAccountRow = {
 
 const defaultProps = {
 	loading: false,
-	onRowClick: jest.fn(),
+	onRowClick: vi.fn(),
 };
 
 describe('ServiceAccountsTable', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('renders name, email, role badge, and ACTIVE status badge', () => {
@@ -49,7 +50,7 @@ describe('ServiceAccountsTable', () => {
 	});
 
 	it('calls onRowClick with the correct account when a row is clicked', async () => {
-		const onRowClick = jest.fn() as jest.MockedFunction<
+		const onRowClick = vi.fn() as MockedFunction<
 			(row: ServiceAccountRow) => void
 		>;
 		const user = userEvent.setup({ pointerEventsCheck: 0 });

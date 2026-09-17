@@ -8,7 +8,7 @@ function createMockCanvas(): HTMLCanvasElement {
 	const canvas = document.createElement('canvas');
 	canvas.width = 800;
 	canvas.height = 400;
-	canvas.getBoundingClientRect = jest.fn(
+	canvas.getBoundingClientRect = vi.fn(
 		(): DOMRect =>
 			({
 				left: 0,
@@ -36,9 +36,9 @@ describe('useFlamegraphZoom', () => {
 	});
 
 	it('handleResetZoom restores traceMetadata.startTime/endTime', () => {
-		const setViewStartTs = jest.fn();
-		const setViewEndTs = jest.fn();
-		const setRowHeight = jest.fn();
+		const setViewStartTs = vi.fn();
+		const setViewEndTs = vi.fn();
+		const setRowHeight = vi.fn();
 		const viewStartRef = { current: 100 };
 		const viewEndRef = { current: 500 };
 		const rowHeightRef = { current: 30 };
@@ -70,9 +70,9 @@ describe('useFlamegraphZoom', () => {
 	});
 
 	it('wheel zoom in decreases visible time range', async () => {
-		const setViewStartTs = jest.fn();
-		const setViewEndTs = jest.fn();
-		const setRowHeight = jest.fn();
+		const setViewStartTs = vi.fn();
+		const setViewEndTs = vi.fn();
+		const setRowHeight = vi.fn();
 		const viewStartRef = { current: traceMetadata.startTime };
 		const viewEndRef = { current: traceMetadata.endTime };
 		const rowHeightRef = { current: DEFAULT_ROW_HEIGHT };
@@ -119,9 +119,9 @@ describe('useFlamegraphZoom', () => {
 	});
 
 	it('wheel zoom out increases visible time range', async () => {
-		const setViewStartTs = jest.fn();
-		const setViewEndTs = jest.fn();
-		const setRowHeight = jest.fn();
+		const setViewStartTs = vi.fn();
+		const setViewEndTs = vi.fn();
+		const setRowHeight = vi.fn();
 		const halfSpan = (traceMetadata.endTime - traceMetadata.startTime) / 2;
 		const viewStartRef = { current: traceMetadata.startTime + halfSpan * 0.25 };
 		const viewEndRef = { current: traceMetadata.startTime + halfSpan * 0.75 };
@@ -169,9 +169,9 @@ describe('useFlamegraphZoom', () => {
 	});
 
 	it('clamps zoom to MIN_VISIBLE_SPAN_MS', async () => {
-		const setViewStartTs = jest.fn();
-		const setViewEndTs = jest.fn();
-		const setRowHeight = jest.fn();
+		const setViewStartTs = vi.fn();
+		const setViewEndTs = vi.fn();
+		const setRowHeight = vi.fn();
 		const viewStartRef = { current: traceMetadata.startTime };
 		const viewEndRef = { current: traceMetadata.startTime + 100 };
 		const rowHeightRef = { current: DEFAULT_ROW_HEIGHT };
@@ -214,9 +214,9 @@ describe('useFlamegraphZoom', () => {
 	});
 
 	it('clamps viewStart/viewEnd to trace bounds', async () => {
-		const setViewStartTs = jest.fn();
-		const setViewEndTs = jest.fn();
-		const setRowHeight = jest.fn();
+		const setViewStartTs = vi.fn();
+		const setViewEndTs = vi.fn();
+		const setRowHeight = vi.fn();
 		const viewStartRef = { current: traceMetadata.startTime };
 		const viewEndRef = { current: traceMetadata.endTime };
 		const rowHeightRef = { current: DEFAULT_ROW_HEIGHT };
@@ -267,9 +267,9 @@ describe('useFlamegraphZoom', () => {
 				viewStartRef: { current: 0 },
 				viewEndRef: { current: 1000 },
 				rowHeightRef: { current: 24 },
-				setViewStartTs: jest.fn(),
-				setViewEndTs: jest.fn(),
-				setRowHeight: jest.fn(),
+				setViewStartTs: vi.fn(),
+				setViewEndTs: vi.fn(),
+				setRowHeight: vi.fn(),
 			}),
 		);
 

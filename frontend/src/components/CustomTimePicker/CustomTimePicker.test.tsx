@@ -5,32 +5,32 @@ import * as timeUtils from 'utils/timeUtils';
 
 import CustomTimePicker from './CustomTimePicker';
 
-jest.mock('react-router-dom', () => {
-	const actual = jest.requireActual('react-router-dom');
+vi.mock('react-router-dom', async () => {
+	const actual = await vi.importActual('react-router-dom');
 
 	return {
 		...actual,
-		useLocation: jest.fn().mockReturnValue({
+		useLocation: vi.fn().mockReturnValue({
 			pathname: '/test-path',
 		}),
 	};
 });
 
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
-	useDispatch: jest.fn(() => jest.fn()),
-	useSelector: jest.fn(() => ({
+vi.mock('react-redux', async () => ({
+	...(await vi.importActual('react-redux')),
+	useDispatch: vi.fn(() => vi.fn()),
+	useSelector: vi.fn(() => ({
 		minTime: 0,
 		maxTime: Date.now(),
 	})),
 }));
 
-jest.mock('providers/Timezone', () => {
-	const actual = jest.requireActual('providers/Timezone');
+vi.mock('providers/Timezone', async () => {
+	const actual = await vi.importActual('providers/Timezone');
 
 	return {
 		...actual,
-		useTimezone: jest.fn().mockReturnValue({
+		useTimezone: vi.fn().mockReturnValue({
 			timezone: {
 				value: 'UTC',
 				offset: '+00:00',
@@ -44,6 +44,8 @@ jest.mock('providers/Timezone', () => {
 		}),
 	};
 });
+
+vi.mock('utils/timeUtils', { spy: true });
 
 interface WrapperProps {
 	initialValue?: string;
@@ -123,8 +125,8 @@ describe('CustomTimePicker', () => {
 	});
 
 	it('applies valid shorthand on Enter', () => {
-		const onValid = jest.fn();
-		const onError = jest.fn();
+		const onValid = vi.fn();
+		const onError = vi.fn();
 
 		render(<Wrapper onValidCustomDateChange={onValid} onError={onError} />);
 
@@ -141,9 +143,9 @@ describe('CustomTimePicker', () => {
 	});
 
 	it('sets error and updates custom time status for invalid shorthand exceeding max allowed window', () => {
-		const onValid = jest.fn();
-		const onError = jest.fn();
-		const onCustomTimeStatusUpdate = jest.fn();
+		const onValid = vi.fn();
+		const onError = vi.fn();
+		const onCustomTimeStatusUpdate = vi.fn();
 
 		render(
 			<Wrapper
@@ -166,8 +168,8 @@ describe('CustomTimePicker', () => {
 	});
 
 	it('treats close after change like pressing Enter (blur + chevron)', () => {
-		const onValid = jest.fn();
-		const onError = jest.fn();
+		const onValid = vi.fn();
+		const onError = vi.fn();
 
 		render(<Wrapper onValidCustomDateChange={onValid} onError={onError} />);
 
@@ -191,8 +193,8 @@ describe('CustomTimePicker', () => {
 	});
 
 	it('applies epoch start/end range on Enter via onCustomDateHandler', () => {
-		const onCustomDateHandler = jest.fn();
-		const onError = jest.fn();
+		const onCustomDateHandler = vi.fn();
+		const onError = vi.fn();
 
 		render(
 			<Wrapper onCustomDateHandler={onCustomDateHandler} onError={onError} />,
@@ -213,9 +215,9 @@ describe('CustomTimePicker', () => {
 	});
 
 	it('uses validateTimeRange result for generic formatted ranges (valid case)', () => {
-		const validateTimeRangeSpy = jest.spyOn(timeUtils, 'validateTimeRange');
-		const onCustomDateHandler = jest.fn();
-		const onError = jest.fn();
+		const validateTimeRangeSpy = vi.mocked(timeUtils.validateTimeRange);
+		const onCustomDateHandler = vi.fn();
+		const onError = vi.fn();
 
 		validateTimeRangeSpy.mockReturnValue({
 			isValid: true,
@@ -244,9 +246,9 @@ describe('CustomTimePicker', () => {
 	});
 
 	it('uses validateTimeRange result for generic formatted ranges (invalid case)', () => {
-		const validateTimeRangeSpy = jest.spyOn(timeUtils, 'validateTimeRange');
-		const onValid = jest.fn();
-		const onError = jest.fn();
+		const validateTimeRangeSpy = vi.mocked(timeUtils.validateTimeRange);
+		const onValid = vi.fn();
+		const onError = vi.fn();
 
 		validateTimeRangeSpy.mockReturnValue({
 			isValid: false,

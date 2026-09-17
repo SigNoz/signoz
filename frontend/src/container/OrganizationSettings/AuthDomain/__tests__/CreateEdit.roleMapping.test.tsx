@@ -1,4 +1,4 @@
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils-full';
 import { rest, server } from 'mocks-server/server';
 import {
 	allRoles,
@@ -19,8 +19,8 @@ import {
 // The @signozhq/ui Button uses Radix Slot and has CSS infinite animations that
 // prevent form.validateFields() from resolving inside act(). Replacing with a
 // simple native button avoids the issue.
-jest.mock('@signozhq/ui/button', () => ({
-	...jest.requireActual('@signozhq/ui/button'),
+vi.mock('@signozhq/ui/button', async () => ({
+	...(await vi.importActual('@signozhq/ui/button')),
 	Button: ({
 		children,
 		onClick,
@@ -53,10 +53,10 @@ jest.mock('@signozhq/ui/button', () => ({
 
 // These are heavy real-timer integration tests (antd Select dropdown render +
 // form.validateFields() + a react-query mutation, all driven through userEvent).
-// Under a CPU-saturated parallel `jest` run the wall-clock roughly triples, which
+// Under a CPU-saturated parallel run the wall-clock roughly triples, which
 // pushes the longest tests past the 5000ms default and makes them flaky. Give the
 // whole file a wider budget (matches LogsPanelComponent.test.tsx).
-jest.setTimeout(20000);
+vi.setConfig({ testTimeout: 20000 });
 
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
@@ -123,7 +123,7 @@ describe('CreateEdit — role mapping uses API roles', () => {
 			<CreateEdit
 				isCreate={false}
 				record={mockDomainWithDirectRoleAttribute}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 
@@ -140,7 +140,7 @@ describe('CreateEdit — role mapping uses API roles', () => {
 			<CreateEdit
 				isCreate={false}
 				record={mockSamlAuthDomain}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 
@@ -173,7 +173,7 @@ describe('CreateEdit — role mapping uses API roles', () => {
 			<CreateEdit
 				isCreate={false}
 				record={mockDomainWithDirectRoleAttribute}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 
@@ -205,7 +205,7 @@ describe('CreateEdit — role mapping uses API roles', () => {
 			<CreateEdit
 				isCreate={false}
 				record={mockSamlAuthDomain}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 
@@ -236,7 +236,7 @@ describe('CreateEdit — role mapping uses API roles', () => {
 			<CreateEdit
 				isCreate={false}
 				record={mockSamlAuthDomain}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 
@@ -265,7 +265,7 @@ describe('CreateEdit — role mapping uses API roles', () => {
 			<CreateEdit
 				isCreate={false}
 				record={mockDomainWithRoleMapping}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 
@@ -299,7 +299,7 @@ describe('CreateEdit — role mapping uses API roles', () => {
 			<CreateEdit
 				isCreate={false}
 				record={mockSamlAuthDomain}
-				onClose={jest.fn()}
+				onClose={vi.fn()}
 			/>,
 		);
 

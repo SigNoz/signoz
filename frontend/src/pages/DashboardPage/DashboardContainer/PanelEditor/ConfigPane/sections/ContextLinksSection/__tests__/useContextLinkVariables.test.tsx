@@ -2,10 +2,10 @@ import { renderHook } from '@testing-library/react';
 
 import { useContextLinkVariables } from '../useContextLinkVariables';
 
-const mockUseGetDashboardV2 = jest.fn();
-const mockUseQueryBuilder = jest.fn();
+const mockUseGetDashboardV2 = vi.fn();
+const mockUseQueryBuilder = vi.fn();
 
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/store/useDashboardStore',
 	() => ({
 		useDashboardStore: (
@@ -14,16 +14,16 @@ jest.mock(
 	}),
 );
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+vi.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): unknown => mockUseQueryBuilder(),
 }));
 
-jest.mock('api/generated/services/dashboard', () => ({
+vi.mock('api/generated/services/dashboard', () => ({
 	useGetDashboardV2: (): unknown => mockUseGetDashboardV2(),
 }));
 
 // dtoToFormModel is exercised by its own suite; here we only need it to surface a name.
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/DashboardSettings/Variables/variableAdapters',
 	() => ({
 		dtoToFormModel: (dto: { name: string }): { name: string } => ({

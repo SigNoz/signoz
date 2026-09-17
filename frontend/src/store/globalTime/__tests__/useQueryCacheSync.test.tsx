@@ -34,12 +34,12 @@ describe('useQueryCacheSync', () => {
 	beforeEach(() => {
 		store = createGlobalTimeStore();
 		queryClient = createTestQueryClient();
-		jest.useFakeTimers();
-		jest.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 		queryClient.clear();
 	});
 
@@ -53,7 +53,7 @@ describe('useQueryCacheSync', () => {
 
 		// Advance time
 		act(() => {
-			jest.advanceTimersByTime(5000);
+			vi.advanceTimersByTime(5000);
 		});
 
 		// Render the hook
@@ -109,7 +109,7 @@ describe('useQueryCacheSync', () => {
 			const initialTimestamp = store.getState().lastRefreshTimestamp;
 
 			act(() => {
-				jest.advanceTimersByTime(5000);
+				vi.advanceTimersByTime(5000);
 			});
 
 			renderHook(() => useQueryCacheSync(store), {
@@ -141,7 +141,7 @@ describe('useQueryCacheSync', () => {
 			const initialTimestamp = store.getState().lastRefreshTimestamp;
 
 			act(() => {
-				jest.advanceTimersByTime(5000);
+				vi.advanceTimersByTime(5000);
 			});
 
 			renderHook(() => useQueryCacheSync(store), {
@@ -169,7 +169,7 @@ describe('useQueryCacheSync', () => {
 			const initialTimestamp = store.getState().lastRefreshTimestamp;
 
 			act(() => {
-				jest.advanceTimersByTime(5000);
+				vi.advanceTimersByTime(5000);
 			});
 
 			renderHook(() => useQueryCacheSync(store), {

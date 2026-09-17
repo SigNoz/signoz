@@ -10,7 +10,7 @@ function getSearchInput(): HTMLInputElement {
 
 describe('ListAlertRules — search', () => {
 	beforeEach(() => {
-		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		vi.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 	});
 
 	it('filters rows by alert name with debounce', async () => {

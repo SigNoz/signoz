@@ -8,22 +8,22 @@ import SpanSummary from '../SpanSummary';
 
 // The percentile widgets fetch their own data — stub them so this suite stays a
 // pure render test of SpanSummary's own content (name, metadata row, linked spans).
-jest.mock('../SpanPercentile/useSpanPercentile', () => ({
+vi.mock('../SpanPercentile/useSpanPercentile', () => ({
 	__esModule: true,
 	default: () => ({
 		isOpen: false,
-		toggleOpen: jest.fn(),
+		toggleOpen: vi.fn(),
 		loading: false,
 		percentileValue: 0,
 		duration: '',
 		spanPercentileData: null,
 	}),
 }));
-jest.mock('../SpanPercentile/SpanPercentileBadge', () => ({
+vi.mock('../SpanPercentile/SpanPercentileBadge', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="percentile-badge" />,
 }));
-jest.mock('../SpanPercentile/SpanPercentilePanel', () => ({
+vi.mock('../SpanPercentile/SpanPercentilePanel', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));

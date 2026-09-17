@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useMutation, useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports -- the hook's own test mocks and asserts the underlying patchDashboardV2 call.
@@ -9,28 +10,28 @@ import { useOptimisticPatch } from '../useOptimisticPatch';
 
 const QUERY_KEY = ['/api/v2/dashboards/dash-1'];
 
-jest.mock('react-query', () => ({
-	useMutation: jest.fn(),
-	useQueryClient: jest.fn(),
+vi.mock('react-query', () => ({
+	useMutation: vi.fn(),
+	useQueryClient: vi.fn(),
 }));
 
-jest.mock('api/generated/services/dashboard', () => ({
-	patchDashboardV2: jest.fn(),
-	getGetDashboardV2QueryKey: jest.fn(() => ['/api/v2/dashboards/dash-1']),
+vi.mock('api/generated/services/dashboard', () => ({
+	patchDashboardV2: vi.fn(),
+	getGetDashboardV2QueryKey: vi.fn(() => ['/api/v2/dashboards/dash-1']),
 }));
 
-jest.mock('../../store/useDashboardStore', () => ({
-	useDashboardStore: jest.fn(
+vi.mock('../../store/useDashboardStore', () => ({
+	useDashboardStore: vi.fn(
 		(selector: (s: { dashboardId: string; isEditable: boolean }) => unknown) =>
 			selector({ dashboardId: 'dash-1', isEditable: true }),
 	),
 }));
 
 const queryClient = {
-	cancelQueries: jest.fn().mockResolvedValue(undefined),
-	getQueryData: jest.fn(),
-	setQueryData: jest.fn(),
-	invalidateQueries: jest.fn().mockResolvedValue(undefined),
+	cancelQueries: vi.fn().mockResolvedValue(undefined),
+	getQueryData: vi.fn(),
+	setQueryData: vi.fn(),
+	invalidateQueries: vi.fn().mockResolvedValue(undefined),
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,11 +50,11 @@ const replaceNameOp = {
 };
 
 beforeEach(() => {
-	jest.clearAllMocks();
-	(useQueryClient as jest.Mock).mockReturnValue(queryClient);
-	(useMutation as jest.Mock).mockImplementation((fn, options) => {
+	vi.clearAllMocks();
+	(useQueryClient as Mock).mockReturnValue(queryClient);
+	(useMutation as Mock).mockImplementation((fn, options) => {
 		captured = { fn, options };
-		return { mutateAsync: jest.fn(), isLoading: false };
+		return { mutateAsync: vi.fn(), isLoading: false };
 	});
 	renderHook(() => useOptimisticPatch());
 });

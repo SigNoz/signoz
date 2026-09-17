@@ -6,21 +6,26 @@ import { TIMEZONE_DATA } from '../constants';
 import EditCustomSchedule from '../EvaluationCadence/EditCustomSchedule';
 import { createMockAlertContextState } from './testUtils';
 
-const mockSetAdvancedOptions = jest.fn();
-jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('container/CreateAlertV2/context', { spy: true });
+
+const mockSetAdvancedOptions = vi.fn();
+vi.mocked(alertState.useCreateAlertState).mockReturnValue(
 	createMockAlertContextState({
 		setAdvancedOptions: mockSetAdvancedOptions,
 	}),
 );
 
-const mockSetIsEvaluationCadenceDetailsVisible = jest.fn();
-const mockSetIsPreviewVisible = jest.fn();
+const mockSetIsEvaluationCadenceDetailsVisible = vi.fn();
+const mockSetIsPreviewVisible = vi.fn();
 
 const EDIT_CUSTOM_SCHEDULE_TEST_ID = '.edit-custom-schedule';
 
 describe('EditCustomSchedule', () => {
 	it('should render the correct display text for custom mode with daily occurrence', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.mocked(alertState.useCreateAlertState).mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE,
@@ -54,7 +59,7 @@ describe('EditCustomSchedule', () => {
 	});
 
 	it('should render the correct display text for custom mode with weekly occurrence', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.mocked(alertState.useCreateAlertState).mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE,
@@ -90,7 +95,7 @@ describe('EditCustomSchedule', () => {
 	});
 
 	it('should render the correct display text for custom mode with monthly occurrence', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.mocked(alertState.useCreateAlertState).mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE,

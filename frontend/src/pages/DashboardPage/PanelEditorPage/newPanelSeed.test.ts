@@ -8,33 +8,36 @@ import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDef
 import { buildPluginSpec } from '../DashboardContainer/Panels/utils/buildPluginSpec';
 import { toPerses } from '../DashboardContainer/queryV5/persesQueryAdapters';
 import { buildNewPanelSeed } from './newPanelSeed';
+import type { Mock } from 'vitest';
 
-jest.mock('../DashboardContainer/queryV5/persesQueryAdapters', () => ({
-	toPerses: jest.fn(),
+vi.mock('../DashboardContainer/queryV5/persesQueryAdapters', () => ({
+	toPerses: vi.fn(),
 }));
-jest.mock('../DashboardContainer/Panels/utils/buildDefaultQueries', () => ({
-	buildDefaultQueries: jest.fn(),
+vi.mock('../DashboardContainer/Panels/utils/buildDefaultQueries', () => ({
+	buildDefaultQueries: vi.fn(),
 }));
-jest.mock('../DashboardContainer/Panels/utils/buildPluginSpec', () => ({
-	buildPluginSpec: jest.fn(),
+vi.mock('../DashboardContainer/Panels/utils/buildPluginSpec', () => ({
+	buildPluginSpec: vi.fn(),
 }));
-jest.mock('../DashboardContainer/Panels/registry', () => ({
-	getPanelDefinition: jest.fn(),
+vi.mock('../DashboardContainer/Panels/registry', () => ({
+	getPanelDefinition: vi.fn(),
 }));
-jest.mock('../DashboardContainer/Panels/capabilities', () => ({
-	isQueryTypeSupportedByPanelKind: jest.fn(),
+vi.mock('../DashboardContainer/Panels/capabilities', async () => ({
+	isQueryTypeSupportedByPanelKind: vi.fn(),
 	// Real predicate: these specs exercise query kinds; the static guard has its
 	// own case below.
-	isStaticPanelKind: jest.requireActual(
-		'../DashboardContainer/Panels/capabilities',
+	isStaticPanelKind: (
+		await vi.importActual<
+			typeof import('../DashboardContainer/Panels/capabilities')
+		>('../DashboardContainer/Panels/capabilities')
 	).isStaticPanelKind,
 }));
 
-const mockToPerses = toPerses as jest.Mock;
-const mockBuildDefaultQueries = buildDefaultQueries as jest.Mock;
-const mockBuildPluginSpec = buildPluginSpec as jest.Mock;
-const mockGetPanelDefinition = getPanelDefinition as jest.Mock;
-const mockIsQueryTypeSupported = isQueryTypeSupportedByPanelKind as jest.Mock;
+const mockToPerses = toPerses as Mock;
+const mockBuildDefaultQueries = buildDefaultQueries as Mock;
+const mockBuildPluginSpec = buildPluginSpec as Mock;
+const mockGetPanelDefinition = getPanelDefinition as Mock;
+const mockIsQueryTypeSupported = isQueryTypeSupportedByPanelKind as Mock;
 
 const DEFAULT_QUERIES = [{ kind: 'default' }];
 const CONVERTED_QUERIES = [{ kind: 'converted' }];
@@ -50,7 +53,7 @@ const q = (extra: Partial<Query> = {}): Query =>
 
 describe('buildNewPanelSeed', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		mockBuildDefaultQueries.mockReturnValue(DEFAULT_QUERIES);
 		mockBuildPluginSpec.mockReturnValue(BASE_SPEC);
 		mockGetPanelDefinition.mockReturnValue({ sections: withUnit });

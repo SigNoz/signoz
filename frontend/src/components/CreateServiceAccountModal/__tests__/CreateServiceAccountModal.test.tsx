@@ -9,18 +9,18 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+vi.mock('@signozhq/ui/sonner', async () => ({
+	...(await vi.importActual('@signozhq/ui/sonner')),
+	toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-const mockToast = jest.mocked(toast);
+const mockToast = vi.mocked(toast);
 
-const showErrorModal = jest.fn();
-jest.mock('providers/ErrorModalProvider', () => ({
+const { showErrorModal } = vi.hoisted(() => ({ showErrorModal: vi.fn() }));
+vi.mock('providers/ErrorModalProvider', async () => ({
 	__esModule: true,
-	...jest.requireActual('providers/ErrorModalProvider'),
-	useErrorModal: jest.fn(() => ({
+	...(await vi.importActual('providers/ErrorModalProvider')),
+	useErrorModal: vi.fn(() => ({
 		showErrorModal,
 		isErrorModalVisible: false,
 	})),
@@ -38,7 +38,7 @@ function renderModal(): ReturnType<typeof render> {
 
 describe('CreateServiceAccountModal', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		server.use(
 			setupAuthzAdmin(),
 			rest.post(SERVICE_ACCOUNTS_ENDPOINT, (_, res, ctx) =>

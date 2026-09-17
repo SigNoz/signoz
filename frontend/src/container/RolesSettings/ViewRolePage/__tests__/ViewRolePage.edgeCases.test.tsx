@@ -2,7 +2,7 @@ import * as roleApi from 'api/generated/services/role';
 import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
-import { render, screen } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils-full';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 import ViewRolePage from '../ViewRolePage';
@@ -14,18 +14,21 @@ import {
 	mockPermissionsData,
 } from './testUtils';
 
+vi.mock('api/generated/services/role', { spy: true });
+vi.mock('../../hooks/useRolePermissions', { spy: true });
+
 describe('ViewRolePage - Edge Cases', () => {
 	beforeEach(() => {
 		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 		server.resetHandlers();
 	});
 
 	it('shows fallback for missing description', async () => {
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: {
 				status: 'success',
 				data: {
@@ -38,7 +41,7 @@ describe('ViewRolePage - Edge Cases', () => {
 			error: null,
 		} as ReturnType<typeof roleApi.useGetRole>);
 
-		jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+		vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 			data: mockPermissionsData,
 			isLoading: false,
 			isError: false,
@@ -53,7 +56,7 @@ describe('ViewRolePage - Edge Cases', () => {
 	});
 
 	it('shows fallback for invalid timestamps', async () => {
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: {
 				status: 'success',
 				data: {
@@ -67,7 +70,7 @@ describe('ViewRolePage - Edge Cases', () => {
 			error: null,
 		} as ReturnType<typeof roleApi.useGetRole>);
 
-		jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+		vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 			data: mockPermissionsData,
 			isLoading: false,
 			isError: false,
@@ -87,7 +90,7 @@ describe('ViewRolePage - Edge Cases', () => {
 	});
 
 	it('shows fallback for undefined timestamps', async () => {
-		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+		vi.mocked(roleApi.useGetRole).mockReturnValue({
 			data: {
 				status: 'success',
 				data: {
@@ -101,7 +104,7 @@ describe('ViewRolePage - Edge Cases', () => {
 			error: null,
 		} as ReturnType<typeof roleApi.useGetRole>);
 
-		jest.spyOn(useRolePermissionsModule, 'useRolePermissions').mockReturnValue({
+		vi.mocked(useRolePermissionsModule.useRolePermissions).mockReturnValue({
 			data: mockPermissionsData,
 			isLoading: false,
 			isError: false,

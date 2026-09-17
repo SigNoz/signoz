@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
@@ -5,16 +6,16 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 
 import { useTableColumns } from '../useTableColumns';
 
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables',
-	() => ({ prepareScalarTables: jest.fn() }),
+	() => ({ prepareScalarTables: vi.fn() }),
 );
-jest.mock(
+vi.mock(
 	'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData',
-	() => ({ getScalarResults: jest.fn(() => []) }),
+	() => ({ getScalarResults: vi.fn(() => []) }),
 );
 
-const mockPrepareScalarTables = prepareScalarTables as unknown as jest.Mock;
+const mockPrepareScalarTables = prepareScalarTables as unknown as Mock;
 
 const DATA = {
 	response: undefined,
@@ -41,7 +42,7 @@ function tableWith(columns: unknown[]): void {
 
 describe('useTableColumns', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('returns [] for a non-table panel kind', () => {

@@ -15,11 +15,11 @@ const NOW_MS = 1705312800000;
 
 describe('zoomOutUtils', () => {
 	beforeEach(() => {
-		jest.spyOn(Date, 'now').mockReturnValue(NOW_MS);
+		vi.spyOn(Date, 'now').mockReturnValue(NOW_MS);
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	describe('getNextDurationInLadder', () => {

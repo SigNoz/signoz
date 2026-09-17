@@ -8,11 +8,16 @@ import EvaluationCadencePreview, {
 } from '../EvaluationCadence/EvaluationCadencePreview';
 import { createMockAlertContextState } from './testUtils';
 
-jest
-	.spyOn(alertState, 'useCreateAlertState')
+// Browser mode has no SSR transform, so a real ESM namespace is frozen and
+// `vi.spyOn` on it throws. `vi.mock(..., { spy: true })` routes the module
+// through the mocker instead, which works in both environments.
+vi.mock('container/CreateAlertV2/context', { spy: true });
+
+vi
+	.mocked(alertState.useCreateAlertState)
 	.mockReturnValue(createMockAlertContextState());
 
-const mockSetIsOpen = jest.fn();
+const mockSetIsOpen = vi.fn();
 
 describe('EvaluationCadencePreview', () => {
 	it('should render list of dates when schedule is generated', () => {
@@ -21,7 +26,7 @@ describe('EvaluationCadencePreview', () => {
 	});
 
 	it('should render empty state when no schedule is generated', () => {
-		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
+		vi.mocked(alertState.useCreateAlertState).mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
 					...INITIAL_ADVANCED_OPTIONS_STATE,

@@ -4,10 +4,11 @@ import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panel
 import PanelTypeSwitcher from '../PanelTypeSwitcher';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
+import type { Mock } from 'vitest';
 
 // Stub the registry so the test doesn't pull in the real renderers and chart libs.
-jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
-	getPanelDefinition: jest.fn(),
+vi.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
+	getPanelDefinition: vi.fn(),
 	PANEL_OPTIONS: [
 		{ kind: 'signoz/TimeSeriesPanel', displayName: 'Time Series' },
 		{ kind: 'signoz/NumberPanel', displayName: 'Number' },
@@ -19,7 +20,7 @@ jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 	].map((option) => ({ ...option, icon: (): null => null })),
 }));
 
-const mockGetPanelDefinition = getPanelDefinition as unknown as jest.Mock;
+const mockGetPanelDefinition = getPanelDefinition as unknown as Mock;
 
 // Query-type support per kind: List is Query-Builder-only; Table/Pie drop PromQL.
 const SUPPORTED_QUERY_TYPES: Record<string, EQueryType[]> = {
@@ -40,7 +41,7 @@ function openDropdown(): void {
 
 describe('PanelTypeSwitcher', () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		// List supports only logs/traces; every other kind also supports metrics.
 		// Query-type support comes from SUPPORTED_QUERY_TYPES (all three by default).
 		mockGetPanelDefinition.mockImplementation((kind: string) => ({
@@ -58,7 +59,7 @@ describe('PanelTypeSwitcher', () => {
 	});
 
 	it('fires onChange with the chosen plugin kind', () => {
-		const onChange = jest.fn();
+		const onChange = vi.fn();
 		render(
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"
@@ -79,7 +80,7 @@ describe('PanelTypeSwitcher', () => {
 				panelKind="signoz/TimeSeriesPanel"
 				queryType={EQueryType.QUERY_BUILDER}
 				signal={TelemetrytypesSignalDTO.metrics}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -94,7 +95,7 @@ describe('PanelTypeSwitcher', () => {
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"
 				queryType={EQueryType.QUERY_BUILDER}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -109,7 +110,7 @@ describe('PanelTypeSwitcher', () => {
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"
 				queryType={EQueryType.PROM}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
@@ -126,7 +127,7 @@ describe('PanelTypeSwitcher', () => {
 			<PanelTypeSwitcher
 				panelKind="signoz/TablePanel"
 				queryType={EQueryType.CLICKHOUSE}
-				onChange={jest.fn()}
+				onChange={vi.fn()}
 			/>,
 		);
 
