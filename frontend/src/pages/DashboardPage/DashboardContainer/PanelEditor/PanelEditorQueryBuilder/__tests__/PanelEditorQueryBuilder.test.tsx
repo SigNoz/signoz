@@ -2,6 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
+import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder';
 
 // Capture the props the (real-guard-fed) QueryBuilderV2 receives without rendering it.
@@ -43,7 +46,7 @@ const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
 function renderBuilder(panelKind: string): void {
 	render(
 		<PanelEditorQueryBuilder
-			panelKind={panelKind as never}
+			panelDefinition={requireQueryPanelDefinition(panelKind as PanelKind)}
 			isLoadingQueries={false}
 			onStageRunQuery={jest.fn()}
 			onCancelQuery={jest.fn()}

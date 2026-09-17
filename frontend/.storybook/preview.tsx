@@ -1,0 +1,133 @@
+import type { Preview } from '@storybook/react-vite';
+import type { SetupWorker } from 'msw';
+import { setupWorker } from 'msw';
+
+import { settleForCapture } from '../src/storybook/visual/settleForCapture';
+import { withProviders } from '../src/storybook/decorators/withProviders';
+import { globalMocks } from '../src/storybook/globals';
+import { resetStoryHistory } from '../src/storybook/navigation/containment';
+import { clearBlockedNavigations } from '../src/storybook/navigation/blockedNavigationStore';
+import {
+	resolveStory,
+	type StoryRuntimeContext,
+} from '../src/storybook/runtime/resolveStory';
+import { allModes } from './modes';
+
+import '../src/ReactI18';
+
+import '../src/styles.scss';
+
+import '../src/storybook/storybook-root.scss';
+
+interface StorybookWorkerHolder {
+	__signozStorybookWorker?: StorybookWorker;
+}
+
+const holder = window as unknown as StorybookWorkerHolder;
+
+/**
+ * One worker per page, even if this module is re-executed by HMR. Two live
+ * workers both answer the service worker and the story gets whichever replies
+ * first.
+ */
+interface StorybookWorker {
+	worker: SetupWorker;
+	ready: Promise<unknown>;
+}
+
+const { worker, ready } = (holder.__signozStorybookWorker ??=
+	((): StorybookWorker => {
+		const instance = setupWorker();
+
+		return {
+			worker: instance,
+			ready: instance.start({
+				serviceWorker: { url: './mockServiceWorker.js' },
+				// Storybook's own traffic (index.json, HMR, telemetry) goes unhandled by
+				// design; only flag the app's API calls so a missing handler is obvious.
+				onUnhandledRequest: (request, print): void => {
+					const url = new URL(request.url.href);
+					const isStaticAsset =
+						/\.(?:woff2?|ttf|otf|css|js|map|png|jpe?g|svg|webp|ico)$/.test(
+							url.pathname,
+						);
+					const isAppRequest =
+						!isStaticAsset &&
+						(url.pathname.startsWith('/api/') || url.host !== window.location.host);
+
+					if (isAppRequest) {
+						print.warning();
+					}
+				},
+			}),
+		};
+	})());
+
+const preview: Preview = {
+	parameters: {
+		layout: 'fullscreen',
+		controls: { expanded: true },
+		// One cloud snapshot per theme, for every story. A mode carries Storybook
+		// globals, so `theme` here is the same toolbar global the app reads out of
+		// localStorage. Widths are Chromatic's only real dimension, as they are
+		// locally: the app shell sizes itself to the viewport, so the height is the
+		// one it is given.
+		chromatic: { modes: allModes },
+	},
+	globalTypes: {
+		theme: {
+			description: 'SigNoz color scheme',
+			toolbar: {
+				title: 'Theme',
+				icon: 'paintbrush',
+				items: [
+					{ value: 'dark', title: 'Dark' },
+					{ value: 'light', title: 'Light' },
+				],
+				dynamicTitle: true,
+			},
+		},
+		motion: {
+			description:
+				'Park every animation on its last frame once the story has settled. Still is what both capture stacks shoot; Live is for watching a transition.',
+			toolbar: {
+				title: 'Motion',
+				icon: 'play',
+				items: [
+					{ value: 'still', title: 'Still' },
+					{ value: 'live', title: 'Live' },
+				],
+				dynamicTitle: true,
+			},
+		},
+	},
+	initialGlobals: { theme: 'dark', motion: 'still' },
+	// Controls every story carries: permissions, banners, and whether the page's
+	// own endpoints answer, hang or fail.
+	args: globalMocks.args,
+	argTypes: globalMocks.argTypes,
+	decorators: [withProviders],
+	loaders: [
+		// Runs on every render, args changes included, and ahead of the decorators:
+		// the whole story world is put in place here, so the provider tree only has
+		// to read it. Re-registering the handlers per render also means an edit to a
+		// handler module takes effect on the next render instead of leaving the
+		// worker on the set it was created with.
+		async (context): Promise<void> => {
+			const world = resolveStory(context as unknown as StoryRuntimeContext);
+
+			world.apply();
+			world.install(worker);
+
+			await ready;
+		},
+	],
+	beforeEach: () => {
+		clearBlockedNavigations();
+		resetStoryHistory();
+	},
+	// After `play`, which is the moment both capture stacks shoot at.
+	afterEach: settleForCapture,
+};
+
+export default preview;

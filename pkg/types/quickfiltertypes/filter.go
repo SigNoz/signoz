@@ -173,18 +173,18 @@ func NewSourceFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFi
 // NewDefaultQuickFilter generates default filters for all supported sources.
 func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 	tracesFilters := []telemetrytypes.TelemetryFieldKey{
-		{Name: "duration_nano", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber},
+		{Name: "duration_nano", FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: telemetrytypes.FieldDataTypeNumber},
 		{Name: "deployment.environment", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: "hasError", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeBool},
+		{Name: "has_error", FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: telemetrytypes.FieldDataTypeBool},
 		{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: "name", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "name", FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: "rpc.method", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: "response_status_code", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: "http_host", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "response_status_code", FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "http_host", FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: "http.method", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: "http.route", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: "http_url", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: "trace_id", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "http_url", FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "trace_id", FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: telemetrytypes.FieldDataTypeString},
 	}
 
 	logsFilters := []telemetrytypes.TelemetryFieldKey{

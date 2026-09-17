@@ -3,6 +3,8 @@ import type {
 	DashboardtypesLayoutDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
+
 import {
 	bottomRowSlot,
 	cloneSectionOps,
@@ -10,6 +12,7 @@ import {
 	createPanelOps,
 	findFreeSlot,
 	itemsOverlap,
+	setPanelTextOp,
 } from '../patchOps';
 
 function item(y: number, height: number): DashboardGridItemDTO {
@@ -252,5 +255,21 @@ describe('cloneSectionOps', () => {
 		expect(ops).toHaveLength(1);
 		expect(ops[0]).toMatchObject({ op: 'add', path: '/spec/layouts/-' });
 		expect((ops[0].value as DashboardtypesLayoutDTO).spec?.items).toHaveLength(0);
+	});
+});
+
+describe('setPanelTextOp', () => {
+	it("points at the panel's authored body", () => {
+		expect(setPanelTextOp('p1', '- [x] done')).toStrictEqual({
+			op: DashboardtypesPatchOpDTO.add,
+			path: '/spec/panels/p1/spec/plugin/spec/text',
+			value: '- [x] done',
+		});
+	});
+
+	// A panel saved before it had a body carries no `text` member, which `replace`
+	// would refuse.
+	it('adds rather than replaces', () => {
+		expect(setPanelTextOp('p1', '').op).toBe(DashboardtypesPatchOpDTO.add);
 	});
 });

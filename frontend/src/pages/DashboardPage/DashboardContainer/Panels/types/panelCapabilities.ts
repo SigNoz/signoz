@@ -28,3 +28,8 @@ export interface PanelQueryCapabilities {
 	 */
 	serverPaginated: boolean;
 }
+
+/** Raw rows rather than an aggregated result — the single source for "is this raw?". */
+export function isRawRequest(capabilities: PanelQueryCapabilities): boolean {
+	return capabilities.requestType === Querybuildertypesv5RequestTypeDTO.raw;
+}
