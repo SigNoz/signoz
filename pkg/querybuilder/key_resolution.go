@@ -25,8 +25,9 @@ const (
 // ResolveLogicalFields picks which logical fields a filter term builds conditions
 // for. With 0 or 1 field it returns the input unchanged and no warning. When a
 // name is ambiguous (several logical fields — a family is one field and never
-// ambiguous with itself) it returns a warning; a resource+attribute mix defaults
-// to the resource fields (the common intent), noted in the warning.
+// ambiguous with itself) it returns a warning; a resource + other-context mix
+// (attribute, body, scope, …) defaults to the resource fields (the common
+// intent), noted in the warning.
 func ResolveLogicalFields(field *telemetrytypes.TelemetryFieldKey, logicalFields []*telemetrytypes.LogicalField) ([]*telemetrytypes.LogicalField, string) {
 	if len(logicalFields) <= 1 {
 		return logicalFields, ""
@@ -39,18 +40,17 @@ func ResolveLogicalFields(field *telemetrytypes.TelemetryFieldKey, logicalFields
 		logicalFields,
 	)
 
-	hasResource, hasAttribute := false, false
+	hasResource, hasOther := false, false
 	for _, item := range logicalFields {
-		switch item.FieldContext {
-		case telemetrytypes.FieldContextResource:
+		if item.FieldContext == telemetrytypes.FieldContextResource {
 			hasResource = true
-		case telemetrytypes.FieldContextAttribute:
-			hasAttribute = true
+		} else {
+			hasOther = true
 		}
 	}
 
-	// when there is both resource and attribute context, default to resource only
-	if hasResource && hasAttribute {
+	// with resource and any other context, default to resource only
+	if hasResource && hasOther {
 		filtered := make([]*telemetrytypes.LogicalField, 0, len(logicalFields))
 		for _, item := range logicalFields {
 			if item.FieldContext == telemetrytypes.FieldContextResource {
@@ -58,7 +58,7 @@ func ResolveLogicalFields(field *telemetrytypes.TelemetryFieldKey, logicalFields
 			}
 		}
 		logicalFields = filtered
-		warning += " " + "Using `resource` context by default. To query attributes explicitly, " +
+		warning += " " + "Using `resource` context by default. To query another context explicitly, " +
 			fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s')", field.Name)
 	}
 
