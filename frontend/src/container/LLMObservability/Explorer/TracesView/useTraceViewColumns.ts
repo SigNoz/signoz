@@ -36,7 +36,7 @@ interface UseTraceViewColumns {
 	requiredFields: readonly string[];
 	isLoading: boolean;
 	/** Set once the keys fetch lands; without it nothing can reach the persisted store. */
-	storageKey?: string;
+	columnStorageKey?: string;
 }
 
 // TODO(ai-explorer): browser-local only, unlike the list views' `?options=` columns.
@@ -65,13 +65,13 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 	);
 
 	// Defaults from a partial column set would persist as the user's own choice.
-	const storageKey = isSuccess ? STORAGE_KEY : undefined;
+	const columnStorageKey = isSuccess ? STORAGE_KEY : undefined;
 
 	useEffect(() => {
-		if (storageKey) {
-			initializeFromDefaults(storageKey, columns);
+		if (columnStorageKey) {
+			initializeFromDefaults(columnStorageKey, columns);
 		}
-	}, [storageKey, columns]);
+	}, [columnStorageKey, columns]);
 
 	const hiddenColumnIds = useHiddenColumnIds(STORAGE_KEY);
 	const columnOrder = useColumnOrder(STORAGE_KEY);
@@ -91,7 +91,7 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 
 	const onFieldsChange = useCallback(
 		(next: TelemetryFieldKey[]): void => {
-			if (!storageKey) {
+			if (!columnStorageKey) {
 				return;
 			}
 
@@ -99,16 +99,16 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 
 			columns.forEach((column) => {
 				if (keptIds.has(column.id) || column.id === TRACE_ID_COLUMN_ID) {
-					showColumn(storageKey, column.id);
+					showColumn(columnStorageKey, column.id);
 				} else {
-					hideColumn(storageKey, column.id);
+					hideColumn(columnStorageKey, column.id);
 				}
 			});
 
 			// Columns missing from the order sort last, so the visible ones suffice.
-			setColumnOrder(storageKey, next.map(columnIdOf));
+			setColumnOrder(columnStorageKey, next.map(columnIdOf));
 		},
-		[columns, storageKey],
+		[columns, columnStorageKey],
 	);
 
 	return {
@@ -117,6 +117,6 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 		onFieldsChange,
 		requiredFields: [TRACE_ID_COLUMN_ID],
 		isLoading: !isFetched,
-		storageKey,
+		columnStorageKey,
 	};
 }

@@ -66,7 +66,7 @@ function TracesView({
 		onFieldsChange,
 		requiredFields,
 		isLoading: isColumnsLoading,
-		storageKey,
+		columnStorageKey,
 	} = useTraceViewColumns();
 
 	const {
@@ -169,21 +169,23 @@ function TracesView({
 	}, []);
 
 	// Without the full column set there is no pool to pick from, so the control is dropped.
+	const canPersistColumns = Boolean(columnStorageKey);
+
 	const fieldsSelectorConfig = useMemo(
 		() =>
-			storageKey
+			canPersistColumns
 				? { fieldsSelector: { value: selectedFields, onFieldsChange } }
 				: null,
-		[storageKey, selectedFields, onFieldsChange],
+		[canPersistColumns, selectedFields, onFieldsChange],
 	);
 
 	// Rendering the pool unfiltered would surface columns the defaults keep hidden.
 	const tableColumns = useMemo(
 		() =>
-			storageKey
+			canPersistColumns
 				? columns
 				: columns.filter((column) => column.defaultVisibility !== false),
-		[storageKey, columns],
+		[canPersistColumns, columns],
 	);
 
 	return (
@@ -221,7 +223,7 @@ function TracesView({
 			<TracesTable
 				data={rows}
 				columns={tableColumns}
-				columnStorageKey={storageKey}
+				columnStorageKey={columnStorageKey}
 				respectColumnOrder
 				panelType="TRACE"
 				getRowHref={getTraceLink}
