@@ -100,8 +100,8 @@ Each entity decides its own key policy. The sections below grow the `sample_enti
 
 A resolver splits the key space in two:
 
-- Reserved keys are the fixed set the entity claims for itself, each mapping to the entity's own data: for `sample_entity` that is `name`, `created_by`, `created_at` and `locked`. The list API can advertise the set (dashboards and rules return `reservedKeywords`) so frontend suggestions never go stale.
-- Every other key is non-reserved, and the entity picks what it means. The resolver above picked the strictest policy: reject with `v.AddError`. Suppose `sample_entity` rows instead carry labels; then any non-reserved key can be treated as a label key, so `team = infra` matches entities labeled `team: infra` (built out under [Relation tables](#relation-tables)). Dashboards works exactly this way: its `DSLKey` constants are the reserved set, and every other key is a tag key.
+- Reserved keys are properties the entity defines for all its instances: every `sample_entity` has a `name`, `created_by`, `created_at` and `locked`, so those keys are claimed up front and always mean that property. The list API can advertise the set (dashboards and rules return `reservedKeywords`) so frontend suggestions never go stale.
+- Every other key is non-reserved: things users attach to individual instances as they want. For `sample_entity` those are labels, so `team = infra` matches only the instances a user labeled `team: infra` (built out under [Relation tables](#relation-tables)). Dashboards exposes tags the same way, and an entity is free to back this with any other per-instance construct. An entity with nothing user-attached rejects unknown keys with `v.AddError`, as the resolver above does.
 
 So the first thing `ResolveComparison` does is route the key:
 
