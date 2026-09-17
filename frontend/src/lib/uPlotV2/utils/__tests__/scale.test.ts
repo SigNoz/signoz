@@ -96,6 +96,26 @@ describe('scale utils', () => {
 			expect(hardMaxOnly).toBe(true);
 			expect(hasFixedRange).toBe(true);
 		});
+
+		it('treats a soft bound of 0 as set, so the axis can be pinned to 0', () => {
+			const { rangeConfig } = scaleUtils.getRangeConfig(
+				null,
+				null,
+				0,
+				null,
+				0,
+				0.05,
+			);
+
+			expect(rangeConfig.min).toStrictEqual({
+				pad: 0,
+				hard: -Infinity,
+				soft: 0,
+				mode: 1,
+			});
+			expect(rangeConfig.max.soft).toBeUndefined();
+			expect(rangeConfig.max.mode).toBe(3);
+		});
 	});
 
 	describe('createRangeFunction', () => {

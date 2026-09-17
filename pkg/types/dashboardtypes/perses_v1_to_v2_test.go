@@ -333,6 +333,37 @@ func TestConvertGraphWidgetToTimeSeriesPanel(t *testing.T) {
 	assert.Equal(t, "high", threshold.Label)
 }
 
+func TestConvertGraphWidgetDropsV1DefaultSoftBounds(t *testing.T) {
+	widget := func(bounds map[string]any) map[string]any {
+		w := map[string]any{"id": "widget-1", "panelTypes": "graph", "title": "Request rate"}
+		for k, v := range bounds {
+			w[k] = v
+		}
+		return w
+	}
+
+	t.Run("0/0 is v1's unset default and is dropped", func(t *testing.T) {
+		panel := (&v1Decoder{}).convertGraphWidget(widget(map[string]any{"softMin": float64(0), "softMax": float64(0)}))
+		require.NotNil(t, panel)
+		spec, ok := panel.Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
+		require.True(t, ok)
+
+		assert.Nil(t, spec.Axes.SoftMin)
+		assert.Nil(t, spec.Axes.SoftMax)
+	})
+
+	t.Run("a lone 0 is a deliberate bound and is kept", func(t *testing.T) {
+		panel := (&v1Decoder{}).convertGraphWidget(widget(map[string]any{"softMin": float64(0)}))
+		require.NotNil(t, panel)
+		spec, ok := panel.Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
+		require.True(t, ok)
+
+		require.NotNil(t, spec.Axes.SoftMin)
+		assert.Equal(t, float64(0), *spec.Axes.SoftMin)
+		assert.Nil(t, spec.Axes.SoftMax)
+	})
+}
+
 func TestConvertGraphWidgetDefaultsForMissingFields(t *testing.T) {
 	widget := map[string]any{
 		"id":         "widget-1",

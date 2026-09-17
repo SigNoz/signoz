@@ -18,6 +18,7 @@ import {
 	prependNullBinToFirstHistogramSeries,
 	replaceUndefinedWithNullInAlignedData,
 } from 'lib/visualization/panels/utils/histogram';
+import { getWidgetSoftBounds } from '../utils';
 
 export interface PrepareHistogramPanelDataParams {
 	apiResponse: MetricRangePayloadProps;
@@ -157,8 +158,7 @@ export function prepareHistogramPanelConfig({
 		id: widget.id,
 		thresholds: widget.thresholds,
 		yAxisUnit: widget.yAxisUnit,
-		softMin: widget.softMin ?? undefined,
-		softMax: widget.softMax ?? undefined,
+		...getWidgetSoftBounds(widget),
 		isLogScale: widget.isLogScale,
 		isDarkMode,
 		apiResponse,

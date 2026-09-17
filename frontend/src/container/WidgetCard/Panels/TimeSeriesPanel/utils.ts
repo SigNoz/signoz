@@ -19,6 +19,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { PanelMode } from 'lib/visualization/panels/types';
 import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
+import { getWidgetSoftBounds } from '../utils';
 
 export const prepareUPlotConfig = ({
 	widget,
@@ -55,8 +56,7 @@ export const prepareUPlotConfig = ({
 		id: widget.id,
 		thresholds: widget.thresholds,
 		yAxisUnit: widget.yAxisUnit,
-		softMin: widget.softMin ?? undefined,
-		softMax: widget.softMax ?? undefined,
+		...getWidgetSoftBounds(widget),
 		isLogScale: widget.isLogScale,
 		isDarkMode,
 		onClick,

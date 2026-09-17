@@ -27,7 +27,7 @@ describe('UPlotScaleBuilder', () => {
 		jest.clearAllMocks();
 	});
 
-	it('initializes softMin/softMax correctly when both are 0 (treated as unset)', () => {
+	it('carries an explicit soft bound of 0 through instead of treating it as unset', () => {
 		const builder = new UPlotScaleBuilder(
 			createScaleProps({
 				softMin: 0,
@@ -36,7 +36,16 @@ describe('UPlotScaleBuilder', () => {
 		);
 
 		// Non-time scale so config path uses thresholds pipeline; we just care that
-		// adjustSoftLimitsWithThresholds receives null soft limits instead of 0/0.
+		// adjustSoftLimitsWithThresholds receives the bounds as given.
+		const adjustSpy = jest.spyOn(scaleUtils, 'adjustSoftLimitsWithThresholds');
+
+		builder.getConfig();
+
+		expect(adjustSpy).toHaveBeenCalledWith(0, 0, undefined, undefined);
+	});
+
+	it('leaves absent soft bounds null', () => {
+		const builder = new UPlotScaleBuilder(createScaleProps());
 		const adjustSpy = jest.spyOn(scaleUtils, 'adjustSoftLimitsWithThresholds');
 
 		builder.getConfig();
