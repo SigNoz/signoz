@@ -59,7 +59,7 @@ func ResolveLogicalFields(field *telemetrytypes.TelemetryFieldKey, logicalFields
 		}
 		logicalFields = filtered
 		warning += " " + "Using `resource` context by default. To query another context explicitly, " +
-			fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s')", field.Name)
+			fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s' or 'body.%s')", field.Name, field.Name)
 	}
 
 	return logicalFields, warning
