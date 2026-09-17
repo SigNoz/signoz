@@ -1,4 +1,4 @@
-import { Tooltip } from 'antd';
+import Tooltip from 'antd/es/tooltip';
 
 import TrimmedText from '../TrimmedText/TrimmedText';
 

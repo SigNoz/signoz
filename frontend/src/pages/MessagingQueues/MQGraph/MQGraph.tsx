@@ -11,7 +11,7 @@ import { Card } from 'container/WidgetCard/styles';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { UpdateTimeInterval } from 'store/actions';
+import { UpdateTimeInterval } from 'store/actions/global';
 
 import {
 	getFiltersFromConfigOptions,

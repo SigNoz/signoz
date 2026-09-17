@@ -11,7 +11,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import logEvent from 'api/common/logEvent';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import { UpdateTimeInterval } from 'store/actions';
+import { UpdateTimeInterval } from 'store/actions/global';
 
 export interface PanelInteractions {
 	/** Drag-select a chart range → write it to the URL + global time so every panel re-fetches the same range. */

@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { UpdateTimeInterval } from 'store/actions';
+import { UpdateTimeInterval } from 'store/actions/global';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/widgets/widget';
 import { GlobalReducer } from 'types/reducer/globalTime';
