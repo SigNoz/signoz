@@ -53,9 +53,20 @@ type AttachDetachSiblingResourceDef struct {
 	TargetResource coretypes.Resource
 	TargetIDs      coretypes.ResourceIDsExtractor
 	TargetSelector coretypes.SelectorFunc
+	// OptionalTargets drops the def when no target ids resolve, for routes where
+	// the target list is legitimately optional in the payload.
+	OptionalTargets bool
 }
 
 func (def AttachDetachSiblingResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
+	if def.OptionalTargets && def.TargetIDs.IsPhase(coretypes.PhaseRequest) {
+		// extractors are pure; on error fall through and let fill record it
+		ids, err := def.TargetIDs.Fn(ec)
+		if err == nil && len(ids) == 0 {
+			return nil
+		}
+	}
+
 	return []coretypes.ResolvedResource{
 		coretypes.NewResolvedResourceWithTarget(
 			def.Verb,
