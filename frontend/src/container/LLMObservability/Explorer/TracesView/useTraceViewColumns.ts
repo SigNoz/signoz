@@ -35,8 +35,8 @@ interface UseTraceViewColumns {
 	onFieldsChange: (next: TelemetryFieldKey[]) => void;
 	requiredFields: readonly string[];
 	isLoading: boolean;
-	/** False until the keys fetch lands; a partial set must not reach the persisted store. */
-	hasCompleteColumnSet: boolean;
+	/** Set once the keys fetch lands; without it nothing can reach the persisted store. */
+	storageKey?: string;
 }
 
 // TODO(ai-explorer): browser-local only, unlike the list views' `?options=` columns.
@@ -65,11 +65,13 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 	);
 
 	// Defaults from a partial column set would persist as the user's own choice.
+	const storageKey = isSuccess ? STORAGE_KEY : undefined;
+
 	useEffect(() => {
-		if (isSuccess) {
-			initializeFromDefaults(STORAGE_KEY, columns);
+		if (storageKey) {
+			initializeFromDefaults(storageKey, columns);
 		}
-	}, [isSuccess, columns]);
+	}, [storageKey, columns]);
 
 	const hiddenColumnIds = useHiddenColumnIds(STORAGE_KEY);
 	const columnOrder = useColumnOrder(STORAGE_KEY);
@@ -89,7 +91,7 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 
 	const onFieldsChange = useCallback(
 		(next: TelemetryFieldKey[]): void => {
-			if (!isSuccess) {
+			if (!storageKey) {
 				return;
 			}
 
@@ -97,16 +99,16 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 
 			columns.forEach((column) => {
 				if (keptIds.has(column.id) || column.id === TRACE_ID_COLUMN_ID) {
-					showColumn(STORAGE_KEY, column.id);
+					showColumn(storageKey, column.id);
 				} else {
-					hideColumn(STORAGE_KEY, column.id);
+					hideColumn(storageKey, column.id);
 				}
 			});
 
 			// Columns missing from the order sort last, so the visible ones suffice.
-			setColumnOrder(STORAGE_KEY, next.map(columnIdOf));
+			setColumnOrder(storageKey, next.map(columnIdOf));
 		},
-		[columns, isSuccess],
+		[columns, storageKey],
 	);
 
 	return {
@@ -115,6 +117,6 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 		onFieldsChange,
 		requiredFields: [TRACE_ID_COLUMN_ID],
 		isLoading: !isFetched,
-		hasCompleteColumnSet: isSuccess,
+		storageKey,
 	};
 }

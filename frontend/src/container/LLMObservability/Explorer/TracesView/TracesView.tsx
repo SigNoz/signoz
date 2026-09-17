@@ -14,7 +14,6 @@ import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -67,7 +66,7 @@ function TracesView({
 		onFieldsChange,
 		requiredFields,
 		isLoading: isColumnsLoading,
-		hasCompleteColumnSet,
+		storageKey,
 	} = useTraceViewColumns();
 
 	const {
@@ -172,19 +171,19 @@ function TracesView({
 	// Without the full column set there is no pool to pick from, so the control is dropped.
 	const fieldsSelectorConfig = useMemo(
 		() =>
-			hasCompleteColumnSet
+			storageKey
 				? { fieldsSelector: { value: selectedFields, onFieldsChange } }
 				: null,
-		[hasCompleteColumnSet, selectedFields, onFieldsChange],
+		[storageKey, selectedFields, onFieldsChange],
 	);
 
 	// Rendering the pool unfiltered would surface columns the defaults keep hidden.
 	const tableColumns = useMemo(
 		() =>
-			hasCompleteColumnSet
+			storageKey
 				? columns
 				: columns.filter((column) => column.defaultVisibility !== false),
-		[hasCompleteColumnSet, columns],
+		[storageKey, columns],
 	);
 
 	return (
@@ -222,11 +221,7 @@ function TracesView({
 			<TracesTable
 				data={rows}
 				columns={tableColumns}
-				columnStorageKey={
-					hasCompleteColumnSet
-						? LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS
-						: undefined
-				}
+				columnStorageKey={storageKey}
 				respectColumnOrder
 				panelType="TRACE"
 				getRowHref={getTraceLink}

@@ -171,7 +171,7 @@ describe('useTraceViewColumns', () => {
 		it('reports the column state as not persistable', async () => {
 			const { result } = await renderColumns();
 
-			expect(result.current.hasCompleteColumnSet).toBe(false);
+			expect(result.current.storageKey).toBeUndefined();
 		});
 
 		it('ignores a selection change instead of persisting a partial set', async () => {
@@ -191,7 +191,7 @@ describe('useTraceViewColumns', () => {
 			mockAggregateKeys(AGGREGATE_KEYS);
 			const { result } = await renderColumns();
 
-			expect(result.current.hasCompleteColumnSet).toBe(true);
+			expect(result.current.storageKey).toBe(STORAGE_KEY);
 			expect(fieldNames(result.current.selectedFields)).toStrictEqual([
 				'service.name',
 				'root_span_name',
