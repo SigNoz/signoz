@@ -161,7 +161,7 @@
         "spec": {
           "display": {
             "name": "Total cost",
-            "description": "Total LLM cost across all calls. Requires gen_ai.usage.cost attribute."
+            "description": "Total LLM cost across all calls. Resolves gen_ai.usage.cost and _signoz.gen_ai.total_cost attributes."
           },
           "plugin": {
             "kind": "signoz/NumberPanel",
@@ -185,7 +185,7 @@
                           "name": "A",
                           "signal": "traces",
                           "stepInterval": 60,
-                          "disabled": false,
+                          "disabled": true,
                           "filter": {
                             "expression": ""
                           },
@@ -197,6 +197,34 @@
                               "expression": "sum(gen_ai.usage.cost)"
                             }
                           ]
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": true,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "sum(_signoz.gen_ai.total_cost)"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "A + B",
+                          "disabled": false
                         }
                       }
                     ]
@@ -454,7 +482,7 @@
                           "name": "A",
                           "signal": "traces",
                           "stepInterval": 60,
-                          "disabled": false,
+                          "disabled": true,
                           "filter": {
                             "expression": ""
                           },
@@ -474,6 +502,43 @@
                               "expression": "sum(gen_ai.usage.cost)"
                             }
                           ]
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "signal": "traces",
+                          "stepInterval": 60,
+                          "disabled": true,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "groupBy": [
+                            {
+                              "name": "gen_ai.request.model",
+                              "fieldDataType": "string",
+                              "fieldContext": "tag"
+                            }
+                          ],
+                          "legend": "{{gen_ai.request.model}}",
+                          "having": {
+                            "expression": ""
+                          },
+                          "aggregations": [
+                            {
+                              "expression": "sum(_signoz.gen_ai.total_cost)"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "A + B",
+                          "disabled": false,
+                          "legend": "{{gen_ai.request.model}}"
                         }
                       }
                     ]

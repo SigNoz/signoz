@@ -19,6 +19,7 @@ var (
 		aiobservabilitytypes.GenAIUsageOutputTokens:             genAIAttribute(aiobservabilitytypes.GenAIUsageOutputTokens, telemetrytypes.FieldDataTypeFloat64),
 		aiobservabilitytypes.GenAIUsageCacheReadInputTokens:     genAIAttribute(aiobservabilitytypes.GenAIUsageCacheReadInputTokens, telemetrytypes.FieldDataTypeFloat64),
 		aiobservabilitytypes.GenAIUsageCacheCreationInputTokens: genAIAttribute(aiobservabilitytypes.GenAIUsageCacheCreationInputTokens, telemetrytypes.FieldDataTypeFloat64),
+		aiobservabilitytypes.GenAIUsageCost:                     genAIAttribute(aiobservabilitytypes.GenAIUsageCost, telemetrytypes.FieldDataTypeFloat64),
 		aiobservabilitytypes.SignozGenAITotalCost:               genAIAttribute(aiobservabilitytypes.SignozGenAITotalCost, telemetrytypes.FieldDataTypeFloat64),
 
 		aiobservabilitytypes.GenAIInputMessages:  genAIAttribute(aiobservabilitytypes.GenAIInputMessages, telemetrytypes.FieldDataTypeString),
