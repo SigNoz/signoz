@@ -15,6 +15,11 @@ type Templater interface {
 	Expand(ctx context.Context, req ExpandRequest, alerts []*types.Alert) (*ExpandResult, error)
 }
 
-// ReceiverIntegrationsFunc constructs the notify.Integration list for a
-// configured receiver.
-type ReceiverIntegrationsFunc = func(nc *Receiver, tmpl *template.Template, logger *slog.Logger, templater Templater) ([]notify.Integration, error)
+type ReceiverIntegrationsFunc = func(
+	nc *Receiver,
+	tmpl *template.Template,
+	logger *slog.Logger,
+	templater Templater,
+	orgID string,
+	threadStore AlertThreadStore,
+) ([]notify.Integration, error)
