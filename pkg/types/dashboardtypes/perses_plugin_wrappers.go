@@ -35,6 +35,7 @@ func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 		string(PanelKindTable):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec"),
 		string(PanelKindHistogram):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec"),
 		string(PanelKindList):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec"),
+		string(PanelKindText):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec"),
 	})
 }
 
@@ -65,6 +66,7 @@ func (PanelPlugin) JSONSchemaOneOf() []any {
 		PanelPluginVariant[TablePanelSpec]{Kind: string(PanelKindTable)},
 		PanelPluginVariant[HistogramPanelSpec]{Kind: string(PanelKindHistogram)},
 		PanelPluginVariant[ListPanelSpec]{Kind: string(PanelKindList)},
+		PanelPluginVariant[TextPanelSpec]{Kind: string(PanelKindText)},
 	}
 }
 
@@ -228,6 +230,7 @@ var (
 		PanelKindTable:      func() any { return new(TablePanelSpec) },
 		PanelKindHistogram:  func() any { return new(HistogramPanelSpec) },
 		PanelKindList:       func() any { return new(ListPanelSpec) },
+		PanelKindText:       func() any { return new(TextPanelSpec) },
 	}
 	queryPluginSpecs = map[QueryPluginKind]func() any{
 		QueryKindBuilder:       func() any { return new(BuilderQuerySpec) },
@@ -250,6 +253,7 @@ var (
 		PanelKindPieChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
 		PanelKindTable:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
 		PanelKindList:       {QueryKindBuilder},
+		PanelKindText:       {},
 	}
 )
 
