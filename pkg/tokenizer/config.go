@@ -69,7 +69,7 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
-		Provider: "jwt",
+		Provider: "opaque",
 		Opaque: OpaqueConfig{
 			GC: GCConfig{
 				Interval: 1 * time.Hour, // 1 hour
