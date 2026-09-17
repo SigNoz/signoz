@@ -1,16 +1,13 @@
 import { useMemo } from 'react';
 import { useGetAIObservabilityFieldsValues } from 'api/generated/services/ai-observability';
 import { useGetFieldsValues } from 'api/generated/services/fields';
-import {
-	TelemetrytypesSignalDTO,
-	TelemetrytypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { DataSource } from 'types/common/queryBuilder';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
+import { DATA_SOURCE_TO_SIGNAL } from 'types/common/queryBuilder';
 
 interface UseFieldValuesProps {
 	filter: IQuickFiltersConfig;
@@ -29,15 +26,6 @@ interface UseFieldValuesReturn {
 	isLoading: boolean;
 	isFetching: boolean;
 }
-
-export const DATA_SOURCE_TO_SIGNAL: Record<
-	DataSource,
-	TelemetrytypesSignalDTO
-> = {
-	[DataSource.METRICS]: TelemetrytypesSignalDTO.metrics,
-	[DataSource.TRACES]: TelemetrytypesSignalDTO.traces,
-	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
-};
 
 const QUICK_FILTERS_SOURCE_TO_SOURCE: Partial<
 	Record<QuickFiltersSource, TelemetrytypesSourceDTO>

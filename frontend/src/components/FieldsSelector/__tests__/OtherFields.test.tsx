@@ -1,29 +1,30 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
-import { DataSource } from 'types/common/queryBuilder';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 
 import OtherFields from '../OtherFields';
 
-jest.mock('hooks/querySuggestions/useGetQueryKeySuggestions');
+jest.mock('hooks/querySuggestions/useFieldKeysSuggestion', () => ({
+	useFieldKeysSuggestion: jest.fn(() => ({
+		data: undefined,
+		isFetching: false,
+		isFetched: true,
+	})),
+}));
 
 const mockSuggestions = (names: string[]): void => {
-	(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
-		data: {
-			data: {
-				data: {
-					keys: {
-						attributeKeys: names.map((name) => ({
-							name,
-							signal: 'logs',
-							fieldDataType: 'string',
-							fieldContext: '',
-						})),
-					},
-				},
-			},
-		},
+	(useFieldKeysSuggestion as jest.Mock).mockReturnValue({
+		data: names.map((name) => ({
+			name,
+			signal: 'logs',
+			fieldDataType: 'string',
+			fieldContext: '',
+		})),
 		isFetching: false,
+		isFetched: true,
 	});
 };
 
@@ -82,7 +83,6 @@ describe('OtherFields — custom (free-typed) option', () => {
 		mockSuggestions(['orderId']);
 		renderOtherFields({ debouncedInputValue: 'orderid' });
 
-		// the real suggestion shows, the lowercased custom name does not
 		expect(screen.getByText('orderId')).toBeInTheDocument();
 		expect(screen.queryByText('orderid')).not.toBeInTheDocument();
 	});
@@ -116,10 +116,126 @@ describe('OtherFields — custom (free-typed) option', () => {
 	it('shows the custom option at the field limit but hides its Add button', () => {
 		renderOtherFields({ debouncedInputValue: 'unknown.a.b.c', isAtLimit: true });
 
-		// same as every other row at the limit: name shown, no Add button
 		expect(screen.getByText('unknown.a.b.c')).toBeInTheDocument();
 		expect(
 			screen.queryByRole('button', { name: /add/i }),
 		).not.toBeInTheDocument();
+	});
+});
+
+describe('OtherFields — field keys config', () => {
+	const pool: TelemetryFieldKey[] = [
+		{ name: 'total_tokens', fieldContext: 'trace', fieldDataType: 'float64' },
+		{ name: 'llm_call_count', fieldContext: 'trace', fieldDataType: 'float64' },
+	];
+
+	const fieldKeysConfig: FieldKeysConfigProp = {
+		fieldContext: TelemetrytypesFieldContextDTO.trace,
+	};
+	const builderQueryType: BuilderQueryType = 'builder_ai_query';
+
+	const mockPool = (fields: TelemetryFieldKey[]): void => {
+		(useFieldKeysSuggestion as jest.Mock).mockReturnValue({
+			data: fields,
+			isFetching: false,
+			isFetched: true,
+		});
+	};
+
+	beforeEach(() => {
+		mockPool(pool);
+	});
+
+	it('lists the pool it is handed', () => {
+		renderOtherFields({
+			fieldKeysConfig,
+			builderQueryType,
+			allowCustomFields: false,
+		});
+
+		expect(screen.getByText('total_tokens')).toBeInTheDocument();
+		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
+	});
+
+	it('forwards the fetch params and search to the shared keys hook', () => {
+		renderOtherFields({
+			fieldKeysConfig,
+			builderQueryType,
+			allowCustomFields: false,
+			debouncedInputValue: 'llm',
+		});
+
+		expect(useFieldKeysSuggestion).toHaveBeenCalledWith(
+			{
+				...fieldKeysConfig,
+				signal: DATA_SOURCE_TO_SIGNAL[DataSource.LOGS],
+				searchText: 'llm',
+			},
+			builderQueryType,
+		);
+	});
+
+	it('lists extra fields the keys endpoint never returns', () => {
+		mockPool([{ name: 'total_tokens' } as TelemetryFieldKey]);
+
+		renderOtherFields({
+			fieldKeysConfig,
+			builderQueryType,
+			extraFields: [{ name: 'last_activity_time' } as TelemetryFieldKey],
+			allowCustomFields: false,
+		});
+
+		expect(screen.getByText('last_activity_time')).toBeInTheDocument();
+		expect(screen.getByText('total_tokens')).toBeInTheDocument();
+	});
+
+	it('filters extra fields by search text', () => {
+		mockPool([]);
+
+		renderOtherFields({
+			fieldKeysConfig,
+			builderQueryType,
+			extraFields: [
+				{ name: 'last_activity_time' } as TelemetryFieldKey,
+				{ name: 'timestamp' } as TelemetryFieldKey,
+			],
+			debouncedInputValue: 'activity',
+			allowCustomFields: false,
+		});
+
+		expect(screen.getByText('last_activity_time')).toBeInTheDocument();
+		expect(screen.queryByText('timestamp')).not.toBeInTheDocument();
+	});
+
+	it('keeps a fetched key whose name does not contain the search text', () => {
+		mockPool([
+			{ name: 'service.name', fieldContext: 'resource' } as TelemetryFieldKey,
+		]);
+
+		renderOtherFields({
+			debouncedInputValue: 'resource.service',
+			allowCustomFields: false,
+		});
+
+		expect(screen.getByText('service.name')).toBeInTheDocument();
+	});
+
+	it('omits pool fields that are already added', () => {
+		renderOtherFields({
+			fieldKeysConfig,
+			builderQueryType,
+			allowCustomFields: false,
+			addedFields: [
+				{
+					name: 'total_tokens',
+					fieldContext: 'trace',
+					fieldDataType: 'float64',
+					key: 'trace:total_tokens:float64',
+				},
+			],
+		});
+
+		expect(screen.queryByText('total_tokens')).not.toBeInTheDocument();
+		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
 	});
 });

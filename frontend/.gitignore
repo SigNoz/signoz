@@ -33,3 +33,6 @@ e2e/test-plan/user-preferences/
 # Storybook
 /storybook-static/
 debug-storybook.log
+
+# Storybook screenshot sweeps (scripts/story-shots.mjs)
+/.story-shots/

@@ -4,7 +4,6 @@ import { useGetAIObservabilityFieldsKeys } from 'api/generated/services/ai-obser
 import { useGetFieldsKeys } from 'api/generated/services/fields';
 import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { DATA_SOURCE_TO_SIGNAL } from 'components/QuickFilters/FilterRenderers/Checkbox/v2/useFieldValues';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
@@ -13,6 +12,7 @@ import {
 	FieldDataType,
 	TelemetryFieldKey,
 } from 'types/api/v5/queryRange';
+import { DATA_SOURCE_TO_SIGNAL } from 'types/common/queryBuilder';
 
 function OtherFiltersSkeleton(): JSX.Element {
 	return (
