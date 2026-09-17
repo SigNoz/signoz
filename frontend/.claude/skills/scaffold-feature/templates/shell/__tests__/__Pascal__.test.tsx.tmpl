@@ -1,11 +1,25 @@
 import { render, screen } from 'tests/test-utils';
+import ROUTES from 'constants/routes';
 
+import { __FIRST_TAB__ } from '../constants';
 import __Pascal__ from '../index';
 
 describe('__Pascal__', () => {
-	it('renders the tab shell', () => {
-		render(<__Pascal__ />);
+	it('renders one tab per view', () => {
+		render(<__Pascal__ />, undefined, { initialRoute: __FIRST_TAB__.route });
 
 		expect(screen.getByTestId('__kebab__-shell')).toBeInTheDocument();
+__TAB_ASSERTIONS__	});
+
+	it('renders the view for the active tab', () => {
+		render(<__Pascal__ />, undefined, { initialRoute: __FIRST_TAB__.route });
+
+		expect(screen.getByTestId('__FIRST_VIEW_TESTID__')).toBeInTheDocument();
+	});
+
+	it('redirects the base path to the first tab', () => {
+		render(<__Pascal__ />, undefined, { initialRoute: __BASE_ROUTE__ });
+
+		expect(screen.getByTestId('__FIRST_VIEW_TESTID__')).toBeInTheDocument();
 	});
 });

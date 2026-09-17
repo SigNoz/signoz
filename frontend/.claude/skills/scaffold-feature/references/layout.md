@@ -10,7 +10,7 @@ src/
   pages/
     Traces/               # has a shell
       index.tsx           # shell — tab switching only
-      constants.ts        # tab definitions
+      constants.tsx       # tab definitions
       Explorer/           # a view
         index.tsx         # view entry — composition, no business logic
         components/
