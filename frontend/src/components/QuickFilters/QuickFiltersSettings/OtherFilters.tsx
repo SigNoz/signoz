@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
 import { Button, Skeleton } from 'antd';
-import { useGetAIObservabilityFieldsKeys } from 'api/generated/services/ai-observability';
-import { useGetFieldsKeys } from 'api/generated/services/fields';
 import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { FieldKeysConfig } from 'api/querySuggestions/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import {
+	BuilderQueryType,
 	FieldContext,
 	FieldDataType,
 	TelemetryFieldKey,
@@ -44,32 +45,29 @@ function OtherFilters({
 	const isMeterDataSource = signal === SignalType.METER_EXPLORER;
 	const isAIObservability = signal === SignalType.AI_OBSERVABILITY;
 
-	const fieldsKeys = useGetFieldsKeys(
-		{
-			searchText: inputValue,
-			signal: signal
-				? DATA_SOURCE_TO_SIGNAL[SIGNAL_DATA_SOURCE_MAP[signal]]
-				: undefined,
-			source: isMeterDataSource ? TelemetrytypesSourceDTO.meter : undefined,
-		},
-		{ query: { enabled: !!signal && !isAIObservability } },
-	);
+	const builderQueryType: BuilderQueryType | undefined = isAIObservability
+		? 'builder_ai_query'
+		: undefined;
 
-	// Signal-wide fields API has no gen_ai gating and no per-trace aggregates.
-	const aiObservabilityKeys = useGetAIObservabilityFieldsKeys(
-		{ searchText: inputValue },
-		{ query: { enabled: isAIObservability } },
-	);
+	const fieldKeysConfig: FieldKeysConfig = isAIObservability
+		? { searchText: inputValue }
+		: {
+				searchText: inputValue,
+				signal: signal
+					? DATA_SOURCE_TO_SIGNAL[SIGNAL_DATA_SOURCE_MAP[signal]]
+					: undefined,
+				source: isMeterDataSource ? TelemetrytypesSourceDTO.meter : undefined,
+			};
 
-	const { data, isFetching } = isAIObservability
-		? aiObservabilityKeys
-		: fieldsKeys;
+	const { data: fetchedKeys, isFetching } = useFieldKeysSuggestion(
+		fieldKeysConfig,
+		builderQueryType,
+	);
 
 	const otherFilters = useMemo<TelemetryFieldKey[]>(() => {
-		const rawSuggestions = Object.values(data?.data?.keys ?? {}).flat();
 		// Normalize: synthesize the composite `key` once so downstream reads (dedupe,
 		// add, render) can trust it.
-		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
+		const suggestions: TelemetryFieldKey[] = (fetchedKeys ?? []).map((attr) => ({
 			name: attr.name,
 			signal: attr.signal as TelemetryFieldKey['signal'],
 			fieldContext: attr.fieldContext as FieldContext,
@@ -83,7 +81,7 @@ function OtherFilters({
 			),
 		);
 		return suggestions.filter((attr) => !addedKeys.has(attr.key as string));
-	}, [data, addedFilters]);
+	}, [fetchedKeys, addedFilters]);
 
 	const handleAddFilter = (filter: TelemetryFieldKey): void => {
 		setAddedFilters((prev) => [...prev, filter]);
