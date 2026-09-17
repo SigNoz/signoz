@@ -487,12 +487,12 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, orgID valuer.UUID, q
 				args...,
 			).ScanStruct(&serviceItem)
 
-			if serviceItem.NumCalls == 0 {
+			if err != nil {
+				r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 				return
 			}
 
-			if err != nil {
-				r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
+			if serviceItem.NumCalls == 0 {
 				return
 			}
 
