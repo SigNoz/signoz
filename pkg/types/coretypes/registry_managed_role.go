@@ -35,17 +35,15 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindAuthDomain}, WildCardSelectorString)},
 		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindAuthDomain}, WildCardSelectorString)},
 		{Verb: VerbDetach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindAuthDomain}, WildCardSelectorString)},
-		// cloud-integration — admin only
+		// cloud-integration — admin can fully manage accounts
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
-		// cloud-integration-service — admin only
+		// cloud-integration-service — admin can read and update account services
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
-		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
-		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
 		// integration — viewer/editor/admin (install/uninstall via ViewAccess)
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIntegration}, WildCardSelectorString)},
@@ -216,6 +214,14 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
 	},
 	SigNozEditorRoleName: {
+		// cloud-integration — editor can read and update existing accounts
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
+		// cloud-integration-service — editor can read and update account services
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
 		// dashboard — full CRUD
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindDashboard}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindDashboard}, WildCardSelectorString)},
@@ -308,6 +314,12 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
 	},
 	SigNozViewerRoleName: {
+		// cloud-integration — viewer can read accounts
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegration}, WildCardSelectorString)},
+		// cloud-integration-service — viewer can read account services
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
 		// dashboard — read only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindDashboard}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindDashboard}, WildCardSelectorString)},
