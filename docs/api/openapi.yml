@@ -171,6 +171,14 @@ components:
       - kind
       - spec
       type: object
+    AlertmanagertypesChannelDefect:
+      enum:
+      - none
+      - missing_type
+      - multiple_notifiers
+      - unsupported_notifier
+      - unrepresentable
+      type: string
     AlertmanagertypesChannelEmailConfig:
       properties:
         headers:
@@ -384,6 +392,40 @@ components:
       required:
       - routingKey
       type: object
+    AlertmanagertypesChannelRepair:
+      properties:
+        action:
+          $ref: '#/components/schemas/AlertmanagertypesChannelRepairAction'
+        applied:
+          type: boolean
+        blockers:
+          items:
+            type: string
+          type: array
+        channels:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesListedNotificationChannel'
+          nullable: true
+          type: array
+        defect:
+          $ref: '#/components/schemas/AlertmanagertypesChannelDefect'
+        detail:
+          type: string
+        id:
+          type: string
+      required:
+      - id
+      - defect
+      - action
+      - applied
+      type: object
+    AlertmanagertypesChannelRepairAction:
+      enum:
+      - none
+      - retype
+      - split
+      - delete
+      type: string
     AlertmanagertypesChannelSlackAction:
       properties:
         confirm:
@@ -1032,6 +1074,11 @@ components:
       required:
       - duration
       - repeatType
+      type: object
+    AlertmanagertypesRepairChannelParams:
+      properties:
+        apply:
+          type: boolean
       type: object
     AlertmanagertypesRepeatOn:
       enum:
@@ -20304,6 +20351,85 @@ paths:
       - tokenizer:
         - notification-channel:update
       summary: Update notification channel
+      tags:
+      - channels
+  /api/v2/notification_channels/{id}/repair:
+    post:
+      deprecated: false
+      description: 'This endpoint diagnoses a stored channel that the v2 API cannot
+        read and applies the fitting action: a channel carrying several notifier configurations
+        is split into one channel per configuration, keeping this ID for the first;
+        a channel whose notifier kind v2 does not model is deleted; a channel with
+        an empty stored type has it rewritten from its data. A delete is refused while
+        a routing policy still names the channel. Nothing is written unless apply=true;
+        by default the response only shows what would happen.'
+      operationId: RepairNotificationChannel
+      parameters:
+      - in: query
+        name: apply
+        schema:
+          type: boolean
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertmanagertypesRepairChannelParams'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesChannelRepair'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:update
+      - tokenizer:
+        - notification-channel:update
+      summary: Repair notification channel
       tags:
       - channels
   /api/v2/notification_channels/test:

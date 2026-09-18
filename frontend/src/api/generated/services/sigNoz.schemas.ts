@@ -596,6 +596,13 @@ export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO;
 
+export enum AlertmanagertypesChannelDefectDTO {
+	none = 'none',
+	missing_type = 'missing_type',
+	multiple_notifiers = 'multiple_notifiers',
+	unsupported_notifier = 'unsupported_notifier',
+	unrepresentable = 'unrepresentable',
+}
 export enum AlertmanagertypesChannelKindDTO {
 	slack = 'slack',
 	email = 'email',
@@ -617,6 +624,63 @@ export enum AlertmanagertypesChannelListSortDTO {
 	created_at = 'created_at',
 	name = 'name',
 }
+export enum AlertmanagertypesChannelRepairActionDTO {
+	none = 'none',
+	retype = 'retype',
+	split = 'split',
+	delete = 'delete',
+}
+export interface AlertmanagertypesListedNotificationChannelDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	displayName: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	kind: AlertmanagertypesChannelKindDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface AlertmanagertypesChannelRepairDTO {
+	action: AlertmanagertypesChannelRepairActionDTO;
+	/**
+	 * @type boolean
+	 */
+	applied: boolean;
+	/**
+	 * @type array
+	 */
+	blockers?: string[];
+	/**
+	 * @type array,null
+	 */
+	channels?: AlertmanagertypesListedNotificationChannelDTO[] | null;
+	defect: AlertmanagertypesChannelDefectDTO;
+	/**
+	 * @type string
+	 */
+	detail?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
 export interface ModelLabelSetDTO {
 	[key: string]: string;
 }
@@ -1108,32 +1172,6 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	 * @type string
 	 */
 	wont_fix_resolution?: string;
-}
-
-export interface AlertmanagertypesListedNotificationChannelDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt: string;
-	/**
-	 * @type string
-	 */
-	displayName: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	kind: AlertmanagertypesChannelKindDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt: string;
 }
 
 export interface AlertmanagertypesListableNotificationChannelDTO {
@@ -2537,6 +2575,13 @@ export interface AlertmanagertypesReceiverDTO {
 	 * @type array
 	 */
 	wechat_configs?: ConfigWechatConfigDTO[];
+}
+
+export interface AlertmanagertypesRepairChannelParamsDTO {
+	/**
+	 * @type boolean
+	 */
+	apply?: boolean;
 }
 
 export interface AlertmanagertypesTestableNotificationChannelDTO {
@@ -13478,6 +13523,25 @@ export type UpdateNotificationChannelPathParameters = {
 };
 export type UpdateNotificationChannel200 = {
 	data: AlertmanagertypesGettableNotificationChannelDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type RepairNotificationChannelPathParameters = {
+	id: string;
+};
+export type RepairNotificationChannelParams = {
+	/**
+	 * @type boolean
+	 * @description undefined
+	 */
+	apply?: boolean;
+};
+
+export type RepairNotificationChannel200 = {
+	data: AlertmanagertypesChannelRepairDTO;
 	/**
 	 * @type string
 	 */
