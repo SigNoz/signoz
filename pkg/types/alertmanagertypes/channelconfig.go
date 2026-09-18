@@ -1014,7 +1014,7 @@ func rejectHTTPBasicAuthBeyondPassword(channelName string, httpConfig *commoncfg
 
 	basicAuth := httpConfig.BasicAuth
 	if *basicAuth != (commoncfg.BasicAuth{Username: basicAuth.Username, Password: basicAuth.Password}) {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.basic_auth, which is not supported", channelName)
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.basic_auth with fields other than username and password, which is not supported", channelName)
 	}
 
 	return nil
@@ -1026,8 +1026,8 @@ func rejectHTTPAuthorizationBeyondBearer(channelName string, httpConfig *commonc
 	}
 
 	authorization := httpConfig.Authorization
-	if *authorization != (commoncfg.Authorization{Type: bearerAuthorizationType, Credentials: authorization.Credentials}) {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization, which is not supported", channelName)
+	if !strings.EqualFold(authorization.Type, bearerAuthorizationType) || *authorization != (commoncfg.Authorization{Type: authorization.Type, Credentials: authorization.Credentials}) {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization with fields other than a bearer token, which is not supported", channelName)
 	}
 
 	return nil
