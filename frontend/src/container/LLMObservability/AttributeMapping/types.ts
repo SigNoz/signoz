@@ -30,12 +30,7 @@ export type MapperDraftMode = 'add' | 'edit';
 
 // `priority` is left out: it is derived from list order when the draft is
 // serialized.
-export type SourceConfig = Omit<
-	SpantypesSpanMapperSourceDTO,
-	'origin' | 'priority'
-> & {
-	origin: MapperOriginValue;
-};
+export type SourceConfig = Omit<SpantypesSpanMapperSourceDTO, 'priority'>;
 
 // Editable form state for a mapper. `sources` is ordered highest priority
 // first; `fieldContext` is where the standardized target is written.
