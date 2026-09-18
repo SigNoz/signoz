@@ -40,7 +40,73 @@ export interface AlertmanagertypesChannelDTO {
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTOKind {
 	slack = 'slack',
 }
+export interface AlertmanagertypesChannelSlackConfirmationDTO {
+	/**
+	 * @type string
+	 */
+	dismissText?: string;
+	/**
+	 * @type string
+	 */
+	okText?: string;
+	/**
+	 * @type string
+	 */
+	text: string;
+	/**
+	 * @type string
+	 */
+	title?: string;
+}
+
+export interface AlertmanagertypesChannelSlackActionDTO {
+	confirm?: AlertmanagertypesChannelSlackConfirmationDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	style?: string;
+	/**
+	 * @type string
+	 */
+	text: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+	/**
+	 * @type string
+	 */
+	value?: string;
+}
+
+export interface AlertmanagertypesChannelSlackFieldDTO {
+	/**
+	 * @type boolean,null
+	 */
+	short?: boolean | null;
+	/**
+	 * @type string
+	 */
+	title: string;
+	/**
+	 * @type string
+	 */
+	value: string;
+}
+
 export interface AlertmanagertypesChannelSlackConfigDTO {
+	/**
+	 * @type array
+	 */
+	actions?: AlertmanagertypesChannelSlackActionDTO[];
 	/**
 	 * @type string
 	 * @format password
@@ -50,6 +116,26 @@ export interface AlertmanagertypesChannelSlackConfigDTO {
 	 * @type string
 	 */
 	channel?: string;
+	/**
+	 * @type string
+	 */
+	color?: string;
+	/**
+	 * @type string
+	 */
+	fallback?: string;
+	/**
+	 * @type array
+	 */
+	fields?: AlertmanagertypesChannelSlackFieldDTO[];
+	/**
+	 * @type string
+	 */
+	footer?: string;
+	/**
+	 * @type string
+	 */
+	pretext?: string;
 	/**
 	 * @type boolean,null
 	 */
@@ -62,6 +148,10 @@ export interface AlertmanagertypesChannelSlackConfigDTO {
 	 * @type string
 	 */
 	title?: string;
+	/**
+	 * @type string
+	 */
+	titleLink?: string;
 }
 
 export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO {

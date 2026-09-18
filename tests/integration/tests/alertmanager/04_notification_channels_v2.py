@@ -27,6 +27,21 @@ _PASSWORD = "password123Z$"
     "kind,spec,assert_field,assert_value",
     [
         pytest.param("slack", {"apiUrl": "https://hooks.slack.test/services/T/B/X", "channel": "#alerts", "title": "Alert", "text": "{{ .CommonLabels.alertname }}"}, "channel", "#alerts", id="slack"),
+        pytest.param(
+            "slack",
+            {
+                "apiUrl": "https://hooks.slack.test/services/T/B/X",
+                "channel": "#alerts",
+                "color": "#439FE0",
+                "titleLink": "{{ .CommonLabels.ruleSource }}",
+                "footer": "platform · terraform",
+                "fields": [{"title": "Severity", "value": "{{ .CommonLabels.severity }}", "short": True}],
+                "actions": [{"type": "button", "text": "Open in SigNoz", "url": "{{ .CommonLabels.ruleSource }}"}],
+            },
+            "fields",
+            [{"title": "Severity", "value": "{{ .CommonLabels.severity }}", "short": True}],
+            id="slack-attachment",
+        ),
         pytest.param("email", {"to": "oncall@integration.test", "html": "<p>{{ .CommonLabels.alertname }}</p>"}, "to", "oncall@integration.test", id="email"),
         pytest.param("webhook", {"url": "https://webhook.test/hook", "username": "bob", "password": "s3cret"}, "username", "bob", id="webhook"),
         pytest.param("pagerduty", {"routingKey": "pd-routing-key", "severity": "critical", "class": "db", "description": "{{ .CommonLabels.alertname }}"}, "severity", "critical", id="pagerduty"),
