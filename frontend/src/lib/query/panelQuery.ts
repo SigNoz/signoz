@@ -1,7 +1,7 @@
 /**
  * Panel query shaping shared by the dashboard panel editor and the query
- * builder: the per-panel-type field allowlist, the panel-type switch, and the
- * dirty-check used to decide whether a panel has unsaved query edits.
+ * builder: the panel-type switch and the dirty-check used to decide whether a
+ * panel has unsaved query edits.
  */
 import {
 	initialQueryBuilderFormValuesMap,
@@ -9,7 +9,11 @@ import {
 } from 'constants/queryBuilder';
 import { cloneDeep, isEqual, set, unset } from 'lodash-es';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+
+import {
+	panelTypeDataSourceFormValuesMap,
+	PartialPanelTypes,
+} from 'lib/query/panelTypeDataSourceFormValuesMap';
 
 // Asks "would saving the current panel change the persisted widget spec?".
 //
@@ -91,111 +95,6 @@ export const getIsQueryModified = (
 	);
 };
 
-export type PartialPanelTypes = {
-	[PANEL_TYPES.BAR]: 'bar';
-	[PANEL_TYPES.LIST]: 'list';
-	[PANEL_TYPES.TABLE]: 'table';
-	[PANEL_TYPES.TIME_SERIES]: 'graph';
-	[PANEL_TYPES.VALUE]: 'value';
-	[PANEL_TYPES.PIE]: 'pie';
-	[PANEL_TYPES.HISTOGRAM]: 'histogram';
-};
-
-/**
- * Builder fields carried across a panel-type switch, per panel type and data source.
- *
- * The 21 combinations reduce to a handful of rules, so they are composed rather than
- * spelled out: logs and traces carry the same fields in every case, metrics splits its
- * aggregation in two, and each panel type is one of four query shapes. Order is
- * irrelevant — `handleQueryChange` copies each field independently.
- *
- * `panelTypeFormValues` in `__tests__/__fixtures__` pins the previous literal table so
- * the composition can be shown to reproduce it exactly.
- */
-
-/** Every field an aggregating query carries — shared by charts, table and pie. */
-const AGGREGATING_FIELDS = [
-	'aggregateAttribute',
-	'aggregateOperator',
-	'filters',
-	'filter',
-	'groupBy',
-	'limit',
-	'having',
-	'orderBy',
-	'functions',
-	'stepInterval',
-	'disabled',
-	'queryName',
-	'legend',
-	'expression',
-	'aggregations',
-] as const;
-
-/** Metrics aggregates over time and then over space, so it carries both steps. */
-const METRICS_AGGREGATION = ['timeAggregation', 'spaceAggregation'] as const;
-
-function omit(fields: readonly string[], ...omitted: string[]): string[] {
-	return fields.filter((field) => !omitted.includes(field));
-}
-
-const SERIES = [...AGGREGATING_FIELDS];
-const SERIES_METRICS = [...SERIES, ...METRICS_AGGREGATION];
-
-// Table and pie reduce each series to a single cell/slice. Note the asymmetry, carried
-// over from the previous table: `reduceTo` is offered for metrics only.
-const SCALAR_METRICS = [...SERIES_METRICS, 'reduceTo'];
-
-/** A single value has no series to group, limit or order. */
-const SINGLE_VALUE = [
-	...omit(AGGREGATING_FIELDS, 'groupBy', 'limit', 'orderBy'),
-	'reduceTo',
-];
-const SINGLE_VALUE_METRICS = [...SINGLE_VALUE, ...METRICS_AGGREGATION];
-
-/** Raw rows carry no aggregation at all. */
-const RAW_ROWS = [
-	'queryName',
-	'filters',
-	'filter',
-	'limit',
-	'orderBy',
-	'functions',
-	'aggregations',
-];
-// Metrics rows drop paging and ordering too, as before.
-const RAW_ROWS_METRICS = ['queryName', 'filters', 'filter', 'aggregations'];
-
-/**
- * Logs and traces share a builder surface; metrics is the one that differs.
- *
- * Each cell gets its own copy. `QueryBuilder`'s provider pushes onto the list it reads
- * from this map, so cells sharing one array instance would contaminate each other.
- */
-function bySource(
-	logsAndTraces: readonly string[],
-	metrics: readonly string[],
-): Record<DataSource, any> {
-	return {
-		[DataSource.LOGS]: { builder: { queryData: [...logsAndTraces] } },
-		[DataSource.TRACES]: { builder: { queryData: [...logsAndTraces] } },
-		[DataSource.METRICS]: { builder: { queryData: [...metrics] } },
-	};
-}
-
-export const panelTypeDataSourceFormValuesMap: Record<
-	keyof PartialPanelTypes,
-	Record<DataSource, any>
-> = {
-	[PANEL_TYPES.TIME_SERIES]: bySource(SERIES, SERIES_METRICS),
-	[PANEL_TYPES.BAR]: bySource(SERIES, SERIES_METRICS),
-	[PANEL_TYPES.HISTOGRAM]: bySource(SERIES, SERIES_METRICS),
-	[PANEL_TYPES.TABLE]: bySource(SERIES, SCALAR_METRICS),
-	[PANEL_TYPES.PIE]: bySource(SERIES, SCALAR_METRICS),
-	[PANEL_TYPES.VALUE]: bySource(SINGLE_VALUE, SINGLE_VALUE_METRICS),
-	[PANEL_TYPES.LIST]: bySource(RAW_ROWS, RAW_ROWS_METRICS),
-};
-
 export function handleQueryChange(
 	newPanelType: keyof PartialPanelTypes,
 	supersetQuery: Query,
@@ -213,7 +112,7 @@ export function handleQueryChange(
 					panelTypeDataSourceFormValuesMap[newPanelType][dataSource].builder
 						.queryData;
 
-				fieldsToSelect.forEach((field: keyof IBuilderQuery) => {
+				fieldsToSelect.forEach((field) => {
 					set(tempQuery, field, supersetQuery.builder.queryData[index][field]);
 				});
 

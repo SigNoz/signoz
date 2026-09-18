@@ -32,7 +32,7 @@ import ROUTES from 'constants/routes';
 import {
 	panelTypeDataSourceFormValuesMap,
 	PartialPanelTypes,
-} from 'lib/query/panelQuery';
+} from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -767,7 +767,7 @@ export function QueryBuilderProvider({
 						].builder.queryData;
 
 					propsRequired?.push('dataSource');
-					propsRequired?.forEach((p: any) => {
+					propsRequired?.forEach((p) => {
 						set(queryItem, p, get(newQueryItem, p));
 					});
 					return queryItem;

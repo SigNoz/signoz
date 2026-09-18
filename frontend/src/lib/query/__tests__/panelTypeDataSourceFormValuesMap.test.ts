@@ -1,7 +1,8 @@
 import {
+	type BuilderField,
 	panelTypeDataSourceFormValuesMap,
 	type PartialPanelTypes,
-} from 'lib/query/panelQuery';
+} from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -17,13 +18,13 @@ import { DataSource } from 'types/common/queryBuilder';
 function fieldsFor(
 	panelType: keyof PartialPanelTypes,
 	dataSource: DataSource,
-): string[] {
+): BuilderField[] {
 	return panelTypeDataSourceFormValuesMap[panelType][dataSource].builder
 		.queryData;
 }
 
 /** Fields present in `to` but not in `from`. */
-function added(from: string[], to: string[]): string[] {
+function added(from: BuilderField[], to: BuilderField[]): BuilderField[] {
 	return to.filter((field) => !from.includes(field)).sort();
 }
 
