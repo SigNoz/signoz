@@ -1,7 +1,9 @@
 import type {
 	DashboardtypesQueryDTO,
+	Querybuildertypesv5CompositeQueryDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5BucketOptionsLogDTOKind } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -100,6 +102,102 @@ describe('persesQueryAdapters', () => {
 			expect(envelopesToQuery(envelopes, PANEL_TYPES.TIME_SERIES).queryType).toBe(
 				EQueryType.PROM,
 			);
+		});
+	});
+
+	describe('bucket options', () => {
+		const bucketOptions = {
+			kind: Querybuildertypesv5BucketOptionsLogDTOKind.log,
+			spec: { scale: 0 },
+		};
+
+		const heatmapQuery = (): Query => ({
+			...initialQueriesMap[DataSource.METRICS],
+			builder: {
+				...initialQueriesMap[DataSource.METRICS].builder,
+				queryData: [
+					{
+						...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+						bucketOptions,
+					},
+				],
+			},
+		});
+
+		it('writes the axis onto the builder query spec', () => {
+			const result = toPerses(heatmapQuery(), PANEL_TYPES.HEATMAP);
+
+			expect(result[0].kind).toBe('heatmap');
+			const [envelope] = (
+				result[0].spec.plugin.spec as Querybuildertypesv5CompositeQueryDTO
+			).queries as [Querybuildertypesv5QueryEnvelopeDTO];
+			expect(
+				(envelope.spec as { bucketOptions?: unknown }).bucketOptions,
+			).toStrictEqual(bucketOptions);
+		});
+
+		it('reads the axis back off the builder query spec', () => {
+			const restored = fromPerses(
+				toPerses(heatmapQuery(), PANEL_TYPES.HEATMAP),
+				PANEL_TYPES.HEATMAP,
+			);
+
+			expect(restored.builder.queryData[0].bucketOptions).toStrictEqual(
+				bucketOptions,
+			);
+		});
+
+		// Explicit-undefined, like every other unset field `createBaseSpec` emits; it
+		// drops out of the payload at JSON.stringify.
+		it("writes and reads a formula's own axis", () => {
+			const base = initialQueriesMap[DataSource.METRICS];
+			const withFormula: Query = {
+				...base,
+				builder: {
+					...base.builder,
+					queryData: [{ ...base.builder.queryData[0], disabled: true }],
+					queryFormulas: [
+						{
+							queryName: 'F1',
+							expression: 'A',
+							legend: '',
+							disabled: false,
+							bucketOptions,
+						},
+					],
+				},
+			};
+
+			const perses = toPerses(withFormula, PANEL_TYPES.HEATMAP);
+			const envelopes = (
+				perses[0].spec.plugin.spec as Querybuildertypesv5CompositeQueryDTO
+			).queries as Querybuildertypesv5QueryEnvelopeDTO[];
+			const formulaEnvelope = envelopes.find(
+				(envelope) => envelope.type === 'builder_formula',
+			);
+
+			expect(
+				(formulaEnvelope?.spec as { bucketOptions?: unknown })?.bucketOptions,
+			).toStrictEqual(bucketOptions);
+
+			const restored = fromPerses(perses, PANEL_TYPES.HEATMAP);
+			expect(restored.builder.queryFormulas[0].bucketOptions).toStrictEqual(
+				bucketOptions,
+			);
+		});
+
+		it('emits no axis when none is set', () => {
+			const result = toPerses(
+				initialQueriesMap[DataSource.METRICS],
+				PANEL_TYPES.HEATMAP,
+			);
+
+			const [envelope] = (
+				result[0].spec.plugin.spec as Querybuildertypesv5CompositeQueryDTO
+			).queries as [Querybuildertypesv5QueryEnvelopeDTO];
+			expect(
+				(envelope.spec as { bucketOptions?: unknown }).bucketOptions,
+			).toBeUndefined();
 		});
 	});
 
