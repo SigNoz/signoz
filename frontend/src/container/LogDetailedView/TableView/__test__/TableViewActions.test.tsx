@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
+import { RESTRICTED_SELECTED_FIELDS } from '../../config';
 import TableViewActions from '../TableViewActions';
 import useAsyncJSONProcessing from '../useAsyncJSONProcessing';
 

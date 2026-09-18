@@ -10,7 +10,6 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
-import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
@@ -27,6 +26,7 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
+import { RESTRICTED_SELECTED_FIELDS } from '../config';
 import { DataType } from '../TableView';
 import {
 	filterKeyForField,
@@ -141,10 +141,9 @@ export default function TableViewActions(
 	const { stagedQuery, updateQueriesData } = useQueryBuilder();
 	const { dataType, logType: fieldType } = getFieldAttributes(record.field);
 
-	// there is no option for where clause in old logs explorer and live logs page or infra monitoring
-	const isOldLogsExplorerOrLiveLogsPage = useMemo(
+	// there is no option for where clause in live logs page or infra monitoring
+	const isLiveLogsOrInfraPage = useMemo(
 		() =>
-			pathname === ROUTES.OLD_LOGS_EXPLORER ||
 			pathname === ROUTES.LIVE_LOGS ||
 			pathname === ROUTES.INFRASTRUCTURE_MONITORING_HOSTS ||
 			pathname === ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES,
@@ -400,7 +399,7 @@ export default function TableViewActions(
 									)}
 								/>
 							</Tooltip>
-							{!isOldLogsExplorerOrLiveLogsPage && (
+							{!isLiveLogsOrInfraPage && (
 								<Popover
 									open={isOpen}
 									onOpenChange={setIsOpen}
@@ -487,7 +486,7 @@ export default function TableViewActions(
 								)}
 							/>
 						</Tooltip>
-						{!isOldLogsExplorerOrLiveLogsPage && (
+						{!isLiveLogsOrInfraPage && (
 							<Popover
 								open={isOpen}
 								onOpenChange={setIsOpen}
