@@ -1,3 +1,4 @@
+import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { Format } from 'constants/formats/types';
 import { EQueryType } from 'types/common/dashboard';
@@ -28,6 +29,8 @@ export interface IBuilderFormula {
 	having?: Having[];
 	stepInterval?: number;
 	orderBy?: OrderByPayload[];
+	/** Heatmap only, like `IBuilderQuery['bucketOptions']`. */
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 }
 
 export type IBuilderTraceOperator = IBuilderQuery;
@@ -92,6 +95,12 @@ export type IBuilderQuery = {
 	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
 	source?: 'meter' | '';
 	builderQueryType?: BuilderQueryType;
+	/**
+	 * Heatmap only, and request-level on the wire: the bucket axis is shared by every
+	 * query in the request, and a heatmap admits exactly one enabled query, so the
+	 * builder edits it alongside that query.
+	 */
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 };
 
 export interface IClickHouseQuery {

@@ -1,0 +1,144 @@
+/**
+ * Borrows the query builder's control metrics rather than the component defaults the
+ * toggle group and number input ship with: 36px tall, 2px radius, and the
+ * `--query-builder-v2-*` surface the selects above this row already paint on.
+ */
+.bucketOptions {
+	--toggle-group-radius: var(--radius-1);
+	--toggle-group-item-size: 36px;
+	--toggle-group-item-font-size: 13px;
+	--toggle-group-item-padding-left: var(--spacing-6);
+	--toggle-group-item-padding-right: var(--spacing-6);
+
+	// Repeated from `.query-add-ons` rather than inherited: the section also renders on a
+	// formula, which has no add-ons ancestor to pick the toggle palette up from.
+	--toggle-group-secondary-bg: var(
+		--query-builder-v2-toggle-group-background-color,
+		var(--l1-background-hover)
+	);
+	--toggle-group-secondary-border: var(
+		--query-builder-v2-toggle-group-border-color,
+		var(--l2-border)
+	);
+	--toggle-group-secondary-active-bg: var(
+		--query-builder-v2-toggle-group-active-background-color,
+		var(--l1-background)
+	);
+	--toggle-group-secondary-bg-hover: var(
+		--query-builder-v2-toggle-group-background-color-hover,
+		var(--l2-background)
+	);
+
+	--input-height: 36px;
+	--input-font-size: 13px;
+	--input-border-radius: var(--radius-1);
+	--input-border-color: var(--query-builder-v2-border-color, var(--l2-border));
+	--input-background: var(
+		--query-builder-v2-background-color,
+		var(--l2-background)
+	);
+	--input-foreground: var(--query-builder-v2-color, var(--l2-foreground));
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+
+	padding: var(--spacing-4);
+	box-sizing: border-box;
+	border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
+	border-radius: var(--radius-1);
+	background: var(--query-builder-v2-background-color, var(--l2-background));
+}
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-8);
+}
+
+/** One label paired with its control, at the same 10px rhythm as the aggregate rows. */
+.field {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-5);
+}
+
+.bounds {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.label {
+	color: var(--l3-foreground);
+	font-family: 'Geist Mono';
+	font-size: 12px;
+	font-weight: var(--font-weight-medium);
+	line-height: 18px;
+	letter-spacing: 0.48px;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+/**
+ * The toggle group exposes a font-size token but no family, so each item's label carries
+ * the query builder's value type itself.
+ */
+.toggleLabel {
+	font-family: 'Geist Mono';
+	font-size: 13px;
+	font-weight: var(--font-weight-normal);
+	letter-spacing: -0.07px;
+}
+
+/** Surface and metrics come from the `--input-*` tokens above; only the family has none. */
+.numberInput {
+	width: 104px;
+
+	font-family: 'Geist Mono';
+	letter-spacing: -0.07px;
+}
+
+/** Bounds read as a sequence of values, so they take the value type in a flat pill. */
+.bound {
+	padding: var(--spacing-1) var(--spacing-3);
+	border-radius: var(--radius-1);
+
+	font-family: 'Geist Mono';
+	font-size: 13px;
+	line-height: 20px;
+	letter-spacing: -0.07px;
+
+	color: var(--query-builder-v2-color, var(--l2-foreground));
+	background: var(--l3-background);
+}
+
+.overflowBound {
+	background: transparent;
+	color: var(--l3-foreground);
+}
+
+.muted {
+	font-family: 'Geist Mono';
+	font-size: 13px;
+	line-height: 20px;
+	color: var(--l3-foreground);
+}
+
+.hint {
+	margin: 0;
+	max-width: 72ch;
+
+	font-family: 'Geist Mono';
+	font-size: 12px;
+	line-height: 18px;
+	color: var(--l3-foreground);
+}
+
+.closeBtn {
+	margin-left: auto;
+	width: 36px;
+	height: 36px;
+}
