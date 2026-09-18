@@ -88,7 +88,6 @@ export const EMPTY_MAPPER_DRAFT: MapperDraft = {
 	fieldContext: FieldContext.attribute,
 	sources: [createEmptySource()],
 	enabled: true,
-	origin: MapperOrigin.user,
 };
 
 function getCleanSources(draft: MapperDraft): SourceConfig[] {
@@ -152,7 +151,6 @@ export const EMPTY_GROUP_DRAFT: GroupDraft = {
 	attributes: [createConditionKey()],
 	resource: [],
 	enabled: true,
-	origin: MapperOrigin.user,
 };
 
 export function isGroupDraftValid(draft: GroupDraft): boolean {
@@ -186,7 +184,6 @@ export function buildDraftMapper(mapper: Mapper): DraftMapper {
 		fieldContext: mapper.fieldContext,
 		sources: getMapperSources(mapper),
 		enabled: mapper.enabled,
-		origin: mapper.origin,
 	};
 }
 
@@ -201,7 +198,6 @@ export function buildDraftGroup(
 		attributes: fromConditionKeys(group.condition?.attributes),
 		resource: fromConditionKeys(group.condition?.resource),
 		enabled: group.enabled,
-		origin: group.origin,
 		mappers: mappers.map(buildDraftMapper),
 	};
 }
@@ -215,7 +211,6 @@ export function groupDraftFromNode(group: DraftGroup): GroupDraft {
 			group.attributes.length > 0 ? group.attributes : [createConditionKey()],
 		resource: group.resource,
 		enabled: group.enabled,
-		origin: group.origin,
 	};
 }
 
@@ -230,7 +225,6 @@ export function mapperDraftFromNode(mapper: DraftMapper): MapperDraft {
 				? mapper.sources.map((source) => ({ ...source }))
 				: [createEmptySource()],
 		enabled: mapper.enabled,
-		origin: mapper.origin,
 	};
 }
 
@@ -245,7 +239,6 @@ export function nodeFromGroupDraft(
 		attributes: cleanKeys(draft.attributes),
 		resource: cleanKeys(draft.resource),
 		enabled: draft.enabled,
-		origin: draft.origin,
 		mappers: existing?.mappers ?? [],
 	};
 }
@@ -261,6 +254,5 @@ export function nodeFromMapperDraft(
 		fieldContext: draft.fieldContext,
 		sources: getCleanSources(draft),
 		enabled: draft.enabled,
-		origin: draft.origin,
 	};
 }

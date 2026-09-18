@@ -45,7 +45,6 @@ export interface MapperDraft {
 	fieldContext: SpantypesFieldContextDTO;
 	sources: SourceConfig[];
 	enabled: boolean;
-	origin: MapperOriginValue;
 }
 
 export interface GroupDraft {
@@ -54,7 +53,6 @@ export interface GroupDraft {
 	attributes: ConditionKey[];
 	resource: ConditionKey[];
 	enabled: boolean;
-	origin: MapperOriginValue;
 }
 
 export interface DraftMapper {
@@ -64,7 +62,6 @@ export interface DraftMapper {
 	fieldContext: SpantypesFieldContextDTO;
 	sources: SourceConfig[];
 	enabled: boolean;
-	origin: MapperOriginValue;
 }
 
 export interface DraftGroup {
@@ -74,6 +71,5 @@ export interface DraftGroup {
 	attributes: ConditionKey[];
 	resource: ConditionKey[];
 	enabled: boolean;
-	origin: MapperOriginValue;
 	mappers: DraftMapper[];
 }

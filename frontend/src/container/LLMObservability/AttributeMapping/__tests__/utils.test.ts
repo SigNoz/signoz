@@ -54,20 +54,18 @@ const shippedMapper = makeMapper({
 });
 
 describe('attribute mapping draft round-trip', () => {
-	it('keeps the origin the API reported on a group and its condition keys', () => {
+	it('keeps the origin the API reported on each condition key', () => {
 		const draft = buildDraftGroup(shippedGroup, []);
 
-		expect(draft.origin).toBe(MapperOrigin.system);
 		expect(draft.attributes).toStrictEqual([
 			{ value: 'gen_ai.', enabled: false, origin: MapperOrigin.system },
 			{ value: 'my.attr', enabled: true, origin: MapperOrigin.user },
 		]);
 	});
 
-	it('keeps the origin the API reported on a mapper and its sources', () => {
+	it('keeps the origin the API reported on each source', () => {
 		const draft = buildDraftMapper(shippedMapper);
 
-		expect(draft.origin).toBe(MapperOrigin.system);
 		// Sorted highest priority first, and priority itself is dropped — list
 		// order carries it.
 		expect(draft.sources).toStrictEqual([
