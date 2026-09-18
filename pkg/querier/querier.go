@@ -24,7 +24,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -47,19 +46,11 @@ type Querier interface {
 }
 
 type querier struct {
-	logger         *slog.Logger
-	fl             flagger.Flagger
-	telemetryStore telemetrystore.TelemetryStore
-	metadataStore  telemetrytypes.MetadataStore
-	promEngine     prometheus.Prometheus
-	// promV2 is the clickhousev2 prometheus provider, wired only when the
-	// serving provider is the default one (nil otherwise). It reads the same
-	// ClickHouse data through a different implementation; PromQL queries
-	// shadow-compare against it behind the use_prometheus_clickhouse_v2 flag
-	// and can be pinned to it for a response (see promqlOptions). It never
-	// serves by default — that cutover happens only after the shadow logs
-	// stay clean.
-	promV2                   prometheus.Prometheus
+	logger                   *slog.Logger
+	fl                       flagger.Flagger
+	telemetryStore           telemetrystore.TelemetryStore
+	metadataStore            telemetrytypes.MetadataStore
+	promEngine               prometheus.Prometheus
 	traceStmtBuilder         qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	aiTraceStmtBuilder       qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	logStmtBuilder           qbtypes.StatementBuilder[qbtypes.LogAggregation]
@@ -71,15 +62,7 @@ type querier struct {
 	liveDataRefresh          time.Duration
 	builderConfig            builderConfig
 	maxConcurrentQueries     int
-	// shadowSlots bounds concurrent shadow comparisons per process; shadows
-	// detach from their requests, so nothing else limits how many pile up.
-	shadowSlots chan struct{}
 }
-
-// maxConcurrentShadows is deliberately small: a shadow is a full extra
-// ClickHouse evaluation, and a sampled stream of comparisons is exactly as
-// useful for rollout evidence as an exhaustive one under load.
-const maxConcurrentShadows = 8
 
 var _ Querier = (*querier)(nil)
 
@@ -88,7 +71,6 @@ func New(
 	telemetryStore telemetrystore.TelemetryStore,
 	metadataStore telemetrytypes.MetadataStore,
 	promEngine prometheus.Prometheus,
-	promV2 prometheus.Prometheus,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aiTraceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
@@ -111,7 +93,6 @@ func New(
 		telemetryStore:           telemetryStore,
 		metadataStore:            metadataStore,
 		promEngine:               promEngine,
-		promV2:                   promV2,
 		traceStmtBuilder:         traceStmtBuilder,
 		aiTraceStmtBuilder:       aiTraceStmtBuilder,
 		logStmtBuilder:           logStmtBuilder,
@@ -125,7 +106,6 @@ func New(
 			logTraceIDWindowPaddingMS: uint64(logTraceIDWindowPadding.Milliseconds()),
 		},
 		maxConcurrentQueries: maxConcurrentQueries,
-		shadowSlots:          make(chan struct{}, maxConcurrentShadows),
 	}
 }
 
@@ -156,7 +136,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	// We need to set if it is unspecified or adjust it if value is not within recommended range
 	intervalWarnings := q.adjustStepInterval(req.CompositeQuery.Queries, req.Start, req.End)
 
-	missingMetricQueries, metricWarnings, err := q.resolveMetricMetadata(ctx, orgID, req.CompositeQuery.Queries, req.Start, req.End)
+	missingMetricQueries, metricWarnings, err := q.resolveMetricMetadata(ctx, orgID, req.CompositeQuery.Queries, req.Start, req.End, req.RequestType)
 	if err != nil {
 		return nil, err
 	}
@@ -165,11 +145,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		missingMetricQuerySet[name] = true
 	}
 
-	promqlOpts, err := q.promqlOptions(ctx, orgID, req)
-	if err != nil {
-		return nil, err
-	}
-	queries, steps, err := q.buildQueries(orgID, req, dependencyQueries, missingMetricQuerySet, event, promqlOpts)
+	queries, steps, err := q.buildQueries(orgID, req, dependencyQueries, missingMetricQuerySet, event)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +153,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	preseededResults := make(map[string]any)
 	for _, name := range missingMetricQueries {
 		switch req.RequestType {
-		case qbtypes.RequestTypeTimeSeries:
+		case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
 		case qbtypes.RequestTypeScalar:
 			preseededResults[name] = &qbtypes.ScalarData{QueryName: name}
@@ -212,41 +188,12 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	return qbResp, qbErr
 }
 
-// promqlOptions derives the PromQL execution options for a request. With the
-// org's use_prometheus_clickhouse_v2 flag on, queries are shadow-compared
-// against the clickhousev2 provider (serving unaffected, diffs logged; see
-// promql_shadow.go). The X-SigNoz-PromQL-Provider header may instead pin the
-// response to that provider — integration tests and support fetch both
-// results for comparison — so it is deliberately flag-gated too: without the
-// gate the header would be an unaudited switch onto a provider still under
-// validation.
-func (q *querier) promqlOptions(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (promqlOptions, error) {
-	enabled := q.fl.BooleanOrEmpty(ctx, flagger.FeatureUsePrometheusClickhouseV2, featuretypes.NewFlaggerEvaluationContext(orgID))
-	if req.PromQLProvider == "" {
-		if enabled && q.promV2 != nil {
-			return promqlOptions{shadow: q.promV2, shadowSlots: q.shadowSlots}, nil
-		}
-		return promqlOptions{}, nil
-	}
-	if req.PromQLProvider != prometheus.ProviderClickhouseV2 {
-		return promqlOptions{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown promql provider %q", req.PromQLProvider)
-	}
-	if !enabled {
-		return promqlOptions{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "promql provider %q requires the use_prometheus_clickhouse_v2 flag", req.PromQLProvider)
-	}
-	if q.promV2 == nil {
-		return promqlOptions{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "promql provider %q is not available", req.PromQLProvider)
-	}
-	return promqlOptions{serve: q.promV2}, nil
-}
-
 func (q *querier) buildQueries(
 	orgID valuer.UUID,
 	req *qbtypes.QueryRangeRequest,
 	dependencyQueries map[string]bool,
 	missingMetricQuerySet map[string]bool,
 	event *qbtypes.QBEvent,
-	promqlOpts promqlOptions,
 ) (map[string]qbtypes.Query, map[string]qbtypes.Step, error) {
 
 	tmplVars := req.Variables
@@ -271,7 +218,7 @@ func (q *querier) buildQueries(
 			if !ok {
 				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query spec %T", query.Spec)
 			}
-			promqlQuery := newPromqlQuery(q.logger, q.promEngine, promQuery, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars, promqlOpts)
+			promqlQuery := newPromqlQuery(q.logger, q.promEngine, promQuery, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars)
 			queries[promQuery.Name] = promqlQuery
 			steps[promQuery.Name] = promQuery.Step
 		case qbtypes.QueryTypeClickHouseSQL:
@@ -334,15 +281,22 @@ func (q *querier) buildQueries(
 				if missingMetricQuerySet[spec.Name] {
 					continue
 				}
+				requestType := req.RequestType
+				if requestType == qbtypes.RequestTypeHeatmap && spec.Disabled {
+					// A disabled query in a heatmap request feeds a formula, and the
+					// formula converts time series into heatmap data, so its inputs
+					// run as time series queries.
+					requestType = qbtypes.RequestTypeTimeSeries
+				}
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
-				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
+				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, requestType)
 				var bq *builderQuery[qbtypes.MetricAggregation]
 
 				if spec.Source == telemetrytypes.SourceMeter {
 					event.Source = telemetrytypes.SourceMeter.StringValue()
-					bq = newBuilderQuery(q.logger, q.telemetryStore, orgID, q.meterStmtBuilder, query.Type, spec, timeRange, req.RequestType, tmplVars, builderConfig{})
+					bq = newBuilderQuery(q.logger, q.telemetryStore, orgID, q.meterStmtBuilder, query.Type, spec, timeRange, requestType, tmplVars, builderConfig{})
 				} else {
-					bq = newBuilderQuery(q.logger, q.telemetryStore, orgID, q.metricStmtBuilder, query.Type, spec, timeRange, req.RequestType, tmplVars, builderConfig{})
+					bq = newBuilderQuery(q.logger, q.telemetryStore, orgID, q.metricStmtBuilder, query.Type, spec, timeRange, requestType, tmplVars, builderConfig{})
 				}
 
 				queries[spec.Name] = bq
@@ -415,7 +369,7 @@ func (q *querier) populateQBEvent(event *qbtypes.QBEvent, queries []qbtypes.Quer
 //     resolved: never-seen metrics and dormant metrics (seen but no data in
 //     the query window).
 //   - err: Internal when a metadata fetch fails.
-func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, queries []qbtypes.QueryEnvelope, start, end uint64) (missingMetricQueries []string, metricWarnings []string, err error) {
+func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, queries []qbtypes.QueryEnvelope, start, end uint64, requestType qbtypes.RequestType) (missingMetricQueries []string, metricWarnings []string, err error) {
 	metricNames := make([]string, 0)
 	for idx := range queries {
 		if queries[idx].Type != qbtypes.QueryTypeBuilder {
@@ -472,6 +426,13 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 			// Type is resolved now; validate aggregation compatibility against it.
 			if err := spec.Aggregations[i].ValidateForTypeAndTemporality(); err != nil {
 				return nil, nil, err
+			}
+			// Only the enabled query is used to render the heatmap, so bucket
+			// options are only applied to the enabled query.
+			if requestType == qbtypes.RequestTypeHeatmap && !spec.Disabled {
+				if err := spec.Aggregations[i].VerifyAndApplyBucketOptions(spec.BucketOptions); err != nil {
+					return nil, nil, err
+				}
 			}
 			if reducedMetricsSet[spec.Aggregations[i].MetricName] {
 				spec.Aggregations[i].Reduced = true
@@ -679,7 +640,7 @@ func (q *querier) run(
 			if val, ok := result.Value.(*qbtypes.RawData); ok && val != nil {
 				return len(val.Rows) != 0
 			}
-		case qbtypes.RequestTypeTimeSeries:
+		case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 			if val, ok := result.Value.(*qbtypes.TimeSeriesData); ok && val != nil {
 				if len(val.Aggregations) != 0 {
 					anyNonEmpty := false
@@ -929,7 +890,7 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 	switch qt := originalQuery.(type) {
 	case *promqlQuery:
 		queryCopy := qt.query.Copy()
-		return newPromqlQuery(q.logger, qt.promEngine, queryCopy, timeRange, qt.requestType, qt.vars, qt.opts)
+		return newPromqlQuery(q.logger, qt.promEngine, queryCopy, timeRange, qt.requestType, qt.vars)
 
 	case *chSQLQuery:
 		queryCopy := qt.query.Copy()
@@ -1000,7 +961,7 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 
 		// Merge all fresh results including the first one
 		switch merged.Type {
-		case qbtypes.RequestTypeTimeSeries:
+		case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 			// Pass nil as cached value to ensure proper merging of all fresh results
 			merged.Value = q.mergeTimeSeriesResults(nil, fresh)
 		}
@@ -1023,7 +984,7 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 	}
 
 	switch merged.Type {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		merged.Value = q.mergeTimeSeriesResults(cached.Value.(*qbtypes.TimeSeriesData), fresh)
 	}
 
@@ -1044,6 +1005,16 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 	return merged
 }
 
+func mergeBucketUpperBounds(cachedValue *qbtypes.TimeSeriesData, freshResults []*qbtypes.Result) map[int][]float64 {
+	upperBoundSources := make([]*qbtypes.TimeSeriesData, 0, len(freshResults)+1)
+	upperBoundSources = append(upperBoundSources, cachedValue)
+	for _, result := range freshResults {
+		freshTS, _ := result.Value.(*qbtypes.TimeSeriesData)
+		upperBoundSources = append(upperBoundSources, freshTS)
+	}
+	return qbtypes.MergeBucketUpperBounds(upperBoundSources...)
+}
+
 // mergeTimeSeriesResults merges time series data.
 func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, freshResults []*qbtypes.Result) *qbtypes.TimeSeriesData {
 
@@ -1052,12 +1023,15 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 	// Map to store aggregation bucket metadata
 	bucketMetadata := make(map[int]*qbtypes.AggregationBucket)
 
+	mergedUpperBounds := mergeBucketUpperBounds(cachedValue, freshResults)
+
 	// Process cached data if available
 	if cachedValue != nil && cachedValue.Aggregations != nil {
 		for _, aggBucket := range cachedValue.Aggregations {
 			if seriesMap[aggBucket.Index] == nil {
 				seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
 			}
+			aggBucket.ReindexValuesToNewUpperBounds(mergedUpperBounds[aggBucket.Index])
 			if bucketMetadata[aggBucket.Index] == nil {
 				bucketMetadata[aggBucket.Index] = aggBucket
 			}
@@ -1109,6 +1083,7 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 		}
 
 		for _, aggBucket := range freshTS.Aggregations {
+			aggBucket.ReindexValuesToNewUpperBounds(mergedUpperBounds[aggBucket.Index])
 			for _, series := range aggBucket.Series {
 				key := qbtypes.GetUniqueSeriesKey(series.Labels)
 

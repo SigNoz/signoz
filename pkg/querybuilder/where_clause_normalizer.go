@@ -406,14 +406,14 @@ func (visitor *whereClauseNormalizer) visitFullText(ctx grammar.IFullTextContext
 
 func (visitor *whereClauseNormalizer) fullTextTerm(term string) string {
 	visitor.appendCondition("", WhereClauseOperatorFullText, []string{term})
-	return quoteValue(term)
+	return FilterStringLiteral(term)
 }
 
 func (visitor *whereClauseNormalizer) normalizeValue(ctx grammar.IValueContext) normalizedValue {
 	switch {
 	case ctx.QUOTED_TEXT() != nil:
 		raw := trimQuotes(ctx.QUOTED_TEXT().GetText())
-		return normalizedValue{text: quoteValue(raw), raw: raw}
+		return normalizedValue{text: FilterStringLiteral(raw), raw: raw}
 	case ctx.NUMBER() != nil:
 		text := ctx.NUMBER().GetText()
 		return normalizedValue{text: text, raw: text}
@@ -425,7 +425,7 @@ func (visitor *whereClauseNormalizer) normalizeValue(ctx grammar.IValueContext) 
 		if strings.HasPrefix(raw, "$") {
 			return normalizedValue{text: raw, raw: raw}
 		}
-		return normalizedValue{text: quoteValue(raw), raw: raw}
+		return normalizedValue{text: FilterStringLiteral(raw), raw: raw}
 	}
 }
 
@@ -522,7 +522,7 @@ func (visitor *whereClauseNormalizer) resolveVariable(raw string) (qbtypes.Varia
 func formatVariableValue(value any) normalizedValue {
 	switch typed := value.(type) {
 	case string:
-		return normalizedValue{text: quoteValue(typed), raw: typed}
+		return normalizedValue{text: FilterStringLiteral(typed), raw: typed}
 	case bool:
 		text := strconv.FormatBool(typed)
 		return normalizedValue{text: text, raw: text}
@@ -537,7 +537,9 @@ func normalizeKeyText(keyText string) string {
 	return telemetrytypes.TelemetryFieldKeyToText(&fieldKey)
 }
 
-func quoteValue(value string) string {
+// FilterStringLiteral quotes value for the filter expression grammar, not for
+// ClickHouse: the grammar's quoted text takes backslash escapes and no hex escapes.
+func FilterStringLiteral(value string) string {
 	escaped := strings.ReplaceAll(value, `\`, `\\`)
 	escaped = strings.ReplaceAll(escaped, `'`, `\'`)
 	return "'" + escaped + "'"

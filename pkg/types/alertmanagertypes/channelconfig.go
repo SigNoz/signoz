@@ -57,6 +57,28 @@ func (t ChannelKind) IsValid() bool {
 	return slices.ContainsFunc(t.Enum(), func(v any) bool { return v == t })
 }
 
+// ToStoredType returns the Channel.Type a channel of this kind is stored under,
+// which matches the kind for all but msteams.
+func (t ChannelKind) ToStoredType() string {
+	if t == ChannelKindMSTeams {
+		return "msteamsv2"
+	}
+
+	return t.StringValue()
+}
+
+// parseStoredChannelType inverts ToStoredType. It reports false for the notifier
+// kinds v1 accepted but v2 does not model.
+func parseStoredChannelType(stored string) (ChannelKind, bool) {
+	for _, channelKind := range channelKinds {
+		if channelKind.kind.ToStoredType() == stored {
+			return channelKind.kind, true
+		}
+	}
+
+	return ChannelKind{}, false
+}
+
 func ErrUnsupportedChannelKind(s string) error {
 	return errors.Newf(
 		errors.TypeInvalidInput,
@@ -185,7 +207,7 @@ type ChannelSpec interface {
 
 type ChannelSlackConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	APIURL       string                       `json:"apiUrl" required:"true"`
+	APIURL       string                       `json:"apiUrl" required:"true" format:"password"`
 	Channel      string                       `json:"channel"`
 	Title        valuer.UnsetOrNonEmptyString `json:"title"`
 	Text         valuer.UnsetOrNonEmptyString `json:"text"`
@@ -290,10 +312,10 @@ func newChannelEmailConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpe
 // was really a bearer token.
 type ChannelWebhookConfig struct {
 	SendResolved *bool  `json:"sendResolved,omitempty"`
-	URL          string `json:"url" required:"true"`
+	URL          string `json:"url" required:"true" format:"password"`
 	Username     string `json:"username"`
-	Password     string `json:"password"`
-	BearerToken  string `json:"bearerToken"`
+	Password     string `json:"password" format:"password"`
+	BearerToken  string `json:"bearerToken" format:"password"`
 }
 
 func (c ChannelWebhookConfig) Validate() error {
@@ -381,7 +403,7 @@ func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (Chann
 
 type ChannelPagerdutyConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	RoutingKey   string                       `json:"routingKey" required:"true"`
+	RoutingKey   string                       `json:"routingKey" required:"true" format:"password"`
 	URL          string                       `json:"url"`
 	Source       valuer.UnsetOrNonEmptyString `json:"source"`
 	Client       valuer.UnsetOrNonEmptyString `json:"client"`
@@ -466,7 +488,7 @@ func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (Cha
 
 type ChannelOpsgenieConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	APIKey       string                       `json:"apiKey" required:"true"`
+	APIKey       string                       `json:"apiKey" required:"true" format:"password"`
 	APIURL       string                       `json:"apiUrl"`
 	Message      valuer.UnsetOrNonEmptyString `json:"message"`
 	Description  valuer.UnsetOrNonEmptyString `json:"description"`
@@ -530,7 +552,7 @@ func newChannelOpsgenieConfigFromReceiver(name string, receiver *Receiver) (Chan
 
 type ChannelMSTeamsConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	WebhookURL   string                       `json:"webhookUrl" required:"true"`
+	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password"`
 	Title        valuer.UnsetOrNonEmptyString `json:"title"`
 	Text         valuer.UnsetOrNonEmptyString `json:"text"`
 }
@@ -578,7 +600,7 @@ func newChannelMSTeamsConfigFromReceiver(name string, receiver *Receiver) (Chann
 
 type ChannelGoogleChatConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	WebhookURL   string                       `json:"webhookUrl" required:"true"`
+	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password"`
 	Title        valuer.UnsetOrNonEmptyString `json:"title"`
 	Text         valuer.UnsetOrNonEmptyString `json:"text"`
 }
@@ -642,7 +664,7 @@ type ChannelJiraConfig struct {
 	CustomFields      map[string]any               `json:"customFields,omitempty"`
 
 	Email    string `json:"email" required:"true"`
-	APIToken string `json:"apiToken" required:"true"`
+	APIToken string `json:"apiToken" required:"true" format:"password"`
 }
 
 func (c ChannelJiraConfig) Validate() error {
@@ -763,7 +785,7 @@ func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelS
 // keyed by the integration API key, which the notifier pins itself.
 type ChannelJSMOpsConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	APIKey       string                       `json:"apiKey" required:"true"`
+	APIKey       string                       `json:"apiKey" required:"true" format:"password"`
 	Message      valuer.UnsetOrNonEmptyString `json:"message"`
 	Description  valuer.UnsetOrNonEmptyString `json:"description"`
 	Priority     string                       `json:"priority"`
@@ -814,7 +836,7 @@ func newChannelJSMOpsConfigFromReceiver(name string, receiver *Receiver) (Channe
 type ChannelIncidentIOConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	URL          string                       `json:"url" required:"true"`
-	Token        string                       `json:"token" required:"true"`
+	Token        string                       `json:"token" required:"true" format:"password"`
 	Title        valuer.UnsetOrNonEmptyString `json:"title"`
 	Description  valuer.UnsetOrNonEmptyString `json:"description"`
 	Metadata     map[string]string            `json:"metadata,omitempty"`
@@ -992,7 +1014,7 @@ func rejectHTTPBasicAuthBeyondPassword(channelName string, httpConfig *commoncfg
 
 	basicAuth := httpConfig.BasicAuth
 	if *basicAuth != (commoncfg.BasicAuth{Username: basicAuth.Username, Password: basicAuth.Password}) {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.basic_auth, which is not supported", channelName)
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.basic_auth with fields other than username and password, which is not supported", channelName)
 	}
 
 	return nil
@@ -1004,8 +1026,8 @@ func rejectHTTPAuthorizationBeyondBearer(channelName string, httpConfig *commonc
 	}
 
 	authorization := httpConfig.Authorization
-	if *authorization != (commoncfg.Authorization{Type: bearerAuthorizationType, Credentials: authorization.Credentials}) {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization, which is not supported", channelName)
+	if !strings.EqualFold(authorization.Type, bearerAuthorizationType) || *authorization != (commoncfg.Authorization{Type: authorization.Type, Credentials: authorization.Credentials}) {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization with fields other than a bearer token, which is not supported", channelName)
 	}
 
 	return nil
@@ -1108,11 +1130,21 @@ func resolveSendResolved(sendResolved *bool, upstreamDefault bool) bool {
 }
 
 func allowedValuesForChannelKind() string {
-	values := make([]string, 0, len(channelKinds))
-	for _, channelKind := range channelKinds {
-		values = append(values, "`"+channelKind.kind.StringValue()+"`")
+	return formatAllowedValues((ChannelKind{}).Enum())
+}
+
+func formatAllowedValues(enum []any) string {
+	values := make([]string, 0, len(enum))
+	for _, value := range enum {
+		stringValuer, ok := value.(interface{ StringValue() string })
+		if !ok {
+			continue
+		}
+
+		values = append(values, "`"+stringValuer.StringValue()+"`")
 	}
 	slices.Sort(values)
+
 	return strings.Join(values, ", ")
 }
 

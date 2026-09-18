@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/semconv"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -35,17 +35,17 @@ var resourceLogOperators = map[v3.FilterOperator]string{
 // buildResourceFilter builds a clickhouse filter string for resource labels
 func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value interface{}, members []string) string {
 	// for all operators except contains and like
-	searchKey := fmt.Sprintf("simpleJSONExtractString(labels, %s)", querybuilder.ClickHouseStringLiteral(key))
+	searchKey := fmt.Sprintf("simpleJSONExtractString(labels, %s)", clickhousesql.StringLiteral(key))
 	if len(members) > 1 {
 		values := make([]string, 0, len(members))
 		for _, member := range members {
-			values = append(values, fmt.Sprintf("NULLIF(simpleJSONExtractString(labels, %s), '')", querybuilder.ClickHouseStringLiteral(member)))
+			values = append(values, fmt.Sprintf("NULLIF(simpleJSONExtractString(labels, %s), '')", clickhousesql.StringLiteral(member)))
 		}
 		searchKey = "COALESCE(" + strings.Join(values, ", ") + ", '')"
 	}
 
 	// for contains and like it will be case insensitive
-	lowerSearchKey := fmt.Sprintf("simpleJSONExtractString(lower(labels), %s)", querybuilder.ClickHouseStringLiteral(key))
+	lowerSearchKey := fmt.Sprintf("simpleJSONExtractString(lower(labels), %s)", clickhousesql.StringLiteral(key))
 	if len(members) > 1 {
 		lowerSearchKey = "lower(" + searchKey + ")"
 	}
@@ -59,16 +59,16 @@ func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value 
 		exists := op == v3.FilterOperatorExists
 		if len(members) == 1 {
 			if exists {
-				return fmt.Sprintf("simpleJSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(key))
+				return fmt.Sprintf("simpleJSONHas(labels, %s)", clickhousesql.StringLiteral(key))
 			}
-			return fmt.Sprintf("not simpleJSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(key))
+			return fmt.Sprintf("not simpleJSONHas(labels, %s)", clickhousesql.StringLiteral(key))
 		}
 		presence := make([]string, 0, len(members))
 		for _, member := range members {
 			if exists {
-				presence = append(presence, fmt.Sprintf("simpleJSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(member)))
+				presence = append(presence, fmt.Sprintf("simpleJSONHas(labels, %s)", clickhousesql.StringLiteral(member)))
 			} else {
-				presence = append(presence, fmt.Sprintf("not simpleJSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(member)))
+				presence = append(presence, fmt.Sprintf("not simpleJSONHas(labels, %s)", clickhousesql.StringLiteral(member)))
 			}
 		}
 		separator := " OR "
