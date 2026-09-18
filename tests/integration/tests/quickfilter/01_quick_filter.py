@@ -71,7 +71,7 @@ def test_v1_get_serves_legacy_shape(
     assert response.status_code == HTTPStatus.OK, response.text
     filters = response.json()["data"]["filters"]
     assert filters[0]["key"] == "duration_nano"
-    assert filters[0]["type"] == "tag"
+    assert filters[0]["type"] == "", "span fields have no v3 attribute type"
     assert filters[0]["dataType"] == "float64"
     assert all("name" not in legacy_filter for legacy_filter in filters)
 
@@ -274,3 +274,36 @@ def test_update_quick_filters_rejects_invalid_input(
             timeout=2,
         )
         assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+
+
+def test_default_traces_filters_are_served_as_the_fields_api_serves_them(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters/traces"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    filters = {field_key["name"]: field_key for field_key in response.json()["data"]["filters"]}
+
+    assert "hasError" not in filters
+    assert (filters["has_error"]["fieldContext"], filters["has_error"]["fieldDataType"]) == ("span", "bool")
+    assert (filters["name"]["fieldContext"], filters["name"]["fieldDataType"]) == ("span", "string")
+    assert (filters["duration_nano"]["fieldContext"], filters["duration_nano"]["fieldDataType"]) == ("span", "number")
+    assert (filters["http.route"]["fieldContext"], filters["http.route"]["fieldDataType"]) == ("attribute", "string")
+
+    for name in ("has_error", "name"):
+        response = requests.get(
+            signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=2,
+            params={"signal": "traces", "searchText": name, "fieldContext": filters[name]["fieldContext"]},
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        served = response.json()["data"]["keys"][name]
+        assert (filters[name]["fieldContext"], filters[name]["fieldDataType"]) in [(key["fieldContext"], key["fieldDataType"]) for key in served]

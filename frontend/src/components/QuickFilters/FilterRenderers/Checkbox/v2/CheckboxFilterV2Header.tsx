@@ -1,25 +1,47 @@
+import { useState } from 'react';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { ChevronDown, ChevronRight, Search, Undo2 } from '@signozhq/icons';
+
+import { SectionActionButton } from '../../shared/SectionActionButton/SectionActionButton';
+
+import classNames from 'classnames';
 
 import styles from './CheckboxFilterV2Header.module.scss';
 
 interface CheckboxFilterHeaderProps {
 	title: string;
 	isOpen: boolean;
-	showClearAll: boolean;
+	actionsClassName?: string;
+	resetActionClassName?: string;
 	onToggleOpen: () => void;
+	onToggleSearch: () => void;
 	onClear: () => void;
-	isSomeFilterPresentForCurrentAttribute: boolean;
 }
 
 export function CheckboxFilterV2Header({
 	title,
 	isOpen,
-	showClearAll,
+	actionsClassName,
+	resetActionClassName,
 	onToggleOpen,
+	onToggleSearch,
 	onClear,
-	isSomeFilterPresentForCurrentAttribute,
 }: CheckboxFilterHeaderProps): JSX.Element {
+	const [isTitleTruncated, setIsTitleTruncated] = useState(false);
+
+	const measureTitle = (el: HTMLElement | null): void => {
+		if (el) {
+			setIsTitleTruncated(el.scrollWidth > el.clientWidth);
+		}
+	};
+
+	const titleText = (
+		<Typography.Text ref={measureTitle} className={styles.title}>
+			{title}
+		</Typography.Text>
+	);
+
 	return (
 		<section
 			role="button"
@@ -40,23 +62,31 @@ export function CheckboxFilterV2Header({
 				) : (
 					<ChevronRight size={13} cursor="pointer" />
 				)}
-				<Typography.Text className={styles.title}>{title}</Typography.Text>
-			</section>
-			<section className={styles.rightAction}>
-				{isOpen && showClearAll && isSomeFilterPresentForCurrentAttribute && (
-					<Typography.Text
-						className={styles.clearAll}
-						onClick={(e): void => {
-							e.stopPropagation();
-							e.preventDefault();
-							onClear();
-						}}
-						data-testid="checkbox-filter-clear-all"
-					>
-						Clear
-					</Typography.Text>
+				{isTitleTruncated ? (
+					<TooltipSimple title={title} delayDuration={400}>
+						{titleText}
+					</TooltipSimple>
+				) : (
+					titleText
 				)}
 			</section>
+			{isOpen && (
+				<section className={classNames(styles.rightAction, actionsClassName)}>
+					<SectionActionButton
+						icon={<Undo2 size={14} />}
+						className={resetActionClassName}
+						tooltip="Reset"
+						onClick={onClear}
+						testId="checkbox-filter-clear-all"
+					/>
+					<SectionActionButton
+						icon={<Search size={14} />}
+						tooltip="Search"
+						onClick={onToggleSearch}
+						testId="checkbox-filter-search-toggle"
+					/>
+				</section>
+			)}
 		</section>
 	);
 }

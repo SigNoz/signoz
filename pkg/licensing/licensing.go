@@ -33,19 +33,10 @@ type Licensing interface {
 	Delete(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) error
 	// Refresh refreshes the license state from upstream server
 	Refresh(ctx context.Context, organizationID valuer.UUID) error
-	// Checkout creates a checkout session via upstream server and returns the redirection link
-	Checkout(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error)
-	// Portal creates a portal session via upstream server and return the redirection link
-	Portal(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error)
 	// GetFeatureFlags fetches all the defined feature flags
 	GetFeatureFlags(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.Feature, error)
 
 	statsreporter.StatsCollector
-}
-
-type API interface {
-	Checkout(http.ResponseWriter, *http.Request)
-	Portal(http.ResponseWriter, *http.Request)
 }
 
 type Handler interface {

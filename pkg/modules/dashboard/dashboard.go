@@ -82,6 +82,10 @@ type Module interface {
 
 	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
+	// DeleteUnsafeV2 deletes a v2 dashboard and its related state without applying deletion guards.
+	// Intended for internal system callers.
+	DeleteUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
 	DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error
 
 	// get the v2 dashboard data by public dashboard id

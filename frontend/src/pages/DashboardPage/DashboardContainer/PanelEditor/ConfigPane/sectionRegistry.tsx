@@ -23,6 +23,8 @@ import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppea
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
 import FormattingSection from './sections/FormattingSection/FormattingSection';
 import LegendSection from './sections/LegendSection/LegendSection';
+import PanelHeaderSection from './sections/PanelHeaderSection/PanelHeaderSection';
+import TextLayoutSection from './sections/TextLayoutSection/TextLayoutSection';
 import ThresholdsSection from './sections/ThresholdsSection/ThresholdsSection';
 import VisualizationSection from './sections/VisualizationSection/VisualizationSection';
 
@@ -116,6 +118,23 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<DashboardtypesHistogramBucketsDTO>(spec, 'histogramBuckets'),
 		update: (spec, buckets): PanelSpec =>
 			updatePluginSlice(spec, 'histogramBuckets', buckets),
+	},
+	[SectionKind.TextLayout]: {
+		Component: TextLayoutSection,
+		get: (spec): SectionSpecMap[SectionKind.TextLayout] | undefined =>
+			getPluginSlice<SectionSpecMap[SectionKind.TextLayout]>(spec, 'presentation'),
+		update: (spec, presentation): PanelSpec =>
+			updatePluginSlice(spec, 'presentation', presentation),
+	},
+	[SectionKind.PanelHeader]: {
+		Component: PanelHeaderSection,
+		get: (spec): SectionSpecMap[SectionKind.PanelHeader] | undefined =>
+			getPluginSlice<SectionSpecMap[SectionKind.PanelHeader]>(
+				spec,
+				'headerOptions',
+			),
+		update: (spec, headerOptions): PanelSpec =>
+			updatePluginSlice(spec, 'headerOptions', headerOptions),
 	},
 	[SectionKind.ContextLinks]: {
 		Component: ContextLinksSection,
