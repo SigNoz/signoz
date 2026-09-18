@@ -384,12 +384,48 @@ components:
       required:
       - routingKey
       type: object
+    AlertmanagertypesChannelSlackAction:
+      properties:
+        confirm:
+          $ref: '#/components/schemas/AlertmanagertypesChannelSlackConfirmation'
+        name:
+          type: string
+        style:
+          type: string
+        text:
+          type: string
+        type:
+          type: string
+        url:
+          type: string
+        value:
+          type: string
+      required:
+      - type
+      - text
+      type: object
     AlertmanagertypesChannelSlackConfig:
       properties:
+        actions:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesChannelSlackAction'
+          type: array
         apiUrl:
           format: password
           type: string
         channel:
+          type: string
+        color:
+          type: string
+        fallback:
+          type: string
+        fields:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesChannelSlackField'
+          type: array
+        footer:
+          type: string
+        pretext:
           type: string
         sendResolved:
           nullable: true
@@ -398,8 +434,36 @@ components:
           type: string
         title:
           type: string
+        titleLink:
+          type: string
       required:
       - apiUrl
+      type: object
+    AlertmanagertypesChannelSlackConfirmation:
+      properties:
+        dismissText:
+          type: string
+        okText:
+          type: string
+        text:
+          type: string
+        title:
+          type: string
+      required:
+      - text
+      type: object
+    AlertmanagertypesChannelSlackField:
+      properties:
+        short:
+          nullable: true
+          type: boolean
+        title:
+          type: string
+        value:
+          type: string
+      required:
+      - title
+      - value
       type: object
     AlertmanagertypesChannelWebhookConfig:
       properties:

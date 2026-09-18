@@ -21,6 +21,7 @@ import (
 // mutually exclusive and so cannot all be set at once.
 func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 	sendResolved := true
+	short := true
 
 	testCases := []struct {
 		description       string
@@ -37,6 +38,16 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Channel:      "#alerts",
 				Title:        valuer.MustNewUnsetOrNonEmptyString("slack title"),
 				Text:         valuer.MustNewUnsetOrNonEmptyString("slack text"),
+				Color:        valuer.MustNewUnsetOrNonEmptyString("#439FE0"),
+				TitleLink:    valuer.MustNewUnsetOrNonEmptyString("{{ .CommonLabels.ruleSource }}"),
+				Pretext:      valuer.MustNewUnsetOrNonEmptyString("slack pretext"),
+				Fallback:     valuer.MustNewUnsetOrNonEmptyString("slack fallback"),
+				Footer:       valuer.MustNewUnsetOrNonEmptyString("slack footer"),
+				Fields:       []ChannelSlackField{{Title: "Severity", Value: "{{ .CommonLabels.severity }}", Short: &short}},
+				Actions: []ChannelSlackAction{
+					{Type: "button", Text: "Open in SigNoz", URL: "{{ .CommonLabels.ruleSource }}", Style: "primary"},
+					{Type: "button", Text: "Acknowledge", Name: "ack", Value: "ack", Confirm: &ChannelSlackConfirmation{Text: "Acknowledge this alert?", Title: "Confirm", OkText: "Yes", DismissText: "No"}},
+				},
 			},
 			expectedRoundTrip: &ChannelSlackConfig{
 				SendResolved: &sendResolved,
@@ -44,6 +55,16 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Channel:      "#alerts",
 				Title:        valuer.MustNewUnsetOrNonEmptyString("slack title"),
 				Text:         valuer.MustNewUnsetOrNonEmptyString("slack text"),
+				Color:        valuer.MustNewUnsetOrNonEmptyString("#439FE0"),
+				TitleLink:    valuer.MustNewUnsetOrNonEmptyString("{{ .CommonLabels.ruleSource }}"),
+				Pretext:      valuer.MustNewUnsetOrNonEmptyString("slack pretext"),
+				Fallback:     valuer.MustNewUnsetOrNonEmptyString("slack fallback"),
+				Footer:       valuer.MustNewUnsetOrNonEmptyString("slack footer"),
+				Fields:       []ChannelSlackField{{Title: "Severity", Value: "{{ .CommonLabels.severity }}", Short: &short}},
+				Actions: []ChannelSlackAction{
+					{Type: "button", Text: "Open in SigNoz", URL: "{{ .CommonLabels.ruleSource }}", Style: "primary"},
+					{Type: "button", Text: "Acknowledge", Name: "ack", Value: "ack", Confirm: &ChannelSlackConfirmation{Text: "Acknowledge this alert?", Title: "Confirm", OkText: "Yes", DismissText: "No"}},
+				},
 			},
 		},
 		{
