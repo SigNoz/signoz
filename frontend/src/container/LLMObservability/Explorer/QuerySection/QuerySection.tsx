@@ -4,8 +4,10 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { DEFAULT_PANEL_TYPE } from '../constants';
+
 function QuerySection(): JSX.Element {
-	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const panelTypes = useGetPanelTypesQueryParam(DEFAULT_PANEL_TYPE);
 
 	const isRawQuery = useMemo(
 		() => panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE,
