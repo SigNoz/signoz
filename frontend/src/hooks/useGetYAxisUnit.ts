@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
 	getMetricUnits,
 	useGetMetrics,
@@ -46,7 +46,6 @@ function useGetYAxisUnit(
 	},
 ): UseGetYAxisUnitResult {
 	const { stagedQuery } = useQueryBuilder();
-	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
 	const metricNames: string[] | null = useMemo(() => {
 		// If the query type is not QUERY_BUILDER, return null
@@ -95,27 +94,16 @@ function useGetYAxisUnit(
 		[units],
 	);
 
-	useEffect(() => {
-		// If there are no metrics, set the y-axis unit to undefined
-		if (units.length === 0) {
-			setYAxisUnit(undefined);
-			// If there is one metric and it has a non-empty unit, set the y-axis unit to it
-		} else if (units.length === 1 && units[0] !== '') {
-			setYAxisUnit(units[0]);
-			// If all metrics have the same non-empty unit, set the y-axis unit to it
-		} else if (areAllMetricUnitsSame) {
-			if (units[0] !== '') {
-				setYAxisUnit(units[0]);
-			} else {
-				setYAxisUnit(undefined);
-			}
-			// If there is more than one metric and they have different units, set the y-axis unit to undefined
-		} else if (units.length > 1 && !areAllMetricUnitsSame) {
-			setYAxisUnit(undefined);
-			// If there is one metric and it has an empty unit, set the y-axis unit to undefined
-		} else if (units.length === 1 && units[0] === '') {
-			setYAxisUnit(undefined);
+	// Derived, not stored: `useGetMetrics` rebuilds its array on every render, so a
+	// state-and-effect version schedules an update after every render — the shape
+	// React reports as "Maximum update depth exceeded".
+	const yAxisUnit = useMemo(() => {
+		// A single shared unit is the only thing a single axis can carry; metrics that
+		// disagree, or that carry no unit at all, leave the axis unitless.
+		if (units.length === 0 || !areAllMetricUnitsSame) {
+			return undefined;
 		}
+		return units[0] || undefined;
 	}, [units, areAllMetricUnitsSame]);
 
 	return { yAxisUnit, isLoading, isError };
