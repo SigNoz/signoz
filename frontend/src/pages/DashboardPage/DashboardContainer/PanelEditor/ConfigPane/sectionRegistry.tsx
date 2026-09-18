@@ -1,7 +1,6 @@
 import type { ComponentType } from 'react';
 import type {
 	DashboardtypesLinkDTO,
-	DashboardtypesAxesDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
 	DashboardtypesPanelSpecDTO,
@@ -9,6 +8,7 @@ import type {
 import {
 	SectionKind,
 	type AnyThreshold,
+	type PanelAxesSlice,
 	type PanelChartAppearanceSlice,
 	type PanelFormattingSlice,
 	type PanelVisualizationSlice,
@@ -81,8 +81,8 @@ export const SECTION_REGISTRY: {
 	},
 	[SectionKind.Axes]: {
 		Component: AxesSection,
-		get: (spec): DashboardtypesAxesDTO | undefined =>
-			getPluginSlice<DashboardtypesAxesDTO>(spec, 'axes'),
+		get: (spec): PanelAxesSlice | undefined =>
+			getPluginSlice<PanelAxesSlice>(spec, 'axes'),
 		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
 	},
 	[SectionKind.Legend]: {
