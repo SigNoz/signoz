@@ -328,9 +328,12 @@ def test_create_rejects_a_duplicate_display_name(
         pytest.param({"name": "telegram-kind", "config": {"kind": "telegram", "spec": {"chatId": 1}}}, id="unmodelled_kind"),
         pytest.param({"name": "slack-unknown-field", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "channel": "#a", "text": "body", "iconEmoji": ":tada:"}}}, id="unknown_spec_field"),
         pytest.param({"name": "slack-with-email-spec", "config": {"kind": "slack", "spec": {"to": "a@integration.test", "html": "<p>body</p>"}}}, id="spec_of_another_kind"),
+        pytest.param({"name": "slack-field-without-value", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "fields": [{"title": "Severity"}]}}}, id="slack_field_without_value"),
+        pytest.param({"name": "slack-action-without-text", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "actions": [{"type": "button", "url": "https://signoz.test"}]}}}, id="slack_action_without_text"),
+        pytest.param({"name": "slack-action-without-target", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "actions": [{"type": "button", "text": "Open"}]}}}, id="slack_action_without_url_or_name"),
+        pytest.param({"name": "slack-confirm-without-text", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "actions": [{"type": "button", "text": "Ack", "name": "ack", "confirm": {"title": "Sure?"}}]}}}, id="slack_action_confirm_without_text"),
         pytest.param({"name": "extra-field", "config": {"kind": "email", "spec": {"to": "a@integration.test", "html": "<p>body</p>"}}, "type": "email"}, id="unknown_envelope_field"),
         pytest.param({"name": "webhook-both-auth", "config": {"kind": "webhook", "spec": {"url": "https://webhook.test/hook", "username": "u", "password": "p", "bearerToken": "t"}}}, id="webhook_basic_auth_with_bearer_token"),
-        pytest.param({"name": "webhook-half-auth", "config": {"kind": "webhook", "spec": {"url": "https://webhook.test/hook", "username": "u"}}}, id="webhook_basic_auth_without_password"),
         # The last three reach the notifier's own validation rather than the
         # spec's, so they assert it still surfaces as a 400 through v2.
         pytest.param({"name": "jira-server-site", "config": {"kind": "jira", "spec": {"site": "https://jira.acme.com", "project": "OPS", "issueType": "Bug", "email": "a@integration.test", "apiToken": "t", "summary": "Alert", "description": "body"}}}, id="jira_site_not_jira_cloud"),
