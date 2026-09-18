@@ -10960,9 +10960,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - cloud-integration:read
       - tokenizer:
-        - VIEWER
+        - cloud-integration:read
       summary: Agent check-in
       tags:
       - cloudintegration
@@ -11289,9 +11289,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - cloud-integration-service:list
+        - cloud-integration:list
       - tokenizer:
-        - cloud-integration-service:list
+        - cloud-integration:list
       summary: List account services metadata
       tags:
       - cloudintegration
@@ -11364,9 +11364,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - cloud-integration-service:read
+        - cloud-integration:read
       - tokenizer:
-        - cloud-integration-service:read
+        - cloud-integration:read
       summary: Get service for account
       tags:
       - cloudintegration
@@ -11418,9 +11418,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - cloud-integration-service:update
+        - cloud-integration:update
       - tokenizer:
-        - cloud-integration-service:update
+        - cloud-integration:update
       summary: Update service
       tags:
       - cloudintegration
@@ -11475,9 +11475,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - cloud-integration:read
       - tokenizer:
-        - VIEWER
+        - cloud-integration:read
       summary: Agent check-in
       tags:
       - cloudintegration
@@ -11528,9 +11528,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - cloud-integration:create
+        - ingestion-key:create
+        - serviceaccount:create
+        - factor-api-key:create
+        - serviceaccount:attach
+        - role:attach
       - tokenizer:
-        - cloud-integration:create
+        - ingestion-key:create
+        - serviceaccount:create
+        - factor-api-key:create
+        - serviceaccount:attach
+        - role:attach
       summary: Get connection credentials
       tags:
       - cloudintegration

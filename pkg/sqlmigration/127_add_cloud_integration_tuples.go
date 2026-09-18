@@ -54,28 +54,19 @@ func (migration *addCloudIntegrationTuples) Up(ctx context.Context, db *bun.DB) 
 
 	isPG := migration.sqlstore.BunDB().Dialect().Name() == dialect.PG
 
-	// cloud-integration and cloud-integration-service moved from legacy role
-	// gates to CheckResources. Existing organizations need the same tuples that
-	// new organizations receive from the managed-role registry at bootstrap.
+	// cloud-integration moved from legacy role gates to CheckResources. Existing
+	// organizations need the same tuples that new organizations receive from the
+	// managed-role registry at bootstrap.
 	tuples := []migrationTuple{
 		{authtypes.SigNozAdminRoleName, "metaresource", "cloud-integration", "create"},
 		{authtypes.SigNozAdminRoleName, "metaresource", "cloud-integration", "read"},
 		{authtypes.SigNozAdminRoleName, "metaresource", "cloud-integration", "update"},
 		{authtypes.SigNozAdminRoleName, "metaresource", "cloud-integration", "delete"},
 		{authtypes.SigNozAdminRoleName, "metaresource", "cloud-integration", "list"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "cloud-integration-service", "read"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "cloud-integration-service", "update"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "cloud-integration-service", "list"},
 		{authtypes.SigNozEditorRoleName, "metaresource", "cloud-integration", "read"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "cloud-integration", "update"},
 		{authtypes.SigNozEditorRoleName, "metaresource", "cloud-integration", "list"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "cloud-integration-service", "read"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "cloud-integration-service", "update"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "cloud-integration-service", "list"},
 		{authtypes.SigNozViewerRoleName, "metaresource", "cloud-integration", "read"},
 		{authtypes.SigNozViewerRoleName, "metaresource", "cloud-integration", "list"},
-		{authtypes.SigNozViewerRoleName, "metaresource", "cloud-integration-service", "read"},
-		{authtypes.SigNozViewerRoleName, "metaresource", "cloud-integration-service", "list"},
 	}
 
 	for _, orgID := range orgIDs {

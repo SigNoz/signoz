@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	citypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -26,14 +25,50 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceCloudIntegration.Scope(coretypes.VerbCreate)}),
+			SecuritySchemes: newScopedSecuritySchemes([]string{
+				coretypes.ResourceMetaResourceIngestionKey.Scope(coretypes.VerbCreate),
+				coretypes.ResourceServiceAccount.Scope(coretypes.VerbCreate),
+				coretypes.ResourceMetaResourceFactorAPIKey.Scope(coretypes.VerbCreate),
+				coretypes.ResourceServiceAccount.Scope(coretypes.VerbAttach),
+				coretypes.ResourceRole.Scope(coretypes.VerbAttach),
+			}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceCloudIntegration,
-			Verb:     coretypes.VerbCreate, // get or create the credentials, so we use create verb here
-			Category: coretypes.ActionCategoryConfigurationChange,
-			Selector: coretypes.WildcardSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceIngestionKey,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceServiceAccount,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryAccessControl,
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceFactorAPIKey,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryAccessControl,
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryAccessControl,
+				SourceResource: coretypes.ResourceServiceAccount,
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceRole,
+				TargetIDs:      signozViewerRoleNamesExtractor(),
+				TargetSelector: coretypes.IDSelector,
+			},
+			handler.AttachDetachParentChildResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryAccessControl,
+				ParentResource: coretypes.ResourceServiceAccount,
+				ParentSelector: coretypes.WildcardSelector,
+				ChildResource:  coretypes.ResourceMetaResourceFactorAPIKey,
+			},
+		),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -119,7 +154,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}", handler.New(
-		provider.authzMiddleware.CheckResources(provider.cloudIntegrationHandler.UpdateAccount, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		provider.authzMiddleware.CheckResources(provider.cloudIntegrationHandler.UpdateAccount, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                  "UpdateAccount",
 			Tags:                []string{"cloudintegration"},
@@ -206,13 +241,14 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceCloudIntegrationService.Scope(coretypes.VerbList)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceCloudIntegration.Scope(coretypes.VerbList)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceCloudIntegrationService,
-			Verb:     coretypes.VerbList,
+			Resource: coretypes.ResourceMetaResourceCloudIntegration,
+			Verb:     coretypes.VerbRead,
 			Category: coretypes.ActionCategoryDataAccess,
-			Selector: coretypes.WildcardSelector,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -239,7 +275,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}", handler.New(
-		provider.authzMiddleware.CheckResources(provider.cloudIntegrationHandler.UpdateService, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		provider.authzMiddleware.CheckResources(provider.cloudIntegrationHandler.UpdateService, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                  "UpdateService",
 			Tags:                []string{"cloudintegration"},
@@ -252,14 +288,14 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceCloudIntegrationService.Scope(coretypes.VerbUpdate)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceCloudIntegration.Scope(coretypes.VerbUpdate)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceCloudIntegrationService,
+			Resource: coretypes.ResourceMetaResourceCloudIntegration,
 			Verb:     coretypes.VerbUpdate,
 			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("service_id"),
-			Selector: coretypes.WildcardSelector,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -279,14 +315,14 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceCloudIntegrationService.Scope(coretypes.VerbRead)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceCloudIntegration.Scope(coretypes.VerbRead)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceCloudIntegrationService,
+			Resource: coretypes.ResourceMetaResourceCloudIntegration,
 			Verb:     coretypes.VerbRead,
 			Category: coretypes.ActionCategoryDataAccess,
-			ID:       coretypes.PathParam("service_id"),
-			Selector: coretypes.WildcardSelector,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -295,7 +331,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	// Agent check-in endpoint is kept same as older one to maintain backward compatibility with already deployed agents.
 	// In the future, this endpoint will be deprecated and a new endpoint will be introduced for consistency with above endpoints.
 	if err := router.Handle("/api/v1/cloud-integrations/{cloud_provider}/agent-check-in", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.cloudIntegrationHandler.AgentCheckIn),
+		provider.authzMiddleware.CheckResources(provider.cloudIntegrationHandler.AgentCheckIn, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "AgentCheckInDeprecated",
 			Tags:                []string{"cloudintegration"},
@@ -307,16 +343,22 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
-			Deprecated:          true,                                 // this endpoint will be deprecated in future
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer), // agent role is viewer
+			Deprecated:          true, // this endpoint will be deprecated in future
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceCloudIntegration.Scope(coretypes.VerbRead)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceCloudIntegration,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.BodyJSONPath("account_id"),
+			Selector: coretypes.IDSelector,
+		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	// TODO: figure out authz permission model for this endppoint without breaking existing deployed agents.
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/check_in", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.cloudIntegrationHandler.AgentCheckIn),
+		provider.authzMiddleware.CheckResources(provider.cloudIntegrationHandler.AgentCheckIn, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "AgentCheckIn",
 			Tags:                []string{"cloudintegration"},
@@ -329,11 +371,24 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer), // agent role is viewer
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceCloudIntegration.Scope(coretypes.VerbRead)}),
 		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceCloudIntegration,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.BodyJSONPath("cloudIntegrationId"),
+			Selector: coretypes.IDSelector,
+		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func signozViewerRoleNamesExtractor() coretypes.ResourceIDsExtractor {
+	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(coretypes.ExtractorContext) ([]string, error) {
+		return []string{authtypes.SigNozViewerRoleName}, nil
+	}}
 }
