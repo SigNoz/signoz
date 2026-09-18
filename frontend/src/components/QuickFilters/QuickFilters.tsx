@@ -321,6 +321,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 							return (
 								<Duration
 									key={filter.attributeKey.key}
+									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
 								/>
