@@ -8,7 +8,11 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { cloneDeep, isEqual, set, unset } from 'lodash-es';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderFormula,
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 // Asks "would saving the current panel change the persisted widget spec?".
@@ -99,6 +103,7 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.VALUE]: 'value';
 	[PANEL_TYPES.PIE]: 'pie';
 	[PANEL_TYPES.HISTOGRAM]: 'histogram';
+	[PANEL_TYPES.HEATMAP]: 'heatmap';
 };
 
 export const panelTypeDataSourceFormValuesMap: Record<
@@ -300,6 +305,75 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'disabled',
 					'queryName',
 					'legend',
+					'expression',
+					'aggregations',
+				],
+			},
+		},
+	},
+	// `functions` and `having` are dropped rather than carried: the heatmap request
+	// rejects both. Every signal is listed because the map is keyed by the query's
+	// own, which a switch can still be holding.
+	[PANEL_TYPES.HEATMAP]: {
+		[DataSource.LOGS]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'limit',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'disabled',
+					'expression',
+					'aggregations',
+				],
+			},
+		},
+		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'limit',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'disabled',
+					'expression',
+					'aggregations',
+					'bucketOptions',
+				],
+			},
+		},
+		[DataSource.TRACES]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'limit',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'disabled',
 					'expression',
 					'aggregations',
 				],
@@ -538,6 +612,24 @@ export const panelTypeDataSourceFormValuesMap: Record<
 	},
 };
 
+/**
+ * Formulas are carried across a panel-type switch whole, not rebuilt from
+ * `panelTypeDataSourceFormValuesMap` the way `queryData` is, so a bucket axis has to be
+ * dropped by hand. The request rejects one on any type but heatmap.
+ */
+const withoutNonHeatmapBucketOptions = (
+	formulas: IBuilderFormula[],
+	newPanelType: keyof PartialPanelTypes,
+): IBuilderFormula[] => {
+	if (newPanelType === PANEL_TYPES.HEATMAP) {
+		return formulas;
+	}
+
+	return (formulas ?? []).map(
+		({ bucketOptions: _bucketOptions, ...rest }) => rest,
+	);
+};
+
 export function handleQueryChange(
 	newPanelType: keyof PartialPanelTypes,
 	supersetQuery: Query,
@@ -581,6 +673,10 @@ export function handleQueryChange(
 
 				return tempQuery;
 			}),
+			queryFormulas: withoutNonHeatmapBucketOptions(
+				supersetQuery.builder.queryFormulas,
+				newPanelType,
+			),
 			queryTraceOperator:
 				newPanelType === PANEL_TYPES.LIST
 					? []
