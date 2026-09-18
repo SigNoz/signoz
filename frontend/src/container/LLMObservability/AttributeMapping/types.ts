@@ -37,7 +37,7 @@ export type SourceConfig = Omit<SpantypesSpanMapperSourceDTO, 'priority'>;
 export interface MapperDraft {
 	id: string | null;
 	name: string;
-	fieldContext: SpantypesFieldContextDTO;
+	fieldContext: FieldContextValue;
 	sources: SourceConfig[];
 	enabled: boolean;
 }
@@ -50,21 +50,15 @@ export interface GroupDraft {
 	enabled: boolean;
 }
 
-export interface DraftMapper {
+// The editor tree identifies rows by `localId` so unsaved ones are addressable;
+// `serverId` is null until the row has been persisted.
+export type DraftMapper = Omit<MapperDraft, 'id'> & {
 	localId: string;
 	serverId: string | null;
-	name: string;
-	fieldContext: SpantypesFieldContextDTO;
-	sources: SourceConfig[];
-	enabled: boolean;
-}
+};
 
-export interface DraftGroup {
+export type DraftGroup = Omit<GroupDraft, 'id'> & {
 	localId: string;
 	serverId: string | null;
-	name: string;
-	attributes: ConditionKey[];
-	resource: ConditionKey[];
-	enabled: boolean;
 	mappers: DraftMapper[];
-}
+};
