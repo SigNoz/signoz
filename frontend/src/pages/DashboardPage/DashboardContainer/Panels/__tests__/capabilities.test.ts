@@ -2,7 +2,6 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { OPERATORS } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
 import { UNSUPPORTED_PANEL } from '../kinds/UnsupportedPanel/definition';
@@ -10,7 +9,6 @@ import { getPanelDefinition, isPanelKindSupported } from '../registry';
 import type { PanelQueryCapabilities } from '../types/panelCapabilities';
 import { NO_PANEL_ACTIONS } from '../types/panelDefinition';
 import {
-	getHiddenQueryBuilderFields,
 	getQueryPanelDefinition,
 	requireQueryPanelDefinition,
 	getSupportedQueryTypes,
@@ -144,7 +142,6 @@ describe('panel capabilities guard', () => {
 			expect(
 				isPanelCombinationValid({ kind: unknownKind, queryType: QUERY_BUILDER }),
 			).toBe(false);
-			expect(getHiddenQueryBuilderFields(unknownKind, logs)).toStrictEqual({});
 			expect(getPanelDefinition(unknownKind).sections).toStrictEqual([]);
 		});
 
@@ -265,39 +262,6 @@ describe('panel capabilities guard', () => {
 			// PromQL → List has no PromQL, falls back to its first (and only) type.
 			expect(resolveQueryType('signoz/ListPanel', PROM)).toBe(QUERY_BUILDER);
 			expect(resolveQueryType('signoz/TablePanel', PROM)).toBe(QUERY_BUILDER);
-		});
-	});
-
-	describe('getHiddenQueryBuilderFields', () => {
-		it('returns {} for kinds that declare no field rules', () => {
-			expect(
-				getHiddenQueryBuilderFields('signoz/TimeSeriesPanel', logs),
-			).toStrictEqual({});
-			expect(getHiddenQueryBuilderFields('signoz/TablePanel', logs)).toStrictEqual(
-				{},
-			);
-		});
-
-		// Mirrors QueryBuilderV2's internal listViewLogFilterConfigs — the guard is the
-		// single source of truth for these values.
-		it('hides step interval / having and sets body-contains for List + logs', () => {
-			expect(getHiddenQueryBuilderFields('signoz/ListPanel', logs)).toStrictEqual({
-				stepInterval: { isHidden: true, isDisabled: true },
-				having: { isHidden: true, isDisabled: true },
-				filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
-			});
-		});
-
-		// Mirrors listViewTracesFilterConfigs — traces additionally hide `limit`.
-		it('additionally hides limit for List + traces', () => {
-			expect(
-				getHiddenQueryBuilderFields('signoz/ListPanel', traces),
-			).toStrictEqual({
-				stepInterval: { isHidden: true, isDisabled: true },
-				having: { isHidden: true, isDisabled: true },
-				limit: { isHidden: true, isDisabled: true },
-				filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
-			});
 		});
 	});
 });
