@@ -21,7 +21,7 @@ export function K8sEmptyState({
 
 	if (isError || error) {
 		return (
-			<div className={styles.container}>
+			<div className={styles.container} data-testid="k8s-error-state">
 				<div className={styles.errorContent}>
 					<ErrorContent
 						error={
@@ -38,7 +38,7 @@ export function K8sEmptyState({
 
 	if (endTimeBeforeRetention) {
 		return (
-			<div className={styles.container}>
+			<div className={styles.container} data-testid="k8s-empty-state-retention">
 				<div className={styles.content}>
 					<img className={styles.eyesEmoji} src={eyesEmojiUrl} alt="eyes emoji" />
 					<div className={styles.noDataMessage}>
@@ -56,7 +56,7 @@ export function K8sEmptyState({
 	}
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} data-testid="k8s-empty-state">
 			<div className={styles.content}>
 				<img
 					src={emptyStateUrl}
