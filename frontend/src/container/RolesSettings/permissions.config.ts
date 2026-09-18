@@ -4,7 +4,9 @@ import {
 	DraftingCompass,
 	FileKey,
 	Gauge,
+	Grid3X3,
 	Key,
+	ListFilter,
 	Logs,
 	Receipt,
 	Shield,
@@ -41,6 +43,14 @@ export interface ResourcePanelConfig {
  * not all of them
  */
 export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
+	dashboard: {
+		label: 'Dashboards',
+		description: 'Dashboards and their panels across the workspace.',
+		icon: Grid3X3,
+		selectorPlaceholder:
+			'Type dashboard ID, separate multiple with comma or space',
+		docsAnchor: 'dashboard',
+	},
 	'factor-api-key': {
 		label: 'API Keys',
 		description: 'Programmatic access tokens for the workspace.',
@@ -76,6 +86,14 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		icon: Receipt,
 		selectorPlaceholder: 'Type * to cover the workspace subscription',
 		docsAnchor: 'subscription',
+	},
+	'quick-filter': {
+		label: 'Quick Filters',
+		description: 'Quick filters shown in the logs, traces, and other explorers.',
+		icon: ListFilter,
+		selectorPlaceholder:
+			'Type quick filter ID, separate multiple with comma or space',
+		docsAnchor: 'quick-filter',
 	},
 	logs: {
 		label: 'Logs',

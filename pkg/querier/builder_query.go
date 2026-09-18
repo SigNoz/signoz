@@ -92,6 +92,10 @@ func (q *builderQuery[T]) Fingerprint() string {
 	// This needs to include all fields that affect the query results
 	parts := []string{q.queryType.StringValue()}
 
+	// A heatmap and a time series query can share every spec field and still
+	// return different rows, so the request type has to separate their entries
+	parts = append(parts, fmt.Sprintf("requestType=%s", q.kind.StringValue()))
+
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))
 
@@ -129,6 +133,9 @@ func (q *builderQuery[T]) Fingerprint() string {
 						route = "buffer"
 					}
 					part += ":" + route
+				}
+				if a.HeatmapBucketing != nil {
+					part += ":" + fingerprintHeatmapBucketing(*a.HeatmapBucketing)
 				}
 				aggParts = append(aggParts, part)
 			}
@@ -183,6 +190,16 @@ func (q *builderQuery[T]) Fingerprint() string {
 	}
 
 	return strings.Join(parts, "&")
+}
+
+// fingerprintHeatmapBucketing captures only what changes the rows ClickHouse
+// returns, which is why LogBucketsSpec.Scale is absent: coarsening it happens in
+// postprocessing, so every scale reads one cache entry.
+func fingerprintHeatmapBucketing(b qbtypes.HeatmapBucketing) string {
+	if b.Kind == qbtypes.BucketsKindLinear {
+		return fmt.Sprintf("%s:%v:%d", b.Kind.StringValue(), b.MaxValue, b.NumBuckets)
+	}
+	return b.Kind.StringValue()
 }
 
 func fingerprintGroupByKey(gb qbtypes.GroupByKey) string {
@@ -412,7 +429,7 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 func emptyResultFor(kind qbtypes.RequestType, queryName string) *qbtypes.Result {
 	var value any
 	switch kind {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		value = &qbtypes.TimeSeriesData{QueryName: queryName}
 	case qbtypes.RequestTypeScalar:
 		value = &qbtypes.ScalarData{QueryName: queryName}
@@ -465,8 +482,9 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
 
 	kind := q.kind
-	// all metric queries are time series then reduced if required
-	if q.spec.Signal == telemetrytypes.SignalMetrics {
+	// all metric queries are time series then reduced if required, except
+	// heatmaps, whose statement returns a row per bucket rather than per point
+	if q.spec.Signal == telemetrytypes.SignalMetrics && kind != qbtypes.RequestTypeHeatmap {
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 

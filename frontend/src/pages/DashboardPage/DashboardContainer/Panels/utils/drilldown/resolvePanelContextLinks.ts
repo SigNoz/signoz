@@ -8,6 +8,8 @@ export interface ResolvedDrilldownLink {
 	id: string;
 	label: string;
 	url: string;
+	/** Opens in a new tab; links saved before the toggle existed default to true. */
+	targetBlank: boolean;
 }
 
 /**
@@ -26,14 +28,16 @@ export function resolvePanelContextLinks(
 	return usable.map((link, index) => {
 		const rawLabel = link.name || link.url || '';
 		const rawUrl = link.url ?? '';
+		const targetBlank = link.targetBlank ?? true;
 		// Only an explicit `false` opts out; undefined defaults to substitution on.
 		if (link.renderVariables === false) {
-			return { id: String(index), label: rawLabel, url: rawUrl };
+			return { id: String(index), label: rawLabel, url: rawUrl, targetBlank };
 		}
 		return {
 			id: String(index),
 			label: resolveTexts({ texts: [rawLabel], processedVariables }).fullTexts[0],
 			url: resolveContextLinkUrl(rawUrl, processedVariables),
+			targetBlank,
 		};
 	});
 }

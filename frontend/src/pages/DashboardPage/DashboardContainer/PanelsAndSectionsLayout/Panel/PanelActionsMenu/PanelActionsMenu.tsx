@@ -7,6 +7,7 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import type { PanelActionsConfig } from '../Panel';
 import { usePanelActionItems } from './usePanelActionItems';
+import menuStyles from '../../../components/MenuActionItem/MenuActionItem.module.scss';
 import styles from './PanelActionsMenu.module.scss';
 
 interface PanelActionsMenuProps {
@@ -43,7 +44,11 @@ function PanelActionsMenu({
 
 	return (
 		<>
-			<DropdownMenuSimple menu={{ items }} align="end">
+			<DropdownMenuSimple
+				menu={{ items }}
+				align="end"
+				className={menuStyles.menuContent}
+			>
 				<Button
 					type="button"
 					variant="ghost"

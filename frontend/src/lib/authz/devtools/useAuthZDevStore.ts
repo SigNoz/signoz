@@ -135,3 +135,5 @@ export const closeAuthZDevModal = (): void =>
 	useAuthZDevStore.getState().closeModal();
 export const toggleAuthZDevModal = (): void =>
 	useAuthZDevStore.getState().toggleModal();
+export const clearAllAuthZDevOverrides = (): void =>
+	useAuthZDevStore.getState().clearAllOverrides();
