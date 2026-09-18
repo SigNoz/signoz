@@ -3,7 +3,6 @@ package promotetypes
 import (
 	"strings"
 
-	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -23,7 +22,7 @@ type PromotePath struct {
 	Indexes []WrappedIndex `json:"indexes,omitempty"`
 }
 
-func (i *PromotePath) ValidateAndSetDefaults() error {
+func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 	if i.Path == "" {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path is required")
 	}
@@ -36,20 +35,25 @@ func (i *PromotePath) ValidateAndSetDefaults() error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "array paths can not be promoted or indexed")
 	}
 
-	if strings.HasPrefix(i.Path, constants.BodyV2ColumnPrefix) || strings.HasPrefix(i.Path, constants.BodyPromotedColumnPrefix) {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "`%s`, `%s` don't add these prefixes to the path", constants.BodyV2ColumnPrefix, constants.BodyPromotedColumnPrefix)
+	if strings.HasPrefix(i.Path, target.BaseColumnPrefix()) || strings.HasPrefix(i.Path, target.PromotedColumnPrefix()) {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "`%s`, `%s` don't add these prefixes to the path", target.BaseColumnPrefix(), target.PromotedColumnPrefix())
 	}
 
-	if !strings.HasPrefix(i.Path, telemetrytypes.BodyJSONStringSearchPrefix) {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must start with `body.`")
+	if target.RequiredPathPrefix != "" {
+		if !strings.HasPrefix(i.Path, target.RequiredPathPrefix) {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must start with `%s`", target.RequiredPathPrefix)
+		}
+		// remove the required prefix from the path
+		i.Path = strings.TrimPrefix(i.Path, target.RequiredPathPrefix)
 	}
-
-	// remove the "body." prefix from the path
-	i.Path = strings.TrimPrefix(i.Path, telemetrytypes.BodyJSONStringSearchPrefix)
 
 	isCardinal := keycheck.IsCardinal(i.Path)
 	if isCardinal {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cardinal paths can not be promoted or indexed")
+	}
+
+	if len(i.Indexes) > 0 && !target.IndexesSupported {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "indexes are not supported for %s %s", target.Entry.Signal.StringValue(), target.Entry.FieldContext.StringValue())
 	}
 
 	for idx, index := range i.Indexes {
