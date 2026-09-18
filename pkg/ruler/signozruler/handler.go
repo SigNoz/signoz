@@ -43,6 +43,29 @@ func (handler *handler) ListRules(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, view)
 }
 
+func (handler *handler) ListRulesV3(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
+
+	params := new(ruletypes.ListRulesParams)
+	if err := binding.Query.BindQuery(req.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+	if err := params.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	listableRules, err := handler.ruler.ListRules(ctx, params)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, listableRules)
+}
+
 func (handler *handler) GetRuleByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()

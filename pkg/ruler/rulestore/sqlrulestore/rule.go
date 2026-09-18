@@ -3,6 +3,7 @@ package sqlrulestore
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"slices"
 
@@ -87,6 +88,46 @@ func (r *rule) DeleteRule(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	}
 
 	return nil
+}
+
+func (r *rule) GetStoredRulesMatching(ctx context.Context, orgID string, query string) ([]*ruletypes.StorableRule, error) {
+	compiled, err := Compile(query, r.sqlstore.Formatter())
+	if err != nil {
+		return nil, err
+	}
+
+	rules := make([]*ruletypes.StorableRule, 0)
+	q := r.sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&rules).
+		Where("org_id = ?", orgID)
+	if !compiled.IsEmpty() {
+		q = q.Where(compiled.SQL, compiled.Args...)
+	}
+	if err := q.Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return rules, nil
+}
+
+func (r *rule) GetStoredRuleLabels(ctx context.Context, orgID string) ([]string, error) {
+	labelsExpression := string(r.sqlstore.Formatter().JSONExtractString("rule.data", "$.labels"))
+
+	labels := make([]string, 0)
+	err := r.sqlstore.
+		BunDB().
+		NewSelect().
+		Model((*ruletypes.StorableRule)(nil)).
+		ColumnExpr(fmt.Sprintf("COALESCE(%s, '')", labelsExpression)).
+		Where("org_id = ?", orgID).
+		Scan(ctx, &labels)
+	if err != nil {
+		return nil, err
+	}
+
+	return labels, nil
 }
 
 func (r *rule) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.StorableRule, error) {

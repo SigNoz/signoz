@@ -15,10 +15,26 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		ID:                  "ListRules",
 		Tags:                []string{"rules"},
 		Summary:             "List alert rules",
-		Description:         "This endpoint lists all alert rules with their current evaluation state",
+		Description:         "This endpoint lists all alert rules with their current evaluation state. Deprecated: use ListRulesV3, which supports filtering, sorting and pagination.",
 		Response:            make([]*ruletypes.Rule, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
+		Deprecated:          true,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v3/rules", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.ListRulesV3), handler.OpenAPIDef{
+		ID:                  "ListRulesV3",
+		Tags:                []string{"rules"},
+		Summary:             "List alert rules (v3)",
+		Description:         "Returns a page of alert rules with their current evaluation state, trimmed to the fields the list page renders. Supports a filter DSL (`query`), a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). The response also carries the org's label pairs and the reserved filter keys for building filter suggestions.",
+		RequestQuery:        new(ruletypes.ListRulesParams),
+		Response:            new(ruletypes.ListableRules),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
