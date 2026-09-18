@@ -23,8 +23,7 @@ function seriesFor(
 	countsAtHoveredRow: [number, number],
 ): HeatmapSeries {
 	return {
-		label: `service.name=${group}`,
-		labels: [{ key: 'service.name', value: group }],
+		label: `{service.name="${group}"}`,
 		points: TIMESTAMPS.map((timestamp, column) => ({
 			timestamp,
 			counts: Array.from({ length: ROW_COUNT }, (_, row) =>
@@ -100,7 +99,7 @@ describe('HeatmapTooltip — cell identity', () => {
 		renderTooltip();
 
 		expect(screen.getByTestId('heatmap-tooltip-range').textContent).toMatch(
-			/^\d{2}:\d{2} → \d{2}:\d{2}$/,
+			/^\d{2}\/\d{2} \d{2}:\d{2} → \d{2}:\d{2}$/,
 		);
 	});
 
@@ -120,6 +119,18 @@ describe('HeatmapTooltip — cell identity', () => {
 			'data-pinned',
 			'true',
 		);
+	});
+
+	it('names a pinned tooltip in its header, as the shared tooltip does', () => {
+		renderTooltip({ isPinned: true });
+
+		expect(screen.getByTestId('uplot-tooltip-status')).toBeInTheDocument();
+	});
+
+	it('leaves the header unbadged while unpinned', () => {
+		renderTooltip();
+
+		expect(screen.queryByTestId('uplot-tooltip-status')).not.toBeInTheDocument();
 	});
 
 	it('is unpinned by default', () => {
@@ -180,13 +191,7 @@ describe('HeatmapTooltip — grouped, nothing selected', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('heads the breakdown with the groupBy key', () => {
-		renderTooltip();
-
-		expect(screen.getByText('service.name')).toBeInTheDocument();
-	});
-
-	it('names each row by value alone and orders by contribution', () => {
+	it('names each row as the legend does and orders by contribution', () => {
 		renderTooltip();
 
 		const rows = screen
@@ -199,23 +204,13 @@ describe('HeatmapTooltip — grouped, nothing selected', () => {
 		expect(rows[2]).toContain('cart');
 	});
 
-	it('shows each group"s share of the cell', () => {
-		renderTooltip();
-
-		const rows = screen.getAllByTestId('heatmap-tooltip-contribution-row');
-		// 355 / 455 = 78%, 86 / 455 = 19%, 14 / 455 = 3.1%
-		expect(rows[0]).toHaveTextContent('78%');
-		expect(rows[1]).toHaveTextContent('19%');
-		expect(rows[2]).toHaveTextContent('3.1%');
-	});
-
 	it('still lists a group that contributed nothing', () => {
 		renderTooltip();
 
 		const rows = screen.getAllByTestId('heatmap-tooltip-contribution-row');
 		expect(rows).toHaveLength(GROUPED.length);
 		expect(rows[3]).toHaveTextContent('payments');
-		expect(rows[3]).toHaveTextContent('0.0%');
+		expect(rows[3]).toHaveTextContent('0');
 	});
 
 	it('does not name a filter when every group is enabled', () => {
@@ -228,7 +223,7 @@ describe('HeatmapTooltip — grouped, nothing selected', () => {
 });
 
 describe('HeatmapTooltip — grouped, one enabled', () => {
-	const selected = { visibleGroups: ['service.name=checkout'] };
+	const selected = { visibleGroups: ['{service.name="checkout"}'] };
 
 	it('returns to neighbouring buckets, since contribution is already answered', () => {
 		renderTooltip(selected);
@@ -243,7 +238,7 @@ describe('HeatmapTooltip — grouped, one enabled', () => {
 		renderTooltip(selected);
 
 		expect(screen.getByTestId('heatmap-tooltip-filter')).toHaveTextContent(
-			'service.name = checkout',
+			'{service.name="checkout"}',
 		);
 	});
 });

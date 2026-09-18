@@ -7,28 +7,6 @@ const EMPTY_GRID: HeatmapGrid = {
 	counts: [],
 };
 
-/**
- * Highest single-cell count each group reaches. Read against the same domain the
- * colour bar uses, this is where a group sits on that bar.
- */
-export function resolveGroupPeaks(
-	series: HeatmapSeries[],
-): Map<string, number> {
-	const peaks = new Map<string, number>();
-	series.forEach((entry) => {
-		let peak = 0;
-		entry.points.forEach((point) =>
-			point.counts.forEach((count) => {
-				if (count !== null && count > peak) {
-					peak = count;
-				}
-			}),
-		);
-		peaks.set(entry.label, peak);
-	});
-	return peaks;
-}
-
 /** Groups the legend currently has enabled. `undefined` means all of them. */
 function resolveVisible(
 	series: HeatmapSeries[],

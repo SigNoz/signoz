@@ -7,6 +7,7 @@ import {
 import { useTimezone } from 'providers/Timezone';
 
 import { HeatmapTooltipProps } from '../../../types';
+import TooltipPinnedBadge from '../TooltipPinnedBadge/TooltipPinnedBadge';
 import HeatmapBucketList from './HeatmapBucketList';
 import HeatmapContributionList from './HeatmapContributionList';
 import {
@@ -15,8 +16,6 @@ import {
 	formatBucketLabel,
 	formatColumnRange,
 	formatCount,
-	formatGroupFilter,
-	resolveGroupByLabel,
 	resolveTooltipBody,
 } from './heatmapTooltipContent';
 import { HeatmapTooltipBody } from './types';
@@ -120,7 +119,7 @@ export default function HeatmapTooltip({
 	// A single enabled group out of several means the legend has isolated it.
 	const isolated =
 		series.length > 1 && visible.length === 1 ? visible[0] : undefined;
-	const filterLabel = formatGroupFilter(isolated);
+	const filterLabel = isolated?.label ?? '';
 
 	return (
 		<div
@@ -137,17 +136,19 @@ export default function HeatmapTooltip({
 							timezone: resolvedTimezone,
 						})}
 					</span>
-					{filterLabel && (
-						<span
-							className={Styles.filter}
-							style={{ color: groupColor }}
-							data-testid="heatmap-tooltip-filter"
-						>
-							<span className={Styles.filterMarker} />
-							<span className={Styles.filterLabel}>{filterLabel}</span>
-						</span>
-					)}
+					{isPinned && <TooltipPinnedBadge />}
 				</div>
+
+				{filterLabel && (
+					<div
+						className={Styles.filter}
+						style={{ color: groupColor }}
+						data-testid="heatmap-tooltip-filter"
+					>
+						<span className={Styles.filterMarker} />
+						<span className={Styles.filterLabel}>{filterLabel}</span>
+					</div>
+				)}
 
 				<div className={Styles.title}>
 					<span className={Styles.titleBucket} data-testid="heatmap-tooltip-bucket">
@@ -158,6 +159,7 @@ export default function HeatmapTooltip({
 							decimalPrecision,
 						})}
 					</span>
+					<span className={Styles.titleSeparator} />
 					<span className={Styles.titleCount} data-testid="heatmap-tooltip-count">
 						{formatCount(cell.count)}
 					</span>
@@ -167,10 +169,7 @@ export default function HeatmapTooltip({
 			<span className={Styles.divider} data-testid="heatmap-tooltip-divider" />
 
 			{body === HeatmapTooltipBody.Contribution ? (
-				<HeatmapContributionList
-					rows={contributionRows}
-					groupByLabel={resolveGroupByLabel(series)}
-				/>
+				<HeatmapContributionList rows={contributionRows} />
 			) : (
 				<HeatmapBucketList rows={bucketRows} />
 			)}
