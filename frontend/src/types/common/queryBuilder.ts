@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { Format } from 'constants/formats/types';
@@ -21,6 +22,15 @@ export enum DataSource {
 	TRACES = 'traces',
 	LOGS = 'logs',
 }
+
+export const DATA_SOURCE_TO_SIGNAL: Record<
+	DataSource,
+	TelemetrytypesSignalDTO
+> = {
+	[DataSource.METRICS]: TelemetrytypesSignalDTO.metrics,
+	[DataSource.TRACES]: TelemetrytypesSignalDTO.traces,
+	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
+};
 
 export enum StringOperators {
 	NOOP = 'noop',

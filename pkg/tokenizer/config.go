@@ -69,7 +69,7 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
-		Provider: "jwt",
+		Provider: "opaque",
 		Opaque: OpaqueConfig{
 			GC: GCConfig{
 				Interval: 1 * time.Hour, // 1 hour
@@ -116,6 +116,11 @@ func (c Config) Validate() error {
 	// Ensure that rotation duration is smaller than rotation interval
 	if c.Rotation.Duration >= c.Rotation.Interval {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "rotation::duration must be smaller than rotation::interval")
+	}
+
+	// Ensure that the jwt secret is set when the provider is jwt, an empty secret signs and verifies tokens with an empty key
+	if c.Provider == "jwt" && c.JWT.Secret == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jwt::secret must be set when provider is jwt, without a JWT secret, user sessions are vulnerable to tampering and unauthorized access")
 	}
 
 	return nil
