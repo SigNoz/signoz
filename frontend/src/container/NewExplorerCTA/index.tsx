@@ -15,11 +15,9 @@ function NewExplorerCTA(): JSX.Element | null {
 	const location = useLocation();
 	const { safeNavigate } = useSafeNavigate();
 
-	const isTraceOrLogsExplorerPage = useMemo(
+	const isTracesExplorerPage = useMemo(
 		() =>
-			location.pathname === ROUTES.LOGS_EXPLORER ||
 			location.pathname === ROUTES.TRACE ||
-			location.pathname === ROUTES.OLD_LOGS_EXPLORER ||
 			location.pathname === ROUTES.TRACES_EXPLORER,
 		[location.pathname],
 	);
@@ -27,12 +25,8 @@ function NewExplorerCTA(): JSX.Element | null {
 	const onClickHandler = useCallback(
 		(e?: React.MouseEvent): void => {
 			let targetPath: string;
-			if (location.pathname === ROUTES.LOGS_EXPLORER) {
-				targetPath = ROUTES.OLD_LOGS_EXPLORER;
-			} else if (location.pathname === ROUTES.TRACE) {
+			if (location.pathname === ROUTES.TRACE) {
 				targetPath = ROUTES.TRACES_EXPLORER;
-			} else if (location.pathname === ROUTES.OLD_LOGS_EXPLORER) {
-				targetPath = ROUTES.LOGS_EXPLORER;
 			} else if (location.pathname === ROUTES.TRACES_EXPLORER) {
 				targetPath = ROUTES.TRACE;
 			} else {
@@ -58,15 +52,11 @@ function NewExplorerCTA(): JSX.Element | null {
 		[location.pathname, onClickHandler],
 	);
 
-	if (!isTraceOrLogsExplorerPage) {
+	if (!isTracesExplorerPage) {
 		return null;
 	}
 
 	if (location.pathname === ROUTES.TRACES_EXPLORER) {
-		return button;
-	}
-
-	if (location.pathname === ROUTES.LOGS_EXPLORER) {
 		return button;
 	}
 

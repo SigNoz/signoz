@@ -32,7 +32,6 @@ import {
 	MessagingQueuesMainPage,
 	MeterExplorerPage,
 	MetricsExplorer,
-	OldLogsExplorer,
 	OnboardingV2,
 	OrgOnboarding,
 	PasswordReset,
@@ -306,13 +305,6 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: LogsExplorer,
 		key: 'LOGS_EXPLORER',
-		isPrivate: true,
-	},
-	{
-		path: ROUTES.OLD_LOGS_EXPLORER,
-		exact: true,
-		component: OldLogsExplorer,
-		key: 'OLD_LOGS_EXPLORER',
 		isPrivate: true,
 	},
 	{
