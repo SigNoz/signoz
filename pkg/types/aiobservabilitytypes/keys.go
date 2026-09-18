@@ -15,6 +15,7 @@ const (
 	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
 	GenAIUsageCacheReadInputTokens     = "gen_ai.usage.cache_read.input_tokens"
 	GenAIUsageCacheCreationInputTokens = "gen_ai.usage.cache_creation.input_tokens"
+	GenAIUsageReasoningOutputTokens    = "gen_ai.usage.reasoning.output_tokens"
 
 	GenAIInputMessages  = "gen_ai.input.messages"
 	GenAIOutputMessages = "gen_ai.output.messages"

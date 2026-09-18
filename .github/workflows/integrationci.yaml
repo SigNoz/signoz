@@ -67,6 +67,7 @@ jobs:
           - semconvfamilies
           - serviceaccount
           - spanmapper
+          - tracedetail
           - querier_json_body
           - querier_skip_resource_fingerprint
           - ttl

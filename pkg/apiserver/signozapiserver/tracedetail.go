@@ -10,6 +10,23 @@ import (
 )
 
 func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
+	if err := router.Handle("/api/v1/traces/{traceID}/summary", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.traceDetailHandler.GetTraceSummary),
+		handler.OpenAPIDef{
+			ID:                  "GetTraceSummary",
+			Tags:                []string{"tracedetail"},
+			Summary:             "Get summary for a trace",
+			Description:         "Returns the trace-level fields of the waterfall (time range, root, span counts, missing spans) and, when the trace has gen_ai spans, its token and cost totals. Computed in one aggregate query.",
+			Response:            new(spantypes.GettableTraceSummary),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusNotFound},
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v4/traces/{traceID}/waterfall", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.traceDetailHandler.GetWaterfallV4),
 		handler.OpenAPIDef{
