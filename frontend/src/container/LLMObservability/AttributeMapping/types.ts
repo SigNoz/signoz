@@ -17,14 +17,7 @@ export type MapperOperationValue = SpantypesSpanMapperOperationDTO;
 export const MapperOrigin = SpantypesSpanMapperOriginDTO;
 export type MapperOriginValue = SpantypesSpanMapperOriginDTO;
 
-// One condition substring. Shipped (system) keys are read-only apart from
-// `enabled`; user keys are fully editable.
-export type ConditionKey = Omit<
-	SpantypesSpanMapperGroupConditionKeyDTO,
-	'origin'
-> & {
-	origin: MapperOriginValue;
-};
+export type ConditionKey = SpantypesSpanMapperGroupConditionKeyDTO;
 
 export type MapperDraftMode = 'add' | 'edit';
 
