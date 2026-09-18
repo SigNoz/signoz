@@ -6,6 +6,7 @@ import {
 import {
 	buildQueryRangeRequest,
 	extractLegendMap,
+	extractQueryNames,
 	getBarStepIntervalSeconds,
 	hasRunnableQueries,
 	toQueryEnvelopes,
@@ -359,6 +360,35 @@ describe('extractLegendMap', () => {
 			]),
 		);
 		expect(legendMap).toStrictEqual({ A: 'CPU {{host}}', B: '', F1: 'sum' });
+	});
+});
+
+describe('extractQueryNames', () => {
+	it('keeps the order the panel defines, formulas included', () => {
+		expect(
+			extractQueryNames(
+				compositeQuery([
+					{ type: 'builder_query', spec: { name: 'A' } },
+					{ type: 'builder_formula', spec: { name: 'F1' } },
+					{ type: 'builder_query', spec: { name: 'B' } },
+				]),
+			),
+		).toStrictEqual(['A', 'F1', 'B']);
+	});
+
+	it('drops an envelope with no name', () => {
+		expect(
+			extractQueryNames(
+				compositeQuery([
+					{ type: 'builder_query', spec: { name: 'A' } },
+					{ type: 'clickhouse_sql', spec: { query: 'SELECT 1' } },
+				]),
+			),
+		).toStrictEqual(['A']);
+	});
+
+	it('is empty for a panel with no queries', () => {
+		expect(extractQueryNames([])).toStrictEqual([]);
 	});
 });
 

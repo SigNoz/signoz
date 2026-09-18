@@ -301,6 +301,7 @@ type Legend struct {
 	Position     LegendPosition    `json:"position"`
 	Mode         LegendMode        `json:"mode"`
 	CustomColors map[string]string `json:"customColors"`
+	SeriesOrder  SeriesOrder       `json:"seriesOrder"`
 }
 
 type ThresholdWithLabel struct {
@@ -449,6 +450,52 @@ func (m *LegendMode) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend mode %q: must be `list` or `table`", v)
+	}
+}
+
+// SeriesOrder decides the order the legend lists series in, and with it the
+// order they are drawn. `mean_desc` lets the data decide; `definition` pins the
+// order to the panel's own query list, so a stacked chart's segments stay in
+// the same place from one panel and one refresh to the next.
+//
+// It lives on Legend because that is where per-series presentation
+// (CustomColors) already lives. Legend is shared with Pie and Histogram, where
+// the field is inert: those renderers do not read it, and the editor does not
+// expose it for them.
+type SeriesOrder struct{ valuer.String }
+
+var (
+	SeriesOrderMeanDesc   = SeriesOrder{valuer.NewString("mean_desc")} // default
+	SeriesOrderDefinition = SeriesOrder{valuer.NewString("definition")}
+)
+
+func (SeriesOrder) Enum() []any {
+	return []any{SeriesOrderMeanDesc, SeriesOrderDefinition}
+}
+
+func (so SeriesOrder) ValueOrDefault() string {
+	if so.IsZero() {
+		return SeriesOrderMeanDesc.StringValue()
+	}
+	return so.StringValue()
+}
+
+func (so SeriesOrder) MarshalJSON() ([]byte, error) {
+	return json.Marshal(so.ValueOrDefault())
+}
+
+func (so *SeriesOrder) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid series order: must be a string, one of `mean_desc` or `definition`")
+	}
+	val := SeriesOrder{valuer.NewString(v)}
+	switch val {
+	case SeriesOrderMeanDesc, SeriesOrderDefinition:
+		*so = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid series order %q: must be `mean_desc` or `definition`", v)
 	}
 }
 

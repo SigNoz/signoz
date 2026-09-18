@@ -41,7 +41,11 @@ func newTestDashboardV2(t *testing.T, orgID valuer.UUID, source Source) *Dashboa
 								FillMode:          FillModeSolid,
 								SpanGaps:          SpanGaps{FillLessThan: "60s"},
 							},
-							Legend: Legend{Position: LegendPositionBottom, Mode: LegendModeList},
+							Legend: Legend{
+								Position:    LegendPositionBottom,
+								Mode:        LegendModeList,
+								SeriesOrder: SeriesOrderMeanDesc,
+							},
 						},
 					},
 					Queries: []Query{

@@ -27,7 +27,7 @@ import { stepClickTimeRange } from '../../utils/drilldown/chartClickTimeRange';
 import { enrichChartClick } from '../../utils/drilldown/enrichChartClick';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
-import { sortSeriesByMeanDesc } from '../../utils/sortSeriesByMean';
+import { sortPanelSeries } from '../../utils/sortPanelSeries';
 
 import { buildTimeSeriesConfig } from './utils/buildConfig';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
@@ -72,13 +72,15 @@ function TimeSeriesPanelRenderer({
 
 	const flatSeries = useMemo(
 		() =>
-			sortSeriesByMeanDesc(
-				flattenTimeSeries(
+			sortPanelSeries({
+				series: flattenTimeSeries(
 					getTimeSeriesResults(data.response),
 					data.legendMap ?? {},
 				),
-			),
-		[data.response, data.legendMap],
+				seriesOrder: spec.legend?.seriesOrder,
+				queries: panel.spec.queries,
+			}),
+		[data.response, data.legendMap, spec.legend?.seriesOrder, panel.spec.queries],
 	);
 
 	const config = useMemo(
@@ -96,6 +98,9 @@ function TimeSeriesPanelRenderer({
 				maxTimeScale,
 				onDragSelect,
 			}),
+		// TooltipPlugin mutates `config` for cursor sync; rebuild on syncMode change
+		// so a fresh instance doesn't inherit stale sync settings (e.g. "No Sync").
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			panelId,
 			spec,
@@ -108,8 +113,6 @@ function TimeSeriesPanelRenderer({
 			minTimeScale,
 			maxTimeScale,
 			onDragSelect,
-			// TooltipPlugin mutates `config` for cursor sync; rebuild on syncMode change
-			// so a fresh instance doesn't inherit stale sync settings (e.g. "No Sync").
 			dashboardPreference?.syncMode,
 		],
 	);

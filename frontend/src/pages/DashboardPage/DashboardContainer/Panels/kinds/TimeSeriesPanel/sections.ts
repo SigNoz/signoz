@@ -14,7 +14,11 @@ export const sections: SectionConfig[] = [
 	{ kind: SectionKind.Axes, controls: { minMax: true, logScale: true } },
 	{
 		kind: SectionKind.Legend,
-		controls: { position: true, colors: resolveTimeSeriesLegendSeries },
+		controls: {
+			position: true,
+			colors: resolveTimeSeriesLegendSeries,
+			seriesOrder: true,
+		},
 	},
 	{
 		kind: SectionKind.ChartAppearance,
