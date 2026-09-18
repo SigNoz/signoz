@@ -75,6 +75,7 @@ function groupDraftOf(
 		attributes: node.attributes,
 		resource: node.resource,
 		enabled: node.enabled,
+		origin: node.origin,
 	};
 }
 
@@ -87,6 +88,7 @@ function mapperDraftOf(
 		fieldContext: node.fieldContext,
 		sources: node.sources,
 		enabled: node.enabled,
+		origin: node.origin,
 	};
 }
 
