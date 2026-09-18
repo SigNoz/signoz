@@ -102,7 +102,20 @@ func (handler *handler) ListChannels(rw http.ResponseWriter, req *http.Request) 
 		channels = make([]*alertmanagertypes.Channel, 0)
 	}
 
-	render.Success(rw, http.StatusOK, channels)
+	// Reads are viewer-scoped, so credentials stay out of the response. Fail
+	// closed: a channel whose data cannot be redacted errors the request
+	// rather than leaking its secrets.
+	redacted := make([]*alertmanagertypes.Channel, 0, len(channels))
+	for _, channel := range channels {
+		rc, err := channel.Redacted()
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		redacted = append(redacted, rc)
+	}
+
+	render.Success(rw, http.StatusOK, redacted)
 }
 
 func (handler *handler) ListAllChannels(rw http.ResponseWriter, req *http.Request) {
@@ -152,7 +165,13 @@ func (handler *handler) GetChannelByID(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	render.Success(rw, http.StatusOK, channel)
+	redacted, err := channel.Redacted()
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, redacted)
 }
 
 func (handler *handler) UpdateChannelByID(rw http.ResponseWriter, req *http.Request) {
@@ -189,6 +208,23 @@ func (handler *handler) UpdateChannelByID(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 	defer req.Body.Close() //nolint:errcheck
+
+	// Reads mask credentials with "<secret>", so a body that round-trips an
+	// edited channel carries the marker in place of real values. Swap the
+	// stored credentials back in before parsing; the parse would otherwise
+	// reject the marker, and persisting it would brick the channel.
+	if alertmanagertypes.HasRedactedSecretMarker(body) {
+		stored, err := handler.alertmanager.GetChannelByID(ctx, claims.OrgID, id)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+		body, err = alertmanagertypes.RestoreRedactedSecrets(body, stored.Data)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+	}
 
 	receiver, err := alertmanagertypes.NewReceiver(string(body))
 	if err != nil {
