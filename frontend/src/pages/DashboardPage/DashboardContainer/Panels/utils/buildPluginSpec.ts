@@ -125,7 +125,7 @@ function isEmptySlice(value: object): boolean {
  * `percent` has no bar equivalent, so it collapses to stacked-on; a stack-mode kind
  * with nothing to carry starts on `normal`.
  */
-function seedStacking(
+function translateStackingForKind(
 	controls: SectionControls[SectionKind.Visualization],
 	old: SectionSpecMap[SectionKind.Visualization] | undefined,
 ): Pick<
@@ -196,7 +196,7 @@ const SECTION_SEEDS: SectionSeeds = {
 					timePreference:
 						old?.timePreference ?? DashboardtypesTimePreferenceDTO.global_time,
 				}),
-				...seedStacking(controls, old),
+				...translateStackingForKind(controls, old),
 				...(controls.fillSpans &&
 					old?.fillSpans !== undefined && { fillSpans: old.fillSpans }),
 			};

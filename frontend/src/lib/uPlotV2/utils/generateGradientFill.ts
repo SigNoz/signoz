@@ -2,7 +2,10 @@ import uPlot from 'uplot';
 
 import {
 	DEFAULT_FILL_OPACITY,
+	GRADIENT_END_STOP,
+	GRADIENT_MID_STOP,
 	GRADIENT_MID_STOP_RATIO,
+	GRADIENT_START_STOP,
 	toAlphaHex,
 } from './fillOpacity';
 
@@ -18,11 +21,11 @@ export function generateGradientFill(
 		0,
 		uPlotInstance.bbox.height,
 	);
-	g.addColorStop(0, `${startColor}${toAlphaHex(opacity)}`);
+	g.addColorStop(GRADIENT_START_STOP, `${startColor}${toAlphaHex(opacity)}`);
 	g.addColorStop(
-		0.6,
+		GRADIENT_MID_STOP,
 		`${startColor}${toAlphaHex(opacity * GRADIENT_MID_STOP_RATIO)}`,
 	);
-	g.addColorStop(1, endColor);
+	g.addColorStop(GRADIENT_END_STOP, endColor);
 	return g;
 }

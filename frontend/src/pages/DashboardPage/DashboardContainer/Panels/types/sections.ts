@@ -1,20 +1,23 @@
 import type {
 	DashboardtypesLinkDTO,
-	DashboardtypesAreaChartAppearanceDTO,
-	DashboardtypesAreaChartVisualizationDTO,
 	DashboardtypesAxesDTO,
-	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesComparisonThresholdDTO,
+	DashboardtypesFillModeDTO,
+	DashboardtypesFillOpacityDTO,
 	DashboardtypesHeaderOptionsDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
+	DashboardtypesLineInterpolationDTO,
+	DashboardtypesLineStyleDTO,
 	DashboardtypesPanelFormattingDTO,
 	DashboardtypesPanelSpecDTO,
+	DashboardtypesSpanGapsDTO,
+	DashboardtypesStackModeDTO,
 	DashboardtypesTableFormattingDTO,
 	DashboardtypesTableThresholdDTO,
 	DashboardtypesTextPresentationDTO,
 	DashboardtypesThresholdWithLabelDTO,
-	DashboardtypesTimeSeriesChartAppearanceDTO,
+	DashboardtypesTimePreferenceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { LegendSeriesResolver } from '../utils/legendSeries';
@@ -89,17 +92,26 @@ export type AnyThreshold =
 export type PanelFormattingSlice = DashboardtypesPanelFormattingDTO &
 	Pick<DashboardtypesTableFormattingDTO, 'columnUnits'>;
 
-// Superset spanning every kind's chart-appearance DTO. Area's `fillMode` is a
-// nominally distinct enum with the same members as TimeSeries', so the TimeSeries one
-// types the shared control.
-export type PanelChartAppearanceSlice =
-	DashboardtypesTimeSeriesChartAppearanceDTO &
-		Pick<DashboardtypesAreaChartAppearanceDTO, 'fillOpacity'>;
+/** Superset spanning every kind's chart-appearance DTO. */
+export interface PanelChartAppearanceSlice {
+	lineStyle?: DashboardtypesLineStyleDTO;
+	lineInterpolation?: DashboardtypesLineInterpolationDTO;
+	/** Area's wire enum is a nominally distinct subset with the same members. */
+	fillMode?: DashboardtypesFillModeDTO;
+	fillOpacity?: DashboardtypesFillOpacityDTO;
+	showPoints?: boolean;
+	spanGaps?: DashboardtypesSpanGapsDTO;
+}
 
-// Superset spanning every kind's visualization DTO. Bar and Area express stacking
-// differently (`stackedBarChart` bool vs `stack` enum); a kind declares exactly one.
-export type PanelVisualizationSlice = DashboardtypesBarChartVisualizationDTO &
-	Pick<DashboardtypesAreaChartVisualizationDTO, 'stack'>;
+/** Superset spanning every kind's visualization DTO. */
+export interface PanelVisualizationSlice {
+	timePreference?: DashboardtypesTimePreferenceDTO;
+	/** Bar stacking; a kind declares this or `stack`, never both. */
+	stackedBarChart?: boolean;
+	/** Area stacking. */
+	stack?: DashboardtypesStackModeDTO;
+	fillSpans?: boolean;
+}
 
 export interface SectionSpecMap {
 	[SectionKind.Formatting]: PanelFormattingSlice; // spec.plugin.spec.formatting

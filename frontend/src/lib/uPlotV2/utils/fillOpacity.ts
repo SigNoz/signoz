@@ -7,6 +7,11 @@ export const DEFAULT_FILL_OPACITY = 0x70 / 255;
 /** Alpha ratio between a gradient's two stops, so it keeps its falloff at any opacity. */
 export const GRADIENT_MID_STOP_RATIO = 0x40 / 0x70;
 
+/** Gradient stop offsets, top to bottom of the plot area. */
+export const GRADIENT_START_STOP = 0;
+export const GRADIENT_MID_STOP = 0.6;
+export const GRADIENT_END_STOP = 1;
+
 /** Clamps into 0–1; missing or non-finite falls back to the default. */
 export function resolveFillOpacity(opacity?: number | null): number {
 	if (typeof opacity !== 'number' || !Number.isFinite(opacity)) {
