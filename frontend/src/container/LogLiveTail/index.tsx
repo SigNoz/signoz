@@ -90,6 +90,13 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 	// This ref depicts thats whether the live tail is played from paused state or not.
 	const liveTailSourceRef = useRef<EventSource>();
 
+	const closeLiveTailSource = useCallback(() => {
+		if (liveTailSourceRef.current) {
+			liveTailSourceRef.current.close();
+			liveTailSourceRef.current = undefined;
+		}
+	}, []);
+
 	useEffect(() => {
 		if (liveTail === 'PLAYING') {
 			const timeStamp = dayjs().subtract(liveTailStartRange, 'minute').valueOf();
@@ -130,10 +137,19 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 		}
 
 		if (liveTail === 'STOPPED') {
-			liveTailSourceRef.current = undefined;
+			closeLiveTailSource();
 		}
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [liveTail, queryString, notifications, dispatch]);
+	}, [liveTail, queryString, notifications, dispatch, closeLiveTailSource]);
+
+	// Close the EventSource when the component unmounts
+	useEffect(
+		() => (): void => {
+			closeLiveTailSource();
+		},
+		[closeLiveTailSource],
+	);
 
 	const handleLiveTailStart = (): void => {
 		handleLiveTail('PLAYING');
@@ -202,9 +218,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 			type: SET_LOADING,
 			payload: false,
 		});
-		if (liveTailSourceRef.current) {
-			liveTailSourceRef.current.close();
-		}
+		closeLiveTailSource();
 	};
 
 	return (
