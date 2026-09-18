@@ -4,6 +4,7 @@ import {
 	DEFAULT_COLOR_STEPS,
 	DEFAULT_HEATMAP_COLORS,
 	getMaxCount,
+	getSmallestPositiveCount,
 	MAX_COLOR_STEPS,
 	MIN_OPACITY_ALPHA,
 	normalizeCount,
@@ -33,6 +34,21 @@ describe('getMaxCount', () => {
 	});
 });
 
+describe('getSmallestPositiveCount', () => {
+	it('ignores nulls, zeros and non-finite counts', () => {
+		expect(
+			getSmallestPositiveCount([
+				[0, null, 4],
+				[Number.NaN, 2, -3],
+			]),
+		).toBe(2);
+	});
+
+	it('returns null when nothing is above zero', () => {
+		expect(getSmallestPositiveCount([[0, null]])).toBeNull();
+	});
+});
+
 describe('resolveCountDomain', () => {
 	it('floors at 0 on auto so a zero count sits at the bottom of the scale', () => {
 		expect(
@@ -40,6 +56,7 @@ describe('resolveCountDomain', () => {
 		).toStrictEqual({
 			min: 0,
 			max: 20,
+			logFloor: 5,
 		});
 	});
 
@@ -49,6 +66,7 @@ describe('resolveCountDomain', () => {
 		).toStrictEqual({
 			min: 10,
 			max: 100,
+			logFloor: 5,
 		});
 	});
 
@@ -58,12 +76,32 @@ describe('resolveCountDomain', () => {
 		).toStrictEqual({
 			min: 50,
 			max: 50,
+			logFloor: 5,
 		});
+	});
+
+	it('takes the log floor from the smallest positive count, below 1 included', () => {
+		expect(
+			resolveCountDomain({ minCount: null, maxCount: null }, [[0, 0.02, 0.8]])
+				.logFloor,
+		).toBeCloseTo(0.02, 6);
+	});
+
+	it('keeps the log floor within MAX_LOG_DECADES of the max', () => {
+		expect(
+			resolveCountDomain({ minCount: null, maxCount: null }, [[1, 1e9]]).logFloor,
+		).toBe(1e3);
+	});
+
+	it('falls back to a floor of 1 for a grid without a positive count', () => {
+		expect(
+			resolveCountDomain({ minCount: null, maxCount: null }, [[null, 0]]).logFloor,
+		).toBe(1);
 	});
 });
 
 describe('normalizeCount', () => {
-	const domain = { min: 0, max: 1000 };
+	const domain = { min: 0, max: 1000, logFloor: 1 };
 
 	it('spreads low counts on a log scale where a linear one washes them out', () => {
 		const log = (count: number): number =>
@@ -99,7 +137,7 @@ describe('normalizeCount', () => {
 		expect(
 			normalizeCount({
 				count: 250,
-				domain: { min: 0, max: 1000 },
+				domain: { min: 0, max: 1000, logFloor: 1 },
 				scale: HeatmapColorScale.Sqrt,
 			}),
 		).toBeCloseTo(0.5, 6);
@@ -115,20 +153,43 @@ describe('normalizeCount', () => {
 		expect(
 			normalizeCount({
 				count: 7,
-				domain: { min: 7, max: 7 },
+				domain: { min: 7, max: 7, logFloor: 1 },
 				scale: HeatmapColorScale.Log,
 			}),
 		).toBe(0);
 	});
 
-	it('handles a log domain whose min and max share a decade floor', () => {
+	it('spreads a log domain that sits entirely below a count of 1', () => {
+		const fractional = { min: 0, max: 1, logFloor: 0.001 };
+		const log = (count: number): number =>
+			normalizeCount({
+				count,
+				domain: fractional,
+				scale: HeatmapColorScale.Log,
+			});
+
+		expect(log(0.001)).toBe(0);
+		expect(log(0.1)).toBeCloseTo(2 / 3, 5);
+		expect(log(1)).toBeCloseTo(1, 6);
+	});
+
+	it('reads a log scale linearly when the floor reaches the top of the domain', () => {
+		const domainAtFloor = { min: 0, max: 1, logFloor: 1 };
+
 		expect(
 			normalizeCount({
 				count: 1,
-				domain: { min: 0, max: 1 },
+				domain: domainAtFloor,
 				scale: HeatmapColorScale.Log,
 			}),
-		).toBe(0);
+		).toBe(1);
+		expect(
+			normalizeCount({
+				count: 0.5,
+				domain: domainAtFloor,
+				scale: HeatmapColorScale.Log,
+			}),
+		).toBe(0.5);
 	});
 });
 
@@ -151,7 +212,7 @@ describe('createHeatmapColorResolver', () => {
 	): ReturnType<typeof createHeatmapColorResolver> =>
 		createHeatmapColorResolver({
 			options: { ...DEFAULT_HEATMAP_COLORS, ...overrides },
-			domain: { min: 0, max: 1000 },
+			domain: { min: 0, max: 1000, logFloor: 1 },
 			isDarkMode,
 			seriesColor: SERIES_COLOR,
 		});
@@ -202,6 +263,6 @@ describe('createHeatmapColorResolver', () => {
 	});
 
 	it('reports the domain it applied', () => {
-		expect(build().domain).toStrictEqual({ min: 0, max: 1000 });
+		expect(build().domain).toStrictEqual({ min: 0, max: 1000, logFloor: 1 });
 	});
 });
