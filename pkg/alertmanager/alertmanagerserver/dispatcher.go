@@ -37,6 +37,7 @@ type Dispatcher struct {
 	aggrGroupsPerRoute map[*dispatch.Route]map[model.Fingerprint]*aggrGroup
 	aggrGroupsNum      int
 
+	ready  chan struct{}
 	done   chan struct{}
 	ctx    context.Context
 	cancel func()
@@ -79,6 +80,7 @@ func NewDispatcher(
 		limits:              lim,
 		notificationManager: n,
 		orgID:               orgID,
+		ready:               make(chan struct{}),
 	}
 	return disp
 }
@@ -95,7 +97,9 @@ func (d *Dispatcher) Run() {
 	d.ctx, d.cancel = context.WithCancel(context.Background())
 	d.mtx.Unlock()
 
-	d.run(d.alerts.Subscribe(fmt.Sprintf("dispatcher-%s", d.orgID)))
+	it := d.alerts.Subscribe(fmt.Sprintf("dispatcher-%s", d.orgID))
+	close(d.ready)
+	d.run(it)
 	close(d.done)
 }
 
