@@ -5,8 +5,6 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { FeatureKeys } from 'constants/features';
-import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { NuqsAdapter } from 'nuqs/adapters/react';
 import { AppContext } from 'providers/App/App';
@@ -19,16 +17,10 @@ import {
 } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import configureStore from 'redux-mock-store';
+import { createAppContextMock } from 'tests/fixtures/appContextMock';
 import thunk from 'redux-thunk';
 import store from 'store';
-import {
-	LicenseEvent,
-	LicensePlatform,
-	LicenseState,
-	LicenseStatus,
-} from 'types/api/licensesV3/getActive';
 import { QueryBuilderContextType } from 'types/common/queryBuilder';
-import { ROLES, USER_ROLES } from 'types/roles';
 // import { MemoryRouter as V5MemoryRouter } from 'react-router-dom-v5-compat';
 
 // Mock ResizeObserver
@@ -106,154 +98,13 @@ jest.mock('react-i18next', () => ({
 	}),
 }));
 
-export const defaultFeatureFlags = [
-	{ name: FeatureKeys.SSO, active: true, usage: 0, usage_limit: -1, route: '' },
-	{
-		name: FeatureKeys.USE_SPAN_METRICS,
-		active: false,
-		usage: 0,
-		usage_limit: -1,
-		route: '',
-	},
-	{
-		name: FeatureKeys.GATEWAY,
-		active: true,
-		usage: 0,
-		usage_limit: -1,
-		route: '',
-	},
-	{
-		name: FeatureKeys.PREMIUM_SUPPORT,
-		active: true,
-		usage: 0,
-		usage_limit: -1,
-		route: '',
-	},
-	{
-		name: FeatureKeys.ANOMALY_DETECTION,
-		active: true,
-		usage: 0,
-		usage_limit: -1,
-		route: '',
-	},
-	{
-		name: FeatureKeys.ONBOARDING,
-		active: true,
-		usage: 0,
-		usage_limit: -1,
-		route: '',
-	},
-	{
-		name: FeatureKeys.CHAT_SUPPORT,
-		active: true,
-		usage: 0,
-		usage_limit: -1,
-		route: '',
-	},
-];
+export { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
 
 export function getAppContextMock(
 	role: string,
 	appContextOverrides?: Partial<IAppContext>,
 ): IAppContext {
-	return {
-		activeLicense: {
-			id: 'test-license-id',
-			eventQueue: {
-				createdAt: '0',
-				event: LicenseEvent.NO_EVENT,
-				scheduledAt: '0',
-				status: '',
-				updatedAt: '0',
-			},
-			state: LicenseState.ACTIVATED,
-			status: LicenseStatus.VALID,
-			platform: LicensePlatform.CLOUD,
-			createdAt: '0',
-			plan: {
-				id: '0',
-				createdAt: '0',
-				description: '',
-				isActive: true,
-				name: '',
-				updatedAt: '0',
-			},
-			freeUntil: '0',
-			updatedAt: '0',
-			validFrom: 0,
-			validUntil: 0,
-		},
-		trialInfo: {
-			trialStart: -1,
-			trialEnd: -1,
-			onTrial: false,
-			workSpaceBlock: false,
-			trialConvertedToSubscription: false,
-			gracePeriodEnd: -1,
-		},
-		isFetchingActiveLicense: false,
-		activeLicenseFetchError: null,
-		changelog: null,
-		user: {
-			accessJwt: 'some-token',
-			refreshJwt: 'some-refresh-token',
-			id: 'some-user-id',
-			email: 'does-not-matter@signoz.io',
-			displayName: 'John Doe',
-			createdAt: 1732544623,
-			organization: 'Nightswatch',
-			orgId: 'does-not-matter-id',
-			role: role as ROLES,
-		},
-		org: [
-			{
-				createdAt: 0,
-				id: 'does-not-matter-id',
-				displayName: 'Pentagon',
-			},
-		],
-		hasEditPermission: role === USER_ROLES.ADMIN || role === USER_ROLES.EDITOR,
-		isFetchingUser: false,
-		userFetchError: null,
-		featureFlags: defaultFeatureFlags,
-		isFetchingFeatureFlags: false,
-		featureFlagsFetchError: null,
-		hostsData: null,
-		isFetchingHosts: false,
-		hostsFetchError: null,
-		orgPreferences: [
-			{
-				name: ORG_PREFERENCES.ORG_ONBOARDING,
-				description: 'Organisation Onboarding',
-				valueType: 'boolean',
-				defaultValue: false,
-				allowedValues: ['true', 'false'],
-				allowedScopes: ['org'],
-				value: false,
-			},
-		],
-		userPreferences: [],
-		updateUserPreferenceInContext: jest.fn(),
-		isFetchingOrgPreferences: false,
-		isFetchingUserPreferences: false,
-		orgPreferencesFetchError: null,
-		isLoggedIn: true,
-		isPreflightLoading: false,
-		showChangelogModal: false,
-		updateUser: jest.fn(),
-		updateOrg: jest.fn(),
-		updateOrgPreferences: jest.fn(),
-		activeLicenseRefetch: jest.fn(),
-		updateChangelog: jest.fn(),
-		toggleChangelogModal: jest.fn(),
-		versionData: {
-			version: '1.0.0',
-			ee: 'Y',
-			setupCompleted: true,
-		},
-
-		...appContextOverrides,
-	};
+	return createAppContextMock(role, appContextOverrides, () => jest.fn());
 }
 
 export function AllTheProviders({

@@ -542,3 +542,42 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 		})
 	}
 }
+
+// The HTTP auth scheme is case-insensitive (RFC 7235) and Alertmanager sends
+// the stored spelling verbatim, so a hand-written receiver may carry any casing.
+func TestChannelToPostableChannelReadsWebhookBearerSchemeCaseInsensitively(t *testing.T) {
+	sendResolved := config.DefaultWebhookConfig.VSendResolved
+
+	testCases := []struct {
+		name                string
+		storedChannelData   string
+		expectedWebhookSpec *ChannelWebhookConfig
+	}{
+		{
+			name:                "CanonicalBearer",
+			storedChannelData:   `{"name":"hook","webhook_configs":[{"send_resolved":true,"url":"https://a","http_config":{"authorization":{"type":"Bearer","credentials":"tok"},"follow_redirects":true,"enable_http2":true}}]}`,
+			expectedWebhookSpec: &ChannelWebhookConfig{SendResolved: &sendResolved, URL: "https://a", BearerToken: "tok"},
+		},
+		{
+			name:                "LowercaseBearer",
+			storedChannelData:   `{"name":"hook","webhook_configs":[{"send_resolved":true,"url":"https://b","http_config":{"authorization":{"type":"bearer","credentials":"lower"},"follow_redirects":true,"enable_http2":true}}]}`,
+			expectedWebhookSpec: &ChannelWebhookConfig{SendResolved: &sendResolved, URL: "https://b", BearerToken: "lower"},
+		},
+		{
+			name:                "UppercaseBearer",
+			storedChannelData:   `{"name":"hook","webhook_configs":[{"send_resolved":true,"url":"https://c","http_config":{"authorization":{"type":"BEARER","credentials":"upper"},"follow_redirects":true,"enable_http2":true}}]}`,
+			expectedWebhookSpec: &ChannelWebhookConfig{SendResolved: &sendResolved, URL: "https://c", BearerToken: "upper"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			channel := Channel{DisplayName: "hook", Data: testCase.storedChannelData}
+
+			postable, err := channel.toPostableNotificationChannel()
+			require.NoError(t, err)
+			assert.Equal(t, ChannelKindWebhook, postable.Config.Kind)
+			assert.Equal(t, testCase.expectedWebhookSpec, postable.Config.Spec)
+		})
+	}
+}

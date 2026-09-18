@@ -78,6 +78,40 @@ func NewRegistry(ctx context.Context, logger *slog.Logger, services ...NamedServ
 	}, nil
 }
 
+// Add registers additional services into the registry. It must be called before Start.
+func (registry *Registry) Add(ctx context.Context, services ...NamedService) error {
+	added := make([]*serviceWithState, 0, len(services))
+	for _, s := range services {
+		if _, ok := registry.servicesByName[s.Name()]; ok {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidRegistry, "cannot add service, duplicate service name %q", s.Name())
+		}
+		added = append(added, newServiceWithState(s))
+	}
+
+	for _, ss := range added {
+		registry.services = append(registry.services, ss)
+		registry.servicesByName[ss.service.Name()] = ss
+	}
+
+	for _, ss := range added {
+		for _, dep := range ss.service.DependsOn() {
+			if dep == ss.service.Name() {
+				registry.logger.ErrorContext(ctx, "ignoring self-dependency", slog.Any("service", ss.service.Name()))
+				continue
+			}
+
+			if _, ok := registry.servicesByName[dep]; !ok {
+				registry.logger.ErrorContext(ctx, "ignoring unknown dependency", slog.Any("service", ss.service.Name()), slog.Any("dependency", dep))
+				continue
+			}
+
+			ss.dependsOn = append(ss.dependsOn, dep)
+		}
+	}
+
+	return detectCyclicDeps(registry.services)
+}
+
 func (registry *Registry) Start(ctx context.Context) {
 	for _, ss := range registry.services {
 		go func(ss *serviceWithState) {

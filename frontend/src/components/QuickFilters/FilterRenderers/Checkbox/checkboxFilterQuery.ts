@@ -23,7 +23,12 @@ export const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in', 'nin'];
 // The operators this algebra emits, and so the only ones it may rewrite out of an
 // expression. A hand-written clause on the same key (CONTAINS, EXISTS, a range) is
 // none of its business and has to survive a toggle.
-const MANAGED_OPERATORS = [OPERATORS['='], OPERATORS['!='], 'in', 'not in'];
+export const MANAGED_OPERATORS = [
+	OPERATORS['='],
+	OPERATORS['!='],
+	'in',
+	'not in',
+];
 
 /**
  * Drops this filter's own clauses for `key` from `expression`, leaving every other
@@ -31,7 +36,7 @@ const MANAGED_OPERATORS = [OPERATORS['='], OPERATORS['!='], 'in', 'not in'];
  * prefixes, since `isKeyMatch` treats `service.name` and `resource.service.name` as
  * the same filter but expression rewrites match keys literally.
  */
-function removeManagedClauses(expression: string, key: string): string {
+export function removeManagedClauses(expression: string, key: string): string {
 	return removeKeysFromExpression(
 		expression,
 		getKeySpellings(key),
@@ -122,49 +127,6 @@ export function deriveCheckboxState({
 		filterState = setDefaultValues(attributeValues, true);
 	}
 	return filterState;
-}
-
-/**
- * Returns a new query with this filter's clauses for the attribute key removed from
- * the active query, both from the structured filter items and the raw expression.
- */
-export function clearFilterFromQuery({
-	currentQuery,
-	filter,
-	activeQueryIndex,
-}: {
-	currentQuery: Query;
-	filter: IQuickFiltersConfig;
-	activeQueryIndex: number;
-}): Query {
-	return {
-		...currentQuery,
-		builder: {
-			...currentQuery.builder,
-			queryData: currentQuery.builder.queryData.map((item, idx) => {
-				if (idx !== activeQueryIndex) {
-					return item;
-				}
-				return {
-					...item,
-					filter: {
-						expression: removeManagedClauses(
-							item.filter?.expression ?? '',
-							filter.attributeKey.key,
-						),
-					},
-					filters: {
-						...item.filters,
-						items:
-							item.filters?.items?.filter(
-								(fil) => !isKeyMatch(fil.key?.key, filter.attributeKey.key),
-							) || [],
-						op: item.filters?.op || 'AND',
-					},
-				};
-			}),
-		},
-	};
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity

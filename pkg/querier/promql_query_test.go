@@ -13,7 +13,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -449,18 +448,6 @@ func TestQuotedMetricOutsideBracesPattern(t *testing.T) {
 	}
 }
 
-// A pinned request must not share cache entries with default serving: a
-// cached default result would satisfy the pin without running the pinned
-// provider.
-func TestFingerprint_PinnedProviderBypassesCache(t *testing.T) {
-	q := &promqlQuery{
-		logger: slog.Default(),
-		query:  qbv5.PromQuery{Query: "up"},
-		opts:   promqlOptions{serve: &prometheustest.Provider{}},
-	}
-	assert.Empty(t, q.Fingerprint())
-}
-
 func TestToResultDropsNonFiniteValues(t *testing.T) {
 	tests := []struct {
 		description        string
@@ -495,7 +482,8 @@ func TestToResultDropsNonFiniteValues(t *testing.T) {
 
 			var mu sync.Mutex
 			var rows, bytes uint64
-			result := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
+			result, err := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
+			require.NoError(t, err)
 
 			tsData, ok := result.Value.(*qbv5.TimeSeriesData)
 			require.True(t, ok)
@@ -526,7 +514,9 @@ func TestToResultDropsSeriesAndBucketLeftEmpty(t *testing.T) {
 
 	var mu sync.Mutex
 	var rows, bytes uint64
-	tsData, ok := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes).Value.(*qbv5.TimeSeriesData)
+	result, err := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
+	require.NoError(t, err)
+	tsData, ok := result.Value.(*qbv5.TimeSeriesData)
 	require.True(t, ok)
 	require.Len(t, tsData.Aggregations, 1)
 	require.Len(t, tsData.Aggregations[0].Series, 1, "the all-NaN series is gone")
@@ -535,7 +525,9 @@ func TestToResultDropsSeriesAndBucketLeftEmpty(t *testing.T) {
 	allNaN := promql.Matrix{
 		{Metric: labels.FromStrings("job_name", "idleJob"), Floats: []promql.FPoint{{T: 1000, F: math.NaN()}}},
 	}
-	tsData, ok = q.toResult(allNaN, nil, time.Now(), &mu, &rows, &bytes).Value.(*qbv5.TimeSeriesData)
+	result, err = q.toResult(allNaN, nil, time.Now(), &mu, &rows, &bytes)
+	require.NoError(t, err)
+	tsData, ok = result.Value.(*qbv5.TimeSeriesData)
 	require.True(t, ok)
 	assert.Empty(t, tsData.Aggregations)
 }

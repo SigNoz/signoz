@@ -162,8 +162,7 @@ func TestStatementBuilder(t *testing.T) {
 		},
 	}
 
-	fm := metricstelemetryschema.NewFieldMapper()
-	cb := metricstelemetryschema.NewConditionBuilder(fm)
+	storage := metricstelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	keys, err := telemetrytypestest.LoadFieldKeysFromJSON("testdata/keys_map.json")
 	if err != nil {
@@ -173,13 +172,12 @@ func TestStatementBuilder(t *testing.T) {
 
 	flagger := flaggertest.New(t)
 
-	metricStmtBuilder := metricsstatementbuilder.NewMetricQueryStatementBuilder(instrumentationtest.New().ToProviderSettings(), mockMetadataStore, fm, cb, flagger)
+	metricStmtBuilder := metricsstatementbuilder.NewMetricQueryStatementBuilder(instrumentationtest.New().ToProviderSettings(), mockMetadataStore, storage, flagger)
 
 	statementBuilder := NewMeterQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		metricStmtBuilder,
 	)
 
@@ -202,8 +200,7 @@ func TestStatementBuilder(t *testing.T) {
 }
 
 func TestGroupByAliasAvoidsColumnCollision(t *testing.T) {
-	fm := metricstelemetryschema.NewFieldMapper()
-	cb := metricstelemetryschema.NewConditionBuilder(fm)
+	storage := metricstelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	keys, err := telemetrytypestest.LoadFieldKeysFromJSON("testdata/keys_map.json")
 	require.NoError(t, err)
@@ -214,9 +211,8 @@ func TestGroupByAliasAvoidsColumnCollision(t *testing.T) {
 	statementBuilder := NewMeterQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
-		metricsstatementbuilder.NewMetricQueryStatementBuilder(instrumentationtest.New().ToProviderSettings(), mockMetadataStore, fm, cb, flagger),
+		storage,
+		metricsstatementbuilder.NewMetricQueryStatementBuilder(instrumentationtest.New().ToProviderSettings(), mockMetadataStore, storage, flagger),
 	)
 
 	for _, groupBy := range []string{"ts", "value", "fingerprint", "service.name"} {

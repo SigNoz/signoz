@@ -50,13 +50,21 @@ func TestTimeSeriesValue_MarshalJSON(t *testing.T) {
 			expected: `{"timestamp":1234567890,"value":"-Inf"}`,
 		},
 		{
-			name: "values array with NaN",
+			name: "zero value",
+			value: TimeSeriesValue{
+				Timestamp: 1234567890,
+				Value:     0,
+			},
+			expected: `{"timestamp":1234567890,"value":0}`,
+		},
+		{
+			name: "values array with NaN, and no value beside it",
 			value: TimeSeriesValue{
 				Timestamp: 1234567890,
 				Value:     1.0,
 				Values:    []float64{1.0, math.NaN(), 3.0, math.Inf(1)},
 			},
-			expected: `{"timestamp":1234567890,"value":1,"values":[1,"NaN",3,"Inf"]}`,
+			expected: `{"timestamp":1234567890,"values":[1,"NaN",3,"Inf"]}`,
 		},
 	}
 
