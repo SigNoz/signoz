@@ -51,5 +51,7 @@ def signoz_families_off(
         request=request,
         pytestconfig=pytestconfig,
         cache_key="signoz-semconv-families-off",
-        env_overrides={},
+        env_overrides={
+            "SIGNOZ_FLAGGER_CONFIG_BOOLEAN_RESOLVE__SEMCONV__FAMILIES": False,
+        },
     )
