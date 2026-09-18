@@ -36,11 +36,7 @@ export const LINE_INTERPOLATION_MAP: Record<
 	[DashboardtypesLineInterpolationDTO.step_before]: LineInterpolation.StepBefore,
 };
 
-/**
- * Keyed by wire value rather than enum: the TimeSeries and Area fill-mode enums are
- * nominally distinct but share members, so both index this one map.
- */
-export const FILL_MODE_MAP: Record<`${DashboardtypesFillModeDTO}`, FillMode> = {
+export const FILL_MODE_MAP: Record<DashboardtypesFillModeDTO, FillMode> = {
 	[DashboardtypesFillModeDTO.solid]: FillMode.Solid,
 	[DashboardtypesFillModeDTO.gradient]: FillMode.Gradient,
 	[DashboardtypesFillModeDTO.none]: FillMode.None,
@@ -48,7 +44,7 @@ export const FILL_MODE_MAP: Record<`${DashboardtypesFillModeDTO}`, FillMode> = {
 
 /** An area panel is always filled, so it drops `none`. */
 export const AREA_FILL_MODE_MAP: Record<
-	`${DashboardtypesAreaFillModeDTO}`,
+	DashboardtypesAreaFillModeDTO,
 	FillMode
 > = omit(FILL_MODE_MAP, DashboardtypesFillModeDTO.none);
 
