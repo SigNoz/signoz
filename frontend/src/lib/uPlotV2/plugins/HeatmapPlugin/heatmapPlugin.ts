@@ -130,16 +130,19 @@ export function createHeatmapHooks({
 				clearHover(u);
 				return;
 			}
-			if (hovered?.row === row && hovered?.column === column) {
+			const count =
+				(u.data[row + 1] as Array<number | null> | undefined)?.[column] ?? null;
+			// The count is part of the identity: a refetch swaps the data under a
+			// stationary cursor, and the cell it points at then means something else.
+			if (
+				hovered?.row === row &&
+				hovered?.column === column &&
+				hovered?.count === count
+			) {
 				return;
 			}
 
-			hovered = {
-				row,
-				column,
-				count:
-					(u.data[row + 1] as Array<number | null> | undefined)?.[column] ?? null,
-			};
+			hovered = { row, column, count };
 			// Drives TooltipPlugin, which only shows a tooltip for a focused series.
 			// uPlot's own focus is disabled here: it picks the series nearest in value
 			// space, and a heatmap's value is a colour, not a y coordinate.
@@ -161,10 +164,15 @@ export function createHeatmapHooks({
 		destroy: (): void => {
 			overlay?.container.remove();
 			overlay = null;
-			hovered = null;
 			hatchPattern = null;
 			cachedData = null;
 			cachedResolver = null;
+			// A rebuilt plot starts with no cursor, so a listener still holding this
+			// cell would keep drawing a hover that no longer exists.
+			if (hovered !== null) {
+				hovered = null;
+				onHoverChange?.(null);
+			}
 		},
 	};
 }

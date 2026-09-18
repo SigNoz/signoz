@@ -16,6 +16,12 @@ export const DEFAULT_COLOR_STEPS = 64;
 /** Without a floor, the lowest counts read as "no data". */
 export const MIN_OPACITY_ALPHA = 0.1;
 
+/** Log's bottom when the grid holds no positive count to take it from. */
+const DEFAULT_LOG_FLOOR = 1;
+
+/** Widest span a single ramp is stretched over on a log scale. */
+const MAX_LOG_DECADES = 6;
+
 /** Used when neither an explicit fill nor a series colour is available. */
 export const DEFAULT_OPACITY_FILL = DesignToken.BG_ROBIN_500;
 
@@ -32,6 +38,9 @@ export const DEFAULT_HEATMAP_COLORS: HeatmapColorOptions = {
 export interface CountDomain {
 	min: number;
 	max: number;
+	/** Bottom decade of the log scale: the smallest count it separates from zero.
+	 *  Always positive, since log has no bottom otherwise. */
+	logFloor: number;
 }
 
 /** Highest count, ignoring `null`. 0 for an empty grid. */
@@ -47,6 +56,40 @@ export function getMaxCount(counts: Array<Array<number | null>>): number {
 	return max;
 }
 
+/** Smallest count above zero, ignoring `null`. `null` for a grid without one. */
+export function getSmallestPositiveCount(
+	counts: Array<Array<number | null>>,
+): number | null {
+	let smallest: number | null = null;
+	for (const row of counts) {
+		for (const count of row) {
+			if (
+				count !== null &&
+				Number.isFinite(count) &&
+				count > 0 &&
+				(smallest === null || count < smallest)
+			) {
+				smallest = count;
+			}
+		}
+	}
+	return smallest;
+}
+
+/**
+ * The grid's own resolution: whole counts floor at 1, while a heatmap of rates or
+ * ratios can live entirely below it, where a fixed floor of 1 would flatten every
+ * cell onto the bottom colour. Capped at `MAX_LOG_DECADES` so one stray tiny cell
+ * cannot stretch the ramp over a range nothing else occupies.
+ */
+function resolveLogFloor(
+	counts: Array<Array<number | null>>,
+	max: number,
+): number {
+	const smallest = getSmallestPositiveCount(counts) ?? DEFAULT_LOG_FLOOR;
+	return Math.max(smallest, max / 10 ** MAX_LOG_DECADES);
+}
+
 /** Explicit clamps win; otherwise 0 to the grid's highest count. */
 export function resolveCountDomain(
 	options: Pick<HeatmapColorOptions, 'minCount' | 'maxCount'>,
@@ -54,7 +97,8 @@ export function resolveCountDomain(
 ): CountDomain {
 	const min = options.minCount ?? 0;
 	const max = options.maxCount ?? getMaxCount(counts);
-	return max > min ? { min, max } : { min, max: min };
+	const logFloor = resolveLogFloor(counts, max);
+	return max > min ? { min, max, logFloor } : { min, max: min, logFloor };
 }
 
 /** Position on the colour scale, 0..1. A degenerate domain collapses to 0 so an
@@ -76,13 +120,15 @@ export function normalizeCount({
 	const clamped = Math.min(Math.max(count, min), max);
 
 	if (scale === HeatmapColorScale.Log) {
-		// 0 and 1 both sit at the bottom; log of either is meaningless.
-		const logMin = Math.log10(Math.max(min, 1));
-		const logMax = Math.log10(Math.max(max, 1));
-		if (!(logMax > logMin)) {
-			return 0;
+		// Anything at or below the floor sits at the bottom; log cannot place it.
+		const bottom = Math.max(min, domain.logFloor);
+		const logMin = Math.log10(bottom);
+		const logMax = Math.log10(max);
+		if (logMax > logMin) {
+			return (Math.log10(Math.max(clamped, bottom)) - logMin) / (logMax - logMin);
 		}
-		return (Math.log10(Math.max(clamped, 1)) - logMin) / (logMax - logMin);
+		// The floor already reaches the top of the domain, so there is no span to
+		// spread logarithmically. Fall through rather than flatten the whole grid.
 	}
 
 	const linear = (clamped - min) / (max - min);
