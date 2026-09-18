@@ -6,7 +6,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
@@ -16,6 +18,27 @@ type handler struct {
 
 func NewHandler(module tracedetail.Module) tracedetail.Handler {
 	return &handler{module: module}
+}
+
+func (h *handler) GetTraceSummary(rw http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	stats, err := h.module.GetTraceStats(r.Context(), orgID, mux.Vars(r)["traceID"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, spantypes.NewGettableTraceSummary(stats))
 }
 
 func (h *handler) GetWaterfallV4(rw http.ResponseWriter, r *http.Request) {

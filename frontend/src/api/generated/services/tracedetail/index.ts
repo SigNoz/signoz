@@ -4,11 +4,17 @@
  * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
-import { useMutation } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 import type {
+	InvalidateOptions,
 	MutationFunction,
+	QueryClient,
+	QueryFunction,
+	QueryKey,
 	UseMutationOptions,
 	UseMutationResult,
+	UseQueryOptions,
+	UseQueryResult,
 } from 'react-query';
 
 import type {
@@ -16,6 +22,8 @@ import type {
 	GetFlamegraphPathParameters,
 	GetTraceAggregations200,
 	GetTraceAggregationsPathParameters,
+	GetTraceSummary200,
+	GetTraceSummaryPathParameters,
 	GetWaterfallV4200,
 	GetWaterfallV4PathParameters,
 	RenderErrorResponseDTO,
@@ -26,6 +34,26 @@ import type {
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
 
 /**
  * Computes span aggregations grouped by requested field.
@@ -127,6 +155,108 @@ export const useGetTraceAggregations = <
 > => {
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
 };
+/**
+ * Returns the trace-level fields of the waterfall (time range, root, span counts, missing spans) and, when the trace has gen_ai spans, its token and cost totals. Computed in one aggregate query.
+ * @summary Get summary for a trace
+ */
+export const getTraceSummary = (
+	{ traceID }: GetTraceSummaryPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetTraceSummary200>({
+		url: `/api/v1/traces/${traceID}/summary`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetTraceSummaryQueryKey = ({
+	traceID,
+}: GetTraceSummaryPathParameters) => {
+	return [`/api/v1/traces/${traceID}/summary`] as const;
+};
+
+export const getGetTraceSummaryQueryOptions = <
+	TData = Awaited<ReturnType<typeof getTraceSummary>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID }: GetTraceSummaryPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getTraceSummary>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetTraceSummaryQueryKey({ traceID });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getTraceSummary>>> = ({
+		signal,
+	}) => getTraceSummary({ traceID }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: traceID !== null && traceID !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getTraceSummary>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetTraceSummaryQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getTraceSummary>>
+>;
+export type GetTraceSummaryQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get summary for a trace
+ */
+
+export function useGetTraceSummary<
+	TData = Awaited<ReturnType<typeof getTraceSummary>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID }: GetTraceSummaryPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getTraceSummary>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetTraceSummaryQueryOptions({ traceID }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get summary for a trace
+ */
+export const invalidateGetTraceSummary = async (
+	queryClient: QueryClient,
+	{ traceID }: GetTraceSummaryPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetTraceSummaryQueryKey({ traceID }) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * Returns the flamegraph view of spans for a given trace ID.
  * @summary Get flamegraph view for a trace

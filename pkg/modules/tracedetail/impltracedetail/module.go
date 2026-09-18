@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.opentelemetry.io/otel/metric"
 )
 
@@ -37,6 +38,21 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 	m.metrics.flamegraphSpanLimit.Record(context.Background(), int64(cfg.Flamegraph.SelectAllSpansLimit), metric.WithAttributes(attrResponseType.String(attrResponseTypeSampled)))
 
 	return m
+}
+
+func (m *module) GetTraceStats(ctx context.Context, orgID valuer.UUID, traceID string) (*spantypes.TraceStats, error) {
+	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+	stats, err := m.store.GetTraceStats(ctx, orgID, traceID, summary)
+	if err != nil {
+		return nil, err
+	}
+	if stats.TotalSpans == 0 {
+		return nil, spantypes.ErrTraceNotFound
+	}
+	return stats, nil
 }
 
 // GetWaterfallV4 is the OOM-safe V4 waterfall.

@@ -27,6 +27,7 @@ type SpanMapperStore interface {
 // TraceStore defines the data access interface for trace detail queries.
 type TraceStore interface {
 	GetTraceSummary(ctx context.Context, traceID string) (*TraceSummary, error)
+	GetTraceStats(ctx context.Context, orgID valuer.UUID, traceID string, summary *TraceSummary) (*TraceStats, error)
 	GetTraceSpans(ctx context.Context, traceID string, summary *TraceSummary) ([]StorableSpan, error)
 	GetMinimalSpans(ctx context.Context, traceID string, start, end time.Time) ([]MinimalSpan, error)
 	GetTraceSpansByIDs(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]StorableSpan, error)

@@ -9503,6 +9503,29 @@ components:
       required:
       - aggregations
       type: object
+    SpantypesGettableTraceSummary:
+      properties:
+        ai:
+          $ref: '#/components/schemas/SpantypesTraceAISummary'
+        endTimestampMillis:
+          minimum: 0
+          type: integer
+        hasMissingSpans:
+          type: boolean
+        rootServiceEntryPoint:
+          type: string
+        rootServiceName:
+          type: string
+        startTimestampMillis:
+          minimum: 0
+          type: integer
+        totalErrorSpansCount:
+          minimum: 0
+          type: integer
+        totalSpansCount:
+          minimum: 0
+          type: integer
+      type: object
     SpantypesGettableWaterfallTrace:
       properties:
         endTimestampMillis:
@@ -9785,6 +9808,32 @@ components:
           additionalProperties: {}
           nullable: true
           type: object
+      type: object
+    SpantypesTraceAISummary:
+      properties:
+        tokens:
+          $ref: '#/components/schemas/SpantypesTraceAITokens'
+        totalCost:
+          nullable: true
+          type: number
+      type: object
+    SpantypesTraceAITokens:
+      properties:
+        cacheRead:
+          minimum: 0
+          type: integer
+        cacheWrite:
+          minimum: 0
+          type: integer
+        input:
+          minimum: 0
+          type: integer
+        output:
+          minimum: 0
+          type: integer
+        reasoning:
+          minimum: 0
+          type: integer
       type: object
     SpantypesUpdatableSpanMapper:
       properties:
@@ -15522,6 +15571,66 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get aggregations for a trace
+      tags:
+      - tracedetail
+  /api/v1/traces/{traceID}/summary:
+    get:
+      deprecated: false
+      description: Returns the trace-level fields of the waterfall (time range, root,
+        span counts, missing spans) and, when the trace has gen_ai spans, its token
+        and cost totals. Computed in one aggregate query.
+      operationId: GetTraceSummary
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceSummary'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get summary for a trace
       tags:
       - tracedetail
   /api/v1/user/me:

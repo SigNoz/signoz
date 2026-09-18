@@ -10974,6 +10974,78 @@ export interface SpantypesGettableTraceAggregationsDTO {
 	aggregations: SpantypesSpanAggregationResultDTO[];
 }
 
+export interface SpantypesTraceAITokensDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	cacheRead?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	cacheWrite?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	input?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	output?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	reasoning?: number;
+}
+
+export interface SpantypesTraceAISummaryDTO {
+	tokens?: SpantypesTraceAITokensDTO;
+	/**
+	 * @type number,null
+	 */
+	totalCost?: number | null;
+}
+
+export interface SpantypesGettableTraceSummaryDTO {
+	ai?: SpantypesTraceAISummaryDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	endTimestampMillis?: number;
+	/**
+	 * @type boolean
+	 */
+	hasMissingSpans?: boolean;
+	/**
+	 * @type string
+	 */
+	rootServiceEntryPoint?: string;
+	/**
+	 * @type string
+	 */
+	rootServiceName?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	startTimestampMillis?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalErrorSpansCount?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalSpansCount?: number;
+}
+
 export interface SpantypesOtelSpanRefDTO {
 	/**
 	 * @type string
@@ -12679,6 +12751,17 @@ export type GetTraceAggregationsPathParameters = {
 };
 export type GetTraceAggregations200 = {
 	data: SpantypesGettableTraceAggregationsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetTraceSummaryPathParameters = {
+	traceID: string;
+};
+export type GetTraceSummary200 = {
+	data: SpantypesGettableTraceSummaryDTO;
 	/**
 	 * @type string
 	 */
