@@ -28,6 +28,8 @@ export type PanelInteractionMap = Record<PanelKind, object> & {
 		onDragSelect?: DragSelect;
 		onCloseStandaloneView?: CloseStandaloneView;
 	};
+	// Drag-select only: the drill-down payload has no shape for a bucket range.
+	'signoz/HeatmapPanel': { onDragSelect?: DragSelect };
 	'signoz/TablePanel': { onClick?: (event: DrilldownClickPayload) => void };
 	'signoz/PieChartPanel': { onClick?: (event: DrilldownClickPayload) => void };
 	'signoz/NumberPanel': { onClick?: (event: DrilldownClickPayload) => void };

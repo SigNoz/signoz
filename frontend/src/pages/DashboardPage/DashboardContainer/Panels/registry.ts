@@ -1,4 +1,5 @@
 import { definition as BarChart } from './kinds/BarChartPanel/definition';
+import { definition as Heatmap } from './kinds/HeatmapPanel/definition';
 import { definition as Histogram } from './kinds/HistogramPanel/definition';
 import { definition as NumberValue } from './kinds/NumberPanel/definition';
 import { definition as PieChart } from './kinds/PieChartPanel/definition';
@@ -23,6 +24,7 @@ export const PANELS: PanelRegistry = {
 	[BarChart.kind]: BarChart,
 	[PieChart.kind]: PieChart,
 	[Histogram.kind]: Histogram,
+	[Heatmap.kind]: Heatmap,
 	[List.kind]: List,
 	[Text.kind]: Text,
 };
