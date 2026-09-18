@@ -3021,10 +3021,8 @@ func (aH *APIHandler) UninstallIntegration(w http.ResponseWriter, r *http.Reques
 // logs
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *middleware.AuthZ) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
-	subRouter.HandleFunc("", am.ViewAccess(aH.getLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", am.ViewAccess(aH.logFields)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", am.EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/aggregate", am.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
 
 	// log pipelines
 	subRouter.HandleFunc("/pipelines/preview", am.ViewAccess(aH.PreviewLogsPipelinesHandler)).Methods(http.MethodPost)
@@ -3062,14 +3060,6 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.WriteJSON(w, r, field)
-}
-
-func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
-	aH.WriteJSON(w, r, map[string]interface{}{"results": []interface{}{}})
-}
-
-func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
-	aH.WriteJSON(w, r, model.GetLogsAggregatesResponse{})
 }
 
 func parseAgentConfigVersion(r *http.Request) (int, error) {

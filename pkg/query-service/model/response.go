@@ -502,21 +502,6 @@ type SignozLog struct {
 	Attributes_float64 map[string]float64 `json:"attributes_float" ch:"attributes_float64"`
 	Attributes_bool    map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
 }
-type GetLogsAggregatesResponse struct {
-	Items map[int64]LogsAggregatesResponseItem `json:"items"`
-}
-
-type LogsAggregatesResponseItem struct {
-	Timestamp int64                  `json:"timestamp,omitempty" `
-	Value     interface{}            `json:"value,omitempty"`
-	GroupBy   map[string]interface{} `json:"groupBy,omitempty"`
-}
-
-type LogsAggregatesDBResponseItem struct {
-	Timestamp int64   `ch:"ts_start_interval"`
-	Value     float64 `ch:"value"`
-	GroupBy   string  `ch:"groupBy"`
-}
 
 // MarshalJSON implements json.Marshaler.
 func (s *ServiceItem) MarshalJSON() ([]byte, error) {
