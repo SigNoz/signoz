@@ -148,6 +148,7 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 			show = true,
 			side = 2, // bottom by default
 			space,
+			splits,
 			gap = 5, // default gap is 5
 		} = this.props;
 
@@ -178,6 +179,9 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		}
 		if (values) {
 			axisConfig.values = values;
+		}
+		if (splits) {
+			axisConfig.splits = splits;
 		}
 		if (gap !== undefined) {
 			axisConfig.gap = gap;

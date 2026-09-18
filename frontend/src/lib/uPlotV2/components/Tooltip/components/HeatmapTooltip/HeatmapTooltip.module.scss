@@ -1,0 +1,151 @@
+// Surface matches the shared Tooltip exactly — same tokens, same radius, no
+// shadow (the plugin's portal wrapper is transparent and paints nothing).
+//
+// Padding lives on the sections rather than here, also matching the shared
+// tooltip: TooltipFooter draws its own dashed top border, background and bottom
+// corner radius, so it has to reach the container edges.
+.container {
+	font-family: 'Inter';
+	font-size: 12px;
+	background: var(--l2-background);
+	-webkit-font-smoothing: antialiased;
+	color: var(--l2-foreground);
+	border-radius: 6px;
+	border: 1px solid var(--l2-border);
+	display: flex;
+	flex-direction: column;
+	min-width: 220px;
+
+	&.pinned {
+		border-color: var(--ring);
+	}
+}
+
+// Separates the cell identity from whichever question the second block answers.
+.divider {
+	display: block;
+	width: 100%;
+	height: 1px;
+	background-color: var(--l2-border);
+}
+
+.identity {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	padding: var(--spacing-4) var(--spacing-4) var(--spacing-3);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-6);
+	font-size: 11px;
+	color: var(--text-vanilla-400);
+	font-variant-numeric: tabular-nums;
+}
+
+.filter {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	min-width: 0;
+}
+
+// Hollow ring, matching the legend's unselected marker — this names the filter the
+// grid is under, it is not a colour key.
+.filterMarker {
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	border: 2px solid currentColor;
+	flex-shrink: 0;
+}
+
+.filterLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.title {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--spacing-8);
+}
+
+.titleBucket {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text-vanilla-100);
+}
+
+.titleCount {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text-vanilla-100);
+	font-variant-numeric: tabular-nums;
+}
+
+.rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+	padding: var(--spacing-3) var(--spacing-4);
+}
+
+.section {
+	font-size: 10px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-vanilla-400);
+	padding: 0 var(--spacing-2) var(--spacing-1);
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	padding: var(--spacing-1) var(--spacing-2);
+	border-radius: 3px;
+	font-size: 12px;
+	color: var(--text-vanilla-400);
+	font-variant-numeric: tabular-nums;
+}
+
+// The hovered bucket is the one the cursor is on; lift it out of the neighbours.
+.rowHovered {
+	background: var(--l3-background);
+	color: var(--text-vanilla-100);
+	font-weight: 500;
+}
+
+.rowLabel {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.rowValue {
+	flex: 0 0 auto;
+	text-align: right;
+}
+
+.rowPercent {
+	flex: 0 0 auto;
+	min-width: 40px;
+	text-align: right;
+	color: var(--text-vanilla-400);
+	opacity: 0.75;
+}
+
+.marker {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
