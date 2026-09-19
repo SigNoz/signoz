@@ -6,7 +6,7 @@ import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
+import { getMs } from 'utils/timeUtils';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
