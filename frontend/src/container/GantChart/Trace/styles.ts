@@ -1,9 +1,6 @@
 import { volcano } from '@ant-design/colors';
-import styled, {
-	css,
-	DefaultTheme,
-	ThemedCssFunction,
-} from 'styled-components';
+import styled, { css } from 'styled-components';
+import { StyledCSS } from 'types/styledComponents';
 
 interface Props {
 	isOnlyChild: boolean;
@@ -49,12 +46,6 @@ export const CardContainer = styled.li<{ isMissing?: boolean }>`
 interface Props {
 	isDarkMode: boolean;
 }
-
-export type StyledCSS =
-	| ReturnType<ThemedCssFunction<DefaultTheme>>
-	| string
-	| false
-	| undefined;
 
 export const CardComponent = styled.div<Props>`
 	border: 1px solid
@@ -111,3 +102,5 @@ export const styles = {
 	flexNoWrap,
 	overFlowHidden,
 };
+
+export type { StyledCSS };
