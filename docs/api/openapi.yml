@@ -7480,6 +7480,29 @@ components:
       - errorType
       - error
       type: object
+    PrometheusLabelsSuccessResponseSchema:
+      properties:
+        data:
+          items:
+            type: string
+          nullable: true
+          type: array
+        infos:
+          items:
+            type: string
+          type: array
+        status:
+          enum:
+          - success
+          type: string
+        warnings:
+          items:
+            type: string
+          type: array
+      required:
+      - status
+      - data
+      type: object
     PrometheusMatrixDataSchema:
       properties:
         result:
@@ -7540,6 +7563,31 @@ components:
       required:
       - resultType
       - result
+      type: object
+    PrometheusSeriesSuccessResponseSchema:
+      properties:
+        data:
+          items:
+            additionalProperties:
+              type: string
+            type: object
+          nullable: true
+          type: array
+        infos:
+          items:
+            type: string
+          type: array
+        status:
+          enum:
+          - success
+          type: string
+        warnings:
+          items:
+            type: string
+          type: array
+      required:
+      - status
+      - data
       type: object
     PrometheusStringDataSchema:
       properties:
@@ -27830,6 +27878,370 @@ paths:
       summary: Replace variables
       tags:
       - querier
+  /prometheus/api/v1/label/{name}/values:
+    get:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusLabelValues
+      parameters:
+      - description: PromQL series selector, e.g. {job="api"}. Repeatable; results
+          are the union of all match[] selectors. Omit to leave unfiltered.
+        in: query
+        name: match[]
+        schema:
+          description: PromQL series selector, e.g. {job="api"}. Repeatable; results
+            are the union of all match[] selectors. Omit to leave unfiltered.
+          items:
+            type: string
+          type: array
+      - description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+          Unix epoch.'
+        in: query
+        name: start
+        schema:
+          description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+            Unix epoch.'
+          type: string
+      - description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+        in: query
+        name: end
+        schema:
+          description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+          type: string
+      - description: Maximum number of results to return.
+        in: query
+        name: limit
+        schema:
+          description: Maximum number of results to return.
+          type: string
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusLabelsSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus label values
+      tags:
+      - prometheus
+    post:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusLabelValuesPost
+      parameters:
+      - description: PromQL series selector, e.g. {job="api"}. Repeatable; results
+          are the union of all match[] selectors. Omit to leave unfiltered.
+        in: query
+        name: match[]
+        schema:
+          description: PromQL series selector, e.g. {job="api"}. Repeatable; results
+            are the union of all match[] selectors. Omit to leave unfiltered.
+          items:
+            type: string
+          type: array
+      - description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+          Unix epoch.'
+        in: query
+        name: start
+        schema:
+          description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+            Unix epoch.'
+          type: string
+      - description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+        in: query
+        name: end
+        schema:
+          description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+          type: string
+      - description: Maximum number of results to return.
+        in: query
+        name: limit
+        schema:
+          description: Maximum number of results to return.
+          type: string
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusLabelsSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus label values
+      tags:
+      - prometheus
+  /prometheus/api/v1/labels:
+    get:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusLabels
+      parameters:
+      - description: PromQL series selector, e.g. {job="api"}. Repeatable; results
+          are the union of all match[] selectors. Omit to leave unfiltered.
+        in: query
+        name: match[]
+        schema:
+          description: PromQL series selector, e.g. {job="api"}. Repeatable; results
+            are the union of all match[] selectors. Omit to leave unfiltered.
+          items:
+            type: string
+          type: array
+      - description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+          Unix epoch.'
+        in: query
+        name: start
+        schema:
+          description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+            Unix epoch.'
+          type: string
+      - description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+        in: query
+        name: end
+        schema:
+          description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+          type: string
+      - description: Maximum number of results to return.
+        in: query
+        name: limit
+        schema:
+          description: Maximum number of results to return.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusLabelsSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus label names
+      tags:
+      - prometheus
+    post:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusLabelsPost
+      parameters:
+      - description: PromQL series selector, e.g. {job="api"}. Repeatable; results
+          are the union of all match[] selectors. Omit to leave unfiltered.
+        in: query
+        name: match[]
+        schema:
+          description: PromQL series selector, e.g. {job="api"}. Repeatable; results
+            are the union of all match[] selectors. Omit to leave unfiltered.
+          items:
+            type: string
+          type: array
+      - description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+          Unix epoch.'
+        in: query
+        name: start
+        schema:
+          description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+            Unix epoch.'
+          type: string
+      - description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+        in: query
+        name: end
+        schema:
+          description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+          type: string
+      - description: Maximum number of results to return.
+        in: query
+        name: limit
+        schema:
+          description: Maximum number of results to return.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusLabelsSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus label names
+      tags:
+      - prometheus
   /prometheus/api/v1/query:
     get:
       description: 'Prometheus-compatible endpoint: the request and response contract
@@ -28196,6 +28608,185 @@ paths:
       - tokenizer:
         - metrics:read
       summary: Prometheus range query
+      tags:
+      - prometheus
+  /prometheus/api/v1/series:
+    get:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusSeries
+      parameters:
+      - description: PromQL series selector, e.g. {job="api"}. At least one is required;
+          repeatable, results are the union of all match[] selectors.
+        in: query
+        name: match[]
+        required: true
+        schema:
+          description: PromQL series selector, e.g. {job="api"}. At least one is required;
+            repeatable, results are the union of all match[] selectors.
+          items:
+            type: string
+          type: array
+      - description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+          Unix epoch.'
+        in: query
+        name: start
+        schema:
+          description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+            Unix epoch.'
+          type: string
+      - description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+        in: query
+        name: end
+        schema:
+          description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+          type: string
+      - description: Maximum number of results to return.
+        in: query
+        name: limit
+        schema:
+          description: Maximum number of results to return.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusSeriesSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus series
+      tags:
+      - prometheus
+    post:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusSeriesPost
+      parameters:
+      - description: PromQL series selector, e.g. {job="api"}. At least one is required;
+          repeatable, results are the union of all match[] selectors.
+        in: query
+        name: match[]
+        required: true
+        schema:
+          description: PromQL series selector, e.g. {job="api"}. At least one is required;
+            repeatable, results are the union of all match[] selectors.
+          items:
+            type: string
+          type: array
+      - description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+          Unix epoch.'
+        in: query
+        name: start
+        schema:
+          description: 'Range start: RFC3339 or float unix seconds. Defaults to the
+            Unix epoch.'
+          type: string
+      - description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+        in: query
+        name: end
+        schema:
+          description: 'Range end: RFC3339 or float unix seconds. Defaults to now.'
+          type: string
+      - description: Maximum number of results to return.
+        in: query
+        name: limit
+        schema:
+          description: Maximum number of results to return.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusSeriesSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus series
       tags:
       - prometheus
 servers:

@@ -19,10 +19,20 @@ import type {
 
 import type {
 	PrometheusErrorResponseSchemaDTO,
+	PrometheusLabelValuesParams,
+	PrometheusLabelValuesPathParameters,
+	PrometheusLabelValuesPostParams,
+	PrometheusLabelValuesPostPathParameters,
+	PrometheusLabelsParams,
+	PrometheusLabelsPostParams,
+	PrometheusLabelsSuccessResponseSchemaDTO,
 	PrometheusQueryParams,
 	PrometheusQueryPostParams,
 	PrometheusQueryRangeParams,
 	PrometheusQueryRangePostParams,
+	PrometheusSeriesParams,
+	PrometheusSeriesPostParams,
+	PrometheusSeriesSuccessResponseSchemaDTO,
 	PrometheusSuccessResponseSchemaDTO,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
@@ -50,6 +60,402 @@ const withQueryKey = <T extends object, K>(
 	return result;
 };
 
+/**
+ * Prometheus-compatible endpoint: the request and response contract is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/). Parameters are accepted as URL query parameters or a form-encoded body, on GET and POST alike.
+ * @summary Prometheus label values
+ */
+export const prometheusLabelValues = (
+	{ name }: PrometheusLabelValuesPathParameters,
+	params?: PrometheusLabelValuesParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<PrometheusLabelsSuccessResponseSchemaDTO>({
+		url: `/prometheus/api/v1/label/${name}/values`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getPrometheusLabelValuesQueryKey = (
+	{ name }: PrometheusLabelValuesPathParameters,
+	params?: PrometheusLabelValuesParams,
+) => {
+	return [
+		`/prometheus/api/v1/label/${name}/values`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getPrometheusLabelValuesQueryOptions = <
+	TData = Awaited<ReturnType<typeof prometheusLabelValues>>,
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+>(
+	{ name }: PrometheusLabelValuesPathParameters,
+	params?: PrometheusLabelValuesParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof prometheusLabelValues>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getPrometheusLabelValuesQueryKey({ name }, params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof prometheusLabelValues>>
+	> = ({ signal }) => prometheusLabelValues({ name }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: name !== null && name !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof prometheusLabelValues>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type PrometheusLabelValuesQueryResult = NonNullable<
+	Awaited<ReturnType<typeof prometheusLabelValues>>
+>;
+export type PrometheusLabelValuesQueryError = ErrorType<
+	PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO
+>;
+
+/**
+ * @summary Prometheus label values
+ */
+
+export function usePrometheusLabelValues<
+	TData = Awaited<ReturnType<typeof prometheusLabelValues>>,
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+>(
+	{ name }: PrometheusLabelValuesPathParameters,
+	params?: PrometheusLabelValuesParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof prometheusLabelValues>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getPrometheusLabelValuesQueryOptions(
+		{ name },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Prometheus label values
+ */
+export const invalidatePrometheusLabelValues = async (
+	queryClient: QueryClient,
+	{ name }: PrometheusLabelValuesPathParameters,
+	params?: PrometheusLabelValuesParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getPrometheusLabelValuesQueryKey({ name }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Prometheus-compatible endpoint: the request and response contract is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/). Parameters are accepted as URL query parameters or a form-encoded body, on GET and POST alike.
+ * @summary Prometheus label values
+ */
+export const prometheusLabelValuesPost = (
+	{ name }: PrometheusLabelValuesPostPathParameters,
+	params?: PrometheusLabelValuesPostParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<PrometheusLabelsSuccessResponseSchemaDTO>({
+		url: `/prometheus/api/v1/label/${name}/values`,
+		method: 'POST',
+		params,
+		signal,
+	});
+};
+
+export const getPrometheusLabelValuesPostMutationOptions = <
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof prometheusLabelValuesPost>>,
+		TError,
+		{
+			pathParams: PrometheusLabelValuesPostPathParameters;
+			params?: PrometheusLabelValuesPostParams;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof prometheusLabelValuesPost>>,
+	TError,
+	{
+		pathParams: PrometheusLabelValuesPostPathParameters;
+		params?: PrometheusLabelValuesPostParams;
+	},
+	TContext
+> => {
+	const mutationKey = ['prometheusLabelValuesPost'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof prometheusLabelValuesPost>>,
+		{
+			pathParams: PrometheusLabelValuesPostPathParameters;
+			params?: PrometheusLabelValuesPostParams;
+		}
+	> = (props) => {
+		const { pathParams, params } = props ?? {};
+
+		return prometheusLabelValuesPost(pathParams, params);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PrometheusLabelValuesPostMutationResult = NonNullable<
+	Awaited<ReturnType<typeof prometheusLabelValuesPost>>
+>;
+
+export type PrometheusLabelValuesPostMutationError = ErrorType<
+	PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO
+>;
+
+/**
+ * @summary Prometheus label values
+ */
+export const usePrometheusLabelValuesPost = <
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof prometheusLabelValuesPost>>,
+		TError,
+		{
+			pathParams: PrometheusLabelValuesPostPathParameters;
+			params?: PrometheusLabelValuesPostParams;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof prometheusLabelValuesPost>>,
+	TError,
+	{
+		pathParams: PrometheusLabelValuesPostPathParameters;
+		params?: PrometheusLabelValuesPostParams;
+	},
+	TContext
+> => {
+	return useMutation(getPrometheusLabelValuesPostMutationOptions(options));
+};
+/**
+ * Prometheus-compatible endpoint: the request and response contract is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/). Parameters are accepted as URL query parameters or a form-encoded body, on GET and POST alike.
+ * @summary Prometheus label names
+ */
+export const prometheusLabels = (
+	params?: PrometheusLabelsParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<PrometheusLabelsSuccessResponseSchemaDTO>({
+		url: `/prometheus/api/v1/labels`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getPrometheusLabelsQueryKey = (
+	params?: PrometheusLabelsParams,
+) => {
+	return [`/prometheus/api/v1/labels`, ...(params ? [params] : [])] as const;
+};
+
+export const getPrometheusLabelsQueryOptions = <
+	TData = Awaited<ReturnType<typeof prometheusLabels>>,
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+>(
+	params?: PrometheusLabelsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof prometheusLabels>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getPrometheusLabelsQueryKey(params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof prometheusLabels>>> = ({
+		signal,
+	}) => prometheusLabels(params, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof prometheusLabels>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type PrometheusLabelsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof prometheusLabels>>
+>;
+export type PrometheusLabelsQueryError = ErrorType<
+	PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO
+>;
+
+/**
+ * @summary Prometheus label names
+ */
+
+export function usePrometheusLabels<
+	TData = Awaited<ReturnType<typeof prometheusLabels>>,
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+>(
+	params?: PrometheusLabelsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof prometheusLabels>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getPrometheusLabelsQueryOptions(params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Prometheus label names
+ */
+export const invalidatePrometheusLabels = async (
+	queryClient: QueryClient,
+	params?: PrometheusLabelsParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getPrometheusLabelsQueryKey(params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Prometheus-compatible endpoint: the request and response contract is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/). Parameters are accepted as URL query parameters or a form-encoded body, on GET and POST alike.
+ * @summary Prometheus label names
+ */
+export const prometheusLabelsPost = (
+	params?: PrometheusLabelsPostParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<PrometheusLabelsSuccessResponseSchemaDTO>({
+		url: `/prometheus/api/v1/labels`,
+		method: 'POST',
+		params,
+		signal,
+	});
+};
+
+export const getPrometheusLabelsPostMutationOptions = <
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof prometheusLabelsPost>>,
+		TError,
+		{ params?: PrometheusLabelsPostParams },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof prometheusLabelsPost>>,
+	TError,
+	{ params?: PrometheusLabelsPostParams },
+	TContext
+> => {
+	const mutationKey = ['prometheusLabelsPost'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof prometheusLabelsPost>>,
+		{ params?: PrometheusLabelsPostParams }
+	> = (props) => {
+		const { params } = props ?? {};
+
+		return prometheusLabelsPost(params);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PrometheusLabelsPostMutationResult = NonNullable<
+	Awaited<ReturnType<typeof prometheusLabelsPost>>
+>;
+
+export type PrometheusLabelsPostMutationError = ErrorType<
+	PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO
+>;
+
+/**
+ * @summary Prometheus label names
+ */
+export const usePrometheusLabelsPost = <
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof prometheusLabelsPost>>,
+		TError,
+		{ params?: PrometheusLabelsPostParams },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof prometheusLabelsPost>>,
+	TError,
+	{ params?: PrometheusLabelsPostParams },
+	TContext
+> => {
+	return useMutation(getPrometheusLabelsPostMutationOptions(options));
+};
 /**
  * Prometheus-compatible endpoint: the request and response contract is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/). Parameters are accepted as URL query parameters or a form-encoded body, on GET and POST alike.
  * @summary Prometheus instant query
@@ -413,4 +819,185 @@ export const usePrometheusQueryRangePost = <
 	TContext
 > => {
 	return useMutation(getPrometheusQueryRangePostMutationOptions(options));
+};
+/**
+ * Prometheus-compatible endpoint: the request and response contract is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/). Parameters are accepted as URL query parameters or a form-encoded body, on GET and POST alike.
+ * @summary Prometheus series
+ */
+export const prometheusSeries = (
+	params: PrometheusSeriesParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<PrometheusSeriesSuccessResponseSchemaDTO>({
+		url: `/prometheus/api/v1/series`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getPrometheusSeriesQueryKey = (
+	params?: PrometheusSeriesParams,
+) => {
+	return [`/prometheus/api/v1/series`, ...(params ? [params] : [])] as const;
+};
+
+export const getPrometheusSeriesQueryOptions = <
+	TData = Awaited<ReturnType<typeof prometheusSeries>>,
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+>(
+	params: PrometheusSeriesParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof prometheusSeries>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getPrometheusSeriesQueryKey(params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof prometheusSeries>>> = ({
+		signal,
+	}) => prometheusSeries(params, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof prometheusSeries>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type PrometheusSeriesQueryResult = NonNullable<
+	Awaited<ReturnType<typeof prometheusSeries>>
+>;
+export type PrometheusSeriesQueryError = ErrorType<
+	PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO
+>;
+
+/**
+ * @summary Prometheus series
+ */
+
+export function usePrometheusSeries<
+	TData = Awaited<ReturnType<typeof prometheusSeries>>,
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+>(
+	params: PrometheusSeriesParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof prometheusSeries>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getPrometheusSeriesQueryOptions(params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Prometheus series
+ */
+export const invalidatePrometheusSeries = async (
+	queryClient: QueryClient,
+	params: PrometheusSeriesParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getPrometheusSeriesQueryKey(params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Prometheus-compatible endpoint: the request and response contract is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/). Parameters are accepted as URL query parameters or a form-encoded body, on GET and POST alike.
+ * @summary Prometheus series
+ */
+export const prometheusSeriesPost = (
+	params: PrometheusSeriesPostParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<PrometheusSeriesSuccessResponseSchemaDTO>({
+		url: `/prometheus/api/v1/series`,
+		method: 'POST',
+		params,
+		signal,
+	});
+};
+
+export const getPrometheusSeriesPostMutationOptions = <
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof prometheusSeriesPost>>,
+		TError,
+		{ params: PrometheusSeriesPostParams },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof prometheusSeriesPost>>,
+	TError,
+	{ params: PrometheusSeriesPostParams },
+	TContext
+> => {
+	const mutationKey = ['prometheusSeriesPost'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof prometheusSeriesPost>>,
+		{ params: PrometheusSeriesPostParams }
+	> = (props) => {
+		const { params } = props ?? {};
+
+		return prometheusSeriesPost(params);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PrometheusSeriesPostMutationResult = NonNullable<
+	Awaited<ReturnType<typeof prometheusSeriesPost>>
+>;
+
+export type PrometheusSeriesPostMutationError = ErrorType<
+	PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO
+>;
+
+/**
+ * @summary Prometheus series
+ */
+export const usePrometheusSeriesPost = <
+	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof prometheusSeriesPost>>,
+		TError,
+		{ params: PrometheusSeriesPostParams },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof prometheusSeriesPost>>,
+	TError,
+	{ params: PrometheusSeriesPostParams },
+	TContext
+> => {
+	return useMutation(getPrometheusSeriesPostMutationOptions(options));
 };
