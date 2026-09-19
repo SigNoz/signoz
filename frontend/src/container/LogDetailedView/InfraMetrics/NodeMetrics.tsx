@@ -6,7 +6,6 @@ import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import dayjs from 'dayjs';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
@@ -85,7 +84,6 @@ function NodeMetrics({
 	);
 
 	const { timezone } = useTimezone();
-	const { currentQuery } = useQueryBuilder();
 
 	const options = useMemo(
 		() =>
@@ -103,7 +101,7 @@ function NodeMetrics({
 					tzDate: (timestamp: number) =>
 						uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 					timezone: timezone.value,
-					query: currentQuery,
+					query: queryPayloads[idx].query,
 					legendScrollPosition: legendScrollPositionRef.current,
 					setLegendScrollPosition: (position: {
 						scrollTop: number;
@@ -122,7 +120,7 @@ function NodeMetrics({
 			verticalLineTimestamp,
 			end,
 			timezone.value,
-			currentQuery,
+			queryPayloads,
 		],
 	);
 
