@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
 	ArrowUpToLine,
 	Filter,
@@ -40,6 +40,7 @@ import CheckboxV2 from './FilterRenderers/Checkbox/v2/CheckboxFilterV2';
 import Duration from './FilterRenderers/Duration/Duration';
 import Slider from './FilterRenderers/Slider/Slider';
 import useFilterConfig from './hooks/useFilterConfig';
+import { useViewportAnchoredHeight } from './hooks/useViewportAnchoredHeight';
 import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
 import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
@@ -59,6 +60,11 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		useFieldApis,
 	} = props;
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+	const settingsDrawerRef = useRef<HTMLDivElement>(null);
+	const settingsDrawerHeight = useViewportAnchoredHeight(
+		settingsDrawerRef,
+		isSettingsOpen,
+	);
 	const [params, setParams] = useApiMonitoringParams();
 	const showIP = params.showIP ?? true;
 
@@ -399,6 +405,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			</div>
 			<div className="quick-filters-settings-container">
 				<div
+					ref={settingsDrawerRef}
 					className={classNames(
 						'quick-filters-settings',
 						{
@@ -406,6 +413,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						},
 						className,
 					)}
+					style={settingsDrawerHeight ? { height: settingsDrawerHeight } : undefined}
 				>
 					{isSettingsOpen && (
 						<QuickFiltersSettings
