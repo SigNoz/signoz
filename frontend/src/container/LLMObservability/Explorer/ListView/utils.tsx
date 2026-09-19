@@ -1,6 +1,6 @@
 import type { TracesTableRow } from '../TracesTable/getFieldColumn';
 import ROUTES from 'constants/routes';
-import { formUrlParams } from 'container/TraceDetail/utils';
+import { formUrlParams } from 'utils/traceUtils';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 export const getTraceLink = (record: Record<string, unknown>): string => {

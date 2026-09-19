@@ -8,7 +8,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { getMs } from 'utils/timeUtils';
-import { formUrlParams } from 'container/TraceDetail/utils';
+import { formUrlParams } from 'utils/traceUtils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
