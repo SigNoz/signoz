@@ -28,7 +28,7 @@ function InfraMetrics({
 	dataSource = DataSource.LOGS,
 }: MetricsDataProps): JSX.Element {
 	const [selectedView, setSelectedView] = useState<string>(() =>
-		podName ? VIEW_TYPES.POD : VIEW_TYPES.NODE,
+		nodeName || hostName ? VIEW_TYPES.NODE : VIEW_TYPES.POD,
 	);
 
 	const viewOptions = useMemo(() => {
