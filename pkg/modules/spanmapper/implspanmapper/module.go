@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
@@ -12,12 +13,22 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+// maxTestSpans bounds the input size: every test request boots a full
+// in-memory collector pipeline and is reachable with viewer access.
+const maxTestSpans = 100
+
 type module struct {
-	store spantypes.SpanMapperStore
+	store    spantypes.SpanMapperStore
+	registry spantypes.SpanMapperGroupRegistry
+	settings factory.ScopedProviderSettings
 }
 
-func NewModule(store spantypes.SpanMapperStore) spanmapper.Module {
-	return &module{store: store}
+func NewModule(store spantypes.SpanMapperStore, registry spantypes.SpanMapperGroupRegistry, providerSettings factory.ProviderSettings) spanmapper.Module {
+	return &module{
+		store:    store,
+		registry: registry,
+		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"),
+	}
 }
 
 func (module *module) ListGroups(ctx context.Context, orgID valuer.UUID, q *spantypes.ListSpanMapperGroupsQuery) ([]*spantypes.SpanMapperGroup, error) {
@@ -29,6 +40,9 @@ func (module *module) GetGroup(ctx context.Context, orgID, id valuer.UUID) (*spa
 }
 
 func (module *module) CreateGroup(ctx context.Context, orgID valuer.UUID, group *spantypes.SpanMapperGroup) error {
+	if module.registry.IsReserved(group.Name) {
+		return errors.Newf(errors.TypeInvalidInput, spantypes.ErrCodeMappingGroupNameReserved, "group name %q is reserved for a default group", group.Name)
+	}
 	return module.store.CreateGroup(ctx, group)
 }
 
@@ -37,10 +51,14 @@ func (module *module) UpdateGroup(ctx context.Context, orgID, id valuer.UUID, na
 	if err != nil {
 		return err
 	}
-	group.Update(name, condition, enabled, updatedBy)
+	if name != nil && *name != group.Name && module.registry.IsReserved(*name) {
+		return errors.Newf(errors.TypeInvalidInput, spantypes.ErrCodeMappingGroupNameReserved, "group name %q is reserved for a default group", *name)
+	}
+	if err := group.Update(name, condition, enabled, updatedBy); err != nil {
+		return err
+	}
 
-	err = module.store.UpdateGroup(ctx, group)
-	if err != nil {
+	if err := module.store.UpdateGroup(ctx, group); err != nil {
 		return err
 	}
 	agentConf.NotifyConfigUpdate(ctx)
@@ -48,8 +66,7 @@ func (module *module) UpdateGroup(ctx context.Context, orgID, id valuer.UUID, na
 }
 
 func (module *module) DeleteGroup(ctx context.Context, orgID, id valuer.UUID) error {
-	err := module.store.DeleteGroup(ctx, orgID, id)
-	if err != nil {
+	if err := module.store.DeleteGroup(ctx, orgID, id); err != nil {
 		return err
 	}
 	agentConf.NotifyConfigUpdate(ctx)
@@ -78,14 +95,13 @@ func (module *module) CreateMapper(ctx context.Context, orgID, groupID valuer.UU
 }
 
 func (module *module) UpdateMapper(ctx context.Context, orgID, groupID, id valuer.UUID, fieldContext spantypes.FieldContext, config *spantypes.SpanMapperConfig, enabled *bool, updatedBy string) error {
-	if _, err := module.store.GetGroup(ctx, orgID, groupID); err != nil {
-		return err
-	}
 	mapper, err := module.store.GetMapper(ctx, orgID, groupID, id)
 	if err != nil {
 		return err
 	}
-	mapper.Update(fieldContext, config, enabled, updatedBy)
+	if err := mapper.Update(fieldContext, config, enabled, updatedBy); err != nil {
+		return err
+	}
 	err = module.store.UpdateMapper(ctx, mapper)
 	if err != nil {
 		return err
@@ -95,17 +111,12 @@ func (module *module) UpdateMapper(ctx context.Context, orgID, groupID, id value
 }
 
 func (module *module) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error {
-	err := module.store.DeleteMapper(ctx, orgID, groupID, id)
-	if err != nil {
+	if err := module.store.DeleteMapper(ctx, orgID, groupID, id, spantypes.SpanMapperOriginUser); err != nil {
 		return err
 	}
 	agentConf.NotifyConfigUpdate(ctx)
 	return nil
 }
-
-// maxTestSpans bounds the input size: every test request boots a full
-// in-memory collector pipeline and is reachable with viewer access.
-const maxTestSpans = 100
 
 func (module *module) TestMappers(ctx context.Context, orgID valuer.UUID, spans []spantypes.SpanMapperTestSpan, groups []*spantypes.SpanMapperGroupWithMappers) ([]spantypes.SpanMapperTestSpan, []string, error) {
 	if len(spans) == 0 {
@@ -125,6 +136,31 @@ func (module *module) TestMappers(ctx context.Context, orgID valuer.UUID, spans 
 		return nil, nil, err
 	}
 	return out, collectorLogs, nil
+}
+
+func (module *module) AgentFeatureType() agentConf.AgentFeatureType {
+	return spantypes.SpanAttrMappingFeatureType
+}
+
+func (module *module) RecommendAgentConfig(orgID valuer.UUID, currentConfYaml []byte, configVersion *opamptypes.AgentConfigVersion) ([]byte, string, error) {
+	ctx := context.Background()
+
+	enabledMappers, err := module.listEnabledGroupsWithMappers(ctx, orgID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	updatedConf, err := spantypes.GenerateCollectorConfigWithSpanMapperProcessor(currentConfYaml, enabledMappers)
+	if err != nil {
+		return nil, "", err
+	}
+
+	serialized, err := json.Marshal(enabledMappers)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return updatedConf, string(serialized), nil
 }
 
 // backfillMappers loads saved mappers for any enabled group whose Mappers is
@@ -156,31 +192,6 @@ func (module *module) backfillMappers(ctx context.Context, orgID valuer.UUID, gr
 		g.Mappers = loaded
 	}
 	return groups, nil
-}
-
-func (module *module) AgentFeatureType() agentConf.AgentFeatureType {
-	return spantypes.SpanAttrMappingFeatureType
-}
-
-func (module *module) RecommendAgentConfig(orgID valuer.UUID, currentConfYaml []byte, configVersion *opamptypes.AgentConfigVersion) ([]byte, string, error) {
-	ctx := context.Background()
-
-	enabledMappers, err := module.listEnabledGroupsWithMappers(ctx, orgID)
-	if err != nil {
-		return nil, "", err
-	}
-
-	updatedConf, err := spantypes.GenerateCollectorConfigWithSpanMapperProcessor(currentConfYaml, enabledMappers)
-	if err != nil {
-		return nil, "", err
-	}
-
-	serialized, err := json.Marshal(enabledMappers)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return updatedConf, string(serialized), nil
 }
 
 // listEnabledGroupsWithMappers returns groups with their mappers.
