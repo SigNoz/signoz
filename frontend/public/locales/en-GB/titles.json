@@ -4,7 +4,6 @@
 	"GET_STARTED": "SigNoz | Get Started",
 	"SERVICE_METRICS": "SigNoz | Service Metrics",
 	"SERVICE_MAP": "SigNoz | Service Map",
-	"TRACE": "SigNoz | Trace",
 	"HOME": "SigNoz | Home",
 	"TRACE_DETAIL": "SigNoz | Trace Detail",
 	"TRACES_EXPLORER": "SigNoz | Traces Explorer",

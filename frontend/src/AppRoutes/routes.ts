@@ -49,7 +49,6 @@ import {
 	SupportPage,
 	TraceDetailOldRedirect,
 	TraceDetailV3,
-	TraceFilter,
 	TracesExplorer,
 	TracesFunnelDetails,
 	TracesFunnels,
@@ -223,13 +222,6 @@ const routes: AppRoutes[] = [
 		component: AlertOverview,
 		isPrivate: true,
 		key: 'ALERT_OVERVIEW',
-	},
-	{
-		path: ROUTES.TRACE,
-		exact: true,
-		component: TraceFilter,
-		isPrivate: true,
-		key: 'TRACE',
 	},
 	{
 		path: ROUTES.TRACES_EXPLORER,

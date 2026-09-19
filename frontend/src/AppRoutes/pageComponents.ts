@@ -53,10 +53,6 @@ export const TracesFunnelDetails = Loadable(
 		),
 );
 
-export const TraceFilter = Loadable(
-	() => import(/* webpackChunkName: "Trace Filter Page" */ 'pages/Trace'),
-);
-
 export const TraceDetailOldRedirect = Loadable(
 	() =>
 		import(
