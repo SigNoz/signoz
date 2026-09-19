@@ -43,7 +43,7 @@ func TestGetTraceTimeRangeMulti(t *testing.T) {
 			finder := &TraceTimeRangeFinder{telemetryStore: nil}
 
 			if !tt.expectOK {
-				_, _, ok, _ := finder.GetTraceTimeRangeMulti(ctx, tt.traceIDs)
+				_, _, ok, _ := finder.GetTraceTimeRangeMulti(ctx, tt.traceIDs, 0, 0)
 				assert.False(t, ok)
 			}
 		})
