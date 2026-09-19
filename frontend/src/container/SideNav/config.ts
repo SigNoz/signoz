@@ -42,7 +42,6 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.SIGN_UP]: [QueryParams.resourceAttributes],
 	[ROUTES.SOMETHING_WENT_WRONG]: [QueryParams.resourceAttributes],
 	[ROUTES.TRACES_EXPLORER]: [QueryParams.resourceAttributes],
-	[ROUTES.TRACE]: [QueryParams.resourceAttributes],
 	[ROUTES.TRACE_DETAIL]: [QueryParams.resourceAttributes],
 	[ROUTES.UN_AUTHORIZED]: [QueryParams.resourceAttributes],
 	[ROUTES.USAGE_EXPLORER]: [QueryParams.resourceAttributes],

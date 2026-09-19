@@ -102,7 +102,7 @@ export function onViewTracePopupClick({
 		urlParams.set(QueryParams.startTime, startTime.toString());
 		urlParams.set(QueryParams.endTime, endTime.toString());
 		urlParams.delete(QueryParams.relativeTime);
-		const avialableParams = routeConfig[ROUTES.TRACE];
+		const avialableParams = routeConfig[ROUTES.TRACES_EXPLORER];
 		const queryString = getQueryString(avialableParams, urlParams);
 
 		const JSONCompositeQuery = encodeURIComponent(

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { generatePath, Link } from 'react-router-dom';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
@@ -53,7 +53,11 @@ export const getTraceLink = (record: Record<string, unknown>): string => {
 	const traceId = readId(record.traceID) || readId(record.trace_id);
 	const spanId = readId(record.spanID) || readId(record.span_id);
 
-	return `${ROUTES.TRACE}/${traceId}${formUrlParams({
+	if (!traceId) {
+		return '';
+	}
+
+	return `${generatePath(ROUTES.TRACE_DETAIL, { id: traceId })}${formUrlParams({
 		spanId,
 		levelUp: 0,
 		levelDown: 0,

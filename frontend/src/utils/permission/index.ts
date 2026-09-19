@@ -87,7 +87,6 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SIGN_UP: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACES_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
-	TRACE: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
 	// Every role must be able to land here - a role missing from this list is
 	// redirected to /un-authorized and then redirected off it again, looping.
@@ -167,7 +166,6 @@ export const routeWithInitialAuthZSupport = {
 	MY_SETTINGS: true,
 	SETTINGS: true,
 	TRACES_EXPLORER: true,
-	TRACE: true,
 	TRACE_DETAIL: true,
 	LOGS: true,
 	LOGS_EXPLORER: true,

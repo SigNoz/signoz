@@ -1588,7 +1588,6 @@ describe('PrivateRoute', () => {
 				deniedRoles: DENIED_ROLES,
 			},
 			TRACES_EXPLORER: { path: ROUTES.TRACES_EXPLORER, deniedRoles: DENIED_ROLES },
-			TRACE: { path: ROUTES.TRACE, deniedRoles: DENIED_ROLES },
 			TRACE_DETAIL: {
 				path: ROUTES.TRACE_DETAIL.replace(':id', 'trace-id-1'),
 				deniedRoles: DENIED_ROLES,

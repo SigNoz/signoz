@@ -6,7 +6,6 @@ const ROUTES = {
 	SERVICE_METRICS: '/services/:servicename',
 	SERVICE_TOP_LEVEL_OPERATIONS: '/services/:servicename/top-level-operations',
 	SERVICE_MAP: '/service-map',
-	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
 	TRACES_EXPLORER: '/traces-explorer',
 	ONBOARDING: '/onboarding',
