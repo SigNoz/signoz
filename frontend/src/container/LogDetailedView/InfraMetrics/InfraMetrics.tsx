@@ -60,6 +60,10 @@ function InfraMetrics({
 	}, [podName]);
 
 	const handleModeChange = (value: string): void => {
+		// single toggle-group emits '' on re-click of the pressed item
+		if (!value) {
+			return;
+		}
 		setSelectedView(value);
 	};
 
