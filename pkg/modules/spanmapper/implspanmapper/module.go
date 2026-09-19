@@ -6,10 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -21,15 +19,13 @@ const maxTestSpans = 100
 
 type module struct {
 	store    spantypes.SpanMapperStore
-	flagger  flagger.Flagger
 	registry spantypes.SpanMapperGroupRegistry
 	settings factory.ScopedProviderSettings
 }
 
-func NewModule(store spantypes.SpanMapperStore, flagger flagger.Flagger, registry spantypes.SpanMapperGroupRegistry, providerSettings factory.ProviderSettings) spanmapper.Module {
+func NewModule(store spantypes.SpanMapperStore, registry spantypes.SpanMapperGroupRegistry, providerSettings factory.ProviderSettings) spanmapper.Module {
 	return &module{
 		store:    store,
-		flagger:  flagger,
 		registry: registry,
 		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"),
 	}
@@ -149,16 +145,6 @@ func (module *module) AgentFeatureType() agentConf.AgentFeatureType {
 func (module *module) RecommendAgentConfig(orgID valuer.UUID, currentConfYaml []byte, configVersion *opamptypes.AgentConfigVersion) ([]byte, string, error) {
 	ctx := context.Background()
 
-	// Skip the llm pricing processor unless AI observability is enabled for the org.
-	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	enabled, err := module.flagger.Boolean(ctx, flagger.FeatureEnableAIObservability, evalCtx)
-	if err != nil {
-		return nil, "", err
-	}
-	if !enabled {
-		return currentConfYaml, "", nil
-	}
-
 	enabledMappers, err := module.listEnabledGroupsWithMappers(ctx, orgID)
 	if err != nil {
 		return nil, "", err
@@ -169,7 +155,7 @@ func (module *module) RecommendAgentConfig(orgID valuer.UUID, currentConfYaml []
 		return nil, "", err
 	}
 
-	serialized, err := json.Marshal(enabled)
+	serialized, err := json.Marshal(enabledMappers)
 	if err != nil {
 		return nil, "", err
 	}

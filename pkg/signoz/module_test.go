@@ -71,7 +71,7 @@ func TestNewModules(t *testing.T) {
 
 	spanMapperRegistry, err := implspanmapper.NewSystemGroupRegistry()
 	require.NoError(t, err)
-	spanMapperModule := implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), flagger, spanMapperRegistry, providerSettings)
+	spanMapperModule := implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), spanMapperRegistry, providerSettings)
 
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, implcloudintegration.NewModule(), retentionGetter, flagger, tagModule, implmetricreductionrule.NewModule(), spanMapperModule)
 

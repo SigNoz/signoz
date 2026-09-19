@@ -163,7 +163,7 @@ func NewModules(
 		CloudIntegration:     cloudIntegrationModule,
 		TraceDetail:          impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
 		SpanMapper:           spanMapper,
-		LLMPricingRule:       impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), fl, querier),
+		LLMPricingRule:       impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), querier),
 		Tag:                  tagModule,
 	}
 }

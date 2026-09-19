@@ -64,7 +64,7 @@ func TestNewHandlers(t *testing.T) {
 	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
 	spanMapperRegistry, err := implspanmapper.NewSystemGroupRegistry()
 	require.NoError(t, err)
-	spanMapperModule := implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), flagger, spanMapperRegistry, providerSettings)
+	spanMapperModule := implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), spanMapperRegistry, providerSettings)
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, nil, nil, nil, retentionGetter, flagger, tagModule, nil, spanMapperModule)
 
 	querierHandler := querier.NewHandler(providerSettings, nil, nil)

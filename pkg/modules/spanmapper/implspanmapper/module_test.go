@@ -55,7 +55,7 @@ func newTestModule(t *testing.T, sqlStore sqlstore.SQLStore, definitions ...span
 	registry, err := spantypes.NewSpanMapperGroupRegistry(definitions)
 	require.NoError(t, err)
 
-	return NewModule(NewStore(sqlStore), nil, registry, factorytest.NewSettings()).(*module)
+	return NewModule(NewStore(sqlStore), registry, factorytest.NewSettings()).(*module)
 }
 
 func newTestDefinition(t *testing.T, version int, body string) spantypes.SpanMapperGroupDefinition {

@@ -533,7 +533,7 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-	spanMapperModule := implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), flagger, spanMapperRegistry, providerSettings)
+	spanMapperModule := implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), spanMapperRegistry, providerSettings)
 
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, cloudIntegrationModule, retentionGetter, flagger, tagModule, metricReductionRuleModule, spanMapperModule)
 
