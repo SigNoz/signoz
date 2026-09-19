@@ -1,3 +1,4 @@
+import { OperatorValues, Tags } from 'hooks/useResourceAttribute/types';
 import { PayloadProps } from 'types/api/trace/getSpans';
 
 export interface TraceReducer {
@@ -46,30 +47,6 @@ interface SpansAggregateData {
 	statusCode: string;
 	method: string;
 }
-
-export interface Tags {
-	Key: string;
-	Operator: OperatorValues;
-	StringValues: string[];
-	NumberValues: number[];
-	BoolValues: boolean[];
-}
-
-export type OperatorValues =
-	| 'NotIn'
-	| 'In'
-	| 'Equals'
-	| 'NotEquals'
-	| 'Contains'
-	| 'NotContains'
-	| 'GreaterThan'
-	| 'Exists'
-	| 'NotExists'
-	| 'LessThan'
-	| 'GreaterThanEquals'
-	| 'LessThanEquals'
-	| 'StartsWith'
-	| 'NotStartsWith';
 
 export type TraceFilterEnum =
 	| 'duration'
@@ -133,3 +110,5 @@ export const AllPanelHeading: {
 		displayValue: 'Trace ID',
 	},
 ];
+
+export type { OperatorValues, Tags };
