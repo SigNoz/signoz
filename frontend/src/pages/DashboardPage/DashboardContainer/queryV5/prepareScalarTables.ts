@@ -3,10 +3,9 @@ import type {
 	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5ScalarDataDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import {
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas';
+
+import { isBuilderEnvelope } from './builderEnvelope';
 
 import type { PanelTable, PanelTableColumn } from './types';
 
@@ -28,13 +27,12 @@ export function extractAggregationsPerQuery(
 ): AggregationsPerQuery {
 	const perQuery: AggregationsPerQuery = {};
 	(requestPayload?.compositeQuery?.queries ?? []).forEach((envelope) => {
-		if (
-			envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
-		) {
+		if (!isBuilderEnvelope(envelope)) {
 			return;
 		}
-		const spec = envelope.spec;
+		const spec = envelope.spec as
+			| { name?: string; aggregations?: unknown }
+			| undefined;
 		if (spec?.name && spec.aggregations) {
 			perQuery[spec.name] = spec.aggregations as AggregationView[];
 		}

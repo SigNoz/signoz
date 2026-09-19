@@ -17,6 +17,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelQueryCapabilities } from '../Panels/types/panelCapabilities';
+import { isBuilderEnvelope } from './builderEnvelope';
 
 // Narrow view over the envelope spec variants. Orval erases envelope `spec` to `unknown`, so
 // shared fields are read through this view with a localized cast at the envelope boundary.
@@ -125,13 +126,10 @@ function withBarStepInterval(
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	const stepInterval = getBarStepIntervalSeconds(startMs, endMs);
 	return envelopes.map((envelope) => {
-		if (
-			envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
-		) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
-		if (envelope.spec?.stepInterval) {
+		if ((envelope.spec as QuerySpecView | undefined)?.stepInterval) {
 			return envelope;
 		}
 		return {
@@ -139,8 +137,8 @@ function withBarStepInterval(
 			spec: {
 				...envelope.spec,
 				stepInterval,
-			} as Querybuildertypesv5BuilderQuerySpecDTO,
-		};
+			},
+		} as Querybuildertypesv5QueryEnvelopeDTO;
 	});
 }
 
@@ -153,10 +151,7 @@ function withListOrderTiebreaker(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	return envelopes.map((envelope) => {
-		if (
-			envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
-		) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
 		const spec = envelope.spec as QuerySpecView;
@@ -181,8 +176,8 @@ function withListOrderTiebreaker(
 					...primary,
 					{ key: { name: 'id' }, direction: primary[0].direction },
 				],
-			} as Querybuildertypesv5BuilderQuerySpecDTO,
-		};
+			},
+		} as Querybuildertypesv5QueryEnvelopeDTO;
 	});
 }
 
@@ -195,10 +190,7 @@ function withPagination(
 	{ offset, limit }: { offset: number; limit: number },
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
 	return envelopes.map((envelope) => {
-		if (
-			envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
-		) {
+		if (!isBuilderEnvelope(envelope)) {
 			return envelope;
 		}
 		return {
@@ -207,8 +199,8 @@ function withPagination(
 				...envelope.spec,
 				offset,
 				limit,
-			} as Querybuildertypesv5BuilderQuerySpecDTO,
-		};
+			},
+		} as Querybuildertypesv5QueryEnvelopeDTO;
 	});
 }
 
@@ -301,11 +293,7 @@ export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 	}
 
 	const metricsSpecs = envelopes
-		.filter(
-			(envelope) =>
-				envelope.type ===
-				Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
-		)
+		.filter(isBuilderEnvelope)
 		.map((envelope) => envelope.spec as QuerySpecView)
 		.filter((spec) => spec.signal === 'metrics');
 

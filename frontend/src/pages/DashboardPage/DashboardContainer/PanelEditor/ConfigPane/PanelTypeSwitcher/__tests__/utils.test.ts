@@ -11,14 +11,14 @@ describe('getPanelTypeDisabledReason', () => {
 		expect(
 			getPanelTypeDisabledReason({
 				kind: 'signoz/TimeSeriesPanel',
-				queryType: PROM,
+				mode: PROM,
 				label: 'Time Series',
 			}),
 		).toBeUndefined();
 		expect(
 			getPanelTypeDisabledReason({
 				kind: 'signoz/ListPanel',
-				queryType: QUERY_BUILDER,
+				mode: QUERY_BUILDER,
 				signal: logs,
 				label: 'List',
 			}),
@@ -29,21 +29,21 @@ describe('getPanelTypeDisabledReason', () => {
 		expect(
 			getPanelTypeDisabledReason({
 				kind: 'signoz/ListPanel',
-				queryType: PROM,
+				mode: PROM,
 				label: 'List',
 			}),
 		).toBe("List isn't available for PromQL queries");
 		expect(
 			getPanelTypeDisabledReason({
 				kind: 'signoz/ListPanel',
-				queryType: CLICKHOUSE,
+				mode: CLICKHOUSE,
 				label: 'List',
 			}),
 		).toBe("List isn't available for ClickHouse queries");
 		expect(
 			getPanelTypeDisabledReason({
 				kind: 'signoz/TablePanel',
-				queryType: PROM,
+				mode: PROM,
 				label: 'Table',
 			}),
 		).toBe("Table isn't available for PromQL queries");
@@ -53,7 +53,7 @@ describe('getPanelTypeDisabledReason', () => {
 		expect(
 			getPanelTypeDisabledReason({
 				kind: 'signoz/ListPanel',
-				queryType: QUERY_BUILDER,
+				mode: QUERY_BUILDER,
 				signal: metrics,
 				label: 'List',
 			}),
@@ -64,7 +64,7 @@ describe('getPanelTypeDisabledReason', () => {
 		expect(
 			getPanelTypeDisabledReason({
 				kind: 'signoz/ListPanel',
-				queryType: PROM,
+				mode: PROM,
 				signal: metrics,
 				label: 'List',
 			}),

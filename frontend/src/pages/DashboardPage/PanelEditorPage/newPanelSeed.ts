@@ -4,13 +4,14 @@ import { EQueryType } from 'types/common/dashboard';
 
 import {
 	isStaticPanelKind,
-	isQueryTypeSupportedByPanelKind,
+	isQueryModeSupportedByPanelKind,
 } from '../DashboardContainer/Panels/capabilities';
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
 import { toPanelType } from '../DashboardContainer/Panels/types/panelKind';
 import type { PanelKind } from '../DashboardContainer/Panels/types/panelKind';
 import { SectionKind } from '../DashboardContainer/Panels/types/sections';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
+import { getQueryMode } from '../DashboardContainer/Panels/utils/queryMode';
 import {
 	buildPluginSpec,
 	type SeededPluginSpec,
@@ -36,7 +37,9 @@ function resolveSeededPanelKind(
 	requestedKind: PanelKind,
 	compositeQuery: Query,
 ): PanelKind {
-	if (isQueryTypeSupportedByPanelKind(requestedKind, compositeQuery.queryType)) {
+	if (
+		isQueryModeSupportedByPanelKind(requestedKind, getQueryMode(compositeQuery))
+	) {
 		return requestedKind;
 	}
 	return (

@@ -28,11 +28,16 @@ import { useViewPanel } from '../hooks/useViewPanel';
 import { buildMoveItems } from '../utils/buildMoveItems';
 import MenuActionItem from '../../../components/MenuActionItem/MenuActionItem';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { isAIBuilderEnvelope } from '../../../queryV5/builderEnvelope';
+import { toQueryEnvelopes } from '../../../queryV5/buildQueryRangeRequest';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 // Stable fallback so renders without layout context don't churn the mutation
 // hooks' deps (a fresh [] each render would re-create their callbacks).
 const EMPTY_SECTIONS: DashboardSection[] = [];
+
+const ALERT_FROM_AI_PANEL_REASON =
+	'Alerts are not available for AI Query Builder panels';
 
 interface UsePanelActionItemsArgs {
 	panelId: string;
@@ -63,6 +68,10 @@ export function usePanelActionItems({
 	panelActions,
 }: UsePanelActionItemsArgs): PanelActionItems {
 	const panelKind = panel.spec.plugin.kind;
+	// The alert builder has no AI query mode, so the flow would open on an empty query.
+	const isAIPanel = toQueryEnvelopes(panel.spec.queries).some(
+		isAIBuilderEnvelope,
+	);
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
 	const openPanelEditor = useOpenPanelEditor();
@@ -157,7 +166,15 @@ export function usePanelActionItems({
 		if (panelCapabilities.createAlert) {
 			dataGroup.push({
 				key: 'create-alert',
-				label: row('Create Alerts', <Bell size={14} />, { checks: [] }),
+				label: (
+					<MenuActionItem
+						label="Create Alerts"
+						icon={<Bell size={14} />}
+						checks={[]}
+						disabledTooltip={isAIPanel ? ALERT_FROM_AI_PANEL_REASON : undefined}
+					/>
+				),
+				disabled: isAIPanel,
 				onClick: (): void => createAlert(panel, panelId),
 			});
 		}
@@ -197,6 +214,7 @@ export function usePanelActionItems({
 		editChecks,
 		editDisabledTooltip,
 		panelCapabilities,
+		isAIPanel,
 		panel,
 		panelActions,
 		sections,
