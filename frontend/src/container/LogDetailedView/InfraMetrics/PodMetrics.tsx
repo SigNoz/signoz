@@ -4,7 +4,7 @@ import { Card, Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import dayjs from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -58,9 +58,9 @@ function PodMetrics({
 	);
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
-			queryKey: ['metrics', payload, ENTITY_VERSION_V4, 'POD'],
+			queryKey: ['metrics', payload, ENTITY_VERSION_V5, 'POD'],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
+				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
 			enabled: !!payload,
 		})),
 	);
