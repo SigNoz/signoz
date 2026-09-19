@@ -10,7 +10,7 @@ import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribute/utils';
 import createQueryParams from 'lib/createQueryParams';
 import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
-import { traceFilterKeys } from 'pages/TracesExplorer/Filter/filterUtils';
+import { traceFilterKeys } from 'constants/traceFilterKeys';
 import {
 	BaseAutocompleteData,
 	DataTypes,

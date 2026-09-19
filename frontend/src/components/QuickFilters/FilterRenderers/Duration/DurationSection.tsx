@@ -12,7 +12,9 @@ import { Slider } from '@signozhq/ui/slider';
 import { getMs } from 'utils/timeUtils';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 
-import { addFilter, FilterType, traceFilterKeys } from './filterUtils';
+import { traceFilterKeys } from 'constants/traceFilterKeys';
+
+import { addFilter, FilterType } from './utils';
 
 interface DurationProps {
 	selectedFilters: FilterType | undefined;
