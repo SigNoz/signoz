@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/stretchr/testify/assert"
@@ -1618,6 +1619,43 @@ func TestStorageRoundTrip(t *testing.T) {
 	assert.Contains(t, responseStr, `"operator":"above"`, "expected operator:above after storage round-trip")
 }
 
+// An AI builder query carries no signal of its own: the plugin kind implies
+// gen_ai, which only reads traces, so decode pins the signal and marshal emits it.
+func TestAIBuilderQueryStorageRoundTrip(t *testing.T) {
+	input := []byte(`{
+		"variables": [],
+		"panels": {"p1": {"kind": "Panel", "spec": {
+			"links": [],
+			"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+			"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/AIBuilderQuery", "spec": {
+				"name": "A", "aggregations": [{"expression": "count()"}]
+			}}}}]
+		}}},
+		"links": [],
+		"layouts": []
+	}`)
+
+	d, err := unmarshalDashboard(input)
+	require.NoError(t, err)
+
+	plugin := d.Panels["p1"].Spec.Queries[0].Spec.Plugin
+	assert.Equal(t, QueryKindAIBuilder, plugin.Kind)
+
+	aiSpec, ok := plugin.Spec.(*AIBuilderQuerySpec)
+	require.True(t, ok, "expected *AIBuilderQuerySpec, got %T", plugin.Spec)
+	assert.Equal(t, "A", aiSpec.Name)
+	assert.Equal(t, telemetrytypes.SignalTraces, aiSpec.Signal)
+
+	stored, err := json.Marshal(plugin)
+	require.NoError(t, err)
+	assert.Contains(t, string(stored), `"kind":"signoz/AIBuilderQuery"`)
+	assert.Contains(t, string(stored), `"signal":"traces"`)
+
+	var loaded QueryPlugin
+	require.NoError(t, json.Unmarshal(stored, &loaded))
+	assert.Equal(t, plugin, loaded)
+}
+
 func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
 	const validSpec = `"spec": {"variables": [], "panels": {}, "layouts": [], "links": []}`
 
@@ -1830,6 +1868,8 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		{"TimeSeries+PromQL", mkQuery("signoz/TimeSeriesPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), false},
 		{"Table+ClickHouse", mkQuery("signoz/TablePanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
 		{"List+Builder", mkQuery("signoz/ListPanel", "signoz/BuilderQuery", `{"name":"A","signal":"logs"}`), false},
+		{"TimeSeries+AIBuilder", mkQuery("signoz/TimeSeriesPanel", "signoz/AIBuilderQuery", `{"name":"A","aggregations":[{"expression":"count()"}]}`), false},
+		{"List+AIBuilder", mkQuery("signoz/ListPanel", "signoz/AIBuilderQuery", `{"name":"A"}`), false},
 		// Top-level: rejected
 		{"Table+PromQL", mkQuery("signoz/TablePanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
 		{"List+ClickHouse", mkQuery("signoz/ListPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), true},
@@ -1839,6 +1879,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		// Composite sub-queries
 		{"Table+Composite(promql)", mkComposite("signoz/TablePanel", "promql", `{"name":"A","query":"up"}`), true},
 		{"Table+Composite(clickhouse)", mkComposite("signoz/TablePanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
+		{"Table+Composite(builder_ai)", mkComposite("signoz/TablePanel", "builder_ai_query", `{"name":"A","aggregations":[{"expression":"count()"}]}`), false},
 	}
 
 	for _, tc := range cases {
