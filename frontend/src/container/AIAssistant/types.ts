@@ -15,9 +15,11 @@
 import type {
 	ApprovalEventDTO,
 	ClarificationEventDTO,
+	ErrorCodeDTO,
 	FeedbackRatingDTO,
 	MessageActionDTO,
 	MessageActionKindDTO,
+	RetryActionDTO,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 
 /** Client-only file attachment — no API equivalent (uploads happen via data URLs). */
@@ -91,6 +93,18 @@ export interface Message {
 	 * bar (copy/vote/regenerate) is hidden — retrying would just 429 again.
 	 */
 	isRateLimitError?: boolean;
+	/**
+	 * Marks an assistant message that represents a failed turn. Drives the
+	 * error styling and replaces the feedback bar with a retry affordance.
+	 */
+	isError?: boolean;
+	/** Known backend error code for the failure, when recognised. */
+	errorCode?: ErrorCodeDTO;
+	/**
+	 * Retry semantics for a failed turn — `manual` renders an inline Retry
+	 * button on the error bubble; `none`/`auto` render no button.
+	 */
+	retryAction?: RetryActionDTO;
 	createdAt: number;
 }
 
