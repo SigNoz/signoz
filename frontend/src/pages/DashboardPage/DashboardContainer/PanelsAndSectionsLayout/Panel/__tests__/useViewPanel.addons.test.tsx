@@ -46,6 +46,10 @@ beforeAll(() => {
 });
 
 // jest.config maps the real hook to a no-op mock; this suite needs real navigation.
+jest.mock('hooks/useIsAIObservabilityEnabled', () => ({
+	useIsAIObservabilityEnabled: (): boolean => false,
+}));
+
 jest.mock('hooks/useSafeNavigate', () =>
 	jest
 		.requireActual('tests/browser-history-safe-navigate')

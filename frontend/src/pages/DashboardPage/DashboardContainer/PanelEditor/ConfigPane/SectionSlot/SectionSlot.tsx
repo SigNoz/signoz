@@ -58,7 +58,7 @@ function SectionSlot({
 	signal,
 	panelKind,
 	onChangePanelKind,
-	queryType,
+	mode,
 	stepInterval,
 	metricUnit,
 }: SectionSlotProps): JSX.Element | null {
@@ -124,7 +124,7 @@ function SectionSlot({
 			signal={signal}
 			panelKind={panelKind}
 			onChangePanelKind={onChangePanelKind}
-			queryType={queryType}
+			mode={mode}
 			stepInterval={stepInterval}
 			metricUnit={metricUnit}
 			registerHeaderAction={registerHeaderAction}

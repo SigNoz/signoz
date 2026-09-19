@@ -18,16 +18,18 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	icon: List,
 	Renderer,
 	EditorPane: ListEditorPane,
-	// Raw records come from logs and traces; metrics don't produce row data.
-	supportedSignals: [
-		TelemetrytypesSignalDTO.logs,
-		TelemetrytypesSignalDTO.traces,
-	],
+	// Raw records come from logs and traces; metrics don't produce row data. No AI mode:
+	// the AI builder authors aggregations, which raw rows have no place for.
+	supportedQueryModes: {
+		[EQueryType.QUERY_BUILDER]: {
+			kind: 'signal',
+			signals: [TelemetrytypesSignalDTO.logs, TelemetrytypesSignalDTO.traces],
+		},
+	},
 	// Raw rows have no aggregation, so step interval / having never apply, and the
 	// Where clause searches the log/span body via `body CONTAINS`. Traces additionally
 	// hide `limit` (the server paginates raw spans). Mirrors QueryBuilderV2's internal
 	// list configs — the capabilities guard is the single source for both.
-	supportedQueryTypes: [EQueryType.QUERY_BUILDER],
 	queryBuilderFields: {
 		default: {
 			stepInterval: { isHidden: true, isDisabled: true },

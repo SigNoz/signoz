@@ -12,6 +12,10 @@ import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder';
 // Capture the props the (real-guard-fed) QueryBuilderV2 receives without rendering it.
 const mockQueryBuilderV2 = jest.fn();
 
+jest.mock('hooks/useIsAIObservabilityEnabled', () => ({
+	useIsAIObservabilityEnabled: (): boolean => false,
+}));
+
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));

@@ -1,16 +1,16 @@
 import { useMemo } from 'react';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import type { EQueryType } from 'types/common/dashboard';
 
 import { PANEL_OPTIONS } from '../../../Panels/registry';
 import type { PanelKind } from '../../../Panels/types/panelKind';
+import type { PanelQueryMode } from '../../../Panels/types/queryModes';
 import type { ConfigSelectItem } from '../controls/ConfigSelect/ConfigSelect';
 
 import { getPanelTypeDisabledReason } from './utils';
 
 interface UsePanelTypeSelectItemsArgs {
-	/** Active query type — a kind that can't be authored in it is disabled. */
-	queryType: EQueryType;
+	/** Active query mode — a kind that can't be authored in it is disabled. */
+	mode: PanelQueryMode;
 	/** Current datasource — also gates the disabled rule (List needs logs/traces, not metrics). */
 	signal?: TelemetrytypesSignalDTO;
 }
@@ -22,7 +22,7 @@ interface UsePanelTypeSelectItemsArgs {
  * modal's header so the two selectors apply the same rule and can't drift.
  */
 export function usePanelTypeSelectItems({
-	queryType,
+	mode,
 	signal,
 }: UsePanelTypeSelectItemsArgs): ConfigSelectItem<PanelKind>[] {
 	return useMemo(
@@ -31,7 +31,7 @@ export function usePanelTypeSelectItems({
 				// One reason drives both the disabled flag and the tooltip, so they can't disagree.
 				const disabledReason = getPanelTypeDisabledReason({
 					kind,
-					queryType,
+					mode,
 					signal,
 					label: displayName,
 				});
@@ -43,6 +43,6 @@ export function usePanelTypeSelectItems({
 					tooltip: disabledReason,
 				};
 			}),
-		[queryType, signal],
+		[mode, signal],
 	);
 }

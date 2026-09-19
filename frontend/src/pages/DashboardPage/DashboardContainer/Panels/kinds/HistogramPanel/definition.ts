@@ -10,6 +10,8 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
+import { AI_QUERY_MODE } from '../../types/queryModes';
+
 export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
 	kind: 'signoz/HistogramPanel',
 	displayName: 'Histogram',
@@ -18,16 +20,22 @@ export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	supportedSignals: [
-		TelemetrytypesSignalDTO.metrics,
-		TelemetrytypesSignalDTO.logs,
-		TelemetrytypesSignalDTO.traces,
-	],
-	supportedQueryTypes: [
-		EQueryType.QUERY_BUILDER,
-		EQueryType.CLICKHOUSE,
-		EQueryType.PROM,
-	],
+	supportedQueryModes: {
+		[EQueryType.QUERY_BUILDER]: {
+			kind: 'signal',
+			signals: [
+				TelemetrytypesSignalDTO.metrics,
+				TelemetrytypesSignalDTO.logs,
+				TelemetrytypesSignalDTO.traces,
+			],
+		},
+		[EQueryType.CLICKHOUSE]: { kind: 'signal-less' },
+		[EQueryType.PROM]: { kind: 'signal-less' },
+		[AI_QUERY_MODE]: {
+			kind: 'signal',
+			signals: [TelemetrytypesSignalDTO.traces],
+		},
+	},
 	queryBuilderFields: {},
 	// Buckets are computed client-side from the raw series, so the request is a plain
 	// time series — the bucket count is a display concern, not a query one.

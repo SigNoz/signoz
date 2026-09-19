@@ -7,8 +7,8 @@ import type {
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { SectionKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { getSupportedSignals } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import type { PanelQueryMode } from 'pages/DashboardPage/DashboardContainer/Panels/types/queryModes';
 import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
-import type { EQueryType } from 'types/common/dashboard';
 
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
@@ -30,7 +30,7 @@ interface ConfigPaneProps {
 	 * panel types the visualization switcher disables — read from the provider, not the
 	 * spec, because a new panel's spec has no query until staged.
 	 */
-	queryType: EQueryType;
+	mode: PanelQueryMode;
 	/** Panel's resolved series, provided to sections that need them (legend colors). */
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */
@@ -57,7 +57,7 @@ function ConfigPane({
 	spec,
 	onChangeSpec,
 	onChangePanelKind,
-	queryType,
+	mode,
 	legendSeries,
 	tableColumns,
 	stepInterval,
@@ -125,7 +125,7 @@ function ConfigPane({
 						signal={signal}
 						panelKind={panelKind}
 						onChangePanelKind={onChangePanelKind}
-						queryType={queryType}
+						mode={mode}
 						stepInterval={stepInterval}
 						metricUnit={metricUnit}
 					/>
@@ -149,7 +149,7 @@ function ConfigPane({
 									signal={signal}
 									panelKind={panelKind}
 									onChangePanelKind={onChangePanelKind}
-									queryType={queryType}
+									mode={mode}
 									stepInterval={stepInterval}
 									metricUnit={metricUnit}
 								/>
