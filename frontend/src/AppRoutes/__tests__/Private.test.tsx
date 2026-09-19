@@ -1593,10 +1593,6 @@ describe('PrivateRoute', () => {
 				path: ROUTES.TRACE_DETAIL.replace(':id', 'trace-id-1'),
 				deniedRoles: DENIED_ROLES,
 			},
-			TRACE_DETAIL_OLD: {
-				path: ROUTES.TRACE_DETAIL_OLD.replace(':id', 'trace-id-1'),
-				deniedRoles: DENIED_ROLES,
-			},
 			// LOGS and LOGS_EXPLORER share a path - matchPath resolves it to whichever
 			// route definition comes last, and both keys are authz-aware either way.
 			LOGS: { path: ROUTES.LOGS, deniedRoles: DENIED_ROLES },

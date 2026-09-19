@@ -47,7 +47,6 @@ import {
 	SomethingWentWrong,
 	StatusPage,
 	SupportPage,
-	TraceDetailOldRedirect,
 	TraceDetailV3,
 	TracesExplorer,
 	TracesFunnelDetails,
@@ -130,14 +129,6 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 		exact: true,
 		key: 'LOGS_SAVE_VIEWS',
-	},
-	// Legacy /trace-old/:id redirects to the current /trace/:id view.
-	{
-		path: ROUTES.TRACE_DETAIL_OLD,
-		exact: true,
-		component: TraceDetailOldRedirect,
-		isPrivate: true,
-		key: 'TRACE_DETAIL_OLD',
 	},
 	{
 		path: ROUTES.TRACE_DETAIL,
