@@ -1,3 +1,4 @@
+import { isBuilderEnvelope } from '../../../queryV5/builderEnvelope';
 import type {
 	DashboardtypesDashboardSpecDTOPanels,
 	DashboardtypesQueryDTO,
@@ -20,14 +21,12 @@ function forEachBuilderSpec(
 	}
 	if (plugin.kind === 'signoz/CompositeQuery') {
 		const composite = plugin.spec as Querybuildertypesv5CompositeQueryDTO;
-		(composite.queries ?? [])
-			.filter((envelope) => envelope.type === 'builder_query')
-			.forEach((envelope) => {
-				const { spec } = envelope as Querybuildertypesv5QueryEnvelopeBuilderDTO;
-				if (spec) {
-					fn(spec as Querybuildertypesv5BuilderQuerySpecDTO);
-				}
-			});
+		(composite.queries ?? []).filter(isBuilderEnvelope).forEach((envelope) => {
+			const { spec } = envelope as Querybuildertypesv5QueryEnvelopeBuilderDTO;
+			if (spec) {
+				fn(spec as Querybuildertypesv5BuilderQuerySpecDTO);
+			}
+		});
 	} else if (plugin.kind === 'signoz/BuilderQuery') {
 		fn(plugin.spec as Querybuildertypesv5BuilderQuerySpecDTO);
 	}

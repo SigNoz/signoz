@@ -44,6 +44,10 @@ const toGeneratedEnvelopes = (
 ): Querybuildertypesv5QueryEnvelopeDTO[] =>
 	envelopes as unknown as Querybuildertypesv5QueryEnvelopeDTO[];
 
+// Deliberately narrower than `isBuilderEnvelope`: its only caller is the List branch of
+// `toPerses`, and the bare `signoz/BuilderQuery` plugin List emits carries no `type`
+// discriminator — an AI query serialized through it would silently come back a plain one.
+// List panels never carry an AI query, so this can only ever see `builder_query`.
 const isBuilderQueryEnvelope = (
 	envelope: Querybuildertypesv5QueryEnvelopeDTO,
 ): boolean =>
