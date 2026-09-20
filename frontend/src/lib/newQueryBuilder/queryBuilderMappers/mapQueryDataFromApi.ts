@@ -48,8 +48,6 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 				builderQueryTypes[spec.name] = 'builder_query';
 			}
 		} else if (q.type === 'builder_ai_query') {
-			// The AI-ness rides on the envelope type, not the spec, so stamp it back onto
-			// the builder query — the editor tab and the outgoing payload both read it there.
 			if (spec.name) {
 				builderQueries[spec.name] = {
 					...convertBuilderQueryToIBuilderQuery(spec as BuilderQuery),
