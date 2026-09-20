@@ -11,6 +11,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	Querybuildertypesv5OrderDirectionDTO,
+	Querybuildertypesv5QueryEnvelopeBuilderAIDTOType,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
 	Querybuildertypesv5QueryEnvelopePromQLDTOType,
@@ -58,6 +59,14 @@ export function toQueryEnvelopes(
 					type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
 					spec: plugin.spec as Querybuildertypesv5BuilderQuerySpecDTO,
 				},
+			];
+		case 'signoz/AIBuilderQuery':
+			// Same wire shape; the widening is only orval's separate `signal` enum, which TS treats nominally.
+			return [
+				{
+					type: Querybuildertypesv5QueryEnvelopeBuilderAIDTOType.builder_ai_query,
+					spec: plugin.spec,
+				} as unknown as Querybuildertypesv5QueryEnvelopeDTO,
 			];
 		case 'signoz/PromQLQuery':
 			return [

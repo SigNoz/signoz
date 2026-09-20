@@ -1,6 +1,10 @@
 import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { isAIBuilderEnvelope, isBuilderEnvelope } from '../builderEnvelope';
+import {
+	isAIBuilderEnvelope,
+	isBuilderEnvelope,
+	isBuilderPluginKind,
+} from '../builderEnvelope';
 
 // Only `type` is read; the generated envelope union erases spec to unknown anyway.
 const envelope = (type: string): Querybuildertypesv5QueryEnvelopeDTO =>
@@ -34,5 +38,21 @@ describe('builder envelope predicates', () => {
 		it('rejects builder_query, which is the whole point of the narrower check', () => {
 			expect(isAIBuilderEnvelope(envelope('builder_query'))).toBe(false);
 		});
+	});
+
+	describe('isBuilderPluginKind', () => {
+		it.each(['signoz/BuilderQuery', 'signoz/AIBuilderQuery'])(
+			'accepts %s — both wrap a builder query spec directly',
+			(kind) => {
+				expect(isBuilderPluginKind(kind)).toBe(true);
+			},
+		);
+
+		it.each(['signoz/CompositeQuery', 'signoz/PromQLQuery'])(
+			'rejects %s',
+			(kind) => {
+				expect(isBuilderPluginKind(kind)).toBe(false);
+			},
+		);
 	});
 });

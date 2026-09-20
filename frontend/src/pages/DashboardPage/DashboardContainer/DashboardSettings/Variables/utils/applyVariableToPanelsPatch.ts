@@ -1,4 +1,7 @@
-import { isBuilderEnvelope } from '../../../queryV5/builderEnvelope';
+import {
+	isBuilderEnvelope,
+	isBuilderPluginKind,
+} from '../../../queryV5/builderEnvelope';
 import type {
 	DashboardtypesDashboardSpecDTOPanels,
 	DashboardtypesQueryDTO,
@@ -27,7 +30,7 @@ function forEachBuilderSpec(
 				fn(spec as Querybuildertypesv5BuilderQuerySpecDTO);
 			}
 		});
-	} else if (plugin.kind === 'signoz/BuilderQuery') {
+	} else if (isBuilderPluginKind(plugin.kind)) {
 		fn(plugin.spec as Querybuildertypesv5BuilderQuerySpecDTO);
 	}
 }

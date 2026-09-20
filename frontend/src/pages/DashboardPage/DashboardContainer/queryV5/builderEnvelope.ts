@@ -1,5 +1,6 @@
 import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/sigNoz.schemas';
 import {
+	DashboardtypesQueryPluginKindDTO,
 	Querybuildertypesv5QueryEnvelopeBuilderAIDTOType,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 } from 'api/generated/services/sigNoz.schemas';
@@ -31,4 +32,19 @@ export function isAIBuilderEnvelope(
 		envelope.type ===
 		Querybuildertypesv5QueryEnvelopeBuilderAIDTOType.builder_ai_query
 	);
+}
+
+/**
+ * The plugin kinds that carry a builder query spec directly, without a CompositeQuery
+ * wrapper — the plugin-level twin of `isBuilderEnvelope`. The editor only ever writes a
+ * bare plugin for List panels, but a dashboard imported from JSON or created over the API
+ * may use one for any panel kind, so read paths must accept both.
+ */
+const BUILDER_PLUGIN_KINDS: string[] = [
+	DashboardtypesQueryPluginKindDTO['signoz/BuilderQuery'],
+	DashboardtypesQueryPluginKindDTO['signoz/AIBuilderQuery'],
+];
+
+export function isBuilderPluginKind(kind: string): boolean {
+	return BUILDER_PLUGIN_KINDS.includes(kind);
 }
