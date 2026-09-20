@@ -3,7 +3,8 @@ import { CircleMinus, CirclePlus } from '@signozhq/icons';
 import { Button, Col, Popover } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+
+import { ActionItemProps } from './LogDetailedView.types';
 
 function ActionItem({
 	fieldKey,
@@ -49,16 +50,6 @@ function ActionItem({
 	);
 }
 
-export interface ActionItemProps {
-	fieldKey: string;
-	fieldValue: string;
-	onClickActionItem: (
-		fieldKey: string,
-		fieldValue: string,
-		operator: string,
-		dataType?: DataTypes,
-		fieldType?: string,
-	) => void;
-}
+export type { ActionItemProps };
 
 export default memo(ActionItem);

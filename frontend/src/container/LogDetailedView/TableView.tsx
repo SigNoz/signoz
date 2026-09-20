@@ -32,6 +32,7 @@ import { openInNewTab } from 'utils/navigation';
 
 import { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
+import { DataType } from './LogDetailedView.types';
 import TableViewActions from './TableView/TableViewActions';
 import {
 	filterKeyForField,
@@ -352,10 +353,6 @@ TableView.defaultProps = {
 	handleChangeSelectedView: undefined,
 };
 
-export interface DataType {
-	key: string;
-	field: string;
-	value: string;
-}
+export type { DataType };
 
 export default TableView;
