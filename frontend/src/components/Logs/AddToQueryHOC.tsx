@@ -1,8 +1,8 @@
-import { memo, MouseEvent, useMemo } from 'react';
+import { memo, MouseEvent, ReactNode, useMemo } from 'react';
 import { Popover } from 'antd';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
-import { AddToQueryHOCProps } from 'container/LogDetailedView/LogDetailedView.types';
+import { FontSize } from 'container/OptionsMenu/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import './AddToQueryHOC.styles.scss';
@@ -38,7 +38,19 @@ function AddToQueryHOC({
 	);
 }
 
-export type { AddToQueryHOCProps };
+export interface AddToQueryHOCProps {
+	fieldKey: string;
+	fieldValue: string;
+	onAddToQuery: (
+		fieldKey: string,
+		fieldValue: string,
+		operator: string,
+		dataType?: DataTypes,
+	) => void;
+	fontSize: FontSize;
+	dataType?: DataTypes;
+	children: ReactNode;
+}
 
 AddToQueryHOC.defaultProps = {
 	dataType: DataTypes.EMPTY,
