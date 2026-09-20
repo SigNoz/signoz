@@ -46,8 +46,8 @@ jobs:
           docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
       - name: build
         run: |
-          docker build -f cmd/enterprise/Dockerfile.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 .
-          docker build -f cmd/enterprise/Dockerfile.with-web.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 .
+          docker build -f cmd/community/Dockerfile.integration --target runtime --build-arg TARGETARCH=amd64 .
+          docker build -f cmd/community/Dockerfile.integration --target with-web --build-arg TARGETARCH=amd64 .
       # docker cp instead of --output type=local (the local exporter stalls on
       # multi-GB outputs); tarballs instead of raw trees so the host never hits
       # the permission and symlink semantics that broke docker cp.

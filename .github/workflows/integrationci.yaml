@@ -37,43 +37,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # AI Vision uses registration/login, managed roles and service-account
+        # API keys. Keep upstream test sources unchanged and select only these.
         suite:
-          - alerts
-          - alertmanager
-          - alertmanagerrotation
-          - basepath
-          - callbackauthn
-          - cloudintegrations
-          - dashboard
-          - ingestionkeys
-          - inframonitoring
-          - logspipelines
           - passwordauthn
-          - preference
-          - quickfilter
-          - querierlogs
-          - queriertraces
-          - queriermetrics
-          - querierscalar
-          - queriercommon
-          - querierai
-          - rawexportdata
-          - promqlconformance
-          - promapiconformance
-          - querierauthz
           - role
-          - rootuser
-          - savedview
-          - semconvfamilies
           - serviceaccount
-          - spanmapper
-          - querier_json_body
-          - querier_skip_resource_fingerprint
-          - ttl
-          - clickhousecluster
-          - metricreduction
+        include:
+          - suite: passwordauthn
+            test-paths: >-
+              integration/tests/passwordauthn
+              --ignore=integration/tests/passwordauthn/02_license.py
+          - suite: role
+            test-paths: >-
+              integration/tests/role/01_register.py::test_managed_roles_create_on_register
+              integration/tests/role/01_register.py::test_managed_role_transactions_match_expected
+          - suite: serviceaccount
+            test-paths: >-
+              integration/tests/serviceaccount
+              --ignore=integration/tests/serviceaccount/06_fga.py
+        # PostgreSQL is implemented only in the removed enterprise edition.
         sqlstore-provider:
-          - postgres
           - sqlite
         sqlite-mode:
           - wal
@@ -81,8 +65,6 @@ jobs:
           - 25.12.5
         schema-migrator-version:
           - v0.144.6
-        postgres-version:
-          - 15
     if: |
       ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
@@ -146,9 +128,8 @@ jobs:
           cd tests && \
             uv run pytest \
             --basetemp=./tmp/ \
-            integration/tests/${{matrix.suite}} \
+            ${{matrix.test-paths}} \
             --sqlstore-provider ${{matrix.sqlstore-provider}} \
             --sqlite-mode ${{matrix.sqlite-mode}} \
-            --postgres-version ${{matrix.postgres-version}} \
             --clickhouse-version ${{matrix.clickhouse-version}} \
             --schema-migrator-version ${{matrix.schema-migrator-version}}

@@ -144,6 +144,20 @@ func (p *provider) ClickhouseDB() clickhouse.Conn {
 	return p
 }
 
+func (p *provider) QueryContext(ctx context.Context, query string, args ...any) (telemetrystore.Rows, error) {
+	stats := &telemetrystore.QueryStats{}
+	ctx = clickhouse.Context(ctx, clickhouse.WithProgress(func(progress *clickhouse.Progress) {
+		stats.RowsScanned += progress.Rows
+		stats.BytesScanned += progress.Bytes
+		stats.Elapsed += progress.Elapsed
+	}))
+	rows, err := p.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return telemetrystore.AdaptClickHouseRows(rows, stats), nil
+}
+
 func (p *provider) Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error) {
 	return RunExplainEstimate(ctx, p, stmt, args...)
 }

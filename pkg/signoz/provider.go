@@ -62,6 +62,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/statsreporter/noopstatsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/oceanbasetelemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/tokenizer/jwttokenizer"
@@ -258,6 +259,10 @@ func NewSQLMigrationProviderFactories(
 
 func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
 	return factory.MustNewNamedMap(
+		oceanbasetelemetrystore.NewFactory(
+			telemetrystorehook.NewLoggingFactory(),
+			telemetrystorehook.NewInstrumentationFactory(),
+		),
 		clickhousetelemetrystore.NewFactory(
 			telemetrystorehook.NewLoggingFactory(),
 			// adding instrumentation factory before settings as we are starting the query span here
@@ -366,6 +371,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			web,
 			modules.QuickFilter,
 			handlers.QuickFilter,
+			handlers.AIVision,
 		),
 	)
 }

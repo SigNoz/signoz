@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/modules/aivision"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
@@ -67,6 +68,7 @@ import (
 )
 
 type Modules struct {
+	AIVision             *aivision.Module
 	OrgGetter            organization.Getter
 	OrgSetter            organization.Setter
 	Preference           preference.Module
@@ -136,6 +138,7 @@ func NewModules(
 	authDomainModule := implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs, authz)
 
 	return Modules{
+		AIVision:             aivision.NewModule(providerSettings, telemetryStore, querier, config.TelemetryStore),
 		OrgGetter:            orgGetter,
 		OrgSetter:            orgSetter,
 		Preference:           implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),

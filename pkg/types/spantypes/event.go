@@ -1,6 +1,10 @@
 package spantypes
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strconv"
+	"strings"
+)
 
 // The Event struct has the data exactly store in the db, while EventV2 is more of what we want to send to client.
 type EventV2 struct {
@@ -18,23 +22,56 @@ type Link struct {
 	SpanID  string `json:"spanId,omitempty"`
 }
 
-// ParseEvents column (Array(String) of JSON-encoded events) into a slice of Event values.
+// ParseEvents accepts ClickHouse's Array(String) and SQL JSON-array storage.
 // Malformed entries are skipped.
 func ParseEvents(raw any) []EventV2 {
-	strs, ok := raw.([]string)
-	if !ok {
+	var strs []string
+	switch value := raw.(type) {
+	case []string:
+		strs = value
+	case string:
+		var items []json.RawMessage
+		if json.Unmarshal([]byte(value), &items) != nil {
+			return []EventV2{}
+		}
+		for _, item := range items {
+			strs = append(strs, string(item))
+		}
+	default:
 		return []EventV2{}
 	}
 	events := make([]EventV2, 0, len(strs))
 	for _, s := range strs {
-		var e Event
+		var e struct {
+			Name              string          `json:"name"`
+			TimeUnixNano      json.RawMessage `json:"timeUnixNano"`
+			TimestampUnixNano json.RawMessage `json:"timestamp_unix_nano"`
+			AttributeMap      map[string]any  `json:"attributeMap"`
+			Attributes        map[string]any  `json:"attributes"`
+		}
 		if err := json.Unmarshal([]byte(s), &e); err != nil {
 			continue
 		}
+		timestamp := e.TimeUnixNano
+		if len(timestamp) == 0 {
+			timestamp = e.TimestampUnixNano
+		}
+		var nano uint64
+		if len(timestamp) != 0 {
+			var err error
+			nano, err = strconv.ParseUint(strings.Trim(string(timestamp), `"`), 10, 64)
+			if err != nil {
+				continue
+			}
+		}
+		attributes := e.AttributeMap
+		if attributes == nil {
+			attributes = e.Attributes
+		}
 		events = append(events, EventV2{
 			Name:         e.Name,
-			TimeUnixNano: e.TimeUnixNano,
-			Attributes:   e.AttributeMap,
+			TimeUnixNano: nano,
+			Attributes:   attributes,
 			IsError:      false,
 		})
 	}
@@ -46,9 +83,24 @@ func ParseLinks(raw any) []Link {
 	if !ok || s == "" {
 		return []Link{}
 	}
-	var links []Link
-	if err := json.Unmarshal([]byte(s), &links); err != nil {
+	var stored []struct {
+		Link
+		TraceIDSnake string `json:"trace_id"`
+		SpanIDSnake  string `json:"span_id"`
+	}
+	if err := json.Unmarshal([]byte(s), &stored); err != nil {
 		return []Link{}
+	}
+	links := make([]Link, 0, len(stored))
+	for _, item := range stored {
+		link := item.Link
+		if link.TraceID == "" {
+			link.TraceID = item.TraceIDSnake
+		}
+		if link.SpanID == "" {
+			link.SpanID = item.SpanIDSnake
+		}
+		links = append(links, link)
 	}
 	return links
 }

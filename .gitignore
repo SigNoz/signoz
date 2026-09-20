@@ -16,6 +16,9 @@ frontend/i18n-translations-hash.json
 # testing
 frontend/coverage
 
+# Local integration acceptance outputs (screenshots, reports, one-off scripts)
+/artifacts/
+
 # production
 frontend/build
 frontend/.yarnclean

@@ -104,7 +104,7 @@ jobs:
           cd tests && \
             uv run pytest \
             --basetemp=./tmp/ \
-            -vv --reuse --with-web \
+            -vv --reuse --with-web --sqlite-mode wal \
             e2e/bootstrap/setup.py::test_setup
       - name: playwright-test
         run: |
@@ -116,7 +116,7 @@ jobs:
           cd tests && \
             uv run pytest \
             --basetemp=./tmp/ \
-            -vv --teardown \
+            -vv --teardown --sqlite-mode wal \
             e2e/bootstrap/setup.py::test_teardown
       - name: upload-artifacts
         if: always()

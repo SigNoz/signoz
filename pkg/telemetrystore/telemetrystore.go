@@ -8,7 +8,11 @@ import (
 )
 
 type TelemetryStore interface {
-	// ClickhouseDB returns the clickhouse connection, which can also EXPLAIN.
+	// QueryContext executes a statement produced by this store's dialect.
+	QueryContext(ctx context.Context, stmt string, args ...any) (Rows, error)
+
+	// ClickhouseDB is the legacy escape hatch for modules not yet migrated to
+	// QueryContext. Non-ClickHouse stores must reject these operations explicitly.
 	ClickhouseDB() clickhouse.Conn
 
 	// Cluster returns the cluster name.

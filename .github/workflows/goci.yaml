@@ -100,10 +100,6 @@ jobs:
         shell: bash
         run: |
           make docker-build-community
-      - name: docker-enterprise
-        shell: bash
-        run: |
-          make docker-build-enterprise
   openapi:
     if: |
       github.event_name == 'merge_group' ||
@@ -119,8 +115,8 @@ jobs:
           go-version: "1.24"
       - name: generate-openapi
         run: |
-          go run cmd/enterprise/*.go generate openapi
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in openapi spec. Run go run cmd/enterprise/*.go generate openapi locally and commit."; exit 1)
+          go run ./cmd/community generate openapi
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in openapi spec. Run go run ./cmd/community generate openapi locally and commit."; exit 1)
   authz:
     if: |
       github.event_name == 'merge_group' ||
@@ -136,8 +132,8 @@ jobs:
           go-version: "1.24"
       - name: generate-authz
         run: |
-          go run cmd/enterprise/*.go generate authz
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in authz permissions. Run go run cmd/enterprise/*.go generate authz locally and commit."; exit 1)
+          go run ./cmd/community generate authz
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in authz permissions. Run go run ./cmd/community generate authz locally and commit."; exit 1)
   web-settings:
     if: |
       github.event_name == 'merge_group' ||
@@ -153,8 +149,8 @@ jobs:
           go-version: "1.24"
       - name: generate-web-settings
         run: |
-          go run cmd/enterprise/*.go generate config web-settings
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in web settings schema. Run go run cmd/enterprise/*.go generate config web-settings locally and commit."; exit 1)
+          go run ./cmd/community generate config web-settings
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in web settings schema. Run go run ./cmd/community generate config web-settings locally and commit."; exit 1)
   transaction-groups:
     if: |
       github.event_name == 'merge_group' ||
@@ -170,5 +166,5 @@ jobs:
           go-version: "1.24"
       - name: generate-transaction-groups
         run: |
-          go run cmd/enterprise/*.go generate config transaction-groups
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in transaction groups schema. Run go run cmd/enterprise/*.go generate config transaction-groups locally and commit."; exit 1)
+          go run ./cmd/community generate config transaction-groups
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in transaction groups schema. Run go run ./cmd/community generate config transaction-groups locally and commit."; exit 1)

@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -449,68 +448,26 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		instrumentationtypes.QueryDuration:   instrumentationtypes.DurationBucket(q.fromMS, q.toMS),
 	})
 
-	totalRows := uint64(0)
-	totalBytes := uint64(0)
-	elapsed := time.Duration(0)
-
-	ctx = clickhouse.Context(ctx, clickhouse.WithProgress(func(p *clickhouse.Progress) {
-		totalRows += p.Rows
-		totalBytes += p.Bytes
-		elapsed += p.Elapsed
-	}))
-
-	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "Query timed out").
-				WithAdditional("Try refining your search by adding relevant resource attributes filtering")
-		}
-
-		if !errors.Is(err, context.Canceled) {
-			return nil, errors.Newf(
-				errors.TypeInternal,
-				errors.CodeInternal,
-				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
-			)
-		}
-
-		return nil, err
-	}
-	defer rows.Close()
-
-	// Pass query window and step for partial value detection
-	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
-
 	kind := q.kind
 	// all metric queries are time series then reduced if required, except
 	// heatmaps, whose statement returns a row per bucket rather than per point
 	if q.spec.Signal == telemetrytypes.SignalMetrics && kind != qbtypes.RequestTypeHeatmap {
 		kind = qbtypes.RequestTypeTimeSeries
 	}
-
-	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+	result, err := ExecuteStatement(ctx, q.telemetryStore, &qbtypes.Statement{Query: query, Args: args}, StatementExecution{
+		Name: q.spec.Name, Kind: kind, Window: &qbtypes.TimeRange{From: q.fromMS, To: q.toMS},
+		Step: q.spec.StepInterval, NormalizeSpans: q.spec.Signal == telemetrytypes.SignalTraces,
+		MaskQueryErrors: true,
+	})
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "Query timed out").
+				WithAdditional("Try refining your search by adding relevant resource attributes filtering")
+		}
 		return nil, err
 	}
-
-	// TODO: This should move to readAsRaw function in consume.go but for now we are keeping it here since it's only relevant for traces
-	if q.spec.Signal == telemetrytypes.SignalTraces {
-		if raw, ok := payload.(*qbtypes.RawData); ok {
-			for _, rr := range raw.Rows {
-				mergeSpanAttributeColumns(rr.Data)
-			}
-		}
-	}
-
-	return &qbtypes.Result{
-		Type:  q.kind,
-		Value: payload,
-		Stats: qbtypes.ExecStats{
-			RowsScanned:  totalRows,
-			BytesScanned: totalBytes,
-			DurationMS:   uint64(elapsed.Milliseconds()),
-		},
-	}, nil
+	result.Type = q.kind
+	return result, nil
 }
 
 func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Result, error) {

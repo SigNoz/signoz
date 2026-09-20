@@ -6,9 +6,21 @@ README.md
 deploy
 sample-apps
 
+# This fork builds only the community edition.
+ee
+cmd/enterprise
+
 # frontend
 **/node_modules
 
 # local env files (tracked example.env templates are unaffected)
 **/.env
 **/.env.*
+
+# Local runtime state and integration acceptance outputs
+bin
+artifacts
+.local
+**/__pycache__
+.claude/settings.local.json
+.claude/worktrees

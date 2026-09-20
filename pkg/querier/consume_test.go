@@ -100,7 +100,7 @@ func TestConsume_JSONColumn(t *testing.T) {
 			{Name: "__result_0", Type: "UInt64"},
 		}, [][]any{{body, uint64(3)}, {`{"level":"warn"}`, uint64(1)}}))
 
-		payload, err := consume(rows, qbtypes.RequestTypeScalar, nil, qbtypes.Step{}, "A")
+		payload, err := consume(telemetrystore.AdaptClickHouseRows(rows, nil), qbtypes.RequestTypeScalar, nil, qbtypes.Step{}, "A")
 		require.NoError(t, err)
 
 		data := payload.(*qbtypes.ScalarData)
@@ -118,7 +118,7 @@ func TestConsume_JSONColumn(t *testing.T) {
 			{Name: "__result_0", Type: "UInt64"},
 		}, [][]any{{ts, body, uint64(3)}}))
 
-		payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
+		payload, err := consume(telemetrystore.AdaptClickHouseRows(rows, nil), qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
 		require.NoError(t, err)
 
 		data := payload.(*qbtypes.TimeSeriesData)
@@ -140,7 +140,7 @@ func TestConsume_JSONColumn(t *testing.T) {
 			{ts, `{"level":"warn"}`, uint64(2)},
 		}))
 
-		payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
+		payload, err := consume(telemetrystore.AdaptClickHouseRows(rows, nil), qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
 		require.NoError(t, err)
 
 		data := payload.(*qbtypes.TimeSeriesData)
@@ -162,7 +162,7 @@ func TestConsume_JSONColumn(t *testing.T) {
 			{Name: "body_v2", Type: "JSON"},
 		}, [][]any{{ts, body}}))
 
-		payload, err := consume(rows, qbtypes.RequestTypeRaw, nil, qbtypes.Step{}, "A")
+		payload, err := consume(telemetrystore.AdaptClickHouseRows(rows, nil), qbtypes.RequestTypeRaw, nil, qbtypes.Step{}, "A")
 		require.NoError(t, err)
 
 		data := payload.(*qbtypes.RawData)

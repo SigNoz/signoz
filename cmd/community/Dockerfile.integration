@@ -1,0 +1,36 @@
+FROM golang:1.25-bookworm AS backend
+WORKDIR /src
+ENV CGO_ENABLED=0 GOFLAGS=-mod=readonly
+ARG TARGETARCH
+
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+COPY cmd/ cmd/
+COPY pkg/ pkg/
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    GOARCH=${TARGETARCH} go build -tags timetzdata -o /out/signoz ./cmd/community
+
+FROM node:22-bookworm-slim AS frontend
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+ENV CI=1
+ENV NODE_OPTIONS=--max-old-space-size=8192
+WORKDIR /src/frontend
+RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
+COPY frontend/ ./
+RUN --mount=type=cache,target=/pnpm/store \
+    pnpm install --frozen-lockfile --store-dir /pnpm/store && pnpm build
+
+# Both test targets run the community entry point with the same templates and
+# certificate roots as the community distribution. No license service is used.
+FROM alpine:3.22 AS runtime
+RUN apk add --no-cache ca-certificates
+WORKDIR /root
+COPY --from=backend /out/signoz /root/signoz
+COPY templates /root/templates
+COPY LICENSE /root/licenses/SigNoz-LICENSE
+ENTRYPOINT ["/root/signoz", "server"]
+
+FROM runtime AS with-web
+COPY --from=frontend /src/frontend/build /root/web

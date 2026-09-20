@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
+	"github.com/SigNoz/signoz/pkg/modules/aivision"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -52,6 +53,7 @@ import (
 )
 
 type provider struct {
+	aivisionHandler            aivision.Handler
 	globalConfig               global.Config
 	web                        web.Web
 	router                     *mux.Router
@@ -147,6 +149,7 @@ func NewFactory(
 	web web.Web,
 	quickFilterModule quickfilter.Module,
 	quickFilterHandler quickfilter.Handler,
+	aivisionHandler aivision.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -199,6 +202,7 @@ func NewFactory(
 			web,
 			quickFilterModule,
 			quickFilterHandler,
+			aivisionHandler,
 		)
 	})
 }
@@ -253,11 +257,13 @@ func newProvider(
 	web web.Web,
 	quickFilterModule quickfilter.Module,
 	quickFilterHandler quickfilter.Handler,
+	aivisionHandler aivision.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
 
 	provider := &provider{
+		aivisionHandler:            aivisionHandler,
 		globalConfig:               globalConfig,
 		web:                        web,
 		router:                     router,
@@ -373,6 +379,9 @@ func (provider *provider) Router() *mux.Router {
 }
 
 func (provider *provider) AddToRouter(router *mux.Router) error {
+	if err := provider.addAIVisionRoutes(router); err != nil {
+		return err
+	}
 	if err := provider.addOrgRoutes(router); err != nil {
 		return err
 	}

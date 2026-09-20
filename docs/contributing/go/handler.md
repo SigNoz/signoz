@@ -155,7 +155,7 @@ if err := router.Handle("/api/v1/things", handler.New(
 Run the following command to update the OpenAPI spec:
 
 ```bash
-go run cmd/enterprise/*.go generate openapi
+go run ./cmd/community generate openapi
 ```
 
 This will update the OpenAPI spec in `docs/api/openapi.yml` to reflect the new endpoint.

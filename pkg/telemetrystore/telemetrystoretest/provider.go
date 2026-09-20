@@ -35,6 +35,14 @@ func (p *Provider) ClickhouseDB() clickhouse.Conn {
 	return conn{Conn: p.clickhouseDB.(clickhouse.Conn)}
 }
 
+func (p *Provider) QueryContext(ctx context.Context, query string, args ...any) (telemetrystore.Rows, error) {
+	rows, err := p.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return telemetrystore.AdaptClickHouseRows(rows, nil), nil
+}
+
 // Cluster returns the cluster name.
 func (p *Provider) Cluster() string {
 	return "cluster"

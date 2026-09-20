@@ -40,6 +40,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/disabledprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -53,10 +54,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/statementbuilder/logsstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/meterstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/oceanbasestatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/tracesstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata/oceanbasemetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -124,6 +127,18 @@ func newQueryStack(
 	querier.BucketCache,
 	error,
 ) {
+	if config.TelemetryStore.Provider == "oceanbase" {
+		cfg := config.TelemetryStore.OceanBase
+		return oceanbasemetadata.New(telemetryStore, cfg),
+			oceanbasestatementbuilder.New[qbtypes.TraceAggregation](cfg),
+			oceanbasestatementbuilder.UnsupportedBuilder[qbtypes.TraceAggregation]{Feature: "AI trace aggregation"},
+			oceanbasestatementbuilder.New[qbtypes.LogAggregation](cfg),
+			oceanbasestatementbuilder.UnsupportedBuilder[qbtypes.LogAggregation]{Feature: "audit queries"},
+			oceanbasestatementbuilder.New[qbtypes.MetricAggregation](cfg),
+			oceanbasestatementbuilder.UnsupportedBuilder[qbtypes.MetricAggregation]{Feature: "meter queries"},
+			oceanbasestatementbuilder.UnsupportedTraceOperator{},
+			querier.NewBucketCache(settings, cache, config.Querier.CacheTTL, config.Querier.FluxInterval), nil
+	}
 	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl)
 
 	cfg := config.Querier.Config
@@ -309,15 +324,20 @@ func New(
 	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
 
 	// Initialize prometheus from the available prometheus provider factories
-	prometheus, err := factory.NewProviderFromNamedMap(
-		ctx,
-		providerSettings,
-		config.Prometheus,
-		NewPrometheusProviderFactories(telemetrystore),
-		config.Prometheus.Provider(),
-	)
-	if err != nil {
-		return nil, err
+	var prometheus prometheus.Prometheus
+	if config.TelemetryStore.Provider == "oceanbase" {
+		prometheus = disabledprometheus.New(providerSettings, config.Prometheus)
+	} else {
+		prometheus, err = factory.NewProviderFromNamedMap(
+			ctx,
+			providerSettings,
+			config.Prometheus,
+			NewPrometheusProviderFactories(telemetrystore),
+			config.Prometheus.Provider(),
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Assemble the query stack (metadata store, statement builders, bucket cache) once,

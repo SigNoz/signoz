@@ -1,8 +1,10 @@
 package telemetrystore
 
 import (
+	"regexp"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
@@ -15,6 +17,16 @@ type Config struct {
 
 	// Clickhouse is the clickhouse configuration
 	Clickhouse ClickhouseConfig `mapstructure:"clickhouse"`
+
+	OceanBase OceanBaseConfig `mapstructure:"oceanbase"`
+}
+
+type OceanBaseConfig struct {
+	DSN           string        `mapstructure:"dsn"`
+	TablePrefix   string        `mapstructure:"table_prefix"`
+	QueryTimeout  time.Duration `mapstructure:"query_timeout"`
+	MaxQueryRange time.Duration `mapstructure:"max_query_range"`
+	MaxResultRows int           `mapstructure:"max_result_rows"`
 }
 
 type ConnectionConfig struct {
@@ -64,10 +76,27 @@ func newConfig() factory.Config {
 			DSN:     "tcp://localhost:9000",
 			Cluster: "cluster",
 		},
+		OceanBase: OceanBaseConfig{
+			TablePrefix:   "signoz",
+			QueryTimeout:  30 * time.Second,
+			MaxQueryRange: 93 * 24 * time.Hour,
+			MaxResultRows: 10000,
+		},
 	}
 
 }
 
 func (c Config) Validate() error {
+	if c.Provider == "oceanbase" {
+		if c.OceanBase.DSN == "" {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetrystore::oceanbase::dsn is required")
+		}
+		if !regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]{0,39}$`).MatchString(c.OceanBase.TablePrefix) {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid OceanBase table prefix")
+		}
+		if c.OceanBase.QueryTimeout <= 0 || c.OceanBase.MaxQueryRange <= 0 || c.OceanBase.MaxResultRows <= 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "OceanBase query timeout, range and row limit must be positive")
+		}
+	}
 	return nil
 }

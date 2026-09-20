@@ -1,0 +1,61 @@
+# signoz-ob - SigNoz community server on OceanBase, self-hosted distribution
+# image for the AI Vision stack.
+#
+# Build context is the repository root:
+#
+#   docker build -f cmd/community/Dockerfile.ob -t signoz-ob .
+#   docker buildx build --platform linux/amd64,linux/arm64 -f cmd/community/Dockerfile.ob .
+#
+# Unlike cmd/community/Dockerfile.multi-arch (which expects a pre-built binary
+# and bundles the web frontend), this image compiles the server itself and
+# ships no frontend: AI Vision deploys it as a headless query/ingest plane with
+# SIGNOZ_WEB_ENABLED=false. The telemetry store is selected at run time via
+# SIGNOZ_TELEMETRYSTORE_PROVIDER=oceanbase / SIGNOZ_TELEMETRYSTORE_OCEANBASE_DSN.
+#
+# The binary is cross-compiled on the build platform (no QEMU): every store
+# driver in use (modernc.org/sqlite, go-sql-driver/mysql) is pure Go, which is
+# also how the upstream Makefile produces its arm64 build.
+
+# ── Stage 1: build ──────────────────────────────────────────────────────────
+FROM --platform=$BUILDPLATFORM golang:1.25-bookworm AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+# Override for networks where proxy.golang.org is unreachable, e.g.
+#   --build-arg GOPROXY=https://goproxy.cn,direct
+ARG GOPROXY=https://proxy.golang.org,direct
+ENV CGO_ENABLED=0 \
+    GOFLAGS=-mod=readonly \
+    GOPROXY=${GOPROXY}
+
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+
+COPY . .
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -tags timetzdata -ldflags "-s -w" -o /out/signoz ./cmd/community
+
+# ── Stage 2: runtime ────────────────────────────────────────────────────────
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/lib/signoz
+
+WORKDIR /app
+COPY --from=builder /out/signoz /app/signoz
+COPY LICENSE /app/licenses/SigNoz-LICENSE
+# Alertmanager / email templates are resolved relative to the working dir.
+COPY templates /app/templates
+
+# The sqlite metastore defaults to /var/lib/signoz/signoz.db; mount a volume
+# there to persist it across container recreation.
+ENV SIGNOZ_WEB_ENABLED=false
+
+EXPOSE 8080
+ENTRYPOINT ["/app/signoz"]
+CMD ["server"]

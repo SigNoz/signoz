@@ -147,7 +147,7 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	}
 	defer rows.Close()
 
-	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name)
+	payload, err := consume(telemetrystore.AdaptClickHouseRows(rows, nil), q.kind, nil, qbtypes.Step{}, q.query.Name)
 	if err != nil {
 		return nil, err
 	}

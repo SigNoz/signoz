@@ -16,6 +16,8 @@ from fixtures.logger import setup_logger
 from fixtures.tls import CA_CONTAINER_PATH, CA_ID_LABEL, ca_id
 
 logger = setup_logger(__name__)
+EDITION_LABEL = "org.signoz.test.edition"
+INTEGRATION_IMAGE = "signoz-community:integration"
 
 
 def create_signoz(
@@ -43,14 +45,12 @@ def create_signoz(
         # Get the no-web flag
         with_web = pytestconfig.getoption("--with-web")
 
-        arch = platform.machine()
-        if arch == "x86_64":
-            arch = "amd64"
+        arch = {"x86_64": "amd64", "aarch64": "arm64"}.get(platform.machine(), platform.machine())
 
         # Build the image
-        dockerfile_path = "cmd/enterprise/Dockerfile.integration"
-        if with_web:
-            dockerfile_path = "cmd/enterprise/Dockerfile.with-web.integration"
+        dockerfile_path = "cmd/community/Dockerfile.integration"
+        build_target = "with-web" if with_web else "runtime"
+        image_name = INTEGRATION_IMAGE + ("-with-web" if with_web else "")
 
         # Docker build context is the repo root — one up from pytest's
         # rootdir (tests/).
@@ -64,12 +64,12 @@ def create_signoz(
                 "build",
                 "--file",
                 str(context / dockerfile_path),
+                "--target",
+                build_target,
                 "--tag",
-                "signoz:integration",
+                image_name,
                 "--build-arg",
                 f"TARGETARCH={arch}",
-                "--build-arg",
-                f"ZEUSURL={zeus.container_configs['8080'].base()}",
                 str(context),
             ],
             check=True,
@@ -82,7 +82,6 @@ def create_signoz(
                 "SIGNOZ_WEB_DIRECTORY": "/root/web",
                 "SIGNOZ_INSTRUMENTATION_LOGS_LEVEL": "debug",
                 "SIGNOZ_PROMETHEUS_ACTIVE__QUERY__TRACKER_ENABLED": False,
-                "SIGNOZ_GATEWAY_URL": gateway.container_configs["8080"].base(),
                 "SIGNOZ_TOKENIZER_JWT_SECRET": "secret",
                 "SIGNOZ_GLOBAL_INGESTION__URL": "https://ingest.test.signoz.cloud",
                 "SIGNOZ_USER_PASSWORD_RESET_ALLOW__SELF": True,
@@ -103,7 +102,7 @@ def create_signoz(
         if env_overrides:
             env = env | env_overrides
 
-        container = DockerContainer("signoz:integration")
+        container = DockerContainer(image_name)
         for k, v in env.items():
             container.with_env(k, v)
         container.with_exposed_ports(8080)
@@ -121,9 +120,11 @@ def create_signoz(
         # The CA lands in the directory Go scans for system roots, so tests can
         # stand in for real TLS hosts (e.g. the fake accounts.google.com) while
         # the bundled roots keep working for everything else.
+        labels = {EDITION_LABEL: "community"}
         if tls:
             container.with_volume_mapping(tls.ca_cert_path, CA_CONTAINER_PATH, "ro")
-            container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls)})
+            labels[CA_ID_LABEL] = ca_id(tls)
+        container.with_kwargs(labels=labels)
 
         container.start()
 
@@ -204,14 +205,13 @@ def create_signoz(
         )
 
     def stale(container: types.SigNoz) -> bool:
-        if not tls:
-            return False
         client = docker.from_env()
         try:
             labels = client.containers.get(container_id=container.self.id).attrs["Config"]["Labels"]
         except docker.errors.NotFound:
             return True
-        return labels.get(CA_ID_LABEL) != ca_id(tls)
+        # A reused upstream enterprise container must be rebuilt for this fork.
+        return labels.get(EDITION_LABEL) != "community" or (tls is not None and labels.get(CA_ID_LABEL) != ca_id(tls))
 
     return reuse.wrap(
         request,

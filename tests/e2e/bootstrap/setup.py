@@ -18,7 +18,6 @@ def _env_file(pytestconfig: pytest.Config) -> Path:
 def test_setup(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    apply_license: types.Operation,  # pylint: disable=unused-argument
     seeder: types.TestContainerDocker,
     pytestconfig: pytest.Config,
 ) -> None:
@@ -38,7 +37,6 @@ def test_setup(
 def test_teardown(
     signoz: types.SigNoz,  # pylint: disable=unused-argument
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    apply_license: types.Operation,  # pylint: disable=unused-argument
     seeder: types.TestContainerDocker,  # pylint: disable=unused-argument
     pytestconfig: pytest.Config,
 ) -> None:

@@ -2,10 +2,12 @@ package app
 
 import (
 	"context"
+	"os"
 
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/ingest"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -78,6 +80,17 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	apiHandler.RegisterMessagingQueuesRoutes(r, am)
 	apiHandler.RegisterThirdPartyApiRoutes(r, am)
 	apiHandler.RegisterTraceFunnelsRoutes(r, am)
+
+	// The gateway forwards verified telemetry to the configured data plane.
+	// Ingest stays disabled unless an internal key is configured.
+	if err := ingest.AddToRouter(r, ingest.Config{
+		DSN:         config.TelemetryStore.OceanBase.DSN,
+		TablePrefix: config.TelemetryStore.OceanBase.TablePrefix,
+		OrgID:       os.Getenv("SIGNOZ_ORG_ID"),
+		InternalKey: os.Getenv("SIGNOZ_INGEST_INTERNAL_KEY"),
+	}, signoz.Instrumentation.Logger()); err != nil {
+		return nil, err
+	}
 
 	opAmpModel.Init(signoz.SQLStore, signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter)
 

@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability/implaiobservability"
+	"github.com/SigNoz/signoz/pkg/modules/aivision"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -61,6 +62,7 @@ import (
 )
 
 type Handlers struct {
+	AIVision                aivision.Handler
 	SavedView               savedview.Handler
 	Apdex                   apdex.Handler
 	Dashboard               dashboard.Handler
@@ -115,6 +117,7 @@ func NewHandlers(
 	statsAggregator statsreporter.Aggregator,
 ) Handlers {
 	return Handlers{
+		AIVision:                aivision.NewHandler(modules.AIVision),
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
 		Apdex:                   implapdex.NewHandler(modules.Apdex),
 		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz),
