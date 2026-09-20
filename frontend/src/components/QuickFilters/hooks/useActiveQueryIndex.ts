@@ -15,13 +15,21 @@ function useActiveQueryIndex(source: QuickFiltersSource): number {
 	const isListView = panelType === PANEL_TYPES.LIST;
 
 	return useMemo(() => {
+		// AI observability builds a single query in the row-level views, so its
+		// filters always drive the first one there.
+		if (source === QuickFiltersSource.AI_OBSERVABILITY) {
+			return isListView || panelType === PANEL_TYPES.TRACE
+				? 0
+				: lastUsedQuery || 0;
+		}
+
 		if (isListView) {
 			return source === QuickFiltersSource.TRACES_EXPLORER
 				? lastUsedQuery || 0
 				: 0;
 		}
 		return lastUsedQuery || 0;
-	}, [isListView, source, lastUsedQuery]);
+	}, [isListView, panelType, source, lastUsedQuery]);
 }
 
 export default useActiveQueryIndex;

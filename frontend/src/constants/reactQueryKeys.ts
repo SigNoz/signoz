@@ -109,6 +109,9 @@ export const REACT_QUERY_KEY = {
 	// Field Keys Suggestion Query Keys
 	FIELD_KEYS_SUGGESTION: 'FIELD_KEYS_SUGGESTION',
 
+	// Field Values Suggestion Query Keys
+	FIELD_VALUES_SUGGESTION: 'FIELD_VALUES_SUGGESTION',
+
 	// AI Assistant Query Keys
 	AI_ASSISTANT_EMPTY_STATE_CHIPS: 'AI_ASSISTANT_EMPTY_STATE_CHIPS',
 } as const;
