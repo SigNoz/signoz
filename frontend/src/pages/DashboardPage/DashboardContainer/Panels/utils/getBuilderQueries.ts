@@ -4,7 +4,10 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
-import { isBuilderEnvelope } from '../../queryV5/builderEnvelope';
+import {
+	isBuilderEnvelope,
+	isBuilderPluginKind,
+} from '../../queryV5/builderEnvelope';
 
 /**
  * Flattens a panel's queries into its builder queries, unwrapping
@@ -18,7 +21,7 @@ export function getBuilderQueries(
 	const flattened: BuilderQuery[] = [];
 	queries.forEach((envelope) => {
 		const plugin = envelope.spec.plugin;
-		if (plugin.kind === 'signoz/BuilderQuery') {
+		if (isBuilderPluginKind(plugin.kind)) {
 			flattened.push(plugin.spec as BuilderQuery);
 			return;
 		}
