@@ -23,7 +23,6 @@ import {
 	LicensePage,
 	ListAllALertsPage,
 	LLMObservabilityPage,
-	LiveLogs,
 	Login,
 	Logs,
 	LogsExplorer,
@@ -313,13 +312,6 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: OldLogsExplorer,
 		key: 'OLD_LOGS_EXPLORER',
-		isPrivate: true,
-	},
-	{
-		path: ROUTES.LIVE_LOGS,
-		exact: true,
-		component: LiveLogs,
-		key: 'LIVE_LOGS',
 		isPrivate: true,
 	},
 	{

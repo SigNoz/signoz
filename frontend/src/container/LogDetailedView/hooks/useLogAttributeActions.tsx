@@ -61,8 +61,7 @@ export function useLogAttributeActions({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
 			?.active || false;
 
-	const isOldExplorerOrLive =
-		pathname === ROUTES.OLD_LOGS_EXPLORER || pathname === ROUTES.LIVE_LOGS;
+	const isOldExplorer = pathname === ROUTES.OLD_LOGS_EXPLORER;
 
 	const filterFor = useCallback(
 		(context: FieldContext, isFilterIn: boolean): void => {
@@ -221,7 +220,7 @@ export function useLogAttributeActions({
 					!handleChangeSelectedView ||
 					!buildLogFilterTarget(fieldKeyPath, undefined, isBodyJsonQueryEnabled)
 						.groupBySupported ||
-					isOldExplorerOrLive,
+					isOldExplorer,
 			},
 			{
 				key: LogDetailsAction.REPLACE_FILTER,
@@ -229,9 +228,7 @@ export function useLogAttributeActions({
 				icon: <RefreshCw size={12} />,
 				onClick: replaceFilter,
 				shouldHide: (_key, fieldKeyPath): boolean =>
-					!handleChangeSelectedView ||
-					isRestricted(fieldKeyPath) ||
-					isOldExplorerOrLive,
+					!handleChangeSelectedView || isRestricted(fieldKeyPath) || isOldExplorer,
 			},
 		];
 	}, [
@@ -239,7 +236,7 @@ export function useLogAttributeActions({
 		groupBy,
 		replaceFilter,
 		isBodyJsonQueryEnabled,
-		isOldExplorerOrLive,
+		isOldExplorer,
 		handleChangeSelectedView,
 		onApplyLogFilter,
 	]);

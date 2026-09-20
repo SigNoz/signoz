@@ -208,4 +208,4 @@ export const routesToSkip = [
 	ROUTES.AI_OBSERVABILITY_EXPLORER,
 ];
 
-export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];
+export const routesToDisable = [ROUTES.LOGS_EXPLORER];

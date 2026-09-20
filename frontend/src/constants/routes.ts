@@ -40,7 +40,6 @@ const ROUTES = {
 	LOGS: '/logs/logs-explorer',
 	OLD_LOGS_EXPLORER: '/logs/old-logs-explorer',
 	LOGS_EXPLORER: '/logs/logs-explorer',
-	LIVE_LOGS: '/logs/logs-explorer/live',
 	LOGS_PIPELINES: '/logs/pipelines',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
