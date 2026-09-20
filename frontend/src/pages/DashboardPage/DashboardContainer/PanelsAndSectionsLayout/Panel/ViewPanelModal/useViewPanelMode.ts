@@ -13,12 +13,13 @@ import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/Dashboa
 import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
 import { buildViewPanelSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/buildViewPanelSpec';
+import { getQueryMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/queryMode';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import {
 	type PanelQueryTimeOverride,
 	type UsePanelQueryResult,
 } from 'pages/DashboardPage/DashboardContainer/hooks/usePanelQuery';
-import type { EQueryType } from 'types/common/dashboard';
+import type { PanelQueryMode } from 'pages/DashboardPage/DashboardContainer/Panels/types/queryModes';
 
 interface UseViewPanelModeArgs {
 	panel: DashboardtypesPanelDTO;
@@ -43,7 +44,7 @@ export interface UseViewPanelModeReturn {
 	 */
 	signal: TelemetrytypesSignalDTO;
 	/** Active query type (selected builder tab) — drives the panel-type selector's disabled rule. */
-	queryType: EQueryType;
+	queryMode: PanelQueryMode;
 	/** Query result for the draft over the per-view window. */
 	query: UsePanelQueryResult;
 	/** Stage & run the live builder query into the draft (drilldown; not persisted). */
@@ -132,7 +133,7 @@ export function useViewPanelMode({
 		setSpec,
 		panelDefinition,
 		signal,
-		queryType: currentQuery.queryType,
+		queryMode: getQueryMode(currentQuery),
 		query,
 		runQuery,
 		resetQuery,

@@ -122,7 +122,7 @@ function StaticEditorBody({
 					spec={spec}
 					onChangeSpec={setSpec}
 					onChangePanelKind={onChangePanelKind}
-					queryType={EQueryType.QUERY_BUILDER}
+					mode={EQueryType.QUERY_BUILDER}
 					legendSeries={[]}
 					tableColumns={[]}
 				/>

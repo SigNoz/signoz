@@ -21,6 +21,7 @@ import { useDashboardEditContext } from '../hooks/useDashboardEditContext';
 import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
 import { useScrollIntoViewStore } from '../store/useScrollIntoViewStore';
+import { getQueryMode } from '../Panels/utils/queryMode';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
 import PanelEditorLayout, {
@@ -319,7 +320,7 @@ function QueryEditorBody({
 					spec={spec}
 					onChangeSpec={setSpec}
 					onChangePanelKind={onChangePanelKind}
-					queryType={currentQuery.queryType}
+					mode={getQueryMode(currentQuery)}
 					legendSeries={legendSeries}
 					tableColumns={tableColumns}
 					stepInterval={stepInterval}

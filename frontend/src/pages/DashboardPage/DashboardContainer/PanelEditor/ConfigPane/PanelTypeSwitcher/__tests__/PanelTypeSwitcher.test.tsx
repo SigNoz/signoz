@@ -43,18 +43,28 @@ describe('PanelTypeSwitcher', () => {
 		jest.clearAllMocks();
 		// List supports only logs/traces; every other kind also supports metrics.
 		// Query-type support comes from SUPPORTED_QUERY_TYPES (all three by default).
-		mockGetPanelDefinition.mockImplementation((kind: string) => ({
-			mode: 'query',
-			supportedSignals:
+		mockGetPanelDefinition.mockImplementation((kind: string) => {
+			const signals =
 				kind === 'signoz/ListPanel'
 					? ['logs', 'traces']
-					: ['metrics', 'logs', 'traces'],
-			supportedQueryTypes: SUPPORTED_QUERY_TYPES[kind] ?? [
+					: ['metrics', 'logs', 'traces'];
+			const queryTypes = SUPPORTED_QUERY_TYPES[kind] ?? [
 				EQueryType.QUERY_BUILDER,
 				EQueryType.CLICKHOUSE,
 				EQueryType.PROM,
-			],
-		}));
+			];
+			return {
+				mode: 'query',
+				supportedQueryModes: Object.fromEntries(
+					queryTypes.map((queryType: EQueryType) => [
+						queryType,
+						queryType === EQueryType.QUERY_BUILDER
+							? { kind: 'signal', signals }
+							: { kind: 'signal-less' },
+					]),
+				),
+			};
+		});
 	});
 
 	it('fires onChange with the chosen plugin kind', () => {
@@ -62,7 +72,7 @@ describe('PanelTypeSwitcher', () => {
 		render(
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"
-				queryType={EQueryType.QUERY_BUILDER}
+				mode={EQueryType.QUERY_BUILDER}
 				onChange={onChange}
 			/>,
 		);
@@ -77,7 +87,7 @@ describe('PanelTypeSwitcher', () => {
 		render(
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"
-				queryType={EQueryType.QUERY_BUILDER}
+				mode={EQueryType.QUERY_BUILDER}
 				signal={TelemetrytypesSignalDTO.metrics}
 				onChange={jest.fn()}
 			/>,
@@ -93,7 +103,7 @@ describe('PanelTypeSwitcher', () => {
 		render(
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"
-				queryType={EQueryType.QUERY_BUILDER}
+				mode={EQueryType.QUERY_BUILDER}
 				onChange={jest.fn()}
 			/>,
 		);
@@ -108,7 +118,7 @@ describe('PanelTypeSwitcher', () => {
 		render(
 			<PanelTypeSwitcher
 				panelKind="signoz/TimeSeriesPanel"
-				queryType={EQueryType.PROM}
+				mode={EQueryType.PROM}
 				onChange={jest.fn()}
 			/>,
 		);
@@ -125,7 +135,7 @@ describe('PanelTypeSwitcher', () => {
 		render(
 			<PanelTypeSwitcher
 				panelKind="signoz/TablePanel"
-				queryType={EQueryType.CLICKHOUSE}
+				mode={EQueryType.CLICKHOUSE}
 				onChange={jest.fn()}
 			/>,
 		);

@@ -8,10 +8,16 @@ import {
 } from './types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from './types/panelDefinition';
 import type { PanelKind } from './types/panelKind';
+import {
+	listQueryModes,
+	listQueryTypes,
+	signalsForMode,
+	type PanelQueryMode,
+} from './types/queryModes';
 
 /**
  * The single deterministic guard for V2 dashboards. Every "what works with what"
- * question — panel kind × query type × signal, and which query-builder fields a kind
+ * question — panel kind × query mode × signal, and which query-builder fields a kind
  * hides — is answered here by reading each kind's declared capabilities from the panel
  * registry. Adding a new kind means declaring its capabilities once in its definition;
  * these functions then cover it automatically. Pure and side-effect free.
@@ -52,23 +58,47 @@ export function requireQueryPanelDefinition(
 	return definition;
 }
 
-/** Signals a kind can visualize. */
+/** Every mode this kind offers, in declaration order (the builder first). */
+export function getSupportedQueryModes(kind: PanelKind): PanelQueryMode[] {
+	const definition = getQueryPanelDefinition(kind);
+	return definition ? listQueryModes(definition.supportedQueryModes) : [];
+}
+
+export function isQueryModeSupportedByPanelKind(
+	kind: PanelKind,
+	mode: PanelQueryMode,
+): boolean {
+	return getSupportedQueryModes(kind).includes(mode);
+}
+
+/**
+ * Signals a kind can visualize — in `mode` when one is given, else across every mode it
+ * offers. The mode-scoped form is what keeps the two axes interoperable: the AI mode
+ * authors traces only, on a kind whose builder mode also takes logs and metrics.
+ */
 export function getSupportedSignals(
 	kind: PanelKind,
+	mode?: PanelQueryMode,
 ): TelemetrytypesSignalDTO[] {
-	return getQueryPanelDefinition(kind)?.supportedSignals ?? [];
+	const modes = getQueryPanelDefinition(kind)?.supportedQueryModes;
+	return modes ? signalsForMode(modes, mode) : [];
 }
 
 export function isSignalSupported(
 	kind: PanelKind,
 	signal: TelemetrytypesSignalDTO,
+	mode?: PanelQueryMode,
 ): boolean {
-	return getSupportedSignals(kind).includes(signal);
+	return getSupportedSignals(kind, mode).includes(signal);
 }
 
-/** Query languages a kind supports (Query Builder / ClickHouse / PromQL). */
+/**
+ * Query languages a kind supports (Query Builder / ClickHouse / PromQL) — its modes
+ * minus the AI one, for the call sites that speak the legacy `queryType` axis.
+ */
 export function getSupportedQueryTypes(kind: PanelKind): EQueryType[] {
-	return getQueryPanelDefinition(kind)?.supportedQueryTypes ?? [];
+	const definition = getQueryPanelDefinition(kind);
+	return definition ? listQueryTypes(definition.supportedQueryModes) : [];
 }
 
 export function isQueryTypeSupportedByPanelKind(
@@ -79,48 +109,63 @@ export function isQueryTypeSupportedByPanelKind(
 }
 
 /**
- * Master guard: is this panel kind renderable with this query type (and, in builder
- * mode, this signal)? ClickHouse/PromQL queries carry no signal, so the signal is
- * validated only when one is given.
+ * Master guard: is this panel kind renderable in this mode (and, where the mode carries
+ * a signal, with this signal)? ClickHouse/PromQL queries carry no signal, so the signal
+ * is validated only when one is given.
  */
 export function isPanelCombinationValid({
 	kind,
-	queryType,
+	mode,
 	signal,
 }: {
 	kind: PanelKind;
-	queryType: EQueryType;
+	mode: PanelQueryMode;
 	signal?: TelemetrytypesSignalDTO;
 }): boolean {
 	// A query-less kind ignores the query entirely, so it pairs with anything.
 	if (isStaticPanelKind(kind)) {
 		return true;
 	}
-	if (!isQueryTypeSupportedByPanelKind(kind, queryType)) {
+	if (!isQueryModeSupportedByPanelKind(kind, mode)) {
 		return false;
 	}
-	if (signal !== undefined && !isSignalSupported(kind, signal)) {
+	if (signal !== undefined && !isSignalSupported(kind, signal, mode)) {
 		return false;
 	}
 	return true;
 }
 
 /**
- * The query type to use for a kind given a `preferred` one: keep it if the kind
- * supports it, otherwise fall back to the kind's first supported type. Used when
- * switching panel kinds to coerce an unsupported active query type (e.g. PromQL → a
- * List panel coerces to Query Builder).
+ * The mode to use for a kind given a `preferred` one: keep it if the kind offers it and
+ * it admits the signal, otherwise fall back to the kind's first mode. Used when switching
+ * panel kinds to coerce an unsupported active mode (PromQL → a List panel coerces to Query
+ * Builder; AI → a kind with no AI mode does the same).
  */
+export function resolveQueryMode(
+	kind: PanelKind,
+	preferred: PanelQueryMode,
+	signal?: TelemetrytypesSignalDTO,
+): PanelQueryMode {
+	const supported = getSupportedQueryModes(kind);
+	if (
+		supported.includes(preferred) &&
+		(signal === undefined || isSignalSupported(kind, signal, preferred))
+	) {
+		return preferred;
+	}
+	// A query-less kind has no modes; the builder is the neutral answer.
+	return supported[0] ?? EQueryType.QUERY_BUILDER;
+}
+
+/** `resolveQueryMode` narrowed to the legacy `queryType` axis. */
 export function resolveQueryType(
 	kind: PanelKind,
 	preferred: EQueryType,
 ): EQueryType {
 	const supported = getSupportedQueryTypes(kind);
-	if (supported.includes(preferred)) {
-		return preferred;
-	}
-	// A query-less kind has no supported types; the builder is the neutral answer.
-	return supported[0] ?? EQueryType.QUERY_BUILDER;
+	return supported.includes(preferred)
+		? preferred
+		: (supported[0] ?? EQueryType.QUERY_BUILDER);
 }
 
 /**

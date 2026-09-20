@@ -60,7 +60,7 @@ function QueryViewModalBody({
 		setSpec,
 		panelDefinition,
 		signal,
-		queryType,
+		queryMode,
 		query,
 		runQuery,
 		resetQuery,
@@ -152,7 +152,7 @@ function QueryViewModalBody({
 				}}
 				onSwitchToEdit={onSwitchToEdit}
 				panelKind={draft.spec.plugin.kind}
-				queryType={queryType}
+				queryMode={queryMode}
 				signal={signal}
 				onChangePanelKind={onChangePanelKind}
 				onResetQuery={resetQuery}

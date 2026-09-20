@@ -18,7 +18,8 @@ import type {
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 
-import { isStaticPanelKind, resolveQueryType } from '../../Panels/capabilities';
+import { isStaticPanelKind, resolveQueryMode } from '../../Panels/capabilities';
+import { getQueryMode, withQueryMode } from '../../Panels/utils/queryMode';
 import { toPanelType, type PanelKind } from '../../Panels/types/panelKind';
 import { getBuilderQueries } from '../../Panels/utils/getBuilderQueries';
 import { toPerses } from '../../queryV5/persesQueryAdapters';
@@ -147,12 +148,16 @@ export function usePanelTypeSwitch({
 				return;
 			}
 
-			// First visit → coerce the query type if the new kind disallows it, then
-			// rebuild the builder query for the new type.
-			const queryType = resolveQueryType(newKind, query.queryType);
+			// First visit → coerce the mode if the new kind disallows it, then rebuild the
+			// builder query for it. Going through the mode (not `queryType`) is what lets an
+			// AI query lose its per-query tag when the new kind has no AI mode: `queryType`
+			// alone cannot express that.
+			const currentSignal = getBuilderQueries(currentSpec.queries)[0]
+				?.signal as TelemetrytypesSignalDTO;
+			const mode = resolveQueryMode(newKind, getQueryMode(query), currentSignal);
 			const transformed = handleQueryChange(
 				newPanelType as keyof PartialPanelTypes,
-				{ ...query, queryType },
+				withQueryMode(query, mode),
 				panelTypeRef.current,
 			);
 			// Match a fresh list panel's default order so the builder's Order By isn't empty.
@@ -160,12 +165,9 @@ export function usePanelTypeSwitch({
 				newKind === 'signoz/ListPanel'
 					? withDefaultListOrder(transformed)
 					: transformed;
-			const signal = getBuilderQueries(currentSpec.queries)[0]
-				?.signal as TelemetrytypesSignalDTO;
-
 			setSpec(
 				buildSpec(
-					getSwitchedPluginSpec(currentSpec, newKind, signal),
+					getSwitchedPluginSpec(currentSpec, newKind, currentSignal),
 					toPerses(nextQuery, newPanelType),
 				),
 			);
