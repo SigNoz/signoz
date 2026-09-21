@@ -29,6 +29,7 @@ import {
 	hasMissingCells,
 	prepareHeatmapChartData,
 	resolveBoundaryPrecision,
+	resolveGroupOrder,
 } from './utils';
 
 /** Vertical space the colour bar takes out of the container. */
@@ -86,7 +87,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 	const onCellClickRef = useRef(onCellClick);
 	onCellClickRef.current = onCellClick;
 
-	const groups = useMemo(() => series.map((entry) => entry.label), [series]);
+	const groups = useMemo(() => resolveGroupOrder(series), [series]);
 
 	const colors = useMemo(
 		() => ({ ...DEFAULT_HEATMAP_COLORS, ...props.colors }),
