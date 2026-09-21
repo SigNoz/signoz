@@ -40,7 +40,73 @@ export interface AlertmanagertypesChannelDTO {
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTOKind {
 	slack = 'slack',
 }
+export interface AlertmanagertypesChannelSlackConfirmationDTO {
+	/**
+	 * @type string
+	 */
+	dismissText?: string;
+	/**
+	 * @type string
+	 */
+	okText?: string;
+	/**
+	 * @type string
+	 */
+	text: string;
+	/**
+	 * @type string
+	 */
+	title?: string;
+}
+
+export interface AlertmanagertypesChannelSlackActionDTO {
+	confirm?: AlertmanagertypesChannelSlackConfirmationDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	style?: string;
+	/**
+	 * @type string
+	 */
+	text: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+	/**
+	 * @type string
+	 */
+	value?: string;
+}
+
+export interface AlertmanagertypesChannelSlackFieldDTO {
+	/**
+	 * @type boolean,null
+	 */
+	short?: boolean | null;
+	/**
+	 * @type string
+	 */
+	title: string;
+	/**
+	 * @type string
+	 */
+	value: string;
+}
+
 export interface AlertmanagertypesChannelSlackConfigDTO {
+	/**
+	 * @type array
+	 */
+	actions?: AlertmanagertypesChannelSlackActionDTO[];
 	/**
 	 * @type string
 	 * @format password
@@ -50,6 +116,26 @@ export interface AlertmanagertypesChannelSlackConfigDTO {
 	 * @type string
 	 */
 	channel?: string;
+	/**
+	 * @type string
+	 */
+	color?: string;
+	/**
+	 * @type string
+	 */
+	fallback?: string;
+	/**
+	 * @type array
+	 */
+	fields?: AlertmanagertypesChannelSlackFieldDTO[];
+	/**
+	 * @type string
+	 */
+	footer?: string;
+	/**
+	 * @type string
+	 */
+	pretext?: string;
 	/**
 	 * @type boolean,null
 	 */
@@ -62,6 +148,10 @@ export interface AlertmanagertypesChannelSlackConfigDTO {
 	 * @type string
 	 */
 	title?: string;
+	/**
+	 * @type string
+	 */
+	titleLink?: string;
 }
 
 export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO {
@@ -506,6 +596,13 @@ export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO;
 
+export enum AlertmanagertypesChannelDefectDTO {
+	none = 'none',
+	missing_type = 'missing_type',
+	multiple_notifiers = 'multiple_notifiers',
+	unsupported_notifier = 'unsupported_notifier',
+	unrepresentable = 'unrepresentable',
+}
 export enum AlertmanagertypesChannelKindDTO {
 	slack = 'slack',
 	email = 'email',
@@ -527,6 +624,63 @@ export enum AlertmanagertypesChannelListSortDTO {
 	created_at = 'created_at',
 	name = 'name',
 }
+export enum AlertmanagertypesChannelRepairActionDTO {
+	none = 'none',
+	retype = 'retype',
+	split = 'split',
+	delete = 'delete',
+}
+export interface AlertmanagertypesListedNotificationChannelDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	displayName: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	kind: AlertmanagertypesChannelKindDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface AlertmanagertypesChannelRepairDTO {
+	action: AlertmanagertypesChannelRepairActionDTO;
+	/**
+	 * @type boolean
+	 */
+	applied: boolean;
+	/**
+	 * @type array
+	 */
+	blockers?: string[];
+	/**
+	 * @type array,null
+	 */
+	channels?: AlertmanagertypesListedNotificationChannelDTO[] | null;
+	defect: AlertmanagertypesChannelDefectDTO;
+	/**
+	 * @type string
+	 */
+	detail?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
 export interface ModelLabelSetDTO {
 	[key: string]: string;
 }
@@ -1018,32 +1172,6 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	 * @type string
 	 */
 	wont_fix_resolution?: string;
-}
-
-export interface AlertmanagertypesListedNotificationChannelDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt: string;
-	/**
-	 * @type string
-	 */
-	displayName: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	kind: AlertmanagertypesChannelKindDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt: string;
 }
 
 export interface AlertmanagertypesListableNotificationChannelDTO {
@@ -2447,6 +2575,13 @@ export interface AlertmanagertypesReceiverDTO {
 	 * @type array
 	 */
 	wechat_configs?: ConfigWechatConfigDTO[];
+}
+
+export interface AlertmanagertypesRepairChannelParamsDTO {
+	/**
+	 * @type boolean
+	 */
+	apply?: boolean;
 }
 
 export interface AlertmanagertypesTestableNotificationChannelDTO {
@@ -10682,6 +10817,22 @@ export interface SpantypesGettableFlamegraphTraceDTO {
 	startTimestampMillis: number;
 }
 
+export enum SpantypesSpanMapperOriginDTO {
+	user = 'user',
+	system = 'system',
+}
+export interface SpantypesSpanMapperGroupConditionKeyDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	origin?: SpantypesSpanMapperOriginDTO;
+	/**
+	 * @type string
+	 */
+	value: string;
+}
+
 /**
  * @nullable
  */
@@ -10689,11 +10840,11 @@ export type SpantypesSpanMapperGroupConditionDTO = {
 	/**
 	 * @type array,null
 	 */
-	attributes: string[] | null;
+	attributes: SpantypesSpanMapperGroupConditionKeyDTO[] | null;
 	/**
 	 * @type array,null
 	 */
-	resource: string[] | null;
+	resource: SpantypesSpanMapperGroupConditionKeyDTO[] | null;
 } | null;
 
 export interface SpantypesSpanMapperGroupDTO {
@@ -10723,6 +10874,7 @@ export interface SpantypesSpanMapperGroupDTO {
 	 * @type string
 	 */
 	orgId: string;
+	origin: SpantypesSpanMapperOriginDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -10732,6 +10884,10 @@ export interface SpantypesSpanMapperGroupDTO {
 	 * @type string
 	 */
 	updatedBy?: string;
+	/**
+	 * @type integer
+	 */
+	version: number;
 }
 
 export interface SpantypesGettableSpanMapperGroupsDTO {
@@ -10790,10 +10946,15 @@ export enum SpantypesSpanMapperOperationDTO {
 export interface SpantypesSpanMapperSourceDTO {
 	context: SpantypesFieldContextDTO;
 	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
 	 * @type string
 	 */
 	key: string;
 	operation: SpantypesSpanMapperOperationDTO;
+	origin?: SpantypesSpanMapperOriginDTO;
 	/**
 	 * @type integer
 	 */
@@ -10835,6 +10996,7 @@ export interface SpantypesSpanMapperDTO {
 	 * @type string
 	 */
 	name: string;
+	origin: SpantypesSpanMapperOriginDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -13388,6 +13550,25 @@ export type UpdateNotificationChannelPathParameters = {
 };
 export type UpdateNotificationChannel200 = {
 	data: AlertmanagertypesGettableNotificationChannelDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type RepairNotificationChannelPathParameters = {
+	id: string;
+};
+export type RepairNotificationChannelParams = {
+	/**
+	 * @type boolean
+	 * @description undefined
+	 */
+	apply?: boolean;
+};
+
+export type RepairNotificationChannel200 = {
+	data: AlertmanagertypesChannelRepairDTO;
 	/**
 	 * @type string
 	 */
