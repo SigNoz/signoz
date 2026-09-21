@@ -3,7 +3,7 @@ import uPlot from 'uplot';
 
 import { isolatedPointFilter } from '../../utils/seriesPointsFilter';
 import type { SeriesProps } from '../types';
-import { DrawStyle, LineInterpolation, LineStyle } from '../types';
+import { DrawStyle, FillMode, LineInterpolation, LineStyle } from '../types';
 import { POINT_SIZE_FACTOR, UPlotSeriesBuilder } from '../UPlotSeriesBuilder';
 
 const createBaseProps = (
@@ -361,5 +361,41 @@ describe('UPlotSeriesBuilder', () => {
 
 		expect(config.points?.filter).toBeUndefined();
 		expect(config.points?.show).toBe(true);
+	});
+
+	// Pins the alpha the solid fill hardcoded before opacity was configurable.
+	it('fills a solid series at the default opacity', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				fillColor: '#112233',
+				fillMode: FillMode.Solid,
+			}),
+		);
+
+		expect(builder.getConfig().fill).toBe('#11223370');
+	});
+
+	it('fills a solid series at the declared opacity', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				fillColor: '#112233',
+				fillMode: FillMode.Solid,
+				fillOpacity: 0.5,
+			}),
+		);
+
+		expect(builder.getConfig().fill).toBe('#11223380');
+	});
+
+	it('leaves an unfilled series without a fill', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				fillColor: '#112233',
+				fillMode: FillMode.None,
+				fillOpacity: 0.5,
+			}),
+		);
+
+		expect(builder.getConfig().fill).toBeUndefined();
 	});
 });

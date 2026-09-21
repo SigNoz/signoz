@@ -61,11 +61,6 @@ jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 	),
 }));
 
-jest.mock('container/NewExplorerCTA', () => ({
-	__esModule: true,
-	default: (): null => null,
-}));
-
 function NuqsParamSetter({ paramValue }: { paramValue: string }): JSX.Element {
 	const [, setYAxisUnit] = useQueryState(
 		'yAxisUnit',
