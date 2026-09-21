@@ -216,7 +216,7 @@ function BucketOptions({
 								precision={0}
 								value={numBuckets}
 								onChange={handleNumBucketsChange}
-								placeholder={String(DEFAULT_NUM_BUCKETS)}
+								placeholder={`Default ${DEFAULT_NUM_BUCKETS}`}
 								data-testid="bucket-options-num-buckets"
 							/>
 						</div>
