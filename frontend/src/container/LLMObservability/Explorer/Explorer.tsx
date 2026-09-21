@@ -8,18 +8,13 @@ import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
-import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
-import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
-import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
-import { useOptionsMenu } from 'container/OptionsMenu';
-import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
-import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
-import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -28,7 +23,6 @@ import {
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
@@ -37,7 +31,7 @@ import {
 	tracesChangeViewAction,
 	tracesRunQueryAction,
 	tracesSaveViewAction,
-} from 'pages/TracesExplorer/aiActions';
+} from './aiActions';
 import { Warning } from 'types/api';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -45,12 +39,10 @@ import {
 	explorerViewToPanelType,
 	getExplorerViewFromUrl,
 } from 'utils/explorerUtils';
-import { v4 } from 'uuid';
 
-import { TOOLBAR_VIEWS } from './constants';
-import { getExportQueryData, getQueryByPanelType } from './explorerUtils';
+import LeftToolbarActions from '../ToolbarActions/LeftToolbarActions';
+import { DEFAULT_PANEL_TYPE, TOOLBAR_VIEWS } from './constants';
 import ListView from './ListView/ListView';
-import { defaultSelectedColumns } from './ListView/configs';
 import QuerySection from './QuerySection/QuerySection';
 import TableView from './TableView/TableView';
 import TimeSeriesView from './TimeSeriesView/TimeSeriesView';
@@ -60,7 +52,6 @@ import './Explorer.styles.scss';
 
 function Explorer(): JSX.Element {
 	const {
-		panelType,
 		updateAllQueriesOperators,
 		handleRunQuery,
 		stagedQuery,
@@ -72,20 +63,12 @@ function Explorer(): JSX.Element {
 
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
-	const { options } = useOptionsMenu({
-		dataSource: DataSource.TRACES,
-		aggregateOperator: 'noop',
-		initialOptions: {
-			selectColumns: defaultSelectedColumns,
-		},
-	});
-
 	const [searchParams] = useSearchParams();
 	const queryClient = useQueryClient();
 	const listQueryKeyRef = useRef<any>();
 
 	// Get panel type from URL
-	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const panelTypesFromUrl = useGetPanelTypesQueryParam(DEFAULT_PANEL_TYPE);
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
 	const [isCancelled, setIsCancelled] = useState(false);
 
@@ -112,19 +95,24 @@ function Explorer(): JSX.Element {
 	const [warning, setWarning] = useState<Warning | undefined>();
 	const [isOpen, setOpen] = useState<boolean>(true);
 
+	const { startUnixMilli, endUnixMilli } = useSignalFieldApis();
+	// existingQuery is left unset so related values auto-extract from the current query
+	const quickFiltersFieldApis = useMemo(
+		() => ({ startUnixMilli, endUnixMilli }),
+		[startUnixMilli, endUnixMilli],
+	);
+
 	const defaultQuery = useMemo(
 		(): Query =>
 			updateAllQueriesOperators(
 				initialQueryAIWithType,
-				PANEL_TYPES.LIST,
+				DEFAULT_PANEL_TYPE,
 				DataSource.TRACES,
 			),
 		[updateAllQueriesOperators],
 	);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
-	const { safeNavigate } = useSafeNavigate();
-	const getExportToDashboardLink = useGetExportToDashboardLink();
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
@@ -139,7 +127,7 @@ function Explorer(): JSX.Element {
 		},
 		[handleExplorerTabChange, handleSetConfig],
 	);
-
+	//TODO: check if we need to enable AI Assistant page actions on LLM o11y
 	// ─── AI Assistant page actions (only when license feature is on) ───────────
 	const aiActions = useMemo(
 		() =>
@@ -179,59 +167,6 @@ function Explorer(): JSX.Element {
 	usePageActions('traces-explorer', aiActions);
 	// ───────────────────────────────────────────────────────────────────────────
 
-	const exportDefaultQuery = useMemo(
-		() =>
-			getQueryByPanelType(
-				stagedQuery || initialQueryAIWithType,
-				panelType || PANEL_TYPES.LIST,
-			),
-		[stagedQuery, panelType],
-	);
-
-	const handleExport = useCallback(
-		(dashboard: ExportDashboard | null, isNewDashboard?: boolean): void => {
-			if (!dashboard || !panelType) {
-				return;
-			}
-
-			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
-				? panelType
-				: PANEL_TYPES.TIME_SERIES;
-
-			const widgetId = v4();
-
-			const query = getExportQueryData(
-				exportDefaultQuery,
-				panelTypeParam,
-				options,
-			);
-
-			logEvent('Traces Explorer: Add to dashboard successful', {
-				panelType,
-				isNewDashboard,
-				dashboardName: dashboard?.title,
-			});
-
-			const dashboardEditView = getExportToDashboardLink({
-				query,
-				panelType: panelTypeParam,
-				dashboardId: dashboard.id,
-				widgetId,
-			});
-
-			if (dashboardEditView) {
-				safeNavigate(dashboardEditView);
-			}
-		},
-		[
-			exportDefaultQuery,
-			panelType,
-			safeNavigate,
-			options,
-			getExportToDashboardLink,
-		],
-	);
-
 	useShareBuilderUrl({ defaultValue: defaultQuery });
 
 	const logEventCalledRef = useRef(false);
@@ -260,8 +195,9 @@ function Explorer(): JSX.Element {
 				<Card className="filter" hidden={!isOpen}>
 					<QuickFilters
 						className="qf-traces-explorer"
-						source={QuickFiltersSource.TRACES_EXPLORER}
-						signal={SignalType.TRACES}
+						source={QuickFiltersSource.AI_OBSERVABILITY}
+						signal={SignalType.AI_OBSERVABILITY}
+						useFieldApis={quickFiltersFieldApis}
 						handleFilterVisibilityChange={(): void => {
 							setOpen(!isOpen);
 						}}
@@ -354,14 +290,6 @@ function Explorer(): JSX.Element {
 							</div>
 						)}
 					</div>
-
-					<ExplorerOptionWrapper
-						disabled={!stagedQuery}
-						query={exportDefaultQuery}
-						sourcepage={DataSource.TRACES}
-						onExport={handleExport}
-						handleChangeSelectedView={handleChangeSelectedView}
-					/>
 				</div>
 			</div>
 		</Sentry.ErrorBoundary>
