@@ -10,7 +10,7 @@ import (
 
 const (
 	DefaultListLimit = 20
-	MaxListLimit     = 5000
+	MaxListLimit     = 200
 	MaxListQueryLen  = 1024
 )
 
