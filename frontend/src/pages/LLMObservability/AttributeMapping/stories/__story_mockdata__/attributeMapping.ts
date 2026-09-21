@@ -5,8 +5,10 @@
 
 import type {
 	ListSpanMapperGroups200,
+	SpantypesSpanMapperGroupConditionKeyDTO,
 	SpantypesSpanMapperGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { SpantypesSpanMapperOriginDTO } from 'api/generated/services/sigNoz.schemas';
 
 const ORG_ID = 'org-signoz';
 
@@ -41,6 +43,11 @@ const GROUPS: GroupSeed[] = [
 
 export const MAPPING_GROUP_MAX = GROUPS.length;
 
+const conditionKeys = (
+	values: readonly string[],
+): SpantypesSpanMapperGroupConditionKeyDTO[] =>
+	values.map((value) => ({ value, enabled: true }));
+
 const group = (
 	seed: GroupSeed,
 	index: number,
@@ -49,7 +56,9 @@ const group = (
 	orgId: ORG_ID,
 	name: seed.name,
 	enabled: seed.enabled,
-	condition: { attributes: seed.attributes, resource: null },
+	origin: SpantypesSpanMapperOriginDTO.user,
+	version: 1,
+	condition: { attributes: conditionKeys(seed.attributes), resource: null },
 	createdAt: '2026-07-18T11:20:00Z',
 	createdBy: 'anna@signoz.io',
 	updatedAt: '2026-08-05T08:40:00Z',
@@ -92,8 +101,8 @@ export const wideConditionGroupsResponse = (): ListSpanMapperGroups200 => {
 					? {
 							...item,
 							condition: {
-								attributes: MANY_ATTRIBUTES,
-								resource: MANY_RESOURCE_KEYS,
+								attributes: conditionKeys(MANY_ATTRIBUTES),
+								resource: conditionKeys(MANY_RESOURCE_KEYS),
 							},
 						}
 					: item,
