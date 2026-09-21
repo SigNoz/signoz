@@ -116,6 +116,20 @@
 	@include custom-scrollbar;
 }
 
+.columnHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-2);
+	padding: 0 var(--row-inset) var(--spacing-2);
+
+	font-family: var(--font-mono);
+	font-size: 10px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--muted-foreground);
+}
+
 .row {
 	display: flex;
 	align-items: center;
@@ -150,6 +164,19 @@
 	flex: 0 0 auto;
 	text-align: right;
 	white-space: nowrap;
+}
+
+.rowShare {
+	flex: 0 0 auto;
+	min-width: 34px;
+	text-align: right;
+	white-space: nowrap;
+
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	letter-spacing: -0.01em;
+	font-variant-numeric: tabular-nums;
+	color: var(--muted-foreground);
 }
 
 .marker {
