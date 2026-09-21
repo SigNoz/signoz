@@ -120,7 +120,7 @@
                 "width": 2,
                 "height": 3,
                 "content": {
-                  "$ref": "#/spec/panels/de0f46cd-d895-56da-a7d0-f16662d28261"
+                  "$ref": "#/spec/panels/a2e790ee-ade7-591d-b1ec-45619bae83d8"
                 }
               },
               {
@@ -129,7 +129,7 @@
                 "width": 2,
                 "height": 3,
                 "content": {
-                  "$ref": "#/spec/panels/a2e790ee-ade7-591d-b1ec-45619bae83d8"
+                  "$ref": "#/spec/panels/786acfc0-086d-5cda-96f0-41f0a1d1a296"
                 }
               },
               {
@@ -138,7 +138,7 @@
                 "width": 2,
                 "height": 3,
                 "content": {
-                  "$ref": "#/spec/panels/9548f4ed-8f9c-5513-bbb3-5d33f5727ea4"
+                  "$ref": "#/spec/panels/5248b262-8459-5d67-9bd9-501d7c19c02d"
                 }
               },
               {
@@ -147,7 +147,7 @@
                 "width": 2,
                 "height": 3,
                 "content": {
-                  "$ref": "#/spec/panels/5248b262-8459-5d67-9bd9-501d7c19c02d"
+                  "$ref": "#/spec/panels/6e52978d-af22-5609-b25a-71c7c9a42bf9"
                 }
               }
             ]
@@ -506,58 +506,6 @@
             ]
           }
         },
-        "de0f46cd-d895-56da-a7d0-f16662d28261": {
-          "kind": "Panel",
-          "spec": {
-            "display": {
-              "name": "AI traces",
-              "description": "Distinct traces containing at least one LLM, tool, or agent span."
-            },
-            "plugin": {
-              "kind": "signoz/NumberPanel",
-              "spec": {
-                "visualization": {
-                  "timePreference": "global_time"
-                },
-                "formatting": {
-                  "unit": "short",
-                  "decimalPrecision": "2"
-                }
-              }
-            },
-            "queries": [
-              {
-                "kind": "scalar",
-                "spec": {
-                  "plugin": {
-                    "kind": "signoz/CompositeQuery",
-                    "spec": {
-                      "queries": [
-                        {
-                          "type": "builder_query",
-                          "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "stepInterval": 0,
-                            "disabled": false,
-                            "filter": {
-                              "expression": "(gen_ai.request.model EXISTS OR gen_ai.tool.name EXISTS OR gen_ai.agent.name EXISTS) AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
-                            },
-                            "aggregations": [
-                              {
-                                "expression": "count_distinct(trace_id)"
-                              }
-                            ]
-                          }
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
         "a2e790ee-ade7-591d-b1ec-45619bae83d8": {
           "kind": "Panel",
           "spec": {
@@ -610,12 +558,12 @@
             ]
           }
         },
-        "9548f4ed-8f9c-5513-bbb3-5d33f5727ea4": {
+        "786acfc0-086d-5cda-96f0-41f0a1d1a296": {
           "kind": "Panel",
           "spec": {
             "display": {
-              "name": "Tool calls",
-              "description": "Spans carrying gen_ai.tool.name."
+              "name": "LLM latency (p95)",
+              "description": "p95 duration of LLM calls."
             },
             "plugin": {
               "kind": "signoz/NumberPanel",
@@ -624,7 +572,7 @@
                   "timePreference": "global_time"
                 },
                 "formatting": {
-                  "unit": "short",
+                  "unit": "ns",
                   "decimalPrecision": "2"
                 }
               }
@@ -645,11 +593,11 @@
                             "stepInterval": 0,
                             "disabled": false,
                             "filter": {
-                              "expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
                             },
                             "aggregations": [
                               {
-                                "expression": "count()"
+                                "expression": "p95(duration_nano)"
                               }
                             ]
                           }
@@ -729,6 +677,58 @@
                             "name": "F1",
                             "expression": "(A/B)*100",
                             "legend": "error %"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "6e52978d-af22-5609-b25a-71c7c9a42bf9": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "TTFT (p95)",
+              "description": "p95 time to first token, from the gen_ai.server.ttft span attribute (seconds) that streaming instrumentations such as OpenLIT emit."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "s",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p95(gen_ai.server.ttft)"
+                              }
+                            ]
                           }
                         }
                       ]
