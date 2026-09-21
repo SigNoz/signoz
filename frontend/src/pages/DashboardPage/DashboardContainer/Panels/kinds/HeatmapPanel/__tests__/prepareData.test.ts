@@ -1,12 +1,18 @@
 import type {
+	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5TimeSeriesDataDTO,
 	Querybuildertypesv5TimeSeriesDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5BucketOptionsLinearDTOKind,
+	Querybuildertypesv5BucketOptionsLogDTOKind,
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
 	FALLBACK_STEP_SECONDS,
 	prepareHeatmapData,
 	resolveHeatmapStep,
+	resolveRequestedBucketKind,
 } from '../prepareData';
 
 /** One result carrying a single aggregation with `buckets` on its meta. */
@@ -147,5 +153,55 @@ describe('resolveHeatmapStep', () => {
 				stepInterval: 0,
 			}),
 		).toBe(FALLBACK_STEP_SECONDS);
+	});
+});
+
+describe('resolveRequestedBucketKind', () => {
+	const request = (
+		queries: unknown[],
+	): Querybuildertypesv5QueryRangeRequestDTO =>
+		({
+			compositeQuery: { queries },
+		} as Querybuildertypesv5QueryRangeRequestDTO);
+
+	it('reads the kind off the query that carries a bucket axis', () => {
+		expect(
+			resolveRequestedBucketKind(
+				request([
+					{ spec: { name: 'A' } },
+					{
+						spec: {
+							name: 'B',
+							bucketOptions: {
+								kind: Querybuildertypesv5BucketOptionsLinearDTOKind.linear,
+								spec: { maxValue: 100 },
+							},
+						},
+					},
+				]),
+			),
+		).toBe(Querybuildertypesv5BucketOptionsLinearDTOKind.linear);
+	});
+
+	it('reads a log axis too', () => {
+		expect(
+			resolveRequestedBucketKind(
+				request([
+					{
+						spec: {
+							bucketOptions: {
+								kind: Querybuildertypesv5BucketOptionsLogDTOKind.log,
+								spec: { scale: 4 },
+							},
+						},
+					},
+				]),
+			),
+		).toBe(Querybuildertypesv5BucketOptionsLogDTOKind.log);
+	});
+
+	it('leaves the choice to the server when no query asked for an axis', () => {
+		expect(resolveRequestedBucketKind(request([{ spec: {} }]))).toBeUndefined();
+		expect(resolveRequestedBucketKind(undefined)).toBeUndefined();
 	});
 });
