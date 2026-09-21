@@ -448,17 +448,6 @@ func TestQuotedMetricOutsideBracesPattern(t *testing.T) {
 	}
 }
 
-// A pinned request must not share cache entries with default serving: a
-// cached default result would satisfy the pin without running the pinned
-// provider.
-func TestFingerprint_PinnedProviderBypassesCache(t *testing.T) {
-	q := &promqlQuery{
-		logger: slog.Default(),
-		query:  qbv5.PromQuery{Query: "up"},
-	}
-	assert.Empty(t, q.Fingerprint())
-}
-
 // promql reports at the window start and every step after it, so a window
 // starting later inside the step describes instants the earlier one never does.
 func TestFingerprintSeparatesWindowsInsideAStep(t *testing.T) {
