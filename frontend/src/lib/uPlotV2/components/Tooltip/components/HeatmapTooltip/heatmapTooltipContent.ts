@@ -43,6 +43,8 @@ export interface HeatmapContributionRow {
 	label: string;
 	color: string;
 	count: number;
+	/** Fraction of the cell this group contributed, 0..1. */
+	share: number;
 }
 
 export function resolveTooltipBody(visibleCount: number): HeatmapTooltipBody {
@@ -103,6 +105,15 @@ export function formatCount(count: number | null): string {
 	return count === null ? NO_DATA_LABEL : count.toLocaleString();
 }
 
+/** `<1%` rather than `0%`, so a group that did contribute never reads as one
+ *  that didn't. */
+export function formatShare(share: number): string {
+	if (share > 0 && share < 0.005) {
+		return '<1%';
+	}
+	return `${Math.round(share * 100)}%`;
+}
+
 /** Highest first, so the list reads in the same direction as the y axis. */
 export function buildBucketRows({
 	counts,
@@ -158,15 +169,22 @@ export function buildContributionRows({
 	/** The grid's one colour; there is no per-series hue. */
 	color: string;
 }): HeatmapContributionRow[] {
-	return series
-		.map((entry) => {
-			const point = entry.points.find((item) => item.timestamp === timestamp);
-			return {
-				label: entry.label,
-				color,
-				// Absent or null contributed nothing to the sum this breaks down.
-				count: point?.counts[row] ?? 0,
-			};
-		})
+	const counted = series.map((entry) => {
+		const point = entry.points.find((item) => item.timestamp === timestamp);
+		return {
+			label: entry.label,
+			color,
+			// Absent or null contributed nothing to the sum this breaks down.
+			count: point?.counts[row] ?? 0,
+		};
+	});
+
+	const total = counted.reduce((sum, entry) => sum + entry.count, 0);
+
+	return counted
+		.map((entry) => ({
+			...entry,
+			share: total > 0 ? entry.count / total : 0,
+		}))
 		.sort((a, b) => b.count - a.count);
 }
