@@ -255,6 +255,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddSubscriptionTuplesFactory(sqlstore),
 		sqlmigration.NewNormalizeQuickFilterFieldsFactory(sqlstore),
 		sqlmigration.NewAddRuleViewFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddAlertTuplesFactory(sqlstore),
 	)
 }
 
