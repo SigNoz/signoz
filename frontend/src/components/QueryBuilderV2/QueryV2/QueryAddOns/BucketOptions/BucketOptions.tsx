@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
+import { Tooltip } from 'antd';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { InputNumber } from '@signozhq/ui/input-number';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
-import { ChevronUp } from '@signozhq/icons';
+import { ChevronUp, Info } from '@signozhq/icons';
 import {
 	Querybuildertypesv5BucketOptionsDTO,
 	Querybuildertypesv5BucketsKindDTO,
@@ -246,7 +247,12 @@ function BucketOptions({
 			</div>
 
 			<div className={styles.bounds} data-testid="bucket-options-bounds">
-				<span className={styles.label}>Bounds</span>
+				<span className={styles.label}>
+					Bounds
+					<Tooltip title={BUCKET_KIND_HINTS[kind]} placement="top">
+						<Info size={12} className={styles.hintIcon} />
+					</Tooltip>
+				</span>
 				{bounds ? (
 					<>
 						{bounds.map((bound) => (
@@ -263,8 +269,6 @@ function BucketOptions({
 					<span className={styles.muted}>Set a max value to see the bounds</span>
 				)}
 			</div>
-
-			<p className={styles.hint}>{BUCKET_KIND_HINTS[kind]}</p>
 		</div>
 	);
 }

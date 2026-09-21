@@ -68,10 +68,14 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: var(--spacing-4);
+	gap: var(--spacing-6);
 }
 
 .label {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+
 	color: var(--l3-foreground);
 	font-family: 'Geist Mono';
 	font-size: 12px;
@@ -101,10 +105,10 @@
 	letter-spacing: -0.07px;
 }
 
-/** Bounds read as a sequence of values, so they take the value type in a flat pill. */
+/** Unfilled: a pill on the same row as the toggles above reads as another control,
+ *  and the bounds are derived rather than set here. */
 .bound {
-	padding: var(--spacing-1) var(--spacing-3);
-	border-radius: var(--radius-1);
+	padding: var(--spacing-1) 0;
 
 	font-family: 'Geist Mono';
 	font-size: 13px;
@@ -112,11 +116,9 @@
 	letter-spacing: -0.07px;
 
 	color: var(--query-builder-v2-color, var(--l2-foreground));
-	background: var(--l3-background);
 }
 
 .overflowBound {
-	background: transparent;
 	color: var(--l3-foreground);
 }
 
@@ -127,13 +129,9 @@
 	color: var(--l3-foreground);
 }
 
-.hint {
-	margin: 0;
-	max-width: 72ch;
-
-	font-family: 'Geist Mono';
-	font-size: 12px;
-	line-height: 18px;
+.hintIcon {
+	flex: none;
+	cursor: help;
 	color: var(--l3-foreground);
 }
 
