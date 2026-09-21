@@ -906,30 +906,25 @@ func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesPara
 
 	listableRules := make([]*ruletypes.ListableRule, 0, len(storedRules))
 	for _, s := range storedRules {
-		gettable := ruletypes.GettableRule{}
-		if err := json.Unmarshal([]byte(s.Data), &gettable); err != nil {
+		listable, err := ruletypes.NewListableRuleFromStorableRule(s)
+		if err != nil {
 			m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", slog.String("rule.id", s.ID.StringValue()), errors.Attr(err))
 			continue
 		}
 
-		gettable.Id = s.ID.StringValue()
-		if state, ok := stateByRuleID[gettable.Id]; ok {
-			gettable.State = state
+		if state, ok := stateByRuleID[listable.Id]; ok {
+			listable.State = state
 		} else {
-			gettable.State = ruletypes.StateDisabled
-			gettable.Disabled = true
+			listable.State = ruletypes.StateDisabled
+			listable.Disabled = true
 		}
 		if len(stateFilter) > 0 {
-			if _, ok := stateFilter[gettable.State]; !ok {
+			if _, ok := stateFilter[listable.State]; !ok {
 				continue
 			}
 		}
 
-		gettable.CreatedAt = s.CreatedAt
-		gettable.CreatedBy = &s.CreatedBy
-		gettable.UpdatedAt = s.UpdatedAt
-		gettable.UpdatedBy = &s.UpdatedBy
-		listableRules = append(listableRules, ruletypes.NewListableRule(&gettable))
+		listableRules = append(listableRules, listable)
 	}
 
 	total := int64(len(listableRules))

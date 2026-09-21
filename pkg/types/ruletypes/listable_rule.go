@@ -25,28 +25,34 @@ type ListableRule struct {
 	types.UserAuditable
 }
 
-func NewListableRule(rule *GettableRule) *ListableRule {
-	listable := &ListableRule{
-		Id:          rule.Id,
-		State:       rule.State,
-		AlertName:   rule.AlertName,
-		Description: rule.Description,
-		AlertType:   rule.AlertType,
-		RuleType:    rule.RuleType,
-		Disabled:    rule.Disabled,
-		Labels:      rule.Labels,
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: rule.CreatedAt,
-			UpdatedAt: rule.UpdatedAt,
-		},
+// storedRuleData is the subset of the persisted rule data blob the list page needs.
+type storedRuleData struct {
+	AlertName   string            `json:"alert"`
+	Description string            `json:"description"`
+	AlertType   AlertType         `json:"alertType"`
+	RuleType    RuleType          `json:"ruleType"`
+	Disabled    bool              `json:"disabled"`
+	Labels      map[string]string `json:"labels"`
+}
+
+// NewListableRuleFromStorableRule leaves State zero; the caller overlays evaluation state.
+func NewListableRuleFromStorableRule(rule *StorableRule) (*ListableRule, error) {
+	data := storedRuleData{}
+	if err := json.Unmarshal([]byte(rule.Data), &data); err != nil {
+		return nil, err
 	}
-	if rule.CreatedBy != nil {
-		listable.CreatedBy = *rule.CreatedBy
-	}
-	if rule.UpdatedBy != nil {
-		listable.UpdatedBy = *rule.UpdatedBy
-	}
-	return listable
+
+	return &ListableRule{
+		Id:            rule.ID.StringValue(),
+		AlertName:     data.AlertName,
+		Description:   data.Description,
+		AlertType:     data.AlertType,
+		RuleType:      data.RuleType,
+		Disabled:      data.Disabled,
+		Labels:        data.Labels,
+		TimeAuditable: rule.TimeAuditable,
+		UserAuditable: rule.UserAuditable,
+	}, nil
 }
 
 // LabelPair is one distinct label key/value observed on the org's rules.
