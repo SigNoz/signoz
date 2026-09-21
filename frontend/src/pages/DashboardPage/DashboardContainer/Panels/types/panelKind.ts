@@ -18,6 +18,7 @@ export type PanelKind = `${DashboardtypesPanelPluginKindDTO}`;
 export const PANEL_KIND_TO_PANEL_TYPE: Record<PanelKind, PANEL_TYPES> = {
 	'signoz/TimeSeriesPanel': PANEL_TYPES.TIME_SERIES,
 	'signoz/BarChartPanel': PANEL_TYPES.BAR,
+	'signoz/AreaChartPanel': PANEL_TYPES.AREA,
 	'signoz/NumberPanel': PANEL_TYPES.VALUE,
 	'signoz/PieChartPanel': PANEL_TYPES.PIE,
 	'signoz/TablePanel': PANEL_TYPES.TABLE,

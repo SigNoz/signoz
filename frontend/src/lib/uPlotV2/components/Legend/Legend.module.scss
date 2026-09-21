@@ -2,6 +2,8 @@
 
 .container {
 	position: relative;
+	// Contains the rows' z-indexes, which otherwise paint over side panels.
+	isolation: isolate;
 	display: flex;
 	flex-direction: column;
 	height: 100%;

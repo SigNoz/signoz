@@ -222,6 +222,8 @@ export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	spanGaps?: boolean | number;
 	fillColor?: string;
 	fillMode?: FillMode;
+	/** 0–1, for `Solid` and `Gradient`; unset uses `DEFAULT_FILL_OPACITY`. */
+	fillOpacity?: number;
 	isDarkMode?: boolean;
 	stepInterval?: number;
 	metric?: { [key: string]: string };
