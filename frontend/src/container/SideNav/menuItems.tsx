@@ -285,7 +285,6 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		key: ROUTES.API_MONITORING,
 		label: 'External APIs',
 		icon: <Binoculars size={16} />,
-		isNew: true,
 		isEnabled: true,
 		itemKey: 'external-apis',
 	},
@@ -293,7 +292,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		key: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		label: 'AI Observability',
 		icon: <Brain size={16} />,
-		isNew: true,
+		isBeta: true,
 		// Gated behind the `enable_ai_observability` feature flag in
 		// SideNav's `computedSecondaryMenuItems`; disabled by default.
 		isEnabled: false,
