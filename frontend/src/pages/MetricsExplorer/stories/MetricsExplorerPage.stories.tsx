@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { screen, userEvent } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -19,6 +20,7 @@ const pageStory = storyMocks(metricsMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Metrics/Explorer',
+	tags: ['play'],
 	component: MetricsExplorerPage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -93,4 +95,22 @@ export const Loading: Story = {
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true, drawer: 'details' },
+};
+
+/**
+ * The dashboards pill in the metric details drawer, open: every dashboard that
+ * charts this metric, each a link out to it.
+ */
+export const MetricDetailsDashboardsMenu: Story = {
+	args: { drawer: 'details' },
+	play: async (): Promise<void> => {
+		await userEvent.click(
+			await screen.findByTestId(
+				'metric-dashboards-popover',
+				{},
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByRole('menu');
+	},
 };

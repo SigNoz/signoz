@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -20,6 +21,7 @@ const pageStory = storyMocks(tracesFunnelDetailsMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Traces/Funnel Details',
+	tags: ['play'],
 	component: TracesFunnelDetails,
 	// The funnel id is in the pathname, so the page renders under its own route
 	// rather than being mounted on its own.
@@ -48,4 +50,21 @@ export const SevereDropOff: Story = {
 /** A funnel someone has started but only defined the entry step of. */
 export const SingleStep: Story = {
 	args: { steps: 1 },
+};
+
+/**
+ * The latency pointer menu on the first step, open over the funnel
+ * configuration: which end of a step's span the funnel times from.
+ */
+export const LatencyPointerMenu: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByTestId(
+				'funnel-step-latency-pointer-0',
+				{},
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByRole('menu');
+	},
 };

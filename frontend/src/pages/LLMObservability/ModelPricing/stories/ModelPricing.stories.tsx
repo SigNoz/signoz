@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -17,6 +18,7 @@ const pageStory = storyMocks(modelPricingMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/AI Observability/Model Pricing',
+	tags: ['play'],
 	component: LLMObservabilityPage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -35,4 +37,20 @@ export const Default: Story = {};
 /** Nothing priced yet, with every model the workspace calls still unmatched. */
 export const NothingPriced: Story = {
 	args: { rules: 0 },
+};
+
+/**
+ * The first pricing rule's menu, open over the table: edit the rule or drop it.
+ */
+export const ModelCostActionsMenu: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const [first] = await within(canvasElement).findAllByRole(
+			'button',
+			{ name: 'Model cost actions' },
+			{ timeout: 10000 },
+		);
+
+		await userEvent.click(first);
+		await screen.findByRole('menu');
+	},
 };

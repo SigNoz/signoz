@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -19,6 +20,7 @@ const pageStory = storyMocks(alertOverviewMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Alerts/Overview',
+	tags: ['play'],
 	component: AlertList,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -55,4 +57,21 @@ export const RuleNotFound: Story = {
 	// The mocked rule request intentionally fails; the resulting console error is
 	// the point of the story, not a regression.
 	parameters: { allowConsoleErrors: true },
+};
+
+/**
+ * The rule's own More options menu, open off the header: rename it, duplicate
+ * it, or delete it.
+ */
+export const AlertActionsMenu: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByTestId(
+				'alert-actions-menu',
+				{},
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByRole('menu');
+	},
 };

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -22,7 +23,7 @@ const pageStory = storyMocks(attributeMappingMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/AI Observability/Attribute Mapping',
-	tags: ['authz'],
+	tags: ['authz', 'play'],
 	component: LLMObservabilityPage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -51,4 +52,20 @@ export const NoGroups: Story = {
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
 	parameters: { msw: { handlers: [wideConditionGroup] } },
+};
+
+/**
+ * The first mapping group's own menu, open: edit the group, clone it, delete it.
+ */
+export const GroupActionsMenu: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const [first] = await within(canvasElement).findAllByRole(
+			'button',
+			{ name: 'Group actions' },
+			{ timeout: 10000 },
+		);
+
+		await userEvent.click(first);
+		await screen.findByRole('menu');
+	},
 };

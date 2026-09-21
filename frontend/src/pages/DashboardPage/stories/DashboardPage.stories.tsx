@@ -232,6 +232,58 @@ export const TooltipsInViewPanelModal: Story = {
 };
 
 /**
+ * The dashboard's own Actions menu, open: rename, clone, lock, full screen and
+ * delete, the menu the toolbar's Actions button carries.
+ */
+export const ActionsMenu: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// The dropdown trigger's Slot merge drops the button's own test id.
+		await userEvent.click(
+			await canvas.findByRole('button', { name: 'Actions' }, { timeout: 10000 }),
+		);
+		await screen.findByText('Clone dashboard');
+	},
+};
+
+/**
+ * One panel's own menu, open over the grid: edit, clone, the download formats
+ * its data can be taken in, and the move-to-section submenu.
+ */
+export const PanelActionsMenu: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(
+			await canvas.findByTestId(
+				'panel-actions-p99-latency',
+				{},
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByRole('menu');
+	},
+};
+
+/**
+ * A section's menu, open: add a panel to it, rename it, clone it, delete it.
+ */
+export const SectionActionsMenu: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		const [firstSection] = await canvas.findAllByRole(
+			'button',
+			{ name: 'Section actions' },
+			{ timeout: 10000 },
+		);
+		await userEvent.click(firstSection);
+		await screen.findByRole('menu');
+	},
+};
+
+/**
  * A dashboard id nobody has, which is what a deleted or mistyped link opens on.
  *
  * Kept last: test-runner shares one page across a file's stories, and the 404

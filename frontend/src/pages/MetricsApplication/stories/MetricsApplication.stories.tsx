@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -20,6 +21,7 @@ const pageStory = storyMocks(metricsApplicationMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Services/Detail',
+	tags: ['play'],
 	component: MetricsApplication,
 	// The page reads the service out of the pathname, so it renders under its own
 	// route rather than being mounted on its own.
@@ -58,4 +60,21 @@ export const DenseOperations: Story = {
 /** The real empty table branch when this service has no top or entry-point operations. */
 export const NoOperations: Story = {
 	args: { operations: 0 },
+};
+
+/**
+ * The Download menu on the top operations table, open: the formats the rows can
+ * be taken away in.
+ */
+export const DownloadMenu: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByTestId(
+				'download-menu-trigger',
+				{},
+				{ timeout: 15000 },
+			),
+		);
+		await screen.findByRole('menu');
+	},
 };

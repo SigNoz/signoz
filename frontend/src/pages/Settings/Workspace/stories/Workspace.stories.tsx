@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -18,6 +19,7 @@ const pageStory = storyMocks(workspaceMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Settings/Workspace',
+	tags: ['play'],
 	component: SettingsPage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -52,4 +54,21 @@ export const RetentionPending: Story = {
 /** An instance with no object storage attached: nothing can be moved to S3. */
 export const NoColdStorage: Story = {
 	args: { license: 'enterprise', coldStorage: false },
+};
+
+/**
+ * The workspace URL menu, open: the hosts the workspace answers on, and which
+ * of them is the active one.
+ */
+export const CustomDomainMenu: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByTestId(
+				'custom-domain-menu-trigger',
+				{},
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByRole('menu');
+	},
 };

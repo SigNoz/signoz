@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { fireEvent, userEvent, waitFor, within } from 'storybook/test';
+import { fireEvent, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -152,5 +152,23 @@ export const TooltipsInFilterBar: Story = {
 	args: { tooltipsOpen: true },
 	play: async ({ canvasElement }): Promise<void> => {
 		await highlightErrors(canvasElement);
+	},
+};
+
+/**
+ * The trace options menu, open off the header: the trace details toggle, preview
+ * fields, and the Colour by submenu over the fields the spans can be coloured
+ * on.
+ */
+export const TraceOptionsMenu: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: 'Trace options' },
+				untilLoaded,
+			),
+		);
+		await screen.findByText('Preview fields');
 	},
 };
