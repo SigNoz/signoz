@@ -714,8 +714,6 @@ describe('TracesExplorer -', () => {
 			return el;
 		});
 
-		// the views list resolves well past the 1s default on slower CI runners,
-		// and the dropdown renders no options until it does
 		await waitFor(
 			() =>
 				expect(
