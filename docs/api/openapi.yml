@@ -3407,29 +3407,6 @@ components:
       required:
       - customValue
       type: object
-    DashboardtypesDashboard:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        data:
-          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
-        id:
-          type: string
-        locked:
-          type: boolean
-        org_id:
-          type: string
-        source:
-          $ref: '#/components/schemas/DashboardtypesSource'
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-      type: object
     DashboardtypesDashboardPanelRef:
       properties:
         dashboardId:
@@ -3603,13 +3580,6 @@ components:
           type: string
         timeRangeEnabled:
           type: boolean
-      type: object
-    DashboardtypesGettablePublicDashboardData:
-      properties:
-        dashboard:
-          $ref: '#/components/schemas/DashboardtypesDashboard'
-        publicDashboard:
-          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
       type: object
     DashboardtypesGettablePublicDashboardDataV2:
       properties:
@@ -4373,9 +4343,6 @@ components:
             (default), all gaps are connected. When true, only gaps smaller than fillLessThan
             are connected.
           type: boolean
-      type: object
-    DashboardtypesStorableDashboardData:
-      additionalProperties: {}
       type: object
     DashboardtypesTableFormatting:
       properties:
@@ -7152,37 +7119,11 @@ components:
       - attributes
       - totalKeys
       type: object
-    MetricsexplorertypesMetricDashboard:
-      properties:
-        dashboardId:
-          type: string
-        dashboardName:
-          type: string
-        widgetId:
-          type: string
-        widgetName:
-          type: string
-      required:
-      - dashboardName
-      - dashboardId
-      - widgetId
-      - widgetName
-      type: object
     MetricsexplorertypesMetricDashboardPanelsResponse:
       properties:
         dashboards:
           items:
             $ref: '#/components/schemas/DashboardtypesDashboardPanelRef'
-          nullable: true
-          type: array
-      required:
-      - dashboards
-      type: object
-    MetricsexplorertypesMetricDashboardsResponse:
-      properties:
-        dashboards:
-          items:
-            $ref: '#/components/schemas/MetricsexplorertypesMetricDashboard'
           nullable: true
           type: array
       required:
@@ -13226,112 +13167,6 @@ paths:
       summary: Update org preference
       tags:
       - preferences
-  /api/v1/public/dashboards/{id}:
-    get:
-      deprecated: false
-      description: This endpoint returns the sanitized dashboard data for public access
-      operationId: GetPublicDashboardData
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/DashboardtypesGettablePublicDashboardData'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - anonymous:
-        - public-dashboard:read
-      summary: Get public dashboard data
-      tags:
-      - dashboard
-  /api/v1/public/dashboards/{id}/widgets/{idx}/query_range:
-    get:
-      deprecated: false
-      description: This endpoint return query range results for a widget of public
-        dashboard
-      operationId: GetPublicDashboardWidgetQueryRange
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: idx
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - anonymous:
-        - public-dashboard:read
-      summary: Get query range result
-      tags:
-      - dashboard
   /api/v1/roles:
     get:
       deprecated: false
@@ -19581,74 +19416,6 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get metric attributes
-      tags:
-      - metrics
-  /api/v2/metrics/dashboards:
-    get:
-      deprecated: false
-      description: This endpoint returns associated dashboards for a specified metric
-      operationId: GetMetricDashboards
-      parameters:
-      - description: The name of the metric. May contain slashes (e.g. cloud-provider
-          metrics like run.googleapis.com/request_latencies).
-        in: query
-        name: metricName
-        required: true
-        schema:
-          description: The name of the metric. May contain slashes (e.g. cloud-provider
-            metrics like run.googleapis.com/request_latencies).
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardsResponse'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get metric dashboards
       tags:
       - metrics
   /api/v2/metrics/highlights:
