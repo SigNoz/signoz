@@ -883,6 +883,11 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 
 // ListRules' total counts what is pageable after corrupt-row drops and the states filter.
 func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesParams) (*ruletypes.ListableRules, error) {
+	// validated here too, not just in the handler: non-API callers reach the manager directly
+	if err := params.Validate(); err != nil {
+		return nil, err
+	}
+
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return nil, err
