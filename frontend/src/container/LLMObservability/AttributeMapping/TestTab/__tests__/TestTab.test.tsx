@@ -63,6 +63,26 @@ const EDITED_SPAN_JSON = `{
   }
 }`;
 
+const SPAN_WITH_EXTRA_KEY_JSON = `{
+  "attributes": {
+    "input.value": "What is quantum computing?"
+  },
+  "resource": {
+    "service.name": "llm-gateway"
+  },
+  "demo": {
+    "name": "demo"
+  }
+}`;
+
+const EXTRA_KEY_RESULT_SPAN = {
+	attributes: {
+		'input.value': 'What is quantum computing?',
+		[MAPPED_ATTRIBUTE_KEY]: 'What is quantum computing?',
+	},
+	resource: { 'service.name': 'llm-gateway' },
+};
+
 const SPAN_INPUT_KEY = LOCALSTORAGE.LLM_ATTRIBUTE_MAPPING_TEST_SPAN;
 
 describe('TestTab — sample-span flow', () => {
@@ -102,6 +122,47 @@ describe('TestTab — sample-span flow', () => {
 		);
 		expect(screen.getByText('populated')).toBeInTheDocument();
 		expect(screen.queryByTestId('test-error')).not.toBeInTheDocument();
+	});
+
+	it('trims extra top-level keys and sends only the envelope', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let body: { spans?: { attributes?: Record<string, unknown> }[] } | undefined;
+		server.use(
+			rest.post(TEST_ENDPOINT, async (req, res, ctx) => {
+				body = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(makeTestResponse([EXTRA_KEY_RESULT_SPAN])),
+				);
+			}),
+		);
+
+		render(<LLMObservabilityAttributeMapping />);
+
+		await user.click(screen.getByRole('tab', { name: 'Test' }));
+		const runBtn = await screen.findByTestId('run-test-button');
+
+		await user.clear(screen.getByTestId('monaco'));
+		await user.paste(SPAN_WITH_EXTRA_KEY_JSON);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('monaco')).toHaveValue(SPAN_WITH_EXTRA_KEY_JSON),
+		);
+		expect(screen.queryByTestId('test-input-error')).not.toBeInTheDocument();
+
+		await user.click(runBtn);
+
+		await expect(
+			screen.findByTestId('test-results'),
+		).resolves.toBeInTheDocument();
+		expect(body?.spans?.[0]?.attributes).toStrictEqual({
+			'input.value': 'What is quantum computing?',
+		});
+		expect(screen.getByTestId('test-result-0-attributes')).toHaveTextContent(
+			MAPPED_ATTRIBUTE_KEY,
+		);
+		expect(screen.getByTestId('test-result-0-resource')).toBeInTheDocument();
+		expect(screen.getByText('populated')).toBeInTheDocument();
 	});
 
 	it('surfaces a backend error and renders no results', async () => {
