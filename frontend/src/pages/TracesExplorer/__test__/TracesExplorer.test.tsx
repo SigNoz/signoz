@@ -716,8 +716,10 @@ describe('TracesExplorer -', () => {
 
 		fireEvent.mouseDown(viewSearchInput);
 
+		// The saved-views request has to land and re-render the dropdown before the
+		// option exists; findByRole's 1s default is not enough on a loaded runner.
 		await expect(
-			screen.findByRole('option', { name: 'R-test panel' }),
+			screen.findByRole('option', { name: 'R-test panel' }, { timeout: 5000 }),
 		).resolves.toBeInTheDocument();
 
 		// save this view
