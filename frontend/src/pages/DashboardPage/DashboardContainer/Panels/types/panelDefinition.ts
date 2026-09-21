@@ -4,7 +4,6 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ChartLine } from '@signozhq/icons';
-import type { EQueryType } from 'types/common/dashboard';
 
 import type { SectionConfig } from './sections';
 import type { AnyPanelInteractionProps } from './interactions';
@@ -13,6 +12,7 @@ import type {
 	PanelQueryCapabilities,
 	QueryBuilderFieldRule,
 } from './panelCapabilities';
+import type { SupportedQueryModes } from './queryModes';
 import type {
 	BaseRendererProps,
 	PanelRendererProps,
@@ -114,10 +114,8 @@ export interface QueryPanelDefinition<
 	Renderer: ComponentType<PanelRendererProps<K>>;
 	/** Lower editor pane — the shared query-builder pane, or a kind wrapper of it. */
 	EditorPane: ComponentType<QueryEditorPaneProps>;
-	/** Signals this kind can visualize. */
-	supportedSignals: TelemetrytypesSignalDTO[];
-	/** Query languages this kind supports (Query Builder / ClickHouse / PromQL). */
-	supportedQueryTypes: EQueryType[];
+	/** Modes this kind offers, each with the signals authorable in it. */
+	supportedQueryModes: SupportedQueryModes;
 	/** Query-builder fields this kind hides/disables, optionally per signal (`{}` hides none). */
 	queryBuilderFields: QueryBuilderFieldRule;
 	/** How this kind's query-range request is shaped (request type, paging, result formatting). */

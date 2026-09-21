@@ -16,7 +16,7 @@ import styles from './VisualizationSection.module.scss';
 type VisualizationSectionProps = SectionEditorProps<SectionKind.Visualization> &
 	Pick<
 		SectionEditorContext,
-		'panelKind' | 'onChangePanelKind' | 'signal' | 'queryType'
+		'panelKind' | 'onChangePanelKind' | 'signal' | 'mode'
 	>;
 
 /**
@@ -31,7 +31,7 @@ function VisualizationSection({
 	onChange,
 	panelKind,
 	onChangePanelKind,
-	queryType,
+	mode,
 	signal,
 }: VisualizationSectionProps): JSX.Element {
 	return (
@@ -39,9 +39,9 @@ function VisualizationSection({
 			{controls.switchPanelKind && panelKind && onChangePanelKind && (
 				<PanelTypeSwitcher
 					panelKind={panelKind}
-					// queryType is optional on the kind-erased section context, but always
+					// mode is optional on the kind-erased section context, but always
 					// supplied in practice; default to Query Builder at this boundary.
-					queryType={queryType ?? EQueryType.QUERY_BUILDER}
+					mode={mode ?? EQueryType.QUERY_BUILDER}
 					signal={signal}
 					onChange={onChangePanelKind}
 				/>

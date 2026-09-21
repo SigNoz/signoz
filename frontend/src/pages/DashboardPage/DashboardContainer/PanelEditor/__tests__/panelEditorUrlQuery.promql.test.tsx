@@ -23,6 +23,10 @@ import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContai
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 
 // jest.config maps the real hook to a no-op mock; this suite needs real navigation.
+jest.mock('hooks/useIsAIObservabilityEnabled', () => ({
+	useIsAIObservabilityEnabled: (): boolean => false,
+}));
+
 jest.mock('hooks/useSafeNavigate', () => {
 	const { useHistory: useRouterHistory } =
 		jest.requireActual('react-router-dom');

@@ -11,6 +11,8 @@ import {
 import { OPERATORS } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
+import { AI_QUERY_MODE } from '../../types/queryModes';
+
 export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	kind: 'signoz/ListPanel',
 	displayName: 'List',
@@ -19,15 +21,20 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	Renderer,
 	EditorPane: ListEditorPane,
 	// Raw records come from logs and traces; metrics don't produce row data.
-	supportedSignals: [
-		TelemetrytypesSignalDTO.logs,
-		TelemetrytypesSignalDTO.traces,
-	],
+	supportedQueryModes: {
+		[EQueryType.QUERY_BUILDER]: {
+			kind: 'signal',
+			signals: [TelemetrytypesSignalDTO.logs, TelemetrytypesSignalDTO.traces],
+		},
+		[AI_QUERY_MODE]: {
+			kind: 'signal',
+			signals: [TelemetrytypesSignalDTO.traces],
+		},
+	},
 	// Raw rows have no aggregation, so step interval / having never apply, and the
 	// Where clause searches the log/span body via `body CONTAINS`. Traces additionally
 	// hide `limit` (the server paginates raw spans). Mirrors QueryBuilderV2's internal
 	// list configs — the capabilities guard is the single source for both.
-	supportedQueryTypes: [EQueryType.QUERY_BUILDER],
 	queryBuilderFields: {
 		default: {
 			stepInterval: { isHidden: true, isDisabled: true },

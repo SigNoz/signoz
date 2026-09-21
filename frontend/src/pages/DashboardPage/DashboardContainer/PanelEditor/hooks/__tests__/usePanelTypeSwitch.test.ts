@@ -5,7 +5,7 @@ import { handleQueryChange } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { resolveQueryType } from '../../../Panels/capabilities';
+import { resolveQueryMode } from '../../../Panels/capabilities';
 import { getBuilderQueries } from '../../../Panels/utils/getBuilderQueries';
 import { toPerses } from '../../../queryV5/persesQueryAdapters';
 import { getSwitchedPluginSpec } from '../../getSwitchedPluginSpec';
@@ -18,7 +18,7 @@ jest.mock('lib/query/panelQuery', () => ({
 	handleQueryChange: jest.fn(),
 }));
 jest.mock('../../../Panels/capabilities', () => ({
-	resolveQueryType: jest.fn(),
+	resolveQueryMode: jest.fn(),
 	// Real predicate: these specs use real (query) kinds and the static path is
 	// exercised through its own cases below.
 	isStaticPanelKind: jest.requireActual('../../../Panels/capabilities')
@@ -36,7 +36,7 @@ jest.mock('../../../Panels/utils/getBuilderQueries', () => ({
 
 const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
 const mockHandleQueryChange = handleQueryChange as unknown as jest.Mock;
-const mockResolveQueryType = resolveQueryType as unknown as jest.Mock;
+const mockResolveQueryMode = resolveQueryMode as unknown as jest.Mock;
 const mockToPerses = toPerses as unknown as jest.Mock;
 const mockGetSwitchedPluginSpec = getSwitchedPluginSpec as unknown as jest.Mock;
 const mockGetBuilderQueries = getBuilderQueries as unknown as jest.Mock;
@@ -95,7 +95,7 @@ describe('usePanelTypeSwitch', () => {
 		mockGetBuilderQueries.mockReturnValue([{ signal: 'logs' }]);
 		// The guard owns coercion (tested in capabilities.test.ts); here it always
 		// resolves to Query Builder so the coerced type flows into handleQueryChange.
-		mockResolveQueryType.mockReturnValue('builder');
+		mockResolveQueryMode.mockReturnValue('builder');
 	});
 
 	it('does nothing when switching to the current kind', () => {
@@ -185,14 +185,52 @@ describe('usePanelTypeSwitch', () => {
 		);
 		act(() => result.current.onChangePanelKind('signoz/ListPanel'));
 
-		// The hook asks the guard to resolve the active query type against the new kind…
-		expect(mockResolveQueryType).toHaveBeenCalledWith(
+		// The hook asks the guard to resolve the active mode against the new kind, passing
+		// the current signal — the AI mode is only valid for traces.
+		expect(mockResolveQueryMode).toHaveBeenCalledWith(
 			'signoz/ListPanel',
 			'promql',
+			'logs',
 		);
-		// …and the resolved type ('builder') flows into the query rebuild.
+		// …and the resolved mode ('builder') flows into the query rebuild.
 		const [, queryArg] = mockHandleQueryChange.mock.calls[0];
 		expect((queryArg as Query).queryType).toBe('builder');
+	});
+
+	it('strips the AI tag when the guard coerces the mode', () => {
+		const setSpec = jest.fn();
+		const aiQuery = {
+			id: 'ai',
+			queryType: 'builder',
+			builder: {
+				queryData: [{ dataSource: 'traces', builderQueryType: 'builder_ai_query' }],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			},
+		} as unknown as Query;
+		mockUseQueryBuilder.mockReturnValue(builderState(aiQuery));
+		// The new kind can't take the AI mode here, so the guard coerces to the builder.
+		mockResolveQueryMode.mockReturnValue('builder');
+
+		const { result } = renderHook(() =>
+			usePanelTypeSwitch({
+				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TIME_SERIES,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/ListPanel'));
+
+		expect(mockResolveQueryMode).toHaveBeenCalledWith(
+			'signoz/ListPanel',
+			'builder_ai_query',
+			'logs',
+		);
+		// The tag has to come off the queries themselves — queryType alone can't say it.
+		const [, queryArg] = mockHandleQueryChange.mock.calls[0];
+		(queryArg as Query).builder.queryData.forEach((qd) => {
+			expect(qd.builderQueryType).toBeUndefined();
+		});
 	});
 
 	it('restores the original kind verbatim on switch-back (reversibility)', () => {

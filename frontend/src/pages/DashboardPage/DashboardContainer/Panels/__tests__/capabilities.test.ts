@@ -17,9 +17,12 @@ import {
 	getSupportedSignals,
 	isPanelCombinationValid,
 	isQueryTypeSupportedByPanelKind,
+	isQueryModeSupportedByPanelKind,
 	isSignalSupported,
+	resolveQueryMode,
 	resolveQueryType,
 } from '../capabilities';
+import { AI_QUERY_MODE } from '../types/queryModes';
 import type { PanelKind } from '../types/panelKind';
 
 const { QUERY_BUILDER, CLICKHOUSE, PROM } = EQueryType;
@@ -142,7 +145,7 @@ describe('panel capabilities guard', () => {
 			expect(getSupportedQueryTypes(unknownKind)).toStrictEqual([]);
 			expect(isSignalSupported(unknownKind, logs)).toBe(false);
 			expect(
-				isPanelCombinationValid({ kind: unknownKind, queryType: QUERY_BUILDER }),
+				isPanelCombinationValid({ kind: unknownKind, mode: QUERY_BUILDER }),
 			).toBe(false);
 			expect(getHiddenQueryBuilderFields(unknownKind, logs)).toStrictEqual({});
 			expect(getPanelDefinition(unknownKind).sections).toStrictEqual([]);
@@ -212,13 +215,13 @@ describe('panel capabilities guard', () => {
 			expect(
 				isPanelCombinationValid({
 					kind: 'signoz/TimeSeriesPanel',
-					queryType: PROM,
+					mode: PROM,
 				}),
 			).toBe(true);
 			expect(
 				isPanelCombinationValid({
 					kind: 'signoz/ListPanel',
-					queryType: QUERY_BUILDER,
+					mode: QUERY_BUILDER,
 					signal: logs,
 				}),
 			).toBe(true);
@@ -226,10 +229,10 @@ describe('panel capabilities guard', () => {
 
 		it('rejects an unsupported query type', () => {
 			expect(
-				isPanelCombinationValid({ kind: 'signoz/ListPanel', queryType: PROM }),
+				isPanelCombinationValid({ kind: 'signoz/ListPanel', mode: PROM }),
 			).toBe(false);
 			expect(
-				isPanelCombinationValid({ kind: 'signoz/TablePanel', queryType: PROM }),
+				isPanelCombinationValid({ kind: 'signoz/TablePanel', mode: PROM }),
 			).toBe(false);
 		});
 
@@ -237,7 +240,7 @@ describe('panel capabilities guard', () => {
 			expect(
 				isPanelCombinationValid({
 					kind: 'signoz/ListPanel',
-					queryType: QUERY_BUILDER,
+					mode: QUERY_BUILDER,
 					signal: metrics,
 				}),
 			).toBe(false);
@@ -247,7 +250,7 @@ describe('panel capabilities guard', () => {
 			expect(
 				isPanelCombinationValid({
 					kind: 'signoz/ListPanel',
-					queryType: QUERY_BUILDER,
+					mode: QUERY_BUILDER,
 				}),
 			).toBe(true);
 		});
@@ -265,6 +268,92 @@ describe('panel capabilities guard', () => {
 			// PromQL → List has no PromQL, falls back to its first (and only) type.
 			expect(resolveQueryType('signoz/ListPanel', PROM)).toBe(QUERY_BUILDER);
 			expect(resolveQueryType('signoz/TablePanel', PROM)).toBe(QUERY_BUILDER);
+		});
+	});
+
+	describe('the AI query mode', () => {
+		const AI_KINDS: PanelKind[] = [
+			'signoz/TimeSeriesPanel',
+			'signoz/BarChartPanel',
+			'signoz/NumberPanel',
+			'signoz/HistogramPanel',
+			'signoz/PieChartPanel',
+			'signoz/TablePanel',
+			'signoz/ListPanel',
+		];
+
+		it.each(AI_KINDS)('is offered by %s, for traces only', (kind) => {
+			expect(isQueryModeSupportedByPanelKind(kind, AI_QUERY_MODE)).toBe(true);
+			expect(getSupportedSignals(kind, AI_QUERY_MODE)).toStrictEqual([traces]);
+		});
+
+		it('is not offered by a query-less kind', () => {
+			expect(
+				isQueryModeSupportedByPanelKind('signoz/TextPanel', AI_QUERY_MODE),
+			).toBe(false);
+		});
+
+		it('does not leak into the legacy queryType axis', () => {
+			expect(getSupportedQueryTypes('signoz/TimeSeriesPanel')).not.toContain(
+				AI_QUERY_MODE,
+			);
+		});
+
+		it('leaves the kind-wide signal list unchanged', () => {
+			// traces is already in the builder mode's list, so the union must not repeat it.
+			expect(getSupportedSignals('signoz/TimeSeriesPanel')).toStrictEqual([
+				metrics,
+				logs,
+				traces,
+			]);
+		});
+
+		it('pairs with traces but not with the other signals of the kind', () => {
+			expect(
+				isPanelCombinationValid({
+					kind: 'signoz/TimeSeriesPanel',
+					mode: AI_QUERY_MODE,
+					signal: traces,
+				}),
+			).toBe(true);
+			expect(
+				isPanelCombinationValid({
+					kind: 'signoz/TimeSeriesPanel',
+					mode: AI_QUERY_MODE,
+					signal: logs,
+				}),
+			).toBe(false);
+		});
+	});
+
+	describe('resolveQueryMode', () => {
+		it('keeps the AI mode on a kind that offers it', () => {
+			expect(
+				resolveQueryMode('signoz/TimeSeriesPanel', AI_QUERY_MODE, traces),
+			).toBe(AI_QUERY_MODE);
+		});
+
+		it('keeps the AI mode on List, whose raw trace rows can be AI-authored', () => {
+			expect(resolveQueryMode('signoz/ListPanel', AI_QUERY_MODE, traces)).toBe(
+				AI_QUERY_MODE,
+			);
+		});
+
+		it('coerces the AI mode on a kind that offers it for other signals only', () => {
+			expect(resolveQueryMode('signoz/ListPanel', AI_QUERY_MODE, logs)).toBe(
+				QUERY_BUILDER,
+			);
+		});
+
+		it('coerces the AI mode when the signal moved off traces', () => {
+			expect(resolveQueryMode('signoz/TimeSeriesPanel', AI_QUERY_MODE, logs)).toBe(
+				QUERY_BUILDER,
+			);
+		});
+
+		it('leaves a query-language mode alone', () => {
+			expect(resolveQueryMode('signoz/TimeSeriesPanel', PROM)).toBe(PROM);
+			expect(resolveQueryMode('signoz/ListPanel', PROM)).toBe(QUERY_BUILDER);
 		});
 	});
 

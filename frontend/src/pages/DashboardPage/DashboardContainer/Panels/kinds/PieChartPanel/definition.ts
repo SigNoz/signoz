@@ -10,6 +10,8 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
+import { AI_QUERY_MODE } from '../../types/queryModes';
+
 export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 	kind: 'signoz/PieChartPanel',
 	displayName: 'Pie Chart',
@@ -18,12 +20,21 @@ export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	supportedSignals: [
-		TelemetrytypesSignalDTO.metrics,
-		TelemetrytypesSignalDTO.logs,
-		TelemetrytypesSignalDTO.traces,
-	],
-	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	supportedQueryModes: {
+		[EQueryType.QUERY_BUILDER]: {
+			kind: 'signal',
+			signals: [
+				TelemetrytypesSignalDTO.metrics,
+				TelemetrytypesSignalDTO.logs,
+				TelemetrytypesSignalDTO.traces,
+			],
+		},
+		[EQueryType.CLICKHOUSE]: { kind: 'signal-less' },
+		[AI_QUERY_MODE]: {
+			kind: 'signal',
+			signals: [TelemetrytypesSignalDTO.traces],
+		},
+	},
 	queryBuilderFields: {},
 	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.scalar,

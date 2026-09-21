@@ -3,15 +3,24 @@ import { EQueryType } from 'types/common/dashboard';
 
 import {
 	isStaticPanelKind,
-	isQueryTypeSupportedByPanelKind,
+	isQueryModeSupportedByPanelKind,
 	isSignalSupported,
 } from '../../../Panels/capabilities';
 import type { PanelKind } from '../../../Panels/types/panelKind';
+import {
+	AI_QUERY_MODE,
+	type PanelQueryMode,
+} from '../../../Panels/types/queryModes';
 
 const QUERY_TYPE_LABEL: Record<EQueryType, string> = {
 	[EQueryType.QUERY_BUILDER]: 'Query Builder',
 	[EQueryType.CLICKHOUSE]: 'ClickHouse',
 	[EQueryType.PROM]: 'PromQL',
+};
+
+const MODE_LABEL: Record<PanelQueryMode, string> = {
+	...QUERY_TYPE_LABEL,
+	[AI_QUERY_MODE]: 'AI Query Builder',
 };
 
 const SIGNAL_LABEL: Record<TelemetrytypesSignalDTO, string> = {
@@ -29,12 +38,12 @@ const SIGNAL_LABEL: Record<TelemetrytypesSignalDTO, string> = {
  */
 export function getPanelTypeDisabledReason({
 	kind,
-	queryType,
+	mode,
 	signal,
 	label,
 }: {
 	kind: PanelKind;
-	queryType: EQueryType;
+	mode: PanelQueryMode;
 	signal?: TelemetrytypesSignalDTO;
 	label: string;
 }): string | undefined {
@@ -44,10 +53,10 @@ export function getPanelTypeDisabledReason({
 	if (isStaticPanelKind(kind)) {
 		return undefined;
 	}
-	if (!isQueryTypeSupportedByPanelKind(kind, queryType)) {
-		return `${label} isn't available for ${QUERY_TYPE_LABEL[queryType]} queries`;
+	if (!isQueryModeSupportedByPanelKind(kind, mode)) {
+		return `${label} isn't available for ${MODE_LABEL[mode]} queries`;
 	}
-	if (signal !== undefined && !isSignalSupported(kind, signal)) {
+	if (signal !== undefined && !isSignalSupported(kind, signal, mode)) {
 		return `${label} doesn't support ${SIGNAL_LABEL[signal]} data`;
 	}
 	return undefined;

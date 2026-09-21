@@ -9,6 +9,7 @@ import type {
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { usePanelTypeSelectItems } from 'pages/DashboardPage/DashboardContainer/PanelEditor/ConfigPane/PanelTypeSwitcher/usePanelTypeSelectItems';
 import ConfigSelect from 'pages/DashboardPage/DashboardContainer/PanelEditor/ConfigPane/controls/ConfigSelect/ConfigSelect';
+import type { PanelQueryMode } from '../../../Panels/types/queryModes';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -41,7 +42,7 @@ interface QueryViewModalHeaderProps extends ViewPanelModalHeaderBaseProps {
 	 * selector greys out kinds that can't be authored in it — e.g. List is
 	 * Query-Builder-only, so PromQL/ClickHouse disable it.
 	 */
-	queryType: EQueryType;
+	queryMode: PanelQueryMode;
 	/** Current builder datasource — greys out kinds that don't support it (e.g. List needs logs/traces, not metrics). */
 	signal: TelemetrytypesSignalDTO;
 	/** Restore the saved query + kind (drilldown reset). */
@@ -74,7 +75,7 @@ function ViewPanelModalHeader(props: ViewPanelModalHeaderProps): JSX.Element {
 	// Same capabilities-guarded options as the editor's PanelTypeSwitcher, so the two
 	// selectors disable the same kinds (e.g. List under PromQL, metrics-only kinds).
 	const panelTypeItems = usePanelTypeSelectItems({
-		queryType: query?.queryType ?? EQueryType.QUERY_BUILDER,
+		mode: query?.queryMode ?? EQueryType.QUERY_BUILDER,
 		signal: query?.signal,
 	});
 

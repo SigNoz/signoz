@@ -1,7 +1,7 @@
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
-import { isQueryTypeSupportedByPanelKind } from '../DashboardContainer/Panels/capabilities';
+import { isQueryModeSupportedByPanelKind } from '../DashboardContainer/Panels/capabilities';
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
 import { SectionKind } from '../DashboardContainer/Panels/types/sections';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
@@ -22,7 +22,7 @@ jest.mock('../DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: jest.fn(),
 }));
 jest.mock('../DashboardContainer/Panels/capabilities', () => ({
-	isQueryTypeSupportedByPanelKind: jest.fn(),
+	isQueryModeSupportedByPanelKind: jest.fn(),
 	// Real predicate: these specs exercise query kinds; the static guard has its
 	// own case below.
 	isStaticPanelKind: jest.requireActual(
@@ -34,7 +34,7 @@ const mockToPerses = toPerses as jest.Mock;
 const mockBuildDefaultQueries = buildDefaultQueries as jest.Mock;
 const mockBuildPluginSpec = buildPluginSpec as jest.Mock;
 const mockGetPanelDefinition = getPanelDefinition as jest.Mock;
-const mockIsQueryTypeSupported = isQueryTypeSupportedByPanelKind as jest.Mock;
+const mockIsQueryModeSupported = isQueryModeSupportedByPanelKind as jest.Mock;
 
 const DEFAULT_QUERIES = [{ kind: 'default' }];
 const CONVERTED_QUERIES = [{ kind: 'converted' }];
@@ -54,7 +54,7 @@ describe('buildNewPanelSeed', () => {
 		mockBuildDefaultQueries.mockReturnValue(DEFAULT_QUERIES);
 		mockBuildPluginSpec.mockReturnValue(BASE_SPEC);
 		mockGetPanelDefinition.mockReturnValue({ sections: withUnit });
-		mockIsQueryTypeSupported.mockReturnValue(true);
+		mockIsQueryModeSupported.mockReturnValue(true);
 	});
 
 	it('uses the kind default seed when it is not an explorer export', () => {
@@ -77,7 +77,7 @@ describe('buildNewPanelSeed', () => {
 	});
 
 	it('coerces a builder-only kind to Table for a ClickHouse query', () => {
-		mockIsQueryTypeSupported.mockReturnValue(false);
+		mockIsQueryModeSupported.mockReturnValue(false);
 		mockToPerses.mockReturnValue(CONVERTED_QUERIES);
 
 		const seed = buildNewPanelSeed(
@@ -91,7 +91,7 @@ describe('buildNewPanelSeed', () => {
 	});
 
 	it('coerces a builder-only kind to TimeSeries for a PromQL query', () => {
-		mockIsQueryTypeSupported.mockReturnValue(false);
+		mockIsQueryModeSupported.mockReturnValue(false);
 		mockToPerses.mockReturnValue(CONVERTED_QUERIES);
 
 		const seed = buildNewPanelSeed(

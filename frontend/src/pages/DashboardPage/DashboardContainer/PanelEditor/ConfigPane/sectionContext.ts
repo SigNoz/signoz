@@ -1,9 +1,9 @@
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
+import type { PanelQueryMode } from '../../Panels/types/queryModes';
 import type { PanelKind } from '../../Panels/types/panelKind';
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
-import { EQueryType } from 'types/common/dashboard';
 
 /**
  * Context `SectionSlot` forwards to every section editor (not spec-slice fields — those
@@ -17,7 +17,7 @@ export interface SectionEditorContext {
 	panelKind?: PanelKind;
 	onChangePanelKind?: (kind: PanelKind) => void;
 	yAxisUnit?: string;
-	queryType?: EQueryType;
+	mode?: PanelQueryMode;
 	stepInterval?: number;
 	/** Unit the selected metric was sent with; drives the unit selector's mismatch warning. */
 	metricUnit?: string;
