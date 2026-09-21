@@ -107,7 +107,7 @@ function TableView({
 						dataSource={DataSource.TRACES}
 						data={data}
 						query={stagedQuery || initialQueriesMap.traces}
-						fileName="traces-table"
+						fileName="ai-traces-table"
 					/>
 				</div>
 			)}

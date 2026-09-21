@@ -2,6 +2,7 @@ package signozalertmanager
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	amConfig "github.com/prometheus/alertmanager/config"
@@ -341,6 +342,139 @@ func (provider *provider) TestNotificationChannel(ctx context.Context, orgID str
 	}
 
 	return provider.service.TestReceiver(ctx, orgID, receiver)
+}
+
+// RepairNotificationChannel refuses a delete while a route policy still names
+// the channel, as DeleteChannelByID does. A split adds the new channels to
+// every route policy naming the original, so what fanned out before still does.
+func (provider *provider) RepairNotificationChannel(ctx context.Context, orgID string, id valuer.UUID, apply bool) (*alertmanagertypes.ChannelRepair, error) {
+	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	repair := channel.Diagnose()
+	switch repair.Action {
+	case alertmanagertypes.ChannelRepairActionRetype:
+		return provider.retypeChannel(ctx, orgID, channel, repair, apply)
+	case alertmanagertypes.ChannelRepairActionSplit:
+		return provider.splitChannel(ctx, orgID, channel, repair, apply)
+	case alertmanagertypes.ChannelRepairActionDelete:
+		return provider.deleteDefectiveChannel(ctx, orgID, channel, repair, apply)
+	}
+
+	repair.Channels = []*alertmanagertypes.ListedNotificationChannel{channel.ToListedNotificationChannel()}
+	return repair, nil
+}
+
+func (provider *provider) retypeChannel(ctx context.Context, orgID string, channel *alertmanagertypes.Channel, repair *alertmanagertypes.ChannelRepair, apply bool) (*alertmanagertypes.ChannelRepair, error) {
+	if err := channel.Retype(); err != nil {
+		return nil, err
+	}
+	repair.Channels = []*alertmanagertypes.ListedNotificationChannel{channel.ToListedNotificationChannel()}
+	if !apply {
+		return repair, nil
+	}
+
+	if err := provider.configStore.UpdateChannel(ctx, orgID, channel); err != nil {
+		return nil, err
+	}
+	repair.Applied = true
+	return repair, nil
+}
+
+func (provider *provider) splitChannel(ctx context.Context, orgID string, channel *alertmanagertypes.Channel, repair *alertmanagertypes.ChannelRepair, apply bool) (*alertmanagertypes.ChannelRepair, error) {
+	channels, err := channel.SplitByNotifier()
+	if err != nil {
+		return nil, err
+	}
+	for _, split := range channels {
+		repair.Channels = append(repair.Channels, split.ToListedNotificationChannel())
+	}
+
+	policies, err := provider.notificationManager.GetRoutePoliciesByChannel(ctx, orgID, channel.DisplayName)
+	if err != nil {
+		return nil, err
+	}
+	if !apply {
+		return repair, nil
+	}
+
+	config, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+		return nil, err
+	}
+
+	receivers := make([]*alertmanagertypes.Receiver, 0, len(channels))
+	for _, split := range channels {
+		receiver, err := alertmanagertypes.NewReceiver(split.Data)
+		if err != nil {
+			return nil, err
+		}
+		receivers = append(receivers, receiver)
+	}
+	if err := config.UpdateReceiver(receivers[0]); err != nil {
+		return nil, err
+	}
+	for _, receiver := range receivers[1:] {
+		if err := config.CreateReceiverV2(receiver); err != nil {
+			return nil, err
+		}
+	}
+
+	for _, split := range channels[1:] {
+		if err := provider.configStore.CreateChannel(ctx, split); err != nil {
+			return nil, err
+		}
+	}
+	if err := provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		return provider.configStore.Set(ctx, config)
+	})); err != nil {
+		return nil, err
+	}
+
+	added := make([]string, 0, len(channels)-1)
+	for _, split := range channels[1:] {
+		added = append(added, split.DisplayName)
+	}
+	for _, policy := range policies {
+		postable := &alertmanagertypes.PostableRoutePolicy{
+			Expression:     policy.Expression,
+			ExpressionKind: policy.ExpressionKind,
+			Channels:       append(policy.Channels, added...),
+			Name:           policy.Name,
+			Description:    policy.Description,
+			Tags:           policy.Tags,
+		}
+		if _, err := provider.UpdateRoutePolicyByID(ctx, policy.ID.String(), postable); err != nil {
+			return nil, err
+		}
+	}
+
+	repair.Applied = true
+	return repair, nil
+}
+
+func (provider *provider) deleteDefectiveChannel(ctx context.Context, orgID string, channel *alertmanagertypes.Channel, repair *alertmanagertypes.ChannelRepair, apply bool) (*alertmanagertypes.ChannelRepair, error) {
+	policies, err := provider.notificationManager.GetRoutePoliciesByChannel(ctx, orgID, channel.DisplayName)
+	if err != nil {
+		return nil, err
+	}
+	for _, policy := range policies {
+		repair.Blockers = append(repair.Blockers, fmt.Sprintf("used by routing policy %q", policy.Name))
+	}
+	if !apply {
+		return repair, nil
+	}
+
+	if err := provider.DeleteChannelByID(ctx, orgID, channel.ID); err != nil {
+		return nil, err
+	}
+	repair.Applied = true
+	return repair, nil
 }
 
 func (provider *provider) Config() alertmanagerserver.Config {
