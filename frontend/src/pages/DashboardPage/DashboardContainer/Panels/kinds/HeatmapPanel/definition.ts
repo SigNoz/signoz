@@ -1,4 +1,4 @@
-import { Grid3X3 } from '@signozhq/icons';
+import { LayoutGrid } from '@signozhq/icons';
 
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 
@@ -16,7 +16,7 @@ export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 	kind: 'signoz/HeatmapPanel',
 	displayName: 'Heatmap',
 	mode: 'query',
-	icon: Grid3X3,
+	icon: LayoutGrid,
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
