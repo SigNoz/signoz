@@ -25,6 +25,9 @@ export const PANEL_KIND_TO_PANEL_TYPE: Record<PanelKind, PANEL_TYPES> = {
 	'signoz/HistogramPanel': PANEL_TYPES.HISTOGRAM,
 	'signoz/ListPanel': PANEL_TYPES.LIST,
 	'signoz/TextPanel': PANEL_TYPES.TEXT,
+	// State timeline plots a time-series request; it behaves as a graph on the
+	// query/alert surfaces that speak the PANEL_TYPES vocabulary.
+	'signoz/StateTimelinePanel': PANEL_TYPES.TIME_SERIES,
 };
 
 /**
@@ -38,14 +41,20 @@ export function toPanelType(kind: PanelKind): PANEL_TYPES {
 }
 
 /**
- * Reverse of {@link PANEL_KIND_TO_PANEL_TYPE} — the mapping is a bijection, so every
- * panel kind round-trips. Partial in this direction because `PANEL_TYPES` also names
- * visualisations with no dashboard kind (trace, empty); a lookup on those is
- * `undefined`.
+ * Reverse of {@link PANEL_KIND_TO_PANEL_TYPE}. The forward map is not injective —
+ * State Timeline and Time Series both map to `PANEL_TYPES.TIME_SERIES` — so the
+ * reverse resolves each `PANEL_TYPES` to its FIRST-declared (canonical) kind:
+ * `TIME_SERIES` round-trips to `signoz/TimeSeriesPanel`, not State Timeline.
+ * Partial because `PANEL_TYPES` also names visualisations with no dashboard kind
+ * (trace, empty); a lookup on those is `undefined`.
  */
 export const PANEL_TYPE_TO_PANEL_KIND: Partial<Record<PANEL_TYPES, PanelKind>> =
-	Object.fromEntries(
-		(Object.entries(PANEL_KIND_TO_PANEL_TYPE) as [PanelKind, PANEL_TYPES][]).map(
-			([kind, type]) => [type, kind],
-		),
-	);
+	(
+		Object.entries(PANEL_KIND_TO_PANEL_TYPE) as [PanelKind, PANEL_TYPES][]
+	).reduce<Partial<Record<PANEL_TYPES, PanelKind>>>((acc, [kind, type]) => {
+		// First-declared kind wins, so a shared PANEL_TYPES keeps its canonical kind.
+		if (!(type in acc)) {
+			acc[type] = kind;
+		}
+		return acc;
+	}, {});

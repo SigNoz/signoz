@@ -33,6 +33,7 @@ export type PanelInteractionMap = Record<PanelKind, object> & {
 		onDragSelect?: DragSelect;
 		onCloseStandaloneView?: CloseStandaloneView;
 	};
+	'signoz/StateTimelinePanel': { onDragSelect?: DragSelect };
 	'signoz/TablePanel': { onClick?: (event: DrilldownClickPayload) => void };
 	'signoz/PieChartPanel': { onClick?: (event: DrilldownClickPayload) => void };
 	'signoz/NumberPanel': { onClick?: (event: DrilldownClickPayload) => void };
