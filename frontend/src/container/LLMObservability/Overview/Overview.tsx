@@ -8,22 +8,34 @@ import styles from './Overview.module.scss';
 function Overview(): JSX.Element {
 	const { dashboard, isLoading, isError, error, refetch } = useSystemDashboard();
 
-	return (
-		<div className={styles.overview} data-testid="llm-observability-overview">
-			{isLoading && <Spinner tip="Loading dashboard..." />}
-			{!isLoading && (isError || !dashboard) && (
+	const renderContent = (): JSX.Element => {
+		if (isLoading) {
+			return <Spinner tip="Loading dashboard..." />;
+		}
+
+		if (isError || !dashboard) {
+			return (
 				<div className={styles.errorState}>
 					<Typography.Title>Failed to load dashboard</Typography.Title>
-					<Typography.Text>{(error as Error | null)?.message}</Typography.Text>
+					<Typography.Text>
+						{error?.response?.data?.error?.message ?? error?.message}
+					</Typography.Text>
 				</div>
-			)}
-			{!isLoading && !isError && dashboard && (
-				<DashboardContainer
-					dashboard={dashboard}
-					refetch={refetch}
-					canEditDashboardOverride={false}
-				/>
-			)}
+			);
+		}
+
+		return (
+			<DashboardContainer
+				dashboard={dashboard}
+				refetch={refetch}
+				canEditDashboardOverride={false}
+			/>
+		);
+	};
+
+	return (
+		<div className={styles.overview} data-testid="llm-observability-overview">
+			{renderContent()}
 		</div>
 	);
 }
