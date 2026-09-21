@@ -74,7 +74,7 @@ describe('Formula bucket options', () => {
 		});
 
 		expect(screen.getByRole('radio', { name: 'Log' })).toBeChecked();
-		expect(screen.getByRole('radio', { name: '1' })).toBeChecked();
+		expect(screen.getByRole('radio', { name: '0' })).toBeChecked();
 	});
 
 	it('writes the picked axis onto the formula', async () => {
