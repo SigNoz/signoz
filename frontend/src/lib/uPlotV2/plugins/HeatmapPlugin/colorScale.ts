@@ -25,6 +25,13 @@ const MAX_LOG_DECADES = 6;
 /** Used when neither an explicit fill nor a series colour is available. */
 export const DEFAULT_OPACITY_FILL = DesignToken.BG_ROBIN_500;
 
+/** Zero takes the panel surface so an empty stretch recedes, leaving the ramp's
+ *  bottom to the smallest count that did occur — on a log scale the two collapse. */
+const ZERO_FILL: Record<'dark' | 'light', string> = {
+	dark: DesignToken.BG_INK_500,
+	light: DesignToken.BG_VANILLA_100,
+};
+
 export const DEFAULT_HEATMAP_COLORS: HeatmapColorOptions = {
 	mode: HeatmapColorMode.Palette,
 	scale: HeatmapColorScale.Log,
@@ -228,9 +235,15 @@ export function createHeatmapColorResolver({
 		return normalizeCount({ count, domain, scale: options.scale });
 	};
 
+	// An explicit `minCount` above zero makes it a clamped value like any other.
+	const zeroFill = domain.min <= 0 ? ZERO_FILL[isDarkMode ? 'dark' : 'light'] : null;
+
 	return {
 		positionOf,
 		colorFor: (count): string | null => {
+			if (count === 0 && zeroFill !== null) {
+				return zeroFill;
+			}
 			const t = positionOf(count);
 			if (t === null) {
 				return null;
