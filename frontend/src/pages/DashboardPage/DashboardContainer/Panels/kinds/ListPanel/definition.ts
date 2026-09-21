@@ -11,6 +11,8 @@ import {
 import { OPERATORS } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
+import { AI_QUERY_MODE } from '../../types/queryModes';
+
 export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	kind: 'signoz/ListPanel',
 	displayName: 'List',
@@ -18,12 +20,15 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	icon: List,
 	Renderer,
 	EditorPane: ListEditorPane,
-	// Raw records come from logs and traces; metrics don't produce row data. No AI mode:
-	// the AI builder authors aggregations, which raw rows have no place for.
+	// Raw records come from logs and traces; metrics don't produce row data.
 	supportedQueryModes: {
 		[EQueryType.QUERY_BUILDER]: {
 			kind: 'signal',
 			signals: [TelemetrytypesSignalDTO.logs, TelemetrytypesSignalDTO.traces],
+		},
+		[AI_QUERY_MODE]: {
+			kind: 'signal',
+			signals: [TelemetrytypesSignalDTO.traces],
 		},
 	},
 	// Raw rows have no aggregation, so step interval / having never apply, and the

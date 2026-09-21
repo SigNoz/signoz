@@ -76,10 +76,23 @@ function PanelEditorQueryBuilder({
 	const isDarkMode = useIsDarkMode();
 	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
 
+	// The modes that actually get a tab. Shared with `items` below: an activeKey with no
+	// matching tab leaves the pane blank, so the two must be computed from one list.
+	const availableModes = useMemo(
+		() =>
+			listQueryModes(panelDefinition.supportedQueryModes).filter(
+				(mode) => mode !== AI_QUERY_MODE || isAIObservabilityEnabled,
+			),
+		[panelDefinition.supportedQueryModes, isAIObservabilityEnabled],
+	);
+
 	// Derived, not stored: the AI mode is a per-query tag, so the active tab is whatever the
-	// queries currently say. A mode the kind no longer offers (after a kind switch) falls back
-	// to the builder rather than selecting a tab that isn't rendered.
-	const activeMode = getQueryMode(currentQuery);
+	// queries currently say — falling back to the first tab when the kind doesn't offer it
+	// (after a kind switch, or an AI panel opened with the feature off).
+	const queryMode = getQueryMode(currentQuery);
+	const activeMode = availableModes.includes(queryMode)
+		? queryMode
+		: (availableModes[0] ?? EQueryType.QUERY_BUILDER);
 
 	const handleQueryCategoryChange = useCallback(
 		(mode: string): void => {
@@ -112,10 +125,6 @@ function PanelEditorQueryBuilder({
 	);
 
 	const items = useMemo(() => {
-		const supportedModes = listQueryModes(
-			panelDefinition.supportedQueryModes,
-		).filter((mode) => mode !== AI_QUERY_MODE || isAIObservabilityEnabled);
-
 		const queryTypeComponents = {
 			[EQueryType.QUERY_BUILDER]: {
 				icon: <Atom size={14} />,
@@ -162,6 +171,7 @@ function PanelEditorQueryBuilder({
 							filterConfigs={filterConfigs}
 							showTraceOperator={false}
 							version="v3"
+							isListViewPanel={isListViewPanel}
 							queryComponents={{}}
 							config={{
 								initialDataSource: DataSource.TRACES,
@@ -173,7 +183,7 @@ function PanelEditorQueryBuilder({
 			},
 		};
 
-		return supportedModes.map((mode) => ({
+		return availableModes.map((mode) => ({
 			key: mode,
 			label: (
 				<div className={styles.queryTypeTab}>
@@ -183,14 +193,7 @@ function PanelEditorQueryBuilder({
 			),
 			children: queryTypeComponents[mode].component,
 		}));
-	}, [
-		panelDefinition,
-		panelType,
-		filterConfigs,
-		isDarkMode,
-		isListViewPanel,
-		isAIObservabilityEnabled,
-	]);
+	}, [availableModes, panelType, filterConfigs, isDarkMode, isListViewPanel]);
 
 	return (
 		<div

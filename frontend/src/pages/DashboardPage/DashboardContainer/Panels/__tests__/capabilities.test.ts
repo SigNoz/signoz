@@ -279,6 +279,7 @@ describe('panel capabilities guard', () => {
 			'signoz/HistogramPanel',
 			'signoz/PieChartPanel',
 			'signoz/TablePanel',
+			'signoz/ListPanel',
 		];
 
 		it.each(AI_KINDS)('is offered by %s, for traces only', (kind) => {
@@ -286,9 +287,9 @@ describe('panel capabilities guard', () => {
 			expect(getSupportedSignals(kind, AI_QUERY_MODE)).toStrictEqual([traces]);
 		});
 
-		it('is not offered by List, whose raw rows carry no aggregation', () => {
+		it('is not offered by a query-less kind', () => {
 			expect(
-				isQueryModeSupportedByPanelKind('signoz/ListPanel', AI_QUERY_MODE),
+				isQueryModeSupportedByPanelKind('signoz/TextPanel', AI_QUERY_MODE),
 			).toBe(false);
 		});
 
@@ -332,8 +333,14 @@ describe('panel capabilities guard', () => {
 			).toBe(AI_QUERY_MODE);
 		});
 
-		it('coerces the AI mode on a kind that does not offer it', () => {
+		it('keeps the AI mode on List, whose raw trace rows can be AI-authored', () => {
 			expect(resolveQueryMode('signoz/ListPanel', AI_QUERY_MODE, traces)).toBe(
+				AI_QUERY_MODE,
+			);
+		});
+
+		it('coerces the AI mode on a kind that offers it for other signals only', () => {
+			expect(resolveQueryMode('signoz/ListPanel', AI_QUERY_MODE, logs)).toBe(
 				QUERY_BUILDER,
 			);
 		});

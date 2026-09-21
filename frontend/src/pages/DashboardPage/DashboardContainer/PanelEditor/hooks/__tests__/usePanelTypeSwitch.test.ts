@@ -197,7 +197,7 @@ describe('usePanelTypeSwitch', () => {
 		expect((queryArg as Query).queryType).toBe('builder');
 	});
 
-	it('strips the AI tag when the new kind has no AI mode', () => {
+	it('strips the AI tag when the guard coerces the mode', () => {
 		const setSpec = jest.fn();
 		const aiQuery = {
 			id: 'ai',
@@ -209,7 +209,7 @@ describe('usePanelTypeSwitch', () => {
 			},
 		} as unknown as Query;
 		mockUseQueryBuilder.mockReturnValue(builderState(aiQuery));
-		// List declares no AI mode, so the guard coerces back to the builder.
+		// The new kind can't take the AI mode here, so the guard coerces to the builder.
 		mockResolveQueryMode.mockReturnValue('builder');
 
 		const { result } = renderHook(() =>
