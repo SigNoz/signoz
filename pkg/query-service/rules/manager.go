@@ -888,7 +888,7 @@ func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesPara
 		return nil, err
 	}
 
-	states, err := params.AlertStates()
+	states, err := params.GetAlertStates()
 	if err != nil {
 		return nil, err
 	}

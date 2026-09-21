@@ -94,15 +94,15 @@ func (p *ListRulesParams) Validate() error {
 			"invalid offset %d, must be a non-negative integer", p.Offset)
 	}
 
-	if _, err := p.AlertStates(); err != nil {
+	if _, err := p.GetAlertStates(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// AlertStates parses States; empty means no state filtering.
-func (p *ListRulesParams) AlertStates() ([]AlertState, error) {
+// GetAlertStates parses States; empty means no state filtering.
+func (p *ListRulesParams) GetAlertStates() ([]AlertState, error) {
 	if len(p.States) == 0 {
 		return nil, nil
 	}
