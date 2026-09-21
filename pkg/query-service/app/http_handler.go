@@ -28,6 +28,7 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 
+	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -57,6 +58,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
@@ -359,22 +361,191 @@ func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
 
+func newScopedSecuritySchemes(scopes ...string) []handler.OpenAPISecurityScheme {
+	return []handler.OpenAPISecurityScheme{
+		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: scopes},
+		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: scopes},
+	}
+}
+
+func newRuleHistoryV1OpenAPIDef(id string) handler.OpenAPIDef {
+	return handler.OpenAPIDef{
+		ID:                id,
+		Tags:              []string{"rules"},
+		Summary:           "Get rule history (v1, deprecated)",
+		Description:       "Deprecated legacy endpoint. Use the v2 rule history routes.",
+		SuccessStatusCode: http.StatusOK,
+		Deprecated:        true,
+		SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)),
+	}
+}
+
+func newRuleHistoryV1ResourceDefs() handler.Option {
+	return handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceRule,
+		Verb:     coretypes.VerbRead,
+		Category: coretypes.ActionCategoryDataAccess,
+		ID:       coretypes.PathParam("id"),
+		Selector: coretypes.IDSelector,
+	})
+}
+
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.editRule)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
-	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/stats", am.ViewAccess(aH.getRuleStats)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/timeline", am.ViewAccess(aH.getRuleStateHistory)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/top_contributors", am.ViewAccess(aH.getRuleStateHistoryTopContributors)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/overall_status", am.ViewAccess(aH.getOverallStateTransitions)).Methods(http.MethodPost)
+	router.Handle("/api/v1/rules", handler.New(
+		am.CheckResources(aH.listRules, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                "ListRulesV1",
+			Tags:              []string{"rules"},
+			Summary:           "List alert rules (v1, deprecated)",
+			Description:       "Deprecated legacy endpoint. Use ListRulesV3.",
+			SuccessStatusCode: http.StatusOK,
+			Deprecated:        true,
+			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodGet)
+	router.Handle("/api/v1/rules/{id}", handler.New(
+		am.CheckResources(aH.getRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                "GetRuleV1",
+			Tags:              []string{"rules"},
+			Summary:           "Get alert rule (v1, deprecated)",
+			Description:       "Deprecated legacy endpoint. Use GetRuleByID.",
+			SuccessStatusCode: http.StatusOK,
+			Deprecated:        true,
+			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodGet)
+	router.Handle("/api/v1/rules", handler.New(
+		am.CheckResources(aH.createRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                "CreateRuleV1",
+			Tags:              []string{"rules"},
+			Summary:           "Create alert rule (v1, deprecated)",
+			Description:       "Deprecated legacy endpoint. Use CreateRule.",
+			SuccessStatusCode: http.StatusOK,
+			Deprecated:        true,
+			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate)),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbCreate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.ResponseJSONPath("data.id"),
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodPost)
+	router.Handle("/api/v1/rules/{id}", handler.New(
+		am.CheckResources(aH.editRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                "UpdateRuleV1",
+			Tags:              []string{"rules"},
+			Summary:           "Update alert rule (v1, deprecated)",
+			Description:       "Deprecated legacy endpoint. Use UpdateRuleByID.",
+			SuccessStatusCode: http.StatusOK,
+			Deprecated:        true,
+			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate)),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodPut)
+	router.Handle("/api/v1/rules/{id}", handler.New(
+		am.CheckResources(aH.deleteRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                "DeleteRuleV1",
+			Tags:              []string{"rules"},
+			Summary:           "Delete alert rule (v1, deprecated)",
+			Description:       "Deprecated legacy endpoint. Use DeleteRuleByID.",
+			SuccessStatusCode: http.StatusOK,
+			Deprecated:        true,
+			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbDelete)),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbDelete,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodDelete)
+	router.Handle("/api/v1/rules/{id}", handler.New(
+		am.CheckResources(aH.patchRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                "PatchRuleV1",
+			Tags:              []string{"rules"},
+			Summary:           "Patch alert rule (v1, deprecated)",
+			Description:       "Deprecated legacy endpoint. Use PatchRuleByID.",
+			SuccessStatusCode: http.StatusOK,
+			Deprecated:        true,
+			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate)),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodPatch)
+	router.Handle("/api/v1/testRule", handler.New(
+		am.CheckResources(aH.testRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                "TestRuleV1",
+			Tags:              []string{"rules"},
+			Summary:           "Test alert rule (v1, deprecated)",
+			Description:       "Deprecated legacy endpoint. Use TestRule.",
+			SuccessStatusCode: http.StatusOK,
+			Deprecated:        true,
+			SecuritySchemes:   newScopedSecuritySchemes(coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbCreate)),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbCreate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodPost)
+	router.Handle("/api/v1/rules/{id}/history/stats", handler.New(
+		am.CheckResources(aH.getRuleStats, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		newRuleHistoryV1OpenAPIDef("GetRuleHistoryStatsV1"),
+		newRuleHistoryV1ResourceDefs(),
+	)).Methods(http.MethodPost)
+	router.Handle("/api/v1/rules/{id}/history/timeline", handler.New(
+		am.CheckResources(aH.getRuleStateHistory, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		newRuleHistoryV1OpenAPIDef("GetRuleHistoryTimelineV1"),
+		newRuleHistoryV1ResourceDefs(),
+	)).Methods(http.MethodPost)
+	router.Handle("/api/v1/rules/{id}/history/top_contributors", handler.New(
+		am.CheckResources(aH.getRuleStateHistoryTopContributors, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		newRuleHistoryV1OpenAPIDef("GetRuleHistoryTopContributorsV1"),
+		newRuleHistoryV1ResourceDefs(),
+	)).Methods(http.MethodPost)
+	router.Handle("/api/v1/rules/{id}/history/overall_status", handler.New(
+		am.CheckResources(aH.getOverallStateTransitions, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		newRuleHistoryV1OpenAPIDef("GetRuleHistoryOverallStatusV1"),
+		newRuleHistoryV1ResourceDefs(),
+	)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.List)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)
