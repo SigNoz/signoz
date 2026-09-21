@@ -46,25 +46,16 @@ describe('ColorBar', () => {
 		expect(screen.getByTestId('color-bar-marker')).toHaveStyle({ left: '100%' });
 	});
 
-	it('keys the two states a colour ramp cannot express', () => {
-		render(<ColorBar ramp={RAMP} minLabel="0" maxLabel="10" />);
+	it('keys the one state a colour ramp cannot express', () => {
+		render(
+			<ColorBar ramp={RAMP} minLabel="0" maxLabel="10" showNoDataKey={true} />,
+		);
 
 		expect(screen.getByText('no data')).toBeInTheDocument();
-		expect(screen.getByText('count 0')).toBeInTheDocument();
 	});
 
-	it('draws the count-0 key with the bottom of the ramp', () => {
+	it('leaves the no-data key out unless the data has a gap', () => {
 		render(<ColorBar ramp={RAMP} minLabel="0" maxLabel="10" />);
-
-		expect(screen.getByText('count 0').firstChild).toHaveStyle({
-			background: RAMP[0],
-		});
-	});
-
-	it('hides the state keys when asked', () => {
-		render(
-			<ColorBar ramp={RAMP} minLabel="0" maxLabel="10" showStateKeys={false} />,
-		);
 
 		expect(screen.queryByText('no data')).not.toBeInTheDocument();
 	});

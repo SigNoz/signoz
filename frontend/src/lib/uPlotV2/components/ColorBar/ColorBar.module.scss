@@ -58,18 +58,14 @@
 	color: var(--muted-foreground);
 }
 
-.swatch,
+// Approximates the canvas hatch painted over null cells, which `createHatchPattern`
+// strokes in the theme's own direction — light on dark, dark on light.
 .hatchSwatch {
 	width: 11px;
 	height: 11px;
 	border-radius: 2px;
 	border: 1px solid var(--l2-border);
 	box-sizing: border-box;
-}
-
-// Approximates the canvas hatch painted over null cells, which `createHatchPattern`
-// strokes in the theme's own direction — light on dark, dark on light.
-.hatchSwatch {
 	background-image: repeating-linear-gradient(
 		45deg,
 		transparent 0 2px,

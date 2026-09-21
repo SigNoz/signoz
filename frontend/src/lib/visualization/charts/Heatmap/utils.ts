@@ -74,6 +74,11 @@ export function resolveBoundaryPrecision({
 	return candidates.find(separates) ?? candidates[candidates.length - 1];
 }
 
+/** Whether any cell is a gap rather than a count. */
+export function hasMissingCells(counts: Array<Array<number | null>>): boolean {
+	return counts.some((row) => row.some((count) => count === null));
+}
+
 /**
  * Flattens the grid into `[timestamps, ...rows]`, one series per bucket row so
  * `setData` handles refetches. The series draw nothing; the renderer paints cells.
