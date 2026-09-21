@@ -12186,9 +12186,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - planned-maintenance:list
       - tokenizer:
-        - VIEWER
+        - planned-maintenance:list
       summary: List downtime schedules
       tags:
       - downtimeschedules
@@ -12242,9 +12242,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:create
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:create
       summary: Create downtime schedule
       tags:
       - downtimeschedules
@@ -12288,9 +12288,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:delete
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:delete
       summary: Delete downtime schedule
       tags:
       - downtimeschedules
@@ -12345,9 +12345,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - planned-maintenance:read
       - tokenizer:
-        - VIEWER
+        - planned-maintenance:read
       summary: Get downtime schedule by ID
       tags:
       - downtimeschedules
@@ -12401,9 +12401,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:update
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:update
       summary: Update downtime schedule
       tags:
       - downtimeschedules
@@ -13666,9 +13666,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - route-policy:list
       - tokenizer:
-        - VIEWER
+        - route-policy:list
       summary: List route policies
       tags:
       - routepolicies
@@ -13722,9 +13722,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - route-policy:create
       - tokenizer:
-        - ADMIN
+        - route-policy:create
       summary: Create route policy
       tags:
       - routepolicies
@@ -13768,9 +13768,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - route-policy:delete
       - tokenizer:
-        - ADMIN
+        - route-policy:delete
       summary: Delete route policy
       tags:
       - routepolicies
@@ -13825,9 +13825,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - route-policy:read
       - tokenizer:
-        - VIEWER
+        - route-policy:read
       summary: Get route policy by ID
       tags:
       - routepolicies
@@ -13893,9 +13893,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - route-policy:update
       - tokenizer:
-        - ADMIN
+        - route-policy:update
       summary: Update route policy
       tags:
       - routepolicies
@@ -21003,9 +21003,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: List rule saved views
       tags:
       - rules
@@ -21060,9 +21060,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: Create rule saved view
       tags:
       - rules
@@ -21113,9 +21113,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: Delete rule saved view
       tags:
       - rules
@@ -21181,9 +21181,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: Update rule saved view
       tags:
       - rules
@@ -21231,9 +21231,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: List alert rules
       tags:
       - rules
@@ -22071,9 +22071,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:create
       - tokenizer:
-        - EDITOR
+        - rule:create
       summary: Create alert rule
       tags:
       - rules
@@ -22117,9 +22117,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:delete
       - tokenizer:
-        - EDITOR
+        - rule:delete
       summary: Delete alert rule
       tags:
       - rules
@@ -22174,9 +22174,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get alert rule by ID
       tags:
       - rules
@@ -23026,9 +23026,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:update
       - tokenizer:
-        - EDITOR
+        - rule:update
       summary: Patch alert rule
       tags:
       - rules
@@ -23866,9 +23866,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:update
       - tokenizer:
-        - EDITOR
+        - rule:update
       summary: Update alert rule
       tags:
       - rules
@@ -23967,9 +23967,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get rule history filter keys
       tags:
       - rules
@@ -24076,9 +24076,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get rule history filter values
       tags:
       - rules
@@ -24150,9 +24150,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get rule overall status timeline
       tags:
       - rules
@@ -24221,9 +24221,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get rule history stats
       tags:
       - rules
@@ -24312,9 +24312,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get rule history timeline
       tags:
       - rules
@@ -24386,9 +24386,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get top contributors to rule firing
       tags:
       - rules
@@ -25227,9 +25227,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:create
       - tokenizer:
-        - EDITOR
+        - rule:create
       summary: Test alert rule
       tags:
       - rules
@@ -27052,9 +27052,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: List alert rules (v3)
       tags:
       - rules
