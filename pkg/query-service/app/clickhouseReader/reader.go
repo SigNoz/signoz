@@ -35,6 +35,7 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -230,41 +231,43 @@ func NewReader(
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-	qry, err := r.prometheus.Engine().NewInstantQuery(ctx, r.prometheus.Storage(), nil, queryParams.Query, queryParams.Time)
+	res, err := r.prometheus.Query(ctx, queryParams.Query, queryParams.Time)
+	var qs stats.QueryStats
 	if err != nil {
-		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		var parseErrs parser.ParseErrors
+		if errorsV2.As(err, &parseErrs) {
+			return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+		// Evaluation errors travel inside the result, as the engine reports
+		// them; the handler maps them from there.
+		return &promql.Result{Err: err}, &qs, nil
 	}
-
-	res := qry.Exec(ctx)
 
 	// Optional stats field in response if parameter "stats" is not empty.
-	var qs stats.QueryStats
-	if queryParams.Stats != "" {
-		qs = stats.NewQueryStats(qry.Stats())
+	if queryParams.Stats != "" && res.Stats != nil {
+		qs = stats.NewQueryStats(res.Stats)
 	}
 
-	qry.Close()
-	return res, &qs, nil
-
+	return &promql.Result{Value: res.Value, Warnings: res.Warnings}, &qs, nil
 }
 
 func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-	qry, err := r.prometheus.Engine().NewRangeQuery(ctx, r.prometheus.Storage(), nil, query.Query, query.Start, query.End, query.Step)
-
+	res, err := r.prometheus.QueryRange(ctx, query.Query, query.Start, query.End, query.Step)
+	var qs stats.QueryStats
 	if err != nil {
-		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		var parseErrs parser.ParseErrors
+		if errorsV2.As(err, &parseErrs) {
+			return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+		return &promql.Result{Err: err}, &qs, nil
 	}
-
-	res := qry.Exec(ctx)
 
 	// Optional stats field in response if parameter "stats" is not empty.
-	var qs stats.QueryStats
-	if query.Stats != "" {
-		qs = stats.NewQueryStats(qry.Stats())
+	if query.Stats != "" && res.Stats != nil {
+		qs = stats.NewQueryStats(res.Stats)
 	}
 
-	qry.Close()
-	return res, &qs, nil
+	return &promql.Result{Value: res.Value, Warnings: res.Warnings}, &qs, nil
 }
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {

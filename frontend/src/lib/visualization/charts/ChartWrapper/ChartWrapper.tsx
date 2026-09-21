@@ -17,7 +17,8 @@ import { ChartWrapperProps } from 'lib/visualization/charts/types';
 import { useChartStacking } from 'lib/visualization/charts/ChartWrapper/useChartStacking';
 
 const TOOLTIP_WIDTH_PADDING = 120;
-const TOOLTIP_MIN_WIDTH = 300;
+// Holds a tooltip row's value column next to a legend-length label.
+const TOOLTIP_MIN_WIDTH = 360;
 
 export default function ChartWrapper({
 	legendConfig = { position: LegendPosition.BOTTOM },

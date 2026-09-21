@@ -329,3 +329,16 @@ export function formatAge(ms: number): string {
 	}
 	return `${seconds}s`;
 }
+
+/**
+ * Formats a nanosecond duration (as a string) as milliseconds with two
+ * decimals, e.g. `'12345678' -> '12.35'`.
+ */
+export const getMs = (value: string): string =>
+	parseFloat(
+		dayjs
+			.duration({
+				milliseconds: parseInt(value, 10) / 1000000,
+			})
+			.format('SSS'),
+	).toFixed(2);

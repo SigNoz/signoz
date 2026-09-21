@@ -4,7 +4,7 @@ import { getFlamegraphRowMetrics } from '../utils';
 import { drawEventDot, drawSpanBar, getEventDotColor } from '../utils';
 import { MOCK_SPAN } from './testUtils';
 
-jest.mock('container/TraceDetail/utils', () => ({
+jest.mock('utils/traceUtils', () => ({
 	convertTimeToRelevantUnit: (): { time: number; timeUnitName: string } => ({
 		time: 50,
 		timeUnitName: 'ms',

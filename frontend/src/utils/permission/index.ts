@@ -87,9 +87,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SIGN_UP: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACES_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
-	TRACE: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
-	TRACE_DETAIL_OLD: ['ADMIN', 'EDITOR', 'VIEWER'],
 	// Every role must be able to land here - a role missing from this list is
 	// redirected to /un-authorized and then redirected off it again, looping.
 	UN_AUTHORIZED: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS', 'AUTHOR'],
@@ -120,6 +118,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	TRACES_FUNNELS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACES_FUNNELS_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
+	TRACE_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
 	OLD_LOGS_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SHORTCUTS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	INTEGRATIONS: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -168,9 +167,7 @@ export const routeWithInitialAuthZSupport = {
 	MY_SETTINGS: true,
 	SETTINGS: true,
 	TRACES_EXPLORER: true,
-	TRACE: true,
 	TRACE_DETAIL: true,
-	TRACE_DETAIL_OLD: true,
 	LOGS: true,
 	LOGS_EXPLORER: true,
 	LIVE_LOGS: true,
