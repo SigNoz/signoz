@@ -11175,9 +11175,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - cloud-integration:read
       - tokenizer:
-        - VIEWER
+        - cloud-integration:read
       summary: Agent check-in
       tags:
       - cloudintegration
@@ -11227,9 +11227,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:list
       - tokenizer:
-        - ADMIN
+        - cloud-integration:list
       summary: List accounts
       tags:
       - cloudintegration
@@ -11284,9 +11284,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:create
       - tokenizer:
-        - ADMIN
+        - cloud-integration:create
       summary: Create account
       tags:
       - cloudintegration
@@ -11329,9 +11329,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:delete
       - tokenizer:
-        - ADMIN
+        - cloud-integration:delete
       summary: Disconnect account
       tags:
       - cloudintegration
@@ -11397,9 +11397,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:read
       - tokenizer:
-        - ADMIN
+        - cloud-integration:read
       summary: Get account
       tags:
       - cloudintegration
@@ -11446,9 +11446,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:update
       - tokenizer:
-        - ADMIN
+        - cloud-integration:update
       summary: Update account
       tags:
       - cloudintegration
@@ -11504,9 +11504,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:list
       - tokenizer:
-        - ADMIN
+        - cloud-integration:list
       summary: List account services metadata
       tags:
       - cloudintegration
@@ -11579,9 +11579,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:read
       - tokenizer:
-        - ADMIN
+        - cloud-integration:read
       summary: Get service for account
       tags:
       - cloudintegration
@@ -11633,9 +11633,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:update
       - tokenizer:
-        - ADMIN
+        - cloud-integration:update
       summary: Update service
       tags:
       - cloudintegration
@@ -11690,9 +11690,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - cloud-integration:read
       - tokenizer:
-        - VIEWER
+        - cloud-integration:read
       summary: Agent check-in
       tags:
       - cloudintegration
@@ -11743,9 +11743,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - ingestion-key:create
+        - serviceaccount:create
+        - factor-api-key:create
+        - serviceaccount:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - ingestion-key:create
+        - serviceaccount:create
+        - factor-api-key:create
+        - serviceaccount:attach
+        - role:attach
       summary: Get connection credentials
       tags:
       - cloudintegration
@@ -11795,10 +11803,8 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
+      - api_key: []
+      - tokenizer: []
       summary: List services metadata
       tags:
       - cloudintegration
@@ -11853,10 +11859,8 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
+      - api_key: []
+      - tokenizer: []
       summary: Get service
       tags:
       - cloudintegration
