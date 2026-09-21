@@ -77,16 +77,6 @@ func NewListableRules(rules []*ListableRule, total int64, labels []LabelPair) *L
 	}
 }
 
-// Display priority, worst first; NOT AlertState.Severity(), which ranks disabled/nodata above firing.
-var stateDisplayRank = map[AlertState]int{
-	StateFiring:     5,
-	StatePending:    4,
-	StateRecovering: 3,
-	StateNoData:     2,
-	StateInactive:   1,
-	StateDisabled:   0,
-}
-
 var severityDisplayRank = map[string]int{
 	"critical": 4,
 	"error":    3,
@@ -118,7 +108,7 @@ func compareListableRules(a, b *ListableRule, sortBy ListSort) int {
 	case ListSortCreatedAt:
 		return a.CreatedAt.Compare(b.CreatedAt)
 	case ListSortState:
-		return cmp.Compare(stateDisplayRank[a.State], stateDisplayRank[b.State])
+		return cmp.Compare(a.State.DisplayRank(), b.State.DisplayRank())
 	case ListSortSeverity:
 		severityA := a.Labels["severity"]
 		severityB := b.Labels["severity"]
