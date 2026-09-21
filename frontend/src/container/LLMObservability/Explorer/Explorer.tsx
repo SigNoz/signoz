@@ -8,6 +8,7 @@ import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueryAIWithType } from 'constants/queryBuilder';
@@ -93,6 +94,13 @@ function Explorer(): JSX.Element {
 
 	const [warning, setWarning] = useState<Warning | undefined>();
 	const [isOpen, setOpen] = useState<boolean>(true);
+
+	const { startUnixMilli, endUnixMilli } = useSignalFieldApis();
+	// existingQuery is left unset so related values auto-extract from the current query
+	const quickFiltersFieldApis = useMemo(
+		() => ({ startUnixMilli, endUnixMilli }),
+		[startUnixMilli, endUnixMilli],
+	);
 
 	const defaultQuery = useMemo(
 		(): Query =>
@@ -187,8 +195,9 @@ function Explorer(): JSX.Element {
 				<Card className="filter" hidden={!isOpen}>
 					<QuickFilters
 						className="qf-traces-explorer"
-						source={QuickFiltersSource.TRACES_EXPLORER}
-						signal={SignalType.TRACES}
+						source={QuickFiltersSource.AI_OBSERVABILITY}
+						signal={SignalType.AI_OBSERVABILITY}
+						useFieldApis={quickFiltersFieldApis}
 						handleFilterVisibilityChange={(): void => {
 							setOpen(!isOpen);
 						}}

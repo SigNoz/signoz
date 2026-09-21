@@ -35,6 +35,7 @@ import { isFunction } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import Checkbox from './FilterRenderers/Checkbox/Checkbox';
+import useActiveQueryIndex from './hooks/useActiveQueryIndex';
 import CheckboxV2 from './FilterRenderers/Checkbox/v2/CheckboxFilterV2';
 import Duration from './FilterRenderers/Duration/Duration';
 import Slider from './FilterRenderers/Slider/Slider';
@@ -113,14 +114,13 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const shouldShowDropdownInListView =
 		isListView && source === QuickFiltersSource.TRACES_EXPLORER;
 
-	const activeQueryIndex = useMemo(() => {
-		if (isListView) {
-			return source === QuickFiltersSource.TRACES_EXPLORER
-				? lastUsedQuery || 0
-				: 0;
-		}
-		return lastUsedQuery || 0;
-	}, [isListView, source, lastUsedQuery]);
+	// AI observability builds a single query in the row-level views, so there is
+	// no query for the selector to switch between.
+	const isAIObservabilityRowView =
+		source === QuickFiltersSource.AI_OBSERVABILITY &&
+		(isListView || panelType === PANEL_TYPES.TRACE);
+
+	const activeQueryIndex = useActiveQueryIndex(source);
 
 	// clear all the filters for the query which is in sync with filters
 	const handleReset = (): void => {
@@ -167,9 +167,10 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
 
 	// In ListView, always show the 0th query's name; otherwise use the active query's name
-	const displayedQueryName = isListView
-		? showQueryName && currentQuery.builder.queryData?.[0]?.queryName
-		: lastQueryName;
+	const displayedQueryName =
+		isListView || isAIObservabilityRowView
+			? showQueryName && currentQuery.builder.queryData?.[0]?.queryName
+			: lastQueryName;
 
 	const handleQueryChange = (value: number): void => {
 		setLastUsedQuery(value);
@@ -182,7 +183,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			<Typography.Text className="text">
 				{displayedQueryName ? 'Filters for' : 'Filters'}
 			</Typography.Text>
-			{queryOptions.length > 1 && (!isListView || shouldShowDropdownInListView) ? (
+			{queryOptions.length > 1 &&
+			!isAIObservabilityRowView &&
+			(!isListView || shouldShowDropdownInListView) ? (
 				<Combobox open={open} onOpenChange={setOpen}>
 					<ComboboxTrigger
 						placeholder="Select a query"
@@ -318,6 +321,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 							return (
 								<Duration
 									key={filter.attributeKey.key}
+									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
 								/>
