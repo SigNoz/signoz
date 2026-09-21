@@ -10,7 +10,7 @@ import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { has } from 'lodash-es';
-import { AllTraceFilterKeyValue } from 'pages/TracesExplorer/Filter/filterUtils';
+import { AllTraceFilterKeyValue } from 'constants/traceFilterKeys';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import {
 	QueryKeyRequestProps,

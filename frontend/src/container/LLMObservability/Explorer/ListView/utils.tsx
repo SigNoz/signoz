@@ -1,6 +1,7 @@
 import type { TracesTableRow } from '../TracesTable/getFieldColumn';
+import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { formUrlParams } from 'container/TraceDetail/utils';
+import { formUrlParams } from 'utils/traceUtils';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 export const getTraceLink = (record: Record<string, unknown>): string => {
@@ -14,7 +15,11 @@ export const getTraceLink = (record: Record<string, unknown>): string => {
 	const traceId = readId(record.traceID) || readId(record.trace_id);
 	const spanId = readId(record.spanID) || readId(record.span_id);
 
-	return `${ROUTES.TRACE}/${traceId}${formUrlParams({
+	if (!traceId) {
+		return '';
+	}
+
+	return `${generatePath(ROUTES.TRACE_DETAIL, { id: traceId })}${formUrlParams({
 		spanId,
 		levelUp: 0,
 		levelDown: 0,

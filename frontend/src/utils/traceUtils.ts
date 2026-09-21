@@ -1,26 +1,10 @@
-/**
- * string is present on the span or not
- */
-import { sortBy } from 'lodash-es';
-import { ITraceTree, Span } from 'types/api/trace/getTraceItem';
-
-export const filterSpansByString = (
-	searchString: string,
-	spans: Span[],
-): Span[] =>
-	spans.filter((span) => {
-		const spanWithoutChildren = [...span].slice(0, 11);
-		return JSON.stringify(spanWithoutChildren).includes(searchString);
-	});
-
-export const SPAN_DETAILS_LEFT_COL_WIDTH = 350;
-
 type TTimeUnitName = 'ms' | 's' | 'm' | 'hr' | 'day' | 'week';
 
 export interface IIntervalUnit {
 	name: TTimeUnitName;
 	multiplier: number;
 }
+
 export const INTERVAL_UNITS: IIntervalUnit[] = [
 	{
 		name: 'ms',
@@ -48,11 +32,7 @@ export const INTERVAL_UNITS: IIntervalUnit[] = [
 	},
 ];
 
-export const resolveTimeFromInterval = (
-	intervalTime: number,
-	intervalUnit: IIntervalUnit,
-): number => intervalTime * intervalUnit.multiplier;
-
+/** Picks the largest unit in which a millisecond duration is >= 1. */
 export const convertTimeToRelevantUnit = (
 	intervalTime: number,
 ): { time: number; timeUnitName: TTimeUnitName } => {
@@ -75,47 +55,7 @@ export const convertTimeToRelevantUnit = (
 	return relevantTime;
 };
 
-export const getSortedData = (treeData: ITraceTree): ITraceTree => {
-	const traverse = (treeNode: ITraceTree, level = 0): void => {
-		if (!treeNode) {
-			return;
-		}
-
-		// need this rule to disable
-		treeNode.children = sortBy(treeNode.children, (e) => e.startTime);
-
-		treeNode.children.forEach((childNode) => {
-			traverse(childNode, level + 1);
-		});
-	};
-	traverse(treeData, 1);
-
-	return treeData;
-};
-
-export const getTreeLevelsCount = (tree: ITraceTree): number => {
-	if (!tree) {
-		return 0;
-	}
-
-	let levels = 1;
-
-	const traverse = (treeNode: ITraceTree, level: number): void => {
-		if (!treeNode) {
-			return;
-		}
-
-		levels = Math.max(level, levels);
-
-		treeNode.children.forEach((childNode) => {
-			traverse(childNode, level + 1);
-		});
-	};
-	traverse(tree, levels);
-
-	return levels;
-};
-
+/** Builds a `?a=1&b=2` query string, URI-encoding each value once. */
 export const formUrlParams = (params: Record<string, any>): string => {
 	let urlParams = '';
 	Object.entries(params).forEach(([key, value], index) => {
