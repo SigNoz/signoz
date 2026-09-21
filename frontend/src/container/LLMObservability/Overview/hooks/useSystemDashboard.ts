@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 
 import {
@@ -41,12 +41,7 @@ export function useSystemDashboard(): UseSystemDashboardResult {
 		[data],
 	);
 
-	// Seed during render (not an effect) so the first Panel render already resolves the
-	// dashboard from the cache. Re-seeds only on a new payload, so in-place cache
-	// updates below (optimistic patches) survive re-renders.
-	const seeded = useRef<DashboardtypesGettableDashboardV2DTO>();
-	if (dashboard && seeded.current !== dashboard) {
-		seeded.current = dashboard;
+	if (dashboard) {
 		queryClient.setQueryData<GetDashboardV2200>(
 			getGetDashboardV2QueryKey({ id: DASHBOARD_ID }),
 			{ data: dashboard, status: 'success' },
