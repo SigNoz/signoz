@@ -7,7 +7,7 @@ import { rest } from 'msw';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { encode } from 'js-base64';
-import type { Tags } from 'types/reducer/trace';
+import type { Tags } from 'hooks/useResourceAttribute/types';
 
 import {
 	choiceControl,

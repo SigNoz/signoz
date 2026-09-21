@@ -3,7 +3,10 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { IResourceAttribute } from 'hooks/useResourceAttribute/types';
+import type {
+	IResourceAttribute,
+	Tags,
+} from 'hooks/useResourceAttribute/types';
 import { getResourceDeploymentKeys } from 'hooks/useResourceAttribute/utils';
 import type { ServicesMapItem } from 'store/actions/serviceMap';
 import type {
@@ -11,7 +14,6 @@ import type {
 	TagValuesPayloadProps,
 } from 'types/api/metrics/getResourceAttributes';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import type { Tags } from 'types/reducer/trace';
 
 export const SERVICE_HEALTH = ['healthy', 'degraded', 'failing'] as const;
 
