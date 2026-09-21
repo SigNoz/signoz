@@ -9,8 +9,8 @@
 	}
 
 	.ant-tabs-nav {
-		padding: 0 16px;
-		margin-bottom: 0px;
+		padding: var(--spacing-0) var(--spacing-8);
+		margin-bottom: var(--spacing-0);
 
 		&::before {
 			border-bottom: 1px solid var(--l1-border) !important;
@@ -37,6 +37,6 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		gap: 8px;
+		gap: var(--spacing-4);
 	}
 }
