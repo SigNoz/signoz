@@ -1,35 +1,6 @@
-import {
-	Querybuildertypesv5RequestTypeDTO,
-	type TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import type { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
 
-/**
- * Query-builder field-visibility config a panel kind can declare, mirroring the
- * shape `QueryBuilderV2` consumes via its `filterConfigs` prop. Derived from that
- * prop type (the underlying `FilterConfigs` isn't exported) so the two never drift.
- */
-export type FilterConfigsPartial = NonNullable<
-	QueryBuilderProps['filterConfigs']
->;
-
-/**
- * Per-signal query-builder field rules for a panel kind. `default` applies to every
- * signal; a per-signal entry is merged over it (signal wins). The capabilities guard
- * resolves this into a single `FilterConfigsPartial` via `getHiddenQueryBuilderFields`.
- */
-export type QueryBuilderFieldRule = {
-	default?: FilterConfigsPartial;
-} & Partial<Record<TelemetrytypesSignalDTO, FilterConfigsPartial>>;
-
-/** The kind's `default` rule with its per-signal overrides merged over it (signal wins). */
-export function mergeQueryBuilderFieldRule(
-	rule: QueryBuilderFieldRule,
-	signal: TelemetrytypesSignalDTO,
-): FilterConfigsPartial {
-	const perSignal = signal ? rule[signal] : undefined;
-	return { ...rule.default, ...perSignal };
-}
+export type { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
 
 /**
  * How a kind's query-range request is shaped. Declared per-kind in
@@ -56,4 +27,9 @@ export interface PanelQueryCapabilities {
 	 * carries no explicit limit" — an explicit limit means the user asked for a fixed set.
 	 */
 	serverPaginated: boolean;
+}
+
+/** Raw rows rather than an aggregated result — the single source for "is this raw?". */
+export function isRawRequest(capabilities: PanelQueryCapabilities): boolean {
+	return capabilities.requestType === Querybuildertypesv5RequestTypeDTO.raw;
 }
