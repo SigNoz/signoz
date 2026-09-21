@@ -12,11 +12,9 @@ from fixtures.promqltestcorpus import ingest_promqltest_corpus
 
 # The same frozen corpus the promqlconformance package replays through
 # /api/v5/query_range, here replayed against the /prometheus/api/v1 endpoints
-# with clickhousev2 as the serving provider (see conftest.py) — the two paths
-# nothing else exercises. Range cases go to query_range, where a
-# RangeExecutor provider serves transpiled statements when the shape allows.
-# Instant cases go to /query with a real `time` parameter, so they need no
-# grid encoding.
+# — the path nothing else exercises. Range cases go to query_range, which
+# serves transpiled statements when the shape allows. Instant cases go to
+# /query with a real `time` parameter, so they need no grid encoding.
 #
 # Prometheus API sample values are strings, "NaN"/"+Inf"/"-Inf" included.
 SPECIALS = {"NaN": math.nan, "Inf": math.inf, "+Inf": math.inf, "-Inf": -math.inf}
@@ -38,8 +36,7 @@ def test_prometheus_api_corpus(
         # range because the v5 API cannot run true instants. This API can:
         # the [base] form of the same eval goes through /query below, and the
         # transpiled coarse-step serving the encoding exercises is covered
-        # (and its known divergences ledgered) by promqlconformance's
-        # clickhousev2 leg.
+        # (and its known divergences ledgered) by promqlconformance.
         if case["variant"] == "instant-coarse":
             continue
 
