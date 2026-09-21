@@ -1,8 +1,7 @@
 #!/usr/bin/env node
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import path from 'node:path';
-import os from 'node:os';
 
 import {
 	bodyFont,
@@ -18,7 +17,8 @@ import {
 
 /**
  * Pairs the PNGs of two story-shots.mjs runs by relative path and reports what
- * moved, per pair, largest first.
+ * moved, per pair, largest first. A shot only one run has is reported too,
+ * labelled with the side it is missing from and counted as changed in full.
  *
  * The comparison is Chromatic's: a pixel counts as changed when its YIQ
  * distance from the baseline pixel is over `threshold` of the largest distance
@@ -55,7 +55,8 @@ if (opts.help || !baseDir || !afterDir || !MODES.has(opts.mode)) {
   --tint <#rrggbb>       override the mode's highlight colour
   --no-caption           do not stamp the story and the run settings on top
 
-Prints "<changed pixels>  <relative path>", largest first. Needs ImageMagick.`);
+Prints "<changed pixels>  <relative path>", largest first; a shot only one run
+has is printed as "(missing previous)" or "(missing current)". Needs ImageMagick.`);
 	process.exit(opts.help ? 0 : 1);
 }
 
@@ -325,6 +326,11 @@ const shotOf = (run, rel) =>
 
 const captionOf = (run, rel) => shotOf(run, rel)?.caption ?? 0;
 
+/** What the shot was shot in, falling back to the directory it sits in. */
+const themeOf = (rel) =>
+	(shotOf(afterRun, rel) ?? shotOf(baseRun, rel))?.theme ??
+	rel.split(path.sep)[0];
+
 /** ImageMagick's inline crop, so a tile shows the shot without its caption. */
 const withoutCaption = (file, { width, height }, top) =>
 	top > 0 ? `${file}[${width}x${height}+0+${top}]` : file;
@@ -369,20 +375,156 @@ const pngs = async (dir, prefix = '') => {
 const results = [];
 await mkdir(outDir, { recursive: true });
 
-for (const rel of (await pngs(baseDir)).sort()) {
+/** The half-built tiles, under the output directory so nothing is left elsewhere. */
+const scratch = Object.fromEntries(
+	['body', 'diff', 'shot', 'missing'].map((name) => [
+		name,
+		path.join(outDir, `.story-shots-${process.pid}-${name}.png`),
+	]),
+);
+
+/** One labelled tile of a parallel montage. */
+const tile = (label, file, background) => [
+	'(',
+	`label:${literal(label)}`,
+	file,
+	'-gravity',
+	'center',
+	'-append',
+	'-bordercolor',
+	background,
+	'-border',
+	'12',
+	')',
+];
+
+/** The tiles side by side under one caption. */
+const montage = ({
+	tiles,
+	width,
+	background,
+	foreground,
+	caption,
+	target,
+	theme,
+}) => {
+	magick([
+		'-background',
+		background,
+		'-fill',
+		foreground,
+		...bodyFont(),
+		'-pointsize',
+		// The tiles end up side by side, so they are read at the montage's width.
+		String(Math.round(pointsize(width * 3) * 0.62)),
+		...tiles.flat(),
+		'-gravity',
+		'north',
+		'+append',
+		caption.length ? scratch.body : target,
+	]);
+	if (caption.length) {
+		stamp({ lines: caption, from: scratch.body, to: target, theme });
+	}
+};
+
+/**
+ * A tile standing in for a shot the run does not have, sized like the one it
+ * does. The gutter's colours are the theme's own inverted, so they go back the
+ * other way here and the tile reads as a shot rather than as a hole.
+ */
+const placeholder = (
+	file,
+	{ width, height },
+	text,
+	{ background, foreground },
+) =>
+	magick([
+		'-size',
+		`${width}x${height}`,
+		'-background',
+		foreground,
+		'-fill',
+		background,
+		'-gravity',
+		'center',
+		...bodyFont(),
+		'-pointsize',
+		String(pointsize(width * 3)),
+		`label:${literal(text)}`,
+		file,
+	]);
+
+const [baseFiles, afterFiles] = await Promise.all([
+	pngs(baseDir),
+	pngs(afterDir),
+]);
+const inBase = new Set(baseFiles);
+const inAfter = new Set(afterFiles);
+
+for (const rel of [...new Set([...baseFiles, ...afterFiles])].sort((a, b) =>
+	a.localeCompare(b),
+)) {
 	const afterFile = path.join(afterDir, rel);
-	const base = readRgba(path.join(baseDir, rel), captionOf(baseRun, rel));
-	let after;
-	try {
-		after = readRgba(afterFile, captionOf(afterRun, rel));
-	} catch {
-		console.error(`missing in after: ${rel}`);
+	const target = path.join(outDir, rel);
+	await mkdir(path.join(outDir, path.dirname(rel)), { recursive: true });
+
+	// A story added, removed or renamed since the baseline has nothing to
+	// compare against, so the side that does have it is written out under the
+	// label of the side that does not, and every one of its pixels counts.
+	if (!inBase.has(rel) || !inAfter.has(rel)) {
+		const gone = inAfter.has(rel) ? 'previous' : 'current';
+		const held = gone === 'previous' ? 'current' : 'previous';
+		const run = gone === 'previous' ? afterRun : baseRun;
+		const image = readRgba(
+			gone === 'previous' ? afterFile : path.join(baseDir, rel),
+			captionOf(run, rel),
+		);
+		const theme = themeOf(rel);
+		const colors = palette(theme);
+		const caption = captionLines(rel, [`missing ${gone}`]);
+
+		if (opts.mode.endsWith('-parallel')) {
+			// The montage keeps its three tiles: the run that has the shot shows it,
+			// and the run that does not, like the diff, says so in its place. There
+			// is nothing to compare, so nothing is tinted.
+			await writeRgba(image, scratch.shot);
+			placeholder(scratch.missing, image, `missing ${gone}`, colors);
+
+			const sides = {
+				[held]: tile(sideLabel(held, run), scratch.shot, colors.background),
+				[gone]: tile(
+					sideLabel(gone, gone === 'previous' ? baseRun : afterRun),
+					scratch.missing,
+					colors.background,
+				),
+			};
+			montage({
+				tiles: [
+					sides.previous,
+					sides.current,
+					tile('diff', scratch.missing, colors.background),
+				],
+				width: image.width,
+				...colors,
+				caption,
+				target,
+				theme,
+			});
+		} else {
+			await writeRgba(image, caption.length ? scratch.body : target);
+			if (caption.length) {
+				stamp({ lines: caption, from: scratch.body, to: target, theme });
+			}
+		}
+
+		results.push([image.width * image.height, rel, `missing ${gone}`]);
 		continue;
 	}
 
-	await mkdir(path.join(outDir, path.dirname(rel)), { recursive: true });
+	const base = readRgba(path.join(baseDir, rel), captionOf(baseRun, rel));
+	const after = readRgba(afterFile, captionOf(afterRun, rel));
 	const diff = diffPair(base, after, opts.mode);
-	const target = path.join(outDir, rel);
 	const parallel = opts.mode.endsWith('-parallel');
 	// With no tiles to label, a run's own settings go in the caption instead.
 	const caption = captionLines(
@@ -391,70 +533,54 @@ for (const rel of (await pngs(baseDir)).sort()) {
 			? []
 			: [sideLabel('previous', baseRun), sideLabel('current', afterRun)],
 	);
-	const diffFile = path.join(os.tmpdir(), `story-shots-${process.pid}.png`);
-	const body = path.join(os.tmpdir(), `story-shots-${process.pid}-body.png`);
 
 	// The gutter is the opposite of the theme's own background, so the tiles and
 	// the caption keep an edge instead of bleeding into it.
-	const shot = shotOf(afterRun, rel) ?? shotOf(baseRun, rel);
-	const theme = shot?.theme ?? rel.split(path.sep)[0];
+	const theme = themeOf(rel);
 	const { background, foreground } = palette(theme);
 
 	if (parallel) {
-		await writeRgba(diff, diffFile);
-		const tile = (label, file) => [
-			'(',
-			`label:${literal(label)}`,
-			file,
-			'-gravity',
-			'center',
-			'-append',
-			'-bordercolor',
+		await writeRgba(diff, scratch.diff);
+		montage({
+			tiles: [
+				tile(
+					sideLabel('previous', baseRun),
+					withoutCaption(path.join(baseDir, rel), base, captionOf(baseRun, rel)),
+					background,
+				),
+				tile(
+					sideLabel('current', afterRun),
+					withoutCaption(afterFile, after, captionOf(afterRun, rel)),
+					background,
+				),
+				tile('diff', scratch.diff, background),
+			],
+			width: after.width,
 			background,
-			'-border',
-			'12',
-			')',
-		];
-		magick([
-			'-background',
-			background,
-			'-fill',
 			foreground,
-			...bodyFont(),
-			'-pointsize',
-			// The tiles end up side by side, so they are read at the montage's width.
-			String(Math.round(pointsize(after.width * 3) * 0.62)),
-			...tile(
-				sideLabel('previous', baseRun),
-				withoutCaption(path.join(baseDir, rel), base, captionOf(baseRun, rel)),
-			),
-			...tile(
-				sideLabel('current', afterRun),
-				withoutCaption(afterFile, after, captionOf(afterRun, rel)),
-			),
-			...tile('diff', diffFile),
-			'-gravity',
-			'north',
-			'+append',
-			caption.length ? body : target,
-		]);
-		if (caption.length) {
-			stamp({ lines: caption, from: body, to: target, theme });
-		}
+			caption,
+			target,
+			theme,
+		});
 	} else {
-		await writeRgba(diff, caption.length ? body : target);
+		await writeRgba(diff, caption.length ? scratch.body : target);
 		if (caption.length) {
-			stamp({ lines: caption, from: body, to: target, theme });
+			stamp({ lines: caption, from: scratch.body, to: target, theme });
 		}
 	}
 
 	results.push([diff.changed, rel]);
 }
 
+await Promise.all(
+	Object.values(scratch).map((file) => rm(file, { force: true })),
+);
+
 results
 	.sort((a, b) => b[0] - a[0])
-	.forEach(([changed, rel]) =>
-		console.log(`${String(changed).padStart(10)}  ${rel}`),
-	);
+	.forEach(([changed, rel, note]) => {
+		const suffix = note ? `  (${note})` : '';
+		console.log(`${String(changed).padStart(10)}  ${rel}${suffix}`);
+	});
 
 console.error(`diffs in ${outDir}`);

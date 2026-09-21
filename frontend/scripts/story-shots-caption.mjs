@@ -15,6 +15,8 @@ export const CONFIG_KEYS = [
 	'motion',
 	'settle',
 	'ignore',
+	'highlight',
+	'crop',
 ];
 
 let tools;

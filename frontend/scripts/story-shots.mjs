@@ -1,15 +1,19 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import { mkdir, rename, writeFile } from 'node:fs/promises';
+import { renameSync, rmSync } from 'node:fs';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
-import os from 'node:os';
 
 import {
+	bodyFont,
 	CONFIG_KEYS,
 	hasMagick,
+	literal,
+	magick,
+	palette,
 	settingsLine,
 	stamp,
 } from './story-shots-caption.mjs';
@@ -39,6 +43,8 @@ const { values: opts, positionals } = parseArgs({
 		clock: { type: 'string', default: FROZEN_CLOCK },
 		motion: { type: 'boolean', default: false },
 		ignore: { type: 'string', multiple: true, default: [] },
+		highlight: { type: 'string', multiple: true, default: [] },
+		crop: { type: 'string', multiple: true, default: [] },
 		flat: { type: 'boolean', default: false },
 		'no-caption': { type: 'boolean', default: false },
 		list: { type: 'boolean', default: false },
@@ -72,6 +78,10 @@ if (opts.help || (!outDir && !opts.list)) {
   --clock <iso|live>  wall clock the page reads (default ${FROZEN_CLOCK})
   --motion            keep animations and transitions running
   --ignore <selector> hide matching elements, on top of [data-shot-ignore]
+  --highlight <selector>
+                      also shoot <id>--highlight.png, every match ringed in red
+  --crop <selector>   also write one <id>--<n>.png per match under <theme>/crops,
+                      and montage them into <theme>/crops.png
   --flat              write <out>/<id>.png instead of <out>/<theme>/<id>.png
   --no-caption        do not stamp the story and the run settings on the shot
   --list              print the matched stories and exit
@@ -135,10 +145,17 @@ if (!stories.length) {
 	process.exit(1);
 }
 
-const ignoreSelectors = opts.ignore
-	.flatMap((value) => value.split(','))
-	.map((value) => value.trim())
-	.filter(Boolean);
+/** A repeatable, comma-separated flag read as one CSS selector list. */
+const selectorList = (values) =>
+	values
+		.flatMap((value) => value.split(','))
+		.map((value) => value.trim())
+		.filter(Boolean)
+		.join(', ');
+
+const ignoreSelectors = selectorList(opts.ignore);
+const highlightSelector = selectorList(opts.highlight);
+const cropSelector = selectorList(opts.crop);
 
 if (opts.clock !== 'live' && Number.isNaN(Date.parse(opts.clock))) {
 	console.error(`--clock: not a date: ${opts.clock}`);
@@ -152,13 +169,12 @@ if (opts.clock !== 'live' && Number.isNaN(Date.parse(opts.clock))) {
  * their bottom - is done by the preview itself, so a Chromatic build and a shot
  * from here see the same page.
  */
-const ignoreCss = (
-	ignore,
-) => `[data-shot-ignore], [data-chromatic='ignore']${ignore
-	.map((selector) => `, ${selector}`)
-	.join('')} {
+const ignoreCss = (ignore) => {
+	const extra = ignore ? `, ${ignore}` : '';
+	return `[data-shot-ignore], [data-chromatic='ignore']${extra} {
 	visibility: hidden !important;
 }`;
+};
 
 /**
  * Playwright is not a frontend dependency: it lives in `tests/e2e`, or globally,
@@ -248,7 +264,9 @@ const runConfig = {
 	grow: opts.grow,
 	motion: opts.motion ? 'live' : 'still',
 	settle: opts.settle,
-	ignore: ignoreSelectors.join(', '),
+	ignore: ignoreSelectors,
+	highlight: highlightSelector,
+	crop: cropSelector,
 };
 
 const captioning = !opts['no-caption'] && hasMagick();
@@ -261,6 +279,8 @@ const configLine = settingsLine(runConfig, CONFIG_KEYS);
 
 for (const theme of themes.length ? themes : [null]) {
 	const dir = opts.flat ? outDir : path.join(outDir, theme ?? 'default');
+	const cropDir = path.join(dir, 'crops');
+	const crops = [];
 	await mkdir(dir, { recursive: true });
 	if (theme) {
 		console.log(`\n[${theme}]`);
@@ -294,6 +314,9 @@ for (const theme of themes.length ? themes : [null]) {
 		// The height the rounds had reached when the page turned out to grow with
 		// the viewport, kept only to flag the story in the log.
 		let chasing = 0;
+
+		// What the story's line in the log says beyond ok/busy.
+		const notes = [];
 
 		const url = new URL(`${base}/iframe.html`);
 		url.searchParams.set('viewMode', 'story');
@@ -447,47 +470,160 @@ for (const theme of themes.length ? themes : [null]) {
 				shot = next;
 			}
 
-			const file = path.join(dir, `${story.id}.png`);
-			await writeFile(file, shot);
+			/**
+			 * The band goes on the shot itself so a single screenshot says what it
+			 * is, and its height is returned so a diff can take it back off. The
+			 * temporary is written beside the shot rather than in the system temp
+			 * directory: those are often separate filesystems, and a rename across
+			 * one fails with EXDEV.
+			 */
+			const caption = (target, lines) => {
+				if (!captioning) {
+					return 0;
+				}
 
-			// The band goes on the shot itself so a single screenshot says what it
-			// is, and its height is recorded so a diff can take it back off.
-			let caption = 0;
-			if (captioning) {
 				const temporary = path.join(
-					os.tmpdir(),
-					`story-shots-caption-${process.pid}.png`,
+					path.dirname(target),
+					`.caption-${process.pid}.png`,
 				);
-				caption = stamp({
+				const rows = stamp({
 					lines: [
 						`${story.title}/${story.name}`,
 						[story.id, theme ?? 'default', stable ? '' : '(busy)']
 							.filter(Boolean)
 							.join('  '),
-						configLine,
+						...lines,
 					].filter(Boolean),
-					from: file,
+					from: target,
 					to: temporary,
 					theme: theme ?? 'dark',
 				});
-				await rename(temporary, file);
+				renameSync(temporary, target);
+				return rows;
+			};
+
+			const file = path.join(dir, `${story.id}.png`);
+			await writeFile(file, shot);
+
+			const record = (relative, caption) =>
+				shots.push({
+					file: path.posix.join(opts.flat ? '' : (theme ?? 'default'), relative),
+					id: story.id,
+					title: story.title,
+					name: story.name,
+					theme: theme ?? 'default',
+					status: stable ? 'ok' : 'busy',
+					caption,
+				});
+
+			record(`${story.id}.png`, caption(file, [configLine]));
+
+			// The crops are taken before anything is drawn over the page, so a
+			// component's own shot carries no ring and no label: the montage at the
+			// end of the theme is what names them.
+			if (cropSelector) {
+				await mkdir(cropDir, { recursive: true });
+
+				// A page that sizes itself in `vh` was shot back at `--height` with
+				// its own scrollbar, and what is below the fold there is laid out but
+				// never painted: cropping it gives a black rectangle. The crops alone
+				// are taken at the height the rounds had reached, which is where the
+				// page does paint.
+				if (chasing) {
+					await page.setViewportSize({
+						width: Number(opts.width),
+						height: chasing,
+					});
+					await page.waitForTimeout(Number(opts.settle));
+				}
+
+				const matches = page.locator(cropSelector);
+				let kept = 0;
+				for (let index = 0; index < (await matches.count()); index += 1) {
+					const element = matches.nth(index);
+					// A group whose children are all conditional renders as a 0x0 box.
+					// It has no counterpart on screen, so there is nothing to crop.
+					const box = await element.boundingBox();
+					if (!box || box.width < 1 || box.height < 1) {
+						continue;
+					}
+
+					kept += 1;
+					const relative = `${story.id}--${kept}.png`;
+					// The scroll that brings an element into view needs a frame before
+					// the crop, or the region comes back unpainted.
+					await element.scrollIntoViewIfNeeded({ timeout: 15_000 });
+					await page.waitForTimeout(250);
+					await element.screenshot({
+						path: path.join(cropDir, relative),
+						timeout: 15_000,
+					});
+					crops.push({
+						file: path.join(cropDir, relative),
+						label: `${story.title}/${story.name}  #${kept}`,
+					});
+					record(path.posix.join('crops', relative), 0);
+				}
+				notes.push(`${kept} cropped`);
+
+				if (chasing) {
+					await page.setViewportSize({
+						width: Number(opts.width),
+						height: Number(opts.height),
+					});
+					await page.waitForTimeout(Number(opts.settle));
+				}
 			}
 
-			shots.push({
-				file: path.posix.join(
-					opts.flat ? '' : (theme ?? 'default'),
-					`${story.id}.png`,
-				),
-				id: story.id,
-				title: story.title,
-				name: story.name,
-				theme: theme ?? 'default',
-				status: stable ? 'ok' : 'busy',
-				caption,
-			});
+			if (highlightSelector) {
+				const ringed = await page.evaluate(
+					([selector, padding]) => {
+						const layer = document.createElement('div');
+						// The shot is viewport-sized, so the rings are placed in viewport
+						// coordinates and survive a page that stayed scrollable.
+						layer.style.cssText =
+							'position:fixed;inset:0;pointer-events:none;z-index:2147483647';
+						let drawn = 0;
+						for (const element of document.querySelectorAll(selector)) {
+							const box = element.getBoundingClientRect();
+							if (box.width < 1 || box.height < 1) {
+								continue;
+							}
+
+							drawn += 1;
+							const ring = document.createElement('div');
+							ring.style.cssText = `position:fixed;box-sizing:border-box;border:3px solid #ff003a;border-radius:4px;left:${
+								box.left - padding
+							}px;top:${box.top - padding}px;width:${
+								box.width + padding * 2
+							}px;height:${box.height + padding * 2}px`;
+							layer.append(ring);
+						}
+						document.documentElement.append(layer);
+						window.__storyShotsHighlight = layer;
+						return drawn;
+					},
+					[highlightSelector, 6],
+				);
+
+				const highlighted = path.join(dir, `${story.id}--highlight.png`);
+				await writeFile(highlighted, await page.screenshot());
+				record(
+					`${story.id}--highlight.png`,
+					caption(highlighted, [`${ringed} highlighted`, configLine]),
+				);
+				notes.push(`${ringed} highlighted`);
+				await page.evaluate(() => {
+					window.__storyShotsHighlight?.remove();
+					delete window.__storyShotsHighlight;
+				});
+			}
+			if (chasing) {
+				notes.push(`viewport-sized content, stopped chasing ${chasing}px`);
+			}
 			console.log(
 				`  ${stable ? 'ok  ' : 'busy'} ${story.id}${
-					chasing ? ` (viewport-sized content, stopped chasing ${chasing}px)` : ''
+					notes.length ? ` (${notes.join(', ')})` : ''
 				}`,
 			);
 		} catch (error) {
@@ -496,6 +632,52 @@ for (const theme of themes.length ? themes : [null]) {
 		} finally {
 			await context.close();
 		}
+	}
+
+	// One image of every crop the theme produced, labelled with the story it came
+	// from. A component that appears on eight pages is a survey rather than eight
+	// screenshots to open one after another.
+	if (crops.length && captioning) {
+		const sheet = path.join(dir, 'crops.png');
+		const { background, foreground } = palette(theme ?? 'dark');
+
+		// `montage -label` sizes every tile to the widest *image*, so a label
+		// longer than its crop runs under the next one. Each crop is composed with
+		// its own label first, which sizes the tile to whichever of the two is
+		// wider, and the sheet is then a montage of finished tiles.
+		const tiles = crops.map(({ file, label }, index) => {
+			const tile = path.join(cropDir, `.tile-${index}.png`);
+			magick([
+				'-background',
+				background,
+				'-fill',
+				foreground,
+				...bodyFont(),
+				'-pointsize',
+				'16',
+				file,
+				`label:${literal(label)}`,
+				'-gravity',
+				'center',
+				'-append',
+				tile,
+			]);
+			return tile;
+		});
+
+		magick([
+			'montage',
+			'-background',
+			background,
+			'-tile',
+			'2x',
+			'-geometry',
+			'+16+16',
+			...tiles,
+			sheet,
+		]);
+		tiles.forEach((tile) => rmSync(tile, { force: true }));
+		console.log(`  ${crops.length} crops -> ${sheet}`);
 	}
 }
 
