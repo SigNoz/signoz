@@ -3,6 +3,8 @@ import {
 	DashboardtypesHeatmapColorScaleDTO,
 	DashboardtypesHeatmapPaletteDTO,
 	DashboardtypesHeatmapYScaleDTO,
+	Querybuildertypesv5BucketOptionsLinearDTOKind,
+	Querybuildertypesv5BucketOptionsLogDTOKind,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	HeatmapAxisScale,
@@ -69,6 +71,39 @@ describe('resolveHeatmapAxisScale', () => {
 
 	it('leaves an unset scale to the bucket bounds', () => {
 		expect(resolveHeatmapAxisScale(undefined)).toBe(HeatmapAxisScale.Auto);
+	});
+
+	it('follows linear bucketing when the panel has not chosen a scale', () => {
+		expect(
+			resolveHeatmapAxisScale(
+				undefined,
+				Querybuildertypesv5BucketOptionsLinearDTOKind.linear,
+			),
+		).toBe(HeatmapAxisScale.Linear);
+		expect(
+			resolveHeatmapAxisScale(
+				DashboardtypesHeatmapYScaleDTO.auto,
+				Querybuildertypesv5BucketOptionsLinearDTOKind.linear,
+			),
+		).toBe(HeatmapAxisScale.Linear);
+	});
+
+	it('leaves log bucketing to the bucket bounds', () => {
+		expect(
+			resolveHeatmapAxisScale(
+				undefined,
+				Querybuildertypesv5BucketOptionsLogDTOKind.log,
+			),
+		).toBe(HeatmapAxisScale.Auto);
+	});
+
+	it('lets an explicit scale outrank the query bucketing', () => {
+		expect(
+			resolveHeatmapAxisScale(
+				DashboardtypesHeatmapYScaleDTO.log,
+				Querybuildertypesv5BucketOptionsLinearDTOKind.linear,
+			),
+		).toBe(HeatmapAxisScale.Log);
 	});
 });
 
