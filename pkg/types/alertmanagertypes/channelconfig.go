@@ -211,11 +211,61 @@ type ChannelSlackConfig struct {
 	Channel      string                       `json:"channel"`
 	Title        valuer.UnsetOrNonEmptyString `json:"title"`
 	Text         valuer.UnsetOrNonEmptyString `json:"text"`
+	Color        valuer.UnsetOrNonEmptyString `json:"color"`
+	TitleLink    valuer.UnsetOrNonEmptyString `json:"titleLink"`
+	Pretext      valuer.UnsetOrNonEmptyString `json:"pretext"`
+	Fallback     valuer.UnsetOrNonEmptyString `json:"fallback"`
+	Footer       valuer.UnsetOrNonEmptyString `json:"footer"`
+	Fields       []ChannelSlackField          `json:"fields,omitempty"`
+	Actions      []ChannelSlackAction         `json:"actions,omitempty"`
+}
+
+type ChannelSlackField struct {
+	Title string `json:"title" required:"true"`
+	Value string `json:"value" required:"true"`
+	Short *bool  `json:"short,omitempty"`
+}
+
+// ChannelSlackAction is a link button when URL is set, otherwise a message
+// button that needs Name. Upstream clears whichever side is not in use.
+type ChannelSlackAction struct {
+	Type    string                    `json:"type" required:"true"`
+	Text    string                    `json:"text" required:"true"`
+	URL     string                    `json:"url"`
+	Style   string                    `json:"style"`
+	Name    string                    `json:"name"`
+	Value   string                    `json:"value"`
+	Confirm *ChannelSlackConfirmation `json:"confirm,omitempty"`
+}
+
+type ChannelSlackConfirmation struct {
+	Text        string `json:"text" required:"true"`
+	Title       string `json:"title"`
+	OkText      string `json:"okText"`
+	DismissText string `json:"dismissText"`
 }
 
 func (c ChannelSlackConfig) Validate() error {
 	if c.APIURL == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.apiUrl is required for a slack channel")
+	}
+
+	for i, field := range c.Fields {
+		if field.Title == "" || field.Value == "" {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.fields[%d] requires title and value", i)
+		}
+	}
+
+	for i, action := range c.Actions {
+		if action.Type == "" || action.Text == "" {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.actions[%d] requires type and text", i)
+		}
+		if action.URL == "" && action.Name == "" {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.actions[%d] requires url or name", i)
+		}
+		if action.Confirm != nil && action.Confirm.Text == "" {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.actions[%d].confirm requires text", i)
+		}
 	}
 
 	return nil
@@ -235,6 +285,13 @@ func (c ChannelSlackConfig) toUndefaultedReceiver(displayName string) (*Receiver
 			Channel:        c.Channel,
 			Title:          c.Title.StringValue(),
 			Text:           c.Text.StringValue(),
+			Color:          c.Color.StringValue(),
+			TitleLink:      c.TitleLink.StringValue(),
+			Pretext:        c.Pretext.StringValue(),
+			Fallback:       c.Fallback.StringValue(),
+			Footer:         c.Footer.StringValue(),
+			Fields:         newUpstreamSlackFields(c.Fields),
+			Actions:        newUpstreamSlackActions(c.Actions),
 		}},
 	}}, nil
 }
@@ -253,7 +310,74 @@ func newChannelSlackConfigFromReceiver(name string, receiver *Receiver) (Channel
 		Channel:      slack.Channel,
 		Title:        valuer.UnsetIfEmpty(slack.Title),
 		Text:         valuer.UnsetIfEmpty(slack.Text),
+		Color:        valuer.UnsetIfEmpty(slack.Color),
+		TitleLink:    valuer.UnsetIfEmpty(slack.TitleLink),
+		Pretext:      valuer.UnsetIfEmpty(slack.Pretext),
+		Fallback:     valuer.UnsetIfEmpty(slack.Fallback),
+		Footer:       valuer.UnsetIfEmpty(slack.Footer),
+		Fields:       newChannelSlackFields(slack.Fields),
+		Actions:      newChannelSlackActions(slack.Actions),
 	}, nil
+}
+
+func newUpstreamSlackFields(fields []ChannelSlackField) []*config.SlackField {
+	if len(fields) == 0 {
+		return nil
+	}
+
+	upstream := make([]*config.SlackField, 0, len(fields))
+	for _, field := range fields {
+		upstream = append(upstream, &config.SlackField{Title: field.Title, Value: field.Value, Short: field.Short})
+	}
+
+	return upstream
+}
+
+func newChannelSlackFields(upstream []*config.SlackField) []ChannelSlackField {
+	if len(upstream) == 0 {
+		return nil
+	}
+
+	fields := make([]ChannelSlackField, 0, len(upstream))
+	for _, field := range upstream {
+		fields = append(fields, ChannelSlackField{Title: field.Title, Value: field.Value, Short: field.Short})
+	}
+
+	return fields
+}
+
+func newUpstreamSlackActions(actions []ChannelSlackAction) []*config.SlackAction {
+	if len(actions) == 0 {
+		return nil
+	}
+
+	upstream := make([]*config.SlackAction, 0, len(actions))
+	for _, action := range actions {
+		upstreamAction := &config.SlackAction{Type: action.Type, Text: action.Text, URL: action.URL, Style: action.Style, Name: action.Name, Value: action.Value}
+		if action.Confirm != nil {
+			upstreamAction.ConfirmField = &config.SlackConfirmationField{Text: action.Confirm.Text, Title: action.Confirm.Title, OkText: action.Confirm.OkText, DismissText: action.Confirm.DismissText}
+		}
+		upstream = append(upstream, upstreamAction)
+	}
+
+	return upstream
+}
+
+func newChannelSlackActions(upstream []*config.SlackAction) []ChannelSlackAction {
+	if len(upstream) == 0 {
+		return nil
+	}
+
+	actions := make([]ChannelSlackAction, 0, len(upstream))
+	for _, upstreamAction := range upstream {
+		action := ChannelSlackAction{Type: upstreamAction.Type, Text: upstreamAction.Text, URL: upstreamAction.URL, Style: upstreamAction.Style, Name: upstreamAction.Name, Value: upstreamAction.Value}
+		if upstreamAction.ConfirmField != nil {
+			action.Confirm = &ChannelSlackConfirmation{Text: upstreamAction.ConfirmField.Text, Title: upstreamAction.ConfirmField.Title, OkText: upstreamAction.ConfirmField.OkText, DismissText: upstreamAction.ConfirmField.DismissText}
+		}
+		actions = append(actions, action)
+	}
+
+	return actions
 }
 
 // ChannelEmailConfig carries no SMTP transport fields: the smarthost,
@@ -309,7 +433,8 @@ func newChannelEmailConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpe
 
 // ChannelWebhookConfig splits apart the two authentication modes the legacy API
 // overloaded onto one password field, where an empty username meant the password
-// was really a bearer token.
+// was really a bearer token. Username or Password may be set without the other,
+// as upstream allows, but not together with BearerToken.
 type ChannelWebhookConfig struct {
 	SendResolved *bool  `json:"sendResolved,omitempty"`
 	URL          string `json:"url" required:"true" format:"password"`
@@ -329,10 +454,6 @@ func (c ChannelWebhookConfig) Validate() error {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.bearerToken cannot be combined with config.spec.username or config.spec.password")
 	}
 
-	if usesBasicAuth && (c.Username == "" || c.Password == "") {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.username and config.spec.password must both be set for basic auth")
-	}
-
 	return nil
 }
 
@@ -346,7 +467,7 @@ func (c ChannelWebhookConfig) toUndefaultedReceiver(displayName string) (*Receiv
 	// and EnableHTTP2 marshal unconditionally, so a zero value would persist
 	// them as false and read back as a config ChannelWebhookConfig cannot represent.
 	switch {
-	case c.Username != "":
+	case c.Username != "" || c.Password != "":
 		httpConfig := commoncfg.DefaultHTTPClientConfig
 		httpConfig.BasicAuth = &commoncfg.BasicAuth{
 			Username: c.Username,
@@ -1014,7 +1135,7 @@ func rejectHTTPBasicAuthBeyondPassword(channelName string, httpConfig *commoncfg
 
 	basicAuth := httpConfig.BasicAuth
 	if *basicAuth != (commoncfg.BasicAuth{Username: basicAuth.Username, Password: basicAuth.Password}) {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.basic_auth, which is not supported", channelName)
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.basic_auth with fields other than username and password, which is not supported", channelName)
 	}
 
 	return nil
@@ -1026,8 +1147,8 @@ func rejectHTTPAuthorizationBeyondBearer(channelName string, httpConfig *commonc
 	}
 
 	authorization := httpConfig.Authorization
-	if *authorization != (commoncfg.Authorization{Type: bearerAuthorizationType, Credentials: authorization.Credentials}) {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization, which is not supported", channelName)
+	if !strings.EqualFold(authorization.Type, bearerAuthorizationType) || *authorization != (commoncfg.Authorization{Type: authorization.Type, Credentials: authorization.Credentials}) {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization with fields other than a bearer token, which is not supported", channelName)
 	}
 
 	return nil

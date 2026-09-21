@@ -21,6 +21,7 @@ import (
 // mutually exclusive and so cannot all be set at once.
 func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 	sendResolved := true
+	short := true
 
 	testCases := []struct {
 		description       string
@@ -37,6 +38,16 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Channel:      "#alerts",
 				Title:        valuer.MustNewUnsetOrNonEmptyString("slack title"),
 				Text:         valuer.MustNewUnsetOrNonEmptyString("slack text"),
+				Color:        valuer.MustNewUnsetOrNonEmptyString("#439FE0"),
+				TitleLink:    valuer.MustNewUnsetOrNonEmptyString("{{ .CommonLabels.ruleSource }}"),
+				Pretext:      valuer.MustNewUnsetOrNonEmptyString("slack pretext"),
+				Fallback:     valuer.MustNewUnsetOrNonEmptyString("slack fallback"),
+				Footer:       valuer.MustNewUnsetOrNonEmptyString("slack footer"),
+				Fields:       []ChannelSlackField{{Title: "Severity", Value: "{{ .CommonLabels.severity }}", Short: &short}},
+				Actions: []ChannelSlackAction{
+					{Type: "button", Text: "Open in SigNoz", URL: "{{ .CommonLabels.ruleSource }}", Style: "primary"},
+					{Type: "button", Text: "Acknowledge", Name: "ack", Value: "ack", Confirm: &ChannelSlackConfirmation{Text: "Acknowledge this alert?", Title: "Confirm", OkText: "Yes", DismissText: "No"}},
+				},
 			},
 			expectedRoundTrip: &ChannelSlackConfig{
 				SendResolved: &sendResolved,
@@ -44,6 +55,16 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Channel:      "#alerts",
 				Title:        valuer.MustNewUnsetOrNonEmptyString("slack title"),
 				Text:         valuer.MustNewUnsetOrNonEmptyString("slack text"),
+				Color:        valuer.MustNewUnsetOrNonEmptyString("#439FE0"),
+				TitleLink:    valuer.MustNewUnsetOrNonEmptyString("{{ .CommonLabels.ruleSource }}"),
+				Pretext:      valuer.MustNewUnsetOrNonEmptyString("slack pretext"),
+				Fallback:     valuer.MustNewUnsetOrNonEmptyString("slack fallback"),
+				Footer:       valuer.MustNewUnsetOrNonEmptyString("slack footer"),
+				Fields:       []ChannelSlackField{{Title: "Severity", Value: "{{ .CommonLabels.severity }}", Short: &short}},
+				Actions: []ChannelSlackAction{
+					{Type: "button", Text: "Open in SigNoz", URL: "{{ .CommonLabels.ruleSource }}", Style: "primary"},
+					{Type: "button", Text: "Acknowledge", Name: "ack", Value: "ack", Confirm: &ChannelSlackConfirmation{Text: "Acknowledge this alert?", Title: "Confirm", OkText: "Yes", DismissText: "No"}},
+				},
 			},
 		},
 		{
@@ -539,6 +560,45 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			_, err := testCase.channel.toPostableNotificationChannel()
 			assert.Error(t, err)
+		})
+	}
+}
+
+// The HTTP auth scheme is case-insensitive (RFC 7235) and Alertmanager sends
+// the stored spelling verbatim, so a hand-written receiver may carry any casing.
+func TestChannelToPostableChannelReadsWebhookBearerSchemeCaseInsensitively(t *testing.T) {
+	sendResolved := config.DefaultWebhookConfig.VSendResolved
+
+	testCases := []struct {
+		name                string
+		storedChannelData   string
+		expectedWebhookSpec *ChannelWebhookConfig
+	}{
+		{
+			name:                "CanonicalBearer",
+			storedChannelData:   `{"name":"hook","webhook_configs":[{"send_resolved":true,"url":"https://a","http_config":{"authorization":{"type":"Bearer","credentials":"tok"},"follow_redirects":true,"enable_http2":true}}]}`,
+			expectedWebhookSpec: &ChannelWebhookConfig{SendResolved: &sendResolved, URL: "https://a", BearerToken: "tok"},
+		},
+		{
+			name:                "LowercaseBearer",
+			storedChannelData:   `{"name":"hook","webhook_configs":[{"send_resolved":true,"url":"https://b","http_config":{"authorization":{"type":"bearer","credentials":"lower"},"follow_redirects":true,"enable_http2":true}}]}`,
+			expectedWebhookSpec: &ChannelWebhookConfig{SendResolved: &sendResolved, URL: "https://b", BearerToken: "lower"},
+		},
+		{
+			name:                "UppercaseBearer",
+			storedChannelData:   `{"name":"hook","webhook_configs":[{"send_resolved":true,"url":"https://c","http_config":{"authorization":{"type":"BEARER","credentials":"upper"},"follow_redirects":true,"enable_http2":true}}]}`,
+			expectedWebhookSpec: &ChannelWebhookConfig{SendResolved: &sendResolved, URL: "https://c", BearerToken: "upper"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			channel := Channel{DisplayName: "hook", Data: testCase.storedChannelData}
+
+			postable, err := channel.toPostableNotificationChannel()
+			require.NoError(t, err)
+			assert.Equal(t, ChannelKindWebhook, postable.Config.Kind)
+			assert.Equal(t, testCase.expectedWebhookSpec, postable.Config.Spec)
 		})
 	}
 }

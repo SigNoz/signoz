@@ -149,6 +149,62 @@ describe('useTraceViewColumns', () => {
 		);
 	});
 
+	describe('when the keys fetch fails', () => {
+		beforeEach(() => {
+			server.use(
+				rest.get(
+					`${ENVIRONMENT.baseURL}/api/v1/ai_observability/fields/keys`,
+					(_req, res, ctx) => res(ctx.status(500), ctx.json({ status: 'error' })),
+				),
+			);
+		});
+
+		it('does not persist defaults', async () => {
+			await renderColumns();
+
+			expect(useColumnStore.getState().tables[STORAGE_KEY]).toBeUndefined();
+			expect(
+				localStorage.getItem(`@signoz/table-columns/${STORAGE_KEY}`),
+			).toBeNull();
+		});
+
+		it('reports the column state as not persistable', async () => {
+			const { result } = await renderColumns();
+
+			expect(result.current.canPersistColumns).toBe(false);
+		});
+
+		it('ignores a selection change instead of persisting a partial set', async () => {
+			const { result } = await renderColumns();
+
+			act(() => {
+				result.current.onFieldsChange([{ name: 'trace_id' }]);
+			});
+
+			expect(useColumnStore.getState().tables[STORAGE_KEY]).toBeUndefined();
+		});
+
+		it('seeds the defaults once a later fetch succeeds', async () => {
+			const { unmount } = await renderColumns();
+			unmount();
+
+			mockAggregateKeys(AGGREGATE_KEYS);
+			const { result } = await renderColumns();
+
+			expect(result.current.canPersistColumns).toBe(true);
+			expect(fieldNames(result.current.selectedFields)).toStrictEqual([
+				'service.name',
+				'root_span_name',
+				'trace_duration_nano',
+				'span_count',
+				'trace_id',
+				'llm_call_count',
+				'total_tokens',
+				'estimated_total_cost',
+			]);
+		});
+	});
+
 	it('hides the columns dropped from the selection', async () => {
 		const { result } = await renderColumns();
 
