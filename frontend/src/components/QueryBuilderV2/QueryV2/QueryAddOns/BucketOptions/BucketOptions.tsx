@@ -13,11 +13,10 @@ import {
 	BUCKET_KIND_HINTS,
 	BUCKET_KIND_OPTIONS,
 	DEFAULT_NUM_BUCKETS,
-	LOG_BANDS_OPTIONS,
+	LOG_SCALE_OPTIONS,
 	MAX_NUM_BUCKETS,
 } from './constants';
 import {
-	bandsPerDoublingFromScale,
 	formatUpperBound,
 	hasBoundsBeyondPreview,
 	isLinearBuckets,
@@ -26,7 +25,6 @@ import {
 	logBuckets,
 	logScaleOf,
 	previewUpperBounds,
-	scaleFromBandsPerDoubling,
 } from './utils';
 import { BucketKindOption } from './types';
 
@@ -101,13 +99,13 @@ function BucketOptions({
 		[emitLinear, logScale, maxValue, numBuckets, onChange],
 	);
 
-	const handleBandsChange = useCallback(
+	const handleScaleChange = useCallback(
 		(value: string): void => {
 			if (!value) {
 				return;
 			}
 
-			const nextScale = scaleFromBandsPerDoubling(Number(value));
+			const nextScale = Number(value);
 			setLogScale(nextScale);
 			onChange(logBuckets(nextScale));
 		},
@@ -144,9 +142,9 @@ function BucketOptions({
 		[],
 	);
 
-	const bandItems = useMemo(
+	const scaleItems = useMemo(
 		() =>
-			LOG_BANDS_OPTIONS.map(({ value, label }) => ({
+			LOG_SCALE_OPTIONS.map(({ value, label }) => ({
 				value,
 				label: <span className={styles.toggleLabel}>{label}</span>,
 				'aria-label': label,
@@ -192,13 +190,13 @@ function BucketOptions({
 
 				{kind === Querybuildertypesv5BucketsKindDTO.log && (
 					<div className={styles.field}>
-						<span className={styles.label}>Bands per doubling</span>
+						<span className={styles.label}>Scale</span>
 						<ToggleGroupSimple
 							type="single"
-							value={String(bandsPerDoublingFromScale(logScale))}
-							items={bandItems}
-							onChange={handleBandsChange}
-							testId="bucket-options-bands"
+							value={String(logScale)}
+							items={scaleItems}
+							onChange={handleScaleChange}
+							testId="bucket-options-scale"
 						/>
 					</div>
 				)}
