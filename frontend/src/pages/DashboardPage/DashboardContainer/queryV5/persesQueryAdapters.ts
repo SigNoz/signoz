@@ -100,6 +100,7 @@ export function panelTypeToRequestType(
 	switch (panelType) {
 		case PANEL_TYPES.TIME_SERIES:
 		case PANEL_TYPES.BAR:
+		case PANEL_TYPES.AREA:
 		case PANEL_TYPES.HISTOGRAM:
 			return Querybuildertypesv5RequestTypeDTO.time_series;
 		case PANEL_TYPES.TABLE:
