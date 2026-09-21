@@ -8,7 +8,9 @@
 }
 
 .item {
-	display: inline-flex;
+	// Not inline-flex: that aligns the icon's bottom edge to the row's text baseline,
+	// lifting the glyph a few px.
+	display: flex;
 	align-items: center;
 	gap: 9px;
 }
