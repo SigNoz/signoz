@@ -4,7 +4,6 @@ import { useQueries } from 'react-query';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { AxiosResponse } from 'axios';
-import { LogViewMode } from 'container/LogsTable';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
@@ -33,6 +32,7 @@ import {
 import {
 	FontSize,
 	InitialOptions,
+	LogViewMode,
 	OptionsMenuConfig,
 	OptionsQuery,
 } from './types';
