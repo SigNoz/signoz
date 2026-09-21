@@ -34,6 +34,35 @@ const mockHistoryPush = history.push as jest.MockedFunction<
 	typeof history.push
 >;
 
+const SYSTEM_DASHBOARD_ENDPOINT = '*/api/v2/dashboards/system/ai-o11y-overview';
+
+function setupSystemDashboard(): void {
+	server.use(
+		rest.get(SYSTEM_DASHBOARD_ENDPOINT, (_req, res, ctx) =>
+			res(
+				ctx.status(200),
+				ctx.json({
+					status: 'success',
+					data: {
+						orgId: 'org',
+						locked: true,
+						name: 'signoz---ai-o11y-overview',
+						schemaVersion: 'v6',
+						source: 'system',
+						tags: null,
+						spec: {
+							display: { name: 'AI Observability Overview' },
+							variables: [],
+							panels: {},
+							layouts: [],
+						},
+					},
+				}),
+			),
+		),
+	);
+}
+
 function setupList(items = mockRules): void {
 	server.use(
 		rest.get(LLM_PRICING_ENDPOINT, (_req, res, ctx) =>
@@ -52,16 +81,19 @@ describe('LLMObservability (integration)', () => {
 		server.resetHandlers();
 	});
 
-	it('renders the overview panel and the tab bar on the overview route', () => {
+	it('renders the overview panel and the tab bar on the overview route', async () => {
+		setupSystemDashboard();
 		render(<LLMObservabilityPage />, undefined, {
 			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
 
 		expect(screen.getByTestId('llm-observability-page')).toBeInTheDocument();
 		expect(screen.getByTestId('llm-observability-overview')).toBeInTheDocument();
-		expect(screen.getByTestId('llm-overview-dashboard')).toBeInTheDocument();
-		expect(screen.getByRole('tab', { name: /Overview/ })).toBeInTheDocument();
-		expect(screen.getByRole('tab', { name: /Explorer/ })).toBeInTheDocument();
+		await waitFor(() =>
+			expect(screen.getByTestId('llm-overview-dashboard')).toBeInTheDocument(),
+		);
+		expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
+		expect(screen.getByRole('tab', { name: 'Explorer' })).toBeInTheDocument();
 		expect(
 			screen.getByRole('tab', { name: /Model pricing/ }),
 		).toBeInTheDocument();
