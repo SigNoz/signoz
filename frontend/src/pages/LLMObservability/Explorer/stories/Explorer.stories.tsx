@@ -51,19 +51,33 @@ const selectFirstQuickFilterValue = async (
 		return found;
 	}, untilLoaded);
 
-	const [filter] = await within(panel).findAllByRole(
-		'checkbox',
+	const [filter] = await within(panel).findAllByTestId(
+		'checkbox-filter-v2',
 		undefined,
 		untilLoaded,
 	);
 
-	await userEvent.click(filter);
-	// The panel re-renders around the new query, so the checkbox is looked up
-	// again on every attempt rather than held from before the click.
-	await waitFor(
-		() => expect(within(panel).getAllByRole('checkbox')[0]).toBeChecked(),
+	const [row] = await within(filter).findAllByTestId(
+		/^checkbox-value-row-/,
+		undefined,
 		untilLoaded,
 	);
+	const value = row.dataset.testid?.replace('checkbox-value-row-', '');
+
+	// Every value starts selected, so the checkbox only excludes one; the row
+	// itself is the "Only" action that narrows the query to a single value.
+	await userEvent.click(within(row).getByRole('button'));
+	// The rows remount around the new query and regroup into sections, so they
+	// are looked up again on every attempt rather than held from before the click.
+	await waitFor(() => {
+		const selected = within(filter).getByTestId('section-selected');
+
+		expect(
+			within(selected)
+				.getAllByTestId(/^checkbox-value-row-/)
+				.map((item) => item.dataset.testid),
+		).toEqual([`checkbox-value-row-${value}`]);
+	}, untilLoaded);
 };
 
 const openQuickFiltersSettings = async (): Promise<void> => {
