@@ -36,8 +36,8 @@ import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext'
 // hooks' deps (a fresh [] each render would re-create their callbacks).
 const EMPTY_SECTIONS: DashboardSection[] = [];
 
-const ALERT_FROM_AI_PANEL_REASON =
-	'Alerts are not available for AI Query Builder panels';
+// TODO(@tewarig): drop each block as its surface gains AI query builder support.
+const AI_PANEL_REASON = 'Not available for AI Query Builder panels yet';
 
 interface UsePanelActionItemsArgs {
 	panelId: string;
@@ -68,7 +68,7 @@ export function usePanelActionItems({
 	panelActions,
 }: UsePanelActionItemsArgs): PanelActionItems {
 	const panelKind = panel.spec.plugin.kind;
-	// The alert builder has no AI query mode, so the flow would open on an empty query.
+	// The alert builder, panel editor and view modal have no AI query mode to open on.
 	const isAIPanel = toQueryEnvelopes(panel.spec.queries).some(
 		isAIBuilderEnvelope,
 	);
@@ -112,13 +112,17 @@ export function usePanelActionItems({
 		const row = (
 			text: string,
 			icon: ReactElement,
-			opts: { checks?: BrandedPermission[]; destructive?: boolean } = {},
+			opts: {
+				checks?: BrandedPermission[];
+				destructive?: boolean;
+				disabledTooltip?: string;
+			} = {},
 		): ReactNode => (
 			<MenuActionItem
 				label={text}
 				icon={icon}
 				checks={opts.checks ?? editChecks}
-				disabledTooltip={editDisabledTooltip}
+				disabledTooltip={opts.disabledTooltip ?? editDisabledTooltip}
 				destructive={opts.destructive}
 			/>
 		);
@@ -127,15 +131,21 @@ export function usePanelActionItems({
 		if (panelCapabilities.view) {
 			panelGroup.push({
 				key: 'view-panel',
-				label: row('View', <Fullscreen size={14} />, { checks: [] }),
+				label: row('View', <Fullscreen size={14} />, {
+					checks: [],
+					disabledTooltip: isAIPanel ? AI_PANEL_REASON : undefined,
+				}),
+				disabled: isAIPanel,
 				onClick: (): void => openView(panelId, panel),
 			});
 		}
 		if (panelCapabilities.edit) {
 			panelGroup.push({
 				key: 'edit-panel',
-				label: row('Edit panel', <PenLine size={14} />),
-				disabled: !isEditable,
+				label: row('Edit panel', <PenLine size={14} />, {
+					disabledTooltip: isAIPanel ? AI_PANEL_REASON : undefined,
+				}),
+				disabled: !isEditable || isAIPanel,
 				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}
@@ -171,7 +181,7 @@ export function usePanelActionItems({
 						label="Create Alerts"
 						icon={<Bell size={14} />}
 						checks={[]}
-						disabledTooltip={isAIPanel ? ALERT_FROM_AI_PANEL_REASON : undefined}
+						disabledTooltip={isAIPanel ? AI_PANEL_REASON : undefined}
 					/>
 				),
 				disabled: isAIPanel,
