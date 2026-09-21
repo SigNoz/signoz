@@ -10,6 +10,7 @@ import { PrecisionOptionsEnum } from 'components/Graph/types';
 
 import {
 	buildHeatmapConfig,
+	hasMissingCells,
 	prepareHeatmapChartData,
 	resolveBoundaryPrecision,
 } from '../utils';
@@ -258,5 +259,15 @@ describe('buildHeatmapConfig', () => {
 		expect(hooks?.draw).toHaveLength(1);
 		expect(hooks?.setCursor).toHaveLength(1);
 		expect(hooks?.destroy).toHaveLength(1);
+	});
+});
+
+describe('hasMissingCells', () => {
+	it('finds a gap anywhere in the grid', () => {
+		expect(hasMissingCells([[1, 2], [3, null]])).toBe(true);
+	});
+
+	it('does not mistake a zero for a gap', () => {
+		expect(hasMissingCells([[0, 0], [0, 1]])).toBe(false);
 	});
 });

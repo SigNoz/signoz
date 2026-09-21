@@ -26,6 +26,7 @@ import { HeatmapChartProps } from 'lib/visualization/charts/types';
 import { useHeatmapGroupLegend } from './useHeatmapGroupLegend';
 import {
 	buildHeatmapConfig,
+	hasMissingCells,
 	prepareHeatmapChartData,
 	resolveBoundaryPrecision,
 } from './utils';
@@ -291,9 +292,10 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				minLabel={colorResolver.domain.min.toLocaleString()}
 				maxLabel={colorResolver.domain.max.toLocaleString()}
 				markerPosition={colorResolver.positionOf(hoveredCell?.count ?? null)}
+				showNoDataKey={hasMissingCells(grid.counts)}
 			/>
 		);
-	}, [showVisualMap, hasGrid, colorResolver, hoveredCell]);
+	}, [showVisualMap, hasGrid, colorResolver, hoveredCell, grid.counts]);
 
 	return (
 		<ChartWrapper
