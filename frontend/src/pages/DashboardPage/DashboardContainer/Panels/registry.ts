@@ -1,3 +1,4 @@
+import { definition as AreaChart } from './kinds/AreaChartPanel/definition';
 import { definition as BarChart } from './kinds/BarChartPanel/definition';
 import { definition as Histogram } from './kinds/HistogramPanel/definition';
 import { definition as NumberValue } from './kinds/NumberPanel/definition';
@@ -21,6 +22,7 @@ export const PANELS: PanelRegistry = {
 	[NumberValue.kind]: NumberValue,
 	[Table.kind]: Table,
 	[BarChart.kind]: BarChart,
+	[AreaChart.kind]: AreaChart,
 	[PieChart.kind]: PieChart,
 	[Histogram.kind]: Histogram,
 	[List.kind]: List,
