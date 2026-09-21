@@ -259,6 +259,15 @@ const preview: Preview = {
 	beforeEach: () => {
 		clearBlockedNavigations();
 		resetStoryHistory();
+
+		// The runner clears its console/network buffer before it navigates, so
+		// anything the outgoing story still has in flight would be reported
+		// against this one. Stamping the moment this story starts gives the runner
+		// a line to discard those by. `Date.now()` is faked for the stories, so
+		// this reads the one clock the runner's own timestamps share.
+		document.body.dataset.signozStoryStartedAt = String(
+			performance.timeOrigin + performance.now(),
+		);
 	},
 	// After `play`, which is the moment both capture stacks shoot at.
 	afterEach: settleForCapture,
