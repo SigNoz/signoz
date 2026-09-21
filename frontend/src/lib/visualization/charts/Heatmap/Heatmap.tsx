@@ -14,7 +14,10 @@ import {
 	resolveExtremeColor,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
-import { resolveHeatmapYAxis } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
+import {
+	cropHeatmapYAxis,
+	resolveHeatmapYAxis,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { resolveHeatmapGrid } from 'lib/uPlotV2/plugins/HeatmapPlugin/grid';
 import {
 	HeatmapAxisScale,
@@ -115,8 +118,8 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 	);
 
 	const yAxis = useMemo(
-		() => resolveHeatmapYAxis(grid.bounds, axisScale),
-		[grid.bounds, axisScale],
+		() => cropHeatmapYAxis(resolveHeatmapYAxis(grid.bounds, axisScale), grid.counts),
+		[grid.bounds, grid.counts, axisScale],
 	);
 
 	// The axis, the series labels and the tooltip all name rows by their boundaries,

@@ -112,6 +112,11 @@ export function drawOverflowBoundary({
 	if (overflowIndex < 1 || !yAxis.rows[overflowIndex].isOverflow) {
 		return;
 	}
+	// A cropped axis puts the edge off the plot, where the line would stroke over
+	// the panel.
+	if (yAxis.edges[overflowIndex] >= yAxis.max) {
+		return;
+	}
 
 	const { ctx } = u;
 	const y = Math.round(u.valToPos(yAxis.edges[overflowIndex], 'y', true));
