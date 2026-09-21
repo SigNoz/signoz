@@ -26,7 +26,6 @@ import {
 	LiveLogs,
 	Login,
 	Logs,
-	LogsExplorer,
 	LogsIndexToFields,
 	LogsSaveViews,
 	MessagingQueuesMainPage,
@@ -298,13 +297,6 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: Logs,
 		key: 'LOGS',
-		isPrivate: true,
-	},
-	{
-		path: ROUTES.LOGS_EXPLORER,
-		exact: true,
-		component: LogsExplorer,
-		key: 'LOGS_EXPLORER',
 		isPrivate: true,
 	},
 	{
