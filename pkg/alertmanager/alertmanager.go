@@ -61,6 +61,10 @@ type Alertmanager interface {
 	// DeleteChannelByID deletes a channel for the organization.
 	DeleteChannelByID(context.Context, string, valuer.UUID) error
 
+	// RepairNotificationChannel diagnoses a stored channel v2 cannot read and
+	// reports the fitting action, applying it only when apply is set.
+	RepairNotificationChannel(context.Context, string, valuer.UUID, bool) (*alertmanagertypes.ChannelRepair, error)
+
 	// Config returns the alertmanagerserver configuration.
 	Config() alertmanagerserver.Config
 
