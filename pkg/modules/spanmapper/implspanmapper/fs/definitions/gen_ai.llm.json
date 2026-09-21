@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "definition": {
     "name": "gen_ai.llm",
     "condition": {
@@ -107,20 +107,6 @@
             },
             {
               "key": "ai.model.provider",
-              "context": "attribute",
-              "operation": "copy",
-              "priority": 10
-            }
-          ]
-        }
-      },
-      {
-        "name": "gen_ai.operation.name",
-        "fieldContext": "attribute",
-        "config": {
-          "sources": [
-            {
-              "key": "llm.request.type",
               "context": "attribute",
               "operation": "copy",
               "priority": 10
@@ -294,6 +280,12 @@
               "priority": 30
             },
             {
+              "key": "ai.response.toolCalls",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 25
+            },
+            {
               "key": "ai.response.text",
               "context": "attribute",
               "operation": "copy",
@@ -329,7 +321,7 @@
         }
       },
       {
-        "name": "gen_ai.response.finish_reason",
+        "name": "gen_ai.response.finish_reasons",
         "fieldContext": "attribute",
         "config": {
           "sources": [
