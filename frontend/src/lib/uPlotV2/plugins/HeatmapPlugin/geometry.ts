@@ -231,6 +231,48 @@ export function resolveHeatmapYAxis(
 	};
 }
 
+/** Highest row holding a count above zero; `null` for a grid with none. */
+function resolveTopOccupiedRow(
+	counts: Array<Array<number | null>>,
+): number | null {
+	for (let row = counts.length - 1; row >= 0; row -= 1) {
+		if (counts[row]?.some((count) => count !== null && count > 0)) {
+			return row;
+		}
+	}
+	return null;
+}
+
+/**
+ * Stops the axis one row above the highest occupied one: a bucket layout routinely
+ * runs decades past anything observed, and that tail squeezes the rows carrying the
+ * distribution. Only `max` and the ticks above it move, so a cropped-away `+Inf` row
+ * is never relabelled as the one below it.
+ */
+export function cropHeatmapYAxis(
+	yAxis: HeatmapYAxis,
+	counts: Array<Array<number | null>>,
+): HeatmapYAxis {
+	const topOccupied = resolveTopOccupiedRow(counts);
+	if (topOccupied === null) {
+		return yAxis;
+	}
+
+	const topVisible = Math.min(topOccupied + 1, yAxis.rows.length - 1);
+	if (topVisible >= yAxis.rows.length - 1) {
+		return yAxis;
+	}
+
+	return {
+		...yAxis,
+		// `splits[i]` is row `i`'s upper edge, so truncating keeps the caller's
+		// index-keyed labels aligned.
+		splits: yAxis.splits.slice(0, topVisible + 1),
+		overflowSplit: null,
+		max: yAxis.edges[topVisible + 1],
+	};
+}
+
 /** Row containing `axisValue`, or `null` when it falls outside the grid. */
 export function resolveRowIndex(
 	edges: number[],
