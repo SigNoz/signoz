@@ -3,6 +3,10 @@ import { HeatmapAxisScale, HeatmapRow, HeatmapYAxis } from './types';
 /** Used when the ratio cannot be inferred, i.e. a single boundary. */
 const FALLBACK_LOG_RATIO = 2;
 
+/** Taller than a real bucket, so the dashed edge below it reads as the end of the
+ *  scale and not as the panel's border. */
+const OVERFLOW_ROW_HEIGHT_RATIO = 2;
+
 const EMPTY_Y_AXIS: HeatmapYAxis = {
 	rows: [],
 	edges: [],
@@ -161,7 +165,7 @@ function resolveOuterEdges(
 		const safeGap = gap > 0 ? gap : Math.abs(first) || 1;
 		// Never extend below zero unless the boundaries already do.
 		const lower = first > 0 ? Math.max(0, first - safeGap) : first - safeGap;
-		return { lower, upper: last + safeGap };
+		return { lower, upper: last + safeGap * OVERFLOW_ROW_HEIGHT_RATIO };
 	}
 
 	const axisFirst = transform.toAxisValue(first);
@@ -173,7 +177,9 @@ function resolveOuterEdges(
 
 	return {
 		lower: transform.toBucketValue(axisFirst - safeGap),
-		upper: transform.toBucketValue(axisLast + safeGap),
+		upper: transform.toBucketValue(
+			axisLast + safeGap * OVERFLOW_ROW_HEIGHT_RATIO,
+		),
 	};
 }
 
