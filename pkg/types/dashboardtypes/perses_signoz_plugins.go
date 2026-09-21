@@ -175,10 +175,12 @@ const (
 	PanelKindHistogram  PanelPluginKind = "signoz/HistogramPanel"
 	PanelKindList       PanelPluginKind = "signoz/ListPanel"
 	PanelKindText       PanelPluginKind = "signoz/TextPanel"
+
+	PanelKindStateTimeline PanelPluginKind = "signoz/StateTimelinePanel"
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindStateTimeline}
 }
 
 func (k PanelPluginKind) rendersWithoutQuery() bool {
@@ -278,6 +280,16 @@ type TextPresentation struct {
 	TextAlign     TextAlign     `json:"textAlign"`
 	VerticalAlign VerticalAlign `json:"verticalAlign"`
 	Background    *string       `json:"background,omitempty" validate:"omitempty,hexcolor"`
+}
+
+// StateTimelinePanelSpec renders time-series as horizontal swim-lane rows with
+// color-coded segments. Segment color is resolved from the value via Thresholds
+// (label variant), so discrete pass/fail states map to threshold colors.
+type StateTimelinePanelSpec struct {
+	Visualization BasicVisualization   `json:"visualization"`
+	Formatting    PanelFormatting      `json:"formatting"`
+	Legend        Legend               `json:"legend"`
+	Thresholds    []ThresholdWithLabel `json:"thresholds" validate:"dive"`
 }
 
 // ══════════════════════════════════════════════
