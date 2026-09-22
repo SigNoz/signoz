@@ -150,7 +150,7 @@ func TestSortListableRules(t *testing.T) {
 			},
 			sortBy:    ListSortState,
 			order:     ListOrderDesc,
-			wantNames: []string{"firing", "pending", "recovering", "nodata", "inactive", "disabled"},
+			wantNames: []string{"firing", "nodata", "pending", "recovering", "inactive", "disabled"},
 		},
 		{
 			name: "severity desc ranks known values then custom ones lexically",
