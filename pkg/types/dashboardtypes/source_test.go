@@ -50,21 +50,17 @@ func TestErrIfNotMutable_BySource(t *testing.T) {
 	cases := []struct {
 		source      Source
 		mutable     bool
-		deletable   bool
-		lockable    bool
 		publishable bool
 	}{
-		{SourceUser, true, true, true, true},
-		{SourceSystem, true, false, false, false},
-		{SourceIntegration, false, false, false, false},
+		{SourceUser, true, true},
+		{SourceSystem, false, false},
+		{SourceIntegration, false, false},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.source.StringValue(), func(t *testing.T) {
-			d := &Dashboard{Source: tc.source}
+			d := &DashboardV2{Source: tc.source}
 			assert.Equal(t, tc.mutable, d.ErrIfNotMutable() == nil)
-			assert.Equal(t, tc.deletable, d.ErrIfNotDeletable() == nil)
-			assert.Equal(t, tc.lockable, d.ErrIfNotLockable() == nil)
 			assert.Equal(t, tc.publishable, d.ErrIfNotPublishable() == nil)
 		})
 	}
