@@ -190,13 +190,16 @@ describe('useFetchedVariableOptions', () => {
 		// so a pick made before searching is never reconciled away.
 		expect(result.current.options).toStrictEqual(['cart']);
 
+		// Clearing falls straight back to the base fetch's options — synchronously, so
+		// closing the dropdown cannot leave the last search's results on screen for a
+		// debounce interval. They come from the cache of a separate query the search
+		// never touched, so nothing is refetched.
 		act(() => {
 			result.current.dynamic?.onSearchReset();
 		});
 
-		await waitFor(() =>
-			expect(result.current.dynamic?.values).toStrictEqual(['cart']),
-		);
+		expect(result.current.dynamic?.values).toStrictEqual(['cart']);
+		expect(mockGetFieldValues).toHaveBeenCalledTimes(2);
 	});
 	it('marks a client error as not retryable', async () => {
 		mockGetFieldValues.mockRejectedValue(

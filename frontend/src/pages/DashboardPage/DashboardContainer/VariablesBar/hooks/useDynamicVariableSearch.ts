@@ -37,7 +37,8 @@ export function useDynamicVariableSearch({
 }: UseDynamicVariableSearchProps): DynamicVariableSearch {
 	const [searchText, setSearchText] = useState('');
 	const debouncedSearchText = useDebounce(searchText, DEBOUNCE_DELAY);
-	const isActive = enabled && !!attribute && !!debouncedSearchText;
+	const isActive =
+		enabled && !!attribute && !!searchText && !!debouncedSearchText;
 
 	const { data, isFetching } = useQuery(
 		[
