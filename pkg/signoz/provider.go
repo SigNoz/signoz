@@ -254,6 +254,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddSubscriptionTuplesFactory(sqlstore),
 		sqlmigration.NewNormalizeQuickFilterFieldsFactory(sqlstore),
 		sqlmigration.NewAddSpanMapperOriginFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddCloudIntegrationTuplesFactory(sqlstore),
 	)
 }
 
