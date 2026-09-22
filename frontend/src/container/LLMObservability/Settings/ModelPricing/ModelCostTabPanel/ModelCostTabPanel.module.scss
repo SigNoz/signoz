@@ -18,6 +18,8 @@
 
 .filtersBarSource {
 	width: 160px;
+	/* Trigger defaults to 2.25rem; the search input and Add button are both 2rem. */
+	--select-trigger-height: 32px;
 }
 
 .pageError {
