@@ -43,9 +43,9 @@ func (a AlertState) Severity() int {
 // NOT Severity(), which ranks disabled/nodata above firing for overall-state computation.
 var alertStateDisplayRank = map[AlertState]int{
 	StateFiring:     5,
-	StatePending:    4,
-	StateRecovering: 3,
-	StateNoData:     2,
+	StateNoData:     4,
+	StatePending:    3,
+	StateRecovering: 2,
 	StateInactive:   1,
 	StateDisabled:   0,
 }
