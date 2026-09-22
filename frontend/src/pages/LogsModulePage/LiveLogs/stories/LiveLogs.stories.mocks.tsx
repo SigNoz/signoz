@@ -8,8 +8,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import type { LogViewMode } from 'container/LogsTable';
-import { FontSize } from 'container/OptionsMenu/types';
+import { FontSize, type LogViewMode } from 'container/OptionsMenu/types';
 import { rest } from 'msw';
 import type {
 	BaseBuilderQuery,
