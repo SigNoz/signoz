@@ -10,6 +10,7 @@
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build -o storybook-static",
     "test:storybook": "bash scripts/test-storybook.sh",
+    "scaffold": "node .claude/skills/scaffold-feature/scaffold.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "prettify": "oxfmt",
