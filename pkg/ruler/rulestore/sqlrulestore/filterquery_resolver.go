@@ -21,7 +21,7 @@ const (
 	ruleTypePath    = "$.ruleType"
 )
 
-// ruleFieldResolver maps rule list DSL keys; label keys are case-sensitive and unknown keys are rejected.
+// ruleFieldResolver maps rule list DSL keys; a non-reserved key is a case-sensitive label lookup.
 type ruleFieldResolver struct{}
 
 func (r ruleFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, rawKey string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string {
