@@ -11,6 +11,7 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import RouteTab from 'components/RouteTab';
+import TextToolTip from 'components/TextToolTip';
 import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
@@ -96,6 +97,11 @@ function AllErrors(): JSX.Element {
 										onStageRunQuery={handleRunQuery}
 										isLoadingQueries={isLoadingQueries}
 										handleCancelQuery={handleCancelQuery}
+									/>
+									<TextToolTip
+										text="More details on how to use exceptions"
+										url="https://signoz.io/docs/userguide/exceptions/?utm_source=product&utm_medium=all-exceptions"
+										urlText="Learn More"
 									/>
 									<HeaderRightSection
 										enableAnnouncements={false}
