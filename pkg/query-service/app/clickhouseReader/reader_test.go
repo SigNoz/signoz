@@ -29,13 +29,12 @@ func TestGetStatusFilters(t *testing.T) {
 	}
 }
 
-
 func TestMaxRetentionTTLForKeyTables(t *testing.T) {
 	testCases := []struct {
-		name              string
-		defaultTTLDays    int
-		ttlConditions     []retentiontypes.CustomRetentionRule
-		expectedTTLDays   int
+		name            string
+		defaultTTLDays  int
+		ttlConditions   []retentiontypes.CustomRetentionRule
+		expectedTTLDays int
 	}{
 		{
 			name:            "zero default falls back to logs retention",
