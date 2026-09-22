@@ -12,7 +12,6 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
@@ -323,11 +322,6 @@ function Explorer(): JSX.Element {
 		});
 	}, []);
 
-	const queryComponents = useMemo(
-		(): QueryBuilderProps['queryComponents'] => ({}),
-		[],
-	);
-
 	const [warning, setWarning] = useState<Warning | undefined>();
 
 	const oneChartPerQueryDisabledTooltip = useMemo(() => {
@@ -381,7 +375,6 @@ function Explorer(): JSX.Element {
 				<QueryBuilderV2
 					config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
 					panelType={PANEL_TYPES.TIME_SERIES}
-					queryComponents={queryComponents}
 					showFunctions={false}
 					version="v3"
 				/>

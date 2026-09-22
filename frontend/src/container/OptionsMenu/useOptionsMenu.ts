@@ -4,13 +4,12 @@ import { useQueries } from 'react-query';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { AxiosResponse } from 'axios';
-import { LogViewMode } from 'container/LogsTable';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { has } from 'lodash-es';
-import { AllTraceFilterKeyValue } from 'pages/TracesExplorer/Filter/filterUtils';
+import { AllTraceFilterKeyValue } from 'constants/traceFilterKeys';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import {
 	QueryKeyRequestProps,
@@ -33,6 +32,7 @@ import {
 import {
 	FontSize,
 	InitialOptions,
+	LogViewMode,
 	OptionsMenuConfig,
 	OptionsQuery,
 } from './types';

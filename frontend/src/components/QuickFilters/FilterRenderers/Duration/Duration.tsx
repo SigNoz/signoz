@@ -1,36 +1,32 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Collapse } from 'antd';
 import { Undo2 } from '@signozhq/icons';
+import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryIndex';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
+import { getMs } from 'utils/timeUtils';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
-import { DurationSection } from 'pages/TracesExplorer/Filter/DurationSection';
 import {
 	AllTraceFilterKeys,
 	AllTraceFilterKeyValue,
-	HandleRunProps,
 	traceFilterKeys,
-	unionTagFilterItems,
-} from 'pages/TracesExplorer/Filter/filterUtils';
+} from 'constants/traceFilterKeys';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import { clearFilterFromQuery } from '../shared/filterQuery';
 import { SectionActionButton } from '../shared/SectionActionButton/SectionActionButton';
+import { DurationSection } from './DurationSection';
+import { FilterType, HandleRunProps, unionTagFilterItems } from './utils';
 
 import './Duration.styles.scss';
 
-export type FilterType = Record<
-	AllTraceFilterKeys,
-	{ values: string[] | string; keys: BaseAutocompleteData }
->;
+export type { FilterType };
 
 function Duration({
 	filter,
@@ -39,7 +35,7 @@ function Duration({
 }: {
 	filter: IQuickFiltersConfig;
 	onFilterChange?: (query: Query) => void;
-	source?: QuickFiltersSource;
+	source: QuickFiltersSource;
 }): JSX.Element {
 	const [selectedFilters, setSelectedFilters] =
 		useState<
@@ -52,26 +48,11 @@ function Duration({
 		filter.defaultOpen ? 'durationNano' : '',
 	]);
 
-	const {
-		currentQuery,
-		redirectWithQueryBuilderData,
-		lastUsedQuery,
-		panelType,
-	} = useQueryBuilder();
+	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
 	const compositeQuery = useGetCompositeQueryParam();
 
-	const isListView = panelType === PANEL_TYPES.LIST;
-	// In ListView mode, use index 0 for most sources; for TRACES_EXPLORER, use lastUsedQuery
-	// Otherwise use lastUsedQuery for non-ListView modes
-	const activeQueryIndex = useMemo(() => {
-		if (isListView) {
-			return source === QuickFiltersSource.TRACES_EXPLORER
-				? lastUsedQuery || 0
-				: 0;
-		}
-		return lastUsedQuery || 0;
-	}, [isListView, source, lastUsedQuery]);
+	const activeQueryIndex = useActiveQueryIndex(source);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const syncSelectedFilters = useMemo((): FilterType => {

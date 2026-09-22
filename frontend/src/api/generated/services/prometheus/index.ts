@@ -30,6 +30,26 @@ import type {
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType } from '../../../generatedAPIInstance';
 
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
+
 /**
  * Prometheus-compatible endpoint: the request and response contract is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/). Parameters are accepted as URL query parameters or a form-encoded body, on GET and POST alike.
  * @summary Prometheus instant query
@@ -108,7 +128,7 @@ export function usePrometheusQuery<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -293,7 +313,7 @@ export function usePrometheusQueryRange<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**

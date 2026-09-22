@@ -6,7 +6,8 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import AddedFields from './AddedFields';
@@ -31,6 +32,9 @@ interface FieldsSelectorProps {
 	// Lets users add a free-typed field which
 	// does not show up in the suggestions
 	allowCustomFields?: boolean;
+	fieldKeysConfig?: FieldKeysConfigProp;
+	builderQueryType?: BuilderQueryType;
+	extraFields?: TelemetryFieldKey[];
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
@@ -50,6 +54,9 @@ function FieldsSelectorContent({
 	maxFields,
 	requiredFields,
 	allowCustomFields,
+	fieldKeysConfig,
+	builderQueryType,
+	extraFields,
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
@@ -158,6 +165,9 @@ function FieldsSelectorContent({
 					onAdd={handleAdd}
 					isAtLimit={isAtLimit}
 					allowCustomFields={allowCustomFields}
+					fieldKeysConfig={fieldKeysConfig}
+					builderQueryType={builderQueryType}
+					extraFields={extraFields}
 				/>
 
 				{hasUnsavedChanges && (

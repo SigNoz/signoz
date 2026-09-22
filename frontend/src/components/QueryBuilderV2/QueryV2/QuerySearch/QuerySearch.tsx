@@ -36,7 +36,7 @@ import {
 } from 'types/antlrQueryTypes';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
-import { DataSource } from 'types/common/queryBuilder';
+import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 import {
 	getCurrentValueIndexAtCursor,
 	getQueryContextAtCursor,
@@ -45,6 +45,13 @@ import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
 import { getRecentQueries } from 'lib/recentQueries/getRecentQueries';
+import type {
+	TelemetrytypesGettableFieldKeysDTOKeysAnyOf,
+	TelemetrytypesSourceDTO,
+	TelemetrytypesTelemetryFieldKeyDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
+import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import type { SignalType } from 'types/api/v5/queryRange';
 
 import {
@@ -52,12 +59,6 @@ import {
 	SUGGESTION_FETCH_DEBOUNCE_MS,
 	SUGGESTIONS_SECTION,
 } from './constants';
-import {
-	fetchFieldKeysForQuery,
-	fetchFieldValuesForQuery,
-	SuggestedFieldKey,
-	SuggestedFieldKeysByName,
-} from './fieldSuggestions';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
@@ -265,8 +266,10 @@ function QuerySearch({
 	const dashboardDynamicVariables = useDynamicVariableSuggestions();
 
 	// Add back the generateOptions function and useEffect
-	const generateOptions = (keys: SuggestedFieldKeysByName): any[] =>
-		Object.values(keys).flatMap((items: SuggestedFieldKey[]) =>
+	const generateOptions = (
+		keys: TelemetrytypesGettableFieldKeysDTOKeysAnyOf,
+	): any[] =>
+		Object.values(keys).flatMap((items: TelemetrytypesTelemetryFieldKeyDTO[]) =>
 			items.map(({ name, fieldDataType, fieldContext }) => ({
 				label: name,
 				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
@@ -319,17 +322,19 @@ function QuerySearch({
 
 			lastFetchedKeyRef.current = searchText || '';
 
-			const response = await fetchFieldKeysForQuery({
-				builderQueryType: queryData.builderQueryType,
-				dataSource,
-				searchText: searchText || '',
-				metricName: debouncedMetricName ?? undefined,
-				signalSource: signalSource as 'meter' | '',
-				metricNamespace,
-			});
+			const response = await getFieldKeySuggestions(
+				{
+					signal: DATA_SOURCE_TO_SIGNAL[dataSource],
+					searchText: searchText || '',
+					metricName: debouncedMetricName ?? undefined,
+					source: signalSource as TelemetrytypesSourceDTO,
+					metricNamespace,
+				},
+				queryData.builderQueryType,
+			);
 
-			if (response.data.data) {
-				const { keys } = response.data.data;
+			if (response.data.keys) {
+				const { keys } = response.data;
 				const options = generateOptions(keys);
 				// Deduplicate by full variant identity (name + context + data type), NOT by
 				// label. deduping by label removes varient which is not expected. If we need
@@ -497,21 +502,23 @@ function QuerySearch({
 			try {
 				const values = valueSuggestionsOverride
 					? await valueSuggestionsOverride(key, sanitizedSearchText)
-					: await fetchFieldValuesForQuery({
-							builderQueryType: queryData.builderQueryType,
-							dataSource,
-							key,
-							searchText: sanitizedSearchText,
-							signalSource: signalSource as 'meter' | '',
-							metricName: debouncedMetricName ?? undefined,
-						}).then((response) => {
-							const responseData = response.data as any;
-							const data = responseData.data || {};
-							const values = data.values || {};
+					: await getFieldValueSuggestions(
+							{
+								signal: DATA_SOURCE_TO_SIGNAL[dataSource],
+								name: key,
+								searchText: sanitizedSearchText,
+								source: signalSource as TelemetrytypesSourceDTO,
+								metricName: debouncedMetricName ?? undefined,
+							},
+							queryData.builderQueryType,
+						).then((response) => {
+							const responseData = response.data;
+							const responseDataValues = responseData.values;
+
 							return {
-								stringValues: values.stringValues || [],
-								numberValues: values.numberValues || [],
-								complete: data.complete ?? false,
+								stringValues: responseDataValues.stringValues ?? [],
+								numberValues: responseDataValues.numberValues ?? [],
+								complete: responseData.complete ?? false,
 							};
 						});
 

@@ -1,9 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
+import { LegendAction } from 'lib/uPlotV2/components/types';
 import {
 	getStoredSeriesVisibility,
 	updateSeriesVisibilityToLocalStorage,
 } from 'lib/visualization/panels/utils/legendVisibilityUtils';
-import type { MouseEvent } from 'react';
 
 import { PieSlice } from 'lib/visualization/charts/types';
 import { usePieInteractions } from 'lib/visualization/hooks/usePieInteractions';
@@ -24,22 +24,6 @@ const DATA: PieSlice[] = [
 	{ label: 'checkout', value: 40, color: '#c' },
 ];
 
-// Builds a fake legend click/move event: `e.target.closest('[data-legend-item-id]')`
-// resolves to the item at `index`, and `e.target.dataset.isLegendMarker` flags marker clicks.
-function legendEvent(
-	index: number | null,
-	isMarker = false,
-): MouseEvent<HTMLDivElement> {
-	const itemEl =
-		index == null ? null : { dataset: { legendItemId: String(index) } };
-	return {
-		target: {
-			closest: (): unknown => itemEl,
-			dataset: { isLegendMarker: isMarker ? 'true' : undefined },
-		},
-	} as unknown as MouseEvent<HTMLDivElement>;
-}
-
 describe('usePieInteractions', () => {
 	beforeEach(() => {
 		mockGetStored.mockReturnValue(null);
@@ -59,11 +43,16 @@ describe('usePieInteractions', () => {
 		expect(result.current.active).toBeNull();
 	});
 
-	describe('marker click (toggle one)', () => {
+	describe('row toggle', () => {
 		it('hides then unhides the clicked slice', () => {
 			const { result } = renderHook(() => usePieInteractions(DATA, 'panel-1'));
 
-			act(() => result.current.onLegendClick(legendEvent(1, true)));
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.TOGGLE,
+					seriesIndex: 1,
+				}),
+			);
 
 			expect(result.current.visibleData).toStrictEqual([DATA[0], DATA[2]]);
 			expect(result.current.legendItems[1].show).toBe(false);
@@ -73,18 +62,50 @@ describe('usePieInteractions', () => {
 				{ label: 'checkout', show: true },
 			]);
 
-			act(() => result.current.onLegendClick(legendEvent(1, true)));
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.TOGGLE,
+					seriesIndex: 1,
+				}),
+			);
 
 			expect(result.current.visibleData).toStrictEqual(DATA);
 			expect(result.current.legendItems[1].show).toBe(true);
 		});
 	});
 
-	describe('label click (isolate / reset)', () => {
-		it('isolates the clicked slice, then resets on a second click', () => {
+	describe('the last slice showing', () => {
+		it('cannot be hidden', () => {
 			const { result } = renderHook(() => usePieInteractions(DATA));
 
-			act(() => result.current.onLegendClick(legendEvent(0, false)));
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.SHOW_ONLY,
+					seriesIndex: 0,
+				}),
+			);
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.TOGGLE,
+					seriesIndex: 0,
+				}),
+			);
+
+			// An empty donut is never a state worth reaching.
+			expect(result.current.visibleData).toStrictEqual([DATA[0]]);
+		});
+	});
+
+	describe('Only', () => {
+		it('isolates the slice', () => {
+			const { result } = renderHook(() => usePieInteractions(DATA));
+
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.SHOW_ONLY,
+					seriesIndex: 0,
+				}),
+			);
 
 			expect(result.current.visibleData).toStrictEqual([DATA[0]]);
 			expect(result.current.legendItems.map((i) => i.show)).toStrictEqual([
@@ -92,8 +113,39 @@ describe('usePieInteractions', () => {
 				false,
 				false,
 			]);
+		});
 
-			act(() => result.current.onLegendClick(legendEvent(0, false)));
+		it('switches the isolation to another slice', () => {
+			const { result } = renderHook(() => usePieInteractions(DATA));
+
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.SHOW_ONLY,
+					seriesIndex: 0,
+				}),
+			);
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.SHOW_ONLY,
+					seriesIndex: 2,
+				}),
+			);
+
+			expect(result.current.visibleData).toStrictEqual([DATA[2]]);
+		});
+	});
+
+	describe('All', () => {
+		it('brings every hidden slice back', () => {
+			const { result } = renderHook(() => usePieInteractions(DATA));
+
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.SHOW_ONLY,
+					seriesIndex: 0,
+				}),
+			);
+			act(() => result.current.onLegendAction({ type: LegendAction.SHOW_ALL }));
 
 			expect(result.current.visibleData).toStrictEqual(DATA);
 		});
@@ -103,11 +155,37 @@ describe('usePieInteractions', () => {
 		it('focuses the hovered slice and clears on leave', () => {
 			const { result } = renderHook(() => usePieInteractions(DATA));
 
-			act(() => result.current.onLegendMouseMove(legendEvent(2)));
+			act(() =>
+				result.current.onLegendAction({ type: LegendAction.HOVER, seriesIndex: 2 }),
+			);
 			expect(result.current.active).toStrictEqual(DATA[2]);
 			expect(result.current.focusedSeriesIndex).toBe(2);
 
-			act(() => result.current.onLegendMouseLeave());
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.HOVER,
+					seriesIndex: null,
+				}),
+			);
+			expect(result.current.active).toBeNull();
+			expect(result.current.focusedSeriesIndex).toBeNull();
+		});
+
+		it('drops the focus when the focused slice is hidden', () => {
+			const { result } = renderHook(() => usePieInteractions(DATA));
+
+			act(() =>
+				result.current.onLegendAction({ type: LegendAction.HOVER, seriesIndex: 1 }),
+			);
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.TOGGLE,
+					seriesIndex: 1,
+				}),
+			);
+
+			// Otherwise every remaining arc stays dimmed and the donut reads as an
+			// isolation instead of one slice being excluded.
 			expect(result.current.active).toBeNull();
 			expect(result.current.focusedSeriesIndex).toBeNull();
 		});
@@ -115,8 +193,15 @@ describe('usePieInteractions', () => {
 		it('does not focus a hidden slice', () => {
 			const { result } = renderHook(() => usePieInteractions(DATA));
 
-			act(() => result.current.onLegendClick(legendEvent(1, true))); // hide cart
-			act(() => result.current.onLegendMouseMove(legendEvent(1)));
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.TOGGLE,
+					seriesIndex: 1,
+				}),
+			);
+			act(() =>
+				result.current.onLegendAction({ type: LegendAction.HOVER, seriesIndex: 1 }),
+			);
 
 			expect(result.current.active).toBeNull();
 		});
@@ -125,7 +210,12 @@ describe('usePieInteractions', () => {
 	describe('persistence', () => {
 		it('does not write to storage when no id is provided', () => {
 			const { result } = renderHook(() => usePieInteractions(DATA));
-			act(() => result.current.onLegendClick(legendEvent(0, true)));
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.TOGGLE,
+					seriesIndex: 0,
+				}),
+			);
 			expect(mockUpdateStored).not.toHaveBeenCalled();
 		});
 

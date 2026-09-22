@@ -77,11 +77,11 @@ type LLMPricingRule struct {
 	Provider     string             `bun:"provider,type:text,notnull" json:"provider" required:"true"`
 	ModelPattern StringSlice        `bun:"model_pattern,type:text,notnull" json:"modelPattern" required:"true"`
 	Unit         LLMPricingRuleUnit `bun:"unit,type:text,notnull" json:"unit" required:"true"`
-	Pricing      LLMRulePricing     `bun:"pricing,type:text,notnull,default:'{}'" json:"pricing" required:"true"`
+	Pricing      LLMRulePricing     `bun:"pricing,type:text,notnull" json:"pricing" required:"true"`
 	// IsOverride marks the row as user-pinned. When true, Zeus skips it entirely.
-	IsOverride bool       `bun:"is_override,notnull,default:false" json:"isOverride" required:"true"`
+	IsOverride bool       `bun:"is_override,notnull" json:"isOverride" required:"true"`
 	SyncedAt   *time.Time `bun:"synced_at" json:"syncedAt,omitempty"`
-	Enabled    bool       `bun:"enabled,notnull,default:true" json:"enabled" required:"true"`
+	Enabled    bool       `bun:"enabled,notnull" json:"enabled" required:"true"`
 }
 
 type GettableLLMPricingRule = LLMPricingRule
@@ -90,14 +90,9 @@ type StorableLLMPricingRule = LLMPricingRule
 
 // UpdatableLLMPricingRule is one entry in the bulk upsert batch.
 //
-// Identification:
-//   - ID set       → match by id (user editing a known row).
-//   - SourceID set → match by source_id (Zeus sync, or user editing a Zeus-synced row).
-//   - neither set  → insert a new row with source_id = NULL (user-created custom rule).
-//
-// IsOverride is a pointer so the caller can distinguish "not sent" from "set to false".
-// When IsOverride is nil AND the matched row has is_override = true, the row is fully
-// preserved — only synced_at is stamped.
+// IsOverride is a pointer so "not sent" differs from "false". Without it the
+// rule is matched on source_id and overridden rows are skipped. With it the
+// rule is matched on id and the value is stored.
 type UpdatableLLMPricingRule struct {
 	ID           *valuer.UUID       `json:"id,omitempty"`
 	SourceID     *valuer.UUID       `json:"sourceId,omitempty"`
@@ -214,6 +209,11 @@ func NewGettableUnmappedModels(items []*UnmappedModel) *GettableUnmappedModels {
 }
 
 func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUID, userEmail string, now time.Time) *LLMPricingRule {
+	id := valuer.GenerateUUID()
+	if u.ID != nil {
+		id = *u.ID
+	}
+
 	isOverride := true
 	if u.IsOverride != nil {
 		isOverride = *u.IsOverride
@@ -222,7 +222,7 @@ func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUI
 	}
 
 	return &LLMPricingRule{
-		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		Identifiable:  types.Identifiable{ID: id},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
 		UserAuditable: types.UserAuditable{CreatedBy: userEmail, UpdatedBy: userEmail},
 		OrgID:         orgID,
@@ -236,26 +236,6 @@ func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUI
 		SyncedAt:      &now,
 		Enabled:       u.Enabled,
 	}
-}
-
-func (r *LLMPricingRule) Update(u *UpdatableLLMPricingRule, userEmail string, now time.Time) {
-	if u.IsOverride == nil && r.IsOverride {
-		r.SyncedAt = &now
-		return
-	}
-
-	r.Model = u.Model
-	r.Provider = u.Provider
-	r.ModelPattern = StringSlice(u.ModelPattern)
-	r.Unit = u.Unit
-	r.Pricing = u.Pricing
-	if u.IsOverride != nil {
-		r.IsOverride = *u.IsOverride
-	}
-	r.Enabled = u.Enabled
-	r.SyncedAt = &now
-	r.UpdatedAt = now
-	r.UpdatedBy = userEmail
 }
 
 func ModelMatchesAnyRule(model string, rules []*LLMPricingRule) bool {

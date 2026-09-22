@@ -218,19 +218,12 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 }
 
 func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string) error {
-	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
-	}
-
-	defer func() {
-		_ = tx.Rollback()
-	}()
+	tx := store.sqlstore.BunDBCtx(ctx)
 
 	// get the password id
 
 	var password types.FactorPassword
-	err = tx.NewSelect().
+	err := tx.NewSelect().
 		Model(&password).
 		Where("user_id = ?", id).
 		Scan(ctx)
@@ -294,11 +287,6 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 		Exec(ctx)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user")
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to commit transaction")
 	}
 
 	return nil

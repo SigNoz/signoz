@@ -316,7 +316,7 @@ function FullView({
 								<QueryBuilderV2
 									panelType={selectedPanelType}
 									version="v3"
-									isListViewPanel={selectedPanelType === PANEL_TYPES.LIST}
+									isRawQuery={selectedPanelType === PANEL_TYPES.LIST}
 									signalSourceChangeEnabled
 									// filterConfigs={filterConfigs}
 									// queryComponents={queryComponents}

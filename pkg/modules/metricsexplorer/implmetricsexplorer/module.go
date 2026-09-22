@@ -23,7 +23,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
@@ -37,8 +36,7 @@ import (
 type module struct {
 	telemetryStore         telemetrystore.TelemetryStore
 	telemetryMetadataStore telemetrytypes.MetadataStore
-	fieldMapper            qbtypes.FieldMapper
-	condBuilder            qbtypes.ConditionBuilder
+	storage                qbtypes.Storage
 	logger                 *slog.Logger
 	cache                  cache.Cache
 	ruleStore              ruletypes.RuleStore
@@ -49,12 +47,9 @@ type module struct {
 
 // NewModule constructs the metrics module with the provided dependencies.
 func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, dashboardModule dashboard.Module, fl flagger.Flagger, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
-	fieldMapper := metricstelemetryschema.NewFieldMapper()
-	condBuilder := metricstelemetryschema.NewConditionBuilder(fieldMapper)
 	return &module{
 		telemetryStore:         ts,
-		fieldMapper:            fieldMapper,
-		condBuilder:            condBuilder,
+		storage:                metricstelemetryschema.NewStorage(),
 		logger:                 providerSettings.Logger,
 		telemetryMetadataStore: telemetryMetadataStore,
 		cache:                  cache,
@@ -394,18 +389,6 @@ func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricN
 	}, nil
 }
 
-func (m *module) GetMetricDashboards(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardsResponse, error) {
-	if metricName == "" {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
-	}
-	data, err := m.dashboardModule.GetByMetricNames(ctx, orgID, []string{metricName})
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get dashboards for metric")
-	}
-
-	return newMetricDashboardsResponse(data[metricName]), nil
-}
-
 func (m *module) GetMetricDashboardsV2(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardPanelsResponse, error) {
 	if metricName == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
@@ -416,22 +399,6 @@ func (m *module) GetMetricDashboardsV2(ctx context.Context, orgID valuer.UUID, m
 	}
 
 	return metricsexplorertypes.NewMetricDashboardPanelsResponse(data[metricName]), nil
-}
-
-func newMetricDashboardsResponse(dashboardList []dashboardtypes.DashboardPanelRef) *metricsexplorertypes.MetricDashboardsResponse {
-	dashboards := make([]metricsexplorertypes.MetricDashboard, 0, len(dashboardList))
-	for _, item := range dashboardList {
-		dashboards = append(dashboards, metricsexplorertypes.MetricDashboard{
-			DashboardName: item.DashboardName,
-			DashboardID:   item.DashboardID,
-			WidgetID:      item.PanelID,
-			WidgetName:    item.PanelName,
-		})
-	}
-
-	return &metricsexplorertypes.MetricDashboardsResponse{
-		Dashboards: dashboards,
-	}
 }
 
 // GetMetricHighlights returns highlights for a metric including data points, last received, total time series, and active time series.
@@ -975,14 +942,12 @@ func (m *module) buildFilterClause(ctx context.Context, orgID valuer.UUID, filte
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
-		Context:          ctx,
-		Logger:           m.logger,
-		FieldMapper:      m.fieldMapper,
-		ConditionBuilder: m.condBuilder,
-		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
-		FieldKeys:        keys,
-		StartNs:          querybuilder.ToNanoSecs(uint64(startMillis)),
-		EndNs:            querybuilder.ToNanoSecs(uint64(endMillis)),
+		Context:        ctx,
+		Query:          querybuilder.NewQueryInfo(ctx, orgID, m.fl, telemetrytypes.SignalMetrics, nil, querybuilder.ToNanoSecs(uint64(startMillis)), querybuilder.ToNanoSecs(uint64(endMillis))),
+		Storage:        m.storage,
+		Logger:         m.logger,
+		FullTextColumn: &telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
+		FieldKeys:      keys,
 	}
 
 	whereClause, err := querybuilder.PrepareWhereClause(expression, opts)
