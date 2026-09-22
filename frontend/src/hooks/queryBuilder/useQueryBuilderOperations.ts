@@ -14,8 +14,6 @@ import {
 	initialQueryBuilderFormValuesMap,
 	listViewInitialLogQuery,
 	listViewInitialTraceQuery,
-	mapOfFormulaToFilters,
-	mapOfQueryFilters,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import {
@@ -59,9 +57,8 @@ import { getFormatedLegend } from 'utils/getFormatedLegend';
 export const useQueryOperations: UseQueryOperations = ({
 	query,
 	index,
-	filterConfigs,
 	formula,
-	isListViewPanel = false,
+	isRawQuery = false,
 	entityVersion,
 	isForTraceOperator = false,
 	savePreviousQuery = false,
@@ -105,46 +102,7 @@ export const useQueryOperations: UseQueryOperations = ({
 		}
 	}, [query]);
 
-	const { dataSource, aggregateOperator } = query;
-
-	const getNewListOfAdditionalFilters = useCallback(
-		(dataSource: DataSource, isQuery: boolean): string[] => {
-			const additionalFiltersKeys: (keyof Pick<
-				IBuilderQuery,
-				'orderBy' | 'limit' | 'having' | 'stepInterval'
-			>)[] = ['having', 'limit', 'orderBy', 'stepInterval'];
-
-			const mapsOfFilters = isQuery ? mapOfQueryFilters : mapOfFormulaToFilters;
-
-			const result: string[] = mapsOfFilters[dataSource]?.reduce<string[]>(
-				(acc, item) => {
-					if (
-						filterConfigs &&
-						filterConfigs[item.field as (typeof additionalFiltersKeys)[number]]
-							?.isHidden
-					) {
-						return acc;
-					}
-
-					acc.push(item.text);
-
-					return acc;
-				},
-				[],
-			);
-
-			return result;
-		},
-
-		[filterConfigs],
-	);
-
-	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
-		string[]
-	>(getNewListOfAdditionalFilters(dataSource, true));
-
-	const [listOfAdditionalFormulaFilters, setListOfAdditionalFormulaFilters] =
-		useState<string[]>(getNewListOfAdditionalFilters(dataSource, false));
+	const { dataSource } = query;
 
 	const handleChangeOperator = useCallback(
 		(value: string): void => {
@@ -460,7 +418,7 @@ export const useQueryOperations: UseQueryOperations = ({
 				removeKeyFromPreviousQuery(newKey);
 			}
 
-			if (isListViewPanel) {
+			if (isRawQuery) {
 				let listPanelQuery: Query | null = null;
 
 				if (nextSource === DataSource.LOGS) {
@@ -506,7 +464,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			handleSetQueryData(index, newQueryData);
 		},
 		[
-			isListViewPanel,
+			isRawQuery,
 			panelType,
 			query,
 			handleSetQueryData,
@@ -625,32 +583,18 @@ export const useQueryOperations: UseQueryOperations = ({
 		handleMetricAggregateAtributeTypes,
 	]);
 
-	useEffect(() => {
-		const additionalFilters = getNewListOfAdditionalFilters(dataSource, true);
-
-		setListOfAdditionalFilters(additionalFilters);
-	}, [dataSource, aggregateOperator, getNewListOfAdditionalFilters]);
-
-	useEffect(() => {
-		const additionalFilters = getNewListOfAdditionalFilters(dataSource, false);
-
-		setListOfAdditionalFormulaFilters(additionalFilters);
-	}, [dataSource, aggregateOperator, getNewListOfAdditionalFilters]);
-
 	return {
 		isTracePanelType,
 		isMetricsDataSource,
 		isLogsDataSource,
 		operators,
 		spaceAggregationOptions,
-		listOfAdditionalFilters,
 		handleChangeOperator,
 		handleSpaceAggregationChange,
 		handleChangeAggregatorAttribute,
 		handleChangeDataSource,
 		handleDeleteQuery,
 		handleChangeQueryData,
-		listOfAdditionalFormulaFilters,
 		handleChangeFormulaData,
 		handleQueryFunctionsUpdates,
 	};

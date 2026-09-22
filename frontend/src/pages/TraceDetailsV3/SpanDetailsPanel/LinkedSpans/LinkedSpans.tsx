@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { generatePath, Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import ROUTES from 'constants/routes';
@@ -78,7 +78,7 @@ export function LinkedSpansPanel({
 }): JSX.Element | null {
 	const getLink = useCallback(
 		(item: SpanReference): string =>
-			`${ROUTES.TRACE}/${item.traceId}?spanId=${item.spanId}`,
+			`${generatePath(ROUTES.TRACE_DETAIL, { id: item.traceId })}?spanId=${item.spanId}`,
 		[],
 	);
 

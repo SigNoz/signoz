@@ -17,7 +17,7 @@ import { decode } from 'js-base64';
 import history from 'lib/history';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { OperatorValues, Tags } from 'types/reducer/trace';
+import { OperatorValues, Tags } from 'hooks/useResourceAttribute/types';
 import { v4 as uuid } from 'uuid';
 
 import { whilelistedKeys } from './config';
