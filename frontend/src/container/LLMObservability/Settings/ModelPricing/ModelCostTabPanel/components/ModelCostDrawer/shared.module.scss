@@ -47,6 +47,15 @@
 	color: var(--accent-cherry);
 }
 
+/* Single treatment for every label in the drawer, so field labels and the */
+/* headings on the bordered surfaces read as one tier. */
+.fieldLabel {
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-medium);
+	line-height: var(--spacing-10);
+	color: var(--l1-foreground);
+}
+
 .pricingField {
 	display: flex;
 	flex-direction: column;
