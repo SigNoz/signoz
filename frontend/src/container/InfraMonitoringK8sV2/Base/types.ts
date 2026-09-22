@@ -141,6 +141,8 @@ export interface K8sBaseDetailsContentProps<T> {
 	customTabs?: K8sDetailsCustomTab<T>[];
 	logsAndTracesInitialExpression: string;
 	eventsInitialExpression: string;
+	/** Identity expression of the drawer's entity, used to scope related resources */
+	selectedItemExpression: string;
 }
 
 // Aliases for backward compatibility

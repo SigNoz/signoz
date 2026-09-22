@@ -97,7 +97,11 @@ export function logInfraExplorerNavigatedEvent(params: {
 		| 'logs_explorer'
 		| 'traces_explorer'
 		| 'k8s_list';
-	source: 'chart_compass_icon' | 'tab_cta_button' | 'stats_card';
+	source:
+		| 'chart_compass_icon'
+		| 'tab_cta_button'
+		| 'stats_card'
+		| 'overview_cta';
 	tab: string;
 	sourceKey: string | null;
 	drawerDurationMsAtNavigation: number | null;

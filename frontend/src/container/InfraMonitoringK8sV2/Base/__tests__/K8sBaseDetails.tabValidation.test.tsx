@@ -29,9 +29,9 @@ const mockEntity: TestEntity = {
 	cluster: 'test-cluster',
 };
 
-function createBaseProps() {
+function createBaseProps(category: InfraMonitoringEntity) {
 	return {
-		category: InfraMonitoringEntity.PODS,
+		category,
 		eventCategory: InfraMonitoringEvents.Pod,
 		getSelectedItemExpression: (): string => 'k8s.pod.name = "test-pod"',
 		fetchEntityData: jest
@@ -51,6 +51,7 @@ function createBaseProps() {
 
 interface RenderOptions {
 	view?: string;
+	category?: InfraMonitoringEntity;
 	tabsConfig?: {
 		showMetrics?: boolean;
 		showLogs?: boolean;
@@ -67,6 +68,8 @@ interface RenderOptions {
 
 function renderK8sBaseDetails({
 	view = VIEW_TYPES.METRICS,
+	// Volumes have no related resources, so they get no overview tab
+	category = InfraMonitoringEntity.VOLUMES,
 	tabsConfig,
 	customTabs,
 }: RenderOptions = {}) {
@@ -78,7 +81,7 @@ function renderK8sBaseDetails({
 	return render(
 		<NuqsTestingAdapter searchParams={searchParams}>
 			<K8sBaseDetails<TestEntity>
-				{...createBaseProps()}
+				{...createBaseProps(category)}
 				tabsConfig={tabsConfig}
 				customTabs={customTabs}
 			/>
@@ -103,6 +106,23 @@ describe('K8sBaseDetails - Tab Validation', () => {
 
 		await waitFor(() => {
 			expect(getSelectedTabText()).toContain('Metrics');
+		});
+	});
+
+	it('should land on the overview tab for a category with related resources', async () => {
+		act(() => {
+			renderK8sBaseDetails({
+				view: 'invalid-tab',
+				category: InfraMonitoringEntity.PODS,
+			});
+		});
+
+		await waitFor(() => {
+			expect(screen.getAllByText('test-pod').length).toBeGreaterThan(0);
+		});
+
+		await waitFor(() => {
+			expect(getSelectedTabText()).toContain('Overview');
 		});
 	});
 
