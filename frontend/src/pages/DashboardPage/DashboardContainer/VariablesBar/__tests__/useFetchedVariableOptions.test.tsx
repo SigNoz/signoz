@@ -114,4 +114,36 @@ describe('useFetchedVariableOptions', () => {
 
 		await waitFor(() => expect(result.current.options).toStrictEqual(['prod']));
 	});
+
+	it('keeps related values as their own section and as selectable options', async () => {
+		mockGetFieldValues.mockResolvedValue({
+			data: {
+				normalizedValues: ['cart', 'payments'],
+				relatedValues: ['checkout'],
+				complete: true,
+			},
+		});
+
+		useDashboardStore.setState({
+			variableFetchStates: { env: VariableFetchState.Loading },
+			variableCycleIds: { env: 1 },
+		});
+
+		const variable = dynamicVariable('env');
+		const { result } = renderHook(
+			() => useFetchedVariableOptions(variable, [variable], {}),
+			{ wrapper },
+		);
+
+		await waitFor(() =>
+			expect(result.current.dynamic?.relatedValues).toStrictEqual(['checkout']),
+		);
+		expect(result.current.dynamic?.values).toStrictEqual(['cart', 'payments']);
+		// A related value the unscoped list never returned is still selectable.
+		expect(result.current.options).toStrictEqual([
+			'cart',
+			'payments',
+			'checkout',
+		]);
+	});
 });

@@ -4,7 +4,9 @@ import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import type { OptionData } from 'components/NewSelect/types';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
+import type { DynamicVariableOptions } from '../../hooks/useFetchedVariableOptions';
 import type { VariableSelection } from '../../selectionTypes';
+import { dynamicVariableOptions } from '../../utils/dynamicVariableOptions';
 import { areSelectionsEqual } from '../../utils/resolveVariableSelection';
 import { selectionFromCommittedValues } from '../../utils/selectionUtils';
 import OverflowValuesTooltip from './OverflowValuesTooltip';
@@ -24,6 +26,8 @@ interface ValueSelectorProps {
 	/** Option-fetch error surfaced in the dropdown, with a retry action. */
 	errorMessage?: string | null;
 	onRetry?: () => void;
+	/** DYNAMIC only: the two sections its values are split into. */
+	dynamic?: DynamicVariableOptions;
 }
 
 function ValueSelector({
@@ -38,10 +42,14 @@ function ValueSelector({
 	testId,
 	errorMessage,
 	onRetry,
+	dynamic,
 }: ValueSelectorProps): JSX.Element {
 	const optionData = useMemo<OptionData[]>(
-		() => options.map((option) => ({ label: option, value: option })),
-		[options],
+		() =>
+			dynamic
+				? dynamicVariableOptions(dynamic.values, dynamic.relatedValues)
+				: options.map((option) => ({ label: option, value: option })),
+		[options, dynamic],
 	);
 
 	// All-selected → the full option set so CustomMultiSelect engages its "all"
@@ -136,6 +144,7 @@ function ValueSelector({
 				)}
 				// Offer ALL only once options load, else a concrete value reads as "all".
 				enableAllSelection={showAllOption && options.length > 0}
+				isDynamicVariable={!!dynamic}
 				onDropdownVisibleChange={(open): void => {
 					if (open) {
 						setDraft(committedValues);
@@ -182,6 +191,7 @@ function ValueSelector({
 			onRetry={onRetry}
 			showSearch
 			placeholder="Select value"
+			isDynamicVariable={!!dynamic}
 			onChange={(next): void => {
 				void logEvent(
 					DashboardDetailEvents.VariableValueSelected,

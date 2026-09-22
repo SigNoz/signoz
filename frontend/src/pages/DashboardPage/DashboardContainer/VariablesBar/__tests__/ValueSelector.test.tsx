@@ -35,6 +35,12 @@ function renderSelector(
 	);
 }
 
+async function openDropdown(): Promise<void> {
+	const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+	const control = screen.getByTestId('variable-select-env');
+	await user.click(control.querySelector('input') as HTMLInputElement);
+}
+
 /** Hovers an element and lets the tooltip's open delay elapse. */
 async function hover(element: HTMLElement): Promise<void> {
 	const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
@@ -112,15 +118,42 @@ describe('ValueSelector', () => {
 		});
 	});
 
+	describe('a dynamic variable', () => {
+		function renderDynamic(relatedValues: string[]): void {
+			render(
+				<TooltipProvider>
+					<ValueSelector
+						options={OPTIONS}
+						variableType="dynamic"
+						multiSelect
+						showAllOption
+						selection={{ value: [], allSelected: false }}
+						onChange={jest.fn()}
+						emptyFallback={{ value: [], allSelected: false }}
+						testId="variable-select-env"
+						dynamic={{ values: OPTIONS, relatedValues }}
+					/>
+				</TooltipProvider>,
+			);
+		}
+
+		it('splits related values out of the full list', async () => {
+			renderDynamic(['checkout-service-prod']);
+
+			await openDropdown();
+
+			expect(
+				screen.getByRole('heading', { level: 2, name: /Related Values/ }),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole('heading', { level: 2, name: /All Values/ }),
+			).toBeInTheDocument();
+		});
+	});
+
 	describe('clearing', () => {
 		function clearIcon(): Element | null {
 			return document.querySelector('.ant-select-clear');
-		}
-
-		async function openDropdown(): Promise<void> {
-			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-			const control = screen.getByTestId('variable-select-env');
-			await user.click(control.querySelector('input') as HTMLInputElement);
 		}
 
 		it('offers no clear icon while the list is closed', () => {

@@ -22,11 +22,20 @@ import type { VariableSelectionMap } from '../selectionTypes';
 import { selectionToPayload } from '../utils/selectionUtils';
 import { useVariableFetchState } from './useVariableFetchState';
 
+export interface DynamicVariableOptions {
+	/** ALL VALUES section. */
+	values: string[];
+	/** RELATED VALUES section — scoped by the sibling dynamic variables' selections. */
+	relatedValues: string[];
+}
+
 export interface VariableOptions {
 	options: string[];
 	loading: boolean;
 	errorMessage: string | null;
 	onRetry?: () => void;
+	/** DYNAMIC only: what the dropdown renders, split into its two sections. */
+	dynamic?: DynamicVariableOptions;
 }
 
 /**
@@ -150,10 +159,26 @@ export function useFetchedVariableOptions(
 		return sortValuesByOrder(values, variable.sort).map(String);
 	}, [dynamicResult.data, variable.sort]);
 
+	const dynamicRelatedOptions = useMemo(
+		() =>
+			sortValuesByOrder(
+				dynamicResult.data?.data?.relatedValues ?? [],
+				variable.sort,
+			).map(String),
+		[dynamicResult.data, variable.sort],
+	);
+
+	// Related values are scoped by the sibling selections, so they can name values the
+	// unscoped list never returned — the selectable set is the union of both sections.
+	const dynamicSelectableOptions = useMemo(
+		() => [...new Set([...dynamicOptions, ...dynamicRelatedOptions])],
+		[dynamicOptions, dynamicRelatedOptions],
+	);
+
 	// Flag a variable that settled with zero options so dependent panels fall through
 	// to "no data" instead of waiting forever. hasFetchedOnce excludes the pre-fetch state.
 	const effectiveOptions =
-		variable.type === 'DYNAMIC' ? dynamicOptions : queryOptions;
+		variable.type === 'DYNAMIC' ? dynamicSelectableOptions : queryOptions;
 	useEffect(() => {
 		if (variable.type !== 'QUERY' && variable.type !== 'DYNAMIC') {
 			return;
@@ -175,13 +200,17 @@ export function useFetchedVariableOptions(
 
 	if (variable.type === 'DYNAMIC') {
 		return {
-			options: dynamicOptions,
+			options: dynamicSelectableOptions,
 			loading: dynamicResult.isFetching || isVariableWaiting,
 			errorMessage: dynamicResult.error
 				? (dynamicResult.error as Error).message || null
 				: null,
 			onRetry: (): void => {
 				void dynamicResult.refetch();
+			},
+			dynamic: {
+				values: dynamicOptions,
+				relatedValues: dynamicRelatedOptions,
 			},
 		};
 	}
