@@ -1,0 +1,15 @@
+.separator {
+	flex-shrink: 0;
+	width: 1px;
+	height: 14px;
+	background: var(--l2-border);
+}
+
+// Strip items hide themselves by rendering null, which would otherwise leave a
+// separator dangling at an edge or two of them side by side. Collapsing them
+// here keeps the call sites free of visibility plumbing.
+.separator:first-child,
+.separator:last-child,
+.separator + .separator {
+	display: none;
+}
