@@ -127,9 +127,7 @@ export function useTestSpanMapper(
 			{ data: body },
 			{
 				onSuccess: (response) => {
-					void logEvent('AI Observability Attribute Mapping: Test run', {
-						isTemplateInput,
-					});
+					void logEvent('AI Observability Attribute Mapping: Test run', {});
 					setTestedAttributes(submittedAttributes);
 					setTestedResource(submittedResource);
 					setResult(response.data?.spans ?? []);
@@ -140,7 +138,7 @@ export function useTestSpanMapper(
 				},
 			},
 		);
-	}, [snapshot, draft, input, isTemplateInput, mutate, reset]);
+	}, [snapshot, draft, input, mutate, reset]);
 
 	return {
 		input,
