@@ -48,12 +48,11 @@
 }
 
 /* Single treatment for every label in the drawer, so field labels and the */
-/* headings on the bordered surfaces read as one tier. */
 .fieldLabel {
 	font-size: var(--periscope-font-size-base);
 	font-weight: var(--font-weight-medium);
 	line-height: var(--spacing-10);
-	color: var(--l1-foreground);
+	color: var(--l2-foreground);
 }
 
 .pricingField {

@@ -21,6 +21,9 @@
 	--dialog-header-padding: var(--spacing-10) var(--spacing-12);
 	--dialog-footer-padding: var(--spacing-8) var(--spacing-12);
 
+	--input-foreground: var(--l1-foreground);
+	--input-placeholder-color: var(--l3-foreground);
+
 	display: flex;
 	overflow: hidden;
 
