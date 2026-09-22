@@ -28,6 +28,9 @@ import {
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringSelectedItemParams,
 	useInfraMonitoringStatusFilter,
+	useInfraMonitoringPodStatusFilter,
+	useInfraMonitoringNodeReadinessFilter,
+	useInfraMonitoringContainerStatusFilter,
 } from '../hooks';
 import {
 	useInfraMonitoringFontSize,
@@ -96,6 +99,10 @@ export type K8sBaseListProps<
 	detailsQueryKeyPrefix: string;
 };
 
+function emptyToUndefined<T>(values: T[]): T[] | undefined {
+	return values.length > 0 ? values : undefined;
+}
+
 export function K8sBaseList<
 	T extends K8sEntityData,
 	TItemKey extends string | SelectedItemParams = string,
@@ -119,6 +126,9 @@ export function K8sBaseList<
 	const [groupBy] = useInfraMonitoringGroupBy();
 	const [orderBy] = useInfraMonitoringOrderBy();
 	const [statusFilter] = useInfraMonitoringStatusFilter();
+	const [podStatusFilter] = useInfraMonitoringPodStatusFilter();
+	const [nodeReadinessFilter] = useInfraMonitoringNodeReadinessFilter();
+	const [containerStatusFilter] = useInfraMonitoringContainerStatusFilter();
 	const [selectedItemParams, setSelectedItemParams] =
 		useInfraMonitoringSelectedItemParams();
 	const selectedItem = selectedItemParams.selectedItem;
@@ -170,6 +180,9 @@ export function K8sBaseList<
 			JSON.stringify(orderBy),
 			JSON.stringify(groupBy),
 			statusFilter,
+			podStatusFilter.join(),
+			nodeReadinessFilter.join(),
+			containerStatusFilter.join(),
 			...extraQueryKeyParts,
 		);
 	}, [
@@ -182,6 +195,9 @@ export function K8sBaseList<
 		orderBy,
 		groupBy,
 		statusFilter,
+		podStatusFilter,
+		nodeReadinessFilter,
+		containerStatusFilter,
 		extraQueryKeyParts,
 	]);
 
@@ -202,6 +218,9 @@ export function K8sBaseList<
 							statusFilter === 'active' || statusFilter === 'inactive'
 								? statusFilter
 								: undefined,
+						filterByPodStatus: emptyToUndefined(podStatusFilter),
+						filterByNodeReadiness: emptyToUndefined(nodeReadinessFilter),
+						filterByContainerStatus: emptyToUndefined(containerStatusFilter),
 					},
 					groupBy:
 						groupBy && groupBy.length > 0
