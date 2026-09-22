@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import logEvent from 'api/common/logEvent';
 import {
 	RenderErrorResponseDTO,
 	SpantypesSpanMapperTestSpanDTO,
@@ -126,6 +127,9 @@ export function useTestSpanMapper(
 			{ data: body },
 			{
 				onSuccess: (response) => {
+					void logEvent('AI Observability Attribute Mapping: Test run', {
+						isTemplateInput,
+					});
 					setTestedAttributes(submittedAttributes);
 					setTestedResource(submittedResource);
 					setResult(response.data?.spans ?? []);
@@ -136,7 +140,7 @@ export function useTestSpanMapper(
 				},
 			},
 		);
-	}, [snapshot, draft, input, mutate, reset]);
+	}, [snapshot, draft, input, isTemplateInput, mutate, reset]);
 
 	return {
 		input,
