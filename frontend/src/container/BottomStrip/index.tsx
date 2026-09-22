@@ -1,6 +1,8 @@
 import { useLayoutEffect } from 'react';
 import { useAppContext } from 'providers/App/App';
 
+import AskNoz from './AskNoz/AskNoz';
+
 import styles from './BottomStrip.module.scss';
 
 export const BOTTOM_STRIP_HEIGHT = 24;
@@ -34,7 +36,9 @@ function BottomStrip(): JSX.Element {
 					</span>
 				)}
 			</div>
-			<div className={styles.right} />
+			<div className={styles.right}>
+				<AskNoz />
+			</div>
 		</div>
 	);
 }
