@@ -26,6 +26,8 @@ interface ValueSelectorProps {
 	/** Option-fetch error surfaced in the dropdown, with a retry action. */
 	errorMessage?: string | null;
 	onRetry?: () => void;
+	/** Hides the retry action for an error that retrying cannot fix. */
+	isRetryable?: boolean;
 	/** DYNAMIC only: sectioned rendering and server-side search. */
 	dynamic?: DynamicVariableOptions;
 }
@@ -42,6 +44,7 @@ function ValueSelector({
 	testId,
 	errorMessage,
 	onRetry,
+	isRetryable = true,
 	dynamic,
 }: ValueSelectorProps): JSX.Element {
 	const optionData = useMemo<OptionData[]>(
@@ -127,6 +130,7 @@ function ValueSelector({
 				loading={loading}
 				errorMessage={errorMessage}
 				onRetry={onRetry}
+				showRetryButton={isRetryable}
 				showSearch
 				// Clearing belongs to the open list: on the closed control the icon would
 				// appear on hover, in a row of variable pills, for an action whose result is
@@ -194,6 +198,7 @@ function ValueSelector({
 			loading={loading}
 			errorMessage={errorMessage}
 			onRetry={onRetry}
+			showRetryButton={isRetryable}
 			showSearch
 			placeholder="Select value"
 			isDynamicVariable={!!dynamic}

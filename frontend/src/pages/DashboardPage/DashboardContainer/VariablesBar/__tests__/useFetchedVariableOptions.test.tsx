@@ -198,6 +198,24 @@ describe('useFetchedVariableOptions', () => {
 			expect(result.current.dynamic?.values).toStrictEqual(['cart']),
 		);
 	});
+	it('marks a client error as not retryable', async () => {
+		mockGetFieldValues.mockRejectedValue(
+			Object.assign(new Error('bad request'), { response: { status: 400 } }),
+		);
+
+		useDashboardStore.setState({
+			variableFetchStates: { env: VariableFetchState.Loading },
+			variableCycleIds: { env: 1 },
+		});
+
+		const variable = dynamicVariable('env');
+		const { result } = renderHook(
+			() => useFetchedVariableOptions(variable, [variable], {}),
+			{ wrapper },
+		);
+
+		await waitFor(() => expect(result.current.isRetryable).toBe(false));
+	});
 	it('scopes the fetch by a sibling dynamic selection, skipping ALL', async () => {
 		mockGetFieldValues.mockResolvedValue(fieldValues(['cart']));
 

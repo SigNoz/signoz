@@ -9,6 +9,7 @@ import {
 	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 } from 'constants/queryCacheTime';
 import type { AppState } from 'store/reducers';
+import { isRetryableError } from 'utils/errorUtils';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
@@ -39,6 +40,8 @@ export interface VariableOptions {
 	loading: boolean;
 	errorMessage: string | null;
 	onRetry?: () => void;
+	/** false for a client error, where retrying the same request cannot help. */
+	isRetryable?: boolean;
 	/** DYNAMIC only: what the dropdown renders, sectioned and search-aware. */
 	dynamic?: DynamicVariableOptions;
 }
@@ -255,6 +258,7 @@ export function useFetchedVariableOptions(
 			onRetry: (): void => {
 				void dynamicResult.refetch();
 			},
+			isRetryable: !dynamicResult.error || isRetryableError(dynamicResult.error),
 			dynamic: dynamicDisplay,
 		};
 	}
@@ -267,5 +271,6 @@ export function useFetchedVariableOptions(
 		onRetry: (): void => {
 			void queryResult.refetch();
 		},
+		isRetryable: !queryResult.error || isRetryableError(queryResult.error),
 	};
 }
