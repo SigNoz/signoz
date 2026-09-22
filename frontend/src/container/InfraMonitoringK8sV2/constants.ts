@@ -157,9 +157,11 @@ export enum VIEWS {
 	PROCESSES = 'processes',
 	EVENTS = 'events',
 	POD_METRICS = 'pod_metrics',
+	OVERVIEW = 'overview',
 }
 
 export const VIEW_TYPES = {
+	OVERVIEW: VIEWS.OVERVIEW,
 	METRICS: VIEWS.METRICS,
 	LOGS: VIEWS.LOGS,
 	TRACES: VIEWS.TRACES,
@@ -896,6 +898,20 @@ export const getInvalidValueTooltipText = (
 	attribute: string,
 ): string => `Some ${entity} do not have ${attribute}s.`;
 
+export const K8S_CATEGORY_LABELS: Record<InfraMonitoringEntity, string> = {
+	[InfraMonitoringEntity.HOSTS]: 'Hosts',
+	[InfraMonitoringEntity.PODS]: 'Pods',
+	[InfraMonitoringEntity.NODES]: 'Nodes',
+	[InfraMonitoringEntity.NAMESPACES]: 'Namespaces',
+	[InfraMonitoringEntity.CLUSTERS]: 'Clusters',
+	[InfraMonitoringEntity.DEPLOYMENTS]: 'Deployments',
+	[InfraMonitoringEntity.STATEFULSETS]: 'StatefulSets',
+	[InfraMonitoringEntity.DAEMONSETS]: 'DaemonSets',
+	[InfraMonitoringEntity.CONTAINERS]: 'Containers',
+	[InfraMonitoringEntity.JOBS]: 'Jobs',
+	[InfraMonitoringEntity.VOLUMES]: 'Volumes',
+};
+
 export const ENTITY_FILTER_PLACEHOLDERS: Record<InfraMonitoringEntity, string> =
 	{
 		[InfraMonitoringEntity.HOSTS]:
@@ -939,9 +955,12 @@ export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	PAGE_SIZE: 'pageSize',
 	EXPANDED: 'expanded',
 	SELECTED_ITEM: 'selectedItem',
+	SELECTED_ITEM_CATEGORY: 'selectedItemCategory',
 	SELECTED_ITEM_CLUSTER_NAME: 'selectedItemClusterName',
 	SELECTED_ITEM_NAMESPACE_NAME: 'selectedItemNamespaceName',
 	SELECTED_ITEM_CONTAINER_NAME: 'selectedItemContainerName',
+	OVERVIEW_CATEGORY: 'overviewCategory',
+	OVERVIEW_EXPRESSION: 'overviewExpression',
 	DETAIL_RELATIVE_TIME: 'detailRelativeTime',
 	DETAIL_START_TIME: 'detailStartTime',
 	DETAIL_END_TIME: 'detailEndTime',
