@@ -911,7 +911,7 @@ func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesPara
 
 	listableRules := make([]*ruletypes.ListableRule, 0, len(storedRules))
 	for _, s := range storedRules {
-		listable, err := ruletypes.NewListableRuleFromStorableRule(s)
+		listable, err := s.ToListableRule()
 		if err != nil {
 			m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", slog.String("rule.id", s.ID.StringValue()), errors.Attr(err))
 			continue

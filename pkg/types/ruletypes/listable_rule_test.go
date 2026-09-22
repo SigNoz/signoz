@@ -32,7 +32,7 @@ func names(rules []*ListableRule) []string {
 	return out
 }
 
-func TestNewListableRuleFromStorableRule(t *testing.T) {
+func TestToListableRule(t *testing.T) {
 	created := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
 	updated := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
 
@@ -43,7 +43,7 @@ func TestNewListableRuleFromStorableRule(t *testing.T) {
 		Data:          `{"alert":"High CPU","description":"cpu is hot","alertType":"METRIC_BASED_ALERT","ruleType":"threshold_rule","disabled":true,"labels":{"severity":"critical"}}`,
 	}
 
-	listable, err := NewListableRuleFromStorableRule(storable)
+	listable, err := storable.ToListableRule()
 	require.NoError(t, err)
 
 	assert.Equal(t, storable.ID.StringValue(), listable.Id)
@@ -59,7 +59,7 @@ func TestNewListableRuleFromStorableRule(t *testing.T) {
 	assert.Equal(t, "updater@signoz.io", listable.UpdatedBy)
 	assert.True(t, listable.State.IsZero())
 
-	_, err = NewListableRuleFromStorableRule(&StorableRule{Data: "not json"})
+	_, err = (&StorableRule{Data: "not json"}).ToListableRule()
 	assert.Error(t, err)
 }
 

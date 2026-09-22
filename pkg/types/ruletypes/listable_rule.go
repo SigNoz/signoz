@@ -35,8 +35,8 @@ type storedRuleData struct {
 	Labels      map[string]string `json:"labels"`
 }
 
-// NewListableRuleFromStorableRule leaves State zero; the caller overlays evaluation state.
-func NewListableRuleFromStorableRule(rule *StorableRule) (*ListableRule, error) {
+// ToListableRule leaves State zero; the caller overlays evaluation state.
+func (rule *StorableRule) ToListableRule() (*ListableRule, error) {
 	data := storedRuleData{}
 	if err := json.Unmarshal([]byte(rule.Data), &data); err != nil {
 		return nil, err
