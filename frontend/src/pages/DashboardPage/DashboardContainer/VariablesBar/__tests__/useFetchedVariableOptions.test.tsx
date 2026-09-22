@@ -146,4 +146,96 @@ describe('useFetchedVariableOptions', () => {
 			'checkout',
 		]);
 	});
+	it('sends the search to the API when the list is incomplete', async () => {
+		mockGetFieldValues.mockImplementation((_signal, _name, searchText) =>
+			Promise.resolve({
+				data: searchText
+					? { normalizedValues: ['payments'], relatedValues: [], complete: false }
+					: { normalizedValues: ['cart'], relatedValues: [], complete: false },
+			}),
+		);
+
+		useDashboardStore.setState({
+			variableFetchStates: { env: VariableFetchState.Loading },
+			variableCycleIds: { env: 1 },
+		});
+
+		const variable = dynamicVariable('env');
+		const { result } = renderHook(
+			() => useFetchedVariableOptions(variable, [variable], {}),
+			{ wrapper },
+		);
+
+		await waitFor(() =>
+			expect(result.current.dynamic?.values).toStrictEqual(['cart']),
+		);
+
+		act(() => {
+			result.current.dynamic?.onSearch('pay');
+		});
+
+		await waitFor(() =>
+			expect(result.current.dynamic?.values).toStrictEqual(['payments']),
+		);
+		expect(mockGetFieldValues).toHaveBeenCalledWith(
+			undefined,
+			'service.name',
+			'pay',
+			1_000,
+			2_000,
+			undefined,
+			expect.anything(),
+		);
+		// The search narrows the dropdown only — the selectable set is the full list,
+		// so a pick made before searching is never reconciled away.
+		expect(result.current.options).toStrictEqual(['cart']);
+
+		act(() => {
+			result.current.dynamic?.onSearchReset();
+		});
+
+		await waitFor(() =>
+			expect(result.current.dynamic?.values).toStrictEqual(['cart']),
+		);
+	});
+	it('scopes the fetch by a sibling dynamic selection, skipping ALL', async () => {
+		mockGetFieldValues.mockResolvedValue(fieldValues(['cart']));
+
+		useDashboardStore.setState({
+			variableFetchStates: { env: VariableFetchState.Loading },
+			variableCycleIds: { env: 1 },
+		});
+
+		const env = dynamicVariable('env');
+		const namespace: VariableFormModel = {
+			...dynamicVariable('namespace'),
+			dynamicAttribute: 'k8s.namespace.name',
+		};
+		const region: VariableFormModel = {
+			...dynamicVariable('region'),
+			dynamicAttribute: 'cloud.region',
+		};
+
+		renderHook(
+			() =>
+				useFetchedVariableOptions(env, [env, namespace, region], {
+					namespace: { value: ['prod'], allSelected: false },
+					// ALL means "no filter", so it contributes nothing to existingQuery —
+					// which is why the backend returns no related values for it.
+					region: { value: null, allSelected: true },
+				}),
+			{ wrapper },
+		);
+
+		await waitFor(() =>
+			expect(mockGetFieldValues).toHaveBeenCalledWith(
+				undefined,
+				'service.name',
+				undefined,
+				1_000,
+				2_000,
+				"k8s.namespace.name = 'prod'",
+			),
+		);
+	});
 });

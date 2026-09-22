@@ -26,7 +26,7 @@ interface ValueSelectorProps {
 	/** Option-fetch error surfaced in the dropdown, with a retry action. */
 	errorMessage?: string | null;
 	onRetry?: () => void;
-	/** DYNAMIC only: the two sections its values are split into. */
+	/** DYNAMIC only: sectioned rendering and server-side search. */
 	dynamic?: DynamicVariableOptions;
 }
 
@@ -145,6 +145,10 @@ function ValueSelector({
 				// Offer ALL only once options load, else a concrete value reads as "all".
 				enableAllSelection={showAllOption && options.length > 0}
 				isDynamicVariable={!!dynamic}
+				onSearch={dynamic?.onSearch}
+				showIncompleteDataMessage={
+					!!dynamic && !dynamic.complete && dynamic.values.length > 0
+				}
 				onDropdownVisibleChange={(open): void => {
 					if (open) {
 						setDraft(committedValues);
@@ -153,6 +157,7 @@ function ValueSelector({
 					}
 
 					setIsOpen(false);
+					dynamic?.onSearchReset();
 					commit(draft);
 				}}
 				onChange={(next): void => {
@@ -192,6 +197,10 @@ function ValueSelector({
 			showSearch
 			placeholder="Select value"
 			isDynamicVariable={!!dynamic}
+			onSearch={dynamic?.onSearch}
+			showIncompleteDataMessage={
+				!!dynamic && !dynamic.complete && dynamic.values.length > 0
+			}
 			onChange={(next): void => {
 				void logEvent(
 					DashboardDetailEvents.VariableValueSelected,

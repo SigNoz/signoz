@@ -119,7 +119,11 @@ describe('ValueSelector', () => {
 	});
 
 	describe('a dynamic variable', () => {
-		function renderDynamic(relatedValues: string[]): void {
+		function renderDynamic(
+			complete: boolean,
+			relatedValues: string[],
+		): jest.Mock {
+			const onSearch = jest.fn();
 			render(
 				<TooltipProvider>
 					<ValueSelector
@@ -131,14 +135,21 @@ describe('ValueSelector', () => {
 						onChange={jest.fn()}
 						emptyFallback={{ value: [], allSelected: false }}
 						testId="variable-select-env"
-						dynamic={{ values: OPTIONS, relatedValues }}
+						dynamic={{
+							values: OPTIONS,
+							relatedValues,
+							complete,
+							onSearch,
+							onSearchReset: jest.fn(),
+						}}
 					/>
 				</TooltipProvider>,
 			);
+			return onSearch;
 		}
 
 		it('splits related values out of the full list', async () => {
-			renderDynamic(['checkout-service-prod']);
+			renderDynamic(true, ['checkout-service-prod']);
 
 			await openDropdown();
 
@@ -148,6 +159,46 @@ describe('ValueSelector', () => {
 			expect(
 				screen.getByRole('heading', { level: 2, name: /All Values/ }),
 			).toBeInTheDocument();
+		});
+
+		it('still opens its dropdown in single-select', async () => {
+			// The shared single select spreads unknown props over its own handlers, so
+			// passing it an `onDropdownVisibleChange` silently kills its open state.
+			render(
+				<TooltipProvider>
+					<ValueSelector
+						options={OPTIONS}
+						variableType="dynamic"
+						multiSelect={false}
+						showAllOption={false}
+						selection={{ value: '', allSelected: false }}
+						onChange={jest.fn()}
+						emptyFallback={{ value: '', allSelected: false }}
+						testId="variable-select-env"
+						dynamic={{
+							values: OPTIONS,
+							relatedValues: [],
+							complete: false,
+							onSearch: jest.fn(),
+							onSearchReset: jest.fn(),
+						}}
+					/>
+				</TooltipProvider>,
+			);
+
+			await openDropdown();
+
+			expect(screen.getByText('cart-service-prod')).toBeInTheDocument();
+		});
+
+		it('routes typing to the API search when the list is truncated', async () => {
+			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			const onSearch = renderDynamic(false, []);
+
+			await openDropdown();
+			await user.keyboard('pay');
+
+			expect(onSearch).toHaveBeenLastCalledWith('pay');
 		});
 	});
 
