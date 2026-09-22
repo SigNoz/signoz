@@ -1,0 +1,40 @@
+.strip {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+
+	flex-shrink: 0;
+	height: var(--bottom-strip-height);
+	padding: 0 12px;
+
+	background: var(--l2-background);
+	border-top: 1px solid var(--l2-border);
+
+	// font styles
+	font-family: var(--font-family-sf-mono, monospace);
+	font-size: 13px;
+	font-weight: var(--font-weight-normal);
+	line-height: var(--line-height-none);
+
+	// Above page content, below the body-portalled overlays that are meant to
+	// cover the strip.
+	position: relative;
+	z-index: 1;
+}
+
+.left,
+.right {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+}
+
+// Temporary placeholder for the left slot. Replaced later.
+.version {
+	color: var(--l2-foreground);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
