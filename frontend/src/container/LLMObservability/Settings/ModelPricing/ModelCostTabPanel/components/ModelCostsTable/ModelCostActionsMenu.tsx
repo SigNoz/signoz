@@ -50,6 +50,7 @@ function ModelCostActionsMenu({
 				color="secondary"
 				size="icon"
 				className={styles.actionButton}
+				aria-label="Model cost actions"
 				testId={`model-cost-actions-${rule.id}`}
 			>
 				<Ellipsis size={16} />
