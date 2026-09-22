@@ -64,42 +64,42 @@ func TestJSONExtractMapValue(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "plain key",
+			name:     "PlainKey",
 			column:   "data",
 			mapField: "labels",
 			key:      "team",
 			expected: `"data"::jsonb->'labels'->>'team'`,
 		},
 		{
-			name:     "dotted key stays one map entry",
+			name:     "DottedKey_OneMapEntry",
 			column:   "data",
 			mapField: "labels",
 			key:      "k8s.cluster",
 			expected: `"data"::jsonb->'labels'->>'k8s.cluster'`,
 		},
 		{
-			name:     "single quote in key is doubled",
+			name:     "SingleQuoteInKey_Doubled",
 			column:   "data",
 			mapField: "labels",
 			key:      "o'brien",
 			expected: `"data"::jsonb->'labels'->>'o''brien'`,
 		},
 		{
-			name:     "backslash in key stays literal",
+			name:     "BackslashInKey_Literal",
 			column:   "data",
 			mapField: "labels",
 			key:      `a\b`,
 			expected: `"data"::jsonb->'labels'->>'a\b'`,
 		},
 		{
-			name:     "double quote in key stays literal",
+			name:     "DoubleQuoteInKey_Literal",
 			column:   "data",
 			mapField: "labels",
 			key:      `a"b`,
 			expected: `"data"::jsonb->'labels'->>'a"b'`,
 		},
 		{
-			name:     "qualified column",
+			name:     "QualifiedColumn",
 			column:   "rule.data",
 			mapField: "labels",
 			key:      "severity",

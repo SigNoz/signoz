@@ -16,35 +16,35 @@ func TestJSONExtractMapValue(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "plain key",
+			name:     "PlainKey",
 			column:   "data",
 			mapField: "labels",
 			key:      "team",
 			expected: `json_extract("data", '$.labels."team"')`,
 		},
 		{
-			name:     "dotted key stays one map entry",
+			name:     "DottedKey_OneMapEntry",
 			column:   "data",
 			mapField: "labels",
 			key:      "k8s.cluster",
 			expected: `json_extract("data", '$.labels."k8s.cluster"')`,
 		},
 		{
-			name:     "backslash in key is escaped",
+			name:     "BackslashInKey_Escaped",
 			column:   "data",
 			mapField: "labels",
 			key:      `a\b`,
 			expected: `json_extract("data", '$.labels."a\\b"')`,
 		},
 		{
-			name:     "single quote in key is doubled",
+			name:     "SingleQuoteInKey_Doubled",
 			column:   "data",
 			mapField: "labels",
 			key:      "o'brien",
 			expected: `json_extract("data", '$.labels."o''brien"')`,
 		},
 		{
-			name:     "qualified column",
+			name:     "QualifiedColumn",
 			column:   "rule.data",
 			mapField: "labels",
 			key:      "severity",
