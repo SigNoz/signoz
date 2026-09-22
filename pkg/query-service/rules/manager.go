@@ -909,27 +909,9 @@ func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesPara
 
 	stateByRuleID := m.snapshotRuleStates()
 
-	listableRules := make([]*ruletypes.ListableRule, 0, len(storedRules))
-	for _, s := range storedRules {
-		listable, err := s.ToListableRule()
-		if err != nil {
-			m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", slog.String("rule.id", s.ID.StringValue()), errors.Attr(err))
-			continue
-		}
-
-		if state, ok := stateByRuleID[listable.Id]; ok {
-			listable.State = state
-		} else {
-			listable.State = ruletypes.StateDisabled
-			listable.Disabled = true
-		}
-		if len(stateFilter) > 0 {
-			if _, ok := stateFilter[listable.State]; !ok {
-				continue
-			}
-		}
-
-		listableRules = append(listableRules, listable)
+	listableRules, errByRuleID := ruletypes.NewListableRulesFromStorableRules(storedRules, stateByRuleID, stateFilter)
+	for ruleID, err := range errByRuleID {
+		m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", slog.String("rule.id", ruleID), errors.Attr(err))
 	}
 
 	total := int64(len(listableRules))

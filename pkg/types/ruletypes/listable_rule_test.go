@@ -63,6 +63,71 @@ func TestToListableRule(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestNewListableRulesFromStorableRules(t *testing.T) {
+	enabledID := valuer.GenerateUUID()
+	pausedID := valuer.GenerateUUID()
+	corruptID := valuer.GenerateUUID()
+
+	storedRules := []*StorableRule{
+		{
+			Identifiable: types.Identifiable{ID: enabledID},
+			Data:         `{"alert":"cpu high","alertType":"METRIC_BASED_ALERT","ruleType":"threshold_rule"}`,
+		},
+		{
+			Identifiable: types.Identifiable{ID: pausedID},
+			Data:         `{"alert":"mem high","alertType":"METRIC_BASED_ALERT","ruleType":"threshold_rule","disabled":true}`,
+		},
+		{
+			Identifiable: types.Identifiable{ID: corruptID},
+			Data:         "not json",
+		},
+	}
+	stateByRuleID := map[string]AlertState{enabledID.StringValue(): StateFiring}
+
+	testCases := []struct {
+		name        string
+		stateFilter map[AlertState]struct{}
+		wantNames   []string
+		wantStates  map[string]AlertState
+	}{
+		{
+			name:       "NoFilter_KeepsAllParseableRows",
+			wantNames:  []string{"cpu high", "mem high"},
+			wantStates: map[string]AlertState{"cpu high": StateFiring, "mem high": StateDisabled},
+		},
+		{
+			name:        "FiringFilter_KeepsOverlaidState",
+			stateFilter: map[AlertState]struct{}{StateFiring: {}},
+			wantNames:   []string{"cpu high"},
+			wantStates:  map[string]AlertState{"cpu high": StateFiring},
+		},
+		{
+			name:        "DisabledFilter_KeepsAbsentFromSnapshot",
+			stateFilter: map[AlertState]struct{}{StateDisabled: {}},
+			wantNames:   []string{"mem high"},
+			wantStates:  map[string]AlertState{"mem high": StateDisabled},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			listableRules, errByRuleID := NewListableRulesFromStorableRules(storedRules, stateByRuleID, testCase.stateFilter)
+
+			require.Len(t, errByRuleID, 1)
+			assert.Error(t, errByRuleID[corruptID.StringValue()])
+
+			assert.Equal(t, testCase.wantNames, names(listableRules))
+			for _, rule := range listableRules {
+				assert.Equal(t, testCase.wantStates[rule.AlertName], rule.State)
+			}
+		})
+	}
+
+	disabledRow, _ := NewListableRulesFromStorableRules(storedRules[1:2], stateByRuleID, nil)
+	require.Len(t, disabledRow, 1)
+	assert.True(t, disabledRow[0].Disabled)
+}
+
 func TestSortListableRules(t *testing.T) {
 	base := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
 

@@ -55,6 +55,38 @@ func (rule *StorableRule) ToListableRule() (*ListableRule, error) {
 	}, nil
 }
 
+// NewListableRulesFromStorableRules converts rows, overlays evaluation state (absent means
+// disabled) and applies the state filter; corrupt rows come back keyed by rule id for the
+// caller to log.
+func NewListableRulesFromStorableRules(storedRules []*StorableRule, stateByRuleID map[string]AlertState, stateFilter map[AlertState]struct{}) ([]*ListableRule, map[string]error) {
+	listableRules := make([]*ListableRule, 0, len(storedRules))
+	errByRuleID := make(map[string]error)
+
+	for _, rule := range storedRules {
+		listable, err := rule.ToListableRule()
+		if err != nil {
+			errByRuleID[rule.ID.StringValue()] = err
+			continue
+		}
+
+		if state, ok := stateByRuleID[listable.Id]; ok {
+			listable.State = state
+		} else {
+			listable.State = StateDisabled
+			listable.Disabled = true
+		}
+		if len(stateFilter) > 0 {
+			if _, ok := stateFilter[listable.State]; !ok {
+				continue
+			}
+		}
+
+		listableRules = append(listableRules, listable)
+	}
+
+	return listableRules, errByRuleID
+}
+
 // LabelPair is one distinct label key/value observed on the org's rules.
 type LabelPair struct {
 	Key   string `json:"key" required:"true"`
