@@ -813,6 +813,12 @@ body.ai-assistant-panel-open {
 	}
 }
 
+body.bottom-strip-on {
+	.PylonChat-chatWindowFrameContainer {
+		bottom: var(--bottom-strip-height, 0px) !important;
+	}
+}
+
 [role='tab'] {
 	color: var(--foreground) !important;
 }

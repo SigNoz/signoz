@@ -885,7 +885,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					)}
 				</Flex>
 
-				{showAddCreditCardModal && <ChatSupportGateway />}
+				{showAddCreditCardModal && !isSavedViewEnabled && <ChatSupportGateway />}
 				{showChangelogModal && changelog && (
 					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
 				)}

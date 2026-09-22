@@ -2,6 +2,8 @@ import { useLayoutEffect } from 'react';
 import { useAppContext } from 'providers/App/App';
 
 import AskNoz from './AskNoz/AskNoz';
+import StripSeparator from './components/StripSeparator/StripSeparator';
+import SupportButton from './SupportButton/SupportButton';
 
 import styles from './BottomStrip.module.scss';
 
@@ -38,6 +40,8 @@ function BottomStrip(): JSX.Element {
 			</div>
 			<div className={styles.right}>
 				<AskNoz />
+				<StripSeparator />
+				<SupportButton />
 			</div>
 		</div>
 	);
