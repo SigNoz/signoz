@@ -30,6 +30,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import { TimeRangeValidationResult, validateTimeRange } from 'utils/timeUtils';
 
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
+import { useInvalidFlash } from './useInvalidFlash';
 
 import './CustomTimePicker.styles.scss';
 
@@ -106,6 +107,7 @@ function CustomTimePicker({
 	const [inputErrorDetails, setInputErrorDetails] = useState<
 		TimeRangeValidationResult['errorDetails'] | null
 	>(null);
+	const { isFlashing, triggerFlash } = useInvalidFlash();
 	const location = useLocation();
 
 	const inputRef = useRef<InputRef>(null);
@@ -275,6 +277,9 @@ function CustomTimePicker({
 		if (!newOpen) {
 			setCustomDTPickerVisible?.(false);
 			setActiveView('datetime');
+			// The rejected value is being discarded in favour of the previous one, so
+			// the error it raised must not outlive it
+			resetErrorStatus();
 
 			if (showLiveLogs) {
 				setSelectedTimePlaceholderValue('Live');
@@ -340,6 +345,7 @@ function CustomTimePicker({
 
 			if (minTime && (!minTime.isValid() || minTime < maxAllowedMinTime)) {
 				setInputStatus(CustomTimePickerInputStatus.ERROR);
+				triggerFlash();
 				onError(true);
 				setInputErrorDetails({
 					message: `Please enter time less than ${maxAllowedMinTimeInMonths} months`,
@@ -392,6 +398,7 @@ function CustomTimePicker({
 
 		if (!isValidTimeRange) {
 			setInputStatus(CustomTimePickerInputStatus.ERROR);
+			triggerFlash();
 			onError(true);
 			setInputErrorDetails(errorDetails || null);
 			return;
@@ -485,6 +492,9 @@ function CustomTimePicker({
 
 		setOpen(false);
 		setCustomDTPickerVisible?.(false);
+		// The rejected value is being discarded in favour of the previous one, so
+		// the error it raised must not outlive it
+		resetErrorStatus();
 
 		if (showLiveLogs) {
 			setInputValue('Live');
@@ -600,6 +610,7 @@ function CustomTimePicker({
 						className={cx(
 							'timeSelection-input',
 							inputStatus === CustomTimePickerInputStatus.ERROR ? 'error' : '',
+							isFlashing ? 'invalid-flash' : '',
 						)}
 						type="text"
 						status={
