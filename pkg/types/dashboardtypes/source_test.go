@@ -53,7 +53,7 @@ func TestErrIfNotMutable_BySource(t *testing.T) {
 		publishable bool
 	}{
 		{SourceUser, true, true},
-		{SourceSystem, true, false},
+		{SourceSystem, false, false},
 		{SourceIntegration, false, false},
 	}
 

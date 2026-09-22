@@ -305,12 +305,3 @@ func (module *module) ReconcileSystemDashboards(ctx context.Context, orgID value
 func (module *module) GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.GetSystemDashboard(ctx, orgID, name)
 }
-
-func (module *module) delete(ctx context.Context, orgID, id valuer.UUID) error {
-	return module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if err := module.store.DeletePublic(ctx, id.String()); err != nil && !errors.Ast(err, errors.TypeNotFound) {
-			return err
-		}
-		return module.store.Delete(ctx, orgID, id)
-	})
-}

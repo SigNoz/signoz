@@ -2,7 +2,6 @@ package impldashboard
 
 import (
 	"context"
-	"slices"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -10,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/tag"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -77,50 +75,4 @@ func (module *module) UpdatePublic(_ context.Context, _ valuer.UUID, _ *dashboar
 
 func (module *module) DeletePublic(_ context.Context, _ valuer.UUID, _ valuer.UUID) error {
 	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
-}
-
-func extractBuilderFilterLabels(data map[string]interface{}) []string {
-	out := []string{}
-
-	// v5: filter.expression
-	if f, ok := data["filter"].(map[string]interface{}); ok {
-		if expr, ok := f["expression"].(string); ok && expr != "" {
-			for _, sel := range querybuilder.QueryStringToKeysSelectors(expr) {
-				if sel != nil && sel.Name != "" {
-					out = append(out, sel.Name)
-				}
-			}
-		}
-	}
-
-	// v3: filters.items[].key.key
-	if f, ok := data["filters"].(map[string]interface{}); ok {
-		if items, ok := f["items"].([]interface{}); ok {
-			for _, it := range items {
-				im, ok := it.(map[string]interface{})
-				if !ok {
-					continue
-				}
-				km, ok := im["key"].(map[string]interface{})
-				if !ok {
-					continue
-				}
-				if key, ok := km["key"].(string); ok && key != "" {
-					out = append(out, key)
-				}
-			}
-		}
-	}
-
-	return out
-}
-
-func appendDedup(dst []string, values ...string) []string {
-	for _, v := range values {
-		if v == "" || slices.Contains(dst, v) {
-			continue
-		}
-		dst = append(dst, v)
-	}
-	return dst
 }
