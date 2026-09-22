@@ -21,15 +21,40 @@ function toSeconds(timestampMs: number): number {
 	return timestampMs / 1000;
 }
 
+/** Default step when a query has no reported interval. */
+const DEFAULT_STEP_SECONDS = 60;
+
 /**
- * Builds segments from a series' points. Each segment spans from one point to
- * the next; the last extends to `timeRange.end`. A single point produces one
- * full-width segment. Consecutive same-colour segments are merged so the
- * tooltip reports the true duration a service stayed in a state.
+ * Infers a step interval (seconds) from the data itself — the gap between the
+ * first two samples of the first series that has at least two points. Used only
+ * when the response carries no `stepIntervals`. Data-derived, so it doesn't
+ * shift with the view window.
+ */
+function inferFallbackStep(series: PanelSeries[]): number {
+	for (const s of series) {
+		if (s.values.length >= 2) {
+			const gap =
+				toSeconds(s.values[1].timestamp) - toSeconds(s.values[0].timestamp);
+			if (gap > 0) {
+				return gap;
+			}
+		}
+	}
+	return DEFAULT_STEP_SECONDS;
+}
+
+/**
+ * Builds segments from a series' points. Each segment spans from one sample to
+ * the next; the last spans one `stepSeconds` beyond the final sample. All
+ * bounds come from data timestamps (never the view window), so a segment's
+ * duration is fixed — a 10s outage reads 10s whether you view an hour or a
+ * week; only its rendered width scales with the view. Consecutive same-colour
+ * segments are merged so the tooltip reports the true time spent in a state.
  */
 function buildSegments(
 	values: PanelSeries['values'],
 	timeRange: TimeRange,
+	stepSeconds: number,
 	thresholds: DashboardtypesThresholdWithLabelDTO[],
 	defaultColor: string,
 	leadingGapEnd?: number,
@@ -64,8 +89,12 @@ function buildSegments(
 			thresholds,
 			defaultColor,
 		);
+		// A sample covers up to the next one; the final sample covers one step.
+		// Data-derived so the duration doesn't move when the view window changes.
 		const endTime =
-			i < values.length - 1 ? toSeconds(values[i + 1].timestamp) : timeRange.end;
+			i < values.length - 1
+				? toSeconds(values[i + 1].timestamp)
+				: startTime + stepSeconds;
 
 		segments.push({
 			startTime,
@@ -113,8 +142,14 @@ export function transformSeriesToSwimLanes(
 	timeRange: TimeRange,
 	thresholds: DashboardtypesThresholdWithLabelDTO[],
 	isDarkMode: boolean,
+	/** Per-query step interval (seconds); sets how far the final sample extends. */
+	stepIntervals?: Record<string, number>,
 ): SwimLaneModel {
 	const defaultColor = isDarkMode ? DEFAULT_COLOR_DARK : DEFAULT_COLOR_LIGHT;
+
+	// Fallback step when a query has no reported interval: the gap between the
+	// first two samples of any series, else 60s. Data-derived, view-independent.
+	const fallbackStep = inferFallbackStep(series);
 
 	// Earliest data point across all series; a large gap before it (query window
 	// starting before data collection) is rendered as a leading "No Data" band.
@@ -136,11 +171,13 @@ export function transformSeriesToSwimLanes(
 		if (s.values.length === 0) {
 			continue;
 		}
+		const stepSeconds = stepIntervals?.[s.queryName] ?? fallbackStep;
 		rows.push({
 			label: s.legend || s.queryName,
 			segments: buildSegments(
 				s.values,
 				timeRange,
+				stepSeconds,
 				thresholds,
 				defaultColor,
 				hasLeadingGap ? earliestDataTimestamp : undefined,

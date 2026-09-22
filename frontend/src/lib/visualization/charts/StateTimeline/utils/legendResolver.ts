@@ -17,7 +17,8 @@ export function resolveLegendTemplate(
 
 /**
  * Resolves the display label for a set of series labels. With a legend template
- * it interpolates `{{key}}` placeholders; otherwise it joins `key=value` pairs.
+ * it interpolates `{{key}}` placeholders. Otherwise: a single label shows just
+ * its value (no `key=` noise); multiple labels join as `key=value` pairs.
  */
 export function resolveLabelFromLabels(
 	labels: Record<string, string>,
@@ -30,6 +31,9 @@ export function resolveLabelFromLabels(
 	const entries = Object.entries(labels);
 	if (entries.length === 0) {
 		return '';
+	}
+	if (entries.length === 1) {
+		return entries[0][1];
 	}
 	return entries.map(([key, value]) => `${key}=${value}`).join(', ');
 }

@@ -41,7 +41,13 @@ describe('resolveLabelFromLabels', () => {
 		expect(resolveLabelFromLabels({ service: 'api' }, '{{service}}')).toBe('api');
 	});
 
-	it('falls back to key=value pairs when no template is given', () => {
+	it('shows just the value for a single label (no key= prefix)', () => {
+		expect(resolveLabelFromLabels({ title: 'ACA - Status Over Time' })).toBe(
+			'ACA - Status Over Time',
+		);
+	});
+
+	it('falls back to key=value pairs for multiple labels', () => {
 		expect(resolveLabelFromLabels({ service: 'api', env: 'prod' })).toBe(
 			'service=api, env=prod',
 		);

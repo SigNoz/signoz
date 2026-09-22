@@ -52,17 +52,28 @@
 	}
 
 	&__body {
+		position: relative;
+		width: 100%;
+		overflow: hidden;
+	}
+
+	// One virtualized item: the service-name header stacked on its coloured lane.
+	&__lane {
 		display: flex;
-		flex-direction: row;
+		flex-direction: column;
 		width: 100%;
 	}
 
-	&__swim-lanes {
-		position: relative;
-		flex: 1;
-		min-width: 0;
-		height: 100%;
+	&__lane-label {
+		display: flex;
+		align-items: center;
+		padding: 0 8px;
 		overflow: hidden;
+		font-size: 12px;
+		font-weight: 500;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		color: var(--text-vanilla-400, #c8ccd4);
 	}
 
 	&__drag-overlay {

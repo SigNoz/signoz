@@ -1,17 +1,16 @@
 import { useMemo, useRef } from 'react';
-import {
-	DashboardtypesLegendPositionDTO,
-	type DashboardtypesStateTimelinePanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesStateTimelinePanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import StateTimelinePanel from 'lib/visualization/charts/StateTimeline/StateTimelinePanel';
 import type { PanelSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import {
 	flattenTimeSeries,
+	getExecStats,
 	getTimeSeriesResults,
 } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
 
+import { resolveLabelFromLabels } from 'lib/visualization/charts/StateTimeline/utils/legendResolver';
 import { transformSeriesToSwimLanes } from 'lib/visualization/charts/StateTimeline/utils/transformData';
 
 import NoData from '../../components/NoData/NoData';
@@ -47,18 +46,30 @@ function StateTimelinePanelRenderer({
 		return { start: startTime, end: endTime };
 	}, [data.requestPayload]);
 
-	// Flatten the V5 response, then resolve each series' display label with the
-	// same legend matrix the chart panels use, so swim-lane labels match legends.
+	// Flatten the V5 response, then resolve each series' swim-lane label. Try the
+	// shared legend matrix first (honours legend templates); but for grouped
+	// metric queries it yields only the query name (metric aggregations carry no
+	// alias/expression), so fall back to the series' own labels — the group-by
+	// values (e.g. service / destination) that actually identify the row.
 	const flatSeries = useMemo<PanelSeries[]>(() => {
 		const series = flattenTimeSeries(
 			getTimeSeriesResults(data.response),
 			data.legendMap ?? {},
 		);
-		return series.map((s) => ({
-			...s,
-			legend: resolveSeriesLabelV5(s, builderQueries, s.legend),
-		}));
+		return series.map((s) => {
+			const resolved = resolveSeriesLabelV5(s, builderQueries, s.legend);
+			const isQueryNameOnly = resolved === s.queryName || resolved === '';
+			const hasLabels = Object.keys(s.labels).length > 0;
+			const legend =
+				isQueryNameOnly && hasLabels ? resolveLabelFromLabels(s.labels) : resolved;
+			return { ...s, legend };
+		});
 	}, [data.response, data.legendMap, builderQueries]);
+
+	const stepIntervals = useMemo(
+		() => getExecStats(data.response)?.stepIntervals,
+		[data.response],
+	);
 
 	const swimLaneModel = useMemo(
 		() =>
@@ -67,8 +78,9 @@ function StateTimelinePanelRenderer({
 				timeRange,
 				spec.thresholds ?? [],
 				isDarkMode,
+				stepIntervals,
 			),
-		[flatSeries, timeRange, spec.thresholds, isDarkMode],
+		[flatSeries, timeRange, spec.thresholds, isDarkMode, stepIntervals],
 	);
 
 	return (
@@ -88,9 +100,6 @@ function StateTimelinePanelRenderer({
 						width={containerDimensions.width}
 						height={containerDimensions.height}
 						isDarkMode={isDarkMode}
-						legendPosition={
-							spec.legend?.position ?? DashboardtypesLegendPositionDTO.bottom
-						}
 						onDragSelect={onDragSelect}
 					/>
 				)}

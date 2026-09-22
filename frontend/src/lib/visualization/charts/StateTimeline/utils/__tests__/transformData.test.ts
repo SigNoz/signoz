@@ -81,18 +81,44 @@ describe('transformSeriesToSwimLanes', () => {
 		expect(model.rows.map((r) => r.label)).toStrictEqual(['alpha', 'Zeta']);
 	});
 
-	it('colours a single point as a full-width segment to the range end', () => {
+	it('ends a single point one step interval after its timestamp (data-derived, not the view)', () => {
 		const model = transformSeriesToSwimLanes(
 			[series({ legend: 'svc', values: [point(1000, 1)] })],
 			TIME_RANGE,
 			PASS_FAIL,
 			true,
+			{ A: 15 },
 		);
 		const [segment] = model.rows[0].segments;
 		expect(segment.startTime).toBe(1000);
-		expect(segment.endTime).toBe(TIME_RANGE.end);
+		// 1000 + 15s step — independent of TIME_RANGE.end.
+		expect(segment.endTime).toBe(1015);
 		expect(segment.color).toBe('#00FF00');
 		expect(segment.thresholdLabel).toBe('Pass');
+	});
+
+	it('keeps segment duration fixed when the view window changes', () => {
+		const values = [point(1000, 1), point(1030, 0)];
+		const narrow = transformSeriesToSwimLanes(
+			[series({ legend: 'svc', values })],
+			{ start: 995, end: 1045 },
+			PASS_FAIL,
+			true,
+			{ A: 30 },
+		);
+		const wide = transformSeriesToSwimLanes(
+			[series({ legend: 'svc', values })],
+			{ start: 0, end: 100_000 },
+			PASS_FAIL,
+			true,
+			{ A: 30 },
+		);
+		const narrowLast = narrow.rows[0].segments.at(-1);
+		const wideLast = wide.rows[0].segments.at(-1);
+		// The final (red) segment ends at 1030 + 30s step in both views.
+		expect(narrowLast?.endTime).toBe(1060);
+		expect(wideLast?.endTime).toBe(1060);
+		expect(narrowLast?.endTime).toBe(wideLast?.endTime);
 	});
 
 	it('merges consecutive same-state points into one segment', () => {
