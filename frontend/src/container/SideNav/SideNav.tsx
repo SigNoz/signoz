@@ -811,6 +811,30 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	// Check if sidebar is collapsed (not pinned, not hovered, and no dropdown open)
 	const isCollapsed = !isPinned && !isHovered && !isDropdownOpen;
 
+	const getItemUrl = useCallback(
+		(item: SidebarItem): string | undefined => {
+			if (item.key === 'quick-search') {
+				return undefined;
+			}
+			if (item.key === ROUTES.SETTINGS) {
+				return settingsRoute;
+			}
+			if (item.key === aiAssistantMenuItem.key) {
+				return aiAssistantActiveConversationId
+					? ROUTES.AI_ASSISTANT.replace(
+							':conversationId',
+							aiAssistantActiveConversationId,
+						)
+					: aiAssistantMenuItem.key;
+			}
+			const params = new URLSearchParams(search);
+			const availableParams = routeConfig[item.key as string];
+			const queryString = getQueryString(availableParams || [], params);
+			return buildNavUrl(item.key as string, queryString);
+		},
+		[settingsRoute, aiAssistantActiveConversationId, search],
+	);
+
 	const renderNavItems = (
 		items: SidebarItem[],
 		allowPin?: boolean,
@@ -845,6 +869,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						handleMenuItemClick(event, item);
 					}}
 					isPinned={isPinnedItem(item)}
+					to={getItemUrl(item)}
 				/>
 			))}
 		</>
