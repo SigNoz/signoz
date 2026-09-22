@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Badge, BadgeColor } from '@signozhq/ui/badge';
+import { Badge } from '@signozhq/ui/badge';
 import { InframonitoringtypesNodeRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
@@ -15,6 +15,7 @@ import {
 	ValidateColumnValueWrapper,
 } from '../components';
 import { InfraMonitoringEntity } from '../constants';
+import { NODE_CONDITION_COLORS, NODE_CONDITION_LABELS } from './utils';
 import { Workflow } from '@signozhq/icons';
 
 export function getK8sNodeRowKey(
@@ -30,18 +31,6 @@ export function getK8sNodeItemKey(
 ): string {
 	return node.nodeName;
 }
-
-const NODE_CONDITION_COLORS: Record<string, BadgeColor> = {
-	ready: 'forest',
-	not_ready: 'amber',
-	no_data: 'secondary',
-};
-
-const NODE_CONDITION_LABEL_MAP: Record<string, string> = {
-	ready: 'Ready',
-	not_ready: 'Not Ready',
-	no_data: 'No Data',
-};
 
 export type NodeTableColumnConfig =
 	TableColumnDef<InframonitoringtypesNodeRecordDTO>;
@@ -108,7 +97,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 
 				return (
 					<Badge color={color} variant="outline">
-						{NODE_CONDITION_LABEL_MAP[row.condition] || 'Unknown'}
+						{NODE_CONDITION_LABELS[row.condition] || 'Unknown'}
 					</Badge>
 				);
 			}

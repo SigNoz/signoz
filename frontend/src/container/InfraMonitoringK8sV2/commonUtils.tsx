@@ -51,6 +51,34 @@ export const POD_STATUS_COLORS: Record<
 	[InframonitoringtypesPodStatusDTO.unexpectedadmissionerror]: 'cherry',
 };
 
+/** kubectl prints these as single CamelCase words, so the enum value alone is not a usable label. */
+export const POD_STATUS_LABELS: Record<
+	InframonitoringtypesPodStatusDTO,
+	string
+> = {
+	[InframonitoringtypesPodStatusDTO.running]: 'Running',
+	[InframonitoringtypesPodStatusDTO.completed]: 'Completed',
+	[InframonitoringtypesPodStatusDTO.pending]: 'Pending',
+	[InframonitoringtypesPodStatusDTO.unknown]: 'Unknown',
+	[InframonitoringtypesPodStatusDTO.no_data]: 'No data',
+	[InframonitoringtypesPodStatusDTO.failed]: 'Failed',
+	[InframonitoringtypesPodStatusDTO.crashloopbackoff]: 'CrashLoopBackOff',
+	[InframonitoringtypesPodStatusDTO.imagepullbackoff]: 'ImagePullBackOff',
+	[InframonitoringtypesPodStatusDTO.errimagepull]: 'ErrImagePull',
+	[InframonitoringtypesPodStatusDTO.createcontainerconfigerror]:
+		'CreateContainerConfigError',
+	[InframonitoringtypesPodStatusDTO.containercreating]: 'ContainerCreating',
+	[InframonitoringtypesPodStatusDTO.oomkilled]: 'OOMKilled',
+	[InframonitoringtypesPodStatusDTO.error]: 'Error',
+	[InframonitoringtypesPodStatusDTO.containercannotrun]: 'ContainerCannotRun',
+	[InframonitoringtypesPodStatusDTO.evicted]: 'Evicted',
+	[InframonitoringtypesPodStatusDTO.nodeaffinity]: 'NodeAffinity',
+	[InframonitoringtypesPodStatusDTO.nodelost]: 'NodeLost',
+	[InframonitoringtypesPodStatusDTO.shutdown]: 'Shutdown',
+	[InframonitoringtypesPodStatusDTO.unexpectedadmissionerror]:
+		'UnexpectedAdmissionError',
+};
+
 type PodStatusCategory =
 	| 'running'
 	| 'completed'
