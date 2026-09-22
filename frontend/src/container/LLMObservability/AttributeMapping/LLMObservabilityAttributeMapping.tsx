@@ -1,9 +1,8 @@
 import { useCallback } from 'react';
-import { Divider } from '@signozhq/ui/divider';
-import { Tabs } from '@signozhq/ui/tabs';
+import { Tabs } from 'antd';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
 
-import AttributeMappingHeader from './components/AttributeMappingHeader/AttributeMappingHeader';
+import AttributeMappingActions from './components/AttributeMappingActions/AttributeMappingActions';
 import AttributeMappingsTab from './AttributeMappingsTab/AttributeMappingsTab';
 import DiscardChangesDialog from './components/DiscardChangesDialog/DiscardChangesDialog';
 import GroupFormDrawer from './components/GroupFormDrawer/GroupFormDrawer';
@@ -59,24 +58,23 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 			className={styles.llmObservabilityAttributeMapping}
 			data-testid="llm-observability-attribute-mapping-page"
 		>
-			<AttributeMappingHeader
-				isDirty={editor.isDirty}
-				isSaving={editor.isSaving}
-				onDiscard={discardConfirm.request}
-				onSave={editor.save}
-			/>
-
 			{editor.saveError && (
 				<div className={styles.pageError} role="alert">
 					{editor.saveError}
 				</div>
 			)}
-			<Divider />
 
 			<Tabs
-				testId="attribute-mapping-tabs"
-				defaultValue={MAPPINGS_TAB_KEY}
+				defaultActiveKey={MAPPINGS_TAB_KEY}
 				items={tabItems}
+				tabBarExtraContent={
+					<AttributeMappingActions
+						isDirty={editor.isDirty}
+						isSaving={editor.isSaving}
+						onDiscard={discardConfirm.request}
+						onSave={editor.save}
+					/>
+				}
 			/>
 			{groupDrawer.isOpen && (
 				<GroupFormDrawer

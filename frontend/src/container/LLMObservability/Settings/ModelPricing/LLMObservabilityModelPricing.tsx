@@ -1,5 +1,5 @@
 import { Badge } from '@signozhq/ui/badge';
-import { Tabs } from '@signozhq/ui/tabs';
+import { Tabs } from 'antd';
 import { useListUnmappedLLMModels } from 'api/generated/services/llmpricingrules';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 
@@ -26,7 +26,7 @@ function LLMObservabilityModelPricing(): JSX.Element {
 			data-testid="llm-observability-model-pricing-page"
 		>
 			<Tabs
-				value={activeTab}
+				activeKey={activeTab}
 				onChange={(key): void => {
 					void setActiveTab(key as typeof activeTab);
 				}}
