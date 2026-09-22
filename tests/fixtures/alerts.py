@@ -19,7 +19,6 @@ from fixtures.logger import setup_logger
 from fixtures.logs import Logs
 from fixtures.maildev import get_all_mails, verify_email_received
 from fixtures.metrics import Metrics
-from fixtures.notification_channel import ensure_notification_channel
 from fixtures.traces import Traces
 
 logger = setup_logger(__name__)
@@ -109,14 +108,14 @@ def delete_all_rules(signoz: types.SigNoz, token: str) -> None:
 def seed_alert_rules(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
+    create_notification_channel: Callable[[dict], str],
     create_alert_rule: Callable[[dict], str],
 ) -> Callable[[dict, list[dict]], None]:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Cleanup is owned by create_alert_rule, which deletes the rules it created.
     def _seed_alert_rules(channel_config: dict, rules: list[dict]) -> None:
         delete_all_rules(signoz, admin_token)
-        ensure_notification_channel(signoz, admin_token, channel_config)
+        create_notification_channel(channel_config)
         for rule in rules:
             create_alert_rule(rule)
 
