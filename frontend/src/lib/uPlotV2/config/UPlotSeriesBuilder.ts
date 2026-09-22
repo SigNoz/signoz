@@ -3,6 +3,7 @@ import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
 import uPlot, { Series } from 'uplot';
 
+import { resolveFillOpacity, toAlphaHex } from '../utils/fillOpacity';
 import { generateGradientFill } from '../utils/generateGradientFill';
 import { isolatedPointFilter } from '../utils/seriesPointsFilter';
 import {
@@ -58,7 +59,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 	}: {
 		resolvedLineColor: string;
 	}): Partial<Series> {
-		const { lineWidth, lineStyle, lineCap, fillColor, fillMode } = this.props;
+		const { lineWidth, lineStyle, lineCap, fillColor, fillMode, fillOpacity } =
+			this.props;
 		const lineConfig: Partial<Series> = {
 			stroke: resolvedLineColor,
 			width: lineWidth ?? DEFAULT_LINE_WIDTH,
@@ -86,11 +88,17 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 		} else if (this.props.drawStyle === DrawStyle.Histogram) {
 			lineConfig.fill = `${finalFillColor}40`;
 		} else if (fillMode && fillMode !== FillMode.None) {
+			const resolvedOpacity = resolveFillOpacity(fillOpacity);
 			if (fillMode === FillMode.Solid) {
-				lineConfig.fill = `${finalFillColor}70`;
+				lineConfig.fill = `${finalFillColor}${toAlphaHex(resolvedOpacity)}`;
 			} else if (fillMode === FillMode.Gradient) {
 				lineConfig.fill = (self: uPlot): CanvasGradient =>
-					generateGradientFill(self, finalFillColor, 'rgba(0, 0, 0, 0)');
+					generateGradientFill(
+						self,
+						finalFillColor,
+						'rgba(0, 0, 0, 0)',
+						resolvedOpacity,
+					);
 			}
 		}
 
