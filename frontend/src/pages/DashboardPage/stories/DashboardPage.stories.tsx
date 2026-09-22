@@ -91,6 +91,8 @@ export const NoData: Story = {
 /** A partial data failure: the dashboard remains visible while panel queries fail. */
 export const PanelQueryError: Story = {
 	args: { dataState: 'error' },
+	// The mocked queries deliberately fail; the resulting console errors are the state under test.
+	parameters: { allowConsoleErrors: true },
 };
 
 /** The panels mid-fetch, with the header, variable bar and grid already laid out. */
