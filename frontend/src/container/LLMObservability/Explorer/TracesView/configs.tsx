@@ -8,7 +8,7 @@ export const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
 /** Always visible: it is the row's link to the trace. */
 export const TRACE_ID_COLUMN_ID = 'trace_id';
 
-/** Everything else starts hidden, including any aggregate the endpoint adds later. */
+/** Everything else starts hidden; only applied at first init, since the store persists hidden ids. */
 const DEFAULT_VISIBLE_FIELDS = new Set([
 	'service.name',
 	'root_span_name',

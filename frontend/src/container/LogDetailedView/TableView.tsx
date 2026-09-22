@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-// eslint-disable-next-line no-restricted-imports
-import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { Link, Pin } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
@@ -14,23 +12,19 @@ import { ResizeTable } from 'components/ResizeTable';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
-import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
-// eslint-disable-next-line no-restricted-imports
-import { Dispatch } from 'redux';
-import AppActions from 'types/actions';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { openInNewTab } from 'utils/navigation';
 
 import { ActionItemProps } from './ActionItem';
+import { RESTRICTED_SELECTED_FIELDS } from './config';
 import FieldRenderer from './FieldRenderer';
 import TableViewActions from './TableView/TableViewActions';
 import {
@@ -65,7 +59,6 @@ function TableView({
 	listViewPanelSelectedFields,
 	handleChangeSelectedView,
 }: Props): JSX.Element | null {
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
 	const [isfilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
 	const isDarkMode = useIsDarkMode();
@@ -185,11 +178,6 @@ function TableView({
 		const spanId = flattenLogData?.span_id;
 
 		if (traceId) {
-			dispatch({
-				type: SET_DETAILED_LOG_DATA,
-				payload: null,
-			});
-
 			const basePath = generatePath(ROUTES.TRACE_DETAIL, {
 				id: traceId,
 			});

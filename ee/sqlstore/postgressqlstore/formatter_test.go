@@ -77,6 +77,34 @@ func TestJSONExtractMapValue(t *testing.T) {
 			key:      "k8s.cluster",
 			expected: `"data"::jsonb->'labels'->>'k8s.cluster'`,
 		},
+		{
+			name:     "single quote in key is doubled",
+			column:   "data",
+			mapField: "labels",
+			key:      "o'brien",
+			expected: `"data"::jsonb->'labels'->>'o''brien'`,
+		},
+		{
+			name:     "backslash in key stays literal",
+			column:   "data",
+			mapField: "labels",
+			key:      `a\b`,
+			expected: `"data"::jsonb->'labels'->>'a\b'`,
+		},
+		{
+			name:     "double quote in key stays literal",
+			column:   "data",
+			mapField: "labels",
+			key:      `a"b`,
+			expected: `"data"::jsonb->'labels'->>'a"b'`,
+		},
+		{
+			name:     "qualified column",
+			column:   "rule.data",
+			mapField: "labels",
+			key:      "severity",
+			expected: `"rule"."data"::jsonb->'labels'->>'severity'`,
+		},
 	}
 
 	for _, tt := range tests {

@@ -145,6 +145,21 @@ SEED_RULES = [
     },
 ]
 
+# Labels deliberately collide with reserved DSL keys (name, state) for the collision tests.
+COLLIDER_RULE = {
+    "alert": "ops shadow rule",
+    "description": "collision fixture",
+    "alertType": "METRIC_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": METRIC_CONDITION,
+    "labels": {"name": "runbook", "state": "managed", "team": "ops"},
+    "annotations": {"summary": "s", "description": "d"},
+    "evaluation": EVALUATION,
+    "notificationSettings": NOTIFICATION_SETTINGS,
+    "version": "v5",
+    "schemaVersion": "v2alpha1",
+}
+
 RESERVED_KEYWORDS = [
     "alert_type",
     "created_at",
@@ -244,6 +259,46 @@ def test_query_filters(
             "(labels.team = 'payments' OR labels.team = 'infra') AND name NOT CONTAINS 'gateway'",
             {"payment latency high", "infra cpu saturation"},
         ),
+    ]
+
+    for query, expected_names in cases:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(BASE_URL),
+            params={"query": query},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, f"query {query!r}: {response.text}"
+        data = response.json()["data"]
+        assert {rule["alert"] for rule in data["rules"]} == expected_names, f"query {query!r}"
+        assert data["total"] == len(expected_names), f"query {query!r}: total mismatch"
+
+
+def test_bare_and_collision_keys(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    seed_alert_rules: Callable[[dict, list[dict]], None],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    seed_alert_rules(SEED_CHANNEL, SEED_RULES + [COLLIDER_RULE])
+
+    cases = [
+        # a bare non-reserved key is a label lookup, no labels. prefix needed
+        ("team = 'infra'", {"infra cpu saturation"}),
+        ("team = 'payments'", {"payment latency high", "payment gateway errors"}),
+        ("team EXISTS", {"payment latency high", "payment gateway errors", "checkout conversion drop", "infra cpu saturation", "ops shadow rule"}),
+        # bare label keys stay case-sensitive
+        ("Team = 'infra'", set()),
+        # state is not reserved, so it reads the rule's state label, not the evaluation state
+        ("state = 'managed'", {"ops shadow rule"}),
+        # a reserved key matches the reserved field or a same-named label
+        ("name = 'payment latency high'", {"payment latency high"}),
+        ("name CONTAINS 'runbook'", {"ops shadow rule"}),
+        # a negative operator must exclude both interpretations
+        ("name != 'runbook'", {r["alert"] for r in SEED_RULES}),
+        # the labels. prefix targets only the label on a collision
+        ("labels.name = 'runbook'", {"ops shadow rule"}),
     ]
 
     for query, expected_names in cases:
@@ -495,8 +550,7 @@ def test_error_contract(
 
     cases = [
         ({"query": "created_by ==== ((("}, "rule_list_filter_invalid", "invalid filter query:"),
-        ({"query": "team = 'infra'"}, "rule_list_filter_invalid", 'unknown filter key "team"'),
-        ({"query": "state = 'firing'"}, "rule_list_filter_invalid", 'unknown filter key "state"'),
+        ({"query": "team > 'infra'"}, "rule_list_filter_invalid", 'operator > is not allowed on the label filter "team"'),
         ({"query": "alert_type = 'bogus'"}, "rule_list_filter_invalid", "METRIC_BASED_ALERT"),
         ({"query": "name REGEXP 'x.*'"}, "rule_list_filter_invalid", "operator REGEXP is not allowed"),
         ({"query": "created_at >= 'yesterday'"}, "rule_list_filter_invalid", "invalid RFC3339 timestamp"),

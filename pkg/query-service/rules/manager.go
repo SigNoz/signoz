@@ -718,8 +718,8 @@ func (m *Manager) Rules() []Rule {
 
 // TriggeredAlerts returns the list of the manager's rules.
 func (m *Manager) TriggeredAlerts() []*ruletypes.NamedAlert {
-	m.mtx.RLock()
-	defer m.mtx.RUnlock()
+	// m.mtx.RLock()
+	// defer m.mtx.RUnlock()
 
 	namedAlerts := []*ruletypes.NamedAlert{}
 
@@ -883,12 +883,17 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 
 // ListRules' total counts what is pageable after corrupt-row drops and the states filter.
 func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesParams) (*ruletypes.ListableRules, error) {
+	// validated here too, not just in the handler: non-API callers reach the manager directly
+	if err := params.Validate(); err != nil {
+		return nil, err
+	}
+
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	states, err := params.AlertStates()
+	states, err := params.GetAlertStates()
 	if err != nil {
 		return nil, err
 	}
@@ -904,32 +909,9 @@ func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesPara
 
 	stateByRuleID := m.snapshotRuleStates()
 
-	listableRules := make([]*ruletypes.ListableRule, 0, len(storedRules))
-	for _, s := range storedRules {
-		gettable := ruletypes.GettableRule{}
-		if err := json.Unmarshal([]byte(s.Data), &gettable); err != nil {
-			m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", slog.String("rule.id", s.ID.StringValue()), errors.Attr(err))
-			continue
-		}
-
-		gettable.Id = s.ID.StringValue()
-		if state, ok := stateByRuleID[gettable.Id]; ok {
-			gettable.State = state
-		} else {
-			gettable.State = ruletypes.StateDisabled
-			gettable.Disabled = true
-		}
-		if len(stateFilter) > 0 {
-			if _, ok := stateFilter[gettable.State]; !ok {
-				continue
-			}
-		}
-
-		gettable.CreatedAt = s.CreatedAt
-		gettable.CreatedBy = &s.CreatedBy
-		gettable.UpdatedAt = s.UpdatedAt
-		gettable.UpdatedBy = &s.UpdatedBy
-		listableRules = append(listableRules, ruletypes.NewListableRule(&gettable))
+	listableRules, errByRuleID := ruletypes.NewListableRulesFromStorableRules(storedRules, stateByRuleID, stateFilter)
+	for ruleID, err := range errByRuleID {
+		m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", slog.String("rule.id", ruleID), errors.Attr(err))
 	}
 
 	total := int64(len(listableRules))

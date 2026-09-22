@@ -21,16 +21,13 @@ const (
 	ruleTypePath    = "$.ruleType"
 )
 
-// ruleFieldResolver maps rule list DSL keys; label keys are case-sensitive and unknown keys are rejected.
+// ruleFieldResolver maps rule list DSL keys; a non-reserved key is a case-sensitive label lookup.
 type ruleFieldResolver struct{}
 
 func (r ruleFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, rawKey string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string {
 	key := strings.ToLower(rawKey)
 
-	if allowedOperations, isReserved := ruletypes.ReservedOps[ruletypes.DSLKey(key)]; isReserved {
-		return r.resolveReservedKey(v, ctx, operation, ruletypes.DSLKey(key), allowedOperations)
-	}
-
+	// labels.<key> is the explicit way to target only the label on a reserved-key collision.
 	if strings.HasPrefix(key, ruletypes.DSLLabelsKeyPrefix) {
 		labelKey := rawKey[len(ruletypes.DSLLabelsKeyPrefix):]
 		if labelKey == "" {
@@ -44,15 +41,46 @@ func (r ruleFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, rawKey stri
 		return r.labelComparison(v, ctx, operation, labelKey)
 	}
 
-	v.AddError("unknown filter key %q, use one of the reserved keys or labels.<key>", rawKey)
-	return ""
-}
+	allowedOperations, isReserved := ruletypes.ReservedOps[ruletypes.DSLKey(key)]
+	_, labelAllowed := ruletypes.LabelsKeyOps[operation]
 
-func (r ruleFieldResolver) resolveReservedKey(v *sqlcompiler.Visitor, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, key ruletypes.DSLKey, allowedOperations map[qbtypesv5.FilterOperator]struct{}) string {
-	if _, allowed := allowedOperations[operation]; !allowed {
+	if !isReserved {
+		if !labelAllowed {
+			v.AddError("operator %s is not allowed on the label filter %q", sqlcompiler.OperationName(operation), rawKey)
+			return ""
+		}
+		return r.labelComparison(v, ctx, operation, rawKey)
+	}
+
+	_, reservedAllowed := allowedOperations[operation]
+	// reserved severity is itself the severity-label lookup; an identical spelling would duplicate the predicate
+	if ruletypes.DSLKey(key) == ruletypes.DSLKeySeverity && rawKey == string(ruletypes.DSLKeySeverity) {
+		labelAllowed = false
+	}
+
+	switch {
+	case reservedAllowed && labelAllowed:
+		reservedPredicate := r.resolveReservedKey(v, ctx, operation, ruletypes.DSLKey(key))
+		labelPredicate := r.labelComparison(v, ctx, operation, rawKey)
+		if reservedPredicate == "" || labelPredicate == "" {
+			return ""
+		}
+		// the key matches both the reserved field and a same-named label; a negative term must exclude both
+		if operation.IsNegativeOperator() {
+			return v.Sb.And(reservedPredicate, labelPredicate)
+		}
+		return v.Sb.Or(reservedPredicate, labelPredicate)
+	case reservedAllowed:
+		return r.resolveReservedKey(v, ctx, operation, ruletypes.DSLKey(key))
+	case labelAllowed:
+		return r.labelComparison(v, ctx, operation, rawKey)
+	default:
 		v.AddError("operator %s is not allowed for key %q", sqlcompiler.OperationName(operation), key)
 		return ""
 	}
+}
+
+func (r ruleFieldResolver) resolveReservedKey(v *sqlcompiler.Visitor, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, key ruletypes.DSLKey) string {
 	switch key {
 	case ruletypes.DSLKeyName:
 		columnExpression := string(v.Formatter.JSONExtractString(ruleDataColumn, nameJSONPath))

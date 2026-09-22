@@ -113,7 +113,7 @@ func TestListRulesParamsAlertStates(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			params := ListRulesParams{ListFilter: ListFilter{States: tc.states}}
-			states, err := params.AlertStates()
+			states, err := params.GetAlertStates()
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.wantErr)

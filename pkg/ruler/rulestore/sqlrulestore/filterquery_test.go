@@ -72,28 +72,39 @@ func TestCompileEmpty(t *testing.T) {
 func TestCompileName(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
-			subtestName:       "name equals",
+			subtestName:       "name equals matches the reserved field or a name label",
 			dslQueryToCompile: "name = 'payment latency'",
-			expectedSQL:       `json_extract("rule"."data", '$.alert') = ?`,
-			expectedArgs:      []any{"payment latency"},
+			expectedSQL:       `(json_extract("rule"."data", '$.alert') = ? OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') = ?)`,
+			expectedArgs:      []any{"payment latency", "payment latency"},
 		},
 		{
-			subtestName:       "name contains escapes wildcards",
+			subtestName:       "name contains escapes wildcards on both sides",
 			dslQueryToCompile: "name CONTAINS '50%'",
-			expectedSQL:       `json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\'`,
-			expectedArgs:      []any{`%50\%%`},
+			expectedSQL:       `(json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') LIKE ? ESCAPE '\')`,
+			expectedArgs:      []any{`%50\%%`, `%50\%%`},
 		},
 		{
 			subtestName:       "name ilike",
 			dslQueryToCompile: "name ILIKE 'Prod%'",
-			expectedSQL:       `lower(json_extract("rule"."data", '$.alert')) LIKE LOWER(?) ESCAPE '\'`,
-			expectedArgs:      []any{"Prod%"},
+			expectedSQL:       `(lower(json_extract("rule"."data", '$.alert')) LIKE LOWER(?) ESCAPE '\' OR lower(COALESCE(json_extract("rule"."data", '$.labels."name"'), '')) LIKE LOWER(?) ESCAPE '\')`,
+			expectedArgs:      []any{"Prod%", "Prod%"},
 		},
 		{
 			subtestName:       "name in list",
 			dslQueryToCompile: "name IN ['a', 'b']",
-			expectedSQL:       `json_extract("rule"."data", '$.alert') IN (?, ?)`,
-			expectedArgs:      []any{"a", "b"},
+			expectedSQL:       `(json_extract("rule"."data", '$.alert') IN (?, ?) OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') IN (?, ?))`,
+			expectedArgs:      []any{"a", "b", "a", "b"},
+		},
+		{
+			subtestName:       "name not equals excludes both the reserved field and the label",
+			dslQueryToCompile: "name != 'x'",
+			expectedSQL:       `(json_extract("rule"."data", '$.alert') <> ? AND COALESCE(json_extract("rule"."data", '$.labels."name"'), '') <> ?)`,
+			expectedArgs:      []any{"x", "x"},
+		},
+		{
+			subtestName:       "name exists is label-only since the reserved field disallows it",
+			dslQueryToCompile: "name EXISTS",
+			expectedSQL:       `json_extract("rule"."data", '$.labels."name"') IS NOT NULL`,
 		},
 		{
 			subtestName:              "range operator rejected on name",
@@ -184,16 +195,16 @@ func TestCompileSeverityAndLabels(t *testing.T) {
 func TestCompileEnums(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
-			subtestName:       "alert_type equals",
+			subtestName:       "alert_type equals matches the enum field or an alert_type label",
 			dslQueryToCompile: "alert_type = 'LOGS_BASED_ALERT'",
-			expectedSQL:       `json_extract("rule"."data", '$.alertType') = ?`,
-			expectedArgs:      []any{"LOGS_BASED_ALERT"},
+			expectedSQL:       `(json_extract("rule"."data", '$.alertType') = ? OR COALESCE(json_extract("rule"."data", '$.labels."alert_type"'), '') = ?)`,
+			expectedArgs:      []any{"LOGS_BASED_ALERT", "LOGS_BASED_ALERT"},
 		},
 		{
 			subtestName:       "rule_type in list",
 			dslQueryToCompile: "rule_type IN ['threshold_rule', 'promql_rule']",
-			expectedSQL:       `json_extract("rule"."data", '$.ruleType') IN (?, ?)`,
-			expectedArgs:      []any{"threshold_rule", "promql_rule"},
+			expectedSQL:       `(json_extract("rule"."data", '$.ruleType') IN (?, ?) OR COALESCE(json_extract("rule"."data", '$.labels."rule_type"'), '') IN (?, ?))`,
+			expectedArgs:      []any{"threshold_rule", "promql_rule", "threshold_rule", "promql_rule"},
 		},
 		{
 			subtestName:              "invalid alert_type value rejected",
@@ -201,9 +212,10 @@ func TestCompileEnums(t *testing.T) {
 			expectedErrShouldContain: `invalid value "bogus" for "alert_type"`,
 		},
 		{
-			subtestName:              "contains rejected on rule_type",
-			dslQueryToCompile:        "rule_type CONTAINS 'thresh'",
-			expectedErrShouldContain: `operator CONTAINS is not allowed for key "rule_type"`,
+			subtestName:       "contains on rule_type is label-only since the enum disallows it",
+			dslQueryToCompile: "rule_type CONTAINS 'thresh'",
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."rule_type"'), '') LIKE ? ESCAPE '\'`,
+			expectedArgs:      []any{"%thresh%"},
 		},
 	})
 }
@@ -218,10 +230,10 @@ func TestCompileAuditColumns(t *testing.T) {
 
 	runCompileCases(t, []compileCase{
 		{
-			subtestName:       "created_by equals",
+			subtestName:       "created_by equals matches the column or a created_by label",
 			dslQueryToCompile: "created_by = 'nikhil@signoz.io'",
-			expectedSQL:       `rule.created_by = ?`,
-			expectedArgs:      []any{"nikhil@signoz.io"},
+			expectedSQL:       `(rule.created_by = ? OR COALESCE(json_extract("rule"."data", '$.labels."created_by"'), '') = ?)`,
+			expectedArgs:      []any{"nikhil@signoz.io", "nikhil@signoz.io"},
 		},
 		{
 			subtestName:       "created_at range",
@@ -261,20 +273,22 @@ func TestCompileComposition(t *testing.T) {
 		{
 			subtestName:       "and of label and column",
 			dslQueryToCompile: "labels.team = 'infra' AND created_by = 'x'",
-			expectedSQL:       `(COALESCE(json_extract("rule"."data", '$.labels."team"'), '') = ? AND rule.created_by = ?)`,
-			expectedArgs:      []any{"infra", "x"},
+			expectedSQL: `(COALESCE(json_extract("rule"."data", '$.labels."team"'), '') = ? ` +
+				`AND (rule.created_by = ? OR COALESCE(json_extract("rule"."data", '$.labels."created_by"'), '') = ?))`,
+			expectedArgs: []any{"infra", "x", "x"},
 		},
 		{
 			subtestName:       "not wraps the inner predicate",
 			dslQueryToCompile: "NOT (name = 'x')",
-			expectedSQL:       `NOT (json_extract("rule"."data", '$.alert') = ?)`,
-			expectedArgs:      []any{"x"},
+			expectedSQL:       `NOT ((json_extract("rule"."data", '$.alert') = ? OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') = ?))`,
+			expectedArgs:      []any{"x", "x"},
 		},
 		{
 			subtestName:       "or of name and severity",
 			dslQueryToCompile: "name CONTAINS 'pay' OR severity = 'critical'",
-			expectedSQL:       `(json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ?)`,
-			expectedArgs:      []any{"%pay%", "critical"},
+			expectedSQL: `((json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') LIKE ? ESCAPE '\') ` +
+				`OR COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ?)`,
+			expectedArgs: []any{"%pay%", "%pay%", "critical"},
 		},
 	})
 }
@@ -285,29 +299,29 @@ func TestCompileComplexExamples(t *testing.T) {
 			subtestName: "name CONTAINS + label = + severity IN + created_by !=",
 			dslQueryToCompile: `name CONTAINS 'latency' AND labels.team = 'payments' ` +
 				`AND severity IN ['critical', 'error'] AND created_by != 'ops@signoz.io'`,
-			expectedSQL: `(json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' ` +
+			expectedSQL: `((json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') LIKE ? ESCAPE '\') ` +
 				`AND COALESCE(json_extract("rule"."data", '$.labels."team"'), '') = ? ` +
 				`AND COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') IN (?, ?) ` +
-				`AND rule.created_by <> ?)`,
-			expectedArgs: []any{"%latency%", "payments", "critical", "error", "ops@signoz.io"},
+				`AND (rule.created_by <> ? AND COALESCE(json_extract("rule"."data", '$.labels."created_by"'), '') <> ?))`,
+			expectedArgs: []any{"%latency%", "%latency%", "payments", "critical", "error", "ops@signoz.io", "ops@signoz.io"},
 		},
 		{
 			subtestName: "nested OR / AND with parens",
 			dslQueryToCompile: `(labels.env IN ['prod', 'staging'] OR name LIKE '%prod%') ` +
 				`AND (severity = 'critical' OR labels.team EXISTS)`,
 			expectedSQL: `((COALESCE(json_extract("rule"."data", '$.labels."env"'), '') IN (?, ?) ` +
-				`OR json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\') ` +
+				`OR (json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') LIKE ? ESCAPE '\')) ` +
 				`AND (COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ? ` +
 				`OR json_extract("rule"."data", '$.labels."team"') IS NOT NULL))`,
-			expectedArgs: []any{"prod", "staging", "%prod%", "critical"},
+			expectedArgs: []any{"prod", "staging", "%prod%", "%prod%", "critical"},
 		},
 		{
 			subtestName:       "NOT over a group ANDed with an enum",
 			dslQueryToCompile: `NOT (labels.team = 'infra' OR name CONTAINS 'cpu') AND alert_type = 'METRIC_BASED_ALERT'`,
 			expectedSQL: `(NOT ((COALESCE(json_extract("rule"."data", '$.labels."team"'), '') = ? ` +
-				`OR json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\')) ` +
-				`AND json_extract("rule"."data", '$.alertType') = ?)`,
-			expectedArgs: []any{"infra", "%cpu%", "METRIC_BASED_ALERT"},
+				`OR (json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') LIKE ? ESCAPE '\'))) ` +
+				`AND (json_extract("rule"."data", '$.alertType') = ? OR COALESCE(json_extract("rule"."data", '$.labels."alert_type"'), '') = ?))`,
+			expectedArgs: []any{"infra", "%cpu%", "%cpu%", "METRIC_BASED_ALERT", "METRIC_BASED_ALERT"},
 		},
 		{
 			subtestName: "free text with three-level nesting and a timestamp",
@@ -316,10 +330,82 @@ func TestCompileComplexExamples(t *testing.T) {
 			expectedSQL: `((lower(COALESCE(json_extract("rule"."data", '$.alert'), '')) LIKE LOWER(?) ESCAPE '\' ` +
 				`OR lower(COALESCE(json_extract("rule"."data", '$.description'), '')) LIKE LOWER(?) ESCAPE '\' ` +
 				`OR lower(COALESCE(json_extract("rule"."data", '$.labels'), '')) LIKE LOWER(?) ESCAPE '\') ` +
-				`AND (lower(json_extract("rule"."data", '$.alert')) LIKE LOWER(?) ESCAPE '\' ` +
+				`AND ((lower(json_extract("rule"."data", '$.alert')) LIKE LOWER(?) ESCAPE '\' ` +
+				`OR lower(COALESCE(json_extract("rule"."data", '$.labels."name"'), '')) LIKE LOWER(?) ESCAPE '\') ` +
 				`OR (COALESCE(json_extract("rule"."data", '$.labels."team"'), '') <> ? AND rule.updated_at > ?)))`,
-			expectedArgs: []any{"%prod%", "%prod%", "%prod%", "%pay%", "infra",
+			expectedArgs: []any{"%prod%", "%prod%", "%prod%", "%pay%", "%pay%", "infra",
 				time.Date(2026, 1, 2, 15, 4, 5, 0, time.UTC)},
+		},
+	})
+}
+
+func TestCompileBareLabelKeys(t *testing.T) {
+	runCompileCases(t, []compileCase{
+		{
+			subtestName:       "bare key compiles to a label match",
+			dslQueryToCompile: "team = 'infra'",
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."team"'), '') = ?`,
+			expectedArgs:      []any{"infra"},
+		},
+		{
+			subtestName:       "bare key keeps its case",
+			dslQueryToCompile: "Team CONTAINS 'inf'",
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."Team"'), '') LIKE ? ESCAPE '\'`,
+			expectedArgs:      []any{"%inf%"},
+		},
+		{
+			subtestName:       "bare key exists",
+			dslQueryToCompile: "env EXISTS",
+			expectedSQL:       `json_extract("rule"."data", '$.labels."env"') IS NOT NULL`,
+		},
+		{
+			subtestName:       "state compiles as a label lookup not a rule state filter",
+			dslQueryToCompile: "state = 'firing'",
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."state"'), '') = ?`,
+			expectedArgs:      []any{"firing"},
+		},
+	})
+}
+
+func TestCompileReservedLabelCollisions(t *testing.T) {
+	runCompileCases(t, []compileCase{
+		{
+			subtestName:       "uppercase reserved key matches the reserved field or the exact-case label",
+			dslQueryToCompile: "NAME = 'x'",
+			expectedSQL:       `(json_extract("rule"."data", '$.alert') = ? OR COALESCE(json_extract("rule"."data", '$.labels."NAME"'), '') = ?)`,
+			expectedArgs:      []any{"x", "x"},
+		},
+		{
+			subtestName:       "severity spelled exactly stays a single predicate",
+			dslQueryToCompile: "severity = 'critical'",
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ?`,
+			expectedArgs:      []any{"critical"},
+		},
+		{
+			subtestName:       "differently cased severity matches both label spellings",
+			dslQueryToCompile: "Severity = 'critical'",
+			expectedSQL: `(COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ? ` +
+				`OR COALESCE(json_extract("rule"."data", '$.labels."Severity"'), '') = ?)`,
+			expectedArgs: []any{"critical", "critical"},
+		},
+		{
+			subtestName:       "range operator stays reserved-only since labels disallow it",
+			dslQueryToCompile: "created_at >= '2026-01-02T15:04:05Z'",
+			expectedSQL:       `rule.created_at >= ?`,
+			expectedArgs:      []any{time.Date(2026, 1, 2, 15, 4, 5, 0, time.UTC)},
+		},
+		{
+			subtestName:       "labels prefix targets only the label on a collision",
+			dslQueryToCompile: "labels.name = 'x'",
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."name"'), '') = ?`,
+			expectedArgs:      []any{"x"},
+		},
+		{
+			subtestName:       "not in excludes both the reserved field and the label",
+			dslQueryToCompile: "created_by NOT IN ['a', 'b']",
+			expectedSQL: `(rule.created_by NOT IN (?, ?) ` +
+				`AND COALESCE(json_extract("rule"."data", '$.labels."created_by"'), '') NOT IN (?, ?))`,
+			expectedArgs: []any{"a", "b", "a", "b"},
 		},
 	})
 }
@@ -327,14 +413,9 @@ func TestCompileComplexExamples(t *testing.T) {
 func TestCompileErrors(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
-			subtestName:              "unknown key rejected instead of matching nothing",
-			dslQueryToCompile:        "team = 'infra'",
-			expectedErrShouldContain: `unknown filter key "team"`,
-		},
-		{
-			subtestName:              "state is not a DSL key",
-			dslQueryToCompile:        "state = 'firing'",
-			expectedErrShouldContain: `unknown filter key "state"`,
+			subtestName:              "range operator rejected on a bare label key",
+			dslQueryToCompile:        "team > 'infra'",
+			expectedErrShouldContain: `operator > is not allowed on the label filter "team"`,
 		},
 		{
 			subtestName:              "syntax error surfaces position",
@@ -364,8 +445,8 @@ func TestCompileTrailingLiteralBackslash(t *testing.T) {
 		{
 			subtestName:       "escaped trailing backslash compiles",
 			dslQueryToCompile: `name LIKE '%\\\\'`,
-			expectedSQL:       `json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\'`,
-			expectedArgs:      []any{`%\\`},
+			expectedSQL:       `(json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') LIKE ? ESCAPE '\')`,
+			expectedArgs:      []any{`%\\`, `%\\`},
 		},
 	})
 }

@@ -29,7 +29,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		ID:                  "ListRulesV3",
 		Tags:                []string{"rules"},
 		Summary:             "List alert rules (v3)",
-		Description:         "Returns a page of alert rules with their current evaluation state, trimmed to the fields the list page renders. Supports a filter DSL (`query`), a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). The response also carries the org's label pairs and the reserved filter keys for building filter suggestions.",
+		Description:         "Returns a page of alert rules with their current evaluation state, trimmed to the fields the list page renders. Supports a filter DSL (`query`), a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). In the filter DSL, a non-reserved key is matched as a rule label directly (`team = infra`); a key that collides with a reserved keyword matches either interpretation (negative operators exclude both), and `labels.<key>` targets only the label. The response also carries the org's label pairs and the reserved filter keys for building filter suggestions.",
 		RequestQuery:        new(ruletypes.ListRulesParams),
 		Response:            new(ruletypes.ListableRules),
 		ResponseContentType: "application/json",
