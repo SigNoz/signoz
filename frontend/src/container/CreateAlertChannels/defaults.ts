@@ -137,7 +137,7 @@ export const JsmOpsInitialConfig: Partial<JsmOpsChannel> = {
 
 {{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
 
-{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})
+{{ end }}{{ if .Annotations.related_traces }}{{ if match "/ai-observability" .Annotations.related_traces }}[View related AI traces]{{ else }}[View related traces]{{ end }}({{ .Annotations.related_traces }})
 
 {{ end }}{{ end }}`,
 	priority:
@@ -163,7 +163,7 @@ export const IncidentIOInitialConfig: Partial<IncidentIOChannel> = {
 
 {{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
 
-{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})
+{{ end }}{{ if .Annotations.related_traces }}{{ if match "/ai-observability" .Annotations.related_traces }}[View related AI traces]{{ else }}[View related traces]{{ end }}({{ .Annotations.related_traces }})
 
 {{ end }}{{ end }}`,
 };
