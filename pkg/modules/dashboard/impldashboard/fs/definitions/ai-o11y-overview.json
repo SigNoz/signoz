@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "definition": {
     "schemaVersion": "v6",
     "name": "signoz---ai-o11y-overview",
@@ -7,11 +7,2765 @@
     "spec": {
       "display": {
         "name": "AI Observability Overview",
-        "description": "Overview of LLM traffic. Panels ship in an upcoming release."
+        "description": "LLM cost, tokens, latency, errors and cache efficiency, per-trace cost and token usage, and tool-call RED, built on the AI query builder. Scope by model, provider, environment and service from the variable bar; model and provider apply to LLM and per-trace panels only."
       },
-      "variables": [],
-      "panels": {},
-      "layouts": []
+      "variables": [
+        {
+          "kind": "ListVariable",
+          "spec": {
+            "name": "model",
+            "display": {
+              "name": "model",
+              "description": "LLM request model"
+            },
+            "allowMultiple": true,
+            "allowAllValue": true,
+            "sort": "alphabetical-asc",
+            "plugin": {
+              "kind": "signoz/DynamicVariable",
+              "spec": {
+                "name": "gen_ai.request.model",
+                "signal": "traces"
+              }
+            }
+          }
+        },
+        {
+          "kind": "ListVariable",
+          "spec": {
+            "name": "provider",
+            "display": {
+              "name": "provider",
+              "description": "LLM provider"
+            },
+            "allowMultiple": true,
+            "allowAllValue": true,
+            "sort": "alphabetical-asc",
+            "plugin": {
+              "kind": "signoz/DynamicVariable",
+              "spec": {
+                "name": "gen_ai.provider.name",
+                "signal": "traces"
+              }
+            }
+          }
+        },
+        {
+          "kind": "ListVariable",
+          "spec": {
+            "name": "environment",
+            "display": {
+              "name": "environment",
+              "description": "Deployment environment"
+            },
+            "allowMultiple": true,
+            "allowAllValue": true,
+            "sort": "alphabetical-asc",
+            "plugin": {
+              "kind": "signoz/DynamicVariable",
+              "spec": {
+                "name": "deployment.environment",
+                "signal": "traces"
+              }
+            }
+          }
+        },
+        {
+          "kind": "ListVariable",
+          "spec": {
+            "name": "service_name",
+            "display": {
+              "name": "service_name",
+              "description": "Service name"
+            },
+            "allowMultiple": true,
+            "allowAllValue": true,
+            "sort": "alphabetical-asc",
+            "plugin": {
+              "kind": "signoz/DynamicVariable",
+              "spec": {
+                "name": "service.name",
+                "signal": "traces"
+              }
+            }
+          }
+        }
+      ],
+      "layouts": [
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/95219db7-37c9-585a-820a-f2bceca1fce6"
+                }
+              },
+              {
+                "x": 2,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/a7f66ccb-6f24-5095-92d8-3b00b4f99dd9"
+                }
+              },
+              {
+                "x": 4,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/a2e790ee-ade7-591d-b1ec-45619bae83d8"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/786acfc0-086d-5cda-96f0-41f0a1d1a296"
+                }
+              },
+              {
+                "x": 8,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/5248b262-8459-5d67-9bd9-501d7c19c02d"
+                }
+              },
+              {
+                "x": 10,
+                "y": 0,
+                "width": 2,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/6e52978d-af22-5609-b25a-71c7c9a42bf9"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/283dee29-0891-58cb-a900-c39d1f98c84a"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/941c0b93-08b8-502d-8632-e66d27c453ff"
+                }
+              },
+              {
+                "x": 0,
+                "y": 6,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/3779cf8f-3acd-53e6-b796-26a973f73b0d"
+                }
+              },
+              {
+                "x": 4,
+                "y": 6,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/23355741-79ac-5e78-9c8a-2a58bbed8e49"
+                }
+              },
+              {
+                "x": 8,
+                "y": 6,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/f614f381-f38d-562a-b71e-7af44112421f"
+                }
+              },
+              {
+                "x": 0,
+                "y": 12,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/2d53ccf0-7aba-52fe-9eb5-96f466d22e6b"
+                }
+              },
+              {
+                "x": 6,
+                "y": 12,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/9957fd59-7919-5061-b59b-360cf508072b"
+                }
+              }
+            ],
+            "display": {
+              "title": "Cost & tokens"
+            }
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/c457751e-43db-5e8e-88b9-5bcd51d209e2"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/c58514e9-be6b-5b69-b08d-c5e179198233"
+                }
+              },
+              {
+                "x": 0,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/7aa8dc7a-6655-5bfe-a779-4362f49107d6"
+                }
+              },
+              {
+                "x": 6,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/0b6e111f-2174-57ac-ae92-f4107c70bfd3"
+                }
+              }
+            ],
+            "display": {
+              "title": "Per-trace usage"
+            }
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/47d2af90-2671-51ad-9738-b2c0c601db42"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/ee8b070c-ee79-5443-b186-553fbab82e2a"
+                }
+              },
+              {
+                "x": 0,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/0107a504-93ed-502c-9c0f-62967d7dac8b"
+                }
+              },
+              {
+                "x": 6,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/676a8fc0-10ba-5487-86d8-5245562024b3"
+                }
+              },
+              {
+                "x": 0,
+                "y": 12,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/3c1a8888-9c48-53f7-8820-fe55f3524ca3"
+                }
+              },
+              {
+                "x": 4,
+                "y": 12,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/287e930a-d46c-5862-8661-53573a77aaa1"
+                }
+              },
+              {
+                "x": 8,
+                "y": 12,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/03061363-a9b0-58c7-8a53-785e3685ed40"
+                }
+              }
+            ],
+            "display": {
+              "title": "LLM latency & errors"
+            }
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/45541206-ba96-5354-b2d9-48dfa4c4cd0b"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/d84540c8-86b6-5586-a799-c3edfd5fe200"
+                }
+              },
+              {
+                "x": 0,
+                "y": 6,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/67799742-50b2-510e-87ef-2e5b3228dd42"
+                }
+              },
+              {
+                "x": 4,
+                "y": 6,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/b429e25c-1758-5981-ba66-9b7a3ae60b48"
+                }
+              },
+              {
+                "x": 8,
+                "y": 6,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/a637c168-4311-5da0-b825-25bfb48d35de"
+                }
+              }
+            ],
+            "display": {
+              "title": "Tool calls"
+            }
+          }
+        }
+      ],
+      "panels": {
+        "95219db7-37c9-585a-820a-f2bceca1fce6": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Total cost",
+              "description": "Sum of per-call LLM cost attached by the SigNoz LLM pricing processor (signoz.gen_ai.usage.tokens.cost)."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "currencyUSD",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(signoz.gen_ai.usage.tokens.cost)"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "a7f66ccb-6f24-5095-92d8-3b00b4f99dd9": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Total tokens",
+              "description": "Input plus output tokens across LLM calls."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "short",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(gen_ai.usage.input_tokens) + sum(gen_ai.usage.output_tokens)"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "a2e790ee-ade7-591d-b1ec-45619bae83d8": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "LLM calls",
+              "description": "Spans carrying gen_ai.request.model."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "short",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "786acfc0-086d-5cda-96f0-41f0a1d1a296": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "LLM latency (p95)",
+              "description": "p95 duration of LLM calls."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "ns",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p95(duration_nano)"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "5248b262-8459-5d67-9bd9-501d7c19c02d": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "LLM error rate",
+              "description": "Percentage of LLM calls that ended in error."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "percent",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "countIf(has_error = true)"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_formula",
+                          "spec": {
+                            "name": "F1",
+                            "expression": "(A/B)*100",
+                            "legend": "error %"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "6e52978d-af22-5609-b25a-71c7c9a42bf9": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "TTFT (p95)",
+              "description": "p95 time to first token, from the gen_ai.server.ttft span attribute (seconds) that streaming instrumentations such as OpenLIT emit."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "s",
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p95(gen_ai.server.ttft)"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "283dee29-0891-58cb-a900-c39d1f98c84a": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Cost over time",
+              "description": "LLM cost by model."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "currencyUSD",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(signoz.gen_ai.usage.tokens.cost)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{gen_ai.request.model}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "941c0b93-08b8-502d-8632-e66d27c453ff": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Token usage over time",
+              "description": "Input, output, cache-read and cache-write tokens."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "short",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(gen_ai.usage.input_tokens)"
+                              }
+                            ],
+                            "legend": "Input"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(gen_ai.usage.output_tokens)"
+                              }
+                            ],
+                            "legend": "Output"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(gen_ai.usage.cache_read.input_tokens)"
+                              }
+                            ],
+                            "legend": "Cache read"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "D",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(gen_ai.usage.cache_creation.input_tokens)"
+                              }
+                            ],
+                            "legend": "Cache write"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "3779cf8f-3acd-53e6-b796-26a973f73b0d": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Cost breakdown",
+              "description": "LLM cost split into input, output, cache-read and cache-write token cost."
+            },
+            "plugin": {
+              "kind": "signoz/BarChartPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "stackedBarChart": true
+                },
+                "formatting": {
+                  "unit": "currencyUSD",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(signoz.gen_ai.usage.input_tokens.cost)"
+                              }
+                            ],
+                            "legend": "Input"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(signoz.gen_ai.usage.output_tokens.cost)"
+                              }
+                            ],
+                            "legend": "Output"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(signoz.gen_ai.usage.cache_read.input_tokens.cost)"
+                              }
+                            ],
+                            "legend": "Cache read"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "D",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(signoz.gen_ai.usage.cache_write.input_tokens.cost)"
+                              }
+                            ],
+                            "legend": "Cache write"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "23355741-79ac-5e78-9c8a-2a58bbed8e49": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Cost per LLM call",
+              "description": "Average cost of one LLM call, by model."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "currencyUSD",
+                  "decimalPrecision": "full"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(signoz.gen_ai.usage.tokens.cost)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_formula",
+                          "spec": {
+                            "name": "F1",
+                            "expression": "A/B",
+                            "legend": "{{gen_ai.request.model}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "f614f381-f38d-562a-b71e-7af44112421f": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Prompt cache hit ratio",
+              "description": "Cache-read tokens as a share of all input tokens (input + cache read)."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "percent",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(gen_ai.usage.input_tokens)"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(gen_ai.usage.cache_read.input_tokens)"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_formula",
+                          "spec": {
+                            "name": "F1",
+                            "expression": "(B/(A+B))*100",
+                            "legend": "cache hit %"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "2d53ccf0-7aba-52fe-9eb5-96f466d22e6b": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Cost by service",
+              "description": "LLM cost and call count per service."
+            },
+            "plugin": {
+              "kind": "signoz/TablePanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "columnUnits": {
+                    "A": "currencyUSD",
+                    "B": "short"
+                  },
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(signoz.gen_ai.usage.tokens.cost)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "service.name",
+                                "fieldContext": "resource",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "cost",
+                            "order": [
+                              {
+                                "key": {
+                                  "name": "sum(signoz.gen_ai.usage.tokens.cost)"
+                                },
+                                "direction": "desc"
+                              }
+                            ],
+                            "limit": 10
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "service.name",
+                                "fieldContext": "resource",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "LLM calls",
+                            "limit": 10
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "9957fd59-7919-5061-b59b-360cf508072b": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Cost by provider",
+              "description": "LLM cost and call count per provider."
+            },
+            "plugin": {
+              "kind": "signoz/TablePanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "columnUnits": {
+                    "A": "currencyUSD",
+                    "B": "short"
+                  },
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "sum(signoz.gen_ai.usage.tokens.cost)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.provider.name",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "cost",
+                            "order": [
+                              {
+                                "key": {
+                                  "name": "sum(signoz.gen_ai.usage.tokens.cost)"
+                                },
+                                "direction": "desc"
+                              }
+                            ],
+                            "limit": 10
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.provider.name",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "LLM calls",
+                            "limit": 10
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "c457751e-43db-5e8e-88b9-5bcd51d209e2": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "AI traces over time",
+              "description": "Distinct traces with LLM, tool, or agent activity per interval."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "short",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "(gen_ai.request.model EXISTS OR gen_ai.tool.name EXISTS OR gen_ai.agent.name EXISTS) AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count_distinct(trace_id)"
+                              }
+                            ],
+                            "legend": "traces"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "c58514e9-be6b-5b69-b08d-c5e179198233": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Calls per AI trace",
+              "description": "Average LLM and tool calls made within a trace. Not scoped by model, since tool spans carry no model."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "short",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_ai_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "avg(trace.llm_call_count)"
+                              }
+                            ],
+                            "legend": "LLM calls"
+                          }
+                        },
+                        {
+                          "type": "builder_ai_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "avg(trace.tool_call_count)"
+                              }
+                            ],
+                            "legend": "Tool calls"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "7aa8dc7a-6655-5bfe-a779-4362f49107d6": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Cost per AI trace",
+              "description": "Average and p95 of the total LLM cost of a trace."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "currencyUSD",
+                  "decimalPrecision": "4"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_ai_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "avg(trace.estimated_total_cost)"
+                              }
+                            ],
+                            "legend": "avg"
+                          }
+                        },
+                        {
+                          "type": "builder_ai_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p95(trace.estimated_total_cost)"
+                              }
+                            ],
+                            "legend": "p95"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "0b6e111f-2174-57ac-ae92-f4107c70bfd3": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Tokens per AI trace",
+              "description": "Average and p95 of the total tokens used by a trace."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "short",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_ai_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "avg(trace.total_tokens)"
+                              }
+                            ],
+                            "legend": "avg"
+                          }
+                        },
+                        {
+                          "type": "builder_ai_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p95(trace.total_tokens)"
+                              }
+                            ],
+                            "legend": "p95"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "47d2af90-2671-51ad-9738-b2c0c601db42": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "LLM latency by model",
+              "description": "Latency percentiles and call count per model."
+            },
+            "plugin": {
+              "kind": "signoz/TablePanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "columnUnits": {
+                    "A": "ns",
+                    "B": "ns",
+                    "C": "ns",
+                    "D": "ns",
+                    "E": "short"
+                  },
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p50(duration_nano)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "p50"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p90(duration_nano)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "p90"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p95(duration_nano)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "p95"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "D",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p99(duration_nano)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "p99"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "E",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "calls",
+                            "order": [
+                              {
+                                "key": {
+                                  "name": "count()"
+                                },
+                                "direction": "desc"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "ee8b070c-ee79-5443-b186-553fbab82e2a": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "LLM latency over time",
+              "description": "p95 latency by model."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "ns",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p95(duration_nano)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{gen_ai.request.model}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "0107a504-93ed-502c-9c0f-62967d7dac8b": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Slowest LLM call per trace",
+              "description": "p50 and p95 of the longest single LLM call in a trace."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "ns",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_ai_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p50(trace.max_llm_duration_nano)"
+                              }
+                            ],
+                            "legend": "p50"
+                          }
+                        },
+                        {
+                          "type": "builder_ai_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p95(trace.max_llm_duration_nano)"
+                              }
+                            ],
+                            "legend": "p95"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "676a8fc0-10ba-5487-86d8-5245562024b3": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Time to first token",
+              "description": "p95 time to first token by model, from the gen_ai.server.ttft span attribute (seconds) that streaming instrumentations such as OpenLIT emit."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "s",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p95(gen_ai.server.ttft)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{gen_ai.request.model}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "3c1a8888-9c48-53f7-8820-fe55f3524ca3": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "LLM errors over time",
+              "description": "Errored LLM calls by model."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "short",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "has_error = true AND gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{gen_ai.request.model}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "287e930a-d46c-5862-8661-53573a77aaa1": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Error rate by model",
+              "description": "Errored calls, total calls and error percentage per model."
+            },
+            "plugin": {
+              "kind": "signoz/TablePanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "columnUnits": {
+                    "A": "short",
+                    "B": "short",
+                    "F1": "percent"
+                  },
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "countIf(has_error = true)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "errors"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.request.model",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "calls",
+                            "order": [
+                              {
+                                "key": {
+                                  "name": "count()"
+                                },
+                                "direction": "desc"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_formula",
+                          "spec": {
+                            "name": "F1",
+                            "expression": "(A/B)*100",
+                            "legend": "error %"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "03061363-a9b0-58c7-8a53-785e3685ed40": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Finish reasons",
+              "description": "LLM calls by finish reason; a rising length/max_tokens share means truncated responses."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "short",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.response.finish_reasons",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{gen_ai.response.finish_reasons}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "45541206-ba96-5354-b2d9-48dfa4c4cd0b": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Tool call rate",
+              "description": "Tool calls per second by tool."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "rate()"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.tool.name",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{gen_ai.tool.name}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "d84540c8-86b6-5586-a799-c3edfd5fe200": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Tool error rate",
+              "description": "Percentage of tool calls that errored."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "percent",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "countIf(has_error = true)"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_formula",
+                          "spec": {
+                            "name": "F1",
+                            "expression": "(A/B)*100",
+                            "legend": "error %"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "67799742-50b2-510e-87ef-2e5b3228dd42": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Tool duration",
+              "description": "p50 and p95 tool call duration."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "ns",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p50(duration_nano)"
+                              }
+                            ],
+                            "legend": "p50"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p95(duration_nano)"
+                              }
+                            ],
+                            "legend": "p95"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "b429e25c-1758-5981-ba66-9b7a3ae60b48": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Top tools",
+              "description": "Most called tools with error count and median duration."
+            },
+            "plugin": {
+              "kind": "signoz/TablePanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "columnUnits": {
+                    "C": "ns"
+                  },
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.tool.name",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "calls",
+                            "order": [
+                              {
+                                "key": {
+                                  "name": "count()"
+                                },
+                                "direction": "desc"
+                              }
+                            ],
+                            "limit": 10
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "countIf(has_error = true)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.tool.name",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "errors",
+                            "limit": 10
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "gen_ai.tool.name EXISTS AND deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p50(duration_nano)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "gen_ai.tool.name",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "p50 duration",
+                            "limit": 10
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "a637c168-4311-5da0-b825-25bfb48d35de": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Top span names",
+              "description": "Most frequent gen_ai span names; useful to see which SDK operations dominate."
+            },
+            "plugin": {
+              "kind": "signoz/TablePanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "columnUnits": {},
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "deployment.environment IN $environment AND service.name IN $service_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "name",
+                                "fieldContext": "span",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "spans",
+                            "order": [
+                              {
+                                "key": {
+                                  "name": "count()"
+                                },
+                                "direction": "desc"
+                              }
+                            ],
+                            "limit": 10
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
     }
   }
 }
