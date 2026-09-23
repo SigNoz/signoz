@@ -139,7 +139,7 @@ func TestSortListableRules(t *testing.T) {
 		wantNames []string
 	}{
 		{
-			name: "state desc is display priority firing first",
+			name: "StateDesc_DisplayPriority_FiringFirst",
 			rules: []*ListableRule{
 				listableRule("disabled", StateDisabled, "", base),
 				listableRule("nodata", StateNoData, "", base),
@@ -153,7 +153,7 @@ func TestSortListableRules(t *testing.T) {
 			wantNames: []string{"firing", "nodata", "pending", "recovering", "inactive", "disabled"},
 		},
 		{
-			name: "severity desc ranks known values then custom ones lexically",
+			name: "SeverityDesc_KnownRanksThenCustomLexical",
 			rules: []*ListableRule{
 				listableRule("warn", StateInactive, "warning", base),
 				listableRule("custom-b", StateInactive, "bbb", base),
@@ -167,7 +167,7 @@ func TestSortListableRules(t *testing.T) {
 			wantNames: []string{"crit", "warn", "custom-b", "custom-a", "none"},
 		},
 		{
-			name: "name asc is case-insensitive",
+			name: "NameAsc_CaseInsensitive",
 			rules: []*ListableRule{
 				listableRule("banana", StateInactive, "", base),
 				listableRule("Apple", StateInactive, "", base),
@@ -178,7 +178,7 @@ func TestSortListableRules(t *testing.T) {
 			wantNames: []string{"Apple", "banana", "cherry"},
 		},
 		{
-			name: "updated_at desc puts newest first",
+			name: "UpdatedAtDesc_NewestFirst",
 			rules: []*ListableRule{
 				listableRule("old", StateInactive, "", base),
 				listableRule("new", StateInactive, "", base.Add(time.Hour)),
@@ -188,7 +188,7 @@ func TestSortListableRules(t *testing.T) {
 			wantNames: []string{"new", "old"},
 		},
 		{
-			name: "state desc ties break on name asc",
+			name: "StateDescTies_BreakOnNameAsc",
 			rules: []*ListableRule{
 				listableRule("banana", StateFiring, "", base),
 				listableRule("zebra", StateDisabled, "", base),
@@ -200,7 +200,7 @@ func TestSortListableRules(t *testing.T) {
 			wantNames: []string{"Apple", "banana", "cherry", "zebra"},
 		},
 		{
-			name: "state asc flips buckets but tiebreak stays name asc",
+			name: "StateAsc_FlipsBuckets_TiebreakNameAsc",
 			rules: []*ListableRule{
 				listableRule("banana", StateFiring, "", base),
 				listableRule("zebra", StateDisabled, "", base),
