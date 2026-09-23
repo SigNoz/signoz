@@ -1,31 +1,39 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LegendAction, OnLegendAction } from 'lib/uPlotV2/components/types';
+
+import {
+	getStoredSeriesVisibility,
+	updateSeriesVisibilityToLocalStorage,
+} from 'lib/visualization/panels/utils/legendVisibilityUtils';
 
 export interface UseLegendVisibilityResult {
 	visibleKeys: string[];
 	hiddenKeys: ReadonlySet<string>;
-	/** Restores a hidden set without reporting it back through `onHiddenChange`. */
-	setHiddenKeys: (hidden: Set<string>) => void;
 	focusedSeriesIndex: number | null;
 	setFocusedKey: (key: string | null) => void;
 	onLegendAction: OnLegendAction;
 }
 
+function isSameSet(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
+	return a.size === b.size && [...a].every((entry) => b.has(entry));
+}
+
 /**
  * Legend visibility and focus for charts whose legend does not list uPlot series.
- * Keyed by label, so a selection survives entries being reordered or leaving the
- * result.
+ * Keyed by label, so a selection survives reordering, and persists under the same
+ * widget store the uPlot legends use.
  */
 export function useLegendVisibility({
 	keys,
 	indexOffset = 0,
-	onHiddenChange,
+	id,
 }: {
 	keys: string[];
 	/** Legend `seriesIndex` of `keys[0]`. Charts that mirror uPlot's 1-based data
 	 *  series pass 1. */
 	indexOffset?: number;
-	onHiddenChange?: (hidden: Set<string>) => void;
+	/** Widget id the selection persists under. Left out, nothing is stored. */
+	id?: string;
 }): UseLegendVisibilityResult {
 	const [hidden, setHidden] = useState<Set<string>>(() => new Set());
 	const [focusedKey, setFocusedKey] = useState<string | null>(null);
@@ -35,12 +43,34 @@ export function useLegendVisibility({
 		[keys, hidden],
 	);
 
+	// The store is the source of truth: reread it whenever the entries change.
+	useEffect(() => {
+		if (!id || !keys.length) {
+			return;
+		}
+		const stored = getStoredSeriesVisibility(id);
+		if (!stored) {
+			return;
+		}
+		const restored = new Set(
+			keys.filter((key) => stored.find((s) => s.label === key)?.show === false),
+		);
+		setHidden((previous) =>
+			isSameSet(previous, restored) ? previous : restored,
+		);
+	}, [id, keys]);
+
 	const applyHidden = useCallback(
 		(next: Set<string>): void => {
 			setHidden(next);
-			onHiddenChange?.(next);
+			if (id) {
+				updateSeriesVisibilityToLocalStorage(
+					id,
+					keys.map((key) => ({ label: key, show: !next.has(key) })),
+				);
+			}
 		},
-		[onHiddenChange],
+		[id, keys],
 	);
 
 	const onLegendAction = useCallback<OnLegendAction>(
@@ -102,7 +132,6 @@ export function useLegendVisibility({
 	return {
 		visibleKeys,
 		hiddenKeys: hidden,
-		setHiddenKeys: setHidden,
 		focusedSeriesIndex: focusedIndex >= 0 ? focusedIndex + indexOffset : null,
 		setFocusedKey,
 		onLegendAction,
