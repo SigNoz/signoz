@@ -7,6 +7,7 @@ import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
 import TanStackTable from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
+import { useBottomStripLeft } from 'container/BottomStrip/useBottomStripLeft';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import { useAppContext } from 'providers/App/App';
@@ -20,6 +21,7 @@ import { ALERT_RULES_PARAMS, useAlertRulesFilters } from './hooks';
 import styles from './ListAlertRules.module.scss';
 import { getAlertRuleColumns } from './table.config';
 import type { AlertRule } from './types';
+import StripInfo from './StripInfo/StripInfo';
 import { useAlertRulesData } from './useAlertRulesData';
 import { useAlertRulesHandlers } from './useAlertRulesHandlers';
 
@@ -68,6 +70,18 @@ function ListAlertRules(): JSX.Element {
 
 	const { filteredRules, isFetching, isError, allRules, refetch } =
 		useAlertRulesData(orderBy, debouncedSearch, filterValues ?? []);
+
+	useBottomStripLeft(
+		useMemo(
+			() => (
+				<StripInfo
+					filteredCount={filteredRules.length}
+					totalCount={allRules.length}
+				/>
+			),
+			[filteredRules.length, allRules.length],
+		),
+	);
 
 	const { handleEdit, handleNewAlert, handleRowClick, handleRowClickNewTab } =
 		useAlertRulesHandlers(allRules.length);
