@@ -1,7 +1,7 @@
-// @ts-nocheck
 import { useCallback, useMemo, useState } from 'react';
 import { Typography } from '@signozhq/ui/typography';
-import { Button, ButtonGroup } from '@signozhq/ui/button';
+import { Button } from '@signozhq/ui/button';
+import { ButtonGroup } from '@signozhq/ui/button-group';
 import { Skeleton } from 'antd';
 
 import { useRolePermissions } from '../../hooks/useRolePermissions';
@@ -96,10 +96,22 @@ function PermissionOverview({
 					size="sm"
 					testId="toggle-all-group"
 				>
-					<Button onClick={handleExpandAll} data-testid="expand-all-button">
+					<Button
+						size="md"
+						variant="solid"
+						color="primary"
+						onClick={handleExpandAll}
+						testId="expand-all-button"
+					>
 						Expand all
 					</Button>
-					<Button onClick={handleCollapseAll} data-testid="collapse-all-button">
+					<Button
+						size="md"
+						variant="solid"
+						color="primary"
+						onClick={handleCollapseAll}
+						testId="collapse-all-button"
+					>
 						Collapse all
 					</Button>
 				</ButtonGroup>
