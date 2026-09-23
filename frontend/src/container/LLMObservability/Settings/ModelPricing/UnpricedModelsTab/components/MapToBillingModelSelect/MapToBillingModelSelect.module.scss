@@ -14,6 +14,24 @@
 	width: 280px;
 }
 
+.footer {
+	padding: var(--spacing-2);
+	background-color: var(--l2-background);
+}
+
+.createItem {
+	gap: var(--spacing-4);
+	font-style: normal;
+	color: var(--accent-primary);
+	--command-item-cursor: pointer;
+	--command-item-svg-size: var(--spacing-7);
+
+	&[data-selected='true'] {
+		background-color: var(--callout-primary-background);
+		color: var(--accent-primary);
+	}
+}
+
 .skeletonList {
 	display: flex;
 	flex-direction: column;

@@ -1,8 +1,11 @@
 import {
 	LEGEND_MAX_BOTTOM_ROWS,
 	MIN_LEGEND_ITEM_WIDTH,
+	LEGEND_COLUMN_GAP,
+	LEGEND_ITEM_EXTRA_WIDTH,
 	LEGEND_ROW_GAP,
 	LEGEND_ROW_HEIGHT,
+	LEGEND_SCROLLER_PADDING_RIGHT,
 	MAX_LEGEND_WIDTH,
 } from 'lib/uPlotV2/components/Legend/constants';
 import { LegendConfig, LegendPosition } from 'lib/uPlotV2/components/types';
@@ -143,9 +146,16 @@ export function calculateChartDimensions({
 	const legendItemWidth = Math.ceil(
 		Math.min(approxLegendItemWidth, MAX_LEGEND_WIDTH),
 	);
+	// Must resolve to the same track count as `.gridList`'s `auto-fill`; a more
+	// generous one under-reserves rows and the grid's last row is clipped away.
+	const gridWidth =
+		containerWidth - LEGEND_PADDING * 2 - LEGEND_SCROLLER_PADDING_RIGHT;
 	const legendItemsPerRow = Math.max(
 		1,
-		Math.floor((containerWidth - LEGEND_PADDING * 2) / legendItemWidth),
+		Math.floor(
+			(gridWidth + LEGEND_COLUMN_GAP) /
+				(legendItemWidth + LEGEND_ITEM_EXTRA_WIDTH + LEGEND_COLUMN_GAP),
+		),
 	);
 
 	// The wrapper's bottom padding is inside this height (border-box).
@@ -163,8 +173,8 @@ export function calculateChartDimensions({
 	);
 
 	// Without this, short grid panels hand most of their area to the legend and
-	// the chart — the pie donut especially — collapses to a sliver. Dropping a
-	// whole row beats clipping one.
+	// the chart — the pie donut especially — collapses to a sliver. The dropped
+	// row's items are clipped rather than removed, so they are scroll-only here.
 	const legendRowCount =
 		neededRowCount > 1 &&
 		heightForRows(neededRowCount) > containerHeight * MAX_SHORT_PANEL_LEGEND_RATIO

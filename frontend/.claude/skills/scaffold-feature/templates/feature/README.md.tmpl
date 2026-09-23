@@ -1,0 +1,28 @@
+# __Title__
+
+<!-- One paragraph: what this feature does, who uses it, and where it is reachable from. -->
+
+## Structure
+
+| Path | Purpose |
+| --- | --- |
+| `index.tsx` | Feature entry. Composition only — no business logic. |
+| `components/` | Feature-local components, nested as `components/<Name>/`. |
+| `hooks/` | Feature hooks, including React Query wrappers over `api/generated`. |
+| `store/` | Zustand stores for feature-local client state. |
+| `types.ts` | Shared feature types. Split into `types/` past ~3 declarations. |
+| `utils.ts` | Pure helpers. |
+| `constants.ts` | Feature constants. |
+| `__tests__/` | Feature-root tests. Component tests live with the component. |
+
+## Data
+
+<!-- Endpoints this feature reads/writes, and the hooks that wrap them. -->
+
+## State
+
+<!-- What lives in the URL (nuqs), what lives in React Query, what lives in store/. -->
+
+## Routing
+
+<!-- Route key in constants/routes.ts, lazy import in AppRoutes/pageComponents.ts, entry in AppRoutes/routes.ts. -->

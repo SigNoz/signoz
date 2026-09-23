@@ -6,6 +6,17 @@
 -->
 <link rel="stylesheet" href="storybook-fonts.css" />
 
+<!--
+	Third-party frames are the one thing msw cannot answer: a cross-origin iframe
+	navigates outside the service worker's scope, so the YouTube embeds and the
+	docs pane in onboarding reach the real network. Same intent as the boot data
+	below, enforced by the browser instead.
+-->
+<meta
+	http-equiv="Content-Security-Policy"
+	content="frame-src 'self' blob: data:"
+/>
+
 <link rel="stylesheet" href="css/uPlot.min.css" />
 
 <script>
@@ -23,4 +34,39 @@
 			pylon: { enabled: false, appId: '', identitySecret: '' },
 		},
 	};
+</script>
+
+<script>
+	// The wall clock every story reads. Chart windows, `4 mins ago` labels and
+	// trial countdowns all derive from `now`, and Chromatic does not freeze the
+	// clock, so a live one redraws every chart axis between two builds of the
+	// same code. `performance.now` and the timers keep running, so anything
+	// waiting on a timeout still resolves. `?storyClock=live`, or an ISO
+	// instant, overrides it.
+	//
+	// `new Date()` is the frozen instant, which is what the app renders from.
+	// `Date.now()` runs on from it instead, because it is also what code measures
+	// elapsed time with: `lodash.debounce` compares two `Date.now()` readings to
+	// decide its trailing call is due, so a frozen one re-arms its timer forever
+	// and every debounced input in the app (the onboarding catalogue search, the
+	// pipelines search, the log filter) silently stops filtering.
+	(() => {
+		const asked = new URLSearchParams(window.location.search).get('storyClock');
+		if (asked === 'live') return;
+
+		const frozen = Date.parse(asked || '2026-06-15T12:00:00.000Z');
+		if (Number.isNaN(frozen)) return;
+
+		const RealDate = Date;
+		const started = performance.now();
+		class FrozenDate extends RealDate {
+			constructor(...args) {
+				super(...(args.length ? args : [frozen]));
+			}
+			static now() {
+				return frozen + (performance.now() - started);
+			}
+		}
+		Object.defineProperty(window, 'Date', { value: FrozenDate, writable: true });
+	})();
 </script>
