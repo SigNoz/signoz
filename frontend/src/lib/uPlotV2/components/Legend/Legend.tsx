@@ -20,6 +20,7 @@ export default function Legend({
 	items,
 	position,
 	averageLegendWidth = MAX_LEGEND_WIDTH,
+	showSearch = false,
 	focusedSeriesIndex,
 	onAction,
 	showCopy = true,
@@ -35,16 +36,20 @@ export default function Legend({
 		[items],
 	);
 
-	// A bottom legend gets two rows; spending one on chrome costs more chart than
-	// the readout is worth.
-	const showToolbar = isRightPosition && items.length > 0;
-	const showFilter = showToolbar;
+	// The layout decides: it reserves the height.
+	const showToolbar = showSearch && items.length > 0;
 
-	const effectiveQuery = showFilter ? filterQuery : '';
+	const effectiveQuery = showToolbar ? filterQuery : '';
 
 	const visibleLegendItems = useMemo(
 		() => filterLegendItems(items, effectiveQuery),
 		[items, effectiveQuery],
+	);
+
+	// Against the whole series set, or a search would always read "N of N".
+	const listedShownCount = useMemo(
+		() => getShownSeriesState(visibleLegendItems).visibleCount,
+		[visibleLegendItems],
 	);
 
 	const isEmptyState =
@@ -85,9 +90,9 @@ export default function Legend({
 		>
 			{showToolbar && (
 				<LegendToolbar
-					visibleCount={visibleCount}
+					visibleCount={listedShownCount}
 					totalCount={items.length}
-					showFilter={showFilter}
+					position={position}
 					filterQuery={filterQuery}
 					onFilterQueryChange={setFilterQuery}
 				/>
