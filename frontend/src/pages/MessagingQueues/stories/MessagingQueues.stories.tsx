@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -56,13 +56,18 @@ export const ConfigurationChecklist: Story = {
 
 		// The button reads plain "Configuration" while the checks are in flight and
 		// ignores clicks until they land, so the count is what to wait on.
-		await userEvent.click(
-			await canvas.findByRole(
-				'button',
-				{ name: /missing configuration/i },
-				untilLoaded,
-			),
+		const button = await canvas.findByRole(
+			'button',
+			{ name: /missing configuration/i },
+			untilLoaded,
 		);
+		// The count shows once any one check lands; the button stays loading, and
+		// ignores clicks, until all three have.
+		await waitFor(
+			() => expect(button).not.toHaveClass('ant-btn-loading'),
+			untilLoaded,
+		);
+		await userEvent.click(button);
 		// The modal header and its title both carry the text.
 		await screen.findAllByText(
 			'Kafka Service Attributes',

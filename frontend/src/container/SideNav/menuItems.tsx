@@ -293,9 +293,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		label: 'AI Observability',
 		icon: <Brain size={16} />,
 		isBeta: true,
-		// Gated behind the `enable_ai_observability` feature flag in
-		// SideNav's `computedSecondaryMenuItems`; disabled by default.
-		isEnabled: false,
+		isEnabled: true,
 		itemKey: 'ai-observability',
 	},
 	{
