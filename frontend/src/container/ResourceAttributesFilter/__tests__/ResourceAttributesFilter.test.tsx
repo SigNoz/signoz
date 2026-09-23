@@ -1,23 +1,14 @@
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { Router } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
-import { createMemoryHistory, MemoryHistory } from 'history';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import { encode } from 'js-base64';
+import { resetTestRoute, TestRouter } from 'tests/router';
 
 import ResourceAttributesFilter from '../ResourceAttributesFilter';
-
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: { search: '', pathname: '/' },
-	},
-}));
 
 jest.mock('api/metrics/getResourceAttributes', () => ({
 	getResourceAttributesTagKeys: jest.fn(),
@@ -30,8 +21,6 @@ import {
 	getResourceAttributesTagValues,
 	// eslint-disable-next-line import/newline-after-import
 } from 'api/metrics/getResourceAttributes';
-// eslint-disable-next-line import/first, import/order
-import history from 'lib/history';
 
 const mockTagKeys = getResourceAttributesTagKeys as jest.MockedFunction<
 	typeof getResourceAttributesTagKeys
@@ -67,18 +56,18 @@ function tagValuesPayload(values: string[]): never {
 	} as unknown as never;
 }
 
-function seedUrl(queries: IResourceAttribute[], pathname: string): void {
-	const location = history.location as { search: string; pathname: string };
-	location.search = queries.length
-		? `?resourceAttribute=${encode(JSON.stringify(queries))}`
-		: '';
-	location.pathname = pathname;
+function routeWithQueries(
+	queries: IResourceAttribute[],
+	pathname: string,
+): string {
+	if (!queries.length) {
+		return pathname;
+	}
+
+	return `${pathname}?resourceAttribute=${encode(JSON.stringify(queries))}`;
 }
 
-function renderFilter(pathname: string): MemoryHistory {
-	const routerHistory = createMemoryHistory({
-		initialEntries: [`${pathname}${history.location.search}`],
-	});
+function renderFilter(route: string): void {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
 	});
@@ -86,9 +75,9 @@ function renderFilter(pathname: string): MemoryHistory {
 	function Wrapper({ children }: { children: ReactNode }): JSX.Element {
 		return (
 			<QueryClientProvider client={queryClient}>
-				<Router history={routerHistory}>
+				<TestRouter initialRoute={route}>
 					<ResourceProvider>{children}</ResourceProvider>
-				</Router>
+				</TestRouter>
 			</QueryClientProvider>
 		);
 	}
@@ -98,8 +87,6 @@ function renderFilter(pathname: string): MemoryHistory {
 			<ResourceAttributesFilter />
 		</Wrapper>,
 	);
-
-	return routerHistory;
 }
 
 describe('ResourceAttributesFilter', () => {
@@ -110,29 +97,29 @@ describe('ResourceAttributesFilter', () => {
 			tagKeysPayload(['resource_deployment.environment']),
 		);
 		mockTagValues.mockResolvedValue(tagValuesPayload(['production', 'staging']));
-		seedUrl([], '/');
+		resetTestRoute();
 	});
 
 	it('shows every applied filter on the service map, including ones it cannot apply', async () => {
-		seedUrl(
-			[
-				{
-					id: 'svc',
-					tagKey: 'resource_service_name',
-					operator: 'IN',
-					tagValue: ['frontend'],
-				},
-				{
-					id: 'env',
-					tagKey: 'resource_deployment.environment',
-					operator: 'IN',
-					tagValue: ['production'],
-				},
-			],
-			ROUTES.SERVICE_MAP,
+		renderFilter(
+			routeWithQueries(
+				[
+					{
+						id: 'svc',
+						tagKey: 'resource_service_name',
+						operator: 'IN',
+						tagValue: ['frontend'],
+					},
+					{
+						id: 'env',
+						tagKey: 'resource_deployment.environment',
+						operator: 'IN',
+						tagValue: ['production'],
+					},
+				],
+				ROUTES.SERVICE_MAP,
+			),
 		);
-
-		renderFilter(ROUTES.SERVICE_MAP);
 
 		await waitFor(() =>
 			expect(screen.getByText(/service\.name/)).toBeInTheDocument(),

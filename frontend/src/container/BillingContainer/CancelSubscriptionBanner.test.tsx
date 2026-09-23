@@ -9,8 +9,7 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import CancelSubscriptionBanner from './CancelSubscriptionBanner';
 
 jest.mock('utils/basePath', () => ({
-	getBasePath: (): string => '/',
-	withBasePath: (path: string): string => path,
+	...jest.requireActual('utils/basePath'),
 	getAbsoluteUrl: (path: string): string => `https://test.signoz.io${path}`,
 	getBaseUrl: (): string => 'https://test.signoz.io',
 }));

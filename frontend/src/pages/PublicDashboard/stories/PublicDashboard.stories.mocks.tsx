@@ -4,7 +4,7 @@
  */
 
 import { rest } from 'msw';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import ROUTES from 'constants/routes';
 
 import {
@@ -37,7 +37,7 @@ const VIEWER = 'Public dashboard · viewer';
 const DATA = 'Public dashboard · panels';
 
 export const publicDashboardRoute = (): string =>
-	generatePath(ROUTES.PUBLIC_DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
+	buildRoutePath(ROUTES.PUBLIC_DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
 
 export const publicDashboardMocks = defineStoryMocks({
 	controls: {

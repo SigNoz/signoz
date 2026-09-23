@@ -1,5 +1,3 @@
-import { Route, Switch } from 'react-router-dom';
-import ROUTES from 'constants/routes';
 import { render, screen, userEvent, within } from 'tests/test-utils';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 
@@ -10,14 +8,7 @@ export async function renderCreateRolePage(): Promise<
 > {
 	const result = render(
 		<TooltipProvider>
-			<Switch>
-				<Route path={ROUTES.ROLES_SETTINGS} exact>
-					<div data-testid="roles-list-redirect" />
-				</Route>
-				<Route path={ROUTES.ROLE_CREATE}>
-					<CreateEditRolePage />
-				</Route>
-			</Switch>
+			<CreateEditRolePage />
 		</TooltipProvider>,
 		undefined,
 		{ initialRoute: '/settings/roles/new' },

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useHistory } from 'react-router-dom';
 import cx from 'classnames';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
 import { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
@@ -32,7 +32,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 
 	const { data, isLoading, isError, error } = useListRoles();
 	const { formatTimezoneAdjustedTimestampOptional } = useTimezone();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const urlQuery = useUrlQuery();
 	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
 	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
@@ -40,9 +40,9 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 	const setCurrentPage = useCallback(
 		(page: number): void => {
 			urlQuery.set('page', String(page));
-			history.replace({ search: urlQuery.toString() });
+			safeNavigate({ search: urlQuery.toString() }, { replace: true });
 		},
-		[history, urlQuery],
+		[safeNavigate, urlQuery],
 	);
 
 	const roles = useMemo(() => data?.data ?? [], [data]);
@@ -130,10 +130,10 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 		(roleId: string, roleName: string): void => {
 			if (isRolesEnabled) {
 				const url = `${ROUTES.ROLE_DETAILS.replace(':roleId', roleId)}?name=${encodeURIComponent(roleName)}`;
-				history.push(url);
+				safeNavigate(url);
 			}
 		},
-		[isRolesEnabled, history],
+		[isRolesEnabled, safeNavigate],
 	);
 
 	const showPaginationItem = (total: number, range: number[]): JSX.Element => (

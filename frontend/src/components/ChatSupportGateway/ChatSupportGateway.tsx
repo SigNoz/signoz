@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { Button, Modal } from 'antd';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { createSubscription } from 'api/generated/services/subscriptions';
@@ -45,7 +45,7 @@ export default function ChatSupportGateway(): JSX.Element {
 			onError: handleBillingOnError,
 		},
 	);
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const handleAddCreditCard = (): void => {
 		logEvent('Add Credit card modal: Clicked', {

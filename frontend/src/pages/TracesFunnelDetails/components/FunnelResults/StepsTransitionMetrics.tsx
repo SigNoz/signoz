@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import { useFunnelStepsMetrics } from 'hooks/TracesFunnels/useFunnelMetrics';
 
 import FunnelMetricsTable from './FunnelMetricsTable';
@@ -17,7 +17,7 @@ function StepsTransitionMetrics({
 	startStep,
 	endStep,
 }: StepsTransitionMetricsProps): JSX.Element {
-	const { funnelId } = useParams<{ funnelId: string }>();
+	const { funnelId } = useAppParams<'funnelId'>();
 	const currentTransition = transitions.find(
 		(transition) => transition.value === selectedTransition,
 	);

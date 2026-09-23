@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Tabs, TabsProps } from 'antd';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
@@ -22,7 +22,7 @@ import './AlertList.styles.scss';
 
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 	const { safeNavigate } = useSafeNavigate();
 
 	const tab = urlQuery.get('tab');

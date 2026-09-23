@@ -19,8 +19,8 @@ import {
 import { WidgetGraphComponentProps } from 'container/WidgetCard/Card/types';
 import WidgetGraphComponent from 'container/WidgetCard/Card/WidgetGraphComponent';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD}/624652db-6097-42f5-bbca-e9012901db00`,
 	}),

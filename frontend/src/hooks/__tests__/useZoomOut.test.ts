@@ -27,7 +27,7 @@ jest.mock('react-redux', () => ({
 	},
 }));
 
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router', () => ({
 	useLocation: (): { pathname: string } => ({ pathname: '/logs-explorer' }),
 }));
 

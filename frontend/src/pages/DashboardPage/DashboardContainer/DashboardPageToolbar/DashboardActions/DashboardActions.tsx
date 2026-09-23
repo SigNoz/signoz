@@ -7,7 +7,7 @@ import {
 	useState,
 } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import {
 	Braces,
 	Configure,
@@ -146,7 +146,7 @@ function DashboardActions({
 				source: 'detail',
 			});
 			safeNavigate(
-				generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
+				buildRoutePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
 			);
 		} catch (error) {
 			showErrorModal(error as APIError);

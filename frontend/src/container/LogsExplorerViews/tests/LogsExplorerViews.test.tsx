@@ -20,8 +20,8 @@ import {
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
 const ACTIVE_LOG_ID = 'test-log-id';
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.LOGS_EXPLORER}`,
 	}),

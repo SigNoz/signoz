@@ -6,7 +6,7 @@ import { TextNoData } from '../../../components/TextNoData';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
@@ -146,7 +146,7 @@ export function EntityCountsSection<T>({
 					) : (
 						<TextNoData type="typography" className={styles.countValue} />
 					)}
-					<Link
+					<AppLink
 						to={buildNavigationUrl(config.targetCategory)}
 						onClick={(): void => handleCardNavigate(config.label)}
 						data-testid={`navigate-${config.label.toLowerCase().replace(/\s+/g, '-')}`}
@@ -164,7 +164,7 @@ export function EntityCountsSection<T>({
 								prefix={<Compass size={14} />}
 							/>
 						</TooltipSimple>
-					</Link>
+					</AppLink>
 				</div>
 			))}
 		</div>

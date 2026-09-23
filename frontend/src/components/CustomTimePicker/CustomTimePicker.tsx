@@ -6,7 +6,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button } from '@signozhq/ui/button';
 import { Input, InputRef, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
@@ -72,6 +72,8 @@ interface CustomTimePickerProps {
 	maxTime: number;
 	/** When true, zoom-out button is hidden (e.g. in drawer/modal time selection) */
 	isModalTimeSelection?: boolean;
+	/** Lands on the trigger input. Not spread — the component takes no rest props. */
+	'data-testid'?: string;
 }
 
 function CustomTimePicker({
@@ -95,6 +97,7 @@ function CustomTimePicker({
 	minTime,
 	maxTime,
 	isModalTimeSelection = false,
+	'data-testid': dataTestId,
 }: CustomTimePickerProps): JSX.Element {
 	const [selectedTimePlaceholderValue, setSelectedTimePlaceholderValue] =
 		useState('Select / Enter Time Range');
@@ -106,7 +109,7 @@ function CustomTimePicker({
 	const [inputErrorDetails, setInputErrorDetails] = useState<
 		TimeRangeValidationResult['errorDetails'] | null
 	>(null);
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const inputRef = useRef<InputRef>(null);
 	const initialInputValueOnOpenRef = useRef<string>('');
@@ -596,6 +599,7 @@ function CustomTimePicker({
 				>
 					<Input
 						ref={inputRef}
+						data-testid={dataTestId}
 						autoComplete="off"
 						className={cx(
 							'timeSelection-input',
@@ -682,4 +686,5 @@ CustomTimePicker.defaultProps = {
 	onExitLiveLogs: noop,
 	showLiveLogs: false,
 	showRecentlyUsed: true,
+	'data-testid': undefined,
 };

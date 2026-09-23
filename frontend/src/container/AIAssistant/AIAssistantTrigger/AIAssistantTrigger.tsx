@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
-import { matchPath, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
+import { matchRoute } from 'lib/router/matchRoute';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -21,12 +22,11 @@ import styles from './AIAssistantTrigger.module.scss';
  * Hidden when the panel is already open or when on the full-screen AI Assistant page.
  */
 export default function AIAssistantTrigger(): JSX.Element | null {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const isDrawerOpen = useAIAssistantStore((s) => s.isDrawerOpen);
 	const isModalOpen = useAIAssistantStore((s) => s.isModalOpen);
 
-	const isFullScreenPage = !!matchPath(pathname, {
-		path: ROUTES.AI_ASSISTANT,
+	const isFullScreenPage = !!matchRoute(pathname, ROUTES.AI_ASSISTANT, {
 		exact: true,
 	});
 

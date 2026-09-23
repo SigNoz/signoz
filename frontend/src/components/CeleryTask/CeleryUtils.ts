@@ -1,5 +1,5 @@
 import { QueryParams } from 'constants/query';
-import { History, Location } from 'history';
+import type { AppLocation } from 'lib/router/types';
 import getRenderer from 'lib/uPlotLib/utils/getRenderer';
 import { Widgets } from 'types/api/widgets/widget';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -17,13 +17,13 @@ export function getValuesFromQueryParams(
 export function setQueryParamsFromOptions(
 	value: string[],
 	urlQuery: URLSearchParams,
-	history: History<unknown>,
-	location: Location<unknown>,
+	navigate: (to: string, options?: { replace?: boolean }) => void,
+	location: AppLocation,
 	queryParams: QueryParams,
 ): void {
 	urlQuery.set(queryParams, value.join(','));
 	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-	history.replace(generatedUrl);
+	navigate(generatedUrl, { replace: true });
 }
 
 export function getFiltersFromQueryParams(

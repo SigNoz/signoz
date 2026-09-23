@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import RouteTab from 'components/RouteTab';
 import { FeatureKeys } from 'constants/features';
@@ -12,7 +11,8 @@ import NavItem from 'container/SideNav/NavItem/NavItem';
 import { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 import { Cog } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
@@ -24,7 +24,7 @@ import { getRoutes } from './utils';
 import './Settings.styles.scss';
 
 function SettingsPage(): JSX.Element {
-	const { pathname, search } = useLocation();
+	const { pathname, search } = useAppLocation();
 
 	const { user, featureFlags, trialInfo, isFetchingActiveLicense } =
 		useAppContext();
@@ -253,8 +253,8 @@ function SettingsPage(): JSX.Element {
 				if (event && isModifierKeyPressed(event)) {
 					openInNewTab(url);
 				} else {
-					history.push(url, {
-						from: pathname,
+					navigate(url, {
+						state: { from: pathname },
 					});
 				}
 			}
@@ -336,7 +336,6 @@ function SettingsPage(): JSX.Element {
 					<RouteTab
 						routes={routes}
 						activeKey={pathname}
-						history={history}
 						tabBarStyle={{ display: 'none' }}
 					/>
 				</div>

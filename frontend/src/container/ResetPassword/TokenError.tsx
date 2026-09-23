@@ -4,7 +4,7 @@ import { Typography } from '@signozhq/ui/typography';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import APIError from 'types/api/error';
 
 import './ResetPassword.styles.scss';
@@ -67,7 +67,7 @@ function TokenError({ error }: TokenErrorProps): JSX.Element {
 						variant="solid"
 						data-testid="back-to-login"
 						prefix={<ArrowLeft size={12} />}
-						onClick={(): void => history.push(ROUTES.LOGIN)}
+						onClick={(): void => navigate(ROUTES.LOGIN)}
 					>
 						Back to login
 					</Button>

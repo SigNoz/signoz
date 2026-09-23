@@ -1,11 +1,11 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as metricsGeneratedAPI from 'api/generated/services/metrics';
 import { Filter } from 'api/v5/v5';
 import * as useQueryBuilderOperationsHooks from 'hooks/queryBuilder/useQueryBuilderOperations';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import APIError from 'types/api/error';
 
 import MetricsTable from '../MetricsTable';
@@ -36,14 +36,6 @@ const mockQueryFilterExpression: Filter = {
 	expression: '',
 };
 
-jest.mock('react-router-dom-v5-compat', () => {
-	const actual = jest.requireActual('react-router-dom-v5-compat');
-	return {
-		...actual,
-		useSearchParams: jest.fn().mockReturnValue([{}, jest.fn()]),
-		useNavigationType: (): any => 'PUSH',
-	};
-});
 describe('MetricsTable', () => {
 	beforeEach(() => {
 		jest
@@ -83,7 +75,7 @@ describe('MetricsTable', () => {
 
 	it('renders table with data correctly', () => {
 		render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<MetricsTable
 						isLoading={false}
@@ -99,7 +91,7 @@ describe('MetricsTable', () => {
 						onFilterChange={jest.fn()}
 					/>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		expect(screen.getByText('List View')).toBeInTheDocument();
@@ -109,7 +101,7 @@ describe('MetricsTable', () => {
 
 	it('shows loading state', () => {
 		render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<MetricsTable
 						isError={false}
@@ -125,7 +117,7 @@ describe('MetricsTable', () => {
 						onFilterChange={jest.fn()}
 					/>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		expect(screen.getByTestId('metrics-table-loading-state')).toBeInTheDocument();
@@ -143,7 +135,7 @@ describe('MetricsTable', () => {
 		});
 
 		render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<MetricsTable
 						isLoading={false}
@@ -160,7 +152,7 @@ describe('MetricsTable', () => {
 						onFilterChange={jest.fn()}
 					/>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		expect(screen.getByText('400')).toBeInTheDocument();
@@ -169,7 +161,7 @@ describe('MetricsTable', () => {
 
 	it('shows empty state when no data', () => {
 		render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<MetricsTable
 						isLoading={false}
@@ -185,7 +177,7 @@ describe('MetricsTable', () => {
 						onFilterChange={jest.fn()}
 					/>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		expect(screen.getByTestId('metrics-table-empty-state')).toBeInTheDocument();
@@ -199,7 +191,7 @@ describe('MetricsTable', () => {
 	it('calls openMetricDetails when row is clicked', () => {
 		const mockOpenMetricDetails = jest.fn();
 		render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<MetricsTable
 						isLoading={false}
@@ -215,7 +207,7 @@ describe('MetricsTable', () => {
 						onFilterChange={jest.fn()}
 					/>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		fireEvent.click(screen.getByText('Metric 1'));
@@ -229,7 +221,7 @@ describe('MetricsTable', () => {
 	it('calls setOrderBy when column header is clicked', () => {
 		const mockSetOrderBy = jest.fn();
 		render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<MetricsTable
 						isLoading={false}
@@ -245,7 +237,7 @@ describe('MetricsTable', () => {
 						onFilterChange={jest.fn()}
 					/>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		const samplesHeader = screen.getByText('SAMPLES');

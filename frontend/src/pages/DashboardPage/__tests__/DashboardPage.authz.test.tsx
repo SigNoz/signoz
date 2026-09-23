@@ -12,8 +12,8 @@ import DashboardPage from '../DashboardPage';
 const DASHBOARD_ID = 'dash-1';
 const DASHBOARD_URL = `http://localhost/api/v2/dashboards/${DASHBOARD_ID}`;
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useParams: (): { dashboardId: string } => ({ dashboardId: DASHBOARD_ID }),
 }));
 

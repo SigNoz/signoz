@@ -1,7 +1,7 @@
 import { PageTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { matchPath } from 'react-router-dom';
+import { matchRoute } from 'lib/router/matchRoute';
 
 import { getAutoContexts } from './getAutoContexts';
 
@@ -45,15 +45,10 @@ export function resolvePageType(
 	// Pseudo-pages with no attachable resource: resolved straight from the
 	// route. They deliberately emit no auto-context chip (see `getAutoContexts`),
 	// so they can't be derived from `metadata.page` like the pages below.
-	if (matchPath(pathname, { path: ROUTES.HOME, exact: true })) {
+	if (matchRoute(pathname, ROUTES.HOME, { exact: true })) {
 		return PageTypeDTO.homepage;
 	}
-	if (
-		matchPath(pathname, {
-			path: ROUTES.INFRASTRUCTURE_MONITORING_BASE,
-			exact: false,
-		})
-	) {
+	if (matchRoute(pathname, ROUTES.INFRASTRUCTURE_MONITORING_BASE)) {
 		return PageTypeDTO.infra_entity_detail;
 	}
 

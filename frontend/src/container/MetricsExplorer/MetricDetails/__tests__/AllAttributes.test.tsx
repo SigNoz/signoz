@@ -8,8 +8,8 @@ import AllAttributes from '../AllAttributes';
 import { AllAttributesValue } from '../AllAttributesValue';
 import { getMockMetricAttributesData, MOCK_METRIC_NAME } from './testUtlls';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.METRICS_EXPLORER}`,
 	}),

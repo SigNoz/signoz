@@ -51,6 +51,12 @@ describe('at basePath="/"', () => {
 		expect(m.getAbsoluteUrl('/logs')).toBe(`${window.location.origin}/logs`);
 	});
 
+	it('stripBasePath is a no-op for any internal path', () => {
+		expect(m.stripBasePath('/logs')).toBe('/logs');
+		expect(m.stripBasePath('/logs/explorer')).toBe('/logs/explorer');
+		expect(m.stripBasePath('/')).toBe('/');
+	});
+
 	it('getBaseUrl returns bare origin', () => {
 		expect(m.getBaseUrl()).toBe(window.location.origin);
 	});
@@ -83,6 +89,34 @@ describe('at basePath="/signoz/"', () => {
 		expect(m.withBasePath('https://example.com/foo')).toBe(
 			'https://example.com/foo',
 		);
+	});
+
+	it('stripBasePath removes the prefix', () => {
+		expect(m.stripBasePath('/signoz/logs')).toBe('/logs');
+		expect(m.stripBasePath('/signoz/logs/explorer')).toBe('/logs/explorer');
+	});
+
+	it('stripBasePath maps the prefix itself to "/"', () => {
+		expect(m.stripBasePath('/signoz/')).toBe('/');
+		expect(m.stripBasePath('/signoz')).toBe('/');
+	});
+
+	it('stripBasePath is idempotent — safe to call twice', () => {
+		expect(m.stripBasePath(m.stripBasePath('/signoz/logs'))).toBe('/logs');
+	});
+
+	it('stripBasePath leaves a path that only looks like the prefix alone', () => {
+		expect(m.stripBasePath('/signozzz/logs')).toBe('/signozzz/logs');
+	});
+
+	it('stripBasePath passes through external URLs', () => {
+		expect(m.stripBasePath('https://example.com/signoz/foo')).toBe(
+			'https://example.com/signoz/foo',
+		);
+	});
+
+	it('stripBasePath round-trips withBasePath', () => {
+		expect(m.stripBasePath(m.withBasePath('/logs?a=1'))).toBe('/logs?a=1');
 	});
 
 	it('getAbsoluteUrl returns origin + prefixed path', () => {

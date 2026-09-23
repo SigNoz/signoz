@@ -2,7 +2,7 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { ArrowUpRight } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
 import DOCLINKS from 'utils/docLinks';
@@ -33,7 +33,7 @@ export default function NoLogs({
 			} else if (dataSource === DataSource.METRICS) {
 				logEvent('Metrics Explorer: Navigate to onboarding', {});
 			}
-			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+			navigate(ROUTES.GET_STARTED_WITH_CLOUD);
 		} else if (dataSource === 'traces') {
 			openInNewTab(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE);
 		} else if (dataSource === DataSource.METRICS) {

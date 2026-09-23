@@ -10,7 +10,7 @@ import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { isUndefined } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
@@ -32,7 +32,7 @@ function AlertChannels(): JSX.Element {
 		user.role,
 	);
 	const onToggleHandler = useCallback(() => {
-		history.push(ROUTES.CHANNELS_NEW);
+		navigate(ROUTES.CHANNELS_NEW);
 	}, []);
 
 	const { isLoading, data, error } = useQuery<

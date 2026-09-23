@@ -1,9 +1,9 @@
 import type { MessageContext } from 'api/ai-assistant/chat';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { matchRoute } from 'lib/router/matchRoute';
 import { AlertListTabs } from 'pages/AlertList/types';
 import { NEW_PANEL_ID } from 'pages/DashboardPage/DashboardContainer/PanelEditor/newPanelRoute';
-import { matchPath } from 'react-router-dom';
 
 /**
  * Resolves the page the user is currently on into structured `MessageContext`
@@ -33,9 +33,10 @@ export function getAutoContexts(
 
 	// Panel editor (V2). `panel/new` has no widget id yet and the schema requires
 	// a non-empty `panel_edit.widgetId`, so it reports `panel_create` instead.
-	const panelEditorMatch = matchPath<{ dashboardId: string; panelId: string }>(
+	const panelEditorMatch = matchRoute<'dashboardId' | 'panelId'>(
 		pathname,
-		{ path: ROUTES.DASHBOARD_PANEL_EDITOR, exact: true },
+		ROUTES.DASHBOARD_PANEL_EDITOR,
+		{ exact: true },
 	);
 	if (panelEditorMatch) {
 		const { dashboardId, panelId } = panelEditorMatch.params;
@@ -55,8 +56,7 @@ export function getAutoContexts(
 	// Dashboard detail — `/dashboard/:dashboardId`. The `expandedWidgetId`
 	// query param signals the panel-fullscreen overlay; otherwise it's the
 	// plain dashboard view.
-	const dashboardMatch = matchPath<{ dashboardId: string }>(pathname, {
-		path: ROUTES.DASHBOARD,
+	const dashboardMatch = matchRoute<'dashboardId'>(pathname, ROUTES.DASHBOARD, {
 		exact: true,
 	});
 	if (dashboardMatch) {
@@ -89,7 +89,7 @@ export function getAutoContexts(
 	}
 
 	// Dashboard list — `/dashboard`.
-	if (matchPath(pathname, { path: ROUTES.ALL_DASHBOARD, exact: true })) {
+	if (matchRoute(pathname, ROUTES.ALL_DASHBOARD, { exact: true })) {
 		return [
 			{
 				source: 'auto',
@@ -106,8 +106,8 @@ export function getAutoContexts(
 	// or `/alerts/history?ruleId=…`. Mirrors dashboard_detail: resourceId is the
 	// rule id and shared metadata carries the URL time range when present.
 	if (
-		matchPath(pathname, { path: ROUTES.ALERT_OVERVIEW, exact: true }) ||
-		matchPath(pathname, { path: ROUTES.ALERT_HISTORY, exact: true })
+		matchRoute(pathname, ROUTES.ALERT_OVERVIEW, { exact: true }) ||
+		matchRoute(pathname, ROUTES.ALERT_HISTORY, { exact: true })
 	) {
 		const ruleId = params.get(QueryParams.ruleId);
 		if (ruleId) {
@@ -129,7 +129,7 @@ export function getAutoContexts(
 	// Alert edit — `/alerts/edit?ruleId=…`. The form syncs its query-builder
 	// state to the URL (`useShareBuilderUrl`), so shared metadata carries the
 	// alert's query + time range, mirroring the dashboard panel editor.
-	if (matchPath(pathname, { path: ROUTES.EDIT_ALERTS, exact: true })) {
+	if (matchRoute(pathname, ROUTES.EDIT_ALERTS, { exact: true })) {
 		const ruleId = params.get(QueryParams.ruleId);
 		if (ruleId) {
 			return [
@@ -145,7 +145,7 @@ export function getAutoContexts(
 
 	// Alert new — `/alerts/new`. No rule id yet (draft), but the query-builder
 	// state is on the URL, so shared metadata carries the in-progress query.
-	if (matchPath(pathname, { path: ROUTES.ALERTS_NEW, exact: true })) {
+	if (matchRoute(pathname, ROUTES.ALERTS_NEW, { exact: true })) {
 		return [
 			{
 				source: 'auto',
@@ -157,7 +157,7 @@ export function getAutoContexts(
 	}
 
 	// Triggered-alerts index — `/alerts/history` without a rule id.
-	if (matchPath(pathname, { path: ROUTES.ALERT_HISTORY, exact: true })) {
+	if (matchRoute(pathname, ROUTES.ALERT_HISTORY, { exact: true })) {
 		return [
 			{
 				source: 'auto',
@@ -172,7 +172,7 @@ export function getAutoContexts(
 	}
 
 	// Alerts index — `/alerts` with tab query param (defaults to Alert Rules).
-	if (matchPath(pathname, { path: ROUTES.LIST_ALL_ALERT, exact: true })) {
+	if (matchRoute(pathname, ROUTES.LIST_ALL_ALERT, { exact: true })) {
 		const page = resolveAlertsIndexPage(params.get(QueryParams.tab));
 		return [
 			{
@@ -191,10 +191,10 @@ export function getAutoContexts(
 
 	// Service detail (covers sub-routes like top-level-operations) —
 	// `/services/:servicename[/...]`.
-	const serviceMatch = matchPath<{ servicename: string }>(pathname, {
-		path: ROUTES.SERVICE_METRICS,
-		exact: false,
-	});
+	const serviceMatch = matchRoute<'servicename'>(
+		pathname,
+		ROUTES.SERVICE_METRICS,
+	);
 	if (serviceMatch?.params.servicename) {
 		return [
 			{
@@ -210,7 +210,7 @@ export function getAutoContexts(
 	}
 
 	// Services list — `/services`.
-	if (matchPath(pathname, { path: ROUTES.APPLICATION, exact: true })) {
+	if (matchRoute(pathname, ROUTES.APPLICATION, { exact: true })) {
 		return [
 			{
 				source: 'auto',
@@ -226,7 +226,7 @@ export function getAutoContexts(
 
 	// ── Logs ──────────────────────────────────────────────────────────────────
 
-	if (matchPath(pathname, { path: ROUTES.LOGS_EXPLORER, exact: false })) {
+	if (matchRoute(pathname, ROUTES.LOGS_EXPLORER)) {
 		const activeLogId = params.get(QueryParams.activeLogId);
 		// `?activeLogId=…` indicates a log-detail panel is open. Per the
 		// schema, log_detail requires payload fields (timestamp, service,
@@ -251,8 +251,7 @@ export function getAutoContexts(
 
 	// Trace detail — `/trace/:id`. Treated as a detail-as-metadata page
 	// (resourceId null, `traceId` lives in metadata).
-	const traceMatch = matchPath<{ id: string }>(pathname, {
-		path: ROUTES.TRACE_DETAIL,
+	const traceMatch = matchRoute<'id'>(pathname, ROUTES.TRACE_DETAIL, {
 		exact: true,
 	});
 	if (traceMatch?.params.id) {
@@ -272,7 +271,7 @@ export function getAutoContexts(
 		];
 	}
 
-	if (matchPath(pathname, { path: ROUTES.TRACES_EXPLORER, exact: false })) {
+	if (matchRoute(pathname, ROUTES.TRACES_EXPLORER)) {
 		return [
 			{
 				source: 'auto',
@@ -289,9 +288,7 @@ export function getAutoContexts(
 	// ── Metrics ───────────────────────────────────────────────────────────────
 
 	// Metrics explorer — `/metrics-explorer` and sub-routes (summary, explorer, views).
-	if (
-		matchPath(pathname, { path: ROUTES.METRICS_EXPLORER_BASE, exact: false })
-	) {
+	if (matchRoute(pathname, ROUTES.METRICS_EXPLORER_BASE)) {
 		return [
 			{
 				source: 'auto',

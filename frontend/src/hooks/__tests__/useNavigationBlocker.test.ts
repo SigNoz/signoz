@@ -4,18 +4,10 @@ import { useNavigationBlocker } from '../useNavigationBlocker';
 
 const mockUnblock = jest.fn();
 const mockBlock = jest.fn().mockReturnValue(mockUnblock);
-const mockPush = jest.fn();
-const mockReplace = jest.fn();
-const mockGoBack = jest.fn();
+const mockRetry = jest.fn();
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useHistory: (): object => ({
-		block: mockBlock,
-		push: mockPush,
-		replace: mockReplace,
-		goBack: mockGoBack,
-	}),
+jest.mock('lib/router/navigation', () => ({
+	blockNavigation: (blocker: unknown): unknown => mockBlock(blocker),
 }));
 
 describe('useNavigationBlocker', () => {
@@ -26,6 +18,19 @@ describe('useNavigationBlocker', () => {
 		state: null,
 		key: 'test-key',
 	};
+
+	/**
+	 * history@5 hands the blocker one transition object and cancels the
+	 * navigation on its own; `retry()` is the only way through, which is why
+	 * these cases assert on `retry` rather than on a returned `false`.
+	 */
+	function transition(action: string): {
+		location: typeof mockLocation;
+		action: string;
+		retry: jest.Mock;
+	} {
+		return { location: mockLocation, action, retry: mockRetry };
+	}
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -48,15 +53,15 @@ describe('useNavigationBlocker', () => {
 		});
 	});
 
-	describe('history.block behavior', () => {
-		it('calls history.block when shouldBlock is true', () => {
+	describe('blockNavigation behavior', () => {
+		it('registers a blocker when shouldBlock is true', () => {
 			renderHook(() => useNavigationBlocker(true));
 
 			expect(mockBlock).toHaveBeenCalledTimes(1);
 			expect(mockBlock).toHaveBeenCalledWith(expect.any(Function));
 		});
 
-		it('does not call history.block when shouldBlock is false', () => {
+		it('does not register a blocker when shouldBlock is false', () => {
 			renderHook(() => useNavigationBlocker(false));
 
 			expect(mockBlock).not.toHaveBeenCalled();
@@ -97,13 +102,12 @@ describe('useNavigationBlocker', () => {
 			const { result } = renderHook(() => useNavigationBlocker(true));
 
 			const blockCallback = mockBlock.mock.calls[0][0];
-			let blockResult: boolean | undefined;
 
 			act(() => {
-				blockResult = blockCallback(mockLocation, 'PUSH');
+				blockCallback(transition('PUSH'));
 			});
 
-			expect(blockResult).toBe(false);
+			expect(mockRetry).not.toHaveBeenCalled();
 			expect(result.current.isBlocked).toBe(true);
 			expect(result.current.blockedNavigationDetails).toStrictEqual({
 				location: mockLocation,
@@ -117,7 +121,7 @@ describe('useNavigationBlocker', () => {
 			const blockCallback = mockBlock.mock.calls[0][0];
 
 			act(() => {
-				blockCallback(mockLocation, 'REPLACE');
+				blockCallback(transition('REPLACE'));
 			});
 
 			expect(result.current.isBlocked).toBe(true);
@@ -130,7 +134,7 @@ describe('useNavigationBlocker', () => {
 			const blockCallback = mockBlock.mock.calls[0][0];
 
 			act(() => {
-				blockCallback(mockLocation, 'POP');
+				blockCallback(transition('POP'));
 			});
 
 			expect(result.current.isBlocked).toBe(true);
@@ -146,18 +150,16 @@ describe('useNavigationBlocker', () => {
 				result.current.confirmNavigation();
 			});
 
-			expect(mockPush).not.toHaveBeenCalled();
-			expect(mockReplace).not.toHaveBeenCalled();
-			expect(mockGoBack).not.toHaveBeenCalled();
+			expect(mockRetry).not.toHaveBeenCalled();
 		});
 
-		it('performs PUSH navigation when confirming blocked PUSH', () => {
+		it('unblocks before retrying, or history@5 would block the retry too', () => {
 			const { result } = renderHook(() => useNavigationBlocker(true));
 
 			const blockCallback = mockBlock.mock.calls[0][0];
 
 			act(() => {
-				blockCallback(mockLocation, 'PUSH');
+				blockCallback(transition('PUSH'));
 			});
 
 			act(() => {
@@ -165,42 +167,31 @@ describe('useNavigationBlocker', () => {
 			});
 
 			expect(mockUnblock).toHaveBeenCalled();
-			expect(mockPush).toHaveBeenCalledWith(mockLocation);
+			expect(mockUnblock.mock.invocationCallOrder[0]).toBeLessThan(
+				mockRetry.mock.invocationCallOrder[0],
+			);
 			expect(result.current.isBlocked).toBe(false);
 			expect(result.current.blockedNavigationDetails).toBeNull();
 		});
 
-		it('performs REPLACE navigation when confirming blocked REPLACE', () => {
-			const { result } = renderHook(() => useNavigationBlocker(true));
+		it.each(['PUSH', 'REPLACE', 'POP'])(
+			'retries the blocked %s, which replays it with its own action',
+			(action) => {
+				const { result } = renderHook(() => useNavigationBlocker(true));
 
-			const blockCallback = mockBlock.mock.calls[0][0];
+				const blockCallback = mockBlock.mock.calls[0][0];
 
-			act(() => {
-				blockCallback(mockLocation, 'REPLACE');
-			});
+				act(() => {
+					blockCallback(transition(action));
+				});
 
-			act(() => {
-				result.current.confirmNavigation();
-			});
+				act(() => {
+					result.current.confirmNavigation();
+				});
 
-			expect(mockReplace).toHaveBeenCalledWith(mockLocation);
-		});
-
-		it('performs goBack when confirming blocked POP', () => {
-			const { result } = renderHook(() => useNavigationBlocker(true));
-
-			const blockCallback = mockBlock.mock.calls[0][0];
-
-			act(() => {
-				blockCallback(mockLocation, 'POP');
-			});
-
-			act(() => {
-				result.current.confirmNavigation();
-			});
-
-			expect(mockGoBack).toHaveBeenCalled();
-		});
+				expect(mockRetry).toHaveBeenCalledTimes(1);
+			},
+		);
 	});
 
 	describe('cancelNavigation', () => {
@@ -210,7 +201,7 @@ describe('useNavigationBlocker', () => {
 			const blockCallback = mockBlock.mock.calls[0][0];
 
 			act(() => {
-				blockCallback(mockLocation, 'PUSH');
+				blockCallback(transition('PUSH'));
 			});
 
 			expect(result.current.isBlocked).toBe(true);
@@ -221,9 +212,7 @@ describe('useNavigationBlocker', () => {
 
 			expect(result.current.isBlocked).toBe(false);
 			expect(result.current.blockedNavigationDetails).toBeNull();
-			expect(mockPush).not.toHaveBeenCalled();
-			expect(mockReplace).not.toHaveBeenCalled();
-			expect(mockGoBack).not.toHaveBeenCalled();
+			expect(mockRetry).not.toHaveBeenCalled();
 		});
 	});
 
@@ -236,14 +225,17 @@ describe('useNavigationBlocker', () => {
 			});
 
 			const blockCallback = mockBlock.mock.calls[0][0];
-			let blockResult: boolean | undefined;
 
 			act(() => {
-				blockResult = blockCallback(mockLocation, 'PUSH');
+				blockCallback(transition('PUSH'));
 			});
 
-			expect(blockResult).toBeUndefined();
+			// The bypass has to let the transition through itself: history@5
+			// cancels every navigation while a blocker is registered.
+			expect(mockRetry).toHaveBeenCalledTimes(1);
 			expect(result.current.isBlocked).toBe(false);
+			// ...and re-arm, or one bypass would disarm the blocker for good.
+			expect(mockBlock).toHaveBeenCalledTimes(2);
 		});
 
 		it('resumes blocking after bypassed navigation', () => {
@@ -256,15 +248,15 @@ describe('useNavigationBlocker', () => {
 			});
 
 			act(() => {
-				blockCallback(mockLocation, 'PUSH');
+				blockCallback(transition('PUSH'));
 			});
 
-			let blockResult: boolean | undefined;
+			mockRetry.mockClear();
 			act(() => {
-				blockResult = blockCallback(mockLocation, 'PUSH');
+				blockCallback(transition('PUSH'));
 			});
 
-			expect(blockResult).toBe(false);
+			expect(mockRetry).not.toHaveBeenCalled();
 			expect(result.current.isBlocked).toBe(true);
 		});
 
@@ -282,13 +274,12 @@ describe('useNavigationBlocker', () => {
 			rerender({ shouldBlock: true });
 
 			const blockCallback = mockBlock.mock.calls[1][0];
-			let blockResult: boolean | undefined;
 
 			act(() => {
-				blockResult = blockCallback(mockLocation, 'PUSH');
+				blockCallback(transition('PUSH'));
 			});
 
-			expect(blockResult).toBe(false);
+			expect(mockRetry).not.toHaveBeenCalled();
 			expect(result.current.isBlocked).toBe(true);
 		});
 	});

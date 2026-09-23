@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider as ReduxProvider } from 'react-redux';
-import { MemoryRouter, Route, useHistory, useParams } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { matchRoute } from 'lib/router/matchRoute';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import {
 	type DashboardtypesPanelDTO,
@@ -15,6 +16,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import configureStore from 'redux-mock-store';
 import appStore from 'store';
+import { TestRouter } from 'tests/router';
 
 import { useOpenPanelEditor } from '../../hooks/useOpenPanelEditor';
 import { usePanelEditorQuerySync } from '../hooks/usePanelEditorQuerySync';
@@ -24,15 +26,11 @@ import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder/PanelEditorQuery
 
 // jest.config maps the real hook to a no-op mock; this suite needs real navigation.
 jest.mock('hooks/useSafeNavigate', () => {
-	const { useHistory: useRouterHistory } =
-		jest.requireActual('react-router-dom');
+	const { navigate } = jest.requireActual('lib/router/navigation');
 	return {
-		useSafeNavigate: (): unknown => {
-			const history = useRouterHistory();
-			return {
-				safeNavigate: (to: string): void => history.push(to),
-			};
-		},
+		useSafeNavigate: (): unknown => ({
+			safeNavigate: (to: string): void => navigate(to),
+		}),
 	};
 });
 
@@ -70,8 +68,7 @@ const PANELS: Record<string, DashboardtypesPanelDTO> = {
 const noop = (): void => {};
 
 /** Stands in for the editor route: the same draft + builder sync `PanelEditorContainer` runs. */
-function EditorRoute(): JSX.Element {
-	const { panelId } = useParams<{ panelId: string }>();
+function EditorRoute({ panelId }: { panelId: string }): JSX.Element {
 	const [panel] = useState(PANELS[panelId]);
 
 	usePanelEditorQuerySync({
@@ -93,9 +90,20 @@ function EditorRoute(): JSX.Element {
 	);
 }
 
+/** Mounts the editor only while the URL is on the editor route, as `<Route>` did. */
+function EditorRouteOutlet(): JSX.Element | null {
+	const { pathname } = useAppLocation();
+	const panelId = matchRoute<'panelId'>(
+		pathname,
+		'/dashboard/:dashboardId/panel/:panelId',
+	)?.params.panelId;
+
+	return panelId ? <EditorRoute panelId={panelId} /> : null;
+}
+
 function Harness(): JSX.Element {
 	const openPanelEditor = useOpenPanelEditor();
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 
 	return (
 		<>
@@ -116,33 +124,28 @@ function Harness(): JSX.Element {
 			<button
 				type="button"
 				data-testid="back"
-				onClick={(): void => history.push('/dashboard/dash-1')}
+				onClick={(): void => safeNavigate('/dashboard/dash-1')}
 			>
 				back
 			</button>
-			<Route
-				path="/dashboard/:dashboardId/panel/:panelId"
-				component={EditorRoute}
-			/>
+			<EditorRouteOutlet />
 		</>
 	);
 }
 
 const renderHarness = (): void => {
 	render(
-		<MemoryRouter initialEntries={['/dashboard/dash-1']}>
-			<CompatRouter>
-				<QueryClientProvider client={new QueryClient()}>
-					<ReduxProvider store={configureStore([])(appStore.getState())}>
-						<TooltipProvider>
-							<QueryBuilderProvider>
-								<Harness />
-							</QueryBuilderProvider>
-						</TooltipProvider>
-					</ReduxProvider>
-				</QueryClientProvider>
-			</CompatRouter>
-		</MemoryRouter>,
+		<TestRouter initialRoute="/dashboard/dash-1">
+			<QueryClientProvider client={new QueryClient()}>
+				<ReduxProvider store={configureStore([])(appStore.getState())}>
+					<TooltipProvider>
+						<QueryBuilderProvider>
+							<Harness />
+						</QueryBuilderProvider>
+					</TooltipProvider>
+				</ReduxProvider>
+			</QueryClientProvider>
+		</TestRouter>,
 	);
 };
 

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '../../../storybook/renderAtRoute';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -24,11 +24,9 @@ const meta = {
 	component: ServiceTopLevelOperations,
 	// The page reads the service out of the pathname, so it renders under its own
 	// route rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route
-			path={ROUTES.SERVICE_TOP_LEVEL_OPERATIONS}
-			component={ServiceTopLevelOperations}
-		/>
+	render: renderAtRoute(
+		ROUTES.SERVICE_TOP_LEVEL_OPERATIONS,
+		ServiceTopLevelOperations,
 	),
 	...pageStory,
 	parameters: { ...pageStory.parameters },

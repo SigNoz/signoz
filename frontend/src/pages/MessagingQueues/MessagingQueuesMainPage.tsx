@@ -1,8 +1,7 @@
-import { useLocation } from 'react-router-dom';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { ListMinus, Rows3 } from '@signozhq/icons';
 import CeleryOverview from 'pages/Celery/CeleryOverview/CeleryOverview';
 
@@ -57,7 +56,7 @@ export const Overview: TabRoutes = {
 };
 
 export default function MessagingQueuesMainPage(): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const isKafkaDetail = pathname === ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL;
 
@@ -69,7 +68,7 @@ export default function MessagingQueuesMainPage(): JSX.Element {
 
 	return (
 		<div className="messaging-queues-module-container">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
+			<RouteTab routes={routes} activeKey={pathname} />
 		</div>
 	);
 }

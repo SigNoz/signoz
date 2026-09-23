@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { Link, Pin } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Space, TableColumnsType as ColumnsType, Tooltip } from 'antd';
@@ -15,7 +15,7 @@ import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
 import { IField } from 'types/api/logs/fields';
@@ -178,7 +178,7 @@ function TableView({
 		const spanId = flattenLogData?.span_id;
 
 		if (traceId) {
-			const basePath = generatePath(ROUTES.TRACE_DETAIL, {
+			const basePath = buildRoutePath(ROUTES.TRACE_DETAIL, {
 				id: traceId,
 			});
 
@@ -188,7 +188,7 @@ function TableView({
 				// open the trace in new tab
 				openInNewTab(route);
 			} else {
-				history.push(route);
+				navigate(route);
 			}
 		}
 	};

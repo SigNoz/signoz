@@ -83,8 +83,8 @@ const mockUseLocation = jest.fn().mockReturnValue({
 });
 let mockUrlQuery: URLSearchParams;
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useLocation: (): void => mockUseLocation(),
 }));
 

@@ -1,19 +1,19 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { render } from '@testing-library/react';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 
 import NotFound from './index';
 
 describe('Not Found page test', () => {
 	it('should render Not Found page without errors', () => {
 		const { asFragment } = render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<NotFound />
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 		expect(asFragment()).toMatchSnapshot();
 	});

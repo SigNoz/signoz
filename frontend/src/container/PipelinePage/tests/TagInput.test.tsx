@@ -1,23 +1,23 @@
 import { I18nextProvider } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { render } from '@testing-library/react';
 import i18n from 'ReactI18';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 
 import TagInput from '../components/TagInput';
 
 describe('Pipeline Page', () => {
 	it('should render TagInput section', () => {
 		const { asFragment } = render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<TagInput setTagsListData={jest.fn()} tagsListData={[]} placeHolder="" />
 					</I18nextProvider>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 		expect(asFragment()).toMatchSnapshot();
 	});

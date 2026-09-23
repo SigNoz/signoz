@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { Color } from '@signozhq/design-tokens';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import { Skeleton } from 'antd';
@@ -94,7 +94,7 @@ function DashboardsAndAlertsPopover({
 						key={dashboard.dashboardId}
 						onClick={(): void => {
 							openInNewTab(
-								generatePath(ROUTES.DASHBOARD, {
+								buildRoutePath(ROUTES.DASHBOARD, {
 									dashboardId: dashboard.dashboardId,
 								}),
 							);

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import { screen, userEvent, within } from 'storybook/test';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '../../../storybook/renderAtRoute';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -25,12 +25,7 @@ const meta = {
 	component: IntegrationsDetailsPage,
 	// The page reads the integration id out of the pathname, so it renders under
 	// its own route rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route
-			path={ROUTES.INTEGRATIONS_DETAIL}
-			component={IntegrationsDetailsPage}
-		/>
-	),
+	render: renderAtRoute(ROUTES.INTEGRATIONS_DETAIL, IntegrationsDetailsPage),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<IntegrationDetailArgs>;

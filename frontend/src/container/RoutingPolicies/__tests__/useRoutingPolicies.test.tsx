@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
-import { Router } from 'react-router-dom';
 import {
 	act,
 	renderHook,
@@ -7,7 +6,7 @@ import {
 	waitFor,
 } from '@testing-library/react';
 import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
-import { createMemoryHistory } from 'history';
+import { TestRouter } from 'tests/router';
 import { SuccessResponseV2 } from 'types/api';
 
 import { UseRoutingPoliciesReturn } from '../types';
@@ -20,13 +19,10 @@ import {
 	MOCK_ROUTING_POLICY_2,
 } from './testUtils';
 
-const mockHistoryReplace = jest.fn();
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useHistory: (): any => ({
-		...jest.requireActual('react-router-dom').useHistory(),
-		replace: mockHistoryReplace,
-	}),
+const mockNavigate = jest.fn();
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: (...args: unknown[]): void => mockNavigate(...args),
 }));
 
 const mockDebouncedFn = jest.fn((fn: () => void) => fn);
@@ -92,17 +88,15 @@ describe('useRoutingPolicies', () => {
 	let queryClient: QueryClient;
 
 	const renderHookWithWrapper = (
-		initialEntries: string[] = ['/alerts'],
+		initialRoute = '/alerts',
 	): RenderHookResult<UseRoutingPoliciesReturn, unknown> => {
-		const history = createMemoryHistory({ initialEntries });
-
 		const wrapper = ({
 			children,
 		}: {
 			children: React.ReactNode;
 		}): React.ReactElement => (
 			<QueryClientProvider client={queryClient}>
-				<Router history={history}>{children}</Router>
+				<TestRouter initialRoute={initialRoute}>{children}</TestRouter>
 			</QueryClientProvider>
 		);
 
@@ -173,9 +167,9 @@ describe('useRoutingPolicies', () => {
 	});
 
 	it('should initialize search term from URL query parameter', () => {
-		const { result } = renderHookWithWrapper([
+		const { result } = renderHookWithWrapper(
 			`/alerts?search=${encodeURIComponent(ROUTING_POLICY_1_NAME)}`,
-		]);
+		);
 
 		expect(result.current.searchTerm).toBe(ROUTING_POLICY_1_NAME);
 		expect(result.current.routingPoliciesData).toHaveLength(1);
@@ -185,7 +179,7 @@ describe('useRoutingPolicies', () => {
 	});
 
 	it('should initialize with empty search when no search param in URL', () => {
-		const { result } = renderHookWithWrapper(['/alerts']);
+		const { result } = renderHookWithWrapper('/alerts');
 
 		expect(result.current.searchTerm).toBe('');
 		expect(result.current.routingPoliciesData).toHaveLength(2);
@@ -199,25 +193,25 @@ describe('useRoutingPolicies', () => {
 		});
 
 		await waitFor(() => {
-			expect(mockHistoryReplace).toHaveBeenCalled();
+			expect(mockNavigate).toHaveBeenCalled();
 		});
 
-		const callArg = mockHistoryReplace.mock.calls[0][0];
+		const callArg = mockNavigate.mock.calls[0][0];
 		expect(callArg).toContain('search=test+search');
 	});
 
 	it('should remove search param from URL when search is cleared', async () => {
-		const { result } = renderHookWithWrapper(['/alerts?search=existing']);
+		const { result } = renderHookWithWrapper('/alerts?search=existing');
 
 		act(() => {
 			result.current.setSearchTerm('');
 		});
 
 		await waitFor(() => {
-			expect(mockHistoryReplace).toHaveBeenCalled();
+			expect(mockNavigate).toHaveBeenCalled();
 		});
 
-		const callArg = mockHistoryReplace.mock.calls[0][0];
+		const callArg = mockNavigate.mock.calls[0][0];
 		expect(callArg).toBe('/alerts?');
 	});
 

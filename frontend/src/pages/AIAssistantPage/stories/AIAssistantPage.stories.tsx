@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '../../../storybook/renderAtRoute';
 import { screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -30,11 +30,9 @@ const meta = {
 	component: AIAssistantPage,
 	// The conversation id is in the pathname, so the page renders under its own
 	// route rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route
-			path={[ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT]}
-			component={AIAssistantPage}
-		/>
+	render: renderAtRoute(
+		[ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT],
+		AIAssistantPage,
 	),
 	...pageStory,
 	parameters: { ...pageStory.parameters },

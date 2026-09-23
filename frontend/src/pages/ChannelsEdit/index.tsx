@@ -2,8 +2,9 @@
 
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { matchPath, useLocation } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { matchRoute } from 'lib/router/matchRoute';
 import get from 'api/channels/get';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import Spinner from 'components/Spinner';
@@ -29,10 +30,9 @@ import './ChannelsEdit.styles.scss';
 function ChannelsEdit(): JSX.Element {
 	const { t } = useTranslation();
 
-	const { pathname } = useLocation();
-	const channelId = matchPath<{ channelId: string }>(pathname, {
-		path: ROUTES.CHANNELS_EDIT,
-	})?.params?.channelId;
+	const { pathname } = useAppLocation();
+	const channelId = matchRoute<'channelId'>(pathname, ROUTES.CHANNELS_EDIT)
+		?.params?.channelId;
 
 	const { isFetching, isError, data, error } = useQuery<
 		SuccessResponseV2<Channels>,

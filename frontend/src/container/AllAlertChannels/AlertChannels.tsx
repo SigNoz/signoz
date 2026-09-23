@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { generatePath } from 'react-router-dom';
 import { Button } from 'antd';
 import type { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
+import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
 import { Channels } from 'types/api/channels/getAll';
 
@@ -20,8 +20,8 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const [action] = useComponentPermission(['new_alert_action'], user.role);
 
 	const onClickEditHandler = useCallback((id: string) => {
-		history.push(
-			generatePath(ROUTES.CHANNELS_EDIT, {
+		navigate(
+			buildRoutePath(ROUTES.CHANNELS_EDIT, {
 				channelId: id,
 			}),
 		);

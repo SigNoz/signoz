@@ -12,7 +12,7 @@ import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
 import { Label } from 'pages/SignUp/styles';
 
@@ -57,7 +57,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							ns: 'common',
 						}),
 					});
-					history.push(ROUTES.LOGIN);
+					navigate(ROUTES.LOGIN);
 				},
 			},
 		);

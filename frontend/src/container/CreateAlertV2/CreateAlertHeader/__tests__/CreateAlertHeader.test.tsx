@@ -42,8 +42,8 @@ jest.mock('uplot', () => {
 	};
 });
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useLocation: (): { search: string } => ({
 		search: '',
 	}),

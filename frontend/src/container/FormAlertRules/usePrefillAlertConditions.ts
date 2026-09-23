@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { ThresholdProps } from 'types/api/widgets/threshold';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -13,7 +13,7 @@ export const usePrefillAlertConditions = (
 	target: number | undefined;
 	targetUnit: string | undefined;
 } => {
-	const location = useLocation();
+	const location = useAppLocation();
 
 	// Extract and set match type
 	const reduceTo = useMemo(() => {

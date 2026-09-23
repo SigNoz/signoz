@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
 
 import logEvent from 'api/common/logEvent';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
+import { navigate } from 'lib/router/navigation';
 import ROUTES from 'constants/routes';
 
 import ConversationView from 'container/AIAssistant/ConversationView';
@@ -14,15 +16,10 @@ import Noz from 'components/Noz/Noz';
 import styles from './AIAssistantPage.module.scss';
 import ConversationsList from 'container/AIAssistant/components/ConversationsList';
 
-interface RouteParams {
-	conversationId: string;
-}
-
 export default function AIAssistantPage(): JSX.Element {
-	const history = useHistory();
-	const location = useLocation<{ fromInApp?: boolean } | undefined>();
+	const location = useAppLocation<{ fromInApp?: boolean } | undefined>();
 	const { pathname } = location;
-	const { conversationId } = useParams<RouteParams>();
+	const { conversationId } = useAppParams<'conversationId'>();
 
 	// Skip the mount-time Opened fire when the user expanded an already-open
 	// drawer/modal — that surface already emitted Opened with the right source.
@@ -79,7 +76,9 @@ export default function AIAssistantPage(): JSX.Element {
 			activeId && conversationsRef.current[activeId]
 				? activeId
 				: startNewConversation();
-		history.replace(ROUTES.AI_ASSISTANT.replace(':conversationId', resumeId));
+		navigate(ROUTES.AI_ASSISTANT.replace(':conversationId', resumeId), {
+			replace: true,
+		});
 		// Only re-run when the URL param changes, not when conversations mutates.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [conversationId]);
@@ -94,19 +93,17 @@ export default function AIAssistantPage(): JSX.Element {
 			activeConversationId !== conversationId &&
 			conversations[activeConversationId]
 		) {
-			history.replace(
+			navigate(
 				ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
+				{ replace: true },
 			);
 		}
-	}, [activeConversationId, conversationId, conversations, history]);
+	}, [activeConversationId, conversationId, conversations]);
 
 	// When conversations sidebar selects a thread, navigate to it
-	const handleHistorySelect = useCallback(
-		(id: string) => {
-			history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', id));
-		},
-		[history],
-	);
+	const handleHistorySelect = useCallback((id: string) => {
+		navigate(ROUTES.AI_ASSISTANT.replace(':conversationId', id));
+	}, []);
 
 	const handleNewConversation = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {
@@ -115,14 +112,14 @@ export default function AIAssistantPage(): JSX.Element {
 			source: 'history_list',
 		});
 		const newId = startNewConversation();
-		history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
-	}, [startNewConversation, history, pathname]);
+		navigate(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
+	}, [startNewConversation, pathname]);
 
 	// Prefer the URL param, but fall back to the store's `activeConversationId`
 	// for the brief render after a re-key (client UUID → backend threadId), so
 	// the chat doesn't unmount while the URL sync effect catches up.
 	let activeId: string | null = null;
-	if (conversations[conversationId]) {
+	if (conversationId && conversations[conversationId]) {
 		activeId = conversationId;
 	} else if (activeConversationId && conversations[activeConversationId]) {
 		activeId = activeConversationId;

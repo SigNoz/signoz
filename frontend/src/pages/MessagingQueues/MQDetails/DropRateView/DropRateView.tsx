@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
-import { generatePath } from 'react-router-dom';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Table } from 'antd';
@@ -12,6 +11,7 @@ import axios from 'axios';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { useNotifications } from 'hooks/useNotifications';
 import { isNumber } from 'lodash-es';
 import {
@@ -96,7 +96,7 @@ export function getColumns(
 											key={item}
 											className="traceid-text"
 											onClick={(): void => {
-												openInNewTab(generatePath(ROUTES.TRACE_DETAIL, { id: item }));
+												openInNewTab(buildRoutePath(ROUTES.TRACE_DETAIL, { id: item }));
 												logEvent(`MQ Kafka: Drop Rate - traceid navigation`, {
 													item,
 												});

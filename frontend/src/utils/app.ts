@@ -2,7 +2,7 @@ import getLocalStorage from 'api/browser/localstorage/get';
 import { FeatureKeys } from 'constants/features';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import dayjs from 'dayjs';
-import history from 'lib/history';
+import { getCurrentLocation } from 'lib/router/navigation';
 import { get } from 'lodash-es';
 
 export const isOnboardingSkipped = (): boolean =>
@@ -61,7 +61,7 @@ export function buildAbsolutePath({
 	relativePath: string;
 	urlQueryString?: string;
 }): string {
-	const currentPathname = history.location.pathname;
+	const currentPathname = getCurrentLocation().pathname;
 
 	if (!relativePath) {
 		return urlQueryString

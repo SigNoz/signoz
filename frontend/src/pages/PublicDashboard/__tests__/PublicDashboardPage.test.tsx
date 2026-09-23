@@ -6,7 +6,7 @@ import {
 
 import PublicDashboardPage from '..';
 
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router', () => ({
 	useParams: (): { dashboardId: string } => ({ dashboardId: 'dash-1' }),
 }));
 

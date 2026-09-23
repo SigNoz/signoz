@@ -6,13 +6,13 @@ import {
 import { getAllViews } from 'api/saveView/getAllViews';
 import { getViewById } from 'api/saveView/getViewById';
 import ROUTES from 'constants/routes';
+import { navigate } from 'lib/router/navigation';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { AllViewsProps, ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { AxiosResponse } from 'axios';
-import type { History } from 'history';
 
 import {
 	buildExplorerNavigationUrl,
@@ -33,6 +33,9 @@ import { resourceRoute, ResourceType } from '../resourceRoute';
 
 jest.mock('api/saveView/getAllViews');
 jest.mock('api/saveView/getViewById');
+jest.mock('lib/router/navigation', () => ({
+	navigate: jest.fn(),
+}));
 
 jest.mock(
 	'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi',
@@ -54,6 +57,7 @@ const mockedGetAllViews = getAllViews as jest.MockedFunction<
 const mockedGetViewById = getViewById as jest.MockedFunction<
 	typeof getViewById
 >;
+const mockedNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 function makeView(id: string, sourcePage: DataSource): ViewProps {
 	return {
@@ -224,15 +228,17 @@ describe('buildExplorerNavigationUrl', () => {
 });
 
 describe('openSavedView', () => {
-	it('navigates with history.push and view query params', () => {
-		const push = jest.fn();
-		const history = { push } as unknown as History;
+	beforeEach(() => {
+		mockedNavigate.mockClear();
+	});
+
+	it('navigates with the view query params', () => {
 		const view = makeView('view-logs', DataSource.LOGS);
 
-		openSavedView(view, history);
+		openSavedView(view);
 
-		expect(push).toHaveBeenCalledTimes(1);
-		const pushedUrl = push.mock.calls[0][0] as string;
+		expect(mockedNavigate).toHaveBeenCalledTimes(1);
+		const pushedUrl = mockedNavigate.mock.calls[0][0] as string;
 		expect(pushedUrl).toContain(ROUTES.LOGS_EXPLORER);
 		expect(pushedUrl).toContain(QueryParams.viewKey);
 	});
@@ -242,42 +248,37 @@ describe('openSavedViewByKey', () => {
 	beforeEach(() => {
 		mockedGetAllViews.mockReset();
 		mockedGetViewById.mockReset();
+		mockedNavigate.mockClear();
 	});
 
 	it('prefers the direct view lookup endpoint', async () => {
 		const view = makeView('view-logs', DataSource.LOGS);
 		mockedGetViewById.mockResolvedValueOnce(mockViewByIdResponse(view));
-		const push = jest.fn();
-		const history = { push } as unknown as History;
 
-		await openSavedViewByKey('view-logs', DataSource.LOGS, history);
+		await openSavedViewByKey('view-logs', DataSource.LOGS);
 
 		expect(mockedGetViewById).toHaveBeenCalledWith('view-logs');
 		expect(mockedGetAllViews).not.toHaveBeenCalled();
-		expect(push).toHaveBeenCalled();
+		expect(mockedNavigate).toHaveBeenCalled();
 	});
 
 	it('falls back to list probing when direct lookup fails', async () => {
 		const view = makeView('view-traces', DataSource.TRACES);
 		mockedGetViewById.mockRejectedValueOnce(new Error('not found'));
 		mockedGetAllViews.mockResolvedValueOnce(mockViewsResponse([view]));
-		const push = jest.fn();
-		const history = { push } as unknown as History;
 
-		await openSavedViewByKey('view-traces', DataSource.TRACES, history);
+		await openSavedViewByKey('view-traces', DataSource.TRACES);
 
 		expect(mockedGetAllViews).toHaveBeenCalledWith(DataSource.TRACES);
-		expect(push).toHaveBeenCalled();
+		expect(mockedNavigate).toHaveBeenCalled();
 	});
 
 	it('throws when the saved view does not exist', async () => {
 		mockedGetViewById.mockRejectedValueOnce(new Error('not found'));
 		mockedGetAllViews.mockResolvedValue(mockViewsResponse([]));
 
-		await expect(
-			openSavedViewByKey('missing', DataSource.LOGS, {
-				push: jest.fn(),
-			} as unknown as History),
-		).rejects.toThrow('Saved view not found');
+		await expect(openSavedViewByKey('missing', DataSource.LOGS)).rejects.toThrow(
+			'Saved view not found',
+		);
 	});
 });

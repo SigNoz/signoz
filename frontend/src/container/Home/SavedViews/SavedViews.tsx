@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Button, Skeleton } from 'antd';
+import { AppLink } from 'lib/router/AppLink';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
@@ -176,7 +176,7 @@ export default function SavedViews({
 
 				{user?.role !== USER_ROLES.VIEWER && (
 					<div className="empty-actions-container">
-						<Link to={getStartedLink}>
+						<AppLink to={getStartedLink}>
 							<Button
 								type="default"
 								className="periscope-btn secondary"
@@ -189,7 +189,7 @@ export default function SavedViews({
 							>
 								Get Started &nbsp; <ArrowRight size={16} />
 							</Button>
-						</Link>
+						</AppLink>
 
 						<Button
 							type="link"
@@ -382,7 +382,7 @@ export default function SavedViews({
 			{selectedEntityViews.length > 0 && (
 				<Card.Footer>
 					<div className="services-footer home-data-card-footer">
-						<Link to={footerLink}>
+						<AppLink to={footerLink}>
 							<Button
 								type="link"
 								className="periscope-btn link learn-more-link"
@@ -394,7 +394,7 @@ export default function SavedViews({
 							>
 								All Views <ArrowRight size={12} />
 							</Button>
-						</Link>
+						</AppLink>
 					</div>
 				</Card.Footer>
 			)}

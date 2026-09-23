@@ -1,4 +1,4 @@
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { QueryParams } from 'constants/query';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -66,7 +66,7 @@ export function buildExportPanelLink({
 	if (!kind) {
 		return null;
 	}
-	const path = generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
+	const path = buildRoutePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
 		dashboardId,
 		panelId: NEW_PANEL_ID,
 	});

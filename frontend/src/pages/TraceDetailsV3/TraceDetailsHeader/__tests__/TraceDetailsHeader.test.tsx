@@ -6,26 +6,19 @@ import { render } from 'tests/test-utils';
 
 import TraceDetailsHeader from '../TraceDetailsHeader';
 
-const mockGoBack = jest.fn();
-const mockPush = jest.fn();
-const mockReplace = jest.fn();
+const mockBack = jest.fn();
+const mockNavigate = jest.fn();
 const mockHasInAppHistory = jest.fn();
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		goBack: (): void => mockGoBack(),
-		push: (path: string): void => mockPush(path),
-		replace: (path: string): void => mockReplace(path),
-		location: { pathname: '/', search: '' },
-		listen: (): (() => void) => (): void => undefined,
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	back: (): void => mockBack(),
+	navigate: (path: string): void => mockNavigate(path),
 	hasInAppHistory: (): boolean => mockHasInAppHistory(),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useParams: (): { id: string } => ({ id: 'trace-123' }),
+jest.mock('lib/router/useAppParams', () => ({
+	useAppParams: (): { id: string } => ({ id: 'trace-123' }),
 }));
 
 jest.mock(
@@ -62,19 +55,19 @@ const baseProps = {
 
 describe('TraceDetailsHeader – back button', () => {
 	beforeEach(() => {
-		mockGoBack.mockClear();
-		mockPush.mockClear();
+		mockBack.mockClear();
+		mockNavigate.mockClear();
 		mockHasInAppHistory.mockReset();
 	});
 
-	it('calls history.goBack() when there is in-app SPA history', () => {
+	it('goes back when there is in-app SPA history', () => {
 		mockHasInAppHistory.mockReturnValue(true);
 		render(<TraceDetailsHeader {...baseProps} />);
 
 		fireEvent.click(screen.getByRole('button', { name: /back/i }));
 
-		expect(mockGoBack).toHaveBeenCalledTimes(1);
-		expect(mockPush).not.toHaveBeenCalled();
+		expect(mockBack).toHaveBeenCalledTimes(1);
+		expect(mockNavigate).not.toHaveBeenCalled();
 	});
 
 	it('pushes to the traces explorer route when there is no in-app SPA history', () => {
@@ -83,17 +76,13 @@ describe('TraceDetailsHeader – back button', () => {
 
 		fireEvent.click(screen.getByRole('button', { name: /back/i }));
 
-		expect(mockPush).toHaveBeenCalledTimes(1);
-		expect(mockPush).toHaveBeenCalledWith(ROUTES.TRACES_EXPLORER);
-		expect(mockGoBack).not.toHaveBeenCalled();
+		expect(mockNavigate).toHaveBeenCalledTimes(1);
+		expect(mockNavigate).toHaveBeenCalledWith(ROUTES.TRACES_EXPLORER);
+		expect(mockBack).not.toHaveBeenCalled();
 	});
 });
 
 describe('TraceDetailsHeader – action cluster', () => {
-	beforeEach(() => {
-		mockReplace.mockClear();
-	});
-
 	it('does not render the action buttons while data is still loading', () => {
 		render(<TraceDetailsHeader {...baseProps} isDataLoaded={false} />);
 

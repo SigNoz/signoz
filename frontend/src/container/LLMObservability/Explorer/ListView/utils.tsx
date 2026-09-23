@@ -1,6 +1,6 @@
 import type { TracesTableRow } from '../TracesTable/getFieldColumn';
-import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { formUrlParams } from 'utils/traceUtils';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
@@ -19,11 +19,13 @@ export const getTraceLink = (record: Record<string, unknown>): string => {
 		return '';
 	}
 
-	return `${generatePath(ROUTES.TRACE_DETAIL, { id: traceId })}${formUrlParams({
-		spanId,
-		levelUp: 0,
-		levelDown: 0,
-	})}`;
+	return `${buildRoutePath(ROUTES.TRACE_DETAIL, { id: traceId })}${formUrlParams(
+		{
+			spanId,
+			levelUp: 0,
+			levelDown: 0,
+		},
+	)}`;
 };
 
 // Reshapes the query-range list payload into table rows. `id` mirrors span_id so

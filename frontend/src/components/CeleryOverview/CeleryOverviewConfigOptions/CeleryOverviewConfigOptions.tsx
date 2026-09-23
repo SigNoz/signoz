@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Row, Select, Spin } from 'antd';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import {
 	getValuesFromQueryParams,
 	setQueryParamsFromOptions,
@@ -35,8 +36,7 @@ export function FilterSelect({
 		useCeleryFilterOptions(filterType);
 
 	const urlQuery = useUrlQuery();
-	const history = useHistory();
-	const location = useLocation();
+	const location = useAppLocation();
 
 	// Add state to track the current search input
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -66,7 +66,7 @@ export function FilterSelect({
 				setQueryParamsFromOptions(
 					value as string[],
 					urlQuery,
-					history,
+					navigate,
 					location,
 					queryParam,
 				);
@@ -77,7 +77,6 @@ export function FilterSelect({
 			handleSearch,
 			shouldSetQueryParams,
 			urlQuery,
-			history,
 			location,
 			queryParam,
 			onChange,

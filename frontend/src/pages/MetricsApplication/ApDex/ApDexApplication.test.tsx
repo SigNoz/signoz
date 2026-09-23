@@ -4,8 +4,8 @@ import { APPLICATION_SETTINGS } from '../constants';
 import { thresholdMockData } from './__mock__/thresholdMockData';
 import ApDexApplication from './ApDexApplication';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useParams: (): {
 		servicename: string;
 	} => ({ servicename: 'mockServiceName' }),

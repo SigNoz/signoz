@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { CircleMinus, CirclePlus, Layers, RefreshCw } from '@signozhq/icons';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { FeatureKeys } from 'constants/features';
@@ -53,7 +53,7 @@ export function useLogAttributeActions({
 	isListViewPanel = false,
 	onApplyLogFilter,
 }: UseLogAttributeActionsParams): UseLogAttributeActionsResult {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const { stagedQuery, updateQueriesData } = useQueryBuilder();
 	const { featureFlags } = useAppContext();
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
+import { navigate } from 'lib/router/navigation';
 import { Button } from '@signozhq/ui/button';
 import { Flex, Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -32,8 +33,7 @@ const cloudIntegrationTypeById: Record<string, IntegrationType> = {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function IntegrationDetailPage(): JSX.Element {
-	const history = useHistory();
-	const { integrationId } = useParams<{ integrationId?: string }>();
+	const { integrationId } = useAppParams<{ integrationId?: string }>();
 	const [activeDetailTab, setActiveDetailTab] = useState<string | null>(
 		'overview',
 	);
@@ -74,7 +74,7 @@ function IntegrationDetailPage(): JSX.Element {
 					prefix={<ArrowLeft size={14} />}
 					className="all-integrations-btn"
 					onClick={(): void => {
-						history.push(ROUTES.INTEGRATIONS);
+						navigate(ROUTES.INTEGRATIONS);
 					}}
 				>
 					All Integrations

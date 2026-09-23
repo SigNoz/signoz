@@ -7,7 +7,7 @@ import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerFo
 import { useForgotPassword } from 'api/generated/services/users';
 import AuthError from 'components/AuthError/AuthError';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import APIError from 'types/api/error';
 import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 import { getBaseUrl } from 'utils/basePath';
@@ -112,7 +112,7 @@ function ForgotPassword({
 	}, [form, forgotPasswordMutate, initialOrgId, hasMultipleOrgs]);
 
 	const handleBackToLogin = useCallback((): void => {
-		history.push(ROUTES.LOGIN);
+		navigate(ROUTES.LOGIN);
 	}, []);
 
 	// Success screen

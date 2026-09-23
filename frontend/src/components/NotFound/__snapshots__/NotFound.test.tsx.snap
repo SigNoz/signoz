@@ -98,6 +98,7 @@ exports[`Not Found page test should render Not Found page without errors 1`] = `
 
 <div
     class="c0"
+    data-testid="not-found"
   >
     <img
       alt="not-found"
@@ -120,6 +121,7 @@ exports[`Not Found page test should render Not Found page without errors 1`] = `
     </div>
     <a
       class="c3"
+      data-discover="true"
       href="/home"
       tabindex="0"
     >

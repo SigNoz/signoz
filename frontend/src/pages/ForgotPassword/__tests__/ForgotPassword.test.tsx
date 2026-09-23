@@ -1,23 +1,16 @@
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { render, waitFor } from 'tests/test-utils';
 
 import ForgotPassword from '../index';
 
 // Mock dependencies
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '',
-		},
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 describe('ForgotPassword Page', () => {
 	beforeEach(() => {
@@ -31,7 +24,7 @@ describe('ForgotPassword Page', () => {
 			});
 
 			await waitFor(() => {
-				expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+				expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 			});
 		});
 

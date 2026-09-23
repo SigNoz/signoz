@@ -1,16 +1,15 @@
-import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useAppLocation } from 'lib/router/useAppLocation';
 
 import { tracesExplorer, tracesFunnel, tracesSaveView } from './constants';
 
 import './TracesModulePage.styles.scss';
 
 function TracesModulePage(): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const routes: TabRoutes[] = [
 		tracesExplorer,
@@ -31,7 +30,6 @@ function TracesModulePage(): JSX.Element {
 				activeKey={
 					pathname.includes(ROUTES.TRACES_FUNNELS) ? ROUTES.TRACES_FUNNELS : pathname
 				}
-				history={history}
 				onChangeHandler={handleTabChange}
 			/>
 		</div>

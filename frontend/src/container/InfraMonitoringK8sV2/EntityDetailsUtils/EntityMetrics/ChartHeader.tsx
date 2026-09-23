@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 import { Compass, Info } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 
@@ -70,14 +70,14 @@ function ChartHeader({
 			{renderInfoIcon()}
 			{metricsExplorerUrl && (
 				<TooltipSimple title="Go to Metrics Explorer" arrow>
-					<Link
+					<AppLink
 						to={metricsExplorerUrl}
 						className={styles.metricsExplorerLink}
 						data-testid={metricsExplorerTestId}
 						onClick={onExploreClick}
 					>
 						<Compass size={14} />
-					</Link>
+					</AppLink>
 				</TooltipSimple>
 			)}
 		</div>

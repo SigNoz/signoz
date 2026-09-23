@@ -21,12 +21,8 @@ jest.mock('hooks/useUrlQuery', () => ({
 	default: (): URLSearchParams => mockQueryParams({}),
 }));
 
-const mockHistoryReplace = jest.fn();
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useHistory: (): any => ({
-		replace: mockHistoryReplace,
-	}),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useLocation: (): any => ({
 		pathname: '/alerts',
 		search: '',

@@ -1,8 +1,8 @@
 import ROUTES from 'constants/routes';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 
 export function useIsLogDetailsV2(): boolean {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	return (
 		pathname === ROUTES.LOGS_EXPLORER ||
 		pathname.startsWith(ROUTES.INFRASTRUCTURE_MONITORING_BASE) ||

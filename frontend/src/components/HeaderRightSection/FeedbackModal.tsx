@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { toast } from '@signozhq/ui/sonner';
 import { Button, Input } from 'antd';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
@@ -11,7 +11,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 	const [activeTab, setActiveTab] = useState('feedback');
 	const [feedback, setFeedback] = useState('');
-	const location = useLocation();
+	const location = useAppLocation();
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const [isLoading, setIsLoading] = useState(false);
 

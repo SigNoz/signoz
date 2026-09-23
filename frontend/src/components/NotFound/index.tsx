@@ -6,7 +6,7 @@ import { Button, Container, Text, TextContainer } from './styles';
 
 function NotFound({ text = defaultText }: Props): JSX.Element {
 	return (
-		<Container>
+		<Container data-testid="not-found">
 			<NotFoundImage />
 
 			<TextContainer>

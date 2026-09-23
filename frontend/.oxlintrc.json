@@ -297,6 +297,9 @@
     // Forces useDashboardFetchRequired() outside the root V2 pages (allowlisted in overrides below)
     "signoz/no-msw-in-story-file": "error",
     // Bans msw imports in *.stories.tsx; handlers/mock data belong in the sibling .stories.mocks.tsx
+    "signoz/no-direct-react-router-import": "error",
+    // Steers new call sites to the src/lib/router facade. Warn, not error: ~310 pre-existing
+    // violations are what the v6 migration is working through (allowlisted in overrides below)
     "no-restricted-globals": [
       "error",
       {
@@ -588,6 +591,25 @@
       "rules": {
         "no-console": "off",
         "sonarjs/cognitive-complexity": "off"
+      }
+    },
+    {
+      // The react-router allowlist from docs/react-router-v6-migration.md: the facade itself,
+      // the route table, the router mount, the two navigation hooks, the history singleton
+      // and the two harnesses that mount a router (jest and Storybook).
+      // Test files are deliberately absent, their router imports go away outright.
+      "files": [
+        "src/lib/router/**",
+        "src/AppRoutes/**",
+        "src/app/AppRouter.tsx",
+        "src/hooks/useSafeNavigate.ts",
+        "src/hooks/useNavigationBlocker.ts",
+        "src/lib/history.ts",
+        "src/tests/router.tsx",
+        "src/storybook/renderAtRoute.tsx"
+      ],
+      "rules": {
+        "signoz/no-direct-react-router-import": "off"
       }
     }
   ]

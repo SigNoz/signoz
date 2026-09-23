@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Select, Skeleton } from 'antd';
@@ -120,7 +120,7 @@ function AccountActionsRenderer({
 
 function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const navigate = useNavigate();
+	const { safeNavigate: navigate } = useSafeNavigate();
 
 	const { data: listAccountsResponse, isLoading } = useListAccounts({
 		cloudProvider: type,

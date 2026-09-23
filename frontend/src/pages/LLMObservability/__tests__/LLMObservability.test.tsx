@@ -4,7 +4,7 @@ import {
 	makeListResponse,
 	mockRules,
 } from 'container/LLMObservability/Settings/ModelPricing/__tests__/fixtures';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
@@ -24,15 +24,12 @@ jest.mock('container/LLMObservability/Explorer/Explorer', () => ({
 	default: (): JSX.Element => <div data-testid="llm-observability-explorer" />,
 }));
 
-jest.mock('lib/history', () => ({
-	push: jest.fn(),
-	listen: jest.fn(() => jest.fn()),
-	location: { pathname: '/ai-observability/overview', search: '' },
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 const SYSTEM_DASHBOARD_ENDPOINT = '*/api/v2/dashboards/system/ai-o11y-overview';
 
@@ -74,7 +71,7 @@ function setupList(items = mockRules): void {
 describe('LLMObservability (integration)', () => {
 	beforeEach(() => {
 		window.history.pushState(null, '', '/');
-		mockHistoryPush.mockClear();
+		mockNavigate.mockClear();
 	});
 
 	afterEach(() => {
@@ -110,7 +107,7 @@ describe('LLMObservability (integration)', () => {
 
 		await user.click(screen.getByRole('tab', { name: /Model pricing/ }));
 
-		expect(mockHistoryPush).toHaveBeenCalledWith(
+		expect(mockNavigate).toHaveBeenCalledWith(
 			ROUTES.AI_OBSERVABILITY_CONFIGURATION,
 		);
 	});
@@ -123,7 +120,7 @@ describe('LLMObservability (integration)', () => {
 
 		await user.click(screen.getByRole('tab', { name: /Attribute Mapping/ }));
 
-		expect(mockHistoryPush).toHaveBeenCalledWith(
+		expect(mockNavigate).toHaveBeenCalledWith(
 			ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
 		);
 	});
@@ -136,7 +133,7 @@ describe('LLMObservability (integration)', () => {
 
 		await user.click(screen.getByRole('tab', { name: /Explorer/ }));
 
-		expect(mockHistoryPush).toHaveBeenCalledWith(
+		expect(mockNavigate).toHaveBeenCalledWith(
 			ROUTES.AI_OBSERVABILITY_EXPLORER,
 		);
 	});

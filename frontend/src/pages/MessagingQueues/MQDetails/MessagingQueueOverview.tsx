@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
 import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
@@ -31,14 +31,13 @@ function ProducerLatencyTabs({
 	setOption: Dispatch<SetStateAction<ProducerLatencyOptions>>;
 }): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
-	const history = useHistory();
+	const location = useAppLocation();
 
 	return (
 		<ToggleGroupSimple
 			type="single"
 			onChange={(value: string): void => {
-				setConfigDetail(urlQuery, location, history, {});
+				setConfigDetail(urlQuery, location, {});
 				setOption(value as ProducerLatencyOptions);
 			}}
 			value={option}

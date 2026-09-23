@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import logEvent from 'api/common/logEvent';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -44,7 +44,7 @@ function K8sHeader({
 
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
-	const location = useLocation();
+	const location = useAppLocation();
 	const invalidateQueries = useGlobalTimeQueryInvalidate();
 
 	const queryData = useMemo(

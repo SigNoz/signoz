@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Dot } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
@@ -39,7 +39,7 @@ function HeaderRightSection({
 	enableFeedback,
 	shareModalExtraOption,
 }: HeaderRightSectionProps): JSX.Element | null {
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
 	const [openShareURLModal, setOpenShareURLModal] = useState(false);

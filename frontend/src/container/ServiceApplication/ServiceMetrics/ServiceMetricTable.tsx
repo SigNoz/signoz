@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { SolidAlertTriangle } from '@signozhq/icons';
 import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -67,7 +67,7 @@ function ServiceMetricTable({
 		[isLoading, queries, topLevelOperations],
 	);
 
-	const { search } = useLocation();
+	const { search } = useAppLocation();
 	const tableColumns = useMemo(() => getColumns(search, true), [search]);
 	const [RPS, setRPS] = useState(0);
 

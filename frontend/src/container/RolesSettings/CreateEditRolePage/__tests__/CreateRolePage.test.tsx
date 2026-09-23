@@ -1,9 +1,9 @@
-import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 
@@ -18,18 +18,9 @@ afterEach(() => {
 });
 
 async function renderCreatePage(): Promise<ReturnType<typeof render>> {
-	const result = render(
-		<Switch>
-			<Route path={ROUTES.ROLES_SETTINGS} exact>
-				<div data-testid="roles-list-redirect" />
-			</Route>
-			<Route path={ROUTES.ROLE_CREATE}>
-				<CreateEditRolePage />
-			</Route>
-		</Switch>,
-		undefined,
-		{ initialRoute: '/settings/roles/new' },
-	);
+	const result = render(<CreateEditRolePage />, undefined, {
+		initialRoute: '/settings/roles/new',
+	});
 	await screen.findByTestId('create-edit-role-page');
 	return result;
 }
@@ -136,9 +127,9 @@ describe('CreateRolePage', () => {
 			const cancelBtn = screen.getByTestId('cancel-button');
 			await user.click(cancelBtn);
 
-			await expect(
-				screen.findByTestId('roles-list-redirect'),
-			).resolves.toBeInTheDocument();
+			await waitFor(() => {
+				expect(safeNavigateMock).toHaveBeenCalledWith(ROUTES.ROLES_SETTINGS);
+			});
 		});
 	});
 
@@ -180,9 +171,9 @@ describe('CreateRolePage', () => {
 				);
 			});
 
-			await expect(
-				screen.findByTestId('roles-list-redirect'),
-			).resolves.toBeInTheDocument();
+			await waitFor(() => {
+				expect(safeNavigateMock).toHaveBeenCalledWith(ROUTES.ROLES_SETTINGS);
+			});
 		});
 	});
 

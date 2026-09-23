@@ -7,7 +7,7 @@ import { invalidateListAccounts } from 'api/generated/services/cloudintegration'
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { useAccountSettingsModal } from 'hooks/integration/aws/useAccountSettingsModal';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { Save } from '@signozhq/icons';
 
 import logEvent from '../../../../../api/common/logEvent';
@@ -50,7 +50,7 @@ function AccountSettingsModal({
 		urlQuery.delete('cloudAccountId');
 		setActiveAccount(null);
 		handleClose();
-		history.replace({ search: urlQuery.toString() });
+		navigate({ search: urlQuery.toString() }, { replace: true });
 
 		logEvent('AWS Integration: Account removed', {
 			id: account?.id,

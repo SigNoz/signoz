@@ -1,4 +1,5 @@
-import { generatePath, Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { Badge } from '@signozhq/ui/badge';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -43,13 +44,13 @@ function FieldCell({ name, value }: FieldCellProps): JSX.Element {
 
 	if (TRACE_ID_FIELD_NAMES.has(name)) {
 		return (
-			<Link
-				to={generatePath(ROUTES.TRACE_DETAIL, { id: text })}
+			<AppLink
+				to={buildRoutePath(ROUTES.TRACE_DETAIL, { id: text })}
 				data-testid="trace-id"
 				onClick={(e): void => e.stopPropagation()}
 			>
 				{text}
-			</Link>
+			</AppLink>
 		);
 	}
 

@@ -2,7 +2,6 @@ import React, { MutableRefObject } from 'react';
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -11,6 +10,7 @@ import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
+import { TestRouter } from 'tests/router';
 import { SuccessResponse, Warning } from 'types/api';
 import { Widgets } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -72,7 +72,7 @@ const createMockAppContext = (): Partial<IAppContext> => ({
 
 const render = (ui: React.ReactElement): ReturnType<typeof rtlRender> =>
 	rtlRender(
-		<MemoryRouter>
+		<TestRouter>
 			<QueryClientProvider client={queryClient}>
 				<Provider store={createMockStore()}>
 					<AppContext.Provider value={createMockAppContext() as IAppContext}>
@@ -80,7 +80,7 @@ const render = (ui: React.ReactElement): ReturnType<typeof rtlRender> =>
 					</AppContext.Provider>
 				</Provider>
 			</QueryClientProvider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 
 jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
