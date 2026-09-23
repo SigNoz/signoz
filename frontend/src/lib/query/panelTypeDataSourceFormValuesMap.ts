@@ -1,7 +1,6 @@
 /**
  * Builder fields carried across a panel-type switch, per panel type and data source.
- * Each shape is cut from the full field list by omission. Order is irrelevant —
- * `handleQueryChange` copies each field independently.
+ * Each shape is cut from the widest one by omission.
  */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -24,16 +23,14 @@ export type PanelTypeFormValues = {
 	builder: { queryData: BuilderField[] };
 };
 
-/** A field added to `IBuilderQuery` fails to compile here until it is classified. */
-const ALL_FIELDS = {
+/** A field added to `IBuilderQuery` fails to compile here until answered either way. */
+const IS_CARRIED = {
 	queryName: true,
-	dataSource: true,
 	aggregateOperator: true,
 	aggregateAttribute: true,
 	aggregations: true,
 	timeAggregation: true,
 	spaceAggregation: true,
-	temporality: true,
 	functions: true,
 	filter: true,
 	filters: true,
@@ -46,14 +43,16 @@ const ALL_FIELDS = {
 	orderBy: true,
 	reduceTo: true,
 	legend: true,
-	pageSize: true,
-	offset: true,
-	selectColumns: true,
-	source: true,
-	builderQueryType: true,
-} satisfies Record<BuilderField, true>;
-
-const EVERY_FIELD = Object.keys(ALL_FIELDS) as BuilderField[];
+	// `dataSource` is appended by the provider; the rest drive surfaces this switch
+	// does not reach.
+	dataSource: false,
+	temporality: false,
+	pageSize: false,
+	offset: false,
+	selectColumns: false,
+	source: false,
+	builderQueryType: false,
+} satisfies Record<BuilderField, boolean>;
 
 function omit(
 	fields: readonly BuilderField[],
@@ -67,23 +66,11 @@ const METRICS_AGGREGATION: readonly BuilderField[] = [
 	'spaceAggregation',
 ];
 
-/** `dataSource` is appended by the provider; the rest drive surfaces this switch
- * does not reach. */
-const NEVER_CARRIED: readonly BuilderField[] = [
-	'dataSource',
-	'temporality',
-	'pageSize',
-	'offset',
-	'selectColumns',
-	'source',
-	'builderQueryType',
-];
-
-/** The widest shape, and the base every other one is cut from. */
-const SCALAR_METRICS: readonly BuilderField[] = omit(
-	EVERY_FIELD,
-	...NEVER_CARRIED,
-);
+const SCALAR_METRICS: readonly BuilderField[] = (
+	Object.entries(IS_CARRIED) as [BuilderField, boolean][]
+)
+	.filter(([, carried]) => carried)
+	.map(([field]) => field);
 
 // `reduceTo` is offered for metrics only, an asymmetry carried over from the old table.
 const SERIES_METRICS: readonly BuilderField[] = omit(
@@ -96,7 +83,6 @@ const SERIES: readonly BuilderField[] = omit(
 	...METRICS_AGGREGATION,
 );
 
-/** A single value has no series to group, limit or order. */
 const SINGLE_VALUE_METRICS: readonly BuilderField[] = omit(
 	SCALAR_METRICS,
 	'groupBy',
@@ -126,8 +112,8 @@ const RAW_ROWS_METRICS: readonly BuilderField[] = omit(
 	'functions',
 );
 
-/** Each cell gets its own copy; sharing one array instance would let cells
- * contaminate each other. */
+/** Each cell gets its own copy; a shared instance would let cells contaminate
+ * each other. */
 function bySource(
 	logsAndTraces: readonly BuilderField[],
 	metrics: readonly BuilderField[],
