@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Tabs } from 'antd';
@@ -50,9 +49,10 @@ function LLMObservabilityModelPricing(): JSX.Element {
 								Unpriced models
 								{unpricedCount > 0 && (
 									<Badge
-										variant="default"
+										color="primary"
+										variant="solid"
 										className={styles.tabBadge}
-										data-testid="unpriced-models-count"
+										testId="unpriced-models-count"
 									>
 										{unpricedCount}
 									</Badge>

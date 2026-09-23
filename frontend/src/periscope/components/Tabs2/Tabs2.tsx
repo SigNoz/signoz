@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
@@ -70,7 +69,11 @@ function Tabs2({
 					>
 						{tab.label}
 
-						{tab.isBeta && <Badge color="robin">Beta</Badge>}
+						{tab.isBeta && (
+							<Badge variant="solid" color="primary">
+								Beta
+							</Badge>
+						)}
 					</Button>
 				))}
 			</Button.Group>

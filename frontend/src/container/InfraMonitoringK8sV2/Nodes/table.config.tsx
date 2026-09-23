@@ -1,6 +1,5 @@
-// @ts-nocheck
 import { Color } from '@signozhq/design-tokens';
-import { Badge, BadgeColor } from '@signozhq/ui/badge';
+import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 import { InframonitoringtypesNodeRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
@@ -32,9 +31,9 @@ export function getK8sNodeItemKey(
 	return node.nodeName;
 }
 
-const NODE_CONDITION_COLORS: Record<string, BadgeColor> = {
-	ready: 'forest',
-	not_ready: 'amber',
+const NODE_CONDITION_COLORS: Record<string, BadgeColorType> = {
+	ready: 'success',
+	not_ready: 'warning',
 	no_data: 'secondary',
 };
 
@@ -108,7 +107,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 				}
 
 				return (
-					<Badge color={color} variant="outline">
+					<Badge color={color} variant="outlined">
 						{NODE_CONDITION_LABEL_MAP[row.condition] || 'Unknown'}
 					</Badge>
 				);

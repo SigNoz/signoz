@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Globe, LockKeyhole } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
@@ -40,7 +39,7 @@ function PublicDashboardStatus({
 				</Typography.Text>
 			</div>
 
-			<Badge variant="outline" color={isPublic ? 'robin' : 'secondary'}>
+			<Badge variant="outlined" color={isPublic ? 'primary' : 'secondary'}>
 				<span className={styles.statusBadgeDot} />
 				{isPublic ? 'Public' : 'Private'}
 			</Badge>

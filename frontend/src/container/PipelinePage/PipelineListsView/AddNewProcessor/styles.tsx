@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ReactNode } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Select } from 'antd';
@@ -9,7 +8,11 @@ export function PipelineIndexIcon({
 }: {
 	children: ReactNode;
 }): JSX.Element {
-	return <Badge color="robin">{children}</Badge>;
+	return (
+		<Badge variant="solid" color="primary">
+			{children}
+		</Badge>
+	);
 }
 
 export const ProcessorTypeWrapper = styled.div`

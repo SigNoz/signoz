@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button, Skeleton } from 'antd';
@@ -179,12 +178,12 @@ export default function AlertRules({
 						</div>
 
 						<div className="alert-rule-item-description home-data-item-tag">
-							<Badge color="sienna" variant="outline">
+							<Badge color="archive" variant="outlined">
 								{rule?.labels?.severity}
 							</Badge>
 
 							{rule.state === 'firing' && (
-								<Badge color="cherry" variant="outline" className="firing-tag">
+								<Badge color="danger" variant="outlined" className="firing-tag">
 									{rule.state}
 								</Badge>
 							)}

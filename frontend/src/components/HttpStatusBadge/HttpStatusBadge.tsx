@@ -1,39 +1,28 @@
-// @ts-nocheck
-import { Badge } from '@signozhq/ui/badge';
+import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 
-type BadgeColor =
-	| 'vanilla'
-	| 'robin'
-	| 'forest'
-	| 'amber'
-	| 'sienna'
-	| 'cherry'
-	| 'sakura'
-	| 'aqua';
+function getStatusCodeColor(statusCode: number): BadgeColorType {
+	if (statusCode >= 200 && statusCode < 300) {
+		return 'success';
+	}
+	if (statusCode >= 300 && statusCode < 400) {
+		return 'primary';
+	}
+	if (statusCode >= 400 && statusCode < 500) {
+		return 'warning';
+	}
+	if (statusCode >= 500) {
+		return 'danger';
+	}
+	if (statusCode >= 100 && statusCode < 200) {
+		return 'secondary';
+	}
+	return 'primary';
+}
 
 interface HttpStatusBadgeProps {
 	statusCode: string | number;
 	testId?: string;
 	className?: string;
-}
-
-function getStatusCodeColor(statusCode: number): BadgeColor {
-	if (statusCode >= 200 && statusCode < 300) {
-		return 'forest'; // Success - green
-	}
-	if (statusCode >= 300 && statusCode < 400) {
-		return 'robin'; // Redirect - blue
-	}
-	if (statusCode >= 400 && statusCode < 500) {
-		return 'amber'; // Client error - amber
-	}
-	if (statusCode >= 500) {
-		return 'cherry'; // Server error - red
-	}
-	if (statusCode >= 100 && statusCode < 200) {
-		return 'vanilla'; // Informational - neutral
-	}
-	return 'robin'; // Default fallback
 }
 
 function HttpStatusBadge({
@@ -50,12 +39,7 @@ function HttpStatusBadge({
 	const color = getStatusCodeColor(numericStatusCode);
 
 	return (
-		<Badge
-			color={color}
-			variant="outline"
-			data-testid={testId}
-			className={className}
-		>
+		<Badge color={color} variant="outlined" testId={testId} className={className}>
 			{statusCode}
 		</Badge>
 	);

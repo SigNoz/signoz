@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Color } from '@signozhq/design-tokens';
 import { Button, Collapse, Flex } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
@@ -120,7 +119,7 @@ function PolicyListItemContent({
 				<Typography>Channels</Typography>
 				<div>
 					{routingPolicy.channels.map((channel) => (
-						<Badge key={channel} color="vanilla">
+						<Badge variant="solid" key={channel} color="secondary">
 							{channel}
 						</Badge>
 					))}

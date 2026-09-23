@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { Badge, BadgeColor } from '@signozhq/ui/badge';
+import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 import { SEVERITY_BADGE_COLORS } from 'components/Alerts/constants';
 import LabelColumn from 'components/Alerts/LabelColumn';
 import type { TableColumnDef } from 'components/TanStackTableView';
@@ -8,8 +8,8 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
 import type { AlertRule } from './types';
 
-const STATE_CONFIG: Record<string, { color: BadgeColor; label: string }> = {
-	firing: { color: 'error', label: 'Firing' },
+const STATE_CONFIG: Record<string, { color: BadgeColorType; label: string }> = {
+	firing: { color: 'danger', label: 'Firing' },
 	inactive: { color: 'success', label: 'OK' },
 	pending: { color: 'warning', label: 'Pending' },
 	disabled: { color: 'secondary', label: 'Disabled' },
@@ -30,13 +30,13 @@ export function getAlertRuleColumns(
 			cell: ({ row, value }): JSX.Element => {
 				const state = String(value ?? '').toLowerCase();
 				const config = STATE_CONFIG[state] ?? {
-					color: 'secondary' as BadgeColor,
+					color: 'secondary',
 					label: 'Unknown',
 				};
 				return (
 					<Badge
 						color={config.color}
-						variant="outline"
+						variant="outlined"
 						testId={`alert-row-${row.id ?? ''}-state`}
 					>
 						{config.label}
@@ -80,7 +80,7 @@ export function getAlertRuleColumns(
 				return (
 					<Badge
 						color={SEVERITY_BADGE_COLORS[severity] ?? 'secondary'}
-						variant="outline"
+						variant="outlined"
 						testId={`alert-row-${row.id ?? ''}-severity`}
 					>
 						{severity}
@@ -106,7 +106,9 @@ export function getAlertRuleColumns(
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
 
-				return <LabelColumn labels={tagKeys} value={labels} color="sakura" />;
+				return (
+					<LabelColumn labels={tagKeys} value={labels} color="highlight-danger" />
+				);
 			},
 		},
 		{

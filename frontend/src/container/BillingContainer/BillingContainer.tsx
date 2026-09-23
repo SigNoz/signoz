@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Callout } from '@signozhq/ui/callout';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
@@ -437,7 +436,14 @@ export default function BillingContainer(): JSX.Element {
 					<Flex vertical gap={8}>
 						<p className={styles.pageInfoTitle}>
 							{isCloudUserVal ? t('teams_cloud') : t('teams')}{' '}
-							{isFreeTrial ? <Badge color="success"> Free Trial </Badge> : ''}
+							{isFreeTrial ? (
+								<Badge variant="solid" color="success">
+									{' '}
+									Free Trial{' '}
+								</Badge>
+							) : (
+								''
+							)}
 						</p>
 
 						{billingData && !isFetchingBillingData && !showGracePeriodMessage ? (

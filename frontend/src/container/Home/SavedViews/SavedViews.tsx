@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Skeleton } from 'antd';
@@ -251,7 +250,7 @@ export default function SavedViews({
 								}
 
 								return (
-									<Badge color="sienna" key={tag}>
+									<Badge variant="solid" color="archive" key={tag}>
 										{tag}
 									</Badge>
 								);

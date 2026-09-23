@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { ReactNode } from 'react';
 import type { TableProps } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
@@ -106,7 +105,7 @@ function makeTraceRenderer(name: string) {
 		}
 		if (HTTP_FIELDS.has(name)) {
 			return (
-				<Badge color="sakura" variant="outline" data-testid={name}>
+				<Badge color="highlight-danger" variant="outlined" testId={name}>
 					{coerceToString(value)}
 				</Badge>
 			);

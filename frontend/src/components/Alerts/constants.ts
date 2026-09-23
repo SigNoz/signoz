@@ -1,5 +1,4 @@
-// @ts-nocheck
-import type { BadgeColor } from '@signozhq/ui/badge';
+import type { BadgeColorType } from '@signozhq/ui/badge';
 
 export const STATE_ORDER = ['firing', 'pending', 'inactive', 'disabled'];
 export const SEVERITY_ORDER = ['critical', 'error', 'warning', 'info'];
@@ -25,9 +24,9 @@ export const SEVERITY_COLORS: Record<string, string> = {
 	info: 'var(--bg-robin-500)',
 };
 
-export const SEVERITY_BADGE_COLORS: Record<string, BadgeColor> = {
-	critical: 'error',
-	error: 'error',
+export const SEVERITY_BADGE_COLORS: Record<string, BadgeColorType> = {
+	critical: 'danger',
+	error: 'danger',
 	warning: 'warning',
 	info: 'primary',
 };

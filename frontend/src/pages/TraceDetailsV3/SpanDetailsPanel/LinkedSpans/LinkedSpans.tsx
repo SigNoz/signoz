@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useCallback, useMemo, useState } from 'react';
 import { generatePath, Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
@@ -95,7 +94,9 @@ export function LinkedSpansPanel({
 					badgeKey="Linked Span ID"
 					badgeValue={
 						<Link to={getLink(item)}>
-							<Badge color="vanilla">{item.spanId}</Badge>
+							<Badge variant="solid" color="secondary">
+								{item.spanId}
+							</Badge>
 						</Link>
 					}
 					direction="column"

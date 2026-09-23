@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Container } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import {
@@ -183,7 +182,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			}
 
 			return (
-				<Badge color={CONTAINER_STATUS_COLORS[row.status]} variant="outline">
+				<Badge color={CONTAINER_STATUS_COLORS[row.status]} variant="outlined">
 					{CONTAINER_STATUS_LABELS[row.status]}
 				</Badge>
 			);
@@ -231,7 +230,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			}
 
 			return (
-				<Badge color={CONTAINER_READY_COLORS[row.ready]} variant="outline">
+				<Badge color={CONTAINER_READY_COLORS[row.ready]} variant="outlined">
 					{CONTAINER_READY_LABELS[row.ready]}
 				</Badge>
 			);

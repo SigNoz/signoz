@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Progress } from '@signozhq/ui/progress';
@@ -32,7 +31,8 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 			const isActive = h.status === InframonitoringtypesHostStatusDTO.active;
 			return (
 				<Badge
-					variant="outline"
+					color="primary"
+					variant="outlined"
 					className={`${infraHostsStyles.infraMonitoringTags} ${
 						isActive ? infraHostsStyles.tagsActive : infraHostsStyles.tagsInactive
 					}`}
@@ -47,7 +47,11 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 		getValue: (h): string => h.meta?.[INFRA_MONITORING_ATTR_KEYS.OS_TYPE] || '-',
 		render: (value): React.ReactNode =>
 			value !== '-' ? (
-				<Badge variant="outline" className={infraHostsStyles.infraMonitoringTags}>
+				<Badge
+					color="primary"
+					variant="outlined"
+					className={infraHostsStyles.infraMonitoringTags}
+				>
 					{value}
 				</Badge>
 			) : (

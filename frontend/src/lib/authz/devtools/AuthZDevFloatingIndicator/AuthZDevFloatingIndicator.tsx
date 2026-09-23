@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
@@ -39,10 +38,10 @@ export function AuthZDevFloatingIndicator(): JSX.Element | null {
 				size="sm"
 				onClick={handleOpen}
 				className={styles.button}
-				data-testid="authz-dev-floating-indicator"
+				testId="authz-dev-floating-indicator"
 			>
 				AuthZ Overrides
-				<Badge color="warning" className={styles.badge}>
+				<Badge variant="solid" color="warning" className={styles.badge}>
 					{overrideCount}
 				</Badge>
 			</Button>
@@ -50,12 +49,14 @@ export function AuthZDevFloatingIndicator(): JSX.Element | null {
 				variant="ghost"
 				color="secondary"
 				size="sm"
+				icon
 				onClick={handleDismiss}
 				className={styles.closeButton}
 				aria-label="Dismiss indicator"
-				data-testid="authz-dev-floating-dismiss"
-				prefix={<X />}
-			/>
+				testId="authz-dev-floating-dismiss"
+			>
+				<X />
+			</Button>
 		</div>,
 		document.body,
 	);

@@ -1,6 +1,5 @@
-// @ts-nocheck
 import { ReactNode } from 'react';
-import { Badge, BadgeColor } from '@signozhq/ui/badge';
+import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
 import { ILog } from 'types/api/logs/log';
@@ -9,13 +8,13 @@ import styles from './LogHighlights.module.scss';
 import TraceIdField from './TraceIdField';
 
 // Severity badge color mirrors the LogStateIndicator bar
-const SEVERITY_COLOR: Record<string, BadgeColor> = {
-	[LogType.TRACE]: 'forest',
-	[LogType.DEBUG]: 'aqua',
-	[LogType.INFO]: 'robin',
-	[LogType.WARN]: 'amber',
-	[LogType.ERROR]: 'cherry',
-	[LogType.FATAL]: 'sakura',
+const SEVERITY_COLOR: Record<string, BadgeColorType> = {
+	[LogType.TRACE]: 'success',
+	[LogType.DEBUG]: 'info',
+	[LogType.INFO]: 'primary',
+	[LogType.WARN]: 'warning',
+	[LogType.ERROR]: 'danger',
+	[LogType.FATAL]: 'highlight-danger',
 };
 
 export interface LogHighlightConfig {
@@ -33,9 +32,13 @@ const getAttr = (log: ILog, key: string): string =>
 
 const valueBadge = (
 	value: string,
-	options?: { prefix?: ReactNode; color?: BadgeColor },
+	options?: { prefix?: ReactNode; color?: BadgeColorType },
 ): ReactNode => (
-	<Badge color={options?.color ?? 'vanilla'} className={styles.valueBadge}>
+	<Badge
+		variant="solid"
+		color={options?.color ?? 'secondary'}
+		className={styles.valueBadge}
+	>
 		{options?.prefix}
 		<span className={styles.badgeText} title={value}>
 			{value}

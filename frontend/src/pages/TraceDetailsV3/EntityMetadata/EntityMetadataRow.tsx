@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { CalendarClock, Server, Timer } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
@@ -54,7 +53,7 @@ function EntityMetadataRow({
 					{service.entryPoint && (
 						<>
 							{' — '}
-							<Badge color="secondary" variant="outline">
+							<Badge color="secondary" variant="outlined">
 								{service.entryPoint}
 							</Badge>
 						</>

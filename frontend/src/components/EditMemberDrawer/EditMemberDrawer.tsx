@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
@@ -520,7 +519,7 @@ function EditMemberDrawer({
 									localRoles.map((roleId) => {
 										const role = availableRoles.find((r) => r.id === roleId);
 										return (
-											<Badge key={roleId} color="vanilla">
+											<Badge variant="solid" key={roleId} color="secondary">
 												{role?.name ?? roleId}
 											</Badge>
 										);
@@ -560,15 +559,15 @@ function EditMemberDrawer({
 				<div className="edit-member-drawer__meta-item">
 					<span className="edit-member-drawer__meta-label">Status</span>
 					{member?.status === MemberStatus.Active ? (
-						<Badge color="forest" variant="outline">
+						<Badge color="success" variant="outlined">
 							ACTIVE
 						</Badge>
 					) : member?.status === MemberStatus.Deleted ? (
-						<Badge color="cherry" variant="outline">
+						<Badge color="danger" variant="outlined">
 							DELETED
 						</Badge>
 					) : (
-						<Badge color="amber" variant="outline">
+						<Badge color="warning" variant="outlined">
 							INVITED
 						</Badge>
 					)}
@@ -576,12 +575,16 @@ function EditMemberDrawer({
 
 				<div className="edit-member-drawer__meta-item">
 					<span className="edit-member-drawer__meta-label">{joinedOnLabel}</span>
-					<Badge color="vanilla">{formatTimestamp(member?.joinedOn)}</Badge>
+					<Badge variant="solid" color="secondary">
+						{formatTimestamp(member?.joinedOn)}
+					</Badge>
 				</div>
 				{!isInvited && (
 					<div className="edit-member-drawer__meta-item">
 						<span className="edit-member-drawer__meta-label">Last Modified</span>
-						<Badge color="vanilla">{formatTimestamp(member?.updatedAt)}</Badge>
+						<Badge variant="solid" color="secondary">
+							{formatTimestamp(member?.updatedAt)}
+						</Badge>
 					</div>
 				)}
 			</div>
@@ -615,10 +618,12 @@ function EditMemberDrawer({
 						<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
 							<span className="edit-member-drawer__tooltip-wrapper">
 								<Button
+									disabledTooltip={undefined}
+									size="md"
 									onClick={(): void => setShowDeleteConfirm(true)}
 									disabled={isRootUser || isSelf}
 									variant="link"
-									color="destructive"
+									color="danger"
 								>
 									<Trash2 size={12} />
 									{isInvited ? 'Revoke Invite' : 'Delete Member'}
@@ -630,6 +635,8 @@ function EditMemberDrawer({
 						<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
 							<span className="edit-member-drawer__tooltip-wrapper">
 								<Button
+									disabledTooltip={undefined}
+									size="md"
 									onClick={handleGenerateResetLink}
 									disabled={isGeneratingLink || isRootUser || isLoadingTokenStatus}
 									variant="link"
@@ -652,12 +659,19 @@ function EditMemberDrawer({
 					</div>
 
 					<div className="edit-member-drawer__footer-right">
-						<Button variant="outlined" color="secondary" onClick={handleClose}>
+						<Button
+							size="md"
+							variant="outlined"
+							color="secondary"
+							onClick={handleClose}
+						>
 							<X size={14} />
 							Cancel
 						</Button>
 
 						<Button
+							disabledTooltip={undefined}
+							size="md"
 							variant="solid"
 							color="primary"
 							disabled={!isDirty || isSaving || isRootUser}

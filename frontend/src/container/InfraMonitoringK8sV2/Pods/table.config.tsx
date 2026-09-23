@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Container } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import {
@@ -113,7 +112,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 			const color = POD_STATUS_COLORS[row.podStatus] || POD_STATUS_COLORS.unknown;
 			const label = row.podStatus.charAt(0).toUpperCase() + row.podStatus.slice(1);
 			return (
-				<Badge color={color} variant="outline">
+				<Badge color={color} variant="outlined">
 					{label}
 				</Badge>
 			);

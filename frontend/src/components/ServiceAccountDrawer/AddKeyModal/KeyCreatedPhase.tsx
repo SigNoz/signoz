@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Check, Copy } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
@@ -25,6 +24,7 @@ function KeyCreatedPhase({
 				<div className="add-key-modal__key-display">
 					<span className="add-key-modal__key-text">{createdKey.key}</span>
 					<Button
+						size="md"
 						variant="link"
 						color="secondary"
 						onClick={onCopy}
@@ -37,7 +37,9 @@ function KeyCreatedPhase({
 
 			<div className="add-key-modal__expiry-meta">
 				<span className="add-key-modal__expiry-label">Expiration</span>
-				<Badge color="vanilla">{expiryLabel}</Badge>
+				<Badge variant="solid" color="secondary">
+					{expiryLabel}
+				</Badge>
 			</div>
 
 			<div className="add-key-modal__callout-wrapper">

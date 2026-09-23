@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { TableColumnType as ColumnType, Tooltip } from 'antd';
@@ -974,7 +973,12 @@ export const getEndPointsColumnsConfig = (
 					})()}
 					{isGroupedByAttribute
 						? text.split(',').map((value) => (
-								<Badge key={value} color="vanilla" className="endpoint-group-tag-item">
+								<Badge
+									variant="solid"
+									key={value}
+									color="secondary"
+									className="endpoint-group-tag-item"
+								>
 									{value === '' ? '<no-value>' : value}
 								</Badge>
 							))

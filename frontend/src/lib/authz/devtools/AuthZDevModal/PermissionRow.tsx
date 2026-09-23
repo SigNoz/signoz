@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { Badge, BadgeColor } from '@signozhq/ui/badge';
+import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { memo, useMemo } from 'react';
@@ -45,13 +44,13 @@ export const PermissionRow = memo(function PermissionRow({
 		};
 	}, [observed.permission]);
 
-	let apiColor: BadgeColor = 'secondary';
+	let apiColor: BadgeColorType = 'secondary';
 	let apiLabel = 'API ?';
 	if (observed.apiValue === true) {
 		apiColor = 'success';
 		apiLabel = 'API ✓';
 	} else if (observed.apiValue === false) {
-		apiColor = 'error';
+		apiColor = 'danger';
 		apiLabel = 'API ✗';
 	}
 
@@ -87,7 +86,7 @@ export const PermissionRow = memo(function PermissionRow({
 				</Typography.Text>
 			</div>
 			<div className={styles.permissionMeta}>
-				<Badge variant="outline" color={apiColor}>
+				<Badge variant="outlined" color={apiColor}>
 					{apiLabel}
 				</Badge>
 				<OverrideControl

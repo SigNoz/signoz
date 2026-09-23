@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { generatePath, Link } from 'react-router-dom';
 import { Badge } from '@signozhq/ui/badge';
 import TanStackTable from 'components/TanStackTableView';
@@ -56,7 +55,7 @@ function FieldCell({ name, value }: FieldCellProps): JSX.Element {
 
 	if (STATUS_FIELD_NAMES.has(name)) {
 		return (
-			<Badge data-testid={name} color="sakura" variant="outline">
+			<Badge testId={name} color="highlight-danger" variant="outlined">
 				{text}
 			</Badge>
 		);

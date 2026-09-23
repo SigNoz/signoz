@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Badge } from '@signozhq/ui/badge';
 import { SpantypesSpanMapperTestSpanDTO } from 'api/generated/services/sigNoz.schemas';
 import { useMemo } from 'react';
@@ -22,12 +21,12 @@ interface TestResultProps {
 const STATUS_BADGE: Partial<
 	Record<
 		AttrChangeStatus,
-		{ color: 'success' | 'robin' | 'sienna'; label: string }
+		{ color: 'success' | 'primary' | 'archive'; label: string }
 	>
 > = {
 	added: { color: 'success', label: 'populated' },
-	changed: { color: 'robin', label: 'remapped' },
-	removed: { color: 'sienna', label: 'moved out' },
+	changed: { color: 'primary', label: 'remapped' },
+	removed: { color: 'archive', label: 'moved out' },
 };
 
 const ROW_CLASS: Partial<Record<AttrChangeStatus, string>> = {
@@ -102,7 +101,7 @@ function TestResult({
 											{formatAttributeValue(entry.value)}
 										</span>
 										{badge ? (
-											<Badge color={badge.color} variant="outline">
+											<Badge color={badge.color} variant="outlined">
 												{badge.label}
 											</Badge>
 										) : (

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 
@@ -13,7 +12,7 @@ function BadgeWithTooltip({
 	return (
 		<div key={label}>
 			<Tooltip title={tooltipTitle}>
-				<Badge className="label-column--tag" color="vanilla">
+				<Badge variant="solid" className="label-column--tag" color="secondary">
 					{getLabelRenderingValue(label, value && value[label])}
 				</Badge>
 			</Tooltip>

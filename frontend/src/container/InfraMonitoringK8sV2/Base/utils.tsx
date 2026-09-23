@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Badge } from '@signozhq/ui/badge';
 
 import styles from './utils.module.scss';
@@ -55,6 +54,7 @@ export function getGroupByEl<
 		<div className={styles.itemDataGroup}>
 			{groupByValues.map((value, index) => (
 				<Badge
+					variant="solid"
 					// oxlint-disable-next-line react/no-array-index-key
 					key={`${index}-${value}`}
 					color="secondary"

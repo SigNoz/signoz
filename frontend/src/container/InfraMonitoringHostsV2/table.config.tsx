@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Container } from '@signozhq/icons';
@@ -26,22 +25,22 @@ import EntityGroupHeader from 'container/InfraMonitoringK8sV2/Base/EntityGroupHe
 import { HostnameCell } from './utils';
 
 import styles from './table.module.scss';
-import { Badge, BadgeColor } from '@signozhq/ui/badge';
+import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 
 const statusMap: Record<
 	InframonitoringtypesHostStatusDTO,
 	{
 		label: string;
-		color: BadgeColor;
+		color: BadgeColorType;
 	}
 > = {
 	[InframonitoringtypesHostStatusDTO.active]: {
 		label: 'ACTIVE',
-		color: 'forest',
+		color: 'success',
 	},
 	[InframonitoringtypesHostStatusDTO.inactive]: {
 		label: 'INACTIVE',
-		color: 'amber',
+		color: 'warning',
 	},
 	['']: {
 		label: 'UNKNOWN',
@@ -158,7 +157,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			const statusDetails = statusMap[status] || statusMap[''];
 			return (
 				<Badge
-					variant="outline"
+					variant="outlined"
 					color={statusDetails.color}
 					className={`${styles.statusTag}`}
 				>

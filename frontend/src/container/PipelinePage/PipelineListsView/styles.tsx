@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ReactNode } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button, Table, TableProps } from 'antd';
@@ -42,7 +41,11 @@ export function ProcessorIndexIcon({
 }: {
 	children: ReactNode;
 }): JSX.Element {
-	return <Badge color="robin">{children}</Badge>;
+	return (
+		<Badge variant="solid" color="primary">
+			{children}
+		</Badge>
+	);
 }
 
 export const StyledTable: React.FC<TableProps<any> & { isDarkMode: boolean }> =

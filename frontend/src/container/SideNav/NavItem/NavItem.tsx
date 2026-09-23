@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
@@ -63,7 +62,7 @@ export default function NavItem({
 
 				{isBeta && (
 					<div className="nav-item-beta">
-						<Badge color="robin" className="sidenav-beta-tag">
+						<Badge variant="solid" color="primary" className="sidenav-beta-tag">
 							Beta
 						</Badge>
 					</div>
@@ -71,7 +70,7 @@ export default function NavItem({
 
 				{isNew && (
 					<div className="nav-item-new">
-						<Badge color="robin" className="sidenav-new-tag">
+						<Badge variant="solid" color="primary" className="sidenav-new-tag">
 							New
 						</Badge>
 					</div>
@@ -79,7 +78,9 @@ export default function NavItem({
 
 				{isEarlyAccess && (
 					<div className="nav-item-early-access">
-						<Badge color="robin">Early Access</Badge>
+						<Badge variant="solid" color="primary">
+							Early Access
+						</Badge>
 					</div>
 				)}
 

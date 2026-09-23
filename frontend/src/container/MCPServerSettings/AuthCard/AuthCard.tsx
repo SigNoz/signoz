@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Skeleton } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
@@ -25,7 +24,7 @@ function AuthCard({
 	return (
 		<section className="mcp-auth-card">
 			<h3 className="mcp-auth-card__title">
-				<Badge color="secondary" variant="default">
+				<Badge color="secondary" variant="solid">
 					2
 				</Badge>
 				Authenticate from your client
@@ -56,6 +55,7 @@ function AuthCard({
 				{isAdmin ? (
 					<div className="mcp-auth-card__cta-row">
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
 							prefix={<KeyRound size={14} />}
