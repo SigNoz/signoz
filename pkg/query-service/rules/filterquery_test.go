@@ -1,4 +1,4 @@
-package sqlrulestore
+package rules
 
 import (
 	"strings"
@@ -27,7 +27,7 @@ func runCompileCases(t *testing.T, cases []compileCase) {
 	t.Helper()
 	for _, c := range cases {
 		t.Run(c.subtestName, func(t *testing.T) {
-			out, err := Compile(c.dslQueryToCompile, formatter(t))
+			out, err := CompileListFilter(c.dslQueryToCompile, formatter(t))
 
 			if c.expectedErrShouldContain != "" {
 				require.Error(t, err)
@@ -468,7 +468,7 @@ func TestCompileReservedKeysAllHandled(t *testing.T) {
 		query, ok := sampleQueries[key]
 		require.True(t, ok, "no sample query for reserved key %q, add one", key)
 
-		out, err := Compile(query, formatter(t))
+		out, err := CompileListFilter(query, formatter(t))
 		require.NoError(t, err, "reserved key %q failed to compile", key)
 		assert.False(t, out.IsEmpty(), "reserved key %q compiled to empty SQL", key)
 	}

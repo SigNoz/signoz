@@ -1,4 +1,4 @@
-package sqlrulestore
+package rules
 
 import (
 	"strings"
@@ -10,7 +10,7 @@ import (
 )
 
 // Compile wraps compiler errors in the rules list filter error code.
-func Compile(query string, formatter sqlstore.SQLFormatter) (*sqlcompiler.Compiled, error) {
+func CompileListFilter(query string, formatter sqlstore.SQLFormatter) (*sqlcompiler.Compiled, error) {
 	compiled, errs := sqlcompiler.Compile(query, formatter, ruleFieldResolver{})
 	if len(errs) > 0 {
 		return nil, errors.NewInvalidInputf(ruletypes.ErrCodeRuleListFilterInvalid,

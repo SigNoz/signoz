@@ -1,4 +1,4 @@
-package sqlrulestore
+package rules
 
 import (
 	"fmt"

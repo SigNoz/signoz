@@ -902,7 +902,12 @@ func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesPara
 		stateFilter[state] = struct{}{}
 	}
 
-	storedRules, err := m.ruleStore.GetStoredRulesMatching(ctx, claims.OrgID, params.Query)
+	compiled, err := CompileListFilter(params.Query, m.sqlstore.Formatter())
+	if err != nil {
+		return nil, err
+	}
+
+	storedRules, err := m.ruleStore.GetStoredRulesMatching(ctx, claims.OrgID, compiled.SQL, compiled.Args)
 	if err != nil {
 		return nil, err
 	}
