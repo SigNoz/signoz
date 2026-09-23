@@ -21,6 +21,7 @@ import type {
 	AlertmanagertypesPostableChannelDTO,
 	AlertmanagertypesPostableNotificationChannelDTO,
 	AlertmanagertypesReceiverDTO,
+	AlertmanagertypesRepairChannelParamsDTO,
 	AlertmanagertypesTestableNotificationChannelDTO,
 	AlertmanagertypesUpdatableNotificationChannelDTO,
 	CreateChannel201,
@@ -35,6 +36,9 @@ import type {
 	ListNotificationChannels200,
 	ListNotificationChannelsParams,
 	RenderErrorResponseDTO,
+	RepairNotificationChannel200,
+	RepairNotificationChannelParams,
+	RepairNotificationChannelPathParameters,
 	UpdateChannelByIDPathParameters,
 	UpdateNotificationChannel200,
 	UpdateNotificationChannelPathParameters,
@@ -1143,6 +1147,113 @@ export const useUpdateNotificationChannel = <
 	TContext
 > => {
 	return useMutation(getUpdateNotificationChannelMutationOptions(options));
+};
+/**
+ * This endpoint diagnoses a stored channel that the v2 API cannot read and applies the fitting action: a channel carrying several notifier configurations is split into one channel per configuration, keeping this ID for the first; a channel whose notifier kind v2 does not model is deleted; a channel with an empty stored type has it rewritten from its data. A delete is refused while a routing policy still names the channel. Nothing is written unless apply=true; by default the response only shows what would happen.
+ * @summary Repair notification channel
+ */
+export const repairNotificationChannel = (
+	{ id }: RepairNotificationChannelPathParameters,
+	alertmanagertypesRepairChannelParamsDTO?: BodyType<AlertmanagertypesRepairChannelParamsDTO>,
+	params?: RepairNotificationChannelParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<RepairNotificationChannel200>({
+		url: `/api/v2/notification_channels/${id}/repair`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: alertmanagertypesRepairChannelParamsDTO,
+		params,
+		signal,
+	});
+};
+
+export const getRepairNotificationChannelMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof repairNotificationChannel>>,
+		TError,
+		{
+			pathParams: RepairNotificationChannelPathParameters;
+			data?: BodyType<AlertmanagertypesRepairChannelParamsDTO>;
+			params?: RepairNotificationChannelParams;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof repairNotificationChannel>>,
+	TError,
+	{
+		pathParams: RepairNotificationChannelPathParameters;
+		data?: BodyType<AlertmanagertypesRepairChannelParamsDTO>;
+		params?: RepairNotificationChannelParams;
+	},
+	TContext
+> => {
+	const mutationKey = ['repairNotificationChannel'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof repairNotificationChannel>>,
+		{
+			pathParams: RepairNotificationChannelPathParameters;
+			data?: BodyType<AlertmanagertypesRepairChannelParamsDTO>;
+			params?: RepairNotificationChannelParams;
+		}
+	> = (props) => {
+		const { pathParams, data, params } = props ?? {};
+
+		return repairNotificationChannel(pathParams, data, params);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type RepairNotificationChannelMutationResult = NonNullable<
+	Awaited<ReturnType<typeof repairNotificationChannel>>
+>;
+export type RepairNotificationChannelMutationBody =
+	| BodyType<AlertmanagertypesRepairChannelParamsDTO>
+	| undefined;
+export type RepairNotificationChannelMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Repair notification channel
+ */
+export const useRepairNotificationChannel = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof repairNotificationChannel>>,
+		TError,
+		{
+			pathParams: RepairNotificationChannelPathParameters;
+			data?: BodyType<AlertmanagertypesRepairChannelParamsDTO>;
+			params?: RepairNotificationChannelParams;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof repairNotificationChannel>>,
+	TError,
+	{
+		pathParams: RepairNotificationChannelPathParameters;
+		data?: BodyType<AlertmanagertypesRepairChannelParamsDTO>;
+		params?: RepairNotificationChannelParams;
+	},
+	TContext
+> => {
+	return useMutation(getRepairNotificationChannelMutationOptions(options));
 };
 /**
  * This endpoint sends a test notification for the configuration in the request body. The channel need not exist and nothing is persisted, so the body carries a configuration only.

@@ -86,17 +86,31 @@ func buildProcessorConfig(groups []*SpanMapperGroupWithMappers) *spanMapperProce
 	out := make([]spanMapperProcessorGroup, 0, len(groups))
 
 	for _, gm := range groups {
+		existsAny := spanMapperProcessorExistsAny{
+			Attributes: enabledConditionValues(gm.Group.Condition.Attributes),
+			Resource:   enabledConditionValues(gm.Group.Condition.Resource),
+		}
+		// The collector rejects an empty exists_any and empty sources; with
+		// per-item toggles, all-off is valid stored state and means "never runs".
+		if len(existsAny.Attributes)+len(existsAny.Resource) == 0 {
+			continue
+		}
+
 		rules := make([]spanMapperProcessorAttribute, 0, len(gm.Mappers))
 		for _, m := range gm.Mappers {
-			rules = append(rules, buildAttributeRule(m))
+			rule := buildAttributeRule(m)
+			if len(rule.Sources) == 0 {
+				continue
+			}
+			rules = append(rules, rule)
+		}
+		if len(rules) == 0 {
+			continue
 		}
 
 		out = append(out, spanMapperProcessorGroup{
-			ID: gm.Group.Name,
-			ExistsAny: spanMapperProcessorExistsAny{
-				Attributes: gm.Group.Condition.Attributes,
-				Resource:   gm.Group.Condition.Resource,
-			},
+			ID:         gm.Group.Name,
+			ExistsAny:  existsAny,
 			Attributes: rules,
 		})
 	}
@@ -104,14 +118,31 @@ func buildProcessorConfig(groups []*SpanMapperGroupWithMappers) *spanMapperProce
 	return &spanMapperProcessorConfig{Groups: out}
 }
 
+func enabledConditionValues(keys []SpanMapperGroupConditionKey) []string {
+	out := make([]string, 0, len(keys))
+	for _, k := range keys {
+		if k.Enabled {
+			out = append(out, k.Value)
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
 // buildAttributeRule maps a single SpanMapper to a collector attribute rule.
-// Sources are sorted by Priority DESC (highest-priority first); read-from-
-// resource sources are encoded via the "resource." prefix on the key. Each
-// source carries its own action — "copy" is omitted to keep the emitted YAML
-// compact, and only "move" is set explicitly.
+// Disabled sources are skipped and the rest are sorted by Priority DESC
+// (highest-priority first); read-from-resource sources are encoded via the
+// "resource." prefix on the key. Each source carries its own action — "copy"
+// is omitted to keep the emitted YAML compact, and only "move" is set explicitly.
 func buildAttributeRule(m *SpanMapper) spanMapperProcessorAttribute {
-	sources := make([]SpanMapperSource, len(m.Config.Sources))
-	copy(sources, m.Config.Sources)
+	sources := make([]SpanMapperSource, 0, len(m.Config.Sources))
+	for _, s := range m.Config.Sources {
+		if s.Enabled {
+			sources = append(sources, s)
+		}
+	}
 	sort.SliceStable(sources, func(i, j int) bool { return sources[i].Priority > sources[j].Priority })
 
 	out := make([]spanMapperProcessorSource, 0, len(sources))

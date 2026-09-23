@@ -23,6 +23,11 @@
 		align-items: center;
 		justify-content: center;
 		gap: var(--margin-2);
+
+		&--disabled {
+			opacity: 0.45;
+			cursor: not-allowed;
+		}
 	}
 }
 

@@ -52,7 +52,7 @@ var (
 	ResourceMetaResourceApdexSetting                     = NewResourceMetaResource(KindApdexSetting)
 	ResourceMetaResourceAuthDomain                       = NewResourceMetaResource(KindAuthDomain)
 	ResourceMetaResourceSession                          = NewResourceMetaResource(KindSession)
-	ResourceMetaResourceCloudIntegration                 = NewResourceMetaResource(KindCloudIntegration)
+	ResourceMetaResourceCloudIntegration                 = NewResourceMetaResource(KindCloudIntegration, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceCloudIntegrationService          = NewResourceMetaResource(KindCloudIntegrationService)
 	ResourceMetaResourceIntegration                      = NewResourceMetaResource(KindIntegration)
 	ResourceMetaResourceDashboard                        = NewResourceMetaResource(KindDashboard, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)

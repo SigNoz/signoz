@@ -71,6 +71,7 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 		<DropdownMenuSimple menu={menu}>
 			<Button
 				className="download-button"
+				data-testid="download-menu-trigger"
 				loading={isLoading || isDownloading}
 				size="small"
 				type="link"

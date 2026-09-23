@@ -175,6 +175,42 @@ func TestResolveLogicalFieldsKeepsFamilyThroughAmbiguity(t *testing.T) {
 	assert.Equal(t, []string{"deployment.environment.name", "deployment.environment"}, memberNames(resolved[0]))
 }
 
+// Resource wins over every other context, not just attribute: a bare key that
+// also lives in body or scope must collapse to resource alone, so the surviving
+// candidate does not AND against the resource fingerprint CTE.
+func TestResolveLogicalFieldsResourceWinsOverOtherContexts(t *testing.T) {
+	testCases := []struct {
+		name  string
+		other telemetrytypes.FieldContext
+	}{
+		{name: "ResourceOverBody", other: telemetrytypes.FieldContextBody},
+		{name: "ResourceOverScope", other: telemetrytypes.FieldContextScope},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			requested := &telemetrytypes.TelemetryFieldKey{Name: "service.name"}
+			fields := []*telemetrytypes.LogicalField{
+				telemetrytypes.SingleLogicalField("service.name", &telemetrytypes.TelemetryFieldKey{
+					Name:          "service.name",
+					FieldContext:  telemetrytypes.FieldContextResource,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+				}),
+				telemetrytypes.SingleLogicalField("service.name", &telemetrytypes.TelemetryFieldKey{
+					Name:          "service.name",
+					FieldContext:  testCase.other,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+				}),
+			}
+
+			resolved, warning := ResolveLogicalFields(requested, fields)
+			assert.NotEmpty(t, warning)
+			require.Len(t, resolved, 1)
+			assert.Equal(t, telemetrytypes.FieldContextResource, resolved[0].FieldContext)
+		})
+	}
+}
+
 // Members of a family with different data types never merge: the identity
 // (signal, context, data type) separates them into distinct logical fields.
 func TestMatchingLogicalFieldsNeverMergesAcrossDataTypes(t *testing.T) {

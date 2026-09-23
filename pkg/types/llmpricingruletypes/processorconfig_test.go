@@ -90,6 +90,15 @@ func TestGenerateCollectorConfigWithLLMPricingProcessor(t *testing.T) {
 			},
 			expectedFile: "collector_rule_cache_mode_unknown.yaml",
 		},
+		// Negative in/out drops the rule; a negative cache price drops only the cache block.
+		{
+			name: "negative_prices",
+			rules: []*LLMPricingRule{
+				makePricingRule("openrouter/auto", []string{"openrouter/auto", "auto"}, LLMPricingRuleCacheModeSubtract, -1, -1, -1, -1),
+				makePricingRule("gpt-4o", []string{"gpt-4o*"}, LLMPricingRuleCacheModeSubtract, 5.0, 15.0, -1, 0),
+			},
+			expectedFile: "collector_rule_without_cache.yaml",
+		},
 	}
 
 	input, err := os.ReadFile(filepath.Join("testdata", "collector_baseline.yaml"))
