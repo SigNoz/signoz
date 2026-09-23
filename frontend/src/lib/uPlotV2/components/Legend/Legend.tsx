@@ -8,7 +8,7 @@ import { LegendAction, LegendPosition, LegendProps } from '../types';
 import { LEGEND_ITEM_EXTRA_WIDTH, MAX_LEGEND_WIDTH } from './constants';
 import LegendRow from './LegendRow';
 import LegendToolbar from './LegendToolbar';
-import { filterLegendItems, getShownSeriesState } from './utils';
+import { getLegendViewState } from './utils';
 
 import styles from './Legend.module.scss';
 
@@ -31,31 +31,17 @@ export default function Legend({
 	const itemWidth = averageLegendWidth + LEGEND_ITEM_EXTRA_WIDTH;
 	const isRightPosition = position === LegendPosition.RIGHT;
 
-	const { visibleCount, soleShownSeriesIndex } = useMemo(
-		() => getShownSeriesState(items),
-		[items],
-	);
-
 	// The layout decides: it reserves the height.
 	const showToolbar = showSearch && items.length > 0;
 
 	const effectiveQuery = showToolbar ? filterQuery : '';
 
-	const visibleLegendItems = useMemo(
-		() => filterLegendItems(items, effectiveQuery),
+	const { listedItems, shownCount, soleShownSeriesIndex, isAllShown } = useMemo(
+		() => getLegendViewState(items, effectiveQuery),
 		[items, effectiveQuery],
 	);
 
-	// Against the whole series set, or a search would always read "N of N".
-	const listedShownCount = useMemo(
-		() => getShownSeriesState(visibleLegendItems).visibleCount,
-		[visibleLegendItems],
-	);
-
-	const isEmptyState =
-		!!effectiveQuery.trim() && visibleLegendItems.length === 0;
-
-	const isAllShown = visibleCount === items.length;
+	const isEmptyState = !!effectiveQuery.trim() && listedItems.length === 0;
 
 	// A row that unmounts under the pointer never fires its own mouseleave.
 	const handleMouseLeave = useCallback(
@@ -90,7 +76,7 @@ export default function Legend({
 		>
 			{showToolbar && (
 				<LegendToolbar
-					visibleCount={listedShownCount}
+					shownCount={shownCount}
 					totalCount={items.length}
 					position={position}
 					filterQuery={filterQuery}
@@ -106,7 +92,7 @@ export default function Legend({
 					className={styles.scroller}
 					listClassName={styles.gridList}
 					itemClassName={styles.gridItem}
-					data={visibleLegendItems}
+					data={listedItems}
 					itemContent={(_, item): JSX.Element => renderLegendItem(item)}
 				/>
 			)}

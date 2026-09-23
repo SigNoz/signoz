@@ -1,6 +1,6 @@
 import { LegendItem } from 'lib/uPlotV2/config/types';
 
-import { filterLegendItems, getShownSeriesState } from '../utils';
+import { filterLegendItems, getLegendViewState } from '../utils';
 
 const items = (shown: boolean[]): LegendItem[] =>
 	shown.map((show, index) => ({
@@ -10,26 +10,47 @@ const items = (shown: boolean[]): LegendItem[] =>
 		show,
 	}));
 
-describe('getShownSeriesState', () => {
+describe('getLegendViewState', () => {
 	it('counts the shown series', () => {
-		expect(getShownSeriesState(items([true, false, true]))).toStrictEqual({
-			visibleCount: 2,
-			soleShownSeriesIndex: null,
-		});
+		const state = getLegendViewState(items([true, false, true]), '');
+
+		expect(state.shownCount).toBe(2);
+		expect(state.soleShownSeriesIndex).toBeNull();
+		expect(state.isAllShown).toBe(false);
 	});
 
 	it('names the series when exactly one is shown', () => {
-		expect(getShownSeriesState(items([false, true, false]))).toStrictEqual({
-			visibleCount: 1,
-			soleShownSeriesIndex: 2,
-		});
+		const state = getLegendViewState(items([false, true, false]), '');
+
+		expect(state.shownCount).toBe(1);
+		expect(state.soleShownSeriesIndex).toBe(2);
 	});
 
 	it('reports nothing shown', () => {
-		expect(getShownSeriesState(items([false, false]))).toStrictEqual({
-			visibleCount: 0,
-			soleShownSeriesIndex: null,
-		});
+		const state = getLegendViewState(items([false, false]), '');
+
+		expect(state.shownCount).toBe(0);
+		expect(state.soleShownSeriesIndex).toBeNull();
+	});
+
+	it('reports every series shown', () => {
+		expect(getLegendViewState(items([true, true]), '').isAllShown).toBe(true);
+	});
+
+	it('counts only the series the search listed', () => {
+		const state = getLegendViewState(items([true, true, false]), 'series-1');
+
+		expect(state.listedItems.map((item) => item.label)).toStrictEqual([
+			'series-1',
+		]);
+		expect(state.shownCount).toBe(1);
+	});
+
+	it('reads isolation off every series, not the listed ones', () => {
+		const state = getLegendViewState(items([false, true, false]), 'series-2');
+
+		expect(state.listedItems).toHaveLength(1);
+		expect(state.soleShownSeriesIndex).toBe(2);
 	});
 });
 
