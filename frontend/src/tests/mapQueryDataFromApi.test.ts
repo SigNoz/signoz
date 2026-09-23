@@ -209,4 +209,29 @@ describe('mapQueryDataFromApi', (): void => {
 			id: 'b5f4b7db-799c-47d2-bf32-090340995e20',
 		});
 	});
+
+	it('keeps builder_ai_query on the mapped builder query', () => {
+		const compositeQuery: ICompositeMetricQuery = {
+			queryType: EQueryType.QUERY_BUILDER,
+			panelType: PANEL_TYPES.TIME_SERIES,
+			unit: undefined,
+			queries: [
+				{
+					type: 'builder_ai_query',
+					spec: {
+						name: 'A',
+						signal: 'traces',
+						filter: { expression: "service.name = 'adservice'" },
+						aggregations: [{ expression: 'count()' }],
+					},
+				} as QueryEnvelope,
+			],
+		};
+
+		const result = mapQueryDataFromApi(compositeQuery);
+
+		expect(result.builder.queryData[0].builderQueryType).toBe('builder_ai_query');
+		expect(result.builder.queryData[0].queryName).toBe('A');
+		expect(result.builder.queryData[0].dataSource).toBe(DataSource.TRACES);
+	});
 });
