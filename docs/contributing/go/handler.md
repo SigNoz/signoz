@@ -179,6 +179,7 @@ The `handler.New` function ties the HTTP handler to OpenAPI metadata via `OpenAP
 - **SuccessStatusCode**: The HTTP status for successful responses (for example, `http.StatusOK`, `http.StatusCreated`, `http.StatusNoContent`).
 - **ErrorStatusCodes**: Additional error status codes beyond the standard ones automatically added by `handler.New`.
 - **SecuritySchemes**: Auth mechanisms and scopes required by the operation.
+- **Stability**: Maturity marker (`handler.StabilityAlpha`, `handler.StabilityBeta`, `handler.StabilityStable`) emitted as the `x-stability` extension on every operation. Unset is emitted as `stable`.
 
 The generic handler:
 

@@ -3,11 +3,31 @@ package handler
 import (
 	"reflect"
 
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 	"github.com/swaggest/jsonschema-go"
 	openapigo "github.com/swaggest/openapi-go"
 	"github.com/swaggest/rest/openapi"
 )
+
+const openAPIStabilityKey string = "x-stability"
+
+var (
+	StabilityAlpha  = Stability{valuer.NewString("alpha")}
+	StabilityBeta   = Stability{valuer.NewString("beta")}
+	StabilityStable = Stability{valuer.NewString("stable")}
+)
+
+// Stability is emitted as the x-stability extension on every operation; unset means stable.
+type Stability struct{ valuer.String }
+
+func (stability Stability) StringValue() string {
+	if stability.IsZero() {
+		return StabilityStable.String.StringValue()
+	}
+
+	return stability.String.StringValue()
+}
 
 // OpenAPIExample is a named example for an OpenAPI operation.
 type OpenAPIExample struct {
@@ -32,6 +52,7 @@ type OpenAPIDef struct {
 	SuccessStatusCode   int
 	ErrorStatusCodes    []int
 	Deprecated          bool
+	Stability           Stability
 	SecuritySchemes     []OpenAPISecurityScheme
 }
 
