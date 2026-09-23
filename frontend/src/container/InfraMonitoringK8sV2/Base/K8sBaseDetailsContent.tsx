@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Fragment, useEffect, useMemo, useRef } from 'react';
 import {
 	BarChart,
@@ -8,8 +7,8 @@ import {
 	ScrollText,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -272,7 +271,10 @@ export default function K8sBaseDetailsContent<T>({
 
 			{!hideDetailViewTabs && (
 				<div className={styles.viewsTabsContainer}>
-					<ToggleGroupSimple
+					<ToggleGroup
+						variant="outlined"
+						color="secondary"
+						size="sm"
 						type="single"
 						className={styles.viewsTabs}
 						onChange={handleTabChange}
@@ -343,30 +345,34 @@ export default function K8sBaseDetailsContent<T>({
 					/>
 
 					{selectedView === VIEW_TYPES.LOGS && (
-						<TooltipSimple title="Go to Logs Explorer" side="left" arrow>
+						<Tooltip title="Go to Logs Explorer" side="left">
 							<Button
+								aria-label="Action"
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								className={styles.compassButton}
 								onClick={handleExplorePagesRedirect}
 							>
 								<Compass size={18} />
 							</Button>
-						</TooltipSimple>
+						</Tooltip>
 					)}
 					{selectedView === VIEW_TYPES.TRACES && (
-						<TooltipSimple title="Go to Traces Explorer" side="left" arrow>
+						<Tooltip title="Go to Traces Explorer" side="left">
 							<Button
+								aria-label="Action"
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								className={styles.compassButton}
 								onClick={handleExplorePagesRedirect}
 							>
 								<Compass size={18} />
 							</Button>
-						</TooltipSimple>
+						</Tooltip>
 					)}
 				</div>
 			)}

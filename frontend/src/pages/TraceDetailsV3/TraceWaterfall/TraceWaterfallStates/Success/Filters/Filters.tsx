@@ -1,16 +1,10 @@
-// @ts-nocheck
 import { useCallback, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ArrowRightFromLine, Search, X } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Button } from '@signozhq/ui/button';
-import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -264,7 +258,8 @@ function Filters({
 		>
 			<Typography.Text>Highlight errors</Typography.Text>
 			<Switch
-				color="cherry"
+				textPlacement="right"
+				color="danger"
 				value={isHighlightErrors}
 				onChange={handleToggleHighlightErrors}
 			/>
@@ -294,9 +289,8 @@ function Filters({
 	);
 
 	const pillWithPopover = expression ? (
-		<TooltipRoot>
-			<TooltipTrigger asChild>{pill}</TooltipTrigger>
-			<TooltipContent side="bottom" align="start">
+		<Tooltip
+			title={
 				<div className={styles.pillPopover}>
 					<div className={styles.pillPopoverHeader}>
 						<Typography.Text>Search query</Typography.Text>
@@ -304,8 +298,12 @@ function Filters({
 					</div>
 					<div className={styles.pillPopoverExpression}>{expression}</div>
 				</div>
-			</TooltipContent>
-		</TooltipRoot>
+			}
+			side="bottom"
+			align="start"
+		>
+			{pill}
+		</Tooltip>
 	) : (
 		pill
 	);
@@ -330,10 +328,12 @@ function Filters({
 			>
 				{isExpanded && (
 					<div className={styles.categoryControls}>
-						<ToggleGroupSimple
+						<ToggleGroup
+							variant="outlined"
+							color="secondary"
 							type="single"
 							value={selectedCategory}
-							onChange={(value: SpanCategory): void => {
+							onChange={(value: string): void => {
 								if (value) {
 									handleCategoryChange(value as SpanCategory);
 								}
@@ -385,33 +385,31 @@ function Filters({
 					{isExpanded && (
 						<div className={styles.expandedActions}>
 							{hasExpression && (
-								<TooltipRoot>
-									<TooltipTrigger asChild>
-										<Button
-											variant="ghost"
-											size="icon"
-											color="secondary"
-											onClick={handleClear}
-										>
-											<X size={14} />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent>Clear filter</TooltipContent>
-								</TooltipRoot>
-							)}
-							<TooltipRoot>
-								<TooltipTrigger asChild>
+								<Tooltip title="Clear filter">
 									<Button
+										aria-label="Action"
 										variant="ghost"
-										size="icon"
+										size="sm"
+										icon
 										color="secondary"
-										onClick={onCollapse}
+										onClick={handleClear}
 									>
-										<ArrowRightFromLine size={14} />
+										<X size={14} />
 									</Button>
-								</TooltipTrigger>
-								<TooltipContent>Collapse filters</TooltipContent>
-							</TooltipRoot>
+								</Tooltip>
+							)}
+							<Tooltip title="Collapse filters">
+								<Button
+									aria-label="Action"
+									variant="ghost"
+									size="sm"
+									icon
+									color="secondary"
+									onClick={onCollapse}
+								>
+									<ArrowRightFromLine size={14} />
+								</Button>
+							</Tooltip>
 						</div>
 					)}
 				</div>

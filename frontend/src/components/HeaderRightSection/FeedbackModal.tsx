@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
 import { Button, Input } from 'antd';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
@@ -103,7 +102,10 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 	return (
 		<div className="feedback-modal-container">
 			<div className="feedback-modal-header">
-				<ToggleGroupSimple
+				<ToggleGroup
+					variant="outlined"
+					color="secondary"
+					size="sm"
 					type="single"
 					value={activeTab}
 					className="feedback-modal-tabs"

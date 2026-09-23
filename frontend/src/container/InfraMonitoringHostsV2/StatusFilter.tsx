@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import {
 	StatusFilterValue,
@@ -46,17 +45,16 @@ function StatusFilter(): JSX.Element {
 			<div className={styles.statusLabel}>Status</div>
 			<ToggleGroup
 				type="single"
+				variant="outlined"
+				color="secondary"
+				size="sm"
 				value={statusFilter === '' ? 'all' : statusFilter}
 				onChange={handleChange}
 				className={styles.statusToggleGroup}
-			>
-				{statusOptions.map((option) => (
-					<ToggleGroupItem
-						key={option.value}
-						value={option.value}
-						aria-label={option.label}
-						className={styles.statusToggleItem}
-					>
+				items={statusOptions.map((option) => ({
+					value: option.value,
+					label: option.label,
+					prefix: (
 						<span
 							className={`${styles.statusDot} ${
 								option.value === 'active'
@@ -66,10 +64,9 @@ function StatusFilter(): JSX.Element {
 										: styles.allDot
 							}`}
 						/>
-						{option.label}
-					</ToggleGroupItem>
-				))}
-			</ToggleGroup>
+					),
+				}))}
+			/>
 		</div>
 	);
 }

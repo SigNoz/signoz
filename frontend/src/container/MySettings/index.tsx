@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Badge } from '@signozhq/ui/badge';
 import { Switch } from '@signozhq/ui/switch';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -66,7 +65,9 @@ function MySettings(): JSX.Element {
 			label: (
 				<div className="theme-option">
 					<Sun size={12} data-testid="light-theme-icon" /> Light{' '}
-					<Badge color="robin">Beta</Badge>
+					<Badge variant="solid" color="primary">
+						Beta
+					</Badge>
 				</div>
 			),
 			value: 'light',
@@ -187,11 +188,14 @@ function MySettings(): JSX.Element {
 					<div className="user-preference-section-content-item theme-selector">
 						<div className="user-preference-section-content-item-title-action">
 							Select your theme
-							<ToggleGroupSimple
+							<ToggleGroup
+								variant="outlined"
+								color="secondary"
+								size="sm"
 								type="single"
 								onChange={handleThemeChange}
 								value={theme}
-								data-testid="theme-selector"
+								testId="theme-selector"
 								items={themeOptions}
 							/>
 						</div>
@@ -217,6 +221,9 @@ function MySettings(): JSX.Element {
 						<div className="user-preference-section-content-item-title-action">
 							Keep the primary sidebar always open{' '}
 							<Switch
+								color="primary"
+								textPlacement="right"
+								disabledTooltip={undefined}
 								value={sideNavPinned}
 								onChange={handleSideNavPinnedChange}
 								disabled={isUpdatingUserPreference}

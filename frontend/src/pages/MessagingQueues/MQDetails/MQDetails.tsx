@@ -1,8 +1,7 @@
-// @ts-nocheck
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
@@ -62,7 +61,10 @@ function MessagingQueuesOptions({
 		MQServiceDetailTypePerView(producerLatencyOption)[selectedView] || [];
 
 	return (
-		<ToggleGroupSimple
+		<ToggleGroup
+			variant="outlined"
+			color="secondary"
+			size="sm"
 			type="single"
 			onChange={(value: string): void =>
 				handleChange(value as MessagingQueueServiceDetailType)

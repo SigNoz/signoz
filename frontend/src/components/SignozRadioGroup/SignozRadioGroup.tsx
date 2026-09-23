@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 
 import './SignozRadioGroup.styles.scss';
 
@@ -25,12 +24,16 @@ function SignozRadioGroup({
 	disabled = false,
 }: SignozRadioGroupProps): JSX.Element {
 	return (
-		<ToggleGroupSimple
+		<ToggleGroup
+			variant="outlined"
+			color="secondary"
+			size="sm"
 			type="single"
 			value={value}
 			className={`signoz-radio-group ${className}`}
 			onChange={onChange}
 			disabled={disabled}
+			disabledTooltip={undefined}
 			items={options.map((option) => ({
 				value: option.value,
 				label: (

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import cx from 'classnames';
@@ -11,8 +10,8 @@ import {
 	DialogSubtitle,
 	DialogTitle,
 } from '@signozhq/ui/dialog';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import type {
 	ApprovalEventDTO,
 	ApprovalEventDTODiff,
@@ -102,16 +101,18 @@ export default function ApprovalCard({
 				<div className={styles.diffSection}>
 					<div className={styles.diffHeader}>
 						<span className={styles.diffHeaderLabel}>Diff</span>
-						<TooltipSimple title="Expand diff">
+						<Tooltip title="Expand diff">
 							<Button
 								variant="link"
 								size="sm"
 								color="secondary"
+								icon
 								onClick={(): void => setDiffExpanded(true)}
 								aria-label="Expand diff"
-								prefix={<Maximize2 size={12} />}
-							/>
-						</TooltipSimple>
+							>
+								<Maximize2 size={12} />
+							</Button>
+						</Tooltip>
 					</div>
 					<DiffView diff={approval.diff} />
 				</div>
@@ -133,7 +134,9 @@ export default function ApprovalCard({
 					<div className={styles.diffModalBody}>
 						<p className={styles.diffModalSummary}>{approval.summary}</p>
 						<div className={styles.diffToolbarRow}>
-							<ToggleGroupSimple
+							<ToggleGroup
+								variant="outlined"
+								color="secondary"
 								type="single"
 								size="sm"
 								value={viewMode}
@@ -157,7 +160,9 @@ export default function ApprovalCard({
 									},
 								]}
 							/>
-							<ToggleGroupSimple
+							<ToggleGroup
+								variant="outlined"
+								color="secondary"
 								type="multiple"
 								size="sm"
 								value={wrapText ? ['wrap'] : []}
@@ -186,6 +191,8 @@ export default function ApprovalCard({
 
 			<div className={styles.actions}>
 				<Button
+					disabledTooltip={undefined}
+					color="primary"
 					variant="solid"
 					size="sm"
 					onClick={handleApprove}
@@ -195,6 +202,7 @@ export default function ApprovalCard({
 					Approve
 				</Button>
 				<Button
+					disabledTooltip={undefined}
 					variant="outlined"
 					size="sm"
 					color="secondary"
@@ -466,7 +474,7 @@ function CopyButton({ text, label }: CopyButtonProps): JSX.Element {
 	};
 
 	return (
-		<TooltipSimple title={copied ? `Copied ${label}` : `Copy ${label}`}>
+		<Tooltip title={copied ? `Copied ${label}` : `Copy ${label}`}>
 			<Button
 				variant="ghost"
 				size="sm"
@@ -476,6 +484,6 @@ function CopyButton({ text, label }: CopyButtonProps): JSX.Element {
 			>
 				{copied ? <Check size={12} /> : <Copy size={12} />}
 			</Button>
-		</TooltipSimple>
+		</Tooltip>
 	);
 }

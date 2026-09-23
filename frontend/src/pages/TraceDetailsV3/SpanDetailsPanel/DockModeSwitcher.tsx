@@ -1,19 +1,12 @@
-// @ts-nocheck
-import { ReactNode } from 'react';
+import { ReactElement } from 'react';
 import { Dock, PanelBottom, PanelRight } from '@signozhq/icons';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
-import {
-	TooltipContent,
-	TooltipProvider,
-	TooltipRoot,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 
 import { SpanDetailVariant } from './constants';
 
 interface DockOption {
 	value: SpanDetailVariant;
-	icon: ReactNode;
+	icon: ReactElement;
 	tooltip: string;
 }
 
@@ -38,40 +31,45 @@ const DOCK_OPTIONS: DockOption[] = [
 interface DockModeSwitcherProps {
 	value: SpanDetailVariant;
 	onChange: (value: SpanDetailVariant) => void;
-	tooltipClassName?: string;
 }
 
 function DockModeSwitcher({
 	value,
 	onChange,
-	tooltipClassName,
 }: DockModeSwitcherProps): JSX.Element {
 	return (
-		<TooltipProvider>
-			<ToggleGroup
-				type="single"
-				value={value}
-				onChange={(v): void => {
-					if (v) {
-						onChange(v as SpanDetailVariant);
-					}
-				}}
-				size="sm"
-			>
-				{DOCK_OPTIONS.map((option) => (
-					<TooltipRoot key={option.value}>
-						<TooltipTrigger asChild>
-							<span data-testid={`dock-mode-${option.value}`}>
-								<ToggleGroupItem value={option.value}>{option.icon}</ToggleGroupItem>
-							</span>
-						</TooltipTrigger>
-						<TooltipContent className={tooltipClassName}>
+		<ToggleGroup
+			type="single"
+			variant="outlined"
+			color="secondary"
+			size="sm"
+			value={value}
+			onChange={(next): void => {
+				if (next) {
+					onChange(next as SpanDetailVariant);
+				}
+			}}
+			items={DOCK_OPTIONS.map((option) => ({
+				value: option.value,
+				testId: `dock-mode-${option.value}`,
+				// No per-item tooltip. The copy stays the accessible name; the icon stays the visible control.
+				label: (
+					<span style={{ display: 'inline-flex', alignItems: 'center' }}>
+						{option.icon}
+						<span
+							style={{
+								display: 'inline-block',
+								inlineSize: 0,
+								blockSize: 0,
+								overflow: 'hidden',
+							}}
+						>
 							{option.tooltip}
-						</TooltipContent>
-					</TooltipRoot>
-				))}
-			</ToggleGroup>
-		</TooltipProvider>
+						</span>
+					</span>
+				),
+			}))}
+		/>
 	);
 }
 

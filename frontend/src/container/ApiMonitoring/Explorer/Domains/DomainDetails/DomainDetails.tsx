@@ -1,10 +1,9 @@
-// @ts-nocheck
 import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Spacing } from '@signozhq/design-tokens';
 import { Button, Drawer } from 'antd';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -226,11 +225,13 @@ function DomainDetails({
 						timeRange={modalTimeRange}
 					/>
 					<div className="views-tabs-container">
-						<ToggleGroupSimple
+						<ToggleGroup
+							variant="outlined"
+							color="secondary"
 							type="single"
 							onChange={handleTabChange}
 							value={selectedView}
-							size="lg"
+							size="md"
 							items={[
 								{ value: VIEW_TYPES.ALL_ENDPOINTS, label: 'All Endpoints' },
 								{ value: VIEW_TYPES.ENDPOINT_STATS, label: 'Endpoint(s) Stats' },
