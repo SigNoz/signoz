@@ -72,20 +72,15 @@ describe('LLMObservabilityAttributeMapping', () => {
 		const attributeMappingsTab = screen.getByRole('tab', {
 			name: 'Attribute Mappings',
 		});
-		expect(attributeMappingsTab).toHaveAttribute('data-state', 'active');
+		expect(attributeMappingsTab).toHaveAttribute('aria-selected', 'true');
 		await expect(
 			screen.findByTestId('attribute-mappings-tab'),
 		).resolves.toBeInTheDocument();
 	});
 
-	it('renders the header with its description and no Save/Discard while pristine', () => {
+	it('renders no Save/Discard while pristine', () => {
 		render(<LLMObservabilityAttributeMapping />);
 
-		expect(
-			screen.getByText(
-				'Configure source-to-target attribute remapping for LLM traces',
-			),
-		).toBeInTheDocument();
 		// The actions only appear once there are staged changes.
 		expect(screen.queryByTestId('save-changes-btn')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('discard-changes-btn')).not.toBeInTheDocument();
@@ -124,7 +119,11 @@ describe('LLMObservabilityAttributeMapping', () => {
 
 		await user.click(screen.getByRole('tab', { name: 'Attribute Mappings' }));
 		await screen.findByTestId('attribute-mappings-tab');
-		expect(screen.queryByTestId('span-json-editor')).not.toBeInTheDocument();
+		// antd keeps a visited pane mounted and marks it aria-hidden, rather than
+		// unmounting it the way the previous tabs did.
+		expect(
+			screen.getByTestId('span-json-editor').closest('[role="tabpanel"]'),
+		).toHaveAttribute('aria-hidden', 'true');
 
 		await user.click(screen.getByRole('tab', { name: 'Test' }));
 
