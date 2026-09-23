@@ -584,6 +584,43 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	spec: AlertmanagertypesChannelIncidentIOConfigDTO;
 }
 
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTOKind {
+	telegram = 'telegram',
+}
+export interface AlertmanagertypesChannelTelegramConfigDTO {
+	/**
+	 * @type string
+	 * @format password
+	 */
+	botToken: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	chatId: number;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type integer,null
+	 */
+	messageThreadId?: number | null;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTO {
+	/**
+	 * @enum telegram
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTOKind;
+	spec: AlertmanagertypesChannelTelegramConfigDTO;
+}
+
 export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTO
@@ -594,7 +631,8 @@ export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO;
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTO;
 
 export enum AlertmanagertypesChannelDefectDTO {
 	none = 'none',
@@ -614,6 +652,7 @@ export enum AlertmanagertypesChannelKindDTO {
 	jira = 'jira',
 	jsmops = 'jsmops',
 	incidentio = 'incidentio',
+	telegram = 'telegram',
 }
 export enum AlertmanagertypesChannelListOrderDTO {
 	asc = 'asc',
