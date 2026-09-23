@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
@@ -141,6 +140,8 @@ export default function ClarificationForm({
 
 			<div className={styles.actions}>
 				<Button
+					disabledTooltip={undefined}
+					size="md"
 					variant="solid"
 					color="primary"
 					onClick={handleSubmit}
@@ -150,6 +151,8 @@ export default function ClarificationForm({
 					Submit
 				</Button>
 				<Button
+					disabledTooltip={undefined}
+					size="md"
 					variant="outlined"
 					color="secondary"
 					onClick={handleCancel}
@@ -311,6 +314,7 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 		return (
 			<div className={styles.field}>
 				<Checkbox
+					color="primary"
 					className={styles.checkboxLabel}
 					value={checked}
 					onChange={(): void => onChange(!checked)}
@@ -383,6 +387,7 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 				<div className={styles.checkboxGroup}>
 					{options?.map((opt) => (
 						<Checkbox
+							color="primary"
 							key={opt}
 							className={styles.checkboxLabel}
 							value={regularSelected.includes(opt)}
@@ -393,6 +398,7 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 					))}
 					{allowCustom && (
 						<Checkbox
+							color="primary"
 							className={styles.checkboxLabel}
 							value={isCustom}
 							onChange={toggleCustom}

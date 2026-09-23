@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Wand } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
@@ -56,9 +55,10 @@ function TelemetrySelectorWizard({
 
 	const trigger = (
 		<Button
+			color="primary"
 			variant="solid"
 			size="sm"
-			data-testid={`telemetry-wizard-trigger-${testId}`}
+			testId={`telemetry-wizard-trigger-${testId}`}
 		>
 			<Wand size={14} />
 			Wizard
@@ -68,6 +68,7 @@ function TelemetrySelectorWizard({
 	const footer = (
 		<>
 			<Button
+				size="md"
 				variant="ghost"
 				color="secondary"
 				onClick={(): void => handleOpenChange(false)}
@@ -75,10 +76,13 @@ function TelemetrySelectorWizard({
 				Cancel
 			</Button>
 			<Button
+				disabledTooltip={undefined}
+				size="md"
+				color="primary"
 				variant="solid"
 				onClick={handleAdd}
 				disabled={!canAdd}
-				data-testid={`wizard-add-btn-${testId}`}
+				testId={`wizard-add-btn-${testId}`}
 			>
 				Add Selector
 			</Button>
@@ -154,6 +158,8 @@ function TelemetrySelectorWizard({
 							testId={`wizard-value-input-${testId}`}
 						/>
 						<Checkbox
+							color="primary"
+							disabledTooltip={undefined}
 							id={`wizard-any-resource-${testId}`}
 							value={isAnyResource}
 							disabled={!supportsKeyScoping}

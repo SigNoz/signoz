@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { grey } from '@ant-design/colors';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { ExtendedChartDataset } from 'lib/visualization/charts/types';
@@ -34,6 +33,8 @@ function CustomCheckBox({
 	return (
 		<span className={styles.wrapper} style={colorStyle}>
 			<Checkbox
+				color="primary"
+				disabledTooltip={undefined}
 				onChange={(checked): void => checkBoxOnChangeHandler(checked, index)}
 				value={isChecked}
 				disabled={disabled}

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useCallback, useState } from 'react';
 import { Color, Style } from '@signozhq/design-tokens';
 import {
@@ -139,6 +138,7 @@ function RoleMappingSection({
 								noStyle
 							>
 								<Checkbox
+									color="primary"
 									id="use-role-attribute"
 									testId="role-mapping-use-role-attribute"
 									onChange={(checked: boolean): void => {
@@ -204,6 +204,7 @@ function RoleMappingSection({
 													</Form.Item>
 
 													<Button
+														size="md"
 														variant="ghost"
 														color="secondary"
 														className="role-mapping-section__remove-btn"
@@ -217,6 +218,7 @@ function RoleMappingSection({
 											))}
 
 											<Button
+												size="md"
 												variant="outlined"
 												color="secondary"
 												onClick={(): void =>

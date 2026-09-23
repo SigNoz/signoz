@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useCallback, useState } from 'react';
 import { Style } from '@signozhq/design-tokens';
 import { CircleHelp } from '@signozhq/icons';
@@ -147,6 +146,7 @@ function ConfigureSAMLAuthnProvider({
 							noStyle
 						>
 							<Checkbox
+								color="primary"
 								id="saml-skip-signing"
 								onChange={(checked: boolean): void => {
 									form.setFieldValue(

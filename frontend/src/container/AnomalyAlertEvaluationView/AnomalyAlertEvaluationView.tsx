@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useRef, useState } from 'react';
 import { Input } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
@@ -321,6 +320,7 @@ function AnomalyAlertEvaluationView({
 							<div className="anomaly-alert-evaluation-view-series-list-items">
 								{filteredSeriesKeys.length > 0 && (
 									<Checkbox
+										color="primary"
 										className="anomaly-alert-evaluation-view-series-list-item"
 										name="series"
 										value={selectedSeries === null}
@@ -333,6 +333,7 @@ function AnomalyAlertEvaluationView({
 								{filteredSeriesKeys.map((seriesKey) => (
 									<div key={seriesKey}>
 										<Checkbox
+											color="primary"
 											className="anomaly-alert-evaluation-view-series-list-item"
 											key={seriesKey}
 											name="series"

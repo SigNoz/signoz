@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
@@ -144,6 +143,8 @@ function AutoRefresh({
 			content={
 				<div className="auto-refresh-menu">
 					<Checkbox
+						color="primary"
+						disabledTooltip={undefined}
 						onChange={onChangeAutoRefreshHandler}
 						value={isAutoRefreshEnabled}
 						disabled={isDisabled}

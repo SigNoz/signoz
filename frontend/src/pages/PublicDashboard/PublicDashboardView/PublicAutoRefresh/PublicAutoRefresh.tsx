@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Check, ChevronDown, RefreshCw } from '@signozhq/icons';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';
@@ -49,6 +48,8 @@ function PublicAutoRefresh({
 				content={
 					<div className="auto-refresh-menu">
 						<Checkbox
+							color="primary"
+							disabledTooltip={undefined}
 							onChange={(value): void => onToggle(value === true)}
 							value={enabled}
 							disabled={disabled}

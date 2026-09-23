@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
@@ -55,6 +54,7 @@ export function CheckboxFilterV2ValueRow({
 		>
 			<div className={styles.checkbox}>
 				<Checkbox
+					disabledTooltip={undefined}
 					onChange={(isChecked): void =>
 						onCheckboxChange(isChecked === true, checkedState)
 					}
@@ -98,7 +98,7 @@ export function CheckboxFilterV2ValueRow({
 				<div className={styles.actions}>
 					{badge && (
 						<Badge
-							variant="outline"
+							variant="outlined"
 							color={badge.color}
 							className={styles.badge}
 							testId={`badge-${badge.key}`}
@@ -106,10 +106,20 @@ export function CheckboxFilterV2ValueRow({
 							{badge.label}
 						</Badge>
 					)}
-					<Button variant="ghost" color="secondary" className={styles.onlyButton}>
+					<Button
+						size="md"
+						variant="ghost"
+						color="secondary"
+						className={styles.onlyButton}
+					>
 						{onlyButtonLabel}
 					</Button>
-					<Button variant="ghost" color="secondary" className={styles.toggleButton}>
+					<Button
+						size="md"
+						variant="ghost"
+						color="secondary"
+						className={styles.toggleButton}
+					>
 						Toggle
 					</Button>
 				</div>

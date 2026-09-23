@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
@@ -146,6 +145,7 @@ export function AboutSigNozQuestions({
 							{shuffledOptionKeys.map((option: string) => (
 								<div key={option} className="checkbox-item">
 									<Checkbox
+										color="primary"
 										id={`checkbox-${option}`}
 										value={interestInSignoz.includes(option)}
 										onChange={createInterestChangeHandler(option)}
@@ -157,6 +157,7 @@ export function AboutSigNozQuestions({
 
 							<div className="checkbox-item checkbox-item-others">
 								<Checkbox
+									color="primary"
 									id="others-checkbox"
 									value={interestInSignoz.includes('Others')}
 									onChange={createInterestChangeHandler('Others')}
@@ -180,6 +181,8 @@ export function AboutSigNozQuestions({
 
 				<div className="onboarding-buttons-container">
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						variant="solid"
 						color="primary"
 						className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
