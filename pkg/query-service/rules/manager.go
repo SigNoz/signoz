@@ -966,10 +966,7 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 	}
 	r.Id = id.StringValue()
 	// fetch state of rule from memory
-	m.mtx.RLock()
-	rm, ok := m.rules[r.Id]
-	m.mtx.RUnlock()
-	if !ok {
+	if rm, ok := m.rules[r.Id]; !ok {
 		r.State = ruletypes.StateDisabled
 		r.Disabled = true
 	} else {
