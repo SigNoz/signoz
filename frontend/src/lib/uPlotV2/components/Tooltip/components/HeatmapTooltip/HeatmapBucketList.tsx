@@ -1,6 +1,7 @@
 import cx from 'classnames';
 
-import { formatCount, HeatmapBucketRow } from './heatmapTooltipContent';
+import { formatCount } from './heatmapTooltipContent';
+import { HeatmapBucketRow } from './types';
 
 import Styles from './HeatmapTooltip.module.scss';
 

@@ -27,7 +27,7 @@ import {
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 import { HeatmapChartProps } from 'lib/visualization/charts/types';
-import { useHeatmapGroupLegend } from './useHeatmapGroupLegend';
+import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
 import { buildHeatmapConfig, prepareHeatmapChartData } from './utils';
 
 /** Vertical space the colour bar takes out of the container. */
@@ -98,12 +98,10 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 	});
 
 	const {
-		visibleGroups,
+		visibleKeys: visibleGroups,
 		focusedSeriesIndex,
-		onLegendClick,
-		onLegendMouseMove,
-		onLegendMouseLeave,
-	} = useHeatmapGroupLegend({ groups });
+		onLegendAction,
+	} = useLegendVisibility({ keys: groups, indexOffset: 1 });
 
 	const grid = useMemo(
 		() => resolveHeatmapGrid({ buckets, step, series, visibleGroups }),
@@ -251,19 +249,10 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				position={legendPosition}
 				averageLegendWidth={averageLegendWidth}
 				focusedSeriesIndex={focusedSeriesIndex}
-				onClick={onLegendClick}
-				onMouseMove={onLegendMouseMove}
-				onMouseLeave={onLegendMouseLeave}
+				onAction={onLegendAction}
 			/>
 		),
-		[
-			legendItems,
-			legendPosition,
-			focusedSeriesIndex,
-			onLegendClick,
-			onLegendMouseMove,
-			onLegendMouseLeave,
-		],
+		[legendItems, legendPosition, focusedSeriesIndex, onLegendAction],
 	);
 
 	const visualMap = useMemo(() => {

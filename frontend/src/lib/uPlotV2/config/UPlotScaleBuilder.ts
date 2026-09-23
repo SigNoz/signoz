@@ -46,9 +46,8 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 
 		// Special handling for time scales (X axis)
 		if (time) {
-			// An explicit range wins: the alignment below trims the tail of the window
-			// to whole minutes, which is right for point-based series but drops the
-			// final column of any chart whose marks span an interval.
+			// A range supplied outright wins: marks spanning an interval have to reach
+			// the end of their last column, past the last timestamp min/max carry.
 			if (range) {
 				return { [scaleKey]: { time: true, auto: false, range } };
 			}

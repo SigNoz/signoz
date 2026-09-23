@@ -1,4 +1,4 @@
-import { getPaletteStops } from '../palettes';
+import { DEFAULT_HEATMAP_PALETTE, getPaletteStops } from '../palettes';
 import { HeatmapColorPalette } from '../types';
 
 const ALL_PALETTES = Object.values(HeatmapColorPalette);
@@ -55,11 +55,11 @@ describe('getPaletteStops', () => {
 		expect(first).toStrictEqual(second);
 	});
 
-	it('falls back to the first ramp for an unknown palette', () => {
+	it('falls back to the default ramp for a palette this build does not define', () => {
 		const unknown = 'nope' as HeatmapColorPalette;
 
 		expect(getPaletteStops(unknown, true)).toStrictEqual(
-			getPaletteStops(HeatmapColorPalette.Ice, true),
+			getPaletteStops(DEFAULT_HEATMAP_PALETTE, true),
 		);
 	});
 

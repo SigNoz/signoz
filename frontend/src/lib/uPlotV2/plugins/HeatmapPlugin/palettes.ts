@@ -1,5 +1,7 @@
 import { HeatmapColorPalette } from './types';
 
+export const DEFAULT_HEATMAP_PALETTE = HeatmapColorPalette.Lava;
+
 interface PaletteDefinition {
 	/** Evenly spaced, one end of the ramp to the other. */
 	stops: string[];
@@ -160,7 +162,8 @@ export function getPaletteStops(
 	palette: HeatmapColorPalette,
 	isDarkMode: boolean,
 ): string[] {
-	const definition = PALETTES[palette] ?? PALETTES[HeatmapColorPalette.Ice];
+	// The name comes off a saved panel spec, so it can be one this build dropped.
+	const definition = PALETTES[palette] ?? PALETTES[DEFAULT_HEATMAP_PALETTE];
 	return definition.darkFirst === isDarkMode
 		? definition.stops
 		: [...definition.stops].reverse();
