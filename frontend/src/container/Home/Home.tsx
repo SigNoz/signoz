@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -26,6 +26,8 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
+import { useBottomStripLeft } from 'container/BottomStrip/useBottomStripLeft';
+import StripInfo from 'container/Home/StripInfo/StripInfo';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -64,6 +66,8 @@ const homeInterval = 30 * 60 * 1000;
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Home(): JSX.Element {
+	useBottomStripLeft(useMemo(() => <StripInfo />, []));
+
 	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
 	const isDarkMode = useIsDarkMode();
