@@ -27,7 +27,7 @@ import {
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 import { HeatmapChartProps } from 'lib/visualization/charts/types';
-import { useHeatmapGroupLegend } from './useHeatmapGroupLegend';
+import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
 import { buildHeatmapConfig, prepareHeatmapChartData } from './utils';
 
 /** Vertical space the colour bar takes out of the container. */
@@ -97,8 +97,11 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 		seriesColor: resolvedSeriesColor,
 	});
 
-	const { visibleGroups, focusedSeriesIndex, onLegendAction } =
-		useHeatmapGroupLegend({ groups });
+	const {
+		visibleKeys: visibleGroups,
+		focusedSeriesIndex,
+		onLegendAction,
+	} = useLegendVisibility({ keys: groups, indexOffset: 1 });
 
 	const grid = useMemo(
 		() => resolveHeatmapGrid({ buckets, step, series, visibleGroups }),

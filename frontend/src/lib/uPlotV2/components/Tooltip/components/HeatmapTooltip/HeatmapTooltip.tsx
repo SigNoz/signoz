@@ -16,10 +16,10 @@ import {
 	formatColumnRange,
 	formatCount,
 	formatGroupFilter,
-	HeatmapTooltipBody,
 	resolveGroupByLabel,
 	resolveTooltipBody,
 } from './heatmapTooltipContent';
+import { HeatmapTooltipBody } from './types';
 
 import Styles from './HeatmapTooltip.module.scss';
 

@@ -28,7 +28,7 @@ export interface ChartLayoutProps {
 	config: UPlotConfigBuilder;
 	/** Defaults to the chart's series labels. Pass them when the legend lists
 	 *  something else, or the split is measured against the wrong text. */
-	seriesLabels?: string[];
+	seriesLabelsOverride?: string[];
 }
 export default function ChartLayout({
 	showLegend = true,
@@ -40,7 +40,7 @@ export default function ChartLayout({
 	containerHeight,
 	legendConfig,
 	config,
-	seriesLabels,
+	seriesLabelsOverride,
 }: ChartLayoutProps): JSX.Element {
 	const chartDimensions = useMemo(
 		() => {
@@ -53,8 +53,8 @@ export default function ChartLayout({
 					averageLegendWidth: MAX_LEGEND_WIDTH,
 				};
 			}
-			const resolvedLabels =
-				seriesLabels ??
+			const seriesLabels =
+				seriesLabelsOverride ??
 				Object.values(config.getLegendItems())
 					.map((item) => item.label)
 					.filter((label): label is string => label !== undefined);
@@ -62,11 +62,17 @@ export default function ChartLayout({
 				containerWidth,
 				containerHeight,
 				legendConfig,
-				seriesLabels: resolvedLabels,
+				seriesLabels,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[containerWidth, containerHeight, legendConfig, showLegend, seriesLabels],
+		[
+			containerWidth,
+			containerHeight,
+			legendConfig,
+			showLegend,
+			seriesLabelsOverride,
+		],
 	);
 
 	return (
