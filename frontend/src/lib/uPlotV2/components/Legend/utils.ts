@@ -5,8 +5,8 @@ export interface LegendViewState {
 	/** Listed items that are toggled on, against every series in the readout. */
 	visibleCount: number;
 	/** The series index when exactly one series is toggled on, else null. */
-	soleVisibleSeriesIndex: number | null;
-	isAllVisible: boolean;
+	onlyVisibleSeriesIndex: number | null;
+	areAllSeriesVisible: boolean;
 }
 
 export function filterLegendItems(
@@ -38,7 +38,7 @@ export function getVisibleSeriesState(
 	return {
 		listedItems,
 		visibleCount: listedItems.filter((item) => item.show).length,
-		soleVisibleSeriesIndex: visible.length === 1 ? visible[0].seriesIndex : null,
-		isAllVisible: visible.length === items.length,
+		onlyVisibleSeriesIndex: visible.length === 1 ? visible[0].seriesIndex : null,
+		areAllSeriesVisible: visible.length === items.length,
 	};
 }

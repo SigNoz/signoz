@@ -36,11 +36,15 @@ export default function Legend({
 
 	const effectiveQuery = showToolbar ? filterQuery : '';
 
-	const { listedItems, visibleCount, soleVisibleSeriesIndex, isAllVisible } =
-		useMemo(
-			() => getVisibleSeriesState(items, effectiveQuery),
-			[items, effectiveQuery],
-		);
+	const {
+		listedItems,
+		visibleCount,
+		onlyVisibleSeriesIndex,
+		areAllSeriesVisible,
+	} = useMemo(
+		() => getVisibleSeriesState(items, effectiveQuery),
+		[items, effectiveQuery],
+	);
 
 	const isEmptyState = !!effectiveQuery.trim() && listedItems.length === 0;
 
@@ -55,16 +59,16 @@ export default function Legend({
 			<LegendRow
 				key={item.seriesIndex}
 				item={item}
-				isSoleVisible={soleVisibleSeriesIndex === item.seriesIndex}
-				isAllVisible={isAllVisible}
+				isOneSeriesVisible={onlyVisibleSeriesIndex === item.seriesIndex}
+				areAllSeriesVisible={areAllSeriesVisible}
 				isFocused={focusedSeriesIndex === item.seriesIndex}
 				showCopy={showCopy}
 				onAction={onAction}
 			/>
 		),
 		[
-			soleVisibleSeriesIndex,
-			isAllVisible,
+			onlyVisibleSeriesIndex,
+			areAllSeriesVisible,
 			focusedSeriesIndex,
 			showCopy,
 			onAction,

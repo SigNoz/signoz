@@ -15,28 +15,28 @@ describe('getVisibleSeriesState', () => {
 		const state = getVisibleSeriesState(items([true, false, true]), '');
 
 		expect(state.visibleCount).toBe(2);
-		expect(state.soleVisibleSeriesIndex).toBeNull();
-		expect(state.isAllVisible).toBe(false);
+		expect(state.onlyVisibleSeriesIndex).toBeNull();
+		expect(state.areAllSeriesVisible).toBe(false);
 	});
 
 	it('names the series when exactly one is shown', () => {
 		const state = getVisibleSeriesState(items([false, true, false]), '');
 
 		expect(state.visibleCount).toBe(1);
-		expect(state.soleVisibleSeriesIndex).toBe(2);
+		expect(state.onlyVisibleSeriesIndex).toBe(2);
 	});
 
 	it('reports nothing shown', () => {
 		const state = getVisibleSeriesState(items([false, false]), '');
 
 		expect(state.visibleCount).toBe(0);
-		expect(state.soleVisibleSeriesIndex).toBeNull();
+		expect(state.onlyVisibleSeriesIndex).toBeNull();
 	});
 
 	it('reports every series shown', () => {
-		expect(getVisibleSeriesState(items([true, true]), '').isAllVisible).toBe(
-			true,
-		);
+		expect(
+			getVisibleSeriesState(items([true, true]), '').areAllSeriesVisible,
+		).toBe(true);
 	});
 
 	it('counts only the series the search listed', () => {
@@ -52,7 +52,7 @@ describe('getVisibleSeriesState', () => {
 		const state = getVisibleSeriesState(items([false, true, false]), 'series-2');
 
 		expect(state.listedItems).toHaveLength(1);
-		expect(state.soleVisibleSeriesIndex).toBe(2);
+		expect(state.onlyVisibleSeriesIndex).toBe(2);
 	});
 });
 
