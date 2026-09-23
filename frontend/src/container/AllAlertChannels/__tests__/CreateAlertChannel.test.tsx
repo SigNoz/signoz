@@ -5,6 +5,7 @@ import {
 	IncidentIOInitialConfig,
 	JiraInitialConfig,
 	JsmOpsInitialConfig,
+	TelegramInitialConfig,
 } from 'container/CreateAlertChannels/defaults';
 import {
 	googleChatDescriptionDefaultValue,
@@ -855,6 +856,90 @@ describe('Create Alert Channel', () => {
 							title: IncidentIOInitialConfig.title,
 							description: IncidentIOInitialConfig.description,
 							metadata: { team: 'core' },
+						},
+					],
+				});
+			}, 15000);
+		});
+		describe('Telegram', () => {
+			beforeEach(() => {
+				render(<CreateAlertChannels preType={ChannelType.Telegram} />);
+			});
+
+			async function fillField(
+				user: ReturnType<typeof userEvent.setup>,
+				testId: string,
+				value: string,
+			): Promise<void> {
+				await user.click(screen.getByTestId(testId));
+				await user.paste(value);
+			}
+
+			it('Should check if the selected item in the type dropdown has text "Telegram"', () => {
+				expect(screen.getByText('Telegram')).toBeInTheDocument();
+			});
+
+			it('Should check if bot token, chat ID and thread ID fields are displayed', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_telegram_bot_token',
+					testId: 'telegram-bot-token-textbox',
+				});
+				testLabelInputAndHelpValue({
+					labelText: 'field_telegram_chat_id',
+					testId: 'telegram-chat-id-textbox',
+				});
+				testLabelInputAndHelpValue({
+					labelText: 'field_telegram_message_thread_id',
+					testId: 'telegram-message-thread-id-textbox',
+				});
+			});
+
+			it('Should check if Message contains the telegram template', () => {
+				expect(screen.getByTestId('telegram-message-textarea')).toHaveTextContent(
+					'Alerts Firing',
+				);
+				expect(screen.getByTestId('telegram-message-textarea')).toHaveTextContent(
+					'Alerts Resolved',
+				);
+			});
+
+			it('Should check if saving sends a telegram_configs payload with thread id', async () => {
+				let requestBody: unknown;
+				server.use(
+					rest.post('http://localhost/api/v1/channels', async (req, res, ctx) => {
+						requestBody = await req.json();
+						return res(
+							ctx.status(201),
+							ctx.json({ status: 'success', data: 'channel created' }),
+						);
+					}),
+				);
+
+				const user = userEvent.setup();
+
+				await fillField(user, 'channel-name-textbox', 'telegram-channel');
+				await fillField(user, 'telegram-bot-token-textbox', '123456:ABC-DEF');
+				await fillField(user, 'telegram-chat-id-textbox', '-1001234567890');
+				await fillField(user, 'telegram-message-thread-id-textbox', '42');
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(successNotification).toHaveBeenCalledWith({
+						message: 'Success',
+						description: 'channel_creation_done',
+					}),
+				);
+
+				expect(requestBody).toStrictEqual({
+					name: 'telegram-channel',
+					telegram_configs: [
+						{
+							token: '123456:ABC-DEF',
+							chat: -1001234567890,
+							message_thread_id: 42,
+							send_resolved: true,
+							message: TelegramInitialConfig.message,
 						},
 					],
 				});

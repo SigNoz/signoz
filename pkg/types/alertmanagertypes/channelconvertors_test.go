@@ -259,6 +259,24 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Metadata:     map[string]string{"team": "platform"},
 			},
 		},
+		{
+			description: "telegram",
+			kind:        ChannelKindTelegram,
+			spec: &ChannelTelegramConfig{
+				SendResolved:    &sendResolved,
+				BotToken:        "123456:ABC-DEF",
+				ChatID:          -1001234567890,
+				MessageThreadID: func() *int { id := 42; return &id }(),
+				Message:         valuer.MustNewUnsetOrNonEmptyString("telegram message"),
+			},
+			expectedRoundTrip: &ChannelTelegramConfig{
+				SendResolved:    &sendResolved,
+				BotToken:        "123456:ABC-DEF",
+				ChatID:          -1001234567890,
+				MessageThreadID: func() *int { id := 42; return &id }(),
+				Message:         valuer.MustNewUnsetOrNonEmptyString("telegram message"),
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -427,8 +445,8 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 		{
 			description: "notifier kind outside the supported set",
 			channel: Channel{
-				DisplayName: "tg",
-				Data:        `{"name":"tg","telegram_configs":[{"chat_id":1}]}`,
+				DisplayName: "discord",
+				Data:        `{"name":"discord","discord_configs":[{"webhook_url":"https://discord.com/api/webhooks/1/x"}]}`,
 			},
 		},
 		{
@@ -450,8 +468,8 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 		{
 			description: "a modelled notifier kind alongside an unmodelled one",
 			channel: Channel{
-				DisplayName: "slack-and-telegram",
-				Data:        `{"name":"slack-and-telegram","slack_configs":[{"api_url":"https://a","channel":"#a"}],"telegram_configs":[{"chat_id":1,"bot_token":"t"}]}`,
+				DisplayName: "slack-and-discord",
+				Data:        `{"name":"slack-and-discord","slack_configs":[{"api_url":"https://a","channel":"#a"}],"discord_configs":[{"webhook_url":"https://discord.com/api/webhooks/1/x"}]}`,
 			},
 		},
 		{

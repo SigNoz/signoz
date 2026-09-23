@@ -43,6 +43,7 @@ var (
 	ChannelKindJira       = ChannelKind{valuer.NewString("jira")}
 	ChannelKindJSMOps     = ChannelKind{valuer.NewString("jsmops")}
 	ChannelKindIncidentIO = ChannelKind{valuer.NewString("incidentio")}
+	ChannelKindTelegram   = ChannelKind{valuer.NewString("telegram")}
 )
 
 func (ChannelKind) Enum() []any {
@@ -176,6 +177,7 @@ func (ChannelConfig) JSONSchemaOneOf() []any {
 		ChannelConfigVariant[ChannelJiraConfig]{Kind: ChannelKindJira.StringValue()},
 		ChannelConfigVariant[ChannelJSMOpsConfig]{Kind: ChannelKindJSMOps.StringValue()},
 		ChannelConfigVariant[ChannelIncidentIOConfig]{Kind: ChannelKindIncidentIO.StringValue()},
+		ChannelConfigVariant[ChannelTelegramConfig]{Kind: ChannelKindTelegram.StringValue()},
 	}
 }
 
@@ -193,6 +195,7 @@ func (ChannelConfig) PrepareJSONSchema(s *jsonschema.Schema) error {
 		ChannelKindJira.StringValue():       channelVariantRef("ChannelJiraConfig"),
 		ChannelKindJSMOps.StringValue():     channelVariantRef("ChannelJSMOpsConfig"),
 		ChannelKindIncidentIO.StringValue(): channelVariantRef("ChannelIncidentIOConfig"),
+		ChannelKindTelegram.StringValue():   channelVariantRef("ChannelTelegramConfig"),
 	})
 }
 
@@ -767,6 +770,100 @@ func newChannelGoogleChatConfigFromReceiver(name string, receiver *Receiver) (Ch
 	}, nil
 }
 
+// ChannelTelegramConfig maps onto upstream alertmanager TelegramConfig. The
+// notifier already lives upstream; this only models the fields the UI and v2
+// API expose. messageThreadId targets a Telegram forum topic.
+type ChannelTelegramConfig struct {
+	SendResolved    *bool                        `json:"sendResolved,omitempty"`
+	BotToken        string                       `json:"botToken" required:"true" format:"password"`
+	ChatID          int64                        `json:"chatId" required:"true"`
+	MessageThreadID *int                         `json:"messageThreadId,omitempty"`
+	Message         valuer.UnsetOrNonEmptyString `json:"message"`
+}
+
+func (c ChannelTelegramConfig) Validate() error {
+	if c.BotToken == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.botToken is required for a telegram channel")
+	}
+
+	if c.ChatID == 0 {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.chatId is required for a telegram channel")
+	}
+
+	if c.MessageThreadID != nil && *c.MessageThreadID <= 0 {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.messageThreadId must be greater than 0")
+	}
+
+	return nil
+}
+
+func (c ChannelTelegramConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
+	telegram := &config.TelegramConfig{
+		NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultTelegramConfig.VSendResolved)},
+		BotToken:       config.Secret(c.BotToken),
+		ChatID:         c.ChatID,
+		Message:        c.Message.StringValue(),
+	}
+	if c.MessageThreadID != nil {
+		telegram.MessageThreadID = *c.MessageThreadID
+	}
+
+	return &Receiver{Receiver: &config.Receiver{
+		Name:            displayName,
+		TelegramConfigs: []*config.TelegramConfig{telegram},
+	}}, nil
+}
+
+func newChannelTelegramConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	telegram := receiver.TelegramConfigs[0]
+	sendResolved := telegram.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, telegram.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	if telegram.BotTokenFile != "" {
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets token_file, which is not supported", name)
+	}
+
+	if telegram.ChatIDFile != "" {
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets chat_file, which is not supported", name)
+	}
+
+	if telegram.APIUrl != nil {
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets api_url, which is not supported", name)
+	}
+
+	if telegram.DisableNotifications {
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets disable_notifications, which is not supported", name)
+	}
+
+	if telegram.ParseMode != "" && telegram.ParseMode != "HTML" {
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets parse_mode %q, which is not supported", name, telegram.ParseMode)
+	}
+
+	if telegram.BotToken == "" {
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q is missing a bot token", name)
+	}
+
+	if telegram.ChatID == 0 {
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q is missing a chat id", name)
+	}
+
+	spec := &ChannelTelegramConfig{
+		SendResolved: &sendResolved,
+		BotToken:     string(telegram.BotToken),
+		ChatID:       telegram.ChatID,
+		Message:      valuer.UnsetIfEmpty(telegram.Message),
+	}
+	if telegram.MessageThreadID != 0 {
+		threadID := telegram.MessageThreadID
+		spec.MessageThreadID = &threadID
+	}
+
+	return spec, nil
+}
+
 type ChannelJiraConfig struct {
 	SendResolved *bool `json:"sendResolved,omitempty"`
 	// Site is the Jira Cloud base URL, https://<site>.atlassian.net. Only Jira
@@ -1218,6 +1315,12 @@ var channelKinds = []channelKindEntry{
 		newSpec:      func() ChannelSpec { return new(ChannelIncidentIOConfig) },
 		countConfigs: func(receiver *Receiver) int { return len(receiver.IncidentIOConfigs) },
 		extractSpec:  newChannelIncidentIOConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindTelegram,
+		newSpec:      func() ChannelSpec { return new(ChannelTelegramConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.TelegramConfigs) },
+		extractSpec:  newChannelTelegramConfigFromReceiver,
 	},
 }
 

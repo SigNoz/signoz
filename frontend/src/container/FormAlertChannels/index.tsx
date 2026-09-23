@@ -16,6 +16,7 @@ import {
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
+	TelegramChannel,
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
 import history from 'lib/history';
@@ -29,6 +30,7 @@ import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
+import TelegramSettings from './Settings/Telegram';
 import WebhookSettings from './Settings/Webhook';
 import { Button } from './styles';
 
@@ -70,6 +72,8 @@ function FormAlertChannels({
 						initialMetadata={initialValue?.metadata as Record<string, string>}
 					/>
 				);
+			case ChannelType.Telegram:
+				return <TelegramSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Email:
@@ -174,6 +178,14 @@ function FormAlertChannels({
 						>
 							incident.io
 						</Select.Option>
+
+						<Select.Option
+							value="telegram"
+							key="telegram"
+							data-testid="select-option"
+						>
+							Telegram
+						</Select.Option>
 					</Select>
 				</Form.Item>
 
@@ -225,7 +237,8 @@ interface FormAlertChannelsProps {
 					GoogleChatChannel &
 					JiraChannel &
 					JsmOpsChannel &
-					IncidentIOChannel
+					IncidentIOChannel &
+					TelegramChannel
 			>
 		>
 	>;

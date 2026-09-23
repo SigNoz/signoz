@@ -9,6 +9,7 @@ import {
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
+	TelegramChannel,
 	WebhookChannel,
 } from './config';
 
@@ -165,6 +166,24 @@ export const IncidentIOInitialConfig: Partial<IncidentIOChannel> = {
 
 {{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})
 
+{{ end }}{{ end }}`,
+};
+
+// mirrors DefaultTelegramConfig message / send_resolved. Parse mode stays HTML
+// on the backend; the template uses HTML entities telegram understands.
+export const TelegramInitialConfig: Partial<TelegramChannel> = {
+	send_resolved: true,
+	message: `{{ if gt (len .Alerts.Firing) 0 }}
+<b>Alerts Firing:</b>
+{{ range .Alerts.Firing -}}
+• <b>{{ .Labels.alertname }}</b>{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
+{{ if .Annotations.summary }}{{ .Annotations.summary }}
+{{ end }}{{ if .Annotations.description }}{{ .Annotations.description }}
+{{ end }}
+{{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}
+<b>Alerts Resolved:</b>
+{{ range .Alerts.Resolved -}}
+• <b>{{ .Labels.alertname }}</b>
 {{ end }}{{ end }}`,
 };
 
@@ -578,7 +597,8 @@ export const ChannelInitialConfig: Record<
 			GoogleChatChannel &
 			JiraChannel &
 			JsmOpsChannel &
-			IncidentIOChannel
+			IncidentIOChannel &
+			TelegramChannel
 	>
 > = {
 	[ChannelType.Slack]: SlackInitialConfig,
@@ -587,6 +607,7 @@ export const ChannelInitialConfig: Record<
 	[ChannelType.Jira]: JiraInitialConfig,
 	[ChannelType.JsmOps]: JsmOpsInitialConfig,
 	[ChannelType.IncidentIO]: IncidentIOInitialConfig,
+	[ChannelType.Telegram]: TelegramInitialConfig,
 	[ChannelType.Pagerduty]: PagerInitialConfig,
 	[ChannelType.Opsgenie]: OpsgenieInitialConfig,
 	[ChannelType.Email]: EmailInitialConfig,

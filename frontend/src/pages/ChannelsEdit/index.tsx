@@ -17,6 +17,7 @@ import {
 	MsTeamsChannel,
 	PagerChannel,
 	SlackChannel,
+	TelegramChannel,
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
 import EditAlertChannels from 'container/EditAlertChannels';
@@ -71,7 +72,8 @@ function ChannelsEdit(): JSX.Element {
 				GoogleChatChannel &
 				JiraChannel &
 				JsmOpsChannel &
-				IncidentIOChannel
+				IncidentIOChannel &
+				TelegramChannel
 		>;
 	} => {
 		let channel: Partial<
@@ -82,7 +84,8 @@ function ChannelsEdit(): JSX.Element {
 				GoogleChatChannel &
 				JiraChannel &
 				JsmOpsChannel &
-				IncidentIOChannel
+				IncidentIOChannel &
+				TelegramChannel
 		> = {
 			name: '',
 		};
@@ -143,6 +146,21 @@ function ChannelsEdit(): JSX.Element {
 			channel = incidentIOConfig;
 			return {
 				type: ChannelType.IncidentIO,
+				channel,
+			};
+		}
+
+		if (value && 'telegram_configs' in value) {
+			const [telegramConfig] = value.telegram_configs;
+			channel = {
+				...telegramConfig,
+				bot_token: telegramConfig.token,
+				chat_id: telegramConfig.chat,
+				message_thread_id: telegramConfig.message_thread_id,
+				message: telegramConfig.message,
+			};
+			return {
+				type: ChannelType.Telegram,
 				channel,
 			};
 		}

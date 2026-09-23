@@ -56,11 +56,11 @@ def test_repair_deletes_a_v1_channel_of_an_unmodelled_kind(
     cleanup_notification_channels: list[str],
 ) -> None:
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    name = f"v1-telegram-{uuid.uuid4().hex[:8]}"
+    name = f"v1-discord-{uuid.uuid4().hex[:8]}"
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/channels"),
-        json={"name": name, "telegram_configs": [{"chat": 12345, "token": "telegram-bot-token"}]},
+        json={"name": name, "discord_configs": [{"webhook_url": "https://discord.com/api/webhooks/1/x"}]},
         headers={"Authorization": f"Bearer {token}"},
         timeout=TIMEOUT,
     )

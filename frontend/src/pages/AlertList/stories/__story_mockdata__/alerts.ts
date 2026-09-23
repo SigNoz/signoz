@@ -79,6 +79,7 @@ export const CHANNEL_TYPES = [
 	'jira',
 	'jsmops',
 	'incidentio',
+	'telegram',
 ] as const;
 
 export type ChannelType = (typeof CHANNEL_TYPES)[number];

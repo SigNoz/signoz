@@ -54,6 +54,7 @@ _PASSWORD = "password123Z$"
         pytest.param("jsmops", {"apiKey": "jsm-api-key", "message": "Alert", "description": "{{ .CommonLabels.alertname }}", "priority": "P2"}, "priority", "P2", id="jsmops"),
         # The incident.io notifier only accepts an alert source's events URL.
         pytest.param("incidentio", {"url": "https://api.incident.io/v2/alert_events/http/01ABCDEF", "token": "incidentio-token", "title": "Alert", "description": "{{ .CommonLabels.alertname }}"}, "title", "Alert", id="incidentio"),
+        pytest.param("telegram", {"botToken": "123456:ABC-DEF", "chatId": -1001234567890, "messageThreadId": 42, "message": "{{ .CommonLabels.alertname }}"}, "chatId", -1001234567890, id="telegram"),
     ],
 )
 def test_create_returns_the_channel_for_every_kind(  # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -101,6 +102,7 @@ def test_create_returns_the_channel_for_every_kind(  # pylint: disable=too-many-
         pytest.param("jira", {"site": "https://acme.atlassian.net", "project": "OPS", "issueType": "Bug", "email": "oncall@integration.test", "apiToken": "jira-api-token", "summary": "Alert", "description": "body"}, False, id="jira"),
         pytest.param("jsmops", {"apiKey": "jsm-api-key", "message": "Alert", "description": "body"}, False, id="jsmops"),
         pytest.param("incidentio", {"url": "https://api.incident.io/v2/alert_events/http/01ABCDEF", "token": "incidentio-token", "title": "Alert", "description": "body"}, False, id="incidentio"),
+        pytest.param("telegram", {"botToken": "123456:ABC-DEF", "chatId": -1001234567890}, True, id="telegram"),
     ],
 )
 def test_create_without_send_resolved_returns_the_notifier_default(  # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -141,6 +143,7 @@ def test_create_without_send_resolved_returns_the_notifier_default(  # pylint: d
         pytest.param("jira", {"site": "https://acme.atlassian.net", "project": "OPS", "issueType": "Bug", "email": "oncall@integration.test", "apiToken": "jira-api-token"}, ["summary", "description"], id="jira"),
         pytest.param("jsmops", {"apiKey": "jsm-api-key"}, ["message", "description"], id="jsmops"),
         pytest.param("incidentio", {"url": "https://api.incident.io/v2/alert_events/http/01ABCDEF", "token": "incidentio-token"}, ["title", "description"], id="incidentio"),
+        pytest.param("telegram", {"botToken": "123456:ABC-DEF", "chatId": -1001234567890}, ["message"], id="telegram"),
     ],
 )
 def test_create_without_templates_returns_the_notifier_defaults(  # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -325,7 +328,10 @@ def test_create_rejects_a_duplicate_display_name(
         pytest.param({"generateName": True, "config": {"kind": "email", "spec": {"to": "a@integration.test", "html": "<p>body</p>"}}}, id="generate_name_without_display_name"),
         pytest.param({"name": "default-receiver", "config": {"kind": "email", "spec": {"to": "a@integration.test", "html": "<p>body</p>"}}}, id="reserved_receiver_name"),
         pytest.param({"name": "no-config"}, id="no_config"),
-        pytest.param({"name": "telegram-kind", "config": {"kind": "telegram", "spec": {"chatId": 1}}}, id="unmodelled_kind"),
+        pytest.param({"name": "discord-kind", "config": {"kind": "discord", "spec": {"webhookUrl": "https://discord.com/api/webhooks/1/x"}}}, id="unmodelled_kind"),
+        pytest.param({"name": "telegram-missing-token", "config": {"kind": "telegram", "spec": {"chatId": 1}}}, id="telegram_without_bot_token"),
+        pytest.param({"name": "telegram-chat-zero", "config": {"kind": "telegram", "spec": {"botToken": "t", "chatId": 0}}}, id="telegram_chat_id_zero"),
+        pytest.param({"name": "telegram-thread-zero", "config": {"kind": "telegram", "spec": {"botToken": "t", "chatId": 1, "messageThreadId": 0}}}, id="telegram_message_thread_id_zero"),
         pytest.param({"name": "slack-unknown-field", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "channel": "#a", "text": "body", "iconEmoji": ":tada:"}}}, id="unknown_spec_field"),
         pytest.param({"name": "slack-with-email-spec", "config": {"kind": "slack", "spec": {"to": "a@integration.test", "html": "<p>body</p>"}}}, id="spec_of_another_kind"),
         pytest.param({"name": "slack-field-without-value", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "fields": [{"title": "Severity"}]}}}, id="slack_field_without_value"),
@@ -382,6 +388,8 @@ def test_create_rejects_invalid_bodies(
         pytest.param("jsmops", {}, id="jsmops_without_api_key"),
         pytest.param("incidentio", {"token": "incidentio-token"}, id="incidentio_without_url"),
         pytest.param("incidentio", {"url": "https://api.incident.io/v2/alert_events/http/01ABCDEF"}, id="incidentio_without_token"),
+        pytest.param("telegram", {"chatId": 1}, id="telegram_without_bot_token"),
+        pytest.param("telegram", {"botToken": "123456:ABC-DEF"}, id="telegram_without_chat_id"),
     ],
 )
 def test_create_rejects_a_spec_missing_a_required_field(
@@ -637,7 +645,7 @@ def test_notification_channel_v2_lifecycle(  # pylint: disable=too-many-statemen
     [
         pytest.param({"sort": "data"}, id="sort_outside_the_enum"),
         pytest.param({"order": "sideways"}, id="order_outside_the_enum"),
-        pytest.param({"kind": "telegram"}, id="kind_outside_the_enum"),
+        pytest.param({"kind": "discord"}, id="kind_outside_the_enum"),
         pytest.param({"limit": -1}, id="negative_limit"),
         pytest.param({"offset": -1}, id="negative_offset"),
     ],
@@ -681,13 +689,13 @@ def test_list_and_get_a_v1_channel_of_an_unmodelled_kind(
     cleanup_notification_channels: list[str],
 ) -> None:
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    name = f"v1-telegram-{uuid.uuid4().hex[:8]}"
+    name = f"v1-discord-{uuid.uuid4().hex[:8]}"
 
-    # telegram is a kind v1 accepts and v2 does not model, so it can only be
+    # discord is a kind v1 accepts and v2 does not model, so it can only be
     # written through v1.
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/channels"),
-        json={"name": name, "telegram_configs": [{"chat": 12345, "token": "telegram-bot-token"}]},
+        json={"name": name, "discord_configs": [{"webhook_url": "https://discord.com/api/webhooks/1/x"}]},
         headers={"Authorization": f"Bearer {token}"},
         timeout=TIMEOUT,
     )
@@ -759,7 +767,7 @@ def test_update_rejects_invalid_bodies(  # pylint: disable=too-many-arguments,to
     [
         pytest.param({"name": "test-send", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X"}}}, id="name_in_body"),
         pytest.param({"config": {"kind": "slack", "spec": {}}}, id="spec_missing_required_field"),
-        pytest.param({"config": {"kind": "telegram", "spec": {"chatId": 1}}}, id="unmodelled_kind"),
+        pytest.param({"config": {"kind": "discord", "spec": {"webhookUrl": "https://discord.com/api/webhooks/1/x"}}}, id="unmodelled_kind"),
         pytest.param({}, id="no_config"),
     ],
 )
