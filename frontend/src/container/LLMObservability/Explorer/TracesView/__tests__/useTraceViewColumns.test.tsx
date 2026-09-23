@@ -109,17 +109,24 @@ describe('useTraceViewColumns', () => {
 		const { result } = await renderColumns();
 
 		expect(columnNames(result.current.columns)).toStrictEqual([
+			'trace_id',
 			'service.name',
 			'root_span_name',
+			'estimated_total_cost',
 			'trace_duration_nano',
 			'span_count',
-			'trace_id',
+			'total_tokens',
+			'input_tokens',
+			'output_tokens',
+			'distinct_tool_count',
+			'llm_call_count',
+			'tool_call_count',
 			'start_time',
 			'end_time',
 			'error_count',
 			'input',
 			'output',
-			...AGGREGATE_KEYS,
+			'max_llm_duration_nano',
 		]);
 	});
 
@@ -127,14 +134,24 @@ describe('useTraceViewColumns', () => {
 		const { result } = await renderColumns();
 
 		expect(fieldNames(result.current.selectedFields)).toStrictEqual([
+			'trace_id',
 			'service.name',
 			'root_span_name',
+			'estimated_total_cost',
 			'trace_duration_nano',
 			'span_count',
-			'trace_id',
-			'llm_call_count',
 			'total_tokens',
-			'estimated_total_cost',
+			'input_tokens',
+			'output_tokens',
+			'distinct_tool_count',
+			'llm_call_count',
+			'tool_call_count',
+			'start_time',
+			'end_time',
+			'error_count',
+			'input',
+			'output',
+			'max_llm_duration_nano',
 		]);
 	});
 
@@ -193,14 +210,24 @@ describe('useTraceViewColumns', () => {
 
 			expect(result.current.canPersistColumns).toBe(true);
 			expect(fieldNames(result.current.selectedFields)).toStrictEqual([
+				'trace_id',
 				'service.name',
 				'root_span_name',
+				'estimated_total_cost',
 				'trace_duration_nano',
 				'span_count',
-				'trace_id',
-				'llm_call_count',
 				'total_tokens',
-				'estimated_total_cost',
+				'input_tokens',
+				'output_tokens',
+				'distinct_tool_count',
+				'llm_call_count',
+				'tool_call_count',
+				'start_time',
+				'end_time',
+				'error_count',
+				'input',
+				'output',
+				'max_llm_duration_nano',
 			]);
 		});
 	});

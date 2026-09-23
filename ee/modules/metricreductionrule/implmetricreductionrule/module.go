@@ -462,7 +462,7 @@ func (m *module) relatedAssetImpact(ctx context.Context, orgID valuer.UUID, metr
 		droppedSet[label] = struct{}{}
 	}
 
-	if dashboards, err := m.dashboard.GetByMetricNames(ctx, orgID, []string{metricName}); err != nil {
+	if dashboards, err := m.dashboard.GetByMetricNamesV2(ctx, orgID, []string{metricName}); err != nil {
 		m.logger.WarnContext(ctx, "failed to fetch related dashboards for reduction preview", slog.String("metric_name", metricName), errors.Attr(err))
 	} else {
 		for _, item := range dashboards[metricName] {

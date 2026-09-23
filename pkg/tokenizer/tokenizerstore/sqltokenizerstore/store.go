@@ -233,6 +233,10 @@ func (store *store) ListByUserID(ctx context.Context, userID valuer.UUID) ([]*au
 }
 
 func (store *store) UpdateLastObservedAtByAccessToken(ctx context.Context, accessTokenToLastObservedAt []map[string]any) error {
+	if len(accessTokenToLastObservedAt) == 0 {
+		return nil
+	}
+
 	values := store.
 		sqlstore.
 		BunDBCtx(ctx).

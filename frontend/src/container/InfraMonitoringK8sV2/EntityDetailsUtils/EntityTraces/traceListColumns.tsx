@@ -3,7 +3,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import { TextNoData } from '../../components/TextNoData';
-import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
+import { getMs } from 'utils/timeUtils';
 import {
 	BlockLink,
 	getTraceLink,
