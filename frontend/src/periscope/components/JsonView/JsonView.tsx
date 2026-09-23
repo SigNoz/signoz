@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
@@ -85,6 +84,8 @@ function JsonView({
 				<div className="json-view__wrap-toggle">
 					<Typography.Text>Wrap text</Typography.Text>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						value={isWrapWord}
 						onChange={(checked): void => setIsWrapWord(checked)}
 					/>

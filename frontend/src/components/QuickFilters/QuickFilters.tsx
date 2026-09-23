@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo, useState } from 'react';
 import {
 	ArrowUpToLine,
@@ -233,48 +232,55 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		<section className="right-actions">
 			<Tooltip title="Reset All">
 				<Button
+					size="md"
 					variant="link"
 					color="secondary"
+					icon
 					aria-label="Reset All"
 					className="right-action-icon-container"
 					onClick={handleReset}
-					prefix={<RefreshCw className="sync-icon" size="md" />}
-				/>
+				>
+					<RefreshCw className="sync-icon" size="md" />
+				</Button>
 			</Tooltip>
 			{showFilterCollapse && (
 				<Tooltip title="Collapse Filters">
 					<Button
+						size="md"
 						variant="link"
 						color="secondary"
+						icon
 						aria-label="Collapse Filters"
 						className="right-action-icon-container"
 						onClick={handleFilterVisibilityChange}
-						prefix={<ArrowUpToLine style={{ rotate: '270deg' }} size="md" />}
-					/>
+					>
+						<ArrowUpToLine style={{ rotate: '270deg' }} size="md" />
+					</Button>
 				</Tooltip>
 			)}
 			{isDynamicFilters && (
 				<AuthZButton
+					size="md"
 					checks={QuickFilterManagePermissions}
 					variant="link"
 					color="secondary"
+					icon
 					aria-label="Settings"
 					className={classNames('right-action-icon-container', {
 						active: isSettingsOpen,
 					})}
 					onClick={(): void => setIsSettingsOpen(true)}
 					testId="settings-icon-container"
-					prefix={
-						<Tooltip title="Settings" open={isSettingsDisabled ? false : undefined}>
-							<SettingsIcon
-								className="settings-icon"
-								data-testid="settings-icon"
-								width={14}
-								height={14}
-							/>
-						</Tooltip>
-					}
-				/>
+				>
+					<Tooltip title="Settings" open={isSettingsDisabled ? false : undefined}>
+						<SettingsIcon
+							className="settings-icon"
+							data-testid="settings-icon"
+							width={14}
+							height={14}
+						/>
+					</Tooltip>
+				</AuthZButton>
 			)}
 		</section>
 	);
@@ -285,6 +291,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				<div className="api-quick-filters-header">
 					<Typography.Text>Show IP addresses</Typography.Text>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						style={{ marginLeft: 'auto' }}
 						value={showIP ?? true}
 						onChange={(checked): void => {

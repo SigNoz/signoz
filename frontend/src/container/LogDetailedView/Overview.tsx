@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ReactNode, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
@@ -172,7 +171,7 @@ function Overview({
 					{
 						key: '1',
 						label: (
-							<Badge color="vanilla">
+							<Badge variant="solid" color="secondary">
 								<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
 									body
 								</Typography.Text>
@@ -205,7 +204,12 @@ function Overview({
 								<div className="log-switch">
 									<div className="wrap-word-switch">
 										<Typography.Text>Wrap text</Typography.Text>
-										<Switch value={isWrapWord} onChange={handleWrapWord} />
+										<Switch
+											color="primary"
+											textPlacement="right"
+											value={isWrapWord}
+											onChange={handleWrapWord}
+										/>
 									</div>
 								</div>
 							</div>
@@ -231,7 +235,7 @@ function Overview({
 								className="attribute-tab-header"
 								onClick={toogleAttributePanelOpenState}
 							>
-								<Badge color="vanilla">
+								<Badge variant="solid" color="secondary">
 									<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
 										Attributes
 									</Typography.Text>
@@ -239,8 +243,9 @@ function Overview({
 
 								{isAttributesExpanded && (
 									<Button
+										size="md"
 										variant="link"
-										color="none"
+										color="secondary"
 										className="action-btn"
 										prefix={<Search size={12} />}
 										onClick={(e): void => {

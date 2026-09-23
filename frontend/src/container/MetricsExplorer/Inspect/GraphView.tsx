@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -208,6 +207,8 @@ function GraphView({
 				</Button.Group>
 				<div className="view-toggle-button">
 					<Switch
+						color="primary"
+						textPlacement="right"
 						value={viewType === 'graph'}
 						onChange={(checked): void => {
 							const newViewType = checked ? 'graph' : 'table';

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Switch } from '@signozhq/ui/switch';
@@ -50,6 +49,8 @@ function TimezoneAdaptation(): JSX.Element {
 			<div className="timezone-adaption__header">
 				<h2 className="timezone-adaption__title">Adapt to my timezone</h2>
 				<Switch
+					color="primary"
+					textPlacement="right"
 					value={isAdaptationEnabled}
 					onChange={handleSwitchChange}
 					style={getSwitchStyles()}

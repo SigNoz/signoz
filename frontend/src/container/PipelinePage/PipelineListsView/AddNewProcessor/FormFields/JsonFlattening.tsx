@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { Info } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
@@ -61,7 +60,12 @@ function JsonFlattening({
 				initialValue={isAdd ? true : selectedProcessorData?.enable_paths}
 			>
 				<Space>
-					<Switch value={enablePaths} onChange={handleEnablePathsChange} />
+					<Switch
+						color="primary"
+						textPlacement="right"
+						value={enablePaths}
+						onChange={handleEnablePathsChange}
+					/>
 					Enable Paths
 				</Space>
 			</Form.Item>
@@ -78,7 +82,12 @@ function JsonFlattening({
 
 			<Form.Item className="json-flattening-form__item">
 				<Space>
-					<Switch value={enableMapping} onChange={handleEnableMappingChange} />
+					<Switch
+						color="primary"
+						textPlacement="right"
+						value={enableMapping}
+						onChange={handleEnableMappingChange}
+					/>
 					<Flex gap="8px" align="center">
 						Enable Mapping
 						<Tooltip title="The order of filled keys will determine the priority of keys i.e. earlier keys have higher precedence">

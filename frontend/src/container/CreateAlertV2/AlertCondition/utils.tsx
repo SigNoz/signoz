@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Button, Flex, SelectProps } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
@@ -446,6 +445,8 @@ export function RoutingPolicyBanner({
 			</Typography.Text>
 			<div className="routing-policies-info-banner-right">
 				<Switch
+					color="primary"
+					textPlacement="right"
 					value={notificationSettings.routingPolicies}
 					testId="routing-policies-switch"
 					onChange={(value): void => {

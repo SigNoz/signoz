@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Switch } from '@signozhq/ui/switch';
 
 import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
@@ -29,6 +28,8 @@ function GroupHeaderActions({
 			onClick={(event): void => event.stopPropagation()}
 		>
 			<Switch
+				color="primary"
+				textPlacement="right"
 				value={group.enabled}
 				onChange={(checked): void => onToggle(group.localId, checked)}
 				testId={`group-enabled-${group.localId}`}

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { SelectSimple } from '@signozhq/ui/select';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
@@ -25,6 +24,9 @@ function PublicDashboardSettingsForm({
 		<>
 			<div className={styles.switchRow}>
 				<Switch
+					color="primary"
+					textPlacement="right"
+					disabledTooltip={undefined}
 					testId="public-dashboard-time-range-toggle"
 					value={timeRangeEnabled}
 					disabled={disabled}

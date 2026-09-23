@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
@@ -65,8 +64,9 @@ function LogsActionsContainer({
 						<div className="frequency-chart-view-controller">
 							<Typography>Frequency chart</Typography>
 							<Switch
+								color="primary"
+								textPlacement="right"
 								value={showFrequencyChart}
-								defaultValue
 								onChange={handleToggleFrequencyChart}
 							/>
 						</div>

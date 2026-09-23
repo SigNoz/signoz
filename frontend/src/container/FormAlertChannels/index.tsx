@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@signozhq/ui/input';
@@ -106,6 +105,8 @@ function FormAlertChannels({
 					name="send_resolved"
 				>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						defaultValue={initialValue?.send_resolved}
 						testId="field-send-resolved-checkbox"
 						onChange={(value): void => {

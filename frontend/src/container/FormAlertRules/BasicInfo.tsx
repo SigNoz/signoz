@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -203,6 +202,9 @@ function BasicInfo({
 						placement="right"
 					>
 						<Switch
+							color="primary"
+							textPlacement="right"
+							disabledTooltip={undefined}
 							value={shouldBroadCastToAllChannels}
 							onChange={handleBroadcastToAllChannels}
 							disabled={noChannels || !!isLoading}

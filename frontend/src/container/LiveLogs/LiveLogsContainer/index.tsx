@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Switch } from '@signozhq/ui/switch';
@@ -233,8 +232,9 @@ function LiveLogsContainer({
 					<div className="live-logs-frequency-chart-view-controller">
 						<Typography>Frequency chart</Typography>
 						<Switch
+							color="primary"
+							textPlacement="right"
 							value={showLiveLogsFrequencyChart}
-							defaultValue
 							onChange={handleToggleFrequencyChart}
 						/>
 					</div>

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -150,6 +149,9 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 								<Info size={14} color={Color.BG_AMBER_600} />
 							)}
 							<Switch
+								color="primary"
+								textPlacement="right"
+								disabledTooltip={undefined}
 								value={enableAbsoluteTime}
 								disabled={!isValidateRelativeTime}
 								onChange={(): void => {
@@ -174,6 +176,8 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 					</Typography.Text>
 					<div className="absolute-relative-time-toggler">
 						<Switch
+							color="primary"
+							textPlacement="right"
 							value={enableExtraOption}
 							onChange={(): void => setEnableExtraOption((prev) => !prev)}
 						/>

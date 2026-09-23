@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
@@ -357,6 +356,9 @@ function Explorer(): JSX.Element {
 							title={oneChartPerQueryDisabledTooltip}
 						>
 							<Switch
+								color="primary"
+								textPlacement="right"
+								disabledTooltip={undefined}
 								value={showOneChartPerQuery}
 								onChange={handleToggleShowOneChartPerQuery}
 								disabled={disableOneChartPerQuery || splitedQueries.length <= 1}

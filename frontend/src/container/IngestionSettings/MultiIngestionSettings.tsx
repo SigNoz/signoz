@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
@@ -1009,19 +1008,24 @@ function MultiIngestionSettings(): JSX.Element {
 								<div className="action-btn">
 									<Button
 										variant="link"
-										size="icon"
+										size="sm"
+										icon
 										color="secondary"
-										suffix={<PenLine size={14} />}
 										aria-label="Edit ingestion key"
 										onClick={onEditKey}
-									/>
+									>
+										<PenLine size={14} />
+									</Button>
 									<Button
+										aria-label="Delete ingestion key"
 										variant="link"
-										size="icon"
-										color="destructive"
-										suffix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+										size="sm"
+										icon
+										color="danger"
 										onClick={onDeleteKey}
-									/>
+									>
+										<Trash2 color={Color.BG_CHERRY_500} size={14} />
+									</Button>
 								</div>
 							</div>
 						),
@@ -1060,7 +1064,7 @@ function MultiIngestionSettings(): JSX.Element {
 													<div className="ingestion-key-tags">
 														{APIKey.tags.map((tag, index) => (
 															// eslint-disable-next-line react/no-array-index-key
-															<Badge key={`${tag}-${index}`} color="vanilla">
+															<Badge variant="solid" key={`${tag}-${index}`} color="secondary">
 																{' '}
 																{tag}{' '}
 															</Badge>
@@ -1128,30 +1132,37 @@ function MultiIngestionSettings(): JSX.Element {
 																{hasLimits(signalName) ? (
 																	<>
 																		<Button
+																			disabledTooltip={undefined}
 																			variant="link"
-																			size="icon"
+																			size="sm"
+																			icon
 																			color="secondary"
-																			prefix={<PenLine size={14} />}
 																			aria-label={`Edit ${signalName} limit`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
 																			onClick={onEditSignalLimit}
-																		/>
+																		>
+																			<PenLine size={14} />
+																		</Button>
 																		<Button
+																			disabledTooltip={undefined}
 																			variant="link"
-																			size="icon"
-																			color="destructive"
-																			prefix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+																			size="sm"
+																			icon
+																			color="danger"
 																			aria-label={`Delete ${signalName} limit`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
 																			onClick={onDeleteSignalLimit}
-																		/>
+																		>
+																			<Trash2 color={Color.BG_CHERRY_500} size={14} />
+																		</Button>
 																	</>
 																) : (
 																	<Button
+																		disabledTooltip={undefined}
 																		variant="outlined"
 																		size="sm"
 																		color="secondary"
@@ -1188,6 +1199,8 @@ function MultiIngestionSettings(): JSX.Element {
 																					<div className="limit-enable-disable-toggle">
 																						<Form.Item name="enableDailyLimit">
 																							<Switch
+																								color="primary"
+																								textPlacement="right"
 																								value={activeSignal?.config?.day?.enabled}
 																								onChange={(value): void => {
 																									setActiveSignal((prev) =>
@@ -1277,6 +1290,8 @@ function MultiIngestionSettings(): JSX.Element {
 																					<div className="limit-enable-disable-toggle">
 																						<Form.Item name="enableSecondLimit">
 																							<Switch
+																								color="primary"
+																								textPlacement="right"
 																								value={activeSignal?.config?.second?.enabled}
 																								onChange={(value): void => {
 																									setActiveSignal((prev) =>
@@ -1386,6 +1401,8 @@ function MultiIngestionSettings(): JSX.Element {
 																			<div className="signal-limit-save-discard">
 																				<div className="signal-limit-save-discard-actions">
 																					<Button
+																						disabledTooltip={undefined}
+																						color="primary"
 																						variant="solid"
 																						size="sm"
 																						disabled={
@@ -1399,6 +1416,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						Save
 																					</Button>
 																					<Button
+																						disabledTooltip={undefined}
 																						variant="outlined"
 																						color="secondary"
 																						size="sm"
@@ -1469,18 +1487,17 @@ function MultiIngestionSettings(): JSX.Element {
 																			limit?.config?.day?.size !== undefined) ||
 																			(signalCfg.usesCount &&
 																				limit?.config?.day?.count !== undefined)) && (
-																			<Badge
-																				asChild
-																				color="cherry"
-																				variant="outline"
+																			<Button
+																				variant="solid"
+																				color="primary"
+																				onClick={onCreateSignalAlert}
+																				size="sm"
 																				testId={`set-alert-btn-${signalName}`}
 																				className="set-alert-btn"
 																			>
-																				<Button onClick={onCreateSignalAlert} size="sm">
-																					<BellPlus size={12} />
-																					Set alert
-																				</Button>
-																			</Badge>
+																				<BellPlus size={12} />
+																				Set alert
+																			</Button>
 																		)}
 																	</div>
 
@@ -1662,11 +1679,13 @@ function MultiIngestionSettings(): JSX.Element {
 								>
 									<Button
 										variant="ghost"
-										size="icon"
+										size="sm"
+										icon
 										color="secondary"
-										prefix={<TriangleAlert size={14} />}
 										aria-label="Ingestion URL error details"
-									/>
+									>
+										<TriangleAlert size={14} />
+									</Button>
 								</Tooltip>
 							)}
 						</div>
@@ -1682,6 +1701,8 @@ function MultiIngestionSettings(): JSX.Element {
 					/>
 
 					<Button
+						size="md"
+						color="primary"
 						variant="solid"
 						className="add-new-ingestion-key-btn"
 						prefix={<Plus size={14} />}
@@ -1719,6 +1740,7 @@ function MultiIngestionSettings(): JSX.Element {
 				destroyOnClose
 				footer={[
 					<Button
+						size="md"
 						key="cancel"
 						variant="ghost"
 						color="secondary"
@@ -1729,9 +1751,10 @@ function MultiIngestionSettings(): JSX.Element {
 						Cancel
 					</Button>,
 					<Button
+						size="md"
 						key="submit"
 						variant="solid"
-						color="destructive"
+						color="danger"
 						prefix={<Trash2 size={16} />}
 						loading={isDeleteingAPIKey}
 						onClick={onDeleteHandler}
@@ -1759,6 +1782,7 @@ function MultiIngestionSettings(): JSX.Element {
 				destroyOnClose
 				footer={[
 					<Button
+						size="md"
 						key="cancel"
 						variant="ghost"
 						color="secondary"
@@ -1769,9 +1793,10 @@ function MultiIngestionSettings(): JSX.Element {
 						Cancel
 					</Button>,
 					<Button
+						size="md"
 						key="submit"
 						variant="solid"
-						color="destructive"
+						color="danger"
 						prefix={<Trash2 size={16} />}
 						loading={isDeletingLimit}
 						onClick={onDeleteLimitHandler}
@@ -1802,6 +1827,7 @@ function MultiIngestionSettings(): JSX.Element {
 				destroyOnClose
 				footer={[
 					<Button
+						size="md"
 						key="cancel"
 						variant="ghost"
 						color="secondary"
@@ -1811,6 +1837,8 @@ function MultiIngestionSettings(): JSX.Element {
 						Cancel
 					</Button>,
 					<Button
+						size="md"
+						color="primary"
 						key="submit"
 						variant="solid"
 						prefix={<Check size={14} />}
@@ -1870,6 +1898,7 @@ function MultiIngestionSettings(): JSX.Element {
 				destroyOnClose
 				footer={[
 					<Button
+						size="md"
 						key="cancel"
 						variant="ghost"
 						color="secondary"
@@ -1879,6 +1908,8 @@ function MultiIngestionSettings(): JSX.Element {
 						Cancel
 					</Button>,
 					<Button
+						size="md"
+						color="primary"
 						key="submit"
 						variant="solid"
 						testId="create-new-key"

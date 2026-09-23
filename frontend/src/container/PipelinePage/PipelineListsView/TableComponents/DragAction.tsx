@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { GripVertical } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
 
@@ -8,7 +7,12 @@ import { LastActionColumn } from '../styles';
 function DragAction({ isEnabled, onChange }: DragActionProps): JSX.Element {
 	return (
 		<LastActionColumn>
-			<Switch defaultValue={isEnabled} onChange={onChange} />
+			<Switch
+				color="primary"
+				textPlacement="right"
+				defaultValue={isEnabled}
+				onChange={onChange}
+			/>
 			<GripVertical size="lg" style={holdIconStyle} />
 		</LastActionColumn>
 	);

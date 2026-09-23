@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
@@ -44,6 +43,7 @@ function GroupFormDrawer({
 			footer={
 				<div className={styles.groupFormFooter}>
 					<Button
+						size="md"
 						variant="ghost"
 						color="secondary"
 						onClick={onClose}
@@ -52,6 +52,8 @@ function GroupFormDrawer({
 						Cancel
 					</Button>
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						variant="solid"
 						color="primary"
 						onClick={onSave}
@@ -79,6 +81,8 @@ function GroupFormDrawer({
 				<div className={`${styles.groupFormField} ${styles.groupFormFieldRow}`}>
 					<span className={styles.groupFormLabel}>Enabled</span>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						value={draft.enabled}
 						onChange={(checked): void => setDraft({ ...draft, enabled: checked })}
 						testId="group-form-enabled"

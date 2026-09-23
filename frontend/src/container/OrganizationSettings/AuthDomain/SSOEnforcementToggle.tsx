@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { Switch } from '@signozhq/ui/switch';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
@@ -62,6 +61,9 @@ function SSOEnforcementToggle({
 
 	return (
 		<Switch
+			color="primary"
+			textPlacement="right"
+			disabledTooltip={undefined}
 			disabled={isLoading}
 			value={isChecked}
 			onChange={onChangeHandler}

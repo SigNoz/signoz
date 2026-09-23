@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Badge } from '@signozhq/ui/badge';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
@@ -61,10 +60,10 @@ function MapperRow({
 				<Badge
 					color={
 						mapper.fieldContext === SpantypesFieldContextDTO.resource
-							? 'amber'
-							: 'robin'
+							? 'warning'
+							: 'primary'
 					}
-					variant="outline"
+					variant="outlined"
 					className={styles.targetContextBadge}
 				>
 					{mapper.fieldContext}
@@ -85,8 +84,8 @@ function MapperRow({
 					>
 						{visibleSources.map((source) => (
 							<Badge
-								variant="outline"
-								color="vanilla"
+								variant="outlined"
+								color="secondary"
 								className={styles.sourceChip}
 								key={`${source.context}:${source.key}`}
 							>
@@ -107,6 +106,8 @@ function MapperRow({
 				{canManage && (
 					<div className={styles.rowActions}>
 						<Switch
+							color="primary"
+							textPlacement="right"
 							value={mapper.enabled}
 							onChange={(checked): void => onToggle(mapper.localId, checked)}
 							testId={`mapper-enabled-${mapper.localId}`}

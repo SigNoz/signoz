@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo, useState } from 'react';
 import { QueryFunctionContext, useQueries, useQuery } from 'react-query';
 import { Spin, Table, Tooltip } from 'antd';
@@ -172,7 +171,12 @@ function TopErrors({
 					/>
 				</div>
 				<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-					<Switch value={showStatusCodeErrors} onChange={setShowStatusCodeErrors} />
+					<Switch
+						color="primary"
+						textPlacement="right"
+						value={showStatusCodeErrors}
+						onChange={setShowStatusCodeErrors}
+					/>
 					<span style={{ color: 'white', fontSize: '14px' }}>
 						Status Message Exists
 					</span>

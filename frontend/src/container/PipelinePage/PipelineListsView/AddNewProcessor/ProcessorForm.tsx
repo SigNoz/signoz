@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useTranslation } from 'react-i18next';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
@@ -96,6 +95,8 @@ function ProcessorFieldInput({
 					>
 						<Space>
 							<Switch
+								color="primary"
+								textPlacement="right"
 								value={form.getFieldValue('enable_flattening')}
 								onChange={(checked: boolean): void => {
 									form.setFieldValue('enable_flattening', checked);

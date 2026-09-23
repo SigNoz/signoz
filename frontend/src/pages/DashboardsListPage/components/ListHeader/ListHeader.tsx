@@ -1,4 +1,3 @@
-// @ts-nocheck
 // eslint-disable-next-line signoz/no-antd-components -- Popover/Tooltip not yet migrated for this menu
 import { Popover, Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
@@ -62,6 +61,8 @@ function ListHeader({
 				<div key={col.key} className={styles.metaRow}>
 					<Typography.Text className={styles.metaLabel}>{col.label}</Typography.Text>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						value={visibleColumns[col.key]}
 						testId={`metadata-toggle-${col.key}`}
 						onChange={(checked): void => {
@@ -87,6 +88,7 @@ function ListHeader({
 						<div className={styles.sortContent}>
 							<Typography.Text className={styles.sortHeading}>Sort By</Typography.Text>
 							<Button
+								size="md"
 								variant="ghost"
 								color="secondary"
 								className={styles.sortButton}
@@ -101,6 +103,7 @@ function ListHeader({
 								Name
 							</Button>
 							<Button
+								size="md"
 								variant="ghost"
 								color="secondary"
 								className={styles.sortButton}
@@ -115,6 +118,7 @@ function ListHeader({
 								Last created
 							</Button>
 							<Button
+								size="md"
 								variant="ghost"
 								color="secondary"
 								className={styles.sortButton}
@@ -131,6 +135,7 @@ function ListHeader({
 							<div className={styles.sortDivider} />
 							<Typography.Text className={styles.sortHeading}>Order</Typography.Text>
 							<Button
+								size="md"
 								variant="ghost"
 								color="secondary"
 								className={styles.sortButton}
@@ -145,6 +150,7 @@ function ListHeader({
 								Ascending
 							</Button>
 							<Button
+								size="md"
 								variant="ghost"
 								color="secondary"
 								className={styles.sortButton}
@@ -194,7 +200,8 @@ function ListHeader({
 						<Button
 							variant="ghost"
 							color="secondary"
-							size="icon"
+							size="sm"
+							icon
 							aria-label="Columns"
 							testId="configure-columns-trigger"
 						>
