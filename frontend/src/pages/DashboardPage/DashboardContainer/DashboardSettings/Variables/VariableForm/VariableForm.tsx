@@ -1,16 +1,13 @@
-// @ts-nocheck
 import { useRef, useState } from 'react';
 import { Check, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { TabsContent, TabsRoot } from '@signozhq/ui/tabs';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 // eslint-disable-next-line signoz/no-antd-components -- TextArea/Collapse: no @signozhq/ui equivalent
 import { Collapse, Input as AntdInput } from 'antd';
 import { CustomMultiSelect } from 'components/NewSelect';
 
-import type { VariableType } from '../variableFormModel';
 import DynamicVariableFields from './DynamicVariableFields';
 import ListVariableFields from './ListVariableFields';
 import QueryVariableFields from './QueryVariableFields';
@@ -102,103 +99,98 @@ function VariableForm({
 					visibleNameError={visibleNameError}
 				/>
 
-				<TabsRoot
-					className={styles.typeSection}
+				<VariableTypeTabs
 					value={model.type}
-					onValueChange={(next): void => selectType(next as VariableType)}
-				>
-					<VariableTypeTabs />
-
-					<TabsContent value="DYNAMIC" className={styles.typePanel}>
-						<div className={styles.typeContent}>
-							<DynamicVariableFields
-								attribute={model.dynamicAttribute}
-								signal={model.dynamicSignal}
-								onChange={onDynamicChange}
-								onPreview={setRawPreview}
-								attributeError={attributeError}
-							/>
-							{listFields}
-							<div className={styles.row}>
-								<div className={styles.labelContainer}>
-									<Typography.Text className={styles.label}>
-										Apply to panels
-									</Typography.Text>
+					onChange={selectType}
+					panels={{
+						DYNAMIC: (
+							<div className={styles.typeContent}>
+								<DynamicVariableFields
+									attribute={model.dynamicAttribute}
+									signal={model.dynamicSignal}
+									onChange={onDynamicChange}
+									onPreview={setRawPreview}
+									attributeError={attributeError}
+								/>
+								{listFields}
+								<div className={styles.row}>
+									<div className={styles.labelContainer}>
+										<Typography.Text className={styles.label}>
+											Apply to panels
+										</Typography.Text>
+									</div>
+									<CustomMultiSelect
+										placeholder="Select panels"
+										options={panelOptions}
+										value={selectedPanelIds}
+										onChange={(value): void => setSelectedPanelIds(value as string[])}
+										data-testid="variable-apply-panels"
+										// Resolve the closed-state tags to panel names (else they show the id).
+										showLabels
+										placement="topRight"
+									/>
 								</div>
-								<CustomMultiSelect
-									placeholder="Select panels"
-									options={panelOptions}
-									value={selectedPanelIds}
-									onChange={(value): void => setSelectedPanelIds(value as string[])}
-									data-testid="variable-apply-panels"
-									// Resolve the closed-state tags to panel names (else they show the id).
-									showLabels
-									placement="topRight"
-								/>
 							</div>
-						</div>
-					</TabsContent>
-
-					<TabsContent value="QUERY" className={styles.typePanel}>
-						<div className={styles.typeContent}>
-							<QueryVariableFields
-								queryValue={model.queryValue}
-								variables={payloadVariables}
-								onChange={(queryValue): void => set({ queryValue })}
-								onPreview={setRawPreview}
-								onError={setPreviewError}
-							/>
-							{listFields}
-						</div>
-					</TabsContent>
-
-					<TabsContent value="CUSTOM" className={styles.typePanel}>
-						<div className={styles.typeContent}>
-							<div className={cx(styles.row, styles.customSection)}>
-								<Collapse
-									collapsible="header"
-									rootClassName="custom-collapse"
-									defaultActiveKey={['1']}
-									items={[
-										{
-											key: '1',
-											label: 'Options',
-											children: (
-												<AntdInput.TextArea
-													value={model.customValue}
-													placeholder="Enter options separated by commas."
-													rootClassName="comma-input"
-													onChange={(e): void => onCustomChange(e.target.value)}
-													data-testid="variable-custom-input"
-												/>
-											),
-										},
-									]}
+						),
+						QUERY: (
+							<div className={styles.typeContent}>
+								<QueryVariableFields
+									queryValue={model.queryValue}
+									variables={payloadVariables}
+									onChange={(queryValue): void => set({ queryValue })}
+									onPreview={setRawPreview}
+									onError={setPreviewError}
 								/>
+								{listFields}
 							</div>
-							{listFields}
-						</div>
-					</TabsContent>
-
-					<TabsContent value="TEXT" className={styles.typePanel}>
-						<div className={styles.typeContent}>
-							<div className={cx(styles.row, styles.textboxSection)}>
-								<div className={styles.labelContainer}>
-									<Typography.Text className={styles.label}>
-										Default Value
-									</Typography.Text>
+						),
+						CUSTOM: (
+							<div className={styles.typeContent}>
+								<div className={cx(styles.row, styles.customSection)}>
+									<Collapse
+										collapsible="header"
+										rootClassName="custom-collapse"
+										defaultActiveKey={['1']}
+										items={[
+											{
+												key: '1',
+												label: 'Options',
+												children: (
+													<AntdInput.TextArea
+														value={model.customValue}
+														placeholder="Enter options separated by commas."
+														rootClassName="comma-input"
+														onChange={(e): void => onCustomChange(e.target.value)}
+														data-testid="variable-custom-input"
+													/>
+												),
+											},
+										]}
+									/>
 								</div>
-								<Input
-									className={styles.defaultInput}
-									value={model.textValue}
-									placeholder="Enter a default value (if any)..."
-									onChange={(e): void => set({ textValue: e.target.value })}
-									testId="variable-text-input"
-								/>
+								{listFields}
 							</div>
-						</div>
-					</TabsContent>
-				</TabsRoot>
+						),
+						TEXT: (
+							<div className={styles.typeContent}>
+								<div className={cx(styles.row, styles.textboxSection)}>
+									<div className={styles.labelContainer}>
+										<Typography.Text className={styles.label}>
+											Default Value
+										</Typography.Text>
+									</div>
+									<Input
+										className={styles.defaultInput}
+										value={model.textValue}
+										placeholder="Enter a default value (if any)..."
+										onChange={(e): void => set({ textValue: e.target.value })}
+										testId="variable-text-input"
+									/>
+								</div>
+							</div>
+						),
+					}}
+				/>
 
 				{cycleError ? (
 					<Typography.Text className={styles.errorText}>
@@ -208,6 +200,7 @@ function VariableForm({
 
 				<div className={styles.actionButtons}>
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						prefix={<X size={14} />}
@@ -216,6 +209,8 @@ function VariableForm({
 						Discard
 					</Button>
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						variant="solid"
 						color="primary"
 						prefix={<Check size={14} />}

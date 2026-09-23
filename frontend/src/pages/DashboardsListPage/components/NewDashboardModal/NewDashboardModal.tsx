@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Tabs } from '@signozhq/ui/tabs';
@@ -40,6 +39,9 @@ function NewDashboardModal({ open, onClose }: Props): JSX.Element {
 			}}
 		>
 			<Tabs
+				variant="primary"
+				orientation="horizontal"
+				alignment="start"
 				value={tab}
 				onChange={handleTabChange}
 				items={[

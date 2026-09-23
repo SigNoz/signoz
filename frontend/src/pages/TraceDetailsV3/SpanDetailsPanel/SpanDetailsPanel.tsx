@@ -1,12 +1,6 @@
-// @ts-nocheck
 import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
-import {
-	TabsContent,
-	TabsList,
-	TabsRoot,
-	TabsTrigger,
-} from '@signozhq/ui/tabs';
+import { Tabs, type TabsItemProps } from '@signozhq/ui/tabs';
 import { Bookmark, ChartColumnBig, List, ScrollText } from '@signozhq/icons';
 import { Skeleton } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
@@ -288,89 +282,110 @@ function SpanDetailsContent({
 	);
 	const eventsCount = selectedSpan.events?.length || 0;
 
+	const spanDetailTabs: TabsItemProps[] = [
+		{
+			key: 'overview',
+			label: 'Overview',
+			prefixIcon: <Bookmark size={14} />,
+			children: (
+				<div className={styles.tabsScroll}>
+					{isWide && summary}
+					<DataViewer
+						data={spanDisplayData}
+						drawerKey="trace-details"
+						prettyViewProps={{
+							showPinned: true,
+							actions: prettyViewCustomActions,
+							visibleActions: VISIBLE_ACTIONS,
+							pinnedFieldsValue,
+							onPinnedFieldsChange,
+						}}
+					/>
+				</div>
+			),
+		},
+		{
+			key: 'events',
+			label: 'Events',
+			prefixIcon: <ScrollText size={14} />,
+			suffixIcon:
+				eventsCount > 0 ? (
+					<Badge variant="solid" color="secondary" className={styles.eventsBadge}>
+						{eventsCount}
+					</Badge>
+				) : undefined,
+			children: (
+				<div className={styles.tabsScroll}>
+					<Events
+						span={selectedSpan}
+						startTime={traceStartTime || 0}
+						isSearchVisible
+					/>
+				</div>
+			),
+		},
+		{
+			key: 'logs',
+			label: 'Logs',
+			prefixIcon: <List size={14} />,
+			children: (
+				<div className={styles.tabsScroll}>
+					<SpanLogs
+						traceId={selectedSpan.trace_id}
+						spanId={selectedSpan.span_id}
+						timeRange={{
+							startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
+							endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
+						}}
+						logs={logs}
+						isLoading={isLogsLoading}
+						isError={isLogsError}
+						isFetching={isLogsFetching}
+						isLogSpanRelated={isLogSpanRelated}
+						handleExplorerPageRedirect={handleExplorerPageRedirect}
+						emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
+					/>
+				</div>
+			),
+		},
+	];
+
+	if (infraMetadata) {
+		spanDetailTabs.push({
+			key: 'metrics',
+			label: 'Metrics',
+			prefixIcon: <ChartColumnBig size={14} />,
+			children: (
+				<div className={styles.tabsScroll}>
+					<InfraMetrics
+						clusterName={infraMetadata.clusterName}
+						podName={infraMetadata.podName}
+						nodeName={infraMetadata.nodeName}
+						hostName={infraMetadata.hostName}
+						timestamp={infraMetadata.spanTimestamp}
+						dataSource={DataSource.TRACES}
+					/>
+				</div>
+			),
+		});
+	}
+
 	return (
 		<>
 			<div className={styles.panelBody} ref={bodyRef}>
 				{!isWide && <div className={styles.detailsSection}>{summary}</div>}
 
 				<div className={styles.tabsSection}>
-					{/* Step 9: ContentTabs */}
-					<TabsRoot defaultValue="overview" onValueChange={handleTabChange}>
-						<TabsList variant="secondary">
-							<TabsTrigger value="overview" variant="secondary">
-								<Bookmark size={14} /> Overview
-							</TabsTrigger>
-							<TabsTrigger value="events" variant="secondary">
-								<ScrollText size={14} /> Events
-								{eventsCount > 0 && (
-									<Badge color="secondary" className={styles.eventsBadge}>
-										{eventsCount}
-									</Badge>
-								)}
-							</TabsTrigger>
-							<TabsTrigger value="logs" variant="secondary">
-								<List size={14} /> Logs
-							</TabsTrigger>
-							{infraMetadata && (
-								<TabsTrigger value="metrics" variant="secondary">
-									<ChartColumnBig size={14} /> Metrics
-								</TabsTrigger>
-							)}
-						</TabsList>
-
-						<div className={styles.tabsScroll}>
-							<TabsContent value="overview">
-								{isWide && summary}
-								<DataViewer
-									data={spanDisplayData}
-									drawerKey="trace-details"
-									prettyViewProps={{
-										showPinned: true,
-										actions: prettyViewCustomActions,
-										visibleActions: VISIBLE_ACTIONS,
-										pinnedFieldsValue,
-										onPinnedFieldsChange,
-									}}
-								/>
-							</TabsContent>
-							<TabsContent value="events">
-								<Events
-									span={selectedSpan}
-									startTime={traceStartTime || 0}
-									isSearchVisible
-								/>
-							</TabsContent>
-							<TabsContent value="logs">
-								<SpanLogs
-									traceId={selectedSpan.trace_id}
-									spanId={selectedSpan.span_id}
-									timeRange={{
-										startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
-										endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
-									}}
-									logs={logs}
-									isLoading={isLogsLoading}
-									isError={isLogsError}
-									isFetching={isLogsFetching}
-									isLogSpanRelated={isLogSpanRelated}
-									handleExplorerPageRedirect={handleExplorerPageRedirect}
-									emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
-								/>
-							</TabsContent>
-							{infraMetadata && (
-								<TabsContent value="metrics">
-									<InfraMetrics
-										clusterName={infraMetadata.clusterName}
-										podName={infraMetadata.podName}
-										nodeName={infraMetadata.nodeName}
-										hostName={infraMetadata.hostName}
-										timestamp={infraMetadata.spanTimestamp}
-										dataSource={DataSource.TRACES}
-									/>
-								</TabsContent>
-							)}
-						</div>
-					</TabsRoot>
+					<Tabs
+						variant="secondary"
+						orientation="horizontal"
+						alignment="start"
+						className={styles.tabsScroll}
+						value={activeTab}
+						onChange={handleTabChange}
+						noTabContentPadding
+						items={spanDetailTabs}
+					/>
 				</div>
 			</div>
 
@@ -419,13 +434,7 @@ function SpanDetailsPanel({
 		if (onVariantChange) {
 			actions.push({
 				key: 'dock-mode',
-				component: (
-					<DockModeSwitcher
-						value={variant}
-						onChange={onVariantChange}
-						tooltipClassName={styles.dockToggleTooltip}
-					/>
-				),
+				component: <DockModeSwitcher value={variant} onChange={onVariantChange} />,
 			});
 		}
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Tabs } from '@signozhq/ui/tabs';
@@ -76,6 +75,7 @@ function ClientTabs({
 								<div className="mcp-client-tabs__install-row">
 									{installHref ? (
 										<Button
+											size="md"
 											variant="solid"
 											color="primary"
 											prefix={<Download size={14} />}
@@ -88,6 +88,8 @@ function ClientTabs({
 										</Button>
 									) : (
 										<Button
+											disabledTooltip={undefined}
+											size="md"
 											variant="solid"
 											color="primary"
 											disabled
@@ -117,6 +119,9 @@ function ClientTabs({
 
 	return (
 		<Tabs
+			variant="primary"
+			orientation="horizontal"
+			alignment="start"
 			className="mcp-client-tabs-root"
 			value={activeTab}
 			onChange={onTabChange}

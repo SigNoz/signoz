@@ -1,14 +1,7 @@
-// @ts-nocheck
-import { useMemo } from 'react';
+import { CSSProperties, useMemo } from 'react';
 
 import { Braces, Globe, Table } from '@signozhq/icons';
-import {
-	TabItemProps,
-	TabsContent,
-	TabsList,
-	TabsRoot,
-	TabsTrigger,
-} from '@signozhq/ui/tabs';
+import { Tabs, TabsItemProps } from '@signozhq/ui/tabs';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
 import Overview from './Overview';
@@ -17,7 +10,6 @@ import VariablesSettings from './Variables';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import { useDashboardStore } from '../store/useDashboardStore';
-import styles from './DashboardSettings.module.scss';
 
 interface DashboardSettingsProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -43,51 +35,49 @@ function DashboardSettings({ dashboard }: DashboardSettingsProps): JSX.Element {
 
 	const enablePublicDashboard = isCloudUser || isEnterpriseSelfHostedUser;
 
-	const items: TabItemProps[] = useMemo(
-		() => [
+	const items: TabsItemProps[] = useMemo(() => {
+		const next: TabsItemProps[] = [
 			{
 				key: TabKeys.OVERVIEW,
 				label: TabKeys.OVERVIEW,
+				prefixIcon: prefixIcons[TabKeys.OVERVIEW],
 				children: <Overview dashboard={dashboard} />,
 			},
 			{
 				key: TabKeys.VARIABLES,
 				label: TabKeys.VARIABLES,
+				prefixIcon: prefixIcons[TabKeys.VARIABLES],
 				children: <VariablesSettings dashboard={dashboard} />,
-				prefixIcon: <Braces size={14} />,
 			},
-			// Readable by anyone who can open the dashboard; the controls inside
-			// gate on update.
-			...(enablePublicDashboard
-				? [
-						{
-							key: TabKeys.PUBLISH,
-							label: TabKeys.PUBLISH,
-							children: <PublicDashboardSettings dashboard={dashboard} />,
-						},
-					]
-				: []),
-		],
-		[enablePublicDashboard, dashboard],
-	);
+		];
+
+		// Readable by anyone who can open the dashboard; the controls inside
+		// gate on update.
+		if (enablePublicDashboard) {
+			next.push({
+				key: TabKeys.PUBLISH,
+				label: TabKeys.PUBLISH,
+				prefixIcon: prefixIcons[TabKeys.PUBLISH],
+				children: <PublicDashboardSettings dashboard={dashboard} />,
+			});
+		}
+
+		return next;
+	}, [enablePublicDashboard, dashboard]);
 
 	return (
-		<TabsRoot defaultValue={settingsRequest?.tab ?? TabKeys.OVERVIEW}>
-			<TabsList variant="primary">
-				{items.map((item) => (
-					<TabsTrigger value={item.key} key={item.key} disabled={item.disabled}>
-						{prefixIcons[item.key as TabKeys]}
-						{item.label}
-					</TabsTrigger>
-				))}
-			</TabsList>
-
-			{items.map((item) => (
-				<TabsContent value={item.key} key={item.key} className={styles.tabsContent}>
-					{item.children}
-				</TabsContent>
-			))}
-		</TabsRoot>
+		<Tabs
+			variant="primary"
+			orientation="horizontal"
+			alignment="start"
+			defaultValue={settingsRequest?.tab ?? TabKeys.OVERVIEW}
+			style={
+				{
+					'--tabs-content-padding': 'var(--spacing-4) 0',
+				} as CSSProperties
+			}
+			items={items}
+		/>
 	);
 }
 

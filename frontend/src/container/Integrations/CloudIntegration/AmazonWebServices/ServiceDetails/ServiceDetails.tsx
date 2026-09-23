@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useCallback, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
@@ -401,6 +400,9 @@ function ServiceDetails({
 											name="logsEnabled"
 											render={({ field }): JSX.Element => (
 												<Switch
+													color="primary"
+													textPlacement="right"
+													disabledTooltip={undefined}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
 													onChange={(checked): void => {
@@ -442,6 +444,9 @@ function ServiceDetails({
 											name="metricsEnabled"
 											render={({ field }): JSX.Element => (
 												<Switch
+													color="primary"
+													textPlacement="right"
+													disabledTooltip={undefined}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
 													onChange={field.onChange}
@@ -456,6 +461,7 @@ function ServiceDetails({
 						{hasUnsavedChanges && !isReadOnly && (
 							<div className="aws-service-details-overview-configuration-actions">
 								<Button
+									disabledTooltip={undefined}
 									variant="solid"
 									color="secondary"
 									onClick={handleDiscard}
@@ -468,6 +474,7 @@ function ServiceDetails({
 									Discard
 								</Button>
 								<Button
+									disabledTooltip={undefined}
 									variant="solid"
 									color="primary"
 									size="sm"
@@ -516,6 +523,8 @@ function ServiceDetails({
 	return (
 		<div className="aws-service-details-container">
 			<Tabs
+				orientation="horizontal"
+				alignment="start"
 				defaultValue="overview"
 				className="aws-service-details-tabs"
 				items={[
