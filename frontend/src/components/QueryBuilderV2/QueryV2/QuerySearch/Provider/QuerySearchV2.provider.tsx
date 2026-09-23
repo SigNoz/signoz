@@ -47,23 +47,29 @@ export function QuerySearchV2Provider({
 		store.getState().setInitialExpression(initialExpression);
 	}, [initialExpression, store]);
 
-	const isInitialized = useRef(false);
+	// The URL owns the expression, in both directions. A provider can outlive the
+	// navigation away from the page it belongs to (a route-driven tab keeps the
+	// leaving pane mounted until its animation ends), so treating a param that
+	// disappeared as something to restore republishes it onto the URL of the page
+	// being entered.
 	useEffect(() => {
-		if (!isInitialized.current && urlExpression) {
-			const cleanedExpression = getUserExpressionFromCombined(
-				initialExpression,
-				urlExpression,
-			);
-			store.getState().initializeFromUrl(cleanedExpression);
-			isInitialized.current = true;
+		const userExpression = getUserExpressionFromCombined(
+			initialExpression,
+			urlExpression,
+		);
+		if (userExpression !== store.getState().committedExpression) {
+			store.getState().initializeFromUrl(userExpression);
 		}
 	}, [urlExpression, initialExpression, store]);
 
+	const publishedExpression = useRef(committedExpression);
 	useEffect(() => {
-		if (isInitialized.current || !urlExpression) {
-			setUrlExpression(committedExpression || null);
+		if (committedExpression === publishedExpression.current) {
+			return;
 		}
-	}, [committedExpression, setUrlExpression, urlExpression]);
+		publishedExpression.current = committedExpression;
+		setUrlExpression(committedExpression || null);
+	}, [committedExpression, setUrlExpression]);
 
 	useEffect(() => {
 		return (): void => {

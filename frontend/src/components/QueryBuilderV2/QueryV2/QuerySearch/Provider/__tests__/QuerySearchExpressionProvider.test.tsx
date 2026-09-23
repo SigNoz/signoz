@@ -110,6 +110,22 @@ describe('QuerySearchExpressionProvider', () => {
 		expect(result.current.expression).toBe('status = 500');
 	});
 
+	it('should follow the URL when the param is dropped', () => {
+		mockUrlValue = 'status = 500';
+
+		const { result, rerender } = renderHook(() => useTestHooks(), {
+			wrapper: createWrapper(),
+		});
+		expect(result.current.expression).toBe('status = 500');
+
+		mockSetQueryState.mockClear();
+		mockUrlValue = null;
+		rerender();
+
+		expect(result.current.expression).toBe('');
+		expect(mockSetQueryState).not.toHaveBeenCalledWith('status = 500');
+	});
+
 	it('should throw error when used outside provider', () => {
 		expect(() => {
 			renderHook(() => useExpression());
