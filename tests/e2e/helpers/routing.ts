@@ -17,6 +17,7 @@ import { authToken } from './common';
 
 // ─── Paths ───────────────────────────────────────────────────────────────
 
+export const ALERTS_LIST_PATH = '/alerts';
 export const DASHBOARDS_LIST_PATH = '/dashboard';
 export const HOME_PATH = '/home';
 export const K8S_LIST_PATH = '/infrastructure-monitoring/kubernetes';
@@ -78,6 +79,20 @@ export function urlOf(page: Page): URL {
 /** A search param as a string, so `toContain` works on an absent param too. */
 export function searchParam(page: Page, key: string): string {
 	return urlOf(page).searchParams.get(key) ?? '';
+}
+
+// ─── Sidebar ──────────────────────────────────────────────────────
+
+/**
+ * A sidebar entry, for driving an in-app transition rather than a document
+ * load. They are `<div class="nav-item">` carrying the label as text, not
+ * anchors, so `getByRole('link')` does not reach them. The anchored regex keeps
+ * a label from matching an entry that merely contains it.
+ */
+export function sidebarItem(page: Page, label: string): Locator {
+	return page
+		.locator('.nav-item')
+		.filter({ hasText: new RegExp(`^${label}$`) });
 }
 
 // ─── History depth ───────────────────────────────────────────────────────

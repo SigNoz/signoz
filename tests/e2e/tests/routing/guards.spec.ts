@@ -63,11 +63,15 @@ test.describe('Routing — auth guards', () => {
 			// Back reaches the replaced /login entry — being logged in redirects away
 			// rather than re-running the login form. The stashed route was cleared
 			// after the post-login redirect, so the fallback is /home.
+			//
+			// Poll for /home rather than for "not /login": `goBack()` resolves on the
+			// history pop, which lands before the app has rendered the /login entry
+			// and redirected off it, so a "not /login" poll is satisfied by the url
+			// the pop started from and the assertion below reads /services.
 			await page.goBack();
 			await expect
 				.poll(() => urlOf(page).pathname, { timeout: 15_000 })
-				.not.toBe(LOGIN_PATH);
-			expect(urlOf(page).pathname).toBe(HOME_PATH);
+				.toBe(HOME_PATH);
 		} finally {
 			await ctx.close();
 		}
