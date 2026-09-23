@@ -1,10 +1,9 @@
-// @ts-nocheck
 import { useMemo } from 'react';
 import { ArrowLeft } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Divider } from '@signozhq/ui/divider';
-import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 import { Tabs } from '@signozhq/ui/tabs';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
@@ -75,28 +74,24 @@ function ViewRoleContentInner({
 							</Typography>
 							<hr className={styles.permissionDivider} />
 							<RadioGroup
+								color="primary"
 								className={styles.permissionModeToggle}
 								value={viewMode}
 								onChange={handleModeChange}
 								testId="permission-view-mode"
-							>
-								<RadioGroupItem
-									value="list"
-									containerClassName={styles.permissionModeItem}
-									className={styles.permissionModeInput}
-									testId="permission-view-mode-list"
-								>
-									List
-								</RadioGroupItem>
-								<RadioGroupItem
-									value="json"
-									containerClassName={styles.permissionModeItem}
-									className={styles.permissionModeInput}
-									testId="permission-view-mode-json"
-								>
-									JSON
-								</RadioGroupItem>
-							</RadioGroup>
+								items={[
+									{
+										value: 'list',
+										label: 'List',
+										testId: 'permission-view-mode-list',
+									},
+									{
+										value: 'json',
+										label: 'JSON',
+										testId: 'permission-view-mode-json',
+									},
+								]}
+							/>
 						</div>
 
 						<div className={styles.permissionContent}>
@@ -155,7 +150,7 @@ function ViewRoleContentInner({
 						<label htmlFor="role-created-at" className={styles.formLabel}>
 							Created At
 						</label>
-						<Badge color="secondary">
+						<Badge variant="solid" color="secondary">
 							{formatTimezoneAdjustedTimestampOptional(role.createdAt)}
 						</Badge>
 					</div>
@@ -163,7 +158,7 @@ function ViewRoleContentInner({
 						<label htmlFor="role-modified-at" className={styles.formLabel}>
 							Last Modified At
 						</label>
-						<Badge color="secondary">
+						<Badge variant="solid" color="secondary">
 							{formatTimezoneAdjustedTimestampOptional(role.updatedAt)}
 						</Badge>
 					</div>
@@ -173,6 +168,9 @@ function ViewRoleContentInner({
 			<Divider />
 
 			<Tabs
+				variant="primary"
+				orientation="horizontal"
+				alignment="start"
 				className={styles.roleTabs}
 				value={activeTab}
 				onChange={handleTabChange}
@@ -233,10 +231,11 @@ function ViewRolePage(): JSX.Element {
 				<div className={styles.viewRolePageHeader}>
 					<div className={styles.viewRolePageHeaderLeft}>
 						<Button
+							size="md"
 							variant="ghost"
 							color="secondary"
 							onClick={handleCancel}
-							data-testid="cancel-button"
+							testId="cancel-button"
 							className={styles.backButton}
 						>
 							<ArrowLeft size={16} />
@@ -277,10 +276,11 @@ function ViewRolePage(): JSX.Element {
 			<div className={styles.viewRolePageHeader}>
 				<div className={styles.viewRolePageHeaderLeft}>
 					<Button
+						size="md"
 						variant="ghost"
 						color="secondary"
 						onClick={handleCancel}
-						data-testid="cancel-button"
+						testId="cancel-button"
 						className={styles.backButton}
 					>
 						<ArrowLeft size={16} />

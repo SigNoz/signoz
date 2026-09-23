@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { Download } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
-import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { RadioGroup } from '@signozhq/ui/radio-group';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	ClientExportData,
@@ -52,31 +51,40 @@ export default function ExportMenu({
 
 	return (
 		<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-			<TooltipSimple title="Download">
+			<Tooltip title="Download">
 				<PopoverTrigger asChild>
 					<Button
+						disabledTooltip={undefined}
 						variant="ghost"
 						color="secondary"
-						size="icon"
+						size="sm"
+						icon
 						aria-label="Download"
-						data-testid={`export-menu-${dataSource}`}
+						testId={`export-menu-${dataSource}`}
 						disabled={isExporting}
 						loading={isExporting}
 					>
 						<Download size={14} />
 					</Button>
 				</PopoverTrigger>
-			</TooltipSimple>
+			</Tooltip>
 			<PopoverContent align="end" className="export-menu-popover">
 				<div className="export-format">
 					<Typography.Text className="title">FORMAT</Typography.Text>
-					<RadioGroup value={exportFormat} onChange={setExportFormat}>
-						<RadioGroupItem value={ExportFormat.Csv}>csv</RadioGroupItem>
-						<RadioGroupItem value={ExportFormat.Jsonl}>jsonl</RadioGroupItem>
-					</RadioGroup>
+					<RadioGroup
+						color="primary"
+						value={exportFormat}
+						onChange={setExportFormat}
+						items={[
+							{ value: ExportFormat.Csv, label: 'csv' },
+							{ value: ExportFormat.Jsonl, label: 'jsonl' },
+						]}
+					/>
 				</div>
 
 				<Button
+					disabledTooltip={undefined}
+					size="md"
 					variant="solid"
 					color="primary"
 					className="export-button"

@@ -1,9 +1,9 @@
-// @ts-nocheck
 import { useCallback, useRef, useState } from 'react';
 import { SolidAlertTriangle } from '@signozhq/icons';
-import { Button, ButtonGroup } from '@signozhq/ui/button';
+import { Button } from '@signozhq/ui/button';
+import { ButtonGroup } from '@signozhq/ui/button-group';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import type { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
@@ -160,28 +160,24 @@ function PermissionEditor({
 				</Typography>
 				<hr className={styles.permissionEditorDivider} />
 				<RadioGroup
+					color="primary"
 					className={styles.permissionEditorModeToggle}
 					value={mode}
 					onChange={handleModeChange}
 					testId="permission-editor-mode"
-				>
-					<RadioGroupItem
-						value="interactive"
-						containerClassName={styles.permissionEditorModeItem}
-						className={styles.permissionEditorModeInput}
-						testId="permission-editor-mode-interactive"
-					>
-						Interactive
-					</RadioGroupItem>
-					<RadioGroupItem
-						value="json"
-						containerClassName={styles.permissionEditorModeItem}
-						className={styles.permissionEditorModeInput}
-						testId="permission-editor-mode-json"
-					>
-						JSON
-					</RadioGroupItem>
-				</RadioGroup>
+					items={[
+						{
+							value: 'interactive',
+							label: 'Interactive',
+							testId: 'permission-editor-mode-interactive',
+						},
+						{
+							value: 'json',
+							label: 'JSON',
+							testId: 'permission-editor-mode-json',
+						},
+					]}
+				/>
 			</div>
 
 			<div className={styles.permissionEditorContent}>
@@ -194,10 +190,22 @@ function PermissionEditor({
 								size="sm"
 								testId="toggle-all-group"
 							>
-								<Button onClick={handleExpandAll} data-testid="expand-all-button">
+								<Button
+									size="md"
+									variant="solid"
+									color="primary"
+									onClick={handleExpandAll}
+									testId="expand-all-button"
+								>
 									Expand all
 								</Button>
-								<Button onClick={handleCollapseAll} data-testid="collapse-all-button">
+								<Button
+									size="md"
+									variant="solid"
+									color="primary"
+									onClick={handleCollapseAll}
+									testId="collapse-all-button"
+								>
 									Collapse all
 								</Button>
 							</ButtonGroup>
@@ -236,7 +244,7 @@ function PermissionEditor({
 				title="Discard JSON changes?"
 				titleIcon={<SolidAlertTriangle size={14} color="#fdd600" />}
 				confirmText="Discard"
-				confirmColor="destructive"
+				confirmColor="danger"
 				cancelText="Stay in JSON"
 				onConfirm={handleDiscardConfirm}
 				onCancel={handleDiscardCancel}
