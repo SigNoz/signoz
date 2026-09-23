@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
-import { NuqsAdapter } from 'nuqs/adapters/react';
+import { NuqsAdapter } from 'nuqs/adapters/react-router/v7';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';

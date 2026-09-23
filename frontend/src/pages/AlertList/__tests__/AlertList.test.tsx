@@ -14,8 +14,8 @@ const PLANNED_DOWNTIME_SUB_TAB = 'planned-downtime';
 const ROUTING_POLICIES_SUB_TAB = 'routing-policies';
 
 const mockUseLocation = jest.fn();
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useLocation: (): unknown => mockUseLocation(),
 }));
 

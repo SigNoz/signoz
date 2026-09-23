@@ -73,7 +73,7 @@ jest.mock('providers/Timezone', () => ({
 	}),
 }));
 
-jest.mock('react-router-dom', () => ({
+jest.mock('react-router', () => ({
 	useLocation: (): {
 		pathname: string;
 		search: string;

@@ -1,24 +1,17 @@
-import { generatePath } from 'react-router-dom';
-
-/**
- * v5's `generatePath` percent-encoded param values through path-to-regexp;
- * v6's is `String(param)` per segment and encodes nothing, so the encoding
- * lives here. Reproduces path-to-regexp's "pretty" encoding: `encodeURI`, then
- * the three characters it leaves behind that would change the shape of the URL.
- */
-function encodeParam(value: string | number | boolean): string {
-	return encodeURI(String(value)).replace(
-		/[/?#]/g,
-		(character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`,
-	);
-}
+import { generatePath } from 'react-router';
 
 /**
  * Fills `:param` segments in a route pattern.
  *
- * Contract: **param values are URI-encoded** — `/`, `?` and `#` come back
- * percent-encoded, so a value can never introduce extra path segments or a
- * query string.
+ * Contract: **param values are passed raw and come back percent-encoded**.
+ * `generatePath` runs each one through `encodeURIComponent`, so a value can
+ * never introduce extra path segments or a query string. Handing it a value
+ * that is already encoded double-encodes it: read params back with
+ * `matchRoute` / `useAppParams`, which un-escape only `%2F`, and decode before
+ * passing one here.
+ *
+ * v7's `generatePath` types params as `string | null`, so non-strings are
+ * stringified here rather than at the 25 call sites.
  */
 export function buildRoutePath(
 	pattern: string,
@@ -28,9 +21,9 @@ export function buildRoutePath(
 		return generatePath(pattern);
 	}
 
-	const encoded = Object.fromEntries(
-		Object.entries(params).map(([key, value]) => [key, encodeParam(value)]),
+	const stringified = Object.fromEntries(
+		Object.entries(params).map(([key, value]) => [key, String(value)]),
 	);
 
-	return generatePath(pattern, encoded);
+	return generatePath(pattern, stringified);
 }

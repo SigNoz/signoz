@@ -1,4 +1,4 @@
-import { useNavigationType } from 'react-router-dom';
+import { useNavigationType } from 'react-router';
 
 import type { NavigationAction } from './types';
 

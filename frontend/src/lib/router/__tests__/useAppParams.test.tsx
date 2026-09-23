@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { renderHook } from '@testing-library/react';
 
 import { useAppParams } from '../useAppParams';

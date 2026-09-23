@@ -5,7 +5,7 @@ import {
 	type Path,
 	type To,
 } from 'history';
-import type { HistoryRouterProps } from 'react-router-dom';
+import type { HistoryRouterProps } from 'react-router';
 
 // No `basename` here: history@5 dropped the option, so the base path lives on
 // the router (`AppRoutes/index.tsx`) for component navigation and on

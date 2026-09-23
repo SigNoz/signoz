@@ -3,9 +3,9 @@ import ROUTES from 'constants/routes';
 import { buildRoutePath } from '../buildRoutePath';
 
 /**
- * These assertions are the contract Phase D has to reproduce: v6.30's
- * `generatePath` does no encoding at all, so the encoding below has to move
- * into `buildRoutePath` when the version flips.
+ * The encoding contract. v7's `generatePath` percent-encodes every param with
+ * `encodeURIComponent`, so `buildRoutePath` no longer encodes anything itself
+ * and these assertions are what pins the library's behaviour.
  */
 describe('buildRoutePath', () => {
 	it('fills a single param', () => {
@@ -46,9 +46,15 @@ describe('buildRoutePath', () => {
 			expect(buildRoutePath(ROUTES.TRACE_DETAIL, { id: value })).toBe(expected);
 		});
 
-		it('leaves a colon alone', () => {
+		it('percent-encodes a colon', () => {
 			expect(buildRoutePath(ROUTES.TRACE_DETAIL, { id: 'a:b' })).toBe(
-				'/trace/a:b',
+				'/trace/a%3Ab',
+			);
+		});
+
+		it('encodes a raw value rather than passing an encoded one through', () => {
+			expect(buildRoutePath(ROUTES.TRACE_DETAIL, { id: 'a%2Fb' })).toBe(
+				'/trace/a%252Fb',
 			);
 		});
 	});

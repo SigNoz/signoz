@@ -8,8 +8,8 @@ import { useResolvePageType } from '../useResolvePageType';
 const mockUseLocation = jest.fn();
 const mockUseVariant = jest.fn();
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useLocation: (): unknown => mockUseLocation(),
 }));
 

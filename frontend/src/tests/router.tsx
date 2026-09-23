@@ -4,7 +4,7 @@ import {
 	Routes,
 	unstable_HistoryRouter as HistoryRouter,
 	useInRouterContext,
-} from 'react-router-dom';
+} from 'react-router';
 import history from 'lib/history';
 import { getBasePath, withBasePath } from 'utils/basePath';
 

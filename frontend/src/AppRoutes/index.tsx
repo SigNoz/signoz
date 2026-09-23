@@ -1,9 +1,5 @@
 import { ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
-import {
-	Route,
-	Routes,
-	unstable_HistoryRouter as HistoryRouter,
-} from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 import * as Sentry from '@sentry/react';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -25,9 +21,7 @@ import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { StatusCodes } from 'http-status-codes';
-import history from 'lib/history';
 import { getCurrentLocation, navigate, subscribe } from 'lib/router/navigation';
-import { getBasePath } from 'utils/basePath';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
@@ -42,21 +36,6 @@ import defaultRoutes, {
 	LIST_LICENSES,
 	SUPPORT_ROUTE,
 } from './routes';
-
-const appRouter = (children: ReactNode): ReactNode => (
-	<HistoryRouter
-		basename={getBasePath()}
-		history={history}
-		// v7_startTransition is off on purpose: under the transition React
-		// keeps the previous screen up instead of committing the Suspense
-		// fallback, so a route whose chunk is not cached yet renders no
-		// loader at all. Rendering pending UI under it needs useNavigation()
-		// and a data router. See docs/react-router-v6-migration.md hazard 12.
-		future={{ v7_relativeSplatPath: true, v7_startTransition: false }}
-	>
-		{children}
-	</HistoryRouter>
-);
 
 const appLayout = (children: ReactNode): ReactNode => (
 	<AppLayout>{children}</AppLayout>
@@ -471,7 +450,6 @@ function App(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<AppShell
-				router={appRouter}
 				overlays={
 					isLoggedInState && (
 						<>

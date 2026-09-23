@@ -23,8 +23,8 @@ import { withAuthZPage } from './withAuthZPage';
 const mockUseParams = jest.fn();
 const mockUseLocation = jest.fn();
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useParams: (): Record<string, string> => mockUseParams(),
 	useLocation: (): { pathname: string; search: string } => mockUseLocation(),
 }));

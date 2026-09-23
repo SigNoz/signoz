@@ -1,6 +1,5 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { act, render, screen } from '@testing-library/react';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
@@ -10,6 +9,7 @@ import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../index';
+import { TestRouter } from 'tests/router';
 
 const mockStore = configureStore<Partial<AppState>>([]);
 
@@ -37,11 +37,11 @@ function renderAutoRefresh(
 	const store = mockStore({ globalTime });
 
 	render(
-		<MemoryRouter initialEntries={[PATHNAME]}>
+		<TestRouter initialRoute={PATHNAME}>
 			<Provider store={store}>
 				<AutoRefresh {...props} />
 			</Provider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 
 	return store;

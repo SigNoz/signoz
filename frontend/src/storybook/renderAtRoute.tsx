@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 
 /**
  * A page that reads its params out of the pathname renders under its own route

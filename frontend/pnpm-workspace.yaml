@@ -74,11 +74,6 @@ overrides:
  #      (postcss-selector-parser ^7.0.0)
  # remove: blocked, 4.2.0 is latest and the range is open, so the floor is what pulls the fix
  postcss-selector-parser@>=7.1.0 <7.1.3: '>=7.1.3 <8'
- # via: @signozhq/ui > nuqs@2 (react-router ^6.4.0 || ^7)
- # remove: blocked. GHSA-wrjc-x8rr-h8h6 and the deserializeErrors advisory are patched
- # only in 7.18.0. Do NOT open the cap: react-router >=7 requires React 19 and breaks
- # the app-wide CompatRouter, so those two moderates stay until the app moves to React 19
- react-router@>=6.7.0 <6.30.6: '>=6.30.6 <7'
  # via: msw@1.3.2 (devDep) > inquirer@8 > external-editor@3.1.0 (tmp ^0.0.33)
  # remove: upgrade msw to >=2 (drops the inquirer/external-editor chain)
  tmp@<0.2.6: '>=0.2.6 <0.3.0'

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { renderHook } from '@testing-library/react';
 
 import { useAppLocation } from '../useAppLocation';

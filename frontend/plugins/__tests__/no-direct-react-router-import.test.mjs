@@ -49,9 +49,9 @@ await ruleTester({
 			errors: [{ message: FACADE }],
 		},
 		{
-			name: 'react-router-dom-v5-compat',
-			code: "import { useNavigate } from 'react-router-dom-v5-compat';",
-			errors: [{ message: 'compat package is an implementation detail' }],
+			name: 'react-router-dom is flagged as the v7 re-export shim',
+			code: "import { Outlet } from 'react-router-dom';",
+			errors: [{ message: 'only a re-export shim' }],
 		},
 		{
 			name: 'lib/history default import',

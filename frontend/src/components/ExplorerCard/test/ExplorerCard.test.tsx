@@ -7,16 +7,10 @@ import { DataSource } from 'types/common/queryBuilder';
 import { viewMockData } from '../__mock__/viewData';
 import ExplorerCard from '../ExplorerCard';
 
-const historyReplace = jest.fn();
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.TRACES_EXPLORER}/`,
-	}),
-	useHistory: (): any => ({
-		...jest.requireActual('react-router-dom').useHistory(),
-		replace: historyReplace,
 	}),
 }));
 

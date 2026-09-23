@@ -4,8 +4,8 @@ import { fireEvent, render } from 'tests/test-utils';
 import { QueryTable } from '../QueryTable';
 import { QueryTableProps, WidgetHeaderProps } from './mocks';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useLocation: (): { pathname: string } => ({
 		pathname: ``,
 	}),

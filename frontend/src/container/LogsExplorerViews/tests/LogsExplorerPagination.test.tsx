@@ -84,8 +84,8 @@ getStateSpy.mockImplementation(() => {
 	return originalState;
 });
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
+jest.mock('react-router', () => ({
+	...jest.requireActual('react-router'),
 	useLocation: (): { search: string; pathname: string } => ({
 		pathname: ROUTES.LOGS_EXPLORER,
 		search:

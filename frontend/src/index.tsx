@@ -2,10 +2,11 @@ import { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient } from 'react-query';
 import AppProviders from 'app/AppProviders';
+import { appRouter } from 'app/AppRouter';
 import AppRoutes from 'AppRoutes';
 import { AxiosError } from 'axios';
 import { configureOverlayScrollbars } from 'lib/configureOverlayScrollbars';
-import { NuqsAdapter } from 'nuqs/adapters/react';
+import { NuqsAdapter } from 'nuqs/adapters/react-router/v7';
 import { AppProvider } from 'providers/App/App';
 import store from 'store';
 import APIError from 'types/api/error';
@@ -61,6 +62,7 @@ if (container) {
 			store={store}
 			queryClient={queryClient}
 			appContext={appContext}
+			router={appRouter}
 			searchParams={searchParams}
 		>
 			<AppRoutes />
