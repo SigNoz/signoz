@@ -252,16 +252,19 @@ export function dashboardRowByTitle(page: Page, title: string): Locator {
 
 // ─── RouteTab ────────────────────────────────────────────────────────────
 
-/** The `route-tab-<key>` label. `key` is the full route path, slashes included. */
+/**
+ * One `RouteTab` tab. `key` is the full route path, slashes included. antd puts
+ * the item key on `data-node-key`, which is why this needs no testid in the
+ * component: a wrapper element added there for one lands between antd's tab
+ * button and the labels pages render inside it, and swallows their clicks.
+ */
 export function routeTab(page: Page, key: string): Locator {
-	return page.getByTestId(`route-tab-${key}`);
+	return page.locator(`.ant-tabs-tab[data-node-key="${key}"]`);
 }
 
-/** The same label, but only when antd marks its tab `aria-selected`. */
+/** The same tab, but only when antd marks it `aria-selected`. */
 export function activeRouteTab(page: Page, key: string): Locator {
-	return page
-		.getByRole('tab', { selected: true })
-		.getByTestId(`route-tab-${key}`);
+	return routeTab(page, key).getByRole('tab', { selected: true });
 }
 
 // ─── New tab ─────────────────────────────────────────────────────────────
