@@ -9,6 +9,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
+import { useBottomStripLeft } from 'container/BottomStrip/useBottomStripLeft';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -20,6 +21,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
+import StripInfo from '../StripInfo/StripInfo';
 import { ServiceMetricsTableProps } from '../types';
 import { getServiceListFromQuery } from '../utils';
 
@@ -65,6 +67,10 @@ function ServiceMetricTable({
 				isLoading,
 			}),
 		[isLoading, queries, topLevelOperations],
+	);
+
+	useBottomStripLeft(
+		useMemo(() => <StripInfo count={services.length} />, [services.length]),
 	);
 
 	const { search } = useLocation();
