@@ -8,7 +8,7 @@ import { LegendAction, LegendPosition, LegendProps } from '../types';
 import { LEGEND_ITEM_EXTRA_WIDTH, MAX_LEGEND_WIDTH } from './constants';
 import LegendRow from './LegendRow';
 import LegendToolbar from './LegendToolbar';
-import { getLegendViewState } from './utils';
+import { getVisibleSeriesState } from './utils';
 
 import styles from './Legend.module.scss';
 
@@ -36,10 +36,11 @@ export default function Legend({
 
 	const effectiveQuery = showToolbar ? filterQuery : '';
 
-	const { listedItems, shownCount, soleShownSeriesIndex, isAllShown } = useMemo(
-		() => getLegendViewState(items, effectiveQuery),
-		[items, effectiveQuery],
-	);
+	const { listedItems, visibleCount, soleVisibleSeriesIndex, isAllVisible } =
+		useMemo(
+			() => getVisibleSeriesState(items, effectiveQuery),
+			[items, effectiveQuery],
+		);
 
 	const isEmptyState = !!effectiveQuery.trim() && listedItems.length === 0;
 
@@ -54,14 +55,20 @@ export default function Legend({
 			<LegendRow
 				key={item.seriesIndex}
 				item={item}
-				isSoleShown={soleShownSeriesIndex === item.seriesIndex}
-				isAllShown={isAllShown}
+				isSoleVisible={soleVisibleSeriesIndex === item.seriesIndex}
+				isAllVisible={isAllVisible}
 				isFocused={focusedSeriesIndex === item.seriesIndex}
 				showCopy={showCopy}
 				onAction={onAction}
 			/>
 		),
-		[soleShownSeriesIndex, isAllShown, focusedSeriesIndex, showCopy, onAction],
+		[
+			soleVisibleSeriesIndex,
+			isAllVisible,
+			focusedSeriesIndex,
+			showCopy,
+			onAction,
+		],
 	);
 
 	return (
@@ -76,7 +83,7 @@ export default function Legend({
 		>
 			{showToolbar && (
 				<LegendToolbar
-					shownCount={shownCount}
+					visibleCount={visibleCount}
 					totalCount={items.length}
 					position={position}
 					filterQuery={filterQuery}

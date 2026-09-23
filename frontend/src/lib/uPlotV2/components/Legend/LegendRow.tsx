@@ -13,9 +13,9 @@ import styles from './LegendRow.module.scss';
 export interface LegendRowProps {
 	item: LegendItem;
 	/** The only series currently shown, so hiding it is refused. */
-	isSoleShown: boolean;
+	isSoleVisible: boolean;
 	/** Nothing is hidden, so the row's action can only narrow the selection. */
-	isAllShown: boolean;
+	isAllVisible: boolean;
 	isFocused: boolean;
 	showCopy: boolean;
 	onAction: OnLegendAction;
@@ -29,15 +29,15 @@ export interface LegendRowProps {
  */
 function LegendRow({
 	item,
-	isSoleShown,
-	isAllShown,
+	isSoleVisible,
+	isAllVisible,
 	isFocused,
 	showCopy,
 	onAction,
 }: LegendRowProps): JSX.Element {
 	const { seriesIndex, show } = item;
 	const label = item.label ?? '';
-	const isShowAllAction = show && !isAllShown;
+	const isShowAllAction = show && !isAllVisible;
 	const scopeActionLabel = isShowAllAction
 		? 'Show all series'
 		: 'Show only current series';
@@ -47,15 +47,15 @@ function LegendRow({
 
 	/** Everything showing -> isolate; showing alone -> restore all. */
 	const handleRowClick = useCallback((): void => {
-		if (isSoleShown) {
+		if (isSoleVisible) {
 			onAction({ type: LegendAction.SHOW_ALL });
 			return;
 		}
 		onAction({
-			type: isAllShown ? LegendAction.SHOW_ONLY : LegendAction.TOGGLE,
+			type: isAllVisible ? LegendAction.SHOW_ONLY : LegendAction.TOGGLE,
 			seriesIndex,
 		});
-	}, [isSoleShown, isAllShown, onAction, seriesIndex]);
+	}, [isSoleVisible, isAllVisible, onAction, seriesIndex]);
 
 	const handleMarkerClick = useCallback(
 		(event: MouseEvent<HTMLButtonElement>): void => {
@@ -126,7 +126,7 @@ function LegendRow({
 					backgroundColor: show ? seriesColor : 'transparent',
 				}}
 				onClick={handleMarkerClick}
-				disabled={isSoleShown}
+				disabled={isSoleVisible}
 				aria-label={`${show ? 'Hide' : 'Show'} ${label}`}
 				data-is-legend-marker={true}
 				data-testid={`legend-marker-${seriesIndex}`}

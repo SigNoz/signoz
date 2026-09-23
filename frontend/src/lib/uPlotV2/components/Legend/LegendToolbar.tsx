@@ -8,7 +8,7 @@ import { LegendPosition } from '../types';
 import styles from './LegendToolbar.module.scss';
 
 export interface LegendToolbarProps {
-	shownCount: number;
+	visibleCount: number;
 	totalCount: number;
 	/** Layout only: the column stacks, the bottom row does not. */
 	position: LegendPosition;
@@ -18,7 +18,7 @@ export interface LegendToolbarProps {
 
 /** Legend chrome: the series search box and the "Showing N of M" readout. */
 export default function LegendToolbar({
-	shownCount,
+	visibleCount,
 	totalCount,
 	position,
 	filterQuery,
@@ -48,7 +48,7 @@ export default function LegendToolbar({
 			aria-live="polite"
 			data-testid="legend-status"
 		>
-			{`Showing ${shownCount} of ${totalCount} series`}
+			{`Showing ${visibleCount} of ${totalCount} series`}
 		</span>
 	);
 
