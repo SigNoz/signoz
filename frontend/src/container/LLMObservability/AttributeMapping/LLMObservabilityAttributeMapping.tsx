@@ -1,5 +1,6 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Tabs } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
 
 import AttributeMappingActions from './components/AttributeMappingActions/AttributeMappingActions';
@@ -19,6 +20,10 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 	const editor = useAttributeMappingEditor();
 	const groupDrawer = useGroupFormDrawer();
 	const spanTest = useTestSpanMapper(editor.snapshot, editor.groups);
+
+	useEffect(() => {
+		void logEvent('AI Observability Attribute Mapping: Page visited', {});
+	}, []);
 
 	const { discard } = editor;
 	// Discarding wipes the whole working copy, so gate it behind a confirm
