@@ -782,7 +782,7 @@
                             "stepInterval": 0,
                             "disabled": false,
                             "filter": {
-                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
                             },
                             "aggregations": [
                               {
@@ -1076,7 +1076,7 @@
                             "stepInterval": 0,
                             "disabled": true,
                             "filter": {
-                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
                             },
                             "aggregations": [
                               {
@@ -1248,7 +1248,7 @@
                     "spec": {
                       "queries": [
                         {
-                          "type": "builder_query",
+                          "type": "builder_ai_query",
                           "spec": {
                             "name": "A",
                             "signal": "traces",
@@ -1282,7 +1282,7 @@
                           }
                         },
                         {
-                          "type": "builder_query",
+                          "type": "builder_ai_query",
                           "spec": {
                             "name": "B",
                             "signal": "traces",
@@ -1353,7 +1353,7 @@
                             "stepInterval": 0,
                             "disabled": false,
                             "filter": {
-                              "expression": "gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
+                              "expression": "gen_ai.request.model EXISTS AND gen_ai.request.model IN $model AND gen_ai.provider.name IN $provider AND deployment.environment IN $environment AND service.name IN $service_name"
                             },
                             "aggregations": [
                               {
@@ -2724,7 +2724,7 @@
                     "spec": {
                       "queries": [
                         {
-                          "type": "builder_query",
+                          "type": "builder_ai_query",
                           "spec": {
                             "name": "A",
                             "signal": "traces",
