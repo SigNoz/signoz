@@ -3,6 +3,8 @@ import {
 	panelTypeDataSourceFormValuesMap,
 	type PartialPanelTypes,
 } from 'lib/query/panelTypeDataSourceFormValuesMap';
+import { isStaticPanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -30,6 +32,7 @@ function added(from: BuilderField[], to: BuilderField[]): BuilderField[] {
 
 /** Panel types built on the aggregating field list. */
 const AGGREGATING_TYPES: (keyof PartialPanelTypes)[] = [
+	PANEL_TYPES.AREA,
 	PANEL_TYPES.BAR,
 	PANEL_TYPES.HISTOGRAM,
 	PANEL_TYPES.TABLE,
@@ -45,6 +48,18 @@ const SCALAR_TYPES: (keyof PartialPanelTypes)[] = [
 describe('panelTypeDataSourceFormValuesMap', () => {
 	const seriesLogs = fieldsFor(PANEL_TYPES.TIME_SERIES, DataSource.LOGS);
 	const seriesMetrics = fieldsFor(PANEL_TYPES.TIME_SERIES, DataSource.METRICS);
+
+	// A kind with no entry throws on switch: handleQueryChange reads
+	// map[panelType][dataSource] straight through, and the cast at its call site
+	// hides the gap. Static kinds return before that call, so they are exempt.
+	it('covers every panel kind that can be switched to', () => {
+		const uncovered = Object.entries(PANEL_KIND_TO_PANEL_TYPE)
+			.filter(([kind]) => !isStaticPanelKind(kind as never))
+			.map(([, panelType]) => panelType)
+			.filter((panelType) => !(panelType in panelTypeDataSourceFormValuesMap));
+
+		expect(uncovered).toStrictEqual([]);
+	});
 
 	it('shares one builder surface between logs and traces', () => {
 		Object.values(panelTypeDataSourceFormValuesMap).forEach((sources) => {

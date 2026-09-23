@@ -1,7 +1,7 @@
 /**
  * Builder fields carried across a panel-type switch, per panel type and data source.
  *
- * The 21 combinations reduce to a handful of rules, so they are composed rather than
+ * The 24 combinations reduce to a handful of rules, so they are composed rather than
  * spelled out: logs and traces carry the same fields in every case, metrics splits its
  * aggregation in two, and each panel type is one of four query shapes. Order is
  * irrelevant — `handleQueryChange` copies each field independently.
@@ -15,6 +15,7 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.LIST]: 'list';
 	[PANEL_TYPES.TABLE]: 'table';
 	[PANEL_TYPES.TIME_SERIES]: 'graph';
+	[PANEL_TYPES.AREA]: 'area';
 	[PANEL_TYPES.VALUE]: 'value';
 	[PANEL_TYPES.PIE]: 'pie';
 	[PANEL_TYPES.HISTOGRAM]: 'histogram';
@@ -118,6 +119,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 	Record<DataSource, PanelTypeFormValues>
 > = {
 	[PANEL_TYPES.TIME_SERIES]: bySource(SERIES, SERIES_METRICS),
+	[PANEL_TYPES.AREA]: bySource(SERIES, SERIES_METRICS),
 	[PANEL_TYPES.BAR]: bySource(SERIES, SERIES_METRICS),
 	[PANEL_TYPES.HISTOGRAM]: bySource(SERIES, SERIES_METRICS),
 	[PANEL_TYPES.TABLE]: bySource(SERIES, SCALAR_METRICS),
