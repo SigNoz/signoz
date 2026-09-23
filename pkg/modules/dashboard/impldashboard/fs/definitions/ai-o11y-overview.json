@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "definition": {
     "schemaVersion": "v6",
     "name": "signoz---ai-o11y-overview",
