@@ -1,11 +1,10 @@
-// @ts-nocheck
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import MEditor from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import {
@@ -58,13 +57,14 @@ function ReadOnlyJsonViewer({
 			data-testid="read-only-json-viewer"
 		>
 			<div className={styles.editorContainer}>
-				<TooltipSimple title={copied ? 'Copied!' : 'Copy JSON'}>
+				<Tooltip title={copied ? 'Copied!' : 'Copy JSON'}>
 					<Button
+						color="secondary"
 						variant="ghost"
 						size="sm"
 						className={styles.copyButton}
 						onClick={handleCopy}
-						data-testid="read-only-json-viewer-copy-button"
+						testId="read-only-json-viewer-copy-button"
 					>
 						{copied ? (
 							<Check size={14} color={Color.BG_FOREST_400} />
@@ -75,7 +75,7 @@ function ReadOnlyJsonViewer({
 							/>
 						)}
 					</Button>
-				</TooltipSimple>
+				</Tooltip>
 				<MEditor
 					value={jsonContent}
 					language="json"

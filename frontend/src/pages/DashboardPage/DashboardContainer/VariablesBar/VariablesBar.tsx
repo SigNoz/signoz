@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { ChevronLeft } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { useInlineOverflowCount } from 'hooks/useInlineOverflowCount';
@@ -115,9 +114,9 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 						{expanded ? (
 							moreButton
 						) : (
-							<TooltipSimple
+							<Tooltip
+								className={TOOLTIP_SCROLL_CONTENT_CLASS}
 								side="top"
-								tooltipContentProps={{ className: TOOLTIP_SCROLL_CONTENT_CLASS }}
 								title={
 									<HiddenVariablesTooltip
 										variables={hiddenVariables}
@@ -126,7 +125,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 								}
 							>
 								{moreButton}
-							</TooltipSimple>
+							</Tooltip>
 						)}
 					</span>
 				)}

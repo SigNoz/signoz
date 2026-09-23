@@ -1,8 +1,7 @@
-// @ts-nocheck
 import React, { useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Check, Copy } from '@signozhq/icons';
 import SyntaxHighlighter, {
 	a11yDark,
@@ -128,7 +127,7 @@ function CopyButton({ text }: { text: string }): JSX.Element {
 	};
 
 	return (
-		<TooltipSimple title={copied ? 'Copied' : 'Copy code'}>
+		<Tooltip title={copied ? 'Copied' : 'Copy code'}>
 			<Button
 				variant="ghost"
 				size="sm"
@@ -139,6 +138,6 @@ function CopyButton({ text }: { text: string }): JSX.Element {
 			>
 				{copied ? <Check size={12} /> : <Copy size={12} />}
 			</Button>
-		</TooltipSimple>
+		</Tooltip>
 	);
 }

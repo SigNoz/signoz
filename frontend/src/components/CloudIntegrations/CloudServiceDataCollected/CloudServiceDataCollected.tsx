@@ -1,11 +1,10 @@
-// @ts-nocheck
 import { Table } from 'antd';
 import {
 	CloudintegrationtypesCollectedLogAttributeDTO,
 	CloudintegrationtypesCollectedMetricDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { BarChart, Info, ScrollText } from '@signozhq/icons';
-import { TooltipProvider, TooltipSimple } from '@signozhq/ui/tooltip';
+import { TooltipProvider, Tooltip } from '@signozhq/ui/tooltip';
 
 import './CloudServiceDataCollected.styles.scss';
 
@@ -90,12 +89,10 @@ function CloudServiceDataCollected({
 						Metrics
 						{metricsInfoTooltip && (
 							<TooltipProvider>
-								<TooltipSimple
+								<Tooltip
+									className={'cloud-service-data-collected-table-tooltip'}
 									title={metricsInfoTooltip}
 									side="top"
-									tooltipContentProps={{
-										className: 'cloud-service-data-collected-table-tooltip',
-									}}
 								>
 									<span
 										className="cloud-service-data-collected-table-heading-info"
@@ -104,7 +101,7 @@ function CloudServiceDataCollected({
 									>
 										<Info size={12} />
 									</span>
-								</TooltipSimple>
+								</Tooltip>
 							</TooltipProvider>
 						)}
 					</div>

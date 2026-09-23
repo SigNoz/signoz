@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Select } from 'antd';
 import { Download, SlidersVertical } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
 
@@ -100,34 +99,38 @@ function K8sTableToolbar({
 			{leftFilters}
 
 			{onDownload && (
-				<TooltipSimple title="Download">
+				<Tooltip title="Download">
 					<Button
+						aria-label="Action"
 						type="button"
 						variant="ghost"
-						size="icon"
+						size="sm"
+						icon
 						color="secondary"
-						data-testid="k8s-table-download-button"
+						testId="k8s-table-download-button"
 						onClick={onDownload}
 						className={styles.toolbarButton}
 					>
 						<Download size={14} />
 					</Button>
-				</TooltipSimple>
+				</Tooltip>
 			)}
 
-			<TooltipSimple title="Options">
+			<Tooltip title="Options">
 				<Button
+					aria-label="Action"
 					type="button"
 					variant="ghost"
-					size="icon"
+					size="sm"
+					icon
 					color="secondary"
-					data-testid="k8s-table-options-button"
+					testId="k8s-table-options-button"
 					onClick={onOpenOptionsDrawer}
 					className={styles.toolbarButton}
 				>
 					<SlidersVertical size={14} />
 				</Button>
-			</TooltipSimple>
+			</Tooltip>
 		</div>
 	);
 }

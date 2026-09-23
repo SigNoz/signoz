@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
 import {
 	Dispatch,
@@ -12,12 +11,7 @@ import {
 } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
 import {
 	createColumnHelper,
 	flexRender,
@@ -107,24 +101,20 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 
 	return (
 		<TooltipProvider>
-			<TooltipRoot
+			<Tooltip
 				open
-				onOpenChange={(open: boolean): void => {
-					if (!open) {
-						setShowPopover(false);
-					}
-				}}
-			>
-				<TooltipTrigger asChild>{dot}</TooltipTrigger>
-				<TooltipContent className={styles.popover}>
+				className={styles.popover}
+				title={
 					<EventTooltipContent
 						eventName={event.name}
 						timeOffsetMs={eventTimeMs - spanTimestamp}
 						isError={isError}
 						attributeMap={event.attributeMap || {}}
 					/>
-				</TooltipContent>
-			</TooltipRoot>
+				}
+			>
+				{dot}
+			</Tooltip>
 		</TooltipProvider>
 	);
 });
@@ -323,7 +313,9 @@ const SpanOverview = memo(function SpanOverview({
 			<span className={styles.subtreeCountSlot}>
 				{span.has_children && (
 					<span className={styles.subtreeCount}>
-						<Badge color="vanilla">{span.sub_tree_node_count}</Badge>
+						<Badge variant="solid" color="secondary">
+							{span.sub_tree_node_count}
+						</Badge>
 					</span>
 				)}
 			</span>
@@ -346,39 +338,33 @@ const SpanOverview = memo(function SpanOverview({
 
 			{/* Action buttons — shown on hover via CSS, right-aligned */}
 			<span className={styles.rowActions}>
-				<TooltipProvider delayDuration={200}>
-					<TooltipRoot>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								color="secondary"
-								className={styles.actionBtn}
-								onClick={onSpanCopy}
-							>
-								<Link size={12} />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent className={styles.actionTooltip}>
-							Copy Span Link
-						</TooltipContent>
-					</TooltipRoot>
-					<TooltipRoot>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								color="secondary"
-								className={styles.actionBtn}
-								onClick={handleFunnelClick}
-							>
-								<ListPlus size={12} />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent className={styles.actionTooltip}>
-							Add to Trace Funnel
-						</TooltipContent>
-					</TooltipRoot>
+				<TooltipProvider delay={200}>
+					<Tooltip title="Copy Span Link" className={styles.actionTooltip}>
+						<Button
+							aria-label="Action"
+							variant="ghost"
+							size="sm"
+							icon
+							color="secondary"
+							className={styles.actionBtn}
+							onClick={onSpanCopy}
+						>
+							<Link size={12} />
+						</Button>
+					</Tooltip>
+					<Tooltip title="Add to Trace Funnel" className={styles.actionTooltip}>
+						<Button
+							aria-label="Action"
+							variant="ghost"
+							size="sm"
+							icon
+							color="secondary"
+							className={styles.actionBtn}
+							onClick={handleFunnelClick}
+						>
+							<ListPlus size={12} />
+						</Button>
+					</Tooltip>
 				</TooltipProvider>
 			</span>
 		</div>
@@ -842,12 +828,6 @@ function Success(props: ISuccessProps): JSX.Element {
 	const virtualItems = virtualizer.getVirtualItems();
 	const leftRows = leftTable.getRowModel().rows;
 
-	const handleHoverCardOpenChange = useCallback((open: boolean): void => {
-		if (!open) {
-			setHoveredSpanId(null);
-		}
-	}, []);
-
 	return (
 		<div className={styles.root}>
 			{isFetching && <div className={styles.loadingBar} />}
@@ -891,7 +871,6 @@ function Success(props: ISuccessProps): JSX.Element {
 					/>
 					<SpanHoverCard
 						hoveredSpanId={hoveredSpanId}
-						onOpenChange={handleHoverCardOpenChange}
 						anchorLeft={sidebarWidth}
 						rowHeight={ROW_HEIGHT}
 						spans={spans}

@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { useEffect, useMemo, useState } from 'react';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Plus, Search } from '@signozhq/icons';
 
 import logEvent from 'api/common/logEvent';
@@ -172,7 +171,7 @@ export default function ConversationsList({
 				{isLoadingThreads && <HeaderLoadingDots />}
 
 				{!isLoadingThreads && showAddNewConversation && (
-					<TooltipSimple title="New conversation">
+					<Tooltip title="New conversation">
 						<Button
 							variant="solid"
 							size="sm"
@@ -182,7 +181,7 @@ export default function ConversationsList({
 						>
 							<Plus size={12} />
 						</Button>
-					</TooltipSimple>
+					</Tooltip>
 				)}
 			</div>
 

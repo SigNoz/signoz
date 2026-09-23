@@ -1,10 +1,9 @@
-// @ts-nocheck
 import { ChangeEvent, ReactNode, useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Check, Minus, Plus } from '@signozhq/icons';
 import {
 	hideColumn,
@@ -140,11 +139,12 @@ function K8sOptionsSidePanel<TData>({
 			<div className={styles.fontSizeContainer}>
 				{FONT_SIZE_OPTIONS.map((option) => (
 					<Button
+						size="md"
 						key={option.value}
 						variant="ghost"
-						color="none"
+						color="secondary"
 						className={styles.fontSizeOption}
-						data-testid={`font-size-${option.value}`}
+						testId={`font-size-${option.value}`}
 						onClick={(): void => setFontSize(option.value)}
 					>
 						{option.label}
@@ -172,27 +172,35 @@ function K8sOptionsSidePanel<TData>({
 					type="number"
 					prefix={
 						<Button
+							disabledTooltip={undefined}
 							variant="solid"
 							color="primary"
 							size="sm"
+							icon
+							aria-label="Decrease max lines"
 							className={styles.lineClampButton}
-							data-testid="line-clamp-decrease"
+							testId="line-clamp-decrease"
 							onClick={decreaseLineClamp}
-							prefix={<Minus />}
 							disabled={lineClamp <= 1}
-						/>
+						>
+							<Minus />
+						</Button>
 					}
 					suffix={
 						<Button
+							disabledTooltip={undefined}
 							variant="solid"
 							color="primary"
 							size="sm"
+							icon
+							aria-label="Increase max lines"
 							className={styles.lineClampButton}
-							data-testid="line-clamp-increase"
+							testId="line-clamp-increase"
 							onClick={increaseLineClamp}
-							prefix={<Plus />}
 							disabled={lineClamp >= 10}
-						/>
+						>
+							<Plus />
+						</Button>
 					}
 				/>
 			</div>
@@ -209,9 +217,12 @@ function K8sOptionsSidePanel<TData>({
 					const isVisible = !hiddenColumnIds.includes(column.id);
 					const switchElement = (
 						<Switch
+							color="primary"
+							textPlacement="right"
+							disabledTooltip={undefined}
 							value={isVisible}
 							disabled={!column.canBeHidden}
-							data-testid={`toggle-column-${column.id}`}
+							testId={`toggle-column-${column.id}`}
 							onChange={(checked): void => handleToggleColumn(column.id, checked)}
 						/>
 					);
@@ -223,9 +234,9 @@ function K8sOptionsSidePanel<TData>({
 							{column.canBeHidden ? (
 								switchElement
 							) : (
-								<TooltipSimple title="Required column cannot be hidden" arrow>
+								<Tooltip title="Required column cannot be hidden">
 									{switchElement}
-								</TooltipSimple>
+								</Tooltip>
 							)}
 						</div>
 					);

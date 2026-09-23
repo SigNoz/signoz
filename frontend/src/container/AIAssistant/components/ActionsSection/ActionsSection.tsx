@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
@@ -13,7 +12,7 @@ import {
 import cx from 'classnames';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import type { MessageActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import {
 	ApplyFilterSignalDTO,
@@ -632,6 +631,7 @@ export default function ActionsSection({
 
 					const chip = (
 						<Button
+							disabledTooltip={undefined}
 							variant="outlined"
 							color="secondary"
 							size="sm"
@@ -646,9 +646,9 @@ export default function ActionsSection({
 					);
 
 					return tooltip ? (
-						<TooltipSimple key={key} title={tooltip}>
+						<Tooltip key={key} title={tooltip}>
 							{chip}
-						</TooltipSimple>
+						</Tooltip>
 					) : (
 						<span key={key}>{chip}</span>
 					);

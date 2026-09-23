@@ -1,13 +1,7 @@
-// @ts-nocheck
 import { ReactNode, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
-import {
-	TooltipContent,
-	TooltipProvider,
-	TooltipRoot,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
 import { Fullscreen } from '@signozhq/icons';
 
 import styles from './ExpandableValue.module.scss';
@@ -40,28 +34,28 @@ function ExpandableValue({
 
 	return (
 		<TooltipProvider>
-			<TooltipRoot>
-				<TooltipTrigger asChild>
-					<span className={styles.trigger}>{children}</span>
-				</TooltipTrigger>
-				<TooltipContent
-					className={styles.tooltipContent}
-					side="top"
-					style={{ zIndex }}
-				>
-					<pre className={styles.preview}>{value}</pre>
-					<Button
-						variant="outlined"
-						color="secondary"
-						size="sm"
-						prefix={<Fullscreen size={14} />}
-						onClick={(): void => setIsDialogOpen(true)}
-						className={styles.expandButton}
-					>
-						Expand
-					</Button>
-				</TooltipContent>
-			</TooltipRoot>
+			<Tooltip
+				className={styles.tooltipContent}
+				side="top"
+				style={{ zIndex }}
+				title={
+					<>
+						<pre className={styles.preview}>{value}</pre>
+						<Button
+							variant="outlined"
+							color="secondary"
+							size="sm"
+							prefix={<Fullscreen size={14} />}
+							onClick={(): void => setIsDialogOpen(true)}
+							className={styles.expandButton}
+						>
+							Expand
+						</Button>
+					</>
+				}
+			>
+				<span className={styles.trigger}>{children}</span>
+			</Tooltip>
 
 			<DialogWrapper
 				title={title}

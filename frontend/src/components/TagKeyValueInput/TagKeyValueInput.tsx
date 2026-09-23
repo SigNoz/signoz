@@ -1,6 +1,6 @@
-// @ts-nocheck
 import { type ChangeEvent, type KeyboardEvent, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
@@ -139,16 +139,18 @@ function TagKeyValueInput({
 							closable
 							onClose={(): void => removeTag(tag)}
 						>
-							<Button
-								variant="ghost"
-								color="secondary"
-								className={styles.tagLabel}
-								title="Double-click to edit"
-								testId={`${testId}-chip`}
-								onDoubleClick={(): void => startEdit(index)}
-							>
-								{tag}
-							</Button>
+							<Tooltip title="Double-click to edit">
+								<Button
+									size="md"
+									variant="ghost"
+									color="secondary"
+									className={styles.tagLabel}
+									testId={`${testId}-chip`}
+									onDoubleClick={(): void => startEdit(index)}
+								>
+									{tag}
+								</Button>
+							</Tooltip>
 						</TagBadge>
 					),
 				)}

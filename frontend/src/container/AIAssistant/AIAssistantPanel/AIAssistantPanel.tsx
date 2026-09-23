@@ -1,8 +1,7 @@
-// @ts-nocheck
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Plus, X } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
@@ -145,50 +144,59 @@ export default function AIAssistantPanel(): JSX.Element | null {
 					</div>
 
 					<div className={styles.actions}>
-						<TooltipSimple title={showHistory ? 'Back to chat' : 'Conversations'}>
+						<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
 							<Button
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								onClick={(): void => setShowHistory((v) => !v)}
 								aria-label="Toggle conversations"
-								prefix={<History size={14} />}
-							/>
-						</TooltipSimple>
+							>
+								<History size={14} />
+							</Button>
+						</Tooltip>
 
-						<TooltipSimple title="New conversation">
+						<Tooltip title="New conversation">
 							<Button
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								onClick={handleNew}
 								aria-label="New conversation"
-								prefix={<Plus size={14} />}
-							/>
-						</TooltipSimple>
+							>
+								<Plus size={14} />
+							</Button>
+						</Tooltip>
 
-						<TooltipSimple title="Open full screen">
+						<Tooltip title="Open full screen">
 							<Button
+								disabledTooltip={undefined}
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								onClick={handleExpand}
 								disabled={!activeConversationId}
 								aria-label="Open full screen"
-								prefix={<Maximize2 size={14} />}
-							/>
-						</TooltipSimple>
+							>
+								<Maximize2 size={14} />
+							</Button>
+						</Tooltip>
 
-						<TooltipSimple title="Close">
+						<Tooltip title="Close">
 							<Button
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								onClick={closeDrawer}
 								aria-label="Close panel"
-								prefix={<X size={14} />}
-							/>
-						</TooltipSimple>
+							>
+								<X size={14} />
+							</Button>
+						</Tooltip>
 					</div>
 				</div>
 

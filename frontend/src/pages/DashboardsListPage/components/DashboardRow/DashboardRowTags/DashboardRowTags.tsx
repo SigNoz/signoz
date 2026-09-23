@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import TagBadge from 'components/TagBadge/TagBadge';
 
 import styles from './DashboardRowTags.module.scss';
@@ -27,10 +26,9 @@ function DashboardRowTags({ tags }: DashboardRowTagsProps): JSX.Element | null {
 				<TagBadge key={tag}>{tag}</TagBadge>
 			))}
 			{extra.length > 0 && (
-				<TooltipSimple
+				<Tooltip
+					className={styles.extraTagsTooltip}
 					side="bottom"
-					arrow
-					tooltipContentProps={{ className: styles.extraTagsTooltip }}
 					title={
 						<div className={styles.extraTags}>
 							{extra.map((tag) => (
@@ -43,7 +41,7 @@ function DashboardRowTags({ tags }: DashboardRowTagsProps): JSX.Element | null {
 					<span role="presentation" onClick={(e): void => e.stopPropagation()}>
 						<TagBadge>+{extra.length}</TagBadge>
 					</span>
-				</TooltipSimple>
+				</Tooltip>
 			)}
 		</div>
 	);

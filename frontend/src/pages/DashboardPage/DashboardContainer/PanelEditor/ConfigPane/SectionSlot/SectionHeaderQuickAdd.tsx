@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 interface SectionHeaderQuickAddConfig {
 	label: string;
@@ -20,20 +19,21 @@ function SectionHeaderQuickAdd({
 	onClick,
 }: SectionHeaderQuickAddProps): JSX.Element {
 	return (
-		<TooltipSimple title="Quick Add" side="top" arrow>
+		<Tooltip title="Quick Add" side="top">
 			<Button
 				type="button"
 				variant="ghost"
 				color="secondary"
-				size="icon"
+				size="sm"
+				icon
 				aria-label={action.label}
 				// Not `testId`: TooltipTrigger's Slot merge overwrites it with undefined.
-				data-testid={action.testId}
+				testId={action.testId}
 				onClick={onClick}
 			>
 				<Plus size={15} />
 			</Button>
-		</TooltipSimple>
+		</Tooltip>
 	);
 }
 

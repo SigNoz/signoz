@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { KeyboardEvent, useCallback } from 'react';
 import MEditor from '@monaco-editor/react';
 import { TriangleAlert } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { Drawer } from 'antd';
@@ -137,9 +136,9 @@ function JsonEditorDrawer({
 							{validationText}
 						</Typography.Text>
 						{danglingWarning && (
-							<TooltipSimple
+							<Tooltip
+								className={styles.warningTooltip}
 								title={danglingPanelIds.join(', ')}
-								tooltipContentProps={{ className: styles.warningTooltip }}
 							>
 								<span
 									className={styles.danglingWarning}
@@ -150,12 +149,12 @@ function JsonEditorDrawer({
 										{danglingWarning}
 									</Typography.Text>
 								</span>
-							</TooltipSimple>
+							</Tooltip>
 						)}
 						{missingRefWarning && (
-							<TooltipSimple
+							<Tooltip
+								className={styles.warningTooltip}
 								title={missingPanelRefs.join(', ')}
-								tooltipContentProps={{ className: styles.warningTooltip }}
 							>
 								<span
 									className={styles.danglingWarning}
@@ -166,7 +165,7 @@ function JsonEditorDrawer({
 										{missingRefWarning}
 									</Typography.Text>
 								</span>
-							</TooltipSimple>
+							</Tooltip>
 						)}
 					</div>
 					<div className={styles.footerActions}>
@@ -184,6 +183,7 @@ function JsonEditorDrawer({
 							disabledTooltip={readOnly ? readOnlyTooltip : undefined}
 						>
 							<Button
+								disabledTooltip={undefined}
 								variant="solid"
 								color="primary"
 								size="md"

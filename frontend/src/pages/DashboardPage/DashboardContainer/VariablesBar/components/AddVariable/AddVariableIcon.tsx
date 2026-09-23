@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
@@ -36,11 +35,12 @@ function AddVariableIcon({
 	// explained by the authz button itself.
 	if (isEditable) {
 		return (
-			<TooltipSimple side="top" title="Add variable">
+			<Tooltip side="top" title="Add variable">
 				<Button
 					variant="outlined"
 					color="secondary"
-					size="icon"
+					size="sm"
+					icon
 					className={styles.addVariableIcon}
 					aria-label="Add variable"
 					testId="dashboard-variables-add"
@@ -48,7 +48,7 @@ function AddVariableIcon({
 				>
 					<Plus size={14} />
 				</Button>
-			</TooltipSimple>
+			</Tooltip>
 		);
 	}
 
@@ -58,7 +58,8 @@ function AddVariableIcon({
 			disabledTooltip={disabledTooltip}
 			variant="outlined"
 			color="secondary"
-			size="icon"
+			size="sm"
+			icon
 			className={styles.addVariableIcon}
 			aria-label="Add variable"
 			testId="dashboard-variables-add"

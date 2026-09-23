@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 import { SEVERITY_BADGE_COLORS } from 'components/Alerts/constants';
 import LabelColumn from 'components/Alerts/LabelColumn';

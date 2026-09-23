@@ -1,10 +1,9 @@
-// @ts-nocheck
 import type { CSSProperties } from 'react';
 import { Check, GripVertical, PenLine, Trash2, X } from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
@@ -101,9 +100,10 @@ function VariableRow({
 									Delete?
 								</Typography.Text>
 								<Button
-									variant="ghost"
-									color="destructive"
-									size="icon"
+									variant="solid"
+									color="danger"
+									size="sm"
+									icon
 									onClick={(): void => onConfirmDelete(index)}
 									aria-label="Confirm delete"
 									testId={`variable-delete-confirm-${variable.name}`}
@@ -113,7 +113,8 @@ function VariableRow({
 								<Button
 									variant="ghost"
 									color="secondary"
-									size="icon"
+									size="sm"
+									icon
 									onClick={onCancelDelete}
 									aria-label="Cancel delete"
 								>
@@ -123,7 +124,7 @@ function VariableRow({
 						) : (
 							<>
 								{variable.type === 'DYNAMIC' ? (
-									<TooltipSimple
+									<Tooltip
 										side="top"
 										title={
 											isAppliedToAll
@@ -132,6 +133,7 @@ function VariableRow({
 										}
 									>
 										<Button
+											disabledTooltip={undefined}
 											variant="ghost"
 											color="secondary"
 											size="sm"
@@ -142,12 +144,13 @@ function VariableRow({
 										>
 											Apply to all
 										</Button>
-									</TooltipSimple>
+									</Tooltip>
 								) : null}
 								<Button
 									variant="ghost"
 									color="secondary"
-									size="icon"
+									size="sm"
+									icon
 									onClick={(): void => onEdit(index)}
 									aria-label="Edit variable"
 									testId={`variable-edit-${variable.name}`}
@@ -157,7 +160,8 @@ function VariableRow({
 								<Button
 									variant="ghost"
 									color="secondary"
-									size="icon"
+									size="sm"
+									icon
 									onClick={(): void => onRequestDelete(index)}
 									aria-label="Delete variable"
 									testId={`variable-delete-${variable.name}`}

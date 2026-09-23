@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { Button } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 interface CheckboxValueRowProps {
 	value: string;
@@ -29,6 +28,8 @@ function CheckboxValueRow({
 	return (
 		<div className="value">
 			<Checkbox
+				color="primary"
+				disabledTooltip={undefined}
 				onChange={(isChecked): void => onCheckboxChange(isChecked === true)}
 				value={checked}
 				disabled={disabled}
@@ -48,11 +49,11 @@ function CheckboxValueRow({
 				{customRendererForValue ? (
 					customRendererForValue(value)
 				) : (
-					<TooltipSimple title={String(value)} side="top" align="start">
+					<Tooltip title={String(value)} side="top" align="start">
 						<Typography.Text className="value-string" truncate={1}>
 							{String(value)}
 						</Typography.Text>
-					</TooltipSimple>
+					</Tooltip>
 				)}
 				<div className="value-actions">
 					<Button type="text" className="only-btn">

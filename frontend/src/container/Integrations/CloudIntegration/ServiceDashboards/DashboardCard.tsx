@@ -1,6 +1,5 @@
-// @ts-nocheck
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { CloudintegrationtypesServiceDashboardDTO } from 'api/generated/services/sigNoz.schemas';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { openInNewTab } from 'utils/navigation';
@@ -60,7 +59,7 @@ function DashboardCard({
 	);
 
 	if (!dashboardId) {
-		return <TooltipSimple title={DISABLED_TOOLTIP}>{card}</TooltipSimple>;
+		return <Tooltip title={DISABLED_TOOLTIP}>{card}</Tooltip>;
 	}
 
 	return card;

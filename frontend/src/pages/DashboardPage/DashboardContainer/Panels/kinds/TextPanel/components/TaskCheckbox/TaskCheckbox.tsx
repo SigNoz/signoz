@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import { useTaskItemOffset } from '../MarkdownContent/taskItemOffset';
 
@@ -41,11 +40,7 @@ function TaskCheckbox({ checked, onChange }: TaskCheckboxProps): JSX.Element {
 
 	// `asChild` on the trigger keeps the input itself as the hover target, so no
 	// wrapper lands inside the body's style reset.
-	return (
-		<TooltipSimple title={WRITE_BACK_HINT} arrow>
-			{box}
-		</TooltipSimple>
-	);
+	return <Tooltip title={WRITE_BACK_HINT}>{box}</Tooltip>;
 }
 
 export default TaskCheckbox;

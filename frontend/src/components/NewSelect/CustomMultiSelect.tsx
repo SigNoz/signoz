@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
 import React, {
 	useCallback,
@@ -21,7 +20,7 @@ import {
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
-import { TooltipProvider, TooltipSimple } from '@signozhq/ui/tooltip';
+import { TooltipProvider, Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
@@ -759,9 +758,14 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					tabIndex={isActive ? 0 : -1}
 				>
 					<Checkbox
+						color="primary"
 						value={isSelected}
 						className="option-checkbox"
-						onClick={(e): void => selectFromButton(e, 'checkbox')}
+						onChange={(): void => {
+							handleItemSelection('checkbox');
+							setActiveChipIndex(-1);
+							setActiveIndex(-1);
+						}}
 					>
 						<div className="option-content">
 							<Typography.Text truncate={1} className="option-label-text">
@@ -1596,7 +1600,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							}}
 						>
 							<div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-								<Checkbox value={allOptionsSelected} className="option-checkbox">
+								<Checkbox
+									color="primary"
+									value={allOptionsSelected}
+									className="option-checkbox"
+								>
 									<div className="option-content">
 										<div className="all-option-text">ALL</div>
 									</div>
@@ -1974,13 +1982,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				// `label` arrives already cut to maxTagTextLength, so the reveal reads the
 				// option's own text (falling back to the raw value for freeform tags).
 				return (
-					<TooltipSimple
-						side="top"
-						delayDuration={300}
-						title={findOptionLabelText(options, value)}
-					>
+					<Tooltip side="top" title={findOptionLabelText(options, value)}>
 						{tag}
-					</TooltipSimple>
+					</Tooltip>
 				);
 			}
 

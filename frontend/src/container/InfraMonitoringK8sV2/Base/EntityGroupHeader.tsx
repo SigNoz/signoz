@@ -1,6 +1,5 @@
-// @ts-nocheck
 import { Group, Info } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import styles from './EntityGroupHeader.module.scss';
 import { DOCS_BASE_URL } from 'constants/app';
@@ -24,8 +23,7 @@ function EntityGroupHeader({
 		if (docPath) {
 			const tooltipTitle = tooltip || 'Not sure what this means?';
 			return (
-				<TooltipSimple
-					arrow
+				<Tooltip
 					title={
 						<>
 							{tooltipTitle}{' '}
@@ -43,17 +41,17 @@ function EntityGroupHeader({
 					<span className={styles.infoIcon}>
 						<Info size="md" />
 					</span>
-				</TooltipSimple>
+				</Tooltip>
 			);
 		}
 
 		if (tooltip) {
 			return (
-				<TooltipSimple title={tooltip}>
+				<Tooltip title={tooltip}>
 					<span className={styles.infoIcon}>
 						<Info size="md" />
 					</span>
-				</TooltipSimple>
+				</Tooltip>
 			);
 		}
 

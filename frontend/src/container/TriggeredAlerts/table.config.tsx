@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { BellDot } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { SEVERITY_BADGE_COLORS } from 'components/Alerts/constants';

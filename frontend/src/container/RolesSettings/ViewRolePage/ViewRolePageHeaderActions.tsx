@@ -1,4 +1,3 @@
-// @ts-nocheck
 import styles from 'container/RolesSettings/ViewRolePage/ViewRolePage.module.scss';
 import { Button } from '@signozhq/ui/button';
 import { Divider } from '@signozhq/ui/divider';
@@ -8,7 +7,7 @@ import {
 	buildRoleReadPermission,
 	buildRoleUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 export function ViewRolePageHeaderActions({
 	isRoleLoading,
@@ -27,10 +26,12 @@ export function ViewRolePageHeaderActions({
 		if (isRoleLoading) {
 			return (
 				<Button
+					disabledTooltip={undefined}
+					size="md"
 					variant="link"
-					color="destructive"
+					color="danger"
 					disabled
-					data-testid="delete-button"
+					testId="delete-button"
 					className={styles.deleteButton}
 				>
 					Delete
@@ -40,26 +41,29 @@ export function ViewRolePageHeaderActions({
 
 		if (isManaged) {
 			return (
-				<TooltipSimple title="Managed roles cannot be deleted">
+				<Tooltip title="Managed roles cannot be deleted">
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						variant="link"
-						color="destructive"
+						color="danger"
 						disabled
-						data-testid="delete-button"
+						testId="delete-button"
 						className={styles.deleteButton}
 					>
 						Delete
 					</Button>
-				</TooltipSimple>
+				</Tooltip>
 			);
 		}
 
 		return (
 			<AuthZButton
+				size="md"
 				checks={[buildRoleDeletePermission(roleName)]}
 				authZEnabled={!!roleName}
 				variant="link"
-				color="destructive"
+				color="danger"
 				onClick={handleOpenDeleteModal}
 				data-testid="delete-button"
 				className={styles.deleteButton}
@@ -72,7 +76,14 @@ export function ViewRolePageHeaderActions({
 	const renderUpdateButton = (): JSX.Element => {
 		if (isRoleLoading) {
 			return (
-				<Button variant="solid" color="primary" disabled data-testid="save-button">
+				<Button
+					disabledTooltip={undefined}
+					size="md"
+					variant="solid"
+					color="primary"
+					disabled
+					testId="save-button"
+				>
 					Update
 				</Button>
 			);
@@ -80,16 +91,24 @@ export function ViewRolePageHeaderActions({
 
 		if (isManaged) {
 			return (
-				<TooltipSimple title="Managed roles cannot be updated">
-					<Button variant="solid" color="primary" disabled data-testid="save-button">
+				<Tooltip title="Managed roles cannot be updated">
+					<Button
+						disabledTooltip={undefined}
+						size="md"
+						variant="solid"
+						color="primary"
+						disabled
+						testId="save-button"
+					>
 						Update
 					</Button>
-				</TooltipSimple>
+				</Tooltip>
 			);
 		}
 
 		return (
 			<AuthZButton
+				size="md"
 				checks={[
 					buildRoleReadPermission(roleName),
 					buildRoleUpdatePermission(roleName),

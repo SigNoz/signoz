@@ -1,6 +1,5 @@
-// @ts-nocheck
 import { Info } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import styles from './FieldLabel.module.scss';
 
@@ -21,11 +20,7 @@ function FieldLabel({
 		<label className={styles.fieldLabel} htmlFor={htmlFor}>
 			{label}
 
-			<TooltipSimple
-				title={tooltip}
-				side="top"
-				tooltipContentProps={{ className: styles.tooltipContent }}
-			>
+			<Tooltip className={styles.tooltipContent} title={tooltip} side="top">
 				<span
 					className={styles.infoTrigger}
 					aria-label={`${label} help`}
@@ -33,7 +28,7 @@ function FieldLabel({
 				>
 					<Info size={12} />
 				</span>
-			</TooltipSimple>
+			</Tooltip>
 			{required && (
 				<span className={styles.required} aria-hidden="true">
 					*

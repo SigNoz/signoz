@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { refreshLicense } from 'api/generated/services/licenses';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { RefreshCcw } from '@signozhq/icons';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { buildLicenseUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
@@ -50,7 +49,7 @@ function RefreshPaymentStatus({
 		>
 			<Button
 				variant="link"
-				color={type === 'text' ? 'none' : 'secondary'}
+				color="secondary"
 				size="md"
 				className={className}
 				onClick={handleRefreshPaymentStatus}
@@ -65,7 +64,7 @@ function RefreshPaymentStatus({
 	return (
 		<span className="refresh-payment-status-btn-wrapper">
 			{type === 'tooltip' ? (
-				<TooltipSimple title={t('refreshPaymentStatus')}>{button}</TooltipSimple>
+				<Tooltip title={t('refreshPaymentStatus')}>{button}</Tooltip>
 			) : (
 				button
 			)}

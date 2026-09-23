@@ -1,7 +1,7 @@
-// @ts-nocheck
 import { Link, useRouteMatch } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { toast } from '@signozhq/ui/sonner';
 import ROUTES from 'constants/routes';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
@@ -36,15 +36,17 @@ export function TraceIdField({ span }: TraceIdFieldProps): JSX.Element {
 		};
 
 		return (
-			<Button
-				variant="link"
-				color="secondary"
-				className={styles.traceIdCopy}
-				onClick={handleCopy}
-				title="Click to copy trace ID"
-			>
-				{span.trace_id}
-			</Button>
+			<Tooltip title="Click to copy trace ID">
+				<Button
+					size="md"
+					variant="link"
+					color="secondary"
+					className={styles.traceIdCopy}
+					onClick={handleCopy}
+				>
+					{span.trace_id}
+				</Button>
+			</Tooltip>
 		);
 	}
 

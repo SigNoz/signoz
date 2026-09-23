@@ -77,6 +77,7 @@
 
 	[class*='tabs__list-wrapper'] {
 		padding-left: 0 !important;
+		flex-shrink: 0;
 	}
 }
 
@@ -107,12 +108,7 @@
 		padding: 0;
 		flex: 1;
 		min-height: 0;
+		overflow-y: auto;
+		scrollbar-width: none;
 	}
-}
-
-// Tooltip is rendered in a portal but the SpanDetailsPanel can be docked as a
-// FloatingPanel (z-index 999), which would otherwise sit on top of the default
-// tooltip (z-index 50). Bump the tooltip above the panel.
-.dockToggleTooltip {
-	--tooltip-z-index: 1000;
 }

@@ -1,6 +1,5 @@
-// @ts-nocheck
 import { Info } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
 import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
@@ -27,7 +26,7 @@ function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
 			>
 				{group.name}
 			</Typography.Text>
-			<TooltipSimple
+			<Tooltip
 				title={
 					<ConditionsTooltip
 						attributes={group.attributes}
@@ -44,7 +43,7 @@ function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
 					· {conditionCount} {conditionCount === 1 ? 'condition' : 'conditions'}
 					<Info size={12} className={styles.conditionInfoIcon} />
 				</span>
-			</TooltipSimple>
+			</Tooltip>
 		</div>
 	);
 }

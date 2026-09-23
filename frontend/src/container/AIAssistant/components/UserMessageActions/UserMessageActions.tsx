@@ -1,8 +1,7 @@
-// @ts-nocheck
 import { useCallback, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Check, Copy } from '@signozhq/icons';
 
 import logEvent from 'api/common/logEvent';
@@ -41,10 +40,11 @@ export default function UserMessageActions({
 
 	return (
 		<div className={styles.actions}>
-			<TooltipSimple title={copied ? 'Copied!' : 'Copy'}>
+			<Tooltip title={copied ? 'Copied!' : 'Copy'}>
 				<Button
 					className={styles.btn}
-					size="icon"
+					size="sm"
+					icon
 					variant="ghost"
 					color="secondary"
 					onClick={handleCopy}
@@ -52,7 +52,7 @@ export default function UserMessageActions({
 				>
 					{copied ? <Check size={12} /> : <Copy size={12} />}
 				</Button>
-			</TooltipSimple>
+			</Tooltip>
 		</div>
 	);
 }

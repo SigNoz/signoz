@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import TooltipScrollArea, {
 	TOOLTIP_SCROLL_CONTENT_CLASS,
 } from 'components/TooltipScrollArea/TooltipScrollArea';
@@ -20,10 +19,9 @@ function OverflowValuesTooltip({
 	values,
 }: OverflowValuesTooltipProps): JSX.Element {
 	return (
-		<TooltipSimple
+		<Tooltip
+			className={TOOLTIP_SCROLL_CONTENT_CLASS}
 			side="top"
-			delayDuration={300}
-			tooltipContentProps={{ className: TOOLTIP_SCROLL_CONTENT_CLASS }}
 			title={
 				<TooltipScrollArea>
 					<ul className={styles.overflowValues}>
@@ -37,7 +35,7 @@ function OverflowValuesTooltip({
 			{/* rc-select copies this node into the overflow wrapper's `title`; an empty
 			    one keeps the browser's own "[object Object]" tooltip out of the way. */}
 			<span title="">+{values.length}</span>
-		</TooltipSimple>
+		</Tooltip>
 	);
 }
 

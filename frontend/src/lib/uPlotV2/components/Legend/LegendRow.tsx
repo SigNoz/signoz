@@ -1,14 +1,12 @@
-// @ts-nocheck
 import { KeyboardEvent, memo, MouseEvent, useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
 import { LegendAction, OnLegendAction } from '../types';
 
-import { LEGEND_TOOLTIP_DELAY_MS } from './constants';
 import styles from './LegendRow.module.scss';
 
 export interface LegendRowProps {
@@ -132,25 +130,11 @@ function LegendRow({
 				data-is-legend-marker={true}
 				data-testid={`legend-marker-${seriesIndex}`}
 			/>
-			<TooltipSimple
-				title={label}
-				arrow
-				side="top"
-				delayDuration={LEGEND_TOOLTIP_DELAY_MS}
-				disableHoverableContent
-				tooltipContentProps={{ className: styles.rowTooltip }}
-			>
+			<Tooltip className={styles.rowTooltip} title={label} side="top">
 				<span className={styles.label}>{label}</span>
-			</TooltipSimple>
+			</Tooltip>
 			<div className={styles.actions}>
-				<TooltipSimple
-					title={scopeActionLabel}
-					arrow
-					side="top"
-					delayDuration={LEGEND_TOOLTIP_DELAY_MS}
-					disableHoverableContent
-					tooltipContentProps={{ className: styles.rowTooltip }}
-				>
+				<Tooltip className={styles.rowTooltip} title={scopeActionLabel} side="top">
 					{/* Radix's asChild merge strips the button's own data-testid. */}
 					<span className={styles.actionTrigger}>
 						<Button
@@ -165,7 +149,7 @@ function LegendRow({
 							{isShowAllAction ? 'All' : 'Only'}
 						</Button>
 					</span>
-				</TooltipSimple>
+				</Tooltip>
 				{showCopy && (
 					<CopyButton
 						value={label}

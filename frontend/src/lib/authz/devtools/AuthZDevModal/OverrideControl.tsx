@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Check, Clock, RotateCcw, X, Zap } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
@@ -8,6 +7,7 @@ import { OverrideState } from '../types';
 
 import styles from './OverrideControl.module.css';
 import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 type OverrideControlProps = {
 	permission: BrandedPermission;
@@ -65,28 +65,29 @@ export function OverrideControl({
 			{OVERRIDE_OPTIONS.map((option) => {
 				const isActive = value === option.state;
 				return (
-					<Button
-						key={option.state}
-						type="button"
-						aria-pressed={isActive}
-						aria-label={option.label}
-						title={option.label}
-						className={cx(styles.segment, {
-							[styles.segmentActive]: isActive,
-							[option.activeClassName]: isActive,
-						})}
-						variant="ghost"
-						color="secondary"
-						onClick={(): void => onSelect(permission, option.state)}
-						data-testid={`override-${option.state}-${permission}`}
-					>
-						<div className={styles.segmentIcon}>{option.icon}</div>
-						{isActive && (
-							<Typography.Text as="span" size="small" weight="medium">
-								{option.label}
-							</Typography.Text>
-						)}
-					</Button>
+					<Tooltip key={option.state} title={option.label}>
+						<Button
+							size="md"
+							type="button"
+							aria-pressed={isActive}
+							aria-label={option.label}
+							className={cx(styles.segment, {
+								[styles.segmentActive]: isActive,
+								[option.activeClassName]: isActive,
+							})}
+							variant="ghost"
+							color="secondary"
+							onClick={(): void => onSelect(permission, option.state)}
+							testId={`override-${option.state}-${permission}`}
+						>
+							<div className={styles.segmentIcon}>{option.icon}</div>
+							{isActive && (
+								<Typography.Text as="span" size="small" weight="medium">
+									{option.label}
+								</Typography.Text>
+							)}
+						</Button>
+					</Tooltip>
 				);
 			})}
 		</div>

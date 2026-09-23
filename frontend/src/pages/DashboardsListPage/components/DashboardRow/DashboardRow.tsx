@@ -1,8 +1,7 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { CalendarClock, LockKeyhole, Pin, PinOff } from '@signozhq/icons';
 import cx from 'classnames';
@@ -128,21 +127,16 @@ function DashboardRow({
 				<div className={styles.titleWithAction}>
 					<div className={styles.titleBlock}>
 						{name.length > 50 ? (
-							<TooltipSimple
-								title={name}
-								side="bottom"
-								disableHoverableContent
-								tooltipContentProps={{ className: styles.nameTooltip }}
-							>
+							<Tooltip className={styles.nameTooltip} title={name} side="bottom">
 								{titleLink}
-							</TooltipSimple>
+							</Tooltip>
 						) : (
 							titleLink
 						)}
 						{isLegacy && (
 							<Badge
-								color="amber"
-								variant="outline"
+								color="warning"
+								variant="outlined"
 								className={styles.legacyBadge}
 								testId={`dashboard-legacy-${index}`}
 							>
@@ -154,32 +148,30 @@ function DashboardRow({
 					<DashboardRowTags tags={tags} />
 
 					{isLocked && (
-						<TooltipSimple
-							title="This dashboard is locked"
-							side="top"
-							disableHoverableContent
-						>
+						<Tooltip title="This dashboard is locked" side="top">
 							<span
 								className={styles.lockIcon}
 								data-testid={`dashboard-lock-${index}`}
 							>
 								<LockKeyhole size={14} />
 							</span>
-						</TooltipSimple>
+						</Tooltip>
 					)}
 
-					<TooltipSimple title={pinTooltip} side="top" disableHoverableContent>
+					<Tooltip title={pinTooltip} side="top">
 						<span className={styles.pinButtonWrap}>
 							<Button
+								disabledTooltip={undefined}
 								type="button"
 								variant="ghost"
 								color="secondary"
-								size="icon"
+								size="sm"
+								icon
 								className={cx(styles.pinButton, {
 									[styles.pinButtonOn]: isPinned && !isLegacy,
 								})}
 								aria-label={pinLabel}
-								data-testid={`dashboard-pin-${index}`}
+								testId={`dashboard-pin-${index}`}
 								disabled={isUpdating || isLegacy}
 								onClick={onTogglePin}
 							>
@@ -193,7 +185,7 @@ function DashboardRow({
 								)}
 							</Button>
 						</span>
-					</TooltipSimple>
+					</Tooltip>
 
 					<ActionsPopover
 						link={link}

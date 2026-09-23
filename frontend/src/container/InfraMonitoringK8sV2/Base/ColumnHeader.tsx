@@ -1,6 +1,5 @@
-// @ts-nocheck
 import { Info } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import styles from './ColumnHeader.module.scss';
 import cx from 'classnames';
@@ -39,8 +38,7 @@ function ColumnHeader({
 			const isJustStringTitle = typeof tooltipTitle === 'string';
 
 			return (
-				<TooltipSimple
-					arrow
+				<Tooltip
 					title={
 						<div onClick={stopPropagationHandler}>
 							{tooltipTitle}{' '}
@@ -60,19 +58,17 @@ function ColumnHeader({
 					<div className={styles.infoIcon}>
 						<Info size="md" />
 					</div>
-				</TooltipSimple>
+				</Tooltip>
 			);
 		}
 
 		if (tooltip) {
 			return (
-				<TooltipSimple
-					title={<div onClick={stopPropagationHandler}>{tooltip}</div>}
-				>
+				<Tooltip title={<div onClick={stopPropagationHandler}>{tooltip}</div>}>
 					<div className={styles.infoIcon}>
 						<Info size="md" />
 					</div>
-				</TooltipSimple>
+				</Tooltip>
 			);
 		}
 

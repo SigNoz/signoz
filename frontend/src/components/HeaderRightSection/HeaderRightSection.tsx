@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dot } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import Noz from 'components/Noz/Noz';
 import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
 import { Popover } from 'antd';
@@ -114,8 +113,9 @@ function HeaderRightSection({
 						</span>
 					) : null}
 
-					<TooltipSimple title={NOZ_TOOLTIP_TITLE}>
+					<Tooltip title={NOZ_TOOLTIP_TITLE}>
 						<Button
+							size="md"
 							variant="solid"
 							color="secondary"
 							className="noz-wave"
@@ -131,7 +131,7 @@ function HeaderRightSection({
 						>
 							<Typography.Text>Noz</Typography.Text>
 						</Button>
-					</TooltipSimple>
+					</Tooltip>
 				</div>
 			)}
 
@@ -148,13 +148,16 @@ function HeaderRightSection({
 					onOpenChange={handleOpenFeedbackModalChange}
 				>
 					<Button
+						color="secondary"
 						variant="ghost"
-						size="icon"
+						size="sm"
+						icon
 						className="share-feedback-btn"
 						aria-label="Feedback"
-						prefix={<SquarePen size={14} />}
 						onClick={handleOpenFeedbackModal}
-					/>
+					>
+						<SquarePen size={14} />
+					</Button>
 				</Popover>
 			)}
 
@@ -171,16 +174,19 @@ function HeaderRightSection({
 					onOpenChange={handleOpenAnnouncementsModalChange}
 				>
 					<Button
+						color="secondary"
 						variant="ghost"
-						size="icon"
+						size="sm"
+						icon
 						aria-label="Announcements"
-						prefix={<Inbox size={14} />}
 						onClick={(): void => {
 							logEvent('Announcements: Clicked', {
 								page: location.pathname,
 							});
 						}}
-					/>
+					>
+						<Inbox size={14} />
+					</Button>
 				</Popover>
 			)}
 
@@ -197,12 +203,15 @@ function HeaderRightSection({
 					onOpenChange={handleOpenShareURLModalChange}
 				>
 					<Button
+						color="secondary"
 						variant="ghost"
-						size="icon"
+						size="sm"
+						icon
 						aria-label="Share"
-						prefix={<Globe size={14} />}
 						onClick={handleOpenShareURLModal}
-					/>
+					>
+						<Globe size={14} />
+					</Button>
 				</Popover>
 			)}
 		</div>

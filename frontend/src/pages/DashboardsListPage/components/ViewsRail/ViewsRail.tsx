@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
 	type ChangeEvent,
 	type ReactElement,
@@ -7,6 +6,7 @@ import {
 } from 'react';
 import logEvent from 'api/common/logEvent';
 import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { Bookmark, PenLine, Plus, Search, Trash2 } from '@signozhq/icons';
@@ -121,6 +121,7 @@ function ViewsRail({
 		return (
 			<div key={row.id} className={cx(styles.row, { [styles.rowActive]: active })}>
 				<Button
+					size="md"
 					variant="ghost"
 					color="secondary"
 					className={styles.item}
@@ -147,33 +148,37 @@ function ViewsRail({
 							initialName={row.label}
 							testIdPrefix="rename-view"
 							trigger={
-								<Button
-									variant="ghost"
-									color="secondary"
-									size="icon"
-									className={styles.itemAction}
-									aria-label="Rename view"
-									title="Rename view"
-									onClick={(e): void => e.stopPropagation()}
-								>
-									<PenLine size={12} />
-								</Button>
+								<Tooltip title="Rename view">
+									<Button
+										variant="ghost"
+										color="secondary"
+										size="sm"
+										icon
+										className={styles.itemAction}
+										aria-label="Rename view"
+										onClick={(e): void => e.stopPropagation()}
+									>
+										<PenLine size={12} />
+									</Button>
+								</Tooltip>
 							}
 						/>
-						<Button
-							variant="ghost"
-							color="secondary"
-							size="icon"
-							className={cx(styles.itemAction, styles.itemActionDanger)}
-							aria-label="Delete view"
-							title="Delete view"
-							onClick={(e): void => {
-								e.stopPropagation();
-								onConfirmDelete(row.id, row.label);
-							}}
-						>
-							<Trash2 size={12} />
-						</Button>
+						<Tooltip title="Delete view">
+							<Button
+								variant="ghost"
+								color="secondary"
+								size="sm"
+								icon
+								className={cx(styles.itemAction, styles.itemActionDanger)}
+								aria-label="Delete view"
+								onClick={(e): void => {
+									e.stopPropagation();
+									onConfirmDelete(row.id, row.label);
+								}}
+							>
+								<Trash2 size={12} />
+							</Button>
+						</Tooltip>
 					</div>
 				)}
 			</div>
@@ -202,15 +207,18 @@ function ViewsRail({
 							confirmLabel="Save view"
 							testIdPrefix="save-view"
 							trigger={
-								<Button
-									variant="ghost"
-									color="secondary"
-									size="icon"
-									title="Save current filters as a view"
-									testId="dashboards-view-save-trigger"
-								>
-									<Plus size={14} />
-								</Button>
+								<Tooltip title="Save current filters as a view">
+									<Button
+										aria-label="Save current filters as a view"
+										variant="ghost"
+										color="secondary"
+										size="sm"
+										icon
+										testId="dashboards-view-save-trigger"
+									>
+										<Plus size={14} />
+									</Button>
+								</Tooltip>
 							}
 						/>
 					</div>

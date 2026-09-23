@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { Fragment } from 'react';
 import { Check } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import {
 	TEXT_BACKGROUND_PAIRS,
@@ -87,7 +86,7 @@ function BackgroundSwatches({
 
 				return (
 					<Fragment key={option}>
-						<TooltipSimple title={isBase ? BASE_TOOLTIPS[option] : title} arrow>
+						<Tooltip title={isBase ? BASE_TOOLTIPS[option] : title}>
 							<label
 								className={cx(styles.swatch, {
 									[styles.checkerboard]: option === TextBackgroundKind.None,
@@ -108,7 +107,7 @@ function BackgroundSwatches({
 								/>
 								{option === value && <Check size={14} />}
 							</label>
-						</TooltipSimple>
+						</Tooltip>
 						{index === DIVIDER_AFTER && <span className={styles.divider} />}
 					</Fragment>
 				);

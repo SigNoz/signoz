@@ -1,13 +1,7 @@
-// @ts-nocheck
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import FieldsSelector from 'components/FieldsSelector';
@@ -129,7 +123,8 @@ function TraceDetailsHeader({
 						<Button
 							variant="solid"
 							color="secondary"
-							size="icon"
+							size="sm"
+							icon
 							className={styles.backBtn}
 							onClick={handlePreviousBtnClick}
 							aria-label="Back"
@@ -153,20 +148,18 @@ function TraceDetailsHeader({
 						{!isFilterExpanded && (
 							<TooltipProvider>
 								<div className={styles.headerActions}>
-									<TooltipRoot>
-										<TooltipTrigger asChild>
-											<Button
-												variant="ghost"
-												size="icon"
-												color="secondary"
-												aria-label="Analytics"
-												onClick={handleToggleAnalytics}
-											>
-												<ChartPie size={14} />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent>Analytics</TooltipContent>
-									</TooltipRoot>
+									<Tooltip title="Analytics">
+										<Button
+											variant="ghost"
+											size="sm"
+											icon
+											color="secondary"
+											aria-label="Analytics"
+											onClick={handleToggleAnalytics}
+										>
+											<ChartPie size={14} />
+										</Button>
+									</Tooltip>
 									<TraceOptionsMenu
 										showTraceDetails={showTraceDetails}
 										onToggleTraceDetails={handleToggleTraceDetails}

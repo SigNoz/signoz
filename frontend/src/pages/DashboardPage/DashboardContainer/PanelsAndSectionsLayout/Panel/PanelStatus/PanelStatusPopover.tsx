@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { Color } from '@signozhq/design-tokens';
 import { CircleX, TriangleAlert } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import PanelStatusContent from './PanelStatusContent';
 import type { PanelStatusDetail, PanelStatusVariant } from './types';
@@ -35,12 +34,11 @@ function PanelStatusPopover({
 	const Icon = variant === 'error' ? CircleX : TriangleAlert;
 
 	return (
-		<TooltipSimple
+		<Tooltip
+			className={styles.tooltipContent}
 			title={<PanelStatusContent variant={variant} detail={detail} />}
 			side="top"
 			align="end"
-			arrow
-			tooltipContentProps={{ className: styles.tooltipContent }}
 		>
 			<span
 				className={styles.trigger}
@@ -49,7 +47,7 @@ function PanelStatusPopover({
 			>
 				<Icon size={16} color={color} />
 			</span>
-		</TooltipSimple>
+		</Tooltip>
 	);
 }
 

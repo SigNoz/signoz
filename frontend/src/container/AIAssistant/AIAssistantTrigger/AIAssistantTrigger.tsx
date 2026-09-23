@@ -1,8 +1,7 @@
-// @ts-nocheck
 import { useCallback } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import Noz from 'components/Noz/Noz';
@@ -44,15 +43,18 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 	}
 
 	return (
-		<TooltipSimple title={NOZ_TOOLTIP_TITLE}>
+		<Tooltip title={NOZ_TOOLTIP_TITLE}>
 			<Button
+				size="md"
 				variant="solid"
 				color="primary"
+				icon
 				className={`${styles.trigger} noz-wave`}
 				onClick={handleOpen}
 				aria-label="Open Noz"
-				prefix={<Noz size={24} />}
-			/>
-		</TooltipSimple>
+			>
+				<Noz size={24} />
+			</Button>
+		</Tooltip>
 	);
 }

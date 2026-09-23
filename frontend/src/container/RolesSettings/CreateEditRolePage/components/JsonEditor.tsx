@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
 	forwardRef,
 	useCallback,
@@ -12,7 +11,7 @@ import MEditor, { Monaco, OnMount } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import type { AuthtypesTransactionGroupDTO } from 'api/generated/services/sigNoz.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -164,8 +163,9 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 		return (
 			<div className={styles.jsonEditor} data-testid="json-editor">
 				<div className={styles.jsonEditorContainer}>
-					<TooltipSimple title={copied ? 'Copied!' : 'Copy JSON'}>
+					<Tooltip title={copied ? 'Copied!' : 'Copy JSON'}>
 						<Button
+							color="secondary"
 							variant="ghost"
 							size="sm"
 							className={styles.copyButton}
@@ -180,7 +180,7 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 								/>
 							)}
 						</Button>
-					</TooltipSimple>
+					</Tooltip>
 					<MEditor
 						value={jsonBuffer}
 						language="json"
