@@ -8,11 +8,12 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { useResizeObserver } from 'hooks/useDimensions';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
+import { LegendItem } from 'lib/uPlotV2/config/types';
 
 import { PieChartProps, PieSlice } from 'lib/visualization/charts/types';
 import { calculateChartDimensions } from 'lib/visualization/charts/utils';
 
-import { usePieInteractions } from 'lib/visualization/hooks/usePieInteractions';
+import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
 import PieArc from 'lib/visualization/charts/Pie/PieArc';
 import PieCenterLabel from 'lib/visualization/charts/Pie/PieCenterLabel';
 import styles from 'lib/visualization/charts/Pie/Pie.module.scss';
@@ -26,8 +27,8 @@ import {
  * Donut chart rendered with @visx. Splits its area into chart + legend with the
  * same `calculateChartDimensions` logic as the uPlot charts (right column /
  * up-to-two bottom rows), renders the shared chart Legend, and delegates the
- * arcs, centre total and interaction state to PieArc / PieCenterLabel /
- * usePieInteractions. Pure presentation — slices are pre-resolved by the caller.
+ * arcs and centre total to PieArc / PieCenterLabel. Pure presentation — slices
+ * are pre-resolved by the caller.
  */
 export default function Pie({
 	data,
@@ -39,14 +40,27 @@ export default function Pie({
 	onSliceClick,
 	'data-testid': testId,
 }: PieChartProps): JSX.Element {
-	const {
-		active,
-		setActive,
-		visibleData,
-		legendItems,
-		focusedSeriesIndex,
-		onLegendAction,
-	} = usePieInteractions(data, id);
+	const labels = useMemo(() => data.map((slice) => slice.label), [data]);
+
+	const { hiddenKeys, focusedSeriesIndex, setFocusedKey, onLegendAction } =
+		useLegendVisibility({ keys: labels, id });
+
+	const legendItems = useMemo<LegendItem[]>(
+		() =>
+			data.map((slice, index) => ({
+				seriesIndex: index,
+				label: slice.label,
+				color: slice.color,
+				show: !hiddenKeys.has(slice.label),
+			})),
+		[data, hiddenKeys],
+	);
+
+	// Hidden slices drop out so the remaining arcs + centre total recompute.
+	const visibleData = useMemo(
+		() => data.filter((slice) => !hiddenKeys.has(slice.label)),
+		[data, hiddenKeys],
+	);
 
 	const {
 		tooltipOpen,
@@ -75,9 +89,9 @@ export default function Pie({
 					containerWidth,
 					containerHeight,
 					legendConfig: { position },
-					seriesLabels: data.map((slice) => slice.label),
+					seriesLabels: labels,
 				}),
-			[containerWidth, containerHeight, position, data],
+			[containerWidth, containerHeight, position, labels],
 		);
 
 	// Donut geometry derived from the allocated chart box, sized to leave room
@@ -93,7 +107,8 @@ export default function Pie({
 	);
 
 	const labelColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400;
-	const activeColor = active?.color ?? null;
+	const activeColor =
+		focusedSeriesIndex !== null ? data[focusedSeriesIndex].color : null;
 
 	const handleSliceEnter = useCallback(
 		(slice: PieSlice, centroidX: number, centroidY: number): void => {
@@ -110,15 +125,15 @@ export default function Pie({
 				tooltipTop: centroidY + height / 2,
 				tooltipLeft: centroidX + width / 2,
 			});
-			setActive(slice);
+			setFocusedKey(slice.label);
 		},
-		[showTooltip, setActive, yAxisUnit, decimalPrecision, height, width],
+		[showTooltip, setFocusedKey, yAxisUnit, decimalPrecision, height, width],
 	);
 
 	const handleSliceLeave = useCallback((): void => {
 		hideTooltip();
-		setActive(null);
-	}, [hideTooltip, setActive]);
+		setFocusedKey(null);
+	}, [hideTooltip, setFocusedKey]);
 
 	if (!data.length) {
 		return (

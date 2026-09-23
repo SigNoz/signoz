@@ -1,7 +1,21 @@
 import { act, renderHook } from '@testing-library/react';
 import { LegendAction } from 'lib/uPlotV2/components/types';
+import {
+	getStoredSeriesVisibility,
+	updateSeriesVisibilityToLocalStorage,
+} from 'lib/visualization/panels/utils/legendVisibilityUtils';
 
 import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
+
+jest.mock('lib/visualization/panels/utils/legendVisibilityUtils');
+
+const mockGetStored = getStoredSeriesVisibility as jest.MockedFunction<
+	typeof getStoredSeriesVisibility
+>;
+const mockUpdateStored =
+	updateSeriesVisibilityToLocalStorage as jest.MockedFunction<
+		typeof updateSeriesVisibilityToLocalStorage
+	>;
 
 const KEYS = ['cart', 'checkout', 'payments'];
 
@@ -18,6 +32,11 @@ function render(
 }
 
 describe('useLegendVisibility', () => {
+	beforeEach(() => {
+		mockGetStored.mockReturnValue(null);
+		mockUpdateStored.mockReset();
+	});
+
 	it('enables every entry to begin with', () => {
 		const { result } = render();
 
@@ -219,27 +238,57 @@ describe('useLegendVisibility', () => {
 		expect(result.current.focusedSeriesIndex).toBeNull();
 	});
 
-	it('reports every new hidden set to the caller', () => {
-		const onHiddenChange = jest.fn();
-		const { result } = render({ onHiddenChange });
+	describe('persistence', () => {
+		it('writes the selection under the widget id', () => {
+			const { result } = render({ id: 'panel-1' });
 
-		act(() =>
-			result.current.onLegendAction({
-				type: LegendAction.TOGGLE,
-				seriesIndex: 2,
-			}),
-		);
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.TOGGLE,
+					seriesIndex: 2,
+				}),
+			);
 
-		expect(onHiddenChange).toHaveBeenCalledWith(new Set(['checkout']));
-	});
+			expect(mockUpdateStored).toHaveBeenLastCalledWith('panel-1', [
+				{ label: 'cart', show: true },
+				{ label: 'checkout', show: false },
+				{ label: 'payments', show: true },
+			]);
+		});
 
-	it('restores a hidden set without reporting it back', () => {
-		const onHiddenChange = jest.fn();
-		const { result } = render({ onHiddenChange });
+		it('does not write without an id', () => {
+			const { result } = render();
 
-		act(() => result.current.setHiddenKeys(new Set(['cart'])));
+			act(() =>
+				result.current.onLegendAction({
+					type: LegendAction.TOGGLE,
+					seriesIndex: 2,
+				}),
+			);
 
-		expect(result.current.visibleKeys).toStrictEqual(['checkout', 'payments']);
-		expect(onHiddenChange).not.toHaveBeenCalled();
+			expect(mockUpdateStored).not.toHaveBeenCalled();
+		});
+
+		it('rehydrates the selection from the store, matched by label', () => {
+			mockGetStored.mockReturnValue([
+				{ label: 'cart', show: true },
+				{ label: 'checkout', show: false },
+				{ label: 'payments', show: true },
+			]);
+
+			const { result } = render({ id: 'panel-1' });
+
+			expect(result.current.visibleKeys).toStrictEqual(['cart', 'payments']);
+		});
+
+		it('leaves the stored selection alone when it already matches', () => {
+			mockGetStored.mockReturnValue([{ label: 'cart', show: false }]);
+
+			const { result, rerender } = render({ id: 'panel-1' });
+			const first = result.current.hiddenKeys;
+			rerender();
+
+			expect(result.current.hiddenKeys).toBe(first);
+		});
 	});
 });

@@ -97,6 +97,7 @@ export interface HistogramChartProps extends ChartWrapperProps {
  * rebuilds the config, which recreates the plot.
  */
 export interface HeatmapChartProps {
+	/** Widget id; the group selection persists under it. */
 	id: string;
 	/** Ascending. N boundaries describe N+1 rows. */
 	buckets: number[];
@@ -118,8 +119,8 @@ export interface HeatmapChartProps {
 	timezone?: Timezone;
 	/** Colour bar below the grid. Default true. */
 	showVisualMap?: boolean;
-	/** Default true; hidden anyway when there is only one group. Every group starts
-	 *  enabled — the label isolates one, the marker excludes one. */
+	/** Default true; hidden anyway when there is only one group. The label isolates
+	 *  one, the marker excludes one. */
 	showLegend?: boolean;
 	legendPosition?: LegendPosition;
 	/** Default true. */

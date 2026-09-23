@@ -101,7 +101,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 		visibleKeys: visibleGroups,
 		focusedSeriesIndex,
 		onLegendAction,
-	} = useLegendVisibility({ keys: groups, indexOffset: 1 });
+	} = useLegendVisibility({ keys: groups, indexOffset: 1, id });
 
 	const grid = useMemo(
 		() => resolveHeatmapGrid({ buckets, step, series, visibleGroups }),
