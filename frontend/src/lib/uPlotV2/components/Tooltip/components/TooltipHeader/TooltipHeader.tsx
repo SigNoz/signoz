@@ -19,6 +19,7 @@ interface TooltipHeaderProps {
 	isPinned: boolean;
 	activeItem: TooltipContentItem | null;
 	headerRowClassName?: string;
+	/** Overrides the default, which drops the date part for points on the current day. */
 	dateFormat?: string;
 }
 
@@ -29,7 +30,7 @@ export default function TooltipHeader({
 	isPinned,
 	activeItem,
 	headerRowClassName,
-	dateFormat = DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS,
+	dateFormat,
 }: TooltipHeaderProps): JSX.Element {
 	const { timezone: userTimezone } = useTimezone();
 	const resolvedTimezone = timezone?.value ?? userTimezone.value;
@@ -46,9 +47,14 @@ export default function TooltipHeader({
 		if (timestamp == null) {
 			return null;
 		}
-		return dayjs(timestamp * 1000)
-			.tz(resolvedTimezone)
-			.format(dateFormat);
+		const pointTime = dayjs(timestamp * 1000).tz(resolvedTimezone);
+		const isToday = pointTime.isSame(dayjs().tz(resolvedTimezone), 'day');
+		return pointTime.format(
+			dateFormat ??
+				(isToday
+					? DATE_TIME_FORMATS.TIME_SECONDS
+					: DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS),
+		);
 	}, [
 		resolvedTimezone,
 		uPlotInstance.data,
