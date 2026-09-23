@@ -10,6 +10,11 @@ export const MIN_LEGEND_ITEM_WIDTH = 110;
 /** Marker + row padding, on top of the estimated label width. */
 export const LEGEND_ITEM_EXTRA_WIDTH = 16;
 
+/** Must match `.gridList`'s column gap and `.scroller`'s padding-right, or the
+ * reserved row count disagrees with the grid that gets laid out. */
+export const LEGEND_COLUMN_GAP = 8;
+export const LEGEND_SCROLLER_PADDING_RIGHT = 4;
+
 /** Must match `.row`'s height and the grid's row gap, or the reserved
  * rectangle clips a row. */
 export const LEGEND_ROW_HEIGHT = 28;
