@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { useCallback, useMemo } from 'react';
 import { JSONTree, KeyPath } from 'react-json-tree';
 import { useCopyToClipboard } from 'react-use';
 import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
-import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple as Dropdown } from 'components/DropdownMenu/DropdownMenuSimple';
 import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -238,9 +237,6 @@ function PrettyView({
 						menu={{ items: menuItems }}
 						align="start"
 						className="pretty-view-actions-dropdown"
-						// Stop click bubbling so item clicks don't reach clickable ancestors
-						// of the trigger through the React tree.
-						onClick={(e: React.MouseEvent): void => e.stopPropagation()}
 					>
 						<span
 							className="pretty-view__actions"

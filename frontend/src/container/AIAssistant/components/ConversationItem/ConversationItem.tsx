@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import cx from 'classnames';
@@ -7,7 +6,7 @@ import { getAbsoluteUrl } from 'utils/basePath';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
 
 import {
 	Archive,
@@ -208,17 +207,18 @@ export default function ConversationItem({
 					<DropdownMenuSimple
 						menu={{ items: menuItems }}
 						align="end"
-						sideOffset={4}
 						className={styles.menu}
 					>
 						<Button
 							variant="link"
-							size="icon"
-							color="none"
+							size="sm"
+							icon
+							color="secondary"
 							className={styles.btn}
 							aria-label="Conversation actions"
-							prefix={<EllipsisVertical size={12} />}
-						/>
+						>
+							<EllipsisVertical size={12} />
+						</Button>
 					</DropdownMenuSimple>
 				</div>
 			)}

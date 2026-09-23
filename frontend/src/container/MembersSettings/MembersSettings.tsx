@@ -1,9 +1,11 @@
-// @ts-nocheck
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenuSimple,
+	type MenuItem,
+} from 'components/DropdownMenu/DropdownMenuSimple';
 import { Input } from '@signozhq/ui/input';
 import { useListUsers } from 'api/generated/services/users';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
@@ -180,6 +182,7 @@ function MembersSettings(): JSX.Element {
 						className="members-filter-dropdown"
 					>
 						<Button
+							size="md"
 							variant="solid"
 							color="secondary"
 							className="members-filter-trigger"
@@ -204,6 +207,7 @@ function MembersSettings(): JSX.Element {
 					</div>
 
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
 						onClick={(): void => void setIsInviteModalOpen(true)}

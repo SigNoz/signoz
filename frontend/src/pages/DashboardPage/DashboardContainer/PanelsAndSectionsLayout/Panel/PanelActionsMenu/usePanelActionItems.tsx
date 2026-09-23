@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { type ReactElement, type ReactNode, useCallback, useMemo } from 'react';
 import {
 	Bell,
@@ -8,7 +7,7 @@ import {
 	PenLine,
 	Trash2,
 } from '@signozhq/icons';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
+import type { MenuItem } from 'components/DropdownMenu/DropdownMenuSimple';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	type ConfirmableAction,

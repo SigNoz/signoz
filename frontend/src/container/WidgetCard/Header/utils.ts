@@ -1,5 +1,4 @@
-// @ts-nocheck
-import type { MenuItem as DropdownMenuItem } from '@signozhq/ui/dropdown-menu';
+import type { MenuItem as DropdownMenuItem } from 'components/DropdownMenu/DropdownMenuSimple';
 
 import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 import { MenuItem } from 'container/WidgetCard/Header/types';

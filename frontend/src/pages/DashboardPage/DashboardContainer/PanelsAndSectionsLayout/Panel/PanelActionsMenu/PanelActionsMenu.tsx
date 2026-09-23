@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { EllipsisVertical } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
@@ -50,22 +49,27 @@ function PanelActionsMenu({
 				align="end"
 				className={menuStyles.menuContent}
 			>
-				<Button
-					type="button"
-					variant="ghost"
-					color="secondary"
-					size="icon"
-					className={styles.trigger}
-					aria-label="Panel actions"
-					data-testid={`panel-actions-${panelId}`}
+				<span
 					// Stop pointer/mouse down from reaching the RGL drag handle this
 					// button lives inside, so opening the menu never starts a panel drag.
 					onPointerDown={(e): void => e.stopPropagation()}
 					onMouseDown={(e): void => e.stopPropagation()}
 					onClick={(e): void => e.stopPropagation()}
 				>
-					<EllipsisVertical size={14} />
-				</Button>
+					<Button
+						type="button"
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						icon
+						className={styles.trigger}
+						aria-label="Panel actions"
+						testId={`panel-actions-${panelId}`}
+						onClick={(e): void => e.stopPropagation()}
+					>
+						<EllipsisVertical size={14} />
+					</Button>
+				</span>
 			</DropdownMenuSimple>
 			<ConfirmDeleteDialog
 				open={deleteConfirm.open}

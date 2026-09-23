@@ -1,6 +1,5 @@
-// @ts-nocheck
 import { FolderInput } from '@signozhq/icons';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
+import type { MenuItem } from 'components/DropdownMenu/DropdownMenuSimple';
 
 import { findRootSection, type DashboardSection } from '../../../utils';
 import type { MovePanelArgs } from '../hooks/useMovePanelToSection';

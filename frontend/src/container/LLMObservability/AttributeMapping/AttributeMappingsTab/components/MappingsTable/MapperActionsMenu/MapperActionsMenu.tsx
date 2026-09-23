@@ -1,8 +1,10 @@
-// @ts-nocheck
 import { useMemo } from 'react';
 import { EllipsisVertical, Pencil, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenuSimple,
+	type MenuItem,
+} from 'components/DropdownMenu/DropdownMenuSimple';
 
 import type { DraftMapper } from 'container/LLMObservability/AttributeMapping/types';
 
@@ -41,7 +43,8 @@ function MapperActionsMenu({
 			<Button
 				variant="ghost"
 				color="secondary"
-				size="icon"
+				size="sm"
+				icon
 				aria-label="Mapping actions"
 				testId={`mapper-actions-${mapper.localId}`}
 			>

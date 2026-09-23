@@ -1,11 +1,10 @@
-// @ts-nocheck
 import {
 	CloudDownload,
 	FileCode,
 	FileImage,
 	FileSpreadsheet,
 } from '@signozhq/icons';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
+import type { MenuItem } from 'components/DropdownMenu/DropdownMenuSimple';
 import {
 	DownloadFormat,
 	type PanelActionCapabilities,

@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -168,11 +167,13 @@ function ActionsMenu({
 		<div onClick={handleClick}>
 			<DropdownMenuSimple menu={{ items: menuItems }} align="end">
 				<Button
+					aria-label="Action"
 					variant="outlined"
 					color="secondary"
-					size="icon"
+					size="sm"
+					icon
 					className={styles.actionButton}
-					data-testid="alert-actions"
+					testId="alert-actions"
 				>
 					<Ellipsis size={16} />
 				</Button>

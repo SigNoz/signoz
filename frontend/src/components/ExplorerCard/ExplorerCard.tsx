@@ -1,8 +1,10 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button, Col, Popover, Row, Select, Space } from 'antd';
-import { DropdownMenuSimple, type MenuProps } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenuSimple,
+	type MenuProps,
+} from 'components/DropdownMenu/DropdownMenuSimple';
 import { Typography } from '@signozhq/ui/typography';
 import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';

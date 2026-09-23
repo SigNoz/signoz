@@ -1,7 +1,9 @@
-// @ts-nocheck
 import { useMemo, useState } from 'react';
 import { Button, Form, Space, Tooltip } from 'antd';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenuSimple,
+	type MenuItem,
+} from 'components/DropdownMenu/DropdownMenuSimple';
 import { Divider } from '@signozhq/ui/divider';
 import { Switch } from '@signozhq/ui/switch';
 import cx from 'classnames';
@@ -201,6 +203,9 @@ function FunnelStep({
 				<div className="funnel-step__footer">
 					<div className="error">
 						<Switch
+							color="primary"
+							textPlacement="right"
+							disabledTooltip={undefined}
 							className="error__switch"
 							value={stepData.has_errors}
 							disabled={!hasEditPermission}

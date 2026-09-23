@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { ChevronDown, Globe } from '@signozhq/icons';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
 import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import TimeItems, {

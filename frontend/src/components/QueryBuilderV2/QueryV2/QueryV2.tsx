@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
 import {
 	ForwardedRef,
@@ -7,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { memo, useEffect, useState } from 'react';
 import type {
 	TableColumnGroupType as ColumnGroupType,
@@ -6,7 +5,10 @@ import type {
 	TableColumnType as ColumnType,
 } from 'antd';
 import { Button, Flex } from 'antd';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenuSimple,
+	type MenuItem,
+} from 'components/DropdownMenu/DropdownMenuSimple';
 import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
@@ -96,6 +98,8 @@ function DynamicColumnTable({
 				>
 					<div>{column.title?.toString()}</div>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						value={columnsData?.findIndex((c) => c.key === column.key) !== -1}
 						onChange={onToggleHandler(index, column)}
 					/>

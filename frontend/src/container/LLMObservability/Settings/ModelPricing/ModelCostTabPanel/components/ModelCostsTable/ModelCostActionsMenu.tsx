@@ -1,8 +1,10 @@
-// @ts-nocheck
 import { useMemo } from 'react';
 import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenuSimple,
+	type MenuItem,
+} from 'components/DropdownMenu/DropdownMenuSimple';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 import styles from './ModelCostActionsMenu.module.scss';
@@ -49,7 +51,8 @@ function ModelCostActionsMenu({
 			<Button
 				variant="ghost"
 				color="secondary"
-				size="icon"
+				size="sm"
+				icon
 				className={styles.actionButton}
 				aria-label="Model cost actions"
 				testId={`model-cost-actions-${rule.id}`}

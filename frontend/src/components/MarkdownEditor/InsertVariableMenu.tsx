@@ -1,8 +1,10 @@
-// @ts-nocheck
 import { useMemo, useState } from 'react';
-import { ChevronDown, DollarSign, Search } from '@signozhq/icons';
+import { ChevronDown, DollarSign } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenuSimple,
+	type MenuItem,
+} from 'components/DropdownMenu/DropdownMenuSimple';
 
 import type { EditorVariable } from './types';
 
@@ -67,12 +69,12 @@ function InsertVariableMenu({
 				items,
 				search: {
 					placeholder: 'Search variables',
-					searchIcon: <Search size={14} />,
 					onSearchChange: setSearch,
 				},
 			}}
 		>
 			<Button
+				disabledTooltip={undefined}
 				type="button"
 				variant="outlined"
 				color="secondary"
@@ -81,7 +83,7 @@ function InsertVariableMenu({
 				prefix={<DollarSign size={14} className={styles.insertVariableIcon} />}
 				suffix={<ChevronDown size={14} />}
 				className={styles.insertVariable}
-				data-testid="markdown-insert-variable"
+				testId="markdown-insert-variable"
 			>
 				Insert variable
 			</Button>

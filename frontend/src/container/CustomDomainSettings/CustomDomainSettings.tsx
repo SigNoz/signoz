@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useMemo, useState } from 'react';
 import {
 	Check,
@@ -12,11 +11,7 @@ import {
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuTrigger,
-} from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { toast } from '@signozhq/ui/sonner';
 import { Skeleton } from 'antd';
 import {
@@ -49,6 +44,7 @@ function DomainUpdateToast({
 			</span>
 			<div className="custom-domain-toast-actions">
 				<Button
+					color="secondary"
 					variant="ghost"
 					size="sm"
 					className="custom-domain-toast-visit-btn"
@@ -61,15 +57,18 @@ function DomainUpdateToast({
 					Visit new URL
 				</Button>
 				<Button
+					color="secondary"
 					variant="ghost"
-					size="icon"
+					size="sm"
+					icon
 					className="custom-domain-toast-dismiss-btn"
 					onClick={(): void => {
 						toast.dismiss(toastId);
 					}}
 					aria-label="Dismiss"
-					prefix={<X size={14} />}
-				/>
+				>
+					<X size={14} />
+				</Button>
 			</div>
 		</div>
 	);
@@ -182,6 +181,33 @@ export default function CustomDomainSettings(): JSX.Element {
 	const workspaceName =
 		org?.[0]?.displayName || customDomainSubdomain || activeHost?.name;
 
+	const workspaceUrlItems: DropdownItemType[] = [
+		{
+			type: 'group',
+			value: 'all-workspace-urls',
+			label: 'All Workspace URLs',
+			items: sortedHosts.map((host) => ({
+				type: 'link',
+				value: host.name,
+				label: stripProtocol(host.url),
+				suffix:
+					host.name === activeHost?.name ? (
+						<Check size={14} />
+					) : (
+						<ExternalLink size={12} />
+					),
+				render: (
+					<a
+						href={host.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						aria-label={stripProtocol(host.url)}
+					/>
+				),
+			})),
+		},
+	];
+
 	if (isLoadingHosts) {
 		return (
 			<div className="custom-domain-card custom-domain-card--loading">
@@ -206,54 +232,25 @@ export default function CustomDomainSettings(): JSX.Element {
 							!workspaceName ? 'workspace-name-hidden' : ''
 						}`}
 					>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button
-									variant="link"
-									color="none"
-									data-testid="custom-domain-menu-trigger"
-									disabled={isFetchingHosts}
-								>
-									<Link2 size={12} />
-									<span>{stripProtocol(activeHost?.url ?? '')}</span>
-									<ChevronDown size={12} />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="start">
-								<div className="workspace-url-dropdown">
-									<span className="workspace-url-dropdown-header">
-										All Workspace URLs
-									</span>
-									<div className="workspace-url-dropdown-divider" />
-									{sortedHosts.map((host) => {
-										const isActive = host.name === activeHost?.name;
-										return (
-											<a
-												key={host.name}
-												href={host.url}
-												target="_blank"
-												rel="noopener noreferrer"
-												className={`workspace-url-dropdown-item${
-													isActive ? ' workspace-url-dropdown-item--active' : ''
-												}`}
-											>
-												<span className="workspace-url-dropdown-item-label">
-													{stripProtocol(host.url ?? '')}
-												</span>
-												{isActive ? (
-													<Check size={14} className="workspace-url-dropdown-item-check" />
-												) : (
-													<ExternalLink
-														size={12}
-														className="workspace-url-dropdown-item-external"
-													/>
-												)}
-											</a>
-										);
-									})}
-								</div>
-							</DropdownMenuContent>
-						</DropdownMenu>
+						<Dropdown
+							items={workspaceUrlItems}
+							nativeButton
+							align="start"
+							side="bottom"
+						>
+							<Button
+								disabledTooltip={undefined}
+								size="md"
+								variant="link"
+								color="secondary"
+								testId="custom-domain-menu-trigger"
+								disabled={isFetchingHosts}
+							>
+								<Link2 size={12} />
+								<span>{stripProtocol(activeHost?.url ?? '')}</span>
+								<ChevronDown size={12} />
+							</Button>
+						</Dropdown>
 						<span className="custom-domain-card-meta-timezone">
 							<Clock size={11} />
 							{timezone.offset}
@@ -262,6 +259,8 @@ export default function CustomDomainSettings(): JSX.Element {
 				</div>
 
 				<Button
+					disabledTooltip={undefined}
+					size="md"
 					variant="solid"
 					color="secondary"
 					prefix={<FilePenLine size={12} />}

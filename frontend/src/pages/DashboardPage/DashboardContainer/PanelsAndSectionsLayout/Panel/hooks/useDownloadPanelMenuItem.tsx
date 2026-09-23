@@ -1,6 +1,5 @@
-// @ts-nocheck
 import { useCallback, useMemo } from 'react';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
+import type { MenuItem } from 'components/DropdownMenu/DropdownMenuSimple';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	DownloadFormat,

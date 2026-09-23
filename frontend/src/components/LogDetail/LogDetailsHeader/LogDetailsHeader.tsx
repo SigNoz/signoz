@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { Button } from '@signozhq/ui/button';
 import { Divider } from '@signozhq/ui/divider';
-import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple as Dropdown } from 'components/DropdownMenu/DropdownMenuSimple';
 import { Typography } from '@signozhq/ui/typography';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { aggregateAttributesResourcesToString } from 'container/LogDetailedView/utils';
 import { toast } from '@signozhq/ui/sonner';
@@ -23,8 +22,6 @@ import { MouseEvent, MouseEventHandler } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
 import styles from './LogDetailsHeader.module.scss';
-
-const TOOLTIP_CONTENT_PROPS = { className: styles.tooltipContent };
 
 interface LogDetailsHeaderProps {
 	log: ILog;
@@ -92,6 +89,7 @@ function LogDetailsHeader({
 			<div className={styles.actions}>
 				{showOpenInExplorer && (
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						prefix={<Compass size={16} />}
@@ -105,47 +103,59 @@ function LogDetailsHeader({
 					menu={{ items: menuItems }}
 					align="end"
 					className={styles.dropdownContent}
-					onClick={(e: MouseEvent): void => e.stopPropagation()}
 				>
 					<Button
+						size="md"
 						variant="link"
 						color="secondary"
-						prefix={<Ellipsis size={16} />}
-						data-testid="log-details-header-menu"
-					/>
+						icon
+						aria-label="Log actions"
+						testId="log-details-header-menu"
+						onClick={(e: MouseEvent): void => e.stopPropagation()}
+					>
+						<Ellipsis size={16} />
+					</Button>
 				</Dropdown>
 
 				<div className={styles.arrows}>
-					<TooltipSimple
+					<Tooltip
 						title="Move to previous log"
 						side="top"
 						open={isPrevDisabled ? false : undefined}
-						tooltipContentProps={TOOLTIP_CONTENT_PROPS}
 					>
 						<Button
+							disabledTooltip={undefined}
+							size="md"
 							variant="outlined"
 							color="secondary"
-							prefix={<ChevronUp size={14} />}
+							icon
+							aria-label="Move to previous log"
 							disabled={isPrevDisabled}
 							onClick={onNavigatePrev}
-							data-testid="log-details-header-prev"
-						/>
-					</TooltipSimple>
-					<TooltipSimple
+							testId="log-details-header-prev"
+						>
+							<ChevronUp size={14} />
+						</Button>
+					</Tooltip>
+					<Tooltip
 						title="Move to next log"
 						side="top"
 						open={isNextDisabled ? false : undefined}
-						tooltipContentProps={TOOLTIP_CONTENT_PROPS}
 					>
 						<Button
+							disabledTooltip={undefined}
+							size="md"
 							variant="outlined"
 							color="secondary"
-							prefix={<ChevronDown size={14} />}
+							icon
+							aria-label="Move to next log"
 							disabled={isNextDisabled}
 							onClick={onNavigateNext}
-							data-testid="log-details-header-next"
-						/>
-					</TooltipSimple>
+							testId="log-details-header-next"
+						>
+							<ChevronDown size={14} />
+						</Button>
+					</Tooltip>
 				</div>
 			</div>
 		</div>

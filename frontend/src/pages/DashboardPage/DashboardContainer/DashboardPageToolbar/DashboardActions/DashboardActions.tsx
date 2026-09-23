@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
 	type ReactElement,
 	type ReactNode,
@@ -22,8 +21,8 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
+import type { MenuItem } from 'components/DropdownMenu/DropdownMenuSimple';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import { cloneDashboardV2 } from 'api/generated/services/dashboard';
@@ -309,6 +308,7 @@ function DashboardActions({
 			</DropdownMenuSimple>
 			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 				<Button
+					disabledTooltip={undefined}
 					variant="solid"
 					color="secondary"
 					className={styles.toolbarButton}
@@ -345,6 +345,7 @@ function DashboardActions({
 			</Button>
 			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 				<Button
+					disabledTooltip={undefined}
 					variant="solid"
 					color="primary"
 					onClick={onAddPanel}

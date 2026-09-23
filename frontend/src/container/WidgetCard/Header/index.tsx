@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import {
@@ -17,7 +16,7 @@ import {
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Tooltip } from 'antd';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
 import { Typography } from '@signozhq/ui/typography';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import ErrorPopover from 'components/ErrorPopover/ErrorPopover';

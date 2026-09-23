@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { type ReactElement, type ReactNode, useMemo } from 'react';
 import { Copy, EllipsisVertical, PenLine, Plus, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
+import type { MenuItem } from 'components/DropdownMenu/DropdownMenuSimple';
 
 import MenuActionItem from '../../../components/MenuActionItem/MenuActionItem';
 import menuStyles from '../../../components/MenuActionItem/MenuActionItem.module.scss';
@@ -103,10 +102,11 @@ function SectionActionsMenu({
 				type="button"
 				variant="ghost"
 				color="secondary"
-				size="icon"
+				size="sm"
+				icon
 				className={styles.trigger}
 				aria-label="Section actions"
-				data-testid={`dashboard-section-actions-${sectionId}`}
+				testId={`dashboard-section-actions-${sectionId}`}
 			>
 				<EllipsisVertical size={14} />
 			</Button>

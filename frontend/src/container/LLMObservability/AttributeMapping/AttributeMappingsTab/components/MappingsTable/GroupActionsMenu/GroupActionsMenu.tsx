@@ -1,8 +1,10 @@
-// @ts-nocheck
 import { useMemo } from 'react';
 import { EllipsisVertical, Pencil, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenuSimple,
+	type MenuItem,
+} from 'components/DropdownMenu/DropdownMenuSimple';
 
 import type { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
 
@@ -41,9 +43,10 @@ function GroupActionsMenu({
 			<Button
 				variant="ghost"
 				color="secondary"
-				size="icon"
+				size="sm"
+				icon
 				aria-label="Group actions"
-				data-testid={`group-actions-${group.localId}`}
+				testId={`group-actions-${group.localId}`}
 			>
 				<EllipsisVertical size={16} />
 			</Button>

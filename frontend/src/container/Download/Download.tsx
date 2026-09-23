@@ -1,7 +1,9 @@
-// @ts-nocheck
 import { useState } from 'react';
 import { CloudDownload } from '@signozhq/icons';
-import { DropdownMenuSimple, type MenuProps } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenuSimple,
+	type MenuProps,
+} from 'components/DropdownMenu/DropdownMenuSimple';
 import { Button, Flex } from 'antd';
 import { unparse } from 'papaparse';
 

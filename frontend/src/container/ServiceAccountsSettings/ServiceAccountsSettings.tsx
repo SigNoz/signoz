@@ -1,9 +1,11 @@
-// @ts-nocheck
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenuSimple,
+	type MenuItem,
+} from 'components/DropdownMenu/DropdownMenuSimple';
 import { Input } from '@signozhq/ui/input';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
 import { invalidateListServiceAccounts } from 'api/generated/services/serviceaccount';
@@ -236,6 +238,8 @@ function ServiceAccountsSettings(): JSX.Element {
 								className="sa-settings-filter-dropdown"
 							>
 								<Button
+									disabledTooltip={undefined}
+									size="md"
 									variant="solid"
 									color="secondary"
 									className="sa-settings-filter-trigger"
@@ -269,6 +273,7 @@ function ServiceAccountsSettings(): JSX.Element {
 					</div>
 
 					<AuthZButton
+						size="md"
 						checks={[SACreatePermission]}
 						variant="solid"
 						color="primary"

@@ -1,8 +1,7 @@
-// @ts-nocheck
 import { useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
 import { Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import {

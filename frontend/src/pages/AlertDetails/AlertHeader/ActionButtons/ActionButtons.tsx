@@ -1,8 +1,10 @@
-// @ts-nocheck
 import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import {
+	DropdownMenuSimple,
+	type MenuItem,
+} from 'components/DropdownMenu/DropdownMenuSimple';
 import { Divider } from '@signozhq/ui/divider';
 import { Switch } from '@signozhq/ui/switch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -119,6 +121,8 @@ function AlertActionButtons({
 				<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
 					{isAlertRuleDisabled !== undefined && (
 						<Switch
+							color="primary"
+							textPlacement="right"
 							onChange={toggleAlertRule}
 							value={!isAlertRuleDisabled}
 							testId="alert-actions-toggle"

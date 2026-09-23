@@ -1,9 +1,8 @@
-// @ts-nocheck
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Color } from '@signozhq/design-tokens';
 import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
 import { GroupedStatusCounts } from 'container/InfraMonitoringK8sV2/components/GroupedStatusCounts';
 import type { StatusCountItem } from 'container/InfraMonitoringK8sV2/components/GroupedStatusCounts';
 import { ValidateColumnValueWrapper } from 'container/InfraMonitoringK8sV2/components/ValidateColumnValueWrapper';
@@ -105,7 +104,8 @@ const rowActions = (): JSX.Element => (
 		<Button
 			aria-label="Service actions"
 			color="secondary"
-			size="icon"
+			size="sm"
+			icon
 			variant="outlined"
 		>
 			<Ellipsis size={16} />
