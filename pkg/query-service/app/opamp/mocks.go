@@ -129,6 +129,12 @@ func (ta *MockAgentConfigProvider) HasReportedDeploymentStatus(orgID valuer.UUID
 }
 
 // AgentConfigProvider interface
+func (ta *MockAgentConfigProvider) PreviewAgentConfig(orgId valuer.UUID, baseConfYaml []byte) ([]byte, error) {
+	recommendedYaml, _, err := ta.RecommendAgentConfig(orgId, baseConfYaml)
+	return recommendedYaml, err
+}
+
+// AgentConfigProvider interface
 func (ta *MockAgentConfigProvider) GetDeployStatusByHash(_ context.Context, _ valuer.UUID, _ string) (opamptypes.DeployStatus, error) {
 	return opamptypes.DeployStatusUnknown, nil
 }

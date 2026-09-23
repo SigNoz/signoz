@@ -24,6 +24,8 @@ type Agent struct {
 	remoteConfig *protobufs.AgentRemoteConfig
 	Status       *protobufs.AgentToServer
 
+	reconnectConfigChecked bool
+
 	// can this agent be load balancer
 	CanLB bool
 
@@ -291,6 +293,11 @@ func (agent *Agent) processStatusUpdate(
 
 		// We need to recalculate the config.
 		configChanged = agent.updateRemoteConfig(configProvider)
+	} else if agent.remoteConfig == nil && !agent.reconnectConfigChecked && agent.Config != "" {
+		// A running agent reconnected after a server restart; settings may have
+		// changed while it was away (e.g. startup reconciliation).
+		agent.reconnectConfigChecked = true
+		configChanged = agent.updateRemoteConfigIfStale(configProvider)
 	}
 
 	// If remote config is changed and different from what the Agent has then
@@ -310,6 +317,20 @@ func (agent *Agent) processStatusUpdate(
 			configProvider.ReportConfigDeploymentStatus,
 		)
 	}
+}
+
+// updateRemoteConfigIfStale records a deployment only when the recommendation
+// differs from the agent's effective config.
+func (agent *Agent) updateRemoteConfigIfStale(configProvider AgentConfigProvider) bool {
+	recommendedConfig, err := configProvider.PreviewAgentConfig(agent.OrgID, []byte(agent.Config))
+	if err != nil {
+		agent.logger.Error("could not preview config recommendation for agent", "agent_id", agent.AgentID, errors.Attr(err))
+		return false
+	}
+	if string(recommendedConfig) == agent.Config {
+		return false
+	}
+	return agent.updateRemoteConfig(configProvider)
 }
 
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
