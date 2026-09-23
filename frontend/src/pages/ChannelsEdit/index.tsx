@@ -153,11 +153,12 @@ function ChannelsEdit(): JSX.Element {
 		if (value && 'telegram_configs' in value) {
 			const [telegramConfig] = value.telegram_configs;
 			channel = {
-				...telegramConfig,
+				name: value.name,
 				bot_token: telegramConfig.token,
 				chat_id: telegramConfig.chat,
 				message_thread_id: telegramConfig.message_thread_id,
 				message: telegramConfig.message,
+				send_resolved: telegramConfig.send_resolved,
 			};
 			return {
 				type: ChannelType.Telegram,

@@ -277,6 +277,22 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Message:         valuer.MustNewUnsetOrNonEmptyString("telegram message"),
 			},
 		},
+		{
+			description: "telegram without thread id",
+			kind:        ChannelKindTelegram,
+			spec: &ChannelTelegramConfig{
+				SendResolved: &sendResolved,
+				BotToken:     "123456:ABC-DEF",
+				ChatID:       12345,
+				Message:      valuer.MustNewUnsetOrNonEmptyString("telegram message"),
+			},
+			expectedRoundTrip: &ChannelTelegramConfig{
+				SendResolved: &sendResolved,
+				BotToken:     "123456:ABC-DEF",
+				ChatID:       12345,
+				Message:      valuer.MustNewUnsetOrNonEmptyString("telegram message"),
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
