@@ -300,14 +300,6 @@ describe('PrivateRoute', () => {
 			);
 		});
 
-		it('should redirect /logs-explorer/live to /logs/logs-explorer/live', () => {
-			renderPrivateRoute({ initialRoute: '/logs-explorer/live' });
-
-			expect(screen.getByTestId('location-display')).toHaveTextContent(
-				'/logs/logs-explorer/live',
-			);
-		});
-
 		it('should redirect /logs-save-views to /logs/saved-views', () => {
 			renderPrivateRoute({ initialRoute: '/logs-save-views' });
 

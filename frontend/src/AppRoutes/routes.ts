@@ -513,7 +513,6 @@ export const LIST_LICENSES: AppRoutes = {
 export const oldNewRoutesMapping: Record<string, string> = {
 	'/pipelines': '/logs/pipelines',
 	'/logs-explorer': '/logs/logs-explorer',
-	'/logs-explorer/live': '/logs/logs-explorer/live',
 	'/logs-save-views': '/logs/saved-views',
 	'/traces-save-views': '/traces/saved-views',
 	'/settings/access-tokens': '/settings/service-accounts',
