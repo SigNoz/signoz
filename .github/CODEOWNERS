@@ -15,6 +15,10 @@
 .github @therealpandey
 go.mod @therealpandey
 
+# Security
+
+/SECURITY.md @therealpandey
+
 # Scaffold Owners
 
 /pkg/config/ @therealpandey
@@ -276,3 +280,9 @@ go.mod @therealpandey
 /frontend/src/components/MessagingQueues/ @SigNoz/events-frontend
 /frontend/src/components/MessagingQueueHealthCheck/ @SigNoz/events-frontend
 /frontend/src/hooks/messagingQueue/ @SigNoz/events-frontend
+
+## Storybook
+/frontend/.storybook/ @H4ad
+/frontend/src/storybook/ @H4ad
+/.claude/skills/signoz-page-story/ @H4ad
+/.claude/skills/storybook-visual-diff/ @H4ad

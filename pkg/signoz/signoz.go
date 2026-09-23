@@ -36,11 +36,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/tag"
 	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheusv2"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -309,11 +309,6 @@ func New(
 
 	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
 
-	// promV2 is the clickhousev2 provider handed to the querier for shadow
-	// comparison and pinned serving (declared before the serving provider,
-	// whose variable shadows the package name below).
-	var promV2 prometheus.Prometheus
-
 	// Initialize prometheus from the available prometheus provider factories
 	prometheus, err := factory.NewProviderFromNamedMap(
 		ctx,
@@ -324,23 +319,6 @@ func New(
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	// With the default provider, also stand up the clickhousev2 provider for
-	// the querier: PromQL queries shadow-compare against it behind the
-	// use_prometheus_clickhouse_v2 flag (see pkg/querier/promql_shadow.go).
-	// It never serves by default. An explicit
-	// prometheus::provider: clickhousev2 makes v2 the serving provider
-	// outright, so there is nothing to compare against.
-	if config.Prometheus.Provider() == "clickhouse" {
-		v2Config := config.Prometheus
-		// The v2 engine only evaluates shadow and pinned queries; disable its
-		// active query tracker so two trackers never share a file.
-		v2Config.ActiveQueryTrackerConfig.Enabled = false
-		promV2, err = clickhouseprometheusv2.New(ctx, providerSettings, v2Config, telemetrystore)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	// Assemble the query stack (metadata store, statement builders, bucket cache) once,
@@ -355,7 +333,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Querier,
-		NewQuerierProviderFactories(telemetrystore, prometheus, promV2, telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
+		NewQuerierProviderFactories(telemetrystore, prometheus, telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
 		config.Querier.Provider(),
 	)
 	if err != nil {
@@ -549,7 +527,15 @@ func New(
 	metricReductionRuleModule := metricReductionRuleModuleCallback(sqlstore, telemetrystore, dashboard, queryParser, licensing, flagger, telemetryMetadataStore, providerSettings, config.MetricsExplorer.TelemetryStore.Threads)
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, cloudIntegrationModule, retentionGetter, flagger, tagModule, metricReductionRuleModule)
+	// The default mapping group registry is parsed here so a malformed embedded
+	// definition fails startup instead of a request.
+	spanMapperRegistry, err := implspanmapper.NewSystemGroupRegistry()
+	if err != nil {
+		return nil, err
+	}
+	spanMapperModule := implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), spanMapperRegistry, providerSettings)
+
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, cloudIntegrationModule, retentionGetter, flagger, tagModule, metricReductionRuleModule, spanMapperModule)
 
 	// Initialize ruler from the variant-specific provider factories
 	rulerInstance, err := factory.NewProviderFromNamedMap(ctx, providerSettings, config.Ruler, rulerProviderFactories(cache, alertmanager, sqlstore, telemetrystore, telemetryMetadataStore, prometheus, orgGetter, modules.RuleStateHistory, querier, queryParser), "signoz")
@@ -619,6 +605,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("meterreporter"), meterReporter, factory.MustNewName("licensing")),
 		factory.NewNamedService(factory.MustNewName("ruler"), rulerInstance),
 		factory.NewNamedService(factory.MustNewName("systemdashboard"), impldashboard.NewService(providerSettings, dashboard, orgGetter)),
+		factory.NewNamedService(factory.MustNewName("spanmappergroup"), implspanmapper.NewService(providerSettings, spanMapperModule, orgGetter)),
 	)
 	if err != nil {
 		return nil, err
@@ -635,9 +622,16 @@ func New(
 		ctx,
 		providerSettings,
 		config.APIServer,
-		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers, config.Global, gateway),
+		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers, config.Global, gateway, identNResolver, sharder, auditor, web),
 		"signoz",
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Register the API server with the registry so its lifecycle is managed
+	// alongside the other services and it shows up in the health endpoint.
+	err = registry.Add(ctx, factory.NewNamedService(factory.MustNewName("apiserver"), apiserverInstance))
 	if err != nil {
 		return nil, err
 	}

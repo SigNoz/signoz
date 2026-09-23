@@ -371,6 +371,14 @@
   "signoz-editor": [
     {
       "type": "metaresource",
+      "kind": "cloud-integration",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "dashboard",
       "verbs": [
         "create",
@@ -574,6 +582,14 @@
     }
   ],
   "signoz-viewer": [
+    {
+      "type": "metaresource",
+      "kind": "cloud-integration",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
     {
       "type": "metaresource",
       "kind": "dashboard",

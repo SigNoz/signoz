@@ -2,7 +2,6 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { OPERATORS } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
 import { UNSUPPORTED_PANEL } from '../kinds/UnsupportedPanel/definition';
@@ -10,7 +9,8 @@ import { getPanelDefinition, isPanelKindSupported } from '../registry';
 import type { PanelQueryCapabilities } from '../types/panelCapabilities';
 import { NO_PANEL_ACTIONS } from '../types/panelDefinition';
 import {
-	getHiddenQueryBuilderFields,
+	getQueryPanelDefinition,
+	requireQueryPanelDefinition,
 	getSupportedQueryTypes,
 	getSupportedSignals,
 	isPanelCombinationValid,
@@ -27,27 +27,36 @@ const { time_series, scalar, raw } = Querybuildertypesv5RequestTypeDTO;
 const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/TimeSeriesPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/BarChartPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/AreaChartPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/NumberPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/HistogramPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
+	// Static kind: no query surface at all.
+	'signoz/TextPanel': [],
 };
 
 const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/TimeSeriesPanel': [metrics, logs, traces],
 	'signoz/BarChartPanel': [metrics, logs, traces],
+	'signoz/AreaChartPanel': [metrics, logs, traces],
 	'signoz/NumberPanel': [metrics, logs, traces],
 	'signoz/HistogramPanel': [metrics, logs, traces],
 	'signoz/PieChartPanel': [metrics, logs, traces],
 	'signoz/TablePanel': [metrics, logs, traces],
 	// List renders raw rows; metrics produce no row data.
 	'signoz/ListPanel': [logs, traces],
+	'signoz/TextPanel': [],
 };
 
 // Exhaustive over PanelKind, so a new kind can't ship without stating how its request is
 // shaped — the check that used to be implicit in a legacy PANEL_TYPES switch.
-const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
+// Partial: a static kind declares no query capabilities — the lookup below
+// resolves undefined on both sides for it.
+const EXPECTED_QUERY_CAPABILITIES: Partial<
+	Record<PanelKind, PanelQueryCapabilities>
+> = {
 	'signoz/TimeSeriesPanel': {
 		requestType: time_series,
 		formatTableResultForUI: false,
@@ -60,6 +69,13 @@ const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
 		requestType: time_series,
 		formatTableResultForUI: false,
 		bucketedStepInterval: true,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
+	'signoz/AreaChartPanel': {
+		requestType: time_series,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
@@ -107,7 +123,7 @@ const ALL_KINDS = Object.keys(EXPECTED_QUERY_TYPES) as PanelKind[];
 describe('panel capabilities guard', () => {
 	describe('query capabilities', () => {
 		it.each(ALL_KINDS)('declares how %s shapes its request', (kind) => {
-			expect(getPanelDefinition(kind).queryCapabilities).toStrictEqual(
+			expect(getQueryPanelDefinition(kind)?.queryCapabilities).toStrictEqual(
 				EXPECTED_QUERY_CAPABILITIES[kind],
 			);
 		});
@@ -135,7 +151,6 @@ describe('panel capabilities guard', () => {
 			expect(
 				isPanelCombinationValid({ kind: unknownKind, queryType: QUERY_BUILDER }),
 			).toBe(false);
-			expect(getHiddenQueryBuilderFields(unknownKind, logs)).toStrictEqual({});
 			expect(getPanelDefinition(unknownKind).sections).toStrictEqual([]);
 		});
 
@@ -149,7 +164,8 @@ describe('panel capabilities guard', () => {
 		});
 
 		it('carries an inert query shape, so a stray request can do no harm', () => {
-			const { queryCapabilities } = getPanelDefinition(unknownKind);
+			const queryCapabilities =
+				requireQueryPanelDefinition(unknownKind).queryCapabilities;
 			expect(queryCapabilities.requestType).toBe(time_series);
 			expect(queryCapabilities.serverPaginated).toBe(false);
 			expect(queryCapabilities.formatTableResultForUI).toBe(false);
@@ -255,39 +271,6 @@ describe('panel capabilities guard', () => {
 			// PromQL → List has no PromQL, falls back to its first (and only) type.
 			expect(resolveQueryType('signoz/ListPanel', PROM)).toBe(QUERY_BUILDER);
 			expect(resolveQueryType('signoz/TablePanel', PROM)).toBe(QUERY_BUILDER);
-		});
-	});
-
-	describe('getHiddenQueryBuilderFields', () => {
-		it('returns {} for kinds that declare no field rules', () => {
-			expect(
-				getHiddenQueryBuilderFields('signoz/TimeSeriesPanel', logs),
-			).toStrictEqual({});
-			expect(getHiddenQueryBuilderFields('signoz/TablePanel', logs)).toStrictEqual(
-				{},
-			);
-		});
-
-		// Mirrors QueryBuilderV2's internal listViewLogFilterConfigs — the guard is the
-		// single source of truth for these values.
-		it('hides step interval / having and sets body-contains for List + logs', () => {
-			expect(getHiddenQueryBuilderFields('signoz/ListPanel', logs)).toStrictEqual({
-				stepInterval: { isHidden: true, isDisabled: true },
-				having: { isHidden: true, isDisabled: true },
-				filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
-			});
-		});
-
-		// Mirrors listViewTracesFilterConfigs — traces additionally hide `limit`.
-		it('additionally hides limit for List + traces', () => {
-			expect(
-				getHiddenQueryBuilderFields('signoz/ListPanel', traces),
-			).toStrictEqual({
-				stepInterval: { isHidden: true, isDisabled: true },
-				having: { isHidden: true, isDisabled: true },
-				limit: { isHidden: true, isDisabled: true },
-				filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
-			});
 		});
 	});
 });

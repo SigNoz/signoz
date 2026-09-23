@@ -5,8 +5,11 @@ import {
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesPanelSpecDTO,
+	DashboardtypesStackModeDTO,
 	DashboardtypesThresholdFormatDTO,
+	DashboardtypesTextAlignDTO,
 	DashboardtypesTimePreferenceDTO,
+	DashboardtypesVerticalAlignDTO,
 	type TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
@@ -35,6 +38,10 @@ export interface SeededPluginSpec {
 	>;
 	selectFields?: SectionSpecMap[SectionKind.Columns];
 	thresholds?: AnyThreshold[];
+	presentation?: SectionSpecMap[SectionKind.TextLayout];
+	headerOptions?: SectionSpecMap[SectionKind.PanelHeader];
+	/** Text panel body. Not a config section — the editor's main pane owns it. */
+	text?: string;
 }
 
 export interface SeedContext {
@@ -113,7 +120,70 @@ function isEmptySlice(value: object): boolean {
 		: Object.keys(value).length === 0;
 }
 
+/**
+ * Translates stacking across a Bar↔Area switch rather than dropping it. Area's
+ * `percent` has no bar equivalent, so it collapses to stacked-on; a stack-mode kind
+ * with nothing to carry starts on `normal`.
+ */
+function translateStackingForKind(
+	controls: SectionControls[SectionKind.Visualization],
+	old: SectionSpecMap[SectionKind.Visualization] | undefined,
+): Pick<
+	SectionSpecMap[SectionKind.Visualization],
+	'stack' | 'stackedBarChart'
+> {
+	if (controls.stacking) {
+		if (old?.stackedBarChart !== undefined) {
+			return { stackedBarChart: old.stackedBarChart };
+		}
+		if (old?.stack !== undefined) {
+			return { stackedBarChart: old.stack !== DashboardtypesStackModeDTO.none };
+		}
+		return {};
+	}
+	if (controls.stackMode) {
+		if (old?.stack !== undefined) {
+			return { stack: old.stack };
+		}
+		if (old?.stackedBarChart !== undefined) {
+			return {
+				stack: old.stackedBarChart
+					? DashboardtypesStackModeDTO.normal
+					: DashboardtypesStackModeDTO.none,
+			};
+		}
+		return { stack: DashboardtypesStackModeDTO.normal };
+	}
+	return {};
+}
+
 const SECTION_SEEDS: SectionSeeds = {
+	[SectionKind.TextLayout]: {
+		specKey: 'presentation',
+		// Explicit alignment defaults (not the API's implicit ones) so the controls
+		// open on a value, and the body carries across a kind switch and back.
+		// `background` has no default — an unset field is the standard card.
+		seed: (
+			_controls,
+			{ oldPluginSpec },
+		): SectionSpecMap[SectionKind.TextLayout] => {
+			const old = oldPluginSpec?.presentation;
+			return {
+				textAlign: old?.textAlign ?? DashboardtypesTextAlignDTO.left,
+				verticalAlign: old?.verticalAlign ?? DashboardtypesVerticalAlignDTO.top,
+				...(old?.background && { background: old.background }),
+			};
+		},
+	},
+	[SectionKind.PanelHeader]: {
+		specKey: 'headerOptions',
+		// Only an active opt-out carries; absent = show (the API's zero value).
+		seed: (
+			_controls,
+			{ oldPluginSpec },
+		): SectionSpecMap[SectionKind.PanelHeader] =>
+			oldPluginSpec?.headerOptions?.hide ? { hide: true } : {},
+	},
 	[SectionKind.Visualization]: {
 		specKey: 'visualization',
 		seed: (
@@ -126,10 +196,7 @@ const SECTION_SEEDS: SectionSeeds = {
 					timePreference:
 						old?.timePreference ?? DashboardtypesTimePreferenceDTO.global_time,
 				}),
-				...(controls.stacking &&
-					old?.stackedBarChart !== undefined && {
-						stackedBarChart: old.stackedBarChart,
-					}),
+				...translateStackingForKind(controls, old),
 				...(controls.fillSpans &&
 					old?.fillSpans !== undefined && { fillSpans: old.fillSpans }),
 			};
@@ -172,7 +239,8 @@ const SECTION_SEEDS: SectionSeeds = {
 			const {
 				lineStyle = DashboardtypesLineStyleDTO.solid,
 				lineInterpolation = DashboardtypesLineInterpolationDTO.spline,
-				fillMode = DashboardtypesFillModeDTO.none,
+				fillMode,
+				fillOpacity,
 				showPoints,
 				spanGaps,
 			} = oldPluginSpec?.chartAppearance ?? {};
@@ -184,7 +252,16 @@ const SECTION_SEEDS: SectionSeeds = {
 				appearance.lineInterpolation = lineInterpolation;
 			}
 			if (controls.fillMode) {
-				appearance.fillMode = fillMode;
+				const carried = fillMode ?? DashboardtypesFillModeDTO.none;
+				// An always-filled kind's wire enum has no `none`, so the save API would
+				// reject it. Keyed off the capability, not the kind.
+				appearance.fillMode =
+					controls.fillOpacity && carried === DashboardtypesFillModeDTO.none
+						? DashboardtypesFillModeDTO.solid
+						: carried;
+			}
+			if (controls.fillOpacity && typeof fillOpacity === 'number') {
+				appearance.fillOpacity = fillOpacity;
 			}
 			if (controls.showPoints && showPoints !== undefined) {
 				appearance.showPoints = showPoints;

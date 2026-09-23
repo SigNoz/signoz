@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { Format } from 'constants/formats/types';
@@ -21,6 +22,15 @@ export enum DataSource {
 	TRACES = 'traces',
 	LOGS = 'logs',
 }
+
+export const DATA_SOURCE_TO_SIGNAL: Record<
+	DataSource,
+	TelemetrytypesSignalDTO
+> = {
+	[DataSource.METRICS]: TelemetrytypesSignalDTO.metrics,
+	[DataSource.TRACES]: TelemetrytypesSignalDTO.traces,
+	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
+};
 
 export enum StringOperators {
 	NOOP = 'noop',
@@ -211,13 +221,11 @@ export enum QueryFunctionsTypes {
 	FILL_ZERO = 'fillZero',
 }
 
-export type PanelTypeKeys =
-	| 'TIME_SERIES'
-	| 'VALUE'
-	| 'TABLE'
-	| 'LIST'
-	| 'TRACE'
-	| 'EMPTY_WIDGET';
+/**
+ * Key names of {@link PANEL_TYPES}. Derived rather than listed: the hand-written
+ * version had fallen behind the enum by three members (`BAR`, `PIE`, `HISTOGRAM`).
+ */
+export type PanelTypeKeys = keyof typeof PANEL_TYPES;
 
 export enum ReduceOperators {
 	LAST = 'last',
@@ -304,11 +312,6 @@ export type QueryBuilderContextType = {
 		options: OptionsQuery,
 	) => boolean;
 	isDefaultQuery: (props: IsDefaultQueryProps) => boolean;
-};
-
-export type QueryAdditionalFilter = {
-	field: keyof IBuilderQuery;
-	text: string;
 };
 
 export type IsDefaultQueryProps = {

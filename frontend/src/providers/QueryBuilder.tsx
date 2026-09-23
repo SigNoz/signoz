@@ -475,6 +475,7 @@ export function QueryBuilderProvider({
 			const newQuery: IBuilderQuery = {
 				...initialBuilderQuery,
 				source: queries?.[0]?.source || '',
+				builderQueryType: queries?.[0]?.builderQueryType,
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				expression: createNewBuilderItemName({
 					existNames,
@@ -766,10 +767,14 @@ export function QueryBuilderProvider({
 							queryItem.dataSource
 						].builder.queryData;
 
-					propsRequired?.push('dataSource');
-					propsRequired?.forEach((p) => {
-						set(queryItem, p, get(newQueryItem, p));
-					});
+					// `dataSource` travels with the panel type's fields, but on a copy:
+					// `propsRequired` is the list the map holds, and pushing onto it grew
+					// that array by one entry on every call.
+					if (propsRequired) {
+						[...propsRequired, 'dataSource'].forEach((p) => {
+							set(queryItem, p, get(newQueryItem, p));
+						});
+					}
 					return queryItem;
 				}
 

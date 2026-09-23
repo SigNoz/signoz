@@ -1,4 +1,4 @@
-import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { Diamond } from '@signozhq/icons';
 import cx from 'classnames';
 import { toFixed } from 'utils/toFixed';

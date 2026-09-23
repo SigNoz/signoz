@@ -60,3 +60,9 @@
 .panelTypeSelector {
 	width: 240px;
 }
+
+// The markdown editor fills its container (CodeMirror), unlike the
+// content-sized query builder — give the static editor slot a fixed share.
+.staticEditor {
+	flex: 0 0 30vh;
+}

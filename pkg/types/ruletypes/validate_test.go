@@ -210,6 +210,10 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			json: patchJSON(validV1Builder(), `{"alertType": "EXCEPTIONS_BASED_ALERT"}`),
 		},
 		{
+			name: "valid alertType AI_TRACES_BASED_ALERT",
+			json: patchJSON(validV1Builder(), `{"alertType": "AI_TRACES_BASED_ALERT"}`),
+		},
+		{
 			name: "empty alertType is ok (optional)",
 			json: removeField(validV1Builder(), "alertType"),
 		},

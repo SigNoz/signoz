@@ -5,6 +5,7 @@ import PublicDashboardHint from './PublicDashboardHint/PublicDashboardHint';
 import PublicDashboardSettingsForm from './PublicDashboardSettingsForm/PublicDashboardSettingsForm';
 import PublicDashboardStatus from './PublicDashboardStatus/PublicDashboardStatus';
 import PublicDashboardUrl from './PublicDashboardUrl/PublicDashboardUrl';
+
 import { usePublicDashboard } from './usePublicDashboard';
 import styles from './PublicDashboard.module.scss';
 
@@ -17,7 +18,8 @@ function PublicDashboardSettings({
 }: PublicDashboardSettingsProps): JSX.Element {
 	const {
 		isPublic,
-		isAdmin,
+		canManage,
+		publishChecks,
 		isLoading,
 		isPublishing,
 		isUpdating,
@@ -34,7 +36,7 @@ function PublicDashboardSettings({
 		onOpenUrl,
 	} = usePublicDashboard(dashboard.id);
 
-	const controlsDisabled = isLoading || !isAdmin;
+	const controlsDisabled = isLoading || !canManage;
 
 	return (
 		<div className={styles.publishTab}>
@@ -61,7 +63,8 @@ function PublicDashboardSettings({
 
 			<PublicDashboardActions
 				isPublic={isPublic}
-				disabled={controlsDisabled}
+				checks={publishChecks}
+				isLoading={isLoading}
 				isPublishing={isPublishing}
 				isUpdating={isUpdating}
 				isUnpublishing={isUnpublishing}

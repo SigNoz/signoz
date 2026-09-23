@@ -1,0 +1,59 @@
+@use '../../../../styles/scrollbar' as *;
+
+.container {
+	position: relative;
+	// Contains the rows' z-indexes, which otherwise paint over side panels.
+	isolation: isolate;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+	// Let the flex children shrink below their content height so the series list
+	// scrolls within the capped legend height instead of overflowing the wrapper
+	// (the default min-height:auto would block the shrink).
+	min-height: 0;
+}
+
+.scroller {
+	// flex:1 + min-height:0 pins the scroller to the space left after the
+	// toolbar instead of growing to fit every row.
+	flex: 1;
+	min-height: 0;
+	height: 100%;
+	width: 100%;
+	padding-right: var(--spacing-2);
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+
+	@include custom-scrollbar;
+}
+
+.gridItem {
+	// Or the item keeps its content width and the label never ellipsizes.
+	min-width: 0;
+	max-width: 100%;
+}
+
+.gridList {
+	min-width: 0;
+	display: grid;
+	grid-auto-flow: row;
+	// min() keeps the column inside a narrow panel, where a wider one would push
+	// the row's actions out of the clipped area.
+	grid-template-columns: repeat(
+		auto-fill,
+		minmax(min(var(--legend-item-width, 240px), 100%), 1fr)
+	);
+	gap: var(--spacing-1) var(--spacing-4);
+}
+
+.container.isRight .gridList {
+	grid-template-columns: 1fr;
+}
+
+.emptyState {
+	padding: var(--spacing-16) 0;
+	font-size: var(--font-size-xs);
+	color: var(--l3-foreground);
+	text-align: center;
+}

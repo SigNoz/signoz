@@ -2,11 +2,8 @@ package httplicensing
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 	"time"
-
-	"github.com/tidwall/gjson"
 
 	"github.com/SigNoz/signoz/ee/licensing/licensingstore/sqllicensingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -226,47 +223,6 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 	)
 
 	return nil
-}
-
-func (provider *provider) Checkout(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error) {
-	activeLicense, err := provider.GetActive(ctx, organizationID)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := json.Marshal(postableSubscription)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to marshal checkout payload")
-	}
-
-	response, err := provider.zeus.GetCheckoutURL(ctx, activeLicense.Key, body)
-	if err != nil {
-		if errors.Ast(err, errors.TypeAlreadyExists) {
-			return nil, errors.WithAdditionalf(err, "checkout has already been completed for this account. Please click 'Refresh Status' to sync your subscription")
-		}
-		return nil, err
-	}
-
-	return &licensetypes.GettableSubscription{RedirectURL: gjson.GetBytes(response, "url").String()}, nil
-}
-
-func (provider *provider) Portal(ctx context.Context, organizationID valuer.UUID, postableSubscription *licensetypes.PostableSubscription) (*licensetypes.GettableSubscription, error) {
-	activeLicense, err := provider.GetActive(ctx, organizationID)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := json.Marshal(postableSubscription)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to marshal portal payload")
-	}
-
-	response, err := provider.zeus.GetPortalURL(ctx, activeLicense.Key, body)
-	if err != nil {
-		return nil, err
-	}
-
-	return &licensetypes.GettableSubscription{RedirectURL: gjson.GetBytes(response, "url").String()}, nil
 }
 
 func (provider *provider) GetFeatureFlags(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.Feature, error) {

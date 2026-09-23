@@ -1,18 +1,26 @@
 import type {
 	DashboardtypesLinkDTO,
 	DashboardtypesAxesDTO,
-	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesComparisonThresholdDTO,
+	DashboardtypesFillModeDTO,
+	DashboardtypesFillOpacityDTO,
+	DashboardtypesHeaderOptionsDTO,
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
+	DashboardtypesLineInterpolationDTO,
+	DashboardtypesLineStyleDTO,
 	DashboardtypesPanelFormattingDTO,
 	DashboardtypesPanelSpecDTO,
+	DashboardtypesSpanGapsDTO,
+	DashboardtypesStackModeDTO,
 	DashboardtypesTableFormattingDTO,
 	DashboardtypesTableThresholdDTO,
+	DashboardtypesTextPresentationDTO,
 	DashboardtypesThresholdWithLabelDTO,
-	DashboardtypesTimeSeriesChartAppearanceDTO,
+	DashboardtypesTimePreferenceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import type { LegendSeriesResolver } from '../utils/legendSeries';
 import {
 	Antenna,
 	BarChart,
@@ -20,10 +28,12 @@ import {
 	Hash,
 	Link2,
 	Palette,
+	PanelTop,
 	PencilRuler,
 	Scale3D,
 	Signpost,
 	Wallpaper,
+	AlignLeft,
 } from '@signozhq/icons';
 
 // Derived from an actual icon component so the type stays exact (size is a
@@ -50,6 +60,8 @@ export enum SectionKind {
 	Thresholds = 'thresholds',
 	ContextLinks = 'contextLinks',
 	Columns = 'columns',
+	TextLayout = 'presentation',
+	PanelHeader = 'headerOptions',
 }
 
 /**
@@ -80,18 +92,41 @@ export type AnyThreshold =
 export type PanelFormattingSlice = DashboardtypesPanelFormattingDTO &
 	Pick<DashboardtypesTableFormattingDTO, 'columnUnits'>;
 
+/** Superset spanning every kind's chart-appearance DTO. */
+export interface PanelChartAppearanceSlice {
+	lineStyle?: DashboardtypesLineStyleDTO;
+	lineInterpolation?: DashboardtypesLineInterpolationDTO;
+	/** Area's wire enum is a nominally distinct subset with the same members. */
+	fillMode?: DashboardtypesFillModeDTO;
+	fillOpacity?: DashboardtypesFillOpacityDTO;
+	showPoints?: boolean;
+	spanGaps?: DashboardtypesSpanGapsDTO;
+}
+
+/** Superset spanning every kind's visualization DTO. */
+export interface PanelVisualizationSlice {
+	timePreference?: DashboardtypesTimePreferenceDTO;
+	/** Bar stacking; a kind declares this or `stack`, never both. */
+	stackedBarChart?: boolean;
+	/** Area stacking. */
+	stack?: DashboardtypesStackModeDTO;
+	fillSpans?: boolean;
+}
+
 export interface SectionSpecMap {
 	[SectionKind.Formatting]: PanelFormattingSlice; // spec.plugin.spec.formatting
 	[SectionKind.Axes]: DashboardtypesAxesDTO; // spec.plugin.spec.axes
 	[SectionKind.Legend]: DashboardtypesLegendDTO; // spec.plugin.spec.legend
-	[SectionKind.ChartAppearance]: DashboardtypesTimeSeriesChartAppearanceDTO; // spec.plugin.spec.chartAppearance
+	[SectionKind.ChartAppearance]: PanelChartAppearanceSlice; // spec.plugin.spec.chartAppearance
 	[SectionKind.Buckets]: DashboardtypesHistogramBucketsDTO; // spec.plugin.spec.histogramBuckets
-	// spec.plugin.spec.visualization — typed as the Bar shape (widest superset);
+	// spec.plugin.spec.visualization — typed as the superset of every kind's shape;
 	// the `controls` bag gates which fields each kind writes.
-	[SectionKind.Visualization]: DashboardtypesBarChartVisualizationDTO;
+	[SectionKind.Visualization]: PanelVisualizationSlice;
 	[SectionKind.Thresholds]: AnyThreshold[]; // spec.plugin.spec.thresholds (variant picks the editor)
 	[SectionKind.ContextLinks]: DashboardtypesLinkDTO[]; // spec.links (PANEL-level)
 	[SectionKind.Columns]: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
+	[SectionKind.TextLayout]: DashboardtypesTextPresentationDTO; // spec.plugin.spec.presentation (Text)
+	[SectionKind.PanelHeader]: DashboardtypesHeaderOptionsDTO; // spec.plugin.spec.headerOptions (Text)
 }
 
 /**
@@ -105,11 +140,21 @@ export interface SectionControls {
 		columnUnits?: boolean;
 	};
 	[SectionKind.Axes]: { minMax?: boolean; logScale?: boolean }; // minMax → softMin/softMax
-	[SectionKind.Legend]: { position?: boolean; colors?: boolean }; // colors → customColors
+	[SectionKind.Legend]: {
+		position?: boolean;
+		// colors → customColors; the resolver supplies the labels overrides are keyed by,
+		// so a kind can't offer color overrides with nothing to color
+		colors?: LegendSeriesResolver;
+	};
 	[SectionKind.ChartAppearance]: {
 		lineStyle?: boolean;
 		lineInterpolation?: boolean;
 		fillMode?: boolean;
+		/**
+		 * Declaring it also marks the kind always-filled: `fillMode` drops `none` to match
+		 * the narrower `AreaFillMode` wire enum the save API validates against.
+		 */
+		fillOpacity?: boolean;
 		showPoints?: boolean;
 		spanGaps?: boolean;
 	};
@@ -119,12 +164,13 @@ export interface SectionControls {
 		mergeQueries?: boolean;
 	};
 	// switchPanelKind → the visualization-type switcher (every kind, so you can switch
-	// away from any panel); stacking → stackedBarChart (Bar); fillSpans → fill gaps with
-	// 0 (TimeSeries).
+	// away from any panel); stacking → stackedBarChart (Bar); stackMode → stack
+	// (Area); fillSpans → fill gaps with 0 (TimeSeries / Area).
 	[SectionKind.Visualization]: {
 		switchPanelKind: boolean;
 		timePreference?: boolean;
 		stacking?: boolean;
+		stackMode?: boolean;
 		fillSpans?: boolean;
 	};
 	// Editor discriminator (not a spec field): which threshold variant a kind edits.
@@ -134,7 +180,11 @@ export interface SectionControls {
 export type ControlledSectionKind = keyof SectionControls;
 
 /** Atomic sections — no sub-controls; a kind either shows them or not. */
-export type AtomicSectionKind = SectionKind.ContextLinks | SectionKind.Columns;
+export type AtomicSectionKind =
+	| SectionKind.ContextLinks
+	| SectionKind.Columns
+	| SectionKind.TextLayout
+	| SectionKind.PanelHeader;
 
 /** Predicate to hide a section from the current spec; returning true removes it. */
 export type SectionVisibilityPredicate = (
@@ -167,6 +217,8 @@ export const SECTION_METADATA = {
 	[SectionKind.Thresholds]: { title: 'Thresholds', icon: Antenna },
 	[SectionKind.ContextLinks]: { title: 'Context Links', icon: Link2 },
 	[SectionKind.Columns]: { title: 'Columns', icon: Columns3 },
+	[SectionKind.TextLayout]: { title: 'Panel appearance', icon: AlignLeft },
+	[SectionKind.PanelHeader]: { title: 'Panel header', icon: PanelTop },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**

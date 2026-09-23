@@ -33,6 +33,13 @@ func MustNewUnsetOrNonEmptyString(val string) UnsetOrNonEmptyString {
 	return nonEmptyString
 }
 
+// UnsetIfEmpty reads a value back from a store, where an empty string is how
+// unset is spelled. It is the only way to reach the zero value from a string, so
+// it must never be used on caller input, which has to reject "" instead.
+func UnsetIfEmpty(val string) UnsetOrNonEmptyString {
+	return UnsetOrNonEmptyString{val: val}
+}
+
 func (enum UnsetOrNonEmptyString) IsZero() bool {
 	return enum.val == ""
 }
@@ -73,16 +80,18 @@ func (enum *UnsetOrNonEmptyString) Scan(val any) error {
 		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "unset_or_non_empty_string: (nil \"%T\")", enum)
 	}
 
+	if val == nil {
+		*enum = UnsetOrNonEmptyString{}
+		return nil
+	}
+
 	str, ok := val.(string)
 	if !ok {
 		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "unset_or_non_empty_string: (non-string \"%T\")", val)
 	}
 
-	var err error
-	*enum, err = NewUnsetOrNonEmptyString(str)
-	if err != nil {
-		return err
-	}
+	// scan is run when reading stored data where we can assume "" means unset, so no errors on seeing "".
+	*enum = UnsetIfEmpty(str)
 
 	return nil
 }
