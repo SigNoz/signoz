@@ -1,6 +1,9 @@
 package ruletypes
 
-import "strings"
+import (
+	"net/url"
+	"strings"
+)
 
 const (
 	DefaultTracesExplorerPath = "traces-explorer"
@@ -17,10 +20,10 @@ func (t AlertType) TracesExplorerPath() string {
 }
 
 // RelatedTracesLabel is the button text notifiers show for a related_traces link.
-// Any link under the AI observability section counts, matching the templates'
-// `match "/ai-observability"` check.
+// Any link whose path is under the AI observability section counts, matching the
+// templates' `match "^https?://[^/]+/ai-observability/"` check.
 func RelatedTracesLabel(link string) string {
-	if strings.Contains(link, "/"+AIObservabilityPathPrefix) {
+	if u, err := url.Parse(link); err == nil && strings.HasPrefix(u.Path, "/"+AIObservabilityPathPrefix+"/") {
 		return "View Related AI Traces"
 	}
 	return "View Related Traces"

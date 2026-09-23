@@ -131,7 +131,7 @@ Description: Request rate exceeded 10k/s`},
      *Summary:* {{ .Annotations.summary }}
      *Description:* {{ .Annotations.description }}
      *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}
-     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}}{{ if match "/ai-observability" .Annotations.related_traces -}} View in <{{ .Annotations.related_traces }}|ai traces explorer> {{- else -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end }}{{- end}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}}{{ if match "^https?://[^/]+/ai-observability/" .Annotations.related_traces -}} View in <{{ .Annotations.related_traces }}|ai traces explorer> {{- else -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end }}{{- end}}
 
      *Details:*
        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
@@ -175,7 +175,7 @@ Description: Request rate exceeded 10k/s`},
 			input: alertmanagertypes.ExpandRequest{
 				DefaultTitleTemplate: `{{ .CommonLabels.alertname }}`,
 				DefaultBodyTemplate: `{{ range .Alerts -}}
-     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}}{{ if match "/ai-observability" .Annotations.related_traces -}} View in <{{ .Annotations.related_traces }}|ai traces explorer> {{- else -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end }}{{- end}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}}{{ if match "^https?://[^/]+/ai-observability/" .Annotations.related_traces -}} View in <{{ .Annotations.related_traces }}|ai traces explorer> {{- else -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end }}{{- end}}
      {{ end }}`,
 			},
 			wantTitle:         "HighLLMLatency",
