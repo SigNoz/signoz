@@ -33,6 +33,7 @@ function EmptyState({ createDropdown }: Props): JSX.Element {
 				<section className={styles.actions}>
 					{createDropdown}
 					<Button
+						size="md"
 						variant="link"
 						color="primary"
 						className={styles.learnMore}

@@ -104,6 +104,7 @@ function TemplatesPanel(): JSX.Element {
 							}}
 						/>
 						<Button
+							disabledTooltip={undefined}
 							variant="solid"
 							color="primary"
 							size="md"

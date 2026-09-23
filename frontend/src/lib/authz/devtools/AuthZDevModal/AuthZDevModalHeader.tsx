@@ -74,28 +74,31 @@ export function AuthZDevModalHeader({
 			</div>
 			<div className={styles.actionsRow}>
 				<Button
+					disabledTooltip={undefined}
 					className={styles.actionButton}
-					variant="outlined"
+					variant="solid"
 					color="success"
 					size="sm"
 					onClick={handleGrantAll}
 					disabled={filteredPermissions.length === 0}
-					data-testid="authz-dev-grant-all"
+					testId="authz-dev-grant-all"
 				>
 					{hasActiveFilter ? 'Grant filtered' : 'Grant all'}
 				</Button>
 				<Button
+					disabledTooltip={undefined}
 					className={styles.actionButton}
-					variant="outlined"
-					color="error"
+					variant="solid"
+					color="danger"
 					size="sm"
 					onClick={handleDenyAll}
 					disabled={filteredPermissions.length === 0}
-					data-testid="authz-dev-deny-all"
+					testId="authz-dev-deny-all"
 				>
 					{hasActiveFilter ? 'Deny filtered' : 'Deny all'}
 				</Button>
 				<Button
+					disabledTooltip={undefined}
 					className={styles.actionButton}
 					variant="outlined"
 					color="secondary"
@@ -104,7 +107,7 @@ export function AuthZDevModalHeader({
 					disabled={
 						hasActiveFilter ? filteredOverrideCount === 0 : overrideCount === 0
 					}
-					data-testid="authz-dev-clear-all"
+					testId="authz-dev-clear-all"
 				>
 					{hasActiveFilter
 						? `Clear filtered (${filteredOverrideCount})`

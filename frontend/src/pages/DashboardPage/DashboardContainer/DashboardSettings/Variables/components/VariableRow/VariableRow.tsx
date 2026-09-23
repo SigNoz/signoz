@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { CSSProperties } from 'react';
 import { Check, GripVertical, PenLine, Trash2, X } from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';

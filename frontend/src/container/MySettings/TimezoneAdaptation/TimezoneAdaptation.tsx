@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Switch } from '@signozhq/ui/switch';

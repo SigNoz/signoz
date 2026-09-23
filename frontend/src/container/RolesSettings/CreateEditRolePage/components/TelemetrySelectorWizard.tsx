@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Wand } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';

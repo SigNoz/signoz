@@ -29,13 +29,31 @@ function MenuActionItem({
 	disabledTooltip,
 	destructive = false,
 }: MenuActionItemProps): JSX.Element {
+	if (destructive) {
+		return (
+			<AuthZButton
+				size="md"
+				checks={checks}
+				disabledTooltip={disabledTooltip}
+				side="left"
+				variant="solid"
+				color="danger"
+				className={styles.menuActionItem}
+				prefix={icon}
+			>
+				{label}
+			</AuthZButton>
+		);
+	}
+
 	return (
 		<AuthZButton
+			size="md"
 			checks={checks}
 			disabledTooltip={disabledTooltip}
 			side="left"
 			variant="ghost"
-			color={destructive ? 'destructive' : 'secondary'}
+			color="secondary"
 			className={styles.menuActionItem}
 			prefix={icon}
 		>

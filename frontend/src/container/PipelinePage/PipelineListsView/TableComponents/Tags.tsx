@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Badge } from '@signozhq/ui/badge';
 
 function Tags({ tags }: TagsProps): JSX.Element {

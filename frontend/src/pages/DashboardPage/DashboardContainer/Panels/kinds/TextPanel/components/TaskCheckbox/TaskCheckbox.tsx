@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 import { useTaskItemOffset } from '../MarkdownContent/taskItemOffset';

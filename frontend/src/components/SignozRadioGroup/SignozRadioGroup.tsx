@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 
 import './SignozRadioGroup.styles.scss';

@@ -38,7 +38,7 @@ import {
 	isUndefined,
 	unset,
 } from 'lodash-es';
-import { ChevronDown, ChevronUp } from '@signozhq/icons';
+import { ChevronDown, ChevronUp, X } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
@@ -929,13 +929,23 @@ function QueryBuilderSearchV2(
 		return (
 			<span className="qb-search-bar-tokenised-tags">
 				<Badge
-					color="vanilla"
+					variant="solid"
+					color="secondary"
 					className={tagDetails?.key?.type || ''}
-					closable={!searchValue && closable}
-					onClose={(e): void => {
-						e.preventDefault();
-						onCloseHandler();
-					}}
+					suffix={
+						!searchValue && closable ? (
+							<button
+								type="button"
+								aria-label="Remove"
+								onClick={(e): void => {
+									e.preventDefault();
+									onCloseHandler();
+								}}
+							>
+								<X size={12} />
+							</button>
+						) : undefined
+					}
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText

@@ -40,8 +40,9 @@ function SaveErrorItem({
 				</span>
 				{onRetry && !isRetrying && (
 					<Button
+						size="md"
 						variant="link"
-						color="none"
+						color="secondary"
 						aria-label="Retry"
 						onClick={async (e): Promise<void> => {
 							e.stopPropagation();

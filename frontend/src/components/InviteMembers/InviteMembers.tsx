@@ -119,11 +119,12 @@ function InviteMembers({
 							<div className={styles.cellAction}>
 								{canRemoveRow && (
 									<Button
-										variant="ghost"
-										color="destructive"
+										size="md"
+										variant="solid"
+										color="danger"
 										onClick={(): void => removeRow(row.id)}
 										aria-label="Remove row"
-										data-testid={`invite-remove-${row.id}`}
+										testId={`invite-remove-${row.id}`}
 									>
 										<Trash2 size={12} />
 									</Button>
@@ -136,11 +137,12 @@ function InviteMembers({
 				{showAddButton && (
 					<div className={styles.addRow}>
 						<Button
+							size="md"
 							variant="dashed"
 							color="secondary"
 							prefix={<Plus size={12} />}
 							onClick={addRow}
-							data-testid="invite-add-row"
+							testId="invite-add-row"
 						>
 							Add another
 						</Button>

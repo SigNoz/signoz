@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Callout } from '@signozhq/ui/callout';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';

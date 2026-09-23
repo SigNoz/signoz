@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import {

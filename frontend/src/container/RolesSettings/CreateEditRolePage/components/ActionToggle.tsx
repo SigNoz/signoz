@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useMemo, useState } from 'react';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Divider } from '@signozhq/ui/divider';

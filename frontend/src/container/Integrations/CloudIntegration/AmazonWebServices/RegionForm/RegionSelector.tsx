@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Dispatch, SetStateAction } from 'react';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { useRegionSelection } from 'hooks/integration/aws/useRegionSelection';

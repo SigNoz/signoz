@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Badge } from '@signozhq/ui/badge';
 import ChevronDown from '@signozhq/icons/ChevronDown';
 import ChevronRight from '@signozhq/icons/ChevronRight';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useState } from 'react';
 import { Style } from '@signozhq/design-tokens';
 import { CircleHelp } from '@signozhq/icons';

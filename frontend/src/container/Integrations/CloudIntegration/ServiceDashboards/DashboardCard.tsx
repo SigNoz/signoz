@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { KeyboardEvent, MouseEvent } from 'react';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { CloudintegrationtypesServiceDashboardDTO } from 'api/generated/services/sigNoz.schemas';

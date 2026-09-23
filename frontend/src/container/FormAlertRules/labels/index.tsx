@@ -1,6 +1,6 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CircleAlert, CircleX } from '@signozhq/icons';
+import { CircleAlert, CircleX, X } from '@signozhq/icons';
 import { Button, Input, message, Modal } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
@@ -153,12 +153,22 @@ function LabelSelect({
 						return (
 							<QueryChipContainer key={query.key}>
 								<Badge
-									color="vanilla"
-									closable={isClosable}
-									onClose={(e): void => {
-										e.preventDefault();
-										handleClose(query.key);
-									}}
+									variant="solid"
+									color="secondary"
+									suffix={
+										isClosable ? (
+											<button
+												type="button"
+												aria-label={`Remove ${query.key}`}
+												onClick={(e): void => {
+													e.preventDefault();
+													handleClose(query.key);
+												}}
+											>
+												<X size={12} />
+											</button>
+										) : undefined
+									}
 								>
 									{query.key}: {query.value}
 								</Badge>

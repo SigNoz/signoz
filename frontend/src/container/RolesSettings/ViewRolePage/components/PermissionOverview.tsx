@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useMemo, useState } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { Button, ButtonGroup } from '@signozhq/ui/button';

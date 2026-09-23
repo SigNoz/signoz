@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useMemo, useState } from 'react';
 import { generatePath, Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';

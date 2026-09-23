@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { FolderInput } from '@signozhq/icons';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 

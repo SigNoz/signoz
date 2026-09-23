@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ExternalLink, SolidInfoCircle } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';

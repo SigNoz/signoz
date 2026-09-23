@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import {

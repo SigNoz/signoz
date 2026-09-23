@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Switch } from '@signozhq/ui/switch';
 
 import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';

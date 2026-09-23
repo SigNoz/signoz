@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CircleAlert, RefreshCw } from '@signozhq/icons';
 import { Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';

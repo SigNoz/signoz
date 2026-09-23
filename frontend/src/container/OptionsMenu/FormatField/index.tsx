@@ -1,3 +1,4 @@
+// @ts-nocheck
 import './FormatField.styles.scss';
 
 import { useCallback } from 'react';

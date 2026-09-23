@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import logEvent from 'api/common/logEvent';

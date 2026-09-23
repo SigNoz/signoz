@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';

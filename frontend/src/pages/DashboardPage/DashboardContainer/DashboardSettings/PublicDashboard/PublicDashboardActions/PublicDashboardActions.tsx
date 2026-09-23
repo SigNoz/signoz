@@ -41,8 +41,10 @@ function PublicDashboardActions({
 				<>
 					<AuthZTooltip checks={checks}>
 						<Button
-							variant="outlined"
-							color="destructive"
+							disabledTooltip={undefined}
+							size="md"
+							variant="solid"
+							color="danger"
 							disabled={disabled}
 							loading={isUnpublishing}
 							prefix={<Trash size={15} />}
@@ -54,6 +56,8 @@ function PublicDashboardActions({
 					</AuthZTooltip>
 					<AuthZTooltip checks={checks}>
 						<Button
+							disabledTooltip={undefined}
+							size="md"
 							variant="solid"
 							color="primary"
 							disabled={disabled}
@@ -69,6 +73,8 @@ function PublicDashboardActions({
 			) : (
 				<AuthZTooltip checks={checks}>
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						variant="solid"
 						color="primary"
 						disabled={disabled}

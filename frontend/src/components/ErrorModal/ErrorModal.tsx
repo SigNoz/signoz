@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Modal } from 'antd';

@@ -182,6 +182,8 @@ function Footer(): JSX.Element {
 	const saveAlertButton = useMemo(() => {
 		let button = (
 			<Button
+				disabledTooltip={undefined}
+				size="md"
 				variant="solid"
 				color="primary"
 				onClick={handleSaveAlert}
@@ -215,6 +217,8 @@ function Footer(): JSX.Element {
 	const testAlertButton = useMemo(() => {
 		let button = (
 			<Button
+				disabledTooltip={undefined}
+				size="md"
 				variant="solid"
 				color="secondary"
 				onClick={handleTestNotification}
@@ -247,6 +251,8 @@ function Footer(): JSX.Element {
 	return (
 		<div className="create-alert-v2-footer">
 			<Button
+				disabledTooltip={undefined}
+				size="md"
 				variant="solid"
 				color="secondary"
 				onClick={handleDiscard}

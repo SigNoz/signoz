@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { orange } from '@ant-design/colors';

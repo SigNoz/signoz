@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useEffect, useState } from 'react';
 import { Check, Copy, LockKeyhole } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';

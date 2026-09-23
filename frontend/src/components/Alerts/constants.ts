@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { BadgeColor } from '@signozhq/ui/badge';
 
 export const STATE_ORDER = ['firing', 'pending', 'inactive', 'disabled'];

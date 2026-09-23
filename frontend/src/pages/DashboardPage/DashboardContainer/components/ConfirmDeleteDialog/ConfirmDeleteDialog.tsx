@@ -31,13 +31,14 @@ function ConfirmDeleteDialog({
 }: ConfirmDeleteDialogProps): JSX.Element {
 	const footer = (
 		<div className={styles.footer}>
-			<Button variant="solid" color="secondary" onClick={onClose}>
+			<Button size="md" variant="solid" color="secondary" onClick={onClose}>
 				<X size={12} />
 				Cancel
 			</Button>
 			<Button
+				size="md"
 				variant="solid"
-				color="destructive"
+				color="danger"
 				loading={isLoading}
 				onClick={onConfirm}
 				testId="confirm-delete"

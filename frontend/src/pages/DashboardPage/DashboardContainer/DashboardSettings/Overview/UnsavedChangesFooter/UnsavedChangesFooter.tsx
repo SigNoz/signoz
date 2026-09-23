@@ -31,6 +31,8 @@ function UnsavedChangesFooter({
 			</div>
 			<div className={styles.footerActionButtons}>
 				<Button
+					disabledTooltip={undefined}
+					size="md"
 					variant="ghost"
 					color="secondary"
 					disabled={isSaving}
@@ -40,6 +42,8 @@ function UnsavedChangesFooter({
 					Discard
 				</Button>
 				<Button
+					disabledTooltip={undefined}
+					size="md"
 					variant="solid"
 					color="primary"
 					disabled={isSaving}

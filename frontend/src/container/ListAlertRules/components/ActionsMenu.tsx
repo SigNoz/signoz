@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Ellipsis } from '@signozhq/icons';

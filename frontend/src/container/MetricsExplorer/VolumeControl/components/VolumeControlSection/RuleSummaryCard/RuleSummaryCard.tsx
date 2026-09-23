@@ -33,11 +33,12 @@ function RuleSummaryCard({
 				</Typography.Text>
 				{canManage && (
 					<Button
+						size="md"
 						variant="ghost"
 						color="secondary"
 						className={styles.editButton}
 						onClick={onEdit}
-						data-testid="volume-control-edit"
+						testId="volume-control-edit"
 					>
 						Edit
 					</Button>

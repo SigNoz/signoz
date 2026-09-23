@@ -30,7 +30,13 @@ describe('AuthZButton', () => {
 
 	it('renders a Button child with forwarded props', () => {
 		render(
-			<AuthZButton checks={[createPerm]} testId="create-btn">
+			<AuthZButton
+				size="md"
+				variant="solid"
+				color="primary"
+				checks={[createPerm]}
+				testId="create-btn"
+			>
 				Create
 			</AuthZButton>,
 		);
@@ -41,7 +47,13 @@ describe('AuthZButton', () => {
 
 	it('forwards checks and enables the check by default', () => {
 		render(
-			<AuthZButton checks={[createPerm]} testId="create-btn">
+			<AuthZButton
+				size="md"
+				variant="solid"
+				color="primary"
+				checks={[createPerm]}
+				testId="create-btn"
+			>
 				Create
 			</AuthZButton>,
 		);
@@ -55,7 +67,14 @@ describe('AuthZButton', () => {
 
 	it('passes authZEnabled through as the tooltip enabled flag', () => {
 		render(
-			<AuthZButton checks={[createPerm]} authZEnabled={false} testId="create-btn">
+			<AuthZButton
+				size="md"
+				variant="solid"
+				color="primary"
+				checks={[createPerm]}
+				authZEnabled={false}
+				testId="create-btn"
+			>
 				Create
 			</AuthZButton>,
 		);

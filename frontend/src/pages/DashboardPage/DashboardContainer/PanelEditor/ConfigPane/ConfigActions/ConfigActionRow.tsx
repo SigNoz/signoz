@@ -26,11 +26,12 @@ function ConfigActionRow({
 }: ConfigActionRowProps): JSX.Element {
 	return (
 		<Button
+			size="md"
 			type="button"
 			variant="outlined"
 			color="secondary"
 			className={styles.row}
-			data-testid={testId}
+			testId={testId}
 			onClick={onClick}
 			prefix={<span className={styles.icon}>{icon}</span>}
 			suffix={<SquareArrowOutUpRight size={14} />}

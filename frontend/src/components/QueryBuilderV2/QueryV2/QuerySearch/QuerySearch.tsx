@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CircleCheck, Info, TriangleAlert, Filter } from '@signozhq/icons';

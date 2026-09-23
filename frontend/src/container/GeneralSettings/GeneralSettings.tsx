@@ -620,6 +620,7 @@ function GeneralSettings({
 							))}
 							{!isCloudUserVal && (
 								<Button
+									disabledTooltip={undefined}
 									variant="solid"
 									size="sm"
 									color="primary"

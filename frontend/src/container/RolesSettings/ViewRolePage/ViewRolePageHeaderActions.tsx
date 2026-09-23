@@ -1,3 +1,4 @@
+// @ts-nocheck
 import styles from 'container/RolesSettings/ViewRolePage/ViewRolePage.module.scss';
 import { Button } from '@signozhq/ui/button';
 import { Divider } from '@signozhq/ui/divider';

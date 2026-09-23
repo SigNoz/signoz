@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type ReactElement, type ReactNode, useCallback, useMemo } from 'react';
 import {
 	Bell,

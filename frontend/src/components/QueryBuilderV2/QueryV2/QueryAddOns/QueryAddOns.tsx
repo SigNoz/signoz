@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';

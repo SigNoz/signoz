@@ -48,20 +48,22 @@ function ThresholdRowShell({
 					type="button"
 					variant="ghost"
 					color="secondary"
-					size="icon"
+					size="sm"
+					icon
 					aria-label={`Edit threshold ${index + 1}`}
-					data-testid={`${testIdPrefix}-edit-${index}`}
+					testId={`${testIdPrefix}-edit-${index}`}
 					onClick={onEdit}
 				>
 					<Pencil size={14} />
 				</Button>
 				<Button
 					type="button"
-					variant="ghost"
-					color="destructive"
-					size="icon"
+					variant="solid"
+					color="danger"
+					size="sm"
+					icon
 					aria-label={`Remove threshold ${index + 1}`}
-					data-testid={`${testIdPrefix}-remove-${index}`}
+					testId={`${testIdPrefix}-remove-${index}`}
 					onClick={onRemove}
 				>
 					<Trash2 size={14} />
@@ -76,21 +78,23 @@ function ThresholdRowShell({
 
 			<div className={styles.actions}>
 				<Button
+					size="md"
 					type="button"
 					variant="outlined"
 					color="secondary"
 					prefix={<X size={14} />}
-					data-testid={`${testIdPrefix}-discard-${index}`}
+					testId={`${testIdPrefix}-discard-${index}`}
 					onClick={onDiscard}
 				>
 					Discard
 				</Button>
 				<Button
+					size="md"
 					type="button"
 					variant="solid"
 					color="primary"
 					prefix={<Check size={14} />}
-					data-testid={`${testIdPrefix}-save-${index}`}
+					testId={`${testIdPrefix}-save-${index}`}
 					onClick={onSave}
 				>
 					Save

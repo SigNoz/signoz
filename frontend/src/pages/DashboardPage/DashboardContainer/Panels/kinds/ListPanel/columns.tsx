@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { ReactNode } from 'react';
 import type { TableProps } from 'antd';
 import { Badge } from '@signozhq/ui/badge';

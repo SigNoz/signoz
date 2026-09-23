@@ -92,6 +92,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 					}
 				/>
 				<Button
+					size="md"
 					variant="solid"
 					color="secondary"
 					className="request-integration-btn"
@@ -128,6 +129,8 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 
 					<div className="request-integration-form-footer">
 						<Button
+							disabledTooltip={undefined}
+							size="md"
 							variant="solid"
 							color="primary"
 							prefix={<Check size={14} />}
@@ -146,6 +149,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 
 				{isGetStartedWithCloudAllowed && (
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
 						onClick={(): void => history.push(ROUTES.GET_STARTED_WITH_CLOUD)}

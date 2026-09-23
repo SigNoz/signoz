@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Check, Copy } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';

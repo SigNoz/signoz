@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';

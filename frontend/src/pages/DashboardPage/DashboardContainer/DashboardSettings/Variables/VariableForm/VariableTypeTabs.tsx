@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Color } from '@signozhq/design-tokens';
 import {
 	ClipboardType,

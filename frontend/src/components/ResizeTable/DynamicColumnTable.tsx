@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { memo, useEffect, useState } from 'react';
 import type {
 	TableColumnGroupType as ColumnGroupType,

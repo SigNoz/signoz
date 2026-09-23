@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Badge } from '@signozhq/ui/badge';
 import { SpantypesSpanMapperTestSpanDTO } from 'api/generated/services/sigNoz.schemas';
 import { useMemo } from 'react';

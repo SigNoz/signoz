@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Skeleton } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';

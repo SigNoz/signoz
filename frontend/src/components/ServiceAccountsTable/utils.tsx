@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ScanSearch } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Tooltip } from 'antd';

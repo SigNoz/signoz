@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Download } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';

@@ -20,11 +20,12 @@ function NoRuleEmptyState({
 			</Typography.Text>
 			{canManage && (
 				<Button
+					size="md"
 					variant="solid"
 					color="primary"
 					className={styles.setupButton}
 					onClick={onSetup}
-					data-testid="volume-control-setup"
+					testId="volume-control-setup"
 				>
 					Set up volume control
 				</Button>

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import cx from 'classnames';

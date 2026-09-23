@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Popover } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 

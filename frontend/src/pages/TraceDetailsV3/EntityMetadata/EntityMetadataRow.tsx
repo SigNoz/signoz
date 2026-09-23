@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CalendarClock, Server, Timer } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';

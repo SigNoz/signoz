@@ -1178,6 +1178,7 @@ function OnboardingAddDataSource(): JSX.Element {
 							renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => (
 								<div className="invite-team-member-modal-footer">
 									<SignozButton
+										size="md"
 										variant="solid"
 										color="secondary"
 										onClick={(): void => setShowInviteTeamMembersModal(false)}
@@ -1185,6 +1186,9 @@ function OnboardingAddDataSource(): JSX.Element {
 										Cancel
 									</SignozButton>
 									<SignozButton
+										disabledTooltip={undefined}
+										size="md"
+										color="primary"
 										variant="solid"
 										onClick={(): void => {
 											void logEvent(

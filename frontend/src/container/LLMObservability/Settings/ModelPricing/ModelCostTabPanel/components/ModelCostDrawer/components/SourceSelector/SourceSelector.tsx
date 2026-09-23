@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';

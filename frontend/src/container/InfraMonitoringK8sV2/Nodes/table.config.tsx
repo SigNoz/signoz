@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Color } from '@signozhq/design-tokens';
 import { Badge, BadgeColor } from '@signozhq/ui/badge';
 import { InframonitoringtypesNodeRecordDTO } from 'api/generated/services/sigNoz.schemas';

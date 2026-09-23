@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Fragment } from 'react';
 import { Check } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';

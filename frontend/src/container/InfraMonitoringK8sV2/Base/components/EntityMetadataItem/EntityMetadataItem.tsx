@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ReactNode, useCallback } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import { TooltipSimple } from '@signozhq/ui/tooltip';

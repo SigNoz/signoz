@@ -102,6 +102,8 @@ function ExportPanelContainer({
 						Cancel
 					</Button>
 					<Button
+						disabledTooltip={undefined}
+						variant="solid"
 						color="primary"
 						size="md"
 						loading={isLoading}
@@ -135,6 +137,7 @@ function ExportPanelContainer({
 						Or create a new dashboard with this panel
 					</Typography.Text>
 					<Button
+						disabledTooltip={undefined}
 						variant="outlined"
 						color="secondary"
 						size="md"

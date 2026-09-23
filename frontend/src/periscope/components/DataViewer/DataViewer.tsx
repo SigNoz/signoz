@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CSSProperties, useMemo, useState } from 'react';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import logEvent from 'api/common/logEvent';

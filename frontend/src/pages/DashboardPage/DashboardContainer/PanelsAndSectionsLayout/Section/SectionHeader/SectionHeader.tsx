@@ -39,6 +39,33 @@ interface SectionHeaderProps {
 	disabledTooltip?: string;
 }
 
+function SectionDragHandleButton({
+	dragHandle,
+	sectionId,
+}: {
+	dragHandle: SectionDragHandle;
+	sectionId: string;
+}): JSX.Element {
+	const { role: _role, ...sortableAttributes } = dragHandle.attributes;
+	return (
+		<span ref={dragHandle.setActivatorNodeRef} {...dragHandle.listeners}>
+			<Button
+				type="button"
+				variant="ghost"
+				color="secondary"
+				size="sm"
+				icon
+				className={styles.dragHandle}
+				aria-label="Drag to reorder section"
+				testId={`dashboard-section-drag-${sectionId}`}
+				{...sortableAttributes}
+			>
+				<GripVertical size={14} />
+			</Button>
+		</span>
+	);
+}
+
 function SectionHeader({
 	sectionId,
 	title,
@@ -53,28 +80,16 @@ function SectionHeader({
 	return (
 		<div className={cx(styles.header, { [styles.headerOpen]: open })}>
 			{dragHandle ? (
-				<Button
-					type="button"
-					variant="ghost"
-					color="secondary"
-					size="icon"
-					className={styles.dragHandle}
-					ref={dragHandle.setActivatorNodeRef}
-					aria-label="Drag to reorder section"
-					data-testid={`dashboard-section-drag-${sectionId}`}
-					{...dragHandle.attributes}
-					{...dragHandle.listeners}
-				>
-					<GripVertical size={14} />
-				</Button>
+				<SectionDragHandleButton dragHandle={dragHandle} sectionId={sectionId} />
 			) : null}
 			<Button
+				size="md"
 				type="button"
 				variant="ghost"
 				color="secondary"
 				className={styles.toggle}
 				onClick={onToggle}
-				data-testid={`dashboard-section-toggle-${sectionId}`}
+				testId={`dashboard-section-toggle-${sectionId}`}
 			>
 				{open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
 				<Typography.Text className={styles.title}>{title}</Typography.Text>

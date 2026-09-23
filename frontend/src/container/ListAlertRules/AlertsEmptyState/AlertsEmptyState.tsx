@@ -86,6 +86,10 @@ export function AlertsEmptyState({
 						<div className={styles.actionContainer}>
 							<div className={styles.buttonGroup}>
 								<Button
+									disabledTooltip={undefined}
+									size="md"
+									variant="solid"
+									color="primary"
 									onClick={onClickNewAlertHandler}
 									disabled={!addNewAlert}
 									loading={loading}
@@ -98,6 +102,8 @@ export function AlertsEmptyState({
 								</Button>
 								{onRefresh && (
 									<Button
+										size="md"
+										variant="solid"
 										onClick={onRefresh}
 										prefix={<RefreshCw />}
 										color="secondary"

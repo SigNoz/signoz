@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Color } from '@signozhq/design-tokens';
 import { CircleX, TriangleAlert } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';

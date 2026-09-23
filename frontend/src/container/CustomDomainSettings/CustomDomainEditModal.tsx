@@ -192,6 +192,7 @@ export default function CustomDomainEditModal({
 						/>
 					) : (
 						<Button
+							disabledTooltip={undefined}
 							variant="solid"
 							size="md"
 							color="primary"

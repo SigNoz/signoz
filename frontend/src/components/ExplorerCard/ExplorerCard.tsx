@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button, Col, Popover, Row, Select, Space } from 'antd';

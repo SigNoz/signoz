@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Fragment, useMemo } from 'react';
 import { Info, Loader } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';

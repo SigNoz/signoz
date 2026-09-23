@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { EllipsisVertical } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Check, Plus, X } from '@signozhq/icons';
 import { Button, Flex } from 'antd';

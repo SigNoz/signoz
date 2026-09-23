@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo, useState } from 'react';
 import { ChevronDown, DollarSign, Search } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';

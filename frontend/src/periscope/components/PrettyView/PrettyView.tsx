@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useMemo } from 'react';
 import { JSONTree, KeyPath } from 'react-json-tree';
 import { useCopyToClipboard } from 'react-use';

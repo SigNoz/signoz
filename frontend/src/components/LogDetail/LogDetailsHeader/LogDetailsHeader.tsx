@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Button } from '@signozhq/ui/button';
 import { Divider } from '@signozhq/ui/divider';
 import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';

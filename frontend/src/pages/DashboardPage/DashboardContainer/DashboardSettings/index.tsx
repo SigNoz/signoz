@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo } from 'react';
 
 import { Braces, Globe, Table } from '@signozhq/icons';

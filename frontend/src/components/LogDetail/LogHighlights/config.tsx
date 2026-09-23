@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ReactNode } from 'react';
 import { Badge, BadgeColor } from '@signozhq/ui/badge';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';

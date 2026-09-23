@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';

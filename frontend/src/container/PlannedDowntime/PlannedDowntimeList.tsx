@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';

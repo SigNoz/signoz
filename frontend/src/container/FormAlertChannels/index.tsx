@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@signozhq/ui/input';

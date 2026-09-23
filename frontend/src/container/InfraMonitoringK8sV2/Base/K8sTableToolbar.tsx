@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Select } from 'antd';

@@ -35,10 +35,11 @@ function LicenseSectionContent(): JSX.Element | null {
 					<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 						<Typography.Text code>{getMaskedKey(licenseKey)}</Typography.Text>
 						<Button
+							size="md"
 							variant="link"
-							color="none"
+							color="secondary"
 							aria-label="Copy license key"
-							data-testid="license-key-copy-btn"
+							testId="license-key-copy-btn"
 							onClick={(): void => handleCopyKey(licenseKey)}
 						>
 							<Copy size={14} />

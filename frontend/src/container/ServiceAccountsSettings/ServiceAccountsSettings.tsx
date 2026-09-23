@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';

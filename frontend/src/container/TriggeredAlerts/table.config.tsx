@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { BellDot } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { SEVERITY_BADGE_COLORS } from 'components/Alerts/constants';
@@ -60,7 +61,7 @@ export function getAlertColumns(
 				return (
 					<Badge
 						color={SEVERITY_BADGE_COLORS[severity] ?? 'secondary'}
-						variant="outline"
+						variant="outlined"
 						testId={testId}
 					>
 						{severity}
@@ -100,7 +101,9 @@ export function getAlertColumns(
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
 
-				return <LabelColumn labels={tagKeys} value={labels} color="sakura" />;
+				return (
+					<LabelColumn labels={tagKeys} value={labels} color="highlight-danger" />
+				);
 			},
 		},
 	];

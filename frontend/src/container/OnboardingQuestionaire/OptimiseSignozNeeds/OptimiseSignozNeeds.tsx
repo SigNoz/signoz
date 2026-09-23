@@ -284,6 +284,8 @@ function OptimiseSignozNeeds({
 
 				<div className="onboarding-buttons-container">
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						variant="solid"
 						color="primary"
 						className={`onboarding-next-button ${
@@ -302,6 +304,8 @@ function OptimiseSignozNeeds({
 						Next
 					</Button>
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						variant="ghost"
 						color="secondary"
 						className="onboarding-do-later-button"

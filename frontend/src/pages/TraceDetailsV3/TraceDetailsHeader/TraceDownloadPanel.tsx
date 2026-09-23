@@ -40,14 +40,16 @@ function TraceDownloadPanel(): JSX.Element {
 					</span>
 					<Button
 						variant="ghost"
-						size="icon"
+						size="sm"
+						icon
 						color="secondary"
 						className={styles.cancelBtn}
 						onClick={cancelDownload}
 						aria-label="Cancel download"
-						data-testid="trace-download-cancel"
-						prefix={<X size={16} />}
-					/>
+						testId="trace-download-cancel"
+					>
+						<X size={16} />
+					</Button>
 				</div>
 				<Progress percent={displayProgress} status="active" showInfo={false} />
 			</div>

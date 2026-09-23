@@ -186,6 +186,8 @@ function SignUp(): JSX.Element {
 
 					<div className="signup-form-actions">
 						<Button
+							disabledTooltip={undefined}
+							size="md"
 							variant="solid"
 							color="primary"
 							type="submit"

@@ -106,8 +106,8 @@ export function getModelCostsColumns({
 						{buckets.map((bucket) => (
 							<Badge
 								key={bucket.key}
-								color="vanilla"
-								variant="outline"
+								color="secondary"
+								variant="outlined"
 								className={styles.extraBucketsChip}
 							>
 								<Typography.Text
@@ -138,10 +138,10 @@ export function getModelCostsColumns({
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
 				<Badge
-					color={row.isOverride ? 'amber' : 'robin'}
-					variant="outline"
+					color={row.isOverride ? 'warning' : 'primary'}
+					variant="outlined"
 					className={styles.sourceBadge}
-					data-testid={`source-badge-${row.id}`}
+					testId={`source-badge-${row.id}`}
 				>
 					{getSourceLabel(row)}
 				</Badge>

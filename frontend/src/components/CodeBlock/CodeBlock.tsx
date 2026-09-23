@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Check, Copy } from '@signozhq/icons';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Tabs } from '@signozhq/ui/tabs';

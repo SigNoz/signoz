@@ -37,6 +37,8 @@ function Controls({
 	return (
 		<div className={styles.container}>
 			<Button
+				disabledTooltip={undefined}
+				color="primary"
 				variant="link"
 				size="md"
 				disabled={isPreviousDisabled}
@@ -46,6 +48,8 @@ function Controls({
 				Previous
 			</Button>
 			<Button
+				disabledTooltip={undefined}
+				color="primary"
 				variant="link"
 				size="md"
 				disabled={isNextDisabled}

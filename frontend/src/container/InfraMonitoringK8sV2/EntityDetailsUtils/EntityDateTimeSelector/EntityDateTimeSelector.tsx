@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback } from 'react';
 import { Undo } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';

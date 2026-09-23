@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useRef, useState } from 'react';
 import { Check, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';

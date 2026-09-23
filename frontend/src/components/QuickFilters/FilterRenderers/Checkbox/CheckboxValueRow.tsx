@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Button } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';

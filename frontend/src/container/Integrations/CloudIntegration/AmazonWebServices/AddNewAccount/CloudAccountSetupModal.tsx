@@ -83,6 +83,8 @@ function CloudAccountSetupModal({
 	const footer = (
 		<div className="cloud-account-setup-modal__footer">
 			<Button
+				disabledTooltip={undefined}
+				size="md"
 				variant="solid"
 				color="primary"
 				prefix={<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />}

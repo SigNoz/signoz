@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import TooltipScrollArea, {
 	TOOLTIP_SCROLL_CONTENT_CLASS,

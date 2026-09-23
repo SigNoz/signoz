@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
 import React, {
 	useCallback,

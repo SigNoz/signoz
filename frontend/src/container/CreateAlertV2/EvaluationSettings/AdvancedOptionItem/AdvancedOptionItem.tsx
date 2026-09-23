@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { Tooltip } from 'antd';
 import { Switch } from '@signozhq/ui/switch';

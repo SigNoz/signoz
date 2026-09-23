@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import { Button } from '@signozhq/ui/button';

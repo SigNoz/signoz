@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';

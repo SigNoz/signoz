@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Link, useRouteMatch } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';

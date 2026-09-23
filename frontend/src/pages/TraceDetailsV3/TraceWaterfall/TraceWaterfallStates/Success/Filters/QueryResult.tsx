@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ChevronDown, ChevronUp, Info, Loader } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import {

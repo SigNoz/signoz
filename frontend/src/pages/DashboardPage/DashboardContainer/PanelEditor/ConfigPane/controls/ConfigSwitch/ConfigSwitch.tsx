@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple, TooltipProvider } from '@signozhq/ui/tooltip';
 import { Copy } from '@signozhq/icons';

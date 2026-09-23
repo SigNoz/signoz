@@ -71,7 +71,9 @@ function ActionsPopover({
 				trigger="click"
 			>
 				<Button
-					size="icon"
+					aria-label="Action"
+					size="sm"
+					icon
 					variant="ghost"
 					color="secondary"
 					testId="dashboard-action-icon"

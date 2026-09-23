@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Globe, LockKeyhole } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';

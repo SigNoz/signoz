@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';

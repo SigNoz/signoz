@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ReactNode, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';

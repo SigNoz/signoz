@@ -47,31 +47,35 @@ function VolumeControlConfigDrawer({
 			</Typography.Text>
 			<div className={styles.footerSpacer} />
 			<Button
+				size="md"
 				variant="outlined"
 				color="secondary"
 				onClick={onClose}
-				data-testid="volume-control-cancel"
+				testId="volume-control-cancel"
 			>
 				Cancel
 			</Button>
 			{hasExistingRule && (
 				<Button
-					variant="ghost"
-					color="destructive"
+					size="md"
+					variant="solid"
+					color="danger"
 					onClick={remove}
 					loading={isRemoving}
-					data-testid="volume-control-remove"
+					testId="volume-control-remove"
 				>
 					Remove rule
 				</Button>
 			)}
 			<Button
+				disabledTooltip={undefined}
+				size="md"
 				variant="solid"
 				color="primary"
 				onClick={save}
 				disabled={isSaveDisabled}
 				loading={isSaving}
-				data-testid="volume-control-save"
+				testId="volume-control-save"
 			>
 				Save rule
 			</Button>

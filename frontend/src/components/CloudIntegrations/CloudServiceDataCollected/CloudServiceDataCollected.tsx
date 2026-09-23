@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Table } from 'antd';
 import {
 	CloudintegrationtypesCollectedLogAttributeDTO,

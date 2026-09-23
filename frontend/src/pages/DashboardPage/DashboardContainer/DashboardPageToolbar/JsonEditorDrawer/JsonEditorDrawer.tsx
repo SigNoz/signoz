@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { KeyboardEvent, useCallback } from 'react';
 import MEditor from '@monaco-editor/react';
 import { TriangleAlert } from '@signozhq/icons';

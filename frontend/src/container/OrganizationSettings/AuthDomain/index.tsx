@@ -154,6 +154,8 @@ function AuthDomain(): JSX.Element {
 				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
 					<section className="auth-domain-list-column-action">
 						<Button
+							size="md"
+							color="primary"
 							className="auth-domain-list-action-link"
 							onClick={(): void => setRecord(record)}
 							variant="link"
@@ -162,6 +164,8 @@ function AuthDomain(): JSX.Element {
 							Configure {SSOType.get(record.config?.kind || '')}
 						</Button>
 						<Button
+							size="md"
+							color="primary"
 							className="auth-domain-list-action-link delete"
 							onClick={(): void => showDeleteModal(record)}
 							variant="link"
@@ -236,6 +240,9 @@ function AuthDomain(): JSX.Element {
 				destroyOnClose
 				footer={[
 					<Button
+						size="md"
+						variant="solid"
+						color="primary"
 						key="cancel"
 						onClick={hideDeleteModal}
 						className="cancel-btn"
@@ -245,6 +252,9 @@ function AuthDomain(): JSX.Element {
 						Cancel
 					</Button>,
 					<Button
+						size="md"
+						variant="solid"
+						color="primary"
 						key="submit"
 						prefix={<Trash2 size={16} />}
 						onClick={handleDeleteDomain}

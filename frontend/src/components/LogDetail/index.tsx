@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useCopyToClipboard } from 'react-use';

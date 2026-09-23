@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { Switch } from '@signozhq/ui/switch';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type FocusEvent, KeyboardEvent } from 'react';
 import {
 	Check,

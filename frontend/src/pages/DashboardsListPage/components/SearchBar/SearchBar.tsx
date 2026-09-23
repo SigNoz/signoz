@@ -171,35 +171,37 @@ function SearchBar({
 					data-testid="dashboards-list-search"
 					onChange={(next): void => onChange(next.replace(/\n/g, ' '))}
 				/>
-				<Button
-					variant="ghost"
-					color="secondary"
-					size="sm"
-					className={styles.submit}
-					aria-label="Run search"
-					disabled={disabled}
-					testId="dashboards-list-search-submit"
-					onMouseDown={(e: MouseEvent<HTMLButtonElement>): void => {
-						e.preventDefault();
-					}}
-					onClick={handleSubmit}
+				<span
+					onMouseDown={(e: MouseEvent<HTMLSpanElement>): void => e.preventDefault()}
 				>
-					{dirty && (
-						<span
-							className={styles.dirtyDot}
-							data-testid="dashboards-list-search-dirty"
-						/>
-					)}
-					Run query
-					<span className={styles.cmdHint}>
-						{isMac ? (
-							<Command size={12} color={Color.BG_VANILLA_400} />
-						) : (
-							<ChevronUp size={12} color={Color.BG_VANILLA_400} />
+					<Button
+						disabledTooltip={undefined}
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						className={styles.submit}
+						aria-label="Run search"
+						disabled={disabled}
+						testId="dashboards-list-search-submit"
+						onClick={handleSubmit}
+					>
+						{dirty && (
+							<span
+								className={styles.dirtyDot}
+								data-testid="dashboards-list-search-dirty"
+							/>
 						)}
-						<CornerDownLeft size={12} color={Color.BG_VANILLA_400} />
-					</span>
-				</Button>
+						Run query
+						<span className={styles.cmdHint}>
+							{isMac ? (
+								<Command size={12} color={Color.BG_VANILLA_400} />
+							) : (
+								<ChevronUp size={12} color={Color.BG_VANILLA_400} />
+							)}
+							<CornerDownLeft size={12} color={Color.BG_VANILLA_400} />
+						</span>
+					</Button>
+				</span>
 			</div>
 		</div>
 	);

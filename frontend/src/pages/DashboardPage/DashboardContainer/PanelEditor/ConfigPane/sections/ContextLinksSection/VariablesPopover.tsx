@@ -83,29 +83,33 @@ function VariablesPopover({
 						<div className={styles.empty}>No variables available</div>
 					) : (
 						variables.map((v) => (
-							<Button
+							<span
 								key={`${v.source}-${v.name}`}
-								type="button"
-								variant="ghost"
-								color="secondary"
-								size="md"
-								className={styles.item}
-								aria-label={`Insert {{${v.name}}}`}
-								testId={`context-link-variable-${v.name}`}
-								// Prevent the input from losing focus when clicking an item.
 								onMouseDown={(e): void => e.preventDefault()}
-								onClick={(): void => {
-									onVariableSelect(`{{${v.name}}}`, cursorPosition ?? undefined);
-									setIsOpen(false);
-								}}
 							>
-								<div className={styles.row}>
-									<Typography.Text
-										className={styles.name}
-									>{`{{${v.name}}}`}</Typography.Text>
-									<Typography.Text className={styles.source}>{v.source}</Typography.Text>
-								</div>
-							</Button>
+								<Button
+									type="button"
+									variant="ghost"
+									color="secondary"
+									size="md"
+									className={styles.item}
+									aria-label={`Insert {{${v.name}}}`}
+									testId={`context-link-variable-${v.name}`}
+									onClick={(): void => {
+										onVariableSelect(`{{${v.name}}}`, cursorPosition ?? undefined);
+										setIsOpen(false);
+									}}
+								>
+									<div className={styles.row}>
+										<Typography.Text
+											className={styles.name}
+										>{`{{${v.name}}}`}</Typography.Text>
+										<Typography.Text className={styles.source}>
+											{v.source}
+										</Typography.Text>
+									</div>
+								</Button>
+							</span>
 						))
 					)}
 				</PopoverContent>

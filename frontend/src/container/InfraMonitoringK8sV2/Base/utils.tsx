@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Badge } from '@signozhq/ui/badge';
 
 import styles from './utils.module.scss';

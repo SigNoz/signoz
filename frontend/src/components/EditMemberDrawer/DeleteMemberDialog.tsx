@@ -38,13 +38,15 @@ function DeleteMemberDialog({
 
 	const footer = (
 		<>
-			<Button variant="solid" color="secondary" onClick={onClose}>
+			<Button size="md" variant="solid" color="secondary" onClick={onClose}>
 				<X size={12} />
 				Cancel
 			</Button>
 			<Button
+				disabledTooltip={undefined}
+				size="md"
 				variant="solid"
-				color="destructive"
+				color="danger"
 				disabled={isDeleting}
 				onClick={onConfirm}
 				loading={isDeleting}

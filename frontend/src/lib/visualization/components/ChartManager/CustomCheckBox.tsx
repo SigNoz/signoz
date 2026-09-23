@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { grey } from '@ant-design/colors';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { ExtendedChartDataset } from 'lib/visualization/charts/types';

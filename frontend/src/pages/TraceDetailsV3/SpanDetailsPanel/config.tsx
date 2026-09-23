@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ReactNode } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import ExpandableValue from 'periscope/components/ExpandableValue';

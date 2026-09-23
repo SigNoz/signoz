@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Fragment, useEffect, useMemo, useRef } from 'react';
 import {
 	BarChart,

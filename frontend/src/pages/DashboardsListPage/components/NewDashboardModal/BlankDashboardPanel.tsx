@@ -150,6 +150,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 					Cancel
 				</Button>
 				<Button
+					disabledTooltip={undefined}
 					variant="solid"
 					color="primary"
 					size="md"

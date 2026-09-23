@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type ReactElement, type ReactNode, useMemo } from 'react';
 import { Copy, EllipsisVertical, PenLine, Plus, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';

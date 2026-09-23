@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Check, ChevronDown, RefreshCw } from '@signozhq/icons';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';

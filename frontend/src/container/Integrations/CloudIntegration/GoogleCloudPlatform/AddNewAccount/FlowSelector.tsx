@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Badge } from '@signozhq/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';

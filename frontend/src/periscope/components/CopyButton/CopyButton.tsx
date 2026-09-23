@@ -50,7 +50,8 @@ function CopyButton({
 		<Button
 			variant="ghost"
 			color="secondary"
-			size="icon"
+			size="sm"
+			icon
 			className={cx(styles.copyButton, className)}
 			onClick={handleClick}
 			aria-label={isCopied ? 'Copied' : ariaLabel}

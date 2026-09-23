@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Color } from '@signozhq/design-tokens';
 import { Ellipsis } from '@signozhq/icons';

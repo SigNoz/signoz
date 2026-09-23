@@ -84,6 +84,7 @@ function CloudAccountSetupDrawer({
 			)}
 			<div className={styles.footer}>
 				<Button
+					size="md"
 					variant="outlined"
 					color="secondary"
 					onClick={handleClose}
@@ -92,6 +93,8 @@ function CloudAccountSetupDrawer({
 					Cancel
 				</Button>
 				<Button
+					disabledTooltip={undefined}
+					size="md"
 					variant="solid"
 					color="primary"
 					onClick={handleSubmit(connectAccount)}

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';

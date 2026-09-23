@@ -48,8 +48,8 @@ function PatternEditor({
 					{patterns.map((pattern) => (
 						<Badge
 							key={pattern}
-							color="vanilla"
-							variant="outline"
+							color="secondary"
+							variant="outlined"
 							className={styles.patternChip}
 						>
 							{pattern}*
@@ -81,6 +81,7 @@ function PatternEditor({
 							testId="drawer-pattern-input"
 						/>
 						<Button
+							size="md"
 							variant="outlined"
 							color="secondary"
 							onClick={addPattern}

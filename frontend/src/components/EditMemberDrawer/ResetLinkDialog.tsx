@@ -45,6 +45,7 @@ function ResetLinkDialog({
 						<span className="reset-link-dialog__link-text">{resetLink}</span>
 					</div>
 					<Button
+						size="md"
 						variant="link"
 						color="secondary"
 						onClick={onCopy}

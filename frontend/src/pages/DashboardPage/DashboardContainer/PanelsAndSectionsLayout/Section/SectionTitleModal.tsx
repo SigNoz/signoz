@@ -72,6 +72,7 @@ function SectionTitleModal({
 						Cancel
 					</Button>
 					<Button
+						disabledTooltip={undefined}
 						variant="solid"
 						color="primary"
 						size="md"

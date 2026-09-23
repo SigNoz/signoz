@@ -219,6 +219,8 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 
 					<div className="reset-password-form-actions">
 						<Button
+							disabledTooltip={undefined}
+							size="md"
 							variant="solid"
 							color="primary"
 							type="submit"

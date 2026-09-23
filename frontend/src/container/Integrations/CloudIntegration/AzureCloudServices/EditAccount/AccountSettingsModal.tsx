@@ -72,6 +72,8 @@ function AccountSettingsModal({
 						cloudProvider={INTEGRATION_TYPES.AZURE}
 					/>
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						variant="solid"
 						color="secondary"
 						disabled={isSaveDisabled}

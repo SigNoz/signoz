@@ -11,8 +11,8 @@ interface VolumeControlBadgeProps {
 function VolumeControlBadge({ rule }: VolumeControlBadgeProps): JSX.Element {
 	const badge = (
 		<Badge
-			data-testid="vc-badge-active"
-			variant="outline"
+			testId="vc-badge-active"
+			variant="outlined"
 			color={rule.active ? 'success' : 'warning'}
 		>
 			<Gauge size={12} />

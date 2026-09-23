@@ -18,7 +18,7 @@ function SelectedItemsChips({
 			{ids.map((id) => (
 				<Badge
 					key={`selector-badge-${componentId}-${id}`}
-					variant="outline"
+					variant="outlined"
 					color="secondary"
 				>
 					{id}

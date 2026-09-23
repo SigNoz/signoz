@@ -71,6 +71,7 @@ function VariableImpactDialog({
 	const footer = (
 		<div className={styles.footer}>
 			<Button
+				size="md"
 				variant="solid"
 				color="secondary"
 				onClick={onClose}
@@ -80,8 +81,9 @@ function VariableImpactDialog({
 				Cancel
 			</Button>
 			<Button
+				size="md"
 				variant="solid"
-				color={isDelete ? 'destructive' : 'primary'}
+				color={isDelete ? 'danger' : 'primary'}
 				loading={isLoading}
 				onClick={(): void => onConfirm(resolvedUsages)}
 				testId="variable-impact-confirm"

@@ -37,6 +37,8 @@ function PanelTypeSelectionModalFooter({
 				/>
 			</div>
 			<Button
+				disabledTooltip={undefined}
+				variant="solid"
 				color="primary"
 				size="md"
 				disabled={isConfirmDisabled}

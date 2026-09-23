@@ -28,6 +28,8 @@ function AttributeMappingActions({
 				Unsaved changes
 			</span>
 			<Button
+				disabledTooltip={undefined}
+				size="md"
 				variant="outlined"
 				color="secondary"
 				onClick={onDiscard}
@@ -37,6 +39,8 @@ function AttributeMappingActions({
 				Discard
 			</Button>
 			<Button
+				disabledTooltip={undefined}
+				size="md"
 				variant="solid"
 				color="primary"
 				onClick={onSave}

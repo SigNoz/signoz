@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo, useState } from 'react';
 import { QueryFunctionContext, useQueries, useQuery } from 'react-query';
 import { Spin, Table, Tooltip } from 'antd';

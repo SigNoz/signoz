@@ -24,6 +24,7 @@ function JsonEditorToolbar({
 	return (
 		<div className={styles.toolbar}>
 			<Button
+				disabledTooltip={undefined}
 				variant="ghost"
 				color="secondary"
 				size="sm"
@@ -56,6 +57,7 @@ function JsonEditorToolbar({
 			</Button>
 			<div className={styles.spacer} />
 			<Button
+				disabledTooltip={undefined}
 				variant="ghost"
 				color="secondary"
 				size="sm"

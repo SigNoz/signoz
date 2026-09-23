@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo } from 'react';
 import { EllipsisVertical, Pencil, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';

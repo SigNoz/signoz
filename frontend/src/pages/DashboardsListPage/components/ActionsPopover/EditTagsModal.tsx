@@ -117,6 +117,7 @@ function EditTagsModal({
 						Cancel
 					</Button>
 					<Button
+						disabledTooltip={undefined}
 						variant="solid"
 						color="primary"
 						size="md"

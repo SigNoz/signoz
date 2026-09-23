@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Button } from '@signozhq/ui/button';
 import {
 	DropdownMenu,

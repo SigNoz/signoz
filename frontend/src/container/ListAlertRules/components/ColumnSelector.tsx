@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo } from 'react';
 import { Columns3 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';

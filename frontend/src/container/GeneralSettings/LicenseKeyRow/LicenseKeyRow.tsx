@@ -29,10 +29,12 @@ function LicenseKeyRow(): JSX.Element | null {
 			<span className="license-key-row__value">
 				<code className="license-key-row__code">{getMaskedKey(licenseKey)}</code>
 				<Button
+					variant="solid"
+					color="primary"
 					type="button"
 					size="sm"
 					aria-label="Copy license key"
-					data-testid="license-key-row-copy-btn"
+					testId="license-key-row-copy-btn"
 					className="license-key-row__copy-btn"
 					onClick={(): void => handleCopyLicenseKey(licenseKey)}
 				>

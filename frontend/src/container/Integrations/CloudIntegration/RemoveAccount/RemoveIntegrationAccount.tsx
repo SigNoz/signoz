@@ -101,8 +101,10 @@ function RemoveIntegrationAccount({
 	return (
 		<div className="remove-integration-account-container">
 			<Button
+				disabledTooltip={undefined}
+				size="md"
 				variant="solid"
-				color="destructive"
+				color="danger"
 				prefix={<Unlink size={14} />}
 				onClick={handleDisconnect}
 				disabled={isRemoveIntegrationLoading}

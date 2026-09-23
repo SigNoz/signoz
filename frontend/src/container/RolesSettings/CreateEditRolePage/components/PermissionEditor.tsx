@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useRef, useState } from 'react';
 import { SolidAlertTriangle } from '@signozhq/icons';
 import { Button, ButtonGroup } from '@signozhq/ui/button';

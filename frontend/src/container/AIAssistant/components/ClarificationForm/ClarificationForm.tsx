@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from 'react';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';

@@ -47,11 +47,13 @@ function AddSectionControl({
 	return (
 		<>
 			<Button
+				size="md"
+				color="secondary"
 				type="button"
 				variant="ghost"
 				className={styles.addButton}
 				onClick={handleClick}
-				data-testid="add-section"
+				testId="add-section"
 			>
 				<Plus size={14} />
 				Add section

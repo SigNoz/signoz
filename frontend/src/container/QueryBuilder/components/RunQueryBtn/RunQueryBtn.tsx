@@ -41,7 +41,9 @@ function RunQueryBtn({
 
 	return isLoading ? (
 		<Button
-			color="destructive"
+			size="md"
+			variant="solid"
+			color="danger"
 			type="button"
 			prefix={<LoaderCircle size={14} className="loading-icon animate-spin" />}
 			className={cx('cancel-query-btn', className)}
@@ -51,6 +53,9 @@ function RunQueryBtn({
 		</Button>
 	) : (
 		<Button
+			disabledTooltip={undefined}
+			size="md"
+			variant="solid"
 			color="primary"
 			type="button"
 			className={cx('run-query-btn', className)}

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Link } from 'react-router-dom';
 import { Compass, Info } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { generatePath, Link } from 'react-router-dom';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';

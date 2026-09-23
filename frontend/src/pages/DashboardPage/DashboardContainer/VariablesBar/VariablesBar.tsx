@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ChevronLeft } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';

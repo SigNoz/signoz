@@ -23,21 +23,22 @@ export function SectionActionButton({
 }: SectionActionButtonProps): JSX.Element {
 	return (
 		<Tooltip title={tooltip}>
-			<Button
-				variant="link"
-				color="secondary"
-				size="sm"
-				className={classNames(styles.iconBtn, className)}
-				onMouseDown={(e): void => e.preventDefault()}
-				onClick={(e): void => {
-					e.stopPropagation();
-					e.preventDefault();
-					onClick();
-				}}
-				data-testid={testId}
-			>
-				{icon}
-			</Button>
+			<span onMouseDown={(e): void => e.preventDefault()}>
+				<Button
+					variant="link"
+					color="secondary"
+					size="sm"
+					className={classNames(styles.iconBtn, className)}
+					onClick={(e): void => {
+						e.stopPropagation();
+						e.preventDefault();
+						onClick();
+					}}
+					testId={testId}
+				>
+					{icon}
+				</Button>
+			</span>
 		</Tooltip>
 	);
 }

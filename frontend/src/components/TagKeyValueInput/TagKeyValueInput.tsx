@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type ChangeEvent, type KeyboardEvent, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';

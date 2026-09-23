@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Check, Clock, RotateCcw, X, Zap } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';

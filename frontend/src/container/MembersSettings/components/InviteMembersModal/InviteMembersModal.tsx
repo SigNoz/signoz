@@ -47,12 +47,20 @@ function InviteMembersModal({
 				onPartialSuccess={handlePartialSuccess}
 				renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => (
 					<div className="invite-members-modal__footer">
-						<Button type="button" variant="solid" color="secondary" onClick={onClose}>
+						<Button
+							size="md"
+							type="button"
+							variant="solid"
+							color="secondary"
+							onClick={onClose}
+						>
 							<X size={12} />
 							Cancel
 						</Button>
 
 						<Button
+							disabledTooltip={undefined}
+							size="md"
 							variant="solid"
 							color="primary"
 							onClick={submit}

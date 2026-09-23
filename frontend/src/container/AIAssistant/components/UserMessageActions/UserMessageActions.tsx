@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';

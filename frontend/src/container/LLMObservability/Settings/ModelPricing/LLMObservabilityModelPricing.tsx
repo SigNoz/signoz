@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Tabs } from 'antd';

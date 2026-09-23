@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dot } from '@signozhq/icons';

@@ -100,14 +100,16 @@ function ExtraPricingBuckets({
 
 					{!isReadOnly && (
 						<Button
-							size="icon"
-							variant="ghost"
-							color="destructive"
+							size="sm"
+							icon
+							variant="solid"
+							color="danger"
 							onClick={(): void => removeBucket(bucket.key)}
 							aria-label={`Remove ${bucket.label}`}
-							data-testid={`drawer-remove-${bucket.testId}`}
-							prefix={<Trash2 size={14} />}
-						/>
+							testId={`drawer-remove-${bucket.testId}`}
+						>
+							<Trash2 size={14} />
+						</Button>
 					)}
 				</div>
 			))}
@@ -132,6 +134,7 @@ function ExtraPricingBuckets({
 
 			{!isReadOnly && !isExtraPricingBucketOpen && availableBuckets.length > 0 && (
 				<Button
+					size="md"
 					variant="dashed"
 					color="secondary"
 					className={styles.bucketAddBtn}

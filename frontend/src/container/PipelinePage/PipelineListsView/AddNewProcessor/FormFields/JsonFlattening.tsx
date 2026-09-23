@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { Info } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';

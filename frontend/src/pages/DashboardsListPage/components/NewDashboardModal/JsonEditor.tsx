@@ -61,7 +61,8 @@ function JsonEditor({
 			<Button
 				variant="ghost"
 				color="secondary"
-				size="icon"
+				size="sm"
+				icon
 				className={styles.expandBtn}
 				aria-label="Expand editor"
 				testId="json-editor-expand"

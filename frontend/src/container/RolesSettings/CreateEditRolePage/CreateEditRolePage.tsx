@@ -110,10 +110,11 @@ function CreateEditRolePageContent(): JSX.Element {
 				<div className={styles.createEditRolePageHeader}>
 					<div className={styles.createEditRolePageHeaderLeft}>
 						<Button
+							size="md"
 							variant="ghost"
 							color="secondary"
 							onClick={handleCancel}
-							data-testid="cancel-button"
+							testId="cancel-button"
 							className={styles.backButton}
 						>
 							<ArrowLeft size={16} />
@@ -172,11 +173,13 @@ function CreateEditRolePageContent(): JSX.Element {
 			<div className={styles.createEditRolePageHeader}>
 				<div className={styles.createEditRolePageHeaderLeft}>
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						variant="ghost"
 						color="secondary"
 						onClick={handleCancel}
 						disabled={isSaving}
-						data-testid="cancel-button"
+						testId="cancel-button"
 						className={styles.backButton}
 					>
 						<ArrowLeft size={16} />
@@ -194,6 +197,7 @@ function CreateEditRolePageContent(): JSX.Element {
 						</div>
 					)}
 					<AuthZButton
+						size="md"
 						checks={saveChecks}
 						authZEnabled={isSaveCheckEnabled}
 						variant="solid"
@@ -304,7 +308,7 @@ function CreateEditRolePageContent(): JSX.Element {
 				title="Discard unsaved changes?"
 				titleIcon={<SolidAlertTriangle size={14} color="#fdd600" />}
 				confirmText="Discard"
-				confirmColor="destructive"
+				confirmColor="danger"
 				cancelText="Keep editing"
 				onConfirm={confirmNavigation}
 				onCancel={cancelNavigation}

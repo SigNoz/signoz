@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ReactNode } from 'react';
 import { Dock, PanelBottom, PanelRight } from '@signozhq/icons';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';

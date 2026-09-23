@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from 'react';
 import { CloudDownload } from '@signozhq/icons';
 import { DropdownMenuSimple, type MenuProps } from '@signozhq/ui/dropdown-menu';

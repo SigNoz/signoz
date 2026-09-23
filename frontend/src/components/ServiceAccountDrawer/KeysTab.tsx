@@ -122,9 +122,11 @@ function buildColumns({
 							]}
 							authZEnabled={!isDisabled && !!accountId}
 							withPortal={false}
-							variant="ghost"
+							variant="solid"
 							size="sm"
-							color="destructive"
+							color="danger"
+							icon
+							aria-label="Revoke Key"
 							disabled={isDisabled}
 							onClick={(e): void => {
 								e.stopPropagation();
@@ -213,6 +215,7 @@ function KeysTab({
 					</a>
 				</p>
 				<AuthZButton
+					size="md"
 					checks={[APIKeyCreatePermission, buildSAAttachPermission(accountId)]}
 					authZEnabled={!isDisabled && !!accountId}
 					withPortal={false}

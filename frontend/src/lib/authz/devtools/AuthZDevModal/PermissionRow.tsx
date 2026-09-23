@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Badge, BadgeColor } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';

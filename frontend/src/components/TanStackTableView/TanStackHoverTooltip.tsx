@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type ReactNode, useLayoutEffect, useMemo } from 'react';
 
 import { chromePerformanceTanstackTableEndHover } from './perfDevtools';

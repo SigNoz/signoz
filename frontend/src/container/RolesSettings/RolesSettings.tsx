@@ -50,6 +50,7 @@ function RolesSettings(): JSX.Element {
 					</AuthZTooltip>
 					{isRolesEnabled && (
 						<AuthZButton
+							size="md"
 							checks={[RoleCreatePermission]}
 							variant="solid"
 							color="primary"

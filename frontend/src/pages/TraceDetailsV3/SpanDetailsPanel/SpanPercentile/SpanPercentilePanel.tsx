@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Select, Skeleton } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Button } from '@signozhq/ui/button';

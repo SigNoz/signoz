@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import {

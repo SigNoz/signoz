@@ -189,11 +189,16 @@ export default function ActionBlock({
 			)}
 
 			<div className={styles.actions}>
-				<Button variant="solid" size="sm" onClick={execute}>
+				<Button color="primary" variant="solid" size="sm" onClick={execute}>
 					<Check size={12} />
 					Apply
 				</Button>
-				<Button variant="outlined" size="sm" onClick={handleDismiss}>
+				<Button
+					color="secondary"
+					variant="outlined"
+					size="sm"
+					onClick={handleDismiss}
+				>
 					<X size={12} />
 					Dismiss
 				</Button>

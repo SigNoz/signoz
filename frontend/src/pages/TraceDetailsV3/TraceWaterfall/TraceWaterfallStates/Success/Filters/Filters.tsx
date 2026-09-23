@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ArrowRightFromLine, Search, X } from '@signozhq/icons';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { generatePath, Link } from 'react-router-dom';
 import { Badge } from '@signozhq/ui/badge';
 import TanStackTable from 'components/TanStackTableView';

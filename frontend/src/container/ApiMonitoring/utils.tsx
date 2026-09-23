@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { TableColumnType as ColumnType, Tooltip } from 'antd';

@@ -26,8 +26,10 @@ function PublicDashboardUrl({
 					<Typography.Text className={styles.linkUrl}>{url}</Typography.Text>
 					<span className={styles.linkDivider} />
 					<Button
+						color="secondary"
 						variant="ghost"
-						size="icon"
+						size="sm"
+						icon
 						aria-label="Copy link"
 						testId="public-dashboard-copy-url"
 						onClick={onCopy}
@@ -35,8 +37,10 @@ function PublicDashboardUrl({
 						<Copy size={15} />
 					</Button>
 					<Button
+						color="secondary"
 						variant="ghost"
-						size="icon"
+						size="sm"
+						icon
 						aria-label="Open link"
 						testId="public-dashboard-open-url"
 						onClick={onOpen}

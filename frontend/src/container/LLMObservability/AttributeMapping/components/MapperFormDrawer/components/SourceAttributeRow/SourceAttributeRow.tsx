@@ -95,9 +95,11 @@ function SourceAttributeRow({
 				testId={`mapper-form-source-operation-${index}`}
 			/>
 			<Button
+				disabledTooltip={undefined}
 				variant="ghost"
 				color="secondary"
-				size="icon"
+				size="sm"
+				icon
 				aria-label="Remove source"
 				disabled={!canRemove}
 				onClick={(): void => onRemove(index)}

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';

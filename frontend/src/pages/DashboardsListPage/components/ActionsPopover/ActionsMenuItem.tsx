@@ -31,22 +31,46 @@ function ActionsMenuItem({
 	loading = false,
 	destructive = false,
 }: Props): JSX.Element {
+	const handleClick = (e: MouseEvent<HTMLButtonElement>): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		onClick(e);
+	};
+
+	if (destructive) {
+		return (
+			<AuthZButton
+				size="md"
+				checks={checks}
+				disabledTooltip={disabledTooltip}
+				side="left"
+				variant="solid"
+				color="danger"
+				className={styles.menuItem}
+				prefix={icon}
+				disabled={loading}
+				loading={loading}
+				onClick={handleClick}
+				testId={testId}
+			>
+				{label}
+			</AuthZButton>
+		);
+	}
+
 	return (
 		<AuthZButton
+			size="md"
 			checks={checks}
 			disabledTooltip={disabledTooltip}
 			side="left"
 			variant="ghost"
-			color={destructive ? 'destructive' : 'secondary'}
+			color="secondary"
 			className={styles.menuItem}
 			prefix={icon}
 			disabled={loading}
 			loading={loading}
-			onClick={(e: MouseEvent<HTMLButtonElement>): void => {
-				e.preventDefault();
-				e.stopPropagation();
-				onClick(e);
-			}}
+			onClick={handleClick}
 			testId={testId}
 		>
 			{label}

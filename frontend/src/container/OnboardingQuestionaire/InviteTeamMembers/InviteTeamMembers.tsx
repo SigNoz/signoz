@@ -120,6 +120,8 @@ function InviteTeamMembers({
 								return (
 									<div className="onboarding-buttons-container">
 										<Button
+											disabledTooltip={undefined}
+											size="md"
 											variant="solid"
 											color="primary"
 											className={`onboarding-next-button ${
@@ -127,7 +129,7 @@ function InviteTeamMembers({
 											}`}
 											onClick={submit}
 											disabled={isInviteButtonDisabled}
-											data-testid="send-invites-button"
+											testId="send-invites-button"
 											suffix={
 												isButtonDisabled ? (
 													<LoaderCircle className="animate-spin" size={12} />
@@ -139,12 +141,14 @@ function InviteTeamMembers({
 											Send Invites
 										</Button>
 										<Button
+											disabledTooltip={undefined}
+											size="md"
 											variant="ghost"
 											color="secondary"
 											className="onboarding-do-later-button"
 											onClick={handleDoLater}
 											disabled={isButtonDisabled}
-											data-testid="do-later-button"
+											testId="do-later-button"
 										>
 											I&apos;ll do this later
 										</Button>

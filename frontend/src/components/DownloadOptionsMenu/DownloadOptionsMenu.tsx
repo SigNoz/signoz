@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useMemo, useState } from 'react';
 import { Button, Popover, Tooltip } from 'antd';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';

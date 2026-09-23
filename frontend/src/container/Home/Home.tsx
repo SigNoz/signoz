@@ -311,6 +311,7 @@ export default function Home(): JSX.Element {
 									rootClassName="welcome-checklist-popover"
 								>
 									<Button
+										size="md"
 										variant="solid"
 										color="secondary"
 										prefix={<ClipboardList size={14} />}
@@ -494,6 +495,7 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
 												className="periscope-btn secondary"
@@ -511,6 +513,7 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
 												className="periscope-btn secondary"
@@ -528,6 +531,7 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
 												className="periscope-btn secondary"
@@ -567,6 +571,7 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
 												className="periscope-btn secondary"
@@ -612,6 +617,7 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
 												className="periscope-btn secondary"
@@ -694,6 +700,7 @@ export default function Home(): JSX.Element {
 								<Card.Footer>
 									<div className="checklist-footer-container">
 										<Button
+											size="md"
 											variant="link"
 											color="secondary"
 											onClick={handleWillDoThisLater}

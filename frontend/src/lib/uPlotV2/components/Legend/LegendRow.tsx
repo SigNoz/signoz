@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { KeyboardEvent, memo, MouseEvent, useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';

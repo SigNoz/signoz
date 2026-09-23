@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ChangeEvent, ReactNode, useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';

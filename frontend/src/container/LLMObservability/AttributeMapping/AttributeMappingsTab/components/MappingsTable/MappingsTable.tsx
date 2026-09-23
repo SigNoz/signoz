@@ -125,6 +125,8 @@ function MappingsTable({
 			{canManage && (
 				<div className={styles.toolbar}>
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						variant="solid"
 						color="primary"
 						prefix={<Plus size={14} />}

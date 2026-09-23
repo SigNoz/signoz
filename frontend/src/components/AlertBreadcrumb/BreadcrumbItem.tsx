@@ -26,6 +26,7 @@ function BreadcrumbItem({
 
 	return (
 		<Button
+			size="md"
 			variant="ghost"
 			color="secondary"
 			className={styles.item}

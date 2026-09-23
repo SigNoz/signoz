@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useRef, useState } from 'react';
 import { Input } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';

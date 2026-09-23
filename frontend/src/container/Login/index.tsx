@@ -389,6 +389,9 @@ function Login(): JSX.Element {
 				<div className="login-form-actions">
 					{!sessionsContext && (
 						<Button
+							disabledTooltip={undefined}
+							size="md"
+							color="primary"
 							disabled={!isNextButtonEnabled}
 							variant="solid"
 							onClick={onNextHandler}
@@ -402,6 +405,8 @@ function Login(): JSX.Element {
 
 					{sessionsContext && isCallbackAuthN && (
 						<Button
+							disabledTooltip={undefined}
+							size="md"
 							disabled={!isSubmitButtonEnabled}
 							variant="solid"
 							type="submit"
@@ -417,6 +422,8 @@ function Login(): JSX.Element {
 
 					{sessionsContext && isPasswordAuthN && (
 						<Button
+							disabledTooltip={undefined}
+							size="md"
 							disabled={!isSubmitButtonEnabled}
 							variant="solid"
 							color="primary"

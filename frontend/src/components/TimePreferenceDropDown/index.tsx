@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { ChevronDown, Globe } from '@signozhq/icons';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';

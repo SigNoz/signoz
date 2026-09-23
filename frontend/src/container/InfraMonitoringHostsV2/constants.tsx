@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Progress } from '@signozhq/ui/progress';

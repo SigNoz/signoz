@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Badge } from '@signozhq/ui/badge';

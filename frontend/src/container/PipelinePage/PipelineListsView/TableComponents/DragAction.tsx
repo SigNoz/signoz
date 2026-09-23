@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { GripVertical } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
 

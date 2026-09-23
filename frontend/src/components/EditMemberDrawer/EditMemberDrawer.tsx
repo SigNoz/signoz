@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';

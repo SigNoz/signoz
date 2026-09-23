@@ -52,6 +52,8 @@ function MapConfirmDialog({
 	const footer = (
 		<div className={styles.footer}>
 			<Button
+				disabledTooltip={undefined}
+				size="md"
 				variant="outlined"
 				color="secondary"
 				onClick={onCancel}
@@ -62,6 +64,7 @@ function MapConfirmDialog({
 				Cancel
 			</Button>
 			<Button
+				size="md"
 				variant="solid"
 				color="primary"
 				loading={isSaving}

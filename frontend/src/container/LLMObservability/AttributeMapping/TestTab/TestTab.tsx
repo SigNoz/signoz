@@ -88,6 +88,8 @@ function TestTab({ spanTest }: TestTabProps): JSX.Element {
 
 				<div className={styles.headerActions}>
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						testId="reset-template-button"
 						variant="outlined"
 						color="secondary"
@@ -99,6 +101,8 @@ function TestTab({ spanTest }: TestTabProps): JSX.Element {
 					</Button>
 
 					<Button
+						disabledTooltip={undefined}
+						size="md"
 						testId="run-test-button"
 						variant="solid"
 						color="primary"

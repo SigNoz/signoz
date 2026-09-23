@@ -134,6 +134,8 @@ function AccountSettingsModal({
 			/>
 
 			<Button
+				disabledTooltip={undefined}
+				size="md"
 				variant="solid"
 				color="secondary"
 				disabled={isSaveDisabled}

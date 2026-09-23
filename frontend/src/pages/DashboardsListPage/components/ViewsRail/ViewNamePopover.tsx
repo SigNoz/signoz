@@ -84,6 +84,7 @@ function ViewNamePopover({
 						Cancel
 					</Button>
 					<Button
+						disabledTooltip={undefined}
 						variant="solid"
 						color="primary"
 						size="sm"

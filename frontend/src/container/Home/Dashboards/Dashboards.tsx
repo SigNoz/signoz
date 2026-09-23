@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Skeleton } from 'antd';

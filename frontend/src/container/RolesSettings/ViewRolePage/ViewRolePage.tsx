@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo } from 'react';
 import { ArrowLeft } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';

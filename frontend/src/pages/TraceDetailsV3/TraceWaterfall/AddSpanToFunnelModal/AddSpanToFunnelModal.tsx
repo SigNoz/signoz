@@ -204,6 +204,7 @@ function AddSpanToFunnelModal({
 	const renderDetailsView = ({ span }: { span: SpanV3 }): JSX.Element => (
 		<div className={cx(styles.root, styles.isDetails)}>
 			<Button
+				size="md"
 				variant="ghost"
 				color="secondary"
 				className={styles.backButton}
@@ -251,6 +252,8 @@ function AddSpanToFunnelModal({
 				activeView === ModalView.DETAILS
 					? [
 							<Button
+								disabledTooltip={undefined}
+								size="md"
 								variant="outlined"
 								color="secondary"
 								key="discard"
@@ -261,6 +264,8 @@ function AddSpanToFunnelModal({
 								Discard
 							</Button>,
 							<Button
+								disabledTooltip={undefined}
+								size="md"
 								key="save"
 								variant="solid"
 								color="primary"
@@ -274,6 +279,7 @@ function AddSpanToFunnelModal({
 						]
 					: [
 							<Button
+								size="md"
 								key="create"
 								variant="outlined"
 								color="secondary"

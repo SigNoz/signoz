@@ -61,6 +61,7 @@ function AnnouncementTooltip({
 				<p className="announcement-tooltip__message">{message}</p>
 				<div className="announcement-tooltip__footer">
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
 						onClick={closeTooltip}

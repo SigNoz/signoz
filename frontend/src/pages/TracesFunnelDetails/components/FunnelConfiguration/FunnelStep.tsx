@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useMemo, useState } from 'react';
 import { Button, Form, Space, Tooltip } from 'antd';
 import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';

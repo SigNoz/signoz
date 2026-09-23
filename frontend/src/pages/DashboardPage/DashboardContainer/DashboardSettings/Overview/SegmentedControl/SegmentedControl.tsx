@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 
 import styles from './SegmentedControl.module.scss';

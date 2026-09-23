@@ -60,10 +60,10 @@ export function getUnpricedModelsColumns({
 			enableMove: false,
 			cell: ({ row }): JSX.Element => (
 				<Badge
-					color="cherry"
-					variant="outline"
+					color="danger"
+					variant="outlined"
 					className={styles.spansBadge}
-					data-testid={`unpriced-spans-${row.modelName}`}
+					testId={`unpriced-spans-${row.modelName}`}
 				>
 					{formatSpanCount(row.spanCount)}
 				</Badge>

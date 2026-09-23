@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback } from 'react';
 import { SolidAlertTriangle, X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';

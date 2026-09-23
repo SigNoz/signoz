@@ -191,6 +191,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 						<section className="action-buttons">
 							{isCreate && (
 								<Button
+									size="md"
 									onClick={onBackHandler}
 									variant="solid"
 									color="secondary"
@@ -201,6 +202,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 							)}
 							{!isCreate && (
 								<Button
+									size="md"
 									onClick={onClose}
 									variant="solid"
 									color="secondary"
@@ -210,6 +212,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 								</Button>
 							)}
 							<Button
+								size="md"
 								onClick={onSubmitHandler}
 								variant="solid"
 								color="primary"

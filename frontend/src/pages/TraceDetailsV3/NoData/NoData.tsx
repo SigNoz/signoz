@@ -45,6 +45,7 @@ function NoData(): JSX.Element {
 				</Typography.Text>
 				<div className={styles.actionBtns}>
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						className={styles.actionBtn}
@@ -55,6 +56,7 @@ function NoData(): JSX.Element {
 						Refresh this page
 					</Button>
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						className={styles.actionBtn}

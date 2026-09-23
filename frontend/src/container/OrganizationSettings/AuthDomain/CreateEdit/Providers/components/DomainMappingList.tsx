@@ -58,6 +58,7 @@ function DomainMappingList({
 								</Form.Item>
 
 								<Button
+									size="md"
 									variant="ghost"
 									color="secondary"
 									className="domain-mapping-list__remove-btn"
@@ -70,6 +71,7 @@ function DomainMappingList({
 						))}
 
 						<Button
+							size="md"
 							variant="outlined"
 							color="secondary"
 							onClick={(): void => add({ domain: '', adminEmail: '' })}

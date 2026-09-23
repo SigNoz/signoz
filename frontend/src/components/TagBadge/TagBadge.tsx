@@ -1,4 +1,5 @@
 import { type MouseEvent, type ReactNode } from 'react';
+import { X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
 
@@ -23,11 +24,22 @@ function TagBadge({
 }: TagBadgeProps): JSX.Element {
 	return (
 		<Badge
-			color="sienna"
-			variant="outline"
+			color="archive"
+			variant="outlined"
 			className={cx(styles.static, className)}
-			closable={closable}
-			onClose={onClose}
+			suffix={
+				closable ? (
+					<button
+						type="button"
+						aria-label="Remove"
+						onClick={(event): void => {
+							onClose?.(event);
+						}}
+					>
+						<X size={12} />
+					</button>
+				) : undefined
+			}
 		>
 			{children}
 		</Badge>

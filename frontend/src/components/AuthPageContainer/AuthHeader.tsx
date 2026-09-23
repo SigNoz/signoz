@@ -22,11 +22,12 @@ function AuthHeader(): JSX.Element {
 				<span className="auth-header-logo-text">SigNoz</span>
 			</div>
 			<Button
+				size="md"
 				className="auth-header-help-button"
 				prefix={<LifeBuoy size={12} />}
 				onClick={handleGetHelp}
 				variant="solid"
-				color="none"
+				color="secondary"
 			>
 				Get Help
 			</Button>

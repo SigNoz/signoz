@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Group, Info } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 

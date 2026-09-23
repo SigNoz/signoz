@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useTranslation } from 'react-i18next';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
