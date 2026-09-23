@@ -1,10 +1,7 @@
 /**
  * Builder fields carried across a panel-type switch, per panel type and data source.
- *
- * The 24 combinations reduce to a handful of rules, so they are composed rather than
- * spelled out: logs and traces carry the same fields in every case, metrics splits its
- * aggregation in two, and each panel type is one of four query shapes. Order is
- * irrelevant — `handleQueryChange` copies each field independently.
+ * Each shape is cut from the full field list by omission. Order is irrelevant —
+ * `handleQueryChange` copies each field independently.
  */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -27,12 +24,7 @@ export type PanelTypeFormValues = {
 	builder: { queryData: BuilderField[] };
 };
 
-/**
- * Every field a builder query has. Exhaustive by construction: a field added to
- * `IBuilderQuery` fails to compile here until it is listed, and the shapes below
- * are cut from this list by omission, so the new field has to be excluded on
- * purpose rather than forgotten into nothing.
- */
+/** A field added to `IBuilderQuery` fails to compile here until it is classified. */
 const ALL_FIELDS = {
 	queryName: true,
 	dataSource: true,
@@ -70,17 +62,13 @@ function omit(
 	return fields.filter((field) => !omitted.includes(field));
 }
 
-/** Metrics aggregates over time and then over space, so it carries both steps. */
 const METRICS_AGGREGATION: readonly BuilderField[] = [
 	'timeAggregation',
 	'spaceAggregation',
 ];
 
-/**
- * Carried by no shape: the provider appends `dataSource` itself, and the rest drive
- * surfaces the panel-type switch does not reach — list paging, the meter source, the
- * trace-operator discriminator.
- */
+/** `dataSource` is appended by the provider; the rest drive surfaces this switch
+ * does not reach. */
 const NEVER_CARRIED: readonly BuilderField[] = [
 	'dataSource',
 	'temporality',
@@ -91,38 +79,35 @@ const NEVER_CARRIED: readonly BuilderField[] = [
 	'builderQueryType',
 ];
 
-/** Carried only where the shape asks for them, below. */
-const SHAPE_SPECIFIC: readonly BuilderField[] = [
-	...METRICS_AGGREGATION,
-	'reduceTo',
-];
-
-/** Charts carry every aggregating field — shared with table and pie. */
-const SERIES: readonly BuilderField[] = omit(
+/** The widest shape, and the base every other one is cut from. */
+const SCALAR_METRICS: readonly BuilderField[] = omit(
 	EVERY_FIELD,
 	...NEVER_CARRIED,
-	...SHAPE_SPECIFIC,
 );
-const SERIES_METRICS: readonly BuilderField[] = [
-	...SERIES,
-	...METRICS_AGGREGATION,
-];
 
-// Table and pie reduce each series to a single cell/slice. Note the asymmetry, carried
-// over from the previous table: `reduceTo` is offered for metrics only.
-const SCALAR_METRICS: readonly BuilderField[] = [...SERIES_METRICS, 'reduceTo'];
+// `reduceTo` is offered for metrics only, an asymmetry carried over from the old table.
+const SERIES_METRICS: readonly BuilderField[] = omit(
+	SCALAR_METRICS,
+	'reduceTo',
+);
+
+const SERIES: readonly BuilderField[] = omit(
+	SERIES_METRICS,
+	...METRICS_AGGREGATION,
+);
 
 /** A single value has no series to group, limit or order. */
-const SINGLE_VALUE: readonly BuilderField[] = [
-	...omit(SERIES, 'groupBy', 'limit', 'orderBy'),
-	'reduceTo',
-];
-const SINGLE_VALUE_METRICS: readonly BuilderField[] = [
-	...SINGLE_VALUE,
+const SINGLE_VALUE_METRICS: readonly BuilderField[] = omit(
+	SCALAR_METRICS,
+	'groupBy',
+	'limit',
+	'orderBy',
+);
+const SINGLE_VALUE: readonly BuilderField[] = omit(
+	SINGLE_VALUE_METRICS,
 	...METRICS_AGGREGATION,
-];
+);
 
-/** Raw rows carry no aggregation at all. */
 const RAW_ROWS: readonly BuilderField[] = omit(
 	SERIES,
 	'aggregateAttribute',
@@ -134,7 +119,6 @@ const RAW_ROWS: readonly BuilderField[] = omit(
 	'legend',
 	'expression',
 );
-// Metrics rows drop paging and ordering too, as before.
 const RAW_ROWS_METRICS: readonly BuilderField[] = omit(
 	RAW_ROWS,
 	'limit',
@@ -142,12 +126,8 @@ const RAW_ROWS_METRICS: readonly BuilderField[] = omit(
 	'functions',
 );
 
-/**
- * Logs and traces share a builder surface; metrics is the one that differs.
- *
- * Each cell gets its own copy. `QueryBuilder`'s provider pushes onto the list it reads
- * from this map, so cells sharing one array instance would contaminate each other.
- */
+/** Each cell gets its own copy; sharing one array instance would let cells
+ * contaminate each other. */
 function bySource(
 	logsAndTraces: readonly BuilderField[],
 	metrics: readonly BuilderField[],
