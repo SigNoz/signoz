@@ -4,7 +4,9 @@ import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import type { OptionData } from 'components/NewSelect/types';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
+import type { DynamicVariableOptions } from '../../hooks/useFetchedVariableOptions';
 import type { VariableSelection } from '../../selectionTypes';
+import { dynamicVariableOptions } from '../../utils/dynamicVariableOptions';
 import { areSelectionsEqual } from '../../utils/resolveVariableSelection';
 import { selectionFromCommittedValues } from '../../utils/selectionUtils';
 import OverflowValuesTooltip from './OverflowValuesTooltip';
@@ -24,6 +26,10 @@ interface ValueSelectorProps {
 	/** Option-fetch error surfaced in the dropdown, with a retry action. */
 	errorMessage?: string | null;
 	onRetry?: () => void;
+	/** Hides the retry action for an error that retrying cannot fix. */
+	isRetryable?: boolean;
+	/** DYNAMIC only: sectioned rendering and server-side search. */
+	dynamic?: DynamicVariableOptions;
 }
 
 function ValueSelector({
@@ -38,10 +44,15 @@ function ValueSelector({
 	testId,
 	errorMessage,
 	onRetry,
+	isRetryable = true,
+	dynamic,
 }: ValueSelectorProps): JSX.Element {
 	const optionData = useMemo<OptionData[]>(
-		() => options.map((option) => ({ label: option, value: option })),
-		[options],
+		() =>
+			dynamic
+				? dynamicVariableOptions(dynamic.values, dynamic.relatedValues)
+				: options.map((option) => ({ label: option, value: option })),
+		[options, dynamic],
 	);
 
 	// All-selected → the full option set so CustomMultiSelect engages its "all"
@@ -119,6 +130,7 @@ function ValueSelector({
 				loading={loading}
 				errorMessage={errorMessage}
 				onRetry={onRetry}
+				showRetryButton={isRetryable}
 				showSearch
 				// Clearing belongs to the open list: on the closed control the icon would
 				// appear on hover, in a row of variable pills, for an action whose result is
@@ -136,6 +148,11 @@ function ValueSelector({
 				)}
 				// Offer ALL only once options load, else a concrete value reads as "all".
 				enableAllSelection={showAllOption && options.length > 0}
+				isDynamicVariable={!!dynamic}
+				onSearch={dynamic?.onSearch}
+				showIncompleteDataMessage={
+					!!dynamic && !dynamic.complete && dynamic.values.length > 0
+				}
 				onDropdownVisibleChange={(open): void => {
 					if (open) {
 						setDraft(committedValues);
@@ -144,6 +161,7 @@ function ValueSelector({
 					}
 
 					setIsOpen(false);
+					dynamic?.onSearchReset();
 					commit(draft);
 				}}
 				onChange={(next): void => {
@@ -180,8 +198,14 @@ function ValueSelector({
 			loading={loading}
 			errorMessage={errorMessage}
 			onRetry={onRetry}
+			showRetryButton={isRetryable}
 			showSearch
 			placeholder="Select value"
+			isDynamicVariable={!!dynamic}
+			onSearch={dynamic?.onSearch}
+			showIncompleteDataMessage={
+				!!dynamic && !dynamic.complete && dynamic.values.length > 0
+			}
 			onChange={(next): void => {
 				void logEvent(
 					DashboardDetailEvents.VariableValueSelected,

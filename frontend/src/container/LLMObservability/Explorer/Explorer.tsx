@@ -173,7 +173,7 @@ function Explorer(): JSX.Element {
 
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
-			logEvent('Traces Explorer: Page visited', {});
+			logEvent('AI Observability Explorer: Page visited', {});
 			logEventCalledRef.current = true;
 		}
 	}, []);

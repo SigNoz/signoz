@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Tabs } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { useListUnmappedLLMModels } from 'api/generated/services/llmpricingrules';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 
@@ -19,6 +21,10 @@ function LLMObservabilityModelPricing(): JSX.Element {
 	// Count powers the tab badge; deduped with the tab's own fetch by react-query.
 	const { data } = useListUnmappedLLMModels();
 	const unpricedCount = data?.data?.items?.length ?? 0;
+
+	useEffect(() => {
+		void logEvent('AI Observability Model Pricing: Page visited', {});
+	}, []);
 
 	return (
 		<div

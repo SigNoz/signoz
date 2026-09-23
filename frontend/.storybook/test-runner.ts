@@ -25,7 +25,23 @@ const IGNORED_MESSAGES = [
 	/violates the following Content Security Policy directive/,
 ];
 
-const messagesByPage = new WeakMap<Page, string[]>();
+interface CapturedMessage {
+	at: number;
+	text: string;
+}
+
+const messagesByPage = new WeakMap<Page, CapturedMessage[]>();
+
+/**
+ * When the story under test started rendering, stamped by the preview's
+ * `beforeEach`. Messages captured before it belong to the previous story: the
+ * runner clears this buffer ahead of the navigation, so whatever that story
+ * still had in flight lands here.
+ */
+const storyStartedAt = (page: Page): Promise<number> =>
+	page
+		.evaluate(() => Number(document.body.dataset.signozStoryStartedAt ?? 0))
+		.catch(() => 0);
 
 /**
  * Only `console.error` fails a story. `console.warn` is dev-time advice from
@@ -43,14 +59,14 @@ const config: TestRunnerConfig = {
 			return;
 		}
 
-		const messages: string[] = [];
+		const messages: CapturedMessage[] = [];
 		messagesByPage.set(page, messages);
 		page.on('console', (message) => {
 			if (
 				message.type() === 'error' &&
 				!IGNORED_MESSAGES.some((pattern) => pattern.test(message.text()))
 			) {
-				messages.push(`[error] ${message.text()}`);
+				messages.push({ at: Date.now(), text: `[error] ${message.text()}` });
 			}
 		});
 		// The console message alone ("Failed to load resource") doesn't name the
@@ -58,12 +74,23 @@ const config: TestRunnerConfig = {
 		// actionable instead of just a status code.
 		page.on('response', (response) => {
 			if (response.status() >= 400) {
-				messages.push(`[response] ${response.status()} ${response.url()}`);
+				messages.push({
+					at: Date.now(),
+					text: `[response] ${response.status()} ${response.url()}`,
+				});
 			}
 		});
 	},
 	async postVisit(page, context): Promise<void> {
-		const messages = messagesByPage.get(page) ?? [];
+		const captured = messagesByPage.get(page) ?? [];
+		if (captured.length === 0) {
+			return;
+		}
+
+		const startedAt = await storyStartedAt(page);
+		const messages = captured
+			.filter((message) => message.at >= startedAt)
+			.map((message) => message.text);
 		if (messages.length === 0) {
 			return;
 		}

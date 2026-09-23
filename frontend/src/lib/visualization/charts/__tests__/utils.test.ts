@@ -113,7 +113,7 @@ describe('calculateChartDimensions', () => {
 	});
 
 	it('BOTTOM: items one past a row still reserve two rows', () => {
-		// 1000px wide fits 5 of these per row, so 6 items need a second row.
+		// 1000px wide fits 4 of these per row, so 6 items need a second row.
 		const dims = calculateChartDimensions({
 			containerWidth: 1000,
 			containerHeight: 500,
@@ -121,6 +121,19 @@ describe('calculateChartDimensions', () => {
 			seriesLabels: labels(6),
 		});
 		expect(dims.legendHeight).toBe(70);
+	});
+
+	it('BOTTOM: reserves the rows the grid actually lays out, not the rows a bare width estimate allows', () => {
+		// The item width alone suggests three fit on one row; the grid's per-item
+		// padding and column gap leave room for two.
+		const dims = calculateChartDimensions({
+			containerWidth: 412,
+			containerHeight: 310,
+			legendConfig: { position: LegendPosition.BOTTOM },
+			seriesLabels: ['P99', 'P95', 'P50'],
+		});
+		expect(dims.legendHeight).toBe(70);
+		expect(dims.height).toBe(240);
 	});
 
 	it('BOTTOM: drops to a single row rather than take half a short panel', () => {
