@@ -24,7 +24,9 @@ func NewQueryInfo(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, si
 		FamiliesOn: semconvFamiliesEnabled(ctx, orgID, fl),
 	}
 	if fl != nil {
-		q.BodyJSONOn = fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+		evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+		q.BodyJSONOn = fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, evalCtx)
+		q.TraceAttrsJSONOn = fl.BooleanOrEmpty(ctx, flagger.FeatureUseTraceAttributesJSON, evalCtx)
 	}
 	return q
 }
