@@ -564,6 +564,20 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 			},
 		},
 		{
+			description: "telegram basic auth",
+			channel: Channel{
+				DisplayName: "tg-basic",
+				Data:        `{"name":"tg-basic","telegram_configs":[{"chat":1,"token":"t","http_config":{"basic_auth":{"username":"u","password":"p"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "telegram token file",
+			channel: Channel{
+				DisplayName: "tg-file",
+				Data:        `{"name":"tg-file","telegram_configs":[{"chat":1,"token_file":"/run/token"}]}`,
+			},
+		},
+		{
 			// ChannelJiraConfig lifts only basic auth out of http_config, because
 			// that is all Jira Cloud accepts.
 			description: "jira authorization header",

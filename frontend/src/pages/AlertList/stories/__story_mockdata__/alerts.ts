@@ -688,6 +688,23 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
 			],
 		},
 	},
+	{
+		name: 'ops-telegram',
+		type: 'telegram',
+		receiver: {
+			telegram_configs: [
+				{
+					token: '123456:ABC-DEF-story-token',
+					chat: -1001234567890,
+					message_thread_id: 42,
+					send_resolved: true,
+					parse_mode: 'HTML',
+					message:
+						'{{ if gt (len .Alerts.Firing) 0 }}\n<b>Alerts Firing:</b>\n{{ range .Alerts.Firing -}}• <b>{{ .Labels.alertname }}</b>\n{{ end }}{{ end }}',
+				},
+			],
+		},
+	},
 ];
 
 export const CHANNEL_MAX = CHANNEL_SEEDS.length;

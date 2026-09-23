@@ -163,6 +163,77 @@ describe('EditAlertChannels save', () => {
 		});
 	});
 
+	it('sends a telegram_configs payload with thread id when editing a telegram channel', async () => {
+		const edit = mockEditChannel();
+		render(
+			<EditAlertChannels
+				channelId="5"
+				initialValue={{
+					type: 'telegram',
+					name: 'telegram-channel',
+					bot_token: '123456:ABC-DEF',
+					chat_id: -1001234567890,
+					message_thread_id: 42,
+					message: '<b>Alert</b>',
+					send_resolved: true,
+				}}
+			/>,
+		);
+
+		const user = userEvent.setup();
+		await user.click(screen.getByTestId('save-channel-button'));
+
+		await waitFor(() => expect(edit.calls).toHaveLength(1));
+		expect(edit.calls[0].id).toBe('5');
+		expect(edit.calls[0].body).toStrictEqual({
+			name: 'telegram-channel',
+			telegram_configs: [
+				{
+					token: '123456:ABC-DEF',
+					chat: -1001234567890,
+					message_thread_id: 42,
+					message: '<b>Alert</b>',
+					send_resolved: true,
+				},
+			],
+		});
+	});
+
+	it('blocks telegram save when the bot token or chat id is missing', async () => {
+		const edit = mockEditChannel();
+		const { unmount } = render(
+			<EditAlertChannels
+				channelId="5"
+				initialValue={{
+					type: 'telegram',
+					name: 'telegram-channel',
+					chat_id: -1001234567890,
+					send_resolved: true,
+				}}
+			/>,
+		);
+
+		const user = userEvent.setup();
+		await user.click(screen.getByTestId('save-channel-button'));
+		expect(edit.calls).toHaveLength(0);
+		unmount();
+
+		render(
+			<EditAlertChannels
+				channelId="5"
+				initialValue={{
+					type: 'telegram',
+					name: 'telegram-channel',
+					bot_token: '123456:ABC-DEF',
+					chat_id: 0,
+					send_resolved: true,
+				}}
+			/>,
+		);
+		await user.click(screen.getByTestId('save-channel-button'));
+		expect(edit.calls).toHaveLength(0);
+	});
+
 	it('persists send_resolved toggle in the edit request', async () => {
 		const edit = mockEditChannel();
 		render(

@@ -903,6 +903,20 @@ describe('Create Alert Channel', () => {
 				);
 			});
 
+			it('Should block save when the bot token or chat id is missing', async () => {
+				const user = userEvent.setup();
+
+				await fillField(user, 'channel-name-textbox', 'telegram-channel');
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(errorNotification).toHaveBeenCalledWith({
+						message: 'Error',
+						description: 'telegram_required_fields',
+					}),
+				);
+			});
+
 			it('Should check if saving sends a telegram_configs payload with thread id', async () => {
 				let requestBody: unknown;
 				server.use(
@@ -979,6 +993,19 @@ describe('Create Alert Channel', () => {
 				);
 				expect(screen.getByTestId('description-textarea')).toHaveTextContent(
 					slackDescriptionDefaultValue,
+				);
+			});
+
+			it('Should check if switching to Telegram prefills the telegram message template', async () => {
+				const user = userEvent.setup();
+				render(<CreateAlertChannels preType={ChannelType.Slack} />);
+
+				await selectType(user, 'Telegram');
+
+				await waitFor(() =>
+					expect(screen.getByTestId('telegram-message-textarea')).toHaveTextContent(
+						'Alerts Firing',
+					),
 				);
 			});
 
