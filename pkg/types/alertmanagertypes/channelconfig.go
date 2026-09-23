@@ -18,9 +18,7 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
-var (
-	ErrCodeChannelUnsupportedKind = errors.MustNewCode("channel_unsupported_kind")
-)
+var ErrCodeChannelUnsupportedKind = errors.MustNewCode("channel_unsupported_kind")
 
 // ════════════════════════════════════════════════════════════════════════
 // Kind
