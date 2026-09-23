@@ -21,5 +21,9 @@ export const LEGEND_ROW_HEIGHT = 28;
 export const LEGEND_ROW_GAP = 2;
 export const LEGEND_MAX_BOTTOM_ROWS = 2;
 
+/** Must match `.inlineToolbar`'s height and margin-bottom, or it eats a row. */
+export const LEGEND_TOOLBAR_HEIGHT = 24;
+export const LEGEND_TOOLBAR_GAP = 4;
+
 /** Hover delay before a row's full-name tooltip opens. */
 export const LEGEND_TOOLTIP_DELAY_MS = 500;

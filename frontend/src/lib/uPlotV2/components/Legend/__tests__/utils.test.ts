@@ -1,6 +1,6 @@
 import { LegendItem } from 'lib/uPlotV2/config/types';
 
-import { filterLegendItems, getShownSeriesState } from '../utils';
+import { filterLegendItems, getVisibleSeriesState } from '../utils';
 
 const items = (shown: boolean[]): LegendItem[] =>
 	shown.map((show, index) => ({
@@ -10,26 +10,49 @@ const items = (shown: boolean[]): LegendItem[] =>
 		show,
 	}));
 
-describe('getShownSeriesState', () => {
+describe('getVisibleSeriesState', () => {
 	it('counts the shown series', () => {
-		expect(getShownSeriesState(items([true, false, true]))).toStrictEqual({
-			visibleCount: 2,
-			soleShownSeriesIndex: null,
-		});
+		const state = getVisibleSeriesState(items([true, false, true]), '');
+
+		expect(state.visibleCount).toBe(2);
+		expect(state.onlyVisibleSeriesIndex).toBeNull();
+		expect(state.areAllSeriesVisible).toBe(false);
 	});
 
 	it('names the series when exactly one is shown', () => {
-		expect(getShownSeriesState(items([false, true, false]))).toStrictEqual({
-			visibleCount: 1,
-			soleShownSeriesIndex: 2,
-		});
+		const state = getVisibleSeriesState(items([false, true, false]), '');
+
+		expect(state.visibleCount).toBe(1);
+		expect(state.onlyVisibleSeriesIndex).toBe(2);
 	});
 
 	it('reports nothing shown', () => {
-		expect(getShownSeriesState(items([false, false]))).toStrictEqual({
-			visibleCount: 0,
-			soleShownSeriesIndex: null,
-		});
+		const state = getVisibleSeriesState(items([false, false]), '');
+
+		expect(state.visibleCount).toBe(0);
+		expect(state.onlyVisibleSeriesIndex).toBeNull();
+	});
+
+	it('reports every series shown', () => {
+		expect(
+			getVisibleSeriesState(items([true, true]), '').areAllSeriesVisible,
+		).toBe(true);
+	});
+
+	it('counts only the series the search listed', () => {
+		const state = getVisibleSeriesState(items([true, true, false]), 'series-1');
+
+		expect(state.listedItems.map((item) => item.label)).toStrictEqual([
+			'series-1',
+		]);
+		expect(state.visibleCount).toBe(1);
+	});
+
+	it('reads isolation off every series, not the listed ones', () => {
+		const state = getVisibleSeriesState(items([false, true, false]), 'series-2');
+
+		expect(state.listedItems).toHaveLength(1);
+		expect(state.onlyVisibleSeriesIndex).toBe(2);
 	});
 });
 
