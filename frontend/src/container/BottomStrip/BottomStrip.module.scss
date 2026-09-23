@@ -29,6 +29,10 @@
 	min-width: 0;
 }
 
+.left {
+	cursor: default;
+}
+
 // Temporary placeholder for the left slot. Replaced later.
 .version {
 	color: var(--l2-foreground);
