@@ -127,7 +127,7 @@ export const createAlertMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v1/channels',
+			'http://localhost/api/v2/notification_channels',
 			response.json(() => channelsResponse(values.channels)),
 		),
 
