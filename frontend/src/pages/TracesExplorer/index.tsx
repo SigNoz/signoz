@@ -2,12 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
-import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
-import QuickFilters from 'components/QuickFilters/QuickFilters';
+import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -261,23 +259,20 @@ function TracesExplorer(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div className="trace-explorer-page">
-				<Card className="filter" hidden={!isOpen}>
-					<QuickFilters
-						className="qf-traces-explorer"
-						source={QuickFiltersSource.TRACES_EXPLORER}
-						signal={SignalType.TRACES}
-						handleFilterVisibilityChange={(): void => {
-							setOpen(!isOpen);
-						}}
-						useFieldApis={quickFilterFieldApis}
-					/>
-				</Card>
-				<div
-					className={cx('trace-explorer', {
-						'filters-expanded': isOpen,
-					})}
-				>
+			<QuickFiltersLayout
+				className="trace-explorer-page"
+				showFilters={isOpen}
+				quickFilterProps={{
+					className: 'qf-traces-explorer',
+					source: QuickFiltersSource.TRACES_EXPLORER,
+					signal: SignalType.TRACES,
+					handleFilterVisibilityChange: (): void => {
+						setOpen(!isOpen);
+					},
+					useFieldApis: quickFilterFieldApis,
+				}}
+			>
+				<div className="trace-explorer">
 					<div className="trace-explorer-header">
 						<Toolbar
 							showAutoRefresh
@@ -369,7 +364,7 @@ function TracesExplorer(): JSX.Element {
 						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				</div>
-			</div>
+			</QuickFiltersLayout>
 		</Sentry.ErrorBoundary>
 	);
 }
