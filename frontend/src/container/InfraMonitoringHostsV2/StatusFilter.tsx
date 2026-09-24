@@ -50,7 +50,6 @@ function StatusFilter(): JSX.Element {
 				size="sm"
 				value={statusFilter === '' ? 'all' : statusFilter}
 				onChange={handleChange}
-				className={styles.statusToggleGroup}
 				items={statusOptions.map((option) => ({
 					value: option.value,
 					label: option.label,

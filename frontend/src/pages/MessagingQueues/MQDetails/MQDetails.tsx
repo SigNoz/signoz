@@ -70,7 +70,6 @@ function MessagingQueuesOptions({
 				handleChange(value as MessagingQueueServiceDetailType)
 			}
 			value={currentTab}
-			className="mq-details-options"
 			items={detailTypes.map((detailType) => ({
 				value: detailType,
 				label: ConsumerLagDetailTitle[detailType],

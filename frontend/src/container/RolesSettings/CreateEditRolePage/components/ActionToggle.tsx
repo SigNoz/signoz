@@ -117,7 +117,6 @@ function ActionToggle({
 						value={scope}
 						onChange={handleToggleChange}
 						items={scopeItems}
-						className={styles.actionToggleScopeToggle}
 						testId={`action-toggle-scope-${resource}-${action}`}
 					/>
 				</div>

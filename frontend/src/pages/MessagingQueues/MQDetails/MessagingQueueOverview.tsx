@@ -45,7 +45,6 @@ function ProducerLatencyTabs({
 				setOption(value as ProducerLatencyOptions);
 			}}
 			value={option}
-			className="mq-details-options"
 			items={[
 				{
 					value: ProducerLatencyOptions.Producers,

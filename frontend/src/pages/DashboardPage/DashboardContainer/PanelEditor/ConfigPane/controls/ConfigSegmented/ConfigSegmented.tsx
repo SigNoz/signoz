@@ -36,7 +36,7 @@ function ConfigSegmented<T extends string = string>({
 			size="sm"
 			type="single"
 			testId={testId}
-			className={styles.group}
+			width="100%"
 			value={value}
 			items={items.map((item) => ({
 				value: item.value,

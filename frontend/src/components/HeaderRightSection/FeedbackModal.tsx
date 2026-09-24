@@ -108,7 +108,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 					size="sm"
 					type="single"
 					value={activeTab}
-					className="feedback-modal-tabs"
+					width="100%"
 					onChange={setActiveTab}
 					items={items}
 				/>

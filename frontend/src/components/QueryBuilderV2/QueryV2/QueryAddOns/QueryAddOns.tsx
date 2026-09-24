@@ -567,7 +567,6 @@ function QueryAddOns({
 				color="secondary"
 				size="sm"
 				type="multiple"
-				className="add-ons-tabs"
 				value={selectedViews.map((view) => view.key)}
 				onChange={(newKeys: string[]): void => {
 					const oldKeys: string[] = selectedViews.map((view) => view.key);

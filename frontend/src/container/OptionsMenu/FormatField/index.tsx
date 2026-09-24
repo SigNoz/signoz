@@ -1,5 +1,3 @@
-import './FormatField.styles.scss';
-
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
@@ -36,7 +34,6 @@ function FormatField({ config }: FormatFieldProps): JSX.Element | null {
 				size="sm"
 				value={config.value}
 				onChange={onChange}
-				className="format-field-toggle-group"
 				items={[
 					{ value: 'raw', label: t('options_menu.raw') },
 					{ value: 'list', label: t('options_menu.default') },

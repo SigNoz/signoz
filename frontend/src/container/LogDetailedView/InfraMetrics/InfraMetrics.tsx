@@ -88,7 +88,6 @@ function InfraMetrics({
 			<SignozRadioGroup
 				value={selectedView}
 				onChange={handleModeChange}
-				className="views-tabs"
 				options={viewOptions}
 			/>
 			{/* TODO(Rahul): Make a common config driven component for this and other infra metrics components */}
