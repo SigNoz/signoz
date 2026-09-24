@@ -57,6 +57,7 @@ const mockPaths = {
 const mockTzDate = jest.fn(
 	(date: Date, _timezone: string) => new Date(date.getTime()),
 );
+const mockOrient = jest.fn();
 
 // Mock uPlot constructor - this needs to be a proper constructor function
 function MockUPlot(
@@ -70,6 +71,7 @@ function MockUPlot(
 // Add static methods to the constructor
 MockUPlot.tzDate = mockTzDate;
 MockUPlot.paths = mockPaths;
+MockUPlot.orient = mockOrient;
 // Pinned so canvas-space maths in draw hooks is deterministic under jsdom.
 MockUPlot.pxRatio = 1;
 

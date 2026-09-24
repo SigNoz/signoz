@@ -195,3 +195,40 @@ describe('scale utils', () => {
 		});
 	});
 });
+
+describe('symmetric log scale', () => {
+	it('maps to uPlot arcsinh with the given linear threshold', () => {
+		expect(
+			scaleUtils.getDistributionConfig({
+				time: false,
+				distr: DistributionType.SymmetricLog,
+				asinhThreshold: 0.01,
+			}),
+		).toStrictEqual({ distr: 4, log: 10, asinh: 0.01 });
+
+		expect(
+			scaleUtils.getDistributionConfig({
+				time: false,
+				distr: DistributionType.SymmetricLog,
+			}).asinh,
+		).toBe(scaleUtils.DEFAULT_ASINH_THRESHOLD);
+	});
+
+	it('ranges a distr 4 scale through uPlot.rangeAsinh', () => {
+		const rangeAsinh = jest.fn(() => [-10, 1000] as uPlot.Range.MinMax);
+		Object.assign(uPlot, { rangeAsinh });
+
+		const rangeFn = scaleUtils.createRangeFunction({
+			rangeConfig: {} as uPlot.Range.Config,
+			hardMinOnly: false,
+			hardMaxOnly: false,
+			hasFixedRange: false,
+			min: null,
+			max: null,
+		});
+		const u = { scales: { y: { distr: 4, log: 10 } } } as unknown as uPlot;
+
+		expect(rangeFn(u, -3, 700, 'y')).toStrictEqual([-10, 1000]);
+		expect(rangeAsinh).toHaveBeenCalledWith(-3, 700, 10, true);
+	});
+});

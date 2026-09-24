@@ -90,7 +90,8 @@ export interface AxisProps {
 	isDarkMode?: boolean;
 	/** Axis is on a log scale — thins the grid lines to keep dense decades readable. */
 	isLogScale?: boolean;
-	/** Unit the y axis ticks are formatted in (`spec.formatting.unit`). */
+	/** Unit the value ticks are formatted in (`spec.formatting.unit`). Named for the
+	 *  y axis, the only value axis until scatter; a non-time x axis reads it too. */
 	yAxisUnit?: string;
 	/**
 	 * X axis carries timestamps, so its ticks format as dates/times. Declared by the caller
@@ -109,6 +110,15 @@ export interface AxisProps {
 export enum DistributionType {
 	Linear = 'linear',
 	Logarithmic = 'logarithmic',
+	/** arcsinh: linear within ±`asinhThreshold`, logarithmic beyond. Takes zero and
+	 *  negatives, which a plain log cannot place. */
+	SymmetricLog = 'symlog',
+}
+
+/** uPlot's data layout: one shared x per chart, or per-series x/y columns. */
+export enum PlotMode {
+	Aligned = 1,
+	Faceted = 2,
 }
 
 export interface ScaleProps {
@@ -125,6 +135,8 @@ export interface ScaleProps {
 	auto?: boolean;
 	logBase?: uPlot.Scale.LogBase;
 	distribution?: DistributionType;
+	/** Half-width of a `SymmetricLog` scale's linear band around zero. Default 1. */
+	asinhThreshold?: number;
 }
 
 export enum DisconnectedValuesMode {
@@ -146,6 +158,8 @@ export enum DrawStyle {
 	Points = 'points',
 	Bar = 'bar',
 	Histogram = 'histogram',
+	/** Faceted (mode 2) discs at per-series x/y, drawn by the caller's `pathBuilder`. */
+	Scatter = 'scatter',
 }
 
 export enum LineInterpolation {
@@ -229,6 +243,8 @@ export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	isDarkMode?: boolean;
 	stepInterval?: number;
 	metric?: { [key: string]: string };
+	/** Mode 2 only: the scales the series' own x and y columns are read against. */
+	facets?: Series.Facet[];
 }
 
 export interface LegendItem {
