@@ -118,7 +118,7 @@ function EditKeyForm({
 								disabledTooltip={
 									canUpdate ? undefined : 'You do not have permission to update this key'
 								}
-								className="edit-key-modal__expiry-toggle"
+								width="60%"
 								items={[
 									{ value: ExpiryMode.NONE, label: 'No Expiration' },
 									{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
@@ -175,7 +175,6 @@ function EditKeyForm({
 					variant="link"
 					color="danger"
 					onClick={onRevokeClick}
-					withPortal={false}
 				>
 					<Trash2 size={12} />
 					Revoke Key
@@ -199,7 +198,6 @@ function EditKeyForm({
 						color="primary"
 						loading={isSaving}
 						disabled={!isDirty}
-						withPortal={false}
 						onClick={(): void => {
 							const form = document.getElementById(FORM_ID);
 							if (form instanceof HTMLFormElement) {

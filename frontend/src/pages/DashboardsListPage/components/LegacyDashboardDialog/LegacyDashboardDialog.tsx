@@ -111,7 +111,6 @@ function LegacyDashboardDialog({
 					)}
 					<AuthZButton
 						checks={editChecks}
-						withPortal={false}
 						variant="solid"
 						color="primary"
 						size="md"

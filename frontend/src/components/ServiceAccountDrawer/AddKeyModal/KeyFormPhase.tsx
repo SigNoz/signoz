@@ -79,7 +79,7 @@ function KeyFormPhase({
 											}
 										}}
 										size="sm"
-										className="add-key-modal__expiry-toggle"
+										width="60%"
 										items={[
 											{ value: ExpiryMode.NONE, label: 'No Expiration' },
 											{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
@@ -131,7 +131,6 @@ function KeyFormPhase({
 						size="md"
 						checks={checks}
 						authZEnabled={!!accountId}
-						withPortal={false}
 						type="button"
 						variant="solid"
 						color="primary"

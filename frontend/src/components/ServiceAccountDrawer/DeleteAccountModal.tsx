@@ -98,7 +98,6 @@ function DeleteAccountModal(): JSX.Element {
 				loading={isDeleting}
 				onClick={handleConfirm}
 				data-testid="confirm-delete-btn"
-				withPortal={false}
 			>
 				<Trash2 size={12} />
 				Delete

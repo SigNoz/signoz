@@ -77,45 +77,6 @@
 		opacity: 0.6;
 	}
 
-	&__expiry-toggle {
-		width: 60%;
-		display: flex;
-		border: 1px solid var(--l1-border);
-		border-radius: 2px;
-		overflow: hidden;
-		padding: 0;
-		gap: 0;
-
-		[data-slot='toggle-group'] {
-			width: 100%;
-			display: flex;
-		}
-
-		&-btn {
-			flex: 1;
-			height: 32px;
-			border-radius: 0;
-			font-size: var(--label-small-400-font-size);
-			font-weight: var(--label-small-400-font-weight);
-			line-height: var(--label-small-400-line-height);
-			justify-content: center;
-			background: transparent;
-			border: none;
-			border-right: 1px solid var(--l1-border);
-			color: var(--foreground);
-			white-space: nowrap;
-
-			&:last-child {
-				border-right: none;
-			}
-
-			&[data-state='on'] {
-				background: var(--l2-background);
-				color: var(--l1-foreground);
-			}
-		}
-	}
-
 	&__datepicker {
 		width: 100%;
 		height: 32px;

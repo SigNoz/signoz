@@ -31,34 +31,36 @@ function MenuActionItem({
 }: MenuActionItemProps): JSX.Element {
 	if (destructive) {
 		return (
-			<AuthZButton
-				size="md"
-				checks={checks}
-				disabledTooltip={disabledTooltip}
-				side="left"
-				variant="solid"
-				color="danger"
-				className={styles.menuActionItem}
-				prefix={icon}
-			>
-				{label}
-			</AuthZButton>
+			<span className={styles.menuActionItem}>
+				<AuthZButton
+					size="md"
+					checks={checks}
+					disabledTooltip={disabledTooltip}
+					variant="solid"
+					color="danger"
+					width="100%"
+					prefix={icon}
+				>
+					{label}
+				</AuthZButton>
+			</span>
 		);
 	}
 
 	return (
-		<AuthZButton
-			size="md"
-			checks={checks}
-			disabledTooltip={disabledTooltip}
-			side="left"
-			variant="ghost"
-			color="secondary"
-			className={styles.menuActionItem}
-			prefix={icon}
-		>
-			{label}
-		</AuthZButton>
+		<span className={styles.menuActionItem}>
+			<AuthZButton
+				size="md"
+				checks={checks}
+				disabledTooltip={disabledTooltip}
+				variant="ghost"
+				color="secondary"
+				width="100%"
+				prefix={icon}
+			>
+				{label}
+			</AuthZButton>
+		</span>
 	);
 }
 

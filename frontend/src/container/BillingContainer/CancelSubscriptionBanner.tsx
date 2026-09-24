@@ -190,7 +190,6 @@ function CancelSubscriptionBanner(): JSX.Element {
 					color="secondary"
 					prefix={<X size={12} />}
 					onClick={handleOpenCancelDialog}
-					className={styles.cancelButton}
 					testId="cancel-subscription-btn"
 				>
 					Cancel Subscription

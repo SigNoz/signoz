@@ -378,7 +378,6 @@ function ServiceAccountDrawer({
 						size="md"
 						checks={[buildSADeletePermission(selectedAccountId ?? '')]}
 						authZEnabled={!!selectedAccountId}
-						withPortal={false}
 						variant="link"
 						color="danger"
 						onClick={(): void => {
@@ -405,7 +404,6 @@ function ServiceAccountDrawer({
 								buildSAUpdatePermission(selectedAccountId ?? ''),
 							]}
 							authZEnabled={!!selectedAccountId}
-							withPortal={false}
 							variant="solid"
 							color="primary"
 							loading={isSaving}
@@ -448,7 +446,6 @@ function ServiceAccountDrawer({
 							}
 						}
 					}}
-					className="sa-drawer__tab-group"
 					items={[
 						{
 							value: ServiceAccountDrawerTab.Overview,
@@ -480,7 +477,6 @@ function ServiceAccountDrawer({
 							buildSAAttachPermission(selectedAccountId ?? ''),
 						]}
 						authZEnabled={!isDeleted && !!selectedAccountId}
-						withPortal={false}
 						variant="outlined"
 						size="sm"
 						color="secondary"

@@ -120,7 +120,6 @@ function buildColumns({
 								buildSADetachPermission(accountId),
 							]}
 							authZEnabled={!isDisabled && !!accountId}
-							withPortal={false}
 							variant="solid"
 							size="sm"
 							color="danger"
@@ -128,12 +127,11 @@ function buildColumns({
 							aria-label="Revoke Key"
 							disabled={isDisabled}
 							disabledTooltip={isDisabled ? 'Service account disabled' : undefined}
-							side="bottom"
 							onClick={(e): void => {
 								e.stopPropagation();
 								onRevokeClick(record.id);
 							}}
-							className="keys-tab__revoke-btn"
+							testId="keys-tab-revoke-btn"
 						>
 							<X size={12} />
 						</AuthZButton>
@@ -219,7 +217,6 @@ function KeysTab({
 					size="md"
 					checks={[APIKeyCreatePermission, buildSAAttachPermission(accountId)]}
 					authZEnabled={!isDisabled && !!accountId}
-					withPortal={false}
 					variant="link"
 					color="primary"
 					onClick={async (): Promise<void> => {

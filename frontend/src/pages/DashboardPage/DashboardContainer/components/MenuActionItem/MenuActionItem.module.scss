@@ -12,17 +12,11 @@
 	--button-variant-ghost-hover-background-color: transparent;
 	--button-internal-hover-state-background-color: transparent;
 	--button-disabled-opacity: 1;
+	--button-justify-content: flex-start;
 
 	/* Padding is the exception: it belongs to the button, which is what the
 	   tooltip anchors to. Left on the item, the anchor is inset from the menu's
 	   edge and the tooltip opens under the panel. */
+	display: block;
 	width: 100%;
-	justify-content: flex-start;
-}
-
-/* The other half: the menu hands its padding to the rows, so a row's box reaches
-   the panel edge, as the list popover's rows do. */
-.menuContent {
-	--dropdown-menu-content-padding: 0;
-	--dropdown-menu-item-padding: 0;
 }

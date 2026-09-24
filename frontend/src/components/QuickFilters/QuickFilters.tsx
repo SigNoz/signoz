@@ -237,7 +237,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					color="secondary"
 					icon
 					aria-label="Reset All"
-					className="right-action-icon-container"
 					onClick={handleReset}
 				>
 					<RefreshCw className="sync-icon" size="md" />
@@ -251,7 +250,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						color="secondary"
 						icon
 						aria-label="Collapse Filters"
-						className="right-action-icon-container"
 						onClick={handleFilterVisibilityChange}
 					>
 						<ArrowUpToLine style={{ rotate: '270deg' }} size="md" />
@@ -266,9 +264,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					color="secondary"
 					icon
 					aria-label="Settings"
-					className={classNames('right-action-icon-container', {
-						active: isSettingsOpen,
-					})}
 					onClick={(): void => setIsSettingsOpen(true)}
 					testId="settings-icon-container"
 				>
@@ -293,7 +288,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					<Switch
 						color="primary"
 						textPlacement="right"
-						style={{ marginLeft: 'auto' }}
 						value={showIP ?? true}
 						onChange={(checked): void => {
 							logEvent('API Monitoring: Show IP addresses clicked', {

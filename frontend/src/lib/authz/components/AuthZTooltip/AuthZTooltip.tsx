@@ -10,9 +10,6 @@ import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
 import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
-import cx from 'classnames';
-
-import styles from '../tooltipContent.module.scss';
 
 const DISABLED_STYLE: CSSProperties = {
 	pointerEvents: 'all',
@@ -96,10 +93,6 @@ function AuthZTooltip({
 					: formatDeniedMessage(deniedPermissions, user.id, tooltipMessage)
 			}
 			side={side}
-			className={cx(
-				isBlocked ? styles.blockedContent : styles.errorContent,
-				styles.aboveOverlay,
-			)}
 			container={withPortal === false ? inlineContainerRef : undefined}
 		>
 			{/*

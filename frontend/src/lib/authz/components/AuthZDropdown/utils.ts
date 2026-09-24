@@ -1,4 +1,5 @@
 import type { DropdownItemType } from '@signozhq/ui/dropdown';
+import { AUTHZ_LOADING_TOOLTIP } from 'lib/authz/components/constants';
 import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
 import type {
 	AuthZCheckResponse,
@@ -6,8 +7,6 @@ import type {
 } from 'lib/authz/hooks/useAuthZ/types';
 
 import type { AuthZDropdownItemType } from './types';
-
-export const AUTHZ_LOADING_TOOLTIP = 'Checking permissions';
 
 function getActiveChecks(item: AuthZDropdownItemType): BrandedPermission[] {
 	if (!('checks' in item) || !item.checks || item.disabled || item.loading) {

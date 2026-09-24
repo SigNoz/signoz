@@ -148,7 +148,6 @@ function CreateServiceAccountModal(): JSX.Element {
 				<AuthZButton
 					size="md"
 					checks={[SACreatePermission]}
-					withPortal={false}
 					type="button"
 					variant="solid"
 					color="primary"
