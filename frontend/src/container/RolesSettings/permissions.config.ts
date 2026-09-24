@@ -99,7 +99,7 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 	'notification-channel': {
 		label: 'Notification Channels',
 		description:
-			'Destinations for alert notifications, such as Slack, PagerDuty or webhooks.',
+			'Destinations for alert notifications, such as Slack, PagerDuty, webhooks, etc.',
 		icon: Cable,
 		selectorPlaceholder:
 			'Type notification channel ID, separate multiple with comma or space',
