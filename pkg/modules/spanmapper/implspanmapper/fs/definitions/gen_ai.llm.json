@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "definition": {
     "name": "gen_ai.llm",
     "condition": {
@@ -250,19 +250,19 @@
             {
               "key": "gen_ai.prompt",
               "context": "attribute",
-              "operation": "copy",
+              "operation": "move",
               "priority": 30
             },
             {
               "key": "ai.prompt.messages",
               "context": "attribute",
-              "operation": "copy",
+              "operation": "move",
               "priority": 20
             },
             {
               "key": "input.value",
               "context": "attribute",
-              "operation": "copy",
+              "operation": "move",
               "priority": 10
             }
           ]
@@ -276,25 +276,25 @@
             {
               "key": "gen_ai.completion",
               "context": "attribute",
-              "operation": "copy",
+              "operation": "move",
               "priority": 30
             },
             {
               "key": "ai.response.toolCalls",
               "context": "attribute",
-              "operation": "copy",
+              "operation": "move",
               "priority": 25
             },
             {
               "key": "ai.response.text",
               "context": "attribute",
-              "operation": "copy",
+              "operation": "move",
               "priority": 20
             },
             {
               "key": "output.value",
               "context": "attribute",
-              "operation": "copy",
+              "operation": "move",
               "priority": 10
             }
           ]
