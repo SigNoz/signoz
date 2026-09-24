@@ -9225,6 +9225,29 @@ export interface PrometheusErrorResponseSchemaDTO {
 	status: PrometheusErrorResponseSchemaDTOStatus;
 }
 
+export enum PrometheusLabelsSuccessResponseSchemaDTOStatus {
+	success = 'success',
+}
+export interface PrometheusLabelsSuccessResponseSchemaDTO {
+	/**
+	 * @type array,null
+	 */
+	data: string[] | null;
+	/**
+	 * @type array
+	 */
+	infos?: string[];
+	/**
+	 * @enum success
+	 * @type string
+	 */
+	status: PrometheusLabelsSuccessResponseSchemaDTOStatus;
+	/**
+	 * @type array
+	 */
+	warnings?: string[];
+}
+
 export enum PrometheusMatrixDataSchemaDTOResultType {
 	matrix = 'matrix',
 }
@@ -9335,6 +9358,33 @@ export type PrometheusQueryDataSchemaDTO =
 	| PrometheusVectorDataSchemaDTO
 	| PrometheusScalarDataSchemaDTO
 	| PrometheusStringDataSchemaDTO;
+
+export type PrometheusSeriesSuccessResponseSchemaDTODataItem = {
+	[key: string]: string;
+};
+
+export enum PrometheusSeriesSuccessResponseSchemaDTOStatus {
+	success = 'success',
+}
+export interface PrometheusSeriesSuccessResponseSchemaDTO {
+	/**
+	 * @type array,null
+	 */
+	data: PrometheusSeriesSuccessResponseSchemaDTODataItem[] | null;
+	/**
+	 * @type array
+	 */
+	infos?: string[];
+	/**
+	 * @enum success
+	 * @type string
+	 */
+	status: PrometheusSeriesSuccessResponseSchemaDTOStatus;
+	/**
+	 * @type array
+	 */
+	warnings?: string[];
+}
 
 export enum PrometheusSuccessResponseSchemaDTOStatus {
 	success = 'success',
@@ -14414,6 +14464,104 @@ export type ReplaceVariables200 = {
 	status: string;
 };
 
+export type PrometheusLabelValuesPathParameters = {
+	name: string;
+};
+export type PrometheusLabelValuesParams = {
+	/**
+	 * @type array
+	 * @description PromQL series selector, e.g. {job="api"}. Repeatable; results are the union of all match[] selectors. Omit to leave unfiltered.
+	 */
+	'match[]'?: string[];
+	/**
+	 * @type string
+	 * @description Range start: RFC3339 or float unix seconds. Defaults to the Unix epoch.
+	 */
+	start?: string;
+	/**
+	 * @type string
+	 * @description Range end: RFC3339 or float unix seconds. Defaults to now.
+	 */
+	end?: string;
+	/**
+	 * @type string
+	 * @description Maximum number of results to return.
+	 */
+	limit?: string;
+};
+
+export type PrometheusLabelValuesPostPathParameters = {
+	name: string;
+};
+export type PrometheusLabelValuesPostParams = {
+	/**
+	 * @type array
+	 * @description PromQL series selector, e.g. {job="api"}. Repeatable; results are the union of all match[] selectors. Omit to leave unfiltered.
+	 */
+	'match[]'?: string[];
+	/**
+	 * @type string
+	 * @description Range start: RFC3339 or float unix seconds. Defaults to the Unix epoch.
+	 */
+	start?: string;
+	/**
+	 * @type string
+	 * @description Range end: RFC3339 or float unix seconds. Defaults to now.
+	 */
+	end?: string;
+	/**
+	 * @type string
+	 * @description Maximum number of results to return.
+	 */
+	limit?: string;
+};
+
+export type PrometheusLabelsParams = {
+	/**
+	 * @type array
+	 * @description PromQL series selector, e.g. {job="api"}. Repeatable; results are the union of all match[] selectors. Omit to leave unfiltered.
+	 */
+	'match[]'?: string[];
+	/**
+	 * @type string
+	 * @description Range start: RFC3339 or float unix seconds. Defaults to the Unix epoch.
+	 */
+	start?: string;
+	/**
+	 * @type string
+	 * @description Range end: RFC3339 or float unix seconds. Defaults to now.
+	 */
+	end?: string;
+	/**
+	 * @type string
+	 * @description Maximum number of results to return.
+	 */
+	limit?: string;
+};
+
+export type PrometheusLabelsPostParams = {
+	/**
+	 * @type array
+	 * @description PromQL series selector, e.g. {job="api"}. Repeatable; results are the union of all match[] selectors. Omit to leave unfiltered.
+	 */
+	'match[]'?: string[];
+	/**
+	 * @type string
+	 * @description Range start: RFC3339 or float unix seconds. Defaults to the Unix epoch.
+	 */
+	start?: string;
+	/**
+	 * @type string
+	 * @description Range end: RFC3339 or float unix seconds. Defaults to now.
+	 */
+	end?: string;
+	/**
+	 * @type string
+	 * @description Maximum number of results to return.
+	 */
+	limit?: string;
+};
+
 export type PrometheusQueryParams = {
 	/**
 	 * @type string
@@ -14524,4 +14672,50 @@ export type PrometheusQueryRangePostParams = {
 	 * @description Any non-empty value includes query statistics in the response.
 	 */
 	stats?: string;
+};
+
+export type PrometheusSeriesParams = {
+	/**
+	 * @type array
+	 * @description PromQL series selector, e.g. {job="api"}. At least one is required; repeatable, results are the union of all match[] selectors.
+	 */
+	'match[]': string[];
+	/**
+	 * @type string
+	 * @description Range start: RFC3339 or float unix seconds. Defaults to the Unix epoch.
+	 */
+	start?: string;
+	/**
+	 * @type string
+	 * @description Range end: RFC3339 or float unix seconds. Defaults to now.
+	 */
+	end?: string;
+	/**
+	 * @type string
+	 * @description Maximum number of results to return.
+	 */
+	limit?: string;
+};
+
+export type PrometheusSeriesPostParams = {
+	/**
+	 * @type array
+	 * @description PromQL series selector, e.g. {job="api"}. At least one is required; repeatable, results are the union of all match[] selectors.
+	 */
+	'match[]': string[];
+	/**
+	 * @type string
+	 * @description Range start: RFC3339 or float unix seconds. Defaults to the Unix epoch.
+	 */
+	start?: string;
+	/**
+	 * @type string
+	 * @description Range end: RFC3339 or float unix seconds. Defaults to now.
+	 */
+	end?: string;
+	/**
+	 * @type string
+	 * @description Maximum number of results to return.
+	 */
+	limit?: string;
 };
