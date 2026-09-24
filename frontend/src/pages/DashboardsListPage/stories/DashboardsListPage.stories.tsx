@@ -6,7 +6,9 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	dashboardsListMocks,
+	openRowActions,
 	overflowingRows,
+	pickRowAction,
 } from './DashboardsListPage.stories.mocks';
 import { BuiltinViewId } from '../types';
 
@@ -112,6 +114,45 @@ export const NewDashboardImportJsonInvalid: Story = {
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
 	parameters: { msw: { handlers: [overflowingRows] } },
+};
+
+/** The first row's actions menu, open over the list. */
+export const RowActionsMenu: Story = {
+	play: async ({ canvasElement }) => {
+		await openRowActions(canvasElement, 0);
+	},
+};
+
+/** The rename dialog, opened from the menu of the second row (the first is locked). */
+export const RenameDashboardDialog: Story = {
+	play: async ({ canvasElement }) => {
+		await openRowActions(canvasElement, 1);
+		await pickRowAction('Rename');
+		await screen.findByRole('dialog', { name: 'Rename dashboard' });
+	},
+};
+
+/** The tags dialog, opened from the menu of the second row (the first is locked). */
+export const EditTagsDialog: Story = {
+	play: async ({ canvasElement }) => {
+		await openRowActions(canvasElement, 1);
+		await pickRowAction(/^(Edit|Add) Tags$/);
+		await screen.findByRole('dialog', { name: /^(Edit|Add) tags$/ });
+	},
+};
+
+/** The popover that names the current filters as a new saved view. */
+export const SaveViewPopover: Story = {
+	play: async ({ canvasElement }) => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: 'Save current filters as a view' },
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByText('Save as view');
+	},
 };
 
 /**

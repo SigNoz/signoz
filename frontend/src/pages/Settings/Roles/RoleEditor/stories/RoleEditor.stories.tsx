@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { userEvent, within } from 'storybook/test';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { roleEditorMocks } from './RoleEditor.stories.mocks';
+import { openLogsCard, roleEditorMocks } from './RoleEditor.stories.mocks';
 
 import SettingsPage from '../../../Settings';
 
@@ -74,4 +74,28 @@ export const Tooltips: Story = {
 /** The copy action over the JSON editor, which the resource cards replace. */
 export const TooltipsInJsonEditor: Story = {
 	args: { tooltipsOpen: true, mode: 'edit', editor: 'json' },
+};
+
+/** The Logs card's first verb granted over everything instead of nothing. */
+export const PermissionEditorScope: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const card = await openLogsCard(canvasElement);
+		const [all] = await within(card).findAllByText('All');
+
+		await userEvent.click(all);
+	},
+};
+
+/** The selector wizard, opened from a Logs verb scoped to named objects. */
+export const TelemetrySelectorWizard: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const card = await openLogsCard(canvasElement);
+		const [onlySelected] = await within(card).findAllByText('Only selected');
+
+		await userEvent.click(onlySelected);
+		await userEvent.click(
+			await within(card).findByRole('button', { name: 'Wizard' }),
+		);
+		await screen.findByRole('dialog', { name: 'Selector Wizard' });
+	},
 };
