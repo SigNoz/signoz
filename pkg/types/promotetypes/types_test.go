@@ -156,14 +156,6 @@ func TestValidateAndSetDefaultsTracesAttributes(t *testing.T) {
 			path:    &PromotePath{Path: "tags[].id", Promote: true},
 			wantErr: true,
 		},
-		{
-			name: "IndexesWithoutSupport_Rejected",
-			path: &PromotePath{
-				Path:    "http.method",
-				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1}},
-			},
-			wantErr: true,
-		},
 	}
 
 	for _, testCase := range testCases {

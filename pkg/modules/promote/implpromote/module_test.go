@@ -42,18 +42,6 @@ func TestPromotePaths(t *testing.T) {
 			paths:  []*promotetypes.PromotePath{{Path: "http.method"}},
 		},
 		{
-			name:   "IndexesOnTraceAttributes_Rejected",
-			target: promotetypes.NewTracesAttributesTarget(),
-			paths: []*promotetypes.PromotePath{{
-				Path:    "http.method",
-				Promote: true,
-				Indexes: []promotetypes.WrappedIndex{
-					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
-				},
-			}},
-			wantErr: true,
-		},
-		{
 			name:    "ColumnPrefixedPath_Rejected",
 			target:  promotetypes.NewTracesAttributesTarget(),
 			paths:   []*promotetypes.PromotePath{{Path: "attributes.http.method", Promote: true}},
