@@ -63,7 +63,7 @@ function JsonFlattening({
 					<Switch
 						color="primary"
 						textPlacement="right"
-						value={enablePaths}
+						value={!!enablePaths}
 						onChange={handleEnablePathsChange}
 					/>
 					Enable Paths
