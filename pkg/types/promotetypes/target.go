@@ -73,6 +73,19 @@ func NewTracesAttributesTarget() Target {
 	)
 }
 
+// NewTargetFromPath validates the {telemetry_signal} and {context} path
+// variables and returns their promotion domain.
+func NewTargetFromPath(signal, context string) (Target, error) {
+	params := &PathParams{Signal: signal, Context: context}
+	if err := params.Validate(); err != nil {
+		return Target{}, err
+	}
+	parsedSignal, _ := telemetrytypes.SignalFromText(params.Signal)
+	parsedContext, _ := telemetrytypes.FieldContextFromText(params.Context)
+	target, _ := TargetFor(parsedSignal, parsedContext)
+	return target, nil
+}
+
 // Targets returns every supported promotion domain.
 func Targets() []Target {
 	return []Target{
@@ -115,17 +128,4 @@ func (p *PathParams) Validate() error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "promotion is not supported for %s %s", signal.StringValue(), context.StringValue())
 	}
 	return nil
-}
-
-// NewTargetFromPath validates the {telemetry_signal} and {context} path
-// variables and returns their promotion domain.
-func NewTargetFromPath(signal, context string) (Target, error) {
-	params := &PathParams{Signal: signal, Context: context}
-	if err := params.Validate(); err != nil {
-		return Target{}, err
-	}
-	parsedSignal, _ := telemetrytypes.SignalFromText(params.Signal)
-	parsedContext, _ := telemetrytypes.FieldContextFromText(params.Context)
-	target, _ := TargetFor(parsedSignal, parsedContext)
-	return target, nil
 }
