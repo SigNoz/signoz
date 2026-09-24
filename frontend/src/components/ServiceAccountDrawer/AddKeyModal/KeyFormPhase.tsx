@@ -4,11 +4,12 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
-import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import {
 	APIKeyCreatePermission,
 	buildSAAttachPermission,
-} from 'hooks/useAuthZ/permissions/service-account.permissions';
+} from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate } from '../utils';
@@ -36,97 +37,107 @@ function KeyFormPhase({
 	onClose,
 	accountId,
 }: KeyFormPhaseProps): JSX.Element {
+	const checks = accountId
+		? [APIKeyCreatePermission, buildSAAttachPermission(accountId)]
+		: [];
+
 	return (
 		<>
 			<form id={FORM_ID} className="add-key-modal__form" onSubmit={onSubmit}>
-				<div className="add-key-modal__field">
-					<label className="add-key-modal__label" htmlFor="key-name">
-						Name <span style={{ color: 'var(--destructive)' }}>*</span>
-					</label>
-					<Input
-						id="key-name"
-						placeholder="Enter key name e.g.: Service Owner"
-						className="add-key-modal__input"
-						{...register('keyName', {
-							required: true,
-							validate: (v) => !!v.trim(),
-						})}
-					/>
-				</div>
-
-				<div className="add-key-modal__field">
-					<span className="add-key-modal__label">Expiration</span>
-					<Controller
-						name="expiryMode"
-						control={control}
-						render={({ field }): JSX.Element => (
-							<ToggleGroupSimple
-								type="single"
-								value={field.value}
-								onChange={(val: string): void => {
-									if (val) {
-										field.onChange(val);
-									}
-								}}
-								size="sm"
-								className="add-key-modal__expiry-toggle"
-								items={[
-									{ value: ExpiryMode.NONE, label: 'No Expiration' },
-									{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
-								]}
+				<AuthZGuardContent checks={checks}>
+					<>
+						<div className="add-key-modal__field">
+							<label className="add-key-modal__label" htmlFor="key-name">
+								Name <span style={{ color: 'var(--destructive)' }}>*</span>
+							</label>
+							<Input
+								id="key-name"
+								placeholder="Enter key name e.g.: Service Owner"
+								className="add-key-modal__input"
+								testId="add-key-name-input"
+								{...register('keyName', {
+									required: true,
+									validate: (v) => !!v.trim(),
+								})}
 							/>
-						)}
-					/>
-				</div>
+						</div>
 
-				{expiryMode === ExpiryMode.DATE && (
-					<div className="add-key-modal__field">
-						<label className="add-key-modal__label" htmlFor="expiry-date">
-							Expiration Date
-						</label>
-						<div className="add-key-modal__datepicker">
+						<div className="add-key-modal__field">
+							<span className="add-key-modal__label">Expiration</span>
 							<Controller
-								name="expiryDate"
+								name="expiryMode"
 								control={control}
 								render={({ field }): JSX.Element => (
-									<DatePicker
-										id="expiry-date"
+									<ToggleGroupSimple
+										type="single"
 										value={field.value}
-										onChange={field.onChange}
-										popupClassName="add-key-modal-datepicker-popup"
-										getPopupContainer={popupContainer}
-										disabledDate={disabledDate}
+										onChange={(val: string): void => {
+											if (val) {
+												field.onChange(val);
+											}
+										}}
+										size="sm"
+										className="add-key-modal__expiry-toggle"
+										items={[
+											{ value: ExpiryMode.NONE, label: 'No Expiration' },
+											{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
+										]}
 									/>
 								)}
 							/>
 						</div>
-					</div>
-				)}
+
+						{expiryMode === ExpiryMode.DATE && (
+							<div className="add-key-modal__field">
+								<label className="add-key-modal__label" htmlFor="expiry-date">
+									Expiration Date
+								</label>
+								<div className="add-key-modal__datepicker">
+									<Controller
+										name="expiryDate"
+										control={control}
+										render={({ field }): JSX.Element => (
+											<DatePicker
+												id="expiry-date"
+												value={field.value}
+												onChange={field.onChange}
+												popupClassName="add-key-modal-datepicker-popup"
+												getPopupContainer={popupContainer}
+												disabledDate={disabledDate}
+											/>
+										)}
+									/>
+								</div>
+							</div>
+						)}
+					</>
+				</AuthZGuardContent>
 			</form>
 
 			<div className="add-key-modal__footer">
 				<div className="add-key-modal__footer-right">
-					<Button variant="solid" color="secondary" onClick={onClose}>
+					<Button
+						variant="solid"
+						color="secondary"
+						onClick={onClose}
+						testId="add-key-cancel-btn"
+					>
 						Cancel
 					</Button>
-					<AuthZTooltip
-						checks={[
-							APIKeyCreatePermission,
-							buildSAAttachPermission(accountId ?? ''),
-						]}
-						enabled={!!accountId}
+					<AuthZButton
+						checks={checks}
+						authZEnabled={!!accountId}
+						withPortal={false}
+						type="submit"
+						form={FORM_ID}
+						variant="solid"
+						color="primary"
+						loading={isSubmitting}
+						disabled={!isValid}
+						testId="add-key-submit-btn"
 					>
-						<Button
-							type="submit"
-							form={FORM_ID}
-							variant="solid"
-							color="primary"
-							loading={isSubmitting}
-							disabled={!isValid}
-						>
-							Create Key
-						</Button>
-					</AuthZTooltip>
+						Create Key
+					</AuthZButton>
 				</div>
 			</div>
 		</>

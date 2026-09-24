@@ -1,5 +1,14 @@
 import { MutableRefObject } from 'react';
-import { Chart, ChartConfiguration, ChartData, Color } from 'chart.js';
+import {
+	ActiveElement,
+	Chart,
+	ChartConfiguration,
+	ChartData,
+	ChartEvent,
+	ChartType,
+	Color,
+	TooltipItem,
+} from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -60,184 +69,189 @@ export const getGraphOptions = (
 	minTime?: number,
 	maxTime?: number,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
-): CustomChartOptions => ({
-	animation: {
-		duration: animate ? 200 : 0,
-	},
-	responsive: true,
-	maintainAspectRatio: false,
-	interaction: {
-		mode: 'index',
-		intersect: true,
-	},
-	plugins: {
-		...(staticLine
-			? {
-					annotation: {
-						annotations: [
-							{
-								type: 'line',
-								yMin: staticLine.yMin,
-								yMax: staticLine.yMax,
-								borderColor: staticLine.borderColor,
-								borderWidth: staticLine.borderWidth,
-								label: {
-									content: staticLine.lineText,
-									enabled: true,
-									font: {
-										size: 10,
+): CustomChartOptions =>
+	({
+		animation: {
+			duration: animate ? 200 : 0,
+		},
+		responsive: true,
+		maintainAspectRatio: false,
+		interaction: {
+			mode: 'index',
+			intersect: true,
+		},
+		plugins: {
+			...(staticLine
+				? {
+						annotation: {
+							annotations: [
+								{
+									type: 'line',
+									yMin: staticLine.yMin,
+									yMax: staticLine.yMax,
+									borderColor: staticLine.borderColor,
+									borderWidth: staticLine.borderWidth,
+									label: {
+										content: staticLine.lineText,
+										enabled: true,
+										font: {
+											size: 10,
+										},
+										borderWidth: 0,
+										position: 'start',
+										backgroundColor: 'transparent',
+										color: staticLine.textColor,
 									},
-									borderWidth: 0,
-									position: 'start',
-									backgroundColor: 'transparent',
-									color: staticLine.textColor,
 								},
-							},
-						],
+							],
+						},
+					}
+				: {}),
+			title: {
+				display: title !== undefined,
+				text: title,
+			},
+			legend: {
+				display: false,
+			},
+			tooltip: {
+				callbacks: {
+					title(context: TooltipItem<'line'>[]): string | string[] {
+						const date = dayjs(context[0].parsed.x);
+						return date
+							.tz(timezone.value)
+							.format(DATE_TIME_FORMATS.MONTH_DATETIME_FULL_SECONDS);
 					},
-				}
-			: {}),
-		title: {
-			display: title !== undefined,
-			text: title,
-		},
-		legend: {
-			display: false,
-		},
-		tooltip: {
-			callbacks: {
-				title(context): string | string[] {
-					const date = dayjs(context[0].parsed.x);
-					return date
-						.tz(timezone.value)
-						.format(DATE_TIME_FORMATS.MONTH_DATETIME_FULL_SECONDS);
+					label(context: TooltipItem<'line'>): string | string[] {
+						let label = context.dataset.label || '';
+
+						if (label) {
+							label += ': ';
+						}
+						if (context.parsed.y !== null) {
+							label += getToolTipValue(context.parsed.y.toString(), yAxisUnit);
+						}
+
+						return label;
+					},
+					labelTextColor(labelData: TooltipItem<'line'>): Color {
+						if (labelData.datasetIndex === nearestDatasetIndex.current) {
+							return 'rgba(255, 255, 255, 1)';
+						}
+
+						return 'rgba(255, 255, 255, 0.75)';
+					},
 				},
-				label(context): string | string[] {
-					let label = context.dataset.label || '';
-
-					if (label) {
-						label += ': ';
-					}
-					if (context.parsed.y !== null) {
-						label += getToolTipValue(context.parsed.y.toString(), yAxisUnit);
-					}
-
-					return label;
-				},
-				labelTextColor(labelData): Color {
-					if (labelData.datasetIndex === nearestDatasetIndex.current) {
-						return 'rgba(255, 255, 255, 1)';
-					}
-
-					return 'rgba(255, 255, 255, 0.75)';
+				position: 'custom',
+				itemSort(item1: TooltipItem<'line'>, item2: TooltipItem<'line'>): number {
+					return item2.parsed.y - item1.parsed.y;
 				},
 			},
-			position: 'custom',
-			itemSort(item1, item2): number {
-				return item2.parsed.y - item1.parsed.y;
-			},
+			[dragSelectPluginId]: createDragSelectPluginOptions(
+				!!onDragSelect,
+				onDragSelect,
+				dragSelectColor,
+			),
+			[intersectionCursorPluginId]: createIntersectionCursorPluginOptions(
+				!!onDragSelect,
+				currentTheme === 'dark' ? 'white' : 'black',
+			),
 		},
-		[dragSelectPluginId]: createDragSelectPluginOptions(
-			!!onDragSelect,
-			onDragSelect,
-			dragSelectColor,
-		),
-		[intersectionCursorPluginId]: createIntersectionCursorPluginOptions(
-			!!onDragSelect,
-			currentTheme === 'dark' ? 'white' : 'black',
-		),
-	},
-	layout: {
-		padding: 0,
-	},
-	scales: {
-		x: {
-			stacked: isStacked,
-			offset: false,
-			grid: {
+		layout: {
+			padding: 0,
+		},
+		scales: {
+			x: {
+				stacked: isStacked,
+				offset: false,
+				grid: {
+					display: true,
+					color: getGridColor(),
+					drawTicks: true,
+				},
+				adapters: {
+					date: chartjsAdapter,
+				},
+				time: {
+					unit: xAxisTimeUnit?.unitName || 'minute',
+					stepSize: xAxisTimeUnit?.stepSize || 1,
+					displayFormats: {
+						millisecond: DATE_TIME_FORMATS.TIME_SECONDS,
+						second: DATE_TIME_FORMATS.TIME_SECONDS,
+						minute: DATE_TIME_FORMATS.TIME,
+						hour: DATE_TIME_FORMATS.SLASH_SHORT,
+						day: DATE_TIME_FORMATS.DATE_SHORT,
+						week: DATE_TIME_FORMATS.DATE_SHORT,
+						month: DATE_TIME_FORMATS.YEAR_MONTH,
+						year: DATE_TIME_FORMATS.YEAR_SHORT,
+					},
+				},
+				type: 'time',
+				ticks: { color: getAxisLabelColor(currentTheme) },
+				...(minTime && {
+					min: dayjs(minTime).tz(timezone.value).format(),
+				}),
+				...(maxTime && {
+					max: dayjs(maxTime).tz(timezone.value).format(),
+				}),
+			},
+			y: {
+				stacked: isStacked,
 				display: true,
-				color: getGridColor(),
-				drawTicks: true,
-			},
-			adapters: {
-				date: chartjsAdapter,
-			},
-			time: {
-				unit: xAxisTimeUnit?.unitName || 'minute',
-				stepSize: xAxisTimeUnit?.stepSize || 1,
-				displayFormats: {
-					millisecond: DATE_TIME_FORMATS.TIME_SECONDS,
-					second: DATE_TIME_FORMATS.TIME_SECONDS,
-					minute: DATE_TIME_FORMATS.TIME,
-					hour: DATE_TIME_FORMATS.SLASH_SHORT,
-					day: DATE_TIME_FORMATS.DATE_SHORT,
-					week: DATE_TIME_FORMATS.DATE_SHORT,
-					month: DATE_TIME_FORMATS.YEAR_MONTH,
-					year: DATE_TIME_FORMATS.YEAR_SHORT,
+				grid: {
+					display: true,
+					color: getGridColor(),
 				},
-			},
-			type: 'time',
-			ticks: { color: getAxisLabelColor(currentTheme) },
-			...(minTime && {
-				min: dayjs(minTime).tz(timezone.value).format(),
-			}),
-			...(maxTime && {
-				max: dayjs(maxTime).tz(timezone.value).format(),
-			}),
-		},
-		y: {
-			stacked: isStacked,
-			display: true,
-			grid: {
-				display: true,
-				color: getGridColor(),
-			},
-			ticks: {
-				color: getAxisLabelColor(currentTheme),
-				// Include a dollar sign in the ticks
-				callback(value): string {
-					return getYAxisFormattedValue(value.toString(), yAxisUnit);
+				ticks: {
+					color: getAxisLabelColor(currentTheme),
+					// Include a dollar sign in the ticks
+					callback(value: number | string): string {
+						return getYAxisFormattedValue(value.toString(), yAxisUnit);
+					},
 				},
 			},
 		},
-	},
-	elements: {
-		line: {
-			tension: 0,
-			cubicInterpolationMode: 'monotone',
-		},
-		point: {
-			hoverBackgroundColor: (ctx: any): string => {
-				if (ctx?.element?.options?.borderColor) {
-					return ctx.element.options.borderColor;
-				}
-				return 'rgba(0,0,0,0.1)';
+		elements: {
+			line: {
+				tension: 0,
+				cubicInterpolationMode: 'monotone',
 			},
-			hoverRadius: 5,
-		},
-	},
-	onClick: (event, element, chart): void => {
-		if (onClickHandler) {
-			onClickHandler(event, element, chart, data);
-		}
-	},
-	onHover: (event, _, chart): void => {
-		if (event.native) {
-			const interactions = chart.getElementsAtEventForMode(
-				event.native,
-				'nearest',
-				{
-					intersect: false,
+			point: {
+				hoverBackgroundColor: (ctx: any): string => {
+					if (ctx?.element?.options?.borderColor) {
+						return ctx.element.options.borderColor;
+					}
+					return 'rgba(0,0,0,0.1)';
 				},
-				true,
-			);
-
-			if (interactions[0]) {
-				nearestDatasetIndex.current = interactions[0].datasetIndex;
+				hoverRadius: 5,
+			},
+		},
+		onClick: (
+			event: ChartEvent,
+			element: ActiveElement[],
+			chart: Chart,
+		): void => {
+			if (onClickHandler) {
+				onClickHandler(event, element, chart, data);
 			}
-		}
-	},
-});
+		},
+		onHover: (event: ChartEvent, _: ActiveElement[], chart: Chart): void => {
+			if (event.native) {
+				const interactions = chart.getElementsAtEventForMode(
+					event.native,
+					'nearest',
+					{
+						intersect: false,
+					},
+					true,
+				);
+
+				if (interactions[0]) {
+					nearestDatasetIndex.current = interactions[0].datasetIndex;
+				}
+			}
+		},
+	}) as CustomChartOptions;
 
 declare module 'chart.js' {
 	interface TooltipPositionerMap {

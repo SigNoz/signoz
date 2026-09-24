@@ -41,19 +41,6 @@ jest.mock('hooks/useUrlQuery', () => (): URLSearchParams => mockUrlQuery);
 
 // React Router is already globally mocked
 
-// Mock complex external dependencies that cause provider issues
-jest.mock('components/SpanHoverCard/SpanHoverCard', () => {
-	function SpanHoverCard({
-		children,
-	}: {
-		children: React.ReactNode;
-	}): JSX.Element {
-		return <div>{children}</div>;
-	}
-	SpanHoverCard.displayName = 'SpanHoverCard';
-	return SpanHoverCard;
-});
-
 // Mock the Filters component that's causing React Query issues
 jest.mock('../Filters/Filters', () => {
 	function Filters(): null {
@@ -106,7 +93,7 @@ jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 	hashFn: (): number => 0,
 }));
 
-jest.mock('container/TraceDetail/utils', () => ({
+jest.mock('utils/traceUtils', () => ({
 	convertTimeToRelevantUnit: (
 		value: number,
 	): { time: number; timeUnitName: string } => ({
@@ -273,11 +260,13 @@ describe('Span Click User Flows', () => {
 		) as HTMLElement;
 		await user.click(spanElement);
 
-		// Verify URL was updated with spanId
 		expect(mockUrlQuery.get('spanId')).toBe('span-1');
-		expect(mockSafeNavigate).toHaveBeenCalledWith({
-			search: expect.stringContaining('spanId=span-1'),
-		});
+		expect(mockSafeNavigate).toHaveBeenCalledWith(
+			{
+				search: expect.stringContaining('spanId=span-1'),
+			},
+			{ replace: true },
+		);
 	});
 
 	it('clicking span duration visually selects the span', async () => {
@@ -443,10 +432,13 @@ describe('Span Click User Flows', () => {
 		expect(mockUrlQuery.get('anotherParam')).toBe('anotherValue');
 		expect(mockUrlQuery.get('spanId')).toBe('span-1');
 
-		expect(mockSafeNavigate).toHaveBeenCalledWith({
-			search: expect.stringMatching(
-				/existingParam=existingValue.*anotherParam=anotherValue.*spanId=span-1/,
-			),
-		});
+		expect(mockSafeNavigate).toHaveBeenCalledWith(
+			{
+				search: expect.stringMatching(
+					/existingParam=existingValue.*anotherParam=anotherValue.*spanId=span-1/,
+				),
+			},
+			{ replace: true },
+		);
 	});
 });

@@ -9,8 +9,8 @@
         {
           "name": "critical",
           "target": 30,
-          "matchType": "1",
-          "op": "1",
+          "matchType": "at_least_once",
+          "op": "above",
           "channels": [
             "test channel"
           ]
@@ -18,8 +18,8 @@
         {
           "name": "warning",
           "target": 20,
-          "matchType": "1",
-          "op": "1",
+          "matchType": "at_least_once",
+          "op": "above",
           "channels": [
             "test channel"
           ]
@@ -27,8 +27,8 @@
         {
           "name": "info",
           "target": 10,
-          "matchType": "1",
-          "op": "1",
+          "matchType": "at_least_once",
+          "op": "above",
           "channels": [
             "test channel"
           ]

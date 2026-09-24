@@ -86,10 +86,10 @@ const buildAccessorFn = <TData>(
 	};
 };
 
-export function buildTanstackColumnDef<TData>(
+export function buildTanstackColumnDef<TData, TItemKey = string>(
 	colDef: TableColumnDef<TData>,
 	isRowActive?: (row: TData) => boolean,
-	getRowKeyData?: (index: number) => RowKeyData | undefined,
+	getRowKeyData?: (index: number) => RowKeyData<TItemKey> | undefined,
 ): ColumnDef<TData> {
 	const isFixed = colDef.width?.fixed != null;
 	const headerFn =
@@ -135,12 +135,12 @@ export function buildTanstackColumnDef<TData>(
 				value: getValue() as TData[any],
 				isActive: isRowActive?.(rowData) ?? false,
 				rowIndex: row.index,
+				rowId: row.id,
 				isExpanded: row.getIsExpanded(),
 				canExpand: row.getCanExpand(),
 				toggleExpanded: (): void => {
 					row.toggleExpanded();
 				},
-				itemKey: keyData?.itemKey ?? '',
 				groupMeta: keyData?.groupMeta,
 			});
 		},

@@ -1,0 +1,30 @@
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.label {
+	font-size: var(--periscope-font-size-base);
+	color: var(--l2-foreground);
+}
+
+.labelHint {
+	color: var(--l3-foreground);
+}
+
+.keys {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.keyRow {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.keyInput {
+	flex: 1;
+}

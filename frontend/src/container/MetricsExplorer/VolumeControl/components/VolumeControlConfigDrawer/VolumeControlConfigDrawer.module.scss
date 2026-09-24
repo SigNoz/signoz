@@ -1,0 +1,30 @@
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	padding: 4px 2px;
+}
+
+.adminRow {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.adminOnlyTag {
+	border: 1px solid var(--bg-amber-500, #ffcc56);
+	border-radius: 99px;
+	padding: 1px 8px;
+	letter-spacing: 0.03em;
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+}
+
+.footerSpacer {
+	flex: 1;
+}

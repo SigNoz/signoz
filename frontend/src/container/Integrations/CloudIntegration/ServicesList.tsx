@@ -39,9 +39,12 @@ function ServicesList({
 	const {
 		data: providerServicesMetadata,
 		isLoading: isProviderServicesLoading,
-	} = useListServicesMetadata({ cloudProvider: type }, undefined, {
-		query: { enabled: !isAccountsLoading && !hasConnectedAccounts },
-	});
+	} = useListServicesMetadata(
+		{ cloudProvider: type },
+		{
+			query: { enabled: !isAccountsLoading && !hasConnectedAccounts },
+		},
+	);
 
 	const servicesMetadata = hasConnectedAccounts
 		? accountServicesMetadata

@@ -1,0 +1,42 @@
+.formSpace {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.infoItemContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.infoTitle {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+}
+
+.nameIconInput {
+	display: flex;
+	gap: 4px;
+
+	[data-radix-popper-content-wrapper] {
+		z-index: 1100 !important;
+	}
+}
+
+// The image-picker owns its size/background; here we only round the left edge so
+// it joins flush with the name input to its right.
+.dashboardImageInput {
+	border-radius: 2px 0px 0px 2px;
+}
+
+.dashboardNameInput {
+	border-radius: 0px 2px 2px 0px;
+	border: 1px solid var(--l2-border);
+}
+
+.descriptionTextArea {
+	border-radius: 2px;
+	border: 1px solid var(--l2-border);
+}

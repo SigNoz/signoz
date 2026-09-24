@@ -62,13 +62,13 @@ function ErrorTitleAndKey({
 
 		switch (parentTitle) {
 			case 'Consumers':
-				link = `${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Consumers}`;
+				link = `${ROUTES.GET_STARTED_WITH_CLOUD}?${QueryParams.getStartedSource}=self-hosted-kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Consumers}`;
 				break;
 			case 'Producers':
-				link = `${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Producers}`;
+				link = `${ROUTES.GET_STARTED_WITH_CLOUD}?${QueryParams.getStartedSource}=self-hosted-kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Producers}`;
 				break;
 			case 'Kafka':
-				link = `${ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Kafka}`;
+				link = `${ROUTES.GET_STARTED_WITH_CLOUD}?${QueryParams.getStartedSource}=self-hosted-kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Kafka}`;
 				break;
 			default:
 				link = '';

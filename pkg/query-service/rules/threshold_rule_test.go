@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -195,10 +196,16 @@ func TestPrepareParamsForLogs(t *testing.T) {
 
 	ts := time.UnixMilli(1705469040000)
 
-	params := rule.prepareParamsForLogs(context.Background(), ts, ruletypes.Labels{}).Encode()
-	assert.Contains(t, params, "&timeRange=%7B%22start%22%3A1705468620000%2C%22end%22%3A1705468920000%2C%22pageSize%22%3A100%7D")
-	assert.Contains(t, params, "&startTime=1705468620000")
-	assert.Contains(t, params, "&endTime=1705468920000")
+	params := rule.prepareParamsForLogs(context.Background(), ts, ruletypes.Labels{})
+	assert.Equal(t, "1705468620000", params.Get("startTime"))
+	assert.Equal(t, "1705468920000", params.Get("endTime"))
+
+	// the frontend decodes compositeQuery twice, so it must be escaped once
+	// before being encoded into the params
+	assert.Contains(t, params.Encode(), "compositeQuery=%257B")
+	compositeQuery, err := url.QueryUnescape(params.Get("compositeQuery"))
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"dataSource":"logs","filter":{}}],"queryFormulas":[]}}`, compositeQuery)
 }
 
 func TestPrepareParamsForLogsFilterExpression(t *testing.T) {
@@ -257,8 +264,13 @@ func TestPrepareParamsForLogsFilterExpression(t *testing.T) {
 
 	ts := time.UnixMilli(1753527163000)
 
-	params := rule.prepareParamsForLogs(context.Background(), ts, ruletypes.Labels{}).Encode()
-	assert.Contains(t, params, "compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522queryName%2522%253A%2522A%2522%252C%2522stepInterval%2522%253A60%252C%2522dataSource%2522%253A%2522logs%2522%252C%2522aggregateOperator%2522%253A%2522noop%2522%252C%2522aggregateAttribute%2522%253A%257B%2522key%2522%253A%2522%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%252C%2522isColumn%2522%253Afalse%252C%2522isJSON%2522%253Afalse%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522limit%2522%253A0%252C%2522offset%2522%253A0%252C%2522pageSize%2522%253A0%252C%2522ShiftBy%2522%253A0%252C%2522IsAnomaly%2522%253Afalse%252C%2522QueriesUsedInFormula%2522%253Anull%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522service.name%2BEXISTS%2522%257D%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%257D%257D&endTime=1753527000000&options=%7B%22maxLines%22%3A0%2C%22format%22%3A%22%22%2C%22selectColumns%22%3Anull%7D&startTime=1753526700000&timeRange=%7B%22start%22%3A1753526700000%2C%22end%22%3A1753527000000%2C%22pageSize%22%3A100%7D")
+	params := rule.prepareParamsForLogs(context.Background(), ts, ruletypes.Labels{})
+	assert.Equal(t, "1753526700000", params.Get("startTime"))
+	assert.Equal(t, "1753527000000", params.Get("endTime"))
+
+	compositeQuery, err := url.QueryUnescape(params.Get("compositeQuery"))
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"dataSource":"logs","filter":{"expression":"service.name EXISTS"}}],"queryFormulas":[]}}`, compositeQuery)
 }
 
 func TestPrepareParamsForTracesFilterExpression(t *testing.T) {
@@ -317,8 +329,13 @@ func TestPrepareParamsForTracesFilterExpression(t *testing.T) {
 
 	ts := time.UnixMilli(1753527163000)
 
-	params := rule.prepareParamsForTraces(context.Background(), ts, ruletypes.Labels{}).Encode()
-	assert.Contains(t, params, "compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522queryName%2522%253A%2522A%2522%252C%2522stepInterval%2522%253A60%252C%2522dataSource%2522%253A%2522traces%2522%252C%2522aggregateOperator%2522%253A%2522noop%2522%252C%2522aggregateAttribute%2522%253A%257B%2522key%2522%253A%2522%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%252C%2522isColumn%2522%253Afalse%252C%2522isJSON%2522%253Afalse%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522limit%2522%253A0%252C%2522offset%2522%253A0%252C%2522pageSize%2522%253A0%252C%2522ShiftBy%2522%253A0%252C%2522IsAnomaly%2522%253Afalse%252C%2522QueriesUsedInFormula%2522%253Anull%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522service.name%2BEXISTS%2522%257D%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%257D%257D&endTime=1753527000000000000&options=%7B%22maxLines%22%3A0%2C%22format%22%3A%22%22%2C%22selectColumns%22%3Anull%7D&startTime=1753526700000000000&timeRange=%7B%22start%22%3A1753526700000000000%2C%22end%22%3A1753527000000000000%2C%22pageSize%22%3A100%7D")
+	params := rule.prepareParamsForTraces(context.Background(), ts, ruletypes.Labels{})
+	assert.Equal(t, "1753526700000000000", params.Get("startTime"))
+	assert.Equal(t, "1753527000000000000", params.Get("endTime"))
+
+	compositeQuery, err := url.QueryUnescape(params.Get("compositeQuery"))
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"dataSource":"traces","filter":{"expression":"service.name EXISTS"}}],"queryFormulas":[]}}`, compositeQuery)
 }
 
 func TestPrepareParamsForTraces(t *testing.T) {
@@ -375,10 +392,16 @@ func TestPrepareParamsForTraces(t *testing.T) {
 
 	ts := time.UnixMilli(1705469040000)
 
-	params := rule.prepareParamsForTraces(context.Background(), ts, ruletypes.Labels{}).Encode()
-	assert.Contains(t, params, "&timeRange=%7B%22start%22%3A1705468620000000000%2C%22end%22%3A1705468920000000000%2C%22pageSize%22%3A100%7D")
-	assert.Contains(t, params, "&startTime=1705468620000000000")
-	assert.Contains(t, params, "&endTime=1705468920000000000")
+	params := rule.prepareParamsForTraces(context.Background(), ts, ruletypes.Labels{})
+	assert.Equal(t, "1705468620000000000", params.Get("startTime"))
+	assert.Equal(t, "1705468920000000000", params.Get("endTime"))
+
+	// the frontend decodes compositeQuery twice, so it must be escaped once
+	// before being encoded into the params
+	assert.Contains(t, params.Encode(), "compositeQuery=%257B")
+	compositeQuery, err := url.QueryUnescape(params.Get("compositeQuery"))
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"dataSource":"traces","filter":{}}],"queryFormulas":[]}}`, compositeQuery)
 }
 
 func TestThresholdRuleLabelNormalization(t *testing.T) {
@@ -628,7 +651,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 		postableRule.RuleCondition.CompareOperator = c.compareOperator
 		postableRule.RuleCondition.MatchType = c.matchType
@@ -737,7 +760,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier, mockMetadataStore := prepareQuerierForMetrics(t, telemetryStore)
@@ -839,7 +862,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier := prepareQuerierForTraces(t, telemetryStore, keysMap)
@@ -889,6 +912,104 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 					}
 				}
 			}
+		}
+	}
+}
+
+func TestThresholdRuleAITracesLink(t *testing.T) {
+	postableRule := ruletypes.PostableRule{
+		AlertName: "AI traces link test",
+		AlertType: ruletypes.AlertTypeAITraces,
+		RuleType:  ruletypes.RuleTypeThreshold,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilderAI,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Name:         "A",
+						StepInterval: qbtypes.Step{Duration: time.Minute},
+						Aggregations: []qbtypes.TraceAggregation{{
+							Expression: "count()",
+						}},
+						Signal: telemetrytypes.SignalTraces,
+						Filter: &qbtypes.Filter{
+							Expression: "service.name = 'llm-gateway'",
+						},
+					},
+				}},
+			},
+		},
+	}
+
+	cols := make([]cmock.ColumnType, 0)
+	cols = append(cols, cmock.ColumnType{Name: "value", Type: "Float64"})
+	cols = append(cols, cmock.ColumnType{Name: "attr", Type: "String"})
+	cols = append(cols, cmock.ColumnType{Name: "timestamp", Type: "DateTime"})
+
+	keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"service.name": {
+			{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+	}
+
+	logger := instrumentationtest.New().Logger()
+
+	for idx, c := range testCases {
+
+		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+
+		rows := cmock.NewRows(cols, c.values)
+		telemetryStore.Mock().
+			ExpectQuery("SELECT any").
+			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil).
+			WillReturnRows(rows)
+
+		querier := prepareQuerierForAITraces(t, telemetryStore, keysMap)
+
+		postableRule.RuleCondition.CompareOperator = c.compareOperator
+		postableRule.RuleCondition.MatchType = c.matchType
+		postableRule.RuleCondition.Target = &c.target
+		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
+		postableRule.RuleCondition.TargetUnit = c.targetUnit
+		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					Name:            postableRule.AlertName,
+					TargetValue:     &c.target,
+					TargetUnit:      c.targetUnit,
+					MatchType:       c.matchType,
+					CompareOperator: c.compareOperator,
+				},
+			},
+		}
+		postableRule.Annotations = map[string]string{
+			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
+		}
+
+		externalURL := mustParseURL(t, "http://localhost:8080")
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, querier, logger, externalURL)
+		require.NoError(t, err, "case %d", idx)
+
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
+		require.NoError(t, err, "case %d", idx)
+
+		assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
+		for _, item := range rule.Active {
+			link := item.Annotations.Map()[ruletypes.AnnotationRelatedTraces]
+			assert.True(t, strings.HasPrefix(link, "http://localhost:8080/ai-observability/explorer?"), "case %d: %s", idx, link)
+			assert.Contains(t, link, "builder_ai_query", "case %d", idx)
+			assert.Contains(t, link, "llm-gateway", "case %d", idx)
 		}
 	}
 }
@@ -957,7 +1078,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier := prepareQuerierForLogs(t, telemetryStore, keysMap)
@@ -1129,7 +1250,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier, mockMetadataStore := prepareQuerierForMetrics(t, telemetryStore)
@@ -1922,7 +2043,7 @@ func TestThresholdEval_RequireMinPoints(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier, mockMetadataStore := prepareQuerierForMetrics(t, telemetryStore)

@@ -1,0 +1,52 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import GridTableComponent from 'container/WidgetCard/Panels/TablePanel';
+import { GRID_TABLE_CONFIG } from 'container/WidgetCard/Panels/TablePanel/config';
+
+import { PanelWrapperProps } from 'container/WidgetCard/Panels/panelWrapper.types';
+
+function TablePanelWrapper({
+	widget,
+	queryResponse,
+	tableProcessedDataRef,
+	searchTerm,
+	openTracesButton,
+	onOpenTraceBtnClick,
+	customOnRowClick,
+	enableDrillDown = false,
+	onColumnWidthsChange,
+}: PanelWrapperProps): JSX.Element {
+	const panelData =
+		(queryResponse.data?.payload?.data?.result?.[0] as any)?.table || [];
+	const { thresholds } = widget;
+
+	const queryRangeRequest = queryResponse.data?.params;
+
+	return (
+		<GridTableComponent
+			data={panelData}
+			query={widget.query}
+			thresholds={thresholds}
+			columnUnits={widget.columnUnits}
+			tableProcessedDataRef={tableProcessedDataRef}
+			sticky={widget.panelTypes === PANEL_TYPES.TABLE}
+			searchTerm={searchTerm}
+			openTracesButton={openTracesButton}
+			onOpenTraceBtnClick={onOpenTraceBtnClick}
+			customOnRowClick={customOnRowClick}
+			widgetId={widget.id}
+			columnWidths={widget.columnWidths}
+			onColumnWidthsChange={onColumnWidthsChange}
+			renderColumnCell={widget.renderColumnCell}
+			customColTitles={widget.customColTitles}
+			contextLinks={widget.contextLinks}
+			enableDrillDown={enableDrillDown}
+			panelType={widget.panelTypes}
+			queryRangeRequest={queryRangeRequest}
+			decimalPrecision={widget.decimalPrecision}
+			hiddenColumns={widget.hiddenColumns}
+			{...GRID_TABLE_CONFIG}
+		/>
+	);
+}
+
+export default TablePanelWrapper;

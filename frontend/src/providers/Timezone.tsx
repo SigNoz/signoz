@@ -20,6 +20,7 @@ import {
 import { LOCALSTORAGE } from 'constants/localStorage';
 import useTimezoneFormatter, {
 	FormatTimezoneAdjustedTimestamp,
+	TimestampInput,
 } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 
 export interface TimezoneContextType {
@@ -27,6 +28,10 @@ export interface TimezoneContextType {
 	browserTimezone: Timezone;
 	updateTimezone: (timezone: Timezone) => void;
 	formatTimezoneAdjustedTimestamp: FormatTimezoneAdjustedTimestamp;
+	formatTimezoneAdjustedTimestampOptional: (
+		input: TimestampInput | undefined,
+		format?: string,
+	) => string;
 	isAdaptationEnabled: boolean;
 	setIsAdaptationEnabled: Dispatch<SetStateAction<boolean>>;
 }
@@ -84,12 +89,29 @@ function TimezoneProvider({
 		userTimezone: timezone,
 	});
 
+	const formatTimezoneAdjustedTimestampOptional = useCallback(
+		(date: TimestampInput | undefined, format?: string): string => {
+			if (!date) {
+				return '—';
+			}
+			const d = new Date(date);
+
+			if (Number.isNaN(d.getTime())) {
+				return '—';
+			}
+
+			return formatTimezoneAdjustedTimestamp(date, format);
+		},
+		[formatTimezoneAdjustedTimestamp],
+	);
+
 	const value = React.useMemo(
 		() => ({
 			timezone: isAdaptationEnabled ? timezone : UTC_TIMEZONE,
 			browserTimezone,
 			updateTimezone,
 			formatTimezoneAdjustedTimestamp,
+			formatTimezoneAdjustedTimestampOptional,
 			isAdaptationEnabled,
 			setIsAdaptationEnabled,
 		}),
@@ -98,6 +120,7 @@ function TimezoneProvider({
 			browserTimezone,
 			updateTimezone,
 			formatTimezoneAdjustedTimestamp,
+			formatTimezoneAdjustedTimestampOptional,
 			isAdaptationEnabled,
 		],
 	);

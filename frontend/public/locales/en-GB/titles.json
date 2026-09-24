@@ -4,7 +4,6 @@
 	"GET_STARTED": "SigNoz | Get Started",
 	"SERVICE_METRICS": "SigNoz | Service Metrics",
 	"SERVICE_MAP": "SigNoz | Service Map",
-	"TRACE": "SigNoz | Trace",
 	"HOME": "SigNoz | Home",
 	"TRACE_DETAIL": "SigNoz | Trace Detail",
 	"TRACES_EXPLORER": "SigNoz | Traces Explorer",
@@ -56,10 +55,13 @@
 	"SERVICE_ACCOUNTS_SETTINGS": "SigNoz | Service Accounts",
 	"MCP_SERVER": "SigNoz | MCP Server",
 	"AI_ASSISTANT": "SigNoz | AI Assistant",
-	"TRACE_DETAIL_OLD": "SigNoz | Trace Detail",
 	"SERVICE_TOP_LEVEL_OPERATIONS": "SigNoz | Service Operations",
 	"ROLE_DETAILS": "SigNoz | Role Details",
 	"TRACES_FUNNELS_DETAIL": "SigNoz | Funnel",
 	"INTEGRATIONS_DETAIL": "SigNoz | Integration",
-	"PUBLIC_DASHBOARD": "SigNoz | Dashboard"
+	"PUBLIC_DASHBOARD": "SigNoz | Dashboard",
+	"AI_OBSERVABILITY_OVERVIEW": "SigNoz | AI Observability Overview",
+	"AI_OBSERVABILITY_EXPLORER": "SigNoz | AI Observability Explorer",
+	"AI_OBSERVABILITY_CONFIGURATION": "SigNoz | AI Observability Configuration",
+	"AI_OBSERVABILITY_ATTRIBUTE_MAPPING": "SigNoz | AI Observability Attribute Mapping"
 }

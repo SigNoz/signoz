@@ -6,7 +6,7 @@ import { Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	useGetMetricAlerts,
-	useGetMetricDashboards,
+	useGetMetricDashboardsV2,
 } from 'api/generated/services/metrics';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -38,7 +38,7 @@ function DashboardsAndAlertsPopover({
 		data: dashboardsData,
 		isLoading: isLoadingDashboards,
 		isError: isErrorDashboards,
-	} = useGetMetricDashboards(
+	} = useGetMetricDashboardsV2(
 		{
 			metricName,
 		},
@@ -55,7 +55,8 @@ function DashboardsAndAlertsPopover({
 
 	const dashboards = useMemo(() => {
 		const currentDashboards = dashboardsData?.data.dashboards ?? [];
-		// Remove duplicate dashboards
+		// The API returns one entry per referencing panel, so a dashboard repeats
+		// once per panel that uses the metric.
 		return currentDashboards.filter(
 			(dashboard, index, self) =>
 				index === self.findIndex((t) => t.dashboardId === dashboard.dashboardId),
@@ -135,6 +136,7 @@ function DashboardsAndAlertsPopover({
 				>
 					<div
 						className="dashboards-and-alerts-popover dashboards-popover"
+						data-testid="metric-dashboards-popover"
 						style={{ backgroundColor: `${Color.BG_SIENNA_500}33` }}
 					>
 						<Grid2X2 size={12} color={Color.BG_SIENNA_500} />
@@ -153,6 +155,7 @@ function DashboardsAndAlertsPopover({
 				>
 					<div
 						className="dashboards-and-alerts-popover alerts-popover"
+						data-testid="metric-alerts-popover"
 						style={{ backgroundColor: `${Color.BG_SAKURA_500}33` }}
 					>
 						<Bell size={12} color={Color.BG_SAKURA_500} />

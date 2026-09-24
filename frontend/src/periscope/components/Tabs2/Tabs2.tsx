@@ -13,6 +13,8 @@ interface Tab {
 	disabled?: boolean;
 	icon?: string | JSX.Element;
 	isBeta?: boolean;
+	/** Optional `data-testid` for the tab button. */
+	testId?: string;
 }
 
 interface TimelineTabsProps {
@@ -63,6 +65,7 @@ function Tabs2({
 						disabled={tab.disabled}
 						icon={tab.icon}
 						style={{ minWidth: buttonMinWidth }}
+						data-testid={tab.testId}
 					>
 						{tab.label}
 

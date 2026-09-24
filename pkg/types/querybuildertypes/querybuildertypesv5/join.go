@@ -38,7 +38,7 @@ func (q QueryRef) Copy() QueryRef {
 
 type QueryBuilderJoin struct {
 	Name     string `json:"name"`
-	Disabled bool   `json:"disabled,omitempty"`
+	Disabled bool   `json:"disabled"`
 
 	// references into flat registry of queries
 	Left  QueryRef `json:"left"`
@@ -48,21 +48,47 @@ type QueryBuilderJoin struct {
 	Type JoinType `json:"type"`
 	On   string   `json:"on"`
 
-	// primary aggregations: if empty ⇒ raw columns
-	// currently supported: []Aggregation, []MetricAggregation
-	Aggregations []any `json:"aggregations,omitempty"`
+	// primary aggregations: if empty ⇒ raw columns. Untyped — joins are deferred
+	// (see the commented JoinAggregation below).
+	Aggregations []any `json:"aggregations,omitzero"`
 	// select columns to select
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero"`
 
 	// post-join clauses (also used for aggregated joins)
 	Filter                *Filter                `json:"filter,omitempty"`
-	GroupBy               []GroupByKey           `json:"groupBy,omitempty"`
+	GroupBy               []GroupByKey           `json:"groupBy,omitzero"`
 	Having                *Having                `json:"having,omitempty"`
-	Order                 []OrderBy              `json:"order,omitempty"`
+	Order                 []OrderBy              `json:"order,omitzero"`
 	Limit                 int                    `json:"limit,omitempty"`
-	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitempty"`
-	Functions             []Function             `json:"functions,omitempty"`
+	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitzero"`
+	Functions             []Function             `json:"functions,omitzero"`
 }
+
+// JoinAggregation modelled a join aggregation as a trace/log/metric oneOf. Deferred:
+// that oneOf has no discriminator (trace ≡ log, and a join carries no `signal`), so
+// code generators can't map it. TODO: add a discriminator before re-enabling.
+//
+// type JoinAggregation struct {
+// 	value any
+// }
+//
+// var _ jsonschema.OneOfExposer = JoinAggregation{}
+//
+// func (JoinAggregation) JSONSchemaOneOf() []any {
+// 	return []any{
+// 		TraceAggregation{},
+// 		LogAggregation{},
+// 		MetricAggregation{},
+// 	}
+// }
+//
+// func (j JoinAggregation) MarshalJSON() ([]byte, error) {
+// 	return json.Marshal(j.value)
+// }
+//
+// func (j *JoinAggregation) UnmarshalJSON(data []byte) error {
+// 	return json.Unmarshal(data, &j.value)
+// }
 
 // Copy creates a deep copy of QueryBuilderJoin.
 func (q QueryBuilderJoin) Copy() QueryBuilderJoin {

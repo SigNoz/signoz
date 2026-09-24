@@ -29,6 +29,7 @@ type OmitAttributesResources = Pick<
 	ILog,
 	Exclude<
 		keyof ILog,
+		| 'date'
 		| 'resources_string'
 		| 'scope_string'
 		| 'attributesString'
@@ -40,6 +41,6 @@ type OmitAttributesResources = Pick<
 
 export type ILogAggregateAttributesResources = OmitAttributesResources & {
 	attributes: Record<string, never>;
-	resources: Record<string, never>;
+	resource: Record<string, never>;
 	scope: Record<string, never>;
 };

@@ -31,7 +31,10 @@ function ViewAllDrawer({
 			}}
 			title="Viewing All Contributors"
 		>
-			<div className="top-contributors-card--view-all">
+			<div
+				className="top-contributors-card--view-all"
+				data-testid="top-contributors-drawer"
+			>
 				<div className="top-contributors-card__content">
 					<TopContributorsRows
 						topContributors={topContributorsData}

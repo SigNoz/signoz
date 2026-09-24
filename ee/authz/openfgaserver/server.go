@@ -105,10 +105,6 @@ func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openf
 	return server.pkgAuthzService.BatchCheck(ctx, tupleReq)
 }
 
-func (server *Server) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType coretypes.Type) ([]*coretypes.Object, error) {
-	return server.pkgAuthzService.ListObjects(ctx, subject, relation, objectType)
-}
-
 func (server *Server) Write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {
 	return server.pkgAuthzService.Write(ctx, additions, deletions)
 }

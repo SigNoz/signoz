@@ -3,19 +3,29 @@ import { useLocation } from 'react-use';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeControlFeatureGate';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import history from 'lib/history';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { Explorer, Summary, Views } from './constants';
+import { Explorer, Summary, Views, VolumeControl } from './constants';
 
 import './MetricsExplorerPage.styles.scss';
 
 function MetricsExplorerPage(): JSX.Element {
 	const { pathname } = useLocation();
+	const { isVolumeControlEnabled } = useVolumeControlFeatureGate();
 
-	const routes: TabRoutes[] = [Summary, Explorer, Views];
+	const routes: TabRoutes[] = useMemo(
+		() => [
+			Summary,
+			...(isVolumeControlEnabled ? [VolumeControl] : []),
+			Explorer,
+			Views,
+		],
+		[isVolumeControlEnabled],
+	);
 
 	const { updateAllQueriesOperators } = useQueryBuilder();
 

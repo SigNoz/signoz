@@ -27,8 +27,12 @@ func TestCache(t *testing.T) {
 	}
 
 	go func() {
-		require.NoError(t, server.Serve(listener))
+		_ = server.Serve(listener)
 	}()
+	t.Cleanup(func() { _ = server.Close() })
+
+	client := &http.Client{Transport: &http.Transport{}}
+	t.Cleanup(client.CloseIdleConnections)
 
 	testCases := []struct {
 		name string
@@ -45,7 +49,7 @@ func TestCache(t *testing.T) {
 			req, err := http.NewRequest("GET", "http://"+listener.Addr().String(), nil)
 			require.NoError(t, err)
 
-			res, err := http.DefaultClient.Do(req)
+			res, err := client.Do(req)
 			require.NoError(t, err)
 			defer func() {
 				require.NoError(t, res.Body.Close())

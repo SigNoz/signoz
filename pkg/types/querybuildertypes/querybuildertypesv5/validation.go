@@ -2,6 +2,7 @@ package querybuildertypesv5
 
 import (
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 
@@ -65,6 +66,8 @@ func wrapValidationError(cause error, contextIdentifier string, errorFormat stri
 const (
 	// Maximum limit for query results.
 	MaxQueryLimit = 10000
+
+	MaxNumBuckets = 512
 )
 
 // ValidationOption is a functional option for configuring validation behaviour.
@@ -78,6 +81,7 @@ type validationConfig struct {
 	skipSelectFieldValidation      bool
 	skipGroupByValidation          bool
 	withTimestampGroupByValidation bool
+	withReduceToValidation         bool
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -140,6 +144,15 @@ func WithSkipGroupByValidation() ValidationOption {
 func WithTimestampGroupByValidation() ValidationOption {
 	return func(cfg *validationConfig) {
 		cfg.withTimestampGroupByValidation = true
+	}
+}
+
+// WithReduceToValidation enables validation that metric aggregations carry a
+// valid reduceTo operator. Used for scalar request types, where the time
+// series produced by a metric query must be reduced to a single value.
+func WithReduceToValidation() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.withReduceToValidation = true
 	}
 }
 
@@ -279,6 +292,29 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 					"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
 				)
 			}
+			if cfg.withReduceToValidation && !v.ReduceTo.IsValid() {
+				aggId := fmt.Sprintf("aggregation #%d", i+1)
+				if q.Name != "" {
+					aggId = fmt.Sprintf("aggregation #%d in query '%s'", i+1, q.Name)
+				}
+				if v.ReduceTo == ReduceToUnknown {
+					return errors.NewInvalidInputf(
+						errors.CodeInvalidInput,
+						"reduceTo is required for %s for the scalar request type",
+						aggId,
+					).WithAdditional(
+						"Metric queries produce a time series; scalar requests must specify how to reduce it to a single value. Valid values are: sum, count, avg, min, max, last, median",
+					)
+				}
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid reduceTo `%s` for %s",
+					v.ReduceTo.StringValue(),
+					aggId,
+				).WithAdditional(
+					"Valid values are: sum, count, avg, min, max, last, median",
+				)
+			}
 		case TraceAggregation:
 			if v.Expression == "" {
 				aggId := fmt.Sprintf("aggregation #%d", i+1)
@@ -341,7 +377,7 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 	return nil
 }
 
-func (m MetricAggregation) ValidateForType() error {
+func (m MetricAggregation) ValidateForTypeAndTemporality() error {
 	if m.SpaceAggregation.IsPercentile() && !m.Type.IsPercentileSpaceAggregationAllowed() {
 		return errors.Newf(
 			errors.TypeInvalidInput,
@@ -349,6 +385,17 @@ func (m MetricAggregation) ValidateForType() error {
 			"invalid space aggregation `%s` for metric type `%s`, percentile space aggregations are only supported for `histogram`, `exponentialhistogram` metric types",
 			m.SpaceAggregation.StringValue(),
 			m.Type.StringValue(),
+		)
+	}
+	// reading a step's distribution out of a cumulative sketch would mean
+	// subtracting the previous point's sketch, which ClickHouse cannot do
+	if m.Type == metrictypes.ExpHistogramType && m.Temporality != metrictypes.Delta {
+		return errors.Newf(
+			errors.TypeUnsupported,
+			errors.CodeUnsupported,
+			"metric `%s` is an exponential histogram recorded with `%s` temporality, which cannot be queried; only `delta` exponential histograms are supported",
+			m.MetricName,
+			m.Temporality.StringValue(),
 		)
 	}
 	return nil
@@ -518,7 +565,7 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 				orderId,
 			).WithAdditional(
 				fmt.Sprintf("For aggregation queries, order by can only reference group by keys, aggregation aliases/expressions, or aggregation indices. Valid keys are: %s", strings.Join(validKeys, ", ")),
-			).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(orderKey, validKeys)...)
+			).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(orderKey, errors.NounKeys, validKeys)...)
 		}
 	}
 
@@ -537,7 +584,7 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 
 	// Validate request type
 	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar:
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap:
 		opts = append(opts, GetValidationOptions(r.RequestType)...)
 	default:
 		return errors.NewInvalidInputf(
@@ -545,8 +592,12 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 			"invalid request type: %s",
 			r.RequestType,
 		).WithAdditional(
-			"Valid request types are: raw, timeseries, scalar",
+			"Valid request types are: raw, timeseries, scalar, heatmap",
 		)
+	}
+
+	if err := r.validateHeatmap(); err != nil {
+		return err
 	}
 
 	// raw/trace request types don't support metric queries;
@@ -573,6 +624,79 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 	}
 
 	return nil
+}
+
+// ValidateRequestScope validates request-level invariants (not individual query
+// specs) and returns the request type's ValidationOptions. The dry-run path uses
+// this so per-query errors can be attributed individually via QueryEnvelope.Validate
+// instead of failing fast like Validate does.
+func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
+	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start time must be before end time")
+	}
+
+	var opts []ValidationOption
+	switch r.RequestType {
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap:
+		opts = GetValidationOptions(r.RequestType)
+	default:
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request type: %s", r.RequestType).
+			WithAdditional("Valid request types are: raw, timeseries, scalar, heatmap")
+	}
+
+	if err := r.validateHeatmap(); err != nil {
+		return nil, err
+	}
+
+	if r.RequestType == RequestTypeRaw || r.RequestType == RequestTypeRawStream || r.RequestType == RequestTypeTrace {
+		for _, envelope := range r.CompositeQuery.Queries {
+			if envelope.GetSignal() == telemetrytypes.SignalMetrics {
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "raw request type is not supported for metric queries")
+			}
+		}
+	}
+
+	if len(r.CompositeQuery.Queries) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one query is required")
+	}
+
+	// Builder query names must be unique across the composite query.
+	queryNames := make(map[string]bool)
+	for _, envelope := range r.CompositeQuery.Queries {
+		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery || envelope.Type == QueryTypeBuilderAI {
+			name := envelope.GetQueryName()
+			if name != "" {
+				if queryNames[name] {
+					return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "duplicate query name '%s'", name)
+				}
+				queryNames[name] = true
+			}
+		}
+	}
+
+	if err := r.validateAllQueriesNotDisabled(); err != nil {
+		return nil, err
+	}
+
+	return opts, nil
+}
+
+// Validate parses the preview query-string parameters. Verbose defaults to true
+// and accepts true/1/false/0; any other value is rejected.
+func (p *QueryRangePreviewParams) Validate() (QueryRangePreviewOptions, error) {
+	switch strings.ToLower(strings.TrimSpace(p.Verbose)) {
+	case "", "true", "1":
+		return QueryRangePreviewOptions{Verbose: true}, nil
+	case "false", "0":
+		return QueryRangePreviewOptions{Verbose: false}, nil
+	}
+	return QueryRangePreviewOptions{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid verbose value %q (allowed: true, false)", p.Verbose)
+}
+
+// Validate validates a single query envelope's spec — the per-query counterpart
+// to ValidateRequestScope, letting the dry-run report errors independently.
+func (e QueryEnvelope) Validate(opts ...ValidationOption) error {
+	return validateQueryEnvelope(e, opts...)
 }
 
 // validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled.
@@ -608,7 +732,7 @@ func (c *CompositeQuery) Validate(opts ...ValidationOption) error {
 		}
 
 		// Check name uniqueness for builder queries
-		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery {
+		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery || envelope.Type == QueryTypeBuilderAI {
 			name := envelope.GetQueryName()
 			if name != "" {
 				if queryNames[name] {
@@ -642,6 +766,15 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"unknown query spec type",
 			)
 		}
+	case QueryTypeBuilderAI:
+		spec, ok := envelope.Spec.(QueryBuilderQuery[TraceAggregation])
+		if !ok {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid AI builder query spec",
+			)
+		}
+		return spec.Validate(opts...)
 	case QueryTypeFormula:
 		spec, ok := envelope.Spec.(QueryBuilderFormula)
 		if !ok {
@@ -711,17 +844,180 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 			"unknown query type: %s",
 			envelope.Type,
 		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
-		).WithSuggestions(errors.ValidReferences(QueryType{}.Enum()...))
+			"Valid query types are: builder_query, builder_ai_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
+		).WithSuggestions(errors.NewValidReferences(errors.NounQueryTypes, QueryType{}.Enum()...))
 	}
+}
+
+func (r *QueryRangeRequest) validateHeatmap() error {
+	if r.RequestType != RequestTypeHeatmap {
+		for _, envelope := range r.CompositeQuery.Queries {
+			if extractEnabledBucketOptions(envelope) != nil {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"bucketOptions are only supported for heatmap requests, got %s",
+					r.RequestType,
+				)
+			}
+		}
+		return nil
+	}
+
+	if r.FormatOptions != nil && r.FormatOptions.FillGaps {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"fillGaps is not supported for heatmap requests: an absent column means collection stopped, which a zero-filled column would hide")
+	}
+
+	enabled := 0
+	for _, envelope := range r.CompositeQuery.Queries {
+		if err := extractEnabledBucketOptions(envelope).validateBucketOptions(); err != nil {
+			return err
+		}
+
+		switch spec := envelope.Spec.(type) {
+		case QueryBuilderQuery[MetricAggregation]:
+			if err := validateHeatmapQuery(spec.Functions, spec.Having); err != nil {
+				return err
+			}
+			if spec.Disabled {
+				continue
+			}
+			enabled++
+		case QueryBuilderFormula:
+			if err := validateHeatmapQuery(spec.Functions, spec.Having); err != nil {
+				return err
+			}
+			if spec.Disabled {
+				continue
+			}
+			enabled++
+		case ClickHouseQuery:
+			if spec.Disabled {
+				continue
+			}
+			enabled++
+		case PromQuery:
+			if spec.Disabled {
+				continue
+			}
+			enabled++
+		// An AI query decodes to the traces spec, so it lands here too. Admitting
+		// either signal means capping Aggregations at one: each carries its own
+		// Meta.Buckets, and a heatmap renders against a single bucket axis.
+		case QueryBuilderQuery[LogAggregation], QueryBuilderQuery[TraceAggregation]:
+			return errors.New(errors.TypeUnsupported, errors.CodeUnsupported,
+				"heatmaps are not supported for the logs and traces signals yet")
+		default:
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"heatmap requests support one metrics builder query, one formula over them, one clickhouse query, or one promql query, got %q", envelope.Type.StringValue())
+		}
+	}
+
+	// A disabled query is a formula input rather than something to draw, so a
+	// request can carry queries and still have none to render.
+	switch {
+	case len(r.CompositeQuery.Queries) == 0:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"at least one query is required")
+	case enabled == 0:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a heatmap needs one enabled query, but every query is disabled").
+			WithAdditional("Enable the query whose distribution you want to plot")
+	case enabled > 1:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a heatmap renders one distribution, but %d queries are enabled", enabled).
+			WithAdditional(
+				"Disable the queries you don't want to plot, keeping only the one whose distribution you want to show",
+				"A formula can stay enabled with the queries it reads disabled",
+			)
+	}
+
+	return nil
+}
+
+// extractEnabledBucketOptions returns the bucket axis a query asks for, nil for
+// a disabled one: a heatmap draws the enabled query alone, so what the rest
+// carry is never read. A promql or clickhouse query has no say in its axis and
+// so has nowhere to state one.
+func extractEnabledBucketOptions(envelope QueryEnvelope) *BucketOptions {
+	var disabled bool
+	var bucketOptions *BucketOptions
+
+	switch spec := envelope.Spec.(type) {
+	case QueryBuilderQuery[MetricAggregation]:
+		disabled, bucketOptions = spec.Disabled, spec.BucketOptions
+	case QueryBuilderQuery[LogAggregation]:
+		disabled, bucketOptions = spec.Disabled, spec.BucketOptions
+	case QueryBuilderQuery[TraceAggregation]:
+		disabled, bucketOptions = spec.Disabled, spec.BucketOptions
+	case QueryBuilderFormula:
+		disabled, bucketOptions = spec.Disabled, spec.BucketOptions
+	}
+
+	if disabled {
+		return nil
+	}
+	return bucketOptions
+}
+
+func (b *BucketOptions) validateBucketOptions() error {
+	if b == nil {
+		return nil
+	}
+
+	switch spec := b.Spec.(type) {
+	case LinearBucketsSpec:
+		if math.IsNaN(spec.MaxValue) || math.IsInf(spec.MaxValue, 0) || spec.MaxValue <= 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"linear buckets need a finite maxValue greater than 0, got %v", spec.MaxValue)
+		}
+		if spec.NumBuckets < 0 || spec.NumBuckets > MaxNumBuckets {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"numBuckets must be between 1 and %d, got %d", MaxNumBuckets, spec.NumBuckets)
+		}
+
+	case LogBucketsSpec:
+		if spec.Scale != nil && (*spec.Scale < MinLogScale || *spec.Scale > MaxLogScale) {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"scale must be between %d and %d, got %d", MinLogScale, MaxLogScale, *spec.Scale)
+		}
+
+	default:
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid bucketOptions kind: %s",
+			b.Kind.StringValue(),
+		).WithAdditional(
+			"Valid bucket kinds are: linear, log",
+		)
+	}
+
+	return nil
+}
+
+// validateHeatmapQuery refuses the per-query settings that cannot mean anything
+// on a heatmap. It runs on disabled queries too: a disabled query is a formula
+// input, so whatever it does still reaches the cells.
+func validateHeatmapQuery(functions []Function, having *Having) error {
+	if len(functions) > 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"functions are not supported for heatmap requests: a heatmap point is a count per bucket, not a single value")
+	}
+
+	if having != nil && having.Expression != "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"having is not supported for heatmap requests: it filters individual cells, which breaks the cumulative differencing")
+	}
+
+	return nil
 }
 
 func GetValidationOptions(requestType RequestType) []ValidationOption {
 	switch requestType {
-	case RequestTypeTimeSeries:
+	case RequestTypeTimeSeries, RequestTypeHeatmap:
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
 	case RequestTypeScalar:
-		return []ValidationOption{WithSkipSelectFieldValidation()}
+		return []ValidationOption{WithSkipSelectFieldValidation(), WithReduceToValidation()}
 	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
 		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
 	default:

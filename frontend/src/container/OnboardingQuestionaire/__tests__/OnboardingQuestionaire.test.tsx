@@ -22,7 +22,8 @@ const ORG_PREFERENCES_ENDPOINT = '*/api/v1/org/preferences/list';
 const UPDATE_ORG_PREFERENCE_ENDPOINT = '*/api/v1/org/preferences/name/update';
 const UPDATE_PROFILE_ENDPOINT = '*/api/v2/zeus/profiles';
 const EDIT_ORG_ENDPOINT = '*/api/v2/orgs/me';
-const INVITE_USERS_ENDPOINT = '*/api/v1/invite/bulk/create';
+const CREATE_USER_ENDPOINT = '*/api/v2/users';
+const LIST_ROLES_ENDPOINT = '*/api/v1/roles';
 
 const mockOrgPreferences = {
 	data: {
@@ -30,6 +31,12 @@ const mockOrgPreferences = {
 	},
 	status: 'success',
 };
+
+const MOCK_ROLES = [
+	{ id: 'role-admin', name: 'Admin', description: 'Admin role' },
+	{ id: 'role-editor', name: 'Editor', description: 'Editor role' },
+	{ id: 'role-viewer', name: 'Viewer', description: 'Viewer role' },
+];
 
 describe('OnboardingQuestionaire Component', () => {
 	beforeEach(() => {
@@ -48,8 +55,11 @@ describe('OnboardingQuestionaire Component', () => {
 			rest.post(UPDATE_ORG_PREFERENCE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success' })),
 			),
-			rest.post(INVITE_USERS_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ status: 'success' })),
+			rest.get(LIST_ROLES_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: MOCK_ROLES })),
+			),
+			rest.post(CREATE_USER_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(201), ctx.json({ data: { id: 'user-123' } })),
 			),
 		);
 	});
@@ -194,10 +204,12 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
-				screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+				screen.findByPlaceholderText(/e\.g\., I asked ChatGPT/i, {}),
 			).resolves.toBeInTheDocument();
 
-			const discoverInput = screen.getByPlaceholderText(/e\.g\., googling/i);
+			const discoverInput = screen.getByPlaceholderText(
+				/e\.g\., I asked ChatGPT/i,
+			);
 			await user.type(discoverInput, 'Found via Google search');
 
 			const interestCheckbox = screen.getByLabelText(
@@ -246,11 +258,11 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
-				screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+				screen.findByPlaceholderText(/e\.g\., I asked ChatGPT/i, {}),
 			).resolves.toBeInTheDocument();
 
 			await user.type(
-				screen.getByPlaceholderText(/e\.g\., googling/i),
+				screen.getByPlaceholderText(/e\.g\., I asked ChatGPT/i),
 				'Found via Google',
 			);
 			await user.click(screen.getByLabelText(/lowering observability costs/i));
@@ -287,7 +299,7 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await user.type(
-				await screen.findByPlaceholderText(/e\.g\., googling/i),
+				await screen.findByPlaceholderText(/e\.g\., I asked ChatGPT/i),
 				'Found via Google',
 			);
 			await user.click(screen.getByLabelText(/lowering observability costs/i));
@@ -319,11 +331,11 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
-				screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+				screen.findByPlaceholderText(/e\.g\., I asked ChatGPT/i, {}),
 			).resolves.toBeInTheDocument();
 
 			await user.type(
-				screen.getByPlaceholderText(/e\.g\., googling/i),
+				screen.getByPlaceholderText(/e\.g\., I asked ChatGPT/i),
 				'Found via Google',
 			);
 			await user.click(screen.getByLabelText(/lowering observability costs/i));

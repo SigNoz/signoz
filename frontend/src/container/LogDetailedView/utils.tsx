@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import Convert from 'ansi-to-html';
 import type { DataNode } from 'antd/es/tree';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
@@ -262,10 +263,11 @@ export const filterKeyForField = (field: string): string => {
 	return fieldAttribs?.newField || field;
 };
 
-export const aggregateAttributesResourcesToString = (logData: ILog): string => {
+export const aggregateAttributesResourcesToObject = (
+	logData: ILog,
+): ILogAggregateAttributesResources => {
 	const outputJson: ILogAggregateAttributesResources = {
 		body: logData.body,
-		date: logData.date,
 		id: logData.id,
 		severityNumber: logData.severityNumber,
 		severityText: logData.severityText,
@@ -274,29 +276,94 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 		traceFlags: logData.traceFlags,
 		traceId: logData.traceId,
 		attributes: {},
-		resources: {},
+		resource: {},
 		scope: {},
 		severity_text: logData.severity_text,
 		severity_number: logData.severity_number,
 	};
 
 	Object.keys(logData).forEach((key) => {
+		if (key === 'date') {
+			return;
+		}
 		if (key.startsWith('attributes_')) {
 			outputJson.attributes = outputJson.attributes || {};
 			Object.assign(outputJson.attributes, logData[key as keyof ILog]);
 		} else if (key.startsWith('resources_')) {
-			outputJson.resources = outputJson.resources || {};
-			Object.assign(outputJson.resources, logData[key as keyof ILog]);
+			outputJson.resource = outputJson.resource || {};
+			Object.assign(outputJson.resource, logData[key as keyof ILog]);
 		} else if (key.startsWith('scope_string')) {
 			outputJson.scope = outputJson.scope || {};
 			Object.assign(outputJson.scope, logData[key as keyof ILog]);
 		} else {
-			// @ts-expect-error
+			// @ts-expect-error dynamic top-level copy
 			outputJson[key] = logData[key as keyof ILog];
 		}
 	});
 
-	return JSON.stringify(outputJson, null, 2);
+	// Show `timestamp` first and `id` last in the details view.
+	const { timestamp, id, ...rest } = outputJson;
+	return { timestamp, ...rest, id };
+};
+
+export const aggregateAttributesResourcesToString = (logData: ILog): string => {
+	try {
+		return JSON.stringify(aggregateAttributesResourcesToObject(logData), null, 2);
+	} catch (err) {
+		Sentry.captureException(err);
+		return '';
+	}
+};
+
+const MAX_JSON_PARSE_BYTES = 128 * 1024;
+
+// A JSON-encoded object/array string is parsed so DataViewer renders it as a tree
+// instead of one escaped string; non-JSON / plain-text values are returned unchanged.
+// Guarded against very large payloads.
+export const parseJsonStringValue = (value: unknown): unknown => {
+	if (typeof value !== 'string') {
+		return value;
+	}
+	const trimmed = value.trim();
+	const looksLikeJson = trimmed.startsWith('{') || trimmed.startsWith('[');
+	if (!looksLikeJson || trimmed.length > MAX_JSON_PARSE_BYTES) {
+		return value;
+	}
+	try {
+		const parsed = JSON.parse(trimmed);
+		return parsed !== null && typeof parsed === 'object' ? parsed : value;
+	} catch {
+		return value;
+	}
+};
+
+// Parse each attribute value that's a stringified JSON string into an object
+// Non-JSON values are left unchanged.
+const parseAttributeJsonValues = (
+	attributes: Record<string, unknown>,
+): Record<string, unknown> => {
+	const parsed: Record<string, unknown> = {};
+	Object.keys(attributes).forEach((key) => {
+		parsed[key] = parseJsonStringValue(attributes[key]);
+	});
+	return parsed;
+};
+
+export const buildPrettyViewData = (
+	raw: ILogAggregateAttributesResources,
+): Record<string, unknown> => {
+	const prettyData: Record<string, unknown> = { ...raw };
+	prettyData.body = parseJsonStringValue(raw.body);
+	prettyData.attributes = parseAttributeJsonValues(raw.attributes);
+
+	// drop undefined fields so they don't render as empty rows
+	Object.keys(prettyData).forEach((key) => {
+		if (prettyData[key] === undefined) {
+			delete prettyData[key];
+		}
+	});
+
+	return prettyData;
 };
 
 const isFloat = (num: number): boolean => num % 1 !== 0;

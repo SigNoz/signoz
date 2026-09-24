@@ -1,4 +1,4 @@
-import { AlertLabelsProps } from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 
 // default match type for threshold
@@ -73,10 +73,6 @@ export interface StatsTimeSeriesItem {
 	value: string;
 }
 
-export type AlertRuleStatsPayload = {
-	data: AlertRuleStats;
-};
-
 export interface AlertRuleTopContributors {
 	fingerprint: number;
 	labels: Labels;
@@ -84,9 +80,6 @@ export interface AlertRuleTopContributors {
 	relatedLogsLink: string;
 	relatedTracesLink: string;
 }
-export type AlertRuleTopContributorsPayload = {
-	data: AlertRuleTopContributors[];
-};
 
 export interface AlertRuleTimelineTableResponse {
 	ruleID: string;
@@ -99,24 +92,12 @@ export interface AlertRuleTimelineTableResponse {
 	labels: Labels;
 	fingerprint: number;
 	value: number;
-	relatedTracesLink: string;
-	relatedLogsLink: string;
+	relatedLogsLink?: string;
+	relatedTracesLink?: string;
 }
-export type AlertRuleTimelineTableResponsePayload = {
-	data: {
-		items: AlertRuleTimelineTableResponse[];
-		total: number;
-		labels: AlertLabelsProps['labels'];
-	};
-};
-
-type AlertState = 'firing' | 'normal' | 'nodata' | 'muted';
 
 export interface AlertRuleTimelineGraphResponse {
 	start: number;
 	end: number;
-	state: AlertState;
+	state: RuletypesAlertStateDTO;
 }
-export type AlertRuleTimelineGraphResponsePayload = {
-	data: AlertRuleTimelineGraphResponse[];
-};

@@ -5,6 +5,18 @@ import (
 	"strings"
 )
 
+// Nouns name the kind of value a suggestion refers to. Pass one to
+// NewValidReferences / NewSuggestionsOnLevenshteinDistance to phrase the
+// "valid <noun> are ..." list consistently across the codebase.
+const (
+	NounFields     = "fields"
+	NounKeys       = "keys"
+	NounServices   = "services"
+	NounQueryTypes = "query types"
+	NounSignals    = "signals"
+	NounReferences = "references"
+)
+
 const (
 	typoSuggestionThreshold = 0.75
 	// maxValidReferences caps how many valid references are listed so
@@ -13,17 +25,18 @@ const (
 	maxValidReferences = 20
 )
 
-// SuggestionsOnLevenshteinDistance returns a "did you mean" correction (only
+// NewSuggestionsOnLevenshteinDistance returns a "did you mean" correction (only
 // when a close match at least typoSuggestionThreshold similar exists) followed
-// by the valid-references list.
-func SuggestionsOnLevenshteinDistance(invalidInput string, validInputs []string) []string {
+// by the valid-references list. noun names the kind of value being suggested
+// (e.g. "fields", "keys") and is used to phrase the valid-references list.
+func NewSuggestionsOnLevenshteinDistance(invalidInput string, noun string, validInputs []string) []string {
 	suggestions := make([]string, 0, 2)
 
 	if match, ok := ClosestLevenshteinMatch(invalidInput, validInputs); ok {
 		suggestions = append(suggestions, didYouMean(match))
 	}
 
-	if refs := ValidReferences(validInputs...); refs != "" {
+	if refs := NewValidReferences(noun, validInputs...); refs != "" {
 		suggestions = append(suggestions, refs)
 	}
 
@@ -52,10 +65,10 @@ func ClosestLevenshteinMatch(input string, candidates []string) (string, bool) {
 	return "", false
 }
 
-// SuggestionsFromFunc formats the string produce returns as a one-element
+// NewSuggestionsFromFunc formats the string produce returns as a one-element
 // "did you mean: `x`" slice, or nil when it returns the empty string (so callers
 // with their own matching strategy compose into a suggestions list cleanly).
-func SuggestionsFromFunc(produce func() string) []string {
+func NewSuggestionsFromFunc(produce func() string) []string {
 	s := produce()
 	if s == "" {
 		return nil
@@ -64,12 +77,12 @@ func SuggestionsFromFunc(produce func() string) []string {
 	return []string{didYouMean(s)}
 }
 
-// ValidReferences formats values as "valid references: `a`, `b`", capped at
-// maxValidReferences with a "(+N more)" suffix. Each value is rendered as its
-// own string, an Enum() element's StringValue(), or fmt.Sprint as a fallback.
-// It returns "" when there are no values, so callers don't surface a bare
-// "valid references: " with nothing after it.
-func ValidReferences[T any](values ...T) string {
+// NewValidReferences formats values as "valid <noun> are `a`, `b`" (e.g. noun
+// "fields", "functions", "keys"), capped at maxValidReferences with a "(+N more)"
+// suffix. Each value is rendered as its own string, an Enum() element's
+// StringValue(), or fmt.Sprint as a fallback. It returns "" when there are no
+// values, so callers don't surface a bare "valid <noun> are" with nothing after it.
+func NewValidReferences[T any](noun string, values ...T) string {
 	if len(values) == 0 {
 		return ""
 	}
@@ -97,7 +110,7 @@ func ValidReferences[T any](values ...T) string {
 		quoted[i] = "`" + r + "`"
 	}
 
-	out := "valid references: " + strings.Join(quoted, ", ")
+	out := "valid " + noun + " are " + strings.Join(quoted, ", ")
 	if truncated > 0 {
 		out += fmt.Sprintf(" (+%d more)", truncated)
 	}

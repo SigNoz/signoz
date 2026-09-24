@@ -1,0 +1,105 @@
+.drawer {
+	// for some reason, the scrollbar is overriding this
+	// for now, I will keep forcing but needs to investigate a global level
+	// why all drawers are being override with l1-background
+	background-color: var(--l2-background) !important;
+	border-color: var(--l2-border) !important;
+	--dialog-description-padding: 0px 0px var(--spacing-8) 0px;
+
+	[data-slot='drawer-description'] {
+		overflow-y: auto;
+	}
+}
+
+.sectionTitle {
+	padding: var(--spacing-4) var(--spacing-8);
+	border-bottom: 1px solid var(--l2-border);
+
+	&:not(:first-of-type) {
+		border-top: 1px solid var(--l2-border);
+	}
+}
+
+.sectionTitleText {
+	text-transform: uppercase;
+}
+
+.fontSizeContainer {
+	display: flex;
+	flex-direction: column;
+	padding: var(--spacing-4) 0;
+}
+
+.fontSizeOption {
+	width: 100%;
+	--button-display: flex;
+	--button-justify-content: space-between;
+	--button-align-items: center;
+	--button-padding: var(--spacing-4) var(--spacing-8);
+}
+
+.fontSizeLabel {
+	text-transform: capitalize;
+}
+
+.checkIcon {
+	color: var(--accent-foreground);
+}
+
+.lineClampContainer {
+	padding: 12px;
+
+	--input-prefix-padding: var(--spacing-3);
+	--input-suffix-padding: var(--spacing-3);
+}
+
+.columnsList {
+	display: flex;
+	flex-direction: column;
+
+	[data-slot='icon'] {
+		display: none;
+	}
+
+	[data-slot='entity-group-header'] {
+		padding-left: 0;
+	}
+
+	[data-slot='column-header'] {
+		display: flex;
+		width: auto;
+
+		span {
+			padding: 0;
+			text-align: left;
+		}
+
+		br {
+			display: none;
+		}
+	}
+}
+
+.columnItem {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-2) var(--spacing-8);
+
+	> span {
+		width: auto !important;
+	}
+
+	&:first-child {
+		padding-top: var(--spacing-8);
+	}
+}
+
+.columnLabel {
+	flex: 1;
+	text-align: left;
+}
+
+.horizontalDivider {
+	border-top: 1px solid var(--l1-border);
+}

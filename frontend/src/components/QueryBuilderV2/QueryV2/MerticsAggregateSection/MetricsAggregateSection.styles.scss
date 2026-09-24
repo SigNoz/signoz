@@ -92,6 +92,11 @@
 
 				.ant-select {
 					width: 100%;
+
+					.ant-select-selector {
+						min-height: 36px;
+					}
+
 					.ant-select-selection-search-input {
 						min-width: max-content !important;
 						max-width: 100% !important;
@@ -100,9 +105,12 @@
 
 				.ant-select-selector {
 					border-radius: 2px;
-					border: 1.005px solid var(--l1-border);
-					background: var(--l1-background);
-					color: var(--l1-foreground);
+					border: 1px solid var(--query-builder-v2-border-color, var(--l2-border)) !important;
+					background-color: var(
+						--query-builder-v2-background-color,
+						var(--l2-background)
+					) !important;
+					color: var(--query-builder-v2-color, var(--l2-foreground));
 					font-family: 'Geist Mono';
 					font-size: 13px;
 					font-style: normal;
@@ -123,6 +131,7 @@
 					.input {
 						flex: initial;
 						width: 100px !important;
+						min-height: 36px;
 					}
 				}
 			}

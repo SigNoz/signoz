@@ -300,7 +300,7 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 		var suggestions []string
 		if len(v.invalid) == 1 {
 			inv := v.invalid[0]
-			suggestions = errors.SuggestionsFromFunc(func() string {
+			suggestions = errors.NewSuggestionsFromFunc(func() string {
 				match, ok := errors.ClosestLevenshteinMatch(inv, validKeys)
 				if !ok || strings.Contains(original, inv+"(") || strings.Contains(match, "(") {
 					return ""
@@ -309,7 +309,7 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			})
 		}
 
-		suggestions = append(suggestions, errors.ValidReferences(validKeys...))
+		suggestions = append(suggestions, errors.NewValidReferences(errors.NounReferences, validKeys...))
 		havingErr := errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"Invalid references in `Having` expression: [%s]",
@@ -339,7 +339,7 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 		// multiple errors are surfaced as one additional detail each. If the parser
 		// produced no message (rare), the top-level message stands on its own.
 		if len(allSyntaxErrors) == 1 && len(msgs) == 1 {
-			suggestions := errors.SuggestionsFromFunc(func() string {
+			suggestions := errors.NewSuggestionsFromFunc(func() string {
 				return havingSuggestion(allSyntaxErrors[0], original)
 			})
 

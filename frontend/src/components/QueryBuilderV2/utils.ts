@@ -8,7 +8,7 @@ import {
 	OPERATORS,
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser, {
 	AndExpressionContext,
@@ -176,7 +176,9 @@ function formatSingleValueForFilter(
 		}
 
 		if (isQuoted(value)) {
-			return unquote(value);
+			// Unescape `\'` → `'` (inverse of formatSingleValue) so the round-trip doesn't
+			// double the backslash each pass.
+			return unquote(value).replace(/\\'/g, "'");
 		}
 	}
 
@@ -524,6 +526,34 @@ export const convertFiltersToExpressionWithExistingQuery = (
 };
 
 /**
+ * Canonical name for a comparison's operator, limited to the equality and
+ * membership forms. Every other shape (LIKE, BETWEEN, EXISTS, CONTAINS, REGEXP,
+ * the ordering operators) returns undefined, so an operator-restricted removal
+ * leaves it in place.
+ *
+ * The ANTLR4 runtime returns null for an absent token or rule despite the
+ * non-nullable TypeScript signatures.
+ */
+const getComparisonOperator = (ctx: ComparisonContext): string | undefined => {
+	if ((ctx.inClause() as unknown) !== null) {
+		return 'in';
+	}
+	if ((ctx.notInClause() as unknown) !== null) {
+		return 'not in';
+	}
+	if ((ctx.EQUALS() as unknown) !== null) {
+		return '=';
+	}
+	if (
+		(ctx.NOT_EQUALS() as unknown) !== null ||
+		(ctx.NEQ() as unknown) !== null
+	) {
+		return '!=';
+	}
+	return undefined;
+};
+
+/**
  * Removes clauses for specified keys from a filter query expression.
  *
  * Uses an ANTLR parse-tree traversal over the existing FilterQuery grammar so that
@@ -540,12 +570,16 @@ export const convertFiltersToExpressionWithExistingQuery = (
  *   - `true`: removes only the first clause whose value contains any `$`.
  *   - `string` (e.g. `"$service.name"`): removes only the clause whose value exactly
  *     matches that string — preferred when the specific variable reference is known.
+ * @param operatorsToRemove - When given, restricts removal to clauses whose operator
+ *   is in this set (`=`, `!=`, `in`, `not in`); every other clause on the key is kept.
+ *   Omit to remove a matching key's clauses whatever their operator.
  * @returns The rewritten expression, or an empty string if all clauses were removed.
  */
 export const removeKeysFromExpression = (
 	expression: string,
 	keysToRemove: string[],
 	removeOnlyVariableExpressions: string | boolean = false,
+	operatorsToRemove?: string[],
 ): string => {
 	if (!keysToRemove || keysToRemove.length === 0) {
 		return expression;
@@ -555,6 +589,9 @@ export const removeKeysFromExpression = (
 	}
 
 	const keysSet = new Set(keysToRemove.map((k) => k.trim().toLowerCase()));
+	const operatorsSet = operatorsToRemove
+		? new Set(operatorsToRemove.map((op) => op.trim().toLowerCase()))
+		: null;
 	// Tracks keys for which a variable expression has already been removed.
 	// Having multiple $-value clauses for the same key is invalid; we remove at most one.
 	const removedVariableKeys = new Set<string>();
@@ -654,6 +691,13 @@ export const removeKeysFromExpression = (
 
 		if (!keysSet.has(keyText)) {
 			return src(ctx);
+		}
+
+		if (operatorsSet) {
+			const operator = getComparisonOperator(ctx);
+			if (!operator || !operatorsSet.has(operator)) {
+				return src(ctx);
+			}
 		}
 
 		if (removeOnlyVariableExpressions) {
@@ -766,6 +810,34 @@ export const removeVariableFromExpression = (
 	}
 
 	return removeKeysFromExpression(expression, keysToRemove, `$${variableName}`);
+};
+
+// Appends `clause` as a top-level AND term, parenthesising the base only when it
+// has a top-level OR (AND binds tighter, so `a OR b AND c` would misbind).
+export const appendAndClause = (
+	expression: string | undefined,
+	clause: string,
+): string => {
+	const base = expression?.trim();
+	if (!base) {
+		return clause;
+	}
+
+	const chars = CharStreams.fromString(base);
+	const lexer = new FilterQueryLexer(chars);
+	lexer.removeErrorListeners();
+	const tokenStream = new CommonTokenStream(lexer);
+	const parser = new FilterQueryParser(tokenStream);
+	parser.removeErrorListeners();
+	const tree = parser.query();
+
+	if (parser.syntaxErrorsCount > 0) {
+		return `(${base}) AND ${clause}`;
+	}
+
+	const hasTopLevelOr =
+		tree.expression().orExpression().andExpression_list().length > 1;
+	return hasTopLevelOr ? `(${base}) AND ${clause}` : `${base} AND ${clause}`;
 };
 
 /**

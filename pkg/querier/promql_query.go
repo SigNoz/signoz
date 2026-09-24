@@ -5,11 +5,15 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
+
+	"github.com/ClickHouse/clickhouse-go/v2"
 
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql"
@@ -101,6 +105,7 @@ type promqlQuery struct {
 }
 
 var _ qbv5.Query = (*promqlQuery)(nil)
+var _ qbv5.StatementProvider = (*promqlQuery)(nil)
 
 func newPromqlQuery(
 	logger *slog.Logger,
@@ -113,7 +118,7 @@ func newPromqlQuery(
 	return &promqlQuery{
 		logger:      logger,
 		promEngine:  promEngine,
-		parser:      promEngine.Parser(),
+		parser:      prometheus.NewParser(),
 		query:       query,
 		tr:          tr,
 		requestType: requestType,
@@ -122,6 +127,12 @@ func newPromqlQuery(
 }
 
 func (q *promqlQuery) Fingerprint() string {
+	switch q.requestType {
+	case qbv5.RequestTypeTimeSeries, qbv5.RequestTypeHeatmap:
+	default:
+		return ""
+	}
+
 	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
 	if err != nil {
 		q.logger.ErrorContext(context.TODO(), "failed render template variables", slog.String("query", q.query.Query))
@@ -129,6 +140,8 @@ func (q *promqlQuery) Fingerprint() string {
 	}
 	parts := []string{
 		"promql",
+		// one expression returns a different shape per request type
+		fmt.Sprintf("requestType=%s", q.requestType.StringValue()),
 		query,
 		q.query.Step.String(),
 	}
@@ -220,6 +233,34 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 	return newQuery.String(), nil
 }
 
+// Statement renders the PromQL string (no SQL args) without executing it, for
+// the preview path.
+func (q *promqlQuery) Statement(_ context.Context) (*qbv5.Statement, error) {
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	if err != nil {
+		return nil, err
+	}
+	return &qbv5.Statement{Query: rendered}, nil
+}
+
+// PreviewStatements returns the ClickHouse statement(s) this PromQL query
+// would run on the engine path, captured without executing them.
+func (q *promqlQuery) PreviewStatements(ctx context.Context) ([]prometheus.CapturedStatement, error) {
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	if err != nil {
+		return nil, err
+	}
+
+	start := int64(querybuilder.ToNanoSecs(q.tr.From))
+	end := int64(querybuilder.ToNanoSecs(q.tr.To))
+
+	statements, err := q.promEngine.Statements(ctx, rendered, time.Unix(0, start), time.Unix(0, end), q.query.Step.Duration)
+	if err != nil {
+		return nil, q.evalError(rendered, err)
+	}
+	return statements, nil
+}
+
 func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
@@ -235,54 +276,102 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		return nil, err
 	}
 
-	qry, err := q.promEngine.Engine().NewRangeQuery(
-		ctx,
-		q.promEngine.Storage(),
-		nil,
-		query,
-		time.Unix(0, start),
-		time.Unix(0, end),
-		q.query.Step.Duration,
-	)
+	// Accumulate ClickHouse-side scan stats across every storage query this
+	// evaluation issues (engine selectors or the compiled executor): progress
+	// options propagate to each ClickHouse query through the context.
+	var statsMu sync.Mutex
+	var rowsScanned, bytesScanned uint64
+	ctx = clickhouse.Context(ctx, clickhouse.WithProgress(func(p *clickhouse.Progress) {
+		statsMu.Lock()
+		rowsScanned += p.Rows
+		bytesScanned += p.Bytes
+		statsMu.Unlock()
+	}))
+
+	began := time.Now()
+
+	res, err := q.promEngine.QueryRange(ctx, query, time.Unix(0, start), time.Unix(0, end), q.query.Step.Duration)
 	if err != nil {
-		// NewRangeQuery can fail with execution errors (e.g. context deadline exceeded)
-		// during the query queue/scheduling stage, not just parse errors.
-		if err := tryEnhancePromQLExecError(err); err != nil {
-			return nil, err
-		}
-
-		return nil, enhancePromQLError(query, err)
+		return nil, q.evalError(query, err)
 	}
 
-	res := qry.Exec(ctx)
-	if res.Err != nil {
-		if err := tryEnhancePromQLExecError(res.Err); err != nil {
-			return nil, err
-		}
-
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "query execution error: %v", res.Err)
+	matrix, ok := res.Value.(promql.Matrix)
+	if !ok {
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "promql query %q returned %T, expected a matrix", query, res.Value)
 	}
 
-	defer qry.Close()
+	warnings, _ := res.Warnings.AsStrings(query, 10, 0)
+	return q.toResult(matrix, warnings, began, &statsMu, &rowsScanned, &bytesScanned)
+}
 
-	matrix, promErr := res.Matrix()
-	if promErr != nil {
-		return nil, errors.WrapInternalf(promErr, errors.CodeInternal, "error getting matrix from promql query %q", query)
+// evalError types an evaluation error: engine execution classes first, then
+// parse errors with the migration hints, everything else internal.
+func (q *promqlQuery) evalError(query string, err error) error {
+	if enhanced := tryEnhancePromQLExecError(err); enhanced != nil {
+		return enhanced
+	}
+	var parseErrs parser.ParseErrors
+	if errors.As(err, &parseErrs) {
+		return enhancePromQLError(query, err)
+	}
+	// The transpiled path raises typed user errors of its own; keep them.
+	if errors.Ast(err, errors.TypeInvalidInput) {
+		return err
+	}
+	return errors.Newf(errors.TypeInternal, errors.CodeInternal, "query execution error: %v", err)
+}
+
+// excludePromLabel hides only known SigNoz storage keys: label names are user
+// data and may legitimately start with "__" (e.g. __address__), so a blanket
+// dunder strip mangles user labelsets. The __scope./__resource. prefixes cover
+// every exporter version's keys.
+func excludePromLabel(labelName string) bool {
+	return labelName == "__temporality__" ||
+		strings.HasPrefix(labelName, "__scope.") ||
+		strings.HasPrefix(labelName, "__resource.")
+}
+
+// collectExecStats snapshots the scan counters a query accumulated. Callers take
+// it at the point they are done with the matrix, so the duration covers the
+// shaping they did.
+func collectExecStats(began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) qbv5.ExecStats {
+	statsMu.Lock()
+	defer statsMu.Unlock()
+	return qbv5.ExecStats{
+		RowsScanned:  *rowsScanned,
+		BytesScanned: *bytesScanned,
+		DurationMS:   uint64(time.Since(began).Milliseconds()),
+	}
+}
+
+func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
+	if q.requestType == qbv5.RequestTypeHeatmap {
+		return q.toResultForHeatmap(matrix, warnings, began, statsMu, rowsScanned, bytesScanned)
+	}
+	return q.toResultForTimeSeriesAndScalar(matrix, warnings, began, statsMu, rowsScanned, bytesScanned), nil
+}
+
+func (q *promqlQuery) toResultForHeatmap(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
+	tsData, err := foldMatrixAsHeatmap(matrix, &q.tr, uint64(q.query.Step.Milliseconds()), q.query.Name)
+	if err != nil {
+		return nil, err
 	}
 
-	excludeLabel := func(labelName string) bool {
-		if labelName == "__name__" {
-			return false
-		}
-		return strings.HasPrefix(labelName, "__") || labelName == "fingerprint"
-	}
+	return &qbv5.Result{
+		Type:     q.requestType,
+		Value:    tsData,
+		Warnings: warnings,
+		Stats:    collectExecStats(began, statsMu, rowsScanned, bytesScanned),
+	}, nil
+}
 
+func (q *promqlQuery) toResultForTimeSeriesAndScalar(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) *qbv5.Result {
 	var series []*qbv5.TimeSeries
 	for _, v := range matrix {
 		var s qbv5.TimeSeries
 		lbls := make([]*qbv5.Label, 0, v.Metric.Len())
 		v.Metric.Range(func(l labels.Label) {
-			if excludeLabel(l.Name) {
+			if excludePromLabel(l.Name) {
 				return
 			}
 			lbls = append(lbls, &qbv5.Label{
@@ -294,27 +383,54 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 
 		for idx := range v.Floats {
 			p := v.Floats[idx]
+			// NaN and +/-Inf have no JSON number form and nothing to plot; the
+			// builder path drops them while scanning rows (see consume.go).
+			if math.IsNaN(p.F) || math.IsInf(p.F, 0) {
+				continue
+			}
 			s.Values = append(s.Values, &qbv5.TimeSeriesValue{
 				Timestamp: p.T,
 				Value:     p.F,
 			})
 		}
+		if len(s.Values) == 0 {
+			continue
+		}
 		series = append(series, &s)
 	}
 
-	warnings, _ := res.Warnings.AsStrings(query, 10, 0)
+	stats := collectExecStats(began, statsMu, rowsScanned, bytesScanned)
+
+	tsData := &qbv5.TimeSeriesData{QueryName: q.query.Name}
+	// No bucket at all when nothing survived: a bucket holding no series reads
+	// as "filtered to empty" to the cache, which stores it as a real result.
+	if len(series) > 0 {
+		tsData.Aggregations = []*qbv5.AggregationBucket{{Series: series}}
+	}
+
+	var payload any = tsData
+	// Scalar requests must return scalar data; reduce each series to its
+	// last point. This approximates an instant query evaluated at the end
+	// of the window: the final range-eval step sees the same samples an
+	// instant query at that timestamp would, except a series that went
+	// stale mid-window still surfaces its most recent value instead of
+	// dropping out of the result.
+	// TODO(srikanthccv): "last" mirrors the instant-query semantics we
+	// have always followed for PromQL scalar requests, but it should be
+	// configurable on the PromQuery spec just like the builder reduceTo.
+	if q.requestType == qbv5.RequestTypeScalar {
+		for _, aggBucket := range tsData.Aggregations {
+			for i, s := range aggBucket.Series {
+				aggBucket.Series[i] = qbv5.FunctionReduceTo(s, qbv5.ReduceToLast)
+			}
+		}
+		payload = convertTimeSeriesDataToScalar(tsData, q.query.Name)
+	}
 
 	return &qbv5.Result{
-		Type: q.requestType,
-		Value: &qbv5.TimeSeriesData{
-			QueryName: q.query.Name,
-			Aggregations: []*qbv5.AggregationBucket{
-				{
-					Series: series,
-				},
-			},
-		},
+		Type:     q.requestType,
+		Value:    payload,
 		Warnings: warnings,
-		// TODO: map promql stats?
-	}, nil
+		Stats:    stats,
+	}
 }

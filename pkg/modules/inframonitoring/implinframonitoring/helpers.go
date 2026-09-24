@@ -6,20 +6,19 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
-
-// quoteIdentifier wraps s in backticks for use as a ClickHouse identifier,
-// escaping any embedded backticks by doubling them.
-func quoteIdentifier(s string) string {
-	return fmt.Sprintf("`%s`", strings.ReplaceAll(s, "`", "``"))
-}
 
 func isKeyInGroupByAttrs(groupByAttrs []qbtypes.GroupByKey, key string) bool {
 	for _, groupBy := range groupByAttrs {
@@ -57,6 +56,33 @@ func compositeKeyFromLabels(labels map[string]string, groupBy []qbtypes.GroupByK
 		parts[i] = labels[key.Name]
 	}
 	return compositeKeyFromList(parts)
+}
+
+// intersectMap returns the entries of m whose key is present in keep (a new
+// map). keep's value type is irrelevant — only its keys are read — so a
+// per-group counts map (already filtered by the SQL push-down) can be passed
+// directly. Used to trim metadataMap to the status-matching groups.
+func intersectMap[V any, K any](m map[string]V, keep map[string]K) map[string]V {
+	out := make(map[string]V, len(m))
+	for k, v := range m {
+		if _, ok := keep[k]; ok {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// intersectRankedGroups returns the ranked groups whose compositeKey is present
+// in keep, preserving order. Keeps status-unmatched groups out of the ranked
+// page slots.
+func intersectRankedGroups[K any](groups []rankedGroup, keep map[string]K) []rankedGroup {
+	out := make([]rankedGroup, 0, len(groups))
+	for _, g := range groups {
+		if _, ok := keep[g.compositeKey]; ok {
+			out = append(out, g)
+		}
+	}
+	return out
 }
 
 // parseAndSortGroups extracts group label maps from a ScalarData response and
@@ -210,7 +236,7 @@ func buildPageGroupsFilterExpr(pageGroups []map[string]string) string {
 	for key, values := range groupValues {
 		quoted := make([]string, len(values))
 		for i, v := range values {
-			quoted[i] = fmt.Sprintf("'%s'", v)
+			quoted[i] = querybuilder.FilterStringLiteral(v)
 		}
 		inClauses = append(inClauses, fmt.Sprintf("%s IN (%s)", key, strings.Join(quoted, ", ")))
 	}
@@ -340,13 +366,13 @@ func alignedMetricWindow(startMs, endMs int64) (
 		flooredEndMs = flooredEndMs - (flooredEndMs % (adjustStep * 1000))
 	}
 
-	tsAdjustedStartMs, _, distributedTSTable, localTSTable := telemetrymetrics.WhichTSTableToUse(
-		samplesAdjustedStartMs, flooredEndMs, nil,
+	tsAdjustedStartMs, _, distributedTSTable, localTSTable := metricstelemetryschema.WhichTSTableToUse(
+		samplesAdjustedStartMs, flooredEndMs, false, nil,
 	)
 
-	distributedSamplesTable, localSamplesTable := telemetrymetrics.WhichSamplesTableToUse(
+	distributedSamplesTable, localSamplesTable := metricstelemetryschema.WhichSamplesTableToUse(
 		samplesAdjustedStartMs, flooredEndMs,
-		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
+		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, false, nil,
 	)
 
 	return samplesAdjustedStartMs, flooredEndMs, tsAdjustedStartMs, distributedTSTable, localTSTable, distributedSamplesTable, localSamplesTable
@@ -358,7 +384,7 @@ func alignedMetricWindow(startMs, endMs int64) (
 func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, samplesTable string, flooredStart, flooredEnd uint64) *sqlbuilder.SelectBuilder {
 	fpSB := sqlbuilder.NewSelectBuilder()
 	fpSB.Select("DISTINCT fingerprint")
-	fpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	fpSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, samplesTable))
 	fpSB.Where(
 		fpSB.In("metric_name", sqlbuilder.List(metricNames)),
 		fpSB.GE("unix_milli", flooredStart),
@@ -367,7 +393,34 @@ func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, sample
 	return fpSB
 }
 
-func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
+// buildReducedSamplesTblFingerprintSubQuery is like buildSamplesTblFingerprintSubQuery
+// but for the reduced tables.
+func (m *module) buildReducedSamplesTblFingerprintSubQuery(metricNames []string, flooredStart, flooredEnd uint64) *sqlbuilder.SelectBuilder {
+	lastSB := sqlbuilder.NewSelectBuilder()
+	lastSB.Select("reduced_fingerprint")
+	lastSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedLastLocalTableName))
+	lastSB.Where(
+		lastSB.In("metric_name", sqlbuilder.List(metricNames)),
+		lastSB.GE("unix_milli", flooredStart),
+		lastSB.L("unix_milli", flooredEnd),
+	)
+
+	sumSB := sqlbuilder.NewSelectBuilder()
+	sumSB.Select("reduced_fingerprint")
+	sumSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedSumLocalTableName))
+	sumSB.Where(
+		sumSB.In("metric_name", sqlbuilder.List(metricNames)),
+		sumSB.GE("unix_milli", flooredStart),
+		sumSB.L("unix_milli", flooredEnd),
+	)
+
+	fpSB := sqlbuilder.NewSelectBuilder()
+	fpSB.Select("DISTINCT reduced_fingerprint AS fingerprint")
+	fpSB.From(fpSB.BuilderAs(sqlbuilder.UnionAll(lastSB, sumSB), "reduced_samples"))
+	return fpSB
+}
+
+func (m *module) buildFilterClause(ctx context.Context, orgID valuer.UUID, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := ""
 	if filter != nil {
 		expression = strings.TrimSpace(filter.Expression)
@@ -382,20 +435,18 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		whereClauseSelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 	}
 
-	keys, _, err := m.telemetryMetadataStore.GetKeysMulti(ctx, whereClauseSelectors)
+	keys, _, err := m.telemetryMetadataStore.GetKeysMulti(ctx, orgID, whereClauseSelectors)
 	if err != nil {
 		return nil, err
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
-		Context:          ctx,
-		Logger:           m.logger,
-		FieldMapper:      m.fieldMapper,
-		ConditionBuilder: m.condBuilder,
-		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
-		FieldKeys:        keys,
-		StartNs:          querybuilder.ToNanoSecs(uint64(startMillis)),
-		EndNs:            querybuilder.ToNanoSecs(uint64(endMillis)),
+		Context:        ctx,
+		Query:          querybuilder.NewQueryInfo(ctx, orgID, m.fl, telemetrytypes.SignalMetrics, nil, querybuilder.ToNanoSecs(uint64(startMillis)), querybuilder.ToNanoSecs(uint64(endMillis))),
+		Storage:        m.storage,
+		Logger:         m.logger,
+		FullTextColumn: &telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
+		FieldKeys:      keys,
 	}
 
 	whereClause, err := querybuilder.PrepareWhereClause(expression, opts)
@@ -410,24 +461,70 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	return whereClause.WhereClause, nil
 }
 
+// mergeQueryWarnings combines any number of query warnings. It is nil-safe and
+// skips nil entries. The first non-nil warning becomes the primary; each
+// subsequent one contributes its message (as an additional warning) and its
+// own additional warnings. Returns nil when all inputs are nil.
+func mergeQueryWarnings(warnings ...*qbtypes.QueryWarnData) *qbtypes.QueryWarnData {
+	var merged *qbtypes.QueryWarnData
+	for _, w := range warnings {
+		if w == nil {
+			continue
+		}
+		if merged == nil {
+			// Copy so we don't mutate the caller's warning.
+			primary := *w
+			merged = &primary
+			continue
+		}
+		if w.Message != "" {
+			merged.Warnings = append(merged.Warnings, qbtypes.QueryWarnDataAdditional{Message: w.Message})
+		}
+		merged.Warnings = append(merged.Warnings, w.Warnings...)
+	}
+	return merged
+}
+
 // NOTE: this method is not specific to infra monitoring — it queries attributes_metadata generically.
 // Consider moving to telemetryMetaStore when a second use case emerges.
 //
-// getMetricsExistenceAndEarliestTime checks which of the given metric names have been
-// reported. It returns a list of missing metrics (those not found or with zero count)
-// and the earliest first-reported timestamp across all present metrics.
-// When all metrics are missing, minFirstReportedUnixMilli is 0.
-// TODO(nikhilmantri0902, srikanthccv): This method was designed this way because querier errors if any of the metrics
-// in the querier list was never sent, the QueryRange call throws not found error. Modify this method, if QueryRange
-// behaviour changes towards this.
-func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) ([]string, uint64, error) {
+// getEarliestMetricTime returns the earliest first_reported_unix_milli across the
+// given metric names. It is used solely for the end-time-before-retention check.
+// When none of the metrics have ever been reported, it returns 0.
+func (m *module) getEarliestMetricTime(ctx context.Context, metricNames []string) (uint64, error) {
 	if len(metricNames) == 0 {
-		return nil, 0, nil
+		return 0, nil
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("metric_name", "count(*) AS cnt", "min(first_reported_unix_milli) AS min_first_reported")
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Select("min(first_reported_unix_milli) AS min_first_reported")
+	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.AttributesMetadataTableName))
+	sb.Where(sb.In("metric_name", sqlbuilder.List(metricNames)))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var minFirstReported uint64
+	if err := m.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&minFirstReported); err != nil {
+		return 0, err
+	}
+
+	return minFirstReported, nil
+}
+
+// getMetricsExistence returns, for each requested metric name, whether it has ever
+// been reported (present in signoz_metrics.distributed_metadata). No time window.
+func (m *module) getMetricsExistence(ctx context.Context, metricNames []string) (map[string]bool, error) {
+	present := make(map[string]bool, len(metricNames))
+	for _, n := range metricNames {
+		present[n] = false
+	}
+	if len(metricNames) == 0 {
+		return present, nil
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("metric_name", "count(*) AS cnt")
+	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.AttributesMetadataTableName))
 	sb.Where(sb.In("metric_name", sqlbuilder.List(metricNames)))
 	sb.GroupBy("metric_name")
 
@@ -435,42 +532,73 @@ func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricN
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
 
-	type metricInfo struct {
-		count            uint64
-		minFirstReported uint64
+	for rows.Next() {
+		var name string
+		var cnt uint64
+		if err := rows.Scan(&name, &cnt); err != nil {
+			return nil, err
+		}
+		if cnt > 0 {
+			present[name] = true
+		}
 	}
-	found := make(map[string]metricInfo, len(metricNames))
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return present, nil
+}
+
+// getAttributesExistence returns, for each requested attrName, whether it has ever
+// been reported as a label on any of the given metricNames. Presence is checked
+// against distributed_metadata without a time-range filter.
+func (m *module) getAttributesExistence(ctx context.Context, metricNames, attrNames []string) (map[string]bool, error) {
+	present := make(map[string]bool, len(attrNames))
+	for _, a := range attrNames {
+		present[a] = false
+	}
+	if len(attrNames) == 0 {
+		return present, nil
+	}
+	if len(metricNames) == 0 {
+		return nil, errors.NewInternalf(errors.CodeInternal, "getAttributesExistence: metricNames must not be empty")
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("attr_name", "count(*) AS cnt")
+	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.AttributesMetadataTableName))
+	sb.Where(
+		sb.In("metric_name", sqlbuilder.List(metricNames)),
+		sb.In("attr_name", sqlbuilder.List(attrNames)),
+	)
+	sb.GroupBy("attr_name")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var name string
-		var cnt, minFR uint64
-		if err := rows.Scan(&name, &cnt, &minFR); err != nil {
-			return nil, 0, err
+		var cnt uint64
+		if err := rows.Scan(&name, &cnt); err != nil {
+			return nil, err
 		}
-		found[name] = metricInfo{count: cnt, minFirstReported: minFR}
+		if name != "" && cnt > 0 {
+			present[name] = true
+		}
 	}
 	if err := rows.Err(); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	var missingMetrics []string
-	var globalMinFirstReported uint64
-	for _, name := range metricNames {
-		info, ok := found[name]
-		if !ok || info.count == 0 {
-			missingMetrics = append(missingMetrics, name)
-			continue
-		}
-		if globalMinFirstReported == 0 || info.minFirstReported < globalMinFirstReported {
-			globalMinFirstReported = info.minFirstReported
-		}
-	}
-
-	return missingMetrics, globalMinFirstReported, nil
+	return present, nil
 }
 
 // getMetadata fetches the latest values of additionalCols for each unique combination of groupBy keys,
@@ -480,6 +608,7 @@ func (m *module) getMetricsExistenceAndEarliestTime(ctx context.Context, metricN
 // mapping to a flat map of attr_name -> attr_value (includes both groupBy and additional cols).
 func (m *module) getMetadata(
 	ctx context.Context,
+	orgID valuer.UUID,
 	metricNames []string,
 	groupBy []qbtypes.GroupByKey,
 	additionalCols []string,
@@ -492,6 +621,8 @@ func (m *module) getMetadata(
 	if len(groupBy) == 0 {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "groupBy must not be empty")
 	}
+
+	reductionEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	// Step-floor the window and pick the right tables — matches the bounds the
 	// QB v5 metric querier uses, so metadataMap covers the same universe the
@@ -514,7 +645,7 @@ func (m *module) getMetadata(
 	innerSelectCols := make([]string, 0, len(groupByCols)+1)
 	for _, col := range groupByCols {
 		innerSelectCols = append(innerSelectCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", innerSB.Var(col), quoteIdentifier(col)),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", innerSB.Var(col), sqlbuilder.Escape(clickhousesql.Identifier(col))),
 		)
 	}
 
@@ -530,28 +661,70 @@ func (m *module) getMetadata(
 	}
 
 	innerSB.Select(innerSelectCols...)
-	innerSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTableName))
-	innerSB.Where(
-		innerSB.In("metric_name", sqlbuilder.List(metricNames)),
-		innerSB.GE("unix_milli", tsAdjustedStartMs),
-		innerSB.LE("unix_milli", flooredEndMs),
-		fmt.Sprintf("fingerprint IN (%s)", innerSB.Var(fpSB)),
-	)
 
-	// Apply optional filter expression
-	if filter != nil && strings.TrimSpace(filter.Expression) != "" {
-		filterClause, err := m.buildFilterClause(ctx, filter, startMs, endMs)
-		if err != nil {
-			return nil, err
+	if reductionEnabled {
+		var filterClause *sqlbuilder.WhereClause
+		if filter != nil && strings.TrimSpace(filter.Expression) != "" {
+			var err error
+			filterClause, err = m.buildFilterClause(ctx, orgID, filter, startMs, endMs)
+			if err != nil {
+				return nil, err
+			}
 		}
+
+		reducedFpSB := m.buildReducedSamplesTblFingerprintSubQuery(metricNames, samplesStartMs, flooredEndMs)
+
+		rawSrc := sqlbuilder.NewSelectBuilder()
+		rawSrc.Select("labels", "unix_milli")
+		rawSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTableName))
+		rawSrc.Where(
+			rawSrc.In("metric_name", sqlbuilder.List(metricNames)),
+			rawSrc.GE("unix_milli", tsAdjustedStartMs),
+			rawSrc.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", rawSrc.Var(fpSB)),
+		)
 		if filterClause != nil {
-			innerSB.AddWhereClause(filterClause)
+			rawSrc.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+		}
+
+		reducedSrc := sqlbuilder.NewSelectBuilder()
+		reducedSrc.Select("labels", "unix_milli")
+		reducedSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.TimeseriesV4ReducedTableName))
+		reducedSrc.Where(
+			reducedSrc.In("metric_name", sqlbuilder.List(metricNames)),
+			reducedSrc.GE("unix_milli", tsAdjustedStartMs),
+			reducedSrc.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", reducedSrc.Var(reducedFpSB)),
+		)
+		if filterClause != nil {
+			reducedSrc.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+		}
+
+		// Inner query reads over the union of raw + reduced series.
+		innerSB.From(innerSB.BuilderAs(sqlbuilder.UnionAll(rawSrc, reducedSrc), "series"))
+	} else {
+		innerSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTableName))
+		innerSB.Where(
+			innerSB.In("metric_name", sqlbuilder.List(metricNames)),
+			innerSB.GE("unix_milli", tsAdjustedStartMs),
+			innerSB.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", innerSB.Var(fpSB)),
+		)
+
+		if filter != nil && strings.TrimSpace(filter.Expression) != "" {
+			filterClause, err := m.buildFilterClause(ctx, orgID, filter, startMs, endMs)
+			if err != nil {
+				return nil, err
+			}
+			if filterClause != nil {
+				innerSB.AddWhereClause(filterClause)
+			}
 		}
 	}
 
 	groupByAliases := make([]string, 0, len(groupByCols))
 	for _, col := range groupByCols {
-		groupByAliases = append(groupByAliases, quoteIdentifier(col))
+		groupByAliases = append(groupByAliases, sqlbuilder.Escape(clickhousesql.Identifier(col)))
 	}
 	innerSB.GroupBy(groupByAliases...)
 
@@ -561,11 +734,11 @@ func (m *module) getMetadata(
 	// Outer SELECT columns: groupBy cols directly + tupleElement(latest_attrs, N) for each additionalCol
 	outerSelectCols := make([]string, 0, len(allCols))
 	for _, col := range groupByCols {
-		outerSelectCols = append(outerSelectCols, quoteIdentifier(col))
+		outerSelectCols = append(outerSelectCols, sqlbuilder.Escape(clickhousesql.Identifier(col)))
 	}
 	for i, col := range additionalCols {
 		outerSelectCols = append(outerSelectCols,
-			fmt.Sprintf("tupleElement(latest_attrs, %d) AS %s", i+1, quoteIdentifier(col)),
+			fmt.Sprintf("tupleElement(latest_attrs, %d) AS %s", i+1, sqlbuilder.Escape(clickhousesql.Identifier(col))),
 		)
 	}
 
@@ -604,6 +777,202 @@ func (m *module) getMetadata(
 		result[compositeKey] = attrMap
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// countAttrIdentityTuples maps a counted attr to the full label tuple that
+// uniquely identifies its entity, so uniqExact counts real entities rather than
+// bare names (namespace-scoped workloads with the same name across namespaces,
+// or cluster-scoped nodes/namespaces across clusters, would otherwise collapse).
+// Attrs absent from this map are counted on their bare name.
+var countAttrIdentityTuples = map[string][]string{
+	inframonitoringtypes.NamespaceNameAttrKey:   {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey},
+	inframonitoringtypes.NodeNameAttrKey:        {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NodeNameAttrKey},
+	inframonitoringtypes.DeploymentNameAttrKey:  {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.DeploymentNameAttrKey},
+	inframonitoringtypes.DaemonSetNameAttrKey:   {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.DaemonSetNameAttrKey},
+	inframonitoringtypes.JobNameAttrKey:         {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.JobNameAttrKey},
+	inframonitoringtypes.StatefulSetNameAttrKey: {inframonitoringtypes.ClusterNameAttrKey, inframonitoringtypes.NamespaceNameAttrKey, inframonitoringtypes.StatefulSetNameAttrKey},
+}
+
+// getPerGroupDistinctCounts returns, per groupBy combination, the exact distinct
+// count of each attr in attrNames within the time range and metric universe.
+// It mirrors getMetadata: fingerprints come from the samples table, labels are
+// read from the timeseries table (raw only, or raw+reduced union when reduction
+// is enabled), and the user filter is merged with the page-groups IN clauses.
+// The returned map keys group column values by "\x00", mapping to attr -> count.
+func (m *module) getPerGroupDistinctCounts(
+	ctx context.Context,
+	orgID valuer.UUID,
+	start, end int64,
+	filter *qbtypes.Filter,
+	groupBy []qbtypes.GroupByKey,
+	pageGroups []map[string]string,
+	attrNames []string,
+	metricNames []string,
+) (map[string]map[string]int64, error) {
+	if len(pageGroups) == 0 || len(groupBy) == 0 {
+		return map[string]map[string]int64{}, nil
+	}
+	if len(attrNames) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "attrNames must not be empty")
+	}
+	if len(metricNames) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricNames must not be empty")
+	}
+
+	// Merge user filter with page-groups IN clauses.
+	userFilterExpr := ""
+	if filter != nil {
+		userFilterExpr = filter.Expression
+	}
+	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
+	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, pageGroupsFilterExpr)
+
+	reductionEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
+
+	// Step-floor the window and pick the right tables — same bounds the QB v5
+	// metric querier uses (see alignedMetricWindow / getMetadata).
+	samplesStartMs, flooredEndMs, tsAdjustedStartMs, distributedTimeSeriesTbl, _, _, localSamplesTbl := alignedMetricWindow(start, end)
+
+	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, localSamplesTbl, samplesStartMs, flooredEndMs)
+
+	groupByCols := make([]string, len(groupBy))
+	for i, key := range groupBy {
+		groupByCols[i] = key.Name
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+
+	// SELECT: one JSONExtractString per groupBy col + one uniqExactIf per attr.
+	selectCols := make([]string, 0, len(groupByCols)+len(attrNames))
+	for _, col := range groupByCols {
+		selectCols = append(selectCols,
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", sb.Var(col), sqlbuilder.Escape(clickhousesql.Identifier(col))),
+		)
+	}
+	for _, attr := range attrNames {
+		// Guard on != '' so a series missing the attr isn't counted as one empty value.
+		extract := fmt.Sprintf("JSONExtractString(labels, %s)", sb.Var(attr))
+
+		// Count on the entity's full identity tuple where one is defined, so
+		// same-named entities in different scopes (e.g. workloads sharing a name
+		// across namespaces) aren't collapsed. Falls back to the bare name.
+		valueExpr := extract
+		if tuple, ok := countAttrIdentityTuples[attr]; ok {
+			parts := make([]string, len(tuple))
+			for i, col := range tuple {
+				parts[i] = fmt.Sprintf("JSONExtractString(labels, %s)", sb.Var(col))
+			}
+			valueExpr = fmt.Sprintf("(%s)", strings.Join(parts, ", "))
+		}
+
+		// Prefix the alias so it never collides with a groupBy col alias
+		// (e.g. clusters grouped by k8s.node.name, which is also counted).
+		selectCols = append(selectCols,
+			fmt.Sprintf("uniqExactIf(%s, %s != '') AS %s", valueExpr, extract, sqlbuilder.Escape(clickhousesql.Identifier(fmt.Sprintf("__count_%s", attr)))),
+		)
+	}
+	sb.Select(selectCols...)
+
+	if reductionEnabled {
+		var filterClause *sqlbuilder.WhereClause
+		if mergedFilterExpr != "" {
+			var err error
+			filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		reducedFpSB := m.buildReducedSamplesTblFingerprintSubQuery(metricNames, samplesStartMs, flooredEndMs)
+
+		rawSrc := sqlbuilder.NewSelectBuilder()
+		rawSrc.Select("labels")
+		rawSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTimeSeriesTbl))
+		rawSrc.Where(
+			rawSrc.In("metric_name", sqlbuilder.List(metricNames)),
+			rawSrc.GE("unix_milli", tsAdjustedStartMs),
+			rawSrc.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", rawSrc.Var(fpSB)),
+		)
+		if filterClause != nil {
+			rawSrc.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+		}
+
+		reducedSrc := sqlbuilder.NewSelectBuilder()
+		reducedSrc.Select("labels")
+		reducedSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.TimeseriesV4ReducedTableName))
+		reducedSrc.Where(
+			reducedSrc.In("metric_name", sqlbuilder.List(metricNames)),
+			reducedSrc.GE("unix_milli", tsAdjustedStartMs),
+			reducedSrc.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", reducedSrc.Var(reducedFpSB)),
+		)
+		if filterClause != nil {
+			reducedSrc.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+		}
+
+		sb.From(sb.BuilderAs(sqlbuilder.UnionAll(rawSrc, reducedSrc), "series"))
+	} else {
+		sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTimeSeriesTbl))
+		sb.Where(
+			sb.In("metric_name", sqlbuilder.List(metricNames)),
+			sb.GE("unix_milli", tsAdjustedStartMs),
+			sb.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", sb.Var(fpSB)),
+		)
+		if mergedFilterExpr != "" {
+			filterClause, err := m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
+			if err != nil {
+				return nil, err
+			}
+			if filterClause != nil {
+				sb.AddWhereClause(filterClause)
+			}
+		}
+	}
+
+	groupByAliases := make([]string, 0, len(groupByCols))
+	for _, col := range groupByCols {
+		groupByAliases = append(groupByAliases, sqlbuilder.Escape(clickhousesql.Identifier(col)))
+	}
+	sb.GroupBy(groupByAliases...)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]map[string]int64)
+	for rows.Next() {
+		groupVals := make([]string, len(groupByCols))
+		counts := make([]uint64, len(attrNames))
+
+		scanPtrs := make([]any, 0, len(groupByCols)+len(attrNames))
+		for i := range groupVals {
+			scanPtrs = append(scanPtrs, &groupVals[i])
+		}
+		for i := range counts {
+			scanPtrs = append(scanPtrs, &counts[i])
+		}
+
+		if err := rows.Scan(scanPtrs...); err != nil {
+			return nil, err
+		}
+
+		attrCounts := make(map[string]int64, len(attrNames))
+		for i, attr := range attrNames {
+			attrCounts[attr] = int64(counts[i])
+		}
+		result[compositeKeyFromList(groupVals)] = attrCounts
+	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}

@@ -1,6 +1,8 @@
 package sqlitesqlstore
 
 import (
+	"strings"
+
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun/schema"
 )
@@ -104,4 +106,8 @@ func (f *formatter) LowerExpression(expression string) []byte {
 	sql = append(sql, expression...)
 	sql = append(sql, ')')
 	return sql
+}
+
+func (f *formatter) EscapeLikePattern(value string) string {
+	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(value)
 }

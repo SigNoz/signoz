@@ -12,8 +12,10 @@ import {
 	DropdownMenuTrigger,
 } from '@signozhq/ui/dropdown-menu';
 import { Settings2 } from '@signozhq/icons';
+import { ExportFormat } from 'lib/exportData/types';
 
 import { useTraceStore } from '../stores/traceStore';
+import { useDownloadTrace } from './useDownloadTrace';
 
 import styles from './TraceOptionsMenu.module.scss';
 
@@ -21,6 +23,10 @@ interface TraceOptionsMenuProps {
 	showTraceDetails: boolean;
 	onToggleTraceDetails: () => void;
 	onOpenPreviewFields: () => void;
+	traceId: string;
+	startTime: number;
+	endTime: number;
+	totalSpansCount: number;
 }
 
 // Composed from dropdown-menu primitives (instead of DropdownMenuSimple)
@@ -30,12 +36,23 @@ function TraceOptionsMenu({
 	showTraceDetails,
 	onToggleTraceDetails,
 	onOpenPreviewFields,
+	traceId,
+	startTime,
+	endTime,
+	totalSpansCount,
 }: TraceOptionsMenuProps): JSX.Element {
 	const colorByField = useTraceStore((s) => s.colorByField);
 	const setColorByField = useTraceStore((s) => s.setColorByField);
 	const availableColorByOptions = useTraceStore(
 		(s) => s.availableColorByOptions,
 	);
+
+	const { isDownloading, isExportDisabled, downloadTrace } = useDownloadTrace({
+		traceId,
+		startTime,
+		endTime,
+		totalSpansCount,
+	});
 
 	const handleColorByChange = (name: string): void => {
 		const next = availableColorByOptions.find((o) => o.field.name === name);
@@ -78,6 +95,32 @@ function TraceOptionsMenu({
 									</DropdownMenuRadioItem>
 								))}
 							</DropdownMenuRadioGroup>
+						</DropdownMenuSubContent>
+					</DropdownMenuSub>
+				)}
+				{!isExportDisabled && (
+					<DropdownMenuSub>
+						<DropdownMenuSubTrigger
+							disabled={isDownloading}
+							data-testid="download-trace-submenu"
+						>
+							Download trace
+						</DropdownMenuSubTrigger>
+						<DropdownMenuSubContent className={styles.traceOptionsDropdown}>
+							<DropdownMenuItem
+								clickable
+								onSelect={(): void => downloadTrace(ExportFormat.Csv)}
+								testId="download-trace-csv"
+							>
+								CSV
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								clickable
+								onSelect={(): void => downloadTrace(ExportFormat.Jsonl)}
+								testId="download-trace-jsonl"
+							>
+								JSONL
+							</DropdownMenuItem>
 						</DropdownMenuSubContent>
 					</DropdownMenuSub>
 				)}

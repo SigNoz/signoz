@@ -656,6 +656,28 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
+		it('UI-03b: clicking "Only" selects just that value', async () => {
+			renderWithVirtuoso(
+				<CustomMultiSelect
+					options={mockOptions}
+					onChange={mockOnChange}
+					value={['frontend']}
+				/>,
+			);
+
+			const combobox = screen.getByRole('combobox');
+			await user.click(combobox);
+
+			// "Only" renders for each non-selected row (hidden until hover via CSS,
+			// which jsdom doesn't apply, so it's clickable here).
+			const onlyButtons = await screen.findAllByText('Only');
+			mockOnChange.mockClear();
+			await user.click(onlyButtons[0]);
+
+			expect(mockOnChange).toHaveBeenCalledTimes(1);
+			expect(mockOnChange.mock.calls[0][0]).toStrictEqual(['backend']);
+		});
+
 		it('UI-04: Should display values with loading info at bottom', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} loading />,
@@ -1449,7 +1471,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			expect(mockOnChange).toHaveBeenCalledWith(
 				['custom-value'],
-				[{ label: 'custom-value', value: 'custom-value' }],
+				[{ label: 'custom-value', value: 'custom-value', type: 'custom' }],
 			);
 		});
 	});

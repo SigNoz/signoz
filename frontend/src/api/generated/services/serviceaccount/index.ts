@@ -22,12 +22,13 @@ import type {
 	CreateServiceAccountKey201,
 	CreateServiceAccountKeyPathParameters,
 	CreateServiceAccountRole201,
-	CreateServiceAccountRolePathParameters,
 	DeleteServiceAccountPathParameters,
 	DeleteServiceAccountRolePathParameters,
 	GetMyServiceAccount200,
 	GetServiceAccount200,
 	GetServiceAccountPathParameters,
+	GetServiceAccountRole200,
+	GetServiceAccountRolePathParameters,
 	GetServiceAccountRoles200,
 	GetServiceAccountRolesPathParameters,
 	ListServiceAccountKeys200,
@@ -45,6 +46,292 @@ import type {
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
+
+/**
+ * This endpoint assigns a role to a service account
+ * @summary Create service account role
+ */
+export const createServiceAccountRole = (
+	serviceaccounttypesPostableServiceAccountRoleDTO?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateServiceAccountRole201>({
+		url: `/api/v1/service_account_roles`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: serviceaccounttypesPostableServiceAccountRoleDTO,
+		signal,
+	});
+};
+
+export const getCreateServiceAccountRoleMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createServiceAccountRole>>,
+		TError,
+		{ data?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createServiceAccountRole>>,
+	TError,
+	{ data?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO> },
+	TContext
+> => {
+	const mutationKey = ['createServiceAccountRole'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createServiceAccountRole>>,
+		{ data?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createServiceAccountRole(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateServiceAccountRoleMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createServiceAccountRole>>
+>;
+export type CreateServiceAccountRoleMutationBody =
+	| BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO>
+	| undefined;
+export type CreateServiceAccountRoleMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create service account role
+ */
+export const useCreateServiceAccountRole = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createServiceAccountRole>>,
+		TError,
+		{ data?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createServiceAccountRole>>,
+	TError,
+	{ data?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO> },
+	TContext
+> => {
+	return useMutation(getCreateServiceAccountRoleMutationOptions(options));
+};
+/**
+ * This endpoint revokes a role from a service account
+ * @summary Delete service account role
+ */
+export const deleteServiceAccountRole = (
+	{ id }: DeleteServiceAccountRolePathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v1/service_account_roles/${id}`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getDeleteServiceAccountRoleMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteServiceAccountRole>>,
+		TError,
+		{ pathParams: DeleteServiceAccountRolePathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteServiceAccountRole>>,
+	TError,
+	{ pathParams: DeleteServiceAccountRolePathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteServiceAccountRole'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteServiceAccountRole>>,
+		{ pathParams: DeleteServiceAccountRolePathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteServiceAccountRole(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteServiceAccountRoleMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteServiceAccountRole>>
+>;
+
+export type DeleteServiceAccountRoleMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete service account role
+ */
+export const useDeleteServiceAccountRole = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteServiceAccountRole>>,
+		TError,
+		{ pathParams: DeleteServiceAccountRolePathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteServiceAccountRole>>,
+	TError,
+	{ pathParams: DeleteServiceAccountRolePathParameters },
+	TContext
+> => {
+	return useMutation(getDeleteServiceAccountRoleMutationOptions(options));
+};
+/**
+ * This endpoint gets an existing service account role
+ * @summary Get service account role
+ */
+export const getServiceAccountRole = (
+	{ id }: GetServiceAccountRolePathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetServiceAccountRole200>({
+		url: `/api/v1/service_account_roles/${id}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetServiceAccountRoleQueryKey = ({
+	id,
+}: GetServiceAccountRolePathParameters) => {
+	return [`/api/v1/service_account_roles/${id}`] as const;
+};
+
+export const getGetServiceAccountRoleQueryOptions = <
+	TData = Awaited<ReturnType<typeof getServiceAccountRole>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetServiceAccountRolePathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getServiceAccountRole>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetServiceAccountRoleQueryKey({ id });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getServiceAccountRole>>
+	> = ({ signal }) => getServiceAccountRole({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getServiceAccountRole>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetServiceAccountRoleQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getServiceAccountRole>>
+>;
+export type GetServiceAccountRoleQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get service account role
+ */
+
+export function useGetServiceAccountRole<
+	TData = Awaited<ReturnType<typeof getServiceAccountRole>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetServiceAccountRolePathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getServiceAccountRole>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetServiceAccountRoleQueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get service account role
+ */
+export const invalidateGetServiceAccountRole = async (
+	queryClient: QueryClient,
+	{ id }: GetServiceAccountRolePathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetServiceAccountRoleQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
 
 /**
  * This endpoint lists the service accounts for an organisation
@@ -112,7 +399,7 @@ export function useListServiceAccounts<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -340,7 +627,7 @@ export const getGetServiceAccountQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getServiceAccount>>,
@@ -377,7 +664,7 @@ export function useGetServiceAccount<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -542,7 +829,7 @@ export const getListServiceAccountKeysQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof listServiceAccountKeys>>,
@@ -580,7 +867,7 @@ export function useListServiceAccountKeys<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -925,7 +1212,7 @@ export const getGetServiceAccountRolesQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getServiceAccountRoles>>,
@@ -963,7 +1250,7 @@ export function useGetServiceAccountRoles<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -982,186 +1269,6 @@ export const invalidateGetServiceAccountRoles = async (
 	return queryClient;
 };
 
-/**
- * This endpoint assigns a role to a service account
- * @summary Create service account role
- */
-export const createServiceAccountRole = (
-	{ id }: CreateServiceAccountRolePathParameters,
-	serviceaccounttypesPostableServiceAccountRoleDTO?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<CreateServiceAccountRole201>({
-		url: `/api/v1/service_accounts/${id}/roles`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: serviceaccounttypesPostableServiceAccountRoleDTO,
-		signal,
-	});
-};
-
-export const getCreateServiceAccountRoleMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createServiceAccountRole>>,
-		TError,
-		{
-			pathParams: CreateServiceAccountRolePathParameters;
-			data?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof createServiceAccountRole>>,
-	TError,
-	{
-		pathParams: CreateServiceAccountRolePathParameters;
-		data?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['createServiceAccountRole'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof createServiceAccountRole>>,
-		{
-			pathParams: CreateServiceAccountRolePathParameters;
-			data?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return createServiceAccountRole(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type CreateServiceAccountRoleMutationResult = NonNullable<
-	Awaited<ReturnType<typeof createServiceAccountRole>>
->;
-export type CreateServiceAccountRoleMutationBody =
-	| BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO>
-	| undefined;
-export type CreateServiceAccountRoleMutationError =
-	ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Create service account role
- */
-export const useCreateServiceAccountRole = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createServiceAccountRole>>,
-		TError,
-		{
-			pathParams: CreateServiceAccountRolePathParameters;
-			data?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof createServiceAccountRole>>,
-	TError,
-	{
-		pathParams: CreateServiceAccountRolePathParameters;
-		data?: BodyType<ServiceaccounttypesPostableServiceAccountRoleDTO>;
-	},
-	TContext
-> => {
-	return useMutation(getCreateServiceAccountRoleMutationOptions(options));
-};
-/**
- * This endpoint revokes a role from service account
- * @summary Delete service account role
- */
-export const deleteServiceAccountRole = (
-	{ id, rid }: DeleteServiceAccountRolePathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v1/service_accounts/${id}/roles/${rid}`,
-		method: 'DELETE',
-		signal,
-	});
-};
-
-export const getDeleteServiceAccountRoleMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteServiceAccountRole>>,
-		TError,
-		{ pathParams: DeleteServiceAccountRolePathParameters },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof deleteServiceAccountRole>>,
-	TError,
-	{ pathParams: DeleteServiceAccountRolePathParameters },
-	TContext
-> => {
-	const mutationKey = ['deleteServiceAccountRole'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof deleteServiceAccountRole>>,
-		{ pathParams: DeleteServiceAccountRolePathParameters }
-	> = (props) => {
-		const { pathParams } = props ?? {};
-
-		return deleteServiceAccountRole(pathParams);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteServiceAccountRoleMutationResult = NonNullable<
-	Awaited<ReturnType<typeof deleteServiceAccountRole>>
->;
-
-export type DeleteServiceAccountRoleMutationError =
-	ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Delete service account role
- */
-export const useDeleteServiceAccountRole = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteServiceAccountRole>>,
-		TError,
-		{ pathParams: DeleteServiceAccountRolePathParameters },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof deleteServiceAccountRole>>,
-	TError,
-	{ pathParams: DeleteServiceAccountRolePathParameters },
-	TContext
-> => {
-	return useMutation(getDeleteServiceAccountRoleMutationOptions(options));
-};
 /**
  * This endpoint gets my service account
  * @summary Gets my service account
@@ -1228,7 +1335,7 @@ export function useGetMyServiceAccount<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**

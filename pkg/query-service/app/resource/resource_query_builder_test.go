@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_buildResourceFilter(t *testing.T) {
@@ -88,7 +89,7 @@ func Test_buildResourceFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := buildResourceFilter(tt.args.logsOp, tt.args.key, tt.args.op, tt.args.value); got != tt.want {
+			if got := buildResourceFilter(tt.args.logsOp, tt.args.key, tt.args.op, tt.args.value, []string{tt.args.key}); got != tt.want {
 				t.Errorf("buildResourceFilter() = %v, want %v", got, tt.want)
 			}
 		})
@@ -282,7 +283,7 @@ func Test_buildResourceIndexFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := buildResourceIndexFilter(tt.args.key, tt.args.op, tt.args.value); got != tt.want {
+			if got := buildResourceIndexFilter(tt.args.key, tt.args.op, tt.args.value, []string{tt.args.key}); got != tt.want {
 				t.Errorf("buildResourceIndexFilter() = %v, want %v", got, tt.want)
 			}
 		})
@@ -379,7 +380,7 @@ func Test_buildResourceFiltersFromFilterItems(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildResourceFiltersFromFilterItems(tt.args.fs)
+			got, err := buildResourceFiltersFromFilterItems(tt.args.fs, false)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildResourceFiltersFromFilterItems() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -541,7 +542,7 @@ func Test_buildResourceSubQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := BuildResourceSubQuery("signoz_logs", "distributed_logs_v2_resource", tt.args.bucketStart, tt.args.bucketEnd, tt.args.fs, tt.args.groupBy, tt.args.aggregateAttribute, false)
+			got, err := BuildResourceSubQuery("signoz_logs", "distributed_logs_v2_resource", tt.args.bucketStart, tt.args.bucketEnd, tt.args.fs, tt.args.groupBy, tt.args.aggregateAttribute, false, false)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("buildResourceSubQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -551,4 +552,59 @@ func Test_buildResourceSubQuery(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_buildResourceFilterFamily(t *testing.T) {
+	members := []string{"deployment.environment.name", "deployment.environment"}
+
+	require.Equal(t,
+		"COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') = 'production'",
+		buildResourceFilter("=", "deployment.environment.name", v3.FilterOperatorEqual, "production", members))
+
+	require.Equal(t,
+		"COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') != 'production'",
+		buildResourceFilter("!=", "deployment.environment.name", v3.FilterOperatorNotEqual, "production", members))
+
+	require.Equal(t,
+		"(simpleJSONHas(labels, 'deployment.environment.name') OR simpleJSONHas(labels, 'deployment.environment'))",
+		buildResourceFilter("", "deployment.environment.name", v3.FilterOperatorExists, nil, members))
+
+	require.Equal(t,
+		"(not simpleJSONHas(labels, 'deployment.environment.name') AND not simpleJSONHas(labels, 'deployment.environment'))",
+		buildResourceFilter("", "deployment.environment.name", v3.FilterOperatorNotExists, nil, members))
+}
+
+func Test_buildResourceIndexFilterFamily(t *testing.T) {
+	members := []string{"deployment.environment.name", "deployment.environment"}
+
+	require.Equal(t,
+		`(labels like '%deployment.environment.name":"production%' OR labels like '%deployment.environment":"production%')`,
+		buildResourceIndexFilter("deployment.environment.name", v3.FilterOperatorEqual, "production", members))
+
+	require.Equal(t, "",
+		buildResourceIndexFilter("deployment.environment.name", v3.FilterOperatorNotEqual, "production", members))
+	require.Equal(t, "",
+		buildResourceIndexFilter("deployment.environment.name", v3.FilterOperatorNotIn, []interface{}{"production"}, members))
+}
+
+func TestBuildResourceSubQueryFamily(t *testing.T) {
+	fs := &v3.FilterSet{Items: []v3.FilterItem{{
+		Key: v3.AttributeKey{
+			Key:      "deployment.environment.name",
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeResource,
+		},
+		Operator: v3.FilterOperatorEqual,
+		Value:    "production",
+	}}}
+
+	familyOn, err := BuildResourceSubQuery("signoz_traces", "distributed_traces_v3_resource", 1, 2, fs, nil, v3.AttributeKey{}, false, true)
+	require.NoError(t, err)
+	require.Contains(t, familyOn, "COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') = 'production'")
+	require.Contains(t, familyOn, `(labels like '%deployment.environment.name":"production%' OR labels like '%deployment.environment":"production%')`)
+
+	familyOff, err := BuildResourceSubQuery("signoz_traces", "distributed_traces_v3_resource", 1, 2, fs, nil, v3.AttributeKey{}, false, false)
+	require.NoError(t, err)
+	require.Contains(t, familyOff, "simpleJSONExtractString(labels, 'deployment.environment.name') = 'production'")
+	require.NotContains(t, familyOff, "COALESCE")
 }

@@ -96,7 +96,7 @@ function MessagingQueues(): JSX.Element {
 								type="default"
 								onClick={(e): void =>
 									getStartedRedirect(
-										`${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Consumers}`,
+										`${ROUTES.GET_STARTED_WITH_CLOUD}?${QueryParams.getStartedSource}=self-hosted-kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Consumers}`,
 										'Configure Consumer',
 										e,
 									)
@@ -116,7 +116,7 @@ function MessagingQueues(): JSX.Element {
 								type="default"
 								onClick={(e): void =>
 									getStartedRedirect(
-										`${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Producers}`,
+										`${ROUTES.GET_STARTED_WITH_CLOUD}?${QueryParams.getStartedSource}=self-hosted-kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Producers}`,
 										'Configure Producer',
 										e,
 									)
@@ -136,7 +136,7 @@ function MessagingQueues(): JSX.Element {
 								type="default"
 								onClick={(e): void =>
 									getStartedRedirect(
-										`${ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Kafka}`,
+										`${ROUTES.GET_STARTED_WITH_CLOUD}?${QueryParams.getStartedSource}=self-hosted-kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Kafka}`,
 										'Monitor kafka',
 										e,
 									)

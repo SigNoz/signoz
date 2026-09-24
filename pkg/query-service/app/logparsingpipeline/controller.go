@@ -342,11 +342,17 @@ type PipelinesPreviewResponse struct {
 
 func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 	ctx context.Context,
+	orgID valuer.UUID,
 	request *PipelinesPreviewRequest,
 ) (*PipelinesPreviewResponse, error) {
 	pipelines, err := ic.enrichPipelinesFilters(ctx, request.Pipelines)
 	if err != nil {
 		return nil, err
+	}
+
+	// The collector gets the same pipeline prepended over opamp; see RecommendAgentConfig.
+	if ic.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		pipelines = append([]pipelinetypes.GettablePipeline{ic.getNormalizePipeline()}, pipelines...)
 	}
 
 	result, collectorLogs, err := SimulatePipelinesProcessing(ctx, pipelines, request.Logs)
@@ -402,7 +408,6 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", err
 	}
 
-	// TODO(Tushar): thread orgID here to evaluate correctly
 	if pc.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgId)) {
 		// add default normalize pipeline at the beginning, only for sending to collector
 		enrichedPipelines = append([]pipelinetypes.GettablePipeline{pc.getNormalizePipeline()}, enrichedPipelines...)

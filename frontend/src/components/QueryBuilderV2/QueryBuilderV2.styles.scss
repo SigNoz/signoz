@@ -80,8 +80,8 @@
 				width: 1px;
 				background: repeating-linear-gradient(
 					to bottom,
-					var(--l1-border),
-					var(--l1-border) 4px,
+					var(--query-builder-v2-border-color, var(--l2-border)),
+					var(--query-builder-v2-border-color, var(--l2-border)) 4px,
 					transparent 4px,
 					transparent 8px
 				);
@@ -101,7 +101,8 @@
 					top: 12px;
 					width: 6px;
 					height: 6px;
-					border-left: 6px dotted var(--l1-border);
+					border-left: 6px dotted
+						var(--query-builder-v2-border-color, var(--l2-border));
 				}
 
 				/* Horizontal line pointing from vertical to the item */
@@ -114,8 +115,8 @@
 					height: 1px;
 					background: repeating-linear-gradient(
 						to right,
-						var(--l1-border),
-						var(--l1-border) 4px,
+						var(--query-builder-v2-border-color, var(--l2-border)),
+						var(--query-builder-v2-border-color, var(--l2-border)) 4px,
 						transparent 4px,
 						transparent 8px
 					);
@@ -241,7 +242,8 @@
 						top: 12px;
 						width: 6px;
 						height: 6px;
-						border-left: 6px dotted var(--l1-border);
+						border-left: 6px dotted
+							var(--query-builder-v2-border-color, var(--l2-border));
 					}
 
 					/* Horizontal line pointing from vertical to the item */
@@ -254,8 +256,8 @@
 						height: 1px;
 						background: repeating-linear-gradient(
 							to right,
-							var(--l1-border),
-							var(--l1-border) 4px,
+							var(--query-builder-v2-border-color, var(--l2-border)),
+							var(--query-builder-v2-border-color, var(--l2-border)) 4px,
 							transparent 4px,
 							transparent 8px
 						);
@@ -273,6 +275,16 @@
 					line-height: 16px; /* 128.571% */
 
 					resize: none;
+
+					background-color: var(
+						--query-builder-v2-background-color,
+						var(--l2-background)
+					);
+					border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
+
+					&:placeholder {
+						color: var(--query-builder-v2-placeholder-color, var(--l3-foreground));
+					}
 				}
 
 				.formula-legend {
@@ -282,15 +294,42 @@
 					.ant-input-group-addon {
 						border-top-left-radius: 0px !important;
 						border-top-right-radius: 0px !important;
-						background: var(--l2-background);
-						color: var(--l2-foreground);
+						background: var(
+							--query-builder-v2-background-color,
+							var(--l2-background)
+						);
+						color: var(--query-builder-v2-color, var(--l2-foreground));
 						font-size: 12px;
 						font-weight: 300;
+
+						border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
+						position: relative;
 					}
 
 					.ant-input {
 						border-top-left-radius: 0px !important;
 						border-top-right-radius: 0px !important;
+
+						height: 36px;
+
+						background-color: var(
+							--query-builder-v2-background-color,
+							var(--l2-background)
+						);
+						border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
+
+						position: relative;
+						margin-left: -1px;
+
+						&:hover,
+						&:focus {
+							z-index: 1;
+							border-color: var(--internal-ant-border-color-hover);
+						}
+
+						&:placeholder {
+							color: var(--query-builder-v2-placeholder-color, var(--l3-foreground));
+						}
 					}
 				}
 			}
@@ -323,8 +362,8 @@
 					width: 1px;
 					background: repeating-linear-gradient(
 						to bottom,
-						var(--l1-border),
-						var(--l1-border) 4px,
+						var(--query-builder-v2-border-color, var(--l2-border)),
+						var(--query-builder-v2-border-color, var(--l2-border)) 4px,
 						transparent 4px,
 						transparent 8px
 					);
@@ -395,8 +434,8 @@
 					width: 1px;
 					background: repeating-linear-gradient(
 						to bottom,
-						var(--l1-border),
-						var(--l1-border) 4px,
+						var(--query-builder-v2-border-color, var(--l2-border)),
+						var(--query-builder-v2-border-color, var(--l2-border)) 4px,
 						transparent 4px,
 						transparent 8px
 					);
@@ -412,7 +451,7 @@
 				min-width: 120px;
 
 				border-radius: 2px;
-				border: 1px solid var(--l1-border);
+				border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
 				background: var(--l1-background);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
@@ -457,13 +496,16 @@
 
 		.ant-select-selector {
 			border-radius: 2px;
-			border: 1px solid var(--l1-border) !important;
-			background: var(--l1-background) !important;
-			height: 34px !important;
+			border: 1px solid var(--query-builder-v2-border-color, var(--l2-border)) !important;
+			background: var(
+				--query-builder-v2-background-color,
+				var(--l2-background)
+			) !important;
+			height: 36px !important;
 			box-sizing: border-box !important;
 
 			.ant-select-selection-item {
-				color: var(--l1-foreground);
+				color: var(--query-builder-v2-color, var(--l1-foreground));
 			}
 		}
 

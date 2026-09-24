@@ -217,6 +217,55 @@ describe('useColumnState', () => {
 		});
 	});
 
+	describe('storageKey changes', () => {
+		it('does not auto-show hidden columns when switching between different storageKeys', () => {
+			// Regression test: when switching Pods→Nodes→Pods, hidden columns were
+			// incorrectly shown because prevColumnIdsRef wasn't reset on storageKey change.
+			// The autoShowNewlyAddedColumns effect would see pod columns as "new" (not in
+			// node columns) and unhide them.
+			const KEY_PODS = 'k8s-pods';
+			const KEY_NODES = 'k8s-nodes';
+
+			const podColumns = [
+				col('podName'),
+				col('podStatus'),
+				col('cpu_request', { defaultVisibility: false }),
+				col('memory_request', { defaultVisibility: false }),
+			];
+
+			const nodeColumns = [
+				col('nodeName'),
+				col('nodeStatus'),
+				col('cpu'),
+				col('memory'),
+			];
+
+			// Initialize both tables
+			act(() => {
+				useColumnStore.getState().initializeFromDefaults(KEY_PODS, podColumns);
+				useColumnStore.getState().initializeFromDefaults(KEY_NODES, nodeColumns);
+			});
+
+			// Start with pods - cpu_request and memory_request should be hidden
+			const { result, rerender } = renderHook(
+				({ storageKey, columns }) => useColumnState({ storageKey, columns }),
+				{ initialProps: { storageKey: KEY_PODS, columns: podColumns } },
+			);
+
+			expect(result.current.hiddenColumnIds).toContain('cpu_request');
+			expect(result.current.hiddenColumnIds).toContain('memory_request');
+
+			// Switch to nodes
+			rerender({ storageKey: KEY_NODES, columns: nodeColumns });
+
+			// Switch back to pods - hidden columns should STILL be hidden
+			rerender({ storageKey: KEY_PODS, columns: podColumns });
+
+			expect(result.current.hiddenColumnIds).toContain('cpu_request');
+			expect(result.current.hiddenColumnIds).toContain('memory_request');
+		});
+	});
+
 	describe('actions', () => {
 		it('hideColumn hides a column', () => {
 			const columns = [col('a'), col('b')];

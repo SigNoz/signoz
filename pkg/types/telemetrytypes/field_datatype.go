@@ -190,6 +190,7 @@ func (FieldDataType) Enum() []any {
 		FieldDataTypeFloat64,
 		FieldDataTypeInt64,
 		FieldDataTypeNumber,
+		FieldDataTypeUnspecified,
 		// FieldDataTypeArrayString,
 		// FieldDataTypeArrayFloat64,
 		// FieldDataTypeArrayBool,

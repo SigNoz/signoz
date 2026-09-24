@@ -9,7 +9,7 @@ import (
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -52,7 +52,7 @@ func (m *module) ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetype
 
 	response := []promotetypes.PromotePath{}
 	for _, path := range promotedPaths {
-		fullPath := telemetrylogs.BodyPromotedColumnPrefix + path
+		fullPath := logstelemetryschema.BodyPromotedColumnPrefix + path
 		path = telemetrytypes.BodyJSONStringSearchPrefix + path
 		item := promotetypes.PromotePath{
 			Path:    path,
@@ -68,7 +68,7 @@ func (m *module) ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetype
 
 	// add the paths that are not promoted but have indexes
 	for path, indexes := range aggr {
-		path := strings.TrimPrefix(path, telemetrylogs.BodyV2ColumnPrefix)
+		path := strings.TrimPrefix(path, logstelemetryschema.BodyV2ColumnPrefix)
 		path = telemetrytypes.BodyJSONStringSearchPrefix + path
 		response = append(response, promotetypes.PromotePath{
 			Path:    path,
@@ -108,8 +108,8 @@ func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Ind
 
 	for _, index := range indexes {
 		alterStmt := schemamigrator.AlterTableAddIndex{
-			Database: telemetrylogs.DBName,
-			Table:    telemetrylogs.LogsV2LocalTableName,
+			Database: logstelemetryschema.DBName,
+			Table:    logstelemetryschema.LogsV2LocalTableName,
 			Index:    index,
 		}
 		op := alterStmt.OnCluster(m.telemetryStore.Cluster())
@@ -153,10 +153,10 @@ func (m *module) PromoteAndIndexPaths(
 			}
 		}
 		if len(it.Indexes) > 0 {
-			parentColumn := telemetrylogs.LogsV2BodyV2Column
+			parentColumn := logstelemetryschema.LogsV2BodyV2Column
 			// if the path is already promoted or is being promoted, add it to the promoted column
 			if _, promoted := existingPromotedPaths[it.Path]; promoted || it.Promote {
-				parentColumn = telemetrylogs.LogsV2BodyPromotedColumn
+				parentColumn = logstelemetryschema.LogsV2BodyPromotedColumn
 			}
 
 			for _, index := range it.Indexes {

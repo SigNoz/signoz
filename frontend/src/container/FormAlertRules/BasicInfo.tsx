@@ -119,6 +119,7 @@ function BasicInfo({
 					<SeveritySelect
 						getPopupContainer={popupContainer}
 						defaultValue="critical"
+						data-testid="alert-severity-select"
 						onChange={(value: unknown | string): void => {
 							const s = (value as string) || 'critical';
 							setAlertDef({
@@ -147,6 +148,7 @@ function BasicInfo({
 					]}
 				>
 					<InputSmall
+						data-testid="alert-name-input-v1"
 						onChange={(e): void => {
 							setAlertDef({
 								...alertDef,
@@ -161,6 +163,7 @@ function BasicInfo({
 					name={['annotations', 'description']}
 				>
 					<TextareaMedium
+						data-testid="alert-description-input"
 						onChange={(e): void => {
 							setAlertDef({
 								...alertDef,

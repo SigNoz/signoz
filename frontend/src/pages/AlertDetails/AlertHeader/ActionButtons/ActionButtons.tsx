@@ -117,7 +117,11 @@ function AlertActionButtons({
 			<div className="alert-action-buttons">
 				<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
 					{isAlertRuleDisabled !== undefined && (
-						<Switch onChange={toggleAlertRule} value={!isAlertRuleDisabled} />
+						<Switch
+							onChange={toggleAlertRule}
+							value={!isAlertRuleDisabled}
+							testId="alert-actions-toggle"
+						/>
 					)}
 				</Tooltip>
 				<CopyToClipboard textToCopy={window.location.href} />
@@ -129,6 +133,7 @@ function AlertActionButtons({
 						<Tooltip title="More options">
 							<Button
 								type="text"
+								data-testid="alert-actions-menu"
 								icon={
 									<Ellipsis
 										size={16}

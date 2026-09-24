@@ -8,6 +8,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlmigration"
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
@@ -145,7 +147,7 @@ func newSyncMigrator(ctx context.Context, config signoz.Config, sqlstoreProvider
 		return nil, err
 	}
 
-	sqlmigrations, err := sqlmigration.New(ctx, providerSettings, config.SQLMigration, signoz.NewSQLMigrationProviderFactories(sqlstore, sqlschema, telemetrystore, providerSettings))
+	sqlmigrations, err := sqlmigration.New(ctx, providerSettings, config.SQLMigration, signoz.NewSQLMigrationProviderFactories(sqlstore, sqlschema, telemetrystore, providerSettings, impldashboard.NewStore(sqlstore), impltag.NewModule(impltag.NewStore(sqlstore))))
 	if err != nil {
 		return nil, err
 	}

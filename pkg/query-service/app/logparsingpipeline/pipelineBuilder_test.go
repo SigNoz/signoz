@@ -325,6 +325,17 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 				"test_json": "bad json",
 			}),
 		}, {
+			"json parser should quietly ignore log with non JSON body",
+			pipelinetypes.PipelineOperator{
+				ID:        "json",
+				Type:      "json_parser",
+				Enabled:   true,
+				Name:      "json parser",
+				ParseFrom: "body",
+				ParseTo:   "attributes",
+			},
+			makeTestLog("plain text log", map[string]string{}),
+		}, {
 			"move parser should ignore non matching logs",
 			pipelinetypes.PipelineOperator{
 				ID:      "move",
@@ -894,8 +905,8 @@ func TestProcessJSONParser_WithFlatteningAndMapping(t *testing.T) {
 	require.Equal(t, 1, parentOp.MaxFlatteningDepth)
 	require.Nil(t, parentOp.Mapping) // Mapping should be removed
 	require.Nil(t, parent.Mapping)   // Mapping should be removed
-	require.Contains(t, parentOp.If, `isJSON(body)`)
-	require.Contains(t, parentOp.If, `type(body)`)
+	require.Empty(t, parentOp.If)
+	require.Equal(t, signozstanzahelper.SendOnErrorQuiet, parentOp.OnError)
 
 	require.Equal(t, 1+totalOps, len(ops))
 
@@ -951,7 +962,8 @@ func TestProcessJSONParser_WithoutMapping(t *testing.T) {
 	require.True(t, op.EnableFlattening)
 	require.True(t, op.EnablePaths)
 	require.Equal(t, "parsed", op.PathPrefix)
-	require.Contains(t, op.If, `isJSON(body)`)
+	require.Empty(t, op.If)
+	require.Equal(t, signozstanzahelper.SendOnErrorQuiet, op.OnError)
 }
 
 func TestProcessJSONParser_Simple(t *testing.T) {
@@ -975,7 +987,8 @@ func TestProcessJSONParser_Simple(t *testing.T) {
 	require.False(t, op.EnableFlattening)
 	require.False(t, op.EnablePaths)
 	require.Equal(t, "", op.PathPrefix)
-	require.Contains(t, op.If, `isJSON(body)`)
+	require.Empty(t, op.If)
+	require.Equal(t, signozstanzahelper.SendOnErrorQuiet, op.OnError)
 }
 
 func TestProcessJSONParser_InvalidType(t *testing.T) {

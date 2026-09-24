@@ -1,17 +1,18 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { Card, Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
+import BarChart from 'lib/visualization/charts/BarChart/BarChart';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
+import { StackMode } from 'lib/uPlotV2/config/types';
 import {
 	LegendPosition,
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import type uPlot from 'uplot';
-import type { UsageResponsePayloadProps } from 'api/billing/getUsage';
+import type { SubscriptiontypesGettableSubscriptionUsageDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { BillingBarChartTooltip } from './BillingBarChartTooltip';
 import { prepareBillingBarConfig } from './prepareBillingBarConfig';
@@ -24,7 +25,7 @@ import {
 import styles from './BillingUsageGraph.module.scss';
 
 interface BillingUsageGraphProps {
-	data: Partial<UsageResponsePayloadProps>;
+	data: Partial<SubscriptiontypesGettableSubscriptionUsageDTO>;
 	billAmount: number;
 }
 
@@ -54,7 +55,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 					const currentDay = breakdown.dayWiseBreakdown.breakdown[0];
 					const nextDay = {
 						...currentDay,
-						timestamp: currentDay.timestamp + 86400,
+						timestamp: (currentDay.timestamp ?? 0) + 86400,
 						count: 0,
 						size: 0,
 						quantity: 0,
@@ -93,7 +94,9 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 
 	const { startTime, endTime } = useMemo(
 		() =>
-			calculateStartEndTime(normalizedData as Partial<UsageResponsePayloadProps>),
+			calculateStartEndTime(
+				normalizedData as Partial<SubscriptiontypesGettableSubscriptionUsageDTO>,
+			),
 		[normalizedData],
 	);
 
@@ -131,9 +134,9 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 			<div ref={graphRef} className={styles.graphContainer}>
 				{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 					<BarChart
+						stack={StackMode.Normal}
 						config={config}
 						data={chartData}
-						isStackedBarChart
 						legendConfig={{ position: LegendPosition.BOTTOM }}
 						customTooltip={renderBillingTooltip}
 						width={containerDimensions.width}

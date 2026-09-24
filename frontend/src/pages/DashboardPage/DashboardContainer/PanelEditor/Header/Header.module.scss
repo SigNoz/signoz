@@ -1,0 +1,22 @@
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 16px;
+	background-color: var(--l1-background-60);
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}

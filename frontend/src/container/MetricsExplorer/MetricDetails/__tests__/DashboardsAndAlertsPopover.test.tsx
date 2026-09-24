@@ -23,7 +23,7 @@ const useGetMetricAlertsMock = jest.spyOn(
 );
 const useGetMetricDashboardsMock = jest.spyOn(
 	metricsExplorerHooks,
-	'useGetMetricDashboards',
+	'useGetMetricDashboardsV2',
 );
 
 describe('DashboardsAndAlertsPopover', () => {
@@ -153,11 +153,15 @@ describe('DashboardsAndAlertsPopover', () => {
 		);
 	});
 
-	it('renders unique dashboards even when there are duplicates', async () => {
+	it('collapses multiple panels of the same dashboard into one entry', async () => {
 		useGetMetricDashboardsMock.mockReturnValue(
 			getMockDashboardsData({
 				data: {
-					dashboards: [MOCK_DASHBOARD_1, MOCK_DASHBOARD_2, MOCK_DASHBOARD_1],
+					dashboards: [
+						MOCK_DASHBOARD_1,
+						MOCK_DASHBOARD_2,
+						{ ...MOCK_DASHBOARD_1, panelId: '3', panelName: 'Panel 3' },
+					],
 				},
 			}),
 		);

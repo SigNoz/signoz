@@ -191,9 +191,6 @@ function TimeSeries({
 		if (metrics[0] && yAxisUnit) {
 			updateMetricMetadata(
 				{
-					pathParams: {
-						metricName: metricNames[0],
-					},
 					data: buildUpdateMetricYAxisUnitPayload(
 						metricNames[0],
 						metrics[0],
@@ -314,6 +311,7 @@ function TimeSeries({
 									dataSource={DataSource.METRICS}
 									error={queries[index].error as APIError}
 									setWarning={setWarning}
+									allowExport
 								/>
 							</div>
 						);

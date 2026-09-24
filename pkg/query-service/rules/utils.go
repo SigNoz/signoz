@@ -57,9 +57,6 @@ func GenerateMetricQueryCHArgs(
 		queryArgs = append(queryArgs, temporality.StringValue())
 	}
 
-	// Add normalized flag
-	queryArgs = append(queryArgs, false)
-
 	// Step2: Add temporal aggregation args
 	// build args for filtering signoz_metrics.distributed_samples_v4 table
 	temporalAggArgs := []interface{}{

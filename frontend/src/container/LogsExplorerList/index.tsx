@@ -211,9 +211,11 @@ function LogsExplorerList({
 					data={logs}
 					isLoading={isLoading || isFetching}
 					onEndReached={onEndReached}
-					isRowActive={(log): boolean =>
-						log.id === activeLog?.id || log.id === activeLogId
+					isRowActive={(log): boolean => log.id === activeLog?.id}
+					getRowClassName={(log): string =>
+						log.id === activeLogId ? 'logs-linked-row' : ''
 					}
+					getRowTestId={(log): string => `logs-table-row-${log.id}`}
 					getRowStyle={(log): CSSProperties =>
 						({
 							'--row-active-bg': getRowBackgroundColor(
@@ -226,10 +228,13 @@ function LogsExplorerList({
 							),
 						}) as CSSProperties
 					}
-					onRowClick={(log): void => {
-						handleSetActiveLog(log);
+					onRowClick={(log, _itemKey, { isActive }): void => {
+						if (isActive) {
+							handleCloseLogDetail();
+						} else {
+							handleSetActiveLog(log);
+						}
 					}}
-					onRowDeactivate={handleCloseLogDetail}
 					activeRowIndex={activeLogIndex}
 					renderRowActions={(log): ReactNode => (
 						<LogLinesActionButtons
@@ -282,6 +287,7 @@ function LogsExplorerList({
 		options.maxLines,
 		options.fontSize,
 		activeLogIndex,
+		activeLogId,
 		logs,
 		onEndReached,
 		getItemContent,

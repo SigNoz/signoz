@@ -7,13 +7,10 @@ import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { QueryParams } from 'constants/query';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
-import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
-import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
 import {
@@ -29,6 +26,7 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
+import { RESTRICTED_SELECTED_FIELDS } from '../config';
 import { DataType } from '../TableView';
 import {
 	filterKeyForField,
@@ -141,12 +139,14 @@ export default function TableViewActions(
 
 	const { pathname } = useLocation();
 	const { stagedQuery, updateQueriesData } = useQueryBuilder();
-	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const { dataType, logType: fieldType } = getFieldAttributes(record.field);
 
-	// there is no option for where clause in old logs explorer and live logs page
-	const isOldLogsExplorerOrLiveLogsPage = useMemo(
-		() => pathname === ROUTES.OLD_LOGS_EXPLORER || pathname === ROUTES.LIVE_LOGS,
+	// there is no option for where clause in live logs page or infra monitoring
+	const isLiveLogsOrInfraPage = useMemo(
+		() =>
+			pathname === ROUTES.LIVE_LOGS ||
+			pathname === ROUTES.INFRASTRUCTURE_MONITORING_HOSTS ||
+			pathname === ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES,
 		[pathname],
 	);
 
@@ -198,8 +198,6 @@ export default function TableViewActions(
 		);
 
 		const queryData: ICurrentQueryData = {
-			name: viewName,
-			id: updatedQuery.id,
 			query: updatedQuery,
 		};
 
@@ -211,7 +209,6 @@ export default function TableViewActions(
 		fieldType,
 		dataType,
 		handleChangeSelectedView,
-		viewName,
 	]);
 
 	const handleReplaceFilter = useCallback((): void => {
@@ -261,8 +258,6 @@ export default function TableViewActions(
 		);
 
 		const queryData: ICurrentQueryData = {
-			name: viewName,
-			id: updatedQuery.id,
 			query: updatedQuery,
 		};
 
@@ -275,7 +270,6 @@ export default function TableViewActions(
 		dataType,
 		fieldData,
 		handleChangeSelectedView,
-		viewName,
 	]);
 
 	// Memoize textToCopy computation
@@ -405,7 +399,7 @@ export default function TableViewActions(
 									)}
 								/>
 							</Tooltip>
-							{!isOldLogsExplorerOrLiveLogsPage && (
+							{!isLiveLogsOrInfraPage && (
 								<Popover
 									open={isOpen}
 									onOpenChange={setIsOpen}
@@ -492,7 +486,7 @@ export default function TableViewActions(
 								)}
 							/>
 						</Tooltip>
-						{!isOldLogsExplorerOrLiveLogsPage && (
+						{!isLiveLogsOrInfraPage && (
 							<Popover
 								open={isOpen}
 								onOpenChange={setIsOpen}

@@ -141,7 +141,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationServiceAccount(ctx context.Cont
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration service account: %w", err))
 	}
-	err = ah.Signoz.Modules.ServiceAccount.SetRoleByName(ctx, orgId, cloudIntegrationServiceAccount.ID, authtypes.SigNozViewerRoleName)
+	_, err = ah.Signoz.Modules.ServiceAccount.SetRoleByName(ctx, orgId, cloudIntegrationServiceAccount.ID, authtypes.SigNozViewerRoleName)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration service account: %w", err))
 	}

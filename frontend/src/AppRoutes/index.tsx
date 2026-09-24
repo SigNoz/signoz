@@ -1,11 +1,12 @@
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
+import AppPageProviders from 'app/AppPageProviders';
+import AppShell from 'app/AppShell';
 import AppLoading from 'components/AppLoading/AppLoading';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import NotFound from 'components/NotFound';
@@ -17,22 +18,15 @@ import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
-import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { NotificationProvider } from 'hooks/useNotifications';
-import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { StatusCodes } from 'http-status-codes';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
-import { CmdKProvider } from 'providers/cmdKProvider';
-import { ErrorModalProvider } from 'providers/ErrorModalProvider';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
 
@@ -44,8 +38,17 @@ import defaultRoutes, {
 	SUPPORT_ROUTE,
 } from './routes';
 
+const appRouter = (children: ReactNode): ReactNode => (
+	<Router history={history}>
+		<CompatRouter>{children}</CompatRouter>
+	</Router>
+);
+
+const appLayout = (children: ReactNode): ReactNode => (
+	<AppLayout>{children}</AppLayout>
+);
+
 function App(): JSX.Element {
-	const themeConfig = useThemeConfig();
 	const {
 		user,
 		isFetchingUser,
@@ -292,10 +295,10 @@ function App(): JSX.Element {
 				isChatSupportEnabled &&
 				!showAddCreditCardModal &&
 				(isCloudUser || isEnterpriseSelfHostedUser) &&
-				(window.signozBootData?.settings?.pylon.enabled ?? true)
+				window.signozBootData?.settings?.pylon?.enabled
 			) {
 				const email = user.email || '';
-				const secret = process.env.PYLON_IDENTITY_SECRET || '';
+				const secret = window.signozBootData?.settings?.pylon?.identitySecret || '';
 				let emailHash = '';
 
 				if (email && secret) {
@@ -304,7 +307,7 @@ function App(): JSX.Element {
 
 				window.pylon = {
 					chat_settings: {
-						app_id: process.env.PYLON_APP_ID,
+						app_id: window.signozBootData?.settings?.pylon?.appId,
 						email: user.email,
 						name: user.displayName || user.email,
 						email_hash: emailHash,
@@ -335,24 +338,35 @@ function App(): JSX.Element {
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
 			if (
-				(window.signozBootData?.settings?.posthog.enabled ?? true) &&
-				process.env.POSTHOG_KEY
+				window.signozBootData?.settings?.posthog?.enabled &&
+				window.signozBootData?.settings?.posthog?.key
 			) {
-				posthog.init(process.env.POSTHOG_KEY, {
-					api_host: 'https://us.i.posthog.com',
+				posthog.init(window.signozBootData.settings.posthog.key, {
+					api_host: window.signozBootData.settings.posthog.apiHost,
+					ui_host: window.signozBootData.settings.posthog.uiHost,
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
 			}
 
 			if (
 				!isSentryInitialized &&
-				(window.signozBootData?.settings?.sentry.enabled ?? true)
+				window.signozBootData?.settings?.sentry?.enabled
 			) {
 				Sentry.init({
-					dsn: process.env.SENTRY_DSN,
-					tunnel: process.env.TUNNEL_URL,
+					dsn: window.signozBootData.settings.sentry.dsn,
+					tunnel: window.signozBootData.settings.sentry.tunnel,
 					environment: process.env.ENVIRONMENT,
 					release: process.env.VERSION,
+					// A tab that outlived a deploy requests hashed assets the new build no longer
+					// has. `lazyRetry` recovers by reloading once, so this class is not worth
+					// reporting. The stylesheet message is Vite's own; the module ones are the
+					// same failure worded differently by Chromium, Firefox and Safari.
+					ignoreErrors: [
+						/Unable to preload CSS for/,
+						/Failed to fetch dynamically imported module/,
+						/error loading dynamically imported module/,
+						/Importing a module script failed/,
+					],
 					integrations: [
 						// Kept for the `transaction` tag used in routing, even though
 						// tracing is disabled. Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
@@ -365,7 +379,23 @@ function App(): JSX.Element {
 					tracesSampleRate: 0, // Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
 					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
-					beforeSend(event) {
+					beforeSend(event, hint) {
+						const error = hint?.originalException as
+							| { name?: string; code?: string | number }
+							| undefined;
+
+						// Ignore benign aborted/cancelled requests (axios + fetch).
+						if (error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED') {
+							return null;
+						}
+						if (error?.name === 'AbortError') {
+							return null;
+						}
+						// Ignore benign Monaco cancellation errors (name 'Canceled').
+						if (error?.name === 'Canceled') {
+							return null;
+						}
+
 						// Drop the event if its level is 'warning' or 'info'
 						if (event.level === 'warning' || event.level === 'info') {
 							return null;
@@ -424,48 +454,36 @@ function App(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<ConfigProvider theme={themeConfig}>
-				<Router history={history}>
-					<CompatRouter>
-						<CmdKProvider>
-							<NotificationProvider>
-								<ErrorModalProvider>
-									{isLoggedInState && <CmdKPalette userRole={user.role} />}
-									{isLoggedInState && (
-										<ShiftHoldOverlayController userRole={user.role} />
-									)}
-									<PrivateRoute>
-										<ResourceProvider>
-											<QueryBuilderProvider>
-												<KeyboardHotkeysProvider>
-													<AppLayout>
-														<PreferenceContextProvider>
-															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																<Switch>
-																	{routes.map(({ path, component, exact }) => (
-																		<Route
-																			key={`${path}`}
-																			exact={exact}
-																			path={path}
-																			component={component}
-																		/>
-																	))}
-																	<Route exact path="/" component={Home} />
-																	<Route path="*" component={NotFound} />
-																</Switch>
-															</Suspense>
-														</PreferenceContextProvider>
-													</AppLayout>
-												</KeyboardHotkeysProvider>
-											</QueryBuilderProvider>
-										</ResourceProvider>
-									</PrivateRoute>
-								</ErrorModalProvider>
-							</NotificationProvider>
-						</CmdKProvider>
-					</CompatRouter>
-				</Router>
-			</ConfigProvider>
+			<AppShell
+				router={appRouter}
+				overlays={
+					isLoggedInState && (
+						<>
+							<CmdKPalette userRole={user.role} />
+							<ShiftHoldOverlayController userRole={user.role} />
+						</>
+					)
+				}
+			>
+				<PrivateRoute>
+					<AppPageProviders layout={appLayout}>
+						<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+							<Switch>
+								{routes.map(({ path, component, exact }) => (
+									<Route
+										key={`${path}`}
+										exact={exact}
+										path={path}
+										component={component}
+									/>
+								))}
+								<Route exact path="/" component={Home} />
+								<Route path="*" component={NotFound} />
+							</Switch>
+						</Suspense>
+					</AppPageProviders>
+				</PrivateRoute>
+			</AppShell>
 		</Sentry.ErrorBoundary>
 	);
 }

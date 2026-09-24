@@ -206,6 +206,7 @@
  * | `getMinMaxTime(time?)` | Get min/max (fresh if auto-refresh enabled, cached otherwise) |
  * | `computeAndStoreMinMax()` | Compute fresh values and cache them |
  * | `getAutoRefreshQueryKey(time, ...parts)` | Build scoped query key for this store instance |
+ * | `resetToParentTime()` | Reset to parent store's time (only if `inheritGlobalTime` was used). Clears URL params. Returns `true` on success |
  *
  * ### Utilities
  *
@@ -235,7 +236,7 @@
  * | Option | Type | Description |
  * |--------|------|-------------|
  * | `name` | `string` | Scope query keys to this store (enables isolated invalidation) |
- * | `inheritGlobalTime` | `boolean` | Initialize with parent/global time value |
+ * | `inheritGlobalTime` | `boolean` | Initialize with parent/global time value. Enables `resetToParentTime()` |
  * | `initialTime` | `string` | Initial time if not inheriting |
  * | `enableUrlParams` | `boolean \| object` | Sync time to URL query params |
  * | `removeQueryParamsOnUnmount` | `boolean` | Clean URL params on unmount |
@@ -341,7 +342,39 @@
  * }
  * ```
  *
- * ### Example 3: Nested Contexts
+ * ### Example 3: Reset to Parent Time
+ *
+ * When using `inheritGlobalTime`, you can reset the child store back to the parent's time:
+ *
+ * ```tsx
+ * function DrawerHeader({ onClose }) {
+ *   const selectedTime = useGlobalTime((s) => s.selectedTime);
+ *   const resetToParentTime = useGlobalTime((s) => s.resetToParentTime);
+ *   const parentStore = useGlobalTime((s) => s.parentStore);
+ *
+ *   const handleReset = () => {
+ *     // Returns true if reset succeeded, false if no parent store
+ *     const success = resetToParentTime();
+ *     if (success) {
+ *       // URL params are automatically cleared
+ *       console.log('Reset to parent time');
+ *     }
+ *   };
+ *
+ *   return (
+ *     <div>
+ *       <DateTimeSelectionV3 />
+ *       {parentStore && (
+ *         <Button onClick={handleReset}>
+ *           Reset to Global Time
+ *         </Button>
+ *       )}
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * ### Example 4: Nested Contexts
  *
  * Contexts can be nested - each level creates isolation:
  *
@@ -379,9 +412,10 @@
  * }
  * ```
  *
- * ### Example 4: URL Sync for Shareable Links
+ * ### Example 5: URL Sync for Shareable Links
  *
- * Persist time selection to URL for shareable links:
+ * Persist time selection to URL for shareable links. When using `resetToParentTime()`,
+ * URL params are automatically cleared:
  *
  * ```tsx
  * function TracesExplorer() {
@@ -400,7 +434,7 @@
  * }
  * ```
  *
- * ### Example 5: localStorage Persistence
+ * ### Example 6: localStorage Persistence
  *
  * Remember user's last selected time across sessions:
  *

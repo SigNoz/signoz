@@ -7,9 +7,8 @@ import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryParams } from 'constants/query';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
+import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
@@ -69,9 +68,7 @@ function ExplorerCard({
 		setIsOpen(newOpen);
 	};
 
-	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
-
-	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
+	const { viewName, viewKey } = useGetSavedViewParams();
 
 	const { options } = useOptionsMenu({
 		storageKey:

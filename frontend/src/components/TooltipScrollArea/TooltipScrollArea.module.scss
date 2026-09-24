@@ -1,0 +1,20 @@
+@use '../../styles/scrollbar' as *;
+
+// Padding for the tooltip body that hosts a scroll area: the right side is given
+// up so the scrollbar can sit flush against the tooltip's edge instead of floating
+// inset from it. `.scrollArea` puts that spacing back between the text and the bar.
+.tooltipContent {
+	--tooltip-padding: var(--spacing-2) 0 var(--spacing-2) var(--spacing-4);
+}
+
+// How tall a hover reveal grows before its content starts scrolling.
+.scrollArea {
+	max-height: 480px;
+	overflow-y: auto;
+	// Keep the page behind the tooltip still once the list hits its end.
+	overscroll-behavior: contain;
+	// Gap between the content and the scrollbar (or the tooltip edge when short).
+	padding-right: var(--spacing-4);
+
+	@include custom-scrollbar;
+}

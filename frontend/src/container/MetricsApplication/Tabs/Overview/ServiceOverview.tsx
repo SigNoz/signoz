@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridCardLayout/GridCard';
+import Graph from 'container/WidgetCard/Card';
 import {
 	GraphTitle,
 	SERVICE_CHART_ID,
@@ -56,10 +56,6 @@ function ServiceOverview({
 		[isSpanMetricEnable, queries],
 	);
 
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const latencyWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -71,7 +67,6 @@ function ServiceOverview({
 						tagFilterItems,
 						isSpanMetricEnable,
 						topLevelOperationsRoute,
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -81,13 +76,7 @@ function ServiceOverview({
 				yAxisUnit: 'ns',
 				id: SERVICE_CHART_ID.latency,
 			}),
-		[
-			isSpanMetricEnable,
-			servicename,
-			tagFilterItems,
-			topLevelOperationsRoute,
-			dotMetricsEnabled,
-		],
+		[isSpanMetricEnable, servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const isQueryEnabled =

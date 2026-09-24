@@ -1,0 +1,164 @@
+.valueRow {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	min-height: 24px;
+}
+
+.checkbox {
+	display: inline-flex;
+	align-items: center;
+}
+
+.valueButton {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--spacing-2);
+	width: calc(100% - 24px);
+	cursor: pointer;
+}
+
+.content {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	min-width: 0;
+}
+
+.valueLabel {
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.actions {
+	display: grid;
+	align-items: center;
+	justify-items: end;
+
+	// Stack badge / only / toggle in a single cell so the crossfade overlaps
+	// instead of laying them side-by-side mid-transition.
+	> * {
+		grid-area: 1 / 1;
+	}
+}
+
+.badge {
+	opacity: 1;
+	transition:
+		opacity 0.16s ease,
+		display 0.16s allow-discrete;
+}
+
+.onlyButton {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transform: translateX(4px);
+	transition:
+		opacity 0.16s ease,
+		transform 0.16s ease,
+		display 0.16s allow-discrete;
+	--button-height: 21px;
+	--button-padding: var(--spacing-5);
+
+	&:hover {
+		background-color: unset;
+	}
+}
+
+.toggleButton {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transform: translateX(4px);
+	transition:
+		opacity 0.16s ease,
+		transform 0.16s ease,
+		display 0.16s allow-discrete;
+	--button-height: 21px;
+	--button-padding: var(--spacing-5);
+
+	&:hover {
+		background-color: unset;
+	}
+}
+
+.isDisabled {
+	cursor: not-allowed;
+
+	.valueLabel {
+		color: var(--l3-foreground);
+	}
+
+	.onlyButton {
+		cursor: not-allowed;
+		color: var(--l3-foreground);
+	}
+
+	.toggleButton {
+		cursor: not-allowed;
+		color: var(--l3-foreground);
+	}
+}
+
+.valueButton:hover {
+	.onlyButton {
+		display: flex;
+		opacity: 1;
+		transform: translateX(0);
+
+		@starting-style {
+			opacity: 0;
+			transform: translateX(4px);
+		}
+	}
+
+	.badge {
+		display: none;
+		opacity: 0;
+	}
+}
+
+.checkbox:hover ~ .valueButton {
+	.toggleButton {
+		display: flex;
+		opacity: 1;
+		transform: translateX(0);
+
+		@starting-style {
+			opacity: 0;
+			transform: translateX(4px);
+		}
+	}
+
+	.badge {
+		display: none;
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.badge,
+	.onlyButton,
+	.toggleButton {
+		transition: none;
+	}
+}
+
+.indicatorFalse {
+	width: 2px;
+	height: 11px;
+	border-radius: 2px;
+	background: var(--danger-background);
+}
+
+.indicatorTrue {
+	width: 2px;
+	height: 11px;
+	border-radius: 2px;
+	background: var(--bg-forest-500);
+}

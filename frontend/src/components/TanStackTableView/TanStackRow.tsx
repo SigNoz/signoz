@@ -8,23 +8,23 @@ import { TableRowContext } from './types';
 
 import tableStyles from './TanStackTable.module.scss';
 
-type TanStackRowCellsProps<TData> = {
+type TanStackRowCellsProps<TData, TItemKey = string> = {
 	row: TanStackRowModel<TData>;
-	context: TableRowContext<TData> | undefined;
+	context: TableRowContext<TData, TItemKey> | undefined;
 	itemKind: 'row' | 'expansion';
 	hasSingleColumn: boolean;
 	columnOrderKey: string;
 	columnVisibilityKey: string;
 };
 
-function TanStackRowCellsInner<TData>({
+function TanStackRowCellsInner<TData, TItemKey = string>({
 	row,
 	context,
 	itemKind,
 	hasSingleColumn,
 	columnOrderKey: _columnOrderKey,
 	columnVisibilityKey: _columnVisibilityKey,
-}: TanStackRowCellsProps<TData>): JSX.Element {
+}: TanStackRowCellsProps<TData, TItemKey>): JSX.Element {
 	const hasHovered = useIsRowHovered(row.id);
 	const rowData = row.original;
 	const visibleCells = row.getVisibleCells();
@@ -33,15 +33,16 @@ function TanStackRowCellsInner<TData>({
 	// Stable references via destructuring, keep them as is
 	const onRowClick = context?.onRowClick;
 	const onRowClickNewTab = context?.onRowClickNewTab;
-	const onRowDeactivate = context?.onRowDeactivate;
 	const isRowActive = context?.isRowActive;
 	const getRowKeyData = context?.getRowKeyData;
 	const rowIndex = row.index;
 
 	const handleClick = useCallback(
 		(event: MouseEvent<HTMLTableCellElement>) => {
+			// Fall back to an empty key so row clicks still fire for consumers
+			// that don't provide getRowKey (e.g. Logs Explorer / Live Logs).
 			const keyData = getRowKeyData?.(rowIndex);
-			const itemKey = keyData?.itemKey ?? '';
+			const itemKey = keyData?.itemKey ?? ('' as TItemKey);
 
 			// Handle ctrl+click or cmd+click (open in new tab)
 			if ((event.ctrlKey || event.metaKey) && onRowClickNewTab) {
@@ -50,21 +51,9 @@ function TanStackRowCellsInner<TData>({
 			}
 
 			const isActive = isRowActive?.(rowData) ?? false;
-			if (isActive && onRowDeactivate) {
-				onRowDeactivate();
-			} else {
-				onRowClick?.(rowData, itemKey);
-			}
+			onRowClick?.(rowData, itemKey, { isActive });
 		},
-		[
-			isRowActive,
-			onRowDeactivate,
-			onRowClick,
-			onRowClickNewTab,
-			rowData,
-			getRowKeyData,
-			rowIndex,
-		],
+		[isRowActive, onRowClick, onRowClickNewTab, rowData, getRowKeyData, rowIndex],
 	);
 
 	if (itemKind === 'expansion') {
@@ -118,7 +107,6 @@ function areRowCellsPropsEqual<TData>(
 		prev.columnVisibilityKey === next.columnVisibilityKey &&
 		prev.context?.onRowClick === next.context?.onRowClick &&
 		prev.context?.onRowClickNewTab === next.context?.onRowClickNewTab &&
-		prev.context?.onRowDeactivate === next.context?.onRowDeactivate &&
 		prev.context?.isRowActive === next.context?.isRowActive &&
 		prev.context?.getRowKeyData === next.context?.getRowKeyData &&
 		prev.context?.renderRowActions === next.context?.renderRowActions &&
@@ -131,6 +119,8 @@ function areRowCellsPropsEqual<TData>(
 const TanStackRowCells = memo(
 	TanStackRowCellsInner,
 	areRowCellsPropsEqual as any,
-) as <T>(props: TanStackRowCellsProps<T>) => JSX.Element;
+) as <T, TItemKey = string>(
+	props: TanStackRowCellsProps<T, TItemKey>,
+) => JSX.Element;
 
 export default TanStackRowCells;

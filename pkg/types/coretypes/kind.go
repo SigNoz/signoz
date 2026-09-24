@@ -39,6 +39,49 @@ func MustNewKind(str string) Kind {
 	return kind
 }
 
+func (name Kind) Enum() []any {
+	return []any{
+		KindAnonymous,
+		KindOrganization,
+		KindRole,
+		KindServiceAccount,
+		KindUser,
+		KindNotificationChannel,
+		KindRoutePolicy,
+		KindApdexSetting,
+		KindAuthDomain,
+		KindSession,
+		KindCloudIntegration,
+		KindCloudIntegrationService,
+		KindIntegration,
+		KindDashboard,
+		KindPublicDashboard,
+		KindIngestionKey,
+		KindIngestionLimit,
+		KindPipeline,
+		KindUserPreference,
+		KindOrgPreference,
+		KindQuickFilter,
+		KindTTLSetting,
+		KindRule,
+		KindPlannedMaintenance,
+		KindSavedView,
+		KindTraceFunnel,
+		KindFactorPassword,
+		KindFactorAPIKey,
+		KindLicense,
+		KindSubscription,
+		KindDeploymentHost,
+		KindLogs,
+		KindTraces,
+		KindMetrics,
+		KindAuditLogs,
+		KindMeterMetrics,
+		KindLogsField,
+		KindTracesField,
+	}
+}
+
 func (name Kind) String() string {
 	return name.val
 }

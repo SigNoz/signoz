@@ -1,6 +1,8 @@
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 // Mapping between panel types and explorer views
 export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {
@@ -10,8 +12,11 @@ export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {
 	[PANEL_TYPES.TABLE]: ExplorerViews.TABLE,
 	[PANEL_TYPES.VALUE]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.BAR]: ExplorerViews.TIMESERIES,
+	[PANEL_TYPES.AREA]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.PIE]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.HISTOGRAM]: ExplorerViews.TIMESERIES,
+	// Dashboard-only visualisation; explorers never offer it.
+	[PANEL_TYPES.TEXT]: ExplorerViews.LIST,
 	[PANEL_TYPES.EMPTY_WIDGET]: ExplorerViews.LIST,
 };
 
@@ -50,3 +55,41 @@ export const getExplorerViewFromUrl = (
 export const getExplorerViewForPanelType = (
 	panelType: PANEL_TYPES,
 ): ExplorerViews => panelTypeToExplorerView[panelType];
+
+export interface MetricsExplorerUrlParams {
+	query: Query;
+	relativeTime?: string;
+	startTimeMs?: number;
+	endTimeMs?: number;
+}
+
+export const getMetricsExplorerUrl = ({
+	query,
+	relativeTime,
+	startTimeMs,
+	endTimeMs,
+}: MetricsExplorerUrlParams): string => {
+	const params = new URLSearchParams();
+	params.set(
+		QueryParams.compositeQuery,
+		// `unit` must always be present: the query builder provider rewrites (and
+		// pushes a new history entry for) any compositeQuery missing a key of
+		// `initialQueriesMap`, which traps the browser back button.
+		// Since this is only being used by infra-monitoring, I will keep this fix one line
+		// instead of going and update each chart configuration.
+		encodeURIComponent(JSON.stringify({ unit: '', ...query })),
+	);
+
+	if (relativeTime) {
+		params.set(QueryParams.relativeTime, relativeTime);
+	} else {
+		if (startTimeMs !== undefined) {
+			params.set(QueryParams.startTime, String(startTimeMs));
+		}
+		if (endTimeMs !== undefined) {
+			params.set(QueryParams.endTime, String(endTimeMs));
+		}
+	}
+
+	return `${ROUTES.METRICS_EXPLORER_EXPLORER}?${params.toString()}`;
+};

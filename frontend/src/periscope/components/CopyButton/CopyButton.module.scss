@@ -1,0 +1,52 @@
+// Square copy button whose icon cross-fades between copy and check.
+.copyButton {
+	flex-shrink: 0;
+}
+
+// Both icons occupy the same box; only one is visible at a time.
+.iconStack {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.icon {
+	position: absolute;
+	inset: 0;
+	transition:
+		opacity 300ms ease,
+		filter 300ms ease,
+		transform 300ms ease;
+}
+
+// Idle state: copy visible, check blurred/rotated/faded out.
+.copyIcon {
+	opacity: 1;
+	filter: blur(0);
+	transform: rotate(0deg);
+}
+
+.checkIcon {
+	opacity: 0;
+	filter: blur(4px);
+	transform: rotate(-90deg);
+	// Green checkmark to signal a successful copy; eases in a touch slower.
+	color: var(--bg-forest-500);
+	transition-duration: 500ms;
+}
+
+// Copied state: copy fades/blurs/rotates out, check animates in.
+.iconStack[data-copied='true'] {
+	.copyIcon {
+		opacity: 0;
+		filter: blur(4px);
+		transform: rotate(90deg);
+	}
+
+	.checkIcon {
+		opacity: 1;
+		filter: blur(0);
+		transform: rotate(0deg);
+	}
+}

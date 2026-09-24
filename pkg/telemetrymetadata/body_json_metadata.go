@@ -13,7 +13,7 @@ import (
 	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -139,8 +139,8 @@ func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, [
 		"name", "type_full", "expr", "granularity",
 	).From(fmt.Sprintf("clusterAllReplicas('%s', %s)", cluster, SkipIndexTableName))
 
-	sb.Where(sb.Equal("database", telemetrylogs.DBName))
-	sb.Where(sb.Equal("table", telemetrylogs.LogsV2LocalTableName))
+	sb.Where(sb.Equal("database", logstelemetryschema.DBName))
+	sb.Where(sb.Equal("table", logstelemetryschema.LogsV2LocalTableName))
 	sb.Where(sb.Or(
 		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyV2ColumnPrefix))),
 		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix))),
@@ -189,12 +189,12 @@ func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ..
 		baseColumn := ""
 		fieldName := ""
 		switch {
-		case strings.HasPrefix(columnExpr, telemetrylogs.BodyV2ColumnPrefix):
-			baseColumn = telemetrylogs.BodyV2ColumnPrefix
-			fieldName = strings.TrimPrefix(columnExpr, telemetrylogs.BodyV2ColumnPrefix)
-		case strings.HasPrefix(columnExpr, telemetrylogs.BodyPromotedColumnPrefix):
-			baseColumn = telemetrylogs.BodyPromotedColumnPrefix
-			fieldName = strings.TrimPrefix(columnExpr, telemetrylogs.BodyPromotedColumnPrefix)
+		case strings.HasPrefix(columnExpr, logstelemetryschema.BodyV2ColumnPrefix):
+			baseColumn = logstelemetryschema.BodyV2ColumnPrefix
+			fieldName = strings.TrimPrefix(columnExpr, logstelemetryschema.BodyV2ColumnPrefix)
+		case strings.HasPrefix(columnExpr, logstelemetryschema.BodyPromotedColumnPrefix):
+			baseColumn = logstelemetryschema.BodyPromotedColumnPrefix
+			fieldName = strings.TrimPrefix(columnExpr, logstelemetryschema.BodyPromotedColumnPrefix)
 		}
 		fieldName = strings.ReplaceAll(fieldName, "`", "")
 
@@ -228,12 +228,12 @@ func (t *telemetryMetaStore) ListJSONValues(ctx context.Context, path string, li
 	}
 
 	if promoted {
-		path = telemetrylogs.BodyPromotedColumnPrefix + path
+		path = logstelemetryschema.BodyPromotedColumnPrefix + path
 	} else {
-		path = telemetrylogs.BodyV2ColumnPrefix + path
+		path = logstelemetryschema.BodyV2ColumnPrefix + path
 	}
 
-	from := fmt.Sprintf("%s.%s", telemetrylogs.DBName, telemetrylogs.LogsV2TableName)
+	from := fmt.Sprintf("%s.%s", logstelemetryschema.DBName, logstelemetryschema.LogsV2TableName)
 	colExpr := func(typ telemetrytypes.JSONDataType) string {
 		return fmt.Sprintf("dynamicElement(%s, '%s')", path, typ.StringValue())
 	}
@@ -366,7 +366,7 @@ func derefValue(v any) any {
 	}
 
 	val := reflect.ValueOf(v)
-	for val.Kind() == reflect.Ptr {
+	for val.Kind() == reflect.Pointer {
 		if val.IsNil() {
 			return nil
 		}
@@ -382,7 +382,7 @@ func (t *telemetryMetaStore) IsPathPromoted(ctx context.Context, path string) (b
 	split := strings.Split(path, telemetrytypes.ArraySep)
 	pathSegment := split[0]
 	query := fmt.Sprintf("SELECT 1 FROM %s.%s WHERE signal = ? AND column_name = ? AND field_context = ? AND field_name = ? LIMIT 1", DBName, PromotedPathsTableName)
-	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, telemetrytypes.SignalLogs, telemetrylogs.LogsV2BodyPromotedColumn, telemetrytypes.FieldContextBody, pathSegment)
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, telemetrytypes.SignalLogs, logstelemetryschema.LogsV2BodyPromotedColumn, telemetrytypes.FieldContextBody, pathSegment)
 	if err != nil {
 		return false, errors.WrapInternalf(err, CodeFailCheckPathPromoted, "failed to check if path %s is promoted", path)
 	}
@@ -397,7 +397,7 @@ func (t *telemetryMetaStore) GetPromotedPaths(ctx context.Context, paths ...stri
 	sb := sqlbuilder.Select("field_name").From(fmt.Sprintf("%s.%s", DBName, PromotedPathsTableName))
 	conditions := []string{
 		sb.Equal("signal", telemetrytypes.SignalLogs),
-		sb.Equal("column_name", telemetrylogs.LogsV2BodyPromotedColumn),
+		sb.Equal("column_name", logstelemetryschema.LogsV2BodyPromotedColumn),
 		sb.Equal("field_context", telemetrytypes.FieldContextBody),
 		sb.NotEqual("field_name", "__all__"),
 	}
@@ -433,8 +433,8 @@ func (t *telemetryMetaStore) GetPromotedPaths(ctx context.Context, paths ...stri
 // TODO(Piyush): Remove this function.
 func CleanPathPrefixes(path string) string {
 	path = strings.TrimPrefix(path, telemetrytypes.BodyJSONStringSearchPrefix)
-	path = strings.TrimPrefix(path, telemetrylogs.BodyV2ColumnPrefix)
-	path = strings.TrimPrefix(path, telemetrylogs.BodyPromotedColumnPrefix)
+	path = strings.TrimPrefix(path, logstelemetryschema.BodyV2ColumnPrefix)
+	path = strings.TrimPrefix(path, logstelemetryschema.BodyPromotedColumnPrefix)
 	return path
 }
 
@@ -454,7 +454,7 @@ func (t *telemetryMetaStore) PromotePaths(ctx context.Context, paths ...string) 
 		if trimmed == "" {
 			continue
 		}
-		if err := batch.Append(telemetrytypes.SignalLogs, telemetrylogs.LogsV2BodyPromotedColumn, "JSON()", telemetrytypes.FieldContextBody, trimmed, 0, releaseTime); err != nil {
+		if err := batch.Append(telemetrytypes.SignalLogs, logstelemetryschema.LogsV2BodyPromotedColumn, "JSON()", telemetrytypes.FieldContextBody, trimmed, 0, releaseTime); err != nil {
 			_ = batch.Abort()
 			return errors.WrapInternalf(err, CodeFailedToAppendPath, "failed to append path")
 		}

@@ -102,6 +102,51 @@ var (
 	AzureRegionWestUS             = CloudProviderRegion{valuer.NewString("westus")}             // West US.
 	AzureRegionWestUS2            = CloudProviderRegion{valuer.NewString("westus2")}            // West US 2.
 	AzureRegionWestUS3            = CloudProviderRegion{valuer.NewString("westus3")}            // West US 3.
+
+	// GCP regions.
+	GCPRegionAfricaSouth1        = CloudProviderRegion{valuer.NewString("africa-south1")}        // Johannesburg, South Africa. Africa.
+	GCPRegionAsiaEast1           = CloudProviderRegion{valuer.NewString("asia-east1")}           // Changhua County, Taiwan. APAC.
+	GCPRegionAsiaEast2           = CloudProviderRegion{valuer.NewString("asia-east2")}           // Hong Kong. APAC.
+	GCPRegionAsiaNortheast1      = CloudProviderRegion{valuer.NewString("asia-northeast1")}      // Tokyo, Japan. APAC.
+	GCPRegionAsiaNortheast2      = CloudProviderRegion{valuer.NewString("asia-northeast2")}      // Osaka, Japan. APAC.
+	GCPRegionAsiaNortheast3      = CloudProviderRegion{valuer.NewString("asia-northeast3")}      // Seoul, South Korea. APAC.
+	GCPRegionAsiaSouth1          = CloudProviderRegion{valuer.NewString("asia-south1")}          // Mumbai, India. APAC.
+	GCPRegionAsiaSouth2          = CloudProviderRegion{valuer.NewString("asia-south2")}          // Delhi, India. APAC.
+	GCPRegionAsiaSoutheast1      = CloudProviderRegion{valuer.NewString("asia-southeast1")}      // Jurong West, Singapore. APAC.
+	GCPRegionAsiaSoutheast2      = CloudProviderRegion{valuer.NewString("asia-southeast2")}      // Jakarta, Indonesia. APAC.
+	GCPRegionAsiaSoutheast3      = CloudProviderRegion{valuer.NewString("asia-southeast3")}      // Bangkok, Thailand. APAC.
+	GCPRegionAustraliaSoutheast1 = CloudProviderRegion{valuer.NewString("australia-southeast1")} // Sydney, Australia. APAC.
+	GCPRegionAustraliaSoutheast2 = CloudProviderRegion{valuer.NewString("australia-southeast2")} // Melbourne, Australia. APAC.
+	GCPRegionEuropeCentral2      = CloudProviderRegion{valuer.NewString("europe-central2")}      // Warsaw, Poland. Europe.
+	GCPRegionEuropeNorth1        = CloudProviderRegion{valuer.NewString("europe-north1")}        // Hamina, Finland. Europe.
+	GCPRegionEuropeNorth2        = CloudProviderRegion{valuer.NewString("europe-north2")}        // Stockholm, Sweden. Europe.
+	GCPRegionEuropeSouthwest1    = CloudProviderRegion{valuer.NewString("europe-southwest1")}    // Madrid, Spain. Europe.
+	GCPRegionEuropeWest1         = CloudProviderRegion{valuer.NewString("europe-west1")}         // St. Ghislain, Belgium. Europe.
+	GCPRegionEuropeWest2         = CloudProviderRegion{valuer.NewString("europe-west2")}         // London, England. Europe.
+	GCPRegionEuropeWest3         = CloudProviderRegion{valuer.NewString("europe-west3")}         // Frankfurt, Germany. Europe.
+	GCPRegionEuropeWest4         = CloudProviderRegion{valuer.NewString("europe-west4")}         // Eemshaven, Netherlands. Europe.
+	GCPRegionEuropeWest6         = CloudProviderRegion{valuer.NewString("europe-west6")}         // Zurich, Switzerland. Europe.
+	GCPRegionEuropeWest8         = CloudProviderRegion{valuer.NewString("europe-west8")}         // Milan, Italy. Europe.
+	GCPRegionEuropeWest9         = CloudProviderRegion{valuer.NewString("europe-west9")}         // Paris, France. Europe.
+	GCPRegionEuropeWest10        = CloudProviderRegion{valuer.NewString("europe-west10")}        // Berlin, Germany. Europe.
+	GCPRegionEuropeWest12        = CloudProviderRegion{valuer.NewString("europe-west12")}        // Turin, Italy. Europe.
+	GCPRegionMECentral1          = CloudProviderRegion{valuer.NewString("me-central1")}          // Doha, Qatar. Middle East.
+	GCPRegionMECentral2          = CloudProviderRegion{valuer.NewString("me-central2")}          // Dammam, Saudi Arabia. Middle East.
+	GCPRegionMEWest1             = CloudProviderRegion{valuer.NewString("me-west1")}             // Tel Aviv, Israel. Middle East.
+	GCPRegionNorthamericaNortheast1 = CloudProviderRegion{valuer.NewString("northamerica-northeast1")} // Montréal, Québec, Canada. North America.
+	GCPRegionNorthamericaNortheast2 = CloudProviderRegion{valuer.NewString("northamerica-northeast2")} // Toronto, Ontario, Canada. North America.
+	GCPRegionNorthamericaSouth1     = CloudProviderRegion{valuer.NewString("northamerica-south1")}     // Querétaro, Mexico. North America.
+	GCPRegionSouthamericaEast1   = CloudProviderRegion{valuer.NewString("southamerica-east1")}   // Osasco, São Paulo, Brazil. South America.
+	GCPRegionSouthamericaWest1   = CloudProviderRegion{valuer.NewString("southamerica-west1")}   // Santiago, Chile. South America.
+	GCPRegionUSCentral1          = CloudProviderRegion{valuer.NewString("us-central1")}          // Council Bluffs, Iowa. North America.
+	GCPRegionUSEast1             = CloudProviderRegion{valuer.NewString("us-east1")}             // Moncks Corner, South Carolina. North America.
+	GCPRegionUSEast4             = CloudProviderRegion{valuer.NewString("us-east4")}             // Ashburn, Virginia. North America.
+	GCPRegionUSEast5             = CloudProviderRegion{valuer.NewString("us-east5")}             // Columbus, Ohio. North America.
+	GCPRegionUSSouth1            = CloudProviderRegion{valuer.NewString("us-south1")}            // Dallas, Texas. North America.
+	GCPRegionUSWest1             = CloudProviderRegion{valuer.NewString("us-west1")}             // The Dalles, Oregon. North America.
+	GCPRegionUSWest2             = CloudProviderRegion{valuer.NewString("us-west2")}             // Los Angeles, California. North America.
+	GCPRegionUSWest3             = CloudProviderRegion{valuer.NewString("us-west3")}             // Salt Lake City, Utah. North America.
+	GCPRegionUSWest4             = CloudProviderRegion{valuer.NewString("us-west4")}             // Las Vegas, Nevada. North America.
 )
 
 func Enum() []any {
@@ -127,6 +172,18 @@ func Enum() []any {
 		AzureRegionSwedenCentral, AzureRegionSwitzerlandNorth, AzureRegionSwitzerlandWest,
 		AzureRegionUAECentral, AzureRegionUAENorth, AzureRegionUKSouth, AzureRegionUKWest,
 		AzureRegionWestCentralUS, AzureRegionWestEurope, AzureRegionWestIndia, AzureRegionWestUS, AzureRegionWestUS2, AzureRegionWestUS3,
+		// GCP regions.
+		GCPRegionAfricaSouth1, GCPRegionAsiaEast1, GCPRegionAsiaEast2, GCPRegionAsiaNortheast1, GCPRegionAsiaNortheast2, GCPRegionAsiaNortheast3,
+		GCPRegionAsiaSouth1, GCPRegionAsiaSouth2, GCPRegionAsiaSoutheast1, GCPRegionAsiaSoutheast2, GCPRegionAsiaSoutheast3,
+		GCPRegionAustraliaSoutheast1, GCPRegionAustraliaSoutheast2,
+		GCPRegionEuropeCentral2, GCPRegionEuropeNorth1, GCPRegionEuropeNorth2, GCPRegionEuropeSouthwest1,
+		GCPRegionEuropeWest1, GCPRegionEuropeWest2, GCPRegionEuropeWest3, GCPRegionEuropeWest4, GCPRegionEuropeWest6,
+		GCPRegionEuropeWest8, GCPRegionEuropeWest9, GCPRegionEuropeWest10, GCPRegionEuropeWest12,
+		GCPRegionMECentral1, GCPRegionMECentral2, GCPRegionMEWest1,
+		GCPRegionNorthamericaNortheast1, GCPRegionNorthamericaNortheast2, GCPRegionNorthamericaSouth1,
+		GCPRegionSouthamericaEast1, GCPRegionSouthamericaWest1,
+		GCPRegionUSCentral1, GCPRegionUSEast1, GCPRegionUSEast4, GCPRegionUSEast5, GCPRegionUSSouth1,
+		GCPRegionUSWest1, GCPRegionUSWest2, GCPRegionUSWest3, GCPRegionUSWest4,
 	}
 }
 
@@ -154,6 +211,19 @@ var SupportedRegions = map[CloudProviderType][]CloudProviderRegion{
 		AzureRegionUAECentral, AzureRegionUAENorth, AzureRegionUKSouth, AzureRegionUKWest,
 		AzureRegionWestCentralUS, AzureRegionWestEurope, AzureRegionWestIndia, AzureRegionWestUS, AzureRegionWestUS2, AzureRegionWestUS3,
 	},
+	CloudProviderTypeGCP: {
+		GCPRegionAfricaSouth1, GCPRegionAsiaEast1, GCPRegionAsiaEast2, GCPRegionAsiaNortheast1, GCPRegionAsiaNortheast2, GCPRegionAsiaNortheast3,
+		GCPRegionAsiaSouth1, GCPRegionAsiaSouth2, GCPRegionAsiaSoutheast1, GCPRegionAsiaSoutheast2, GCPRegionAsiaSoutheast3,
+		GCPRegionAustraliaSoutheast1, GCPRegionAustraliaSoutheast2,
+		GCPRegionEuropeCentral2, GCPRegionEuropeNorth1, GCPRegionEuropeNorth2, GCPRegionEuropeSouthwest1,
+		GCPRegionEuropeWest1, GCPRegionEuropeWest2, GCPRegionEuropeWest3, GCPRegionEuropeWest4, GCPRegionEuropeWest6,
+		GCPRegionEuropeWest8, GCPRegionEuropeWest9, GCPRegionEuropeWest10, GCPRegionEuropeWest12,
+		GCPRegionMECentral1, GCPRegionMECentral2, GCPRegionMEWest1,
+		GCPRegionNorthamericaNortheast1, GCPRegionNorthamericaNortheast2, GCPRegionNorthamericaSouth1,
+		GCPRegionSouthamericaEast1, GCPRegionSouthamericaWest1,
+		GCPRegionUSCentral1, GCPRegionUSEast1, GCPRegionUSEast4, GCPRegionUSEast5, GCPRegionUSSouth1,
+		GCPRegionUSWest1, GCPRegionUSWest2, GCPRegionUSWest3, GCPRegionUSWest4,
+	},
 }
 
 func validateAWSRegion(region string) error {
@@ -174,4 +244,14 @@ func validateAzureRegion(region string) error {
 	}
 
 	return errors.NewInvalidInputf(ErrCodeInvalidCloudRegion, "invalid Azure region: %s", region)
+}
+
+func validateGCPRegion(region string) error {
+	for _, r := range SupportedRegions[CloudProviderTypeGCP] {
+		if r.StringValue() == region {
+			return nil
+		}
+	}
+
+	return errors.NewInvalidInputf(ErrCodeInvalidCloudRegion, "invalid GCP region: %s", region)
 }

@@ -1,17 +1,20 @@
 import ROUTES from 'constants/routes';
 
 import { whilelistedKeys } from '../config';
-import { mappingWithRoutesAndKeys } from '../utils';
+import {
+	filterServiceMapSupportedQueries,
+	mappingWithRoutesAndKeys,
+} from '../utils';
 
 describe('useResourceAttribute config', () => {
 	describe('whilelistedKeys', () => {
-		it('should include underscore-notation keys (DOT_METRICS_ENABLED=false)', () => {
+		it('should include underscore-notation keys', () => {
 			expect(whilelistedKeys).toContain('resource_deployment_environment');
 			expect(whilelistedKeys).toContain('resource_k8s_cluster_name');
 			expect(whilelistedKeys).toContain('resource_k8s_cluster_namespace');
 		});
 
-		it('should include dot-notation keys (DOT_METRICS_ENABLED=true)', () => {
+		it('should include dot-notation keys', () => {
 			expect(whilelistedKeys).toContain('resource_deployment.environment');
 			expect(whilelistedKeys).toContain('resource_k8s.cluster.name');
 			expect(whilelistedKeys).toContain('resource_k8s.cluster.namespace');
@@ -72,6 +75,31 @@ describe('useResourceAttribute config', () => {
 			const result = mappingWithRoutesAndKeys('/services', allFilters);
 			expect(result).toHaveLength(5);
 			expect(result).toStrictEqual(allFilters);
+		});
+	});
+
+	describe('filterServiceMapSupportedQueries', () => {
+		const environmentQuery = {
+			id: 'env',
+			tagKey: 'resource_deployment_environment',
+			operator: 'IN',
+			tagValue: ['production'],
+		};
+		const serviceQuery = {
+			id: 'svc',
+			tagKey: 'resource_service_name',
+			operator: 'IN',
+			tagValue: ['frontend'],
+		};
+
+		it('should keep only the queries the service map can filter on', () => {
+			expect(
+				filterServiceMapSupportedQueries([environmentQuery, serviceQuery]),
+			).toStrictEqual([environmentQuery]);
+		});
+
+		it('should return an empty list when no query is supported', () => {
+			expect(filterServiceMapSupportedQueries([serviceQuery])).toStrictEqual([]);
 		});
 	});
 });

@@ -1,12 +1,12 @@
 /* Overlay stays below content */
 [data-slot='dialog-overlay'] {
-	z-index: 50;
+	z-index: 1000 !important;
 }
 
 /* Dialog content always above overlay */
 [data-slot='dialog-content'] {
 	position: fixed;
-	z-index: 60;
+	z-index: 1001 !important;
 	background: var(--l1-background);
 	color: var(--l1-foreground);
 

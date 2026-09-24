@@ -1,0 +1,42 @@
+.downloadPanel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+	padding: var(--spacing-4);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.title {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	font-size: var(--paragraph-base-400-font-size);
+	font-weight: var(--font-weight-medium);
+	color: var(--secondary-foreground);
+	white-space: nowrap;
+}
+
+.loader {
+	color: var(--bg-robin-500);
+	flex-shrink: 0;
+}
+
+.percent {
+	font-size: var(--paragraph-base-400-font-size);
+	font-weight: var(--font-weight-semibold);
+	color: var(--l2-foreground);
+	flex-shrink: 0;
+}
+
+.cancelBtn {
+	height: 24px;
+	width: 24px;
+	flex-shrink: 0;
+	color: var(--l2-foreground);
+}

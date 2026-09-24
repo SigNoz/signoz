@@ -27,6 +27,7 @@ export interface IAppContext {
 	isFetchingHosts: boolean;
 	isFetchingFeatureFlags: boolean;
 	isFetchingOrgPreferences: boolean;
+	isFetchingUserPreferences: boolean;
 	userFetchError: unknown;
 	activeLicenseFetchError: APIError | null;
 	hostsFetchError: unknown;

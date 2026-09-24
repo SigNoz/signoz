@@ -90,8 +90,6 @@ queries.active
 .devenv/**/tmp/**
 .qodo
 
-.dev
-
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -231,4 +229,7 @@ cython_debug/
 # LSP config files
 pyrightconfig.json
 
-
+# dev
+.dev/
+.claude/worktrees/
+.claude/settings.local.json

@@ -59,6 +59,7 @@ func (r *rule) EditRule(ctx context.Context, storedRule *ruletypes.StorableRule,
 			BunDBCtx(ctx).
 			NewUpdate().
 			Model(storedRule).
+			Where("org_id = ?", storedRule.OrgID).
 			Where("id = ?", storedRule.ID.StringValue()).
 			Exec(ctx)
 		if err != nil {
@@ -69,7 +70,7 @@ func (r *rule) EditRule(ctx context.Context, storedRule *ruletypes.StorableRule,
 	})
 }
 
-func (r *rule) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.Context) error) error {
+func (r *rule) DeleteRule(ctx context.Context, orgID valuer.UUID, id valuer.UUID, cb func(context.Context) error) error {
 	if err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		// Find maintenance windows that would be left with no rules after this
 		// deletion. An empty RuleIDs list is treated as "suppress all rules", so
@@ -121,6 +122,7 @@ func (r *rule) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.C
 			BunDBCtx(ctx).
 			NewDelete().
 			Model(new(ruletypes.StorableRule)).
+			Where("org_id = ?", orgID.StringValue()).
 			Where("id = ?", id.StringValue()).
 			Exec(ctx)
 		if err != nil {
@@ -150,12 +152,13 @@ func (r *rule) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.S
 	return rules, nil
 }
 
-func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.StorableRule, error) {
+func (r *rule) GetStoredRule(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*ruletypes.StorableRule, error) {
 	rule := new(ruletypes.StorableRule)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
 		Model(rule).
+		Where("org_id = ?", orgID.StringValue()).
 		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {

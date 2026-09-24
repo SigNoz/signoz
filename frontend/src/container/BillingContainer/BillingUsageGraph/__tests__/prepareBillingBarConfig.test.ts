@@ -58,24 +58,15 @@ describe('prepareBillingBarConfig', () => {
 		expect(config.series?.[4]?.stroke).toBe(Color.BG_AMBER_500);
 	});
 
-	it('sets stacking bands, padding, and focus alpha for behavioral parity', () => {
+	it('sets padding and focus alpha for behavioral parity', () => {
 		const builder = prepareBillingBarConfig({
 			...baseProps,
 			apiResponse: makeApiResponse(['Logs', 'Traces', 'Metrics']),
 		});
 		const config = builder.getConfig();
-		expect(config.bands).toStrictEqual([{ series: [1, 2] }, { series: [2, 3] }]);
+		// Stacking bands come from the chart now — see useChartStacking.
 		expect(config.padding).toStrictEqual([32, 32, 16, 16]);
 		expect(config.focus).toStrictEqual({ alpha: 0.3 });
-	});
-
-	it('sets no bands when result is empty', () => {
-		const builder = prepareBillingBarConfig({
-			...baseProps,
-			apiResponse: makeApiResponse([]),
-		});
-		const config = builder.getConfig();
-		expect(config.bands).toBeUndefined();
 	});
 
 	it('uses queryName as label when legend is undefined', () => {

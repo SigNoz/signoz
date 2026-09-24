@@ -92,52 +92,76 @@
 						color: var(--l3-foreground);
 					}
 
-					.only-btn {
-						cursor: not-allowed;
-						color: var(--l3-foreground);
-					}
-
+					.only-btn,
 					.toggle-btn {
 						cursor: not-allowed;
 						color: var(--l3-foreground);
 					}
 				}
 
-				.only-btn {
-					display: none;
+				// Stack "Only"/"All" and "Toggle" in a single cell so revealing
+				// one swaps in place instead of shifting the row layout.
+				.value-actions {
+					display: grid;
+					align-items: center;
+					justify-items: end;
+
+					> * {
+						grid-area: 1 / 1;
+					}
 				}
+
+				.only-btn,
 				.toggle-btn {
 					display: none;
-				}
-
-				.toggle-btn:hover {
-					background-color: unset;
-				}
-
-				.only-btn:hover {
-					background-color: unset;
-				}
-			}
-
-			.checkbox-value-section:hover {
-				.toggle-btn {
-					display: none;
-				}
-				.only-btn {
-					display: flex;
 					align-items: center;
 					justify-content: center;
 					height: 21px;
+					opacity: 0;
+					transform: translateX(4px);
+					// `display` is animated as a discrete property so the button
+					// stays mounted through its fade-out on exit.
+					transition:
+						opacity 0.16s ease,
+						transform 0.16s ease,
+						display 0.16s allow-discrete;
+
+					&:hover {
+						background-color: unset;
+					}
+				}
+			}
+
+			// Hovering the label/value area reveals the "Only"/"All" action.
+			.checkbox-value-section:hover .only-btn {
+				display: flex;
+				opacity: 1;
+				transform: translateX(0);
+
+				// Entry animation start state (fires on the display switch).
+				@starting-style {
+					opacity: 0;
+					transform: translateX(4px);
+				}
+			}
+
+			// Hovering the checkbox reveals the "Toggle" action.
+			.check-box:hover ~ .checkbox-value-section .toggle-btn {
+				display: flex;
+				opacity: 1;
+				transform: translateX(0);
+
+				@starting-style {
+					opacity: 0;
+					transform: translateX(4px);
 				}
 			}
 		}
 
-		.value:hover {
+		@media (prefers-reduced-motion: reduce) {
+			.only-btn,
 			.toggle-btn {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				height: 21px;
+				transition: none;
 			}
 		}
 	}

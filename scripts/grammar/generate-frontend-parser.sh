@@ -6,6 +6,6 @@ echo "Generating TypeScript parser..."
 mkdir -p frontend/src/parser
 
 # Generate TypeScript parser
-antlr4 -Dlanguage=TypeScript -o frontend/src/parser grammar/FilterQuery.g4 -visitor
+(cd grammar && antlr4 -Dlanguage=TypeScript -o ../frontend/src/parser FilterQuery.g4 -visitor)
 
 echo "TypeScript parser generation complete"

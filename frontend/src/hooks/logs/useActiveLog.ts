@@ -1,29 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { OPERATORS, QueryBuilderKeys } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
 import { MetricsType } from 'container/MetricsApplication/constant';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
-import { AppState } from 'store/reducers';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { ILogsReducer } from 'types/reducer/logs';
 import { v4 as uuid } from 'uuid';
 
 import { UseActiveLog } from './types';
@@ -40,21 +32,9 @@ export function getOldLogsOperatorFromNew(operator: string): string {
 }
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export const useActiveLog = (): UseActiveLog => {
-	const dispatch = useDispatch();
-
-	const {
-		searchFilter: { queryString },
-	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const queryClient = useQueryClient();
-	const { pathname } = useLocation();
-	const history = useHistory();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const { notifications } = useNotifications();
-
-	const isLogsPage = useMemo(
-		() => pathname === ROUTES.OLD_LOGS_EXPLORER,
-		[pathname],
-	);
 
 	const [activeLog, setActiveLog] = useState<ILog | null>(null);
 
@@ -72,26 +52,9 @@ export const useActiveLog = (): UseActiveLog => {
 		prevQueryRef.current = compositeQuery;
 	}, [compositeQuery]);
 
-	const onSetDetailedLogData = useCallback(
-		(logData: ILog) => {
-			dispatch({
-				type: SET_DETAILED_LOG_DATA,
-				payload: logData,
-			});
-		},
-		[dispatch],
-	);
-
-	const onSetActiveLog = useCallback(
-		(nextActiveLog: ILog): void => {
-			if (isLogsPage) {
-				onSetDetailedLogData(nextActiveLog);
-			} else {
-				setActiveLog(nextActiveLog);
-			}
-		},
-		[isLogsPage, onSetDetailedLogData],
-	);
+	const onSetActiveLog = useCallback((nextActiveLog: ILog): void => {
+		setActiveLog(nextActiveLog);
+	}, []);
 
 	const onClearActiveLog = useCallback((): void => setActiveLog(null), []);
 
@@ -204,26 +167,12 @@ export const useActiveLog = (): UseActiveLog => {
 		},
 		[currentQuery, notifications, queryClient, redirectWithQueryBuilderData],
 	);
-	const onAddToQueryLogs = useCallback(
-		(fieldKey: string, fieldValue: string, operator: string) => {
-			const newOperator = getOldLogsOperatorFromNew(operator);
-			const updatedQueryString = getGeneratedFilterQueryString(
-				fieldKey,
-				fieldValue,
-				newOperator,
-				queryString,
-			);
-
-			history.replace(`${ROUTES.OLD_LOGS_EXPLORER}?q=${updatedQueryString}`);
-		},
-		[history, queryString],
-	);
 
 	return {
 		activeLog,
 		onSetActiveLog,
 		onClearActiveLog,
-		onAddToQuery: isLogsPage ? onAddToQueryLogs : onAddToQueryExplorer,
+		onAddToQuery: onAddToQueryExplorer,
 		onGroupByAttribute,
 	};
 };

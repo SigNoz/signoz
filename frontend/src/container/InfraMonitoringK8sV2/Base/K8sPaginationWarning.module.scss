@@ -1,0 +1,15 @@
+.paginationWarning {
+	border: 1px solid var(--callout-warning-border);
+	background-color: var(--callout-warning-background);
+
+	padding: var(--spacing-2) var(--spacing-4);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	gap: var(--spacing-4);
+}
+
+.warningIcon {
+	cursor: pointer;
+}

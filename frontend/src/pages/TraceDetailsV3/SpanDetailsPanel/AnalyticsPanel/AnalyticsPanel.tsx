@@ -148,7 +148,7 @@ function AnalyticsPanel({
 				className="floating-panel__drag-handle"
 			/>
 
-			<div className={styles.body}>
+			<div className={styles.body} data-testid="trace-analytics-panel">
 				<TabsRoot defaultValue="exec-time" onValueChange={onTabChange}>
 					<TabsList variant="secondary">
 						<TabsTrigger value="exec-time" variant="secondary">

@@ -84,11 +84,12 @@ export function KeyboardHotkeysProvider({
 		}
 
 		const target = event.target as HTMLElement;
-		const isCodeMirrorEditor =
-			(target as HTMLElement).closest('.cm-editor') !== null;
+		const isCodeMirrorEditor = target.closest('.cm-editor') !== null;
+		const isMonacoEditor = target.closest('.monaco-editor') !== null;
 		if (
-			IGNORE_INPUTS.includes((target as HTMLElement).tagName.toLowerCase()) ||
-			isCodeMirrorEditor
+			IGNORE_INPUTS.includes(target.tagName.toLowerCase()) ||
+			isCodeMirrorEditor ||
+			isMonacoEditor
 		) {
 			return;
 		}

@@ -1,0 +1,225 @@
+import {
+	Dispatch,
+	memo,
+	MutableRefObject,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { QueryKey } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
+import logEvent from 'api/common/logEvent';
+import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
+import type { TableColumnDef } from 'components/TanStackTableView/types';
+import { ENTITY_VERSION_V5 } from 'constants/app';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
+import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
+import { getTraceLink, transformSpanRows } from './utils';
+import { getFieldColumn, TracesTableRow } from '../TracesTable/getFieldColumn';
+import TracesTable from '../TracesTable/TracesTable';
+import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { Pagination } from 'hooks/queryPagination';
+import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
+import useUrlQueryData from 'hooks/useUrlQueryData';
+import { ArrowUp10, Minus } from '@signozhq/icons';
+import { AppState } from 'store/reducers';
+import { Warning } from 'types/api';
+import { DataSource } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
+
+import TraceExplorerControls from '../Controls';
+import { getListViewQuery } from '../explorerUtils';
+import {
+	defaultSelectedColumns,
+	PER_PAGE_OPTIONS,
+	TIMESTAMP_FIELD,
+} from './configs';
+import './ListView.styles.scss';
+
+import styles from './ListView.module.scss';
+
+interface ListViewProps {
+	isFilterApplied: boolean;
+	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
+	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
+	queryKeyRef?: MutableRefObject<QueryKey | undefined>;
+}
+
+function ListView({
+	isFilterApplied,
+	setWarning,
+	setIsLoadingQueries,
+	queryKeyRef,
+}: ListViewProps): JSX.Element {
+	const { stagedQuery, panelType: panelTypeFromQueryBuilder } =
+		useQueryBuilder();
+
+	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
+
+	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
+
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+		loading: timeRangeUpdateLoading,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
+
+	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
+		QueryParams.pagination,
+	);
+	const paginationConfig =
+		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
+
+	const requestQuery = useMemo(
+		() => getListViewQuery(stagedQuery || initialQueryAIWithType, orderBy),
+		[stagedQuery, orderBy],
+	);
+
+	const queryKey = useMemo(
+		() => [
+			REACT_QUERY_KEY.GET_QUERY_RANGE,
+			globalSelectedTime,
+			maxTime,
+			minTime,
+			stagedQuery,
+			panelType,
+			paginationConfig,
+			orderBy,
+		],
+		[
+			stagedQuery,
+			panelType,
+			globalSelectedTime,
+			paginationConfig,
+			maxTime,
+			minTime,
+			orderBy,
+		],
+	);
+
+	if (queryKeyRef) {
+		queryKeyRef.current = queryKey;
+	}
+
+	const { data, isFetching, isLoading, isError, error } = useGetQueryRange(
+		{
+			query: requestQuery,
+			graphType: panelType,
+			selectedTime: 'GLOBAL_TIME' as const,
+			globalSelectedInterval: globalSelectedTime as CustomTimeType,
+			params: {
+				dataSource: 'traces',
+			},
+			tableParams: {
+				pagination: paginationConfig,
+				selectColumns: defaultSelectedColumns,
+			},
+		},
+		ENTITY_VERSION_V5,
+		{
+			queryKey,
+			enabled:
+				// don't make api call while the time range state in redux is loading
+				!timeRangeUpdateLoading && !!stagedQuery && panelType === PANEL_TYPES.LIST,
+		},
+	);
+
+	useEffect(() => {
+		if (data?.payload) {
+			setWarning(data?.warning);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload, data?.warning]);
+
+	useEffect(() => {
+		if (isLoading || isFetching) {
+			setIsLoadingQueries(true);
+		} else {
+			setIsLoadingQueries(false);
+		}
+	}, [isLoading, isFetching, setIsLoadingQueries]);
+
+	const queryTableDataResult = data?.payload?.data?.newResult?.data?.result;
+	const queryTableData = useMemo(
+		() => queryTableDataResult || [],
+		[queryTableDataResult],
+	);
+
+	// TODO(ai-explorer): static columns until the preferences framework lands.
+	const columns = useMemo<TableColumnDef<TracesTableRow>[]>(
+		() =>
+			[TIMESTAMP_FIELD, ...defaultSelectedColumns].map((field) =>
+				getFieldColumn(field),
+			),
+		[],
+	);
+
+	const rows = useMemo(
+		() => transformSpanRows(queryTableData),
+		[queryTableData],
+	);
+
+	const handleOrderChange = useCallback((value: string) => {
+		setOrderBy(value);
+	}, []);
+
+	useEffect(() => {
+		if (!isLoading && !isFetching && !isError && rows.length !== 0) {
+			void logEvent('AI Observability Explorer: Data present', {
+				panelType,
+			});
+		}
+	}, [isLoading, isFetching, isError, rows, panelType]);
+
+	return (
+		<div className={styles.container}>
+			<div className="trace-explorer-controls">
+				<div className="order-by-container">
+					<div className="order-by-label">
+						Order by <Minus size={14} /> <ArrowUp10 size={14} />
+					</div>
+
+					<ListViewOrderBy
+						value={orderBy}
+						onChange={handleOrderChange}
+						dataSource={DataSource.TRACES}
+					/>
+				</div>
+
+				<TraceExplorerControls
+					isLoading={isFetching}
+					totalCount={rows.length}
+					perPageOptions={PER_PAGE_OPTIONS}
+				/>
+			</div>
+
+			<TracesTable
+				data={rows}
+				columns={columns}
+				columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_LIST_COLUMNS}
+				respectColumnOrder
+				panelType="LIST"
+				getRowHref={getTraceLink}
+				isLoading={isLoading}
+				isFetching={isFetching}
+				isError={isError}
+				error={error}
+				isFilterApplied={isFilterApplied}
+			/>
+		</div>
+	);
+}
+
+ListView.defaultProps = {
+	queryKeyRef: undefined,
+};
+
+export default memo(ListView);

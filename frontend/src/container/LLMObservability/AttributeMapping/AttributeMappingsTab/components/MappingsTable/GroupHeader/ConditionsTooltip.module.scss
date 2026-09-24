@@ -1,0 +1,32 @@
+.conditionsTooltip {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+	max-width: 320px;
+	text-align: left;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+}
+
+.keyList {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-1);
+}
+
+.key {
+	max-width: 100%;
+	padding: 0 var(--spacing-1);
+	border-radius: var(--radius-1);
+	background: var(--bg-ink-300);
+	color: var(--l1-foreground);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-xs);
+	white-space: normal;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}

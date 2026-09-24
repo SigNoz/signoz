@@ -51,6 +51,7 @@ export default function TooltipPlugin({
 	canPinTooltip = false,
 	pinKey = DEFAULT_PIN_TOOLTIP_KEY,
 	onClick,
+	portalRoot: portalRootProp,
 }: TooltipPluginProps): JSX.Element | null {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const rafId = useRef<number | null>(null);
@@ -59,7 +60,9 @@ export default function TooltipPlugin({
 	const renderRef = useRef(render);
 	renderRef.current = render;
 	const [portalRoot, setPortalRoot] = useState<HTMLElement>(
-		(document.fullscreenElement as HTMLElement) ?? document.body,
+		portalRootProp ??
+			(document.fullscreenElement as HTMLElement) ??
+			document.body,
 	);
 
 	// React-managed snapshot of what should be rendered. The controller
@@ -464,8 +467,12 @@ export default function TooltipPlugin({
 	}, [config]);
 
 	const resolvePortalRoot = useCallback((): void => {
-		setPortalRoot((document.fullscreenElement as HTMLElement) ?? document.body);
-	}, []);
+		setPortalRoot(
+			portalRootProp ??
+				(document.fullscreenElement as HTMLElement) ??
+				document.body,
+		);
+	}, [portalRootProp]);
 
 	useLayoutEffect((): (() => void) => {
 		resolvePortalRoot();

@@ -56,17 +56,6 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 				maxTime = fallbackMax;
 			}
 
-			// Align max time to "endTime - 1 minute", rounded down to minute precision
-			// This matches legacy getXAxisScale behavior and avoids empty space at the right edge
-			const oneMinuteAgoTimestamp = (maxTime - 60) * 1000;
-			const currentDate = new Date(oneMinuteAgoTimestamp);
-
-			currentDate.setSeconds(0);
-			currentDate.setMilliseconds(0);
-
-			const unixTimestampSeconds = Math.floor(currentDate.getTime() / 1000);
-			maxTime = unixTimestampSeconds;
-
 			return {
 				[scaleKey]: {
 					time: true,

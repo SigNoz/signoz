@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"runtime"
+
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 )
 
 type source struct{}
@@ -17,9 +19,9 @@ func (h *source) Wrap(next LogHandler) LogHandler {
 		if record.PC != 0 {
 			frame, _ := runtime.CallersFrames([]uintptr{record.PC}).Next()
 			record.AddAttrs(
-				slog.String("code.filepath", frame.File),
-				slog.String("code.function", frame.Function),
-				slog.Int("code.lineno", frame.Line),
+				slog.String(instrumentationtypes.CodeFilePath, frame.File),
+				slog.String(instrumentationtypes.CodeFunctionName, frame.Function),
+				slog.Int(instrumentationtypes.CodeLineNumber, frame.Line),
 			)
 		}
 

@@ -1,5 +1,8 @@
 // ** Helpers
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
@@ -29,7 +32,6 @@ import {
 	MeterAggregateOperator,
 	MetricAggregateOperator,
 	NumberOperators,
-	QueryAdditionalFilter,
 	QueryBuilderData,
 	ReduceOperators,
 	StringOperators,
@@ -99,43 +101,6 @@ export const metricsSpaceAggregationOperatorsByType = {
 	Gauge: metricsGaugeSpaceAggregateOperatorOptions,
 	Histogram: metricsHistogramSpaceAggregateOperatorOptions,
 	ExponentialHistogram: metricsHistogramSpaceAggregateOperatorOptions,
-};
-
-export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
-	metrics: [
-		{ text: 'Aggregation interval', field: 'stepInterval' },
-		{ text: 'Having', field: 'having' },
-	],
-	logs: [
-		{ text: 'Order by', field: 'orderBy' },
-		{ text: 'Limit', field: 'limit' },
-		{ text: 'Having', field: 'having' },
-		{ text: 'Aggregation interval', field: 'stepInterval' },
-	],
-	traces: [
-		{ text: 'Order by', field: 'orderBy' },
-		{ text: 'Limit', field: 'limit' },
-		{ text: 'Having', field: 'having' },
-		{ text: 'Aggregation interval', field: 'stepInterval' },
-	],
-};
-
-const commonFormulaFilters: QueryAdditionalFilter[] = [
-	{
-		text: 'Having',
-		field: 'having',
-	},
-	{ text: 'Order by', field: 'orderBy' },
-	{ text: 'Limit', field: 'limit' },
-];
-
-export const mapOfFormulaToFilters: Record<
-	DataSource,
-	QueryAdditionalFilter[]
-> = {
-	metrics: commonFormulaFilters,
-	logs: commonFormulaFilters,
-	traces: commonFormulaFilters,
 };
 
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
@@ -345,6 +310,19 @@ export const initialQueryMeterWithType: Query = {
 	},
 };
 
+export const initialQueryAIWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [
+			{
+				...initialQueryBuilderFormValuesMap.traces,
+				builderQueryType: 'builder_ai_query',
+			},
+		],
+	},
+};
+
 export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	string: Object.values(StringOperators),
 	number: Object.values(NumberOperators),
@@ -358,8 +336,10 @@ export enum PANEL_TYPES {
 	LIST = 'list',
 	TRACE = 'trace',
 	BAR = 'bar',
+	AREA = 'area',
 	PIE = 'pie',
 	HISTOGRAM = 'histogram',
+	TEXT = 'text',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 
@@ -389,11 +369,17 @@ const METRIC_TYPE_TO_ATTRIBUTE_TYPE: Record<
 export function toAttributeType(
 	metricType: MetrictypesTypeDTO | undefined,
 	isMonotonic?: boolean,
+	temporality?: MetrictypesTemporalityDTO,
 ): ATTRIBUTE_TYPES | '' {
 	if (!metricType) {
 		return '';
 	}
-	if (metricType === MetrictypesTypeDTO.sum && isMonotonic === false) {
+	// Only non-monotonic cumulative sums are treated as gauges; delta sums stay Sum
+	if (
+		metricType === MetrictypesTypeDTO.sum &&
+		isMonotonic === false &&
+		temporality === MetrictypesTemporalityDTO.cumulative
+	) {
 		return ATTRIBUTE_TYPES.GAUGE;
 	}
 	return METRIC_TYPE_TO_ATTRIBUTE_TYPE[metricType] || '';
@@ -590,18 +576,6 @@ export const listViewInitialLogQuery: Query = {
 			},
 		],
 	},
-};
-
-export const PANEL_TYPES_INITIAL_QUERY: Record<PANEL_TYPES, Query> = {
-	[PANEL_TYPES.TIME_SERIES]: initialQueriesMap.metrics,
-	[PANEL_TYPES.VALUE]: initialQueriesMap.metrics,
-	[PANEL_TYPES.TABLE]: initialQueriesMap.metrics,
-	[PANEL_TYPES.LIST]: listViewInitialLogQuery,
-	[PANEL_TYPES.TRACE]: initialQueriesMap.traces,
-	[PANEL_TYPES.BAR]: initialQueriesMap.metrics,
-	[PANEL_TYPES.PIE]: initialQueriesMap.metrics,
-	[PANEL_TYPES.HISTOGRAM]: initialQueriesMap.metrics,
-	[PANEL_TYPES.EMPTY_WIDGET]: initialQueriesMap.metrics,
 };
 
 export const listViewInitialTraceQuery: Query = {

@@ -1,65 +1,23 @@
-import type { ReactNode } from 'react';
 import userEvent from '@testing-library/user-event';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
-import { setupAuthzAdmin } from 'tests/authz-test-utils';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
 
 const SA_LIST_ENDPOINT = '*/api/v1/service_accounts';
 const SA_ENDPOINT = '*/api/v1/service_accounts/:id';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
-const SA_ROLES_ENDPOINT = '*/api/v1/service_accounts/:id/roles';
 const ROLES_ENDPOINT = '*/api/v1/roles';
-
-jest.mock('@signozhq/ui/drawer', () => ({
-	...jest.requireActual('@signozhq/ui/drawer'),
-	DrawerWrapper: ({
-		children,
-		footer,
-		open,
-	}: {
-		children?: ReactNode;
-		footer?: ReactNode;
-		open: boolean;
-	}): JSX.Element | null =>
-		open ? (
-			<div>
-				{children}
-				{footer}
-			</div>
-		) : null,
-}));
-
-jest.mock('@signozhq/ui/dialog', () => ({
-	...jest.requireActual('@signozhq/ui/dialog'),
-	DialogWrapper: ({
-		children,
-		open,
-		title,
-	}: {
-		children?: ReactNode;
-		open: boolean;
-		title?: string;
-	}): JSX.Element | null =>
-		open ? (
-			<div role="dialog" aria-label={title}>
-				{children}
-			</div>
-		) : null,
-	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
-}));
 
 const mockServiceAccountsAPI = [
 	{
 		id: 'sa-1',
 		name: 'CI Bot',
 		email: 'ci-bot@signoz.io',
-		roles: ['signoz-admin'],
+		serviceAccountRoles: [],
 		status: 'ACTIVE',
 		createdAt: 1700000000,
 		updatedAt: 1700000001,
@@ -68,7 +26,7 @@ const mockServiceAccountsAPI = [
 		id: 'sa-2',
 		name: 'Monitoring Agent',
 		email: 'monitor@signoz.io',
-		roles: ['signoz-viewer'],
+		serviceAccountRoles: [],
 		status: 'ACTIVE',
 		createdAt: 1700000002,
 		updatedAt: 1700000003,
@@ -77,7 +35,7 @@ const mockServiceAccountsAPI = [
 		id: 'sa-3',
 		name: 'Legacy Bot',
 		email: 'legacy@signoz.io',
-		roles: ['signoz-editor'],
+		serviceAccountRoles: [],
 		status: 'DISABLED',
 		createdAt: 1700000004,
 		updatedAt: 1700000005,
@@ -100,9 +58,6 @@ describe('ServiceAccountsSettings (integration)', () => {
 					: res(ctx.status(404), ctx.json({ message: 'Not found' }));
 			}),
 			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ data: [] })),
-			),
-			rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [] })),
 			),
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
@@ -173,11 +128,11 @@ describe('ServiceAccountsSettings (integration)', () => {
 			</NuqsTestingAdapter>,
 		);
 
-		fireEvent.click(
-			await screen.findByRole('button', {
-				name: /View service account CI Bot/i,
-			}),
-		);
+		const viewButton = await screen.findByRole('button', {
+			name: /View service account CI Bot/i,
+		});
+
+		fireEvent.click(viewButton);
 
 		await expect(
 			screen.findByRole('button', { name: /Delete Service Account/i }),
@@ -249,7 +204,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 		fireEvent.click(screen.getByRole('button', { name: /New Service Account/i }));
 
-		await screen.findByRole('dialog', { name: /New Service Account/i });
+		await screen.findByTestId('create-service-account-modal');
 		expect(screen.getByPlaceholderText('Enter a name')).toBeInTheDocument();
 	});
 

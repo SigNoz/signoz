@@ -269,3 +269,170 @@ export function mockQueryRangeV5WithEventsResponse({
 		),
 	);
 }
+
+export type MockTracesOptions = {
+	offset?: number;
+	pageSize?: number;
+	hasMore?: boolean;
+	delay?: number;
+	customTraces?: Array<{
+		serviceName?: string;
+		name?: string;
+		durationNano?: number;
+		httpMethod?: string;
+		responseStatusCode?: string;
+	}>;
+	onReceiveRequest?: (
+		req: RestRequest,
+	) =>
+		| undefined
+		| void
+		| Omit<MockTracesOptions, 'onReceiveRequest'>
+		| Promise<Omit<MockTracesOptions, 'onReceiveRequest'>>
+		| Promise<void>;
+};
+
+const createTracesResponse = ({
+	offset = 0,
+	pageSize = 10,
+	hasMore = true,
+	customTraces,
+}: MockTracesOptions): MetricRangePayloadV5 => {
+	const serviceNames = ['frontend', 'backend', 'database', 'api-gateway'];
+	const spanNames = [
+		'GET /api/users',
+		'POST /api/orders',
+		'SELECT * FROM users',
+	];
+	const httpMethods = ['GET', 'POST', 'PUT', 'DELETE'];
+	const statusCodes = ['200', '201', '400', '404', '500'];
+
+	const rows = customTraces
+		? customTraces.map((trace, index) => {
+				const baseTimestamp = new Date('2026-04-21T17:54:33Z').getTime();
+				const currentTimestamp = new Date(baseTimestamp - index * 60000);
+				return {
+					timestamp: currentTimestamp.toISOString(),
+					data: {
+						serviceName:
+							trace.serviceName ?? serviceNames[index % serviceNames.length],
+						name: trace.name ?? spanNames[index % spanNames.length],
+						durationNano: trace.durationNano ?? 1000000 + index * 100000,
+						httpMethod: trace.httpMethod ?? httpMethods[index % httpMethods.length],
+						responseStatusCode:
+							trace.responseStatusCode ?? statusCodes[index % statusCodes.length],
+						traceID: `trace-id-${index}`,
+						spanID: `span-id-${index}`,
+					},
+				};
+			})
+		: Array.from(
+				{ length: hasMore ? pageSize : Math.ceil(pageSize / 2) },
+				(_, index) => {
+					const cumulativeIndex = offset + index;
+					const baseTimestamp = new Date('2026-04-21T17:54:33Z').getTime();
+					const currentTimestamp = new Date(baseTimestamp - cumulativeIndex * 60000);
+					return {
+						timestamp: currentTimestamp.toISOString(),
+						data: {
+							serviceName: serviceNames[cumulativeIndex % serviceNames.length],
+							name: spanNames[cumulativeIndex % spanNames.length],
+							durationNano: 1000000 + cumulativeIndex * 100000,
+							httpMethod: httpMethods[cumulativeIndex % httpMethods.length],
+							responseStatusCode: statusCodes[cumulativeIndex % statusCodes.length],
+							traceID: `trace-id-${cumulativeIndex}`,
+							spanID: `span-id-${cumulativeIndex}`,
+						},
+					};
+				},
+			);
+
+	return {
+		data: {
+			type: 'raw',
+			data: {
+				results: [
+					{
+						queryName: 'A',
+						nextCursor: hasMore ? 'next-cursor-token' : '',
+						rows,
+					},
+				],
+			},
+			meta: {
+				bytesScanned: 9682976,
+				durationMs: 295,
+				rowsScanned: 34198,
+				stepIntervals: { A: 170 },
+			},
+		},
+	};
+};
+
+export function mockQueryRangeV5WithTracesResponse({
+	hasMore = true,
+	offset = 0,
+	pageSize = 10,
+	delay = 0,
+	customTraces,
+	onReceiveRequest,
+}: MockTracesOptions = {}): void {
+	server.use(
+		rest.post(QUERY_RANGE_URL, async (req, res, ctx) =>
+			res(
+				...(delay ? [ctx.delay(delay)] : []),
+				ctx.status(200),
+				ctx.json(
+					createTracesResponse(
+						(await onReceiveRequest?.(req)) ?? {
+							hasMore,
+							pageSize,
+							offset,
+							customTraces,
+						},
+					),
+				),
+			),
+		),
+	);
+}
+
+export function mockQueryRangeV5WithEmptyTraces(): void {
+	server.use(
+		rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
+			res(
+				ctx.status(200),
+				ctx.json({
+					data: {
+						type: 'raw',
+						data: {
+							results: [{ queryName: 'A', nextCursor: '', rows: [] }],
+						},
+						meta: {
+							bytesScanned: 0,
+							durationMs: 10,
+							rowsScanned: 0,
+							stepIntervals: {},
+						},
+					},
+				}),
+			),
+		),
+	);
+}
+
+export function mockQueryRangeV5WithKeyNotFoundError(): void {
+	server.use(
+		rest.post(QUERY_RANGE_URL, (_, res, ctx) =>
+			res(
+				ctx.status(400),
+				ctx.json({
+					error: {
+						code: 'invalid_input',
+						errors: [{ message: 'key not found' }],
+					},
+				}),
+			),
+		),
+	);
+}

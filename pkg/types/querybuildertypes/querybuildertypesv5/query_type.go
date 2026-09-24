@@ -9,6 +9,7 @@ type QueryType struct {
 var (
 	QueryTypeUnknown       = QueryType{valuer.NewString("unknown")}
 	QueryTypeBuilder       = QueryType{valuer.NewString("builder_query")}
+	QueryTypeBuilderAI     = QueryType{valuer.NewString("builder_ai_query")}
 	QueryTypeFormula       = QueryType{valuer.NewString("builder_formula")}
 	QueryTypeSubQuery      = QueryType{valuer.NewString("builder_sub_query")}
 	QueryTypeJoin          = QueryType{valuer.NewString("builder_join")}
@@ -21,6 +22,7 @@ var (
 func (QueryType) Enum() []any {
 	return []any{
 		QueryTypeBuilder,
+		QueryTypeBuilderAI,
 		QueryTypeFormula,
 		// Not yet supported.
 		// QueryTypeSubQuery,

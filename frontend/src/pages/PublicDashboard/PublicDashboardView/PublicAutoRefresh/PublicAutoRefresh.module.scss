@@ -1,0 +1,23 @@
+// Mirrors `.refresh-actions` from DateTimeSelectionV2: one bordered, rounded container
+// holding borderless buttons split by a divider.
+.refreshActions {
+	display: flex;
+	flex-direction: row;
+	border-radius: 2px;
+	border: 1px solid var(--l2-border);
+	background: var(--l2-background);
+
+	.refreshButton {
+		display: flex;
+		border-right: 1px solid var(--l2-border);
+	}
+
+	:global(.ant-btn) {
+		display: flex;
+		padding: 4px 8px;
+		align-items: center;
+		box-shadow: none;
+		border: none;
+		background: transparent;
+	}
+}

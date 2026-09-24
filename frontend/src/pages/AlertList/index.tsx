@@ -4,14 +4,17 @@ import { Tabs, TabsProps } from 'antd';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
+import AllAlertChannels from 'container/AllAlertChannels';
 import AllAlertRules from 'container/ListAlertRules';
 import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
 import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
+import { Cable, GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import AlertDetails from 'pages/AlertDetails';
+import ChannelsEdit from 'pages/ChannelsEdit';
+import ChannelsNew from 'pages/ChannelsNew';
 
 import { AlertListSubTabs, AlertListTabs } from './types';
 
@@ -26,6 +29,9 @@ function AllAlertList(): JSX.Element {
 	const subTab = urlQuery.get('subTab');
 	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
 	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
+	const isChannelsNew = location.pathname === ROUTES.CHANNELS_NEW;
+	const isChannelsEdit = location.pathname.startsWith('/alerts/channels/edit/');
+	const isChannelDetails = isChannelsNew || isChannelsEdit;
 
 	const handleConfigurationTabChange = useCallback(
 		(subTab: string): void => {
@@ -89,6 +95,22 @@ function AllAlertList(): JSX.Element {
 		{
 			label: (
 				<div className="periscope-tab top-level-tab">
+					<Cable size={14} />
+					Notification Channels
+				</div>
+			),
+			key: AlertListTabs.CHANNELS,
+			children: (
+				<div className="alert-rules-container">
+					{isChannelsNew && <ChannelsNew />}
+					{isChannelsEdit && <ChannelsEdit />}
+					{!isChannelDetails && <AllAlertChannels />}
+				</div>
+			),
+		},
+		{
+			label: (
+				<div className="periscope-tab top-level-tab">
 					<ConfigureIcon width={14} height={14} />
 					Configuration
 				</div>
@@ -98,11 +120,21 @@ function AllAlertList(): JSX.Element {
 		},
 	];
 
+	const getActiveKey = (): string => {
+		if (isAlertHistory || isAlertOverview) {
+			return AlertListTabs.ALERT_RULES;
+		}
+		if (isChannelDetails) {
+			return AlertListTabs.CHANNELS;
+		}
+		return tab || AlertListTabs.ALERT_RULES;
+	};
+
 	return (
 		<Tabs
 			destroyInactiveTabPane
 			items={items}
-			activeKey={tab || AlertListTabs.ALERT_RULES}
+			activeKey={getActiveKey()}
 			onChange={(tab): void => {
 				const queryParams = new URLSearchParams();
 
@@ -120,7 +152,9 @@ function AllAlertList(): JSX.Element {
 				safeNavigate(`/alerts?${queryParams.toString()}`);
 			}}
 			className={`alerts-container ${
-				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''
+				isAlertHistory || isAlertOverview || isChannelDetails
+					? 'alert-details-tabs'
+					: ''
 			}`}
 			tabBarExtraContent={
 				<HeaderRightSection

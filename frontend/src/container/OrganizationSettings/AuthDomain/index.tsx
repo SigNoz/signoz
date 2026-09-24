@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
 import { Plus, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
@@ -26,7 +26,7 @@ import './AuthDomain.styles.scss';
 import '../../IngestionSettings/IngestionSettings.styles.scss';
 
 export const SSOType = new Map<string, string>([
-	['google_auth', 'Google Auth'],
+	['google', 'Google Auth'],
 	['saml', 'SAML'],
 	['email_password', 'Email Password'],
 	['oidc', 'OIDC'],
@@ -121,8 +121,8 @@ function AuthDomain(): JSX.Element {
 			},
 			{
 				title: 'Enforce SSO',
-				dataIndex: ['config', 'ssoEnabled'],
-				key: 'ssoEnabled',
+				dataIndex: 'enabled',
+				key: 'enabled',
 				width: 80,
 				render: (
 					value: boolean,
@@ -157,13 +157,15 @@ function AuthDomain(): JSX.Element {
 							className="auth-domain-list-action-link"
 							onClick={(): void => setRecord(record)}
 							variant="link"
+							testId="auth-domain-configure"
 						>
-							Configure {SSOType.get(record.config?.ssoType || '')}
+							Configure {SSOType.get(record.config?.kind || '')}
 						</Button>
 						<Button
 							className="auth-domain-list-action-link delete"
 							onClick={(): void => showDeleteModal(record)}
 							variant="link"
+							testId="auth-domain-delete"
 						>
 							Delete
 						</Button>
@@ -177,7 +179,9 @@ function AuthDomain(): JSX.Element {
 	return (
 		<div className="auth-domain">
 			<section className="auth-domain-header">
-				<h3 className="auth-domain-title">Authenticated Domains</h3>
+				<h3 className="auth-domain-title" data-testid="auth-domain-title">
+					Authenticated Domains
+				</h3>
 				<Button
 					prefix={<Plus size="md" />}
 					onClick={(): void => {
@@ -186,6 +190,7 @@ function AuthDomain(): JSX.Element {
 					variant="solid"
 					size="sm"
 					color="primary"
+					testId="auth-domain-add"
 				>
 					Add Domain
 				</Button>
@@ -195,7 +200,14 @@ function AuthDomain(): JSX.Element {
 				<Table
 					columns={columns}
 					dataSource={authDomainListResponse?.data}
-					onRow={undefined}
+					onRow={(
+						record: AuthtypesGettableAuthDomainDTO,
+					): HTMLAttributes<HTMLElement> =>
+						// data-* attributes are valid row props but absent from the antd typing
+						({
+							'data-testid': `auth-domain-row-${record.name}`,
+						}) as unknown as HTMLAttributes<HTMLElement>
+					}
 					loading={
 						isLoadingAuthDomainListResponse || isFetchingAuthDomainListResponse
 					}
@@ -228,6 +240,7 @@ function AuthDomain(): JSX.Element {
 						onClick={hideDeleteModal}
 						className="cancel-btn"
 						prefix={<X size={16} />}
+						testId="auth-domain-delete-cancel"
 					>
 						Cancel
 					</Button>,
@@ -237,6 +250,7 @@ function AuthDomain(): JSX.Element {
 						onClick={handleDeleteDomain}
 						className="delete-btn"
 						loading={isLoading}
+						testId="auth-domain-delete-confirm"
 					>
 						Delete Domain
 					</Button>,

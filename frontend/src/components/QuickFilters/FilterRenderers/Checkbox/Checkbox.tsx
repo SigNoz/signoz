@@ -5,6 +5,7 @@ import { Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	IQuickFiltersConfig,
+	QuickFilterChangeEventData,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
@@ -14,7 +15,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import CheckboxFilterHeader from './CheckboxFilterHeader';
 import CheckboxValueRow from './CheckboxValueRow';
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
-import useActiveQueryIndex from './useActiveQueryIndex';
+import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryIndex';
 import useCheckboxDisclosure from './useCheckboxDisclosure';
 import useCheckboxFilterActions from './useCheckboxFilterActions';
 import useCheckboxFilterState from './useCheckboxFilterState';
@@ -28,11 +29,12 @@ interface ICheckboxProps {
 	filter: IQuickFiltersConfig;
 	source: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
+	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
-	const { source, filter, onFilterChange } = props;
+	const { source, filter, onFilterChange, onQuickFilterChange } = props;
 	const [searchText, setSearchText] = useState<string>('');
 
 	const activeQueryIndex = useActiveQueryIndex(source);
@@ -61,6 +63,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		attributeValues,
 		activeQueryIndex,
 		onFilterChange,
+		onQuickFilterChange,
 	});
 
 	const setSearchTextDebounced = useDebouncedFn((...args) => {

@@ -3,19 +3,20 @@ import { Select, Spin } from 'antd';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 import { getParsedAggregationOptionsForOrderBy } from 'utils/aggregationConverter';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
-import { selectStyle } from '../QueryBuilderSearch/config';
+import { selectStyle } from '../QueryBuilderSearchV2/config';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import { useOrderByFilter } from './useOrderByFilter';
 
 export function OrderByFilter({
 	query,
 	onChange,
-	isListViewPanel = false,
+	isRawQuery = false,
 	entityVersion,
 	isNewQueryV2 = false,
 }: OrderByFilterProps): JSX.Element {
+	const getPopupContainer = useSelectPopupContainer();
 	const {
 		debouncedSearchText,
 		selectedValue,
@@ -34,7 +35,7 @@ export function OrderByFilter({
 			searchText: debouncedSearchText,
 		},
 		{
-			enabled: !!query.aggregateAttribute?.key || isListViewPanel,
+			enabled: !!query.aggregateAttribute?.key || isRawQuery,
 			keepPreviousData: true,
 		},
 	);
@@ -78,7 +79,7 @@ export function OrderByFilter({
 
 	return (
 		<Select
-			getPopupContainer={popupContainer}
+			getPopupContainer={getPopupContainer}
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}

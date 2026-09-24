@@ -1,5 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import { ThresholdProps } from 'types/api/widgets/threshold';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 import { GetYAxisScale, getYAxisScale } from './getYAxisScale';

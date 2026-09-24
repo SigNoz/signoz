@@ -4,7 +4,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
-import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { getSpanAttribute, resolveSpanColor } from 'pages/TraceDetailsV3/utils';
@@ -64,7 +64,11 @@ export function SpanTooltipContent({
 			{previewRows && previewRows.length > 0 && (
 				<div className={styles.preview}>
 					{previewRows.map((row) => (
-						<div key={row.key} className={styles.row}>
+						<div
+							key={row.key}
+							className={styles.row}
+							data-testid={`span-hover-card-preview-${row.key}`}
+						>
 							<span className={styles.previewKey}>{row.key}:</span>{' '}
 							<span className={styles.previewValue}>{row.value}</span>
 						</div>

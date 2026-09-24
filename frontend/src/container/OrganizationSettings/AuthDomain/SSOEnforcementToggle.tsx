@@ -31,7 +31,7 @@ function SSOEnforcementToggle({
 		useUpdateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
 	const onChangeHandler = (checked: boolean): void => {
-		if (!record.id) {
+		if (!record.id || !record.config) {
 			return;
 		}
 
@@ -41,14 +41,9 @@ function SSOEnforcementToggle({
 			{
 				pathParams: { id: record.id },
 				data: {
-					config: {
-						ssoEnabled: checked,
-						ssoType: record.config?.ssoType,
-						googleAuthConfig: record.config?.googleAuthConfig,
-						oidcConfig: record.config?.oidcConfig,
-						samlConfig: record.config?.samlConfig,
-						roleMapping: record.config?.roleMapping,
-					},
+					enabled: checked,
+					config: record.config,
+					roleMapping: record.roleMapping,
 				},
 			},
 			{
@@ -65,7 +60,12 @@ function SSOEnforcementToggle({
 	};
 
 	return (
-		<Switch disabled={isLoading} value={isChecked} onChange={onChangeHandler} />
+		<Switch
+			disabled={isLoading}
+			value={isChecked}
+			onChange={onChangeHandler}
+			testId="auth-domain-enforce-sso"
+		/>
 	);
 }
 

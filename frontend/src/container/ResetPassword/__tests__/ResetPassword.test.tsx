@@ -33,7 +33,7 @@ jest.mock('hooks/useNotifications', () => ({
 	}),
 }));
 
-const RESET_PASSWORD_ENDPOINT = '*/resetPassword';
+const RESET_PASSWORD_ENDPOINT = '*/api/v2/factor_password/reset';
 
 const mockHistoryPush = history.push as jest.MockedFunction<
 	typeof history.push

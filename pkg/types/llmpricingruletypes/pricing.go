@@ -3,6 +3,7 @@ package llmpricingruletypes
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"path"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -14,18 +15,6 @@ import (
 
 const (
 	LLMCostFeatureType agentConf.AgentFeatureType = "llm_pricing"
-
-	GenAIRequestModel                  = "gen_ai.request.model"
-	GenAIUsageInputTokens              = "gen_ai.usage.input_tokens"
-	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
-	GenAIUsageCacheReadInputTokens     = "gen_ai.usage.cache_read.input_tokens"
-	GenAIUsageCacheCreationInputTokens = "gen_ai.usage.cache_creation.input_tokens"
-
-	SignozGenAICostInput      = "_signoz.gen_ai.cost_input"
-	SignozGenAICostOutput     = "_signoz.gen_ai.cost_output"
-	SignozGenAICostCacheRead  = "_signoz.gen_ai.cost_cache_read"
-	SignozGenAICostCacheWrite = "_signoz.gen_ai.cost_cache_write"
-	SignozGenAITotalCost      = "_signoz.gen_ai.total_cost"
 )
 
 var (
@@ -53,7 +42,8 @@ var (
 	LLMPricingRuleCacheModeSubtract = LLMPricingRuleCacheMode{valuer.NewString("subtract")}
 	// LLMPricingRuleCacheModeAdditive: cached tokens are reported separately (Anthropic-style).
 	LLMPricingRuleCacheModeAdditive = LLMPricingRuleCacheMode{valuer.NewString("additive")}
-	// LLMPricingRuleCacheModeUnknown: provider behaviour is unknown; falls back to subtract.
+	// LLMPricingRuleCacheModeUnknown: provider behaviour is unknown. buildProcessorConfig
+	// normalizes this to an empty mode in the collector config.
 	LLMPricingRuleCacheModeUnknown = LLMPricingRuleCacheMode{valuer.NewString("unknown")}
 )
 
@@ -87,11 +77,11 @@ type LLMPricingRule struct {
 	Provider     string             `bun:"provider,type:text,notnull" json:"provider" required:"true"`
 	ModelPattern StringSlice        `bun:"model_pattern,type:text,notnull" json:"modelPattern" required:"true"`
 	Unit         LLMPricingRuleUnit `bun:"unit,type:text,notnull" json:"unit" required:"true"`
-	Pricing      LLMRulePricing     `bun:"pricing,type:text,notnull,default:'{}'" json:"pricing" required:"true"`
+	Pricing      LLMRulePricing     `bun:"pricing,type:text,notnull" json:"pricing" required:"true"`
 	// IsOverride marks the row as user-pinned. When true, Zeus skips it entirely.
-	IsOverride bool       `bun:"is_override,notnull,default:false" json:"isOverride" required:"true"`
+	IsOverride bool       `bun:"is_override,notnull" json:"isOverride" required:"true"`
 	SyncedAt   *time.Time `bun:"synced_at" json:"syncedAt,omitempty"`
-	Enabled    bool       `bun:"enabled,notnull,default:true" json:"enabled" required:"true"`
+	Enabled    bool       `bun:"enabled,notnull" json:"enabled" required:"true"`
 }
 
 type GettableLLMPricingRule = LLMPricingRule
@@ -100,14 +90,9 @@ type StorableLLMPricingRule = LLMPricingRule
 
 // UpdatableLLMPricingRule is one entry in the bulk upsert batch.
 //
-// Identification:
-//   - ID set       → match by id (user editing a known row).
-//   - SourceID set → match by source_id (Zeus sync, or user editing a Zeus-synced row).
-//   - neither set  → insert a new row with source_id = NULL (user-created custom rule).
-//
-// IsOverride is a pointer so the caller can distinguish "not sent" from "set to false".
-// When IsOverride is nil AND the matched row has is_override = true, the row is fully
-// preserved — only synced_at is stamped.
+// IsOverride is a pointer so "not sent" differs from "false". Without it the
+// rule is matched on source_id and overridden rows are skipped. With it the
+// rule is matched on id and the value is stored.
 type UpdatableLLMPricingRule struct {
 	ID           *valuer.UUID       `json:"id,omitempty"`
 	SourceID     *valuer.UUID       `json:"sourceId,omitempty"`
@@ -125,8 +110,10 @@ type UpdatableLLMPricingRules struct {
 }
 
 type ListPricingRulesQuery struct {
-	Offset int `query:"offset" json:"offset"`
-	Limit  int `query:"limit"  json:"limit"`
+	Offset     int    `query:"offset" json:"offset"`
+	Limit      int    `query:"limit"  json:"limit"`
+	Search     string `query:"q" json:"q"`
+	IsOverride *bool  `query:"isOverride" json:"isOverride"`
 }
 
 type GettablePricingRules struct {
@@ -134,6 +121,17 @@ type GettablePricingRules struct {
 	Total  int                       `json:"total"  required:"true"`
 	Offset int                       `json:"offset" required:"true"`
 	Limit  int                       `json:"limit"  required:"true"`
+}
+
+// Models deleted from spans which doesn't have a corresponding pricing entry.
+type UnmappedModel struct {
+	ModelName string `json:"modelName" required:"true"`
+	Provider  string `json:"provider"`
+	SpanCount uint64 `json:"spanCount" required:"true"`
+}
+
+type GettableUnmappedModels struct {
+	Items []*UnmappedModel `json:"items" required:"true"`
 }
 
 func (LLMPricingRuleUnit) Enum() []any {
@@ -204,7 +202,18 @@ func NewGettableLLMPricingRulesFromLLMPricingRules(items []*LLMPricingRule, tota
 	}
 }
 
+func NewGettableUnmappedModels(items []*UnmappedModel) *GettableUnmappedModels {
+	return &GettableUnmappedModels{
+		Items: items,
+	}
+}
+
 func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUID, userEmail string, now time.Time) *LLMPricingRule {
+	id := valuer.GenerateUUID()
+	if u.ID != nil {
+		id = *u.ID
+	}
+
 	isOverride := true
 	if u.IsOverride != nil {
 		isOverride = *u.IsOverride
@@ -213,7 +222,7 @@ func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUI
 	}
 
 	return &LLMPricingRule{
-		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		Identifiable:  types.Identifiable{ID: id},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
 		UserAuditable: types.UserAuditable{CreatedBy: userEmail, UpdatedBy: userEmail},
 		OrgID:         orgID,
@@ -229,22 +238,13 @@ func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUI
 	}
 }
 
-func (r *LLMPricingRule) Update(u *UpdatableLLMPricingRule, userEmail string, now time.Time) {
-	if u.IsOverride == nil && r.IsOverride {
-		r.SyncedAt = &now
-		return
+func ModelMatchesAnyRule(model string, rules []*LLMPricingRule) bool {
+	for _, r := range rules {
+		for _, pattern := range r.ModelPattern {
+			if ok, err := path.Match(pattern, model); err == nil && ok {
+				return true
+			}
+		}
 	}
-
-	r.Model = u.Model
-	r.Provider = u.Provider
-	r.ModelPattern = StringSlice(u.ModelPattern)
-	r.Unit = u.Unit
-	r.Pricing = u.Pricing
-	if u.IsOverride != nil {
-		r.IsOverride = *u.IsOverride
-	}
-	r.Enabled = u.Enabled
-	r.SyncedAt = &now
-	r.UpdatedAt = now
-	r.UpdatedBy = userEmail
+	return false
 }

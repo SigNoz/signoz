@@ -1,0 +1,155 @@
+import type {
+	DashboardtypesPanelDTO,
+	Querybuildertypesv5QueryWarnDataDTO as WarningDTO,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
+import { StatusCodes } from 'http-status-codes';
+
+import {
+	panelStatusFromError,
+	panelStatusFromMultipleEnabledQueries,
+	panelStatusFromWarning,
+} from '../utils';
+
+// The query layer rejects with the raw AxiosError from the generated client
+// (it is not pre-converted to APIError), so the tests mirror that wire shape.
+function axiosErrorWith(
+	error: RenderErrorResponseDTO['error'],
+	status: number = StatusCodes.BAD_REQUEST,
+): AxiosError<RenderErrorResponseDTO> {
+	return {
+		response: { status, data: { error } },
+	} as AxiosError<RenderErrorResponseDTO>;
+}
+
+describe('panelStatusFromError', () => {
+	it('returns null when there is no error', () => {
+		expect(panelStatusFromError(null)).toBeNull();
+	});
+
+	it('maps a structured API error to code/message/docs/sub-messages', () => {
+		const error = axiosErrorWith({
+			code: 'invalid_query',
+			message: 'Query is invalid',
+			url: 'https://docs/err',
+			errors: [
+				{ message: 'missing aggregation', suggestions: [] },
+				{ message: 'bad filter', suggestions: [] },
+			],
+			suggestions: [],
+			type: '',
+		});
+
+		expect(panelStatusFromError(error)).toStrictEqual({
+			code: 'invalid_query',
+			message: 'Query is invalid',
+			docsUrl: 'https://docs/err',
+			messages: ['missing aggregation', 'bad filter'],
+		});
+	});
+
+	it('falls back to the error message when there is no structured body', () => {
+		expect(panelStatusFromError(new Error('boom'))).toStrictEqual({
+			code: 'UPSTREAM_UNAVAILABLE',
+			message: 'boom',
+			docsUrl: undefined,
+			messages: [],
+		});
+	});
+
+	it('omits docsUrl when the API error has no url', () => {
+		const error = axiosErrorWith(
+			{
+				code: 'x',
+				message: 'y',
+				url: '',
+				errors: [],
+				suggestions: [],
+				type: '',
+			},
+			StatusCodes.INTERNAL_SERVER_ERROR,
+		);
+
+		expect(panelStatusFromError(error)?.docsUrl).toBeUndefined();
+	});
+});
+
+describe('panelStatusFromWarning', () => {
+	it('returns null when there is no warning', () => {
+		expect(panelStatusFromWarning(undefined)).toBeNull();
+	});
+
+	it('maps a warning to the normalized status shape (no code — V5 warnings carry none)', () => {
+		const warning: WarningDTO = {
+			message: 'Some series were dropped',
+			url: 'https://docs/warn',
+			warnings: [{ message: 'series A truncated' }],
+		};
+
+		expect(panelStatusFromWarning(warning)).toStrictEqual({
+			message: 'Some series were dropped',
+			docsUrl: 'https://docs/warn',
+			messages: ['series A truncated'],
+		});
+	});
+});
+
+function panel(
+	kind: string,
+	envelopes: { disabled?: boolean }[],
+): DashboardtypesPanelDTO {
+	return {
+		spec: {
+			plugin: { kind, spec: {} },
+			queries: [
+				{
+					spec: {
+						plugin: {
+							kind: 'signoz/CompositeQuery',
+							spec: {
+								queries: envelopes.map(({ disabled }) => ({
+									type: 'builder_query',
+									spec: { disabled },
+								})),
+							},
+						},
+					},
+				},
+			],
+		},
+	} as unknown as DashboardtypesPanelDTO;
+}
+
+describe('panelStatusFromMultipleEnabledQueries', () => {
+	it('warns when a Number panel has more than one enabled query', () => {
+		const detail = panelStatusFromMultipleEnabledQueries(
+			panel('signoz/NumberPanel', [{}, {}]),
+		);
+		expect(detail).not.toBeNull();
+		expect(detail?.message).toMatch(/single value/i);
+		expect(detail?.messages).toHaveLength(1);
+	});
+
+	it('counts only enabled queries (a disabled second query is fine)', () => {
+		expect(
+			panelStatusFromMultipleEnabledQueries(
+				panel('signoz/NumberPanel', [{}, { disabled: true }]),
+			),
+		).toBeNull();
+	});
+
+	it('does not warn when a Number panel has a single enabled query', () => {
+		expect(
+			panelStatusFromMultipleEnabledQueries(panel('signoz/NumberPanel', [{}])),
+		).toBeNull();
+	});
+
+	it('does not warn for other panel kinds even with multiple enabled queries', () => {
+		expect(
+			panelStatusFromMultipleEnabledQueries(
+				panel('signoz/TimeSeriesPanel', [{}, {}]),
+			),
+		).toBeNull();
+	});
+});

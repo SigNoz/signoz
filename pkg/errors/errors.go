@@ -75,6 +75,12 @@ func (b *base) Error() string {
 	return b.m
 }
 
+// Unwrap exposes the wrapped cause so stdlib errors.Is / errors.As can walk
+// the chain — e.g. errors.Is(WrapCanceledf(context.Canceled, …), context.Canceled).
+func (b *base) Unwrap() error {
+	return b.e
+}
+
 // New returns a base error. It requires type, code and message as input.
 func New(t typ, code Code, message string) *base {
 	return &base{
@@ -335,6 +341,16 @@ func WrapTimeoutf(cause error, code Code, format string, args ...any) *base {
 // NewTimeoutf is a wrapper around Newf with TypeTimeout.
 func NewTimeoutf(code Code, format string, args ...any) *base {
 	return Newf(TypeTimeout, code, format, args...)
+}
+
+// WrapCanceledf is a wrapper around Wrapf with TypeCanceled.
+func WrapCanceledf(cause error, code Code, format string, args ...any) *base {
+	return Wrapf(cause, TypeCanceled, code, format, args...)
+}
+
+// NewCanceledf is a wrapper around Newf with TypeCanceled.
+func NewCanceledf(code Code, format string, args ...any) *base {
+	return Newf(TypeCanceled, code, format, args...)
 }
 
 // WrapUnauthenticatedf is a wrapper around Wrapf with TypeUnauthenticated.

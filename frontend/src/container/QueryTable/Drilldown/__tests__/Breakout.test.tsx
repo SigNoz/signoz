@@ -38,7 +38,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-jest.mock('container/GridCardLayout/useResolveQuery', () => ({
+jest.mock('container/WidgetCard/hooks/useResolveQuery', () => ({
 	__esModule: true,
 	default: (): any => ({
 		getUpdatedQuery: jest.fn().mockResolvedValue({}),
@@ -64,16 +64,6 @@ jest.mock('react-redux', () => ({
 			maxTime: 1713738000000,
 			minTime: 1713734400000,
 		},
-	}),
-}));
-
-jest.mock('container/QueryTable/Drilldown/useDashboardVarConfig', () => ({
-	__esModule: true,
-	default: (): any => ({
-		dashbaordVariablesConfig: {
-			items: <>items</>,
-		},
-		// contextItems: <></>,
 	}),
 }));
 
@@ -237,6 +227,10 @@ describe('TableDrilldown Breakout Functionality', () => {
 		// Verify that the groupBy has been updated to only contain the selected breakout option
 		expect(aggregateQueryData.groupBy).toHaveLength(1);
 		expect(aggregateQueryData.groupBy[0].key).toBe('deployment.environment');
+
+		// The picked field's type travels with it — dropping it leaves the breakout query
+		// untyped, so a drilldown on its result can't tell a number from a string.
+		expect(aggregateQueryData.groupBy[0].dataType).toBe('string');
 
 		// Verify that orderBy has been cleared (as per getBreakoutQuery logic)
 		expect(aggregateQueryData.orderBy).toStrictEqual([]);

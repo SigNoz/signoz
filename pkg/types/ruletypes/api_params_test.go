@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -1326,4 +1327,28 @@ func TestAnomalyNegationEval(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestVersionDefaultsToV5(t *testing.T) {
+	content := `{
+		"alert": "cpu high",
+		"alertType": "METRIC_BASED_ALERT",
+		"ruleType": "threshold_rule",
+		"schemaVersion": "v2alpha1",
+		"condition": {
+			"compositeQuery": {
+				"queries": [{"type": "promql", "spec": {"name": "A", "query": "up"}}],
+				"panelType": "graph",
+				"queryType": "promql"
+			},
+			"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "1", "op": "1"}]}
+		},
+		"evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},
+		"notificationSettings": {"usePolicy": false}
+	}`
+
+	rule := PostableRule{}
+	require.NoError(t, json.Unmarshal([]byte(content), &rule))
+	assert.Equal(t, "v5", rule.Version)
+	assert.NoError(t, rule.Validate())
 }

@@ -1,0 +1,33 @@
+.export-menu-popover {
+	width: 240px;
+	padding: 0 12px 12px 12px;
+
+	.title {
+		display: flex;
+		color: var(--l1-foreground);
+		font-family: Inter;
+		font-size: var(--periscope-font-size-small);
+		font-style: normal;
+		font-weight: 500;
+		line-height: 18px;
+		letter-spacing: 0.88px;
+		text-transform: uppercase;
+		margin-bottom: 8px;
+	}
+
+	.export-format {
+		padding: 12px 4px;
+		display: flex;
+		flex-direction: column;
+
+		// radio option labels — radix popover content inherits the root font
+		// size; pin to the app's 13px base the antd popover used to impose
+		label {
+			font-size: var(--periscope-font-size-base);
+		}
+	}
+
+	.export-button {
+		width: 100%;
+	}
+}

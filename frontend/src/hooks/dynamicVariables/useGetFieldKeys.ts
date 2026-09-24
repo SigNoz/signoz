@@ -30,4 +30,6 @@ export const useGetFieldKeys = ({
 		queryKey: ['fieldKeys', signal, name],
 		queryFn: () => getFieldKeys(signal, name),
 		enabled,
+		// Keep prior keys during a search refetch so the dropdown doesn't blank out.
+		keepPreviousData: true,
 	});

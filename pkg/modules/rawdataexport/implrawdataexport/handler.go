@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"slices"
 	"strconv"
 	"time"
@@ -114,6 +115,10 @@ func validateAndApplyDefaultExportLimits(queries []qbtypes.QueryEnvelope) error 
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", MaxExportRowCountLimit)
 		}
 		queries[idx].SetLimit(limit)
+
+		if queries[idx].GetOffset() < 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset must be non-negative")
+		}
 	}
 	return nil
 }
@@ -280,6 +285,13 @@ func constructCSVRecordFromQueryResponse(data map[string]any, headerToIndexMappi
 
 	for key, value := range data {
 		if index, exists := headerToIndexMapping[key]; exists && value != nil {
+
+			if rv := reflect.ValueOf(value); rv.Kind() == reflect.Pointer {
+				if rv.IsNil() {
+					continue
+				}
+				value = rv.Elem().Interface()
+			}
 
 			var valueStr string
 			switch v := value.(type) {

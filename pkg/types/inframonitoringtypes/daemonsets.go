@@ -12,22 +12,23 @@ type DaemonSets struct {
 	Type                   ResponseType           `json:"type" required:"true"`
 	Records                []DaemonSetRecord      `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
-	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
 type DaemonSetRecord struct {
-	DaemonSetName          string           `json:"daemonSetName" required:"true"`
-	DaemonSetCPU           float64          `json:"daemonSetCPU" required:"true"`
-	DaemonSetCPURequest    float64          `json:"daemonSetCPURequest" required:"true"`
-	DaemonSetCPULimit      float64          `json:"daemonSetCPULimit" required:"true"`
-	DaemonSetMemory        float64          `json:"daemonSetMemory" required:"true"`
-	DaemonSetMemoryRequest float64          `json:"daemonSetMemoryRequest" required:"true"`
-	DaemonSetMemoryLimit   float64          `json:"daemonSetMemoryLimit" required:"true"`
+	DaemonSetName          string            `json:"daemonSetName" required:"true"`
+	DaemonSetCPU           float64           `json:"daemonSetCPU" required:"true"`
+	DaemonSetCPURequest    float64           `json:"daemonSetCPURequest" required:"true"`
+	DaemonSetCPULimit      float64           `json:"daemonSetCPULimit" required:"true"`
+	DaemonSetMemory        float64           `json:"daemonSetMemory" required:"true"`
+	DaemonSetMemoryRequest float64           `json:"daemonSetMemoryRequest" required:"true"`
+	DaemonSetMemoryLimit   float64           `json:"daemonSetMemoryLimit" required:"true"`
 	DesiredNodes           int               `json:"desiredNodes" required:"true"`
 	CurrentNodes           int               `json:"currentNodes" required:"true"`
-	PodCountsByPhase       PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
+	ReadyNodes             int               `json:"readyNodes" required:"true"`
+	MisscheduledNodes      int               `json:"misscheduledNodes" required:"true"`
+	PodCountsByStatus      PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	Meta                   map[string]string `json:"meta" required:"true"`
 }
 
@@ -35,11 +36,18 @@ type DaemonSetRecord struct {
 type PostableDaemonSets struct {
 	Start   int64                `json:"start" required:"true"`
 	End     int64                `json:"end" required:"true"`
-	Filter  *qbtypes.Filter      `json:"filter"`
+	Filter  *DaemonSetFilter     `json:"filter"`
 	GroupBy []qbtypes.GroupByKey `json:"groupBy"`
 	OrderBy *qbtypes.OrderBy     `json:"orderBy"`
 	Offset  int                  `json:"offset"`
 	Limit   int                  `json:"limit" required:"true"`
+}
+
+// DaemonSetFilter is the attribute filter plus an optional secondary filter on the
+// derived pod display status(es) (see PodStatus); matches any listed (OR). Empty = off.
+type DaemonSetFilter struct {
+	qbtypes.Filter    `json:",inline"`
+	FilterByPodStatus []PodStatus `json:"filterByPodStatus"`
 }
 
 // Validate ensures PostableDaemonSets contains acceptable values.
@@ -79,6 +87,14 @@ func (req *PostableDaemonSets) Validate() error {
 
 	if req.Offset < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
+	}
+
+	if req.Filter != nil {
+		for _, s := range req.Filter.FilterByPodStatus {
+			if !s.IsFilterable() {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by pod status: %s", s)
+			}
+		}
 	}
 
 	if req.OrderBy != nil {

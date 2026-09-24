@@ -186,6 +186,7 @@ function Footer(): JSX.Element {
 				color="primary"
 				onClick={handleSaveAlert}
 				disabled={disableButtons || Boolean(alertValidationMessage)}
+				testId="save-alert-rule-button"
 			>
 				{isCreatingAlertRule || isUpdatingAlertRule ? (
 					<Loader data-testid="save-alert-rule-loader-icon" size={14} />
@@ -218,6 +219,7 @@ function Footer(): JSX.Element {
 				color="secondary"
 				onClick={handleTestNotification}
 				disabled={disableButtons || Boolean(alertValidationMessage)}
+				testId="test-notification-button"
 			>
 				{isTestingAlertRule ? (
 					<Loader data-testid="test-notification-loader-icon" size={14} />
@@ -249,6 +251,7 @@ function Footer(): JSX.Element {
 				color="secondary"
 				onClick={handleDiscard}
 				disabled={disableButtons}
+				testId="discard-alert-rule-button"
 			>
 				<X size={14} /> Discard
 			</Button>

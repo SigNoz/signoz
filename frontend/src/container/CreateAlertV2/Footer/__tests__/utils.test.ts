@@ -130,6 +130,28 @@ describe('Footer utils', () => {
 			};
 			expect(validateCreateAlertState(currentArgs)).toBeNull();
 		});
+
+		it('when threshold channels are null', () => {
+			const currentArgs: BuildCreateAlertRulePayloadArgs = {
+				...args,
+				basicAlertState: {
+					...args.basicAlertState,
+					name: 'test name',
+				},
+				thresholdState: {
+					...args.thresholdState,
+					thresholds: [
+						{
+							...args.thresholdState.thresholds[0],
+							channels: null as unknown as string[],
+						},
+					],
+				},
+			};
+			expect(validateCreateAlertState(currentArgs)).toBe(
+				'Please select at least one channel for each threshold or enable routing policies',
+			);
+		});
 	});
 
 	describe('getNotificationSettingsProps', () => {
@@ -532,7 +554,7 @@ describe('Footer utils', () => {
 			['symbol', '>', 'at_least_once'],
 			['literal', 'above', 'at_least_once'],
 			['short', 'eq', 'avg'],
-			['UI-unexposed', 'above_or_equal', 'at_least_once'],
+			['inclusive', 'above_or_equal', 'at_least_once'],
 		])(
 			'round-trips %s op/matchType unchanged through the submit payload (%s / %s)',
 			(_desc, op, matchType) => {

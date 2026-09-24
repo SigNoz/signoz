@@ -19,13 +19,10 @@ import {
 
 export const serviceMetricsQuery = (
 	topLevelOperation: [keyof ServiceDataProps, string[]],
-	dotMetricsEnabled: boolean,
 ): QueryBuilderData => {
 	const p99AutoCompleteData: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		key: dotMetricsEnabled
-			? WidgetKeys.Signoz_latency_bucket
-			: WidgetKeys.Signoz_latency_bucket_norm,
+		key: WidgetKeys.SignozLatencyBucket,
 		type: '',
 	};
 
@@ -53,9 +50,7 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -78,9 +73,7 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -90,7 +83,7 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.Int64,
-				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
+				key: WidgetKeys.StatusCode,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -113,9 +106,7 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -138,9 +129,7 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -193,9 +182,7 @@ export const serviceMetricsQuery = (
 	const groupBy: BaseAutocompleteData[] = [
 		{
 			dataType: DataTypes.String,
-			key: dotMetricsEnabled
-				? WidgetKeys.Service_name
-				: WidgetKeys.Service_name_norm,
+			key: WidgetKeys.OTelServiceName,
 			type: MetricsType.Tag,
 		},
 	];

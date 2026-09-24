@@ -57,10 +57,13 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 		}
 
 		const timeAtCursor = offsetTimestamp + cursorXPercent * spread;
-		const unit = getIntervalUnit(spread, offsetTimestamp);
+		// Use the same width-derived interval spread the ticks use, so the badge
+		// unit always matches the tick unit (narrow rulers pick fewer intervals).
+		const intervalSpread = spread / getMinimumIntervalsBasedOnWidth(width);
+		const unit = getIntervalUnit(intervalSpread, offsetTimestamp);
 		const formatted = toFixed(resolveTimeFromInterval(timeAtCursor, unit), 2);
 		return `${formatted}${unit.name}`;
-	}, [cursorXPercent, spread, offsetTimestamp]);
+	}, [cursorXPercent, spread, offsetTimestamp, width]);
 
 	if (endTimestamp < startTimestamp) {
 		console.error(
@@ -94,12 +97,17 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 						>
 							<text
 								x={index === intervals.length - 1 ? -10 : 0}
-								y={timelineHeight * 2}
+								y={timelineHeight * 2 - 3}
 								fill={strokeColor}
 							>
 								{interval.label}
 							</text>
-							<line y1={0} y2={timelineHeight} stroke={strokeColor} strokeWidth="1" />
+							<line
+								y1={0}
+								y2={timelineHeight - 3}
+								stroke={strokeColor}
+								strokeWidth="1"
+							/>
 						</g>
 					))}
 			</svg>

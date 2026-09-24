@@ -53,17 +53,24 @@ export const getUpdatedStepInterval = (evalWindow?: string): number => {
 };
 
 export const getSelectedQueryOptions = (
-	queries: Array<
-		| IBuilderQuery
-		| IBuilderTraceOperator
-		| IBuilderFormula
-		| IClickHouseQuery
-		| IPromQLQuery
-	>,
-): SelectProps['options'] =>
-	queries
+	queries:
+		| Array<
+				| IBuilderQuery
+				| IBuilderTraceOperator
+				| IBuilderFormula
+				| IClickHouseQuery
+				| IPromQLQuery
+		  >
+		| undefined
+		| null,
+): SelectProps['options'] => {
+	if (!queries) {
+		return [];
+	}
+	return queries
 		.filter((query) => !query.disabled)
 		.map((query) => ({
 			label: 'queryName' in query ? query.queryName : query.name,
 			value: 'queryName' in query ? query.queryName : query.name,
 		}));
+};

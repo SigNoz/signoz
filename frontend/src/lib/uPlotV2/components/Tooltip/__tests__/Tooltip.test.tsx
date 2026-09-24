@@ -73,9 +73,9 @@ function createTooltipContent(
 	};
 }
 
-function createUPlotInstance(cursorIdx: number | null): uPlot {
+function createUPlotInstance(cursorIdx: number | null, timestamp = 1): uPlot {
 	return {
-		data: [[1], []],
+		data: [[timestamp], []],
 		cursor: { idx: cursorIdx },
 		// The rest of the uPlot fields are not used by Tooltip
 	} as unknown as uPlot;
@@ -118,6 +118,19 @@ describe('Tooltip', () => {
 		const expectedTitle = dayjs(1 * 1000)
 			.tz('UTC')
 			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
+
+		expect(screen.getByText(expectedTitle)).toBeInTheDocument();
+	});
+
+	it('drops the date from the header title for a point on the current day', () => {
+		const todayTimestamp = dayjs().tz('UTC').startOf('hour').unix();
+		const uPlotInstance = createUPlotInstance(0, todayTimestamp);
+
+		renderTooltip({ uPlotInstance });
+
+		const expectedTitle = dayjs(todayTimestamp * 1000)
+			.tz('UTC')
+			.format(DATE_TIME_FORMATS.TIME_SECONDS);
 
 		expect(screen.getByText(expectedTitle)).toBeInTheDocument();
 	});
@@ -177,7 +190,8 @@ describe('Tooltip', () => {
 		renderTooltip({ uPlotInstance, content });
 
 		const list = screen.getByTestId('uplot-tooltip-list');
-		expect(list).toHaveStyle({ height: '200px' });
+		// Measured height (200) + the scroll viewport's vertical padding (16)
+		expect(list).toHaveStyle({ height: '216px' });
 	});
 
 	it('sets tooltip list height based on content length when Virtuoso reports 0 height', () => {
@@ -188,8 +202,8 @@ describe('Tooltip', () => {
 		renderTooltip({ uPlotInstance, content });
 
 		const list = screen.getByTestId('uplot-tooltip-list');
-		// Falls back to content length: 2 items * 38px = 76px
-		expect(list).toHaveStyle({ height: '76px' });
+		// Falls back to content length (2 * 38 = 76) + vertical padding (16) = 92px
+		expect(list).toHaveStyle({ height: '92px' });
 	});
 });
 

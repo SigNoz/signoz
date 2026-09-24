@@ -8,6 +8,11 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import dayjs from 'dayjs';
 import useClickOutside from 'hooks/useClickOutside';
+import {
+	TraceDetailEventKeys,
+	TraceDetailEvents,
+} from 'pages/TraceDetailsV3/events';
+import { useTraceDetailLogEvent } from 'pages/TraceDetailsV3/hooks/useTraceDetailLogEvent';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 export interface IResourceAttribute {
@@ -37,7 +42,7 @@ export interface UseSpanPercentileReturn {
 	selectedTimeRange: number;
 	setSelectedTimeRange: (range: number) => void;
 	showResourceAttributesSelector: boolean;
-	setShowResourceAttributesSelector: (show: boolean) => void;
+	toggleResourceAttributesSelector: () => void;
 	resourceAttributesSearchQuery: string;
 	setResourceAttributesSearchQuery: (query: string) => void;
 	spanResourceAttributes: IResourceAttribute[];
@@ -75,6 +80,8 @@ function useSpanPercentile(selectedSpan: SpanV3): UseSpanPercentileReturn {
 		useState(false);
 
 	const resourceAttributesSelectorRef = useRef<HTMLDivElement | null>(null);
+
+	const logTraceEvent = useTraceDetailLogEvent('v3', selectedSpan.trace_id);
 
 	useClickOutside({
 		ref: resourceAttributesSelectorRef,
@@ -257,6 +264,12 @@ function useSpanPercentile(selectedSpan: SpanV3): UseSpanPercentileReturn {
 
 	const handleResourceAttributeChange = useCallback(
 		(key: string, value: string, isSelected: boolean): void => {
+			logTraceEvent(TraceDetailEvents.SpanPercentileAttributeChanged, {
+				[TraceDetailEventKeys.SpanId]: selectedSpan.span_id,
+				[TraceDetailEventKeys.ResourceAttributeKey]: key,
+				[TraceDetailEventKeys.Selected]: isSelected,
+			});
+
 			updateSpanResourceAttributes((prev) =>
 				prev.map((attr) => (attr.key === key ? { ...attr, isSelected } : attr)),
 			);
@@ -271,7 +284,7 @@ function useSpanPercentile(selectedSpan: SpanV3): UseSpanPercentileReturn {
 			setShouldFetchData(true);
 			setShouldUpdateUserPreference(true);
 		},
-		[selectedResourceAttributes],
+		[selectedResourceAttributes, logTraceEvent, selectedSpan.span_id],
 	);
 
 	useEffect(() => {
@@ -293,12 +306,37 @@ function useSpanPercentile(selectedSpan: SpanV3): UseSpanPercentileReturn {
 		'ms',
 	);
 
-	const toggleOpen = useCallback(() => setIsOpen((prev) => !prev), []);
+	const toggleOpen = useCallback(() => {
+		const nextOpen = !isOpen;
+		setIsOpen(nextOpen);
+		logTraceEvent(TraceDetailEvents.SpanPercentileToggled, {
+			[TraceDetailEventKeys.SpanId]: selectedSpan.span_id,
+			[TraceDetailEventKeys.Open]: nextOpen,
+			[TraceDetailEventKeys.PercentileValue]: percentileValue,
+		});
+	}, [isOpen, logTraceEvent, selectedSpan.span_id, percentileValue]);
 
-	const handleTimeRangeChange = useCallback((range: number): void => {
-		setShouldFetchData(true);
-		setSelectedTimeRange(range);
-	}, []);
+	const toggleResourceAttributesSelector = useCallback(() => {
+		const nextOpen = !showResourceAttributesSelector;
+		setShowResourceAttributesSelector(nextOpen);
+		logTraceEvent(TraceDetailEvents.SpanPercentileAttributesSelectorToggled, {
+			[TraceDetailEventKeys.SpanId]: selectedSpan.span_id,
+			[TraceDetailEventKeys.Open]: nextOpen,
+		});
+	}, [showResourceAttributesSelector, logTraceEvent, selectedSpan.span_id]);
+
+	const handleTimeRangeChange = useCallback(
+		(range: number): void => {
+			logTraceEvent(TraceDetailEvents.SpanPercentileTimeRangeChanged, {
+				[TraceDetailEventKeys.SpanId]: selectedSpan.span_id,
+				[TraceDetailEventKeys.From]: selectedTimeRange,
+				[TraceDetailEventKeys.To]: range,
+			});
+			setShouldFetchData(true);
+			setSelectedTimeRange(range);
+		},
+		[logTraceEvent, selectedSpan.span_id, selectedTimeRange],
+	);
 
 	return {
 		isOpen,
@@ -312,7 +350,7 @@ function useSpanPercentile(selectedSpan: SpanV3): UseSpanPercentileReturn {
 		selectedTimeRange,
 		setSelectedTimeRange: handleTimeRangeChange,
 		showResourceAttributesSelector,
-		setShowResourceAttributesSelector,
+		toggleResourceAttributesSelector,
 		resourceAttributesSearchQuery,
 		setResourceAttributesSearchQuery,
 		spanResourceAttributes,

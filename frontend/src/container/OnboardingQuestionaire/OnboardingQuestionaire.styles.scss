@@ -143,6 +143,8 @@
 			}
 
 			&.invite-team-members-form {
+				--invite-members-field-background: var(--l3-background);
+
 				padding-right: 12px;
 
 				.form-group {

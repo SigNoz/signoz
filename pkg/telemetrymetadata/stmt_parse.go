@@ -27,7 +27,7 @@ func (v *TelemetryFieldVisitor) VisitColumnDef(expr *parser.ColumnDef) error {
 	}
 
 	// Parse column name to extract context and data type
-	columnName := expr.Name.String()
+	columnName := parser.Format(expr.Name)
 
 	// Remove backticks if present
 	columnName = strings.TrimPrefix(columnName, "`")
@@ -75,7 +75,7 @@ func (v *TelemetryFieldVisitor) VisitColumnDef(expr *parser.ColumnDef) error {
 	// Extract field name from the DEFAULT expression
 	// The DEFAULT expression should be something like: resources_string['k8s.cluster.name']
 	// We need to extract the key inside the square brackets
-	defaultExprStr := expr.DefaultExpr.String()
+	defaultExprStr := parser.Format(expr.DefaultExpr)
 
 	// Look for the pattern: map['key']
 	startIdx := strings.Index(defaultExprStr, "['")

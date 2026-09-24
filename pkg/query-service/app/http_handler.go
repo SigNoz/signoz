@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
@@ -29,21 +30,18 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	_ "modernc.org/sqlite"
 
 	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
 	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
@@ -55,13 +53,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
@@ -117,25 +113,6 @@ type APIHandler struct {
 	// is registers.
 	SetupCompleted bool
 
-	// Websocket connection upgrader
-	Upgrader *websocket.Upgrader
-
-	hostsRepo      *inframetrics.HostsRepo
-	processesRepo  *inframetrics.ProcessesRepo
-	podsRepo       *inframetrics.PodsRepo
-	nodesRepo      *inframetrics.NodesRepo
-	namespacesRepo *inframetrics.NamespacesRepo
-	clustersRepo   *inframetrics.ClustersRepo
-	// workloads
-	deploymentsRepo  *inframetrics.DeploymentsRepo
-	daemonsetsRepo   *inframetrics.DaemonSetsRepo
-	statefulsetsRepo *inframetrics.StatefulSetsRepo
-	jobsRepo         *inframetrics.JobsRepo
-
-	pvcsRepo *inframetrics.PvcsRepo
-
-	LicensingAPI licensing.API
-
 	QueryParserAPI *queryparser.API
 
 	Signoz *signoz.SigNoz
@@ -153,8 +130,6 @@ type APIHandlerOpts struct {
 
 	// Flux Interval
 	FluxInterval time.Duration
-
-	LicensingAPI licensing.API
 
 	QueryParserAPI *queryparser.API
 
@@ -180,17 +155,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 	querier := querier.NewQuerier(querierOpts)
 	querierv2 := querierV2.NewQuerier(querierOptsV2)
 
-	hostsRepo := inframetrics.NewHostsRepo(opts.Reader, querierv2)
-	processesRepo := inframetrics.NewProcessesRepo(opts.Reader, querierv2)
-	podsRepo := inframetrics.NewPodsRepo(opts.Reader, querierv2)
-	nodesRepo := inframetrics.NewNodesRepo(opts.Reader, querierv2)
-	namespacesRepo := inframetrics.NewNamespacesRepo(opts.Reader, querierv2)
-	clustersRepo := inframetrics.NewClustersRepo(opts.Reader, querierv2)
-	deploymentsRepo := inframetrics.NewDeploymentsRepo(opts.Reader, querierv2)
-	daemonsetsRepo := inframetrics.NewDaemonSetsRepo(opts.Reader, querierv2)
-	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
-	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
-	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
 	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
 	aH := &APIHandler{
@@ -202,18 +166,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
-		hostsRepo:                     hostsRepo,
-		processesRepo:                 processesRepo,
-		podsRepo:                      podsRepo,
-		nodesRepo:                     nodesRepo,
-		namespacesRepo:                namespacesRepo,
-		clustersRepo:                  clustersRepo,
-		deploymentsRepo:               deploymentsRepo,
-		daemonsetsRepo:                daemonsetsRepo,
-		statefulsetsRepo:              statefulsetsRepo,
-		jobsRepo:                      jobsRepo,
-		pvcsRepo:                      pvcsRepo,
-		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		QueryParserAPI:                opts.QueryParserAPI,
 	}
@@ -248,12 +200,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 	// If the root user is enabled, the setup is complete
 	if config.User.Root.Enabled {
 		aH.SetupCompleted = true
-	}
-
-	aH.Upgrader = &websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
 	}
 
 	return aH, nil
@@ -397,76 +343,8 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *middlew
 
 	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
 
-	// TODO(Raj): Remove this handler after /ws based path has been completely rolled out.
-	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
-
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.Signoz.Handlers.QuerierHandler.QueryRawStream)).Methods(http.MethodGet)
-}
-
-func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *middleware.AuthZ) {
-	hostsSubRouter := router.PathPrefix("/api/v1/hosts").Subrouter()
-	hostsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getHostAttributeKeys)).Methods(http.MethodGet)
-	hostsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getHostAttributeValues)).Methods(http.MethodGet)
-	hostsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getHostList)).Methods(http.MethodPost)
-
-	processesSubRouter := router.PathPrefix("/api/v1/processes").Subrouter()
-	processesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getProcessAttributeKeys)).Methods(http.MethodGet)
-	processesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getProcessAttributeValues)).Methods(http.MethodGet)
-	processesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getProcessList)).Methods(http.MethodPost)
-
-	podsSubRouter := router.PathPrefix("/api/v1/pods").Subrouter()
-	podsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getPodAttributeKeys)).Methods(http.MethodGet)
-	podsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPodAttributeValues)).Methods(http.MethodGet)
-	podsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPodList)).Methods(http.MethodPost)
-
-	pvcsSubRouter := router.PathPrefix("/api/v1/pvcs").Subrouter()
-	pvcsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getPvcAttributeKeys)).Methods(http.MethodGet)
-	pvcsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPvcAttributeValues)).Methods(http.MethodGet)
-	pvcsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPvcList)).Methods(http.MethodPost)
-
-	nodesSubRouter := router.PathPrefix("/api/v1/nodes").Subrouter()
-	nodesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNodeAttributeKeys)).Methods(http.MethodGet)
-	nodesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNodeAttributeValues)).Methods(http.MethodGet)
-	nodesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNodeList)).Methods(http.MethodPost)
-
-	namespacesSubRouter := router.PathPrefix("/api/v1/namespaces").Subrouter()
-	namespacesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNamespaceAttributeKeys)).Methods(http.MethodGet)
-	namespacesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNamespaceAttributeValues)).Methods(http.MethodGet)
-	namespacesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNamespaceList)).Methods(http.MethodPost)
-
-	clustersSubRouter := router.PathPrefix("/api/v1/clusters").Subrouter()
-	clustersSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getClusterAttributeKeys)).Methods(http.MethodGet)
-	clustersSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getClusterAttributeValues)).Methods(http.MethodGet)
-	clustersSubRouter.HandleFunc("/list", am.ViewAccess(aH.getClusterList)).Methods(http.MethodPost)
-
-	deploymentsSubRouter := router.PathPrefix("/api/v1/deployments").Subrouter()
-	deploymentsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getDeploymentAttributeKeys)).Methods(http.MethodGet)
-	deploymentsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getDeploymentAttributeValues)).Methods(http.MethodGet)
-	deploymentsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getDeploymentList)).Methods(http.MethodPost)
-
-	daemonsetsSubRouter := router.PathPrefix("/api/v1/daemonsets").Subrouter()
-	daemonsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getDaemonSetAttributeKeys)).Methods(http.MethodGet)
-	daemonsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getDaemonSetAttributeValues)).Methods(http.MethodGet)
-	daemonsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getDaemonSetList)).Methods(http.MethodPost)
-
-	statefulsetsSubRouter := router.PathPrefix("/api/v1/statefulsets").Subrouter()
-	statefulsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getStatefulSetAttributeKeys)).Methods(http.MethodGet)
-	statefulsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getStatefulSetAttributeValues)).Methods(http.MethodGet)
-	statefulsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getStatefulSetList)).Methods(http.MethodPost)
-
-	jobsSubRouter := router.PathPrefix("/api/v1/jobs").Subrouter()
-	jobsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getJobAttributeKeys)).Methods(http.MethodGet)
-	jobsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getJobAttributeValues)).Methods(http.MethodGet)
-	jobsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getJobList)).Methods(http.MethodPost)
-
-	infraOnboardingSubRouter := router.PathPrefix("/api/v1/infra_onboarding").Subrouter()
-	infraOnboardingSubRouter.HandleFunc("/k8s/status", am.ViewAccess(aH.getK8sInfraOnboardingStatus)).Methods(http.MethodGet)
-}
-
-func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *middleware.AuthZ) {
-	subRouter := router.PathPrefix("/ws").Subrouter()
-	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *middleware.AuthZ) {
@@ -484,6 +362,7 @@ func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
+
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
@@ -496,19 +375,13 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/rules/{id}/history/top_contributors", am.ViewAccess(aH.getRuleStateHistoryTopContributors)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rules/{id}/history/overall_status", am.ViewAccess(aH.getOverallStateTransitions)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.List)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{id}", am.ViewAccess(aH.Get)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Update)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Delete)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/dashboards/{id}/lock", am.EditAccess(aH.Signoz.Handlers.Dashboard.LockUnlock)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.Signoz.Handlers.SavedView.List)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/explorer/views", am.EditAccess(aH.Signoz.Handlers.SavedView.Create)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.Signoz.Handlers.SavedView.Get)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Update)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Delete)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/explorer/views/{id}", am.ViewAccess(aH.Signoz.Handlers.SavedView.Get)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/views/{id}", am.EditAccess(aH.Signoz.Handlers.SavedView.Update)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/views/{id}", am.EditAccess(aH.Signoz.Handlers.SavedView.Delete)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost) // Deprecated Usage, use the below endpoint /v2/services
@@ -536,7 +409,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/features", am.ViewAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/features", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodPost)
@@ -547,19 +420,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
-	// Quick Filters
+	// Quick Filters (v1 routes serve the legacy v3 shape; v2 lives in signozapiserver)
 	router.HandleFunc("/api/v1/orgs/me/filters", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetQuickFilters)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSignalFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSourceFilters)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.Signoz.Handlers.QuickFilter.UpdateQuickFilters)).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
-
-	router.HandleFunc("/api/v3/licenses", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
-		render.Success(rw, http.StatusOK, []any{})
-	})).Methods(http.MethodGet)
-	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
-		aH.LicensingAPI.Activate(rw, req)
-	})).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/span_percentile", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
 
@@ -957,12 +823,12 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
 
 				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()
-			} else if rule.AlertType == ruletypes.AlertTypeTraces {
+			} else if rule.AlertType == ruletypes.AlertTypeTraces || rule.AlertType == ruletypes.AlertTypeAITraces {
 				// TODO(srikanthccv): re-visit this and support multiple queries
 				var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
 
 				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder {
+					if query.Type == qbtypes.QueryTypeBuilder || query.Type == qbtypes.QueryTypeBuilderAI {
 						switch spec := query.Spec.(type) {
 						case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
 							q = spec
@@ -976,7 +842,7 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 				}
 
 				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause).Encode()
+				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause, rule.AlertType.BuilderQueryType()).Encode()
 			}
 		}
 	}
@@ -1051,10 +917,6 @@ func prepareQuery(r *http.Request) (string, error) {
 		return "", tmplErr
 	}
 
-	if !constants.IsDotMetricsEnabled {
-		return queryBuf.String(), nil
-	}
-
 	query = queryBuf.String()
 
 	// Now handle $var replacements (simple string replace)
@@ -1077,84 +939,14 @@ func prepareQuery(r *http.Request) (string, error) {
 	return newQuery, nil
 }
 
-func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	id := mux.Vars(r)["id"]
-	if id == "" {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
-		return
-	}
-
-	dashboardID, err := valuer.NewUUID(id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	dashboard, err := aH.Signoz.Modules.Dashboard.Get(ctx, orgID, dashboardID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	gettableDashboard, err := dashboardtypes.NewGettableDashboardFromDashboard(dashboard)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, gettableDashboard)
-}
-
-func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	dashboards, err := aH.Signoz.Modules.Dashboard.List(ctx, orgID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		render.Error(rw, err)
-		return
-	}
-
-	gettableDashboards, err := dashboardtypes.NewGettableDashboardsFromDashboards(dashboards)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	render.Success(rw, http.StatusOK, gettableDashboards)
-}
-
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {
 	query, err := prepareQuery(r)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
+
+	clickhousesql.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
 
 	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
@@ -1291,13 +1083,19 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	query, err := parseGetTopOperationsRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetTopOperations(r.Context(), query)
+	result, apiErr := aH.reader.GetTopOperations(r.Context(), orgID, query)
 
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1308,13 +1106,20 @@ func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getEntryPointOps(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	query, err := parseGetTopOperationsRequest(r)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	result, apiErr := aH.reader.GetEntryPointOperations(r.Context(), query)
+	result, apiErr := aH.reader.GetEntryPointOperations(r.Context(), orgID, query)
 	if apiErr != nil {
 		render.Error(w, apiErr)
 		return
@@ -1389,12 +1194,19 @@ func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Requ
 }
 
 func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	query, err := parseGetServicesRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetServices(r.Context(), query)
+	result, apiErr := aH.reader.GetServices(r.Context(), orgID, query)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1403,13 +1215,19 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) dependencyGraph(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	query, err := parseGetServicesRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, err := aH.reader.GetDependencyGraph(r.Context(), query)
+	result, err := aH.reader.GetDependencyGraph(r.Context(), orgID, query)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1634,7 +1452,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
-		aH.HandleError(w, err, http.StatusInternalServerError)
+		aH.HandleError(w, err, http.StatusUnauthorized)
 		return
 	}
 
@@ -1660,31 +1478,6 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
-	fineGrainedAuthz := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseFineGrainedAuthz, evalCtx)
-	featureSet = append(featureSet, &licensetypes.Feature{
-		Name:       valuer.NewString(flagger.FeatureUseFineGrainedAuthz.String()),
-		Active:     fineGrainedAuthz,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
-
-	useDashboardV2 := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseDashboardV2, evalCtx)
-	featureSet = append(featureSet, &licensetypes.Feature{
-		Name:       valuer.NewString(flagger.FeatureUseDashboardV2.String()),
-		Active:     useDashboardV2,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
-
-	if constants.IsDotMetricsEnabled {
-		for idx, feature := range featureSet {
-			if feature.Name == licensetypes.DotMetricsEnabled {
-				featureSet[idx].Active = true
-			}
-		}
-	}
 	aH.Respond(w, featureSet)
 }
 
@@ -2125,12 +1918,8 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	var kafkaConsumerFetchLatencyAvg string = "kafka_consumer_fetch_latency_avg"
-	var kafkaConsumerLag string = "kafka_consumer_group_lag"
-	if constants.IsDotMetricsEnabled {
-		kafkaConsumerLag = "kafka.consumer_group.lag"
-		kafkaConsumerFetchLatencyAvg = "kafka.consumer.fetch_latency_avg"
-	}
+	var kafkaConsumerFetchLatencyAvg string = "kafka.consumer.fetch_latency_avg"
+	var kafkaConsumerLag string = "kafka.consumer_group.lag"
 
 	if !fetchLatencyState && !consumerLagState {
 		entries = append(entries, kafka.OnboardingResponse{
@@ -3036,7 +2825,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 		}
 
 		statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
-			ctx, connectionTests.Metrics, nil,
+			ctx, orgID, connectionTests.Metrics, nil,
 		)
 
 		resultLock.Lock()
@@ -3287,7 +3076,19 @@ func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	resultLogs, err := aH.LogsParsingPipelineController.PreviewLogsPipelines(r.Context(), &req)
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
+	orgID, errv2 := valuer.NewUUID(claims.OrgID)
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
+	resultLogs, err := aH.LogsParsingPipelineController.PreviewLogsPipelines(r.Context(), orgID, &req)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -3505,9 +3306,16 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), orgID, req)
 	case v3.DataSourceMeter:
 		response, err = aH.reader.GetMeterAttributeKeys(r.Context(), req)
 	case v3.DataSourceLogs:
@@ -3536,9 +3344,16 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeValues(r.Context(), orgID, req)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -3565,9 +3380,16 @@ func (aH *APIHandler) autoCompleteAttributeValuesPost(w http.ResponseWriter, r *
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeValues(r.Context(), orgID, req)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -3678,27 +3500,6 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 				tracesV3.AddTimestampFilters(min, max, queryRangeParams)
 				aH.logger.DebugContext(ctx, "post adding timestamp filter in traces query", "query_range_params", queryRangeParams)
 			}
-		}
-	}
-
-	// Hook up query progress tracking if requested
-	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
-	if len(queryIdHeader) > 0 {
-		onQueryFinished, apiErr := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
-
-		if apiErr != nil {
-			aH.logger.ErrorContext(ctx, "failed to report query start for progress tracking",
-				"query_id", queryIdHeader, errors.Attr(apiErr),
-			)
-
-		} else {
-			// Adding queryId to the context signals clickhouse queries to report progress
-			//lint:ignore SA1029 ignore for now
-			ctx = context.WithValue(ctx, "queryId", queryIdHeader)
-
-			defer func() {
-				go onQueryFinished()
-			}()
 		}
 	}
 
@@ -3868,6 +3669,10 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queryRangeParams.UseJSONBody = aH.Signoz.Flagger.BooleanOrEmpty(
+		r.Context(), flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID),
+	)
+
 	// add temporality for each metric
 	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
@@ -3877,73 +3682,6 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
-}
-
-func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Request) {
-	// Upgrade connection to websocket, sending back the requested protocol
-	// value for sec-websocket-protocol
-	//
-	// Since js websocket API doesn't allow setting headers, this header is often
-	// used for passing auth tokens. As per websocket spec the connection will only
-	// succeed if the requested `Sec-Websocket-Protocol` is sent back as a header
-	// in the upgrade response (signifying that the protocol is supported by the server).
-	upgradeResponseHeaders := http.Header{}
-	requestedProtocol := r.Header.Get("Sec-WebSocket-Protocol")
-	if len(requestedProtocol) > 0 {
-		upgradeResponseHeaders.Add("Sec-WebSocket-Protocol", requestedProtocol)
-	}
-
-	c, err := aH.Upgrader.Upgrade(w, r, upgradeResponseHeaders)
-	if err != nil {
-		RespondError(w, model.InternalError(fmt.Errorf(
-			"couldn't upgrade connection: %w", err,
-		)), nil)
-		return
-	}
-	defer c.Close()
-
-	// Websocket upgrade complete. Subscribe to query progress and send updates to client
-	//
-	// Note: we handle any subscription problems (queryId query param missing or query already complete etc)
-	// after the websocket connection upgrade by closing the channel.
-	// The other option would be to handle the errors before websocket upgrade by sending an
-	// error response instead of the upgrade response, but that leads to a generic websocket
-	// connection failure on the client.
-
-	queryId := r.URL.Query().Get("q")
-
-	progressCh, unsubscribe, apiErr := aH.reader.SubscribeToQueryProgress(queryId)
-	if apiErr != nil {
-		// Shouldn't happen unless query progress requested after query finished
-		aH.logger.WarnContext(r.Context(), "failed to subscribe to query progress",
-			"query_id", queryId, errors.Attr(apiErr),
-		)
-		return
-	}
-	defer func() { go unsubscribe() }()
-
-	for queryProgress := range progressCh {
-		msg, err := json.Marshal(queryProgress)
-		if err != nil {
-			aH.logger.ErrorContext(r.Context(), "failed to serialize progress message",
-				"query_id", queryId, "progress", queryProgress, errors.Attr(err),
-			)
-			continue
-		}
-
-		err = c.WriteMessage(websocket.TextMessage, msg)
-		if err != nil {
-			aH.logger.ErrorContext(r.Context(), "failed to write progress message to websocket",
-				"query_id", queryId, "msg", string(msg), errors.Attr(err),
-			)
-			break
-
-		} else {
-			aH.logger.DebugContext(r.Context(), "wrote progress message to websocket",
-				"query_id", queryId, "msg", string(msg),
-			)
-		}
-	}
 }
 
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
@@ -4308,20 +4046,20 @@ func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middlew
 		Methods(http.MethodPut)
 
 	// Analytics endpoints
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", aH.handleValidateTraces).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", aH.handleFunnelAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", aH.handleStepAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps/overview", aH.handleFunnelStepAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", aH.handleFunnelSlowTraces).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", aH.handleFunnelErrorTraces).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", am.ViewAccess(aH.handleValidateTraces)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", am.ViewAccess(aH.handleFunnelAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", am.ViewAccess(aH.handleStepAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps/overview", am.ViewAccess(aH.handleFunnelStepAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", am.ViewAccess(aH.handleFunnelSlowTraces)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", am.ViewAccess(aH.handleFunnelErrorTraces)).Methods("POST")
 
 	// Analytics endpoints
-	traceFunnelsRouter.HandleFunc("/analytics/validate", aH.handleValidateTracesWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/overview", aH.handleFunnelAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/steps", aH.handleStepAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/steps/overview", aH.handleFunnelStepAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/slow-traces", aH.handleFunnelSlowTracesWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/error-traces", aH.handleFunnelErrorTracesWithPayload).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/validate", am.ViewAccess(aH.handleValidateTracesWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/overview", am.ViewAccess(aH.handleFunnelAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/steps", am.ViewAccess(aH.handleStepAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/steps/overview", am.ViewAccess(aH.handleFunnelStepAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/slow-traces", am.ViewAccess(aH.handleFunnelSlowTracesWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/error-traces", am.ViewAccess(aH.handleFunnelErrorTracesWithPayload)).Methods("POST")
 }
 
 func (aH *APIHandler) handleValidateTraces(w http.ResponseWriter, r *http.Request) {

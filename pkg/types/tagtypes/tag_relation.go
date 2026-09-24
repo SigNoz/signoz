@@ -16,23 +16,27 @@ type TagRelation struct {
 	Kind       coretypes.Kind `json:"kind" required:"true" bun:"kind,type:text,notnull"`
 	ResourceID valuer.UUID    `json:"resourceId" required:"true" bun:"resource_id,type:text,notnull"`
 	TagID      valuer.UUID    `json:"tagId" required:"true" bun:"tag_id,type:text,notnull"`
-	CreatedAt  time.Time      `json:"createdAt" bun:"created_at,notnull"`
+	// Rank is the tag's position within its resource; reads order by it.
+	Rank      int       `json:"rank" bun:"rank,notnull"`
+	CreatedAt time.Time `json:"createdAt" bun:"created_at,notnull"`
 }
 
-func NewTagRelation(kind coretypes.Kind, resourceID valuer.UUID, tagID valuer.UUID) *TagRelation {
+func NewTagRelation(kind coretypes.Kind, resourceID valuer.UUID, tagID valuer.UUID, rank int) *TagRelation {
 	return &TagRelation{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 		Kind:         kind,
 		ResourceID:   resourceID,
 		TagID:        tagID,
+		Rank:         rank,
 		CreatedAt:    time.Now(),
 	}
 }
 
+// NewTagRelations ranks each tag by its position so reads preserve order.
 func NewTagRelations(kind coretypes.Kind, resourceID valuer.UUID, tagIDs []valuer.UUID) []*TagRelation {
 	relations := make([]*TagRelation, 0, len(tagIDs))
-	for _, tagID := range tagIDs {
-		relations = append(relations, NewTagRelation(kind, resourceID, tagID))
+	for rank, tagID := range tagIDs {
+		relations = append(relations, NewTagRelation(kind, resourceID, tagID, rank))
 	}
 	return relations
 }

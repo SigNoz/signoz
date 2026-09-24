@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/swaggest/jsonschema-go"
@@ -64,6 +66,64 @@ type QueryRangeResponse struct {
 	QBEvent *QBEvent `json:"-"`
 }
 
+// QueryRangePreviewResponse is the dry-run output: one QueryPreview per query,
+// keyed by the request's query names.
+type QueryRangePreviewResponse struct {
+	CompositeQuery map[string]QueryPreview `json:"compositeQuery" required:"true" nullable:"true"`
+}
+
+// QueryRangePreviewOptions carries per-call options for the dry-run endpoint.
+type QueryRangePreviewOptions struct {
+	Verbose bool
+}
+
+// QueryRangePreviewParams are the query-string parameters of the dry-run endpoint.
+type QueryRangePreviewParams struct {
+	Verbose string `query:"verbose"`
+}
+
+// PrepareJSONSchema adds description to the QueryRangePreviewResponse schema.
+func (q *QueryRangePreviewResponse) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithDescription("Response from the v5 query range preview (dry-run) endpoint. For each query in the composite query, returns the underlying ClickHouse statement(s) it renders to without executing them (one per PromQL metric selector; exactly one for builder/ClickHouse/trace-operator queries), with the optional EXPLAIN ESTIMATE and granule analysis attached per statement when requested.")
+	return nil
+}
+
+// QueryPreview is the dry-run result for a single query.
+type QueryPreview struct {
+	Valid      bool               `json:"valid" required:"true" nullable:"false"`
+	Error      error              `json:"error" required:"true"`
+	Warnings   []string           `json:"warnings" required:"true" nullable:"false"`
+	Statements []PreviewStatement `json:"statements" required:"true" nullable:"false"`
+}
+
+// PreviewStatement is one rendered ClickHouse statement with its args and, when
+// requested, its EXPLAIN ESTIMATE and granule breakdown. The query/args JSON
+// keys follow the OpenTelemetry db.statement.* convention.
+type PreviewStatement struct {
+	Query    string                              `json:"db.statement.query" required:"true" nullable:"false"`
+	Args     []any                               `json:"db.statement.args" required:"true" nullable:"false"`
+	Estimate []telemetrystoretypes.EstimateEntry `json:"estimate" required:"true" nullable:"false"`
+	Granules *telemetrystoretypes.Granules       `json:"granules" required:"true" nullable:"true"`
+}
+
+// MarshalJSON renders Error in its structured form (code/message/suggestions)
+// rather than the empty object a bare error produces. The nullable:"false"
+// arrays are non-nil from the producer, so they marshal as [] rather than null.
+func (p QueryPreview) MarshalJSON() ([]byte, error) {
+	type alias QueryPreview
+	out := struct {
+		alias
+		Error *errors.JSON `json:"error"`
+	}{alias: alias(p)}
+	out.alias.Error = nil
+	// Derive the verdict so the two can't desync.
+	out.Valid = p.Error == nil
+	if p.Error != nil {
+		out.Error = errors.AsJSON(p.Error)
+	}
+	return json.Marshal(out)
+}
+
 var _ jsonschema.Preparer = &QueryRangeResponse{}
 
 // PrepareJSONSchema adds description to the QueryRangeResponse schema.
@@ -78,17 +138,63 @@ type TimeSeriesData struct {
 }
 
 type AggregationBucket struct {
-	Index int    `json:"index"` // or string Alias
-	Alias string `json:"alias"`
-	Meta  struct {
-		Unit string `json:"unit,omitempty"`
-	} `json:"meta,omitempty"`
-	Series []*TimeSeries `json:"series"` // no extra nesting
+	Index  int             `json:"index"` // or string Alias
+	Alias  string          `json:"alias"`
+	Meta   AggregationMeta `json:"meta,omitempty"`
+	Series []*TimeSeries   `json:"series"` // no extra nesting
 
 	PredictedSeries  []*TimeSeries `json:"predictedSeries,omitempty"`
 	UpperBoundSeries []*TimeSeries `json:"upperBoundSeries,omitempty"`
 	LowerBoundSeries []*TimeSeries `json:"lowerBoundSeries,omitempty"`
 	AnomalyScores    []*TimeSeries `json:"anomalyScores,omitempty"`
+}
+
+// ReindexValuesToNewUpperBounds moves each count to the index its upper bound
+// holds in onto, a superset of Meta.Buckets. No count changes, only its position
+// in Values.
+func (a *AggregationBucket) ReindexValuesToNewUpperBounds(onto []float64) {
+	if a == nil {
+		return
+	}
+
+	from := a.Meta.Buckets
+	if len(onto) == 0 || slices.Equal(from, onto) {
+		return
+	}
+
+	upperBoundToIndex := make(map[float64]int, len(onto))
+	for index, upperBound := range onto {
+		upperBoundToIndex[upperBound] = index
+	}
+
+	for _, series := range a.Series {
+		for _, point := range series.Values {
+			if len(point.Values) == 0 {
+				continue
+			}
+			reindexed := make([]float64, len(onto)+1)
+			for index, count := range point.Values {
+				if index >= len(from) {
+					reindexed[len(onto)] = count
+					break
+				}
+				if newIndex, ok := upperBoundToIndex[from[index]]; ok {
+					reindexed[newIndex] = count
+				}
+			}
+			point.Values = reindexed
+		}
+	}
+
+	a.Meta.Buckets = onto
+}
+
+type AggregationMeta struct {
+	Unit string `json:"unit,omitempty"`
+	// Buckets holds ascending upper bounds shared by every series in the
+	// AggregationBucket, set only for heatmap results. Each point's Values holds
+	// len(Buckets)+1 counts: one per bound, then the open-above overflow.
+	Buckets []float64 `json:"buckets,omitempty"`
 }
 
 type TimeSeries struct {
@@ -114,6 +220,26 @@ func (ts *TimeSeries) EvaluableValues() []*TimeSeriesValue {
 type Label struct {
 	Key   telemetrytypes.TelemetryFieldKey `json:"key"`
 	Value any                              `json:"value"`
+}
+
+var _ jsonschema.Preparer = Label{}
+
+// PrepareJSONSchema types `value` as a string/number/bool scalar instead of an
+// untyped {}. The Go field stays `any`; this only shapes the generated schema.
+func (Label) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if _, ok := s.Properties["value"]; !ok {
+		return nil
+	}
+
+	value := jsonschema.Schema{}
+	value.OneOf = []jsonschema.SchemaOrBool{
+		jsonschema.String.ToSchemaOrBool(),
+		jsonschema.Number.ToSchemaOrBool(),
+		jsonschema.Boolean.ToSchemaOrBool(),
+	}
+	s.Properties["value"] = value.ToSchemaOrBool()
+
+	return nil
 }
 
 func GetUniqueSeriesKey(labels []*Label) string {
@@ -174,13 +300,9 @@ type TimeSeriesValue struct {
 	// on the client side, these partial values are rendered differently.
 	Partial bool `json:"partial,omitempty"`
 
-	// for the heatmap type chart
+	// Values holds one count per histogram bucket for heatmap results, in the
+	// order of the aggregation's Meta.Buckets. Value is omitted in that case.
 	Values []float64 `json:"values,omitempty"`
-	Bucket *Bucket   `json:"bucket,omitempty"`
-}
-
-type Bucket struct {
-	Step float64 `json:"step"`
 }
 
 type ColumnType struct {
@@ -248,6 +370,11 @@ func roundToNonZeroDecimals(val float64, n int) float64 {
 		// Round to n decimal places
 		multiplier := math.Pow(10, float64(n))
 		rounded := math.Round(val*multiplier) / multiplier
+		if math.IsInf(rounded, 0) {
+			// val*multiplier overflowed for near-max float64 values; the
+			// finite input must stay finite or the JSON encoder rejects it.
+			return val
+		}
 
 		// If the result is a whole number, return it as such
 		if rounded == math.Trunc(rounded) {
@@ -264,6 +391,11 @@ func roundToNonZeroDecimals(val float64, n int) float64 {
 	order := math.Floor(math.Log10(absVal))
 	scale := math.Pow(10, -order+float64(n)-1)
 	rounded := math.Round(val*scale) / scale
+	if math.IsNaN(rounded) || math.IsInf(rounded, 0) {
+		// scale overflowed for subnormal values (order below ~-308); the
+		// finite input must stay finite or it serializes as "NaN".
+		return val
+	}
 
 	// Clean up floating point precision
 	str := strconv.FormatFloat(rounded, 'f', -1, 64)
@@ -314,7 +446,7 @@ func sanitizeValue(v any) any {
 			result[keyStr] = sanitizeValue(rv.MapIndex(key).Interface())
 		}
 		return result
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if rv.IsNil() {
 			return nil
 		}
@@ -391,13 +523,20 @@ func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	// a heatmap point's counts are spread across Values, so there is no one
+	// number Value could carry
+	var sanitizedValue any
+	if t.Values == nil {
+		sanitizedValue = sanitizeValue(t.Value)
+	}
+
 	return json.Marshal(&struct {
 		*Alias
-		Value  any `json:"value"`
+		Value  any `json:"value,omitempty"`
 		Values any `json:"values,omitempty"`
 	}{
 		Alias:  (*Alias)(&t),
-		Value:  sanitizeValue(t.Value),
+		Value:  sanitizedValue,
 		Values: sanitizedValues,
 	})
 }

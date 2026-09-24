@@ -42,7 +42,7 @@ function SpanPercentilePanel({
 		selectedTimeRange,
 		setSelectedTimeRange,
 		showResourceAttributesSelector,
-		setShowResourceAttributesSelector,
+		toggleResourceAttributesSelector,
 		resourceAttributesSearchQuery,
 		setResourceAttributesSearchQuery,
 		spanResourceAttributes,
@@ -72,9 +72,7 @@ function SpanPercentilePanel({
 					variant="link"
 					color="secondary"
 					size="icon"
-					onClick={(): void =>
-						setShowResourceAttributesSelector(!showResourceAttributesSelector)
-					}
+					onClick={toggleResourceAttributesSelector}
 					prefix={
 						showResourceAttributesSelector ? <Check size={16} /> : <Plus size={16} />
 					}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -239,17 +240,20 @@ type MetricAlertsResponse struct {
 	Alerts []MetricAlert `json:"alerts" required:"true" nullable:"true"`
 }
 
-// MetricDashboard represents a dashboard/widget referencing a metric.
-type MetricDashboard struct {
-	DashboardName string `json:"dashboardName" required:"true"`
-	DashboardID   string `json:"dashboardId" required:"true"`
-	WidgetID      string `json:"widgetId" required:"true"`
-	WidgetName    string `json:"widgetName" required:"true"`
+// MetricDashboardPanelsResponse is the response for the v2 metric dashboards
+// endpoint: the dashboard panels that reference the metric.
+type MetricDashboardPanelsResponse struct {
+	Dashboards []dashboardtypes.DashboardPanelRef `json:"dashboards" required:"true" nullable:"true"`
 }
 
-// MetricDashboardsResponse represents the response for metric dashboards endpoint.
-type MetricDashboardsResponse struct {
-	Dashboards []MetricDashboard `json:"dashboards" required:"true" nullable:"true"`
+// NewMetricDashboardPanelsResponse wraps the dashboard panels that reference a
+// metric into the v2 API response.
+func NewMetricDashboardPanelsResponse(refs []dashboardtypes.DashboardPanelRef) *MetricDashboardPanelsResponse {
+	if refs == nil {
+		refs = []dashboardtypes.DashboardPanelRef{}
+	}
+
+	return &MetricDashboardPanelsResponse{Dashboards: refs}
 }
 
 // MetricHighlightsResponse is the output structure for the metric highlights endpoint.
@@ -260,17 +264,37 @@ type MetricHighlightsResponse struct {
 	ActiveTimeSeries uint64 `json:"activeTimeSeries" required:"true"`
 }
 
+// MetricNameQuery represents the query parameters for endpoints that take a metric name.
+type MetricNameQuery struct {
+	MetricName string `query:"metricName" required:"true" description:"The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies)."`
+}
+
+// Validate ensures MetricNameQuery contains acceptable values.
+func (q *MetricNameQuery) Validate() error {
+	if q == nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+	if q.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+	return nil
+}
+
 // MetricAttributesRequest represents the query parameters for the metric attributes endpoint.
 type MetricAttributesRequest struct {
-	MetricName string `json:"-"`
-	Start      *int64 `query:"start"`
-	End        *int64 `query:"end"`
+	MetricName string `query:"metricName" required:"true" description:"The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies)."`
+	Start      *int64 `query:"start" description:"Start of the time range as a Unix timestamp in milliseconds."`
+	End        *int64 `query:"end" description:"End of the time range as a Unix timestamp in milliseconds."`
 }
 
 // Validate ensures MetricAttributesRequest contains acceptable values.
 func (req *MetricAttributesRequest) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
+	}
+
+	if req.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
 	}
 
 	if req.Start != nil && req.End != nil {

@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-use';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Form, Input as AntdInput } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import resetPasswordApi from 'api/v1/factor_password/resetPassword';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useResetPassword } from 'api/generated/services/users';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
@@ -14,7 +15,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
 import { Label } from 'pages/SignUp/styles';
-import APIError from 'types/api/error';
 
 import { FormContainer } from './styles';
 
@@ -26,40 +26,41 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const [confirmPasswordError, setConfirmPasswordError] =
 		useState<boolean>(false);
 
-	const [errorMessage, setErrorMessage] = useState<APIError | null>();
-
 	const [isValidPassword, setIsValidPassword] = useState(false);
-	const [loading, setLoading] = useState(false);
 	const { t } = useTranslation(['common']);
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const { notifications } = useNotifications();
 
+	const {
+		mutate: resetPassword,
+		isLoading,
+		error: mutationError,
+	} = useResetPassword();
+
+	const errorMessage = useMemo(
+		() => convertToApiError(mutationError),
+		[mutationError],
+	);
+
 	const [form] = Form.useForm<FormValues>();
-	const handleFormSubmit: () => Promise<void> = async () => {
-		try {
-			setLoading(true);
-			setErrorMessage(null);
-			const { password } = form.getFieldsValue();
+	const handleFormSubmit = (): void => {
+		const { password } = form.getFieldsValue();
 
-			await resetPasswordApi({
-				password,
-				token: token || '',
-			});
-
-			notifications.success({
-				message: t('success', {
-					ns: 'common',
-				}),
-			});
-			history.push(ROUTES.LOGIN);
-
-			setLoading(false);
-		} catch (error) {
-			setLoading(false);
-			setErrorMessage(error as APIError);
-		}
+		resetPassword(
+			{ data: { password, token: token || '' } },
+			{
+				onSuccess: (): void => {
+					notifications.success({
+						message: t('success', {
+							ns: 'common',
+						}),
+					});
+					history.push(ROUTES.LOGIN);
+				},
+			},
+		);
 	};
 
 	const validatePassword = (): boolean => {
@@ -222,7 +223,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							color="primary"
 							type="submit"
 							data-attr="reset-password"
-							disabled={!isValidPassword || loading}
+							disabled={!isValidPassword || isLoading}
 							className="reset-password-submit-button"
 							suffix={<ArrowRight size={16} />}
 						>

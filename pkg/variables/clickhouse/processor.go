@@ -69,7 +69,7 @@ func (qp *QueryProcessor) ProcessQuery(query string, transformer FilterTransform
 	// Reconstruct the query
 	var resultBuilder strings.Builder
 	for _, stmt := range stmts {
-		resultBuilder.WriteString(stmt.String())
+		resultBuilder.WriteString(parser.Format(stmt))
 		resultBuilder.WriteString(";")
 	}
 

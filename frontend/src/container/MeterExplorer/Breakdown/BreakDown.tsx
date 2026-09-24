@@ -9,8 +9,8 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import GridCard from 'container/GridCardLayout/GridCard';
-import { Card, CardContainer } from 'container/GridCardLayout/styles';
+import GridCard from 'container/WidgetCard/Card';
+import { Card, CardContainer } from 'container/WidgetCard/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -18,7 +18,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
@@ -164,7 +164,7 @@ function BreakDown(): JSX.Element {
 								Meter metrics data is aggregated over 1 hour period. Please select time
 								range accordingly.&nbsp;
 								<a
-									href="https://signoz.io/docs/cost-meter/overview/#accessing-cost-meter"
+									href="https://signoz.io/docs/cost-meter/overview/#get-started"
 									rel="noopener noreferrer"
 									target="_blank"
 									style={{ textDecoration: 'underline' }}

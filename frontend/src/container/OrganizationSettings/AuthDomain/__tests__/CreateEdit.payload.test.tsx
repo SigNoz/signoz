@@ -9,6 +9,7 @@ import {
 	mockUpdateSuccessResponse,
 } from './mocks';
 
+// TODO: https://github.com/SigNoz/platform-pod/issues/2602
 // The real @signozhq/ui/button has internal effects that prevent form.validateFields()
 // from resolving inside act(). Mirror the pattern from SSOEnforcementToggle.test.tsx
 // which mocks @signozhq/ui/switch for the same reason.
@@ -111,9 +112,7 @@ describe('CreateEdit — save payload correctness', () => {
 		await waitFor(() => expect(capturedPayload).not.toBeNull());
 
 		expect(capturedPayload).toMatchObject({
-			config: expect.objectContaining({
-				roleMapping: expect.objectContaining({ groupMappings: {} }),
-			}),
+			roleMapping: expect.objectContaining({ groupMappings: {} }),
 		});
 	});
 
@@ -160,7 +159,7 @@ describe('CreateEdit — save payload correctness', () => {
 
 		expect(capturedPayload).toMatchObject({
 			config: expect.objectContaining({
-				googleAuthConfig: expect.objectContaining({
+				spec: expect.objectContaining({
 					domainToAdminEmail: {},
 				}),
 			}),

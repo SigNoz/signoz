@@ -70,7 +70,35 @@ jobs:
           cd tests/e2e && pnpm install --frozen-lockfile
       - name: playwright-browsers
         run: |
-          cd tests/e2e && pnpm playwright install --with-deps ${{ matrix.project }}
+          docker create --name pw mcr.microsoft.com/playwright:v1.57.0-noble
+          docker cp pw:/ms-playwright "$RUNNER_TEMP/ms-playwright"
+          docker rm pw
+          echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/ms-playwright" >> "$GITHUB_ENV"
+          cd tests/e2e && pnpm playwright install-deps ${{ matrix.project }}
+      # Restore-only: the cacheci workflow owns cache saves. Seeds the
+      # BuildKit cache mounts so the in-test image build is incremental.
+      - name: restore
+        id: restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/cacheci
+          key: tests-primary
+          restore-keys: |
+            tests-secondary
+      - name: inject
+        if: steps.restore.outputs.cache-matched-key != ''
+        run: |
+          cat > "$RUNNER_TEMP/inject.Dockerfile" <<'EOF'
+          FROM busybox:1.37
+          RUN --mount=type=cache,target=/root/.cache/go-build \
+              --mount=type=cache,target=/go/pkg/mod \
+              --mount=type=cache,target=/pnpm/store \
+              --mount=type=bind,target=/restored \
+              tar -xf /restored/go-build.tar -C /root/.cache/go-build && \
+              tar -xf /restored/go-mod.tar -C /go/pkg/mod && \
+              tar -xf /restored/pnpm-store.tar -C /pnpm/store
+          EOF
+          docker build -f "$RUNNER_TEMP/inject.Dockerfile" "$RUNNER_TEMP/cacheci"
       - name: bring-up-stack
         run: |
           cd tests && \

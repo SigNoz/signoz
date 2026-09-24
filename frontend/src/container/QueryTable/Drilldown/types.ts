@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
-import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export type ContextMenuItem = ReactNode;
@@ -31,7 +33,8 @@ export interface AggregateContextMenuConfig {
 
 export interface BreakoutAttributeType {
 	key: string;
-	dataType: QUERY_BUILDER_KEY_TYPES;
+	/** The picked field's type, in the vocabulary the group-by it becomes is read with. */
+	dataType: DataTypes;
 	type: string;
 }
 

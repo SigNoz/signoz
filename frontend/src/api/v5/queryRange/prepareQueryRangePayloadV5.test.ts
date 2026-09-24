@@ -14,11 +14,15 @@ import {
 	QueryBuilderFormula as V5QueryBuilderFormula,
 	QueryEnvelope,
 	QueryRangePayloadV5,
+	RequestType,
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
-import { prepareQueryRangePayloadV5 } from './prepareQueryRangePayloadV5';
+import {
+	convertBuilderQueriesToV5,
+	prepareQueryRangePayloadV5,
+} from './prepareQueryRangePayloadV5';
 
 jest.mock('lib/getStartEndRangeTime', () => ({
 	__esModule: true,
@@ -897,5 +901,76 @@ describe('prepareQueryRangePayloadV5', () => {
 		) as QueryEnvelope;
 		const logSpec = builderQuery.spec as LogBuilderQuery;
 		expect(logSpec.filter).toStrictEqual({ expression: '' });
+	});
+});
+
+describe('convertBuilderQueriesToV5 having normalization', () => {
+	const buildSpec = (having: unknown): MetricBuilderQuery => {
+		const [envelope] = convertBuilderQueriesToV5(
+			{
+				A: {
+					dataSource: DataSource.METRICS,
+					queryName: 'A',
+					aggregations: [{ metricName: 'm', spaceAggregation: 'p99' }],
+					having,
+				} as unknown as IBuilderQuery,
+			},
+			'time_series',
+			PANEL_TYPES.TIME_SERIES,
+		);
+		return envelope.spec as MetricBuilderQuery;
+	};
+
+	it.each([
+		['a legacy V4 array', []],
+		['a blank empty-object having', { expression: '' }],
+		['a whitespace-only having', { expression: '   ' }],
+		['a nullish having', undefined],
+	])('drops %s (serializes to undefined)', (_label, having) => {
+		expect(buildSpec(having).having).toBeUndefined();
+	});
+
+	it('preserves a real having expression', () => {
+		expect(buildSpec({ expression: 'count() > 5' }).having).toStrictEqual({
+			expression: 'count() > 5',
+		});
+	});
+});
+
+describe('convertBuilderQueriesToV5 builder query type', () => {
+	const buildEnvelope = (
+		builderQueryType: IBuilderQuery['builderQueryType'],
+		requestType: RequestType,
+	): QueryEnvelope => {
+		const [envelope] = convertBuilderQueriesToV5(
+			{
+				A: {
+					dataSource: DataSource.TRACES,
+					queryName: 'A',
+					builderQueryType,
+				} as unknown as IBuilderQuery,
+			},
+			requestType,
+		);
+		return envelope;
+	};
+
+	it.each<[RequestType]>([
+		['trace'],
+		['raw'],
+		['time_series'],
+		['scalar'],
+		['distribution'],
+	])('sends builder_ai_query for the %s request type', (requestType) => {
+		expect(buildEnvelope('builder_ai_query', requestType).type).toBe(
+			'builder_ai_query',
+		);
+	});
+
+	it.each<[string, IBuilderQuery['builderQueryType']]>([
+		['an unmarked query', undefined],
+		['an explicitly generic query', 'builder_query'],
+	])('sends builder_query for %s', (_label, builderQueryType) => {
+		expect(buildEnvelope(builderQueryType, 'trace').type).toBe('builder_query');
 	});
 });

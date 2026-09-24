@@ -12,8 +12,9 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
+import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import {
@@ -31,11 +32,9 @@ import {
 } from 'pages/MetricsExplorer/aiActions';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Warning } from 'types/api';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
-import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { explorerViewToPanelType } from 'utils/explorerUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -63,6 +62,7 @@ function Explorer(): JSX.Element {
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const getExportToDashboardLink = useGetExportToDashboardLink();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
@@ -260,7 +260,7 @@ function Explorer(): JSX.Element {
 
 	const handleExport = useCallback(
 		(
-			dashboard: Dashboard | null,
+			dashboard: ExportDashboard | null,
 			_isNewDashboard?: boolean,
 			queryToExport?: Query,
 		): void => {
@@ -278,16 +278,18 @@ function Explorer(): JSX.Element {
 				};
 			}
 
-			const dashboardEditView = generateExportToDashboardLink({
+			const dashboardEditView = getExportToDashboardLink({
 				query,
 				panelType: PANEL_TYPES.TIME_SERIES,
 				dashboardId: dashboard.id,
 				widgetId,
 			});
 
-			safeNavigate(dashboardEditView);
+			if (dashboardEditView) {
+				safeNavigate(dashboardEditView);
+			}
 		},
-		[exportDefaultQuery, safeNavigate, yAxisUnit],
+		[exportDefaultQuery, safeNavigate, yAxisUnit, getExportToDashboardLink],
 	);
 
 	const splitedQueries = useMemo(
@@ -319,11 +321,6 @@ function Explorer(): JSX.Element {
 			[MetricsExplorerEventKeys.Tab]: 'explorer',
 		});
 	}, []);
-
-	const queryComponents = useMemo(
-		(): QueryBuilderProps['queryComponents'] => ({}),
-		[],
-	);
 
 	const [warning, setWarning] = useState<Warning | undefined>();
 
@@ -378,7 +375,6 @@ function Explorer(): JSX.Element {
 				<QueryBuilderV2
 					config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
 					panelType={PANEL_TYPES.TIME_SERIES}
-					queryComponents={queryComponents}
 					showFunctions={false}
 					version="v3"
 				/>

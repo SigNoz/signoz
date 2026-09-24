@@ -1,4 +1,21 @@
 .overview-container {
+	.data-viewer {
+		min-height: 500px;
+	}
+
+	.pretty-view__search-wrapper {
+		background: var(--l2-background);
+	}
+
+	.pretty-view__search-input {
+		background: var(--l2-background) !important;
+	}
+
+	.log-body-value {
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
 	.tag {
 		border-radius: 20px;
 		border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);

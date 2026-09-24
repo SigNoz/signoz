@@ -680,6 +680,13 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Datetime', () => {
+		beforeAll(() => {
+			jest.useFakeTimers().setSystemTime(new Date('2026-01-01T00:00:00Z'));
+		});
+		afterAll(() => {
+			jest.useRealTimers();
+		});
+
 		it('formats datetime units', () => {
 			expect(formatUniversalUnit(900, UniversalYAxisUnit.DATETIME_FROM_NOW)).toBe(
 				'56 years ago',

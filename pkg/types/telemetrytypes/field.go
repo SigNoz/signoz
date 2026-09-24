@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -22,20 +22,27 @@ const (
 	// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries.
 	// e.g., "body.status" where "body." is the prefix.
 	BodyJSONStringSearchPrefix = "body."
-	ArraySep                   = jsontypeexporter.ArraySeparator
-	ArraySepSuffix             = "[]"
+	// ArraySep must match the array separator written by the collector's JSON
+	// type exporter; the shared constant (jsontypeexporter.ArraySeparator) was
+	// removed from signoz-otel-collector, so the value is duplicated here.
+	ArraySep       = "[]."
+	ArraySepSuffix = "[]"
 	// TODO(Piyush): Remove once we've migrated to the new array syntax.
 	ArrayAnyIndex       = "[*]."
 	ArrayAnyIndexSuffix = "[*]"
 )
 
 type TelemetryFieldKey struct {
-	Name          string        `json:"name" validate:"required" required:"true"`
-	Description   string        `json:"description,omitempty"`
-	Unit          string        `json:"unit,omitempty"`
-	Signal        Signal        `json:"signal,omitzero"`
-	FieldContext  FieldContext  `json:"fieldContext,omitzero"`
-	FieldDataType FieldDataType `json:"fieldDataType,omitzero"`
+	Name        string `json:"name" validate:"required" required:"true"`
+	Description string `json:"description,omitempty"`
+	Unit        string `json:"unit,omitempty"`
+	// signal/fieldContext/fieldDataType always serialize (empty included): the empty
+	// value is a first-class "unspecified / any" selection a client can set, so it
+	// must round-trip verbatim rather than be dropped. Their Enum()s include the
+	// empty member so the "" is a valid schema value.
+	Signal        Signal        `json:"signal"`
+	FieldContext  FieldContext  `json:"fieldContext"`
+	FieldDataType FieldDataType `json:"fieldDataType"`
 
 	JSONPlan     JSONAccessPlan               `json:"-"`
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
@@ -172,58 +179,13 @@ func (f *TelemetryFieldKey) Normalize() {
 
 }
 
-// GetFieldKeyFromKeyText returns a TelemetryFieldKey from a key text.
-// The key text is expected to be in the format of `fieldContext.fieldName:fieldDataType` in the search query.
-// Both fieldContext and :fieldDataType are optional.
-// fieldName can contain dots and can start with a dot (e.g., ".http_code").
-// Special cases:
-// - When key exactly matches a field context name (e.g., "body", "attribute"), use unspecified context.
-// - When key starts with "body." prefix, use "body" as context with remainder as field name.
+// GetFieldKeyFromKeyText returns a TelemetryFieldKey parsed from a key text of the
+// form `fieldContext.fieldName:fieldDataType` (context and :dataType optional). It
+// delegates to Normalize; see Normalize for the parsing rules and special cases.
 func GetFieldKeyFromKeyText(key string) TelemetryFieldKey {
-	var explicitFieldDataType = FieldDataTypeUnspecified
-	var fieldName string
-
-	// Step 1: Parse data type from the right (after the last ":")
-	var keyWithoutDataType string
-	if colonIdx := strings.LastIndex(key, ":"); colonIdx != -1 {
-		potentialDataType := key[colonIdx+1:]
-		if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
-			explicitFieldDataType = dt
-			keyWithoutDataType = key[:colonIdx]
-		} else {
-			// No valid data type found, treat the entire key as the field name
-			keyWithoutDataType = key
-		}
-	} else {
-		keyWithoutDataType = key
-	}
-
-	// Step 2: Parse field context from the left
-	if dotIdx := strings.Index(keyWithoutDataType, "."); dotIdx != -1 {
-		potentialContext := keyWithoutDataType[:dotIdx]
-		if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
-			fieldName = keyWithoutDataType[dotIdx+1:]
-
-			// Step 2a: Handle special case for log.body.* fields
-			if fc == FieldContextLog && strings.HasPrefix(fieldName, BodyJSONStringSearchPrefix) {
-				fc = FieldContextBody
-				fieldName = strings.TrimPrefix(fieldName, BodyJSONStringSearchPrefix)
-			}
-
-			return TelemetryFieldKey{
-				Name:          fieldName,
-				FieldContext:  fc,
-				FieldDataType: explicitFieldDataType,
-			}
-		}
-	}
-
-	// Step 3: No context found, entire key is the field name
-	return TelemetryFieldKey{
-		Name:          keyWithoutDataType,
-		FieldContext:  FieldContextUnspecified,
-		FieldDataType: explicitFieldDataType,
-	}
+	f := TelemetryFieldKey{Name: key}
+	f.Normalize()
+	return f
 }
 
 func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {
@@ -241,19 +203,19 @@ func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("`%s_%s_%s`",
+	return clickhousesql.Identifier(fmt.Sprintf("%s_%s_%s",
 		key.FieldContext.String,
 		fieldDataTypes[key.FieldDataType.StringValue()].StringValue(),
 		strings.ReplaceAll(key.Name, ".", "$$"),
-	)
+	))
 }
 
 func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
-	return fmt.Sprintf("`%s_%s_%s_exists`",
+	return clickhousesql.Identifier(fmt.Sprintf("%s_%s_%s_exists",
 		key.FieldContext.String,
 		fieldDataTypes[key.FieldDataType.StringValue()].StringValue(),
 		strings.ReplaceAll(key.Name, ".", "$$"),
-	)
+	))
 }
 
 type TelemetryFieldValues struct {
@@ -283,6 +245,27 @@ type FieldKeySelector struct {
 	SelectorMatchType FieldSelectorMatchType `json:"selectorMatchType"`
 	Limit             int                    `json:"limit"`
 	MetricContext     *MetricContext         `json:"metricContext,omitempty"`
+}
+
+// MatchesKey reports whether a statically defined key satisfies the selector, so
+// callers can suggest keys that were never ingested.
+func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {
+	if s.FieldContext != FieldContextUnspecified && s.FieldContext != key.FieldContext {
+		return false
+	}
+
+	if s.FieldDataType != FieldDataTypeUnspecified && s.FieldDataType != key.FieldDataType {
+		return false
+	}
+
+	if s.Name == "" {
+		return true
+	}
+
+	if s.SelectorMatchType == FieldSelectorMatchTypeExact {
+		return strings.EqualFold(s.Name, key.Name)
+	}
+	return strings.Contains(strings.ToLower(key.Name), strings.ToLower(s.Name))
 }
 
 type FieldValueSelector struct {
@@ -399,6 +382,14 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 	}
 
 	return fieldValueSelector
+}
+
+func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType FieldDataType) *TelemetryFieldKey {
+	return &TelemetryFieldKey{
+		Name:          name,
+		FieldContext:  fieldContext,
+		FieldDataType: fieldDataType,
+	}
 }
 
 type TelemetryFieldKeySkipIndex struct {

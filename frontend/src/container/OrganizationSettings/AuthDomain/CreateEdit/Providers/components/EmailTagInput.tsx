@@ -9,12 +9,14 @@ interface EmailTagInputProps {
 	value?: string[];
 	onChange?: (value: string[]) => void;
 	placeholder?: string;
+	testId?: string;
 }
 
 function EmailTagInput({
 	value = [],
 	onChange,
 	placeholder = 'Type an email and press Enter',
+	testId,
 }: EmailTagInputProps): JSX.Element {
 	const [validationError, setValidationError] = useState('');
 
@@ -34,7 +36,7 @@ function EmailTagInput({
 	);
 
 	return (
-		<div className="email-tag-input">
+		<div className="email-tag-input" data-testid={testId}>
 			<Tooltip
 				title={validationError}
 				open={!!validationError}

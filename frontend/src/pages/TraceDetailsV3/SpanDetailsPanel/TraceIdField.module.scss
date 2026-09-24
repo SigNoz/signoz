@@ -1,0 +1,18 @@
+.traceId {
+	color: var(--accent-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	display: block;
+}
+
+.traceIdCopy {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: 0;
+	height: auto;
+	justify-content: flex-start;
+}

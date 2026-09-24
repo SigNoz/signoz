@@ -37,7 +37,7 @@ function ConfigureSAMLAuthnProvider({
 				<p className="authn-provider__description">
 					Configure SAML 2.0 Single Sign-On with your Identity Provider. Read the{' '}
 					<a
-						href="https://signoz.io/docs/userguide/sso-authentication"
+						href="https://signoz.io/docs/manage/administrator-guide/sso/overview/"
 						target="_blank"
 						rel="noreferrer"
 					>
@@ -76,7 +76,7 @@ function ConfigureSAMLAuthnProvider({
 							</Tooltip>
 						</label>
 						<Form.Item
-							name={['samlConfig', 'samlIdp']}
+							name={['samlConfig', 'location']}
 							className="authn-provider__form-item"
 							rules={[
 								{
@@ -98,7 +98,7 @@ function ConfigureSAMLAuthnProvider({
 							</Tooltip>
 						</label>
 						<Form.Item
-							name={['samlConfig', 'samlEntity']}
+							name={['samlConfig', 'entityId']}
 							className="authn-provider__form-item"
 							rules={[
 								{
@@ -120,7 +120,7 @@ function ConfigureSAMLAuthnProvider({
 							</Tooltip>
 						</label>
 						<Form.Item
-							name={['samlConfig', 'samlCert']}
+							name={['samlConfig', 'certificate']}
 							className="authn-provider__form-item"
 							rules={[
 								{

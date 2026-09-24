@@ -1,0 +1,10 @@
+.banner {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 9px 12px;
+	border-radius: 6px;
+	background: var(--callout-primary-background);
+	border: 1px solid var(--callout-primary-border);
+	color: var(--callout-primary-icon);
+}

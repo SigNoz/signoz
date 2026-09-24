@@ -3,7 +3,6 @@ import { matchPath, Redirect, useLocation } from 'react-router-dom';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { useListUsers } from 'api/generated/services/users';
-import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
@@ -14,7 +13,10 @@ import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { OrgPreference } from 'types/api/preferences/preference';
 import { USER_ROLES } from 'types/roles';
-import { routePermission } from 'utils/permission';
+import {
+	routePermission,
+	routeWithInitialAuthZSupport,
+} from 'utils/permission';
 
 import routes, {
 	LIST_LICENSES,
@@ -37,12 +39,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		activeLicense,
 		isFetchingActiveLicense,
 		trialInfo,
-		featureFlags,
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
-
 	const mapRoutes = useMemo(
 		() =>
 			new Map(
@@ -55,7 +55,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			),
 		[pathname],
 	);
-	const isOldRoute = oldRoutes.indexOf(pathname) > -1;
 	const currentRoute = mapRoutes.get('current');
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
@@ -83,12 +82,36 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	}, [usersData?.data]);
 
 	// Handle old routes - redirect to new routes
+	const isOldRoute = oldRoutes.indexOf(pathname) > -1;
 	if (isOldRoute) {
 		const redirectUrl = oldNewRoutesMapping[pathname];
+		// TODO(H4ad): Remove this after https://github.com/SigNoz/engineering-pod/issues/5322
+		// A mapped target may itself carry a query string (e.g. `/alerts?tab=Channels`).
+		// react-router does not re-parse a `?` embedded in the `pathname` field, so split
+		// it out and merge with the incoming search params.
+		const [redirectPath, redirectSearch = ''] = redirectUrl.split('?');
+		const mergedParams = new URLSearchParams(location.search);
+		new URLSearchParams(redirectSearch).forEach((value, name) => {
+			mergedParams.set(name, value);
+		});
+		const search = mergedParams.toString();
 		return (
 			<Redirect
 				to={{
-					pathname: redirectUrl,
+					pathname: redirectPath,
+					search: search ? `?${search}` : '',
+					hash: location.hash,
+				}}
+			/>
+		);
+	}
+
+	if (pathname.startsWith('/settings/channels/edit/')) {
+		const channelId = pathname.replace('/settings/channels/edit/', '');
+		return (
+			<Redirect
+				to={{
+					pathname: `/alerts/channels/edit/${channelId}`,
 					search: location.search,
 					hash: location.hash,
 				}}
@@ -136,12 +159,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	// Check for workspace blocked (trial expired)
 	if (!isFetchingActiveLicense && isCloudPlatform && trialInfo?.workSpaceBlock) {
 		const isRouteEnabledForWorkspaceBlockedState =
-			isAdmin &&
-			(pathname === ROUTES.SETTINGS ||
-				pathname === ROUTES.ORG_SETTINGS ||
-				pathname === ROUTES.MEMBERS_SETTINGS ||
-				pathname === ROUTES.BILLING ||
-				pathname === ROUTES.MY_SETTINGS);
+			pathname === ROUTES.SETTINGS ||
+			pathname === ROUTES.BILLING ||
+			(isAdmin &&
+				(pathname === ROUTES.ORG_SETTINGS ||
+					pathname === ROUTES.MEMBERS_SETTINGS ||
+					pathname === ROUTES.MY_SETTINGS));
 
 		if (
 			pathname !== ROUTES.WORKSPACE_LOCKED &&
@@ -189,21 +212,22 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		}
 	}
 
-	// Check for GET_STARTED → GET_STARTED_WITH_CLOUD redirect (feature flag)
-	if (
-		currentRoute?.path === ROUTES.GET_STARTED &&
-		featureFlags?.find((e) => e.name === FeatureKeys.ONBOARDING_V3)?.active
-	) {
-		return <Redirect to={ROUTES.GET_STARTED_WITH_CLOUD} />;
-	}
-
 	// Main routing logic
 	if (currentRoute) {
 		const { isPrivate, key } = currentRoute;
 		if (isPrivate) {
 			if (isLoggedInState) {
 				const route = routePermission[key];
-				if (route && route.find((e) => e === user.role) === undefined) {
+				const hasInitialAuthZSupport = Object.hasOwn(
+					routeWithInitialAuthZSupport,
+					key,
+				);
+
+				if (
+					route &&
+					route.find((e) => e === user.role) === undefined &&
+					hasInitialAuthZSupport === false
+				) {
 					return <Redirect to={ROUTES.UN_AUTHORIZED} />;
 				}
 			} else {

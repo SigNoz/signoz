@@ -11,22 +11,19 @@ import {
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
-import { Collapse, Form, Select, Tooltip } from 'antd';
+import { Collapse, Form, Tooltip } from 'antd';
+import RolesSelect, { useRoles } from 'components/RolesSelect';
 import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 
 import './RoleMappingSection.styles.scss';
-
-const ROLE_OPTIONS = [
-	{ value: 'VIEWER', label: 'VIEWER' },
-	{ value: 'EDITOR', label: 'EDITOR' },
-	{ value: 'ADMIN', label: 'ADMIN' },
-];
 
 interface RoleMappingSectionProps {
 	fieldNamePrefix: string[];
 	isExpanded?: boolean;
 	onExpandChange?: (expanded: boolean) => void;
 }
+
+const SIGNOZ_VIEWER_ROLE = 'signoz-viewer';
 
 function RoleMappingSection({
 	fieldNamePrefix,
@@ -38,6 +35,7 @@ function RoleMappingSection({
 		[...fieldNamePrefix, 'useRoleAttribute'],
 		form,
 	);
+	const { roles, isLoading, isError, error, refetch } = useRoles();
 
 	// Support both controlled and uncontrolled modes
 	const [internalExpanded, setInternalExpanded] = useState(false);
@@ -76,6 +74,7 @@ function RoleMappingSection({
 							role="button"
 							aria-expanded={expanded}
 							aria-controls="role-mapping-content"
+							data-testid="role-mapping-header"
 						>
 							{!expanded ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
 							<div className="role-mapping-section__collapse-header-text">
@@ -108,19 +107,26 @@ function RoleMappingSection({
 						<div className="role-mapping-section__field-group">
 							<label className="role-mapping-section__label" htmlFor="default-role">
 								Default Role
-								<Tooltip title='The default role assigned to new SSO users if no other role mapping applies. Default: "VIEWER"'>
+								<Tooltip title='The default role assigned to new SSO users if no other role mapping applies. Default: "signoz-viewer"'>
 									<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 								</Tooltip>
 							</label>
 							<Form.Item
 								name={[...fieldNamePrefix, 'defaultRole']}
 								className="role-mapping-section__form-item"
-								initialValue="VIEWER"
+								initialValue={SIGNOZ_VIEWER_ROLE}
 							>
-								<Select
+								<RolesSelect
 									id="default-role"
-									options={ROLE_OPTIONS}
+									valueField="name"
+									roles={roles}
+									loading={isLoading}
+									isError={isError}
+									error={error}
+									onRefetch={refetch}
 									className="role-mapping-section__select"
+									allowClear={false}
+									getPopupContainer={(): HTMLElement => document.body}
 								/>
 							</Form.Item>
 						</div>
@@ -133,6 +139,7 @@ function RoleMappingSection({
 							>
 								<Checkbox
 									id="use-role-attribute"
+									testId="role-mapping-use-role-attribute"
 									onChange={(checked: boolean): void => {
 										form.setFieldValue([...fieldNamePrefix, 'useRoleAttribute'], checked);
 									}}
@@ -140,7 +147,7 @@ function RoleMappingSection({
 									Use Role Attribute Directly
 								</Checkbox>
 							</Form.Item>
-							<Tooltip title="If enabled, the role claim/attribute from the IDP will be used directly instead of group mappings. The role value must match a SigNoz role (VIEWER, EDITOR, or ADMIN).">
+							<Tooltip title="If enabled, the role claim/attribute from the IDP will be used directly instead of group mappings. The role value must match a SigNoz role name (e.g. signoz-viewer, signoz-editor, signoz-admin, or a custom role).">
 								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 							</Tooltip>
 						</div>
@@ -161,24 +168,37 @@ function RoleMappingSection({
 									{(fields, { add, remove }): JSX.Element => (
 										<div className="role-mapping-section__items">
 											{fields.map((field) => (
-												<div key={field.key} className="role-mapping-section__row">
+												<div
+													key={field.key}
+													className="role-mapping-section__row"
+													data-testid="role-mapping-row"
+												>
 													<Form.Item
 														name={[field.name, 'groupName']}
 														className="role-mapping-section__field role-mapping-section__field--group"
 														rules={[{ required: true, message: 'Group name is required' }]}
 													>
-														<Input placeholder="IDP Group Name" />
+														<Input
+															placeholder="IDP Group Name"
+															testId="role-mapping-group-name"
+														/>
 													</Form.Item>
 
 													<Form.Item
 														name={[field.name, 'role']}
 														className="role-mapping-section__field role-mapping-section__field--role"
 														rules={[{ required: true, message: 'Role is required' }]}
-														initialValue="VIEWER"
+														initialValue={SIGNOZ_VIEWER_ROLE}
 													>
-														<Select
-															options={ROLE_OPTIONS}
-															className="role-mapping-section__select"
+														<RolesSelect
+															valueField="name"
+															roles={roles}
+															loading={isLoading}
+															isError={isError}
+															error={error}
+															onRefetch={refetch}
+															allowClear={false}
+															getPopupContainer={(): HTMLElement => document.body}
 														/>
 													</Form.Item>
 
@@ -188,6 +208,7 @@ function RoleMappingSection({
 														className="role-mapping-section__remove-btn"
 														onClick={(): void => remove(field.name)}
 														aria-label="Remove mapping"
+														testId="role-mapping-remove"
 													>
 														<Trash2 size={12} />
 													</Button>
@@ -197,8 +218,11 @@ function RoleMappingSection({
 											<Button
 												variant="outlined"
 												color="secondary"
-												onClick={(): void => add({ groupName: '', role: 'VIEWER' })}
+												onClick={(): void =>
+													add({ groupName: '', role: SIGNOZ_VIEWER_ROLE })
+												}
 												prefix={<Plus size={14} />}
+												testId="role-mapping-add"
 											>
 												Add Group Mapping
 											</Button>

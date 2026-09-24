@@ -53,7 +53,8 @@ import {
 	defaultTraceSelectedColumns,
 } from 'container/OptionsMenu/constants';
 import { OptionsQuery } from 'container/OptionsMenu/types';
-import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
+import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
+import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useSaveView } from 'hooks/saveViews/useSaveView';
@@ -66,7 +67,6 @@ import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMapp
 import { cloneDeep, isEqual, omit } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { FormattingOptions } from 'providers/preferences/types';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -287,8 +287,7 @@ function ExplorerOptions({
 
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 
-	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
-	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
+	const { viewName, viewKey } = useGetSavedViewParams();
 
 	const extraData = viewsData?.data?.data?.find(
 		(view) => view.id === viewKey,
@@ -453,15 +452,15 @@ function ExplorerOptions({
 			if (handleChangeSelectedView) {
 				handleChangeSelectedView(panelTypeToExplorerView[currentPanelType], {
 					query,
-					name,
-					id,
+					viewName: name,
+					viewKey: id,
 				});
 			} else {
 				// to remove this after traces cleanup
 				handleExplorerTabChange(currentPanelType, {
 					query,
-					name,
-					id,
+					viewName: name,
+					viewKey: id,
 				});
 			}
 		},
@@ -717,13 +716,13 @@ function ExplorerOptions({
 
 	const infoIconLink = useMemo(() => {
 		if (isLogsExplorer) {
-			return 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar';
+			return 'https://signoz.io/docs/userguide/logs_query_builder/?utm_source=product&utm_medium=logs-explorer-toolbar';
 		}
 		// TODO: Add metrics explorer info icon link
 		if (isMetricsExplorer) {
 			return '';
 		}
-		return 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar';
+		return 'https://signoz.io/docs/userguide/traces/?utm_source=product&utm_medium=trace-explorer-toolbar';
 	}, [isLogsExplorer, isMetricsExplorer]);
 
 	const getQueryName = (query: Query): string => {
@@ -1031,26 +1030,19 @@ function ExplorerOptions({
 					/>
 				</div>
 			</Modal>
-			<Modal
-				footer={null}
-				onOk={onCancel(false)}
-				onCancel={onCancel(false)}
+			<ExportPanelContainer
 				open={isExport}
-				centered
-				destroyOnClose
-			>
-				<ExportPanelContainer
-					query={isOneChartPerQuery ? queryToExport : query}
-					isLoading={isLoading}
-					onExport={(dashboard, isNewDashboard): void => {
-						if (isOneChartPerQuery && queryToExport) {
-							onExport(dashboard, isNewDashboard, queryToExport);
-						} else {
-							onExport(dashboard, isNewDashboard);
-						}
-					}}
-				/>
-			</Modal>
+				onClose={onCancel(false)}
+				query={isOneChartPerQuery ? queryToExport : query}
+				isLoading={isLoading}
+				onExport={(dashboard, isNewDashboard): void => {
+					if (isOneChartPerQuery && queryToExport) {
+						onExport(dashboard, isNewDashboard, queryToExport);
+					} else {
+						onExport(dashboard, isNewDashboard);
+					}
+				}}
+			/>
 		</div>
 	);
 }
@@ -1058,7 +1050,7 @@ function ExplorerOptions({
 export interface ExplorerOptionsProps {
 	isLoading?: boolean;
 	onExport: (
-		dashboard: Dashboard | null,
+		dashboard: ExportDashboard | null,
 		isNewDashboard?: boolean,
 		queryToExport?: Query,
 	) => void;

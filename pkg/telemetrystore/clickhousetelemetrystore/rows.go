@@ -25,13 +25,95 @@ func (r *rowsWithHooks) Close() error {
 
 	// mark as closed and run the onClose hook
 	r.closed = true
-	if err := r.Err(); err != nil {
+	if err := castError(r.Rows.Err()); err != nil {
 		r.event.Err = err
 	}
-	closeErr := r.Rows.Close()
+	closeErr := castError(r.Rows.Close())
 	if closeErr != nil {
 		r.event.Err = closeErr
 	}
 	r.onClose()
 	return closeErr
+}
+
+func (r *rowsWithHooks) Err() error {
+	return castError(r.Rows.Err())
+}
+
+func (r *rowsWithHooks) Scan(dest ...any) error {
+	return castError(r.Rows.Scan(dest...))
+}
+
+func (r *rowsWithHooks) ScanStruct(dest any) error {
+	return castError(r.Rows.ScanStruct(dest))
+}
+
+func (r *rowsWithHooks) Totals(dest ...any) error {
+	return castError(r.Rows.Totals(dest...))
+}
+
+// rowWithCastError wraps driver.Row so errors surfaced by Err/Scan/ScanStruct
+// are normalized through castError, matching the rest of the provider's API.
+type rowWithCastError struct {
+	driver.Row
+}
+
+func (r *rowWithCastError) Err() error {
+	return castError(r.Row.Err())
+}
+
+func (r *rowWithCastError) Scan(dest ...any) error {
+	return castError(r.Row.Scan(dest...))
+}
+
+func (r *rowWithCastError) ScanStruct(dest any) error {
+	return castError(r.Row.ScanStruct(dest))
+}
+
+// batchWithCastError wraps driver.Batch so error-returning methods (Append,
+// Send, Close, etc.) are normalized through castError.
+type batchWithCastError struct {
+	driver.Batch
+}
+
+func (b *batchWithCastError) Abort() error {
+	return castError(b.Batch.Abort())
+}
+
+func (b *batchWithCastError) Append(v ...any) error {
+	return castError(b.Batch.Append(v...))
+}
+
+func (b *batchWithCastError) AppendStruct(v any) error {
+	return castError(b.Batch.AppendStruct(v))
+}
+
+func (b *batchWithCastError) Flush() error {
+	return castError(b.Batch.Flush())
+}
+
+func (b *batchWithCastError) Send() error {
+	return castError(b.Batch.Send())
+}
+
+func (b *batchWithCastError) Close() error {
+	return castError(b.Batch.Close())
+}
+
+func (b *batchWithCastError) Column(i int) driver.BatchColumn {
+	return &batchColumnWithCastError{BatchColumn: b.Batch.Column(i)}
+}
+
+// batchColumnWithCastError wraps driver.BatchColumn so column-level appends
+// also flow through castError.
+type batchColumnWithCastError struct {
+	driver.BatchColumn
+}
+
+func (c *batchColumnWithCastError) Append(v any) error {
+	return castError(c.BatchColumn.Append(v))
+}
+
+func (c *batchColumnWithCastError) AppendRow(v any) error {
+	return castError(c.BatchColumn.AppendRow(v))
 }

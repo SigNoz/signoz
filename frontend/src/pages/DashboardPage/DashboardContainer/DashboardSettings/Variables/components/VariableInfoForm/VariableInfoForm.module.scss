@@ -1,0 +1,25 @@
+.infoItemContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.infoTitle {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 12px;
+}
+
+.variableNameInput {
+	border-radius: 2px;
+	border: 1px solid var(--l2-border);
+
+	&::placeholder {
+		color: var(--l3-foreground);
+	}
+}
+
+.descriptionTextArea {
+	border-radius: 2px;
+	border: 1px solid var(--l2-border);
+}

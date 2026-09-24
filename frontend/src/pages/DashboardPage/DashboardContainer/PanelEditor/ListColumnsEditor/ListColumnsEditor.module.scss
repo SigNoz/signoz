@@ -1,0 +1,38 @@
+.editor {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px;
+	border-top: 1px solid var(--l2-border);
+	background-color: var(--l1-background);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+}
+
+.title {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--l2-foreground);
+}
+
+.body {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.hint {
+	font-size: 11px;
+	color: var(--l3-foreground);
+}

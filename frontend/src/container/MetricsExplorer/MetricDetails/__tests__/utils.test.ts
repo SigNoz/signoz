@@ -147,6 +147,44 @@ describe('MetricDetails utils', () => {
 			expect(query.builder.queryData[0]?.spaceAggregation).toBe('sum');
 		});
 
+		it('treats a cumulative non-monotonic Sum as a Gauge', () => {
+			const query = getMetricDetailsQuery(
+				TEST_METRIC_NAME,
+				MetrictypesTypeDTO.sum,
+				undefined,
+				undefined,
+				undefined,
+				false,
+				MetrictypesTemporalityDTO.cumulative,
+			);
+
+			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
+				ATTRIBUTE_TYPES.GAUGE,
+			);
+			expect(query.builder.queryData[0]?.aggregateOperator).toBe('avg');
+			expect(query.builder.queryData[0]?.timeAggregation).toBe('avg');
+			expect(query.builder.queryData[0]?.spaceAggregation).toBe('avg');
+		});
+
+		it('treats a delta non-monotonic Sum as a Sum', () => {
+			const query = getMetricDetailsQuery(
+				TEST_METRIC_NAME,
+				MetrictypesTypeDTO.sum,
+				undefined,
+				undefined,
+				undefined,
+				false,
+				MetrictypesTemporalityDTO.delta,
+			);
+
+			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
+				ATTRIBUTE_TYPES.SUM,
+			);
+			expect(query.builder.queryData[0]?.aggregateOperator).toBe('rate');
+			expect(query.builder.queryData[0]?.timeAggregation).toBe('rate');
+			expect(query.builder.queryData[0]?.spaceAggregation).toBe('sum');
+		});
+
 		it('should create correct query for GAUGE metric type', () => {
 			const query = getMetricDetailsQuery(
 				TEST_METRIC_NAME,

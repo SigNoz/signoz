@@ -1,0 +1,44 @@
+.metadataItem {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+	min-width: 0;
+}
+
+.valueRow {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	min-width: 0;
+}
+
+.label {
+	letter-spacing: 0.44px;
+	text-transform: uppercase;
+}
+
+// Single-line ellipsis rather than Typography's `truncate`, which line-clamps:
+// clamping still wraps the text, so a value breaking at a hyphen ends its line
+// early and leaves a gap between the ellipsis and the copy button.
+//
+// This has to be a block: overflow and text-overflow do not apply to inline
+// boxes, and Typography.Text renders an inline span.
+.value {
+	display: block;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.valueText {
+	font-family: var(--periscope-font-family-mono);
+}
+
+// Sized to the icon rather than the default 2rem tap target, so it sits flush
+// against the value instead of floating in its own block of padding.
+.copyButton {
+	--button-padding: 2px;
+	--button-height: auto;
+	--button-width: auto;
+}

@@ -12,7 +12,7 @@ type PromQuery struct {
 	// stats if true, the query will return stats
 	Stats bool `json:"stats"`
 
-	Legend string `json:"legend,omitempty"`
+	Legend string `json:"legend"`
 }
 
 // Copy creates a deep copy of the PromQuery.

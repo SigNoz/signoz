@@ -22,6 +22,7 @@ import (
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
@@ -54,7 +55,7 @@ func TestMSTeamsV2Retry(t *testing.T) {
 
 	for statusCode, expected := range test.RetryTests(test.DefaultRetryCodes()) {
 		actual, _ := notifier.retrier.Check(statusCode, nil)
-		require.Equal(t, expected, actual, "retry - error on status %d", statusCode)
+		assert.Equal(t, expected, actual, "retry - error on status %d", statusCode)
 	}
 }
 
@@ -110,7 +111,7 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 			} else {
 				var reasonError *notify.ErrorWithReason
 				require.ErrorAs(t, err, &reasonError)
-				require.Equal(t, tt.expectedReason, reasonError.Reason)
+				assert.Equal(t, tt.expectedReason, reasonError.Reason)
 			}
 		})
 	}
@@ -133,7 +134,6 @@ func TestMSTeamsV2Templating(t *testing.T) {
 		cfg       *config.MSTeamsV2Config
 		titleLink string
 
-		retry  bool
 		errMsg string
 	}{
 		{
@@ -143,7 +143,6 @@ func TestMSTeamsV2Templating(t *testing.T) {
 				Text:  `{{ template "msteams.default.text" . }}`,
 			},
 			titleLink: `{{ template "msteamsv2.default.titleLink" . }}`,
-			retry:     false,
 		},
 		{
 			title: "title with templating errors",
@@ -185,12 +184,12 @@ func TestMSTeamsV2Templating(t *testing.T) {
 				},
 			}...)
 			if tc.errMsg == "" {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 			} else {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.errMsg)
+				assert.Contains(t, err.Error(), tc.errMsg)
 			}
-			require.Equal(t, tc.retry, ok)
+			assert.False(t, ok)
 		})
 	}
 }
@@ -250,14 +249,14 @@ func TestPrepareContent(t *testing.T) {
 		}
 		blocks, err := notifier.prepareContent(ctx, alerts)
 		require.NoError(t, err)
-		require.NotEmpty(t, blocks)
+		require.Len(t, blocks, 2)
 		// First block should be the title with color (firing = red)
-		require.Equal(t, "Bolder", blocks[0].Weight)
-		require.Equal(t, colorRed, blocks[0].Color)
+		assert.Equal(t, "Bolder", blocks[0].Weight)
+		assert.Equal(t, colorRed, blocks[0].Color)
 		// verify title text
-		require.Equal(t, "Alertname: test", blocks[0].Text)
+		assert.Equal(t, "Alertname: test", blocks[0].Text)
 		// verify body text
-		require.Equal(t, "Firing alert: test", blocks[1].Text)
+		assert.Equal(t, "Firing alert: test", blocks[1].Text)
 	})
 
 	t.Run("custom template - per-alert color", func(t *testing.T) {
@@ -305,16 +304,15 @@ func TestPrepareContent(t *testing.T) {
 		}
 		blocks, err := notifier.prepareContent(ctx, alerts)
 		require.NoError(t, err)
-		require.NotEmpty(t, blocks)
 		// total 3 blocks: title and 2 body blocks
-		require.True(t, len(blocks) == 3)
+		require.Len(t, blocks, 3)
 		// First block: title color is overall color of the alerts
-		require.Equal(t, colorRed, blocks[0].Color)
+		assert.Equal(t, colorRed, blocks[0].Color)
 		// verify title text
-		require.Equal(t, "Custom Title", blocks[0].Text)
+		assert.Equal(t, "Custom Title", blocks[0].Text)
 		// Body blocks should have per-alert color
-		require.Equal(t, colorRed, blocks[1].Color)   // firing
-		require.Equal(t, colorGreen, blocks[2].Color) // resolved
+		assert.Equal(t, colorRed, blocks[1].Color)   // firing
+		assert.Equal(t, colorGreen, blocks[2].Color) // resolved
 	})
 }
 

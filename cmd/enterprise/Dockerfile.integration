@@ -4,9 +4,13 @@ ARG OS="linux"
 ARG TARGETARCH
 ARG ZEUSURL
 
+# HOME comes from the build user, not the image config; declare it so the
+# /root paths below trace to it.
+ENV HOME=/root
+
 # This path is important for stacktraces
 WORKDIR $GOPATH/src/github.com/signoz/signoz
-WORKDIR /root
+WORKDIR $HOME
 
 RUN set -eux; \
 	apt-get update; \
@@ -14,23 +18,36 @@ RUN set -eux; \
 		g++ \
 		gcc \
 		libc6-dev \
-		make \
 		pkg-config \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
+# Keep the literal cache-mount targets below in sync with these. The caches
+# are shared with Dockerfile.with-web.integration (same target paths).
+ENV GOCACHE=$HOME/.cache/go-build
+ENV GOMODCACHE=$GOPATH/pkg/mod
+
 COPY go.mod go.sum ./
 
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+	go mod download
 
 COPY ./cmd/ ./cmd/
 COPY ./ee/ ./ee/
 COPY ./pkg/ ./pkg/
 COPY ./templates /root/templates
 
-COPY Makefile Makefile
-RUN TARGET_DIR=/root ARCHS=${TARGETARCH} ZEUS_URL=${ZEUSURL} LICENSE_URL=${ZEUSURL}/api/v1 make go-build-enterprise-race
-RUN mv /root/linux-${TARGETARCH}/signoz /root/signoz
+# Invoked directly instead of via make so Makefile changes don't invalidate
+# this layer; the Makefile's git-derived ldflags resolve to empty in here
+# anyway (.git is dockerignored).
+RUN --mount=type=cache,target=/go/pkg/mod \
+	--mount=type=cache,target=/root/.cache/go-build \
+	GOARCH=${TARGETARCH} GOOS=${OS} go build -C ./cmd/enterprise -race -tags timetzdata -o /root/signoz \
+	-ldflags "-s -w \
+		-X github.com/SigNoz/signoz/pkg/version.version=integration \
+		-X github.com/SigNoz/signoz/pkg/version.variant=enterprise \
+		-X github.com/SigNoz/signoz/ee/zeus.url=${ZEUSURL} \
+		-X github.com/SigNoz/signoz/ee/zeus.deprecatedURL=${ZEUSURL}/api/v1"
 
 RUN chmod 755 /root /root/signoz
 

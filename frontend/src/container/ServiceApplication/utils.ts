@@ -2,7 +2,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { ServicesList } from 'types/api/metrics/getService';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
@@ -26,7 +25,6 @@ export function getSeriesValue(
 export const getQueryRangeRequestData = ({
 	topLevelOperations,
 	globalSelectedInterval,
-	dotMetricsEnabled,
 }: GetQueryRangeRequestDataProps): GetQueryResultsProps[] => {
 	const requestData: GetQueryResultsProps[] = [];
 	topLevelOperations.forEach((operation) => {
@@ -34,7 +32,7 @@ export const getQueryRangeRequestData = ({
 			query: {
 				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
-				builder: serviceMetricsQuery(operation, dotMetricsEnabled),
+				builder: serviceMetricsQuery(operation),
 				clickhouse_sql: [],
 				id: uuid(),
 			},
@@ -48,7 +46,6 @@ export const getQueryRangeRequestData = ({
 			graphType: serviceMetricsWidget?.panelTypes,
 			query: updatedQuery,
 			globalSelectedInterval,
-			variables: getDashboardVariables(),
 		});
 	});
 	return requestData;

@@ -15,11 +15,13 @@
 	.ant-tree-node-content-wrapper {
 		user-select: text !important;
 		cursor: text !important;
+		min-width: 0;
 	}
 
 	.ant-tree-title {
 		user-select: text !important;
 		cursor: text !important;
+		overflow-wrap: anywhere;
 	}
 }
 

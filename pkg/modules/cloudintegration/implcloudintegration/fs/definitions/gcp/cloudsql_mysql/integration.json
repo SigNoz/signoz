@@ -1,0 +1,136 @@
+{
+  "id": "cloudsql_mysql",
+  "title": "GCP Cloud SQL for MySQL",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "cloudsql.googleapis.com/database/up",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/instance_state",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/replication/replica_lag",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/cpu/utilization",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/memory/utilization",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/disk/utilization",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/network/connections",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/mysql/queries",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/mysql/dml_operations_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/mysql/threads",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/mysql/innodb/buffer_pool_reads_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/mysql/innodb/buffer_pool_read_requests_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/mysql/slow_queries_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/mysql/aborted_connects_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/mysql/innodb/deadlocks_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/mysql/innodb/row_lock_waits_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/disk/read_ops_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "cloudsql.googleapis.com/database/disk/write_ops_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      }
+    ],
+    "logs": []
+  },
+  "telemetryCollectionStrategy": {
+    "gcp": {}
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "GCP Cloud SQL for MySQL Overview",
+        "description": "Overview of GCP Cloud SQL for MySQL metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

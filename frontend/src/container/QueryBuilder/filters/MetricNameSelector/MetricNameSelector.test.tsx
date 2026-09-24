@@ -31,7 +31,7 @@ jest.mock('hooks/useDebounce', () => ({
 	default: <T,>(value: T): T => value,
 }));
 
-jest.mock('../QueryBuilderSearch/OptionRenderer', () => ({
+jest.mock('../OptionRenderer/OptionRenderer', () => ({
 	__esModule: true,
 	default: ({ value }: { value: string }): JSX.Element => <span>{value}</span>,
 }));
@@ -393,12 +393,13 @@ describe('selecting a metric type updates the aggregation options', () => {
 		]);
 	});
 
-	it('non-monotonic Sum metric is treated as Gauge', () => {
+	it('cumulative non-monotonic Sum metric is treated as Gauge', () => {
 		returnMetrics([
 			makeMetric({
 				metricName: 'active_connections',
 				type: MetrictypesTypeDTO.sum,
 				isMonotonic: false,
+				temporality: 'cumulative' as never,
 			}),
 		]);
 
@@ -418,6 +419,36 @@ describe('selecting a metric type updates the aggregation options', () => {
 			'Max',
 			'Count',
 			'Count Distinct',
+		]);
+		expect(getOptionLabels('space-agg-options')).toStrictEqual([
+			'Sum',
+			'Avg',
+			'Min',
+			'Max',
+		]);
+	});
+
+	it('delta non-monotonic Sum metric is treated as Sum', () => {
+		returnMetrics([
+			makeMetric({
+				metricName: 'queue_depth_delta',
+				type: MetrictypesTypeDTO.sum,
+				isMonotonic: false,
+				temporality: 'delta' as never,
+			}),
+		]);
+
+		render(<MetricQueryHarness query={makeQuery()} />);
+
+		const input = screen.getByRole('combobox');
+		fireEvent.change(input, {
+			target: { value: 'queue_depth_delta' },
+		});
+		fireEvent.blur(input);
+
+		expect(getOptionLabels('time-agg-options')).toStrictEqual([
+			'Rate',
+			'Increase',
 		]);
 		expect(getOptionLabels('space-agg-options')).toStrictEqual([
 			'Sum',

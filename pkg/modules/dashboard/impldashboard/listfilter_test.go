@@ -460,6 +460,83 @@ func TestCompile_ComplexExamples(t *testing.T) {
 	})
 }
 
+func TestCompile_FreeText(t *testing.T) {
+	// freeTextSQL is the predicate every free-text query compiles to; only the
+	// bound pattern differs.
+	freeTextSQL := `
+		(
+		lower(COALESCE(json_extract("dashboard"."data", '$.spec.display.name'), '')) LIKE LOWER(?) ESCAPE '\'
+		OR lower(COALESCE(json_extract("dashboard"."data", '$.spec.display.description'), '')) LIKE LOWER(?) ESCAPE '\'
+		OR EXISTS (
+			SELECT 1 FROM tag_relation tr
+			JOIN tag t ON t.id = tr.tag_id
+			WHERE tr.kind = ? AND tr.resource_id = dashboard.id
+			AND (lower(COALESCE(t.key, '')) LIKE LOWER(?) ESCAPE '\' OR lower(COALESCE(t.value, '')) LIKE LOWER(?) ESCAPE '\')
+		))`
+	freeTextArgs := func(pattern string) []any {
+		return []any{pattern, pattern, kindArg, pattern, pattern}
+	}
+
+	runCompileCases(t, []compileCase{
+		{
+			subtestName:       "single bare word",
+			dslQueryToCompile: `payment`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%payment%"),
+		},
+		{
+			// consecutive words are implicit-AND per the grammar, so each is its
+			// own term; `"prod payment"` (below) is the way to match the phrase
+			subtestName:       "words are separate terms AND'd together",
+			dslQueryToCompile: `prod payment`,
+			expectedSQL:       "(" + freeTextSQL + " AND " + freeTextSQL + ")",
+			expectedArgs:      append(freeTextArgs("%prod%"), freeTextArgs("%payment%")...),
+		},
+		{
+			subtestName:       "a quoted token matches the whole phrase",
+			dslQueryToCompile: `"prod payment"`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%prod payment%"),
+		},
+		{
+			subtestName:       "quoting is the escape hatch for a DSL-like literal",
+			dslQueryToCompile: `"team = prod"`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%team = prod%"),
+		},
+		{
+			subtestName:       "LIKE wildcards in the term are escaped to match literally",
+			dslQueryToCompile: `"50%"`,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs(`%50\%%`),
+		},
+		{
+			subtestName:       "surrounding whitespace is trimmed",
+			dslQueryToCompile: `   payment   `,
+			expectedSQL:       freeTextSQL,
+			expectedArgs:      freeTextArgs("%payment%"),
+		},
+		{
+			subtestName:       "free-text term composes with a comparison via AND",
+			dslQueryToCompile: `prod AND name CONTAINS 'signoz'`,
+			expectedSQL:       "(" + freeTextSQL + ` AND json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\')`,
+			expectedArgs:      append(freeTextArgs("%prod%"), "%signoz%"),
+		},
+		{
+			subtestName:       "free-text words compose with a comparison via OR",
+			dslQueryToCompile: `prod payment OR name = 'x'`,
+			expectedSQL:       "((" + freeTextSQL + " AND " + freeTextSQL + `) OR json_extract("dashboard"."data", '$.spec.display.name') = ?)`,
+			expectedArgs:      append(append(freeTextArgs("%prod%"), freeTextArgs("%payment%")...), "x"),
+		},
+		{
+			subtestName:       "NOT negates a free-text term",
+			dslQueryToCompile: `NOT payment`,
+			expectedSQL:       "NOT (" + freeTextSQL + ")",
+			expectedArgs:      freeTextArgs("%payment%"),
+		},
+	})
+}
+
 func TestCompile_Rejections(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
@@ -483,6 +560,16 @@ func TestCompile_Rejections(t *testing.T) {
 			expectedErrShouldContain: "RFC3339",
 		},
 		{
+			subtestName:              "rejects LIKE pattern ending in an unescaped backslash",
+			dslQueryToCompile:        `name LIKE 'prod\\'`,
+			expectedErrShouldContain: "must not end with an unescaped backslash",
+		},
+		{
+			subtestName:              "rejects ILIKE pattern ending in an unescaped backslash",
+			dslQueryToCompile:        `name ILIKE '%\\'`,
+			expectedErrShouldContain: "must not end with an unescaped backslash",
+		},
+		{
 			subtestName:              "rejects REGEXP — not yet supported",
 			dslQueryToCompile:        `name REGEXP '.*'`,
 			expectedErrShouldContain: "REGEXP",
@@ -495,8 +582,19 @@ func TestCompile_Rejections(t *testing.T) {
 	})
 }
 
+func TestCompileTrailingLiteralBackslash(t *testing.T) {
+	runCompileCases(t, []compileCase{
+		{
+			subtestName:       "escaped trailing backslash compiles",
+			dslQueryToCompile: `name LIKE '%\\\\'`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'`,
+			expectedArgs:      []any{`%\\`},
+		},
+	})
+}
+
 // Every key in dashboardtypes.ReservedOps must have a matching case in
-// visitComparisonForReservedKeys; a key that's reserved but unhandled falls
+// resolveReservedKey; a key that's reserved but unhandled falls
 // through to the "no handler for reserved key" error. Equal is accepted by all
 // reserved keys, so `key = 'x'` always reaches the dispatch switch — a missing
 // handler surfaces as that error regardless of whether the value type-checks.
@@ -506,7 +604,7 @@ func TestCompileReservedKeysAllHandled(t *testing.T) {
 			_, err := Compile(string(key)+` = 'x'`, formatter(t))
 			if err != nil {
 				assert.NotContains(t, err.Error(), "no handler for reserved key",
-					"reserved key %q has no handler in visitComparisonForReservedKeys", key)
+					"reserved key %q has no handler in resolveReservedKey", key)
 			}
 		})
 	}

@@ -16,6 +16,42 @@ from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
 from fixtures.time import parse_duration, parse_timestamp
 
+# All keys returned by the trace list endpoint when selectFields is empty:
+# every intrinsic and calculated column, plus the merged `attributes` and
+# `resource` maps that wrap the contextual columns in the response layer.
+ALL_SELECT_FIELDS = [
+    # all intrinsic columns
+    "timestamp",
+    "trace_id",
+    "span_id",
+    "trace_state",
+    "parent_span_id",
+    "flags",
+    "name",
+    "kind",
+    "kind_string",
+    "duration_nano",
+    "status_code",
+    "status_message",
+    "status_code_string",
+    "events",
+    "links",
+    # all calculated columns
+    "response_status_code",
+    "external_http_url",
+    "http_url",
+    "external_http_method",
+    "http_method",
+    "http_host",
+    "db_name",
+    "db_operation",
+    "has_error",
+    "is_remote",
+    # all contextual columns (merged in response layer)
+    "attributes",
+    "resource",
+]
+
 
 class TracesKind(Enum):
     SPAN_KIND_UNSPECIFIED = 0
@@ -28,6 +64,22 @@ class TracesKind(Enum):
     @classmethod
     def from_value(cls, value: int) -> "TracesKind":
         return cls(value)
+
+    def kind_string(self) -> str:
+        """The `kind_string` column value, mirroring ptrace.SpanKind.String() — the exporter
+        writes `otelSpan.Kind().String()`. Features filter on these, e.g. third-party-apis
+        requires `kind_string = 'Client'`."""
+        return _KIND_STRINGS[self]
+
+
+_KIND_STRINGS = {
+    TracesKind.SPAN_KIND_UNSPECIFIED: "Unspecified",
+    TracesKind.SPAN_KIND_INTERNAL: "Internal",
+    TracesKind.SPAN_KIND_SERVER: "Server",
+    TracesKind.SPAN_KIND_CLIENT: "Client",
+    TracesKind.SPAN_KIND_PRODUCER: "Producer",
+    TracesKind.SPAN_KIND_CONSUMER: "Consumer",
+}
 
 
 class TracesStatusCode(Enum):
@@ -236,9 +288,11 @@ class Traces(ABC):
     attributes_number: dict[str, np.float64]
     attributes_bool: dict[str, bool]
     resources_string: dict[str, str]
+    # Accepting parsed events and links, but will be stored as list[str], str in db
+    events: list[dict[str, Any]]
+    links: list[dict[str, Any]]
     resource_json: dict[str, str]
-    events: list[str]
-    links: str
+    attributes_json: dict[str, Any]
     response_status_code: str
     external_http_url: str
     http_url: str
@@ -249,6 +303,7 @@ class Traces(ABC):
     db_operation: str
     has_error: bool
     is_remote: str
+    scope_json: dict[str, Any]
 
     resource: list[TracesResource]
     tag_attributes: list[TracesTagAttributes]
@@ -274,7 +329,9 @@ class Traces(ABC):
         links: list[TracesLink] = [],
         trace_state: str = "",
         flags: np.uint32 = 0,
+        scope: dict[str, Any] = {},
         resource_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
+        attribute_write_mode: Literal["legacy_only", "dual_write", "json_only"] = "dual_write",
     ) -> None:
         if timestamp is None:
             timestamp = datetime.datetime.now()
@@ -307,7 +364,7 @@ class Traces(ABC):
         self.flags = flags
         self.name = name
         self.kind = kind.value
-        self.kind_string = kind.name
+        self.kind_string = kind.kind_string()
         self.status_code = status_code.value
         self.status_message = status_message
         self.status_code_string = status_code.name
@@ -354,6 +411,33 @@ class Traces(ABC):
 
         # Calculate resource fingerprint
         self.resource_fingerprint = LogsOrTracesFingerprint(self.resources_string).calculate()
+
+        # Process scope mirroring the InstrumentationScope on the OTLP span.
+        scope_name = scope.get("name", "")
+        scope_version = scope.get("version", "")
+        scope_string = {k: str(v) for k, v in scope.get("attributes", {}).items()}
+        self.scope_json = {
+            "name": scope_name,
+            "version": scope_version,
+            "attributes": scope_string,
+        }
+
+        scope_keys = {"scope.name": scope_name, "scope.version": scope_version}
+        scope_keys.update(scope_string)
+        for k, v in scope_keys.items():
+            if v == "":
+                continue
+            self.tag_attributes.append(
+                TracesTagAttributes(
+                    timestamp=timestamp,
+                    tag_key=k,
+                    tag_type="scope",
+                    tag_data_type="string",
+                    string_value=v,
+                    number_value=None,
+                )
+            )
+            self.attribute_keys.append(TracesResourceOrAttributeKeys(name=k, datatype="string", tag_type="scope"))
 
         # Process attributes by type and populate custom fields
         self.attribute_string = {}
@@ -428,10 +512,25 @@ class Traces(ABC):
                     )
                 )
 
-        # Process events and derive error events
+        # Spans before the attribute JSON-evolution time populate only the legacy
+        # attributes_{string,number,bool} maps; spans at or after it dual-write the
+        # native-typed `attributes` JSON column too, and spans past the map-write
+        # cutoff populate only the JSON column (metadata rows are still written).
+        self.attributes_json = {} if attribute_write_mode == "legacy_only" else dict(attributes)
+        if attribute_write_mode == "json_only":
+            self.attribute_string, self.attributes_number, self.attributes_bool = {}, {}, {}
+
+        # Process events and derive error events. self.events holds the parsed
+        # response shape; np_arr() encodes back to the DB format on insert.
         self.events = []
         for event in events:
-            self.events.append(json.dumps([event.name, event.time_unix_nano, event.attribute_map]))
+            self.events.append(
+                {
+                    "name": event.name,
+                    "timeUnixNano": int(event.time_unix_nano),
+                    "attributes": dict(event.attribute_map),
+                }
+            )
 
             # Create error events for exception events (following Go exporter logic)
             if event.name == "exception":
@@ -453,7 +552,26 @@ class Traces(ABC):
                 ),
             )
 
-        self.links = json.dumps([link.__dict__() for link in links_copy], separators=(",", ":"))
+        # self.links holds the parsed response shape (trace_id/span_id only;
+        # ref_type is dropped to match the API). np_arr() re-encodes for DB insert.
+        self.links = [{"traceId": link.trace_id, "spanId": link.span_id} for link in links_copy]
+        self._links_db = json.dumps(
+            [link.__dict__() for link in links_copy],
+            separators=(",", ":"),
+        )
+        # DB shape per event: {"name", "timeUnixNano", "attributeMap"}. Must match
+        # what the consume-layer parser in pkg/types/spantypes expects.
+        self._events_db = [
+            json.dumps(
+                {
+                    "name": event.name,
+                    "timeUnixNano": int(event.time_unix_nano),
+                    "attributeMap": dict(event.attribute_map),
+                },
+                separators=(",", ":"),
+            )
+            for event in events
+        ]
 
         # Initialize resource
         self.resource = []
@@ -546,7 +664,6 @@ class Traces(ABC):
             self.response_status_code = str_value
 
     def np_arr(self) -> np.array:
-        """Return span data as numpy array for database insertion"""
         return np.array(
             [
                 self.ts_bucket_start,
@@ -568,8 +685,8 @@ class Traces(ABC):
                 self.attributes_number,
                 self.attributes_bool,
                 self.resources_string,
-                self.events,
-                self.links,
+                self._events_db,
+                self._links_db,
                 self.response_status_code,
                 self.external_http_url,
                 self.http_url,
@@ -581,6 +698,8 @@ class Traces(ABC):
                 self.has_error,
                 self.is_remote,
                 self.resource_json,
+                self.scope_json,
+                self.attributes_json,
             ],
             dtype=object,
         )
@@ -590,7 +709,6 @@ class Traces(ABC):
         cls,
         data: dict,
     ) -> "Traces":
-        """Create a Traces instance from a dict."""
         # parse timestamp from iso format
         timestamp = parse_timestamp(data["timestamp"])
         duration = parse_duration(data.get("duration", "PT1S"))
@@ -612,6 +730,7 @@ class Traces(ABC):
             attributes=data.get("attributes", {}),
             trace_state=data.get("trace_state", ""),
             flags=data.get("flags", 0),
+            scope=data.get("scope", {}),
         )
 
     @classmethod
@@ -751,6 +870,8 @@ def insert_traces_to_clickhouse(conn, traces: list[Traces]) -> None:
             "has_error",
             "is_remote",
             "resource",
+            "scope",
+            "attributes",
         ],
         data=[trace.np_arr() for trace in traces],
     )
@@ -773,7 +894,23 @@ _TRACES_TABLES_TO_TRUNCATE = [
     "tag_attributes_v2",
     "span_attributes_keys",
     "signoz_error_index_v2",
+    "top_level_operations",
 ]
+
+
+def insert_top_level_operations_to_clickhouse(conn, operations: list[tuple[str, str]]) -> None:
+    """Seed distributed_top_level_operations with (name, serviceName) rows so the
+    isEntryPoint span-scope filter has entries to match against. The `time`
+    column defaults to now(), which satisfies the filter's `time >= start`
+    guard for any recent query window."""
+    if not operations:
+        return
+    conn.insert(
+        database="signoz_traces",
+        table="distributed_top_level_operations",
+        column_names=["name", "serviceName"],
+        data=[[name, service_name] for name, service_name in operations],
+    )
 
 
 def truncate_traces_tables(conn, cluster: str) -> None:
@@ -798,6 +935,72 @@ def insert_traces(
     )
 
 
+def insert_attribute_evolution_to_clickhouse(conn, signal: str, release_time: datetime.datetime) -> None:
+    """Seed the `attributes` JSON column-evolution row for a signal at release_time. Unlike the
+    resource row (seeded by the migrator at install), the attribute JSON rollout is install-specific
+    and not migrator-seeded, so tests insert it to gate map-vs-JSON resolution across a window."""
+    # insert_deduplicate=0: successive tests seed a byte-identical row (release_time is
+    # minute-aligned), and ReplicatedMergeTree would drop the re-insert as a duplicate even
+    # after the prior test's teardown deleted it, leaving the querier to fall back to the Map.
+    conn.command(
+        """
+        INSERT INTO signoz_metadata.distributed_column_evolution_metadata
+            (signal, column_name, column_type, field_context, field_name, version, release_time)
+        SETTINGS insert_deduplicate = 0
+        VALUES (%(signal)s, 'attributes', 'JSON()', 'attribute', '__all__', 1, %(release_time_ns)s)
+        """,
+        parameters={"signal": signal, "release_time_ns": int(release_time.timestamp() * 1e9)},
+    )
+
+
+@pytest.fixture(name="seed_attribute_evolution", scope="function")
+def seed_attribute_evolution(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[Callable[[str, datetime.datetime], None], Any]:
+    def _seed(signal: str, release_time: datetime.datetime) -> None:
+        insert_attribute_evolution_to_clickhouse(clickhouse.conn, signal, release_time)
+
+    yield _seed
+
+    cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
+    clickhouse.conn.query(f"ALTER TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' DELETE WHERE column_name = 'attributes' AND field_context = 'attribute' AND field_name = '__all__' SETTINGS mutations_sync = 1")
+
+
+# A rollout far before any test's query window, so seeding it makes the querier read span
+# attributes entirely from the native JSON column rather than straddling into the legacy Map.
+ATTRIBUTE_JSON_ROLLOUT_TIME = datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC)
+
+
+@pytest.fixture(name="use_attribute_backend")
+def use_attribute_backend(
+    seed_attribute_evolution: Callable[[str, datetime.datetime], None],
+) -> Callable[[str], None]:
+    """Applies the physical attribute layout a test runs under. "map" leaves the querier on the
+    legacy attributes_{string,number,bool} maps; "json" seeds the column-evolution row so it reads
+    the native `attributes` JSON column instead. Pair with
+    @pytest.mark.parametrize("attribute_backend", ["map", "json"]) and call it once in the body;
+    insert_traces dual-writes both layouts, so a test that passes under both has strict Map/JSON
+    parity."""
+
+    def _apply(backend: str) -> None:
+        if backend == "json":
+            seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
+
+    return _apply
+
+
+@pytest.fixture(name="insert_top_level_operations", scope="function")
+def insert_top_level_operations(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[Callable[[list[tuple[str, str]]], None], Any]:
+    def _insert(operations: list[tuple[str, str]]) -> None:
+        insert_top_level_operations_to_clickhouse(clickhouse.conn, operations)
+
+    yield _insert
+
+    clickhouse.conn.query(f"TRUNCATE TABLE signoz_traces.top_level_operations ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC")
+
+
 @pytest.fixture(name="remove_traces_ttl_and_storage_settings", scope="function")
 def remove_traces_ttl_and_storage_settings(signoz: types.SigNoz):
     """
@@ -820,3 +1023,84 @@ def remove_traces_ttl_and_storage_settings(signoz: types.SigNoz):
             signoz.telemetrystore.conn.query(f"ALTER TABLE signoz_traces.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' RESET SETTING storage_policy;")
         except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"ttl and storage policy reset failed for {table}: {e}")
+
+
+# ============================================================================
+# Clean / corrupt factor (shared across the traces querier tests)
+# ============================================================================
+# Colliding/corrupt metadata mixed into every seeded span in the "corrupt"
+# variant of the list/aggregation tests. It injects:
+#   - intrinsic column names as span attributes (timestamp, duration_nano, ...)
+#   - calculated column names as span attributes (http_method, db_name, ...)
+#   - a key (service.name) present in both attributes and resources
+# Values deliberately mix Python types (str / int / float / bool) so the
+# collision also spans the attributes_string / attributes_number /
+# attributes_bool type-variant columns — e.g. a string attribute named
+# duration_nano vs the numeric intrinsic, a numeric attribute named
+# response_status_code vs the string calculated column, a bool attribute named
+# db_name vs the string calculated column.
+# Field-key collision resolution must keep the real intrinsic/calculated/resource
+# columns winning regardless of the attribute's type, so every assertion holds
+# identically for clean and corrupt spans. The corrupt values only ever surface
+# inside the raw `attributes` map.
+CORRUPT_ATTRIBUTES: dict[str, Any] = {
+    # intrinsic names (real column type in comment)
+    "timestamp": "corrupt_data",  # string vs number
+    "trace_id": 12345,  # number vs string
+    "span_id": True,  # bool vs string
+    "parent_span_id": "corrupt_data",  # string vs string
+    "trace_state": 99,  # number vs string
+    "flags": "corrupt_data",  # string vs number
+    "name": 42,  # number vs string
+    "kind": "corrupt_data",  # string vs number
+    "kind_string": 7,  # number vs string
+    "duration_nano": "corrupt_data",  # string vs number
+    "status_code": True,  # bool vs number
+    "status_message": 500,  # number vs string
+    "status_code_string": False,  # bool vs string
+    # calculated names (real column type in comment)
+    "response_status_code": 999,  # number vs string
+    "external_http_url": 8080,  # number vs string
+    "http_url": True,  # bool vs string
+    "external_http_method": 1,  # number vs string
+    "http_method": False,  # bool vs string
+    "http_host": 12,  # number vs string
+    "db_name": True,  # bool vs string
+    "db_operation": 3.5,  # number vs string
+    "has_error": "corrupt_data",  # string vs bool
+    "is_remote": 1,  # number vs string
+    # collides with the resource key of the same name
+    "service.name": "collision-attr-value",
+}
+# Resources are always stored as strings, so the resource-side collision only
+# varies the key names.
+CORRUPT_RESOURCES: dict[str, Any] = {
+    "timestamp": "corrupt_data",
+    "duration_nano": "corrupt_data",
+    "http_method": "corrupt_data",
+}
+
+# A TYPE-CONSISTENT collision, distinct from CORRUPT_* (whose wrong-type values are
+# dropped by field-key resolution): a numeric span attribute named `duration_nano`
+# shares both the name AND a compatible type with the intrinsic duration_nano (UInt64)
+# column, so resolution unions it with the column into a multiIf. This exercises the
+# collision path that regressed with ClickHouse NO_COMMON_TYPE (386) — the intrinsic
+# column must still win. Kept out of CORRUPT_ATTRIBUTES because a type-consistent
+# collision changes raw-select output (the multiIf stringifies the value), which the
+# list tests assert against; only aggregation/filter tests opt into this variant.
+COLLISION_ATTRIBUTES: dict[str, Any] = {
+    "duration_nano": 1.0,  # numeric attr vs the numeric intrinsic (type-consistent)
+}
+
+
+def trace_noise(variant: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    """(extra_attributes, extra_resources) to merge into every span a traces test seeds, keyed by
+    variant. "clean" adds nothing; "corrupt" injects wrong-type colliding intrinsic/calculated field
+    names (dropped by resolution, so results are unchanged); "collision" injects a type-consistent
+    numeric duration_nano attribute that unions into a multiIf, exercising collision resolution on
+    aggregation/filter paths. Returns fresh dicts so callers can mutate them safely."""
+    if variant == "clean":
+        return {}, {}
+    if variant == "collision":
+        return dict(COLLISION_ATTRIBUTES), {}
+    return dict(CORRUPT_ATTRIBUTES), dict(CORRUPT_RESOURCES)

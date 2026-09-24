@@ -6,6 +6,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
+import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
@@ -134,6 +135,21 @@ function getFilter(queryData: IBuilderQuery): Filter {
 	};
 }
 
+/**
+ * Normalizes a builder query's `having` to the V5 shape, treating "no having filter" as absent.
+ * V4 stored it as an array; V5 expects `{ expression }`. An array (legacy), a nullish value, or a
+ * blank expression — the query builder seeds `{ expression: '' }` for an empty having — all mean
+ * "no having" and must serialize to `undefined`. Emitting an empty `{ expression: '' }` sends a
+ * no-op filter and, because a saved panel never carries one, reads an untouched panel as dirty.
+ */
+function normalizeHaving(having: unknown): Having | undefined {
+	if (having == null || Array.isArray(having)) {
+		return undefined;
+	}
+	const { expression } = having as Having;
+	return expression?.trim() ? (having as Having) : undefined;
+}
+
 function createBaseSpec(
 	queryData: IBuilderQuery,
 	requestType: RequestType,
@@ -181,12 +197,7 @@ function createBaseSpec(
 					)
 				: undefined,
 		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
-		// V4 uses having as array, V5 uses having as object with expression field
-		// If having is an array (V4 format), treat it as undefined for V5
-		having:
-			isEmpty(queryData.having) || Array.isArray(queryData.having)
-				? undefined
-				: (queryData?.having as Having),
+		having: normalizeHaving(queryData.having),
 		functions: isEmpty(queryData.functions)
 			? undefined
 			: queryData.functions.map((func: QueryFunction): QueryFunction => {
@@ -354,7 +365,7 @@ export function convertBuilderQueriesToV5(
 			}
 
 			return {
-				type: 'builder_query' as QueryType,
+				type: queryData.builderQueryType ?? 'builder_query',
 				spec,
 			};
 		},
@@ -414,10 +425,7 @@ function createTraceOperatorBaseSpec(
 					)
 				: undefined,
 		legend: isEmpty(legend) ? undefined : legend,
-		// V4 uses having as array, V5 uses having as object with expression field
-		// If having is an array (V4 format), treat it as undefined for V5
-		having:
-			isEmpty(having) || Array.isArray(having) ? undefined : (having as Having),
+		having: normalizeHaving(having),
 		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
 			: nonEmptySelectColumns?.map(
@@ -538,20 +546,22 @@ function reduceQueriesToObject(queryArray: any[]): {
 /**
  * Prepares V5 query range payload from GetQueryResultsProps
  */
-export const prepareQueryRangePayloadV5 = ({
-	query,
-	globalSelectedInterval,
-	graphType,
-	selectedTime,
-	tableParams,
-	variables = {},
-	start: startTime,
-	end: endTime,
-	formatForWeb,
-	originalGraphType,
-	fillGaps,
-	dynamicVariables,
-}: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
+export const prepareQueryRangePayloadV5 = (
+	{
+		query,
+		globalSelectedInterval,
+		graphType,
+		selectedTime,
+		tableParams,
+		variables = {},
+		start: startTime,
+		end: endTime,
+		formatForWeb,
+		originalGraphType,
+		fillGaps,
+	}: GetQueryResultsProps,
+	dynamicVariables: DynamicVariableSuggestion[] = [],
+): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
 	let queries: QueryEnvelope[] = [];
@@ -664,9 +674,9 @@ export const prepareQueryRangePayloadV5 = ({
 			(acc, [key, value]) => {
 				acc[key] = {
 					value,
-					type: dynamicVariables
-						?.find((v) => v.name === key)
-						?.type?.toLowerCase() as VariableType,
+					type: dynamicVariables.some((v) => v.name === key)
+						? ('dynamic' as VariableType)
+						: undefined,
 				};
 				return acc;
 			},

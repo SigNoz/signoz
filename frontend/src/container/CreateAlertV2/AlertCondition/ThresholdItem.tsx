@@ -66,6 +66,10 @@ function ThresholdItem({
 				return '=';
 			case AlertThresholdOperator.IS_NOT_EQUAL_TO:
 				return '!=';
+			case AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO:
+				return '>=';
+			case AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO:
+				return '<=';
 			default:
 				return '';
 		}

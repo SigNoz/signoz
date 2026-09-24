@@ -10,6 +10,7 @@ import './JsonView.styles.scss';
 export interface JsonViewProps {
 	data: string;
 	height?: string;
+	fontSize?: number;
 }
 
 const editorOptions: EditorProps['options'] = {
@@ -23,6 +24,9 @@ const editorOptions: EditorProps['options'] = {
 	lineHeight: 18,
 	colorDecorators: true,
 	scrollBeyondLastLine: false,
+	// Disabled: the transparent editor background leaves the sticky-scroll widget
+	// without an opaque backing, so scrolling lines bleed through and overlap it.
+	stickyScroll: { enabled: false },
 	scrollbar: {
 		vertical: 'hidden',
 		horizontal: 'hidden',
@@ -53,7 +57,11 @@ function setEditorTheme(monaco: Monaco): void {
 	});
 }
 
-function JsonView({ data, height = '575px' }: JsonViewProps): JSX.Element {
+function JsonView({
+	data,
+	height = '575px',
+	fontSize = 12,
+}: JsonViewProps): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState(true);
 	const isDarkMode = useIsDarkMode();
 
@@ -62,7 +70,11 @@ function JsonView({ data, height = '575px' }: JsonViewProps): JSX.Element {
 			<MEditor
 				value={data}
 				language="json"
-				options={{ ...editorOptions, wordWrap: isWrapWord ? 'on' : 'off' }}
+				options={{
+					...editorOptions,
+					fontSize,
+					wordWrap: isWrapWord ? 'on' : 'off',
+				}}
 				onChange={(): void => {}}
 				height={height}
 				theme={isDarkMode ? 'signoz-dark' : 'light'}

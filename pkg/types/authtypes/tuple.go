@@ -3,6 +3,7 @@ package authtypes
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -47,14 +48,90 @@ func NewTuplesFromTransactions(transactions []*Transaction, subject string, orgI
 	return tuples, nil
 }
 
-// NewTuplesFromTransactionsWithCorrelations converts transactions to tuples for BatchCheck,
-// and for each transaction whose selector is not already a wildcard, generates an additional
-// tuple with the wildcard selector. This ensures that permissions granted via wildcard
-// selectors (e.g., dashboard:*) are checked alongside exact selectors (e.g., dashboard:abc-123).
-//
-// Returns:
-//   - tuples: all tuples to check (exact + correlated), keyed by transaction ID or generated correlation ID
-//   - correlations: maps transaction ID to a slice of correlation IDs for the additional tuples
+func NewTuplesFromTransactionGroups(name string, orgID valuer.UUID, transactionGroups []*TransactionGroup) ([]*openfgav1.TupleKey, error) {
+	tuples := make([]*openfgav1.TupleKey, 0)
+	subject := MustNewSubject(coretypes.NewResourceRole(), name, orgID, &coretypes.VerbAssignee)
+
+	for _, transactionGroup := range transactionGroups {
+		if err := coretypes.ErrIfVerbNotValidForResource(transactionGroup.Relation.Verb, transactionGroup.ObjectGroup.Resource); err != nil {
+			return nil, err
+		}
+
+		resource, err := coretypes.NewResourceFromTypeAndKind(transactionGroup.ObjectGroup.Resource.Type, transactionGroup.ObjectGroup.Resource.Kind)
+		if err != nil {
+			return nil, err
+		}
+
+		objectGroupTuples := NewTuples(resource, subject, transactionGroup.Relation, transactionGroup.ObjectGroup.Selectors, orgID)
+		tuples = append(tuples, objectGroupTuples...)
+	}
+
+	return tuples, nil
+}
+
+func DiffTuples(existing, desired []*openfgav1.TupleKey) (additions, deletions []*openfgav1.TupleKey) {
+	key := func(tuple *openfgav1.TupleKey) string {
+		return tuple.GetUser() + "|" + tuple.GetRelation() + "|" + tuple.GetObject()
+	}
+
+	existingSet := make(map[string]struct{}, len(existing))
+	for _, tuple := range existing {
+		existingSet[key(tuple)] = struct{}{}
+	}
+
+	desiredSet := make(map[string]struct{}, len(desired))
+	for _, tuple := range desired {
+		desiredSet[key(tuple)] = struct{}{}
+	}
+
+	additions = make([]*openfgav1.TupleKey, 0)
+	for _, tuple := range desired {
+		if _, ok := existingSet[key(tuple)]; !ok {
+			additions = append(additions, tuple)
+		}
+	}
+
+	deletions = make([]*openfgav1.TupleKey, 0)
+	for _, tuple := range existing {
+		if _, ok := desiredSet[key(tuple)]; !ok {
+			deletions = append(deletions, tuple)
+		}
+	}
+
+	return additions, deletions
+}
+
+func MustNewTransactionGroupsFromTuples(tuples []*openfgav1.TupleKey) TransactionGroups {
+	objectsByRelation := make(map[string][]*coretypes.Object)
+
+	for _, tuple := range tuples {
+		verb, err := coretypes.NewVerb(tuple.GetRelation())
+		if err != nil {
+			panic(err)
+		}
+
+		object := coretypes.MustNewObjectFromString(tuple.GetObject())
+		objectsByRelation[verb.StringValue()] = append(objectsByRelation[verb.StringValue()], object)
+	}
+
+	transactionGroups := make(TransactionGroups, 0)
+	for _, verb := range coretypes.Verbs {
+		objects := objectsByRelation[verb.StringValue()]
+		if len(objects) == 0 {
+			continue
+		}
+
+		for _, objectGroup := range coretypes.NewObjectGroupsFromObjects(objects) {
+			transactionGroups = append(transactionGroups, &TransactionGroup{
+				Relation:    Relation{Verb: verb},
+				ObjectGroup: *objectGroup,
+			})
+		}
+	}
+
+	return transactionGroups
+}
+
 func NewTuplesFromTransactionsWithCorrelations(transactions []*Transaction, subject string, orgID valuer.UUID) (tuples map[string]*openfgav1.TupleKey, correlations map[string][]string, err error) {
 	tuples = make(map[string]*openfgav1.TupleKey)
 	correlations = make(map[string][]string)
@@ -65,17 +142,29 @@ func NewTuplesFromTransactionsWithCorrelations(transactions []*Transaction, subj
 			return nil, nil, err
 		}
 
+		selectorStrings, err := newCheckSelectors(txn.Object.Resource.Type, txn.Object.Selector)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		selectors := make([]coretypes.Selector, 0, len(selectorStrings))
+		for _, selectorString := range selectorStrings {
+			selector, err := txn.Object.Resource.Type.Selector(selectorString)
+			if err != nil {
+				return nil, nil, err
+			}
+			selectors = append(selectors, selector)
+		}
+
 		txnID := txn.ID.StringValue()
-
-		txnTuples := NewTuples(resource, subject, txn.Relation, []coretypes.Selector{txn.Object.Selector}, orgID)
-		tuples[txnID] = txnTuples[0]
-
-		if txn.Object.Selector.String() != coretypes.WildCardSelectorString {
-			wildcardSelector := txn.Object.Resource.Type.MustSelector(coretypes.WildCardSelectorString)
-			wildcardTuples := NewTuples(resource, subject, txn.Relation, []coretypes.Selector{wildcardSelector}, orgID)
+		for index, tuple := range NewTuples(resource, subject, txn.Relation, selectors, orgID) {
+			if index == 0 {
+				tuples[txnID] = tuple
+				continue
+			}
 
 			correlationID := valuer.GenerateUUID().StringValue()
-			tuples[correlationID] = wildcardTuples[0]
+			tuples[correlationID] = tuple
 			correlations[txnID] = append(correlations[txnID], correlationID)
 		}
 	}
@@ -83,10 +172,6 @@ func NewTuplesFromTransactionsWithCorrelations(transactions []*Transaction, subj
 	return tuples, correlations, nil
 }
 
-// NewTuplesFromTransactionsWithManagedRoles converts transactions to tuples for BatchCheck.
-// Direct role-assignment transactions (TypeRole + VerbAssignee) produce one tuple keyed by txn ID.
-// Other transactions are expanded via managedRolesByTransaction into role-assignee checks, keyed by "txnID:roleName".
-// Transactions with no managed role mapping are marked as pre-resolved (false) in the returned map.
 func NewTuplesFromTransactionsWithManagedRoles(
 	transactions []*Transaction,
 	subject string,
@@ -131,10 +216,6 @@ func NewTuplesFromTransactionsWithManagedRoles(
 	return tuples, preResolved, roleCorrelations, nil
 }
 
-// NewTransactionWithAuthorizationFromBatchResults merges batch check results into an ordered
-// slice of TransactionWithAuthorization matching the input transactions order.
-// preResolved contains txn IDs whose authorization was determined without BatchCheck.
-// roleCorrelations maps txn IDs to correlation IDs used for managed role checks.
 func NewTransactionWithAuthorizationFromBatchResults(
 	transactions []*Transaction,
 	batchResults map[string]*TupleKeyAuthorization,
@@ -177,4 +258,22 @@ func NewTransactionWithAuthorizationFromBatchResults(
 	}
 
 	return output
+}
+
+func newCheckSelectors(resourceType coretypes.Type, selector coretypes.Selector) ([]string, error) {
+	if resourceType.Equals(coretypes.TypeTelemetryResource) {
+		canonical, err := telemetrytypes.NewTelemetryGrantSelector(selector.String())
+		if err != nil {
+			return nil, err
+		}
+
+		return telemetrytypes.NewTelemetryGrantSelectors(canonical), nil
+	}
+
+	selectorStrings := []string{selector.String()}
+	if selector.String() != coretypes.WildCardSelectorString {
+		selectorStrings = append(selectorStrings, coretypes.WildCardSelectorString)
+	}
+
+	return selectorStrings, nil
 }

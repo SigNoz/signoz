@@ -48,8 +48,8 @@ func (CompareOperator) Enum() []any {
 		ValueIsBelowLiteral,
 		ValueIsEqLiteral,
 		ValueIsNotEqLiteral,
-		// ValueAboveOrEqLiteral,
-		// ValueBelowOrEqLiteral,
+		ValueAboveOrEqLiteral,
+		ValueBelowOrEqLiteral,
 		ValueOutsideBoundsLiteral,
 	}
 }

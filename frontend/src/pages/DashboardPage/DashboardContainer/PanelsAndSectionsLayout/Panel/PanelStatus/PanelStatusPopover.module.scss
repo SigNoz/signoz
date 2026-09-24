@@ -1,0 +1,156 @@
+@use '../../../../../../styles/scrollbar' as *;
+
+.trigger {
+	display: inline-flex;
+	align-items: center;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+// Strip the tooltip's own padding/width cap so the card content (which owns its
+// 16px section padding) frames cleanly — a padding-less surface, like the
+// shared WarningPopover, restyled with V2 tokens.
+.tooltipContent {
+	max-width: 520px !important;
+	padding: 0 !important;
+	overflow: hidden;
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	min-width: 320px;
+}
+
+// === Summary header: icon + code/message, optional docs button ===
+.summary {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 16px;
+}
+
+.summaryLeft {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	min-width: 0;
+}
+
+.iconWrapper {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+	margin-top: 2px;
+}
+
+.summaryText {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.code {
+	margin: 0;
+	color: var(--l1-foreground);
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 20px;
+}
+
+.message {
+	margin: 0;
+	color: var(--l2-foreground);
+	font-size: 13px;
+	line-height: 18px;
+	word-break: break-word;
+}
+
+.docsLink {
+	text-decoration: none;
+	color: var(--l2-foreground);
+}
+
+// === MESSAGES count pill + dotted rule ===
+.messageBadge {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 0 16px 12px;
+}
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 10px;
+	border: 1px solid var(--l1-border);
+	border-radius: 20px;
+}
+
+.badgeDot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--bg-sakura-500);
+}
+
+.badgeText {
+	color: var(--l1-foreground);
+	font-size: 10px;
+	font-weight: 500;
+	letter-spacing: 0.5px;
+}
+
+.badgeCount {
+	color: var(--l2-foreground);
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.badgeLine {
+	flex: 1;
+	height: 8px;
+	background-image: radial-gradient(
+		circle,
+		var(--l3-background) 1px,
+		transparent 2px
+	);
+	background-size: 8px 11px;
+}
+
+// === Per-item messages ===
+.messageList {
+	margin: 0;
+	padding: 0 16px 16px;
+	list-style: none;
+	max-height: 260px;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	@include custom-scrollbar;
+}
+
+.messageItem {
+	position: relative;
+	padding-left: 14px;
+	color: var(--l2-foreground);
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	line-height: 18px;
+	word-break: break-word;
+}
+
+.messageItem::before {
+	content: '';
+	position: absolute;
+	left: 2px;
+	top: 7px;
+	width: 2px;
+	height: 4px;
+	border-radius: 50px;
+	background: var(--l1-border);
+}

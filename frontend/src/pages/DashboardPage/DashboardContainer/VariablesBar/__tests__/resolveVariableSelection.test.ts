@@ -1,0 +1,292 @@
+import {
+	emptyVariableFormModel,
+	type VariableFormModel,
+} from '../../DashboardSettings/Variables/variableFormModel';
+import {
+	configuredDefaultValue,
+	reconcileWithOptions,
+	resolveDefaultSelection,
+} from '../utils/resolveVariableSelection';
+
+function model(overrides: Partial<VariableFormModel>): VariableFormModel {
+	return { ...emptyVariableFormModel(), ...overrides };
+}
+
+describe('resolveDefaultSelection', () => {
+	it('TEXT: uses defaultValue, then textValue, else empty string', () => {
+		expect(
+			resolveDefaultSelection(model({ type: 'TEXT', defaultValue: 'd' })),
+		).toStrictEqual({ value: 'd', allSelected: false });
+		expect(
+			resolveDefaultSelection(model({ type: 'TEXT', textValue: 't' })),
+		).toStrictEqual({ value: 't', allSelected: false });
+		expect(resolveDefaultSelection(model({ type: 'TEXT' }))).toStrictEqual({
+			value: '',
+			allSelected: false,
+		});
+	});
+
+	it('list: ALL when allowAll (multi + showAllOption) and no default', () => {
+		expect(
+			resolveDefaultSelection(
+				model({ type: 'QUERY', multiSelect: true, showAllOption: true }),
+			),
+		).toStrictEqual({ value: null, allSelected: true });
+	});
+
+	it('list: ALL sentinel default → ALL', () => {
+		expect(
+			resolveDefaultSelection(
+				model({ type: 'CUSTOM', multiSelect: true, defaultValue: '__ALL__' }),
+			),
+		).toStrictEqual({ value: null, allSelected: true });
+	});
+
+	it('list: configured default wins over ALL default', () => {
+		expect(
+			resolveDefaultSelection(
+				model({
+					type: 'QUERY',
+					multiSelect: true,
+					showAllOption: true,
+					defaultValue: 'x',
+				}),
+			),
+		).toStrictEqual({ value: ['x'], allSelected: false });
+	});
+
+	it('list: no default and no allowAll → empty placeholder (filled after fetch)', () => {
+		expect(resolveDefaultSelection(model({ type: 'QUERY' }))).toStrictEqual({
+			value: '',
+			allSelected: false,
+		});
+		expect(
+			resolveDefaultSelection(model({ type: 'QUERY', multiSelect: true })),
+		).toStrictEqual({ value: [], allSelected: false });
+	});
+});
+
+describe('reconcileWithOptions', () => {
+	it('leaves a valid single selection untouched (local-first)', () => {
+		expect(
+			reconcileWithOptions(
+				model({ type: 'QUERY' }),
+				{ value: 'b', allSelected: false },
+				['a', 'b'],
+			),
+		).toBeNull();
+	});
+
+	it('materializes query ALL to the full option array', () => {
+		expect(
+			reconcileWithOptions(
+				model({ type: 'QUERY', multiSelect: true, showAllOption: true }),
+				{ value: null, allSelected: true },
+				['a', 'b'],
+			),
+		).toStrictEqual({ value: ['a', 'b'], allSelected: true });
+	});
+
+	it('does not materialize dynamic ALL (sends __all__)', () => {
+		expect(
+			reconcileWithOptions(
+				model({ type: 'DYNAMIC', multiSelect: true, showAllOption: true }),
+				{ value: null, allSelected: true },
+				['a', 'b'],
+			),
+		).toBeNull();
+	});
+
+	it('keeps the still-valid subset when options re-scope', () => {
+		expect(
+			reconcileWithOptions(
+				model({ type: 'QUERY', multiSelect: true }),
+				{ value: ['a', 'b', 'c'], allSelected: false },
+				['a', 'b', 'd'],
+			),
+		).toStrictEqual({ value: ['a', 'b'], allSelected: false });
+	});
+
+	it('preserves a user-entered single value not in the options (freeform)', () => {
+		// A typed value that isn't among the fetched options must survive a refetch
+		// (e.g. a time-range change) rather than being reset to the default.
+		expect(
+			reconcileWithOptions(
+				model({ type: 'QUERY' }),
+				{ value: 'typed-value', allSelected: false },
+				['a', 'b'],
+			),
+		).toBeNull();
+	});
+
+	it('falls back to the configured default (else first) when invalid', () => {
+		expect(
+			reconcileWithOptions(
+				model({ type: 'QUERY', defaultValue: 'b' }),
+				{ value: '', allSelected: false },
+				['a', 'b', 'c'],
+			),
+		).toStrictEqual({ value: 'b', allSelected: false });
+		expect(
+			reconcileWithOptions(
+				model({ type: 'QUERY' }),
+				{ value: '', allSelected: false },
+				['a', 'b'],
+			),
+		).toStrictEqual({ value: 'a', allSelected: false });
+	});
+
+	it('does nothing while options are empty', () => {
+		expect(
+			reconcileWithOptions(
+				model({ type: 'QUERY' }),
+				{ value: '', allSelected: false },
+				[],
+			),
+		).toBeNull();
+	});
+
+	describe('preserveSelection (options moved on their own — time range, reload)', () => {
+		const multi = model({
+			type: 'DYNAMIC',
+			multiSelect: true,
+			showAllOption: true,
+			dynamicAttribute: 'service.name',
+		});
+
+		it('keeps a multi-select pick the new option list no longer offers', () => {
+			expect(
+				reconcileWithOptions(multi, { value: ['frontend'], allSelected: false }, [
+					'backend',
+					'cart',
+				]),
+			).toStrictEqual({ value: null, allSelected: true });
+
+			expect(
+				reconcileWithOptions(
+					multi,
+					{ value: ['frontend'], allSelected: false },
+					['backend', 'cart'],
+					{ preserveSelection: true },
+				),
+			).toBeNull();
+		});
+
+		it('still materializes ALL, which must track the option list', () => {
+			expect(
+				reconcileWithOptions(
+					model({ type: 'QUERY', multiSelect: true, showAllOption: true }),
+					{ value: ['a'], allSelected: true },
+					['a', 'b'],
+					{ preserveSelection: true },
+				),
+			).toStrictEqual({ value: ['a', 'b'], allSelected: true });
+		});
+
+		it('still fills the default when nothing is selected yet', () => {
+			expect(
+				reconcileWithOptions(multi, { value: [], allSelected: false }, ['a', 'b'], {
+					preserveSelection: true,
+				}),
+			).toStrictEqual({ value: null, allSelected: true });
+		});
+	});
+
+	// A typed value is in no option list, so no refetch can invalidate it.
+	describe('customValues (typed in, never offered by the data)', () => {
+		const multi = model({
+			type: 'DYNAMIC',
+			multiSelect: true,
+			showAllOption: true,
+			dynamicAttribute: 'service.name',
+		});
+
+		it('keeps them through a re-scope that drops a fetched value', () => {
+			expect(
+				reconcileWithOptions(
+					multi,
+					{
+						value: ['frontend', 'typed-in'],
+						allSelected: false,
+						customValues: ['typed-in'],
+					},
+					['backend', 'cart'],
+				),
+			).toStrictEqual({
+				value: ['typed-in'],
+				allSelected: false,
+				customValues: ['typed-in'],
+			});
+		});
+
+		it('never re-defaults a selection made only of them', () => {
+			expect(
+				reconcileWithOptions(
+					multi,
+					{ value: ['typed-in'], allSelected: false, customValues: ['typed-in'] },
+					['backend', 'cart'],
+				),
+			).toBeNull();
+		});
+
+		// An inert marker is not worth a store write + dependent refetch to prune.
+		it('leaves a stale marker alone when it drops nothing', () => {
+			expect(
+				reconcileWithOptions(
+					multi,
+					{
+						value: ['frontend', 'typed-in'],
+						allSelected: false,
+						customValues: ['typed-in', 'removed-earlier'],
+					},
+					['frontend'],
+				),
+			).toBeNull();
+		});
+
+		it('prunes markers for values it does drop', () => {
+			expect(
+				reconcileWithOptions(
+					multi,
+					{
+						value: ['stale', 'typed-in'],
+						allSelected: false,
+						customValues: ['typed-in'],
+					},
+					['frontend'],
+				),
+			).toStrictEqual({
+				value: ['typed-in'],
+				allSelected: false,
+				customValues: ['typed-in'],
+			});
+		});
+
+		it('still drops an unmarked value the list no longer offers', () => {
+			expect(
+				reconcileWithOptions(
+					multi,
+					{ value: ['frontend', 'stale'], allSelected: false },
+					['frontend'],
+				),
+			).toStrictEqual({ value: ['frontend'], allSelected: false });
+		});
+	});
+});
+
+describe('configuredDefaultValue', () => {
+	it('TEXT: textValue fallback; list: defaultValue only (no ALL synthesis)', () => {
+		expect(configuredDefaultValue(model({ type: 'TEXT', textValue: 't' }))).toBe(
+			't',
+		);
+		expect(
+			configuredDefaultValue(model({ type: 'QUERY', defaultValue: 'x' })),
+		).toBe('x');
+		// ALL-by-default list variable is not expanded here (options unknown).
+		expect(
+			configuredDefaultValue(
+				model({ type: 'QUERY', multiSelect: true, showAllOption: true }),
+			),
+		).toBeUndefined();
+	});
+});

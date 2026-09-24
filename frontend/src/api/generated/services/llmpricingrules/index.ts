@@ -23,12 +23,33 @@ import type {
 	GetLLMPricingRulePathParameters,
 	ListLLMPricingRules200,
 	ListLLMPricingRulesParams,
+	ListUnmappedLLMModels200,
 	LlmpricingruletypesUpdatableLLMPricingRulesDTO,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
 
 /**
  * Returns all LLM pricing rules for the authenticated org, with pagination.
@@ -109,7 +130,7 @@ export function useListLLMPricingRules<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -129,7 +150,7 @@ export const invalidateListLLMPricingRules = async (
 };
 
 /**
- * Single write endpoint used by both the user and the Zeus sync job. Per-rule match is by id, then sourceId, then insert. Override rows (is_override=true) are fully preserved when the request does not provide isOverride; only synced_at is stamped.
+ * Single write endpoint used by both the user and the Zeus sync job. Rules without isOverride are matched by sourceId and override rows (is_override=true) are skipped. Rules with isOverride are matched by id and inserted when new.
  * @summary Create or update pricing rules
  */
 export const createOrUpdateLLMPricingRules = (
@@ -338,7 +359,7 @@ export const getGetLLMPricingRuleQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getLLMPricingRule>>,
@@ -375,7 +396,7 @@ export function useGetLLMPricingRule<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -388,6 +409,90 @@ export const invalidateGetLLMPricingRule = async (
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
 		{ queryKey: getGetLLMPricingRuleQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns models seen in the last hour of trace data (gen_ai.request.model) that no pricing rule pattern matches, so the user can add them to an existing rule or create a new one.
+ * @summary List unmapped models
+ */
+export const listUnmappedLLMModels = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListUnmappedLLMModels200>({
+		url: `/api/v1/llm_pricing_rules/unmapped_models`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getListUnmappedLLMModelsQueryKey = () => {
+	return [`/api/v1/llm_pricing_rules/unmapped_models`] as const;
+};
+
+export const getListUnmappedLLMModelsQueryOptions = <
+	TData = Awaited<ReturnType<typeof listUnmappedLLMModels>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listUnmappedLLMModels>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getListUnmappedLLMModelsQueryKey();
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listUnmappedLLMModels>>
+	> = ({ signal }) => listUnmappedLLMModels(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof listUnmappedLLMModels>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListUnmappedLLMModelsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listUnmappedLLMModels>>
+>;
+export type ListUnmappedLLMModelsQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List unmapped models
+ */
+
+export function useListUnmappedLLMModels<
+	TData = Awaited<ReturnType<typeof listUnmappedLLMModels>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listUnmappedLLMModels>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListUnmappedLLMModelsQueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List unmapped models
+ */
+export const invalidateListUnmappedLLMModels = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListUnmappedLLMModelsQueryKey() },
 		options,
 	);
 

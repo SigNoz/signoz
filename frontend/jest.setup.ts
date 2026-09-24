@@ -29,6 +29,18 @@ if (!HTMLElement.prototype.scrollIntoView) {
 	HTMLElement.prototype.scrollIntoView = function (): void {};
 }
 
+// jsdom doesn't implement the Pointer Capture API, which Radix UI primitives
+// (e.g. @signozhq/ui Select) call when opening. Stub them so those components
+// can be exercised in tests.
+if (!HTMLElement.prototype.hasPointerCapture) {
+	HTMLElement.prototype.hasPointerCapture = function (): boolean {
+		return false;
+	};
+}
+if (!HTMLElement.prototype.releasePointerCapture) {
+	HTMLElement.prototype.releasePointerCapture = function (): void {};
+}
+
 if (typeof window.IntersectionObserver === 'undefined') {
 	class IntersectionObserverMock {
 		observe(): void {}
@@ -48,6 +60,40 @@ if (typeof window.ResizeObserver === 'undefined') {
 		disconnect(): void {}
 	}
 	(window as any).ResizeObserver = ResizeObserverMock;
+}
+
+if (typeof globalThis.DOMRect === 'undefined') {
+	(globalThis as any).DOMRect = class DOMRect {
+		x = 0;
+		y = 0;
+		width = 0;
+		height = 0;
+		top = 0;
+		right = 0;
+		bottom = 0;
+		left = 0;
+		constructor(x = 0, y = 0, width = 0, height = 0) {
+			this.x = x;
+			this.y = y;
+			this.width = width;
+			this.height = height;
+			this.top = y;
+			this.right = x + width;
+			this.bottom = y + height;
+			this.left = x;
+		}
+		toJSON(): any {
+			return { x: this.x, y: this.y, width: this.width, height: this.height };
+		}
+		static fromRect(rect?: {
+			x?: number;
+			y?: number;
+			width?: number;
+			height?: number;
+		}): DOMRect {
+			return new DOMRect(rect?.x, rect?.y, rect?.width, rect?.height);
+		}
+	};
 }
 
 // Patch getComputedStyle to handle CSS parsing errors from @signozhq/* packages.

@@ -316,6 +316,34 @@ describe('CreateAlertV2 utils', () => {
 		});
 	});
 
+	describe('getThresholdStateFromAlertDef null channels', () => {
+		it('falls back to an empty array so downstream consumers never see null', () => {
+			const def: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				condition: {
+					...defaultPostableAlertRuleV2.condition,
+					thresholds: {
+						kind: 'basic',
+						spec: [
+							{
+								name: 'critical',
+								target: 1,
+								targetUnit: UniversalYAxisUnit.MINUTES,
+								channels: null as unknown as string[],
+								matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
+								op: AlertThresholdOperator.IS_ABOVE,
+							},
+						],
+					},
+				},
+			};
+
+			expect(
+				getThresholdStateFromAlertDef(def).thresholds[0].channels,
+			).toStrictEqual([]);
+		});
+	});
+
 	describe('normalizeOperator', () => {
 		it.each([
 			['1', AlertThresholdOperator.IS_ABOVE],
@@ -332,23 +360,18 @@ describe('CreateAlertV2 utils', () => {
 			['not_equal', AlertThresholdOperator.IS_NOT_EQUAL_TO],
 			['not_eq', AlertThresholdOperator.IS_NOT_EQUAL_TO],
 			['!=', AlertThresholdOperator.IS_NOT_EQUAL_TO],
+			['5', AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO],
+			['above_or_equal', AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO],
+			['above_or_eq', AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO],
+			['>=', AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO],
+			['6', AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO],
+			['below_or_equal', AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO],
+			['below_or_eq', AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO],
+			['<=', AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO],
 			['7', AlertThresholdOperator.ABOVE_BELOW],
 			['outside_bounds', AlertThresholdOperator.ABOVE_BELOW],
 		])('maps backend alias %s to canonical enum', (alias, expected) => {
 			expect(normalizeOperator(alias)).toBe(expected);
-		});
-
-		it.each([
-			['5', 'above_or_equal'],
-			['above_or_equal', 'above_or_equal'],
-			['above_or_eq', 'above_or_equal'],
-			['>=', 'above_or_equal'],
-			['6', 'below_or_equal'],
-			['below_or_equal', 'below_or_equal'],
-			['below_or_eq', 'below_or_equal'],
-			['<=', 'below_or_equal'],
-		])('returns undefined for UI-unexposed alias %s (%s family)', (alias) => {
-			expect(normalizeOperator(alias)).toBeUndefined();
 		});
 
 		it('returns undefined for unknown values', () => {
@@ -413,8 +436,8 @@ describe('CreateAlertV2 utils', () => {
 			['symbol', '>', 'at_least_once'],
 			['short form', 'eq', 'avg'],
 			['mixed numeric and literal', '7', 'last'],
-			['UI-unexposed operator', 'above_or_equal', 'at_least_once'],
-			['UI-unexposed numeric operator', '5', 'at_least_once'],
+			['inclusive literal operator', 'above_or_equal', 'at_least_once'],
+			['inclusive numeric operator', '5', 'at_least_once'],
 		])('preserves %s op/matchType verbatim (%s / %s)', (_desc, op, matchType) => {
 			const state = getThresholdStateFromAlertDef(buildDef(op, matchType));
 			expect(state.operator).toBe(op);

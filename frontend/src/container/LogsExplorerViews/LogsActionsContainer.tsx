@@ -113,6 +113,7 @@ function LogsActionsContainer({
 					onClose={(): void => setIsFieldsSelectorOpen(false)}
 					signal={DataSource.LOGS}
 					requiredFields={LOGS_REQUIRED_COLUMNS}
+					allowCustomFields
 				/>
 			)}
 		</div>

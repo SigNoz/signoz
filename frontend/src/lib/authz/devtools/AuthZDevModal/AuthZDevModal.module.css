@@ -1,0 +1,140 @@
+.modal {
+	--dialog-width: 640px;
+	--dialog-max-width: 92vw;
+	--dialog-max-height: 78vh;
+	--dialog-description-padding: var(--spacing-4) var(--spacing-4) 0px
+		var(--spacing-4);
+
+	[data-slot='dialog-description'],
+	[data-slot='dialog-header'] {
+		background-color: var(--l2-background);
+	}
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	max-height: calc(78vh - 80px);
+}
+
+.header {
+	display: flex;
+	flex-direction: column;
+	flex-shrink: 0;
+	gap: var(--spacing-4);
+	padding-bottom: var(--spacing-4);
+}
+
+.searchRow {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+
+	--input-background: var(--l3-background);
+	--input-hover-background: var(--l3-background);
+	--input-focus-background: var(--l3-background);
+	--input-border-color: var(--l3-border);
+	--input-hover-border-color: var(--l3-border);
+	--input-focus-border-color: var(--l3-border);
+
+	--select-trigger-background-color: var(--l3-background);
+	--select-trigger-hover-background: var(--l3-background);
+	--select-trigger-focus-background: var(--l3-background);
+	--select-trigger-border-color: var(--l3-border);
+
+	--select-content-background: var(--l3-background);
+	--select-item-highlight-background: var(--l3-background-hover);
+}
+
+.search {
+	flex: 1 1 auto;
+	min-width: 0;
+
+	--input-width: 100%;
+}
+
+.filter {
+	flex: 0 0 176px;
+	/* Normalize the library trigger height (2.25rem) to match the input. */
+	--select-trigger-height: 2rem;
+}
+
+.search > *,
+.filter > * {
+	box-sizing: border-box;
+}
+
+.searchIcon {
+	display: inline-flex;
+	color: var(--l3-foreground);
+}
+
+.actionsRow {
+	display: flex;
+	gap: var(--spacing-3);
+}
+
+.actionButton {
+	flex: 0 0 auto;
+	height: 2rem;
+}
+
+.list {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: var(--spacing-6);
+	padding: var(--spacing-4) 0;
+	overflow-y: auto;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.sectionHeader {
+	display: flex;
+	align-items: baseline;
+	gap: var(--spacing-3);
+	padding: var(--spacing-3) var(--spacing-2);
+	margin: 0 0 var(--spacing-1);
+	border-bottom: 1px solid var(--l2-border);
+}
+
+.empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 160px;
+	padding: var(--spacing-16);
+}
+
+.footer {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-4);
+	padding: var(--spacing-4) 0;
+	border-top: 1px solid var(--l2-border);
+}
+
+.hint {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.hintGroup {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+.count {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}

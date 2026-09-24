@@ -20,9 +20,6 @@ def test_webhook_notification_channel(
     make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     create_webhook_notification_channel: Callable[[str, str, dict, bool], str],
 ) -> None:
-    """
-    Tests the creation and delivery of test alerts on the created notification channel
-    """
     logger.info("Setting up notification channel")
 
     # Prepare notification channel name and webhook endpoint

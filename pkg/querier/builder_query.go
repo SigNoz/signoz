@@ -11,48 +11,66 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+const estimateTimeout = 5 * time.Second
 
 const traceOutsideRangeWarn = "Query %s references a trace_id that exists between %s and %s (UTC) but lies outside the selected time range; adjust the time range to see results"
 
 type builderQuery[T any] struct {
 	logger         *slog.Logger
 	telemetryStore telemetrystore.TelemetryStore
+	orgID          valuer.UUID
 	stmtBuilder    qbtypes.StatementBuilder[T]
+	queryType      qbtypes.QueryType
 	spec           qbtypes.QueryBuilderQuery[T]
 	variables      map[string]qbtypes.VariableItem
 
 	fromMS uint64
 	toMS   uint64
 	kind   qbtypes.RequestType
+
+	builderConfig builderConfig
 }
 
 var _ qbtypes.Query = (*builderQuery[any])(nil)
+var _ qbtypes.StatementProvider = (*builderQuery[any])(nil)
+
+type builderConfig struct {
+	logTraceIDWindowPaddingMS uint64
+}
 
 func newBuilderQuery[T any](
 	logger *slog.Logger,
 	telemetryStore telemetrystore.TelemetryStore,
+	orgID valuer.UUID,
 	stmtBuilder qbtypes.StatementBuilder[T],
+	queryType qbtypes.QueryType,
 	spec qbtypes.QueryBuilderQuery[T],
 	tr qbtypes.TimeRange,
 	kind qbtypes.RequestType,
 	variables map[string]qbtypes.VariableItem,
+	cfg builderConfig,
 ) *builderQuery[T] {
 	return &builderQuery[T]{
 		logger:         logger,
 		telemetryStore: telemetryStore,
+		orgID:          orgID,
 		stmtBuilder:    stmtBuilder,
+		queryType:      queryType,
 		spec:           spec,
 		variables:      variables,
 		fromMS:         tr.From,
 		toMS:           tr.To,
 		kind:           kind,
+		builderConfig:  cfg,
 	}
 }
 
@@ -64,9 +82,19 @@ func (q *builderQuery[T]) Fingerprint() string {
 		return ""
 	}
 
+	// AI trace aggregations qualify and rank traces on whole-window per-trace
+	// values, which do not decompose into cacheable time buckets.
+	if q.queryType == qbtypes.QueryTypeBuilderAI {
+		return ""
+	}
+
 	// Create a deterministic fingerprint for builder queries
 	// This needs to include all fields that affect the query results
-	parts := []string{"builder"}
+	parts := []string{q.queryType.StringValue()}
+
+	// A heatmap and a time series query can share every spec field and still
+	// return different rows, so the request type has to separate their entries
+	parts = append(parts, fmt.Sprintf("requestType=%s", q.kind.StringValue()))
 
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))
@@ -91,13 +119,25 @@ func (q *builderQuery[T]) Fingerprint() string {
 				if a.ComparisonSpaceAggregationParam != nil {
 					spaceAggParamStr = a.ComparisonSpaceAggregationParam.StringValue()
 				}
-				aggParts = append(aggParts, fmt.Sprintf("%s:%s:%s:%s:%s",
+				part := fmt.Sprintf("%s:%s:%s:%s:%s",
 					a.MetricName,
 					a.Temporality.StringValue(),
 					a.TimeAggregation.StringValue(),
 					a.SpaceAggregation.StringValue(),
 					spaceAggParamStr,
-				))
+				)
+				if a.Reduced {
+					oneDay := uint64(24 * time.Hour.Milliseconds())
+					route := "reduced"
+					if q.toMS-q.fromMS < oneDay && q.fromMS >= uint64(time.Now().UnixMilli())-oneDay {
+						route = "buffer"
+					}
+					part += ":" + route
+				}
+				if a.HeatmapBucketing != nil {
+					part += ":" + fingerprintHeatmapBucketing(*a.HeatmapBucketing)
+				}
+				aggParts = append(aggParts, part)
 			}
 		}
 		parts = append(parts, fmt.Sprintf("aggs=[%s]", strings.Join(aggParts, ",")))
@@ -152,6 +192,16 @@ func (q *builderQuery[T]) Fingerprint() string {
 	return strings.Join(parts, "&")
 }
 
+// fingerprintHeatmapBucketing captures only what changes the rows ClickHouse
+// returns, which is why LogBucketsSpec.Scale is absent: coarsening it happens in
+// postprocessing, so every scale reads one cache entry.
+func fingerprintHeatmapBucketing(b qbtypes.HeatmapBucketing) string {
+	if b.Kind == qbtypes.BucketsKindLinear {
+		return fmt.Sprintf("%s:%v:%d", b.Kind.StringValue(), b.MaxValue, b.NumBuckets)
+	}
+	return b.Kind.StringValue()
+}
+
 func fingerprintGroupByKey(gb qbtypes.GroupByKey) string {
 	return fingerprintFieldKey(gb.TelemetryFieldKey)
 }
@@ -194,6 +244,11 @@ func (q *builderQuery[T]) isWindowList() bool {
 	return true
 }
 
+// Statement renders the SQL without executing it, for the preview path.
+func (q *builderQuery[T]) Statement(ctx context.Context) (*qbtypes.Statement, error) {
+	return q.stmtBuilder.Build(ctx, q.orgID, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
+}
+
 func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) {
 
 	// can we do window based pagination?
@@ -215,8 +270,12 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 		}
 	}
 
-	stmt, err := q.stmtBuilder.Build(ctx, fromMS, toMS, q.kind, q.spec, q.variables)
+	stmt, err := q.stmtBuilder.Build(ctx, q.orgID, fromMS, toMS, q.kind, q.spec, q.variables)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := q.enforceEstimate(ctx, stmt); err != nil {
 		return nil, err
 	}
 
@@ -229,6 +288,65 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	result.Warnings = stmt.Warnings
 	result.WarningsDocURL = stmt.WarningsDocURL
 	return result, nil
+}
+
+// estimateRows returns the per-shard EXPLAIN ESTIMATE scan rows for a cost-guarded
+// statement. guarded=false means nothing to enforce; a non-nil error means reject.
+// Callers own the budget comparison (per-statement or cumulative).
+func (q *builderQuery[T]) estimateRows(ctx context.Context, stmt *qbtypes.Statement) (int64, bool, error) {
+	if stmt.CostGuard == nil || stmt.CostGuard.MaxScanRows <= 0 {
+		return 0, false, nil
+	}
+
+	estCtx, cancel := context.WithTimeout(ctx, estimateTimeout)
+	defer cancel()
+
+	entries, err := q.telemetryStore.Estimate(estCtx, stmt.Query, stmt.Args...)
+	if err != nil {
+		if ctx.Err() != nil {
+			return 0, true, ctx.Err()
+		}
+		if errors.Is(estCtx.Err(), context.DeadlineExceeded) {
+			return 0, true, errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"This query is too broad to plan within %s", estimateTimeout).
+				WithSuggestions(costGuardSuggestions(stmt.CostGuard.Warning)...)
+		}
+		return 0, true, err
+	}
+
+	var rows int64
+	for _, e := range entries {
+		rows += e.Rows
+	}
+	return rows, true, nil
+}
+
+// enforceEstimate rejects a scan-heavy statement whose estimate exceeds its own
+// budget, before executing. Budget 0 disables.
+func (q *builderQuery[T]) enforceEstimate(ctx context.Context, stmt *qbtypes.Statement) error {
+	rows, guarded, err := q.estimateRows(ctx, stmt)
+	if err != nil {
+		return err
+	}
+	if !guarded {
+		return nil
+	}
+	if budget := stmt.CostGuard.MaxScanRows; rows > budget {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"This query would scan about %d rows per shard in this range, over the per-shard limit of %d", rows, budget).
+			WithSuggestions(costGuardSuggestions(stmt.CostGuard.Warning)...)
+	}
+	return nil
+}
+
+// costGuardSuggestions leads with the requirement's advisory (e.g. the search() hint),
+// then how to get under budget.
+func costGuardSuggestions(advisory string) []string {
+	suggestions := make([]string, 0, 2)
+	if advisory != "" {
+		suggestions = append(suggestions, advisory)
+	}
+	return append(suggestions, "Narrow the time range or add a more selective filter.")
 }
 
 // narrowWindowByTraceID inspects the filter for trace_id predicates and clamps
@@ -250,12 +368,12 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 		return fromMS, toMS, true, ""
 	}
 
-	traceIDs, found := telemetrytraces.ExtractTraceIDsFromFilter(q.spec.Filter.Expression)
+	traceIDs, found := tracestelemetryschema.ExtractTraceIDsFromFilter(q.spec.Filter.Expression)
 	if !found || len(traceIDs) == 0 {
 		return fromMS, toMS, true, ""
 	}
 
-	finder := telemetrytraces.NewTraceTimeRangeFinder(q.telemetryStore)
+	finder := tracestelemetryschema.NewTraceTimeRangeFinder(q.telemetryStore)
 	traceStart, traceEnd, exists, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
 	if err != nil {
 		return fromMS, toMS, true, ""
@@ -277,9 +395,20 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 		return fromMS, toMS, true, ""
 	}
 
+	// Logs can be flushed slightly after the span ends. The trace
+	// time range comes from the spans table, so for logs we widen it by the
+	// configured padding before clamping. Keep the actual recorded bounds for
+	// the user-facing warning so it reports where the trace truly lies, not the
+	// padded range.
+	actualStartMS, actualEndMS := traceStartMS, traceEndMS
+	if q.spec.Signal == telemetrytypes.SignalLogs {
+		traceStartMS -= q.builderConfig.logTraceIDWindowPaddingMS
+		traceEndMS += q.builderConfig.logTraceIDWindowPaddingMS
+	}
+
 	if traceStartMS > toMS || traceEndMS < fromMS {
-		traceStartUTC := time.UnixMilli(int64(traceStartMS)).UTC().Format(time.RFC3339)
-		traceEndUTC := time.UnixMilli(int64(traceEndMS)).UTC().Format(time.RFC3339)
+		traceStartUTC := time.UnixMilli(int64(actualStartMS)).UTC().Format(time.RFC3339)
+		traceEndUTC := time.UnixMilli(int64(actualEndMS)).UTC().Format(time.RFC3339)
 		return fromMS, toMS, false, fmt.Sprintf(traceOutsideRangeWarn, q.spec.Name, traceStartUTC, traceEndUTC)
 	}
 	if traceStartMS > fromMS {
@@ -300,7 +429,7 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 func emptyResultFor(kind qbtypes.RequestType, queryName string) *qbtypes.Result {
 	var value any
 	switch kind {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		value = &qbtypes.TimeSeriesData{QueryName: queryName}
 	case qbtypes.RequestTypeScalar:
 		value = &qbtypes.ScalarData{QueryName: queryName}
@@ -353,14 +482,24 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
 
 	kind := q.kind
-	// all metric queries are time series then reduced if required
-	if q.spec.Signal == telemetrytypes.SignalMetrics {
+	// all metric queries are time series then reduced if required, except
+	// heatmaps, whose statement returns a row per bucket rather than per point
+	if q.spec.Signal == telemetrytypes.SignalMetrics && kind != qbtypes.RequestTypeHeatmap {
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 
 	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
+	}
+
+	// TODO: This should move to readAsRaw function in consume.go but for now we are keeping it here since it's only relevant for traces
+	if q.spec.Signal == telemetrytypes.SignalTraces {
+		if raw, ok := payload.(*qbtypes.RawData); ok {
+			for _, rr := range raw.Rows {
+				mergeSpanAttributeColumns(rr.Data)
+			}
+		}
 	}
 
 	return &qbtypes.Result{
@@ -444,16 +583,32 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	var warnings []string
 	var warningsDocURL string
 
+	// Cumulative across visited buckets: the budget bounds the whole query's per-shard
+	// scan, not each bucket independently.
+	var estimatedScan int64
+
 	for _, r := range buckets {
 		q.spec.Offset = 0
 		q.spec.Limit = need
 
-		stmt, err := q.stmtBuilder.Build(ctx, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
+		stmt, err := q.stmtBuilder.Build(ctx, q.orgID, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
 		if err != nil {
 			return nil, err
 		}
 		warnings = stmt.Warnings
 		warningsDocURL = stmt.WarningsDocURL
+		rowsEst, guarded, err := q.estimateRows(ctx, stmt)
+		if err != nil {
+			return nil, err
+		}
+		if guarded {
+			estimatedScan += rowsEst
+			if budget := stmt.CostGuard.MaxScanRows; estimatedScan > budget {
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
+					"This query would scan about %d rows per shard across the time range, over the per-shard limit of %d", estimatedScan, budget).
+					WithSuggestions(costGuardSuggestions(stmt.CostGuard.Warning)...)
+			}
+		}
 		// Execute with proper context for partial value detection
 		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
 		if err != nil {

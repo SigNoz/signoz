@@ -6,9 +6,10 @@ import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 import { Input } from '@signozhq/ui/input';
 import { useListUsers } from 'api/generated/services/users';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
-import InviteMembersModal from 'components/InviteMembersModal/InviteMembersModal';
+import InviteMembersModal from 'container/MembersSettings/components/InviteMembersModal/InviteMembersModal';
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { parseAsBoolean, useQueryState } from 'nuqs';
 import { toISOString } from 'utils/app';
 
 import { FilterMode, MemberStatus, toMemberStatus } from './utils';
@@ -26,7 +27,10 @@ function MembersSettings(): JSX.Element {
 	// TODO(nuqs): Replace with nuqs once the nuqs setup and integration is done - for search
 	const [searchQuery, setSearchQuery] = useState('');
 	const [filterMode, setFilterMode] = useState<FilterMode>(FilterMode.All);
-	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+	const [isInviteModalOpen, setIsInviteModalOpen] = useQueryState(
+		'invite',
+		parseAsBoolean.withDefault(false),
+	);
 	const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null);
 
 	const { data: usersData, isLoading, refetch: refetchUsers } = useListUsers();
@@ -160,7 +164,7 @@ function MembersSettings(): JSX.Element {
 	}, [refetchUsers]);
 
 	return (
-		<>
+		<div className="members-settings-page">
 			<div className="members-settings">
 				<div className="members-settings__header">
 					<h1 className="members-settings__title">Members</h1>
@@ -201,7 +205,7 @@ function MembersSettings(): JSX.Element {
 					<Button
 						variant="solid"
 						color="primary"
-						onClick={(): void => setIsInviteModalOpen(true)}
+						onClick={(): void => void setIsInviteModalOpen(true)}
 					>
 						<Plus size={12} />
 						Invite member
@@ -221,7 +225,7 @@ function MembersSettings(): JSX.Element {
 
 			<InviteMembersModal
 				open={isInviteModalOpen}
-				onClose={(): void => setIsInviteModalOpen(false)}
+				onClose={(): void => void setIsInviteModalOpen(null)}
 				onComplete={handleInviteComplete}
 			/>
 
@@ -231,7 +235,7 @@ function MembersSettings(): JSX.Element {
 				onClose={handleDrawerClose}
 				onComplete={handleMemberEditComplete}
 			/>
-		</>
+		</div>
 	);
 }
 

@@ -152,3 +152,7 @@ func (f *formatter) LowerExpression(expression string) []byte {
 	sql = append(sql, ')')
 	return sql
 }
+
+func (f *formatter) EscapeLikePattern(value string) string {
+	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(value)
+}
