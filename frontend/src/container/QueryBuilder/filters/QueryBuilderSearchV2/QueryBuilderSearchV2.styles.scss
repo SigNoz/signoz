@@ -257,47 +257,6 @@
 				margin-inline-start: 0px !important;
 				margin-inline-end: 0px !important;
 			}
-
-			&.resource {
-				border: 1px solid color-mix(in srgb, var(--bg-aqua-400) 13%, transparent);
-
-				.qb-tag-text {
-					color: var(--bg-aqua-400);
-					background: color-mix(in srgb, var(--bg-aqua-400) 6%, transparent);
-					font-size: 14px;
-				}
-
-				> button {
-					background: color-mix(in srgb, var(--bg-aqua-400) 6%, transparent);
-				}
-			}
-			&.tag {
-				border: 1px solid color-mix(in srgb, var(--bg-sienna-400) 20%, transparent);
-
-				.qb-tag-text {
-					color: var(--bg-sienna-400);
-					background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent);
-					font-size: 14px;
-				}
-
-				> button {
-					background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent);
-				}
-			}
-
-			&.scope {
-				border: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
-
-				.qb-tag-text {
-					color: var(--bg-robin-400);
-					background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
-					font-size: 14px;
-				}
-
-				> button {
-					background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
-				}
-			}
 		}
 	}
 }

@@ -156,11 +156,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 
 			const statusDetails = statusMap[status] || statusMap[''];
 			return (
-				<Badge
-					variant="outlined"
-					color={statusDetails.color}
-					className={`${styles.statusTag}`}
-				>
+				<Badge variant="outlined" color={statusDetails.color}>
 					{statusDetails.label}
 				</Badge>
 			);

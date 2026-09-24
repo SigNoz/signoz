@@ -18,7 +18,7 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		label: 'SERVICE',
 		render: (span): ReactNode | null =>
 			span['service.name'] ? (
-				<Badge variant="solid" color="secondary" className={styles.serviceBadge}>
+				<Badge variant="solid" color="secondary" maxWidth="100%">
 					<span className={styles.serviceDot} />
 					<span className={styles.badgeEllipsisText} title={span['service.name']}>
 						{span['service.name']}
@@ -58,11 +58,7 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		render: (span): ReactNode | null =>
 			span.status_message ? (
 				<ExpandableValue value={span.status_message} title="Status message">
-					<Badge
-						variant="solid"
-						color="secondary"
-						className={styles.statusMessageBadge}
-					>
+					<Badge variant="solid" color="secondary" maxWidth="100%">
 						<span className={styles.badgeEllipsisText}>{span.status_message}</span>
 					</Badge>
 				</ExpandableValue>

@@ -53,10 +53,6 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 						key={tag.value}
 						color={index % 2 ? 'highlight-danger' : 'primary'}
 						variant="outlined"
-						className={cx(
-							{ 'red-tag': index % 2 },
-							{ 'non-closable-tag': !closable },
-						)}
 						suffix={
 							closable ? (
 								<button
@@ -215,7 +211,7 @@ export function CollapseListContent({
 						selectedTags={alertOptions}
 					/>
 				) : (
-					<Badge variant="solid" className="all-alerts-tag" color="secondary">
+					<Badge variant="solid" color="secondary">
 						All alert rules
 					</Badge>
 				),

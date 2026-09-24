@@ -42,7 +42,7 @@ function LabelTag({ label, value, color }: LabelTagProps): JSX.Element {
 			<span>
 				<Badge
 					color={color ?? 'secondary'}
-					className={styles.labelBadge}
+					maxWidth={180}
 					variant="outlined"
 					testId={`label-tag-${label}`}
 				>

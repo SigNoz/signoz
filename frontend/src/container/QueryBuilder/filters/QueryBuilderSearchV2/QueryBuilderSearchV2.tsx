@@ -931,7 +931,6 @@ function QueryBuilderSearchV2(
 				<Badge
 					variant="solid"
 					color="secondary"
-					className={tagDetails?.key?.type || ''}
 					suffix={
 						!searchValue && closable ? (
 							<button

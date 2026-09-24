@@ -13,16 +13,9 @@
 	padding: 6px 8px;
 	border-radius: 2px;
 	border: 1px solid var(--l2-border);
-}
 
-// Sienna chip via the @signozhq Badge; this only constrains its width.
-.tag {
-	max-width: 240px;
-}
-
-// The tag label is a bare, chrome-less button inside the Badge (double-click to
-// edit); strip its Button styling and let it ellipsize.
-.tagLabel {
+	// The tag label is a bare, chrome-less button inside the Badge (double-click to
+	// edit); strip its Button styling.
 	--button-height: auto;
 	--button-padding: 0;
 	--button-gap: 0;
@@ -30,11 +23,7 @@
 	--button-variant-ghost-hover-background-color: transparent;
 	--button-variant-ghost-color: currentColor;
 	--button-variant-ghost-hover-color: currentColor;
-	overflow: hidden;
-	max-width: 200px;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	cursor: text;
+	--button-cursor: text;
 }
 
 .input {

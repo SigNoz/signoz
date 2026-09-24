@@ -22,13 +22,11 @@ function getStatusCodeColor(statusCode: number): BadgeColorType {
 interface HttpStatusBadgeProps {
 	statusCode: string | number;
 	testId?: string;
-	className?: string;
 }
 
 function HttpStatusBadge({
 	statusCode,
 	testId,
-	className,
 }: HttpStatusBadgeProps): JSX.Element | null {
 	const numericStatusCode = Number(statusCode);
 
@@ -39,7 +37,7 @@ function HttpStatusBadge({
 	const color = getStatusCodeColor(numericStatusCode);
 
 	return (
-		<Badge color={color} variant="outlined" testId={testId} className={className}>
+		<Badge color={color} variant="outlined" testId={testId}>
 			{statusCode}
 		</Badge>
 	);

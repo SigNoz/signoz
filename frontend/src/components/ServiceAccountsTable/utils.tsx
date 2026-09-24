@@ -41,7 +41,7 @@ export function StatusBadge({ status }: { status: string }): JSX.Element {
 		);
 	}
 	return (
-		<Badge color="secondary" variant="outlined" className="sa-status-badge">
+		<Badge color="secondary" variant="outlined">
 			{status ? status.toUpperCase() : 'UNKNOWN'}
 		</Badge>
 	);

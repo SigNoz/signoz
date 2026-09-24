@@ -135,7 +135,7 @@ function TagKeyValueInput({
 					) : (
 						<TagBadge
 							key={tag}
-							className={styles.tag}
+							maxWidth={240}
 							closable
 							onClose={(): void => removeTag(tag)}
 						>
@@ -144,7 +144,7 @@ function TagKeyValueInput({
 									size="md"
 									variant="ghost"
 									color="secondary"
-									className={styles.tagLabel}
+									maxWidth={200}
 									testId={`${testId}-chip`}
 									onDoubleClick={(): void => startEdit(index)}
 								>

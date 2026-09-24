@@ -116,12 +116,7 @@ function LabelColumn({
 					}
 				>
 					<span>
-						<Badge
-							color={color}
-							className={styles.overflowBadge}
-							variant="outlined"
-							testId="label-overflow-badge"
-						>
+						<Badge color={color} variant="outlined" testId="label-overflow-badge">
 							+{remainingLabels.length}
 						</Badge>
 					</span>

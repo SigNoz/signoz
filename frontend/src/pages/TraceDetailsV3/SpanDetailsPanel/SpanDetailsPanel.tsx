@@ -310,7 +310,7 @@ function SpanDetailsContent({
 			prefixIcon: <ScrollText size={14} />,
 			suffixIcon:
 				eventsCount > 0 ? (
-					<Badge variant="solid" color="secondary" className={styles.eventsBadge}>
+					<Badge variant="solid" color="secondary">
 						{eventsCount}
 					</Badge>
 				) : undefined,

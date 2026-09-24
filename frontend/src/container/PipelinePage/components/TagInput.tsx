@@ -95,7 +95,6 @@ function TagInput({
 				variant="solid"
 				key={tag}
 				color="secondary"
-				style={{ userSelect: 'none' }}
 				suffix={
 					<button
 						type="button"
@@ -110,6 +109,7 @@ function TagInput({
 				}
 			>
 				<span
+					style={{ userSelect: 'none' }}
 					onDoubleClick={(ev): void => {
 						setEditInputIndex(index);
 						setEditInputValue(tag);

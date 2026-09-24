@@ -183,7 +183,7 @@ export default function AlertRules({
 							</Badge>
 
 							{rule.state === 'firing' && (
-								<Badge color="danger" variant="outlined" className="firing-tag">
+								<Badge color="danger" variant="outlined">
 									{rule.state}
 								</Badge>
 							)}

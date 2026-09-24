@@ -8,7 +8,6 @@ import type {
 	UnpricedModel,
 } from 'container/LLMObservability/Settings/ModelPricing/types';
 import { formatSpanCount } from 'container/LLMObservability/Settings/ModelPricing/utils';
-import styles from './tableConfig.module.scss';
 
 export interface UnpricedColumnsConfig {
 	canManage: boolean;
@@ -62,7 +61,6 @@ export function getUnpricedModelsColumns({
 				<Badge
 					color="danger"
 					variant="outlined"
-					className={styles.spansBadge}
 					testId={`unpriced-spans-${row.modelName}`}
 				>
 					{formatSpanCount(row.spanCount)}

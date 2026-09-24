@@ -12,13 +12,6 @@
 	}
 }
 
-.valueBadge {
-	--badge-font-size: 13px;
-	box-sizing: border-box;
-	max-width: 100%;
-	min-width: 0;
-}
-
 // Truncating text inside a badge
 .badgeText {
 	min-width: 0;

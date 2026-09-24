@@ -48,12 +48,7 @@ function LLMObservabilityModelPricing(): JSX.Element {
 							<span className={styles.tabLabel}>
 								Unpriced models
 								{unpricedCount > 0 && (
-									<Badge
-										color="primary"
-										variant="solid"
-										className={styles.tabBadge}
-										testId="unpriced-models-count"
-									>
+									<Badge color="primary" variant="solid" testId="unpriced-models-count">
 										{unpricedCount}
 									</Badge>
 								)}

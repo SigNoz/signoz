@@ -64,7 +64,6 @@ function MapperRow({
 							: 'primary'
 					}
 					variant="outlined"
-					className={styles.targetContextBadge}
 				>
 					{mapper.fieldContext}
 				</Badge>
@@ -86,7 +85,6 @@ function MapperRow({
 							<Badge
 								variant="outlined"
 								color="secondary"
-								className={styles.sourceChip}
 								key={`${source.context}:${source.key}`}
 							>
 								<span className={styles.sourceChipText} title={source.key}>

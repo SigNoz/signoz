@@ -62,7 +62,7 @@ export default function NavItem({
 
 				{isBeta && (
 					<div className="nav-item-beta">
-						<Badge variant="solid" color="primary" className="sidenav-beta-tag">
+						<Badge variant="solid" color="primary">
 							Beta
 						</Badge>
 					</div>
@@ -70,7 +70,7 @@ export default function NavItem({
 
 				{isNew && (
 					<div className="nav-item-new">
-						<Badge variant="solid" color="primary" className="sidenav-new-tag">
+						<Badge variant="solid" color="primary">
 							New
 						</Badge>
 					</div>

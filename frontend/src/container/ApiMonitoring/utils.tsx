@@ -973,12 +973,7 @@ export const getEndPointsColumnsConfig = (
 					})()}
 					{isGroupedByAttribute
 						? text.split(',').map((value) => (
-								<Badge
-									variant="solid"
-									key={value}
-									color="secondary"
-									className="endpoint-group-tag-item"
-								>
+								<Badge variant="solid" key={value} color="secondary">
 									{value === '' ? '<no-value>' : value}
 								</Badge>
 							))

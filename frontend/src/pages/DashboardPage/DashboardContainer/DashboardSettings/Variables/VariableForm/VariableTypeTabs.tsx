@@ -57,7 +57,7 @@ function VariableTypeTabs({
 					label: 'Dynamic',
 					prefixIcon: <Pyramid size={14} />,
 					suffixIcon: (
-						<Badge variant="solid" color="primary" className={styles.betaTag}>
+						<Badge variant="solid" color="primary">
 							Beta
 						</Badge>
 					),
@@ -84,13 +84,11 @@ function VariableTypeTabs({
 					prefixIcon: <DatabaseZap size={14} />,
 					suffixIcon: (
 						<>
-							<Badge
-								variant="solid"
-								color="warning"
-								className={styles.notRecommendedBadge}
-							>
-								Not Recommended
-							</Badge>
+							<span className={styles.notRecommendedBadge}>
+								<Badge variant="solid" color="warning">
+									Not Recommended
+								</Badge>
+							</span>
 							<span
 								className={styles.notRecommendedInfo}
 								onClick={(e): void => e.stopPropagation()}

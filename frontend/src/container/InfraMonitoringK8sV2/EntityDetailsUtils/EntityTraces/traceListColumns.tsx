@@ -116,12 +116,7 @@ export const getTraceListColumns = (
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Badge
-								testId={key}
-								color="primary"
-								variant="outlined"
-								className={styles.pointer}
-							>
+							<Badge testId={key} color="primary" variant="outlined">
 								{httpMethod}
 							</Badge>
 						</BlockLink>
@@ -147,11 +142,7 @@ export const getTraceListColumns = (
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<HttpStatusBadge
-								statusCode={statusCode}
-								testId={key}
-								className={styles.pointer}
-							/>
+							<HttpStatusBadge statusCode={statusCode} testId={key} />
 						</BlockLink>
 					);
 				}

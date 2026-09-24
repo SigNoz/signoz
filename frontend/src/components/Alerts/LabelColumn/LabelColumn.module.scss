@@ -7,24 +7,9 @@
 	width: 100%;
 }
 
-.labelBadge {
-	cursor: default;
-	font-size: 12px;
-
-	--badge-display: inline;
-
-	max-width: 180px;
-	text-overflow: ellipsis;
-}
-
 .overflowTrigger {
 	all: unset;
 	cursor: pointer;
-}
-
-.overflowBadge {
-	cursor: pointer;
-	font-size: 12px;
 }
 
 .labelPopover {

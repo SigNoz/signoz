@@ -1,16 +1,13 @@
 import { type MouseEvent, type ReactNode } from 'react';
 import { X } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
-import cx from 'classnames';
-
-import styles from './TagBadge.module.scss';
+import { Badge, type BadgeProps } from '@signozhq/ui/badge';
 
 interface TagBadgeProps {
 	children: ReactNode;
 	// Show a remove button (editable contexts: create modal, settings drawer).
 	closable?: boolean;
 	onClose?: (event: MouseEvent<HTMLButtonElement>) => void;
-	className?: string;
+	maxWidth?: BadgeProps['maxWidth'];
 }
 
 // The single sienna tag chip used everywhere dashboards render tags — list rows,
@@ -20,13 +17,13 @@ function TagBadge({
 	children,
 	closable,
 	onClose,
-	className,
+	maxWidth,
 }: TagBadgeProps): JSX.Element {
 	return (
 		<Badge
 			color="archive"
 			variant="outlined"
-			className={cx(styles.static, className)}
+			maxWidth={maxWidth}
 			suffix={
 				closable ? (
 					<button
