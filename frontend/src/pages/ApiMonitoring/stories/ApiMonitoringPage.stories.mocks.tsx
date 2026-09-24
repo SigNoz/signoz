@@ -8,6 +8,7 @@ import {
 	QuickfiltertypesSourceDTO,
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
+	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { VIEWS } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
@@ -24,7 +25,10 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
-import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
+import {
+	fieldKeysResponse,
+	fieldValuesResponse,
+} from '@/storybook/msw/__story_mockdata__/fields';
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
 import {
@@ -315,6 +319,21 @@ export const apiMonitoringMocks = defineStoryMocks({
 						QUICK_FILTER_VALUES[req.url.searchParams.get('attributeKey') ?? ''] ?? [],
 				},
 			})),
+		),
+
+		rest.get(
+			'http://localhost/api/v1/fields/keys',
+			response.json((req) =>
+				fieldKeysResponse(
+					groupByAttributeKeys(req.url.searchParams.get('searchText') ?? '').map(
+						({ key }) => key,
+					),
+					{
+						signal: TelemetrytypesSignalDTO.traces,
+						fieldContext: TelemetrytypesFieldContextDTO.attribute,
+					},
+				),
+			),
 		),
 
 		rest.get(
