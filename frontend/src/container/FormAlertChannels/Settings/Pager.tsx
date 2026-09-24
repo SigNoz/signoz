@@ -3,16 +3,20 @@ import { useTranslation } from 'react-i18next';
 import { Form, Input } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
-import { PagerChannel } from '../../CreateAlertChannels/config';
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import PagerDetails from './PagerDetails';
 
 const { TextArea } = Input;
 
-function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
+function PagerForm({
+	setSelectedConfig,
+	initialDetails,
+}: PagerFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	return (
 		<>
 			<Form.Item
-				name="routing_key"
+				name="routingKey"
 				label={t('field_pager_routing_key')}
 				tooltip={{
 					title: (
@@ -29,7 +33,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
 							...value,
-							routing_key: event.target.value,
+							routingKey: event.target.value,
 						}));
 					}}
 					data-testid="pager-routing-key-textbox"
@@ -71,22 +75,10 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 				/>
 			</Form.Item>
 
-			<Form.Item
-				name="details"
-				help={t('help_pager_details')}
-				label={t('field_pager_details')}
-			>
-				<TextArea
-					rows={4}
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							details: event.target.value,
-						}))
-					}
-					data-testid="pager-additional-details-textarea"
-				/>
-			</Form.Item>
+			<PagerDetails
+				setSelectedConfig={setSelectedConfig}
+				initialDetails={initialDetails}
+			/>
 
 			<Form.Item
 				name="component"
@@ -151,7 +143,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 			</Form.Item>
 
 			<Form.Item
-				name="client_url"
+				name="clientUrl"
 				help={t('help_pager_client_url')}
 				label={t('field_pager_client_url')}
 			>
@@ -159,7 +151,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 					onChange={(event): void =>
 						setSelectedConfig((value) => ({
 							...value,
-							client_url: event.target.value,
+							clientUrl: event.target.value,
 						}))
 					}
 					data-testid="pager-client-url-textarea"
@@ -170,7 +162,8 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 }
 
 interface PagerFormProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<PagerChannel>>>;
+	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
+	initialDetails?: Record<string, string>;
 }
 
 export default PagerForm;

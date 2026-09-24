@@ -1,5 +1,6 @@
 .breadcrumb {
-	padding-left: 16px;
+	/* the bar sat flush against the tab strip above it */
+	padding: var(--spacing-4) 16px var(--spacing-2);
 
 	ol {
 		align-items: center;

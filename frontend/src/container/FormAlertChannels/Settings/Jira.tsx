@@ -4,7 +4,7 @@ import { Collapse, Form, Input, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
-import { JiraChannel } from '../../CreateAlertChannels/config';
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 import {
 	isValidJiraReopenDuration,
 	isValidJiraSiteURL,
@@ -13,7 +13,7 @@ import {
 function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 	const { t } = useTranslation('channels');
 
-	const update = (patch: Partial<JiraChannel>): void =>
+	const update = (patch: Partial<ChannelSpecFormValues>): void =>
 		setSelectedConfig((value) => ({ ...value, ...patch }));
 
 	const advanced = (
@@ -45,49 +45,49 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 			</Form.Item>
 
 			<Form.Item
-				name="resolve_transition"
+				name="resolveTransition"
 				label={t('field_jira_resolve_transition')}
 				help={t('help_jira_resolve_transition')}
 			>
 				<Input
 					placeholder={t('placeholder_jira_resolve_transition')}
 					onChange={(event): void =>
-						update({ resolve_transition: event.target.value })
+						update({ resolveTransition: event.target.value })
 					}
 					data-testid="jira-resolve-transition-textbox"
 				/>
 			</Form.Item>
 
 			<Form.Item
-				name="reopen_transition"
+				name="reopenTransition"
 				label={t('field_jira_reopen_transition')}
 				help={t('help_jira_reopen_transition')}
 			>
 				<Input
 					placeholder={t('placeholder_jira_reopen_transition')}
 					onChange={(event): void =>
-						update({ reopen_transition: event.target.value })
+						update({ reopenTransition: event.target.value })
 					}
 					data-testid="jira-reopen-transition-textbox"
 				/>
 			</Form.Item>
 
 			<Form.Item
-				name="wont_fix_resolution"
+				name="wontFixResolution"
 				label={t('field_jira_wont_fix_resolution')}
 				help={t('help_jira_wont_fix_resolution')}
 			>
 				<Input
 					placeholder={t('placeholder_jira_wont_fix_resolution')}
 					onChange={(event): void =>
-						update({ wont_fix_resolution: event.target.value })
+						update({ wontFixResolution: event.target.value })
 					}
 					data-testid="jira-wont-fix-resolution-textbox"
 				/>
 			</Form.Item>
 
 			<Form.Item
-				name="reopen_duration"
+				name="reopenDuration"
 				label={t('field_jira_reopen_duration')}
 				extra={t('help_jira_reopen_duration')}
 				rules={[
@@ -111,7 +111,7 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 			>
 				<Input
 					placeholder={t('placeholder_jira_reopen_duration')}
-					onChange={(event): void => update({ reopen_duration: event.target.value })}
+					onChange={(event): void => update({ reopenDuration: event.target.value })}
 					data-testid="jira-reopen-duration-textbox"
 				/>
 			</Form.Item>
@@ -167,26 +167,26 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 			</Form.Item>
 
 			<Form.Item
-				name="username"
+				name="email"
 				label={t('field_jira_email')}
 				help={t('help_jira_email')}
 				required
 			>
 				<Input
-					onChange={(event): void => update({ username: event.target.value })}
+					onChange={(event): void => update({ email: event.target.value })}
 					data-testid="jira-email-textbox"
 				/>
 			</Form.Item>
 
 			<Form.Item
-				name="password"
+				name="apiToken"
 				label={t('field_jira_api_token')}
 				help={t('help_jira_api_token')}
 				required
 			>
 				<Input
 					type="password"
-					onChange={(event): void => update({ password: event.target.value })}
+					onChange={(event): void => update({ apiToken: event.target.value })}
 					data-testid="jira-api-token-textbox"
 				/>
 			</Form.Item>
@@ -200,13 +200,13 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 			</Form.Item>
 
 			<Form.Item
-				name="issue_type"
+				name="issueType"
 				label={t('field_jira_issue_type')}
 				help={t('help_jira_issue_type')}
 				required
 			>
 				<Input
-					onChange={(event): void => update({ issue_type: event.target.value })}
+					onChange={(event): void => update({ issueType: event.target.value })}
 					data-testid="jira-issue-type-textbox"
 				/>
 			</Form.Item>
@@ -250,7 +250,7 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 }
 
 interface JiraProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<JiraChannel>>>;
+	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
 }
 
 export default JiraSettings;
