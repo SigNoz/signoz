@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Search } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
@@ -13,6 +12,12 @@ import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculate
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import TextToolTip from 'components/TextToolTip';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
+import {
+	NotificationChannelCreatePermission,
+	NotificationChannelListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useTimezone } from 'providers/Timezone';
 
@@ -39,6 +44,7 @@ const QUERY_PARAMS_CONFIG = {
 	limit: 'limit',
 } as const;
 
+const CREATE_CHECKS = [NotificationChannelCreatePermission];
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 
@@ -171,7 +177,8 @@ function NotificationChannels(): JSX.Element {
 						url="https://signoz.io/docs/setup-alerts-notification/"
 						urlText="Learn More"
 					/>
-					<Button
+					<AuthZButton
+						checks={CREATE_CHECKS}
 						variant="solid"
 						color="primary"
 						className={styles.newChannelButton}
@@ -180,7 +187,7 @@ function NotificationChannels(): JSX.Element {
 						testId="channels-create"
 					>
 						New channel
-					</Button>
+					</AuthZButton>
 				</div>
 
 				<div className={styles.filtersRow}>
@@ -259,4 +266,6 @@ function NotificationChannels(): JSX.Element {
 	);
 }
 
-export default NotificationChannels;
+export default withAuthZContent(NotificationChannels, {
+	checks: [NotificationChannelListPermission],
+});

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import {
 	Braces,
 	Ellipsis,
+	Eye,
 	PenLine,
 	SquareArrowOutUpRight,
 	Trash2,
@@ -9,6 +10,7 @@ import {
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
+import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
 
 import styles from './ChannelActionsMenu.module.scss';
 
@@ -28,12 +30,18 @@ function ChannelActionsMenu({
 	onDelete,
 	onViewJson,
 }: ChannelActionsMenuProps): JSX.Element {
+	const { canEdit, canDelete } = useNotificationChannelPermissions(channel.id);
+
+	// Without `update` the same screen is still readable, so the action opens it
+	// as a view rather than disappearing.
+	const openLabel = canEdit ? 'Edit' : 'View';
+
 	const menuItems = useMemo(
 		() => [
 			{
 				key: 'open',
-				label: 'Edit',
-				icon: <PenLine size={14} />,
+				label: openLabel,
+				icon: canEdit ? <PenLine size={14} /> : <Eye size={14} />,
 				onClick: (): void => onOpen(channel),
 			},
 			{
@@ -53,11 +61,12 @@ function ChannelActionsMenu({
 				key: 'delete',
 				label: 'Delete',
 				icon: <Trash2 size={14} />,
+				disabled: !canDelete,
 				danger: true,
 				onClick: (): void => onDelete(channel),
 			},
 		],
-		[channel, onOpen, onDelete, onViewJson],
+		[openLabel, canEdit, canDelete, channel, onOpen, onDelete, onViewJson],
 	);
 
 	return (
