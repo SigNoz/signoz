@@ -116,6 +116,10 @@ func (provider *provider) ListRuleStates(ctx context.Context) (*ruletypes.Gettab
 	return provider.manager.ListRuleStates(ctx)
 }
 
+func (provider *provider) ListRules(ctx context.Context, params *ruletypes.ListRulesParams) (*ruletypes.ListableRules, error) {
+	return provider.manager.ListRules(ctx, params)
+}
+
 func (provider *provider) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error) {
 	return provider.manager.GetRule(ctx, id)
 }

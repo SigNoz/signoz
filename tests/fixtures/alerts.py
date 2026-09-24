@@ -88,6 +88,40 @@ def create_alert_rule_with_channel(
     return _create_alert_rule_with_channel
 
 
+def delete_all_rules(signoz: types.SigNoz, token: str) -> None:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/rules"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    for rule in response.json()["data"]:
+        delete_response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule['id']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert delete_response.status_code == HTTPStatus.OK, f"failed to delete rule {rule['id']}: {delete_response.text}"
+
+
+@pytest.fixture(name="seed_alert_rules", scope="function")
+def seed_alert_rules(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    create_notification_channel: Callable[[dict], str],
+    create_alert_rule: Callable[[dict], str],
+) -> Callable[[dict, list[dict]], None]:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    def _seed_alert_rules(channel_config: dict, rules: list[dict]) -> None:
+        delete_all_rules(signoz, admin_token)
+        create_notification_channel(channel_config)
+        for rule in rules:
+            create_alert_rule(rule)
+
+    return _seed_alert_rules
+
+
 def labels_to_map(labels: list[dict]) -> dict[str, str]:
     """Converts the label list shape of the v2 rule history APIs to a plain map."""
     return {label["key"]["name"]: label["value"] for label in labels or []}
