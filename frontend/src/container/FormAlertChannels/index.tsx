@@ -8,6 +8,8 @@ import {
 	ChannelFormValues,
 	ChannelKind,
 } from 'container/CreateAlertChannels/types';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 import EmailSettings from './Settings/Email';
 import GoogleChatSettings from './Settings/GoogleChat';
@@ -48,6 +50,8 @@ function FormAlertChannels({
 	testingState,
 	editing = false,
 	readOnly = false,
+	saveChecks = [],
+	testChecks = [],
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
@@ -139,26 +143,30 @@ function FormAlertChannels({
 
 				{!readOnly && (
 					<div className={styles.actions}>
-						<Button
-							variant="solid"
-							color="primary"
-							size="md"
-							testId="save-channel-button"
-							loading={savingState}
-							onClick={onSaveHandler}
-						>
-							{t('button_save_channel')}
-						</Button>
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="md"
-							testId="test-channel-button"
-							loading={testingState}
-							onClick={onTestHandler}
-						>
-							{t('button_test_channel')}
-						</Button>
+						<AuthZTooltip checks={saveChecks}>
+							<Button
+								variant="solid"
+								color="primary"
+								size="md"
+								testId="save-channel-button"
+								loading={savingState}
+								onClick={onSaveHandler}
+							>
+								{t('button_save_channel')}
+							</Button>
+						</AuthZTooltip>
+						<AuthZTooltip checks={testChecks}>
+							<Button
+								variant="outlined"
+								color="secondary"
+								size="md"
+								testId="test-channel-button"
+								loading={testingState}
+								onClick={onTestHandler}
+							>
+								{t('button_test_channel')}
+							</Button>
+						</AuthZTooltip>
 					</div>
 				)}
 			</form>
@@ -176,13 +184,19 @@ interface FormAlertChannelsProps {
 	savingState: boolean;
 	// editing indicates if the form is opened in edit mode
 	editing?: boolean;
-	/** The reader has `read` but not `update`, so the form shows without saving. */
+	/** The reader has `read` but not `update`, so the fields render disabled. */
 	readOnly?: boolean;
+	/** Gates saving; a denial disables the button and names the missing scope. */
+	saveChecks?: BrandedPermission[];
+	/** Gates a test send, which the API allows with `create`. */
+	testChecks?: BrandedPermission[];
 }
 
 FormAlertChannels.defaultProps = {
 	editing: undefined,
 	readOnly: false,
+	saveChecks: [],
+	testChecks: [],
 };
 
 export default FormAlertChannels;

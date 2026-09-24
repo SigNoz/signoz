@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Callout } from '@signozhq/ui/callout';
 import Spinner from 'components/Spinner';
 import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
+import { NotificationChannelCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 
 import ChannelFormBody from './ChannelFormBody';
 import styles from './ChannelForm.module.scss';
@@ -19,11 +20,19 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 	// A reader with `read` but no `update` still gets the screen, without saving.
 	// While the check is in flight the answer is unknown, so the form stays
 	// editable rather than flashing read-only; the API is the real gate.
-	const { canEdit, isLoading: isPermissionLoading } =
-		useNotificationChannelPermissions(channelId ?? '', {
-			enabled: !!channelId,
-		});
+	const {
+		canEdit,
+		isLoading: isPermissionLoading,
+		editChecks,
+	} = useNotificationChannelPermissions(channelId ?? '', {
+		enabled: !!channelId,
+	});
 	const readOnly = !!channelId && !isPermissionLoading && !canEdit;
+	// Saving an existing channel needs read and update on it; creating one needs
+	// create on the collection, which is also what a test send is gated on.
+	const saveChecks = channelId
+		? editChecks
+		: [NotificationChannelCreatePermission];
 
 	if (loadError) {
 		return (
@@ -49,6 +58,8 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 			target={channelId ? { mode: 'edit', channelId } : { mode: 'create' }}
 			onDone={onDone}
 			readOnly={readOnly}
+			saveChecks={saveChecks}
+			testChecks={[NotificationChannelCreatePermission]}
 		/>
 	);
 }
