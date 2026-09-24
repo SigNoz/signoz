@@ -1216,6 +1216,7 @@ export interface AlertmanagertypesRecurrenceDTO {
 	duration: string;
 	/**
 	 * @type array,null
+	 * @description Required for weekly recurrence.
 	 */
 	repeatOn?: AlertmanagertypesRepeatOnDTO[] | null;
 	repeatType: AlertmanagertypesRepeatTypeDTO;
@@ -1225,6 +1226,7 @@ export interface AlertmanagertypesScheduleDTO {
 	/**
 	 * @type string
 	 * @format date-time
+	 * @description If empty, the alert will be active forever.
 	 */
 	endTime?: string;
 	recurrence?: AlertmanagertypesRecurrenceDTO;
