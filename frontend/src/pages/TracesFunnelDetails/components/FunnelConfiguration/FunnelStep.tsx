@@ -206,7 +206,6 @@ function FunnelStep({
 							color="primary"
 							textPlacement="right"
 							disabledTooltip="You need edit permissions to change this step"
-							className="error__switch"
 							value={stepData.has_errors}
 							disabled={!hasEditPermission}
 							onChange={(): void =>

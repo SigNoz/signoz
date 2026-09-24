@@ -21,11 +21,6 @@ function TimezoneAdaptation(): JSX.Element {
 		[timezone, browserTimezone],
 	);
 
-	const getSwitchStyles = (): React.CSSProperties => ({
-		backgroundColor:
-			isAdaptationEnabled && isTimezoneOverridden ? Color.BG_AMBER_400 : undefined,
-	});
-
 	const handleOverrideClear = (): void => {
 		updateTimezone(browserTimezone);
 		logEvent('Account Settings: Timezone override cleared', {});
@@ -49,11 +44,10 @@ function TimezoneAdaptation(): JSX.Element {
 			<div className="timezone-adaption__header">
 				<h2 className="timezone-adaption__title">Adapt to my timezone</h2>
 				<Switch
-					color="primary"
+					color={isAdaptationEnabled && isTimezoneOverridden ? 'warning' : 'primary'}
 					textPlacement="right"
 					value={isAdaptationEnabled}
 					onChange={handleSwitchChange}
-					style={getSwitchStyles()}
 					testId="timezone-adaptation-switch"
 				/>
 			</div>
