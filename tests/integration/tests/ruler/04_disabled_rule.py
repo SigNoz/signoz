@@ -78,12 +78,12 @@ def test_disabled_rule_does_not_evaluate_or_notify(
 
     # Insert alert data that would fire the rule if it were evaluated
     insert_alert_data(
-        [types.AlertData(type="metrics", data_path="rules/test_scenarios/disabled_rule/alert_data.jsonl")],
+        [types.AlertData(type="metrics", data_path="ruler/test_scenarios/disabled_rule/alert_data.jsonl")],
         base_time=datetime.now(tz=UTC) - timedelta(minutes=5),
     )
 
     # Create the disabled alert rule
-    rule_path = get_testdata_file_path("rules/test_scenarios/disabled_rule/rule.json")
+    rule_path = get_testdata_file_path("ruler/test_scenarios/disabled_rule/rule.json")
     with open(rule_path, encoding="utf-8") as f:
         rule_data = json.loads(f.read())
     update_rule_channel_name(rule_data, notification_channel_name)

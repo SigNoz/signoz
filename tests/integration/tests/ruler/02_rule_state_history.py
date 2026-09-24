@@ -29,10 +29,10 @@ def test_logs_rule_history_related_links(
     query_start_ms = int((datetime.now(tz=UTC) - timedelta(minutes=30)).timestamp() * 1000)
 
     insert_alert_data(
-        [types.AlertData(type="logs", data_path="rules/test_scenarios/rule_state_history_logs/alert_data.jsonl")],
+        [types.AlertData(type="logs", data_path="ruler/test_scenarios/rule_state_history_logs/alert_data.jsonl")],
         base_time=datetime.now(tz=UTC) - timedelta(minutes=5),
     )
-    rule_id = create_alert_rule_with_channel("rules/test_scenarios/rule_state_history_logs/rule.json")
+    rule_id = create_alert_rule_with_channel("ruler/test_scenarios/rule_state_history_logs/rule.json")
 
     (item, query_end_ms) = wait_for_firing_timeline_entry(signoz, token, rule_id, query_start_ms)
 
@@ -73,10 +73,10 @@ def test_traces_rule_history_related_links(
     query_start_ms = int((datetime.now(tz=UTC) - timedelta(minutes=30)).timestamp() * 1000)
 
     insert_alert_data(
-        [types.AlertData(type="traces", data_path="rules/test_scenarios/rule_state_history_traces/alert_data.jsonl")],
+        [types.AlertData(type="traces", data_path="ruler/test_scenarios/rule_state_history_traces/alert_data.jsonl")],
         base_time=datetime.now(tz=UTC) - timedelta(minutes=5),
     )
-    rule_id = create_alert_rule_with_channel("rules/test_scenarios/rule_state_history_traces/rule.json")
+    rule_id = create_alert_rule_with_channel("ruler/test_scenarios/rule_state_history_traces/rule.json")
 
     (item, query_end_ms) = wait_for_firing_timeline_entry(signoz, token, rule_id, query_start_ms)
 
@@ -117,10 +117,10 @@ def test_ai_traces_rule_history_related_links(
     query_start_ms = int((datetime.now(tz=UTC) - timedelta(minutes=30)).timestamp() * 1000)
 
     insert_alert_data(
-        [types.AlertData(type="traces", data_path="rules/test_scenarios/rule_state_history_ai_traces/alert_data.jsonl")],
+        [types.AlertData(type="traces", data_path="ruler/test_scenarios/rule_state_history_ai_traces/alert_data.jsonl")],
         base_time=datetime.now(tz=UTC) - timedelta(minutes=5),
     )
-    rule_id = create_alert_rule_with_channel("rules/test_scenarios/rule_state_history_ai_traces/rule.json")
+    rule_id = create_alert_rule_with_channel("ruler/test_scenarios/rule_state_history_ai_traces/rule.json")
 
     (item, query_end_ms) = wait_for_firing_timeline_entry(signoz, token, rule_id, query_start_ms)
 
