@@ -190,7 +190,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			expectedEvols:   []string{"resources_string"},
 		},
 		{
-			name:    "Empty columns array",
+			name:    "Empty columns array ignores evolutions",
 			columns: []*schema.Column{},
 			evolutions: []*telemetrytypes.EvolutionEntry{
 				{
@@ -207,8 +207,6 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{},
 			expectedEvols:   []string{},
-			expectedError:   true,
-			errorStr:        "column resources_string not found",
 		},
 		{
 			name: "Duplicate evolutions - should use first encountered (oldest if sorted)",
@@ -440,6 +438,26 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			tsEnd:           uint64(time.Date(2024, 2, 20, 0, 0, 0, 0, time.UTC).UnixNano()),
 			expectedColumns: []string{"attributes"},
 			expectedEvols:   []string{"attributes"},
+		},
+		{
+			name: "Non-candidate evolution ignored - JSON released before window keeps the map",
+			columns: []*schema.Column{
+				attributes_string,
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalTraces,
+					ColumnName:   "attributes",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextAttribute,
+					FieldName:    "__all__",
+					ReleaseTime:  time.Date(2024, 2, 10, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			tsStart:         uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 20, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"attributes_string"},
+			expectedEvols:   []string{},
 		},
 	}
 
