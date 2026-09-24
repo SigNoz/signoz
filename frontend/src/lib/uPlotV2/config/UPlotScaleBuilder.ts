@@ -93,6 +93,7 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 			time,
 			distr,
 			logBase,
+			asinhThreshold: this.props.asinhThreshold,
 		});
 
 		const { rangeConfig, hardMinOnly, hardMaxOnly, hasFixedRange } =

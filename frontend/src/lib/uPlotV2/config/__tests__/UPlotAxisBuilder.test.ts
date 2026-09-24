@@ -376,3 +376,51 @@ describe('UPlotAxisBuilder', () => {
 		expect(config.values).toBeDefined();
 	});
 });
+
+describe('UPlotAxisBuilder value x axis', () => {
+	it('formats a non-time x axis with its unit', () => {
+		(getToolTipValue as jest.Mock).mockReturnValue('1.2K req/s');
+		const config = new UPlotAxisBuilder(
+			createAxisProps({ scaleKey: 'x', isTimeAxis: false, yAxisUnit: 'reqps' }),
+		).getConfig();
+
+		const values = (config.values as uPlot.Axis.DynamicValues)(
+			{} as uPlot,
+			[1200],
+			0,
+			0,
+			0,
+		);
+
+		expect(values).toStrictEqual(['1.2K req/s']);
+		expect(getToolTipValue).toHaveBeenCalledWith('1200', 'reqps', undefined);
+	});
+
+	it('leaves a non-time x axis to uPlot when nothing says how to format it', () => {
+		const config = new UPlotAxisBuilder(
+			createAxisProps({ scaleKey: 'x', isTimeAxis: false }),
+		).getConfig();
+
+		expect(config.values).toBeUndefined();
+	});
+});
+
+describe('UPlotAxisBuilder out-of-range splits', () => {
+	it('leaves a split the scale cannot place unlabelled', () => {
+		(getToolTipValue as jest.Mock).mockImplementation((v: string) => `${v} ms`);
+		const config = new UPlotAxisBuilder(
+			createAxisProps({ scaleKey: 'y', yAxisUnit: 'ms' }),
+		).getConfig();
+		const u = { scales: { y: { min: 0, max: 1000 } } } as unknown as uPlot;
+
+		const values = (config.values as uPlot.Axis.DynamicValues)(
+			u,
+			[-10, 0, 500, 5000],
+			0,
+			0,
+			0,
+		);
+
+		expect(values).toStrictEqual(['', '0 ms', '500 ms', '']);
+	});
+});
