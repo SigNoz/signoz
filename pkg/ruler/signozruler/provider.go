@@ -172,7 +172,7 @@ func (provider *provider) ListRuleViews(ctx context.Context, orgID valuer.UUID) 
 	}
 	views, errByViewID := ruletypes.NewGettableRuleViewsFromStorableRuleViews(storables)
 	for viewID, err := range errByViewID {
-		provider.logger.ErrorContext(ctx, "failed to decode rule view from db", slog.String("rule_view.id", viewID), errors.Attr(err))
+		provider.logger.ErrorContext(ctx, "failed to decode rule view from db", slog.String("rule_view_id", viewID), errors.Attr(err))
 	}
 	return &ruletypes.ListableRuleViews{Views: views}, nil
 }
