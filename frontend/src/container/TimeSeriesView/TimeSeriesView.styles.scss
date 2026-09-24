@@ -11,6 +11,12 @@
 		flex-shrink: 0;
 	}
 
+	&__header-actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
 	.ant-card-body {
 		height: 50vh;
 		min-height: 350px;
