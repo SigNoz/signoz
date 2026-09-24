@@ -5,7 +5,6 @@ import { render, screen, userEvent, within } from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import CreateEditRolePage from '../CreateEditRolePage';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 
 beforeEach(() => {
 	server.use(setupAuthzAdmin());
@@ -17,16 +16,14 @@ afterEach(() => {
 
 function renderPage(): ReturnType<typeof render> {
 	return render(
-		<TooltipProvider>
-			<Switch>
-				<Route path={ROUTES.ROLES_SETTINGS} exact>
-					<div data-testid="roles-list-redirect" />
-				</Route>
-				<Route path={ROUTES.ROLE_CREATE}>
-					<CreateEditRolePage />
-				</Route>
-			</Switch>
-		</TooltipProvider>,
+		<Switch>
+			<Route path={ROUTES.ROLES_SETTINGS} exact>
+				<div data-testid="roles-list-redirect" />
+			</Route>
+			<Route path={ROUTES.ROLE_CREATE}>
+				<CreateEditRolePage />
+			</Route>
+		</Switch>,
 		undefined,
 		{ initialRoute: '/settings/roles/new' },
 	);

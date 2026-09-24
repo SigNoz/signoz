@@ -1,4 +1,3 @@
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { act, render, screen } from '@testing-library/react';
 
 import LabelColumn from './LabelColumn';
@@ -37,7 +36,7 @@ afterEach(() => {
 function renderWithProviders(
 	ui: React.ReactElement,
 ): ReturnType<typeof render> {
-	return render(<TooltipProvider>{ui}</TooltipProvider>);
+	return render(ui);
 }
 
 describe('LabelColumn', () => {

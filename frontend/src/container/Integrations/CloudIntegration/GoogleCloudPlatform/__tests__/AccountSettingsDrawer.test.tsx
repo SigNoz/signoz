@@ -1,7 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from '@signozhq/ui/sonner';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { server } from 'mocks-server/server';
 import { rest, RestRequest } from 'msw';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
@@ -38,13 +37,11 @@ const setActiveAccount = jest.fn();
 const renderDrawer = (): void => {
 	render(
 		<MockQueryClientProvider>
-			<TooltipProvider>
-				<AccountSettingsDrawer
-					onClose={onClose}
-					account={gcpAccount}
-					setActiveAccount={setActiveAccount}
-				/>
-			</TooltipProvider>
+			<AccountSettingsDrawer
+				onClose={onClose}
+				account={gcpAccount}
+				setActiveAccount={setActiveAccount}
+			/>
 		</MockQueryClientProvider>,
 	);
 };

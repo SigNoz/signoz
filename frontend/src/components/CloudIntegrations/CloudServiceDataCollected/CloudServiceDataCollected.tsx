@@ -4,7 +4,7 @@ import {
 	CloudintegrationtypesCollectedMetricDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { BarChart, Info, ScrollText } from '@signozhq/icons';
-import { TooltipProvider, Tooltip } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import './CloudServiceDataCollected.styles.scss';
 
@@ -88,21 +88,19 @@ function CloudServiceDataCollected({
 						<BarChart size={14} />
 						Metrics
 						{metricsInfoTooltip && (
-							<TooltipProvider>
-								<Tooltip
-									className={'cloud-service-data-collected-table-tooltip'}
-									title={metricsInfoTooltip}
-									side="top"
+							<Tooltip
+								className={'cloud-service-data-collected-table-tooltip'}
+								title={metricsInfoTooltip}
+								side="top"
+							>
+								<span
+									className="cloud-service-data-collected-table-heading-info"
+									aria-label="About the metrics listed below"
+									data-testid="data-collected-metrics-info"
 								>
-									<span
-										className="cloud-service-data-collected-table-heading-info"
-										aria-label="About the metrics listed below"
-										data-testid="data-collected-metrics-info"
-									>
-										<Info size={12} />
-									</span>
-								</Tooltip>
-							</TooltipProvider>
+									<Info size={12} />
+								</span>
+							</Tooltip>
 						)}
 					</div>
 					<Table

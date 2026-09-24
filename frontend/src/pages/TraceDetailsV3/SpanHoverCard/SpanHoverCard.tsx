@@ -1,4 +1,4 @@
-import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
@@ -143,26 +143,24 @@ export function SpanHoverCard({
 	]);
 
 	return (
-		<TooltipProvider>
-			<Tooltip
-				open={hoverCardData !== null}
-				side="right"
-				align="start"
-				sideOffset={8}
-				className={styles.popover}
-				title={
-					hoverCardData ? <SpanTooltipContent {...hoverCardData.tooltip} /> : null
-				}
-			>
-				<div
-					className={styles.anchor}
-					style={{
-						top: hoverCardData?.anchorTop ?? 0,
-						left: anchorLeft,
-						height: rowHeight,
-					}}
-				/>
-			</Tooltip>
-		</TooltipProvider>
+		<Tooltip
+			open={hoverCardData !== null}
+			side="right"
+			align="start"
+			sideOffset={8}
+			className={styles.popover}
+			title={
+				hoverCardData ? <SpanTooltipContent {...hoverCardData.tooltip} /> : null
+			}
+		>
+			<div
+				className={styles.anchor}
+				style={{
+					top: hoverCardData?.anchorTop ?? 0,
+					left: anchorLeft,
+					height: rowHeight,
+				}}
+			/>
+		</Tooltip>
 	);
 }

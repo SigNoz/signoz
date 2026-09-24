@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
-import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Fullscreen } from '@signozhq/icons';
 
 import styles from './ExpandableValue.module.scss';
@@ -33,7 +33,7 @@ function ExpandableValue({
 	}
 
 	return (
-		<TooltipProvider>
+		<>
 			<Tooltip
 				className={styles.tooltipContent}
 				side="top"
@@ -66,7 +66,7 @@ function ExpandableValue({
 			>
 				<pre className={styles.fullValue}>{value}</pre>
 			</DialogWrapper>
-		</TooltipProvider>
+		</>
 	);
 }
 

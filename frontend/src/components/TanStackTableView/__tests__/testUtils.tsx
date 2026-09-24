@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { render, RenderResult } from '@testing-library/react';
 import { NuqsTestingAdapter, OnUrlUpdateFunction } from 'nuqs/adapters/testing';
 
@@ -64,9 +63,7 @@ export function renderTanStackTable<T = TestRow, TItemKey = string>(
 			<VirtuosoMockContext.Provider
 				value={{ viewportHeight: 500, itemHeight: 50 }}
 			>
-				<TooltipProvider>
-					<TanStackTable<T, TItemKey> {...mergedProps} />
-				</TooltipProvider>
+				<TanStackTable<T, TItemKey> {...mergedProps} />
 			</VirtuosoMockContext.Provider>
 		</NuqsTestingAdapter>,
 	);
@@ -87,7 +84,7 @@ export function renderWithProviders(
 			<VirtuosoMockContext.Provider
 				value={{ viewportHeight: 500, itemHeight: 50 }}
 			>
-				<TooltipProvider>{ui}</TooltipProvider>
+				ui
 			</VirtuosoMockContext.Provider>
 		</NuqsTestingAdapter>,
 	);

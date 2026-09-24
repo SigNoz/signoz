@@ -1,4 +1,3 @@
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { render, screen, waitFor } from 'tests/test-utils';
 
 import ViewRolePage from '../ViewRolePage';
@@ -20,15 +19,9 @@ describe('ViewRolePage - Managed Role', () => {
 	});
 
 	it('disables Delete button for managed roles', async () => {
-		render(
-			<TooltipProvider>
-				<ViewRolePage />
-			</TooltipProvider>,
-			undefined,
-			{
-				initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
-			},
-		);
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
+		});
 
 		await waitFor(() => {
 			expect(screen.getByTestId('delete-button')).toBeDisabled();
@@ -36,15 +29,9 @@ describe('ViewRolePage - Managed Role', () => {
 	});
 
 	it('disables Update button for managed roles', async () => {
-		render(
-			<TooltipProvider>
-				<ViewRolePage />
-			</TooltipProvider>,
-			undefined,
-			{
-				initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
-			},
-		);
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
+		});
 
 		await waitFor(() => {
 			expect(screen.getByTestId('save-button')).toBeDisabled();
@@ -52,15 +39,9 @@ describe('ViewRolePage - Managed Role', () => {
 	});
 
 	it('still shows Cancel button for managed roles', async () => {
-		render(
-			<TooltipProvider>
-				<ViewRolePage />
-			</TooltipProvider>,
-			undefined,
-			{
-				initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
-			},
-		);
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(MANAGED_ROLE_ID, MANAGED_ROLE_NAME),
+		});
 
 		await expect(
 			screen.findByTestId('cancel-button'),

@@ -20,7 +20,7 @@ import {
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
-import { TooltipProvider, Tooltip } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
@@ -2020,56 +2020,51 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	return (
 		// Self-provided so the per-tag tooltips work wherever this select is rendered,
 		// without every consumer having to sit under an app-level provider.
-		<TooltipProvider>
-			<div
-				className={cx('custom-multiselect-wrapper', {
-					'all-selected': allOptionShown || isAllSelected,
+		<div
+			className={cx('custom-multiselect-wrapper', {
+				'all-selected': allOptionShown || isAllSelected,
+			})}
+		>
+			{(allOptionShown || isAllSelected) && !searchText && (
+				<div className="all-text">ALL</div>
+			)}
+			<Select
+				ref={selectRef}
+				className={cx('custom-multiselect', className, {
+					'has-selection': selectedChips.length > 0 && !isAllSelected,
+					'is-all-selected': isAllSelected,
 				})}
-			>
-				{(allOptionShown || isAllSelected) && !searchText && (
-					<div className="all-text">ALL</div>
-				)}
-				<Select
-					ref={selectRef}
-					className={cx('custom-multiselect', className, {
-						'has-selection': selectedChips.length > 0 && !isAllSelected,
-						'is-all-selected': isAllSelected,
-					})}
-					placeholder={placeholder}
-					mode="multiple"
-					showSearch
-					filterOption={false}
-					onSearch={handleSearch}
-					value={displayValue}
-					onChange={(newValue): void => {
-						handleInternalChange(newValue, false);
-					}}
-					onClear={onClearHandler}
-					onDropdownVisibleChange={handleDropdownVisibleChange}
-					open={isOpen}
-					defaultActiveFirstOption={defaultActiveFirstOption}
-					popupMatchSelectWidth={dropdownMatchSelectWidth}
-					allowClear={allowClear}
-					getPopupContainer={getPopupContainer ?? popupContainer}
-					suffixIcon={<ChevronDown style={{ cursor: 'default' }} size="md" />}
-					dropdownRender={customDropdownRender}
-					menuItemSelectedIcon={null}
-					popupClassName={cx(
-						'custom-multiselect-dropdown-container',
-						popupClassName,
-					)}
-					notFoundContent={<div className="empty-message">{noDataMessage}</div>}
-					onKeyDown={handleKeyDown}
-					tagRender={tagRender as any}
-					placement={placement}
-					listHeight={300}
-					searchValue={searchText}
-					maxTagTextLength={maxTagTextLength}
-					maxTagCount={isAllSelected ? undefined : maxTagCount}
-					{...rest}
-				/>
-			</div>
-		</TooltipProvider>
+				placeholder={placeholder}
+				mode="multiple"
+				showSearch
+				filterOption={false}
+				onSearch={handleSearch}
+				value={displayValue}
+				onChange={(newValue): void => {
+					handleInternalChange(newValue, false);
+				}}
+				onClear={onClearHandler}
+				onDropdownVisibleChange={handleDropdownVisibleChange}
+				open={isOpen}
+				defaultActiveFirstOption={defaultActiveFirstOption}
+				popupMatchSelectWidth={dropdownMatchSelectWidth}
+				allowClear={allowClear}
+				getPopupContainer={getPopupContainer ?? popupContainer}
+				suffixIcon={<ChevronDown style={{ cursor: 'default' }} size="md" />}
+				dropdownRender={customDropdownRender}
+				menuItemSelectedIcon={null}
+				popupClassName={cx('custom-multiselect-dropdown-container', popupClassName)}
+				notFoundContent={<div className="empty-message">{noDataMessage}</div>}
+				onKeyDown={handleKeyDown}
+				tagRender={tagRender as any}
+				placement={placement}
+				listHeight={300}
+				searchValue={searchText}
+				maxTagTextLength={maxTagTextLength}
+				maxTagCount={isAllSelected ? undefined : maxTagCount}
+				{...rest}
+			/>
+		</div>
 	);
 };
 

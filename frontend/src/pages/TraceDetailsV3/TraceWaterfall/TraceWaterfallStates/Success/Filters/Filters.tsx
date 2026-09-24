@@ -4,7 +4,7 @@ import { ArrowRightFromLine, Search, X } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -313,112 +313,110 @@ function Filters({
 	// dropped, so collapse can't accidentally commit a malformed expression
 	// and fire an erroring /query_range request.
 	return (
-		<TooltipProvider>
-			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-			<div
-				className={cx(styles.root, isExpanded && styles.isExpanded)}
-				ref={containerRef}
-				onBlur={(e): void => {
-					const relatedTarget = e.relatedTarget as Node | null;
-					const blurredIntoSelf = !!containerRef.current?.contains(relatedTarget);
-					if (!blurredIntoSelf) {
-						handleBlur();
-					}
-				}}
-			>
-				{isExpanded && (
-					<div className={styles.categoryControls}>
-						<ToggleGroup
-							variant="outlined"
-							color="secondary"
-							type="single"
-							value={selectedCategory}
-							onChange={(value: string): void => {
-								if (value) {
-									handleCategoryChange(value as SpanCategory);
-								}
-							}}
-							size="sm"
-							items={categories.map((category) => ({
-								value: category,
-								label: category,
-							}))}
-						/>
-					</div>
-				)}
-
-				<div className={styles.searchInput}>
-					{isExpanded ? (
-						<div className={styles.searchAndNav}>
-							<div className={styles.searchContainer}>
-								<QuerySearch
-									queryData={{
-										...BASE_FILTER_QUERY,
-										filters,
-										filter: { expression },
-									}}
-									onChange={handleExpressionChange}
-									onRun={handleRunQuery}
-									dataSource={DataSource.TRACES}
-									placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
-								/>
-							</div>
-						</div>
-					) : (
-						<div className={styles.searchPill}>{pillWithPopover}</div>
-					)}
-				</div>
-
-				<div className={styles.resultActions}>
-					<QueryResult
-						hasExpression={hasExpression}
-						hasResults={hasResults}
-						isFetching={isFetching}
-						error={error}
-						noData={noData}
-						currentIndex={currentSearchedIndex}
-						total={filteredSpanIds.length}
-						onPrev={handlePrev}
-						onNext={handleNext}
-						showNavigation={isExpanded}
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
+		<div
+			className={cx(styles.root, isExpanded && styles.isExpanded)}
+			ref={containerRef}
+			onBlur={(e): void => {
+				const relatedTarget = e.relatedTarget as Node | null;
+				const blurredIntoSelf = !!containerRef.current?.contains(relatedTarget);
+				if (!blurredIntoSelf) {
+					handleBlur();
+				}
+			}}
+		>
+			{isExpanded && (
+				<div className={styles.categoryControls}>
+					<ToggleGroup
+						variant="outlined"
+						color="secondary"
+						type="single"
+						value={selectedCategory}
+						onChange={(value: string): void => {
+							if (value) {
+								handleCategoryChange(value as SpanCategory);
+							}
+						}}
+						size="sm"
+						items={categories.map((category) => ({
+							value: category,
+							label: category,
+						}))}
 					/>
-					{isExpanded && (
-						<div className={styles.expandedActions}>
-							{hasExpression && (
-								<Tooltip title="Clear filter">
-									<Button
-										aria-label="Action"
-										variant="ghost"
-										size="sm"
-										icon
-										color="secondary"
-										onClick={handleClear}
-									>
-										<X size={14} />
-									</Button>
-								</Tooltip>
-							)}
-							<Tooltip title="Collapse filters">
+				</div>
+			)}
+
+			<div className={styles.searchInput}>
+				{isExpanded ? (
+					<div className={styles.searchAndNav}>
+						<div className={styles.searchContainer}>
+							<QuerySearch
+								queryData={{
+									...BASE_FILTER_QUERY,
+									filters,
+									filter: { expression },
+								}}
+								onChange={handleExpressionChange}
+								onRun={handleRunQuery}
+								dataSource={DataSource.TRACES}
+								placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
+							/>
+						</div>
+					</div>
+				) : (
+					<div className={styles.searchPill}>{pillWithPopover}</div>
+				)}
+			</div>
+
+			<div className={styles.resultActions}>
+				<QueryResult
+					hasExpression={hasExpression}
+					hasResults={hasResults}
+					isFetching={isFetching}
+					error={error}
+					noData={noData}
+					currentIndex={currentSearchedIndex}
+					total={filteredSpanIds.length}
+					onPrev={handlePrev}
+					onNext={handleNext}
+					showNavigation={isExpanded}
+				/>
+				{isExpanded && (
+					<div className={styles.expandedActions}>
+						{hasExpression && (
+							<Tooltip title="Clear filter">
 								<Button
 									aria-label="Action"
 									variant="ghost"
 									size="sm"
 									icon
 									color="secondary"
-									onClick={onCollapse}
+									onClick={handleClear}
 								>
-									<ArrowRightFromLine size={14} />
+									<X size={14} />
 								</Button>
 							</Tooltip>
-						</div>
-					)}
-				</div>
-
-				<NozButton />
-
-				<div className={styles.highlightControl}>{highlightErrorsToggle}</div>
+						)}
+						<Tooltip title="Collapse filters">
+							<Button
+								aria-label="Action"
+								variant="ghost"
+								size="sm"
+								icon
+								color="secondary"
+								onClick={onCollapse}
+							>
+								<ArrowRightFromLine size={14} />
+							</Button>
+						</Tooltip>
+					</div>
+				)}
 			</div>
-		</TooltipProvider>
+
+			<NozButton />
+
+			<div className={styles.highlightControl}>{highlightErrorsToggle}</div>
+		</div>
 	);
 }
 

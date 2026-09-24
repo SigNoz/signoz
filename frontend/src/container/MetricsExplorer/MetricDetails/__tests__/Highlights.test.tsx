@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import TimezoneProvider from 'providers/Timezone';
 
@@ -10,9 +9,7 @@ import { getMockMetricHighlightsData, MOCK_METRIC_NAME } from './testUtlls';
 function renderHighlights(metricName: string): ReturnType<typeof render> {
 	return render(
 		<TimezoneProvider>
-			<TooltipProvider>
-				<Highlights metricName={metricName} />
-			</TooltipProvider>
+			<Highlights metricName={metricName} />
 		</TimezoneProvider>,
 	);
 }

@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import {
 	createColumnHelper,
 	flexRender,
@@ -100,22 +100,20 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 	const eventTimeMs = event.timeUnixNano / 1e6;
 
 	return (
-		<TooltipProvider>
-			<Tooltip
-				open
-				className={styles.popover}
-				title={
-					<EventTooltipContent
-						eventName={event.name}
-						timeOffsetMs={eventTimeMs - spanTimestamp}
-						isError={isError}
-						attributeMap={event.attributeMap || {}}
-					/>
-				}
-			>
-				{dot}
-			</Tooltip>
-		</TooltipProvider>
+		<Tooltip
+			open
+			className={styles.popover}
+			title={
+				<EventTooltipContent
+					eventName={event.name}
+					timeOffsetMs={eventTimeMs - spanTimestamp}
+					isError={isError}
+					attributeMap={event.attributeMap || {}}
+				/>
+			}
+		>
+			{dot}
+		</Tooltip>
 	);
 });
 
@@ -338,34 +336,32 @@ const SpanOverview = memo(function SpanOverview({
 
 			{/* Action buttons — shown on hover via CSS, right-aligned */}
 			<span className={styles.rowActions}>
-				<TooltipProvider delay={200}>
-					<Tooltip title="Copy Span Link" className={styles.actionTooltip}>
-						<Button
-							aria-label="Action"
-							variant="ghost"
-							size="sm"
-							icon
-							color="secondary"
-							className={styles.actionBtn}
-							onClick={onSpanCopy}
-						>
-							<Link size={12} />
-						</Button>
-					</Tooltip>
-					<Tooltip title="Add to Trace Funnel" className={styles.actionTooltip}>
-						<Button
-							aria-label="Action"
-							variant="ghost"
-							size="sm"
-							icon
-							color="secondary"
-							className={styles.actionBtn}
-							onClick={handleFunnelClick}
-						>
-							<ListPlus size={12} />
-						</Button>
-					</Tooltip>
-				</TooltipProvider>
+				<Tooltip title="Copy Span Link" className={styles.actionTooltip}>
+					<Button
+						aria-label="Action"
+						variant="ghost"
+						size="sm"
+						icon
+						color="secondary"
+						className={styles.actionBtn}
+						onClick={onSpanCopy}
+					>
+						<Link size={12} />
+					</Button>
+				</Tooltip>
+				<Tooltip title="Add to Trace Funnel" className={styles.actionTooltip}>
+					<Button
+						aria-label="Action"
+						variant="ghost"
+						size="sm"
+						icon
+						color="secondary"
+						className={styles.actionBtn}
+						onClick={handleFunnelClick}
+					>
+						<ListPlus size={12} />
+					</Button>
+				</Tooltip>
 			</span>
 		</div>
 	);

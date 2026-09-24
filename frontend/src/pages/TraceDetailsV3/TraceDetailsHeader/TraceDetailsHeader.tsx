@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import FieldsSelector from 'components/FieldsSelector';
@@ -146,31 +146,29 @@ function TraceDetailsHeader({
 						)}
 					>
 						{!isFilterExpanded && (
-							<TooltipProvider>
-								<div className={styles.headerActions}>
-									<Tooltip title="Analytics">
-										<Button
-											variant="ghost"
-											size="sm"
-											icon
-											color="secondary"
-											aria-label="Analytics"
-											onClick={handleToggleAnalytics}
-										>
-											<ChartPie size={14} />
-										</Button>
-									</Tooltip>
-									<TraceOptionsMenu
-										showTraceDetails={showTraceDetails}
-										onToggleTraceDetails={handleToggleTraceDetails}
-										onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
-										traceId={traceID || ''}
-										startTime={filterMetadata.startTime}
-										endTime={filterMetadata.endTime}
-										totalSpansCount={traceMetadata?.totalSpansCount || 0}
-									/>
-								</div>
-							</TooltipProvider>
+							<div className={styles.headerActions}>
+								<Tooltip title="Analytics">
+									<Button
+										variant="ghost"
+										size="sm"
+										icon
+										color="secondary"
+										aria-label="Analytics"
+										onClick={handleToggleAnalytics}
+									>
+										<ChartPie size={14} />
+									</Button>
+								</Tooltip>
+								<TraceOptionsMenu
+									showTraceDetails={showTraceDetails}
+									onToggleTraceDetails={handleToggleTraceDetails}
+									onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
+									traceId={traceID || ''}
+									startTime={filterMetadata.startTime}
+									endTime={filterMetadata.endTime}
+									totalSpansCount={traceMetadata?.totalSpansCount || 0}
+								/>
+							</div>
 						)}
 						<div
 							key="filter"

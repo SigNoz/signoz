@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { server } from 'mocks-server/server';
 import { rest, RestRequest } from 'msw';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
@@ -30,9 +29,7 @@ const onClose = jest.fn();
 const renderDrawer = (): void => {
 	render(
 		<MockQueryClientProvider>
-			<TooltipProvider>
-				<CloudAccountSetupDrawer onClose={onClose} />
-			</TooltipProvider>
+			<CloudAccountSetupDrawer onClose={onClose} />
 		</MockQueryClientProvider>,
 	);
 };

@@ -1,7 +1,6 @@
 import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from 'tests/test-utils';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 
 import Header from '../Header';
@@ -27,18 +26,15 @@ const mockUseIsAIAssistantEnabled = useIsAIAssistantEnabled as jest.Mock;
 function renderHeader(
 	props: Partial<ComponentProps<typeof Header>> = {},
 ): void {
-	// AppLayout supplies the TooltipProvider in the app; the header is rendered bare here.
 	render(
 		<MemoryRouter>
-			<TooltipProvider>
-				<Header
-					isDirty={false}
-					isSaving={false}
-					onSave={jest.fn()}
-					onClose={jest.fn()}
-					{...props}
-				/>
-			</TooltipProvider>
+			<Header
+				isDirty={false}
+				isSaving={false}
+				onSave={jest.fn()}
+				onClose={jest.fn()}
+				{...props}
+			/>
 		</MemoryRouter>,
 	);
 }
