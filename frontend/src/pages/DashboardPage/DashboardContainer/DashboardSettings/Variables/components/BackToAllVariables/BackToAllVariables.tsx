@@ -13,7 +13,6 @@ const BackToAllVariables = ({
 			<Button
 				variant="ghost"
 				color="secondary"
-				className={styles.backToAllVariablesButton}
 				prefix={<ArrowLeft size={14} />}
 				onClick={onClose}
 				testId="variable-form-back"

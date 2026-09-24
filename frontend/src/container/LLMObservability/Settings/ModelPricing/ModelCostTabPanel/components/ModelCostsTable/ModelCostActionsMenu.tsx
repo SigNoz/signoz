@@ -7,8 +7,6 @@ import {
 } from 'components/DropdownMenu/DropdownMenuSimple';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
-import styles from './ModelCostActionsMenu.module.scss';
-
 interface ModelCostActionsMenuProps {
 	rule: LlmpricingruletypesLLMPricingRuleDTO;
 	canManage: boolean;
@@ -53,7 +51,6 @@ function ModelCostActionsMenu({
 				color="secondary"
 				size="sm"
 				icon
-				className={styles.actionButton}
 				aria-label="Model cost actions"
 				testId={`model-cost-actions-${rule.id}`}
 			>

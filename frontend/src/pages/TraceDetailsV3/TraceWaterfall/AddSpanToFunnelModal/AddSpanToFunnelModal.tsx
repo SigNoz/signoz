@@ -207,7 +207,6 @@ function AddSpanToFunnelModal({
 				size="md"
 				variant="ghost"
 				color="secondary"
-				className={styles.backButton}
 				onClick={handleBack}
 				prefix={<ArrowLeft size={14} />}
 			>
@@ -258,7 +257,6 @@ function AddSpanToFunnelModal({
 								color="secondary"
 								key="discard"
 								onClick={handleDiscard}
-								className={styles.discardButton}
 								disabled={!isUnsavedChanges}
 							>
 								Discard
@@ -269,7 +267,7 @@ function AddSpanToFunnelModal({
 								key="save"
 								variant="solid"
 								color="primary"
-								className={styles.saveButton}
+								width="135px"
 								onClick={handleSaveFunnel}
 								disabled={!isUnsavedChanges}
 								prefix={<Check size={14} />}
@@ -283,7 +281,7 @@ function AddSpanToFunnelModal({
 								key="create"
 								variant="outlined"
 								color="secondary"
-								className={styles.createButton}
+								width="153px"
 								onClick={handleCreateNewClick}
 								prefix={<Plus size={14} />}
 							>

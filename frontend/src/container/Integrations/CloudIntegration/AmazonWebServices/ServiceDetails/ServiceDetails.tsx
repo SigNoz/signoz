@@ -476,7 +476,7 @@ function ServiceDetails({
 									disabled={isUpdatingServiceConfig}
 									size="sm"
 									prefix={<X size={14} />}
-									className="discard-btn"
+									width={100}
 									type="button"
 								>
 									Discard
@@ -486,7 +486,7 @@ function ServiceDetails({
 									variant="solid"
 									color="primary"
 									size="sm"
-									className="save-btn"
+									width={100}
 									prefix={<Save size={14} />}
 									type="submit"
 									loading={isUpdatingServiceConfig}

@@ -287,9 +287,7 @@ function OptimiseSignozNeeds({
 						size="md"
 						variant="solid"
 						color="primary"
-						className={`onboarding-next-button ${
-							isUpdatingProfile || isNextDisabled ? 'disabled' : ''
-						}`}
+						width="100%"
 						onClick={handleOnNext}
 						loading={isUpdatingProfile}
 						disabled={isNextDisabled}
@@ -302,7 +300,7 @@ function OptimiseSignozNeeds({
 						size="md"
 						variant="ghost"
 						color="secondary"
-						className="onboarding-do-later-button"
+						width="100%"
 						onClick={handleWillDoLater}
 						loading={isUpdatingProfile}
 					>

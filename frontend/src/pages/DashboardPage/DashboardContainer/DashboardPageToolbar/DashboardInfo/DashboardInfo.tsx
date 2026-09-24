@@ -20,7 +20,6 @@ import { linkifyText } from 'utils/linkifyText';
 import { openInNewTab } from 'utils/navigation';
 
 import styles from './DashboardInfo.module.scss';
-import { TOOLTIP_SCROLL_CONTENT_CLASS } from 'components/TooltipScrollArea/TooltipScrollArea';
 
 import TagsOverflowTooltip from './TagsOverflowTooltip';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
@@ -142,7 +141,6 @@ function DashboardInfo({
 						color="primary"
 						size="sm"
 						icon
-						className={styles.dashboardTitleActionButton}
 						aria-label="Save title"
 						testId="dashboard-title-save"
 						onClick={onCommit}
@@ -155,7 +153,6 @@ function DashboardInfo({
 						color="secondary"
 						size="sm"
 						icon
-						className={styles.dashboardTitleActionButton}
 						aria-label="Cancel title edit"
 						testId="dashboard-title-cancel"
 						onClick={onCancel}
@@ -202,7 +199,6 @@ function DashboardInfo({
 						color="secondary"
 						size="sm"
 						icon
-						className={styles.publicLink}
 						aria-label="Open public dashboard"
 						testId="dashboard-public-link"
 						onClick={handleOpenPublicUrl}
@@ -221,7 +217,6 @@ function DashboardInfo({
 						color="secondary"
 						size="sm"
 						icon
-						className={styles.lockButton}
 						aria-label={isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard'}
 						testId="dashboard-lock"
 						disabled={!onToggleLock}
@@ -244,10 +239,7 @@ function DashboardInfo({
 							<TagBadge key={tag}>{tag}</TagBadge>
 						))}
 						{remainingTags.length > 0 && (
-							<Tooltip
-								className={TOOLTIP_SCROLL_CONTENT_CLASS}
-								title={<TagsOverflowTooltip tags={remainingTags} />}
-							>
+							<Tooltip title={<TagsOverflowTooltip tags={remainingTags} />}>
 								<span data-testid="dashboard-tags-overflow">
 									<TagBadge>+{remainingTags.length}</TagBadge>
 								</span>

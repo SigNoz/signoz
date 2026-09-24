@@ -137,7 +137,7 @@ function ExtraPricingBuckets({
 					size="md"
 					variant="dashed"
 					color="secondary"
-					className={styles.bucketAddBtn}
+					width="100%"
 					prefix={<Plus size={14} />}
 					onClick={(): void => setIsExtraPricingBucketOpen(true)}
 					testId="drawer-add-bucket-btn"

@@ -109,7 +109,6 @@ function K8sTableToolbar({
 						color="secondary"
 						testId="k8s-table-download-button"
 						onClick={onDownload}
-						className={styles.toolbarButton}
 					>
 						<Download size={14} />
 					</Button>
@@ -126,7 +125,6 @@ function K8sTableToolbar({
 					color="secondary"
 					testId="k8s-table-options-button"
 					onClick={onOpenOptionsDrawer}
-					className={styles.toolbarButton}
 				>
 					<SlidersVertical size={14} />
 				</Button>

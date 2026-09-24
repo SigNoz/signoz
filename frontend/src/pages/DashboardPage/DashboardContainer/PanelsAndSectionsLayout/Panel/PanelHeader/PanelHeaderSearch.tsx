@@ -51,7 +51,6 @@ function PanelHeaderSearch({
 					size="sm"
 					icon
 					onClick={(): void => setExpanded(true)}
-					className={styles.searchTrigger}
 					testId="panel-header-search-trigger"
 					aria-label="Search"
 				>
@@ -77,7 +76,6 @@ function PanelHeaderSearch({
 					color="secondary"
 					size="sm"
 					icon
-					className={styles.clear}
 					onClick={clear}
 					testId="panel-header-search-clear"
 					aria-label="Clear search"

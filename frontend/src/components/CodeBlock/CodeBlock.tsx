@@ -53,19 +53,20 @@ function CodeBlock({
 			data-testid="code-block-container"
 		>
 			{showCopyButton ? (
-				<Tooltip title={isCopied ? 'Copied' : 'Copy'}>
-					<Button
-						variant="ghost"
-						color="secondary"
-						size="sm"
-						icon
-						onClick={handleCopy}
-						aria-label="Copy code"
-						style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}
-					>
-						{isCopied ? <Check size={14} /> : <Copy size={14} />}
-					</Button>
-				</Tooltip>
+				<div className={styles.copyButton}>
+					<Tooltip title={isCopied ? 'Copied' : 'Copy'}>
+						<Button
+							variant="ghost"
+							color="secondary"
+							size="sm"
+							icon
+							onClick={handleCopy}
+							aria-label="Copy code"
+						>
+							{isCopied ? <Check size={14} /> : <Copy size={14} />}
+						</Button>
+					</Tooltip>
+				</div>
 			) : null}
 			<SyntaxHighlighter
 				style={a11yDark}

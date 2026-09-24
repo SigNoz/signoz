@@ -43,18 +43,19 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 	}
 
 	return (
-		<Tooltip title={NOZ_TOOLTIP_TITLE}>
-			<Button
-				size="md"
-				variant="solid"
-				color="primary"
-				icon
-				className={`${styles.trigger} noz-wave`}
-				onClick={handleOpen}
-				aria-label="Open Noz"
-			>
-				<Noz size={24} />
-			</Button>
-		</Tooltip>
+		<div className={`${styles.trigger} noz-wave`}>
+			<Tooltip title={NOZ_TOOLTIP_TITLE}>
+				<Button
+					size="md"
+					variant="solid"
+					color="primary"
+					icon
+					onClick={handleOpen}
+					aria-label="Open Noz"
+				>
+					<Noz size={24} />
+				</Button>
+			</Tooltip>
+		</div>
 	);
 }

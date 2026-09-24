@@ -73,7 +73,6 @@ function IntegrationDetailPage(): JSX.Element {
 					variant="link"
 					color="secondary"
 					prefix={<ArrowLeft size={14} />}
-					className="all-integrations-btn"
 					onClick={(): void => {
 						history.push(ROUTES.INTEGRATIONS);
 					}}

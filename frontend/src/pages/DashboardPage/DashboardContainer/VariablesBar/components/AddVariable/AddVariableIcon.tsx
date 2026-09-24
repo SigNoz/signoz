@@ -5,7 +5,6 @@ import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 import { useDashboardStore } from '../../../store/useDashboardStore';
-import styles from './AddVariable.module.scss';
 
 interface AddVariableIconProps {
 	/** Permissions the control needs; reported in the standard wording when denied. */
@@ -41,7 +40,6 @@ function AddVariableIcon({
 					color="secondary"
 					size="sm"
 					icon
-					className={styles.addVariableIcon}
 					aria-label="Add variable"
 					testId="dashboard-variables-add"
 					onClick={onClick}
@@ -60,7 +58,6 @@ function AddVariableIcon({
 			color="secondary"
 			size="sm"
 			icon
-			className={styles.addVariableIcon}
 			aria-label="Add variable"
 			testId="dashboard-variables-add"
 			onClick={onClick}

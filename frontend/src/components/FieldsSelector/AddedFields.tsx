@@ -57,7 +57,6 @@ function SortableField({
 			</div>
 			{!isRequired && (
 				<Button
-					className={cx(styles.removeBtn, 'periscope-btn')}
 					variant="solid"
 					color="danger"
 					size="sm"

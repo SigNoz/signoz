@@ -95,7 +95,6 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 					size="md"
 					variant="solid"
 					color="secondary"
-					className="request-integration-btn"
 					prefix={<Cable size={14} />}
 					onClick={(): void => setIsRequestIntegrationDialogOpen(true)}
 				>

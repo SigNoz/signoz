@@ -41,7 +41,7 @@ export function TraceIdField({ span }: TraceIdFieldProps): JSX.Element {
 					size="md"
 					variant="link"
 					color="secondary"
-					className={styles.traceIdCopy}
+					maxWidth="100%"
 					onClick={handleCopy}
 				>
 					{span.trace_id}

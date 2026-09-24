@@ -85,6 +85,7 @@ function VariablesPopover({
 						variables.map((v) => (
 							<span
 								key={`${v.source}-${v.name}`}
+								className={styles.item}
 								onMouseDown={(e): void => e.preventDefault()}
 							>
 								<Button
@@ -92,7 +93,7 @@ function VariablesPopover({
 									variant="ghost"
 									color="secondary"
 									size="md"
-									className={styles.item}
+									width="100%"
 									aria-label={`Insert {{${v.name}}}`}
 									testId={`context-link-variable-${v.name}`}
 									onClick={(): void => {

@@ -124,7 +124,7 @@ function ViewsRail({
 					size="md"
 					variant="ghost"
 					color="secondary"
-					className={styles.item}
+					width="100%"
 					onClick={(): void => onSelect(row.id)}
 					testId={`dashboards-view-${row.id}`}
 					prefix={<Icon size={16} className={styles.itemIcon} />}
@@ -154,7 +154,6 @@ function ViewsRail({
 										color="secondary"
 										size="sm"
 										icon
-										className={styles.itemAction}
 										aria-label="Rename view"
 										onClick={(e): void => e.stopPropagation()}
 									>
@@ -169,7 +168,6 @@ function ViewsRail({
 								color="secondary"
 								size="sm"
 								icon
-								className={cx(styles.itemAction, styles.itemActionDanger)}
 								aria-label="Delete view"
 								onClick={(e): void => {
 									e.stopPropagation();

@@ -1,6 +1,5 @@
 import { Check, Clock, RotateCcw, X, Zap } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
-import cx from 'classnames';
 
 import type { BrandedPermission } from '../../hooks/useAuthZ/types';
 import { OverrideState } from '../types';
@@ -19,7 +18,6 @@ type OverrideOption = {
 	state: OverrideState;
 	label: string;
 	icon: React.ReactNode;
-	activeClassName: string;
 };
 
 const OVERRIDE_OPTIONS: OverrideOption[] = [
@@ -27,31 +25,26 @@ const OVERRIDE_OPTIONS: OverrideOption[] = [
 		state: OverrideState.Reset,
 		label: 'Auto',
 		icon: <RotateCcw size={13} />,
-		activeClassName: styles.optAuto,
 	},
 	{
 		state: OverrideState.Granted,
 		label: 'Grant',
 		icon: <Check size={13} />,
-		activeClassName: styles.optGranted,
 	},
 	{
 		state: OverrideState.Denied,
 		label: 'Deny',
 		icon: <X size={13} />,
-		activeClassName: styles.optDenied,
 	},
 	{
 		state: OverrideState.Delay,
 		label: 'Delay',
 		icon: <Clock size={13} />,
-		activeClassName: styles.optDelay,
 	},
 	{
 		state: OverrideState.Error,
 		label: 'Error',
 		icon: <Zap size={13} />,
-		activeClassName: styles.optError,
 	},
 ];
 
@@ -71,10 +64,7 @@ export function OverrideControl({
 							type="button"
 							aria-pressed={isActive}
 							aria-label={option.label}
-							className={cx(styles.segment, {
-								[styles.segmentActive]: isActive,
-								[option.activeClassName]: isActive,
-							})}
+							data-option={option.state}
 							variant="ghost"
 							color="secondary"
 							onClick={(): void => onSelect(permission, option.state)}

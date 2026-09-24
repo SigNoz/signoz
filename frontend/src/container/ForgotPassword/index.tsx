@@ -184,11 +184,11 @@ function ForgotPassword({
 				<div className="login-form-actions forgot-password-actions">
 					<Button
 						size="md"
-						color="primary"
+						color="secondary"
 						variant="solid"
 						type="button"
 						testId="forgot-password-back"
-						className="forgot-password-back-button"
+						width="100%"
 						onClick={handleBackToLogin}
 						prefix={<ArrowLeft size={12} />}
 					>
@@ -204,7 +204,7 @@ function ForgotPassword({
 						color="primary"
 						type="submit"
 						testId="forgot-password-submit"
-						className="login-submit-btn"
+						width="100%"
 						suffix={<ArrowRight size={12} />}
 					>
 						{isLoading ? 'Sending...' : 'Send reset link'}

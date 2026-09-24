@@ -393,7 +393,7 @@ function Login(): JSX.Element {
 							variant="solid"
 							onClick={onNextHandler}
 							testId="initiate_login"
-							className="login-submit-btn"
+							width="100%"
 							suffix={<ArrowRight />}
 						>
 							Next
@@ -411,7 +411,7 @@ function Login(): JSX.Element {
 							color="primary"
 							testId="callback_authn_submit"
 							data-attr="signup"
-							className="login-submit-btn"
+							width="100%"
 							suffix={<ArrowRight />}
 						>
 							Sign in with SSO
@@ -429,7 +429,7 @@ function Login(): JSX.Element {
 							testId="password_authn_submit"
 							type="submit"
 							data-attr="signup"
-							className="login-submit-btn"
+							width="100%"
 							suffix={<ArrowRight />}
 						>
 							Sign in with Password

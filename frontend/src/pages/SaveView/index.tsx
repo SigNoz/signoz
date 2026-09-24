@@ -344,7 +344,6 @@ function SaveView(): JSX.Element {
 						variant="solid"
 						color="secondary"
 						onClick={hideDeleteViewModal}
-						className="cancel-btn"
 						prefix={<X size={16} />}
 					>
 						Cancel
@@ -356,7 +355,6 @@ function SaveView(): JSX.Element {
 						color="danger"
 						prefix={<Trash2 size={16} />}
 						onClick={onDeleteHandler}
-						className="delete-btn"
 						loading={isDeleteLoading}
 						testId="confirm-delete"
 					>

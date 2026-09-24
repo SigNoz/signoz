@@ -19,7 +19,6 @@ import type { AxiosError } from 'axios';
 
 import type { AlertRule } from '../types';
 import { ALERT_ACTIONS, alertActionLogEvent } from '../utils';
-import styles from './ActionsMenu.module.scss';
 
 interface ActionsMenuProps {
 	rule: AlertRule;
@@ -172,7 +171,6 @@ function ActionsMenu({
 					color="secondary"
 					size="sm"
 					icon
-					className={styles.actionButton}
 					testId="alert-actions"
 				>
 					<Ellipsis size={16} />

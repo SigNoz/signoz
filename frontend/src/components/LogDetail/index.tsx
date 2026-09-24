@@ -334,7 +334,6 @@ function LogDetailInner({
 										color="secondary"
 										icon
 										aria-label="Move to previous log"
-										className="log-arrow-btn log-arrow-btn-up"
 										disabled={isPrevDisabled}
 										onClick={goToPrev}
 									>
@@ -353,7 +352,6 @@ function LogDetailInner({
 										color="secondary"
 										icon
 										aria-label="Move to next log"
-										className="log-arrow-btn log-arrow-btn-down"
 										disabled={isNextDisabled}
 										onClick={goToNext}
 									>
@@ -368,7 +366,6 @@ function LogDetailInner({
 										variant="outlined"
 										color="secondary"
 										prefix={<Compass size={16} />}
-										className="open-in-explorer-btn"
 										onClick={handleOpenInExplorer}
 									>
 										Open in Explorer
@@ -426,7 +423,7 @@ function LogDetailInner({
 						color="secondary"
 						size="sm"
 						type="single"
-						className="views-tabs"
+						testId="log-detail-views-tabs"
 						onChange={handleModeChange}
 						value={selectedView}
 						items={[

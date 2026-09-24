@@ -82,7 +82,6 @@ export function AuthZDevModalHeader({
 			<div className={styles.actionsRow}>
 				<Button
 					disabledTooltip={noPermissionsReason}
-					className={styles.actionButton}
 					variant="solid"
 					color="success"
 					size="sm"
@@ -94,7 +93,6 @@ export function AuthZDevModalHeader({
 				</Button>
 				<Button
 					disabledTooltip={noPermissionsReason}
-					className={styles.actionButton}
 					variant="solid"
 					color="danger"
 					size="sm"
@@ -106,7 +104,6 @@ export function AuthZDevModalHeader({
 				</Button>
 				<Button
 					disabledTooltip={noOverridesReason}
-					className={styles.actionButton}
 					variant="outlined"
 					color="secondary"
 					size="sm"

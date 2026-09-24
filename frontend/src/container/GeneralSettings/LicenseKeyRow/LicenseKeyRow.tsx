@@ -35,7 +35,6 @@ function LicenseKeyRow(): JSX.Element | null {
 					size="sm"
 					aria-label="Copy license key"
 					testId="license-key-row-copy-btn"
-					className="license-key-row__copy-btn"
 					onClick={(): void => handleCopyLicenseKey(licenseKey)}
 					icon
 				>

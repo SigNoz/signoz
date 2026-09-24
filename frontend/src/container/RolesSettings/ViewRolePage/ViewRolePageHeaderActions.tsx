@@ -30,7 +30,6 @@ export function ViewRolePageHeaderActions({
 					color="danger"
 					loading
 					testId="delete-button"
-					className={styles.deleteButton}
 				>
 					Delete
 				</Button>
@@ -46,7 +45,6 @@ export function ViewRolePageHeaderActions({
 					disabled
 					disabledTooltip="Managed roles cannot be deleted"
 					testId="delete-button"
-					className={styles.deleteButton}
 				>
 					Delete
 				</Button>
@@ -62,7 +60,6 @@ export function ViewRolePageHeaderActions({
 				color="danger"
 				onClick={handleOpenDeleteModal}
 				data-testid="delete-button"
-				className={styles.deleteButton}
 			>
 				Delete
 			</AuthZButton>

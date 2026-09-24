@@ -58,18 +58,19 @@ function JsonEditor({
 
 	return (
 		<div className={styles.editorWrap}>
-			<Button
-				variant="ghost"
-				color="secondary"
-				size="sm"
-				icon
-				className={styles.expandBtn}
-				aria-label="Expand editor"
-				testId="json-editor-expand"
-				onClick={(): void => setExpanded(true)}
-			>
-				<Maximize2 size={14} />
-			</Button>
+			<div className={styles.expandBtn}>
+				<Button
+					variant="ghost"
+					color="secondary"
+					size="sm"
+					icon
+					aria-label="Expand editor"
+					testId="json-editor-expand"
+					onClick={(): void => setExpanded(true)}
+				>
+					<Maximize2 size={14} />
+				</Button>
+			</div>
 			<div className={styles.editor}>{renderEditor(height)}</div>
 
 			<DialogWrapper

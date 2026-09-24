@@ -56,7 +56,6 @@ export default function ContextPickerEmptyState({
 				variant="link"
 				size="sm"
 				color="primary"
-				className={styles.contextPopoverEmptyCta}
 				onClick={(): void => onPrefill(prefill)}
 				testId={`ai-context-empty-cta-${category}`}
 				prefix={<Sparkles size={14} />}

@@ -167,7 +167,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 									color="secondary"
 									onClick={(): void => setShowHistory((v) => !v)}
 									aria-label="Toggle conversations"
-									className={showHistory ? styles.toggleBtnActive : ''}
+									aria-pressed={showHistory}
 								>
 									<History size={14} />
 								</Button>

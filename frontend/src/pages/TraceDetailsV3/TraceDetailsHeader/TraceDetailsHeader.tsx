@@ -125,7 +125,6 @@ function TraceDetailsHeader({
 							color="secondary"
 							size="sm"
 							icon
-							className={styles.backBtn}
 							onClick={handlePreviousBtnClick}
 							aria-label="Back"
 						>

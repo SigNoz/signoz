@@ -7,7 +7,6 @@ import type { DashboardSection } from '../../../utils';
 import { useAddSection } from '../hooks/useAddSection';
 import { useFirstSectionMigration } from '../hooks/useFirstSectionMigration';
 import FirstSectionMigrationModal from '../FirstSectionMigrationModal';
-import styles from './AddSectionControl.module.scss';
 
 const DEFAULT_SECTION_TITLE = 'New section';
 
@@ -51,7 +50,6 @@ function AddSectionControl({
 				color="secondary"
 				type="button"
 				variant="ghost"
-				className={styles.addButton}
 				onClick={handleClick}
 				testId="add-section"
 				prefix={<Plus size={14} />}

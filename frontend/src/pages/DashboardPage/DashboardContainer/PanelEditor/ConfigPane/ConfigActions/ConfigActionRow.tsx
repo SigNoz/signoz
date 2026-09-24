@@ -30,7 +30,7 @@ function ConfigActionRow({
 			type="button"
 			variant="outlined"
 			color="secondary"
-			className={styles.row}
+			width="100%"
 			testId={testId}
 			onClick={onClick}
 			prefix={<span className={styles.icon}>{icon}</span>}

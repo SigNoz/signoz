@@ -26,7 +26,6 @@ function AttributeWithExpandablePopover({
 				color="primary"
 				onClick={(): void => onExpand(attributeKey, attributeValue)}
 				size="sm"
-				className={popoverStyles.expandButton}
 				prefix={<Fullscreen size={14} />}
 			>
 				Expand

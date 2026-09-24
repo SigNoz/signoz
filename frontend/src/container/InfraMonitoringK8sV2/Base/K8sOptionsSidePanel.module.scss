@@ -28,13 +28,8 @@
 	display: flex;
 	flex-direction: column;
 	padding: var(--spacing-4) 0;
-}
 
-.fontSizeOption {
-	width: 100%;
-	--button-display: flex;
 	--button-justify-content: space-between;
-	--button-align-items: center;
 	--button-padding: var(--spacing-4) var(--spacing-8);
 }
 

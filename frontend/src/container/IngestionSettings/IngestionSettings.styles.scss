@@ -43,12 +43,6 @@
 			gap: 12px;
 
 			padding: 16px 0;
-
-			.add-new-ingestion-key-btn {
-				display: flex;
-				align-items: center;
-				gap: 8px;
-			}
 		}
 
 		.ant-table-row {
@@ -426,11 +420,6 @@
 								font-size: 12px;
 								font-weight: 600;
 							}
-
-							.set-alert-btn {
-								cursor: pointer;
-								margin-left: 24px;
-							}
 						}
 					}
 
@@ -618,28 +607,7 @@
 			justify-content: flex-end;
 			padding: 16px 16px;
 			margin: 0;
-
-			.cancel-btn {
-				display: flex;
-				align-items: center;
-				border: none;
-				border-radius: 2px;
-				background: var(--l1-border);
-			}
-
-			.delete-btn {
-				display: flex;
-				align-items: center;
-				border: none;
-				border-radius: 2px;
-				background: var(--danger-background);
-				margin-left: 12px;
-			}
-
-			.delete-btn:hover {
-				color: var(--l1-foreground);
-				background: var(--bg-cherry-600);
-			}
+			gap: 12px;
 		}
 	}
 

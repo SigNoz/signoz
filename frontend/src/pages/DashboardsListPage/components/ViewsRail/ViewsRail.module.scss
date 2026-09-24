@@ -116,14 +116,9 @@
 	background: var(--primary-background);
 }
 
-.item {
+.row > [data-slot='button'] {
 	--button-display: flex;
 	--button-justify-content: flex-start;
-	--button-padding: 9px 10px;
-	flex: 1;
-	min-width: 0;
-	width: 100%;
-	font-size: var(--font-size-base);
 }
 
 .itemIcon {
@@ -163,23 +158,6 @@
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.1s;
-}
-
-.itemAction {
-	--button-height: 20px;
-	--button-padding: 0;
-	--button-border-radius: 4px;
-	--button-variant-ghost-color: var(--l3-foreground);
-	--button-variant-ghost-hover-background-color: var(--l1-background);
-	--button-variant-ghost-hover-color: var(--l1-foreground);
-	width: 20px;
-	height: 20px;
-	flex: none;
-}
-
-.itemActionDanger {
-	--button-variant-ghost-hover-background-color: var(--danger-background);
-	--button-variant-ghost-hover-color: var(--danger-color, #fff);
 }
 
 .row:hover .itemActions {

@@ -23,7 +23,6 @@ function NoRuleEmptyState({
 					size="md"
 					variant="solid"
 					color="primary"
-					className={styles.setupButton}
 					onClick={onSetup}
 					testId="volume-control-setup"
 				>

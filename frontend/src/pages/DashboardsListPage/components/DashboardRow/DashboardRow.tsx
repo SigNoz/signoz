@@ -124,18 +124,13 @@ function DashboardRow({
 			<div className={styles.row} onClick={onClickHandler}>
 				<div className={styles.titleWithAction}>
 					<div className={styles.titleBlock}>
-						<Tooltip
-							className={styles.nameTooltip}
-							title={name.length > 50 ? name : undefined}
-							side="bottom"
-						>
+						<Tooltip title={name.length > 50 ? name : undefined} side="bottom">
 							{titleLink}
 						</Tooltip>
 						{isLegacy && (
 							<Badge
 								color="warning"
 								variant="outlined"
-								className={styles.legacyBadge}
 								testId={`dashboard-legacy-${index}`}
 							>
 								Legacy
@@ -156,33 +151,36 @@ function DashboardRow({
 						</Tooltip>
 					)}
 
-					<Tooltip title={isLegacy ? undefined : pinLabel} side="top">
-						<Button
-							disabledTooltip={legacyPinTooltip}
-							type="button"
-							variant="ghost"
-							color="secondary"
-							size="sm"
-							icon
-							className={cx(styles.pinButton, {
-								[styles.pinButtonOn]: isPinned && !isLegacy,
-							})}
-							aria-label={pinLabel}
-							testId={`dashboard-pin-${index}`}
-							disabled={isLegacy}
-							loading={isUpdating}
-							onClick={onTogglePin}
-						>
-							{isPinned ? (
-								<>
-									<Pin size={14} className={styles.pinnedIcon} />
-									<PinOff size={14} className={styles.unpinIcon} />
-								</>
-							) : (
-								<Pin size={14} />
-							)}
-						</Button>
-					</Tooltip>
+					<span
+						className={cx(styles.pinButton, {
+							[styles.pinButtonOn]: isPinned && !isLegacy,
+						})}
+					>
+						<Tooltip title={isLegacy ? undefined : pinLabel} side="top">
+							<Button
+								disabledTooltip={legacyPinTooltip}
+								type="button"
+								variant="ghost"
+								color="secondary"
+								size="sm"
+								icon
+								aria-label={pinLabel}
+								testId={`dashboard-pin-${index}`}
+								disabled={isLegacy}
+								loading={isUpdating}
+								onClick={onTogglePin}
+							>
+								{isPinned ? (
+									<>
+										<Pin size={14} className={styles.pinnedIcon} />
+										<PinOff size={14} className={styles.unpinIcon} />
+									</>
+								) : (
+									<Pin size={14} />
+								)}
+							</Button>
+						</Tooltip>
+					</span>
 
 					<ActionsPopover
 						link={link}

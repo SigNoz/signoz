@@ -1,7 +1,6 @@
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Copy } from '@signozhq/icons';
-import './CopyIconButton.styles.scss';
 
 interface CopyIconButtonProps {
 	ariaLabel: string;
@@ -26,7 +25,6 @@ function CopyIconButton({
 				aria-label={ariaLabel}
 				disabled={disabled}
 				disabledTooltip={disabledTooltip}
-				className="mcp-copy-btn"
 				onClick={onCopy}
 			>
 				<Copy size={14} />

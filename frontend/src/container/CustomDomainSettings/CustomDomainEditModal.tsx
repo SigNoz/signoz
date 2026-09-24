@@ -196,7 +196,7 @@ export default function CustomDomainEditModal({
 							variant="solid"
 							size="md"
 							color="primary"
-							className="edit-modal-apply-btn"
+							width="100%"
 							onClick={handleSubmit}
 							disabled={value === initialSubdomain}
 							loading={isLoading}

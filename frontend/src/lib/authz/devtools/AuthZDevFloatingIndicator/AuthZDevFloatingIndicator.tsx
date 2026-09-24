@@ -37,11 +37,10 @@ export function AuthZDevFloatingIndicator(): JSX.Element | null {
 				color="warning"
 				size="sm"
 				onClick={handleOpen}
-				className={styles.button}
 				testId="authz-dev-floating-indicator"
 			>
 				AuthZ Overrides
-				<Badge variant="solid" color="warning" className={styles.badge}>
+				<Badge variant="solid" color="warning">
 					{overrideCount}
 				</Badge>
 			</Button>
@@ -51,7 +50,6 @@ export function AuthZDevFloatingIndicator(): JSX.Element | null {
 				size="sm"
 				icon
 				onClick={handleDismiss}
-				className={styles.closeButton}
 				aria-label="Dismiss indicator"
 				testId="authz-dev-floating-dismiss"
 			>

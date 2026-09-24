@@ -84,7 +84,6 @@ function ErrorState({
 					size="md"
 					variant="link"
 					color="primary"
-					className={styles.learnMore}
 					onClick={handleContactSupportClick}
 					testId="dashboards-list-contact-support"
 				>

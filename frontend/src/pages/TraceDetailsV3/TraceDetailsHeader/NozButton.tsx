@@ -30,18 +30,19 @@ export default function NozButton(): JSX.Element | null {
 	}
 
 	return (
-		<Tooltip title={NOZ_TOOLTIP_TITLE}>
-			<Button
-				variant="ghost"
-				size="sm"
-				icon
-				color="secondary"
-				className="noz-wave"
-				aria-label="Open Noz"
-				onClick={handleOpenNoz}
-			>
-				<Noz size={16} />
-			</Button>
-		</Tooltip>
+		<span className="noz-wave">
+			<Tooltip title={NOZ_TOOLTIP_TITLE}>
+				<Button
+					variant="ghost"
+					size="sm"
+					icon
+					color="secondary"
+					aria-label="Open Noz"
+					onClick={handleOpenNoz}
+				>
+					<Noz size={16} />
+				</Button>
+			</Tooltip>
+		</span>
 	);
 }

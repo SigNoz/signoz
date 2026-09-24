@@ -102,26 +102,16 @@ export function CheckboxFilterV2ValueRow({
 						<Badge
 							variant="outlined"
 							color={badge.color}
-							className={styles.badge}
+							data-action="badge"
 							testId={`badge-${badge.key}`}
 						>
 							{badge.label}
 						</Badge>
 					)}
-					<Button
-						size="md"
-						variant="ghost"
-						color="secondary"
-						className={styles.onlyButton}
-					>
+					<Button size="md" variant="ghost" color="secondary" data-action="only">
 						{onlyButtonLabel}
 					</Button>
-					<Button
-						size="md"
-						variant="ghost"
-						color="secondary"
-						className={styles.toggleButton}
-					>
+					<Button size="md" variant="ghost" color="secondary" data-action="toggle">
 						Toggle
 					</Button>
 				</div>

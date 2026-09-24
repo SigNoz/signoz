@@ -53,34 +53,6 @@
 	}
 }
 
-.publicLink {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	padding: 0;
-	border: none;
-	background: transparent;
-	color: inherit;
-	cursor: pointer;
-}
-
-.lockButton {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	padding: 0;
-	border: none;
-	background: transparent;
-	color: inherit;
-	cursor: pointer;
-}
-
-.lockButton:disabled {
-	cursor: default;
-}
-
 .divider {
 	flex-shrink: 0;
 	width: 1px;
@@ -99,10 +71,6 @@
 .dashboardTitleInput {
 	flex: 1;
 	min-width: 0;
-}
-
-.dashboardTitleActionButton {
-	flex-shrink: 0;
 }
 
 /* Fixed footprint (2 tags + `+N`): never shrinks, so a long title ellipsizes

@@ -207,7 +207,6 @@ function RoleMappingSection({
 														size="md"
 														variant="ghost"
 														color="secondary"
-														className="role-mapping-section__remove-btn"
 														onClick={(): void => remove(field.name)}
 														aria-label="Remove mapping"
 														testId="role-mapping-remove"

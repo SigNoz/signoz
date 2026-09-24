@@ -38,14 +38,13 @@ function SortableColumnChip({
 
 	return (
 		<div ref={setNodeRef} style={style} className={styles.chip}>
-			<span {...listeners}>
+			<span {...listeners} className={styles.grip}>
 				<Button
 					type="button"
 					variant="ghost"
 					color="secondary"
 					size="sm"
 					icon
-					className={styles.grip}
 					aria-label={`Reorder ${name}`}
 					{...sortableAttributes}
 				>
@@ -61,7 +60,6 @@ function SortableColumnChip({
 				color="secondary"
 				size="sm"
 				icon
-				className={styles.remove}
 				aria-label={`Remove ${name}`}
 				testId="list-column-remove"
 				onClick={(): void => onRemove(name)}

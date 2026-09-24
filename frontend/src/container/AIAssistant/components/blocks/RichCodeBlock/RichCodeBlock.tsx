@@ -127,18 +127,19 @@ function CopyButton({ text }: { text: string }): JSX.Element {
 	};
 
 	return (
-		<Tooltip title={copied ? 'Copied' : 'Copy code'}>
-			<Button
-				variant="ghost"
-				size="sm"
-				color="secondary"
-				className={styles.copyBtn}
-				onClick={handleCopy}
-				aria-label={copied ? 'Copied' : 'Copy code'}
-				icon
-			>
-				{copied ? <Check size={12} /> : <Copy size={12} />}
-			</Button>
-		</Tooltip>
+		<div className={styles.copyBtn}>
+			<Tooltip title={copied ? 'Copied' : 'Copy code'}>
+				<Button
+					variant="ghost"
+					size="sm"
+					color="secondary"
+					onClick={handleCopy}
+					aria-label={copied ? 'Copied' : 'Copy code'}
+					icon
+				>
+					{copied ? <Check size={12} /> : <Copy size={12} />}
+				</Button>
+			</Tooltip>
+		</div>
 	);
 }

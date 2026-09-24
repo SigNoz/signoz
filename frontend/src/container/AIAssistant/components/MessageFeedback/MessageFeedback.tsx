@@ -176,7 +176,6 @@ export default function MessageFeedback({
 				<div className={styles.actions}>
 					<Tooltip title={copied ? 'Copied!' : 'Copy'}>
 						<Button
-							className={styles.btn}
 							size="sm"
 							icon
 							variant="ghost"
@@ -190,9 +189,7 @@ export default function MessageFeedback({
 
 					<Tooltip title={VOTE_LABEL[FeedbackRatingDTO.positive].tooltip}>
 						<Button
-							className={cx(styles.btn, {
-								[styles.votedUp]: vote === FeedbackRatingDTO.positive,
-							})}
+							data-vote="positive"
 							size="sm"
 							icon
 							variant="ghost"
@@ -207,9 +204,7 @@ export default function MessageFeedback({
 
 					<Tooltip title={VOTE_LABEL[FeedbackRatingDTO.negative].tooltip}>
 						<Button
-							className={cx(styles.btn, {
-								[styles.votedDown]: vote === FeedbackRatingDTO.negative,
-							})}
+							data-vote="negative"
 							size="sm"
 							icon
 							variant="ghost"
@@ -225,7 +220,6 @@ export default function MessageFeedback({
 					{onRegenerate && (
 						<Tooltip title="Regenerate">
 							<Button
-								className={styles.btn}
 								size="sm"
 								icon
 								variant="ghost"

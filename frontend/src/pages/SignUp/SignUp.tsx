@@ -200,7 +200,7 @@ function SignUp(): JSX.Element {
 							data-attr="signup"
 							disabled={!!invalidFormReason}
 							loading={loading}
-							className="signup-submit-button"
+							width="100%"
 							suffix={<ArrowRight size={16} />}
 						>
 							Access My Workspace

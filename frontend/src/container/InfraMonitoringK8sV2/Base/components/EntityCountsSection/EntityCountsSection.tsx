@@ -150,6 +150,7 @@ export function EntityCountsSection<T>({
 						to={buildNavigationUrl(config.targetCategory)}
 						onClick={(): void => handleCardNavigate(config.label)}
 						data-testid={`navigate-${config.label.toLowerCase().replace(/\s+/g, '-')}`}
+						className={styles.navigateButton}
 					>
 						<Tooltip
 							title={`View ${config.label.toLowerCase()} of '${selectedItem}'`}
@@ -161,7 +162,6 @@ export function EntityCountsSection<T>({
 								icon
 								variant="ghost"
 								color="secondary"
-								className={styles.navigateButton}
 							>
 								<Compass size={14} />
 							</Button>

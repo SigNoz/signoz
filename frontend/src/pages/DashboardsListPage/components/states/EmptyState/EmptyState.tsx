@@ -36,7 +36,6 @@ function EmptyState({ createDropdown }: Props): JSX.Element {
 						size="md"
 						variant="link"
 						color="primary"
-						className={styles.learnMore}
 						testId="learn-more"
 						onClick={(): void => {
 							logEvent('Dashboard List: Learn more clicked', {});

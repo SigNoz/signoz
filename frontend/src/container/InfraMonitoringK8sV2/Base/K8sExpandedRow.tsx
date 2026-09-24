@@ -292,7 +292,6 @@ export function K8sExpandedRow<
 			type="button"
 			color="secondary"
 			variant="outlined"
-			className={styles.viewAllButton}
 			testId="expanded-row-view-all"
 			onClick={handleViewAllClick}
 			prefix={<CornerDownRight size={14} />}

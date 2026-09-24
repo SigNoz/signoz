@@ -246,7 +246,6 @@ function Overview({
 										size="md"
 										variant="link"
 										color="secondary"
-										className="action-btn"
 										prefix={<Search size={12} />}
 										onClick={(e): void => {
 											e.stopPropagation();

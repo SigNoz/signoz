@@ -194,7 +194,7 @@ export function AboutSigNozQuestions({
 						size="md"
 						variant="solid"
 						color="primary"
-						className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
+						width="100%"
 						onClick={handleOnNext}
 						disabled={isNextDisabled}
 						disabledTooltip={getNextDisabledReason()}

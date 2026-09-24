@@ -115,7 +115,6 @@ function InviteTeamMembers({
 							showHeader
 							renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => {
 								const isButtonDisabled = isSubmitting || isLoading;
-								const isInviteButtonDisabled = isButtonDisabled || !canSubmit;
 
 								return (
 									<div className="onboarding-buttons-container">
@@ -123,9 +122,7 @@ function InviteTeamMembers({
 											size="md"
 											variant="solid"
 											color="primary"
-											className={`onboarding-next-button ${
-												isInviteButtonDisabled ? 'disabled' : ''
-											}`}
+											width="100%"
 											onClick={submit}
 											loading={isButtonDisabled}
 											disabled={!canSubmit}
@@ -139,7 +136,7 @@ function InviteTeamMembers({
 											size="md"
 											variant="ghost"
 											color="secondary"
-											className="onboarding-do-later-button"
+											width="100%"
 											onClick={handleDoLater}
 											loading={isLoading}
 											disabled={isSubmitting}

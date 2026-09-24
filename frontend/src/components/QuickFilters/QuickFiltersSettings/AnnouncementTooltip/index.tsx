@@ -66,7 +66,6 @@ function AnnouncementTooltip({
 						color="primary"
 						onClick={closeTooltip}
 						prefix={<Check size={16} />}
-						className="announcement-tooltip__footer__button"
 					>
 						Okay
 					</Button>

@@ -1489,7 +1489,6 @@ function MultiIngestionSettings(): JSX.Element {
 																				onClick={onCreateSignalAlert}
 																				size="sm"
 																				testId={`set-alert-btn-${signalName}`}
-																				className="set-alert-btn"
 																				prefix={<BellPlus size={12} />}
 																			>
 																				Set alert
@@ -1700,7 +1699,6 @@ function MultiIngestionSettings(): JSX.Element {
 						size="md"
 						color="primary"
 						variant="solid"
-						className="add-new-ingestion-key-btn"
 						prefix={<Plus size={14} />}
 						onClick={showAddModal}
 					>
@@ -1742,7 +1740,6 @@ function MultiIngestionSettings(): JSX.Element {
 						color="secondary"
 						prefix={<X size={16} />}
 						onClick={hideDeleteViewModal}
-						className="cancel-btn"
 					>
 						Cancel
 					</Button>,
@@ -1754,7 +1751,6 @@ function MultiIngestionSettings(): JSX.Element {
 						prefix={<Trash2 size={16} />}
 						loading={isDeleteingAPIKey}
 						onClick={onDeleteHandler}
-						className="delete-btn"
 					>
 						Delete Ingestion Key
 					</Button>,
@@ -1784,7 +1780,6 @@ function MultiIngestionSettings(): JSX.Element {
 						color="secondary"
 						prefix={<X size={16} />}
 						onClick={hideDeleteLimitModal}
-						className="cancel-btn"
 					>
 						Cancel
 					</Button>,
@@ -1796,7 +1791,6 @@ function MultiIngestionSettings(): JSX.Element {
 						prefix={<Trash2 size={16} />}
 						loading={isDeletingLimit}
 						onClick={onDeleteLimitHandler}
-						className="delete-btn"
 					>
 						Delete Limit
 					</Button>,

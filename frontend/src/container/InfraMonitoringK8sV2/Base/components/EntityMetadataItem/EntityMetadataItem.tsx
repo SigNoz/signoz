@@ -51,7 +51,6 @@ export function EntityMetadataItem({
 							value={value}
 							size={10}
 							ariaLabel={`Copy ${label}`}
-							className={styles.copyButton}
 							testId={`copy-metadata-${label.toLowerCase().replace(/\s+/g, '-')}`}
 							onCopy={handleCopy}
 						/>

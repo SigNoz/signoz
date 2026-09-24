@@ -113,25 +113,26 @@ function HeaderRightSection({
 						</span>
 					) : null}
 
-					<Tooltip title={NOZ_TOOLTIP_TITLE}>
-						<Button
-							size="md"
-							variant="solid"
-							color="secondary"
-							className="noz-wave"
-							onClick={handleOpenAIAssistant}
-							aria-label={
-								showHeaderPendingBadge
-									? pendingUserInputCount === 1
-										? 'Open Noz, 1 action needs your response'
-										: `Open Noz, ${pendingUserInputCount} actions need your response`
-									: 'Open Noz'
-							}
-							prefix={<Noz size={20} />}
-						>
-							<Typography.Text>Noz</Typography.Text>
-						</Button>
-					</Tooltip>
+					<span className="noz-wave">
+						<Tooltip title={NOZ_TOOLTIP_TITLE}>
+							<Button
+								size="md"
+								variant="solid"
+								color="secondary"
+								onClick={handleOpenAIAssistant}
+								aria-label={
+									showHeaderPendingBadge
+										? pendingUserInputCount === 1
+											? 'Open Noz, 1 action needs your response'
+											: `Open Noz, ${pendingUserInputCount} actions need your response`
+										: 'Open Noz'
+								}
+								prefix={<Noz size={20} />}
+							>
+								<Typography.Text>Noz</Typography.Text>
+							</Button>
+						</Tooltip>
+					</span>
 				</div>
 			)}
 
@@ -152,7 +153,6 @@ function HeaderRightSection({
 						variant="ghost"
 						size="sm"
 						icon
-						className="share-feedback-btn"
 						aria-label="Feedback"
 						onClick={handleOpenFeedbackModal}
 					>

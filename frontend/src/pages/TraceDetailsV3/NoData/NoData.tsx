@@ -48,7 +48,7 @@ function NoData(): JSX.Element {
 						size="md"
 						variant="outlined"
 						color="secondary"
-						className={styles.actionBtn}
+						width="160px"
 						prefix={<RefreshCw size={14} />}
 						onClick={(): void => window.location.reload()}
 						testId="trace-no-data-refresh-button"
@@ -59,7 +59,7 @@ function NoData(): JSX.Element {
 						size="md"
 						variant="outlined"
 						color="secondary"
-						className={styles.actionBtn}
+						width="160px"
 						prefix={<LifeBuoy size={14} />}
 						onClick={(): void => handleContactSupport(isCloudUserVal)}
 						testId="trace-no-data-contact-support-button"

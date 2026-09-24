@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
 import { Button } from '@signozhq/ui/button';
-import cx from 'classnames';
 import {
 	ChevronUp,
 	Command,
@@ -13,7 +12,6 @@ import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 import './RunQueryBtn.scss';
 
 type RunQueryBtnProps = {
-	className?: string;
 	label?: string;
 	disabled?: boolean;
 	disabledTooltip?: ReactNode;
@@ -31,7 +29,6 @@ type RunQueryBtnProps = {
 );
 
 function RunQueryBtn({
-	className,
 	label,
 	isLoadingQueries,
 	handleCancelQuery,
@@ -49,7 +46,6 @@ function RunQueryBtn({
 			color="danger"
 			type="button"
 			prefix={<LoaderCircle size={14} className="loading-icon animate-spin" />}
-			className={cx('cancel-query-btn', className)}
 			onClick={handleCancelQuery}
 		>
 			Cancel
@@ -60,7 +56,6 @@ function RunQueryBtn({
 			variant="solid"
 			color="primary"
 			type="button"
-			className={cx('run-query-btn', className)}
 			disabled={disabled}
 			disabledTooltip={disabledTooltip}
 			onClick={onStageRunQuery}

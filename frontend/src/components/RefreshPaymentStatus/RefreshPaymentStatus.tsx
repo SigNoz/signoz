@@ -10,11 +10,9 @@ import { useAppContext } from 'providers/App/App';
 
 function RefreshPaymentStatus({
 	type,
-	className,
 	withPortal,
 }: {
 	type?: 'button' | 'text' | 'tooltip';
-	className?: string;
 	withPortal?: false;
 }): JSX.Element {
 	const { t } = useTranslation(['failedPayment']);
@@ -51,7 +49,6 @@ function RefreshPaymentStatus({
 				variant="link"
 				color="secondary"
 				size="md"
-				className={className}
 				onClick={handleRefreshPaymentStatus}
 				prefix={<RefreshCcw size={14} />}
 				loading={isLoading}
@@ -71,7 +68,6 @@ function RefreshPaymentStatus({
 }
 RefreshPaymentStatus.defaultProps = {
 	type: 'button',
-	className: undefined,
 	withPortal: undefined,
 };
 

@@ -276,7 +276,6 @@ export default function K8sBaseDetailsContent<T>({
 						color="secondary"
 						size="sm"
 						type="single"
-						className={styles.viewsTabs}
 						onChange={handleTabChange}
 						value={selectedView}
 						items={[
@@ -352,7 +351,6 @@ export default function K8sBaseDetailsContent<T>({
 								size="sm"
 								icon
 								color="secondary"
-								className={styles.compassButton}
 								onClick={handleExplorePagesRedirect}
 							>
 								<Compass size={18} />
@@ -367,7 +365,6 @@ export default function K8sBaseDetailsContent<T>({
 								size="sm"
 								icon
 								color="secondary"
-								className={styles.compassButton}
 								onClick={handleExplorePagesRedirect}
 							>
 								<Compass size={18} />

@@ -43,7 +43,6 @@ function TraceDownloadPanel(): JSX.Element {
 						size="sm"
 						icon
 						color="secondary"
-						className={styles.cancelBtn}
 						onClick={cancelDownload}
 						aria-label="Cancel download"
 						testId="trace-download-cancel"

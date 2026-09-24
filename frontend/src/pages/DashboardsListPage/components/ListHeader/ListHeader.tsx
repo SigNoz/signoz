@@ -91,7 +91,7 @@ function ListHeader({
 								size="md"
 								variant="ghost"
 								color="secondary"
-								className={styles.sortButton}
+								width="100%"
 								onClick={(): void => onSortChange(DashboardtypesListSortDTO.name)}
 								testId="sort-by-name"
 								suffix={
@@ -106,7 +106,7 @@ function ListHeader({
 								size="md"
 								variant="ghost"
 								color="secondary"
-								className={styles.sortButton}
+								width="100%"
 								onClick={(): void => onSortChange(DashboardtypesListSortDTO.created_at)}
 								testId="sort-by-last-created"
 								suffix={
@@ -121,7 +121,7 @@ function ListHeader({
 								size="md"
 								variant="ghost"
 								color="secondary"
-								className={styles.sortButton}
+								width="100%"
 								onClick={(): void => onSortChange(DashboardtypesListSortDTO.updated_at)}
 								testId="sort-by-last-updated"
 								suffix={
@@ -138,7 +138,7 @@ function ListHeader({
 								size="md"
 								variant="ghost"
 								color="secondary"
-								className={styles.sortButton}
+								width="100%"
 								onClick={(): void => onOrderChange(DashboardtypesListOrderDTO.asc)}
 								testId="sort-order-asc"
 								suffix={
@@ -153,7 +153,7 @@ function ListHeader({
 								size="md"
 								variant="ghost"
 								color="secondary"
-								className={styles.sortButton}
+								width="100%"
 								onClick={(): void => onOrderChange(DashboardtypesListOrderDTO.desc)}
 								testId="sort-order-desc"
 								suffix={

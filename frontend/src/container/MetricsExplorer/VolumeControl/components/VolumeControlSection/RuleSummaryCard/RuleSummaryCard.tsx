@@ -36,7 +36,6 @@ function RuleSummaryCard({
 						size="md"
 						variant="ghost"
 						color="secondary"
-						className={styles.editButton}
 						onClick={onEdit}
 						testId="volume-control-edit"
 					>

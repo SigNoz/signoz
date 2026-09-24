@@ -57,27 +57,28 @@ function ReadOnlyJsonViewer({
 			data-testid="read-only-json-viewer"
 		>
 			<div className={styles.editorContainer}>
-				<Tooltip title={copied ? 'Copied!' : 'Copy JSON'}>
-					<Button
-						color="secondary"
-						variant="ghost"
-						size="sm"
-						className={styles.copyButton}
-						onClick={handleCopy}
-						testId="read-only-json-viewer-copy-button"
-						icon
-						aria-label={copied ? 'Copied' : 'Copy JSON'}
-					>
-						{copied ? (
-							<Check size={14} color={Color.BG_FOREST_400} />
-						) : (
-							<Copy
-								size={14}
-								color={isDarkMode ? Color.BG_VANILLA_400 : Color.TEXT_INK_400}
-							/>
-						)}
-					</Button>
-				</Tooltip>
+				<div className={styles.copyButton}>
+					<Tooltip title={copied ? 'Copied!' : 'Copy JSON'}>
+						<Button
+							color="secondary"
+							variant="ghost"
+							size="sm"
+							onClick={handleCopy}
+							testId="read-only-json-viewer-copy-button"
+							icon
+							aria-label={copied ? 'Copied' : 'Copy JSON'}
+						>
+							{copied ? (
+								<Check size={14} color={Color.BG_FOREST_400} />
+							) : (
+								<Copy
+									size={14}
+									color={isDarkMode ? Color.BG_VANILLA_400 : Color.TEXT_INK_400}
+								/>
+							)}
+						</Button>
+					</Tooltip>
+				</div>
 				<MEditor
 					value={jsonContent}
 					language="json"

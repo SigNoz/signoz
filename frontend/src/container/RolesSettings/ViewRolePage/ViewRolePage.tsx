@@ -75,7 +75,6 @@ function ViewRoleContentInner({
 							<hr className={styles.permissionDivider} />
 							<RadioGroup
 								color="primary"
-								className={styles.permissionModeToggle}
 								value={viewMode}
 								onChange={handleModeChange}
 								testId="permission-view-mode"
@@ -236,7 +235,6 @@ function ViewRolePage(): JSX.Element {
 							color="secondary"
 							onClick={handleCancel}
 							testId="cancel-button"
-							className={styles.backButton}
 							icon
 							aria-label="Back"
 						>
@@ -283,7 +281,6 @@ function ViewRolePage(): JSX.Element {
 						color="secondary"
 						onClick={handleCancel}
 						testId="cancel-button"
-						className={styles.backButton}
 						icon
 						aria-label="Back"
 					>

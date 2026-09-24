@@ -126,7 +126,6 @@ function OverviewTab({
 							variant="link"
 							color="secondary"
 							onClick={handleCopyId}
-							className="sa-drawer__copy-btn"
 							testId="copy-id-btn"
 							icon
 							aria-label={hasCopiedId ? 'Copied' : 'Copy ID'}
@@ -198,7 +197,7 @@ function OverviewTab({
 							DELETED
 						</Badge>
 					) : (
-						<Badge color="secondary" variant="outlined" className="sa-status-badge">
+						<Badge color="secondary" variant="outlined">
 							{account.status ? account.status.toUpperCase() : 'UNKNOWN'}
 						</Badge>
 					)}

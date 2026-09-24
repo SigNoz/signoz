@@ -199,7 +199,6 @@ export default function K8sBaseDetails<T>({
 				aria-label="Close"
 				onClick={handleClose}
 				testId="close-drawer-button"
-				className={styles.closeButton}
 			>
 				<X />
 			</Button>
@@ -213,7 +212,6 @@ export default function K8sBaseDetails<T>({
 			<CopyButton
 				value={selectedItem ?? ''}
 				ariaLabel="Copy ID"
-				className={styles.copyIdButton}
 				testId="copy-id-button"
 				onCopy={handleCopyId}
 			/>

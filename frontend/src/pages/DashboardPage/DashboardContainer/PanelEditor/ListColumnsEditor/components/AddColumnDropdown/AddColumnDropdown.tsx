@@ -55,7 +55,6 @@ function AddColumnDropdown({
 					color="secondary"
 					size="sm"
 					icon
-					className={styles.addBtn}
 					aria-label="Add column"
 					// `data-testid` (not the `testId` prop) survives the trigger's
 					// `asChild` Slot merge, which otherwise resets it to undefined.

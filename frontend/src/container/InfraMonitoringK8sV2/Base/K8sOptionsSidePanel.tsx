@@ -142,7 +142,7 @@ function K8sOptionsSidePanel<TData>({
 						key={option.value}
 						variant="ghost"
 						color="secondary"
-						className={styles.fontSizeOption}
+						width="100%"
 						testId={`font-size-${option.value}`}
 						onClick={(): void => setFontSize(option.value)}
 						suffix={
@@ -179,7 +179,6 @@ function K8sOptionsSidePanel<TData>({
 							size="sm"
 							icon
 							aria-label="Decrease max lines"
-							className={styles.lineClampButton}
 							testId="line-clamp-decrease"
 							onClick={decreaseLineClamp}
 							disabled={lineClamp <= 1}
@@ -195,7 +194,6 @@ function K8sOptionsSidePanel<TData>({
 							size="sm"
 							icon
 							aria-label="Increase max lines"
-							className={styles.lineClampButton}
 							testId="line-clamp-increase"
 							onClick={increaseLineClamp}
 							disabled={lineClamp >= 10}

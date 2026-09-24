@@ -9,7 +9,6 @@ import {
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import cx from 'classnames';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -631,7 +630,6 @@ export default function ActionsSection({
 							variant="outlined"
 							color="secondary"
 							size="sm"
-							className={cx(styles.chip, { [styles.error]: isError })}
 							onClick={(): void => handleClick(key, action)}
 							disabled={isSuccess}
 							loading={isLoading}

@@ -906,7 +906,6 @@ export default function ChatInput({
 								variant="ghost"
 								size="sm"
 								icon
-								className={styles.attachmentRemove}
 								onClick={(): void => removeFile(f.uid)}
 								aria-label={`Remove ${f.name}`}
 							>
@@ -927,11 +926,7 @@ export default function ChatInput({
 						return (
 							<div key={key} className={cx(styles.contextTag, styles.auto)}>
 								<div className={styles.contextTagContent}>
-									<Badge
-										color="secondary"
-										variant="outlined"
-										className={styles.contextTagCategory}
-									>
+									<Badge color="secondary" variant="outlined">
 										{category}
 									</Badge>
 									<span className={styles.contextTagLabel}>{label}</span>
@@ -942,7 +937,6 @@ export default function ChatInput({
 										size="sm"
 										icon
 										color="secondary"
-										className={styles.contextTagRemove}
 										onClick={(): void => onDismissAutoContext(key)}
 										aria-label={`Remove ${category}: ${label} context`}
 									>
@@ -958,11 +952,7 @@ export default function ChatInput({
 							className={styles.contextTag}
 						>
 							<div className={styles.contextTagContent}>
-								<Badge
-									color="primary"
-									variant="outlined"
-									className={styles.contextTagCategory}
-								>
+								<Badge color="primary" variant="outlined">
 									{contextItem.category}
 								</Badge>
 								<span className={styles.contextTagLabel}>{contextItem.value}</span>
@@ -972,7 +962,6 @@ export default function ChatInput({
 								size="sm"
 								icon
 								color="secondary"
-								className={styles.contextTagRemove}
 								onClick={(): void =>
 									removeContext(contextItem.category, contextItem.entityId)
 								}
@@ -1080,9 +1069,7 @@ export default function ChatInput({
 												// the Tab sequence; arrow keys move between tabs.
 												tabIndex={isActive ? 0 : -1}
 												aria-selected={isActive}
-												className={cx(styles.contextPopoverCategoryItem, {
-													[styles.active]: isActive,
-												})}
+												width="100%"
 												onClick={(): void => {
 													setActiveContextCategory(category);
 													setPickerSearchQuery('');
@@ -1151,9 +1138,7 @@ export default function ChatInput({
 														color="secondary"
 														size="sm"
 														aria-pressed={isSelected}
-														className={cx(styles.contextPopoverEntityItem, {
-															[styles.selected]: isSelected,
-														})}
+														width="100%"
 														onClick={(): void =>
 															toggleContextSelection(
 																activeContextCategory,
@@ -1163,9 +1148,7 @@ export default function ChatInput({
 														}
 														onKeyDown={(e): void => handleEntityKeyDown(e, index)}
 													>
-														<span className={styles.contextPopoverEntityItemText}>
-															{option.value}
-														</span>
+														{option.value}
 													</Button>
 												);
 											})
@@ -1193,7 +1176,6 @@ export default function ChatInput({
 										size="sm"
 										icon
 										color="secondary"
-										className={cx(styles.micDiscard, styles.secondary)}
 										onClick={handleDiscard}
 										aria-label="Discard recording"
 									>
@@ -1217,7 +1199,6 @@ export default function ChatInput({
 										size="sm"
 										icon
 										color="danger"
-										className={cx(styles.micStop, styles.destructive)}
 										onClick={handleStopAndSend}
 										aria-label="Stop and send"
 									>
@@ -1236,7 +1217,6 @@ export default function ChatInput({
 									onClick={(): void => startVoiceInput(VoiceInputSource.Button)}
 									disabled={disabled}
 									aria-label="Start voice input"
-									className={styles.micBtn}
 								>
 									<Mic size={14} />
 								</Button>

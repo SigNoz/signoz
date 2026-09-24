@@ -84,7 +84,7 @@ export default function ExportMenu({
 					size="md"
 					variant="solid"
 					color="primary"
-					className="export-button"
+					width="100%"
 					onClick={handleExport}
 					loading={isExporting}
 					prefix={<Download size={16} />}

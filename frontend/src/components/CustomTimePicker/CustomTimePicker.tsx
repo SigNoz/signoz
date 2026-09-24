@@ -654,7 +654,6 @@ function CustomTimePicker({
 					<Button
 						disabledTooltip="Zoom out time range is limited to 1 month"
 						size="md"
-						className="zoom-out-btn"
 						onClick={handleZoomOut}
 						disabled={zoomOutDisabled}
 						testId="zoom-out-btn"

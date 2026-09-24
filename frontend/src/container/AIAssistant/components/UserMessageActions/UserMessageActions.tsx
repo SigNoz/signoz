@@ -42,7 +42,6 @@ export default function UserMessageActions({
 		<div className={styles.actions}>
 			<Tooltip title={copied ? 'Copied!' : 'Copy'}>
 				<Button
-					className={styles.btn}
 					size="sm"
 					icon
 					variant="ghost"

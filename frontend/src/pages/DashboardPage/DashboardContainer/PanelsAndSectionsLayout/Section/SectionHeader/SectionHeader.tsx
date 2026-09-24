@@ -48,14 +48,17 @@ function SectionDragHandleButton({
 }): JSX.Element {
 	const { role: _role, ...sortableAttributes } = dragHandle.attributes;
 	return (
-		<span ref={dragHandle.setActivatorNodeRef} {...dragHandle.listeners}>
+		<span
+			ref={dragHandle.setActivatorNodeRef}
+			{...dragHandle.listeners}
+			className={styles.dragHandle}
+		>
 			<Button
 				type="button"
 				variant="ghost"
 				color="secondary"
 				size="sm"
 				icon
-				className={styles.dragHandle}
 				aria-label="Drag to reorder section"
 				testId={`dashboard-section-drag-${sectionId}`}
 				{...sortableAttributes}
@@ -82,23 +85,25 @@ function SectionHeader({
 			{dragHandle ? (
 				<SectionDragHandleButton dragHandle={dragHandle} sectionId={sectionId} />
 			) : null}
-			<Button
-				size="md"
-				type="button"
-				variant="ghost"
-				color="secondary"
-				className={styles.toggle}
-				onClick={onToggle}
-				testId={`dashboard-section-toggle-${sectionId}`}
-				prefix={open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-			>
-				<Typography.Text className={styles.title}>{title}</Typography.Text>
-				{repeatVariable ? (
-					<Typography.Text className={styles.repeatBadge}>
-						(repeats per ${repeatVariable})
-					</Typography.Text>
-				) : null}
-			</Button>
+			<div className={styles.toggle}>
+				<Button
+					size="md"
+					type="button"
+					variant="ghost"
+					color="secondary"
+					width="100%"
+					onClick={onToggle}
+					testId={`dashboard-section-toggle-${sectionId}`}
+					prefix={open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+				>
+					<Typography.Text className={styles.title}>{title}</Typography.Text>
+					{repeatVariable ? (
+						<Typography.Text className={styles.repeatBadge}>
+							(repeats per ${repeatVariable})
+						</Typography.Text>
+					) : null}
+				</Button>
+			</div>
 			{actions ? (
 				<SectionActionsMenu
 					sectionId={sectionId}

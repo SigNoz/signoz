@@ -47,7 +47,6 @@ function DomainUpdateToast({
 					color="secondary"
 					variant="ghost"
 					size="sm"
-					className="custom-domain-toast-visit-btn"
 					suffix={<ExternalLink size={12} />}
 					onClick={(): void => {
 						// oxlint-disable-next-line signoz/no-raw-absolute-path
@@ -61,7 +60,6 @@ function DomainUpdateToast({
 					variant="ghost"
 					size="sm"
 					icon
-					className="custom-domain-toast-dismiss-btn"
 					onClick={(): void => {
 						toast.dismiss(toastId);
 					}}

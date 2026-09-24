@@ -138,7 +138,6 @@ function VariableRow({
 											color="secondary"
 											size="sm"
 											disabled={isAppliedToAll}
-											className={styles.applyAllButton}
 											onClick={(): void => onApplyToAll(index)}
 											testId={`variable-apply-all-${variable.name}`}
 										>

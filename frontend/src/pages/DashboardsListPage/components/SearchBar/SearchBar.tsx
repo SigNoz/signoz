@@ -172,6 +172,7 @@ function SearchBar({
 					onChange={(next): void => onChange(next.replace(/\n/g, ' '))}
 				/>
 				<span
+					className={styles.submit}
 					onMouseDown={(e: MouseEvent<HTMLSpanElement>): void => e.preventDefault()}
 				>
 					<Button
@@ -179,7 +180,6 @@ function SearchBar({
 						variant="ghost"
 						color="secondary"
 						size="sm"
-						className={styles.submit}
 						aria-label="Run search"
 						disabled={disabled}
 						testId="dashboards-list-search-submit"

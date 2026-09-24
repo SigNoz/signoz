@@ -156,7 +156,6 @@ function AuthDomain(): JSX.Element {
 						<Button
 							size="md"
 							color="primary"
-							className="auth-domain-list-action-link"
 							onClick={(): void => setRecord(record)}
 							variant="link"
 							testId="auth-domain-configure"
@@ -165,8 +164,7 @@ function AuthDomain(): JSX.Element {
 						</Button>
 						<Button
 							size="md"
-							color="primary"
-							className="auth-domain-list-action-link delete"
+							color="danger"
 							onClick={(): void => showDeleteModal(record)}
 							variant="link"
 							testId="auth-domain-delete"
@@ -232,7 +230,7 @@ function AuthDomain(): JSX.Element {
 			)}
 
 			<Modal
-				className="delete-ingestion-key-modal"
+				className="delete-ingestion-key-modal auth-domain-delete-modal"
 				title={<span className="title">Delete Domain</span>}
 				open={isDeleteModalOpen}
 				closable
@@ -242,10 +240,9 @@ function AuthDomain(): JSX.Element {
 					<Button
 						size="md"
 						variant="solid"
-						color="primary"
+						color="secondary"
 						key="cancel"
 						onClick={hideDeleteModal}
-						className="cancel-btn"
 						prefix={<X size={16} />}
 						testId="auth-domain-delete-cancel"
 					>
@@ -254,11 +251,10 @@ function AuthDomain(): JSX.Element {
 					<Button
 						size="md"
 						variant="solid"
-						color="primary"
+						color="danger"
 						key="submit"
 						prefix={<Trash2 size={16} />}
 						onClick={handleDeleteDomain}
-						className="delete-btn"
 						loading={isLoading}
 						testId="auth-domain-delete-confirm"
 					>
