@@ -1,19 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
 import { Plus } from '@signozhq/icons';
 import { Button, Flex, Form, Select, Tooltip } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
-import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import ROUTES from 'constants/routes';
+import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
-import { SuccessResponseV2 } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef, Labels } from 'types/api/alerts/def';
-import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 import { openInNewTab } from 'utils/navigation';
@@ -47,12 +44,7 @@ function BasicInfo({
 }: BasicInfoProps): JSX.Element {
 	const { t } = useTranslation('alerts');
 
-	const { isLoading, data, error, isError, refetch } = useQuery<
-		SuccessResponseV2<Channels[]>,
-		APIError
-	>(['getChannels'], {
-		queryFn: () => getAll(),
-	});
+	const { isLoading, data, error, isError, refetch } = useChannelOptions();
 
 	const { user } = useAppContext();
 	const [addNewChannelPermission] = useComponentPermission(
@@ -81,7 +73,7 @@ function BasicInfo({
 		});
 	};
 
-	const noChannels = data?.data?.length === 0;
+	const noChannels = data?.length === 0;
 	const handleCreateNewChannels = useCallback(() => {
 		logEvent('Alert: Create notification channel button clicked', {
 			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
@@ -96,7 +88,7 @@ function BasicInfo({
 		if (!isLoading && isNewRule && !hasLoggedEvent.current) {
 			logEvent('Alert: New alert creation page visited', {
 				dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
-				numberOfChannels: data?.data?.length,
+				numberOfChannels: data?.length,
 			});
 			hasLoggedEvent.current = true;
 		}
@@ -232,7 +224,7 @@ function BasicInfo({
 								disabled={shouldBroadCastToAllChannels}
 								currentValue={alertDef.preferredChannels}
 								handleCreateNewChannels={handleCreateNewChannels}
-								channels={data?.data || []}
+								channels={data || []}
 								isLoading={isLoading}
 								hasError={isError}
 								error={error as APIError}

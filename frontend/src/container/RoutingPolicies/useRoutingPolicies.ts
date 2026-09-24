@@ -2,17 +2,16 @@ import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useHistory } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
-import getAllChannels from 'api/channels/getAll';
 import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useCreateRoutingPolicy } from 'hooks/routingPolicies/useCreateRoutingPolicy';
 import { useDeleteRoutingPolicy } from 'hooks/routingPolicies/useDeleteRoutingPolicy';
+import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
 import { useGetRoutingPolicies } from 'hooks/routingPolicies/useGetRoutingPolicies';
 import { useUpdateRoutingPolicy } from 'hooks/routingPolicies/useUpdateRoutingPolicy';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { SuccessResponseV2 } from 'types/api';
-import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 
 import {
@@ -87,10 +86,8 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		isLoading: isLoadingChannels,
 		isError: isErrorChannels,
 		refetch: refetchChannels,
-	} = useQuery<SuccessResponseV2<Channels[]>, APIError>(['getChannels'], {
-		queryFn: () => getAllChannels(),
-	});
-	const channels = data?.data || [];
+	} = useChannelOptions();
+	const channels = data || [];
 
 	const refreshChannels = (): void => {
 		refetchChannels();
