@@ -241,7 +241,7 @@ func (m *storage) resolveColumnExprs(
 		return nil, nil, nil, err
 	}
 
-	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, columnEvolutions(q, key), q.StartNs, q.EndNs)
+	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -320,15 +320,6 @@ func (m *storage) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
-// columnEvolutions returns the evolutions of the columns getColumn resolves key to. With
-// use_trace_attributes_json off an attribute resolves to its map alone, which has no entries.
-func columnEvolutions(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) []*telemetrytypes.EvolutionEntry {
-	if key.FieldContext == telemetrytypes.FieldContextAttribute && !q.TraceAttrsJSONOn {
-		return nil
-	}
-	return key.Evolutions
-}
-
 // attributeColumnEvolutionRegistered reports whether key carries an evolution entry for the given column.
 func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, columnName string) bool {
 	for _, e := range key.Evolutions {
@@ -369,7 +360,7 @@ func (m *storage) columnIsTemporal(ctx context.Context, q qbtypes.QueryInfo, key
 	if err != nil {
 		return false, err
 	}
-	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, columnEvolutions(q, key), q.StartNs, q.EndNs)
+	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
 	if err != nil {
 		return false, err
 	}
@@ -431,7 +422,7 @@ func (m *storage) read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 // string, because its ::String cast folds NULL. Every other column reads a
 // real value.
 func absentReads(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, columns []*schema.Column) (qbtypes.Absent, error) {
-	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, columnEvolutions(q, key), q.StartNs, q.EndNs)
+	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
 	if err != nil {
 		return qbtypes.AlwaysPresent, err
 	}
@@ -515,14 +506,14 @@ func negatePresence(presence string) string {
 // legacy Map's absent-key semantics. Negative operators carry no guard, so NULL <> x would drop rows
 // lacking the key, whereas the Map defaulted them to the type zero and kept them (0 <> x).
 // String needs no fold: its ::String value already reads absent as the empty string.
-func foldAbsentJSONReadToTypeDefault(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, expr string) string {
+func foldAbsentJSONReadToTypeDefault(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, expr string) string {
 	if !operator.IsNegativeOperator() || operator == qbtypes.FilterOperatorNotExists {
 		return expr
 	}
 	if key.FieldContext != telemetrytypes.FieldContextAttribute {
 		return expr
 	}
-	if !q.TraceAttrsJSONOn || !attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
+	if !attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
 		return expr
 	}
 	switch key.FieldDataType {
@@ -616,6 +607,6 @@ func (m *storage) Compile(ctx context.Context, q qbtypes.QueryInfo, logical *tel
 	// collision cast: the read is then non-nullable (like a Map column), so a downstream string
 	// cast (numeric member vs a string value) can't pair a Nullable(String) with the numeric
 	// default and raise a type mismatch.
-	read.SQL = foldAbsentJSONReadToTypeDefault(q, logical.Single(), operator, read.SQL)
+	read.SQL = foldAbsentJSONReadToTypeDefault(logical.Single(), operator, read.SQL)
 	return querybuilder.SharedConditionForRead(ctx, q, m, logical, read, operator, value, sb)
 }

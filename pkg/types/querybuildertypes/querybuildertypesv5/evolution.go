@@ -13,12 +13,21 @@ import (
 
 // SelectEvolutionsForColumns selects the appropriate evolution entries for each column based on the time range.
 // Logic:
+//   - Ignores evolutions of columns outside the candidate columns
 //   - Finds the latest base evolution (<= tsStartTime) across ALL columns
 //   - Rejects all evolutions before this latest base evolution
 //   - For duplicate evolutions it considers the oldest one (first in ReleaseTime)
 //   - For each column, includes its evolution if it's >= latest base evolution and <= tsEndTime
 //   - Results are sorted by ReleaseTime descending (newest first)
 func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
+	columnLookUpMap := make(map[string]*schema.Column, len(columns))
+	for _, column := range columns {
+		columnLookUpMap[column.Name] = column
+	}
+	evolutions = slices.DeleteFunc(slices.Clone(evolutions), func(e *telemetrytypes.EvolutionEntry) bool {
+		_, ok := columnLookUpMap[e.ColumnName]
+		return !ok
+	})
 	if len(evolutions) == 0 {
 		return columns, nil, nil
 	}
@@ -72,11 +81,6 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no base evolution found for columns %v", columns)
 	}
 
-	columnLookUpMap := make(map[string]*schema.Column)
-	for _, column := range columns {
-		columnLookUpMap[column.Name] = column
-	}
-
 	// Collect column-evolution pairs
 	type colEvoPair struct {
 		column    *schema.Column
@@ -92,10 +96,6 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		// skip evolutions after tsEndTime
 		if evolution.ReleaseTime.After(tsEndTime) || evolution.ReleaseTime.Equal(tsEndTime) {
 			continue
-		}
-
-		if _, exists := columnLookUpMap[evolution.ColumnName]; !exists {
-			return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "evolution column %s not found in columns %v", evolution.ColumnName, columns)
 		}
 
 		pairs = append(pairs, colEvoPair{columnLookUpMap[evolution.ColumnName], evolution})
