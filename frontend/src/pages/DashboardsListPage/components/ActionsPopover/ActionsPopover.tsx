@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { Popover } from 'antd';
+import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { EllipsisVertical } from '@signozhq/icons';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 
-import ActionsPopoverContent from './ActionsPopoverContent';
 import EditTagsModal from './EditTagsModal';
 import RenameDashboardModal from './RenameDashboardModal';
+import { useDashboardActionItems } from './useDashboardActionItems';
 import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 	isLocked: boolean;
 	// Current tags as `key:value` strings, for the inline tag editor.
 	tags: string[];
-	onView: (event: React.MouseEvent<HTMLElement>) => void;
+	onView: (event: React.MouseEvent) => void;
 	// A legacy (pre-v2) dashboard has no v2 spec, so the actions that operate on
 	// one (view, open, copy link, rename, edit tags, duplicate, lock) don't apply —
 	// only Delete is kept.
@@ -33,42 +33,42 @@ function ActionsPopover({
 	onView,
 	isLegacy = false,
 }: Props): JSX.Element {
-	const [isOpen, setIsOpen] = useState(false);
+	const [hasOpened, setHasOpened] = useState(false);
 	const [isRenameOpen, setIsRenameOpen] = useState(false);
 	const [isEditTagsOpen, setIsEditTagsOpen] = useState(false);
 
+	const handleOpenChange = useCallback((open: boolean): void => {
+		if (open) {
+			setHasOpened(true);
+		}
+	}, []);
+	const openRename = useCallback((): void => setIsRenameOpen(true), []);
+	const openEditTags = useCallback((): void => setIsEditTagsOpen(true), []);
+
+	const { items, contextHolder } = useDashboardActionItems({
+		link,
+		dashboardId,
+		dashboardName,
+		source,
+		isLocked,
+		tags,
+		isLegacy,
+		enabled: hasOpened,
+		onView,
+		onOpenRename: openRename,
+		onOpenEditTags: openEditTags,
+	});
+
 	return (
 		<>
-			<Popover
-				open={isOpen}
-				onOpenChange={setIsOpen}
-				// A render function, so only the open row pays for the menu's mutations
-				// and checks; destroyTooltipOnHide releases them on close.
-				content={(): JSX.Element => (
-					<ActionsPopoverContent
-						link={link}
-						dashboardId={dashboardId}
-						dashboardName={dashboardName}
-						source={source}
-						isLocked={isLocked}
-						tags={tags}
-						isLegacy={isLegacy}
-						onView={onView}
-						onOpenRename={(): void => {
-							setIsOpen(false);
-							setIsRenameOpen(true);
-						}}
-						onOpenEditTags={(): void => {
-							setIsOpen(false);
-							setIsEditTagsOpen(true);
-						}}
-					/>
-				)}
-				destroyTooltipOnHide
-				placement="bottomRight"
-				arrow={false}
-				rootClassName="dashboardActionsPopover"
-				trigger="click"
+			<AuthZDropdown
+				items={items}
+				nativeButton
+				side="bottom"
+				align="end"
+				aria-label="Dashboard actions"
+				testId="dashboard-action-icon"
+				onOpenChange={handleOpenChange}
 			>
 				<Button
 					aria-label="Action"
@@ -76,15 +76,12 @@ function ActionsPopover({
 					icon
 					variant="ghost"
 					color="secondary"
-					testId="dashboard-action-icon"
-					onClick={(e): void => {
-						e.stopPropagation();
-						e.preventDefault();
-					}}
+					// The row navigates on click.
+					onClick={(e): void => e.stopPropagation()}
 				>
 					<EllipsisVertical size={14} />
 				</Button>
-			</Popover>
+			</AuthZDropdown>
 			<RenameDashboardModal
 				open={isRenameOpen}
 				dashboardId={dashboardId}
@@ -97,6 +94,7 @@ function ActionsPopover({
 				currentTags={tags}
 				onClose={(): void => setIsEditTagsOpen(false)}
 			/>
+			{contextHolder}
 		</>
 	);
 }

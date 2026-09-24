@@ -7,6 +7,7 @@ Quick reference for permission-gating UI. All components use AND semantics: user
 ```
 Need to gate...
 ├── A button? → AuthZButton
+├── Rows of a dropdown menu? → AuthZDropdown
 ├── Any element with tooltip on deny? → AuthZTooltip
 ├── A section inside a page? → withAuthZContent (preferred)
 │   └── Need JSX wrapper? → AuthZGuardContent
@@ -77,6 +78,24 @@ import { SACreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/service
 <AuthZButton checks={[SACreatePermission]} onClick={handleCreate}>
   Create
 </AuthZButton>
+```
+
+### AuthZDropdown
+
+`Dropdown` whose `item`, `link` and `submenu` rows take optional `checks`. A pending row shows as loading, a denied row is disabled with the denial tooltip. Checks run on first open. A row's own `disabled` or `loading` outranks its checks.
+
+```tsx
+<AuthZDropdown
+  nativeButton
+  side="bottom"
+  align="end"
+  items={[
+    { type: 'item', value: 'view', label: 'View', onClick: onView },
+    { type: 'item', value: 'delete', label: 'Delete', danger: true, checks: [buildDashboardDeletePermission(id)], onClick: onDelete },
+  ]}
+>
+  <Button aria-label="Actions">...</Button>
+</AuthZDropdown>
 ```
 
 ### AuthZTooltip

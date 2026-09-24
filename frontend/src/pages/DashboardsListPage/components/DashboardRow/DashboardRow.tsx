@@ -66,7 +66,7 @@ function DashboardRow({
 		DATE_TIME_FORMATS.DASH_DATETIME_UTC,
 	);
 
-	const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
+	const onClickHandler = (event: React.MouseEvent): void => {
 		// Clicks inside portaled overlays (the actions menu, edit modals) bubble here
 		// through React's tree even though they render outside the row in the DOM.
 		// Only navigate when the click actually landed inside the row.

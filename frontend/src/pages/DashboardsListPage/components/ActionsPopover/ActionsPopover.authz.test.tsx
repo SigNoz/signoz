@@ -12,6 +12,7 @@ import {
 	buildDashboardUpdatePermission,
 	DashboardCreatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
 
 import ActionsPopover from './ActionsPopover';
 import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
@@ -32,11 +33,20 @@ const baseProps = {
 async function openMenu(): Promise<void> {
 	await userEvent.click(screen.getByTestId('dashboard-action-icon'));
 	await screen.findByTestId('dashboard-action-rename');
+	// Rows waiting on their check show as loading, not disabled.
+	await waitFor(() => {
+		expect(document.querySelector('[data-loading]')).toBeNull();
+	});
 }
 
-// The authz component puts the denied scopes on the control it disables.
-function deniedScopes(testId: string): string | null {
-	return screen.getByTestId(testId).getAttribute('data-denied-permissions');
+function isRowDisabled(testId: string): boolean {
+	return screen.getByTestId(testId).hasAttribute('data-disabled');
+}
+
+async function rowTooltip(testId: string): Promise<string> {
+	await userEvent.hover(screen.getByTestId(testId));
+	const tooltip = await screen.findByRole('tooltip');
+	return tooltip.textContent ?? '';
 }
 
 describe('ActionsPopover - AuthZ', () => {
@@ -74,16 +84,16 @@ describe('ActionsPopover - AuthZ', () => {
 			await openMenu();
 
 			await waitFor(() => {
-				expect(deniedScopes('dashboard-action-rename')).toContain(
-					buildDashboardUpdatePermission(DASHBOARD_ID),
-				);
+				expect(isRowDisabled('dashboard-action-rename')).toBe(true);
 			});
-			expect(screen.getByTestId('dashboard-action-rename')).toBeDisabled();
-			expect(screen.getByTestId('dashboard-action-edit-tags')).toBeDisabled();
+			expect(isRowDisabled('dashboard-action-edit-tags')).toBe(true);
+			await expect(rowTooltip('dashboard-action-rename')).resolves.toContain(
+				formatPermission(buildDashboardUpdatePermission(DASHBOARD_ID)),
+			);
 
 			// Read-only actions and delete are unaffected.
-			expect(screen.getByTestId('dashboard-action-view')).toBeEnabled();
-			expect(screen.getByTestId('dashboard-action-delete')).toBeEnabled();
+			expect(isRowDisabled('dashboard-action-view')).toBe(false);
+			expect(isRowDisabled('dashboard-action-delete')).toBe(false);
 		});
 
 		// Authz guide rule 3: delete does not depend on read.
@@ -94,10 +104,10 @@ describe('ActionsPopover - AuthZ', () => {
 			await openMenu();
 
 			await waitFor(() => {
-				expect(screen.getByTestId('dashboard-action-delete')).toBeEnabled();
+				expect(isRowDisabled('dashboard-action-rename')).toBe(true);
 			});
-			expect(screen.getByTestId('dashboard-action-rename')).toBeDisabled();
-			expect(screen.getByTestId('dashboard-action-duplicate')).toBeDisabled();
+			expect(isRowDisabled('dashboard-action-duplicate')).toBe(true);
+			expect(isRowDisabled('dashboard-action-delete')).toBe(false);
 		});
 
 		it('disables delete and explains why when delete is denied', async () => {
@@ -107,12 +117,12 @@ describe('ActionsPopover - AuthZ', () => {
 			await openMenu();
 
 			await waitFor(() => {
-				expect(deniedScopes('dashboard-action-delete')).toBe(
-					buildDashboardDeletePermission(DASHBOARD_ID),
-				);
+				expect(isRowDisabled('dashboard-action-delete')).toBe(true);
 			});
-			expect(screen.getByTestId('dashboard-action-delete')).toBeDisabled();
-			expect(screen.getByTestId('dashboard-action-rename')).toBeEnabled();
+			expect(isRowDisabled('dashboard-action-rename')).toBe(false);
+			await expect(rowTooltip('dashboard-action-delete')).resolves.toContain(
+				formatPermission(buildDashboardDeletePermission(DASHBOARD_ID)),
+			);
 		});
 
 		it('disables duplicate without create, leaving rename usable', async () => {
@@ -122,13 +132,11 @@ describe('ActionsPopover - AuthZ', () => {
 			await openMenu();
 
 			await waitFor(() => {
-				expect(screen.getByTestId('dashboard-action-rename')).toBeEnabled();
+				expect(isRowDisabled('dashboard-action-duplicate')).toBe(true);
 			});
-			expect(screen.getByTestId('dashboard-action-duplicate')).toBeDisabled();
+			expect(isRowDisabled('dashboard-action-rename')).toBe(false);
 		});
 	});
-
-	describe('lock', () => {});
 
 	describe('locked dashboard', () => {
 		// Access before state: without the permission, the lock is the wrong thing
@@ -140,11 +148,13 @@ describe('ActionsPopover - AuthZ', () => {
 			await openMenu();
 
 			await waitFor(() => {
-				expect(deniedScopes('dashboard-action-rename')).toContain(
-					buildDashboardUpdatePermission(DASHBOARD_ID),
-				);
+				expect(isRowDisabled('dashboard-action-rename')).toBe(true);
 			});
-			expect(screen.getByTestId('dashboard-action-rename')).toBeDisabled();
+			const tooltip = await rowTooltip('dashboard-action-rename');
+			expect(tooltip).toContain(
+				formatPermission(buildDashboardUpdatePermission(DASHBOARD_ID)),
+			);
+			expect(tooltip).not.toContain('dashboard_locked');
 		});
 
 		it('reports the lock, not the permission, for an editor', async () => {
@@ -155,10 +165,12 @@ describe('ActionsPopover - AuthZ', () => {
 
 			// Duplicate is not lock-gated, so it resolving marks the checks as settled.
 			await waitFor(() => {
-				expect(screen.getByTestId('dashboard-action-duplicate')).toBeEnabled();
+				expect(isRowDisabled('dashboard-action-rename')).toBe(true);
 			});
-			expect(screen.getByTestId('dashboard-action-rename')).toBeDisabled();
-			expect(deniedScopes('dashboard-action-rename')).toBeNull();
+			// Jest renders i18n keys.
+			await expect(rowTooltip('dashboard-action-rename')).resolves.toBe(
+				'dashboard_locked',
+			);
 		});
 	});
 
@@ -169,12 +181,10 @@ describe('ActionsPopover - AuthZ', () => {
 			render(<ActionsPopover {...baseProps} />);
 			await openMenu();
 
-			await waitFor(() => {
-				expect(screen.getByTestId('dashboard-action-rename')).toBeEnabled();
-			});
-			expect(screen.getByTestId('dashboard-action-edit-tags')).toBeEnabled();
-			expect(screen.getByTestId('dashboard-action-duplicate')).toBeEnabled();
-			expect(screen.getByTestId('dashboard-action-delete')).toBeEnabled();
+			expect(isRowDisabled('dashboard-action-rename')).toBe(false);
+			expect(isRowDisabled('dashboard-action-edit-tags')).toBe(false);
+			expect(isRowDisabled('dashboard-action-duplicate')).toBe(false);
+			expect(isRowDisabled('dashboard-action-delete')).toBe(false);
 		});
 	});
 });
