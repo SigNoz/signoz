@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
-import { Info, Plus, X } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
+import { Info, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { Pill, type PillCloseEvent } from '@signozhq/ui/pill';
 import { Typography } from '@signozhq/ui/typography';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
@@ -93,7 +93,7 @@ function ItemInputSelector({
 	);
 
 	const handleBadgeClose = useCallback(
-		(e: React.MouseEvent, itemId: string, index: number): void => {
+		(e: PillCloseEvent, itemId: string, index: number): void => {
 			e.preventDefault();
 			handleRemove(itemId);
 
@@ -153,26 +153,16 @@ function ItemInputSelector({
 				<div className={styles.itemInputSelectorFooter}>
 					<div ref={badgesRef} className={styles.itemInputSelectorBadges}>
 						{selectedIds.map((id, index) => (
-							<Badge
-								variant="solid"
+							<Pill.Closeable
 								key={id}
-								color="secondary"
-								className={styles.itemInputSelectorBadge}
 								testId={`item-badge-${testId}-${index}`}
-								suffix={
-									<button
-										type="button"
-										aria-label={`Remove ${id}`}
-										onClick={(e): void => handleBadgeClose(e, id, index)}
-									>
-										<X size={12} />
-									</button>
-								}
+								closeAriaLabel={`Remove ${id}`}
+								onClose={(e): void => handleBadgeClose(e, id, index)}
 							>
 								<Typography as="span" size="small" truncate={1} title={id}>
 									{id}
 								</Typography>
-							</Badge>
+							</Pill.Closeable>
 						))}
 					</div>
 					<Tooltip
