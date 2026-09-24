@@ -5,7 +5,12 @@ import {
 	STEP_INTERVAL_MULTIPLIER,
 } from '../../constants';
 import type { SeriesProps } from '../types';
-import { DrawStyle, SelectionPreferencesSource, StackMode } from '../types';
+import {
+	DrawStyle,
+	PlotMode,
+	SelectionPreferencesSource,
+	StackMode,
+} from '../types';
 import { UPlotConfigBuilder } from '../UPlotConfigBuilder';
 
 // Mock only the real boundary that hits localStorage
@@ -649,5 +654,17 @@ describe('UPlotConfigBuilder stacking', () => {
 		builder.setBands([{ series: [1, 3] }]);
 
 		expect(builder.getConfig().bands).toStrictEqual([{ series: [1, 3] }]);
+	});
+});
+
+describe('UPlotConfigBuilder plot mode', () => {
+	it('leaves mode unset for aligned data and emits 2 when faceted', () => {
+		const aligned = new UPlotConfigBuilder({ id: 'aligned' });
+		expect(aligned.getConfig().mode).toBeUndefined();
+
+		const faceted = new UPlotConfigBuilder({ id: 'faceted' });
+		faceted.setMode(PlotMode.Faceted);
+		expect(faceted.getMode()).toBe(PlotMode.Faceted);
+		expect(faceted.getConfig().mode).toBe(2);
 	});
 });

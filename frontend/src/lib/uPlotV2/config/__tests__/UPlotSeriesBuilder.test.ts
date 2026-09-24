@@ -399,3 +399,39 @@ describe('UPlotSeriesBuilder', () => {
 		expect(builder.getConfig().fill).toBeUndefined();
 	});
 });
+
+describe('UPlotSeriesBuilder scatter', () => {
+	it('draws through the given path builder and hides uPlot points', () => {
+		const pathBuilder = jest.fn();
+		const config = new UPlotSeriesBuilder(
+			createBaseProps({
+				drawStyle: DrawStyle.Scatter,
+				pathBuilder,
+				facets: [{ scale: 'x' }, { scale: 'y' }],
+				lineColor: '#ff0000',
+				fillOpacity: 0.5,
+				lineWidth: 1,
+				pointSize: 8,
+			}),
+		).getConfig();
+
+		expect(config.paths).toBe(pathBuilder);
+		expect(config.facets).toStrictEqual([{ scale: 'x' }, { scale: 'y' }]);
+		expect(config.points?.show).toBe(false);
+		expect(config.points?.size).toBe(8);
+		expect(config.stroke).toBe('#ff0000');
+		expect(config.width).toBe(1);
+		expect(config.fill).toBe('#ff000080');
+	});
+
+	it('draws nothing without a path builder', () => {
+		const config = new UPlotSeriesBuilder(
+			createBaseProps({ drawStyle: DrawStyle.Scatter }),
+		).getConfig();
+
+		expect(
+			(config.paths as uPlot.Series.PathBuilder)({} as uPlot, 1, 0, 0),
+		).toBeNull();
+		expect(config.facets).toBeUndefined();
+	});
+});
