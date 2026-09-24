@@ -44,7 +44,13 @@ function BasicInfo({
 }: BasicInfoProps): JSX.Element {
 	const { t } = useTranslation('alerts');
 
-	const { isLoading, data, error, isError, refetch } = useChannelOptions();
+	const {
+		isLoading,
+		data: channels,
+		error,
+		isError,
+		refetch,
+	} = useChannelOptions();
 
 	const { user } = useAppContext();
 	const [addNewChannelPermission] = useComponentPermission(
@@ -73,7 +79,7 @@ function BasicInfo({
 		});
 	};
 
-	const noChannels = data?.length === 0;
+	const noChannels = channels.length === 0;
 	const handleCreateNewChannels = useCallback(() => {
 		logEvent('Alert: Create notification channel button clicked', {
 			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
@@ -88,7 +94,7 @@ function BasicInfo({
 		if (!isLoading && isNewRule && !hasLoggedEvent.current) {
 			logEvent('Alert: New alert creation page visited', {
 				dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
-				numberOfChannels: data?.length,
+				numberOfChannels: channels.length,
 			});
 			hasLoggedEvent.current = true;
 		}
@@ -224,7 +230,7 @@ function BasicInfo({
 								disabled={shouldBroadCastToAllChannels}
 								currentValue={alertDef.preferredChannels}
 								handleCreateNewChannels={handleCreateNewChannels}
-								channels={data || []}
+								channels={channels}
 								isLoading={isLoading}
 								hasError={isError}
 								error={error as APIError}

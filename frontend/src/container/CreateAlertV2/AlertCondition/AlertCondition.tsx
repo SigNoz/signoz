@@ -17,12 +17,11 @@ function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
 
 	const {
-		data,
+		data: channels,
 		isLoading: isLoadingChannels,
 		isError: isErrorChannels,
 		refetch: refreshChannels,
 	} = useChannelOptions();
-	const channels = data || [];
 
 	const showMultipleTabs =
 		alertType === AlertTypes.ANOMALY_BASED_ALERT ||

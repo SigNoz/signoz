@@ -41,22 +41,33 @@ describe('toChannelConfig', () => {
 		});
 	});
 
-	it('drops untouched fields so the api applies its own defaults', () => {
-		expect(
-			toChannelConfig(ChannelKind.webhook, { url: 'https://example.com/hook' }),
-		).toStrictEqual({
-			kind: 'webhook',
-			spec: { url: 'https://example.com/hook' },
-		});
-	});
-
-	it('keeps a false the user chose rather than treating it as blank', () => {
+	it('drops what a user left blank but keeps a false they chose', () => {
 		expect(
 			toChannelConfig(ChannelKind.webhook, {
 				url: 'https://example.com/hook',
+				username: '',
+				password: undefined,
+				bearerToken: '',
 				sendResolved: false,
 			}),
-		).toMatchObject({ spec: { sendResolved: false } });
+		).toStrictEqual({
+			kind: 'webhook',
+			spec: { url: 'https://example.com/hook', sendResolved: false },
+		});
+	});
+
+	it('drops an attachment list the user emptied instead of sending []', () => {
+		expect(
+			toChannelConfig(ChannelKind.slack, {
+				...slackValues,
+				fields: [],
+				actions: [],
+			}).spec,
+		).not.toHaveProperty('fields');
+	});
+
+	it.each(Object.values(ChannelKind))('stamps the config as %s', (kind) => {
+		expect(toChannelConfig(kind, slackValues).kind).toBe(kind);
 	});
 
 	it('sends only the selected kind s fields, not another kind s leftovers', () => {
