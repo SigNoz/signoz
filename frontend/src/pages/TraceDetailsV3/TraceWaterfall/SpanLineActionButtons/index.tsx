@@ -16,7 +16,7 @@ export default function SpanLineActionButtons({
 
 	return (
 		<div className={styles.root}>
-			<Tooltip title="Copy Span Link" className={styles.tooltip}>
+			<Tooltip title="Copy Span Link">
 				<Button
 					aria-label="Action"
 					variant="ghost"
@@ -24,7 +24,6 @@ export default function SpanLineActionButtons({
 					icon
 					color="secondary"
 					onClick={onSpanCopy}
-					className={styles.copyBtn}
 				>
 					<Link size={14} />
 				</Button>

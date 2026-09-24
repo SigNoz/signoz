@@ -130,16 +130,15 @@ function LegendRow({
 				data-is-legend-marker={true}
 				data-testid={`legend-marker-${seriesIndex}`}
 			/>
-			<Tooltip className={styles.rowTooltip} title={label} side="top">
+			<Tooltip title={label} side="top">
 				<span className={styles.label}>{label}</span>
 			</Tooltip>
 			<div className={styles.actions}>
-				<Tooltip className={styles.rowTooltip} title={scopeActionLabel} side="top">
+				<Tooltip title={scopeActionLabel} side="top">
 					<Button
 						variant="ghost"
 						color="secondary"
 						size="sm"
-						className={cx(styles.actionButton, styles.scopeButton)}
 						onClick={handleScopeClick}
 						aria-label={scopeActionLabel}
 						testId={`legend-scope-${seriesIndex}`}
@@ -151,7 +150,6 @@ function LegendRow({
 					<CopyButton
 						value={label}
 						size={13}
-						className={styles.actionButton}
 						ariaLabel={`Copy ${label}`}
 						testId={`legend-copy-${seriesIndex}`}
 					/>

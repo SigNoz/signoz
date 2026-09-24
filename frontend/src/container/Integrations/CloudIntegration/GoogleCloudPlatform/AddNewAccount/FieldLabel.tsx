@@ -20,7 +20,7 @@ function FieldLabel({
 		<label className={styles.fieldLabel} htmlFor={htmlFor}>
 			{label}
 
-			<Tooltip className={styles.tooltipContent} title={tooltip} side="top">
+			<Tooltip title={tooltip} side="top">
 				<span
 					className={styles.infoTrigger}
 					aria-label={`${label} help`}

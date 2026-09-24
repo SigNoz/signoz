@@ -1,7 +1,5 @@
 import { Tooltip } from '@signozhq/ui/tooltip';
-import TooltipScrollArea, {
-	TOOLTIP_SCROLL_CONTENT_CLASS,
-} from 'components/TooltipScrollArea/TooltipScrollArea';
+import TooltipScrollArea from 'components/TooltipScrollArea/TooltipScrollArea';
 
 import styles from '../../VariablesBar.module.scss';
 
@@ -20,7 +18,6 @@ function OverflowValuesTooltip({
 }: OverflowValuesTooltipProps): JSX.Element {
 	return (
 		<Tooltip
-			className={TOOLTIP_SCROLL_CONTENT_CLASS}
 			side="top"
 			title={
 				<TooltipScrollArea>

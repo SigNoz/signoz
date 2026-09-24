@@ -102,7 +102,6 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 	return (
 		<Tooltip
 			open
-			className={styles.popover}
 			title={
 				<EventTooltipContent
 					eventName={event.name}
@@ -336,27 +335,25 @@ const SpanOverview = memo(function SpanOverview({
 
 			{/* Action buttons — shown on hover via CSS, right-aligned */}
 			<span className={styles.rowActions}>
-				<Tooltip title="Copy Span Link" className={styles.actionTooltip}>
+				<Tooltip title="Copy Span Link">
 					<Button
 						aria-label="Action"
 						variant="ghost"
 						size="sm"
 						icon
 						color="secondary"
-						className={styles.actionBtn}
 						onClick={onSpanCopy}
 					>
 						<Link size={12} />
 					</Button>
 				</Tooltip>
-				<Tooltip title="Add to Trace Funnel" className={styles.actionTooltip}>
+				<Tooltip title="Add to Trace Funnel">
 					<Button
 						aria-label="Action"
 						variant="ghost"
 						size="sm"
 						icon
 						color="secondary"
-						className={styles.actionBtn}
 						onClick={handleFunnelClick}
 					>
 						<ListPlus size={12} />

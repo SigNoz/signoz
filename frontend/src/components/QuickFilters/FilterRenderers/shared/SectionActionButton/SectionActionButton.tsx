@@ -2,10 +2,6 @@ import { ReactNode } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from 'antd';
 
-import classNames from 'classnames';
-
-import styles from './SectionActionButton.module.scss';
-
 interface SectionActionButtonProps {
 	icon: ReactNode;
 	tooltip: string;
@@ -23,12 +19,11 @@ export function SectionActionButton({
 }: SectionActionButtonProps): JSX.Element {
 	return (
 		<Tooltip title={tooltip}>
-			<span onMouseDown={(e): void => e.preventDefault()}>
+			<span className={className} onMouseDown={(e): void => e.preventDefault()}>
 				<Button
 					variant="link"
 					color="secondary"
 					size="sm"
-					className={classNames(styles.iconBtn, className)}
 					onClick={(e): void => {
 						e.stopPropagation();
 						e.preventDefault();

@@ -35,7 +35,6 @@ function PanelStatusPopover({
 
 	return (
 		<Tooltip
-			className={styles.tooltipContent}
 			title={<PanelStatusContent variant={variant} detail={detail} />}
 			side="top"
 			align="end"

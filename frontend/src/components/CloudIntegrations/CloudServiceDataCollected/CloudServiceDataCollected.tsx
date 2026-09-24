@@ -88,11 +88,7 @@ function CloudServiceDataCollected({
 						<BarChart size={14} />
 						Metrics
 						{metricsInfoTooltip && (
-							<Tooltip
-								className={'cloud-service-data-collected-table-tooltip'}
-								title={metricsInfoTooltip}
-								side="top"
-							>
+							<Tooltip title={metricsInfoTooltip} side="top">
 								<span
 									className="cloud-service-data-collected-table-heading-info"
 									aria-label="About the metrics listed below"

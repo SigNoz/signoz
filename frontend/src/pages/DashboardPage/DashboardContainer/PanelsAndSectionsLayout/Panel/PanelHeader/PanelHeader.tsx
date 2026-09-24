@@ -105,7 +105,7 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 			<div className={styles.headerLeft}>
 				<Typography.Text className={styles.headerTitle}>{name}</Typography.Text>
 				{description && (
-					<Tooltip className={styles.descriptionTooltip} title={description}>
+					<Tooltip title={description}>
 						<Info
 							className={styles.headerInfoIcon}
 							size={14}

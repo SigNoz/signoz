@@ -148,7 +148,6 @@ export function SpanHoverCard({
 			side="right"
 			align="start"
 			sideOffset={8}
-			className={styles.popover}
 			title={
 				hoverCardData ? <SpanTooltipContent {...hoverCardData.tooltip} /> : null
 			}

@@ -27,7 +27,6 @@ function DashboardRowTags({ tags }: DashboardRowTagsProps): JSX.Element | null {
 			))}
 			{extra.length > 0 && (
 				<Tooltip
-					className={styles.extraTagsTooltip}
 					side="bottom"
 					title={
 						<div className={styles.extraTags}>

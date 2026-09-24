@@ -35,11 +35,9 @@ function ExpandableValue({
 	return (
 		<>
 			<Tooltip
-				className={styles.tooltipContent}
 				side="top"
-				style={{ zIndex }}
 				title={
-					<>
+					<div className={styles.tooltipContent}>
 						<pre className={styles.preview}>{value}</pre>
 						<Button
 							variant="outlined"
@@ -47,11 +45,10 @@ function ExpandableValue({
 							size="sm"
 							prefix={<Fullscreen size={14} />}
 							onClick={(): void => setIsDialogOpen(true)}
-							className={styles.expandButton}
 						>
 							Expand
 						</Button>
-					</>
+					</div>
 				}
 			>
 				<span className={styles.trigger}>{children}</span>

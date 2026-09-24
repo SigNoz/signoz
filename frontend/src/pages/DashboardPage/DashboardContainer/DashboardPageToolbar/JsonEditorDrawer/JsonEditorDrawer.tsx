@@ -142,10 +142,7 @@ function JsonEditorDrawer({
 							{validationText}
 						</Typography.Text>
 						{danglingWarning && (
-							<Tooltip
-								className={styles.warningTooltip}
-								title={danglingPanelIds.join(', ')}
-							>
+							<Tooltip title={danglingPanelIds.join(', ')}>
 								<span
 									className={styles.danglingWarning}
 									data-testid="json-editor-dangling-warning"
@@ -158,10 +155,7 @@ function JsonEditorDrawer({
 							</Tooltip>
 						)}
 						{missingRefWarning && (
-							<Tooltip
-								className={styles.warningTooltip}
-								title={missingPanelRefs.join(', ')}
-							>
+							<Tooltip title={missingPanelRefs.join(', ')}>
 								<span
 									className={styles.danglingWarning}
 									data-testid="json-editor-missing-ref-warning"
