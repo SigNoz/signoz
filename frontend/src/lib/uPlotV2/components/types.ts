@@ -6,6 +6,10 @@ import uPlot from 'uplot';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { LegendItem } from '../config/types';
 import { HeatmapSeries, HeatmapYAxis } from '../plugins/HeatmapPlugin/types';
+import type {
+	ScatterChannels,
+	ScatterPointLabel,
+} from '../plugins/ScatterPlugin/types';
 import { SyncTooltipFilterMode } from '../plugins/TooltipPlugin/types';
 
 /**
@@ -117,6 +121,17 @@ export interface HeatmapTooltipProps
 	visibleGroups: string[];
 	/** Same colour the legend and the densest cells use. */
 	groupColor: string;
+}
+
+/** Not part of `TooltipProps`: it describes one point's channels, not a series list. */
+export interface ScatterTooltipProps
+	extends BaseTooltipProps, TooltipRenderArgs {
+	channels: ScatterChannels;
+	/** The group values behind a point, e.g. `service.name` → `cart`. */
+	resolvePointLabels?: (
+		seriesIndex: number,
+		dataIndex: number,
+	) => ScatterPointLabel[];
 }
 
 export type TooltipProps =
