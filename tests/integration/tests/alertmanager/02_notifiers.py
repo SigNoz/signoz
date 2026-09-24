@@ -31,11 +31,11 @@ logger = setup_logger(__name__)
 NOTIFIERS_TEST = [
     types.AlertManagerNotificationTestCase(
         name="slack_notifier_default_templating",
-        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        rule_path="rules/test_scenarios/threshold_above_at_least_once/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+                data_path="rules/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
             ),
         ],
         channel_config=slack_default_config,
@@ -64,11 +64,11 @@ NOTIFIERS_TEST = [
     ),
     types.AlertManagerNotificationTestCase(
         name="msteams_notifier_default_templating",
-        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        rule_path="rules/test_scenarios/threshold_above_at_least_once/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+                data_path="rules/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
             ),
         ],
         channel_config=msteams_default_config,
@@ -149,11 +149,11 @@ NOTIFIERS_TEST = [
     ),
     types.AlertManagerNotificationTestCase(
         name="pagerduty_notifier_default_templating",
-        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        rule_path="rules/test_scenarios/threshold_above_at_least_once/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+                data_path="rules/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
             ),
         ],
         channel_config=pagerduty_default_config,
@@ -194,11 +194,11 @@ NOTIFIERS_TEST = [
     ),
     types.AlertManagerNotificationTestCase(
         name="opsgenie_notifier_default_templating",
-        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        rule_path="rules/test_scenarios/threshold_above_at_least_once/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+                data_path="rules/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
             ),
         ],
         channel_config=opsgenie_default_config,
@@ -226,11 +226,11 @@ NOTIFIERS_TEST = [
     ),
     types.AlertManagerNotificationTestCase(
         name="webhook_notifier_default_templating",
-        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        rule_path="rules/test_scenarios/threshold_above_at_least_once/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+                data_path="rules/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
             ),
         ],
         channel_config=webhook_default_config,
@@ -275,11 +275,11 @@ NOTIFIERS_TEST = [
     ),
     types.AlertManagerNotificationTestCase(
         name="email_notifier_default_templating",
-        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        rule_path="rules/test_scenarios/threshold_above_at_least_once/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+                data_path="rules/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
             ),
         ],
         channel_config=email_default_config,
