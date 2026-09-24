@@ -63,13 +63,21 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_1etd5_1"
-                        data-capitalize="false"
-                        data-color="robin"
+                        class="_badge_zirh1_1"
+                        data-base-ui-tooltip-trigger=""
+                        data-color="primary"
                         data-slot="badge"
-                        data-variant="default"
+                        data-text-overflow="ellipsis"
+                        data-text-transform="uppercase"
+                        data-variant="solid"
+                        id="base-ui-:r1:"
                       >
-                        1
+                        <span
+                          class="_badge__label_zirh1_111"
+                          data-slot="badge-label"
+                        >
+                          1
+                        </span>
                       </span>
                     </td>
                     <td
@@ -93,13 +101,21 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_1etd5_1"
-                        data-capitalize="false"
-                        data-color="robin"
+                        class="_badge_zirh1_1"
+                        data-base-ui-tooltip-trigger=""
+                        data-color="primary"
                         data-slot="badge"
-                        data-variant="default"
+                        data-text-overflow="ellipsis"
+                        data-text-transform="uppercase"
+                        data-variant="solid"
+                        id="base-ui-:r3:"
                       >
-                        2
+                        <span
+                          class="_badge__label_zirh1_111"
+                          data-slot="badge-label"
+                        >
+                          2
+                        </span>
                       </span>
                     </td>
                     <td
@@ -123,13 +139,21 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_1etd5_1"
-                        data-capitalize="false"
-                        data-color="robin"
+                        class="_badge_zirh1_1"
+                        data-base-ui-tooltip-trigger=""
+                        data-color="primary"
                         data-slot="badge"
-                        data-variant="default"
+                        data-text-overflow="ellipsis"
+                        data-text-transform="uppercase"
+                        data-variant="solid"
+                        id="base-ui-:r5:"
                       >
-                        3
+                        <span
+                          class="_badge__label_zirh1_111"
+                          data-slot="badge-label"
+                        >
+                          3
+                        </span>
                       </span>
                     </td>
                     <td

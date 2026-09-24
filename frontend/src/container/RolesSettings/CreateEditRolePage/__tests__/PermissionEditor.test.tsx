@@ -155,8 +155,8 @@ describe('PermissionEditor', () => {
 				'action-toggle-scope-factor-api-key-read',
 			);
 			expect(
-				within(scopeToggle).getByRole('radio', { name: 'None' }),
-			).toBeChecked();
+				within(scopeToggle).getByRole('button', { name: 'None' }),
+			).toHaveAttribute('aria-pressed', 'true');
 		});
 
 		it('changes scope to All when clicked', async () => {
@@ -176,8 +176,8 @@ describe('PermissionEditor', () => {
 				'action-toggle-scope-factor-api-key-read',
 			);
 			expect(
-				within(scopeToggle).getByRole('radio', { name: 'All' }),
-			).toBeChecked();
+				within(scopeToggle).getByRole('button', { name: 'All' }),
+			).toHaveAttribute('aria-pressed', 'true');
 		});
 
 		it('updates granted count when scope changed', async () => {

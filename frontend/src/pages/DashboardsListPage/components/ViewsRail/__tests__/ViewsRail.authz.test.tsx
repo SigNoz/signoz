@@ -55,9 +55,9 @@ describe('ViewsRail - AuthZ', () => {
 
 		renderRail();
 
-		// Radix's asChild clone swallows the trigger's testId, so match its title.
+		// Radix's asChild clone swallows the trigger's testId, so match its label.
 		await expect(
-			screen.findByTitle('Save current filters as a view'),
+			screen.findByLabelText('Save current filters as a view'),
 		).resolves.not.toHaveAttribute('aria-disabled', 'true');
 		expect(
 			screen.getByTestId('dashboards-view-save-changes'),

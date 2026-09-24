@@ -288,9 +288,9 @@ describe('ServiceAccountDrawer', () => {
 
 		await screen.findByDisplayValue('CI Bot');
 
-		await user.click(screen.getByRole('radio', { name: /Keys/i }));
+		await user.click(screen.getByRole('button', { name: /Keys/i }));
 
-		await screen.findByText(/No keys/i);
+		await expect(screen.findByText(/No keys/i)).resolves.toBeInTheDocument();
 	});
 
 	it('shows error state when account fetch fails', async () => {

@@ -115,8 +115,8 @@ describe('JsonEditor', () => {
 				screen.getByTestId('action-toggle-factor-api-key-create'),
 			).getByTestId('action-toggle-scope-factor-api-key-create');
 			expect(
-				within(scopeToggle).getByRole('radio', { name: 'All' }),
-			).toBeChecked();
+				within(scopeToggle).getByRole('button', { name: 'All' }),
+			).toHaveAttribute('aria-pressed', 'true');
 		});
 	});
 

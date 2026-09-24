@@ -49,13 +49,11 @@ function renderFeature(
 }
 
 // skipHover: simulated pointer travel fires pointerleave on the subtrigger and
-// radix's grace-area math (zero rects in jsdom) closes the submenu.
-// pointerEventsCheck 0: radix puts pointer-events:none on <body> while open.
+// Base UI's safe-polygon math (zero rects in jsdom) closes the submenu.
 function setupUser(): ReturnType<typeof userEvent.setup> {
 	return userEvent.setup({
 		delay: null,
 		skipHover: true,
-		pointerEventsCheck: 0,
 	});
 }
 
@@ -64,7 +62,9 @@ async function startDownload(
 ): Promise<ReturnType<typeof userEvent.setup>> {
 	const user = setupUser();
 	await user.click(screen.getByRole('button', { name: /trace options/i }));
-	await user.click(await screen.findByTestId('download-trace-submenu'));
+	// Base UI ignores mouse clicks on a hover-opened submenu trigger.
+	(await screen.findByTestId('download-trace-submenu')).focus();
+	await user.keyboard('{ArrowRight}');
 	await user.click(await screen.findByTestId(`download-trace-${format}`));
 	return user;
 }

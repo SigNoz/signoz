@@ -4,22 +4,38 @@ exports[`PipelinePage container test should render Tags section 1`] = `
 <DocumentFragment>
   <span>
     <span
-      class="_badge_1etd5_1"
-      data-capitalize="false"
-      data-color="sakura"
+      class="_badge_zirh1_1"
+      data-base-ui-tooltip-trigger=""
+      data-color="highlight-danger"
       data-slot="badge"
-      data-variant="default"
+      data-text-overflow="ellipsis"
+      data-text-transform="uppercase"
+      data-variant="solid"
+      id="base-ui-:r1:"
     >
-      server
+      <span
+        class="_badge__label_zirh1_111"
+        data-slot="badge-label"
+      >
+        server
+      </span>
     </span>
     <span
-      class="_badge_1etd5_1"
-      data-capitalize="false"
-      data-color="sakura"
+      class="_badge_zirh1_1"
+      data-base-ui-tooltip-trigger=""
+      data-color="highlight-danger"
       data-slot="badge"
-      data-variant="default"
+      data-text-overflow="ellipsis"
+      data-text-transform="uppercase"
+      data-variant="solid"
+      id="base-ui-:r3:"
     >
-      app
+      <span
+        class="_badge__label_zirh1_111"
+        data-slot="badge-label"
+      >
+        app
+      </span>
     </span>
   </span>
 </DocumentFragment>

@@ -156,9 +156,7 @@ describe('KeysTab', () => {
 
 		// Wait for authz to complete and table to render
 		await screen.findByText('Production Key');
-		const revokeBtns = screen
-			.getAllByRole('button')
-			.filter((btn) => btn.className.includes('keys-tab__revoke-btn'));
+		const revokeBtns = screen.getAllByTestId('keys-tab-revoke-btn');
 		await user.click(revokeBtns[0]);
 
 		expect(onUrlUpdate).toHaveBeenCalledWith(
@@ -175,9 +173,7 @@ describe('KeysTab', () => {
 
 		// Wait for authz to complete and table to render
 		await screen.findByText('Production Key');
-		const revokeBtns = screen
-			.getAllByRole('button')
-			.filter((btn) => btn.className.includes('keys-tab__revoke-btn'));
+		const revokeBtns = screen.getAllByTestId('keys-tab-revoke-btn');
 		await user.click(revokeBtns[0]);
 
 		const confirmBtn = await screen.findByRole('button', { name: /Revoke Key/i });
@@ -193,9 +189,7 @@ describe('KeysTab', () => {
 
 		// Wait for authz to complete and table to render
 		await screen.findByText('Production Key');
-		const revokeBtns = screen
-			.getAllByRole('button')
-			.filter((btn) => btn.className.includes('keys-tab__revoke-btn'));
+		const revokeBtns = screen.getAllByTestId('keys-tab-revoke-btn');
 		revokeBtns.forEach((btn) =>
 			expect(btn).toHaveAttribute('aria-disabled', 'true'),
 		);

@@ -213,8 +213,9 @@ describe('CancelSubscriptionBanner', () => {
 		);
 	});
 
-	it('retry link is a native anchor with correct mailto href in fallback view', async () => {
+	it('retry button opens the mailto link in fallback view', async () => {
 		mockMailto();
+		const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CancelSubscriptionBanner />);
@@ -229,11 +230,11 @@ describe('CancelSubscriptionBanner', () => {
 		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
-		const retryLink = screen.getByTestId('retry-mailto-btn');
-		expect(retryLink.tagName).toBe('A');
-		expect(retryLink).toHaveAttribute(
-			'href',
+		await user.click(screen.getByTestId('retry-mailto-btn'));
+		expect(openSpy).toHaveBeenCalledWith(
 			expect.stringContaining('mailto:cloud-support@signoz.io'),
+			'_blank',
+			'noopener,noreferrer',
 		);
 	});
 

@@ -90,12 +90,12 @@ describe('OnboardingQuestionaire Component', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			render(<OnboardingQuestionaire />);
 
-			const datadogCheckbox = screen.getByLabelText(/datadog/i);
+			const datadogCheckbox = screen.getByRole('radio', { name: /datadog/i });
 			await user.click(datadogCheckbox);
 
 			const otelYes = screen.getByRole('radio', { name: /yes/i });
 			await user.click(otelYes);
-			await user.click(screen.getByLabelText(/just exploring/i));
+			await user.click(screen.getByRole('radio', { name: /just exploring/i }));
 
 			const nextButton = await screen.findByRole('button', { name: /next/i });
 			expect(nextButton).not.toHaveAttribute('aria-disabled', 'true');
@@ -105,7 +105,7 @@ describe('OnboardingQuestionaire Component', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			render(<OnboardingQuestionaire />);
 
-			const othersCheckbox = screen.getByLabelText(/^others$/i);
+			const othersCheckbox = screen.getByRole('radio', { name: /^others$/i });
 			await user.click(othersCheckbox);
 
 			await expect(
@@ -122,7 +122,7 @@ describe('OnboardingQuestionaire Component', () => {
 				screen.queryByText(/What is your timeline for migrating to SigNoz/i),
 			).not.toBeInTheDocument();
 
-			const datadogCheckbox = screen.getByLabelText(/datadog/i);
+			const datadogCheckbox = screen.getByRole('radio', { name: /datadog/i });
 			await user.click(datadogCheckbox);
 
 			await expect(
@@ -130,7 +130,9 @@ describe('OnboardingQuestionaire Component', () => {
 			).resolves.toBeInTheDocument();
 
 			// Not visible when None is selected
-			const noneCheckbox = screen.getByLabelText(/none\/starting fresh/i);
+			const noneCheckbox = screen.getByRole('radio', {
+				name: /none\/starting fresh/i,
+			});
 			await user.click(noneCheckbox);
 
 			expect(
@@ -142,9 +144,9 @@ describe('OnboardingQuestionaire Component', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			render(<OnboardingQuestionaire />);
 
-			await user.click(screen.getByLabelText(/datadog/i));
+			await user.click(screen.getByRole('radio', { name: /datadog/i }));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
-			await user.click(screen.getByLabelText(/just exploring/i));
+			await user.click(screen.getByRole('radio', { name: /just exploring/i }));
 
 			const nextButton = screen.getByRole('button', { name: /next/i });
 			await user.click(nextButton);
@@ -162,9 +164,9 @@ describe('OnboardingQuestionaire Component', () => {
 
 			// Navigate to step 2
 
-			await user.click(screen.getByLabelText(/datadog/i));
+			await user.click(screen.getByRole('radio', { name: /datadog/i }));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
-			await user.click(screen.getByLabelText(/just exploring/i));
+			await user.click(screen.getByRole('radio', { name: /just exploring/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
@@ -181,9 +183,9 @@ describe('OnboardingQuestionaire Component', () => {
 
 			// Navigate to step 2
 
-			await user.click(screen.getByLabelText(/datadog/i));
+			await user.click(screen.getByRole('radio', { name: /datadog/i }));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
-			await user.click(screen.getByLabelText(/just exploring/i));
+			await user.click(screen.getByRole('radio', { name: /just exploring/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await waitFor(() => {
@@ -198,9 +200,9 @@ describe('OnboardingQuestionaire Component', () => {
 
 			// Navigate to step 2
 
-			await user.click(screen.getByLabelText(/datadog/i));
+			await user.click(screen.getByRole('radio', { name: /datadog/i }));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
-			await user.click(screen.getByLabelText(/just exploring/i));
+			await user.click(screen.getByRole('radio', { name: /just exploring/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
@@ -212,9 +214,9 @@ describe('OnboardingQuestionaire Component', () => {
 			);
 			await user.type(discoverInput, 'Found via Google search');
 
-			const interestCheckbox = screen.getByLabelText(
-				/lowering observability costs/i,
-			);
+			const interestCheckbox = screen.getByRole('checkbox', {
+				name: /lowering observability costs/i,
+			});
 			await user.click(interestCheckbox);
 
 			const nextButton = await screen.findByRole('button', { name: /next/i });
@@ -227,16 +229,16 @@ describe('OnboardingQuestionaire Component', () => {
 
 			// Navigate to step 2
 
-			await user.click(screen.getByLabelText(/datadog/i));
+			await user.click(screen.getByRole('radio', { name: /datadog/i }));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
-			await user.click(screen.getByLabelText(/just exploring/i));
+			await user.click(screen.getByRole('radio', { name: /just exploring/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
 				screen.findByText(/what got you interested in signoz/i, {}),
 			).resolves.toBeInTheDocument();
 
-			const othersCheckbox = screen.getByLabelText(/^others$/i);
+			const othersCheckbox = screen.getByRole('checkbox', { name: /^others$/i });
 			await user.click(othersCheckbox);
 
 			await expect(
@@ -252,9 +254,9 @@ describe('OnboardingQuestionaire Component', () => {
 
 			// Navigate through steps 1 and 2
 
-			await user.click(screen.getByLabelText(/datadog/i));
+			await user.click(screen.getByRole('radio', { name: /datadog/i }));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
-			await user.click(screen.getByLabelText(/just exploring/i));
+			await user.click(screen.getByRole('radio', { name: /just exploring/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
@@ -265,7 +267,9 @@ describe('OnboardingQuestionaire Component', () => {
 				screen.getByPlaceholderText(/e\.g\., I asked ChatGPT/i),
 				'Found via Google',
 			);
-			await user.click(screen.getByLabelText(/lowering observability costs/i));
+			await user.click(
+				screen.getByRole('checkbox', { name: /lowering observability costs/i }),
+			);
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
@@ -293,16 +297,18 @@ describe('OnboardingQuestionaire Component', () => {
 			render(<OnboardingQuestionaire />);
 
 			// Navigate to step 3
-			await user.click(screen.getByLabelText(/datadog/i));
+			await user.click(screen.getByRole('radio', { name: /datadog/i }));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
-			await user.click(screen.getByLabelText(/just exploring/i));
+			await user.click(screen.getByRole('radio', { name: /just exploring/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await user.type(
 				await screen.findByPlaceholderText(/e\.g\., I asked ChatGPT/i),
 				'Found via Google',
 			);
-			await user.click(screen.getByLabelText(/lowering observability costs/i));
+			await user.click(
+				screen.getByRole('checkbox', { name: /lowering observability costs/i }),
+			);
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			// Click "I'll do this later" on step 3 — triggers PUT /zeus/profiles
@@ -325,9 +331,9 @@ describe('OnboardingQuestionaire Component', () => {
 
 			// Navigate to step 3
 
-			await user.click(screen.getByLabelText(/datadog/i));
+			await user.click(screen.getByRole('radio', { name: /datadog/i }));
 			await user.click(screen.getByRole('radio', { name: /yes/i }));
-			await user.click(screen.getByLabelText(/just exploring/i));
+			await user.click(screen.getByRole('radio', { name: /just exploring/i }));
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
@@ -338,7 +344,9 @@ describe('OnboardingQuestionaire Component', () => {
 				screen.getByPlaceholderText(/e\.g\., I asked ChatGPT/i),
 				'Found via Google',
 			);
-			await user.click(screen.getByLabelText(/lowering observability costs/i));
+			await user.click(
+				screen.getByRole('checkbox', { name: /lowering observability costs/i }),
+			);
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
