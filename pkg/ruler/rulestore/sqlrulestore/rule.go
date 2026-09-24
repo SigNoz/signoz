@@ -90,20 +90,15 @@ func (r *rule) DeleteRule(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	return nil
 }
 
-func (r *rule) GetStoredRulesMatching(ctx context.Context, orgID string, query string) ([]*ruletypes.StorableRule, error) {
-	compiled, err := Compile(query, r.sqlstore.Formatter())
-	if err != nil {
-		return nil, err
-	}
-
+func (r *rule) GetStoredRulesMatching(ctx context.Context, orgID string, filterSQL string, filterArgs []any) ([]*ruletypes.StorableRule, error) {
 	rules := make([]*ruletypes.StorableRule, 0)
 	q := r.sqlstore.
 		BunDB().
 		NewSelect().
 		Model(&rules).
 		Where("org_id = ?", orgID)
-	if !compiled.IsEmpty() {
-		q = q.Where(compiled.SQL, compiled.Args...)
+	if filterSQL != "" {
+		q = q.Where(filterSQL, filterArgs...)
 	}
 	if err := q.Scan(ctx); err != nil {
 		return nil, err

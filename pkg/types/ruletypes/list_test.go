@@ -19,53 +19,53 @@ func TestListRulesParamsValidate(t *testing.T) {
 		wantLimit int
 	}{
 		{
-			name:      "empty params get defaults",
+			name:      "EmptyParams_Defaults",
 			params:    ListRulesParams{},
 			wantSort:  ListSortUpdatedAt,
 			wantOrder: ListOrderDesc,
 			wantLimit: DefaultListLimit,
 		},
 		{
-			name:      "explicit values kept",
+			name:      "ExplicitValues_Kept",
 			params:    ListRulesParams{ListFilter: ListFilter{Sort: ListSortSeverity, Order: ListOrderAsc}, Limit: 50, Offset: 100},
 			wantSort:  ListSortSeverity,
 			wantOrder: ListOrderAsc,
 			wantLimit: 50,
 		},
 		{
-			name:      "over-max limit clamped",
+			name:      "OverMaxLimit_Clamped",
 			params:    ListRulesParams{Limit: MaxListLimit + 1},
 			wantSort:  ListSortUpdatedAt,
 			wantOrder: ListOrderDesc,
 			wantLimit: MaxListLimit,
 		},
 		{
-			name:    "invalid state rejected",
+			name:    "InvalidState_Rejected",
 			params:  ListRulesParams{ListFilter: ListFilter{States: []string{"bogus"}}},
 			wantErr: `invalid state "bogus"`,
 		},
 		{
-			name:    "invalid sort rejected",
+			name:    "InvalidSort_Rejected",
 			params:  ListRulesParams{ListFilter: ListFilter{Sort: ListSort{valuer.NewString("bogus")}}},
 			wantErr: "invalid sort",
 		},
 		{
-			name:    "invalid order rejected",
+			name:    "InvalidOrder_Rejected",
 			params:  ListRulesParams{ListFilter: ListFilter{Order: ListOrder{valuer.NewString("bogus")}}},
 			wantErr: "invalid order",
 		},
 		{
-			name:    "negative limit rejected",
+			name:    "NegativeLimit_Rejected",
 			params:  ListRulesParams{Limit: -1},
 			wantErr: "invalid limit",
 		},
 		{
-			name:    "negative offset rejected",
+			name:    "NegativeOffset_Rejected",
 			params:  ListRulesParams{Offset: -1},
 			wantErr: "invalid offset",
 		},
 		{
-			name:    "over-long query rejected",
+			name:    "OverLongQuery_Rejected",
 			params:  ListRulesParams{ListFilter: ListFilter{Query: strings.Repeat("a", MaxListQueryLen+1)}},
 			wantErr: "query cannot be longer",
 		},
@@ -95,16 +95,16 @@ func TestListRulesParamsAlertStates(t *testing.T) {
 		wantStates []AlertState
 	}{
 		{
-			name:       "valid states parsed to typed values",
+			name:       "ValidStates_ParsedToTypedValues",
 			states:     []string{"firing", "pending"},
 			wantStates: []AlertState{StateFiring, StatePending},
 		},
 		{
-			name:   "absent states mean no filtering",
+			name:   "AbsentStates_NoFiltering",
 			states: nil,
 		},
 		{
-			name:    "invalid state rejected",
+			name:    "InvalidState_Rejected",
 			states:  []string{"bogus"},
 			wantErr: `invalid state "bogus"`,
 		},

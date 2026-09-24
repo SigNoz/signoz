@@ -9,6 +9,7 @@ import {
 	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 } from 'constants/queryCacheTime';
 import type { AppState } from 'store/reducers';
+import { isRetryableError } from 'utils/errorUtils';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
@@ -20,13 +21,29 @@ import { useDashboardStore } from '../../store/useDashboardStore';
 import { buildExistingDynamicVariableQuery } from '../utils/dynamicFilter';
 import type { VariableSelectionMap } from '../selectionTypes';
 import { selectionToPayload } from '../utils/selectionUtils';
+import { useDynamicVariableSearch } from './useDynamicVariableSearch';
 import { useVariableFetchState } from './useVariableFetchState';
+
+export interface DynamicVariableOptions {
+	/** ALL VALUES section — narrowed to the API's matches while a search is active. */
+	values: string[];
+	/** RELATED VALUES section — scoped by the sibling dynamic variables' selections. */
+	relatedValues: string[];
+	/** false when the backend truncated the list, so searching has to hit the API. */
+	complete: boolean;
+	onSearch: (text: string) => void;
+	onSearchReset: () => void;
+}
 
 export interface VariableOptions {
 	options: string[];
 	loading: boolean;
 	errorMessage: string | null;
 	onRetry?: () => void;
+	/** false for a client error, where retrying the same request cannot help. */
+	isRetryable?: boolean;
+	/** DYNAMIC only: what the dropdown renders, sectioned and search-aware. */
+	dynamic?: DynamicVariableOptions;
 }
 
 /**
@@ -150,10 +167,68 @@ export function useFetchedVariableOptions(
 		return sortValuesByOrder(values, variable.sort).map(String);
 	}, [dynamicResult.data, variable.sort]);
 
+	const dynamicRelatedOptions = useMemo(
+		() =>
+			sortValuesByOrder(
+				dynamicResult.data?.data?.relatedValues ?? [],
+				variable.sort,
+			).map(String),
+		[dynamicResult.data, variable.sort],
+	);
+
+	// Related values are scoped by the sibling selections, so they can name values the
+	// unscoped list never returned — the selectable set is the union of both sections.
+	const dynamicSelectableOptions = useMemo(
+		() => [...new Set([...dynamicOptions, ...dynamicRelatedOptions])],
+		[dynamicOptions, dynamicRelatedOptions],
+	);
+
+	const isDynamicListComplete = dynamicResult.data?.data?.complete ?? true;
+
+	const search = useDynamicVariableSearch({
+		signal: signalForApi(variable.dynamicSignal),
+		attribute: variable.dynamicAttribute,
+		startUnixMilli: minTime,
+		endUnixMilli: maxTime,
+		existingQuery: existingQuery || undefined,
+		enabled: variable.type === 'DYNAMIC' && !isDynamicListComplete,
+	});
+
+	// One stable object: the select rebuilds its whole option list whenever this
+	// identity changes, so it must not be a literal rebuilt on every render.
+	const dynamicDisplay = useMemo<DynamicVariableOptions>(() => {
+		const display = search.results
+			? {
+					values: sortValuesByOrder(search.results.values, variable.sort).map(
+						String,
+					),
+					relatedValues: sortValuesByOrder(
+						search.results.relatedValues,
+						variable.sort,
+					).map(String),
+				}
+			: { values: dynamicOptions, relatedValues: dynamicRelatedOptions };
+
+		return {
+			...display,
+			complete: isDynamicListComplete,
+			onSearch: search.onSearch,
+			onSearchReset: search.reset,
+		};
+	}, [
+		search.results,
+		search.onSearch,
+		search.reset,
+		isDynamicListComplete,
+		dynamicOptions,
+		dynamicRelatedOptions,
+		variable.sort,
+	]);
+
 	// Flag a variable that settled with zero options so dependent panels fall through
 	// to "no data" instead of waiting forever. hasFetchedOnce excludes the pre-fetch state.
 	const effectiveOptions =
-		variable.type === 'DYNAMIC' ? dynamicOptions : queryOptions;
+		variable.type === 'DYNAMIC' ? dynamicSelectableOptions : queryOptions;
 	useEffect(() => {
 		if (variable.type !== 'QUERY' && variable.type !== 'DYNAMIC') {
 			return;
@@ -175,14 +250,16 @@ export function useFetchedVariableOptions(
 
 	if (variable.type === 'DYNAMIC') {
 		return {
-			options: dynamicOptions,
-			loading: dynamicResult.isFetching || isVariableWaiting,
+			options: dynamicSelectableOptions,
+			loading: dynamicResult.isFetching || isVariableWaiting || search.isSearching,
 			errorMessage: dynamicResult.error
 				? (dynamicResult.error as Error).message || null
 				: null,
 			onRetry: (): void => {
 				void dynamicResult.refetch();
 			},
+			isRetryable: !dynamicResult.error || isRetryableError(dynamicResult.error),
+			dynamic: dynamicDisplay,
 		};
 	}
 	return {
@@ -194,5 +271,6 @@ export function useFetchedVariableOptions(
 		onRetry: (): void => {
 			void queryResult.refetch();
 		},
+		isRetryable: !queryResult.error || isRetryableError(queryResult.error),
 	};
 }

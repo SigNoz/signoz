@@ -164,7 +164,7 @@ func (typ *Token) IsRotationRequired(rotationInterval time.Duration) error {
 func (typ *Token) Rotate(accessTokenOrPrevAccessToken string, refreshTokenOrPrevRefreshToken string, rotationDuration time.Duration, idleDuration time.Duration, maxDuration time.Duration) error {
 	if typ.PrevAccessToken == accessTokenOrPrevAccessToken && typ.PrevRefreshToken == refreshTokenOrPrevRefreshToken {
 		// If the token has been rotated within the rotation duration, do nothing and return the same token.
-		if !typ.RotatedAt.IsZero() && typ.RotatedAt.Before(time.Now().Add(-rotationDuration)) {
+		if !typ.RotatedAt.IsZero() && typ.RotatedAt.After(time.Now().Add(-rotationDuration)) {
 			return nil
 		}
 

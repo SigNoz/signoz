@@ -1,0 +1,17 @@
+.fixture {
+	max-width: 640px;
+	padding: 160px 24px 24px;
+}
+
+.legend {
+	height: 120px;
+	max-width: 640px;
+}
+
+.truncatedValue {
+	display: block;
+	max-width: 320px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}

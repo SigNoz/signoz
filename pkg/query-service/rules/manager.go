@@ -902,7 +902,12 @@ func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesPara
 		stateFilter[state] = struct{}{}
 	}
 
-	storedRules, err := m.ruleStore.GetStoredRulesMatching(ctx, claims.OrgID, params.Query)
+	compiled, err := CompileListFilter(params.Query, m.sqlstore.Formatter())
+	if err != nil {
+		return nil, err
+	}
+
+	storedRules, err := m.ruleStore.GetStoredRulesMatching(ctx, claims.OrgID, compiled.SQL, compiled.Args)
 	if err != nil {
 		return nil, err
 	}
@@ -961,10 +966,7 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 	}
 	r.Id = id.StringValue()
 	// fetch state of rule from memory
-	m.mtx.RLock()
-	rm, ok := m.rules[r.Id]
-	m.mtx.RUnlock()
-	if !ok {
+	if rm, ok := m.rules[r.Id]; !ok {
 		r.State = ruletypes.StateDisabled
 		r.Disabled = true
 	} else {

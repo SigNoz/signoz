@@ -4886,50 +4886,6 @@ export interface DashboardtypesCustomVariableSpecDTO {
 	customValue: string;
 }
 
-export interface DashboardtypesStorableDashboardDataDTO {
-	[key: string]: unknown;
-}
-
-export enum DashboardtypesSourceDTO {
-	user = 'user',
-	system = 'system',
-	integration = 'integration',
-}
-export interface DashboardtypesDashboardDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	data?: DashboardtypesStorableDashboardDataDTO;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type boolean
-	 */
-	locked?: boolean;
-	/**
-	 * @type string
-	 */
-	org_id?: string;
-	source?: DashboardtypesSourceDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
 export interface DashboardtypesDashboardPanelRefDTO {
 	/**
 	 * @type string
@@ -5868,6 +5824,11 @@ export interface DashboardtypesDashboardViewDTO {
 	updatedAt?: string;
 }
 
+export enum DashboardtypesSourceDTO {
+	user = 'user',
+	system = 'system',
+	integration = 'integration',
+}
 export interface TagtypesGettableTagDTO {
 	/**
 	 * @type string
@@ -5943,11 +5904,6 @@ export interface DashboardtypesGettablePublicDasbhboardDTO {
 	 * @type boolean
 	 */
 	timeRangeEnabled?: boolean;
-}
-
-export interface DashboardtypesGettablePublicDashboardDataDTO {
-	dashboard?: DashboardtypesDashboardDTO;
-	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
 export interface DashboardtypesGettablePublicDashboardDataV2DTO {
@@ -9022,37 +8978,11 @@ export interface MetricsexplorertypesMetricAttributesResponseDTO {
 	totalKeys: number;
 }
 
-export interface MetricsexplorertypesMetricDashboardDTO {
-	/**
-	 * @type string
-	 */
-	dashboardId: string;
-	/**
-	 * @type string
-	 */
-	dashboardName: string;
-	/**
-	 * @type string
-	 */
-	widgetId: string;
-	/**
-	 * @type string
-	 */
-	widgetName: string;
-}
-
 export interface MetricsexplorertypesMetricDashboardPanelsResponseDTO {
 	/**
 	 * @type array,null
 	 */
 	dashboards: DashboardtypesDashboardPanelRefDTO[] | null;
-}
-
-export interface MetricsexplorertypesMetricDashboardsResponseDTO {
-	/**
-	 * @type array,null
-	 */
-	dashboards: MetricsexplorertypesMetricDashboardDTO[] | null;
 }
 
 export interface MetricsexplorertypesMetricHighlightsResponseDTO {
@@ -12634,29 +12564,6 @@ export type GetOrgPreference200 = {
 export type UpdateOrgPreferencePathParameters = {
 	name: string;
 };
-export type GetPublicDashboardDataPathParameters = {
-	id: string;
-};
-export type GetPublicDashboardData200 = {
-	data: DashboardtypesGettablePublicDashboardDataDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetPublicDashboardWidgetQueryRangePathParameters = {
-	id: string;
-	idx: string;
-};
-export type GetPublicDashboardWidgetQueryRange200 = {
-	data: Querybuildertypesv5QueryRangeResponseDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListRoles200 = {
 	/**
 	 * @type array
@@ -13608,22 +13515,6 @@ export type GetMetricAttributesParams = {
 
 export type GetMetricAttributes200 = {
 	data: MetricsexplorertypesMetricAttributesResponseDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetMetricDashboardsParams = {
-	/**
-	 * @type string
-	 * @description The name of the metric. May contain slashes (e.g. cloud-provider metrics like run.googleapis.com/request_latencies).
-	 */
-	metricName: string;
-};
-
-export type GetMetricDashboards200 = {
-	data: MetricsexplorertypesMetricDashboardsResponseDTO;
 	/**
 	 * @type string
 	 */

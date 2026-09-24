@@ -47,6 +47,7 @@ jobs:
           - dashboard
           - ingestionkeys
           - inframonitoring
+          - llmpricingrules
           - logspipelines
           - passwordauthn
           - preference

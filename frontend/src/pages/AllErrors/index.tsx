@@ -5,13 +5,11 @@ import { Filter } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import cx from 'classnames';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
-import QuickFilters from 'components/QuickFilters/QuickFilters';
+import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import RouteTab from 'components/RouteTab';
-import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import ResourceAttributesFilterV2 from 'container/ResourceAttributeFilterV2/ResourceAttributesFilterV2';
@@ -59,63 +57,52 @@ function AllErrors(): JSX.Element {
 	const quickFilterFieldApis = useSignalFieldApis();
 
 	return (
-		<div className={cx('all-errors-page', showFilters ? 'filter-visible' : '')}>
-			{showFilters && (
-				<section className={cx('all-errors-quick-filter-section')}>
-					<QuickFilters
-						className="qf-exceptions"
-						source={QuickFiltersSource.EXCEPTIONS}
-						signal={SignalType.EXCEPTIONS}
-						handleFilterVisibilityChange={handleFilterVisibilityChange}
-						useFieldApis={quickFilterFieldApis}
-					/>
-				</section>
-			)}
-			<section
-				className={cx(
-					'all-errors-right-section',
-					showFilters ? 'filter-visible' : '',
-				)}
-			>
-				<TypicalOverlayScrollbar>
-					<>
-						<Toolbar
-							showAutoRefresh={false}
-							leftActions={
-								!showFilters ? (
-									<Tooltip title="Show Filters">
-										<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-											<Filter size="md" />
-										</Button>
-									</Tooltip>
-								) : undefined
-							}
-							rightActions={
-								<div className="right-toolbar-actions-container">
-									<RightToolbarActions
-										onStageRunQuery={handleRunQuery}
-										isLoadingQueries={isLoadingQueries}
-										handleCancelQuery={handleCancelQuery}
-									/>
-									<HeaderRightSection
-										enableAnnouncements={false}
-										enableShare
-										enableFeedback
-									/>
-								</div>
-							}
+		<QuickFiltersLayout
+			className="all-errors-page"
+			contentClassName="all-errors-right-section"
+			showFilters={showFilters}
+			quickFilterProps={{
+				className: 'qf-exceptions',
+				source: QuickFiltersSource.EXCEPTIONS,
+				signal: SignalType.EXCEPTIONS,
+				handleFilterVisibilityChange,
+				useFieldApis: quickFilterFieldApis,
+			}}
+		>
+			<Toolbar
+				showAutoRefresh={false}
+				leftActions={
+					!showFilters ? (
+						<Tooltip title="Show Filters">
+							<Button onClick={handleFilterVisibilityChange} className="filter-btn">
+								<Filter size="md" />
+							</Button>
+						</Tooltip>
+					) : undefined
+				}
+				rightActions={
+					<div className="right-toolbar-actions-container">
+						<RightToolbarActions
+							onStageRunQuery={handleRunQuery}
+							isLoadingQueries={isLoadingQueries}
+							handleCancelQuery={handleCancelQuery}
 						/>
-						<ResourceAttributesFilterV2 />
-						<RouteTab
-							routes={routes}
-							activeKey={pathname}
-							history={history}
-							showRightSection={false}
+						<HeaderRightSection
+							enableAnnouncements={false}
+							enableShare
+							enableFeedback
 						/>
-					</>
-				</TypicalOverlayScrollbar>
-			</section>
-		</div>
+					</div>
+				}
+			/>
+			<ResourceAttributesFilterV2 />
+			<RouteTab
+				routes={routes}
+				activeKey={pathname}
+				history={history}
+				showRightSection={false}
+			/>
+		</QuickFiltersLayout>
 	);
 }
 

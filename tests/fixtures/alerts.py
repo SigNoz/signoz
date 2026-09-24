@@ -19,7 +19,6 @@ from fixtures.logger import setup_logger
 from fixtures.logs import Logs
 from fixtures.maildev import get_all_mails, verify_email_received
 from fixtures.metrics import Metrics
-from fixtures.notification_channel import ensure_notification_channel
 from fixtures.traces import Traces
 
 logger = setup_logger(__name__)
@@ -109,48 +108,18 @@ def delete_all_rules(signoz: types.SigNoz, token: str) -> None:
 def seed_alert_rules(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
+    create_notification_channel: Callable[[dict], str],
     create_alert_rule: Callable[[dict], str],
 ) -> Callable[[dict, list[dict]], None]:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Cleanup is owned by create_alert_rule, which deletes the rules it created.
     def _seed_alert_rules(channel_config: dict, rules: list[dict]) -> None:
         delete_all_rules(signoz, admin_token)
-        ensure_notification_channel(signoz, admin_token, channel_config)
+        create_notification_channel(channel_config)
         for rule in rules:
             create_alert_rule(rule)
 
     return _seed_alert_rules
-
-
-@pytest.fixture(name="create_rule_view", scope="function")
-def create_rule_view(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> Callable[[dict], dict]:
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    view_ids = []
-
-    def _create_rule_view(view: dict) -> dict:
-        response = requests.post(
-            signoz.self.host_configs["8080"].get("/api/v2/rule_views"),
-            json=view,
-            headers={"Authorization": f"Bearer {admin_token}"},
-            timeout=5,
-        )
-        assert response.status_code == HTTPStatus.CREATED, f"Failed to create rule view, api returned {response.status_code} with response: {response.text}"
-        created = response.json()["data"]
-        view_ids.append(created["id"])
-        return created
-
-    yield _create_rule_view
-    # A view the test already deleted returns 404; only real failures are logged.
-    for view_id in view_ids:
-        response = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v2/rule_views/{view_id}"),
-            headers={"Authorization": f"Bearer {admin_token}"},
-            timeout=5,
-        )
-        if response.status_code not in (HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND):
-            logger.error("Error deleting rule view: %s", {"view_id": view_id, "response": response.text})
 
 
 def labels_to_map(labels: list[dict]) -> dict[str, str]:

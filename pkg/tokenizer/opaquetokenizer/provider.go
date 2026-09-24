@@ -159,12 +159,14 @@ func (provider *provider) RotateToken(ctx context.Context, accessToken string, r
 	var rotatedToken *authtypes.Token
 
 	if err := provider.tokenStore.GetOrUpdateByAccessTokenOrPrevAccessToken(ctx, accessToken, func(ctx context.Context, token *authtypes.StorableToken) error {
+		currentAccessToken := token.AccessToken
+
 		if err := token.Rotate(accessToken, refreshToken, provider.config.Rotation.Duration, provider.config.Lifetime.Idle, provider.config.Lifetime.Max); err != nil {
 			return err
 		}
 
-		// If the token passed the Rotate method and is the same as the input token, return the same token.
-		if token.AccessToken == accessToken && token.RefreshToken == refreshToken {
+		// If the token passed the Rotate method and is the same as the stored token, return the same token.
+		if token.AccessToken == currentAccessToken {
 			rotatedToken = token
 			return nil
 		}
