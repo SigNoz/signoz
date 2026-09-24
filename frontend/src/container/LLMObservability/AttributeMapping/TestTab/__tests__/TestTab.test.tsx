@@ -222,12 +222,12 @@ describe('TestTab — sample-span flow', () => {
 		const resetBtn = await screen.findByTestId('reset-template-button');
 
 		expect(screen.getByTestId('monaco')).toHaveValue(EDITED_SPAN_JSON);
-		expect(resetBtn).toBeEnabled();
+		expect(resetBtn).not.toHaveAttribute('aria-disabled', 'true');
 
 		await user.click(resetBtn);
 
 		expect(screen.getByTestId('monaco')).toHaveValue(SAMPLE_SPAN_JSON);
 		expect(get(SPAN_INPUT_KEY)).toBeFalsy();
-		expect(resetBtn).toBeDisabled();
+		expect(resetBtn).toHaveAttribute('aria-disabled', 'true');
 	});
 });

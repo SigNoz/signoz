@@ -134,7 +134,10 @@ export const CancelSubscription: Story = {
 		// The button is cloned disabled while its own permission check is in
 		// flight, and the click that lands there is dropped rather than queued.
 		await waitFor(() =>
-			expect(screen.getByTestId('cancel-subscription-btn')).toBeEnabled(),
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
 		);
 
 		await userEvent.click(screen.getByTestId('cancel-subscription-btn'));
@@ -151,7 +154,9 @@ export const CancelSubscription: Story = {
 		);
 
 		await waitFor(() =>
-			expect(screen.getByTestId('cancel-subscription-confirm-btn')).toBeEnabled(),
+			expect(
+				screen.getByTestId('cancel-subscription-confirm-btn'),
+			).not.toHaveAttribute('aria-disabled', 'true'),
 		);
 	},
 };

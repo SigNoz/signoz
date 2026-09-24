@@ -93,7 +93,10 @@ describe('ServiceAccountDrawer', () => {
 			screen.findByDisplayValue('CI Bot'),
 		).resolves.toBeInTheDocument();
 		expect(screen.getByText('ci-bot@signoz.io')).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
+		expect(screen.getByRole('button', { name: /Save Changes/i })).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('editing name enables Save; clicking Save sends correct payload and calls onSuccess', async () => {
@@ -119,7 +122,9 @@ describe('ServiceAccountDrawer', () => {
 		await user.type(nameInput, 'CI Bot Updated');
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await waitFor(() => {
@@ -160,7 +165,9 @@ describe('ServiceAccountDrawer', () => {
 		await user.click(await screen.findByTitle('signoz-viewer'));
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await waitFor(() => {
@@ -205,7 +212,9 @@ describe('ServiceAccountDrawer', () => {
 		await user.click(removeBtn);
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await waitFor(() => {
@@ -359,7 +368,9 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await user.type(nameInput, 'New Name');
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await expect(
@@ -395,7 +406,9 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await user.click(await screen.findByTitle('signoz-viewer'));
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await expect(
@@ -431,7 +444,9 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await user.click(await screen.findByTitle('signoz-viewer'));
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		// Retried after 429 — at least 2 calls, no error shown
@@ -469,7 +484,9 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await user.type(nameInput, 'Retry Test');
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await screen.findByText(/Name update.*name update failed/i, undefined, {

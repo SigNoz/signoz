@@ -299,7 +299,10 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		expect(
 			screen.getByTestId('wizard-selector-hint-logs-read'),
 		).toHaveTextContent('Allow service.name=frontend for Builder Query queries.');
-		expect(screen.getByTestId('wizard-add-btn-logs-read')).not.toBeDisabled();
+		expect(screen.getByTestId('wizard-add-btn-logs-read')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('restores the hardcoded key in the selector once the value changes', async () => {
@@ -315,7 +318,10 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		expect(selectorInput).toHaveValue(
 			'builder_query/signoz.workspace.key.id/frontend2',
 		);
-		expect(screen.getByTestId('wizard-add-btn-logs-read')).not.toBeDisabled();
+		expect(screen.getByTestId('wizard-add-btn-logs-read')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('blocks adding when the selector has an unknown query type', async () => {
@@ -329,7 +335,10 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		expect(
 			screen.getByTestId('wizard-selector-hint-logs-read'),
 		).toHaveTextContent('"sql_query" is not a supported query type.');
-		expect(screen.getByTestId('wizard-add-btn-logs-read')).toBeDisabled();
+		expect(screen.getByTestId('wizard-add-btn-logs-read')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('blocks adding when the selector is emptied', async () => {
@@ -341,7 +350,10 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		expect(
 			screen.getByTestId('wizard-selector-hint-logs-read'),
 		).toHaveTextContent('Enter a selector.');
-		expect(screen.getByTestId('wizard-add-btn-logs-read')).toBeDisabled();
+		expect(screen.getByTestId('wizard-add-btn-logs-read')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('adds the hand-edited selector verbatim', async () => {

@@ -76,13 +76,17 @@ describe('AddKeyModal', () => {
 		const nameInput = await screen.findByTestId('add-key-name-input');
 		const createBtn = await screen.findByTestId('add-key-submit-btn');
 
-		expect(createBtn).toBeDisabled();
+		expect(createBtn).toHaveAttribute('aria-disabled', 'true');
 
 		await user.type(nameInput, 'My Key');
-		await waitFor(() => expect(createBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(createBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 
 		await user.clear(nameInput);
-		await waitFor(() => expect(createBtn).toBeDisabled());
+		await waitFor(() =>
+			expect(createBtn).toHaveAttribute('aria-disabled', 'true'),
+		);
 	});
 
 	it('successful creation transitions to phase 2 with key displayed and security callout', async () => {
@@ -92,7 +96,9 @@ describe('AddKeyModal', () => {
 		const nameInput = await screen.findByTestId('add-key-name-input');
 		const submitBtn = await screen.findByTestId('add-key-submit-btn');
 		await user.type(nameInput, 'Deploy Key');
-		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(submitBtn);
 
 		await screen.findByText('snz_abc123xyz456secret');
@@ -108,7 +114,9 @@ describe('AddKeyModal', () => {
 		const nameInput = await screen.findByTestId('add-key-name-input');
 		const submitBtn = await screen.findByTestId('add-key-submit-btn');
 		await user.type(nameInput, 'Deploy Key');
-		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(submitBtn);
 
 		await screen.findByText('snz_abc123xyz456secret');
@@ -151,7 +159,10 @@ describe('AddKeyModal', () => {
 		).resolves.toBeInTheDocument();
 
 		// The footer lives outside the guard: submit is gated, Cancel still works.
-		expect(screen.getByTestId('add-key-submit-btn')).toBeDisabled();
+		expect(screen.getByTestId('add-key-submit-btn')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		await user.click(screen.getByTestId('add-key-cancel-btn'));
 

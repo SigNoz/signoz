@@ -85,7 +85,10 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		renderDrawer();
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-connect-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-connect-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		await user.click(screen.getByTestId('gcp-connect-account-btn'));
@@ -110,7 +113,10 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		renderDrawer();
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-connect-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-connect-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		await user.type(
@@ -178,7 +184,10 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		renderDrawer();
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-connect-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-connect-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		await user.type(screen.getByTestId('gcp-account-name-input'), 'my-org');

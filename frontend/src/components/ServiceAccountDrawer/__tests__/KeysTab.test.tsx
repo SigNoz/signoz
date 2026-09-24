@@ -196,6 +196,8 @@ describe('KeysTab', () => {
 		const revokeBtns = screen
 			.getAllByRole('button')
 			.filter((btn) => btn.className.includes('keys-tab__revoke-btn'));
-		revokeBtns.forEach((btn) => expect(btn).toBeDisabled());
+		revokeBtns.forEach((btn) =>
+			expect(btn).toHaveAttribute('aria-disabled', 'true'),
+		);
 	});
 });

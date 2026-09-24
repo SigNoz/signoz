@@ -260,11 +260,14 @@ describe('Footer', () => {
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
-		).toBeEnabled();
+		).not.toHaveAttribute('aria-disabled', 'true');
 		expect(
 			screen.getByRole('button', { name: /test notification/i }),
-		).toBeEnabled();
-		expect(screen.getByRole('button', { name: /discard/i })).toBeEnabled();
+		).not.toHaveAttribute('aria-disabled', 'true');
+		expect(screen.getByRole('button', { name: /discard/i })).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('should show loading state on test notification button when testing alert rule', () => {

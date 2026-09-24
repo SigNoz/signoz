@@ -485,7 +485,7 @@ describe('PermissionEditor', () => {
 			const addBtn = screen.getByTestId(
 				'item-input-selector-add-btn-factor-api-key-read',
 			);
-			expect(addBtn).toBeDisabled();
+			expect(addBtn).toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 

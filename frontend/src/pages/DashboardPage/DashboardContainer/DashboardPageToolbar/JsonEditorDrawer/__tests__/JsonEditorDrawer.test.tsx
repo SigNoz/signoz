@@ -175,7 +175,10 @@ describe('JsonEditorDrawer', () => {
 		const { rerender } = render(
 			<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />,
 		);
-		expect(screen.getByTestId('json-editor-apply')).toBeDisabled();
+		expect(screen.getByTestId('json-editor-apply')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		mockUseJsonEditor.mockReturnValue(
 			hookValue({ validity: { valid: false, lineCount: 1 } }),
@@ -183,13 +186,19 @@ describe('JsonEditorDrawer', () => {
 		rerender(
 			<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />,
 		);
-		expect(screen.getByTestId('json-editor-apply')).toBeDisabled();
+		expect(screen.getByTestId('json-editor-apply')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		mockUseJsonEditor.mockReturnValue(hookValue({ isSaving: true }));
 		rerender(
 			<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />,
 		);
-		expect(screen.getByTestId('json-editor-apply')).toBeDisabled();
+		expect(screen.getByTestId('json-editor-apply')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('wires toolbar and footer buttons to the hook callbacks', () => {

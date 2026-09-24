@@ -221,8 +221,14 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 		// Active log is the first one.
 		renderDrawer({ log: logs[0], logs, onNavigateLog });
 
-		expect(screen.getByTestId('log-details-header-prev')).toBeDisabled();
-		expect(screen.getByTestId('log-details-header-next')).toBeEnabled();
+		expect(screen.getByTestId('log-details-header-prev')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+		expect(screen.getByTestId('log-details-header-next')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		await user.click(screen.getByTestId('log-details-header-next'));
 		expect(onNavigateLog).toHaveBeenLastCalledWith(logs[1]);

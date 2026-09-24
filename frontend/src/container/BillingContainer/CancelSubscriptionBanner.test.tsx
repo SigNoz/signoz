@@ -56,7 +56,10 @@ describe('CancelSubscriptionBanner', () => {
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('cancel-subscription-btn')).toBeDisabled();
+			expect(screen.getByTestId('cancel-subscription-btn')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -77,7 +80,10 @@ describe('CancelSubscriptionBanner', () => {
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('cancel-subscription-btn')).toBeEnabled();
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
 
@@ -98,19 +104,22 @@ describe('CancelSubscriptionBanner', () => {
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('cancel-subscription-btn')).toBeEnabled();
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
 
 		const confirmButton = screen.getByTestId('cancel-subscription-confirm-btn');
-		expect(confirmButton).toBeDisabled();
+		expect(confirmButton).toHaveAttribute('aria-disabled', 'true');
 
 		const input = screen.getByTestId('cancel-confirm-input');
 		await user.type(input, 'canc');
-		expect(confirmButton).toBeDisabled();
+		expect(confirmButton).toHaveAttribute('aria-disabled', 'true');
 
 		await user.type(input, 'el');
-		expect(confirmButton).toBeEnabled();
+		expect(confirmButton).not.toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('closes dialog and resets input when Go back is clicked', async () => {
@@ -118,7 +127,10 @@ describe('CancelSubscriptionBanner', () => {
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('cancel-subscription-btn')).toBeEnabled();
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
 
@@ -131,7 +143,10 @@ describe('CancelSubscriptionBanner', () => {
 		);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('cancel-subscription-btn')).toBeEnabled();
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
 		expect(screen.getByTestId('cancel-confirm-input')).toHaveValue('');
@@ -144,7 +159,10 @@ describe('CancelSubscriptionBanner', () => {
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('cancel-subscription-btn')).toBeEnabled();
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
 		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
@@ -177,7 +195,10 @@ describe('CancelSubscriptionBanner', () => {
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('cancel-subscription-btn')).toBeEnabled();
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
 		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
@@ -199,7 +220,10 @@ describe('CancelSubscriptionBanner', () => {
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('cancel-subscription-btn')).toBeEnabled();
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
 		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');
@@ -220,7 +244,10 @@ describe('CancelSubscriptionBanner', () => {
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('cancel-subscription-btn')).toBeEnabled();
+			expect(screen.getByTestId('cancel-subscription-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('cancel-subscription-btn'));
 		await user.type(screen.getByTestId('cancel-confirm-input'), 'cancel');

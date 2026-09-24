@@ -83,7 +83,7 @@ describe('OnboardingQuestionaire Component', () => {
 			render(<OnboardingQuestionaire />);
 
 			const nextButton = screen.getByRole('button', { name: /next/i });
-			expect(nextButton).toBeDisabled();
+			expect(nextButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('enables next button when all required fields are filled', async () => {
@@ -98,7 +98,7 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByLabelText(/just exploring/i));
 
 			const nextButton = await screen.findByRole('button', { name: /next/i });
-			expect(nextButton).not.toBeDisabled();
+			expect(nextButton).not.toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('shows other tool input when Others is selected', async () => {
@@ -188,7 +188,7 @@ describe('OnboardingQuestionaire Component', () => {
 
 			await waitFor(() => {
 				const nextButton = screen.getByRole('button', { name: /next/i });
-				expect(nextButton).toBeDisabled();
+				expect(nextButton).toHaveAttribute('aria-disabled', 'true');
 			});
 		});
 
@@ -218,7 +218,7 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(interestCheckbox);
 
 			const nextButton = await screen.findByRole('button', { name: /next/i });
-			expect(nextButton).not.toBeDisabled();
+			expect(nextButton).not.toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('shows other interest input when Others checkbox is selected', async () => {

@@ -82,7 +82,10 @@ describe('EditKeyModal (URL-controlled)', () => {
 		await expect(
 			screen.findByDisplayValue('Original Key Name'),
 		).resolves.toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
+		expect(screen.getByRole('button', { name: /Save Changes/i })).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('save calls update API, shows toast, and closes modal', async () => {

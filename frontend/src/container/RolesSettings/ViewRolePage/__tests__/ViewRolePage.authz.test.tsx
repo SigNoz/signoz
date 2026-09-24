@@ -146,8 +146,14 @@ describe('ViewRolePage - AuthZ', () => {
 			});
 
 			await waitFor(() => {
-				expect(screen.getByTestId('delete-button')).not.toBeDisabled();
-				expect(screen.getByTestId('save-button')).not.toBeDisabled();
+				expect(screen.getByTestId('delete-button')).not.toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
+				expect(screen.getByTestId('save-button')).not.toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 	});
@@ -234,7 +240,10 @@ describe('ViewRolePage - AuthZ', () => {
 			});
 
 			await waitFor(() => {
-				expect(screen.getByTestId('save-button')).toBeDisabled();
+				expect(screen.getByTestId('save-button')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 
@@ -264,7 +273,10 @@ describe('ViewRolePage - AuthZ', () => {
 			});
 
 			await waitFor(() => {
-				expect(screen.getByTestId('save-button')).toBeDisabled();
+				expect(screen.getByTestId('save-button')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 
@@ -328,7 +340,7 @@ describe('ViewRolePage - AuthZ', () => {
 
 			await waitFor(() => {
 				const updateButton = screen.getByTestId('save-button');
-				expect(updateButton).toBeDisabled();
+				expect(updateButton).toHaveAttribute('aria-disabled', 'true');
 				expect(updateButton).toHaveAttribute('data-denied-permissions');
 			});
 		});
@@ -357,7 +369,10 @@ describe('ViewRolePage - AuthZ', () => {
 			});
 
 			await waitFor(() => {
-				expect(screen.getByTestId('delete-button')).toBeDisabled();
+				expect(screen.getByTestId('delete-button')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 
@@ -383,7 +398,10 @@ describe('ViewRolePage - AuthZ', () => {
 			});
 
 			await waitFor(() => {
-				expect(screen.getByTestId('delete-button')).not.toBeDisabled();
+				expect(screen.getByTestId('delete-button')).not.toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 
@@ -410,7 +428,7 @@ describe('ViewRolePage - AuthZ', () => {
 
 			await waitFor(() => {
 				const deleteButton = screen.getByTestId('delete-button');
-				expect(deleteButton).toBeDisabled();
+				expect(deleteButton).toHaveAttribute('aria-disabled', 'true');
 				expect(deleteButton).toHaveAttribute('data-denied-permissions');
 			});
 		});

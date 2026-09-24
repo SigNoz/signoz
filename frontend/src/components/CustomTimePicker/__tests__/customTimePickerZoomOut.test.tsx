@@ -164,6 +164,6 @@ describe('CustomTimePicker - zoom out button', () => {
 		);
 
 		const zoomOutBtn = screen.getByTestId('zoom-out-btn');
-		expect(zoomOutBtn).toBeDisabled();
+		expect(zoomOutBtn).toHaveAttribute('aria-disabled', 'true');
 	});
 });

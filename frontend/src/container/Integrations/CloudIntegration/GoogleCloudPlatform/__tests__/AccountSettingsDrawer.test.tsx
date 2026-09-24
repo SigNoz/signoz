@@ -95,12 +95,18 @@ describe('GCP AccountSettingsDrawer', () => {
 		const user = userEvent.setup();
 		renderDrawer();
 
-		expect(screen.getByTestId('gcp-update-account-btn')).toBeDisabled();
+		expect(screen.getByTestId('gcp-update-account-btn')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		await user.type(getProjectIdsInput(), 'project-c,');
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -110,7 +116,10 @@ describe('GCP AccountSettingsDrawer', () => {
 
 		await user.type(getProjectIdsInput(), 'project-c,');
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('gcp-update-account-btn'));
 
@@ -156,7 +165,10 @@ describe('GCP AccountSettingsDrawer', () => {
 		}
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('gcp-update-account-btn'));
 
@@ -184,7 +196,10 @@ describe('GCP AccountSettingsDrawer', () => {
 
 		await user.type(getProjectIdsInput(), 'project-c,');
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('gcp-update-account-btn'));
 

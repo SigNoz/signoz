@@ -24,7 +24,10 @@ describe('ViewRolePage - Managed Role', () => {
 		});
 
 		await waitFor(() => {
-			expect(screen.getByTestId('delete-button')).toBeDisabled();
+			expect(screen.getByTestId('delete-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -34,7 +37,10 @@ describe('ViewRolePage - Managed Role', () => {
 		});
 
 		await waitFor(() => {
-			expect(screen.getByTestId('save-button')).toBeDisabled();
+			expect(screen.getByTestId('save-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 

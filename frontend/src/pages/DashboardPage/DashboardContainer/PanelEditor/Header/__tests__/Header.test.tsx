@@ -72,7 +72,10 @@ describe('PanelEditor Header', () => {
 
 		renderHeader({ isDirty: false });
 
-		expect(screen.getByTestId('panel-editor-v2-save')).toBeEnabled();
+		expect(screen.getByTestId('panel-editor-v2-save')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('disables Save only while read-only or saving', () => {
@@ -84,7 +87,10 @@ describe('PanelEditor Header', () => {
 			readOnlyTooltip: 'Locked',
 		});
 
-		expect(screen.getByTestId('panel-editor-v2-save')).toBeDisabled();
+		expect(screen.getByTestId('panel-editor-v2-save')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('shows the Unsaved Changes badge only when there are unsaved edits', () => {

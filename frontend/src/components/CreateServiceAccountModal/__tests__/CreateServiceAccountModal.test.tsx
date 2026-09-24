@@ -60,7 +60,10 @@ describe('CreateServiceAccountModal', () => {
 		await screen.findByTestId('create-sa-name-input');
 
 		await waitFor(() =>
-			expect(screen.getByTestId('create-sa-submit-btn')).toBeDisabled(),
+			expect(screen.getByTestId('create-sa-submit-btn')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
 		);
 	});
 
@@ -72,10 +75,14 @@ describe('CreateServiceAccountModal', () => {
 		const submitBtn = await screen.findByTestId('create-sa-submit-btn');
 
 		await user.type(nameInput, 'test');
-		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 
 		await user.clear(nameInput);
-		await waitFor(() => expect(submitBtn).toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).toHaveAttribute('aria-disabled', 'true'),
+		);
 	});
 
 	it('successful submit shows toast.success and closes modal', async () => {
@@ -86,7 +93,9 @@ describe('CreateServiceAccountModal', () => {
 		await user.type(nameInput, 'Deploy Bot');
 
 		const submitBtn = screen.getByTestId('create-sa-submit-btn');
-		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(submitBtn);
 
 		await waitFor(() => {
@@ -120,7 +129,9 @@ describe('CreateServiceAccountModal', () => {
 		await user.type(nameInput, 'Dupe Bot');
 
 		const submitBtn = screen.getByTestId('create-sa-submit-btn');
-		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(submitBtn);
 
 		await waitFor(() => {
@@ -180,7 +191,10 @@ describe('CreateServiceAccountModal', () => {
 		).resolves.toBeInTheDocument();
 
 		// The footer lives outside the guard: submit is gated, Cancel still works.
-		expect(screen.getByTestId('create-sa-submit-btn')).toBeDisabled();
+		expect(screen.getByTestId('create-sa-submit-btn')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		await user.click(screen.getByTestId('create-sa-cancel-btn'));
 
