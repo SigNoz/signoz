@@ -16,6 +16,10 @@ import type {
 	HeatmapColorOptions,
 	HeatmapSeries,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import type {
+	ScatterChannels,
+	ScatterPointLabel,
+} from 'lib/uPlotV2/plugins/ScatterPlugin/types';
 import {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,
@@ -86,6 +90,15 @@ export interface BarChartProps extends ChartWrapperProps {
 
 export interface HistogramChartProps extends ChartWrapperProps {
 	isQueriesMerged?: boolean;
+}
+
+/** `data` is mode-2 (`prepareScatterChartData`); `config` comes from `buildScatterConfig`. */
+export interface ScatterChartProps extends ChartWrapperProps {
+	channels: ScatterChannels;
+	resolvePointLabels?: (
+		seriesIndex: number,
+		dataIndex: number,
+	) => ScatterPointLabel[];
 }
 
 /**
