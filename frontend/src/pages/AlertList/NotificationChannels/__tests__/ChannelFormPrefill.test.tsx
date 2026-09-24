@@ -1,3 +1,4 @@
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen } from 'tests/test-utils';
@@ -190,6 +191,7 @@ const CASES: PrefillCase[] = [
 describe('ChannelForm prefill', () => {
 	beforeEach(() => {
 		window.history.replaceState({}, '', '/');
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {

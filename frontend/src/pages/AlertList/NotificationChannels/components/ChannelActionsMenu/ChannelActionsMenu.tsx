@@ -13,6 +13,7 @@ import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { toast } from '@signozhq/ui/sonner';
 import ROUTES from 'constants/routes';
+import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import type { Channel } from '../../types';
@@ -32,6 +33,7 @@ function ChannelActionsMenu({
 	onViewJson,
 }: ChannelActionsMenuProps): JSX.Element {
 	const [, setCopy] = useCopyToClipboard();
+	const { canDelete } = useNotificationChannelPermissions(channel.id);
 
 	const menuItems = useMemo<DropdownItemType[]>(
 		() => [
@@ -76,11 +78,12 @@ function ChannelActionsMenu({
 				value: 'delete',
 				label: 'Delete',
 				prefix: <Trash2 size={14} />,
+				disabled: !canDelete,
 				danger: true,
 				onClick: (): void => onDelete(channel),
 			},
 		],
-		[channel, onOpen, onDelete, onViewJson, setCopy],
+		[canDelete, channel, onOpen, onDelete, onViewJson, setCopy],
 	);
 
 	return (
