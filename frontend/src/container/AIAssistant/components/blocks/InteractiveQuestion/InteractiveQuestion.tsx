@@ -117,7 +117,7 @@ export default function InteractiveQuestion({
 						))}
 					</div>
 					<Button
-						disabledTooltip={undefined}
+						disabledTooltip="Select at least one option"
 						color="primary"
 						variant="solid"
 						size="sm"

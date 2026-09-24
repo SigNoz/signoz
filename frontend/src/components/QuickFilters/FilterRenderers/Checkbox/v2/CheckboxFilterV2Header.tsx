@@ -62,11 +62,7 @@ export function CheckboxFilterV2Header({
 				) : (
 					<ChevronRight size={13} cursor="pointer" />
 				)}
-				{isTitleTruncated ? (
-					<Tooltip title={title}>{titleText}</Tooltip>
-				) : (
-					titleText
-				)}
+				<Tooltip title={isTitleTruncated ? title : undefined}>{titleText}</Tooltip>
 			</section>
 			{isOpen && (
 				<section className={classNames(styles.rightAction, actionsClassName)}>

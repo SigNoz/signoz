@@ -101,6 +101,16 @@ export function AboutSigNozQuestions({
 			handleInterestChange(option, Boolean(checked));
 		};
 
+	const getNextDisabledReason = (): string => {
+		if (discoverSignoz === '') {
+			return 'Tell us how you first came across SigNoz';
+		}
+		if (interestInSignoz.length === 0) {
+			return 'Select what got you interested in SigNoz';
+		}
+		return 'Describe what got you interested in SigNoz';
+	};
+
 	const handleOnNext = (): void => {
 		setSignozDetails({
 			discoverSignoz,
@@ -181,13 +191,13 @@ export function AboutSigNozQuestions({
 
 				<div className="onboarding-buttons-container">
 					<Button
-						disabledTooltip={undefined}
 						size="md"
 						variant="solid"
 						color="primary"
 						className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
 						onClick={handleOnNext}
 						disabled={isNextDisabled}
+						disabledTooltip={getNextDisabledReason()}
 						suffix={<ArrowRight size={12} />}
 					>
 						Next

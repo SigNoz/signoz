@@ -45,16 +45,18 @@ function LineClampedText({
 		</div>
 	);
 
-	return isOverflowing ? (
+	return (
 		<Tooltip
-			title={<div onClick={(e): void => e.stopPropagation()}>{text}</div>}
+			title={
+				isOverflowing ? (
+					<div onClick={(e): void => e.stopPropagation()}>{text}</div>
+				) : undefined
+			}
 			overlayClassName="line-clamped-wrapper"
 			{...tooltipProps}
 		>
 			{content}
 		</Tooltip>
-	) : (
-		content
 	);
 }
 

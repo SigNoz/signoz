@@ -223,10 +223,10 @@ function MySettings(): JSX.Element {
 							<Switch
 								color="primary"
 								textPlacement="right"
-								disabledTooltip={undefined}
 								value={sideNavPinned}
 								onChange={handleSideNavPinnedChange}
 								disabled={isUpdatingUserPreference}
+								disabledTooltip="Saving your preference"
 								testId="side-nav-pinned-switch"
 							/>
 						</div>

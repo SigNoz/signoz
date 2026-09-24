@@ -77,11 +77,10 @@ function LegacyDashboardDialog({
 			footer={
 				<div className={styles.footer}>
 					<Button
-						disabledTooltip={undefined}
 						variant="ghost"
 						color="secondary"
 						size="md"
-						disabled={isMigrating}
+						loading={isMigrating}
 						onClick={onClose}
 						testId="legacy-dashboard-close"
 					>

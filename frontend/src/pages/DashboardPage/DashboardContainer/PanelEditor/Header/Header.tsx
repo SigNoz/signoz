@@ -113,7 +113,7 @@ function Header({
 						variant="solid"
 						color="primary"
 						testId="panel-editor-v2-save"
-						disabled={readOnly || isSaving}
+						disabled={readOnly}
 						loading={!readOnly && isSaving}
 						onClick={readOnly ? undefined : onSave}
 					>

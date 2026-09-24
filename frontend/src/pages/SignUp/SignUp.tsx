@@ -91,15 +91,21 @@ function SignUp(): JSX.Element {
 
 	const showPasswordMismatchError = confirmPasswordTouched && isPasswordMismatch;
 
-	const isValidForm = useMemo(
-		(): boolean =>
-			!loading &&
-			Boolean(email?.trim()) &&
-			Boolean(password?.trim()) &&
-			Boolean(confirmPassword?.trim()) &&
-			password === confirmPassword,
-		[loading, email, password, confirmPassword],
-	);
+	const invalidFormReason = useMemo((): string | undefined => {
+		if (!email?.trim()) {
+			return 'Enter your email first';
+		}
+		if (!password?.trim()) {
+			return 'Enter a password first';
+		}
+		if (!confirmPassword?.trim()) {
+			return 'Confirm your password first';
+		}
+		if (password !== confirmPassword) {
+			return "Passwords don't match";
+		}
+		return undefined;
+	}, [email, password, confirmPassword]);
 
 	return (
 		<AuthPageContainer>
@@ -186,13 +192,14 @@ function SignUp(): JSX.Element {
 
 					<div className="signup-form-actions">
 						<Button
-							disabledTooltip={undefined}
+							disabledTooltip={invalidFormReason}
 							size="md"
 							variant="solid"
 							color="primary"
 							type="submit"
 							data-attr="signup"
-							disabled={!isValidForm}
+							disabled={!!invalidFormReason}
+							loading={loading}
 							className="signup-submit-button"
 							suffix={<ArrowRight size={16} />}
 						>

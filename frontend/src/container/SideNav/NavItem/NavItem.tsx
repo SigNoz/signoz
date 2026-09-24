@@ -110,12 +110,10 @@ export default function NavItem({
 	);
 
 	// Only non-pinnable items set `tooltip`; it would nest with the pin tooltip.
-	return tooltip ? (
+	return (
 		<Tooltip title={tooltip} placement="right">
 			{navItem}
 		</Tooltip>
-	) : (
-		navItem
 	);
 }
 

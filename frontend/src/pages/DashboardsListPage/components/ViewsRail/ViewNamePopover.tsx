@@ -84,7 +84,11 @@ function ViewNamePopover({
 						Cancel
 					</Button>
 					<Button
-						disabledTooltip={undefined}
+						disabledTooltip={
+							trimmed.length === 0
+								? 'Enter a view name first'
+								: `Use at most ${VIEW_NAME_MAX_LENGTH} characters`
+						}
 						variant="solid"
 						color="primary"
 						size="sm"

@@ -3,6 +3,8 @@ import { Button } from '@signozhq/ui/button';
 
 import styles from './JsonEditorToolbar.module.scss';
 
+const READ_ONLY_REASON = 'This dashboard is read-only';
+
 interface JsonEditorToolbarProps {
 	isDirty: boolean;
 	/** Locked/no-permission — Format and Reset (draft mutators) are disabled. */
@@ -24,7 +26,7 @@ function JsonEditorToolbar({
 	return (
 		<div className={styles.toolbar}>
 			<Button
-				disabledTooltip={undefined}
+				disabledTooltip={READ_ONLY_REASON}
 				variant="ghost"
 				color="secondary"
 				size="sm"
@@ -57,7 +59,7 @@ function JsonEditorToolbar({
 			</Button>
 			<div className={styles.spacer} />
 			<Button
-				disabledTooltip={undefined}
+				disabledTooltip={readOnly ? READ_ONLY_REASON : 'No changes to reset'}
 				variant="ghost"
 				color="secondary"
 				size="sm"

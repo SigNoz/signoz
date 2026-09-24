@@ -77,12 +77,10 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 							: tag?.label}
 					</Badge>
 				);
-				return isLongTag ? (
-					<Tooltip title={tag?.label} key={tag?.value}>
+				return (
+					<Tooltip title={isLongTag ? tag?.label : undefined} key={tag?.value}>
 						{tagElem}
 					</Tooltip>
-				) : (
-					tagElem
 				);
 			})}
 		</Space>

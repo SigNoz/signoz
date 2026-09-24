@@ -88,7 +88,6 @@ function TestTab({ spanTest }: TestTabProps): JSX.Element {
 
 				<div className={styles.headerActions}>
 					<Button
-						disabledTooltip={undefined}
 						size="md"
 						testId="reset-template-button"
 						variant="outlined"
@@ -96,12 +95,12 @@ function TestTab({ spanTest }: TestTabProps): JSX.Element {
 						prefix={<RotateCcw size={14} />}
 						onClick={resetToTemplate}
 						disabled={isTemplateInput}
+						disabledTooltip="Already showing the default span"
 					>
 						Reset to Default Span
 					</Button>
 
 					<Button
-						disabledTooltip={undefined}
 						size="md"
 						testId="run-test-button"
 						variant="solid"
@@ -109,7 +108,8 @@ function TestTab({ spanTest }: TestTabProps): JSX.Element {
 						prefix={<Play size={14} />}
 						onClick={run}
 						loading={isRunning}
-						disabled={isRunning || validationError !== null}
+						disabled={validationError !== null}
+						disabledTooltip={validationError}
 					>
 						Run Test
 					</Button>

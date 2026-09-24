@@ -12,6 +12,7 @@ interface ValueRowProps {
 	value: string;
 	checkedState: CheckedState;
 	disabled: boolean;
+	disabledTooltip?: string;
 	title: string;
 	onlyButtonLabel: string;
 	customRendererForValue?: (value: string) => JSX.Element;
@@ -36,6 +37,7 @@ export function CheckboxFilterV2ValueRow({
 	value,
 	checkedState,
 	disabled,
+	disabledTooltip,
 	title,
 	onlyButtonLabel,
 	customRendererForValue,
@@ -54,7 +56,7 @@ export function CheckboxFilterV2ValueRow({
 		>
 			<div className={styles.checkbox}>
 				<Checkbox
-					disabledTooltip={undefined}
+					disabledTooltip={disabledTooltip}
 					onChange={(isChecked): void =>
 						onCheckboxChange(isChecked === true, checkedState)
 					}

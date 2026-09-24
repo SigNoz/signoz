@@ -46,7 +46,7 @@ function QueryResult({
 				</Typography.Text>
 				<Button
 					aria-label="Action"
-					disabledTooltip={undefined}
+					disabledTooltip="This is the first result"
 					variant="ghost"
 					size="sm"
 					icon
@@ -58,7 +58,7 @@ function QueryResult({
 				</Button>
 				<Button
 					aria-label="Action"
-					disabledTooltip={undefined}
+					disabledTooltip="This is the last result"
 					variant="ghost"
 					size="sm"
 					icon

@@ -52,12 +52,12 @@ function GroupFormDrawer({
 						Cancel
 					</Button>
 					<Button
-						disabledTooltip={undefined}
 						size="md"
 						variant="solid"
 						color="primary"
 						onClick={onSave}
 						disabled={!isValid}
+						disabledTooltip="Enter a group name first"
 						testId="group-form-save"
 					>
 						{isEdit ? 'Save group' : 'Create group'}

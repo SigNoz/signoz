@@ -93,11 +93,15 @@ function RenameDashboardModal({
 						Cancel
 					</Button>
 					<Button
-						disabledTooltip={undefined}
+						disabledTooltip={
+							trimmed.length === 0
+								? 'Enter a dashboard name first'
+								: 'Change the name first'
+						}
 						variant="solid"
 						color="primary"
 						size="md"
-						disabled={!canSave}
+						disabled={trimmed.length === 0 || trimmed === currentName}
 						loading={isLoading}
 						onClick={(): void => runRename()}
 						testId="rename-dashboard-submit"

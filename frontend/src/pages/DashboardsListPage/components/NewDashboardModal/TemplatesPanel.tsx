@@ -1,10 +1,5 @@
 import { type ChangeEvent, type KeyboardEvent, useState } from 'react';
-import {
-	Check,
-	LayoutDashboard,
-	LoaderCircle,
-	SquareArrowOutUpRight,
-} from '@signozhq/icons';
+import { Check, LayoutDashboard, SquareArrowOutUpRight } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
@@ -104,19 +99,14 @@ function TemplatesPanel(): JSX.Element {
 							}}
 						/>
 						<Button
-							disabledTooltip={undefined}
+							disabledTooltip="Enter a dashboard name first"
 							variant="solid"
 							color="primary"
 							size="md"
-							disabled={submitting || requestName.length === 0}
+							disabled={requestName.length === 0}
+							loading={submitting}
 							testId="request-dashboard-submit"
-							prefix={
-								submitting ? (
-									<LoaderCircle size={14} className={styles.spinner} />
-								) : (
-									<Check size={14} />
-								)
-							}
+							prefix={<Check size={14} />}
 							onClick={(): void => {
 								void handleRequest();
 							}}

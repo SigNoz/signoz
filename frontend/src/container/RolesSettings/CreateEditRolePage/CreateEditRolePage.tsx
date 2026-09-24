@@ -173,12 +173,12 @@ function CreateEditRolePageContent(): JSX.Element {
 			<div className={styles.createEditRolePageHeader}>
 				<div className={styles.createEditRolePageHeaderLeft}>
 					<Button
-						disabledTooltip={undefined}
 						size="md"
 						variant="ghost"
 						color="secondary"
 						onClick={handleCancel}
 						disabled={isSaving}
+						disabledTooltip="Wait for the save to finish"
 						testId="cancel-button"
 						className={styles.backButton}
 					>

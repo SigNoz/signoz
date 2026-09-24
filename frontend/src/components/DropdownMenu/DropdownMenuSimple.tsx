@@ -180,6 +180,8 @@ interface DropdownMenuSimpleProps {
 	side?: Side;
 	testId?: string;
 	nativeButton?: boolean;
+	disabled?: boolean;
+	disabledTooltip?: ReactNode;
 }
 
 export function DropdownMenuSimple({
@@ -190,6 +192,8 @@ export function DropdownMenuSimple({
 	side = 'bottom',
 	testId,
 	nativeButton = true,
+	disabled,
+	disabledTooltip,
 }: DropdownMenuSimpleProps): JSX.Element {
 	const loading = menu.loading;
 	const loadingText = typeof loading === 'object' ? loading.text : undefined;
@@ -203,6 +207,8 @@ export function DropdownMenuSimple({
 			className={className}
 			testId={testId}
 			loading={Boolean(loading)}
+			disabled={disabled}
+			disabledTooltip={disabledTooltip}
 			loadingContent={loadingText}
 			searchInputProps={
 				menu.search

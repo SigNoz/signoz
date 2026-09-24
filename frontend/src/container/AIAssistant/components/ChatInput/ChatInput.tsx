@@ -72,6 +72,7 @@ interface ChatInputProps {
 	) => void;
 	onCancel?: () => void;
 	disabled?: boolean;
+	disabledTooltip?: string;
 	isStreaming?: boolean;
 	/**
 	 * URL-derived `source: 'auto'` contexts representing the page the user is
@@ -236,6 +237,7 @@ export default function ChatInput({
 	onSend,
 	onCancel,
 	disabled,
+	disabledTooltip,
 	isStreaming = false,
 	autoContexts,
 	onDismissAutoContext,
@@ -1026,7 +1028,7 @@ export default function ChatInput({
 					>
 						<PopoverTrigger asChild>
 							<Button
-								disabledTooltip={undefined}
+								disabledTooltip={disabledTooltip}
 								variant="solid"
 								color="secondary"
 								size="sm"
@@ -1226,7 +1228,7 @@ export default function ChatInput({
 						) : (
 							<Tooltip title="Voice input">
 								<Button
-									disabledTooltip={undefined}
+									disabledTooltip={disabledTooltip}
 									color="secondary"
 									variant="ghost"
 									size="sm"
@@ -1257,7 +1259,7 @@ export default function ChatInput({
 					) : (
 						<Tooltip title="Send message">
 							<Button
-								disabledTooltip={undefined}
+								disabledTooltip={disabled ? disabledTooltip : 'Type a message first'}
 								variant="solid"
 								size="sm"
 								icon

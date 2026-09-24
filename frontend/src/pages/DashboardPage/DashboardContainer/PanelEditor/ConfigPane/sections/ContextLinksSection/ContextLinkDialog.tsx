@@ -110,7 +110,7 @@ function ContextLinkDialog({
 						Cancel
 					</Button>
 					<Button
-						disabledTooltip={undefined}
+						disabledTooltip={urlInvalid ? URL_ERROR : 'Enter a URL first'}
 						size="md"
 						type="button"
 						variant="solid"

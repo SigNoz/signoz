@@ -6,6 +6,7 @@ import {
 	type MenuItem,
 } from 'components/DropdownMenu/DropdownMenuSimple';
 
+import { READ_ONLY_TOOLTIP } from './constants';
 import type { EditorVariable } from './types';
 
 import styles from './MarkdownEditor.module.scss';
@@ -65,6 +66,8 @@ function InsertVariableMenu({
 	return (
 		<DropdownMenuSimple
 			className={styles.variableMenu}
+			disabled={disabled}
+			disabledTooltip={READ_ONLY_TOOLTIP}
 			menu={{
 				items,
 				search: {
@@ -74,12 +77,10 @@ function InsertVariableMenu({
 			}}
 		>
 			<Button
-				disabledTooltip={undefined}
 				type="button"
 				variant="outlined"
 				color="secondary"
 				size="sm"
-				disabled={disabled}
 				prefix={<DollarSign size={14} className={styles.insertVariableIcon} />}
 				suffix={<ChevronDown size={14} />}
 				className={styles.insertVariable}

@@ -128,12 +128,12 @@ function VariableRow({
 										side="top"
 										title={
 											isAppliedToAll
-												? 'Already applied to all panels'
+												? undefined
 												: 'Add this variable as a filter to every panel'
 										}
 									>
 										<Button
-											disabledTooltip={undefined}
+											disabledTooltip="Already applied to all panels"
 											variant="ghost"
 											color="secondary"
 											size="sm"

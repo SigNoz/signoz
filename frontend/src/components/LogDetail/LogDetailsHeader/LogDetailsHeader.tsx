@@ -119,12 +119,11 @@ function LogDetailsHeader({
 
 				<div className={styles.arrows}>
 					<Tooltip
-						title="Move to previous log"
+						title={isPrevDisabled ? undefined : 'Move to previous log'}
 						side="top"
-						open={isPrevDisabled ? false : undefined}
 					>
 						<Button
-							disabledTooltip={undefined}
+							disabledTooltip="No previous log"
 							size="md"
 							variant="outlined"
 							color="secondary"
@@ -138,12 +137,11 @@ function LogDetailsHeader({
 						</Button>
 					</Tooltip>
 					<Tooltip
-						title="Move to next log"
+						title={isNextDisabled ? undefined : 'Move to next log'}
 						side="top"
-						open={isNextDisabled ? false : undefined}
 					>
 						<Button
-							disabledTooltip={undefined}
+							disabledTooltip="No next log"
 							size="md"
 							variant="outlined"
 							color="secondary"

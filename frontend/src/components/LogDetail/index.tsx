@@ -323,12 +323,12 @@ function LogDetailInner({
 						<div className="log-detail-drawer__title-right">
 							<div className="log-arrows">
 								<Tooltip
-									title={isPrevDisabled ? '' : 'Move to previous log'}
+									title={isPrevDisabled ? undefined : 'Move to previous log'}
 									placement="top"
 									mouseLeaveDelay={0}
 								>
 									<Button
-										disabledTooltip={undefined}
+										disabledTooltip="No previous log"
 										size="md"
 										variant="outlined"
 										color="secondary"
@@ -342,12 +342,12 @@ function LogDetailInner({
 									</Button>
 								</Tooltip>
 								<Tooltip
-									title={isNextDisabled ? '' : 'Move to next log'}
+									title={isNextDisabled ? undefined : 'Move to next log'}
 									placement="top"
 									mouseLeaveDelay={0}
 								>
 									<Button
-										disabledTooltip={undefined}
+										disabledTooltip="No next log"
 										size="md"
 										variant="outlined"
 										color="secondary"

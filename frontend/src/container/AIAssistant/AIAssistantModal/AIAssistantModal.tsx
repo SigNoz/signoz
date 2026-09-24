@@ -188,7 +188,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 
 							<Tooltip title="Open full screen">
 								<Button
-									disabledTooltip={undefined}
+									disabledTooltip="Start a conversation first"
 									variant="ghost"
 									size="sm"
 									icon

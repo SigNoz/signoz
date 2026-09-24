@@ -86,12 +86,12 @@ export function AlertsEmptyState({
 						<div className={styles.actionContainer}>
 							<div className={styles.buttonGroup}>
 								<Button
-									disabledTooltip={undefined}
 									size="md"
 									variant="solid"
 									color="primary"
 									onClick={onClickNewAlertHandler}
 									disabled={!addNewAlert}
+									disabledTooltip="You need permission to create alert rules"
 									loading={loading}
 									testId="add-alert"
 								>

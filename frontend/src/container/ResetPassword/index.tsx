@@ -219,13 +219,14 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 
 					<div className="reset-password-form-actions">
 						<Button
-							disabledTooltip={undefined}
 							size="md"
 							variant="solid"
 							color="primary"
 							type="submit"
 							data-attr="reset-password"
-							disabled={!isValidPassword || isLoading}
+							loading={isLoading}
+							disabled={!isValidPassword}
+							disabledTooltip="Enter matching passwords in both fields"
 							className="reset-password-submit-button"
 							suffix={<ArrowRight size={16} />}
 						>

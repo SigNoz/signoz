@@ -1186,7 +1186,6 @@ function OnboardingAddDataSource(): JSX.Element {
 										Cancel
 									</SignozButton>
 									<SignozButton
-										disabledTooltip={undefined}
 										size="md"
 										color="primary"
 										variant="solid"
@@ -1198,6 +1197,7 @@ function OnboardingAddDataSource(): JSX.Element {
 											void submit();
 										}}
 										disabled={!canSubmit}
+										disabledTooltip="Add at least one team member to invite"
 										loading={isSubmitting}
 										suffix={<ArrowRight size={14} />}
 									>

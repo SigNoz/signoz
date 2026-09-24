@@ -7,7 +7,6 @@ import {
 	buildRoleReadPermission,
 	buildRoleUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
-import { Tooltip } from '@signozhq/ui/tooltip';
 
 export function ViewRolePageHeaderActions({
 	isRoleLoading,
@@ -26,11 +25,10 @@ export function ViewRolePageHeaderActions({
 		if (isRoleLoading) {
 			return (
 				<Button
-					disabledTooltip={undefined}
 					size="md"
 					variant="link"
 					color="danger"
-					disabled
+					loading
 					testId="delete-button"
 					className={styles.deleteButton}
 				>
@@ -41,19 +39,17 @@ export function ViewRolePageHeaderActions({
 
 		if (isManaged) {
 			return (
-				<Tooltip title="Managed roles cannot be deleted">
-					<Button
-						disabledTooltip={undefined}
-						size="md"
-						variant="link"
-						color="danger"
-						disabled
-						testId="delete-button"
-						className={styles.deleteButton}
-					>
-						Delete
-					</Button>
-				</Tooltip>
+				<Button
+					size="md"
+					variant="link"
+					color="danger"
+					disabled
+					disabledTooltip="Managed roles cannot be deleted"
+					testId="delete-button"
+					className={styles.deleteButton}
+				>
+					Delete
+				</Button>
 			);
 		}
 
@@ -77,11 +73,10 @@ export function ViewRolePageHeaderActions({
 		if (isRoleLoading) {
 			return (
 				<Button
-					disabledTooltip={undefined}
 					size="md"
 					variant="solid"
 					color="primary"
-					disabled
+					loading
 					testId="save-button"
 				>
 					Update
@@ -91,18 +86,16 @@ export function ViewRolePageHeaderActions({
 
 		if (isManaged) {
 			return (
-				<Tooltip title="Managed roles cannot be updated">
-					<Button
-						disabledTooltip={undefined}
-						size="md"
-						variant="solid"
-						color="primary"
-						disabled
-						testId="save-button"
-					>
-						Update
-					</Button>
-				</Tooltip>
+				<Button
+					size="md"
+					variant="solid"
+					color="primary"
+					disabled
+					disabledTooltip="Managed roles cannot be updated"
+					testId="save-button"
+				>
+					Update
+				</Button>
 			);
 		}
 

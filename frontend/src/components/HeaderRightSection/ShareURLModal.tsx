@@ -151,7 +151,7 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 							<Switch
 								color="primary"
 								textPlacement="right"
-								disabledTooltip={undefined}
+								disabledTooltip="Please select / enter valid relative time to toggle."
 								value={enableAbsoluteTime}
 								disabled={!isValidateRelativeTime}
 								onChange={(): void => {

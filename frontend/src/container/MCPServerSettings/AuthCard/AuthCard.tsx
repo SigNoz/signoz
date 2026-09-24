@@ -44,7 +44,6 @@ function AuthCard({
 						<CopyIconButton
 							ariaLabel="Copy SigNoz instance URL"
 							onCopy={onCopyInstanceUrl}
-							disabled={isLoadingInstanceUrl}
 						/>
 					</div>
 				)}

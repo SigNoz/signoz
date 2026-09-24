@@ -213,9 +213,9 @@ function DashboardInfo({
 			)}
 
 			{showLockToggle && (
-				<Tooltip title={lockTooltip}>
+				<Tooltip title={onToggleLock ? lockTooltip : undefined}>
 					<Button
-						disabledTooltip={undefined}
+						disabledTooltip={lockTooltip}
 						type="button"
 						variant="ghost"
 						color="secondary"

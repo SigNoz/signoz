@@ -150,7 +150,7 @@ function CancelSubscriptionBanner(): JSX.Element {
 				Go back
 			</Button>
 			<Button
-				disabledTooltip={undefined}
+				disabledTooltip="Type cancel to confirm"
 				size="md"
 				variant="solid"
 				color="danger"

@@ -239,12 +239,11 @@ export default function CustomDomainSettings(): JSX.Element {
 							side="bottom"
 						>
 							<Button
-								disabledTooltip={undefined}
 								size="md"
 								variant="link"
 								color="secondary"
 								testId="custom-domain-menu-trigger"
-								disabled={isFetchingHosts}
+								loading={isFetchingHosts}
 							>
 								<Link2 size={12} />
 								<span>{stripProtocol(activeHost?.url ?? '')}</span>
@@ -259,12 +258,13 @@ export default function CustomDomainSettings(): JSX.Element {
 				</div>
 
 				<Button
-					disabledTooltip={undefined}
+					disabledTooltip="Wait for the URL update to finish"
 					size="md"
 					variant="solid"
 					color="secondary"
 					prefix={<FilePenLine size={12} />}
-					disabled={isFetchingHosts || isPollingEnabled}
+					disabled={isPollingEnabled}
+					loading={isFetchingHosts}
 					onClick={(): void => setIsEditModalOpen(true)}
 				>
 					Edit workspace link

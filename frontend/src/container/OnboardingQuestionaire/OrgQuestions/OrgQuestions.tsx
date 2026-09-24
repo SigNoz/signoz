@@ -90,6 +90,19 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 		);
 	};
 
+	const getNextDisabledReason = (): string => {
+		if (!observabilityTool) {
+			return 'Select the observability tool you use';
+		}
+		if (observabilityTool === 'Others' && otherTool === '') {
+			return 'Enter the observability tool you use';
+		}
+		if (showMigrationQuestion && migrationTimeline === null) {
+			return 'Select your migration timeline';
+		}
+		return 'Tell us if you already use OpenTelemetry';
+	};
+
 	useEffect(() => {
 		const isValidObservability = isValidUsesObservability();
 		const isMigrationValid = !showMigrationQuestion || migrationTimeline !== null;
@@ -201,13 +214,13 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 				</div>
 
 				<Button
-					disabledTooltip={undefined}
 					size="md"
 					variant="solid"
 					color="primary"
 					className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
 					onClick={handleNext}
 					disabled={isNextDisabled}
+					disabledTooltip={getNextDisabledReason()}
 					suffix={<ArrowRight size={12} />}
 				>
 					Next

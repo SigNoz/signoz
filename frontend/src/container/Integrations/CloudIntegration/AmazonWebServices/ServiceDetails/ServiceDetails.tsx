@@ -402,7 +402,11 @@ function ServiceDetails({
 												<Switch
 													color="primary"
 													textPlacement="right"
-													disabledTooltip={undefined}
+													disabledTooltip={
+														isReadOnly
+															? 'Connect an AWS account first'
+															: 'Wait for the changes to save'
+													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
 													onChange={(checked): void => {
@@ -446,7 +450,11 @@ function ServiceDetails({
 												<Switch
 													color="primary"
 													textPlacement="right"
-													disabledTooltip={undefined}
+													disabledTooltip={
+														isReadOnly
+															? 'Connect an AWS account first'
+															: 'Wait for the changes to save'
+													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
 													onChange={field.onChange}
@@ -461,7 +469,7 @@ function ServiceDetails({
 						{hasUnsavedChanges && !isReadOnly && (
 							<div className="aws-service-details-overview-configuration-actions">
 								<Button
-									disabledTooltip={undefined}
+									disabledTooltip="Wait for the changes to save"
 									variant="solid"
 									color="secondary"
 									onClick={handleDiscard}
@@ -474,7 +482,7 @@ function ServiceDetails({
 									Discard
 								</Button>
 								<Button
-									disabledTooltip={undefined}
+									disabledTooltip="Select at least one S3 bucket"
 									variant="solid"
 									color="primary"
 									size="sm"
@@ -482,7 +490,7 @@ function ServiceDetails({
 									prefix={<Save size={14} />}
 									type="submit"
 									loading={isUpdatingServiceConfig}
-									disabled={isS3SyncBucketsMissing || isUpdatingServiceConfig}
+									disabled={isS3SyncBucketsMissing}
 								>
 									Save
 								</Button>

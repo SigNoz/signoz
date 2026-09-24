@@ -63,11 +63,9 @@ function RefreshPaymentStatus({
 
 	return (
 		<span className="refresh-payment-status-btn-wrapper">
-			{type === 'tooltip' ? (
-				<Tooltip title={t('refreshPaymentStatus')}>{button}</Tooltip>
-			) : (
-				button
-			)}
+			<Tooltip title={type === 'tooltip' ? t('refreshPaymentStatus') : undefined}>
+				{button}
+			</Tooltip>
 		</span>
 	);
 }

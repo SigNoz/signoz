@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ArrowRight, LoaderCircle } from '@signozhq/icons';
+import { ArrowRight } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import InviteMembers from 'components/InviteMembers/InviteMembers';
@@ -120,7 +120,6 @@ function InviteTeamMembers({
 								return (
 									<div className="onboarding-buttons-container">
 										<Button
-											disabledTooltip={undefined}
 											size="md"
 											variant="solid"
 											color="primary"
@@ -128,26 +127,23 @@ function InviteTeamMembers({
 												isInviteButtonDisabled ? 'disabled' : ''
 											}`}
 											onClick={submit}
-											disabled={isInviteButtonDisabled}
+											loading={isButtonDisabled}
+											disabled={!canSubmit}
+											disabledTooltip="Add at least one team member to invite"
 											testId="send-invites-button"
-											suffix={
-												isButtonDisabled ? (
-													<LoaderCircle className="animate-spin" size={12} />
-												) : (
-													<ArrowRight size={12} />
-												)
-											}
+											suffix={<ArrowRight size={12} />}
 										>
 											Send Invites
 										</Button>
 										<Button
-											disabledTooltip={undefined}
 											size="md"
 											variant="ghost"
 											color="secondary"
 											className="onboarding-do-later-button"
 											onClick={handleDoLater}
-											disabled={isButtonDisabled}
+											loading={isLoading}
+											disabled={isSubmitting}
+											disabledTooltip="Wait for the invites to be sent"
 											testId="do-later-button"
 										>
 											I&apos;ll do this later

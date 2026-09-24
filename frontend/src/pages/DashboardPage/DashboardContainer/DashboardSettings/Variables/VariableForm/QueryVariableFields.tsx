@@ -95,7 +95,7 @@ function QueryVariableFields({
 			</div>
 			<div className={styles.testRow}>
 				<Button
-					disabledTooltip={undefined}
+					disabledTooltip="Enter a query first"
 					variant="solid"
 					color="primary"
 					size="sm"

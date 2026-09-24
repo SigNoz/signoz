@@ -72,7 +72,7 @@ function AccountSettingsModal({
 						cloudProvider={INTEGRATION_TYPES.AZURE}
 					/>
 					<Button
-						disabledTooltip={undefined}
+						disabledTooltip="Change the resource groups first"
 						size="md"
 						variant="solid"
 						color="secondary"

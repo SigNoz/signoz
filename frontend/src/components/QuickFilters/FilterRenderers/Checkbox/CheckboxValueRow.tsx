@@ -8,6 +8,7 @@ interface CheckboxValueRowProps {
 	value: string;
 	checked: boolean;
 	disabled: boolean;
+	disabledTooltip?: string;
 	title: string;
 	onlyButtonLabel: string;
 	customRendererForValue?: (value: string) => JSX.Element;
@@ -19,6 +20,7 @@ function CheckboxValueRow({
 	value,
 	checked,
 	disabled,
+	disabledTooltip,
 	title,
 	onlyButtonLabel,
 	customRendererForValue,
@@ -29,7 +31,7 @@ function CheckboxValueRow({
 		<div className="value">
 			<Checkbox
 				color="primary"
-				disabledTooltip={undefined}
+				disabledTooltip={disabledTooltip}
 				onChange={(isChecked): void => onCheckboxChange(isChecked === true)}
 				value={checked}
 				disabled={disabled}
@@ -69,6 +71,7 @@ function CheckboxValueRow({
 }
 
 CheckboxValueRow.defaultProps = {
+	disabledTooltip: undefined,
 	customRendererForValue: undefined,
 };
 

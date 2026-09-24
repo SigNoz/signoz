@@ -54,14 +54,12 @@ export default function ExportMenu({
 			<Tooltip title="Download">
 				<PopoverTrigger asChild>
 					<Button
-						disabledTooltip={undefined}
 						variant="ghost"
 						color="secondary"
 						size="sm"
 						icon
 						aria-label="Download"
 						testId={`export-menu-${dataSource}`}
-						disabled={isExporting}
 						loading={isExporting}
 					>
 						<Download size={14} />
@@ -83,13 +81,11 @@ export default function ExportMenu({
 				</div>
 
 				<Button
-					disabledTooltip={undefined}
 					size="md"
 					variant="solid"
 					color="primary"
 					className="export-button"
 					onClick={handleExport}
-					disabled={isExporting}
 					loading={isExporting}
 					prefix={<Download size={16} />}
 				>

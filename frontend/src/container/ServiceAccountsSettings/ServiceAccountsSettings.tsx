@@ -238,12 +238,13 @@ function ServiceAccountsSettings(): JSX.Element {
 								className="sa-settings-filter-dropdown"
 							>
 								<Button
-									disabledTooltip={undefined}
 									size="md"
 									variant="solid"
 									color="secondary"
 									className="sa-settings-filter-trigger"
-									disabled={controlsDisabled}
+									loading={isAuthZLoading}
+									disabled={!canListServiceAccounts}
+									disabledTooltip={undefined}
 								>
 									<span>{filterLabel}</span>
 									<ChevronDown

@@ -134,7 +134,11 @@ function AccountSettingsModal({
 			/>
 
 			<Button
-				disabledTooltip={undefined}
+				disabledTooltip={
+					selectedRegions.length === 0
+						? 'Select at least one region'
+						: 'Change the regions first'
+				}
 				size="md"
 				variant="solid"
 				color="secondary"

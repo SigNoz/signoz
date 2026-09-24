@@ -2,9 +2,9 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
-import { BarChart, Compass, Loader, ScrollText } from '@signozhq/icons';
+import { BarChart, Compass, ScrollText } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Modal, Spin } from 'antd';
+import { Modal } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import TextToolTip from 'components/TextToolTip';
@@ -455,6 +455,28 @@ function GeneralSettings({
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const showCustomDomainSettings = isCloudUserVal && isAdmin;
 
+	const getSaveDisabledReason = (
+		name: string,
+		totalRetentionPeriod: NumberOrNull,
+		s3RetentionPeriod: NumberOrNull,
+	): string => {
+		if (
+			s3Enabled &&
+			(totalRetentionPeriod || s3RetentionPeriod) &&
+			Number(totalRetentionPeriod) <= Number(s3RetentionPeriod)
+		) {
+			return t('retention_comparison_error', { name });
+		}
+		if (
+			!metricsTotalRetentionPeriod ||
+			!tracesTotalRetentionPeriod ||
+			!logsTotalRetentionPeriod
+		) {
+			return errorText;
+		}
+		return 'Change the retention period first';
+	};
+
 	const renderConfig = [
 		{
 			name: 'Metrics',
@@ -479,19 +501,17 @@ function GeneralSettings({
 				apiLoading: postApiLoadingMetrics,
 				saveButtonText:
 					metricsTtlValuesPayload.status === 'pending' ? (
-						<span>
-							<Spin
-								spinning
-								size="small"
-								indicator={<Loader className="animate-spin" />}
-							/>{' '}
-							{t('retention_save_button.pending', { name: 'metrics' })}
-						</span>
+						<span>{t('retention_save_button.pending', { name: 'metrics' })}</span>
 					) : (
 						<span>{t('retention_save_button.success')}</span>
 					),
-				isDisabled:
-					metricsTtlValuesPayload.status === 'pending' || isMetricsSaveDisabled,
+				isLoading: metricsTtlValuesPayload.status === 'pending',
+				isDisabled: isMetricsSaveDisabled,
+				disabledReason: getSaveDisabledReason(
+					'metrics',
+					metricsTotalRetentionPeriod,
+					metricsS3RetentionPeriod,
+				),
 			},
 			statusComponent: (
 				<StatusMessage
@@ -526,19 +546,17 @@ function GeneralSettings({
 				apiLoading: postApiLoadingTraces,
 				saveButtonText:
 					tracesTtlValuesPayload.status === 'pending' ? (
-						<span>
-							<Spin
-								spinning
-								size="small"
-								indicator={<Loader className="animate-spin" />}
-							/>{' '}
-							{t('retention_save_button.pending', { name: 'traces' })}
-						</span>
+						<span>{t('retention_save_button.pending', { name: 'traces' })}</span>
 					) : (
 						<span>{t('retention_save_button.success')}</span>
 					),
-				isDisabled:
-					tracesTtlValuesPayload.status === 'pending' || isTracesSaveDisabled,
+				isLoading: tracesTtlValuesPayload.status === 'pending',
+				isDisabled: isTracesSaveDisabled,
+				disabledReason: getSaveDisabledReason(
+					'traces',
+					tracesTotalRetentionPeriod,
+					tracesS3RetentionPeriod,
+				),
 			},
 			statusComponent: (
 				<StatusMessage
@@ -572,18 +590,17 @@ function GeneralSettings({
 				apiLoading: postApiLoadingLogs,
 				saveButtonText:
 					logsTtlValuesPayload.status === 'pending' ? (
-						<span>
-							<Spin
-								spinning
-								size="small"
-								indicator={<Loader className="animate-spin" />}
-							/>{' '}
-							{t('retention_save_button.pending', { name: 'logs' })}
-						</span>
+						<span>{t('retention_save_button.pending', { name: 'logs' })}</span>
 					) : (
 						<span>{t('retention_save_button.success')}</span>
 					),
-				isDisabled: logsTtlValuesPayload.status === 'pending' || isLogsSaveDisabled,
+				isLoading: logsTtlValuesPayload.status === 'pending',
+				isDisabled: isLogsSaveDisabled,
+				disabledReason: getSaveDisabledReason(
+					'logs',
+					logsTotalRetentionPeriod,
+					logsS3RetentionPeriod,
+				),
 			},
 			statusComponent: (
 				<StatusMessage
@@ -620,12 +637,13 @@ function GeneralSettings({
 							))}
 							{!isCloudUserVal && (
 								<Button
-									disabledTooltip={undefined}
+									disabledTooltip={category.save.disabledReason}
 									variant="solid"
 									size="sm"
 									color="primary"
 									onClick={category.save.modalOpen}
 									disabled={category.save.isDisabled}
+									loading={category.save.isLoading}
 								>
 									{category.save.saveButtonText}
 								</Button>

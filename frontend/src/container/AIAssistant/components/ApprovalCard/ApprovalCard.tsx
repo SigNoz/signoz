@@ -191,7 +191,7 @@ export default function ApprovalCard({
 
 			<div className={styles.actions}>
 				<Button
-					disabledTooltip={undefined}
+					disabledTooltip="Wait for the response to finish"
 					color="primary"
 					variant="solid"
 					size="sm"
@@ -202,7 +202,7 @@ export default function ApprovalCard({
 					Approve
 				</Button>
 				<Button
-					disabledTooltip={undefined}
+					disabledTooltip="Wait for the response to finish"
 					variant="outlined"
 					size="sm"
 					color="secondary"

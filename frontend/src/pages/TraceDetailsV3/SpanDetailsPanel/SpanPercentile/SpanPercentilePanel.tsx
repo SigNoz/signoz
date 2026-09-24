@@ -107,7 +107,7 @@ function SpanPercentilePanel({
 								<div className={styles.resourceSelectorItem} key={attr.key}>
 									<Checkbox
 										color="primary"
-										disabledTooltip={undefined}
+										disabledTooltip="This attribute is always included"
 										value={attr.isSelected}
 										onChange={(checked): void => {
 											handleResourceAttributeChange(

@@ -167,7 +167,7 @@ function ListPanelRenderer({
 					{showPager && pagination && (
 						<div className={styles.pager} data-testid="list-panel-pager">
 							<Button
-								disabledTooltip={undefined}
+								disabledTooltip="You are on the first page"
 								type="button"
 								variant="ghost"
 								color="secondary"
@@ -184,7 +184,7 @@ function ListPanelRenderer({
 								Page {pagination.pageIndex + 1}
 							</span>
 							<Button
-								disabledTooltip={undefined}
+								disabledTooltip="You are on the last page"
 								type="button"
 								variant="ghost"
 								color="secondary"

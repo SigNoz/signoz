@@ -140,7 +140,11 @@ export default function ClarificationForm({
 
 			<div className={styles.actions}>
 				<Button
-					disabledTooltip={undefined}
+					disabledTooltip={
+						isStreaming
+							? 'Wait for the response to finish'
+							: 'Fill in the required fields first'
+					}
 					size="md"
 					variant="solid"
 					color="primary"
@@ -151,7 +155,7 @@ export default function ClarificationForm({
 					Submit
 				</Button>
 				<Button
-					disabledTooltip={undefined}
+					disabledTooltip="Wait for the response to finish"
 					size="md"
 					variant="outlined"
 					color="secondary"

@@ -76,12 +76,12 @@ function TelemetrySelectorWizard({
 				Cancel
 			</Button>
 			<Button
-				disabledTooltip={undefined}
 				size="md"
 				color="primary"
 				variant="solid"
 				onClick={handleAdd}
 				disabled={!canAdd}
+				disabledTooltip={validation.message}
 				testId={`wizard-add-btn-${testId}`}
 			>
 				Add Selector
@@ -159,10 +159,10 @@ function TelemetrySelectorWizard({
 						/>
 						<Checkbox
 							color="primary"
-							disabledTooltip={undefined}
 							id={`wizard-any-resource-${testId}`}
 							value={isAnyResource}
 							disabled={!supportsKeyScoping}
+							disabledTooltip="This query type does not support key scoping"
 							onChange={(checked): void => handleAnyResourceChange(checked === true)}
 							testId={`wizard-any-resource-checkbox-${testId}`}
 						>

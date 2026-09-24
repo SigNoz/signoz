@@ -3,7 +3,7 @@ import { Button } from '@signozhq/ui/button';
 import { Slider } from '@signozhq/ui/slider';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight, LoaderCircle, Minus } from '@signozhq/icons';
+import { ArrowRight, Minus } from '@signozhq/icons';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
 
@@ -284,7 +284,6 @@ function OptimiseSignozNeeds({
 
 				<div className="onboarding-buttons-container">
 					<Button
-						disabledTooltip={undefined}
 						size="md"
 						variant="solid"
 						color="primary"
@@ -292,25 +291,20 @@ function OptimiseSignozNeeds({
 							isUpdatingProfile || isNextDisabled ? 'disabled' : ''
 						}`}
 						onClick={handleOnNext}
-						disabled={isUpdatingProfile || isNextDisabled}
-						suffix={
-							isUpdatingProfile ? (
-								<LoaderCircle className="animate-spin" size={12} />
-							) : (
-								<ArrowRight size={12} />
-							)
-						}
+						loading={isUpdatingProfile}
+						disabled={isNextDisabled}
+						disabledTooltip="Set at least one of the values above"
+						suffix={<ArrowRight size={12} />}
 					>
 						Next
 					</Button>
 					<Button
-						disabledTooltip={undefined}
 						size="md"
 						variant="ghost"
 						color="secondary"
 						className="onboarding-do-later-button"
 						onClick={handleWillDoLater}
-						disabled={isUpdatingProfile}
+						loading={isUpdatingProfile}
 					>
 						I&apos;ll do this later
 					</Button>

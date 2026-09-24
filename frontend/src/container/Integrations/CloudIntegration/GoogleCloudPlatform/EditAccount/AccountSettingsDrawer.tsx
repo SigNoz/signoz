@@ -67,7 +67,7 @@ function AccountSettingsDrawer({
 						cloudProvider={INTEGRATION_TYPES.GCP}
 					/>
 					<Button
-						disabledTooltip={undefined}
+						disabledTooltip="Change the project IDs first"
 						size="md"
 						variant="solid"
 						color="secondary"

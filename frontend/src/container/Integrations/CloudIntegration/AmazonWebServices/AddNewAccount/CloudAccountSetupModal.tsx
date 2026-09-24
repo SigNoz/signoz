@@ -83,18 +83,20 @@ function CloudAccountSetupModal({
 	const footer = (
 		<div className="cloud-account-setup-modal__footer">
 			<Button
-				disabledTooltip={undefined}
+				disabledTooltip={
+					selectedRegions.length === 0
+						? 'Select at least one region'
+						: 'Waiting for the account to connect'
+				}
 				size="md"
 				variant="solid"
 				color="primary"
 				prefix={<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />}
 				onClick={handleSubmit}
 				disabled={
-					selectedRegions.length === 0 ||
-					isLoading ||
-					isGeneratingUrl ||
-					modalState === ModalStateEnum.WAITING
+					selectedRegions.length === 0 || modalState === ModalStateEnum.WAITING
 				}
+				loading={isLoading || isGeneratingUrl}
 			>
 				Launch Cloud Formation Template
 			</Button>

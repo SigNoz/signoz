@@ -79,19 +79,15 @@ function ForgotPassword({
 
 	const hasMultipleOrgs = orgs.length > 1;
 
-	const isSubmitEnabled = useMemo((): boolean => {
-		if (isLoading) {
-			return false;
-		}
-
+	const submitDisabledReason = useMemo((): string | undefined => {
 		if (!watchedEmail?.trim()) {
-			return false;
+			return 'Enter your email first';
 		}
 
 		// Ensure we have an orgId (either selected from dropdown or the initial one)
 		const currentOrgId = hasMultipleOrgs ? selectedOrgId : initialOrgId;
-		return Boolean(currentOrgId);
-	}, [watchedEmail, selectedOrgId, isLoading, initialOrgId, hasMultipleOrgs]);
+		return currentOrgId ? undefined : 'Select an organization first';
+	}, [watchedEmail, selectedOrgId, initialOrgId, hasMultipleOrgs]);
 
 	const handleSubmit = useCallback((): void => {
 		const values = form.getFieldsValue();
@@ -200,9 +196,9 @@ function ForgotPassword({
 					</Button>
 
 					<Button
-						disabledTooltip={undefined}
+						disabledTooltip={submitDisabledReason}
 						size="md"
-						disabled={!isSubmitEnabled}
+						disabled={Boolean(submitDisabledReason)}
 						loading={isLoading}
 						variant="solid"
 						color="primary"

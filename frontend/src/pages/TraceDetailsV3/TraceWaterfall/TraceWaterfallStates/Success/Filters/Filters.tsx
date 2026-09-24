@@ -288,24 +288,24 @@ function Filters({
 		</div>
 	);
 
-	const pillWithPopover = expression ? (
+	const pillWithPopover = (
 		<Tooltip
 			title={
-				<div className={styles.pillPopover}>
-					<div className={styles.pillPopoverHeader}>
-						<Typography.Text>Search query</Typography.Text>
-						<CopyButton value={expression} size={12} />
+				expression ? (
+					<div className={styles.pillPopover}>
+						<div className={styles.pillPopoverHeader}>
+							<Typography.Text>Search query</Typography.Text>
+							<CopyButton value={expression} size={12} />
+						</div>
+						<div className={styles.pillPopoverExpression}>{expression}</div>
 					</div>
-					<div className={styles.pillPopoverExpression}>{expression}</div>
-				</div>
+				) : undefined
 			}
 			side="bottom"
 			align="start"
 		>
 			{pill}
 		</Tooltip>
-	) : (
-		pill
 	);
 
 	// Mode-conditional render: only one of (pill | QuerySearch) is mounted

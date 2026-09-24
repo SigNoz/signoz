@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { Button } from '@signozhq/ui/button';
 import cx from 'classnames';
 import {
@@ -15,6 +16,7 @@ type RunQueryBtnProps = {
 	className?: string;
 	label?: string;
 	disabled?: boolean;
+	disabledTooltip?: ReactNode;
 } & (
 	| {
 			onStageRunQuery: () => void;
@@ -35,6 +37,7 @@ function RunQueryBtn({
 	handleCancelQuery,
 	onStageRunQuery,
 	disabled,
+	disabledTooltip,
 }: RunQueryBtnProps): JSX.Element {
 	const isMac = getUserOperatingSystem() === UserOperatingSystem.MACOS;
 	const isLoading = isLoadingQueries ?? false;
@@ -53,13 +56,13 @@ function RunQueryBtn({
 		</Button>
 	) : (
 		<Button
-			disabledTooltip={undefined}
 			size="md"
 			variant="solid"
 			color="primary"
 			type="button"
 			className={cx('run-query-btn', className)}
 			disabled={disabled}
+			disabledTooltip={disabledTooltip}
 			onClick={onStageRunQuery}
 			prefix={<Play size={14} />}
 		>

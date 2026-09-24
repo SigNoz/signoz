@@ -14,6 +14,7 @@ interface SignozRadioGroupProps {
 	onChange: (value: string) => void;
 	className?: string;
 	disabled?: boolean;
+	disabledTooltip?: string;
 }
 
 function SignozRadioGroup({
@@ -22,6 +23,7 @@ function SignozRadioGroup({
 	onChange,
 	className = '',
 	disabled = false,
+	disabledTooltip,
 }: SignozRadioGroupProps): JSX.Element {
 	return (
 		<ToggleGroup
@@ -33,7 +35,7 @@ function SignozRadioGroup({
 			className={`signoz-radio-group ${className}`}
 			onChange={onChange}
 			disabled={disabled}
-			disabledTooltip={undefined}
+			disabledTooltip={disabledTooltip}
 			items={options.map((option) => ({
 				value: option.value,
 				label: (
@@ -50,6 +52,7 @@ function SignozRadioGroup({
 SignozRadioGroup.defaultProps = {
 	className: '',
 	disabled: false,
+	disabledTooltip: undefined,
 };
 
 export default SignozRadioGroup;

@@ -135,12 +135,12 @@ function ItemInputSelector({
 				prefix={prefixElement}
 				suffix={
 					<Button
-						disabledTooltip={undefined}
 						color="primary"
 						variant="solid"
 						size="sm"
 						onClick={handleAddClick}
 						disabled={!inputValue.trim()}
+						disabledTooltip="Enter a value first"
 						testId={`item-input-selector-add-btn-${testId}`}
 					>
 						<Plus size={14} />

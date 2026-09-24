@@ -49,6 +49,13 @@ export function AuthZDevModalHeader({
 		clearAllOverrides(hasActiveFilter ? filteredPermissions : undefined);
 	}, [clearAllOverrides, hasActiveFilter, filteredPermissions]);
 
+	const noPermissionsReason = hasActiveFilter
+		? 'No permissions match the filter'
+		: 'No permissions to change';
+	const noOverridesReason = hasActiveFilter
+		? 'No filtered permission is overridden'
+		: 'No permission is overridden';
+
 	return (
 		<div className={styles.header}>
 			<div className={styles.searchRow}>
@@ -74,7 +81,7 @@ export function AuthZDevModalHeader({
 			</div>
 			<div className={styles.actionsRow}>
 				<Button
-					disabledTooltip={undefined}
+					disabledTooltip={noPermissionsReason}
 					className={styles.actionButton}
 					variant="solid"
 					color="success"
@@ -86,7 +93,7 @@ export function AuthZDevModalHeader({
 					{hasActiveFilter ? 'Grant filtered' : 'Grant all'}
 				</Button>
 				<Button
-					disabledTooltip={undefined}
+					disabledTooltip={noPermissionsReason}
 					className={styles.actionButton}
 					variant="solid"
 					color="danger"
@@ -98,7 +105,7 @@ export function AuthZDevModalHeader({
 					{hasActiveFilter ? 'Deny filtered' : 'Deny all'}
 				</Button>
 				<Button
-					disabledTooltip={undefined}
+					disabledTooltip={noOverridesReason}
 					className={styles.actionButton}
 					variant="outlined"
 					color="secondary"

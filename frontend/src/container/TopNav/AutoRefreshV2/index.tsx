@@ -144,10 +144,10 @@ function AutoRefresh({
 				<div className="auto-refresh-menu">
 					<Checkbox
 						color="primary"
-						disabledTooltip={undefined}
 						onChange={onChangeAutoRefreshHandler}
 						value={isAutoRefreshEnabled}
 						disabled={isDisabled}
+						disabledTooltip="Auto refresh is not available for a custom time range"
 						className="auto-refresh-checkbox"
 					>
 						Auto Refresh

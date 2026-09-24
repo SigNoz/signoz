@@ -135,20 +135,17 @@ function LegendRow({
 			</Tooltip>
 			<div className={styles.actions}>
 				<Tooltip className={styles.rowTooltip} title={scopeActionLabel} side="top">
-					{/* Radix's asChild merge strips the button's own data-testid. */}
-					<span className={styles.actionTrigger}>
-						<Button
-							variant="ghost"
-							color="secondary"
-							size="sm"
-							className={cx(styles.actionButton, styles.scopeButton)}
-							onClick={handleScopeClick}
-							aria-label={scopeActionLabel}
-							testId={`legend-scope-${seriesIndex}`}
-						>
-							{isShowAllAction ? 'All' : 'Only'}
-						</Button>
-					</span>
+					<Button
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						className={cx(styles.actionButton, styles.scopeButton)}
+						onClick={handleScopeClick}
+						aria-label={scopeActionLabel}
+						testId={`legend-scope-${seriesIndex}`}
+					>
+						{isShowAllAction ? 'All' : 'Only'}
+					</Button>
 				</Tooltip>
 				{showCopy && (
 					<CopyButton

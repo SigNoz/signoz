@@ -650,13 +650,9 @@ function CustomTimePicker({
 				</Popover>
 			</Tooltip>
 			{!showLiveLogs && !isModalTimeSelection && (
-				<Tooltip
-					title={
-						zoomOutDisabled ? 'Zoom out time range is limited to 1 month' : 'Zoom out'
-					}
-				>
+				<Tooltip title={zoomOutDisabled ? undefined : 'Zoom out'}>
 					<Button
-						disabledTooltip={undefined}
+						disabledTooltip="Zoom out time range is limited to 1 month"
 						size="md"
 						className="zoom-out-btn"
 						onClick={handleZoomOut}

@@ -59,12 +59,12 @@ function InviteMembersModal({
 						</Button>
 
 						<Button
-							disabledTooltip={undefined}
 							size="md"
 							variant="solid"
 							color="primary"
 							onClick={submit}
 							disabled={!canSubmit}
+							disabledTooltip="Add at least one team member to invite"
 							loading={isSubmitting}
 						>
 							{isSubmitting ? 'Inviting...' : 'Invite Team Members'}

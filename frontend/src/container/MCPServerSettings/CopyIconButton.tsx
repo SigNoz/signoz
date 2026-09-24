@@ -7,34 +7,30 @@ interface CopyIconButtonProps {
 	ariaLabel: string;
 	onCopy: () => void;
 	disabled?: boolean;
+	disabledTooltip?: string;
 }
 
 function CopyIconButton({
 	ariaLabel,
 	onCopy,
 	disabled = false,
+	disabledTooltip,
 }: CopyIconButtonProps): JSX.Element {
-	const tooltipTitle = disabled
-		? 'Enter your Cloud region first'
-		: 'Copy to clipboard';
-
 	return (
-		<Tooltip title={tooltipTitle}>
-			<span>
-				<Button
-					disabledTooltip={undefined}
-					color="secondary"
-					variant="ghost"
-					size="sm"
-					icon
-					aria-label={ariaLabel}
-					disabled={disabled}
-					className="mcp-copy-btn"
-					onClick={onCopy}
-				>
-					<Copy size={14} />
-				</Button>
-			</span>
+		<Tooltip title={disabled ? undefined : 'Copy to clipboard'}>
+			<Button
+				color="secondary"
+				variant="ghost"
+				size="sm"
+				icon
+				aria-label={ariaLabel}
+				disabled={disabled}
+				disabledTooltip={disabledTooltip}
+				className="mcp-copy-btn"
+				onClick={onCopy}
+			>
+				<Copy size={14} />
+			</Button>
 		</Tooltip>
 	);
 }

@@ -1132,7 +1132,7 @@ function MultiIngestionSettings(): JSX.Element {
 																{hasLimits(signalName) ? (
 																	<>
 																		<Button
-																			disabledTooltip={undefined}
+																			disabledTooltip="Finish editing the current limit first"
 																			variant="link"
 																			size="sm"
 																			icon
@@ -1146,7 +1146,7 @@ function MultiIngestionSettings(): JSX.Element {
 																			<PenLine size={14} />
 																		</Button>
 																		<Button
-																			disabledTooltip={undefined}
+																			disabledTooltip="Finish editing the current limit first"
 																			variant="link"
 																			size="sm"
 																			icon
@@ -1162,7 +1162,7 @@ function MultiIngestionSettings(): JSX.Element {
 																	</>
 																) : (
 																	<Button
-																		disabledTooltip={undefined}
+																		disabledTooltip="Finish editing the current limit first"
 																		variant="outlined"
 																		size="sm"
 																		color="secondary"
@@ -1401,13 +1401,9 @@ function MultiIngestionSettings(): JSX.Element {
 																			<div className="signal-limit-save-discard">
 																				<div className="signal-limit-save-discard-actions">
 																					<Button
-																						disabledTooltip={undefined}
 																						color="primary"
 																						variant="solid"
 																						size="sm"
-																						disabled={
-																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
-																						}
 																						loading={
 																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
 																						}
@@ -1416,7 +1412,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						Save
 																					</Button>
 																					<Button
-																						disabledTooltip={undefined}
+																						disabledTooltip="Wait for the limit to save"
 																						variant="outlined"
 																						color="secondary"
 																						size="sm"

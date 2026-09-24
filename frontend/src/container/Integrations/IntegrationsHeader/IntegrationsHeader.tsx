@@ -129,7 +129,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 
 					<div className="request-integration-form-footer">
 						<Button
-							disabledTooltip={undefined}
+							disabledTooltip="Enter an integration name first"
 							size="md"
 							variant="solid"
 							color="primary"
@@ -137,7 +137,6 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 							onClick={handleRequestIntegrationSubmit}
 							loading={isSubmittingRequestForIntegration}
 							disabled={
-								isSubmittingRequestForIntegration ||
 								!requestedIntegrationName ||
 								requestedIntegrationName?.trim().length === 0
 							}

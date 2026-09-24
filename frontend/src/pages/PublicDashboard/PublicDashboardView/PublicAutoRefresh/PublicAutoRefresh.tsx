@@ -15,6 +15,7 @@ interface PublicAutoRefreshProps {
 	/** Selected interval key, e.g. `30s`. */
 	interval: string;
 	disabled?: boolean;
+	disabledTooltip?: string;
 	onToggle: (enabled: boolean) => void;
 	onIntervalChange: (key: string) => void;
 	onRefresh: () => void;
@@ -26,6 +27,7 @@ function PublicAutoRefresh({
 	enabled,
 	interval,
 	disabled = false,
+	disabledTooltip,
 	onToggle,
 	onIntervalChange,
 	onRefresh,
@@ -49,7 +51,7 @@ function PublicAutoRefresh({
 					<div className="auto-refresh-menu">
 						<Checkbox
 							color="primary"
-							disabledTooltip={undefined}
+							disabledTooltip={disabledTooltip}
 							onChange={(value): void => onToggle(value === true)}
 							value={enabled}
 							disabled={disabled}

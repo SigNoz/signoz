@@ -117,12 +117,10 @@ function EditTagsModal({
 						Cancel
 					</Button>
 					<Button
-						disabledTooltip={undefined}
 						variant="solid"
 						color="primary"
 						size="md"
 						loading={isLoading}
-						disabled={isLoading}
 						onClick={(): void => runSave()}
 						testId="edit-tags-submit"
 					>

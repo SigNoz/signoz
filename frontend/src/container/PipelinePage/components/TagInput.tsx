@@ -120,12 +120,10 @@ function TagInput({
 				</span>
 			</Badge>
 		);
-		return isLongTag ? (
-			<Tooltip title={tag} key={tag}>
+		return (
+			<Tooltip title={isLongTag ? tag : undefined} key={tag}>
 				{tagElem}
 			</Tooltip>
-		) : (
-			tagElem
 		);
 	});
 

@@ -41,6 +41,8 @@ type FormValues = {
 	url: string;
 };
 
+const ENTER_VALID_EMAIL = 'Enter a valid email address';
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function Login(): JSX.Element {
 	const urlQueryParams = useUrlQuery();
@@ -280,27 +282,21 @@ function Login(): JSX.Element {
 		email?.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
 	);
 
-	const isNextButtonEnabled =
-		isEmailValid && !versionLoading && !sessionsContextLoading;
+	const isNextLoading = versionLoading || sessionsContextLoading;
 
-	const isSubmitButtonEnabled = useMemo((): boolean => {
-		if (!isEmailValid || isSubmitting) {
-			return false;
+	const submitDisabledReason = useMemo((): string | undefined => {
+		if (!isEmailValid) {
+			return ENTER_VALID_EMAIL;
 		}
 		const hasMultipleOrgs = (sessionsContext?.orgs.length ?? 0) > 1;
 		if (hasMultipleOrgs && !orgId) {
-			return false;
+			return 'Select an organization first';
 		}
-
-		return !(isPasswordAuthN && !password?.trim());
-	}, [
-		isEmailValid,
-		isSubmitting,
-		sessionsContext,
-		orgId,
-		isPasswordAuthN,
-		password,
-	]);
+		if (isPasswordAuthN && !password?.trim()) {
+			return 'Enter your password first';
+		}
+		return undefined;
+	}, [isEmailValid, sessionsContext, orgId, isPasswordAuthN, password]);
 
 	return (
 		<div className="login-form-container">
@@ -389,10 +385,11 @@ function Login(): JSX.Element {
 				<div className="login-form-actions">
 					{!sessionsContext && (
 						<Button
-							disabledTooltip={undefined}
 							size="md"
 							color="primary"
-							disabled={!isNextButtonEnabled}
+							loading={isNextLoading}
+							disabled={!isEmailValid}
+							disabledTooltip={ENTER_VALID_EMAIL}
 							variant="solid"
 							onClick={onNextHandler}
 							testId="initiate_login"
@@ -405,9 +402,10 @@ function Login(): JSX.Element {
 
 					{sessionsContext && isCallbackAuthN && (
 						<Button
-							disabledTooltip={undefined}
 							size="md"
-							disabled={!isSubmitButtonEnabled}
+							loading={isSubmitting}
+							disabled={!!submitDisabledReason}
+							disabledTooltip={submitDisabledReason}
 							variant="solid"
 							type="submit"
 							color="primary"
@@ -422,9 +420,10 @@ function Login(): JSX.Element {
 
 					{sessionsContext && isPasswordAuthN && (
 						<Button
-							disabledTooltip={undefined}
 							size="md"
-							disabled={!isSubmitButtonEnabled}
+							loading={isSubmitting}
+							disabled={!!submitDisabledReason}
+							disabledTooltip={submitDisabledReason}
 							variant="solid"
 							color="primary"
 							testId="password_authn_submit"

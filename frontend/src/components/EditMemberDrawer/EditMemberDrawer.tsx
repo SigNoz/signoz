@@ -615,47 +615,40 @@ function EditMemberDrawer({
 			{!isDeleted && (
 				<>
 					<div className="edit-member-drawer__footer-left">
-						<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
-							<span className="edit-member-drawer__tooltip-wrapper">
-								<Button
-									disabledTooltip={undefined}
-									size="md"
-									onClick={(): void => setShowDeleteConfirm(true)}
-									disabled={isRootUser || isSelf}
-									variant="link"
-									color="danger"
-								>
-									<Trash2 size={12} />
-									{isInvited ? 'Revoke Invite' : 'Delete Member'}
-								</Button>
-							</span>
-						</Tooltip>
+						<Button
+							disabledTooltip={getDeleteTooltip(isRootUser, isSelf)}
+							size="md"
+							onClick={(): void => setShowDeleteConfirm(true)}
+							disabled={isRootUser || isSelf}
+							variant="link"
+							color="danger"
+						>
+							<Trash2 size={12} />
+							{isInvited ? 'Revoke Invite' : 'Delete Member'}
+						</Button>
 
 						<div className="edit-member-drawer__footer-divider" />
-						<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
-							<span className="edit-member-drawer__tooltip-wrapper">
-								<Button
-									disabledTooltip={undefined}
-									size="md"
-									onClick={handleGenerateResetLink}
-									disabled={isGeneratingLink || isRootUser || isLoadingTokenStatus}
-									variant="link"
-									color="warning"
-								>
-									<RefreshCw size={12} />
-									{isGeneratingLink
-										? 'Generating...'
-										: isInvited
-											? getInviteButtonLabel(
-													isLoadingTokenStatus,
-													existingToken,
-													isTokenExpired,
-													tokenNotFound,
-												)
-											: 'Generate Password Reset Link'}
-								</Button>
-							</span>
-						</Tooltip>
+						<Button
+							disabledTooltip={ROOT_USER_TOOLTIP}
+							size="md"
+							onClick={handleGenerateResetLink}
+							disabled={isRootUser}
+							loading={isGeneratingLink || isLoadingTokenStatus}
+							variant="link"
+							color="warning"
+						>
+							<RefreshCw size={12} />
+							{isGeneratingLink
+								? 'Generating...'
+								: isInvited
+									? getInviteButtonLabel(
+											isLoadingTokenStatus,
+											existingToken,
+											isTokenExpired,
+											tokenNotFound,
+										)
+									: 'Generate Password Reset Link'}
+						</Button>
 					</div>
 
 					<div className="edit-member-drawer__footer-right">
@@ -670,11 +663,11 @@ function EditMemberDrawer({
 						</Button>
 
 						<Button
-							disabledTooltip={undefined}
+							disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : 'No changes to save'}
 							size="md"
 							variant="solid"
 							color="primary"
-							disabled={!isDirty || isSaving || isRootUser}
+							disabled={!isDirty || isRootUser}
 							onClick={handleSave}
 							loading={isSaving}
 						>

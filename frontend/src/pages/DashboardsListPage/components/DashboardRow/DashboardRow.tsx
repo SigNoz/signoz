@@ -103,12 +103,10 @@ function DashboardRow({
 	};
 
 	const pinLabel = isPinned ? 'Unpin dashboard' : 'Pin dashboard';
-	const pinTooltip = isLegacy
-		? "This dashboard isn't available in the new experience, so it can't be pinned"
-		: pinLabel;
+	const legacyPinTooltip =
+		"This dashboard isn't available in the new experience, so it can't be pinned";
 
-	// Only long titles are truncated, so only they need the full-name tooltip;
-	// wrapping conditionally avoids an empty hanging tooltip for short names.
+	// Only long titles are truncated, so only they need the full-name tooltip.
 	const titleLink = (
 		<div className={styles.titleLink} onClick={onClickHandler}>
 			<img src={image} alt="dashboard-image" className={styles.icon} />
@@ -126,13 +124,13 @@ function DashboardRow({
 			<div className={styles.row} onClick={onClickHandler}>
 				<div className={styles.titleWithAction}>
 					<div className={styles.titleBlock}>
-						{name.length > 50 ? (
-							<Tooltip className={styles.nameTooltip} title={name} side="bottom">
-								{titleLink}
-							</Tooltip>
-						) : (
-							titleLink
-						)}
+						<Tooltip
+							className={styles.nameTooltip}
+							title={name.length > 50 ? name : undefined}
+							side="bottom"
+						>
+							{titleLink}
+						</Tooltip>
 						{isLegacy && (
 							<Badge
 								color="warning"
@@ -158,33 +156,32 @@ function DashboardRow({
 						</Tooltip>
 					)}
 
-					<Tooltip title={pinTooltip} side="top">
-						<span className={styles.pinButtonWrap}>
-							<Button
-								disabledTooltip={undefined}
-								type="button"
-								variant="ghost"
-								color="secondary"
-								size="sm"
-								icon
-								className={cx(styles.pinButton, {
-									[styles.pinButtonOn]: isPinned && !isLegacy,
-								})}
-								aria-label={pinLabel}
-								testId={`dashboard-pin-${index}`}
-								disabled={isUpdating || isLegacy}
-								onClick={onTogglePin}
-							>
-								{isPinned ? (
-									<>
-										<Pin size={14} className={styles.pinnedIcon} />
-										<PinOff size={14} className={styles.unpinIcon} />
-									</>
-								) : (
-									<Pin size={14} />
-								)}
-							</Button>
-						</span>
+					<Tooltip title={isLegacy ? undefined : pinLabel} side="top">
+						<Button
+							disabledTooltip={legacyPinTooltip}
+							type="button"
+							variant="ghost"
+							color="secondary"
+							size="sm"
+							icon
+							className={cx(styles.pinButton, {
+								[styles.pinButtonOn]: isPinned && !isLegacy,
+							})}
+							aria-label={pinLabel}
+							testId={`dashboard-pin-${index}`}
+							disabled={isLegacy}
+							loading={isUpdating}
+							onClick={onTogglePin}
+						>
+							{isPinned ? (
+								<>
+									<Pin size={14} className={styles.pinnedIcon} />
+									<PinOff size={14} className={styles.unpinIcon} />
+								</>
+							) : (
+								<Pin size={14} />
+							)}
+						</Button>
 					</Tooltip>
 
 					<ActionsPopover

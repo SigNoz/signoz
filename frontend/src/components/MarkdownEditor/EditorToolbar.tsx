@@ -14,6 +14,7 @@ import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
+import { READ_ONLY_TOOLTIP } from './constants';
 import InsertVariableMenu from './InsertVariableMenu';
 import MarkdownHelp from './MarkdownHelp';
 import type { EditorCommand, EditorVariable } from './types';
@@ -61,9 +62,9 @@ function EditorToolbar({
 			<span className={styles.toolbarDivider} />
 			<div className={styles.commands}>
 				{commands.map((command) => (
-					<Tooltip key={command.id} title={command.label}>
+					<Tooltip key={command.id} title={disabled ? undefined : command.label}>
 						<Button
-							disabledTooltip={undefined}
+							disabledTooltip={READ_ONLY_TOOLTIP}
 							type="button"
 							variant="ghost"
 							color="secondary"

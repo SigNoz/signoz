@@ -81,12 +81,12 @@ function ModelCostDrawer({
 			</Button>
 			{canManage && (
 				<Button
-					disabledTooltip={undefined}
 					size="md"
 					variant="solid"
 					color="primary"
 					onClick={handleSubmit(onSave)}
 					disabled={!isDirty}
+					disabledTooltip="No changes to save"
 					loading={isSaving}
 					testId="drawer-save-btn"
 				>

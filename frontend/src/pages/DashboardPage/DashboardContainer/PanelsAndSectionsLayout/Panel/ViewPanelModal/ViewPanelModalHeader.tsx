@@ -1,7 +1,6 @@
 import { PenLine, RotateCw } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import cx from 'classnames';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import type {
 	CustomTimeType,
@@ -127,17 +126,16 @@ function ViewPanelModalHeader(props: ViewPanelModalHeaderProps): JSX.Element {
 						modalInitialEndTime={query.endMs}
 					/>
 					<Button
-						disabledTooltip={undefined}
 						size="sm"
 						icon
 						variant="outlined"
 						color="secondary"
 						onClick={query.onRefresh}
-						disabled={query.isFetching}
+						loading={query.isFetching}
 						aria-label="Refresh"
 						testId="view-panel-refresh"
 					>
-						<RotateCw className={cx({ 'animate-spin': query.isFetching })} />
+						<RotateCw />
 					</Button>
 				</div>
 			)}

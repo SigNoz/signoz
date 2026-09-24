@@ -97,7 +97,13 @@ function JsonEditorDrawer({
 		[apply, readOnly, onClose],
 	);
 
-	const applyDisabled = readOnly || !isDirty || !validity.valid || isSaving;
+	const applyDisabled = readOnly || !isDirty || !validity.valid;
+	let applyDisabledReason: string | undefined;
+	if (!readOnly && !isDirty) {
+		applyDisabledReason = 'No changes to apply';
+	} else if (!readOnly && !validity.valid) {
+		applyDisabledReason = 'Fix the JSON errors first';
+	}
 	const validationText = validity.valid
 		? `Valid JSON · ${validity.lineCount} lines`
 		: `Line ${validity.errorLine ?? '?'} · ${validity.message ?? 'Invalid JSON'}`;
@@ -183,12 +189,13 @@ function JsonEditorDrawer({
 							disabledTooltip={readOnly ? readOnlyTooltip : undefined}
 						>
 							<Button
-								disabledTooltip={undefined}
+								disabledTooltip={applyDisabledReason}
 								variant="solid"
 								color="primary"
 								size="md"
 								testId="json-editor-apply"
 								disabled={applyDisabled}
+								loading={isSaving}
 								onClick={readOnly ? undefined : (): void => void apply()}
 							>
 								Apply changes

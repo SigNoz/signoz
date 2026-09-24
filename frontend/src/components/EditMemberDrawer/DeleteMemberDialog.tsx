@@ -43,11 +43,9 @@ function DeleteMemberDialog({
 				Cancel
 			</Button>
 			<Button
-				disabledTooltip={undefined}
 				size="md"
 				variant="solid"
 				color="danger"
-				disabled={isDeleting}
 				onClick={onConfirm}
 				loading={isDeleting}
 			>

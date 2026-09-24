@@ -193,24 +193,19 @@ function BasicInfo({
 					name="alert_all_configured_channels"
 					label="Alert all the configured channels"
 				>
-					<Tooltip
-						title={
-							noChannels
-								? 'No channels. Ask an admin to create a notification channel'
-								: undefined
+					<Switch
+						color="primary"
+						textPlacement="right"
+						disabledTooltip={
+							isLoading
+								? 'Wait for the channels to load'
+								: 'No channels. Ask an admin to create a notification channel'
 						}
-						placement="right"
-					>
-						<Switch
-							color="primary"
-							textPlacement="right"
-							disabledTooltip={undefined}
-							value={shouldBroadCastToAllChannels}
-							onChange={handleBroadcastToAllChannels}
-							disabled={noChannels || !!isLoading}
-							testId="alert-broadcast-to-all-channels"
-						/>
-					</Tooltip>
+						value={shouldBroadCastToAllChannels}
+						onChange={handleBroadcastToAllChannels}
+						disabled={noChannels || !!isLoading}
+						testId="alert-broadcast-to-all-channels"
+					/>
 				</FormItemMedium>
 
 				{!shouldBroadCastToAllChannels && (

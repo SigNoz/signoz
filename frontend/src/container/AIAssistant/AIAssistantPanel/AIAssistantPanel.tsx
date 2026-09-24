@@ -172,7 +172,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 
 						<Tooltip title="Open full screen">
 							<Button
-								disabledTooltip={undefined}
+								disabledTooltip="Start a conversation first"
 								variant="ghost"
 								size="sm"
 								icon

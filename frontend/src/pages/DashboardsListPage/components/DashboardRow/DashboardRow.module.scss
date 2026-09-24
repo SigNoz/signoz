@@ -67,17 +67,6 @@
 	color: var(--l3-foreground);
 }
 
-/* Wrap so the tooltip has a hoverable target even when the pin button is disabled
-   (a legacy dashboard can't be pinned). */
-.pinButtonWrap {
-	display: inline-flex;
-	flex: none;
-}
-
-.pinButtonWrap button:disabled {
-	pointer-events: none;
-}
-
 .pinButton {
 	display: inline-flex;
 	align-items: center;

@@ -3,7 +3,6 @@ import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
-import { Tooltip } from '@signozhq/ui/tooltip';
 import { Check, Minus, Plus } from '@signozhq/icons';
 import {
 	hideColumn,
@@ -172,7 +171,7 @@ function K8sOptionsSidePanel<TData>({
 					type="number"
 					prefix={
 						<Button
-							disabledTooltip={undefined}
+							disabledTooltip="Minimum is 1 line"
 							variant="solid"
 							color="primary"
 							size="sm"
@@ -188,7 +187,7 @@ function K8sOptionsSidePanel<TData>({
 					}
 					suffix={
 						<Button
-							disabledTooltip={undefined}
+							disabledTooltip="Maximum is 10 lines"
 							variant="solid"
 							color="primary"
 							size="sm"
@@ -215,29 +214,20 @@ function K8sOptionsSidePanel<TData>({
 			<div className={styles.columnsList}>
 				{orderedVisibleColumnItems.map((column) => {
 					const isVisible = !hiddenColumnIds.includes(column.id);
-					const switchElement = (
-						<Switch
-							color="primary"
-							textPlacement="right"
-							disabledTooltip={undefined}
-							value={isVisible}
-							disabled={!column.canBeHidden}
-							testId={`toggle-column-${column.id}`}
-							onChange={(checked): void => handleToggleColumn(column.id, checked)}
-						/>
-					);
 					return (
 						<div className={styles.columnItem} key={column.id}>
 							<Typography.Text as="span" size="sm" className={styles.columnLabel}>
 								{column.label}
 							</Typography.Text>
-							{column.canBeHidden ? (
-								switchElement
-							) : (
-								<Tooltip title="Required column cannot be hidden">
-									{switchElement}
-								</Tooltip>
-							)}
+							<Switch
+								color="primary"
+								textPlacement="right"
+								disabledTooltip="Required column cannot be hidden"
+								value={isVisible}
+								disabled={!column.canBeHidden}
+								testId={`toggle-column-${column.id}`}
+								onChange={(checked): void => handleToggleColumn(column.id, checked)}
+							/>
 						</div>
 					);
 				})}

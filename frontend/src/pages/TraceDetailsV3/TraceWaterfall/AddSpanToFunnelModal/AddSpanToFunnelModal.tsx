@@ -252,7 +252,7 @@ function AddSpanToFunnelModal({
 				activeView === ModalView.DETAILS
 					? [
 							<Button
-								disabledTooltip={undefined}
+								disabledTooltip="No changes to discard"
 								size="md"
 								variant="outlined"
 								color="secondary"
@@ -264,7 +264,7 @@ function AddSpanToFunnelModal({
 								Discard
 							</Button>,
 							<Button
-								disabledTooltip={undefined}
+								disabledTooltip="No changes to save"
 								size="md"
 								key="save"
 								variant="solid"

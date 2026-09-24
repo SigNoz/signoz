@@ -68,12 +68,12 @@ function VolumeControlConfigDrawer({
 				</Button>
 			)}
 			<Button
-				disabledTooltip={undefined}
 				size="md"
 				variant="solid"
 				color="primary"
 				onClick={save}
 				disabled={isSaveDisabled}
+				disabledTooltip="Select at least one attribute"
 				loading={isSaving}
 				testId="volume-control-save"
 			>

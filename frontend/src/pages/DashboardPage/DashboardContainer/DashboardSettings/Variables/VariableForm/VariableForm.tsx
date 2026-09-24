@@ -209,12 +209,12 @@ function VariableForm({
 						Discard
 					</Button>
 					<Button
-						disabledTooltip={undefined}
+						disabledTooltip={nameError || attributeError}
 						size="md"
 						variant="solid"
 						color="primary"
 						prefix={<Check size={14} />}
-						disabled={!!nameError || !!attributeError || isSaving}
+						disabled={!!nameError || !!attributeError}
 						loading={isSaving}
 						onClick={handleSave}
 						testId="variable-save"
