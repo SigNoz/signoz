@@ -57,3 +57,12 @@
 	color: var(--l3-foreground);
 	text-align: center;
 }
+
+/* The bottom legend's box is only the rows reserved for it. */
+.container:not(.isRight) .emptyState {
+	flex: 1;
+	min-height: 0;
+	display: grid;
+	place-items: center;
+	padding: 0;
+}

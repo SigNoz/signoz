@@ -8,7 +8,7 @@ import { LegendAction, LegendPosition, LegendProps } from '../types';
 import { LEGEND_ITEM_EXTRA_WIDTH, MAX_LEGEND_WIDTH } from './constants';
 import LegendRow from './LegendRow';
 import LegendToolbar from './LegendToolbar';
-import { filterLegendItems, getShownSeriesState } from './utils';
+import { getVisibleSeriesState } from './utils';
 
 import styles from './Legend.module.scss';
 
@@ -20,6 +20,7 @@ export default function Legend({
 	items,
 	position,
 	averageLegendWidth = MAX_LEGEND_WIDTH,
+	showSearch = false,
 	focusedSeriesIndex,
 	onAction,
 	showCopy = true,
@@ -30,27 +31,22 @@ export default function Legend({
 	const itemWidth = averageLegendWidth + LEGEND_ITEM_EXTRA_WIDTH;
 	const isRightPosition = position === LegendPosition.RIGHT;
 
-	const { visibleCount, soleShownSeriesIndex } = useMemo(
-		() => getShownSeriesState(items),
-		[items],
-	);
+	// The layout decides: it reserves the height.
+	const showToolbar = showSearch && items.length > 0;
 
-	// A bottom legend gets two rows; spending one on chrome costs more chart than
-	// the readout is worth.
-	const showToolbar = isRightPosition && items.length > 0;
-	const showFilter = showToolbar;
+	const effectiveQuery = showToolbar ? filterQuery : '';
 
-	const effectiveQuery = showFilter ? filterQuery : '';
-
-	const visibleLegendItems = useMemo(
-		() => filterLegendItems(items, effectiveQuery),
+	const {
+		listedItems,
+		visibleCount,
+		onlyVisibleSeriesIndex,
+		areAllSeriesVisible,
+	} = useMemo(
+		() => getVisibleSeriesState(items, effectiveQuery),
 		[items, effectiveQuery],
 	);
 
-	const isEmptyState =
-		!!effectiveQuery.trim() && visibleLegendItems.length === 0;
-
-	const isAllShown = visibleCount === items.length;
+	const isEmptyState = !!effectiveQuery.trim() && listedItems.length === 0;
 
 	// A row that unmounts under the pointer never fires its own mouseleave.
 	const handleMouseLeave = useCallback(
@@ -63,14 +59,20 @@ export default function Legend({
 			<LegendRow
 				key={item.seriesIndex}
 				item={item}
-				isSoleShown={soleShownSeriesIndex === item.seriesIndex}
-				isAllShown={isAllShown}
+				isOneSeriesVisible={onlyVisibleSeriesIndex === item.seriesIndex}
+				areAllSeriesVisible={areAllSeriesVisible}
 				isFocused={focusedSeriesIndex === item.seriesIndex}
 				showCopy={showCopy}
 				onAction={onAction}
 			/>
 		),
-		[soleShownSeriesIndex, isAllShown, focusedSeriesIndex, showCopy, onAction],
+		[
+			onlyVisibleSeriesIndex,
+			areAllSeriesVisible,
+			focusedSeriesIndex,
+			showCopy,
+			onAction,
+		],
 	);
 
 	return (
@@ -87,7 +89,7 @@ export default function Legend({
 				<LegendToolbar
 					visibleCount={visibleCount}
 					totalCount={items.length}
-					showFilter={showFilter}
+					position={position}
 					filterQuery={filterQuery}
 					onFilterQueryChange={setFilterQuery}
 				/>
@@ -101,7 +103,7 @@ export default function Legend({
 					className={styles.scroller}
 					listClassName={styles.gridList}
 					itemClassName={styles.gridItem}
-					data={visibleLegendItems}
+					data={listedItems}
 					itemContent={(_, item): JSX.Element => renderLegendItem(item)}
 				/>
 			)}
