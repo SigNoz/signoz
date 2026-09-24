@@ -31,7 +31,6 @@ import {
 	type AlertmanagertypesListedNotificationChannelDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
-import type { Channels } from 'types/api/channels/getAll';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -694,19 +693,6 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
 
 export const CHANNEL_MAX = CHANNEL_SEEDS.length;
 
-const buildChannel = (index: number): Channels => {
-	const seed = CHANNEL_SEEDS[index % CHANNEL_SEEDS.length];
-
-	return {
-		id: String(index + 1),
-		name: seed.name,
-		type: seed.type,
-		created_at: ago((index + 10) * DAY),
-		updated_at: ago((index + 1) * DAY),
-		data: JSON.stringify({ name: seed.name, ...seed.receiver }),
-	};
-};
-
 const buildListedChannel = (
 	index: number,
 ): AlertmanagertypesListedNotificationChannelDTO => {
@@ -721,14 +707,6 @@ const buildListedChannel = (
 		updatedAt: ago((index + 1) * DAY),
 	};
 };
-
-/** The v2 list, which is what the channel pickers read. */
-export const channelsResponse = (
-	count: number,
-): { status: string; data: Channels[] } => ({
-	status: 'success',
-	data: Array.from({ length: count }, (_unused, index) => buildChannel(index)),
-});
 
 /** The v2 list, which is what the redesigned channels list reads. */
 export const notificationChannelsResponse = (
@@ -797,7 +775,10 @@ export const notificationChannelByRowId = (
 
 /** Channel names the alert form and the routing policies pick from. */
 export const channelNames = (count: number): string[] =>
-	channelsResponse(count).data.map((channel) => channel.name);
+	Array.from(
+		{ length: count },
+		(_unused, index) => CHANNEL_SEEDS[index % CHANNEL_SEEDS.length].name,
+	);
 
 /**
  * The v2 spec each kind is fetched with, so the edit form renders populated
@@ -866,19 +847,6 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 		title: '{{ .CommonLabels.alertname }}',
 		sendResolved: true,
 	},
-};
-
-/** A single channel as the v2 API returns it, which the edit screen reads. */
-export const channelResponse = (
-	id: string,
-	type: ChannelType,
-): { status: string; data: Channels } => {
-	const index = CHANNEL_SEEDS.findIndex((seed) => seed.type === type);
-
-	return {
-		status: 'success',
-		data: { ...buildChannel(Math.max(index, 0)), id },
-	};
 };
 
 /** The v2 fetch by id, which is what the redesigned screens read. */
