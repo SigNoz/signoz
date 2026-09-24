@@ -89,7 +89,12 @@ function FormAlertChannels({
 			</Typography.Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
-				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
+				<Form.Item
+					label={t('field_channel_name')}
+					labelAlign="left"
+					name="name"
+					extra={editing ? t('help_channel_name_immutable') : undefined}
+				>
 					<Input
 						data-testid="channel-name-textbox"
 						disabled={editing}

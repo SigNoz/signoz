@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
+import { useQueryClient } from 'react-query';
 import { useHistory } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
 import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
@@ -12,7 +12,6 @@ import { useUpdateRoutingPolicy } from 'hooks/routingPolicies/useUpdateRoutingPo
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { SuccessResponseV2 } from 'types/api';
-import APIError from 'types/api/error';
 
 import {
 	PolicyDetailsModalMode,
@@ -82,12 +81,11 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 
 	// Channels list
 	const {
-		data,
+		data: channels,
 		isLoading: isLoadingChannels,
 		isError: isErrorChannels,
 		refetch: refetchChannels,
 	} = useChannelOptions();
-	const channels = data || [];
 
 	const refreshChannels = (): void => {
 		refetchChannels();

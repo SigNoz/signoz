@@ -87,8 +87,9 @@ const VALIDATORS: Record<ChannelKind, Validator> = {
 
 /**
  * Client-side validation for the fields the API rejects outright, so a save
- * round trip is not spent on an obviously incomplete form. Returns the message
- * to show, or null when the form can be submitted.
+ * round trip is not spent on an obviously incomplete form. Each rule mirrors the
+ * matching `Validate()` in `pkg/types/alertmanagertypes`. Returns the message to
+ * show, or null when the form can be submitted.
  */
 export function validateChannel(
 	kind: ChannelKind,

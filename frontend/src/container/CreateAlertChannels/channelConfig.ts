@@ -14,13 +14,16 @@ import {
 	AlertmanagertypesTestableNotificationChannelDTO,
 	AlertmanagertypesUpdatableNotificationChannelDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { isEmpty, isNil, omitBy, pick } from 'lodash-es';
+import { pick } from 'lodash-es';
+import { omitBlank } from 'utils/omitBlank';
 
 import { ChannelFormValues, ChannelKind, ChannelSpecFormValues } from './types';
 
 /**
  * The fields each kind sends. `satisfies` ties every entry to that kind's
  * generated spec, so a key the API does not model fails to compile.
+ * An untouched field is dropped rather than sent empty, because the API
+ * applies its own default only for an absent key.
  */
 const SPEC_FIELDS = {
 	[ChannelKind.slack]: [
@@ -120,30 +123,15 @@ const SPEC_FIELDS = {
 	] as const satisfies readonly (keyof AlertmanagertypesChannelIncidentIOConfigDTO)[],
 } satisfies Record<ChannelKind, readonly (keyof ChannelSpecFormValues)[]>;
 
-/**
- * The API rejects a key it does not model and applies its own default for an
- * absent one, so an untouched field is dropped rather than sent empty. `false`
- * and `0` are values a user chose, so only blanks go.
- */
-function omitBlank(spec: Record<string, unknown>): Record<string, unknown> {
-	return omitBy(
-		spec,
-		(value) =>
-			isNil(value) ||
-			value === '' ||
-			((Array.isArray(value) || typeof value === 'object') && isEmpty(value)),
-	);
-}
-
 export function toChannelConfig(
 	kind: ChannelKind,
 	values: ChannelFormValues,
 ): AlertmanagertypesChannelConfigDTO {
 	const spec = omitBlank(pick(values, SPEC_FIELDS[kind]));
 
-	// Each variant narrows `kind` to its own single-member enum, which a value
-	// typed as the shared ChannelKind cannot satisfy. The string values are the
-	// same, so the union is asserted once here rather than per kind.
+	// The generated config type is a union whose every member fixes `kind` to a
+	// single literal, so a plain ChannelKind never matches one. Asserted once
+	// here instead of ten times.
 	return { kind, spec } as unknown as AlertmanagertypesChannelConfigDTO;
 }
 
