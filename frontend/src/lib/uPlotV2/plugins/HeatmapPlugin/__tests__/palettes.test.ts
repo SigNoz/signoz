@@ -1,4 +1,4 @@
-import { DEFAULT_HEATMAP_PALETTE, getPaletteStops } from '../palettes';
+import { getPaletteStops } from '../palettes';
 import { HeatmapColorPalette } from '../types';
 
 const ALL_PALETTES = Object.values(HeatmapColorPalette);
@@ -53,14 +53,6 @@ describe('getPaletteStops', () => {
 		const second = getPaletteStops(HeatmapColorPalette.Lava, false);
 
 		expect(first).toStrictEqual(second);
-	});
-
-	it('falls back to the default ramp for a palette this build does not define', () => {
-		const unknown = 'nope' as HeatmapColorPalette;
-
-		expect(getPaletteStops(unknown, true)).toStrictEqual(
-			getPaletteStops(DEFAULT_HEATMAP_PALETTE, true),
-		);
 	});
 
 	it('offers a neutral ramp for panels that already spend colour elsewhere', () => {

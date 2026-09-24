@@ -162,8 +162,7 @@ export function getPaletteStops(
 	palette: HeatmapColorPalette,
 	isDarkMode: boolean,
 ): string[] {
-	// The name comes off a saved panel spec, so it can be one this build dropped.
-	const definition = PALETTES[palette] ?? PALETTES[DEFAULT_HEATMAP_PALETTE];
+	const definition = PALETTES[palette];
 	return definition.darkFirst === isDarkMode
 		? definition.stops
 		: [...definition.stops].reverse();
