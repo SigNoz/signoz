@@ -110,7 +110,7 @@ test.describe('Alerts page shell', () => {
 
 		await expect(page.getByText(alertChannel.name)).toBeVisible();
 		await expect(
-			page.getByRole('button', { name: /new alert channel/i }),
+			page.getByRole('button', { name: /new channel/i }),
 		).toBeVisible();
 	});
 
