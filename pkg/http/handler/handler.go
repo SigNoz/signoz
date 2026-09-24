@@ -62,10 +62,6 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 	opCtx.SetDescription(handler.openAPIDef.Description)
 	opCtx.SetIsDeprecated(handler.openAPIDef.Deprecated)
 
-	if exposer, ok := opCtx.(openapi3.OperationExposer); ok {
-		exposer.Operation().WithMapOfAnythingItem(openAPIStabilityKey, handler.openAPIDef.Stability.StringValue())
-	}
-
 	// Add security schemes
 	for _, securityScheme := range handler.openAPIDef.SecuritySchemes {
 		opCtx.AddSecurity(securityScheme.Name, securityScheme.Scopes...)

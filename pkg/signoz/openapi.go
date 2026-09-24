@@ -174,6 +174,7 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 	}
 
 	attachDiscriminators(openapi.reflector.Spec)
+	openapi.collector.AttachStabilities(openapi.reflector.Spec)
 
 	// The library's MarshalYAML does a JSON round-trip that converts all numbers
 	// to float64, causing large integers (e.g. epoch millisecond timestamps) to
