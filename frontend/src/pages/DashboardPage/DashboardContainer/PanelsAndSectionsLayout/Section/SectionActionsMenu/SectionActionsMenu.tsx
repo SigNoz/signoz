@@ -5,8 +5,6 @@ import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
 import type { MenuItem } from 'components/DropdownMenu/DropdownMenuSimple';
 
 import MenuActionItem from '../../../components/MenuActionItem/MenuActionItem';
-import menuStyles from '../../../components/MenuActionItem/MenuActionItem.module.scss';
-import styles from './SectionActionsMenu.module.scss';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 interface SectionActionsMenuProps {
@@ -97,14 +95,13 @@ function SectionActionsMenu({
 	]);
 
 	return (
-		<DropdownMenuSimple menu={{ items }} className={menuStyles.menuContent}>
+		<DropdownMenuSimple menu={{ items }}>
 			<Button
 				type="button"
 				variant="ghost"
 				color="secondary"
 				size="sm"
 				icon
-				className={styles.trigger}
 				aria-label="Section actions"
 				testId={`dashboard-section-actions-${sectionId}`}
 			>

@@ -65,7 +65,7 @@ function InsertVariableMenu({
 
 	return (
 		<DropdownMenuSimple
-			className={styles.variableMenu}
+			contentMaxWidth={320}
 			disabled={disabled}
 			disabledTooltip={READ_ONLY_TOOLTIP}
 			menu={{
@@ -83,7 +83,6 @@ function InsertVariableMenu({
 				size="sm"
 				prefix={<DollarSign size={14} className={styles.insertVariableIcon} />}
 				suffix={<ChevronDown size={14} />}
-				className={styles.insertVariable}
 				testId="markdown-insert-variable"
 			>
 				Insert variable

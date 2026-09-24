@@ -1291,7 +1291,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									nativeButton={false}
 									side="top"
 									align="start"
-									className="nav-dropdown-overlay help-support-dropdown"
 									onOpenChange={handleDropdownOpenChange}
 								>
 									<div className="nav-item">
@@ -1310,7 +1309,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									nativeButton={false}
 									side="top"
 									align="start"
-									className="nav-dropdown-overlay settings-dropdown"
 									onOpenChange={handleDropdownOpenChange}
 								>
 									<div className={cx('nav-item', isSettingsPage && 'active')}>

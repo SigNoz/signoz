@@ -7,8 +7,6 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import type { PanelActionsConfig } from '../Panel';
 import { usePanelActionItems } from './usePanelActionItems';
-import menuStyles from '../../../components/MenuActionItem/MenuActionItem.module.scss';
-import styles from './PanelActionsMenu.module.scss';
 
 interface PanelActionsMenuProps {
 	panelId: string;
@@ -44,11 +42,7 @@ function PanelActionsMenu({
 
 	return (
 		<>
-			<DropdownMenuSimple
-				menu={{ items }}
-				align="end"
-				className={menuStyles.menuContent}
-			>
+			<DropdownMenuSimple menu={{ items }} align="end">
 				<span
 					// Stop pointer/mouse down from reaching the RGL drag handle this
 					// button lives inside, so opening the menu never starts a panel drag.
@@ -62,7 +56,6 @@ function PanelActionsMenu({
 						color="secondary"
 						size="sm"
 						icon
-						className={styles.trigger}
 						aria-label="Panel actions"
 						testId={`panel-actions-${panelId}`}
 						onClick={(e): void => e.stopPropagation()}

@@ -175,7 +175,7 @@ function mapItem(item: MenuItem, index: number): DropdownItemType {
 interface DropdownMenuSimpleProps {
 	menu: MenuProps;
 	children: ReactNode;
-	className?: string;
+	contentMaxWidth?: number | string;
 	align?: Align;
 	side?: Side;
 	testId?: string;
@@ -187,7 +187,7 @@ interface DropdownMenuSimpleProps {
 export function DropdownMenuSimple({
 	menu,
 	children,
-	className,
+	contentMaxWidth,
 	align = 'end',
 	side = 'bottom',
 	testId,
@@ -204,7 +204,7 @@ export function DropdownMenuSimple({
 			nativeButton={nativeButton}
 			align={align}
 			side={side}
-			className={className}
+			contentMaxWidth={contentMaxWidth}
 			testId={testId}
 			loading={Boolean(loading)}
 			disabled={disabled}

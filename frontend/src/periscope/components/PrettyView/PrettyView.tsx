@@ -233,11 +233,7 @@ function PrettyView({
 			return (
 				<span className="pretty-view__value-row">
 					<span>{content}</span>
-					<Dropdown
-						menu={{ items: menuItems }}
-						align="start"
-						className="pretty-view-actions-dropdown"
-					>
+					<Dropdown menu={{ items: menuItems }} align="start">
 						<span
 							className="pretty-view__actions"
 							onClick={(e): void => {

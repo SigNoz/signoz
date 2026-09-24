@@ -37,7 +37,7 @@ function TimePreference({
 	);
 
 	return (
-		<DropdownMenuSimple menu={menu} className="time-selection-menu">
+		<DropdownMenuSimple menu={menu}>
 			<Button className="time-selection-target">
 				<div className="button-selected-text">
 					<Globe size={14} />

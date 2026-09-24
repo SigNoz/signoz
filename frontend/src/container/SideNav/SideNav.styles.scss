@@ -588,46 +588,6 @@
 		display: none;
 	}
 
-	.sidenav-new-tag {
-		border-radius: 12px;
-		background: var(--primary-background);
-
-		color: var(--primary-foreground);
-		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings:
-			'case' on,
-			'cpsp' on,
-			'dlig' on,
-			'salt' on;
-		font-family: Inter;
-		font-size: 9px;
-		font-style: normal;
-		font-weight: 300;
-		line-height: 12px; /* 140% */
-		letter-spacing: 0.3px;
-		text-transform: uppercase;
-	}
-
-	.sidenav-beta-tag {
-		color: var(--l1-foreground);
-		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings:
-			'case' on,
-			'cpsp' on,
-			'dlig' on,
-			'salt' on;
-		font-family: Inter;
-		font-size: 9px;
-		font-style: normal;
-		font-weight: 300;
-		line-height: 12px; /* 140% */
-		letter-spacing: 0.3px;
-		text-transform: uppercase;
-
-		border-radius: 12px;
-		background: var(--l3-background);
-	}
-
 	.sidenav-early-access-tag {
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
 		font-feature-settings:
@@ -1066,79 +1026,35 @@
 	}
 }
 
-.nav-dropdown-overlay {
-	.ant-dropdown-menu {
-		margin-left: 8px !important;
-		padding: 0px !important;
-		width: 360px !important;
-		border-radius: 3px !important;
+.user-settings-dropdown-logged-in-section {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 
-		.ant-dropdown-menu-item {
-			.ant-dropdown-menu-title-content {
-				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 300;
-				line-height: normal;
-				letter-spacing: 0.14px;
-			}
+	.user-settings-dropdown-label-text {
+		color: var(--l3-foreground);
+		font-family: Inter;
+		font-size: var(--uppercase-small-500-font-size);
+		font-weight: var(--uppercase-small-500-font-weight);
+		font-style: normal;
+		line-height: 18px;
+		letter-spacing: 0.88px;
+		text-transform: uppercase;
+	}
 
-			&:hover:not(.ant-dropdown-menu-item-disabled) {
-				.ant-dropdown-menu-title-content {
-					color: var(--l1-foreground);
-				}
-			}
-		}
+	.user-settings-dropdown-label-email {
+		color: var(--l1-foreground);
+		font-family: Inter;
+		font-size: var(--font-size-xs);
+		font-style: normal;
+		line-height: normal;
+		letter-spacing: 0.14px;
 	}
 }
 
-.settings-dropdown {
-	.user-settings-dropdown-logged-in-section {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-
-		.user-settings-dropdown-label-text {
-			color: var(--l3-foreground);
-			font-family: Inter;
-			font-size: var(--uppercase-small-500-font-size);
-			font-weight: var(--uppercase-small-500-font-weight);
-			font-style: normal;
-			line-height: 18px;
-			letter-spacing: 0.88px;
-			text-transform: uppercase;
-		}
-
-		.user-settings-dropdown-label-email {
-			color: var(--l1-foreground);
-			font-family: Inter;
-			font-size: var(--font-size-xs);
-			font-style: normal;
-			line-height: normal;
-			letter-spacing: 0.14px;
-		}
-	}
-
-	.ant-dropdown-menu-item-divider {
-		background-color: var(--secondary) !important;
-	}
-
-	.ant-dropdown-menu-item-disabled {
-		opacity: 0.7;
-	}
-
-	.ant-dropdown-menu {
-		width: 100% !important;
-	}
-}
-
-.settings-dropdown,
-.help-support-dropdown {
-	.user-settings-dropdown-logout-section {
-		color: var(--danger-background);
-		pointer-events: auto;
-	}
+.user-settings-dropdown-logout-section {
+	color: var(--danger-background);
+	pointer-events: auto;
 }
 
 .secondary-nav-items {
@@ -1311,10 +1227,6 @@
 		font-weight: 400;
 		line-height: 20px;
 	}
-}
-
-.help-support-dropdown li.ant-dropdown-menu-item-divider {
-	background-color: var(--secondary) !important;
 }
 
 .version-tooltip-overlay {

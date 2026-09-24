@@ -225,7 +225,6 @@ export const QueryV2 = forwardRef(function QueryV2(
 
 							{isMultiQueryAllowed && (
 								<DropdownMenuSimple
-									className="query-actions-dropdown"
 									menu={{
 										items: [
 											{

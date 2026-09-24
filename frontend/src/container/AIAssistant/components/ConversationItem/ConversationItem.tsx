@@ -204,17 +204,12 @@ export default function ConversationItem({
 					// own clicks don't bubble, but the trigger button does.
 					onClick={(e): void => e.stopPropagation()}
 				>
-					<DropdownMenuSimple
-						menu={{ items: menuItems }}
-						align="end"
-						className={styles.menu}
-					>
+					<DropdownMenuSimple menu={{ items: menuItems }} align="end">
 						<Button
 							variant="link"
 							size="sm"
 							icon
 							color="secondary"
-							className={styles.btn}
 							aria-label="Conversation actions"
 						>
 							<EllipsisVertical size={12} />

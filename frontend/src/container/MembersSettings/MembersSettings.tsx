@@ -177,15 +177,11 @@ function MembersSettings(): JSX.Element {
 				</div>
 
 				<div className="members-settings__controls">
-					<DropdownMenuSimple
-						menu={{ items: filterMenuItems }}
-						className="members-filter-dropdown"
-					>
+					<DropdownMenuSimple menu={{ items: filterMenuItems }}>
 						<Button
 							size="md"
 							variant="solid"
 							color="secondary"
-							className="members-filter-trigger"
 							suffix={
 								<ChevronDown size={12} className="members-filter-trigger__chevron" />
 							}

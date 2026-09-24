@@ -44,7 +44,6 @@ import { useAddSection } from '../../PanelsAndSectionsLayout/Section/hooks/useAd
 import SectionTitleModal from '../../PanelsAndSectionsLayout/Section/SectionTitleModal';
 import JsonEditorDrawer from '../JsonEditorDrawer/JsonEditorDrawer';
 import SettingsDrawer from '../SettingsDrawer';
-import menuStyles from '../../components/MenuActionItem/MenuActionItem.module.scss';
 import styles from './DashboardActions.module.scss';
 import { useDeleteDashboardAction } from './useDeleteDashboardAction';
 import { useDashboardStore } from '../../store/useDashboardStore';
@@ -291,15 +290,11 @@ function DashboardActions({
 
 	return (
 		<div className={styles.dashboardActionsContainer}>
-			<DropdownMenuSimple
-				menu={{ items: menuItems }}
-				className={menuStyles.menuContent}
-			>
+			<DropdownMenuSimple menu={{ items: menuItems }}>
 				<Button
 					variant="solid"
 					color="secondary"
 					size="md"
-					className={styles.toolbarButton}
 					prefix={<Grid3X3 size="md" />}
 					testId="options"
 				>
@@ -311,7 +306,6 @@ function DashboardActions({
 					disabledTooltip={undefined}
 					variant="solid"
 					color="secondary"
-					className={styles.toolbarButton}
 					prefix={<Configure size="md" />}
 					testId="show-drawer"
 					disabled={!isEditable}
@@ -335,7 +329,6 @@ function DashboardActions({
 			<Button
 				variant="solid"
 				color="secondary"
-				className={styles.toolbarButton}
 				prefix={<Braces size="md" />}
 				testId="edit-json"
 				onClick={handleOpenJsonEditor}

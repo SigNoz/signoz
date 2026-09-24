@@ -233,15 +233,11 @@ function ServiceAccountsSettings(): JSX.Element {
 				<div className="sa-settings__controls">
 					<AuthZTooltip checks={[SAListPermission]}>
 						<span>
-							<DropdownMenuSimple
-								menu={{ items: filterMenuItems }}
-								className="sa-settings-filter-dropdown"
-							>
+							<DropdownMenuSimple menu={{ items: filterMenuItems }}>
 								<Button
 									size="md"
 									variant="solid"
 									color="secondary"
-									className="sa-settings-filter-trigger"
 									loading={isAuthZLoading}
 									disabled={!canListServiceAccounts}
 									disabledTooltip={undefined}

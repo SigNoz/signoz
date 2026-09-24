@@ -99,11 +99,7 @@ function LogDetailsHeader({
 					</Button>
 				)}
 
-				<Dropdown
-					menu={{ items: menuItems }}
-					align="end"
-					className={styles.dropdownContent}
-				>
+				<Dropdown menu={{ items: menuItems }} align="end">
 					<Button
 						size="md"
 						variant="link"

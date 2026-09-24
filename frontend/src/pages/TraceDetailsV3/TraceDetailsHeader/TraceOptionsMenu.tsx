@@ -6,8 +6,6 @@ import { ExportFormat } from 'lib/exportData/types';
 import { useTraceStore } from '../stores/traceStore';
 import { useDownloadTrace } from './useDownloadTrace';
 
-import styles from './TraceOptionsMenu.module.scss';
-
 interface TraceOptionsMenuProps {
 	showTraceDetails: boolean;
 	onToggleTraceDetails: () => void;
@@ -122,13 +120,7 @@ function TraceOptionsMenu({
 	}
 
 	return (
-		<Dropdown
-			items={items}
-			nativeButton
-			align="start"
-			side="bottom"
-			className={styles.traceOptionsDropdown}
-		>
+		<Dropdown items={items} nativeButton align="start" side="bottom">
 			<Button
 				variant="ghost"
 				size="sm"
