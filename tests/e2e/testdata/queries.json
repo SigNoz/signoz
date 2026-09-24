@@ -1,0 +1,12 @@
+{
+    "logs": {
+        "query": ""
+    },
+    "metrics": {
+        "metricName": "signoz_calls_total",
+        "query": ""
+    },
+    "traces": {
+        "query": ""
+    }
+}
