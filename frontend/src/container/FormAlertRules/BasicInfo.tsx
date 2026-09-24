@@ -7,8 +7,7 @@ import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import ROUTES from 'constants/routes';
 import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
-import useComponentPermission from 'hooks/useComponentPermission';
-import { useAppContext } from 'providers/App/App';
+import { useNotificationChannelCollectionPermissions } from 'hooks/notificationChannels/useNotificationChannelCollectionPermissions';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef, Labels } from 'types/api/alerts/def';
 import APIError from 'types/api/error';
@@ -52,11 +51,8 @@ function BasicInfo({
 		refetch,
 	} = useChannelOptions();
 
-	const { user } = useAppContext();
-	const [addNewChannelPermission] = useComponentPermission(
-		['add_new_channel'],
-		user.role,
-	);
+	const { canCreate: addNewChannelPermission } =
+		useNotificationChannelCollectionPermissions();
 
 	const [shouldBroadCastToAllChannels, setShouldBroadCastToAllChannels] =
 		useState(false);
