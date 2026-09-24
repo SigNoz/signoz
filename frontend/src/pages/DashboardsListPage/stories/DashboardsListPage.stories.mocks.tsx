@@ -6,6 +6,7 @@
 import { rest } from 'msw';
 import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
+import { screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	choiceControl,
@@ -342,3 +343,30 @@ export const dashboardsListMocks = defineStoryMocks({
 		});
 	},
 });
+
+/** Opens the actions menu of the row at `index`. */
+export const openRowActions = async (
+	canvasElement: HTMLElement,
+	index: number,
+): Promise<void> => {
+	// The icon-only trigger carries no accessible name.
+	const triggers = await within(canvasElement).findAllByTestId(
+		'dashboard-action-icon',
+		{},
+		{ timeout: 10000 },
+	);
+
+	await userEvent.click(triggers[index]);
+	await screen.findByText('Rename');
+};
+
+/** Picks a row action, retrying while its permission check still disables it. */
+export const pickRowAction = async (label: string | RegExp): Promise<void> => {
+	await waitFor(
+		async () => {
+			await userEvent.click(screen.getByText(label));
+			await screen.findByRole('dialog', {}, { timeout: 500 });
+		},
+		{ timeout: 10000 },
+	);
+};

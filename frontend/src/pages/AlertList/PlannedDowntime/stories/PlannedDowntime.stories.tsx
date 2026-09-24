@@ -103,6 +103,18 @@ export const DeleteDowntimeConfirm: Story = {
 	},
 };
 
+/** The new-downtime form set to repeat weekly, which adds the days and duration. */
+export const NewDowntimeRecurring: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await NewDowntime.play?.({ canvasElement } as never);
+		await userEvent.click(
+			await screen.findByRole('combobox', { name: 'Repeats every' }),
+		);
+		await userEvent.click(await screen.findByText('Weekly'));
+		await screen.findByText('Duration');
+	},
+};
+
 /** A client-side search with no matching downtime schedule. */
 export const SearchNoResults: Story = {
 	play: async ({ canvasElement }): Promise<void> => {

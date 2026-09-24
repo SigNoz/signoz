@@ -5,6 +5,7 @@
 
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
+import { userEvent, within } from 'storybook/test';
 import { RoleType } from 'types/roles';
 
 import { choiceControl } from '@/storybook/controls/controls';
@@ -84,3 +85,18 @@ export const roleEditorMocks = defineStoryMocks({
 	],
 	config: (values) => ({ route: routeFor(values.mode, values.editor) }),
 });
+
+/** Opens the Logs card and returns it. */
+export const openLogsCard = async (
+	canvasElement: HTMLElement,
+): Promise<HTMLElement> => {
+	const header = await within(canvasElement).findByRole(
+		'button',
+		{ name: /^Logs:/ },
+		{ timeout: 15_000 },
+	);
+
+	await userEvent.click(header);
+
+	return header.parentElement as HTMLElement;
+};

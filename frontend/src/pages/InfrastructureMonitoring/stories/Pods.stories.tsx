@@ -41,6 +41,21 @@ export const PodDetailsEvents: StoryObj<PodsArgs> = {
 	args: { drawer: true, drawerTab: VIEWS.EVENTS },
 };
 
+/** The selected pod's details drawer, switched to its logs tab. */
+export const DetailsDrawerLogsTab: StoryObj<PodsArgs> = {
+	args: { drawer: true },
+	play: async () => {
+		const drawer = within(
+			await screen.findByRole('dialog', {}, { timeout: 10000 }),
+		);
+
+		await userEvent.click(
+			await drawer.findByText('Logs', {}, { timeout: 10000 }),
+		);
+		await drawer.findByRole('button', { name: /logs explorer/i });
+	},
+};
+
 /**
  * Every tooltip the pod list carries, held open: Collapse Filters beside the
  * quick filters, Options above the table, the Pod Name, Status, Age and Restarts
