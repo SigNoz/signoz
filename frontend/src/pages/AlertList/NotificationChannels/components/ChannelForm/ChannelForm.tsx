@@ -3,6 +3,7 @@ import { Callout } from '@signozhq/ui/callout';
 import Spinner from 'components/Spinner';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
+import { NotificationChannelCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 
 import { useChannelFormState } from './useChannelFormState';
 import styles from './ChannelForm.module.scss';
@@ -32,11 +33,19 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 	// A reader with `read` but no `update` still gets the screen, without saving.
 	// While the check is in flight the answer is unknown, so the form stays
 	// editable rather than flashing read-only; the API is the real gate.
-	const { canEdit, isLoading: isPermissionLoading } =
-		useNotificationChannelPermissions(channelId ?? '', {
-			enabled: !!channelId,
-		});
+	const {
+		canEdit,
+		isLoading: isPermissionLoading,
+		editChecks,
+	} = useNotificationChannelPermissions(channelId ?? '', {
+		enabled: !!channelId,
+	});
 	const readOnly = !!channelId && !isPermissionLoading && !canEdit;
+	// Saving an existing channel needs read and update on it; creating one needs
+	// create on the collection, which is also what a test send is gated on.
+	const saveChecks = channelId
+		? editChecks
+		: [NotificationChannelCreatePermission];
 
 	// A channel written through the v1 API can carry a configuration this API
 	// does not model, several notifier configs on one channel for instance.
@@ -81,6 +90,8 @@ function ChannelForm({ channelId, onDone }: ChannelFormProps): JSX.Element {
 			initialValue={{ type, ...values }}
 			editing={!!channelId}
 			readOnly={readOnly}
+			saveChecks={saveChecks}
+			testChecks={[NotificationChannelCreatePermission]}
 		/>
 	);
 }
