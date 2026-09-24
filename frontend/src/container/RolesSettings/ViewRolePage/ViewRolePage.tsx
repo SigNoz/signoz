@@ -237,6 +237,8 @@ function ViewRolePage(): JSX.Element {
 							onClick={handleCancel}
 							testId="cancel-button"
 							className={styles.backButton}
+							icon
+							aria-label="Back"
 						>
 							<ArrowLeft size={16} />
 						</Button>
@@ -282,6 +284,8 @@ function ViewRolePage(): JSX.Element {
 						onClick={handleCancel}
 						testId="cancel-button"
 						className={styles.backButton}
+						icon
+						aria-label="Back"
 					>
 						<ArrowLeft size={16} />
 					</Button>

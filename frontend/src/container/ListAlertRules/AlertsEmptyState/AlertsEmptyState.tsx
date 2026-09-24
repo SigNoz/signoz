@@ -94,11 +94,9 @@ export function AlertsEmptyState({
 									disabledTooltip="You need permission to create alert rules"
 									loading={loading}
 									testId="add-alert"
+									prefix={<Plus size="md" />}
 								>
-									<span className={styles.buttonContent}>
-										<Plus size="md" />
-										New Alert Rule
-									</span>
+									New Alert Rule
 								</Button>
 								{onRefresh && (
 									<Button

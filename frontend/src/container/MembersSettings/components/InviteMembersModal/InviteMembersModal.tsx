@@ -53,8 +53,8 @@ function InviteMembersModal({
 							variant="solid"
 							color="secondary"
 							onClick={onClose}
+							prefix={<X size={12} />}
 						>
-							<X size={12} />
 							Cancel
 						</Button>
 

@@ -54,8 +54,8 @@ function AddSectionControl({
 				className={styles.addButton}
 				onClick={handleClick}
 				testId="add-section"
+				prefix={<Plus size={14} />}
 			>
-				<Plus size={14} />
 				Add section
 			</Button>
 			<FirstSectionMigrationModal

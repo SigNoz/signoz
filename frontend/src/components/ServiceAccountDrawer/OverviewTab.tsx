@@ -128,6 +128,8 @@ function OverviewTab({
 							onClick={handleCopyId}
 							className="sa-drawer__copy-btn"
 							testId="copy-id-btn"
+							icon
+							aria-label={hasCopiedId ? 'Copied' : 'Copy ID'}
 						>
 							{hasCopiedId ? <Check size={14} /> : <Copy size={14} />}
 						</Button>

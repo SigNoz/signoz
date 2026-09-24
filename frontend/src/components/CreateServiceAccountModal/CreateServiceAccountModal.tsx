@@ -140,8 +140,8 @@ function CreateServiceAccountModal(): JSX.Element {
 					color="secondary"
 					onClick={handleClose}
 					testId="create-sa-cancel-btn"
+					prefix={<X size={12} />}
 				>
-					<X size={12} />
 					Cancel
 				</Button>
 

@@ -125,6 +125,7 @@ function InviteMembers({
 										onClick={(): void => removeRow(row.id)}
 										aria-label="Remove row"
 										testId={`invite-remove-${row.id}`}
+										icon
 									>
 										<Trash2 size={12} />
 									</Button>

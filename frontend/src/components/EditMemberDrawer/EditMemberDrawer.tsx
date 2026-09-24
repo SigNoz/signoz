@@ -622,8 +622,8 @@ function EditMemberDrawer({
 							disabled={isRootUser || isSelf}
 							variant="link"
 							color="danger"
+							prefix={<Trash2 size={12} />}
 						>
-							<Trash2 size={12} />
 							{isInvited ? 'Revoke Invite' : 'Delete Member'}
 						</Button>
 
@@ -636,8 +636,8 @@ function EditMemberDrawer({
 							loading={isGeneratingLink || isLoadingTokenStatus}
 							variant="link"
 							color="warning"
+							prefix={<RefreshCw size={12} />}
 						>
-							<RefreshCw size={12} />
 							{isGeneratingLink
 								? 'Generating...'
 								: isInvited
@@ -657,8 +657,8 @@ function EditMemberDrawer({
 							variant="outlined"
 							color="secondary"
 							onClick={handleClose}
+							prefix={<X size={14} />}
 						>
-							<X size={14} />
 							Cancel
 						</Button>
 

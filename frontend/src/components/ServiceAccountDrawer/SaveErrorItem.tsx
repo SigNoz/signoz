@@ -54,6 +54,7 @@ function SaveErrorItem({
 								setIsRetrying(false);
 							}
 						}}
+						icon
 					>
 						<RotateCw size={12} color={Color.BG_CHERRY_400} />
 					</Button>

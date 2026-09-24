@@ -481,6 +481,7 @@ function CopyButton({ text, label }: CopyButtonProps): JSX.Element {
 				color="secondary"
 				onClick={handleCopy}
 				aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
+				icon
 			>
 				{copied ? <Check size={12} /> : <Copy size={12} />}
 			</Button>

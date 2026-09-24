@@ -211,6 +211,7 @@ function RoleMappingSection({
 														onClick={(): void => remove(field.name)}
 														aria-label="Remove mapping"
 														testId="role-mapping-remove"
+														icon
 													>
 														<Trash2 size={12} />
 													</Button>

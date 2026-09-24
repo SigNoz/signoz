@@ -394,8 +394,8 @@ function ServiceAccountDrawer({
 							variant="outlined"
 							color="secondary"
 							onClick={handleClose}
+							prefix={<X size={14} />}
 						>
-							<X size={14} />
 							Cancel
 						</Button>
 						<AuthZButton

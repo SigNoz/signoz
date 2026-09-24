@@ -244,8 +244,9 @@ function Footer(): JSX.Element {
 				onClick={handleDiscard}
 				disabled={disableButtons}
 				testId="discard-alert-rule-button"
+				prefix={<X size={14} />}
 			>
-				<X size={14} /> Discard
+				Discard
 			</Button>
 			<div className="button-group">
 				{testAlertButton}

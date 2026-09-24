@@ -29,6 +29,8 @@ function KeyCreatedPhase({
 						color="secondary"
 						onClick={onCopy}
 						className="add-key-modal__copy-btn"
+						icon
+						aria-label={hasCopied ? 'Copied' : 'Copy key'}
 					>
 						{hasCopied ? <Check size={12} /> : <Copy size={12} />}
 					</Button>

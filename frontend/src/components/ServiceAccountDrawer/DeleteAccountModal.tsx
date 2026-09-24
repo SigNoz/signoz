@@ -80,8 +80,13 @@ function DeleteAccountModal(): JSX.Element {
 
 	const footer = (
 		<div className="sa-delete-dialog__footer">
-			<Button size="md" variant="solid" color="secondary" onClick={handleCancel}>
-				<X size={12} />
+			<Button
+				size="md"
+				variant="solid"
+				color="secondary"
+				onClick={handleCancel}
+				prefix={<X size={12} />}
+			>
 				Cancel
 			</Button>
 			<AuthZButton

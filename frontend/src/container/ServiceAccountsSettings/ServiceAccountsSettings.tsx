@@ -245,12 +245,14 @@ function ServiceAccountsSettings(): JSX.Element {
 									loading={isAuthZLoading}
 									disabled={!canListServiceAccounts}
 									disabledTooltip={undefined}
+									suffix={
+										<ChevronDown
+											size={12}
+											className="sa-settings-filter-trigger__chevron"
+										/>
+									}
 								>
 									<span>{filterLabel}</span>
-									<ChevronDown
-										size={12}
-										className="sa-settings-filter-trigger__chevron"
-									/>
 								</Button>
 							</DropdownMenuSimple>
 						</span>

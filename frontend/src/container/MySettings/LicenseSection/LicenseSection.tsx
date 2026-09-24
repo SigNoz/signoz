@@ -41,6 +41,7 @@ function LicenseSectionContent(): JSX.Element | null {
 							aria-label="Copy license key"
 							testId="license-key-copy-btn"
 							onClick={(): void => handleCopyKey(licenseKey)}
+							icon
 						>
 							<Copy size={14} />
 						</Button>

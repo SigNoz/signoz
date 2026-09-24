@@ -1490,8 +1490,8 @@ function MultiIngestionSettings(): JSX.Element {
 																				size="sm"
 																				testId={`set-alert-btn-${signalName}`}
 																				className="set-alert-btn"
+																				prefix={<BellPlus size={12} />}
 																			>
-																				<BellPlus size={12} />
 																				Set alert
 																			</Button>
 																		)}

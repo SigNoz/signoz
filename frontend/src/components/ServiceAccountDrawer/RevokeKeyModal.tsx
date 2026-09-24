@@ -41,8 +41,13 @@ export function RevokeKeyFooter({
 }: RevokeKeyFooterProps): JSX.Element {
 	return (
 		<>
-			<Button size="md" variant="solid" color="secondary" onClick={onCancel}>
-				<X size={12} />
+			<Button
+				size="md"
+				variant="solid"
+				color="secondary"
+				onClick={onCancel}
+				prefix={<X size={12} />}
+			>
 				Cancel
 			</Button>
 			<AuthZButton

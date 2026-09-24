@@ -59,8 +59,8 @@ function TelemetrySelectorWizard({
 			variant="solid"
 			size="sm"
 			testId={`telemetry-wizard-trigger-${testId}`}
+			prefix={<Wand size={14} />}
 		>
-			<Wand size={14} />
 			Wizard
 		</Button>
 	);

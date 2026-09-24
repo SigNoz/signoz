@@ -65,6 +65,8 @@ function ReadOnlyJsonViewer({
 						className={styles.copyButton}
 						onClick={handleCopy}
 						testId="read-only-json-viewer-copy-button"
+						icon
+						aria-label={copied ? 'Copied' : 'Copy JSON'}
 					>
 						{copied ? (
 							<Check size={14} color={Color.BG_FOREST_400} />

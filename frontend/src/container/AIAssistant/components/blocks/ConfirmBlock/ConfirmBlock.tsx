@@ -88,8 +88,8 @@ export default function ConfirmBlock({
 					variant="solid"
 					size="sm"
 					onClick={(): void => handle('accepted')}
+					prefix={<Check size={12} />}
 				>
-					<Check size={12} />
 					{acceptLabel}
 				</Button>
 				<Button
@@ -97,8 +97,8 @@ export default function ConfirmBlock({
 					variant="outlined"
 					size="sm"
 					onClick={(): void => handle('rejected')}
+					prefix={<X size={12} />}
 				>
-					<X size={12} />
 					{rejectLabel}
 				</Button>
 			</div>

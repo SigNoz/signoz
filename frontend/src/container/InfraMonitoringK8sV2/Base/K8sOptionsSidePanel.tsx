@@ -145,11 +145,13 @@ function K8sOptionsSidePanel<TData>({
 						className={styles.fontSizeOption}
 						testId={`font-size-${option.value}`}
 						onClick={(): void => setFontSize(option.value)}
+						suffix={
+							fontSize === option.value ? (
+								<Check size={14} className={styles.checkIcon} />
+							) : undefined
+						}
 					>
 						{option.label}
-						{fontSize === option.value && (
-							<Check size={14} className={styles.checkIcon} />
-						)}
 					</Button>
 				))}
 			</div>

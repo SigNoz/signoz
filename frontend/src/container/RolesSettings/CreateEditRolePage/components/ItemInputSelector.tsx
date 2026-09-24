@@ -142,8 +142,8 @@ function ItemInputSelector({
 						disabled={!inputValue.trim()}
 						disabledTooltip="Enter a value first"
 						testId={`item-input-selector-add-btn-${testId}`}
+						prefix={<Plus size={14} />}
 					>
-						<Plus size={14} />
 						Add
 					</Button>
 				}

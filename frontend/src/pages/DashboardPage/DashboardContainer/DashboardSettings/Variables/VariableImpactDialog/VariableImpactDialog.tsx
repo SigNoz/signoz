@@ -76,8 +76,8 @@ function VariableImpactDialog({
 				color="secondary"
 				onClick={onClose}
 				testId="variable-impact-cancel"
+				prefix={<X size={12} />}
 			>
-				<X size={12} />
 				Cancel
 			</Button>
 			<Button
@@ -87,8 +87,8 @@ function VariableImpactDialog({
 				loading={isLoading}
 				onClick={(): void => onConfirm(resolvedUsages)}
 				testId="variable-impact-confirm"
+				prefix={<Check size={12} />}
 			>
-				<Check size={12} />
 				{confirmLabel}
 			</Button>
 		</div>

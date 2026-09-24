@@ -8,8 +8,8 @@ import {
 import { Tooltip } from '@signozhq/ui/tooltip';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import { useAppContext } from 'providers/App/App';
+import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
 import cx from 'classnames';
 
 import styles from '../tooltipContent.module.scss';
@@ -47,18 +47,6 @@ interface AuthZTooltipProps {
 	 * otherwise the tooltip will not have the correct z-index
 	 */
 	withPortal?: false;
-}
-
-function formatDeniedMessage(
-	denied: BrandedPermission[],
-	userId: string,
-	override?: string,
-): string {
-	if (override) {
-		return override;
-	}
-	const permissions = denied.map(formatPermission).join(', ');
-	return `user/${userId} is not authorized to perform ${permissions}`;
 }
 
 function AuthZTooltip({

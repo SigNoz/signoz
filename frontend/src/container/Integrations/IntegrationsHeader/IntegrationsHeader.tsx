@@ -152,9 +152,9 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 						variant="solid"
 						color="primary"
 						onClick={(): void => history.push(ROUTES.GET_STARTED_WITH_CLOUD)}
+						suffix={<ArrowRight size={14} />}
 					>
 						<span>View 150+ Data Sources</span>
-						<ArrowRight size={14} />
 					</Button>
 				)}
 			</div>

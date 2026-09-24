@@ -181,8 +181,13 @@ function EditKeyForm({
 					Revoke Key
 				</AuthZButton>
 				<div className="edit-key-modal__footer-right">
-					<Button size="md" variant="solid" color="secondary" onClick={onClose}>
-						<X size={12} />
+					<Button
+						size="md"
+						variant="solid"
+						color="secondary"
+						onClick={onClose}
+						prefix={<X size={12} />}
+					>
 						Cancel
 					</Button>
 					<AuthZButton

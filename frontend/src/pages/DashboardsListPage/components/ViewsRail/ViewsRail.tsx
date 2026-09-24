@@ -127,8 +127,8 @@ function ViewsRail({
 					className={styles.item}
 					onClick={(): void => onSelect(row.id)}
 					testId={`dashboards-view-${row.id}`}
+					prefix={<Icon size={16} className={styles.itemIcon} />}
 				>
-					<Icon size={16} className={styles.itemIcon} />
 					<Typography.Text className={styles.itemLabel}>{row.label}</Typography.Text>
 					{active && isModified && (
 						<div className={styles.dirtyDot} title="Unsaved changes" />

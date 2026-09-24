@@ -90,8 +90,8 @@ function SectionHeader({
 				className={styles.toggle}
 				onClick={onToggle}
 				testId={`dashboard-section-toggle-${sectionId}`}
+				prefix={open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
 			>
-				{open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
 				<Typography.Text className={styles.title}>{title}</Typography.Text>
 				{repeatVariable ? (
 					<Typography.Text className={styles.repeatBadge}>

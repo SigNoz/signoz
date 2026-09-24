@@ -178,6 +178,7 @@ export default function ConversationsList({
 							color="secondary"
 							onClick={onNewConversation}
 							aria-label="New conversation"
+							icon
 						>
 							<Plus size={12} />
 						</Button>

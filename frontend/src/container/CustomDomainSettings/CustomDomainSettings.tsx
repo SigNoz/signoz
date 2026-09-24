@@ -244,10 +244,10 @@ export default function CustomDomainSettings(): JSX.Element {
 								color="secondary"
 								testId="custom-domain-menu-trigger"
 								loading={isFetchingHosts}
+								prefix={<Link2 size={12} />}
+								suffix={<ChevronDown size={12} />}
 							>
-								<Link2 size={12} />
 								<span>{stripProtocol(activeHost?.url ?? '')}</span>
-								<ChevronDown size={12} />
 							</Button>
 						</Dropdown>
 						<span className="custom-domain-card-meta-timezone">

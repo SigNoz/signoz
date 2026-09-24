@@ -116,6 +116,8 @@ function CreateEditRolePageContent(): JSX.Element {
 							onClick={handleCancel}
 							testId="cancel-button"
 							className={styles.backButton}
+							icon
+							aria-label="Back"
 						>
 							<ArrowLeft size={16} />
 						</Button>
@@ -181,6 +183,8 @@ function CreateEditRolePageContent(): JSX.Element {
 						disabledTooltip="Wait for the save to finish"
 						testId="cancel-button"
 						className={styles.backButton}
+						icon
+						aria-label="Back"
 					>
 						<ArrowLeft size={16} />
 					</Button>

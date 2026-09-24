@@ -170,6 +170,8 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 							size="sm"
 							className={styles.copyButton}
 							onClick={handleCopy}
+							icon
+							aria-label={copied ? 'Copied' : 'Copy JSON'}
 						>
 							{copied ? (
 								<Check size={14} color={Color.BG_FOREST_400} />
