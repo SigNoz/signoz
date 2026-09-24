@@ -1,7 +1,8 @@
 import { type ChangeEvent, type ReactNode, useEffect, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { PopoverSimple } from '@signozhq/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
 import styles from './ViewsRail.module.scss';
@@ -13,6 +14,7 @@ interface Props {
 	onOpenChange: (open: boolean) => void;
 	onSubmit: (name: string) => void;
 	trigger: ReactNode;
+	tooltip: string;
 	title: string;
 	confirmLabel: string;
 	initialName?: string;
@@ -26,6 +28,7 @@ function ViewNamePopover({
 	onOpenChange,
 	onSubmit,
 	trigger,
+	tooltip,
 	title,
 	confirmLabel,
 	initialName = '',
@@ -50,57 +53,57 @@ function ViewNamePopover({
 	};
 
 	return (
-		<PopoverSimple
-			open={open}
-			onOpenChange={onOpenChange}
-			align="start"
-			trigger={trigger}
-		>
-			<div className={styles.savePopover}>
-				<div className={styles.saveTitle}>{title}</div>
-				<Typography.Text className={styles.saveLabel}>Name</Typography.Text>
-				<Input
-					value={name}
-					autoFocus
-					maxLength={VIEW_NAME_MAX_LENGTH}
-					placeholder="e.g. Prod alerts"
-					testId={`${testIdPrefix}-name`}
-					onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-						setName(e.target.value)
-					}
-					onKeyDown={(e): void => {
-						if (e.key === 'Enter') {
-							handleSave();
+		<Popover open={open} onOpenChange={onOpenChange}>
+			<Tooltip title={tooltip}>
+				<PopoverTrigger asChild>{trigger}</PopoverTrigger>
+			</Tooltip>
+			<PopoverContent align="start">
+				<div className={styles.savePopover}>
+					<div className={styles.saveTitle}>{title}</div>
+					<Typography.Text className={styles.saveLabel}>Name</Typography.Text>
+					<Input
+						value={name}
+						autoFocus
+						maxLength={VIEW_NAME_MAX_LENGTH}
+						placeholder="e.g. Prod alerts"
+						testId={`${testIdPrefix}-name`}
+						onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+							setName(e.target.value)
 						}
-					}}
-				/>
-				<div className={styles.saveActions}>
-					<Button
-						variant="ghost"
-						color="secondary"
-						size="sm"
-						onClick={(): void => onOpenChange(false)}
-					>
-						Cancel
-					</Button>
-					<Button
-						disabledTooltip={
-							trimmed.length === 0
-								? 'Enter a view name first'
-								: `Use at most ${VIEW_NAME_MAX_LENGTH} characters`
-						}
-						variant="solid"
-						color="primary"
-						size="sm"
-						disabled={!canSave}
-						testId={`${testIdPrefix}-confirm`}
-						onClick={handleSave}
-					>
-						{confirmLabel}
-					</Button>
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter') {
+								handleSave();
+							}
+						}}
+					/>
+					<div className={styles.saveActions}>
+						<Button
+							variant="ghost"
+							color="secondary"
+							size="sm"
+							onClick={(): void => onOpenChange(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							disabledTooltip={
+								trimmed.length === 0
+									? 'Enter a view name first'
+									: `Use at most ${VIEW_NAME_MAX_LENGTH} characters`
+							}
+							variant="solid"
+							color="primary"
+							size="sm"
+							disabled={!canSave}
+							testId={`${testIdPrefix}-confirm`}
+							onClick={handleSave}
+						>
+							{confirmLabel}
+						</Button>
+					</div>
 				</div>
-			</div>
-		</PopoverSimple>
+			</PopoverContent>
+		</Popover>
 	);
 }
 

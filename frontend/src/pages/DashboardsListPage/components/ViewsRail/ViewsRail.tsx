@@ -147,19 +147,18 @@ function ViewsRail({
 							confirmLabel="Rename"
 							initialName={row.label}
 							testIdPrefix="rename-view"
+							tooltip="Rename view"
 							trigger={
-								<Tooltip title="Rename view">
-									<Button
-										variant="ghost"
-										color="secondary"
-										size="sm"
-										icon
-										aria-label="Rename view"
-										onClick={(e): void => e.stopPropagation()}
-									>
-										<PenLine size={12} />
-									</Button>
-								</Tooltip>
+								<Button
+									variant="ghost"
+									color="secondary"
+									size="sm"
+									icon
+									aria-label="Rename view"
+									onClick={(e): void => e.stopPropagation()}
+								>
+									<PenLine size={12} />
+								</Button>
 							}
 						/>
 						<Tooltip title="Delete view">
@@ -204,19 +203,18 @@ function ViewsRail({
 							title="Save as view"
 							confirmLabel="Save view"
 							testIdPrefix="save-view"
+							tooltip="Save current filters as a view"
 							trigger={
-								<Tooltip title="Save current filters as a view">
-									<Button
-										aria-label="Save current filters as a view"
-										variant="ghost"
-										color="secondary"
-										size="sm"
-										icon
-										testId="dashboards-view-save-trigger"
-									>
-										<Plus size={14} />
-									</Button>
-								</Tooltip>
+								<Button
+									aria-label="Save current filters as a view"
+									variant="ghost"
+									color="secondary"
+									size="sm"
+									icon
+									testId="dashboards-view-save-trigger"
+								>
+									<Plus size={14} />
+								</Button>
 							}
 						/>
 					</div>
