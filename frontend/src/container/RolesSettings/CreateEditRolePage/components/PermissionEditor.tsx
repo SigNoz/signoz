@@ -160,7 +160,6 @@ function PermissionEditor({
 				<hr className={styles.permissionEditorDivider} />
 				<RadioGroup
 					color="primary"
-					className={styles.permissionEditorModeToggle}
 					value={mode}
 					onChange={handleModeChange}
 					testId="permission-editor-mode"

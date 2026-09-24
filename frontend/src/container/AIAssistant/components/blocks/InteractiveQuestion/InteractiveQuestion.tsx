@@ -85,7 +85,6 @@ export default function InteractiveQuestion({
 				<RadioGroup
 					color="primary"
 					textOverflow="wrap"
-					className={styles.options}
 					onChange={(value): void => {
 						setSelected([value]);
 						handleSubmit([value]);
@@ -110,7 +109,6 @@ export default function InteractiveQuestion({
 											: prev.filter((v) => v !== opt.value),
 									);
 								}}
-								className={styles.option}
 							>
 								{opt.label}
 							</Checkbox>
@@ -121,7 +119,6 @@ export default function InteractiveQuestion({
 						color="primary"
 						variant="solid"
 						size="sm"
-						className={styles.submit}
 						disabled={selected.length === 0}
 						onClick={(): void => handleSubmit(selected)}
 					>

@@ -470,7 +470,6 @@ export function PlannedDowntimeForm(
 					>
 						<RadioGroup
 							color="primary"
-							className="silence-alerts-radio-group"
 							items={[
 								{ value: 'all', label: 'All alert rules' },
 								{ value: 'specific', label: 'Specific alert rules' },

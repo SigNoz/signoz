@@ -25,7 +25,6 @@ function FlowSelector({ value, onChange }: FlowSelectorProps): JSX.Element {
 				textOverflow="wrap"
 				value={value}
 				onChange={(next): void => onChange(next as SetupFlow)}
-				className={styles.flowRadioGroup}
 				items={[
 					{
 						value: 'manual',

@@ -21,18 +21,19 @@ function SegmentedControl<T extends string>({
 	testId,
 }: SegmentedControlProps<T>): JSX.Element {
 	return (
-		<RadioGroup
-			color="primary"
-			className={styles.segmented}
-			value={value}
-			onChange={(next): void => onChange(next as T)}
-			testId={testId}
-			items={options.map((option) => ({
-				value: option.value,
-				label: option.label,
-				testId: testId ? `${testId}-${option.value}` : undefined,
-			}))}
-		/>
+		<div className={styles.segmented}>
+			<RadioGroup
+				color="primary"
+				value={value}
+				onChange={(next): void => onChange(next as T)}
+				testId={testId}
+				items={options.map((option) => ({
+					value: option.value,
+					label: option.label,
+					testId: testId ? `${testId}-${option.value}` : undefined,
+				}))}
+			/>
+		</div>
 	);
 }
 

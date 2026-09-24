@@ -158,7 +158,6 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 							textOverflow="visible"
 							value={observabilityTool}
 							onChange={handleObservabilityToolChange}
-							className="observability-tools-radio-container"
 							items={Object.entries(observabilityTools).map(([tool, label]) => ({
 								value: tool,
 								label:
@@ -189,7 +188,6 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 								color="primary"
 								value={migrationTimeline}
 								onChange={setMigrationTimeline}
-								className="migration-timeline-radio-container"
 								items={Object.entries(migrationTimelineOptions).map(([key, label]) => ({
 									value: key,
 									label,
@@ -204,7 +202,6 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 							color="primary"
 							value={usesOtel === true ? 'yes' : usesOtel === false ? 'no' : null}
 							onChange={handleOtelChange}
-							className="opentelemetry-radio-container"
 							items={[
 								{ value: 'yes', label: 'Yes' },
 								{ value: 'no', label: 'No' },
@@ -217,7 +214,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 					size="md"
 					variant="solid"
 					color="primary"
-					className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
+					width="100%"
 					onClick={handleNext}
 					disabled={isNextDisabled}
 					disabledTooltip={getNextDisabledReason()}

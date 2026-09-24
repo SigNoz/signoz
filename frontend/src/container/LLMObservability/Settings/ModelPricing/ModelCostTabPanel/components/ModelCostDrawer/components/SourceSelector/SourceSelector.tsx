@@ -55,7 +55,6 @@ function SourceSelector({
 				textOverflow="wrap"
 				value={isOverride ? 'override' : 'auto'}
 				onChange={(value): void => handleSourceChange(value as 'auto' | 'override')}
-				className={styles.sourceRadioGroup}
 				items={[
 					disableAuto
 						? {
