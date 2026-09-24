@@ -14,11 +14,11 @@ from fixtures.fs import get_testdata_file_path
 
 TEST_CASE = types.AlertTestCase(
     name="promql_subquery_no_step",
-    rule_path="rules/test_scenarios/promql_subquery_no_step/rule.json",
+    rule_path="ruler/test_scenarios/promql_subquery_no_step/rule.json",
     alert_data=[
         types.AlertData(
             type="metrics",
-            data_path="rules/test_scenarios/promql_subquery_no_step/alert_data.jsonl",
+            data_path="ruler/test_scenarios/promql_subquery_no_step/alert_data.jsonl",
         ),
     ],
     alert_expectation=types.AlertExpectation(

@@ -63,7 +63,7 @@ jobs:
           - querierauthz
           - role
           - rootuser
-          - rules
+          - ruler
           - savedview
           - semconvfamilies
           - serviceaccount
