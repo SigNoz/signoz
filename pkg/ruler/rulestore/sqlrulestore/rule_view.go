@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func (r *rule) CreateRuleView(ctx context.Context, view *ruletypes.RuleView) error {
+func (r *rule) CreateRuleView(ctx context.Context, view *ruletypes.StorableRuleView) error {
 	_, err := r.sqlstore.
 		BunDBCtx(ctx).
 		NewInsert().
@@ -20,10 +20,10 @@ func (r *rule) CreateRuleView(ctx context.Context, view *ruletypes.RuleView) err
 	return nil
 }
 
-func (r *rule) GetRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*ruletypes.RuleView, error) {
-	view := new(ruletypes.RuleView)
+func (r *rule) GetRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*ruletypes.StorableRuleView, error) {
+	view := new(ruletypes.StorableRuleView)
 	err := r.sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(view).
 		Where("id = ?", id).
@@ -35,10 +35,10 @@ func (r *rule) GetRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 	return view, nil
 }
 
-func (r *rule) ListRuleViews(ctx context.Context, orgID valuer.UUID) ([]*ruletypes.RuleView, error) {
-	views := make([]*ruletypes.RuleView, 0)
+func (r *rule) ListRuleViews(ctx context.Context, orgID valuer.UUID) ([]*ruletypes.StorableRuleView, error) {
+	views := make([]*ruletypes.StorableRuleView, 0)
 	err := r.sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(&views).
 		Where("org_id = ?", orgID).
@@ -50,7 +50,7 @@ func (r *rule) ListRuleViews(ctx context.Context, orgID valuer.UUID) ([]*ruletyp
 	return views, nil
 }
 
-func (r *rule) UpdateRuleView(ctx context.Context, view *ruletypes.RuleView) error {
+func (r *rule) UpdateRuleView(ctx context.Context, view *ruletypes.StorableRuleView) error {
 	res, err := r.sqlstore.
 		BunDBCtx(ctx).
 		NewUpdate().
@@ -75,7 +75,7 @@ func (r *rule) DeleteRuleView(ctx context.Context, orgID valuer.UUID, id valuer.
 	res, err := r.sqlstore.
 		BunDBCtx(ctx).
 		NewDelete().
-		Model(new(ruletypes.RuleView)).
+		Model(new(ruletypes.StorableRuleView)).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
 		Exec(ctx)

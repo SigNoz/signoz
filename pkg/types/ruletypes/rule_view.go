@@ -23,15 +23,52 @@ var (
 	ErrCodeRuleViewNotFound     = errors.MustNewCode("rule_view_not_found")
 )
 
-type RuleView struct {
+type StorableRuleView struct {
 	bun.BaseModel `bun:"table:rule_view,alias:rule_view"`
 
 	types.Identifiable
 	types.TimeAuditable
 
-	Name  string       `bun:"name,type:text,notnull" json:"name" required:"true"`
-	Data  RuleViewData `bun:"data,type:text,notnull" json:"data" required:"true"`
-	OrgID valuer.UUID  `bun:"org_id,type:text,notnull" json:"orgId" required:"true"`
+	Name  string      `bun:"name,type:text,notnull"`
+	Data  string      `bun:"data,type:text,notnull"`
+	OrgID valuer.UUID `bun:"org_id,type:text,notnull"`
+}
+
+func (s *StorableRuleView) ToGettableRuleView() (*GettableRuleView, error) {
+	data := RuleViewData{}
+	if err := json.Unmarshal([]byte(s.Data), &data); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't decode rule view %s", s.ID)
+	}
+
+	return &GettableRuleView{
+		ID:        s.ID,
+		Name:      s.Name,
+		Data:      data,
+		OrgID:     s.OrgID,
+		CreatedAt: s.CreatedAt,
+		UpdatedAt: s.UpdatedAt,
+	}, nil
+}
+
+func (s *StorableRuleView) Update(updatable UpdatableRuleView) error {
+	data, err := json.Marshal(updatable.Data)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't encode rule view %s", s.ID)
+	}
+
+	s.Name = updatable.Name
+	s.Data = string(data)
+	s.UpdatedAt = time.Now()
+	return nil
+}
+
+type GettableRuleView struct {
+	ID        valuer.UUID  `json:"id" required:"true"`
+	Name      string       `json:"name" required:"true"`
+	Data      RuleViewData `json:"data" required:"true"`
+	OrgID     valuer.UUID  `json:"orgId" required:"true"`
+	CreatedAt time.Time    `json:"createdAt" required:"true"`
+	UpdatedAt time.Time    `json:"updatedAt" required:"true"`
 }
 
 // RuleViewData holds the rule listing state (ListRulesParams minus pagination) a view replays.
@@ -72,27 +109,43 @@ func (p *PostableRuleView) Validate() error {
 	return p.Data.Validate()
 }
 
-func (p PostableRuleView) NewRuleView(orgID valuer.UUID) *RuleView {
+func (p PostableRuleView) ToStorableRuleView(orgID valuer.UUID) (*StorableRuleView, error) {
+	data, err := json.Marshal(p.Data)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't encode rule view %q", p.Name)
+	}
+
 	now := time.Now()
-	return &RuleView{
+	return &StorableRuleView{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
-		OrgID:         orgID,
 		Name:          p.Name,
-		Data:          p.Data,
-	}
+		Data:          string(data),
+		OrgID:         orgID,
+	}, nil
 }
 
 type UpdatableRuleView = PostableRuleView
 
-func (v *RuleView) Update(updateable UpdatableRuleView) {
-	v.Name = updateable.Name
-	v.Data = updateable.Data
-	v.UpdatedAt = time.Now()
+// NewGettableRuleViewsFromStorableRuleViews converts rows; corrupt rows come back keyed by view id for the caller to log.
+func NewGettableRuleViewsFromStorableRuleViews(storables []*StorableRuleView) ([]*GettableRuleView, map[string]error) {
+	views := make([]*GettableRuleView, 0, len(storables))
+	errByViewID := make(map[string]error)
+
+	for _, storable := range storables {
+		view, err := storable.ToGettableRuleView()
+		if err != nil {
+			errByViewID[storable.ID.StringValue()] = err
+			continue
+		}
+		views = append(views, view)
+	}
+
+	return views, errByViewID
 }
 
 type ListableRuleViews struct {
-	Views []*RuleView `json:"views" required:"true" nullable:"false"`
+	Views []*GettableRuleView `json:"views" required:"true" nullable:"false"`
 }
 
 func validateRuleViewName(name string) error {

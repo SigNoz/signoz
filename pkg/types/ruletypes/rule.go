@@ -66,9 +66,9 @@ type RuleStore interface {
 	GetStoredRule(context.Context, valuer.UUID, valuer.UUID) (*StorableRule, error)
 	GetStoredRulesByMetricName(context.Context, string, string) ([]RuleAlert, error)
 
-	CreateRuleView(context.Context, *RuleView) error
-	GetRuleView(context.Context, valuer.UUID, valuer.UUID) (*RuleView, error)
-	ListRuleViews(context.Context, valuer.UUID) ([]*RuleView, error)
-	UpdateRuleView(context.Context, *RuleView) error
+	CreateRuleView(context.Context, *StorableRuleView) error
+	GetRuleView(context.Context, valuer.UUID, valuer.UUID) (*StorableRuleView, error)
+	ListRuleViews(context.Context, valuer.UUID) ([]*StorableRuleView, error)
+	UpdateRuleView(context.Context, *StorableRuleView) error
 	DeleteRuleView(context.Context, valuer.UUID, valuer.UUID) error
 }
