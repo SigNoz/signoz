@@ -1,3 +1,7 @@
+import {
+	setupAuthzAdmin,
+	setupAuthzGrantByPrefix,
+} from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
@@ -10,6 +14,7 @@ const TEST_TIMEOUT = 20000;
 describe('ChannelForm save', () => {
 	beforeEach(() => {
 		window.history.replaceState({}, '', '/');
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
@@ -99,6 +104,27 @@ describe('ChannelForm save', () => {
 				},
 			});
 			expect(body).not.toHaveProperty('displayName');
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
+		'opens read-only, with no way to save, when update is denied',
+		async () => {
+			server.use(setupAuthzGrantByPrefix('read', 'list'));
+
+			render(<ChannelForm channelId="3" onDone={jest.fn()} />);
+
+			const channelName = await screen.findByTestId(
+				'channel-name-textbox',
+				{},
+				FIND,
+			);
+			await waitFor(() => expect(channelName).toBeDisabled(), FIND);
+
+			expect(screen.getByTestId('slack-channel-textbox')).toBeDisabled();
+			expect(screen.queryByTestId('save-channel-button')).not.toBeInTheDocument();
+			expect(screen.queryByTestId('test-channel-button')).not.toBeInTheDocument();
 		},
 		TEST_TIMEOUT,
 	);

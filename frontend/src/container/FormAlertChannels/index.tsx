@@ -36,6 +36,7 @@ function FormAlertChannels({
 	title,
 	initialValue,
 	editing = false,
+	readOnly = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 
@@ -88,7 +89,12 @@ function FormAlertChannels({
 				{title}
 			</Typography.Title>
 
-			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
+			<Form
+				initialValues={initialValue}
+				layout="vertical"
+				form={formInstance}
+				disabled={readOnly}
+			>
 				<Form.Item
 					label={t('field_channel_name')}
 					labelAlign="left"
@@ -188,25 +194,30 @@ function FormAlertChannels({
 				<Form.Item>{renderSettings()}</Form.Item>
 
 				<Form.Item>
-					<Button
-						data-testid="save-channel-button"
-						disabled={savingState}
-						loading={savingState}
-						type="primary"
-						onClick={(): void => onSaveHandler(type)}
-					>
-						{t('button_save_channel')}
-					</Button>
-					<Button
-						data-testid="test-channel-button"
-						disabled={testingState}
-						loading={testingState}
-						onClick={(): void => onTestHandler(type)}
-					>
-						{t('button_test_channel')}
-					</Button>
+					{!readOnly && (
+						<>
+							<Button
+								data-testid="save-channel-button"
+								disabled={savingState}
+								loading={savingState}
+								type="primary"
+								onClick={(): void => onSaveHandler(type)}
+							>
+								{t('button_save_channel')}
+							</Button>
+							<Button
+								data-testid="test-channel-button"
+								disabled={testingState}
+								loading={testingState}
+								onClick={(): void => onTestHandler(type)}
+							>
+								{t('button_test_channel')}
+							</Button>
+						</>
+					)}
 					<Button
 						data-testid="return-button"
+						disabled={false}
 						onClick={(): void => {
 							history.replace(ROUTES.ALL_CHANNELS);
 						}}
@@ -232,10 +243,13 @@ interface FormAlertChannelsProps {
 	initialValue: Store;
 	// editing indicates if the form is opened in edit mode
 	editing?: boolean;
+	/** The reader has `read` but not `update`, so the form shows without saving. */
+	readOnly?: boolean;
 }
 
 FormAlertChannels.defaultProps = {
 	editing: undefined,
+	readOnly: false,
 };
 
 export default FormAlertChannels;
