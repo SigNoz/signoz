@@ -306,7 +306,7 @@ func (m *storage) resolveColumnExprs(
 				// a key could have been materialized, if so return the materialized column name
 				if key.Materialized {
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
-					existExprs = append(existExprs, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
+					existExprs = append(existExprs, telemetrytypes.FieldKeyToMaterializedExistsCondition(key, true))
 				} else {
 					exprs = append(exprs, fmt.Sprintf("%s[%s]", columnName, clickhousesql.StringLiteral(key.Name)))
 					existExprs = append(existExprs, fmt.Sprintf("mapContains(%s, %s)", columnName, clickhousesql.StringLiteral(key.Name)))
