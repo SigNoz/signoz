@@ -10,6 +10,8 @@ import {
 	ChannelKind,
 	ChannelSpecFormValues,
 } from 'container/CreateAlertChannels/types';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import history from 'lib/history';
 
 import EmailSettings from './Settings/Email';
@@ -36,6 +38,9 @@ function FormAlertChannels({
 	title,
 	initialValue,
 	editing = false,
+	readOnly = false,
+	saveChecks = [],
+	testChecks = [],
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 
@@ -88,7 +93,12 @@ function FormAlertChannels({
 				{title}
 			</Typography.Title>
 
-			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
+			<Form
+				initialValues={initialValue}
+				layout="vertical"
+				form={formInstance}
+				disabled={readOnly}
+			>
 				<Form.Item
 					label={t('field_channel_name')}
 					labelAlign="left"
@@ -188,25 +198,30 @@ function FormAlertChannels({
 				<Form.Item>{renderSettings()}</Form.Item>
 
 				<Form.Item>
-					<Button
-						data-testid="save-channel-button"
-						disabled={savingState}
-						loading={savingState}
-						type="primary"
-						onClick={(): void => onSaveHandler(type)}
-					>
-						{t('button_save_channel')}
-					</Button>
-					<Button
-						data-testid="test-channel-button"
-						disabled={testingState}
-						loading={testingState}
-						onClick={(): void => onTestHandler(type)}
-					>
-						{t('button_test_channel')}
-					</Button>
+					<AuthZTooltip checks={saveChecks}>
+						<Button
+							data-testid="save-channel-button"
+							disabled={savingState}
+							loading={savingState}
+							type="primary"
+							onClick={(): void => onSaveHandler(type)}
+						>
+							{t('button_save_channel')}
+						</Button>
+					</AuthZTooltip>
+					<AuthZTooltip checks={testChecks}>
+						<Button
+							data-testid="test-channel-button"
+							disabled={testingState}
+							loading={testingState}
+							onClick={(): void => onTestHandler(type)}
+						>
+							{t('button_test_channel')}
+						</Button>
+					</AuthZTooltip>
 					<Button
 						data-testid="return-button"
+						disabled={false}
 						onClick={(): void => {
 							history.replace(ROUTES.ALL_CHANNELS);
 						}}
@@ -232,10 +247,19 @@ interface FormAlertChannelsProps {
 	initialValue: Store;
 	// editing indicates if the form is opened in edit mode
 	editing?: boolean;
+	/** The reader has `read` but not `update`, so the fields render disabled. */
+	readOnly?: boolean;
+	/** Gates saving; a denial disables the button and names the missing scope. */
+	saveChecks?: BrandedPermission[];
+	/** Gates a test send, which the API allows with `create`. */
+	testChecks?: BrandedPermission[];
 }
 
 FormAlertChannels.defaultProps = {
 	editing: undefined,
+	readOnly: false,
+	saveChecks: [],
+	testChecks: [],
 };
 
 export default FormAlertChannels;

@@ -1,5 +1,6 @@
 import {
 	Bot,
+	Cable,
 	ChartLine,
 	DraftingCompass,
 	FileKey,
@@ -94,6 +95,15 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Type quick filter ID, separate multiple with comma or space',
 		docsAnchor: 'quick-filter',
+	},
+	'notification-channel': {
+		label: 'Notification Channels',
+		description:
+			'Destinations for alert notifications, such as Slack, PagerDuty, webhooks, etc.',
+		icon: Cable,
+		selectorPlaceholder:
+			'Type notification channel ID, separate multiple with comma or space',
+		docsAnchor: 'notification-channel',
 	},
 	logs: {
 		label: 'Logs',
