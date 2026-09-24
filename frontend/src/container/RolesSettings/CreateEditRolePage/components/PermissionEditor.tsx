@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
 import { SolidAlertTriangle } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { ButtonGroup } from '@signozhq/ui/button-group';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { RadioGroup } from '@signozhq/ui/radio-group';
@@ -189,26 +188,21 @@ function PermissionEditor({
 								color="secondary"
 								size="sm"
 								testId="toggle-all-group"
-							>
-								<Button
-									size="md"
-									variant="solid"
-									color="primary"
-									onClick={handleExpandAll}
-									testId="expand-all-button"
-								>
-									Expand all
-								</Button>
-								<Button
-									size="md"
-									variant="solid"
-									color="primary"
-									onClick={handleCollapseAll}
-									testId="collapse-all-button"
-								>
-									Collapse all
-								</Button>
-							</ButtonGroup>
+								items={[
+									{
+										value: 'expand-all',
+										label: 'Expand all',
+										onClick: handleExpandAll,
+										testId: 'expand-all-button',
+									},
+									{
+										value: 'collapse-all',
+										label: 'Collapse all',
+										onClick: handleCollapseAll,
+										testId: 'collapse-all-button',
+									},
+								]}
+							/>
 						</div>
 						<div className={styles.permissionEditorResourceList}>
 							{resources.map((resource) => (
