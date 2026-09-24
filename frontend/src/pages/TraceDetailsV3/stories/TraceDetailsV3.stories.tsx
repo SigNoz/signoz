@@ -172,3 +172,31 @@ export const TraceOptionsMenu: Story = {
 		await screen.findByText('Preview fields');
 	},
 };
+
+/** The span panel moved from the right edge to the bottom through its dock toggle. */
+export const DockModeSwitched: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		// The dock options are icon-only and carry no accessible name.
+		const option = await within(canvasElement).findByTestId(
+			'dock-mode-docked',
+			undefined,
+			untilLoaded,
+		);
+
+		await userEvent.click(option.querySelector('button') ?? option);
+	},
+};
+
+/** The span's percentile badge expanded into the distribution it was ranked in. */
+export const SpanPercentileOpen: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: /^p\d+/ },
+				untilLoaded,
+			),
+		);
+		await screen.findByText(/This span duration is/);
+	},
+};
