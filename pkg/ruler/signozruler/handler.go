@@ -345,3 +345,122 @@ func (handler *handler) DeleteDowntimeScheduleByID(rw http.ResponseWriter, req *
 
 	render.Success(rw, http.StatusNoContent, nil)
 }
+
+func (handler *handler) ListRuleViews(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	views, err := handler.ruler.ListRuleViews(ctx, orgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, views)
+}
+
+func (handler *handler) CreateRuleView(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	var postable ruletypes.PostableRuleView
+	if err := binding.JSON.BindBody(req.Body, &postable); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	view, err := handler.ruler.CreateRuleView(ctx, orgID, postable)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, view)
+}
+
+func (handler *handler) UpdateRuleView(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(req)["id"])
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
+
+	var updatable ruletypes.UpdatableRuleView
+	if err := binding.JSON.BindBody(req.Body, &updatable); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	view, err := handler.ruler.UpdateRuleView(ctx, orgID, id, updatable)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, view)
+}
+
+func (handler *handler) DeleteRuleView(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(req)["id"])
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
+
+	if err := handler.ruler.DeleteRuleView(ctx, orgID, id); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}

@@ -2,10 +2,12 @@ package signozruler
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
@@ -26,6 +28,7 @@ import (
 type provider struct {
 	manager   *rules.Manager
 	ruleStore ruletypes.RuleStore
+	logger    *slog.Logger
 	stopC     chan struct{}
 	healthyC  chan struct{}
 }
@@ -73,7 +76,7 @@ func NewFactory(
 			return nil, err
 		}
 
-		return &provider{manager: manager, ruleStore: ruleStore, stopC: make(chan struct{}), healthyC: make(chan struct{})}, nil
+		return &provider{manager: manager, ruleStore: ruleStore, logger: providerSettings.Logger, stopC: make(chan struct{}), healthyC: make(chan struct{})}, nil
 	})
 }
 
@@ -146,4 +149,51 @@ func (provider *provider) TestNotification(ctx context.Context, orgID valuer.UUI
 
 func (provider *provider) MaintenanceStore() alertmanagertypes.MaintenanceStore {
 	return provider.manager.MaintenanceStore()
+}
+
+func (provider *provider) CreateRuleView(ctx context.Context, orgID valuer.UUID, postable ruletypes.PostableRuleView) (*ruletypes.GettableRuleView, error) {
+	if err := postable.Validate(); err != nil {
+		return nil, err
+	}
+	storable, err := postable.ToStorableRuleView(orgID)
+	if err != nil {
+		return nil, err
+	}
+	if err := provider.ruleStore.CreateRuleView(ctx, storable); err != nil {
+		return nil, err
+	}
+	return storable.ToGettableRuleView()
+}
+
+func (provider *provider) ListRuleViews(ctx context.Context, orgID valuer.UUID) (*ruletypes.ListableRuleViews, error) {
+	storables, err := provider.ruleStore.ListRuleViews(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	views, errByViewID := ruletypes.NewGettableRuleViewsFromStorableRuleViews(storables)
+	for viewID, err := range errByViewID {
+		provider.logger.ErrorContext(ctx, "failed to decode rule view from db", slog.String("rule_view_id", viewID), errors.Attr(err))
+	}
+	return &ruletypes.ListableRuleViews{Views: views}, nil
+}
+
+func (provider *provider) UpdateRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable ruletypes.UpdatableRuleView) (*ruletypes.GettableRuleView, error) {
+	if err := updatable.Validate(); err != nil {
+		return nil, err
+	}
+	storable, err := provider.ruleStore.GetRuleView(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := storable.Update(updatable); err != nil {
+		return nil, err
+	}
+	if err := provider.ruleStore.UpdateRuleView(ctx, storable); err != nil {
+		return nil, err
+	}
+	return storable.ToGettableRuleView()
+}
+
+func (provider *provider) DeleteRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return provider.ruleStore.DeleteRuleView(ctx, orgID, id)
 }
