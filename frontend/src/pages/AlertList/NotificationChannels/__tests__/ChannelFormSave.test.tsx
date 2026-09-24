@@ -48,7 +48,9 @@ describe('ChannelForm save', () => {
 				screen.getByTestId('webhook-url-textbox'),
 				'https://hooks.slack.com/services/T/B/X',
 			);
-			await user.click(screen.getByTestId('save-channel-button'));
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(() => expect(save).toBeEnabled(), FIND);
+			await user.click(save);
 
 			await waitFor(() => expect(onDone).toHaveBeenCalled(), FIND);
 
@@ -93,7 +95,9 @@ describe('ChannelForm save', () => {
 			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			await user.clear(screen.getByTestId('slack-channel-textbox'));
 			await user.type(screen.getByTestId('slack-channel-textbox'), '#changed');
-			await user.click(screen.getByTestId('save-channel-button'));
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(() => expect(save).toBeEnabled(), FIND);
+			await user.click(save);
 
 			await waitFor(() => expect(onDone).toHaveBeenCalled(), FIND);
 
@@ -109,22 +113,27 @@ describe('ChannelForm save', () => {
 	);
 
 	it(
-		'opens read-only, with no way to save, when update is denied',
+		'opens read-only, with saving disabled rather than hidden, when update is denied',
 		async () => {
 			server.use(setupAuthzGrantByPrefix('read', 'list'));
 
 			render(<ChannelForm channelId="3" onDone={jest.fn()} />);
 
-			const channelName = await screen.findByTestId(
-				'channel-name-textbox',
-				{},
+			await screen.findByTestId('channel-name-textbox', {}, FIND);
+
+			// the whole form goes disabled once the denial lands
+			await waitFor(
+				() => expect(screen.getByTestId('slack-channel-textbox')).toBeDisabled(),
 				FIND,
 			);
-			await waitFor(() => expect(channelName).toBeDisabled(), FIND);
 
-			expect(screen.getByTestId('slack-channel-textbox')).toBeDisabled();
-			expect(screen.queryByTestId('save-channel-button')).not.toBeInTheDocument();
-			expect(screen.queryByTestId('test-channel-button')).not.toBeInTheDocument();
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(() => expect(save).toBeDisabled(), FIND);
+			expect(save).toHaveAttribute(
+				'data-denied-permissions',
+				expect.stringContaining('update'),
+			);
+			expect(screen.getByTestId('test-channel-button')).toBeDisabled();
 		},
 		TEST_TIMEOUT,
 	);
