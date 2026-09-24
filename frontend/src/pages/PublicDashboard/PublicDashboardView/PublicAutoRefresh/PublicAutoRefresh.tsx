@@ -49,16 +49,17 @@ function PublicAutoRefresh({
 				trigger={['click']}
 				content={
 					<div className="auto-refresh-menu">
-						<Checkbox
-							color="primary"
-							disabledTooltip={disabledTooltip}
-							onChange={(value): void => onToggle(value === true)}
-							value={enabled}
-							disabled={disabled}
-							className="auto-refresh-checkbox"
-						>
-							Auto Refresh
-						</Checkbox>
+						<div className="auto-refresh-checkbox">
+							<Checkbox
+								color="primary"
+								disabledTooltip={disabledTooltip}
+								onChange={(value): void => onToggle(value === true)}
+								value={enabled}
+								disabled={disabled}
+							>
+								Auto Refresh
+							</Checkbox>
+						</div>
 						<Typography.Text disabled={disabled} className="refresh-interval-text">
 							Refresh Interval
 						</Typography.Text>

@@ -498,114 +498,95 @@ $custom-border-color: #2c3044;
 			margin-bottom: 8px;
 		}
 
-		.option-checkbox {
+		.all-option-text {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
 			width: 100%;
-			cursor: default;
+		}
 
-			// The checkbox button is the only pointer target on the left; the label
-			// still toggles on click but keeps a default cursor.
-			> button {
-				cursor: pointer;
-			}
+		.option-content {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			width: 100%;
 
-			// @signozhq/ui Checkbox renders children inside a <label> that is
-			// content-sized by default. Make it fill the row (min-width: 0 lets it
-			// shrink) so the option text below can truncate instead of overflowing.
-			> label {
+			.option-label-text {
 				flex: 1 1 auto;
 				min-width: 0;
+				margin-bottom: 0;
+				overflow: hidden;
+				white-space: nowrap;
+				text-overflow: ellipsis;
 			}
 
-			.all-option-text {
+			.option-badge {
+				font-size: 12px;
+				padding: 2px 6px;
+				border-radius: 4px;
+				background-color: $custom-border-color;
+				color: var(--l2-foreground);
+				margin-left: 8px;
+			}
+		}
+
+		// "Only"/"All" is the primary action — a filled pill that reads as a
+		// button; "Toggle" is a secondary hint in plain text. Sized to the row's
+		// resting height so revealing them on hover never shifts it.
+		.only-btn,
+		.toggle-btn {
+			display: none;
+			align-items: center;
+			justify-content: center;
+			height: 18px;
+			min-height: 0;
+			font-size: 12px;
+			line-height: 1;
+			box-shadow: none;
+		}
+
+		.only-btn {
+			padding: 4px 8px;
+			// Black interior + a visible border so the pill stands out clearly
+			// against the near-black row when revealed on hover.
+			border: 1px solid var(--l3-border);
+			border-radius: 3px;
+			background-color: var(--bg-ink-500, #0b0c0e);
+			color: var(--l1-foreground);
+			cursor: pointer;
+		}
+
+		.toggle-btn {
+			padding: 0 6px;
+			border: none;
+			background-color: transparent;
+			color: var(--l2-foreground);
+			cursor: pointer;
+		}
+
+		// Toggle appears over the checkbox area; "Only/All" takes over the row
+		// content and hides Toggle there (higher specificity wins).
+		&:hover {
+			.toggle-btn {
 				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				width: 100%;
 			}
 
-			.option-content {
+			.option-badge {
+				display: none;
+			}
+		}
+
+		.option-content:hover {
+			.only-btn {
 				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				width: 100%;
-
-				.option-label-text {
-					flex: 1 1 auto;
-					min-width: 0;
-					margin-bottom: 0;
-					overflow: hidden;
-					white-space: nowrap;
-					text-overflow: ellipsis;
-				}
-
-				.option-badge {
-					font-size: 12px;
-					padding: 2px 6px;
-					border-radius: 4px;
-					background-color: $custom-border-color;
-					color: var(--l2-foreground);
-					margin-left: 8px;
-				}
 			}
 
-			// "Only"/"All" is the primary action — a filled pill that reads as a
-			// button; "Toggle" is a secondary hint in plain text. Sized to the row's
-			// resting height so revealing them on hover never shifts it.
-			.only-btn,
 			.toggle-btn {
 				display: none;
-				align-items: center;
-				justify-content: center;
-				height: 18px;
-				min-height: 0;
-				font-size: 12px;
-				line-height: 1;
-				box-shadow: none;
 			}
 
-			.only-btn {
-				padding: 4px 8px;
-				// Black interior + a visible border so the pill stands out clearly
-				// against the near-black row when revealed on hover.
-				border: 1px solid var(--l3-border);
-				border-radius: 3px;
-				background-color: var(--bg-ink-500, #0b0c0e);
-				color: var(--l1-foreground);
-				cursor: pointer;
-			}
-
-			.toggle-btn {
-				padding: 0 6px;
-				border: none;
-				background-color: transparent;
-				color: var(--l2-foreground);
-				cursor: pointer;
-			}
-
-			// Toggle appears over the checkbox area; "Only/All" takes over the row
-			// content and hides Toggle there (higher specificity wins).
-			&:hover {
-				.toggle-btn {
-					display: flex;
-				}
-
-				.option-badge {
-					display: none;
-				}
-			}
-
-			.option-content:hover {
-				.only-btn {
-					display: flex;
-				}
-
-				.toggle-btn {
-					display: none;
-				}
-
-				.option-badge {
-					display: none;
-				}
+			.option-badge {
+				display: none;
 			}
 		}
 	}

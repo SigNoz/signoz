@@ -319,7 +319,6 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 			<div className={styles.field}>
 				<Checkbox
 					color="primary"
-					className={styles.checkboxLabel}
 					value={checked}
 					onChange={(): void => onChange(!checked)}
 				>
@@ -393,7 +392,6 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 						<Checkbox
 							color="primary"
 							key={opt}
-							className={styles.checkboxLabel}
 							value={regularSelected.includes(opt)}
 							onChange={(): void => toggleRegular(opt)}
 						>
@@ -401,12 +399,7 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 						</Checkbox>
 					))}
 					{allowCustom && (
-						<Checkbox
-							color="primary"
-							className={styles.checkboxLabel}
-							value={isCustom}
-							onChange={toggleCustom}
-						>
+						<Checkbox color="primary" value={isCustom} onChange={toggleCustom}>
 							{CUSTOM_OPTION_LABEL}
 						</Checkbox>
 					)}

@@ -760,7 +760,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					<Checkbox
 						color="primary"
 						value={isSelected}
-						className="option-checkbox"
+						width="100%"
 						onChange={(): void => {
 							handleItemSelection('checkbox');
 							setActiveChipIndex(-1);
@@ -1600,11 +1600,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							}}
 						>
 							<div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-								<Checkbox
-									color="primary"
-									value={allOptionsSelected}
-									className="option-checkbox"
-								>
+								<Checkbox color="primary" value={allOptionsSelected} width="100%">
 									<div className="option-content">
 										<div className="all-option-text">ALL</div>
 									</div>

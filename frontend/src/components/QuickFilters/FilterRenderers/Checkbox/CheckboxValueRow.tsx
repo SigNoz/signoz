@@ -35,7 +35,6 @@ function CheckboxValueRow({
 				onChange={(isChecked): void => onCheckboxChange(isChecked === true)}
 				value={checked}
 				disabled={disabled}
-				className="check-box"
 			/>
 
 			<div
