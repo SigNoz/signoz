@@ -20,16 +20,13 @@ import (
 //   - For each column, includes its evolution if it's >= latest base evolution and <= tsEndTime
 //   - Results are sorted by ReleaseTime descending (newest first)
 func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
+	if len(evolutions) == 0 {
+		return columns, nil, nil
+	}
+
 	columnLookUpMap := make(map[string]*schema.Column, len(columns))
 	for _, column := range columns {
 		columnLookUpMap[column.Name] = column
-	}
-	evolutions = slices.DeleteFunc(slices.Clone(evolutions), func(e *telemetrytypes.EvolutionEntry) bool {
-		_, ok := columnLookUpMap[e.ColumnName]
-		return !ok
-	})
-	if len(evolutions) == 0 {
-		return columns, nil, nil
 	}
 
 	// Derive the base column from the candidate columns.
@@ -73,6 +70,9 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		if evolution.ReleaseTime.After(tsStartTime) {
 			break
 		}
+		if _, exists := columnLookUpMap[evolution.ColumnName]; !exists {
+			continue
+		}
 		latestBaseEvolutionAcrossAll = evolution
 	}
 
@@ -95,6 +95,10 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		}
 		// skip evolutions after tsEndTime
 		if evolution.ReleaseTime.After(tsEndTime) || evolution.ReleaseTime.Equal(tsEndTime) {
+			continue
+		}
+
+		if _, exists := columnLookUpMap[evolution.ColumnName]; !exists {
 			continue
 		}
 

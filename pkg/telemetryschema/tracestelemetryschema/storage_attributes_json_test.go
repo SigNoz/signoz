@@ -97,8 +97,7 @@ func TestFieldForAttributeNoEvolutionParity(t *testing.T) {
 }
 
 // TestAttributeJSONFlagOffParity proves the evolution entry alone does not switch reads to the
-// JSON column: with use_trace_attributes_json off, reads and conditions stay on the Map for every
-// window.
+// JSON column: with use_trace_attributes_json off, reads and conditions stay on the Map for every window.
 func TestAttributeJSONFlagOffParity(t *testing.T) {
 	ctx := context.Background()
 	storage := NewStorage()
