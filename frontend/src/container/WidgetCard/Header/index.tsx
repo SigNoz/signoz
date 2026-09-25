@@ -16,7 +16,7 @@ import {
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Tooltip } from 'antd';
-import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
+import { Dropdown } from '@signozhq/ui/dropdown';
 import { Typography } from '@signozhq/ui/typography';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
@@ -41,14 +41,15 @@ import { buildAbsolutePath } from 'utils/app';
 
 import { errorTooltipPosition } from 'container/WidgetCard/Header/config';
 import {
+	CLONE_DENIED_TOOLTIP,
+	DELETE_DENIED_TOOLTIP,
+	EDIT_DENIED_TOOLTIP,
 	MENUITEM_KEYS_VS_LABELS,
 	MenuItemKeys,
+	VIEW_LOADING_TOOLTIP,
 } from 'container/WidgetCard/Header/contants';
 import { MenuItem } from 'container/WidgetCard/Header/types';
-import {
-	generateMenuList,
-	isTWidgetOptions,
-} from 'container/WidgetCard/Header/utils';
+import { generateMenuList } from 'container/WidgetCard/Header/utils';
 
 import 'container/WidgetCard/Header/WidgetHeader.styles.scss';
 
@@ -116,37 +117,6 @@ function WidgetHeader({
 		downloadLink.remove();
 	}, [tableProcessedDataRef, title]);
 
-	const keyMethodMapping = useMemo(
-		() => ({
-			[MenuItemKeys.View]: onView,
-			[MenuItemKeys.Edit]: onEditHandler,
-			[MenuItemKeys.Delete]: onDelete,
-			[MenuItemKeys.Clone]: onClone,
-			[MenuItemKeys.CreateAlerts]: onCreateAlertsHandler,
-			[MenuItemKeys.Download]: onDownloadHandler,
-		}),
-		[
-			onView,
-			onEditHandler,
-			onDelete,
-			onClone,
-			onCreateAlertsHandler,
-			onDownloadHandler,
-		],
-	);
-
-	const onMenuItemSelectHandler = useCallback(
-		({ key }: { key: string }): void => {
-			if (isTWidgetOptions(key)) {
-				const functionToCall = keyMethodMapping[key];
-
-				if (functionToCall) {
-					functionToCall();
-				}
-			}
-		},
-		[keyMethodMapping],
-	);
 	const { user } = useAppContext();
 
 	const [deleteWidget, editWidget] = useComponentPermission(
@@ -157,48 +127,62 @@ function WidgetHeader({
 	const actions = useMemo(
 		(): MenuItem[] => [
 			{
-				key: MenuItemKeys.View,
-				icon: <Fullscreen size="md" />,
+				type: 'item',
+				value: MenuItemKeys.View,
+				prefix: <Fullscreen size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
 				isVisible: headerMenuList?.includes(MenuItemKeys.View) || false,
-				disabled: queryResponse.isFetching,
+				loading: queryResponse.isFetching,
+				loadingTooltip: VIEW_LOADING_TOOLTIP,
+				onClick: onView,
 			},
 			{
-				key: MenuItemKeys.Edit,
-				icon: <Pencil size="md" />,
+				type: 'item',
+				value: MenuItemKeys.Edit,
+				prefix: <Pencil size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Edit) || false,
 				disabled: !editWidget,
+				disabledTooltip: EDIT_DENIED_TOOLTIP,
+				onClick: onEditHandler,
 			},
 			{
-				key: MenuItemKeys.Clone,
-				icon: <Copy size="md" />,
+				type: 'item',
+				value: MenuItemKeys.Clone,
+				prefix: <Copy size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Clone) || false,
 				disabled: !editWidget,
+				disabledTooltip: CLONE_DENIED_TOOLTIP,
+				onClick: onClone,
 			},
 			{
-				key: MenuItemKeys.Download,
-				icon: <CloudDownload size="md" />,
+				type: 'item',
+				value: MenuItemKeys.Download,
+				prefix: <CloudDownload size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download],
 				isVisible: widget.panelTypes === PANEL_TYPES.TABLE,
-				disabled: false,
+				onClick: onDownloadHandler,
 			},
 			{
-				key: MenuItemKeys.Delete,
-				icon: <Trash2 size="md" />,
+				type: 'item',
+				value: MenuItemKeys.Delete,
+				prefix: <Trash2 size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Delete) || false,
 				disabled: !deleteWidget,
+				disabledTooltip: DELETE_DENIED_TOOLTIP,
 				danger: true,
+				onClick: onDelete,
 			},
 			{
-				key: MenuItemKeys.CreateAlerts,
-				icon: <Bell size="md" />,
+				type: 'item',
+				value: MenuItemKeys.CreateAlerts,
+				prefix: <Bell size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
-				rightIcon: <SquareArrowOutUpRight size="lg" />,
+				suffix: <SquareArrowOutUpRight size="lg" />,
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
-				disabled: false,
+				onClick: onCreateAlertsHandler,
 			},
 		],
 		[
@@ -207,24 +191,20 @@ function WidgetHeader({
 			editWidget,
 			deleteWidget,
 			widget.panelTypes,
+			onView,
+			onEditHandler,
+			onClone,
+			onDownloadHandler,
+			onDelete,
+			onCreateAlertsHandler,
 		],
 	);
 
-	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
+	const menuItems = useMemo(() => generateMenuList(actions), [actions]);
 
 	const [showGlobalSearch, setShowGlobalSearch] = useState(false);
 
 	const globalSearchAvailable = widget.panelTypes === PANEL_TYPES.TABLE;
-
-	const menu = useMemo(
-		() => ({
-			items: updatedMenuList.map((item) => ({
-				...item,
-				onClick: onMenuItemSelectHandler,
-			})),
-		}),
-		[updatedMenuList, onMenuItemSelectHandler],
-	);
 
 	const { truncatedText, fullText } = useGetResolvedText({
 		text: widget.title as string,
@@ -319,8 +299,8 @@ function WidgetHeader({
 								data-testid="widget-header-search"
 							/>
 						)}
-						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
-							<DropdownMenuSimple menu={menu} side="bottom" align="end">
+						{menuItems.length > 0 && (
+							<Dropdown items={menuItems} nativeButton side="bottom" align="end">
 								<Button
 									data-testid="widget-header-options"
 									className={`widget-header-more-options ${
@@ -328,7 +308,7 @@ function WidgetHeader({
 									}`}
 									icon={<EllipsisVertical size="md" />}
 								/>
-							</DropdownMenuSimple>
+							</Dropdown>
 						)}
 					</div>
 				</>
