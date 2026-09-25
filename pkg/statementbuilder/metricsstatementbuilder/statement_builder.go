@@ -473,6 +473,9 @@ func (b *StatementBuilder) buildTemporalAggDeltaFastPath(
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
+	if f := metricstelemetryschema.StaleMarkerFilterForSamplesTable(samplesTable); f != "" {
+		sb.Where(f)
+	}
 	sb.GroupBy("ts")
 	sb.GroupBy(GroupByAliases(query.GroupBy)...)
 
@@ -605,6 +608,9 @@ func (b *StatementBuilder) buildTemporalAggDelta(
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
+	if f := metricstelemetryschema.StaleMarkerFilterForSamplesTable(samplesTable); f != "" {
+		sb.Where(f)
+	}
 	sb.GroupBy("fingerprint", "ts")
 	sb.GroupBy(GroupByAliases(query.GroupBy)...)
 	sb.OrderBy("fingerprint", "ts")
@@ -646,6 +652,9 @@ func (b *StatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		baseSb.GTE("unix_milli", start),
 		baseSb.LT("unix_milli", end),
 	)
+	if f := metricstelemetryschema.StaleMarkerFilterForSamplesTable(samplesTable); f != "" {
+		baseSb.Where(f)
+	}
 	baseSb.GroupBy("fingerprint", "ts")
 	baseSb.GroupBy(GroupByAliases(query.GroupBy)...)
 	baseSb.OrderBy("fingerprint", "ts")
@@ -737,6 +746,9 @@ func (b *StatementBuilder) buildTemporalAggForMultipleTemporalities(
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
+	if f := metricstelemetryschema.StaleMarkerFilterForSamplesTable(samplesTable); f != "" {
+		sb.Where(f)
+	}
 	sb.GroupBy("fingerprint", "ts", "temporality")
 	sb.GroupBy(GroupByAliases(query.GroupBy)...)
 	queryWithoutWindow, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
