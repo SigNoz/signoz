@@ -37,6 +37,7 @@ components:
           opsgenie: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig'
           pagerduty: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfig'
           slack: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfig'
+          telegram: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfig'
           webhook: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfig'
         propertyName: kind
       oneOf:
@@ -50,6 +51,7 @@ components:
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig'
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig'
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfig'
       type: object
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig:
       properties:
@@ -155,6 +157,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/AlertmanagertypesChannelSlackConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfig:
+      properties:
+        kind:
+          enum:
+          - telegram
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelTelegramConfig'
       required:
       - kind
       - spec
@@ -307,6 +321,7 @@ components:
       - jira
       - jsmops
       - incidentio
+      - telegram
       type: string
     AlertmanagertypesChannelListOrder:
       enum:
@@ -506,6 +521,26 @@ components:
       required:
       - title
       - value
+      type: object
+    AlertmanagertypesChannelTelegramConfig:
+      properties:
+        botToken:
+          format: password
+          type: string
+        chatId:
+          format: int64
+          type: integer
+        message:
+          type: string
+        messageThreadId:
+          nullable: true
+          type: integer
+        sendResolved:
+          nullable: true
+          type: boolean
+      required:
+      - botToken
+      - chatId
       type: object
     AlertmanagertypesChannelWebhookConfig:
       properties:

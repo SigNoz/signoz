@@ -108,6 +108,7 @@ export enum ChannelType {
 	Jira = 'jira',
 	JsmOps = 'jsmops',
 	IncidentIO = 'incidentio',
+	Telegram = 'telegram',
 }
 
 // LabelFilterStatement will be used for preparing filter conditions / matchers
@@ -191,4 +192,13 @@ export interface JsmOpsChannel extends Channel {
 	priority?: string;
 	// tags, joined to a comma-separated string for the backend
 	tags?: string[];
+}
+
+// TelegramChannel configures alerts via a Telegram bot. message_thread_id
+// targets a forum topic; leave it empty to post in the chat itself.
+export interface TelegramChannel extends Channel {
+	bot_token: string;
+	chat_id: number;
+	message_thread_id?: number;
+	message?: string;
 }
