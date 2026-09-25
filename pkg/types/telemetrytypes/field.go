@@ -253,6 +253,14 @@ type FieldKeySelector struct {
 	MetricContext     *MetricContext         `json:"metricContext,omitempty"`
 }
 
+// Identity is the selector's signal, context, data type, and the given
+// name, joined into one key. Two selectors with the same identity fetch the
+// same metadata. The metric context is not part of it: a caller that
+// selects per metric name duplicates the selectors after this key is used.
+func (s *FieldKeySelector) Identity(name string) string {
+	return s.Signal.StringValue() + ";" + s.FieldContext.StringValue() + ";" + s.FieldDataType.StringValue() + ";" + name
+}
+
 // MatchesKey reports whether a statically defined key satisfies the selector, so
 // callers can suggest keys that were never ingested.
 func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {

@@ -369,6 +369,9 @@ func (q *querier) populateQBEvent(event *qbtypes.QBEvent, queries []qbtypes.Quer
 //     resolved: never-seen metrics and dormant metrics (seen but no data in
 //     the query window).
 //   - err: Internal when a metadata fetch fails.
+//
+// Metric metadata resolves through every storage name of a metric-name
+// family, the same names the statement builder unions.
 func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, queries []qbtypes.QueryEnvelope, start, end uint64, requestType qbtypes.RequestType) (missingMetricQueries []string, metricWarnings []string, err error) {
 	metricNames := make([]string, 0)
 	for idx := range queries {
@@ -381,7 +384,7 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 		}
 		for _, agg := range spec.Aggregations {
 			if agg.MetricName != "" {
-				metricNames = append(metricNames, agg.MetricName)
+				metricNames = append(metricNames, querybuilder.FamilyMetricNames(ctx, orgID, q.fl, agg.MetricName)...)
 			}
 		}
 	}
@@ -410,13 +413,19 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 		presentAggregations := make([]qbtypes.MetricAggregation, 0, len(spec.Aggregations))
 		for i := range spec.Aggregations {
 			if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
-				if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && temp != metrictypes.Unknown {
-					spec.Aggregations[i].Temporality = temp
+				for _, member := range querybuilder.FamilyMetricNames(ctx, orgID, q.fl, spec.Aggregations[i].MetricName) {
+					if temp, ok := metricTemporality[member]; ok && temp != metrictypes.Unknown {
+						spec.Aggregations[i].Temporality = temp
+						break
+					}
 				}
 			}
 			if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
-				if foundMetricType, ok := metricTypes[spec.Aggregations[i].MetricName]; ok && foundMetricType != metrictypes.UnspecifiedType {
-					spec.Aggregations[i].Type = foundMetricType
+				for _, member := range querybuilder.FamilyMetricNames(ctx, orgID, q.fl, spec.Aggregations[i].MetricName) {
+					if foundMetricType, ok := metricTypes[member]; ok && foundMetricType != metrictypes.UnspecifiedType {
+						spec.Aggregations[i].Type = foundMetricType
+						break
+					}
 				}
 			}
 			if spec.Aggregations[i].Type == metrictypes.UnspecifiedType {

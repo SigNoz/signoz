@@ -435,6 +435,7 @@ func (m *module) buildFilterClause(ctx context.Context, orgID valuer.UUID, filte
 		whereClauseSelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 	}
 
+	whereClauseSelectors = querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, m.fl, whereClauseSelectors)
 	keys, _, err := m.telemetryMetadataStore.GetKeysMulti(ctx, orgID, whereClauseSelectors)
 	if err != nil {
 		return nil, err
