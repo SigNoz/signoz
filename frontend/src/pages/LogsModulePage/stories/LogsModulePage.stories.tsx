@@ -1,4 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import {
+	blurFilter,
+	openKeySuggestions,
+	showFilterErrors,
+	typeFilter,
+	typeFilterWithCaretBack,
+	findSuggestion,
+} from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/querySearch.play';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -206,6 +214,141 @@ export const Tooltips: Story = {
 		await openFirstLog(canvasElement);
 		await userEvent.click(
 			await screen.findByTestId('log-details-header-next', undefined, untilLoaded),
+		);
+	},
+};
+
+/** The filter focused before anything is typed: every key the logs carry. */
+export const FilterKeySuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openKeySuggestions(canvasElement, 'severity_text');
+	},
+};
+
+/** A partial key, with the keys that still match and the typed part marked. */
+export const FilterPartialKey: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'serv');
+		await findSuggestion(canvasElement, 'service.name');
+	},
+};
+
+/** A string key followed by a space: the operators a string compares with. */
+export const FilterOperatorSuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'service.name ');
+		await findSuggestion(canvasElement, 'CONTAINS');
+	},
+};
+
+/** A number key puts the range comparisons first. */
+export const FilterNumberOperatorSuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'http.status_code ');
+		await findSuggestion(canvasElement, 'BETWEEN');
+	},
+};
+
+/** `NOT` after a key narrows the list to the operators it can negate. */
+export const FilterNegatedOperatorSuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'service.name NOT ');
+		await findSuggestion(canvasElement, 'IN');
+	},
+};
+
+/** A key and an operator: the values the key holds, fetched for it. */
+export const FilterValueSuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'service.name = ');
+		await findSuggestion(canvasElement, 'checkout');
+	},
+};
+
+/** Values still being fetched for the key. */
+export const FilterValuesLoading: Story = {
+	args: { filterValues: 'loading' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'service.name = ');
+		await findSuggestion(canvasElement, 'Loading suggestions');
+	},
+};
+
+/** A key the backend holds no values for, such as the free-text body. */
+export const FilterNoValueSuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'body = ');
+		await findSuggestion(canvasElement, 'No suggestions available');
+	},
+};
+
+/** The values request failed. */
+export const FilterValuesError: Story = {
+	args: { filterValues: 'error' },
+	// The values request deliberately fails.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'service.name = ');
+		await findSuggestion(canvasElement, 'Error loading suggestions');
+	},
+};
+
+/** Inside an `IN` list, after the first value: the rest of the values. */
+export const FilterInList: Story = {
+	// The editor logs a TypeError while the list is open, which it survives.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilterWithCaretBack(
+			canvasElement,
+			"service.name IN ['auth', ]",
+			1,
+			'checkout',
+		);
+	},
+};
+
+/** A complete condition: the conjunctions that start the next one. */
+export const FilterConjunctionSuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, "service.name = 'checkout' ");
+		await findSuggestion(canvasElement, 'OR');
+	},
+};
+
+/** Inside an opened group: keys, another group and `NOT`. */
+export const FilterNestedGroup: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilterWithCaretBack(canvasElement, '()', 1, 'NOT');
+	},
+};
+
+/** A long valid expression mixing operators, left for the next run. */
+export const FilterComplete: Story = {
+	// The editor logs a TypeError while the `IN` list is typed, which it survives.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(
+			canvasElement,
+			"service.name IN ['checkout', 'payments'] AND severity_text = 'ERROR' AND http.status_code >= 500 AND body CONTAINS 'timeout'",
+		);
+		await blurFilter(canvasElement);
+	},
+};
+
+/** An incomplete expression after focus left: the marker and its errors. */
+export const FilterSyntaxError: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await showFilterErrors(canvasElement, 'service.name = ');
+	},
+};
+
+/** Filters run before, offered above the key suggestions. */
+export const FilterRecentSearches: Story = {
+	args: { recentFilters: 3 },
+	play: async ({ canvasElement }): Promise<void> => {
+		await openKeySuggestions(
+			canvasElement,
+			"k8s.namespace.name = 'observability'",
 		);
 	},
 };

@@ -15,7 +15,10 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
-import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
+import {
+	fieldKeysResponse,
+	fieldValuesResponse,
+} from '@/storybook/msw/__story_mockdata__/fields';
 import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 import {
@@ -31,6 +34,7 @@ import {
 import {
 	emptyPanelResponse,
 	NAMESPACE_VALUES,
+	VARIABLE_ATTRIBUTES,
 	panelResponse,
 	serviceVariableValues,
 } from './__story_mockdata__/panelData';
@@ -236,6 +240,12 @@ export const dashboardMocks = defineStoryMocks({
 			rest.get(
 				'http://localhost/api/v1/fields/values',
 				response.json(() => fieldValuesResponse(NAMESPACE_VALUES)),
+			),
+
+			// The dynamic variable editor lists the attributes a variable can read.
+			rest.get(
+				'http://localhost/api/v1/fields/keys',
+				response.json(() => fieldKeysResponse(VARIABLE_ATTRIBUTES)),
 			),
 
 			// The header reads the public link on every load, so it answers even while

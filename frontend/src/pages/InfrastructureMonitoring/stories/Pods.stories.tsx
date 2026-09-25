@@ -1,4 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import {
+	findSuggestion,
+	openKeySuggestions,
+	typeFilter,
+} from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/querySearch.play';
 import { screen, userEvent, within } from 'storybook/test';
 import { VIEWS } from 'container/InfraMonitoringK8sV2/constants';
 
@@ -52,7 +57,7 @@ export const DetailsDrawerLogsTab: StoryObj<PodsArgs> = {
 		await userEvent.click(
 			await drawer.findByText('Logs', {}, { timeout: 10000 }),
 		);
-		await drawer.findByRole('button', { name: /logs explorer/i });
+		await drawer.findAllByText(/handled request in/, {}, { timeout: 10000 });
 	},
 };
 
@@ -99,5 +104,20 @@ export const TooltipsInOptionsPanel: StoryObj<PodsArgs> = {
 		);
 
 		await screen.findByText('Columns');
+	},
+};
+
+/** The pod filter focused: the Kubernetes keys pods can be narrowed by. */
+export const FilterKeySuggestions: StoryObj<PodsArgs> = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openKeySuggestions(canvasElement, 'k8s.node.name');
+	},
+};
+
+/** The pod filter on a namespace: the namespaces the pods run in. */
+export const FilterValueSuggestions: StoryObj<PodsArgs> = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'k8s.namespace.name = ');
+		await findSuggestion(canvasElement, 'kube-system');
 	},
 };

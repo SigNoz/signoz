@@ -1,4 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import {
+	findSuggestion,
+	openKeySuggestions,
+	typeFilter,
+} from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/querySearch.play';
 import { screen, userEvent } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -112,5 +117,20 @@ export const MetricDetailsDashboardsMenu: Story = {
 			),
 		);
 		await screen.findByRole('menu');
+	},
+};
+
+/** The summary's metric search focused: the attributes metrics can be found by. */
+export const FilterKeySuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openKeySuggestions(canvasElement, 'k8s.cluster.name');
+	},
+};
+
+/** The metric search on an attribute and an operator: the values it holds. */
+export const FilterValueSuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'service.name = ');
+		await findSuggestion(canvasElement, 'checkout');
 	},
 };
