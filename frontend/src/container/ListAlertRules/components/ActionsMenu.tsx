@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -23,14 +23,9 @@ import { ALERT_ACTIONS, alertActionLogEvent } from '../utils';
 interface ActionsMenuProps {
 	rule: AlertRule;
 	onEdit: (rule: AlertRule, options?: { newTab?: boolean }) => void;
-	isLoading?: boolean;
 }
 
-function ActionsMenu({
-	rule,
-	onEdit,
-	isLoading: externalLoading = false,
-}: ActionsMenuProps): JSX.Element {
+function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	const queryClient = useQueryClient();
 
 	const handleToggle = useCallback((): void => {
@@ -76,6 +71,7 @@ function ActionsMenu({
 				if (newRule) {
 					onEdit(newRule as AlertRule);
 				}
+				return newRule;
 			}),
 			{
 				loading: 'Cloning alert...',
@@ -111,44 +107,43 @@ function ActionsMenu({
 		);
 	}, [rule, queryClient]);
 
-	const menuItems = useMemo(
+	const menuItems = useMemo<DropdownItemType[]>(
 		() => [
 			{
-				key: 'toggle',
+				type: 'item',
+				value: 'toggle',
 				label: rule.disabled ? 'Enable' : 'Disable',
-				disabled: externalLoading,
 				onClick: handleToggle,
 			},
 			{
-				key: 'edit',
+				type: 'item',
+				value: 'edit',
 				label: 'Edit',
-				disabled: externalLoading,
 				onClick: handleEdit,
 			},
 			{
-				key: 'edit-new-tab',
+				type: 'item',
+				value: 'edit-new-tab',
 				label: 'Edit in New Tab',
-				disabled: externalLoading,
 				onClick: handleEditNewTab,
 			},
 			{
-				key: 'clone',
+				type: 'item',
+				value: 'clone',
 				label: 'Clone',
-				disabled: externalLoading,
 				onClick: handleClone,
 			},
-			{ key: 'divider', type: 'divider' as const },
+			{ type: 'separator', value: 'before-delete' },
 			{
-				key: 'delete',
+				type: 'item',
+				value: 'delete',
 				label: 'Delete',
-				disabled: externalLoading,
 				danger: true,
 				onClick: handleDelete,
 			},
 		],
 		[
 			rule.disabled,
-			externalLoading,
 			handleToggle,
 			handleEdit,
 			handleEditNewTab,
@@ -164,7 +159,7 @@ function ActionsMenu({
 	return (
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 		<div onClick={handleClick}>
-			<DropdownMenuSimple menu={{ items: menuItems }} align="end">
+			<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 				<Button
 					aria-label="Action"
 					variant="outlined"
@@ -175,7 +170,7 @@ function ActionsMenu({
 				>
 					<Ellipsis size={16} />
 				</Button>
-			</DropdownMenuSimple>
+			</Dropdown>
 		</div>
 	);
 }

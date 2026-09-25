@@ -2,10 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import {
-	DropdownMenuSimple,
-	type MenuItem,
-} from 'components/DropdownMenu/DropdownMenuSimple';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Input } from '@signozhq/ui/input';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
 import { invalidateListServiceAccounts } from 'api/generated/services/serviceaccount';
@@ -139,9 +136,10 @@ function ServiceAccountsSettings(): JSX.Element {
 
 	const totalCount = allAccounts.length;
 
-	const filterMenuItems: MenuItem[] = [
+	const filterMenuItems: DropdownItemType[] = [
 		{
-			key: FilterMode.All,
+			type: 'item',
+			value: FilterMode.All,
 			label: (
 				<div className="sa-settings-filter-option">
 					<span>All accounts ⎯ {totalCount}</span>
@@ -154,7 +152,8 @@ function ServiceAccountsSettings(): JSX.Element {
 			},
 		},
 		{
-			key: FilterMode.Active,
+			type: 'item',
+			value: FilterMode.Active,
 			label: (
 				<div className="sa-settings-filter-option">
 					<span>Active ⎯ {activeCount}</span>
@@ -167,7 +166,8 @@ function ServiceAccountsSettings(): JSX.Element {
 			},
 		},
 		{
-			key: FilterMode.Deleted,
+			type: 'item',
+			value: FilterMode.Deleted,
 			label: (
 				<div className="sa-settings-filter-option">
 					<span>Deleted ⎯ {deletedCount}</span>
@@ -233,7 +233,7 @@ function ServiceAccountsSettings(): JSX.Element {
 				<div className="sa-settings__controls">
 					<AuthZTooltip checks={[SAListPermission]}>
 						<span>
-							<DropdownMenuSimple menu={{ items: filterMenuItems }}>
+							<Dropdown items={filterMenuItems} nativeButton align="end" side="bottom">
 								<Button
 									size="md"
 									variant="solid"
@@ -250,7 +250,7 @@ function ServiceAccountsSettings(): JSX.Element {
 								>
 									<span>{filterLabel}</span>
 								</Button>
-							</DropdownMenuSimple>
+							</Dropdown>
 						</span>
 					</AuthZTooltip>
 

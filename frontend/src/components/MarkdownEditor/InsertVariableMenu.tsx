@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown, DollarSign } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import {
-	DropdownMenuSimple,
-	type MenuItem,
-} from 'components/DropdownMenu/DropdownMenuSimple';
+import { Dropdown, type DropdownActionItemType } from '@signozhq/ui/dropdown';
 
 import { READ_ONLY_TOOLTIP } from './constants';
 import type { EditorVariable } from './types';
@@ -21,9 +18,10 @@ interface InsertVariableMenuProps {
 function toMenuItems(
 	variables: EditorVariable[],
 	onSelect: (name: string) => void,
-): MenuItem[] {
+): DropdownActionItemType[] {
 	return variables.map((variable) => ({
-		key: variable.name,
+		type: 'item',
+		value: variable.name,
 		label: (
 			<span
 				className={styles.variableRow}
@@ -64,16 +62,17 @@ function InsertVariableMenu({
 	}
 
 	return (
-		<DropdownMenuSimple
+		<Dropdown
+			items={items}
+			nativeButton
+			align="end"
+			side="bottom"
 			contentMaxWidth={320}
 			disabled={disabled}
 			disabledTooltip={READ_ONLY_TOOLTIP}
-			menu={{
-				items,
-				search: {
-					placeholder: 'Search variables',
-					onSearchChange: setSearch,
-				},
+			searchInputProps={{
+				placeholder: 'Search variables',
+				onChange: setSearch,
 			}}
 		>
 			<Button
@@ -87,7 +86,7 @@ function InsertVariableMenu({
 			>
 				Insert variable
 			</Button>
-		</DropdownMenuSimple>
+		</Dropdown>
 	);
 }
 

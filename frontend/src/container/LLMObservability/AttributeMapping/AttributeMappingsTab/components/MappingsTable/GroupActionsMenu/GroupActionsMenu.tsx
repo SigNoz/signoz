@@ -1,10 +1,7 @@
 import { useMemo } from 'react';
 import { EllipsisVertical, Pencil, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import {
-	DropdownMenuSimple,
-	type MenuItem,
-} from 'components/DropdownMenu/DropdownMenuSimple';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 
 import type { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
 
@@ -19,19 +16,21 @@ function GroupActionsMenu({
 	onEdit,
 	onRemove,
 }: GroupActionsMenuProps): JSX.Element {
-	const menuItems = useMemo<MenuItem[]>(
+	const menuItems = useMemo<DropdownItemType[]>(
 		() => [
 			{
-				key: 'edit',
+				type: 'item',
+				value: 'edit',
 				label: 'Edit',
-				icon: <Pencil size={14} />,
+				prefix: <Pencil size={14} />,
 				onClick: (): void => onEdit(group),
 			},
 			{
-				key: 'delete',
+				type: 'item',
+				value: 'delete',
 				label: 'Delete',
 				danger: true,
-				icon: <Trash2 size={14} />,
+				prefix: <Trash2 size={14} />,
 				onClick: (): void => onRemove(group.localId),
 			},
 		],
@@ -39,7 +38,7 @@ function GroupActionsMenu({
 	);
 
 	return (
-		<DropdownMenuSimple menu={{ items: menuItems }} align="end">
+		<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 			<Button
 				variant="ghost"
 				color="secondary"
@@ -50,7 +49,7 @@ function GroupActionsMenu({
 			>
 				<EllipsisVertical size={16} />
 			</Button>
-		</DropdownMenuSimple>
+		</Dropdown>
 	);
 }
 

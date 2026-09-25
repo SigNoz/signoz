@@ -5,10 +5,7 @@ import type {
 	TableColumnType as ColumnType,
 } from 'antd';
 import { Button, Flex } from 'antd';
-import {
-	DropdownMenuSimple,
-	type MenuItem,
-} from 'components/DropdownMenu/DropdownMenuSimple';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
@@ -87,9 +84,10 @@ function DynamicColumnTable({
 			);
 		};
 
-	const items: MenuItem[] =
+	const items: DropdownItemType[] =
 		dynamicColumns?.map((column, index) => ({
-			key: String(index),
+			type: 'item',
+			value: String(index),
 			label: (
 				<div
 					className="dynamicColumnsTable-items"
@@ -133,14 +131,14 @@ function DynamicColumnTable({
 			<Flex justify="flex-end" align="center" gap={8}>
 				{facingIssueBtn && <LaunchChatSupport {...facingIssueBtn} />}
 				{dynamicColumns && (
-					<DropdownMenuSimple menu={{ items }}>
+					<Dropdown items={items} nativeButton align="end" side="bottom">
 						<Button
 							className="dynamicColumnTable-button filter-btn"
 							size="middle"
 							icon={<SlidersHorizontal size={14} />}
 							data-testid="additional-filters-button"
 						/>
-					</DropdownMenuSimple>
+					</Dropdown>
 				)}
 			</Flex>
 

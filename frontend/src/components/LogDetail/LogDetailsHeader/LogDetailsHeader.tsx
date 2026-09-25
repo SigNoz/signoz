@@ -1,6 +1,6 @@
 import { Button } from '@signozhq/ui/button';
 import { Divider } from '@signozhq/ui/divider';
-import { DropdownMenuSimple as Dropdown } from 'components/DropdownMenu/DropdownMenuSimple';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Typography } from '@signozhq/ui/typography';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -51,17 +51,19 @@ function LogDetailsHeader({
 		toast.success('Copied to clipboard', { position: 'bottom-right' });
 	};
 
-	const menuItems = [
+	const menuItems: DropdownItemType[] = [
 		{
-			key: 'copy-log',
+			type: 'item',
+			value: 'copy-log',
 			label: 'Copy log',
-			icon: <Copy size={14} />,
+			prefix: <Copy size={14} />,
 			onClick: handleCopyLog,
 		},
 		{
-			key: 'copy-link',
+			type: 'item',
+			value: 'copy-link',
 			label: 'Copy link to log',
-			icon: <Link size={14} />,
+			prefix: <Link size={14} />,
 			onClick: (): void => onLogCopy(),
 		},
 	];
@@ -99,7 +101,7 @@ function LogDetailsHeader({
 					</Button>
 				)}
 
-				<Dropdown menu={{ items: menuItems }} align="end">
+				<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 					<Button
 						size="md"
 						variant="link"

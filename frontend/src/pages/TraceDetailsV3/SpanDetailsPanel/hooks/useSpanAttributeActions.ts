@@ -22,7 +22,7 @@ import { v4 as uuid } from 'uuid';
 export interface SpanAttributeAction {
 	label: string;
 	value: string;
-	icon?: React.ReactNode;
+	icon?: React.ReactElement;
 	disabled?: boolean;
 	hidden?: boolean;
 	callback: (args: { key: string; value: string; dataType?: string }) => void;

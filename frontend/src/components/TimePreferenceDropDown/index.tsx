@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { ChevronDown, Globe } from '@signozhq/icons';
-import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import TimeItems, {
@@ -17,8 +17,8 @@ function TimePreference({
 	selectedTime,
 }: TimePreferenceDropDownProps): JSX.Element {
 	const timeMenuItemOnChangeHandler = useCallback(
-		(event: TimeMenuItemOnChangeHandlerEvent) => {
-			const selectedTime = TimeItems.find((e) => e.enum === event.key);
+		(key: timePreferenceType) => {
+			const selectedTime = TimeItems.find((e) => e.enum === key);
 			if (selectedTime !== undefined) {
 				setSelectedTime(selectedTime);
 			}
@@ -26,18 +26,18 @@ function TimePreference({
 		[setSelectedTime],
 	);
 
-	const menu = useMemo(
-		() => ({
-			items: menuItems.map((item) => ({
+	const items = useMemo<DropdownItemType[]>(
+		() =>
+			menuItems.map((item) => ({
 				...item,
-				onClick: timeMenuItemOnChangeHandler,
+				type: 'item',
+				onClick: (): void => timeMenuItemOnChangeHandler(item.value),
 			})),
-		}),
 		[timeMenuItemOnChangeHandler],
 	);
 
 	return (
-		<DropdownMenuSimple menu={menu}>
+		<Dropdown items={items} nativeButton align="end" side="bottom">
 			<Button className="time-selection-target">
 				<div className="button-selected-text">
 					<Globe size={14} />
@@ -47,12 +47,8 @@ function TimePreference({
 				</div>
 				<ChevronDown size="md" />
 			</Button>
-		</DropdownMenuSimple>
+		</Dropdown>
 	);
-}
-
-interface TimeMenuItemOnChangeHandlerEvent {
-	key: timePreferenceType | string;
 }
 
 interface TimePreferenceDropDownProps {

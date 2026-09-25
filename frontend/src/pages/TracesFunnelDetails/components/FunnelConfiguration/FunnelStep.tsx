@@ -1,9 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Button, Form, Space, Tooltip } from 'antd';
-import {
-	DropdownMenuSimple,
-	type MenuItem,
-} from 'components/DropdownMenu/DropdownMenuSimple';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Divider } from '@signozhq/ui/divider';
 import { Switch } from '@signozhq/ui/switch';
 import cx from 'classnames';
@@ -41,19 +38,18 @@ function FunnelStep({
 	const [isAddDetailsModalOpen, setIsAddDetailsModalOpen] =
 		useState<boolean>(false);
 
-	const latencyPointerItems: MenuItem[] = [
+	const latencyPointerItems: DropdownItemType[] = [
 		{
 			type: 'radio-group',
+			name: 'latency-pointer',
 			value: stepData.latency_pointer,
 			onChange: (value): void =>
 				onStepChange(index, {
 					latency_pointer: value as FunnelStepData['latency_pointer'],
 				}),
-			children: LatencyPointers.map((option) => ({
-				type: 'radio',
-				key: option.value,
-				label: option.key,
+			items: LatencyPointers.map((option) => ({
 				value: option.value,
+				label: option.key,
 			})),
 		},
 	];
@@ -217,7 +213,12 @@ function FunnelStep({
 					<div className="latency-pointer">
 						<div className="latency-pointer__label">Latency pointer</div>
 						{hasEditPermission ? (
-							<DropdownMenuSimple menu={{ items: latencyPointerItems }}>
+							<Dropdown
+								items={latencyPointerItems}
+								nativeButton={false}
+								align="end"
+								side="bottom"
+							>
 								<Space data-testid={`funnel-step-latency-pointer-${index}`}>
 									{
 										LatencyPointers.find(
@@ -226,7 +227,7 @@ function FunnelStep({
 									}
 									<ChevronDown size={14} color="var(--bg-vanilla-400)" />
 								</Space>
-							</DropdownMenuSimple>
+							</Dropdown>
 						) : (
 							<Space>
 								{
