@@ -7,8 +7,17 @@ import { rest } from 'msw';
 import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
-import { countControl, toggleControl } from '@/storybook/controls/controls';
+import {
+	choiceControl,
+	countControl,
+	toggleControl,
+} from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import {
+	RESPONSE_STATES,
+	type ResponseState,
+	respondWith,
+} from '@/storybook/runtime/responseState';
 import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
 
 import {
@@ -41,6 +50,13 @@ export const exceptionsMocks = defineStoryMocks({
 				'Filters the org has configured for exceptions. At 0 the panel has nothing to render, which is what a workspace that never customised them shows.',
 			value: 6,
 			max: EXCEPTION_QUICK_FILTER_CAP,
+		}),
+		filterKeys: choiceControl<ResponseState>('Filter keys', {
+			group: FILTERS,
+			description:
+				'How `/autocomplete/attribute_keys` answers when the resource filter opens, apart from the page-wide Data control.',
+			options: RESPONSE_STATES,
+			value: 'loaded',
 		}),
 		filterPanel: toggleControl('Quick filters panel', {
 			group: FILTERS,
@@ -92,7 +108,7 @@ export const exceptionsMocks = defineStoryMocks({
 
 		rest.get(
 			'http://localhost/api/v3/autocomplete/attribute_keys',
-			response.json((req) =>
+			respondWith(values.filterKeys, (req) =>
 				exceptionAttributeKeysResponse(req.url.searchParams.get('searchText')),
 			),
 		),
