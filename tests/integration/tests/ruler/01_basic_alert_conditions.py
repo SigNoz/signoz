@@ -21,12 +21,12 @@ from fixtures.logger import setup_logger
 TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     types.AlertTestCase(
         name="test_threshold_above_at_least_once",
-        rule_path="alerts/test_scenarios/threshold_above_at_least_once/rule.json",
+        rule_path="ruler/test_scenarios/threshold_above_at_least_once/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
                 # active requests dummy data
-                data_path="alerts/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -44,11 +44,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_above_all_the_time",
-        rule_path="alerts/test_scenarios/threshold_above_all_the_time/rule.json",
+        rule_path="ruler/test_scenarios/threshold_above_all_the_time/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_above_all_the_time/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_above_all_the_time/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -66,11 +66,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_above_in_total",
-        rule_path="alerts/test_scenarios/threshold_above_in_total/rule.json",
+        rule_path="ruler/test_scenarios/threshold_above_in_total/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_above_in_total/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_above_in_total/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -96,11 +96,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_above_average",
-        rule_path="alerts/test_scenarios/threshold_above_average/rule.json",
+        rule_path="ruler/test_scenarios/threshold_above_average/rule.json",
         alert_data=[
             types.AlertData(
                 type="traces",
-                data_path="alerts/test_scenarios/threshold_above_average/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_above_average/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -118,11 +118,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_above_last",
-        rule_path="alerts/test_scenarios/threshold_above_last/rule.json",
+        rule_path="ruler/test_scenarios/threshold_above_last/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_above_last/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_above_last/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -140,11 +140,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_below_at_least_once",
-        rule_path="alerts/test_scenarios/threshold_below_at_least_once/rule.json",
+        rule_path="ruler/test_scenarios/threshold_below_at_least_once/rule.json",
         alert_data=[
             types.AlertData(
                 type="logs",
-                data_path="alerts/test_scenarios/threshold_below_at_least_once/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_below_at_least_once/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -162,11 +162,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_below_all_the_time",
-        rule_path="alerts/test_scenarios/threshold_below_all_the_time/rule.json",
+        rule_path="ruler/test_scenarios/threshold_below_all_the_time/rule.json",
         alert_data=[
             types.AlertData(
                 type="logs",
-                data_path="alerts/test_scenarios/threshold_below_all_the_time/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_below_all_the_time/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -184,12 +184,12 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_below_in_total",
-        rule_path="alerts/test_scenarios/threshold_below_in_total/rule.json",
+        rule_path="ruler/test_scenarios/threshold_below_in_total/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
                 # one rate ~5 + rest 0.01 so it remains in total below 10
-                data_path="alerts/test_scenarios/threshold_below_in_total/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_below_in_total/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -207,11 +207,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_below_average",
-        rule_path="alerts/test_scenarios/threshold_below_average/rule.json",
+        rule_path="ruler/test_scenarios/threshold_below_average/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_below_average/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_below_average/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -229,11 +229,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_below_last",
-        rule_path="alerts/test_scenarios/threshold_below_last/rule.json",
+        rule_path="ruler/test_scenarios/threshold_below_last/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_below_last/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_below_last/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -251,11 +251,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_equal_to_at_least_once",
-        rule_path="alerts/test_scenarios/threshold_equal_to_at_least_once/rule.json",
+        rule_path="ruler/test_scenarios/threshold_equal_to_at_least_once/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_equal_to_at_least_once/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_equal_to_at_least_once/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -273,11 +273,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_equal_to_all_the_time",
-        rule_path="alerts/test_scenarios/threshold_equal_to_all_the_time/rule.json",
+        rule_path="ruler/test_scenarios/threshold_equal_to_all_the_time/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_equal_to_all_the_time/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_equal_to_all_the_time/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -295,11 +295,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_equal_to_in_total",
-        rule_path="alerts/test_scenarios/threshold_equal_to_in_total/rule.json",
+        rule_path="ruler/test_scenarios/threshold_equal_to_in_total/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_equal_to_in_total/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_equal_to_in_total/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -317,11 +317,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_equal_to_average",
-        rule_path="alerts/test_scenarios/threshold_equal_to_average/rule.json",
+        rule_path="ruler/test_scenarios/threshold_equal_to_average/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_equal_to_average/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_equal_to_average/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -339,11 +339,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_equal_to_last",
-        rule_path="alerts/test_scenarios/threshold_equal_to_last/rule.json",
+        rule_path="ruler/test_scenarios/threshold_equal_to_last/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_equal_to_last/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_equal_to_last/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -361,11 +361,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_not_equal_to_at_least_once",
-        rule_path="alerts/test_scenarios/threshold_not_equal_to_at_least_once/rule.json",
+        rule_path="ruler/test_scenarios/threshold_not_equal_to_at_least_once/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_not_equal_to_at_least_once/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_not_equal_to_at_least_once/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -383,11 +383,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_not_equal_to_all_the_time",
-        rule_path="alerts/test_scenarios/threshold_not_equal_to_all_the_time/rule.json",
+        rule_path="ruler/test_scenarios/threshold_not_equal_to_all_the_time/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_not_equal_to_all_the_time/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_not_equal_to_all_the_time/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -405,11 +405,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_not_equal_to_in_total",
-        rule_path="alerts/test_scenarios/threshold_not_equal_to_in_total/rule.json",
+        rule_path="ruler/test_scenarios/threshold_not_equal_to_in_total/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_not_equal_to_in_total/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_not_equal_to_in_total/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -427,11 +427,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_not_equal_to_average",
-        rule_path="alerts/test_scenarios/threshold_not_equal_to_average/rule.json",
+        rule_path="ruler/test_scenarios/threshold_not_equal_to_average/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_not_equal_to_average/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_not_equal_to_average/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -449,11 +449,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
     ),
     types.AlertTestCase(
         name="test_threshold_not_equal_to_last",
-        rule_path="alerts/test_scenarios/threshold_not_equal_to_last/rule.json",
+        rule_path="ruler/test_scenarios/threshold_not_equal_to_last/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/threshold_not_equal_to_last/alert_data.jsonl",
+                data_path="ruler/test_scenarios/threshold_not_equal_to_last/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -475,11 +475,11 @@ TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS = [
 TEST_RULES_UNIT_CONVERSION = [
     types.AlertTestCase(
         name="test_unit_conversion_bytes_to_mb",
-        rule_path="alerts/test_scenarios/unit_conversion_bytes_to_mb/rule.json",
+        rule_path="ruler/test_scenarios/unit_conversion_bytes_to_mb/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/unit_conversion_bytes_to_mb/alert_data.jsonl",
+                data_path="ruler/test_scenarios/unit_conversion_bytes_to_mb/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -497,11 +497,11 @@ TEST_RULES_UNIT_CONVERSION = [
     ),
     types.AlertTestCase(
         name="test_unit_conversion_ms_to_second",
-        rule_path="alerts/test_scenarios/unit_conversion_ms_to_second/rule.json",
+        rule_path="ruler/test_scenarios/unit_conversion_ms_to_second/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/unit_conversion_ms_to_second/alert_data.jsonl",
+                data_path="ruler/test_scenarios/unit_conversion_ms_to_second/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -523,11 +523,11 @@ TEST_RULES_UNIT_CONVERSION = [
 TEST_RULES_MISCELLANEOUS = [
     types.AlertTestCase(
         name="test_no_data_rule_test",
-        rule_path="alerts/test_scenarios/no_data_rule_test/rule.json",
+        rule_path="ruler/test_scenarios/no_data_rule_test/rule.json",
         alert_data=[
             types.AlertData(
                 type="metrics",
-                data_path="alerts/test_scenarios/no_data_rule_test/alert_data.jsonl",
+                data_path="ruler/test_scenarios/no_data_rule_test/alert_data.jsonl",
             ),
         ],
         alert_expectation=types.AlertExpectation(
@@ -547,11 +547,11 @@ TEST_RULES_MISCELLANEOUS = [
     # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3934) with alertManager is resolved
     # types.AlertTestCase(
     #     name="test_multi_threshold_rule_test",
-    #     rule_path="alerts/test_scenarios/multi_threshold_rule_test/rule.json",
+    #     rule_path="ruler/test_scenarios/multi_threshold_rule_test/rule.json",
     #     alert_data=[
     #         types.AlertData(
     #             type="metrics",
-    #             data_path="alerts/test_scenarios/multi_threshold_rule_test/alert_data.jsonl",
+    #             data_path="ruler/test_scenarios/multi_threshold_rule_test/alert_data.jsonl",
     #         ),
     #     ],
     #     alert_expectation=types.AlertExpectation(
