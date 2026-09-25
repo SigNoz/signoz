@@ -1,13 +1,24 @@
 .traces-funnel-details {
 	display: flex;
-	// 45px -> height of the tab bar
-	height: calc(100vh - 45px);
+	height: 100%;
 
 	&__steps-config {
 		flex-shrink: 0;
 		width: 600px;
 		border-right: 1px solid var(--l1-border);
+		// Positioning context for the absolute .steps-footer.
 		position: relative;
+		display: flex;
+		flex-direction: column;
+
+		// Scoped here so the modal usage of FunnelConfiguration on trace details
+		// stays in normal flow.
+		.funnel-configuration {
+			flex: 1;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+		}
 	}
 	&__steps-results {
 		width: 100%;
