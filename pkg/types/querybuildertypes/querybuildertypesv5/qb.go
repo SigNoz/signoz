@@ -39,14 +39,16 @@ var (
 // QueryInfo is the query's context as one value. It holds the time range
 // every read needs, the signal and queried metric that family admission
 // needs, and the query-path flags evaluated one time per request. The
-// generic flows read FamiliesOn. Only the logs storage reads BodyJSONOn.
+// generic flows read FamiliesOn. Only the logs storage reads BodyJSONOn, and
+// only the traces storage reads TraceAttrsJSONOn.
 type QueryInfo struct {
-	StartNs    uint64
-	EndNs      uint64
-	Signal     telemetrytypes.Signal
-	Metric     *telemetrytypes.MetricContext
-	FamiliesOn bool
-	BodyJSONOn bool
+	StartNs          uint64
+	EndNs            uint64
+	Signal           telemetrytypes.Signal
+	Metric           *telemetrytypes.MetricContext
+	FamiliesOn       bool
+	BodyJSONOn       bool
+	TraceAttrsJSONOn bool
 }
 
 // Absent is how a field key reads for a row that does not carry it, with

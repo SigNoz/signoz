@@ -11,6 +11,7 @@ var (
 	FeatureUseJSONBody            = featuretypes.MustNewName("use_json_body")
 	FeatureEnableMetricsReduction = featuretypes.MustNewName("enable_metrics_reduction")
 	FeatureResolveSemconvFamilies = featuretypes.MustNewName("resolve_semconv_families")
+	FeatureUseTraceAttributesJSON = featuretypes.MustNewName("use_trace_attributes_json")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -76,6 +77,14 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether trace queries resolve a semantic-convention name to all the spellings of its family",
+			DefaultVariant: featuretypes.MustNewName("disabled"),
+			Variants:       featuretypes.NewBooleanVariants(),
+		},
+		&featuretypes.Feature{
+			Name:           FeatureUseTraceAttributesJSON,
+			Kind:           featuretypes.KindBoolean,
+			Stage:          featuretypes.StageExperimental,
+			Description:    "Controls whether trace queries read span attributes from the JSON columns",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
