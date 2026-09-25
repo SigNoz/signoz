@@ -249,7 +249,8 @@ func relatedButtons(alert *types.Alert) []button {
 		}
 	}
 	add("View Related Logs", string(alert.Annotations[ruletypes.AnnotationRelatedLogs]))
-	add("View Related Traces", string(alert.Annotations[ruletypes.AnnotationRelatedTraces]))
+	traces := string(alert.Annotations[ruletypes.AnnotationRelatedTraces])
+	add(ruletypes.RelatedTracesLabel(traces), traces)
 	return buttons
 }
 

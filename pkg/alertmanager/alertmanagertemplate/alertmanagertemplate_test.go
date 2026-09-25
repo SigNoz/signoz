@@ -131,7 +131,7 @@ Description: Request rate exceeded 10k/s`},
      *Summary:* {{ .Annotations.summary }}
      *Description:* {{ .Annotations.description }}
      *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}
-     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}}{{ if match "^https?://[^/]+/ai-observability/" .Annotations.related_traces -}} View in <{{ .Annotations.related_traces }}|ai traces explorer> {{- else -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end }}{{- end}}
 
      *Details:*
        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
@@ -155,6 +155,31 @@ Description: Request rate exceeded 10k/s`},
 				"        • *severity:* critical\n" +
 				"       \n" +
 				"     "},
+			wantIsDefaultBody: true,
+		},
+		{
+			// AI trace alerts link to the ai-observability explorer; the default
+			// body template labels that link differently from a plain traces link.
+			name: "old template: ai traces link labelled ai traces explorer",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighLLMLatency", ruletypes.LabelSeverityName: "warning"},
+					map[string]string{
+						"summary":        "LLM latency high",
+						"description":    "p99 latency of LLM calls is high",
+						"related_traces": "https://signoz.example.com/ai-observability/explorer?startTime=1&endTime=2",
+					},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				DefaultTitleTemplate: `{{ .CommonLabels.alertname }}`,
+				DefaultBodyTemplate: `{{ range .Alerts -}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}}{{ if match "^https?://[^/]+/ai-observability/" .Annotations.related_traces -}} View in <{{ .Annotations.related_traces }}|ai traces explorer> {{- else -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end }}{{- end}}
+     {{ end }}`,
+			},
+			wantTitle:         "HighLLMLatency",
+			wantBody:          []string{"*RelatedTraces:* View in <https://signoz.example.com/ai-observability/explorer?startTime=1&endTime=2|ai traces explorer>\n     "},
 			wantIsDefaultBody: true,
 		},
 		{

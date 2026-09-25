@@ -214,3 +214,25 @@ func TestNotifyTruncatesLongDescription(t *testing.T) {
 	assert.LessOrEqual(t, len(desc), maxDescriptionLenRunes)
 	assert.Equal(t, '…', desc[len(desc)-1])
 }
+
+func TestNotifyRelatedTracesLabel(t *testing.T) {
+	testCases := []struct {
+		name string
+		link string
+		want string
+	}{
+		{name: "TracesExplorer", link: "https://signoz.example/traces-explorer?q=1", want: "[View related traces]"},
+		{name: "AITracesExplorer", link: "https://signoz.example/ai-observability/explorer?q=1", want: "[View related AI traces]"},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			m := newMockIncidentIO(t)
+			a := alert(true)
+			a.Annotations["related_traces"] = model.LabelValue(testCase.link)
+			_, err := newNotifier(t, m).Notify(ctx(), a)
+			require.NoError(t, err)
+
+			assert.Contains(t, m.lastEvent(t).Description, testCase.want+"("+testCase.link+")")
+		})
+	}
+}
