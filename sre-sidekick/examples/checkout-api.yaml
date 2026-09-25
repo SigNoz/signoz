@@ -1,0 +1,64 @@
+apiVersion: reliability/v1
+kind: TelemetryProfile
+
+metadata:
+  name: checkout-api
+  service: checkout-api
+  environment: production
+
+spec:
+  data_kind: backend
+  source:
+    adapter: signoz
+    endpoint: http://localhost:8080
+
+  signals:
+    traces:
+      root_span: http.server
+      fields:
+        - path: service.name
+          type: string
+          required: true
+        - path: http.request.method
+          type: string
+          required: true
+
+    metrics:
+      fields:
+        - path: http.server.request.count
+          type: counter
+          required: true
+        - path: http.server.request.duration
+          type: histogram
+          required: true
+
+    logs:
+      fields:
+        - path: severity
+          type: string
+          required: true
+        - path: trace_id
+          type: string
+          required: true
+
+  audit_rules:
+    - id: required-service-name
+      type: required_field
+      signal: traces
+      field: service.name
+      severity: blocker
+      recommendation: Set service.name in the OpenTelemetry resource.
+
+    - id: request-freshness
+      type: freshness
+      signal: metrics
+      field: http.server.request.count
+      max_age: 10m
+      severity: warning
+
+    - id: request-cardinality
+      type: cardinality
+      signal: metrics
+      field: http.request.method
+      max_distinct_values: 20
+      severity: warning
