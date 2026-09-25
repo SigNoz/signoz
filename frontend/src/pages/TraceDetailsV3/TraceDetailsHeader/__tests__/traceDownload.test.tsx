@@ -168,7 +168,7 @@ describe('trace download flow', () => {
 		// Reopen the menu mid-download: trigger is disabled by REAL store state.
 		await user.click(screen.getByRole('button', { name: /trace options/i }));
 		const trigger = await screen.findByTestId('download-trace-submenu');
-		expect(trigger).toHaveAttribute('data-disabled');
+		expect(trigger).toHaveAttribute('data-loading');
 
 		// Cleanup: stop the in-flight download so the module-scoped guard resets.
 		await user.click(screen.getByTestId('trace-download-cancel'));

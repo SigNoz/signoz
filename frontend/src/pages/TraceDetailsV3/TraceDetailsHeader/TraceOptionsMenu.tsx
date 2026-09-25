@@ -94,8 +94,8 @@ function TraceOptionsMenu({
 			value: 'download-trace',
 			label: 'Download trace',
 			testId: 'download-trace-submenu',
-			disabled: isDownloading,
-			disabledTooltip: undefined,
+			loading: isDownloading,
+			loadingTooltip: 'Downloading trace',
 			items: [
 				{
 					type: 'item',
