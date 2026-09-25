@@ -27,6 +27,18 @@ jest.mock(
 		useDashboardEditContext: (): typeof mockEditContext => mockEditContext,
 	}),
 );
+const mockDashboardFetch = {
+	dashboard: { id: 'dash-1', spec: { duration: '' } },
+	variables: [],
+	refetch: jest.fn(),
+};
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/hooks/useDashboardFetchRequired',
+	() => ({
+		useDashboardFetchRequired: (): typeof mockDashboardFetch =>
+			mockDashboardFetch,
+	}),
+);
 import { useScrollIntoViewStore } from '../../store/useScrollIntoViewStore';
 
 /**

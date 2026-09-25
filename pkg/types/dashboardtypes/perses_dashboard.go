@@ -286,6 +286,9 @@ func (p *PostableDashboardV2) Validate() error {
 	if err := p.validateImage(); err != nil {
 		return err
 	}
+	if err := p.Spec.validateDuration(); err != nil {
+		return err
+	}
 	return p.Spec.Validate()
 }
 
@@ -487,6 +490,9 @@ func (u *UpdatableDashboardV2) Validate() error {
 		return err
 	}
 	if err := u.validateImage(); err != nil {
+		return err
+	}
+	if err := u.Spec.validateDuration(); err != nil {
 		return err
 	}
 	return u.Spec.Validate()
