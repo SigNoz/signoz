@@ -23,7 +23,7 @@ func valueForIndexFilter(op qbtypes.FilterOperator, key *telemetrytypes.Telemetr
 		return values
 	default:
 		// format to string for anything else as we store resource values as string
-		if op == qbtypes.FilterOperatorEqual {
+		if op == qbtypes.FilterOperatorEqual || op == qbtypes.FilterOperatorNotEqual {
 			return fmt.Sprintf(`%%%s":"%s%%`, key.Name, querybuilder.FormatValueForContains(v))
 		}
 		return fmt.Sprintf(`%%%s%%%s%%`, key.Name, querybuilder.FormatValueForContains(v))
