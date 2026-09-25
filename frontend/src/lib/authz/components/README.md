@@ -82,7 +82,7 @@ import { SACreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/service
 
 ### AuthZDropdown
 
-`Dropdown` whose `item`, `link` and `submenu` rows take optional `checks`. A pending row shows as loading, a denied row is disabled with the denial tooltip. Checks run on first open. A row's own `disabled` or `loading` outranks its checks.
+`Dropdown` whose `item`, `link` and `submenu` rows take optional `checks`, at the top level or inside a `group`. A pending row shows as loading, a denied row is disabled with the denial tooltip. Checks run on first open. A row's own `disabled` or `loading` outranks its checks: spread `blockedBy(reason)` from `./AuthZDropdown/utils` for a non-permission block such as a lock.
 
 ```tsx
 <AuthZDropdown

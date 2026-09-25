@@ -16,6 +16,7 @@ import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
+import { blockedBy } from 'lib/authz/components/AuthZDropdown/utils';
 import { DashboardCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { getAbsoluteUrl } from 'utils/basePath';
@@ -38,14 +39,6 @@ interface Params {
 	onView: (event: React.MouseEvent) => void;
 	onOpenRename: () => void;
 	onOpenEditTags: () => void;
-}
-
-// A reason blocks the row; without one the row's checks decide.
-function blockedBy(reason: string): {
-	disabled: boolean;
-	disabledTooltip: string | undefined;
-} {
-	return { disabled: !!reason, disabledTooltip: reason || undefined };
 }
 
 export function useDashboardActionItems({

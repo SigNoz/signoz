@@ -1,5 +1,7 @@
 import type {
 	DropdownActionItemType,
+	DropdownGroupChildType,
+	DropdownGroupItemType,
 	DropdownItemType,
 	DropdownLinkItemType,
 	DropdownProps,
@@ -13,15 +15,23 @@ export type AuthZGateableItemType =
 	| DropdownLinkItemType
 	| DropdownSubmenuItemType;
 
+type AuthZGatedItemType = AuthZGateableItemType & {
+	/**
+	 * Permissions the row needs (AND semantics). A row's own `disabled` or
+	 * `loading` outranks them, and they are then skipped.
+	 */
+	checks?: BrandedPermission[];
+};
+
+/** What a group may hold, with `checks` on the gateable rows. */
+export type AuthZGroupChildType =
+	| AuthZGatedItemType
+	| Exclude<DropdownGroupChildType, AuthZGateableItemType>;
+
 export type AuthZDropdownItemType =
-	| (AuthZGateableItemType & {
-			/**
-			 * Permissions the row needs (AND semantics). A row's own `disabled` or
-			 * `loading` outranks them, and they are then skipped.
-			 */
-			checks?: BrandedPermission[];
-	  })
-	| Exclude<DropdownItemType, AuthZGateableItemType>;
+	| AuthZGatedItemType
+	| DropdownGroupItemType<AuthZGroupChildType>
+	| Exclude<DropdownItemType, AuthZGateableItemType | DropdownGroupItemType>;
 
 export type AuthZDropdownProps = Omit<DropdownProps, 'items'> & {
 	items: AuthZDropdownItemType[];

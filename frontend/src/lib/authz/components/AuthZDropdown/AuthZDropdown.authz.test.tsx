@@ -97,6 +97,34 @@ describe('AuthZDropdown', () => {
 		);
 	});
 
+	it('gates rows inside a group', async () => {
+		server.use(setupAuthzDeny(createPerm));
+
+		renderDropdown([
+			{
+				type: 'group',
+				value: 'section',
+				label: 'Section',
+				items: [
+					{ type: 'item', value: 'open', label: 'Open', testId: 'row-open' },
+					{
+						type: 'item',
+						value: 'create',
+						label: 'Create',
+						testId: 'row-create',
+						checks: [createPerm],
+					},
+				],
+			},
+		]);
+		await openMenu();
+
+		await waitFor(() => {
+			expect(screen.getByTestId('row-create')).toHaveAttribute('data-disabled');
+		});
+		expect(screen.getByTestId('row-open')).not.toHaveAttribute('data-disabled');
+	});
+
 	it('enables a granted row', async () => {
 		server.use(setupAuthzAdmin());
 
