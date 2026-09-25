@@ -288,7 +288,7 @@ function SpanDetailsContent({
 			label: 'Overview',
 			prefixIcon: <Bookmark size={14} />,
 			children: (
-				<div className={styles.tabsScroll}>
+				<>
 					{isWide && summary}
 					<DataViewer
 						data={spanDisplayData}
@@ -301,7 +301,7 @@ function SpanDetailsContent({
 							onPinnedFieldsChange,
 						}}
 					/>
-				</div>
+				</>
 			),
 		},
 		{
@@ -315,13 +315,11 @@ function SpanDetailsContent({
 					</Badge>
 				) : undefined,
 			children: (
-				<div className={styles.tabsScroll}>
-					<Events
-						span={selectedSpan}
-						startTime={traceStartTime || 0}
-						isSearchVisible
-					/>
-				</div>
+				<Events
+					span={selectedSpan}
+					startTime={traceStartTime || 0}
+					isSearchVisible
+				/>
 			),
 		},
 		{
@@ -329,23 +327,21 @@ function SpanDetailsContent({
 			label: 'Logs',
 			prefixIcon: <List size={14} />,
 			children: (
-				<div className={styles.tabsScroll}>
-					<SpanLogs
-						traceId={selectedSpan.trace_id}
-						spanId={selectedSpan.span_id}
-						timeRange={{
-							startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
-							endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
-						}}
-						logs={logs}
-						isLoading={isLogsLoading}
-						isError={isLogsError}
-						isFetching={isLogsFetching}
-						isLogSpanRelated={isLogSpanRelated}
-						handleExplorerPageRedirect={handleExplorerPageRedirect}
-						emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
-					/>
-				</div>
+				<SpanLogs
+					traceId={selectedSpan.trace_id}
+					spanId={selectedSpan.span_id}
+					timeRange={{
+						startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
+						endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
+					}}
+					logs={logs}
+					isLoading={isLogsLoading}
+					isError={isLogsError}
+					isFetching={isLogsFetching}
+					isLogSpanRelated={isLogSpanRelated}
+					handleExplorerPageRedirect={handleExplorerPageRedirect}
+					emptyStateConfig={!hasTraceIdLogs ? emptyLogsStateConfig : undefined}
+				/>
 			),
 		},
 	];
@@ -356,16 +352,14 @@ function SpanDetailsContent({
 			label: 'Metrics',
 			prefixIcon: <ChartColumnBig size={14} />,
 			children: (
-				<div className={styles.tabsScroll}>
-					<InfraMetrics
-						clusterName={infraMetadata.clusterName}
-						podName={infraMetadata.podName}
-						nodeName={infraMetadata.nodeName}
-						hostName={infraMetadata.hostName}
-						timestamp={infraMetadata.spanTimestamp}
-						dataSource={DataSource.TRACES}
-					/>
-				</div>
+				<InfraMetrics
+					clusterName={infraMetadata.clusterName}
+					podName={infraMetadata.podName}
+					nodeName={infraMetadata.nodeName}
+					hostName={infraMetadata.hostName}
+					timestamp={infraMetadata.spanTimestamp}
+					dataSource={DataSource.TRACES}
+				/>
 			),
 		});
 	}
