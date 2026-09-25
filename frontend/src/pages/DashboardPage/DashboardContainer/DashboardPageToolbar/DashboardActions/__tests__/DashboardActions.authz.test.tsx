@@ -135,6 +135,29 @@ describe('DashboardActions - AuthZ', () => {
 			expect(screen.getByText('Clone dashboard')).toBeInTheDocument();
 			// Full screen never depended on permission.
 			expect(screen.getByText('Full screen')).toBeInTheDocument();
+
+			expect(screen.getByTestId('dashboard-action-rename')).toHaveAttribute(
+				'data-disabled',
+			);
+			expect(screen.getByTestId('dashboard-action-delete')).toHaveAttribute(
+				'data-disabled',
+			);
+			await waitFor(
+				() => {
+					expect(screen.getByTestId('dashboard-action-clone')).toHaveAttribute(
+						'data-disabled',
+					);
+				},
+				{ timeout: 3000 },
+			);
+			expect(
+				screen.getByTestId('dashboard-action-fullscreen'),
+			).not.toHaveAttribute('data-disabled');
+
+			await userEvent.hover(screen.getByTestId('dashboard-action-rename'));
+			await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
+				'no permission',
+			);
 		});
 	});
 
@@ -185,6 +208,23 @@ describe('DashboardActions - AuthZ', () => {
 			await expect(
 				screen.findByText('Clone dashboard'),
 			).resolves.toBeInTheDocument();
+
+			await waitFor(
+				() => {
+					expect(screen.getByTestId('dashboard-action-clone')).toHaveAttribute(
+						'data-disabled',
+					);
+				},
+				{ timeout: 3000 },
+			);
+			expect(screen.getByTestId('dashboard-action-rename')).not.toHaveAttribute(
+				'data-disabled',
+			);
+
+			await userEvent.hover(screen.getByTestId('dashboard-action-clone'));
+			await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
+				'is not authorized to perform create',
+			);
 		});
 	});
 

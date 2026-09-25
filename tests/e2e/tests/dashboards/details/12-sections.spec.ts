@@ -449,7 +449,7 @@ test.describe('Dashboard Detail — Sections', () => {
 		const sectionName = `Temp Section ${Date.now()}`;
 
 		await page.getByTestId('options').click();
-		await page.getByRole('button', { name: 'New section' }).click();
+		await page.getByRole('menuitem', { name: 'New section' }).click();
 
 		const newSectionDialog = page.getByRole('dialog', { name: 'New Section' });
 		await expect(newSectionDialog).toBeVisible();

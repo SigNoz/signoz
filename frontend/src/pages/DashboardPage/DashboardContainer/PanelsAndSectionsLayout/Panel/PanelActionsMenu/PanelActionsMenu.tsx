@@ -1,7 +1,7 @@
 import { EllipsisVertical } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
@@ -42,13 +42,20 @@ function PanelActionsMenu({
 
 	return (
 		<>
-			<DropdownMenuSimple menu={{ items }} align="end">
-				<span
-					// Stop pointer/mouse down from reaching the RGL drag handle this
-					// button lives inside, so opening the menu never starts a panel drag.
-					onPointerDown={(e): void => e.stopPropagation()}
-					onMouseDown={(e): void => e.stopPropagation()}
-					onClick={(e): void => e.stopPropagation()}
+			{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+			<span
+				// Stop pointer/mouse down from reaching the RGL drag handle this
+				// button lives inside, so opening the menu never starts a panel drag.
+				onPointerDown={(e): void => e.stopPropagation()}
+				onMouseDown={(e): void => e.stopPropagation()}
+				onClick={(e): void => e.stopPropagation()}
+			>
+				<AuthZDropdown
+					items={items}
+					nativeButton
+					align="end"
+					side="bottom"
+					testId={`panel-actions-${panelId}`}
 				>
 					<Button
 						type="button"
@@ -57,13 +64,11 @@ function PanelActionsMenu({
 						size="sm"
 						icon
 						aria-label="Panel actions"
-						testId={`panel-actions-${panelId}`}
-						onClick={(e): void => e.stopPropagation()}
 					>
 						<EllipsisVertical size={14} />
 					</Button>
-				</span>
-			</DropdownMenuSimple>
+				</AuthZDropdown>
+			</span>
 			<ConfirmDeleteDialog
 				open={deleteConfirm.open}
 				title="Delete panel?"

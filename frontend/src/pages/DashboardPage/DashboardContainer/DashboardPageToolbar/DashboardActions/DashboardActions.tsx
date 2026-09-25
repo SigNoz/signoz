@@ -1,11 +1,4 @@
-import {
-	type ReactElement,
-	type ReactNode,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { generatePath } from 'react-router-dom';
 import {
@@ -21,8 +14,6 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from 'components/DropdownMenu/DropdownMenuSimple';
-import type { MenuItem } from 'components/DropdownMenu/DropdownMenuSimple';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import { cloneDashboardV2 } from 'api/generated/services/dashboard';
@@ -30,15 +21,15 @@ import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/service
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
+import { blockedBy } from 'lib/authz/components/AuthZDropdown/utils';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { DashboardCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
-import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
-import MenuActionItem from '../../components/MenuActionItem/MenuActionItem';
 import DashboardSettings from '../../DashboardSettings';
 import { useAddSection } from '../../PanelsAndSectionsLayout/Section/hooks/useAddSection';
 import SectionTitleModal from '../../PanelsAndSectionsLayout/Section/SectionTitleModal';
@@ -69,32 +60,26 @@ function DashboardActions({
 	onOpenRename,
 }: DashboardActionsProps): JSX.Element {
 	const {
-		isLocked,
 		isEditable,
 		editChecks,
 		editDisabledTooltip,
 		deleteChecks,
 		deleteDisabledTooltip,
-		canDeleteDashboard,
-		canReadDashboard,
 	} = useDashboardEditContext();
 	const settingsRequest = useDashboardStore((s) => s.settingsRequest);
 	const clearSettingsRequest = useDashboardStore((s) => s.clearSettingsRequest);
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
-	const { canCreate } = useDashboardCollectionPermissions();
-	const { canToggleLock, disabledTooltip: lockDisabledTooltip } =
-		useDashboardLockPermission({
-			dashboardId: dashboard.id,
-			source: dashboard.source,
-		});
+	const { disabledTooltip: lockDisabledTooltip } = useDashboardLockPermission({
+		dashboardId: dashboard.id,
+		source: dashboard.source,
+	});
 
 	// Cloning creates a new dashboard, so it needs `create` too, and no lock gate.
 	const cloneChecks = useMemo(
 		() => [...editChecks.slice(0, 1), DashboardCreatePermission],
 		[editChecks],
 	);
-	const cloneDenied = !canCreate || !canReadDashboard;
 
 	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] =
 		useState<boolean>(false);
@@ -178,119 +163,106 @@ function DashboardActions({
 	}, [dashboard.id, handle]);
 
 	// Unavailable items stay in the menu, carrying the reason.
-	// The row carries icon, label and reason; the item keeps `disabled`/`onClick`.
-	const row = useCallback(
-		(
-			text: string,
-			icon: ReactElement,
-			checks: BrandedPermission[],
-			opts: { disabledTooltip?: string; destructive?: boolean } = {},
-		): ReactNode => (
-			<MenuActionItem
-				label={text}
-				icon={icon}
-				checks={checks}
-				disabledTooltip={opts.disabledTooltip}
-				destructive={opts.destructive}
-			/>
-		),
-		[],
-	);
-
-	const menuItems = useMemo<MenuItem[]>(() => {
-		const dashboardGroup: MenuItem[] = [
-			{
-				key: 'rename',
-				label: row('Rename', <PenLine size={14} />, editChecks, {
-					disabledTooltip: editDisabledTooltip,
-				}),
-				disabled: !isEditable,
-				onClick: onOpenRename,
-			},
-			// Clone creates a new dashboard, so it's not lock-gated.
-			{
-				key: 'clone',
-				label: row('Clone dashboard', <Copy size={14} />, cloneChecks),
-				disabled: isCloning || cloneDenied,
-				onClick: (): void => void handleClone(),
-			},
-			{
-				key: 'lock',
-				label: row(
-					isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard',
-					<LockKeyhole size={14} />,
-					editChecks,
-					{ disabledTooltip: lockDisabledTooltip },
-				),
-				disabled: !canToggleLock,
-				onClick: onLockToggle,
-			},
-			{
-				key: 'fullscreen',
-				label: row('Full screen', <Fullscreen size={14} />, []),
-				onClick: handleEnterFullScreen,
-			},
-		];
-
-		return [
+	const menuItems = useMemo<AuthZDropdownItemType[]>(
+		() => [
 			{
 				type: 'group',
-				key: 'group-dashboard',
+				value: 'group-dashboard',
 				label: 'Dashboard',
-				children: dashboardGroup,
+				items: [
+					{
+						type: 'item',
+						value: 'rename',
+						testId: 'dashboard-action-rename',
+						label: 'Rename',
+						prefix: <PenLine size={14} />,
+						checks: editChecks,
+						...blockedBy(editDisabledTooltip),
+						onClick: onOpenRename,
+					},
+					// Clone creates a new dashboard, so it's not lock-gated.
+					{
+						type: 'item',
+						value: 'clone',
+						testId: 'dashboard-action-clone',
+						label: 'Clone dashboard',
+						prefix: <Copy size={14} />,
+						checks: cloneChecks,
+						loading: isCloning,
+						loadingTooltip: 'Cloning dashboard',
+						onClick: (): void => void handleClone(),
+					},
+					{
+						type: 'item',
+						value: 'lock',
+						testId: 'dashboard-action-lock',
+						label: isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard',
+						prefix: <LockKeyhole size={14} />,
+						checks: editChecks,
+						...blockedBy(lockDisabledTooltip),
+						onClick: onLockToggle,
+					},
+					{
+						type: 'item',
+						value: 'fullscreen',
+						testId: 'dashboard-action-fullscreen',
+						label: 'Full screen',
+						prefix: <Fullscreen size={14} />,
+						onClick: handleEnterFullScreen,
+					},
+				],
 			},
 			{
 				type: 'group',
-				key: 'group-layout',
+				value: 'group-layout',
 				label: 'Layout',
-				children: [
+				items: [
 					{
-						key: 'new-section',
-						label: row('New section', <SquareStack size={14} />, editChecks, {
-							disabledTooltip: editDisabledTooltip,
-						}),
-						disabled: !isEditable,
+						type: 'item',
+						value: 'new-section',
+						testId: 'dashboard-action-new-section',
+						label: 'New section',
+						prefix: <SquareStack size={14} />,
+						checks: editChecks,
+						...blockedBy(editDisabledTooltip),
 						onClick: (): void => setIsNewSectionOpen(true),
 					},
 				],
 			},
-			{ type: 'divider', key: 'divider-danger' },
+			{ type: 'separator', value: 'divider-danger' },
 			{
-				key: 'delete',
-				label: row('Delete dashboard', <Trash2 size={14} />, deleteChecks, {
-					disabledTooltip: deleteDisabledTooltip,
-					destructive: true,
-				}),
+				type: 'item',
+				value: 'delete',
+				testId: 'dashboard-action-delete',
+				label: 'Delete dashboard',
+				prefix: <Trash2 size={14} />,
+				danger: true,
+				checks: deleteChecks,
 				// Independent of read/update, but a locked dashboard can't be removed.
-				disabled: isLocked || !canDeleteDashboard,
+				...blockedBy(deleteDisabledTooltip),
 				onClick: confirmDeleteDashboard,
 			},
-		];
-	}, [
-		row,
-		isEditable,
-		isLocked,
-		editChecks,
-		editDisabledTooltip,
-		deleteChecks,
-		deleteDisabledTooltip,
-		canDeleteDashboard,
-		cloneChecks,
-		cloneDenied,
-		isCloning,
-		canToggleLock,
-		lockDisabledTooltip,
-		isDashboardLocked,
-		onOpenRename,
-		handleClone,
-		onLockToggle,
-		handleEnterFullScreen,
-		confirmDeleteDashboard,
-	]);
+		],
+		[
+			editChecks,
+			editDisabledTooltip,
+			deleteChecks,
+			deleteDisabledTooltip,
+			cloneChecks,
+			isCloning,
+			lockDisabledTooltip,
+			isDashboardLocked,
+			onOpenRename,
+			handleClone,
+			onLockToggle,
+			handleEnterFullScreen,
+			confirmDeleteDashboard,
+		],
+	);
 
 	return (
 		<div className={styles.dashboardActionsContainer}>
-			<DropdownMenuSimple menu={{ items: menuItems }}>
+			<AuthZDropdown items={menuItems} nativeButton align="end" side="bottom">
 				<Button
 					variant="solid"
 					color="secondary"
@@ -300,7 +272,7 @@ function DashboardActions({
 				>
 					Actions
 				</Button>
-			</DropdownMenuSimple>
+			</AuthZDropdown>
 			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 				<Button
 					disabledTooltip={undefined}

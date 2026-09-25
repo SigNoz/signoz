@@ -1,4 +1,4 @@
-import { type ReactElement, type ReactNode, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
 	Bell,
 	Copy,
@@ -7,7 +7,6 @@ import {
 	PenLine,
 	Trash2,
 } from '@signozhq/icons';
-import type { MenuItem } from 'components/DropdownMenu/DropdownMenuSimple';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	type ConfirmableAction,
@@ -26,8 +25,8 @@ import { useDownloadPanelMenuItem } from '../hooks/useDownloadPanelMenuItem';
 import { useMovePanelToSection } from '../hooks/useMovePanelToSection';
 import { useViewPanel } from '../hooks/useViewPanel';
 import { buildMoveItems } from '../utils/buildMoveItems';
-import MenuActionItem from '../../../components/MenuActionItem/MenuActionItem';
-import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
+import { blockedBy } from 'lib/authz/components/AuthZDropdown/utils';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 // Stable fallback so renders without layout context don't churn the mutation
@@ -45,7 +44,7 @@ interface UsePanelActionItemsArgs {
 }
 
 export interface PanelActionItems {
-	items: MenuItem[];
+	items: AuthZDropdownItemType[];
 	/** Two-step confirm flow for the destructive Delete action. */
 	deleteConfirm: ConfirmableAction;
 }
@@ -98,44 +97,37 @@ export function usePanelActionItems({
 	// Stable opener so the items memo doesn't rebuild on dialog state changes.
 	const { request: requestDelete } = deleteConfirm;
 
-	const items = useMemo<MenuItem[]>(() => {
-		// The row is a button carrying its own icon and reason; the item hosts it.
-		const row = (
-			text: string,
-			icon: ReactElement,
-			opts: { checks?: BrandedPermission[]; destructive?: boolean } = {},
-		): ReactNode => (
-			<MenuActionItem
-				label={text}
-				icon={icon}
-				checks={opts.checks ?? editChecks}
-				disabledTooltip={editDisabledTooltip}
-				destructive={opts.destructive}
-			/>
-		);
+	const items = useMemo<AuthZDropdownItemType[]>(() => {
+		const editGate = { checks: editChecks, ...blockedBy(editDisabledTooltip) };
 
-		const panelGroup: MenuItem[] = [];
+		const panelGroup: AuthZDropdownItemType[] = [];
 		if (panelCapabilities.view) {
 			panelGroup.push({
-				key: 'view-panel',
-				label: row('View', <Fullscreen size={14} />, { checks: [] }),
+				type: 'item',
+				value: 'view-panel',
+				label: 'View',
+				prefix: <Fullscreen size={14} />,
 				onClick: (): void => openView(panelId, panel),
 			});
 		}
 		if (panelCapabilities.edit) {
 			panelGroup.push({
-				key: 'edit-panel',
-				label: row('Edit panel', <PenLine size={14} />),
-				disabled: !isEditable,
+				type: 'item',
+				value: 'edit-panel',
+				label: 'Edit panel',
+				prefix: <PenLine size={14} />,
+				...editGate,
 				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}
 		if (panelCapabilities.clone) {
 			// Needs section context to place the copy; disabled without it.
 			panelGroup.push({
-				key: 'clone-panel',
-				label: row('Clone', <Copy size={14} />),
-				disabled: !isEditable || !panelActions,
+				type: 'item',
+				value: 'clone-panel',
+				label: 'Clone',
+				prefix: <Copy size={14} />,
+				...editGate,
 				onClick: (): void => {
 					if (panelActions) {
 						void clonePanel({
@@ -147,7 +139,7 @@ export function usePanelActionItems({
 			});
 		}
 
-		const dataGroup: MenuItem[] = [];
+		const dataGroup: AuthZDropdownItemType[] = [];
 		if (downloadItem) {
 			dataGroup.push(downloadItem);
 		}
@@ -156,13 +148,15 @@ export function usePanelActionItems({
 		// unlike edit/clone — it isn't gated on editability (V1 parity).
 		if (panelCapabilities.createAlert) {
 			dataGroup.push({
-				key: 'create-alert',
-				label: row('Create Alerts', <Bell size={14} />, { checks: [] }),
+				type: 'item',
+				value: 'create-alert',
+				label: 'Create Alerts',
+				prefix: <Bell size={14} />,
 				onClick: (): void => createAlert(panel, panelId),
 			});
 		}
 
-		const moveGroup: MenuItem[] =
+		const moveGroup: AuthZDropdownItemType[] =
 			isEditable && panelActions
 				? buildMoveItems({
 						sections,
@@ -172,25 +166,32 @@ export function usePanelActionItems({
 					})
 				: [
 						{
-							key: 'move',
-							label: row('Move to section', <FolderInput size={14} />),
-							disabled: true,
+							type: 'item',
+							value: 'move',
+							label: 'Move to section',
+							prefix: <FolderInput size={14} />,
+							...editGate,
 						},
 					];
 
-		const deleteGroup: MenuItem[] = [
+		const deleteGroup: AuthZDropdownItemType[] = [
 			{
-				key: 'delete-panel',
-				label: row('Delete panel', <Trash2 size={14} />, { destructive: true }),
-				disabled: !isEditable || !panelActions,
+				type: 'item',
+				value: 'delete-panel',
+				label: 'Delete panel',
+				prefix: <Trash2 size={14} />,
+				danger: true,
+				...editGate,
 				onClick: (): void => requestDelete(),
 			},
 		];
 
 		return [panelGroup, dataGroup, moveGroup, deleteGroup]
 			.filter((group) => group.length > 0)
-			.flatMap((group, index) =>
-				index === 0 ? group : [{ type: 'divider' as const }, ...group],
+			.flatMap<AuthZDropdownItemType>((group, index) =>
+				index === 0
+					? group
+					: [{ type: 'separator', value: `separator-${index}` }, ...group],
 			);
 	}, [
 		isEditable,

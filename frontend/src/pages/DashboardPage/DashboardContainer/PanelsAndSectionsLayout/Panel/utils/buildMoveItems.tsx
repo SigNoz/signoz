@@ -1,5 +1,8 @@
 import { FolderInput } from '@signozhq/icons';
-import type { MenuItem } from 'components/DropdownMenu/DropdownMenuSimple';
+import type {
+	DropdownActionItemType,
+	DropdownSubmenuItemType,
+} from '@signozhq/ui/dropdown';
 
 import { findRootSection, type DashboardSection } from '../../../utils';
 import type { MovePanelArgs } from '../hooks/useMovePanelToSection';
@@ -26,7 +29,7 @@ export function buildMoveItems({
 	currentLayoutIndex,
 	panelId,
 	movePanel,
-}: MoveItemsArgs): MenuItem[] {
+}: MoveItemsArgs): DropdownSubmenuItemType[] {
 	const rootSection = findRootSection(sections);
 
 	// Sections are already in layout order, so the root (index 0, when present)
@@ -43,13 +46,15 @@ export function buildMoveItems({
 
 	return [
 		{
-			key: 'move',
+			type: 'submenu',
+			value: 'move',
 			label: 'Move to section',
-			icon: <FolderInput size={14} />,
-			children: targets.map((section) => {
+			prefix: <FolderInput size={14} />,
+			items: targets.map((section): DropdownActionItemType => {
 				const isRoot = section === rootSection;
 				return {
-					key: isRoot ? 'move-to-root' : `move-${section.layoutIndex}`,
+					type: 'item',
+					value: isRoot ? 'move-to-root' : `move-${section.layoutIndex}`,
 					label: isRoot ? ROOT_LABEL : (section.title as string),
 					onClick: (): void =>
 						void movePanel({
