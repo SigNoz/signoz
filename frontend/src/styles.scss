@@ -22,6 +22,11 @@ body {
 	font-style: normal;
 	background: var(--l1-background) !important;
 	color: var(--l1-foreground) !important;
+
+	// compatibility changes, to reduce amount of drift
+	// between old code and new components
+	--badge-max-width: 100%; // ignore max-width of badges
+	--dropdown-internal-max-block-size: none; // ignore max-height of dropdowns
 }
 
 body {
