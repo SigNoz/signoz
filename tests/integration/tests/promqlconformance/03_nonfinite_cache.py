@@ -58,8 +58,7 @@ def test_promql_ratio_with_zero_denominator_is_dropped_and_cached(
     assert set(first["active_job"].values()) == {25.0}, sorted(set(first["active_job"].values()))
     assert len(first["active_job"]) == expected_points, f"expected {expected_points} points, got {len(first['active_job'])}"
 
-    # The cached read excludes end_ms, the one legitimate difference.
+    # Both reads must agree exactly, including the point promql reports at end_ms.
     assert set(second) == set(first), sorted(second)
     for job_name, points in first.items():
-        expected = {ts: value for ts, value in points.items() if ts < end_ms}
-        assert second[job_name] == expected, f"{job_name}: got {len(second[job_name])} of {len(expected)} points"
+        assert second[job_name] == points, f"{job_name}: got {len(second[job_name])} of {len(points)} points"
