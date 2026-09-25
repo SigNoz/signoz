@@ -1,6 +1,6 @@
 ---
 name: storybook-visual-diff
-description: Screenshot a set of SigNoz Storybook stories, then pixel-diff two runs to see what a CSS or component change did, with the changes tinted over the new shot. Use when asked to take story screenshots, capture a visual baseline, compare before/after of a style change, or find which pages a change affects.
+description: Screenshot a set of SigNoz Storybook stories, then pixel-diff two runs to see what a CSS or component change did, with the changes tinted over the new shot. Also surveys where a component is used across the UI, ringing each instance in red and collecting every one into a single contact sheet. Use when asked to take story screenshots, capture a visual baseline, compare before/after of a style change, find which pages a change affects, or show every place a component appears.
 ---
 
 # Storybook visual diff
@@ -22,7 +22,7 @@ says, take it and do not ask again; ask only for what is genuinely missing, in
 
 | To settle | Ask | Options |
 | --- | --- | --- |
-| Job | "What should this run produce?" | shoot only · baseline for a change you are about to make · compare against a change already in the working tree · compare this branch against another (`main` by default, or one the user names) · compare two configurations of the same story (`--args`, clock, width) · noise floor (same tree twice) |
+| Job | "What should this run produce?" | shoot only · survey where a component is used (§4) · baseline for a change you are about to make · compare against a change already in the working tree · compare this branch against another (`main` by default, or one the user names) · compare two configurations of the same story (`--args`, clock, width) · noise floor (same tree twice) |
 | Scope | "Which stories?" | offer 2-3 concrete selections read off `index.json` (a page, a `--title` prefix, everything), never open-ended |
 | Themes | "Which themes?" | dark · dark + light |
 | Read-out | "How should the diff read?" | `green` (changed pixels over the after shot) · `green-parallel` (before \| after \| diff, side by side) · `red` · `red-parallel` · `none` (keep both runs, do not diff) |
@@ -39,6 +39,7 @@ The job decides which loop below to run:
 | Job | Loop |
 | --- | --- |
 | **shoot only** | §1, §2, stop. Report the paths. No diff, no second run. |
+| **usage survey** | §1, §4, stop. One run, no diff: the question is where a component appears, not what moved. |
 | **baseline first** | the full loop, stopping after step 2 to hand the change back. The user makes it, then continue at step 4. |
 | **change already in the tree** | the tree *is* the after state. `git stash` (or check out the base commit) to shoot the before, restore, shoot the after. Confirm the working tree is clean enough to stash before touching it, and restore it even if a capture fails. |
 | **branch vs branch** | shoot the current branch, then `git switch <base>` in place (stash first if the tree is dirty), restart the dev server, shoot again, switch back and unstash. Restart matters: HMR does not survive a whole-branch swap cleanly. Get the tree back to where it started even if a capture fails. |
@@ -122,6 +123,8 @@ node scripts/story-shots.mjs .story-shots/baseline \
 | `--clock <iso\|live>` | wall clock the page reads, passed to the preview as `?storyClock`; `live` unfreezes it |
 | `--motion` | keep animations and transitions running (sets the `motion` global to `live`) |
 | `--ignore <selector>` | hide matching elements, on top of `[data-shot-ignore]` and `[data-chromatic="ignore"]` |
+| `--highlight <selector>` | also write `<id>--highlight.png`, every match ringed in red with 6px of padding |
+| `--crop <selector>` | also write one `crops/<id>--<n>.png` per match, and montage the theme's crops into `crops.png` |
 | `--flat` | write `<out>/<id>.png`, no theme directory |
 | `--no-caption` | leave the caption band off the shots |
 | `--list` | print the matched stories and exit |
@@ -129,8 +132,9 @@ node scripts/story-shots.mjs .story-shots/baseline \
 Files land at `<out>/<theme>/<story-id>.png`, next to a `shots.json` recording
 what each shot is (id, title, name, theme, `ok`/`busy`, the caption's height in
 rows) and how the run was configured (args, clock, width, height, grow, motion,
-settle, ignore). Keep the flags identical between the two runs or the diff pairs
-nothing.
+settle, ignore, highlight, crop). Keep the flags identical between the two runs
+or the diff pairs nothing. `--highlight` and `--crop` write extra files beside
+the shots; §4 is what they are for.
 
 Every shot carries the caption band described below, so a single screenshot says
 what it is on its own. `--no-caption` leaves it off, and so does a machine
@@ -208,10 +212,75 @@ pixelmatch's `includeAA: false`. So the script implements that comparison:
 A pair whose shots are different sizes is compared over the overlap, and every
 row and column that exists in only one of them counts as changed.
 
-Pairing is by `<theme>/<story-id>.png`, so a story that exists on only one side
-(new on the feature branch, renamed, retitled) has nothing to pair with and is
-skipped silently. On a branch-vs-branch run, compare the two runs' file lists
-before reading the numbers.
+Pairing is by `<theme>/<story-id>.png`. A file that exists on one side only (a
+story added on the feature branch, renamed, retitled, or one whose capture
+failed) has nothing to compare against. It is not skipped: the side that has the
+shot is written out, captioned `missing previous` or `missing current`, and every
+one of its pixels counts as changed, so it sorts to the top of the report and is
+printed with that note. In the parallel modes the run that does not have it gets
+a placeholder tile saying so, in the theme's own colours, so the montage keeps
+its three tiles. Without this a whole component going missing reads as a clean
+run.
+
+## 4. Surveying where a component is used
+
+A different question from a diff: not *what moved*, but *where does this
+component appear and what does each instance look like*. One run answers it.
+
+```bash
+node scripts/story-shots.mjs .story-shots/button-group --port 6007 --theme dark,light \
+  --highlight '.ant-btn-group, div[role="group"][class*="button-group"]' \
+  --crop '.ant-btn-group, div[role="group"][class*="button-group"]' \
+  --stories pages-home--default,pages-alerts-history--default,...
+```
+
+Four things come out, per theme:
+
+- `<theme>/<id>.png` — the page as it is.
+- `<theme>/<id>--highlight.png` — the same page with every instance ringed in
+  red. This is what says *where on the page*, which a crop cannot.
+- `<theme>/crops/<id>--<n>.png` — each instance on its own.
+- `<theme>/crops.png` — every crop of that theme in one labelled contact sheet.
+
+The sheet is the useful artifact. Twelve instances across nine pages is one
+image to read, not twelve files to open in turn, and the label under each says
+which story it came from.
+
+### Finding the selector and the stories
+
+1. **Grep the source for the import, not the tag.** `Button.Group` and
+   `ButtonGroup` are two different components in this repo: antd's, and
+   `@signozhq/ui/button`'s. A survey that greps one misses the other.
+2. **Read the rendered markup, not the JSX.** `--crop` takes a CSS selector
+   against the DOM. antd's group is `.ant-btn-group`; the design-system one is a
+   `div[role="group"]` whose class is a hashed CSS module, hence
+   `[class*="button-group"]`. Open the built component under
+   `node_modules/@signozhq/ui/dist/` when the class is not obvious.
+3. **Map each source file to the story that renders it.** Follow the consumers:
+   a container renders inside a page, and the page's story is the one to shoot.
+   A component behind a drawer or a tab needs the story whose `args` open it
+   (`--args drawer:endpoint-stats`), not the page default.
+4. **Let the run itself confirm the mapping.** Each story logs `N cropped`. A
+   `0 cropped` line means that story never reaches the state, so swap the story
+   rather than the selector.
+
+### What a zero means
+
+- **`0 cropped` on a story** — the component is not on that page in that state.
+  Wrong story, or the state is behind an interaction the story has no `play`
+  for. A modal nobody opens cannot be surveyed; say so instead of shooting the
+  page it sits behind.
+- **An instance in the source with no crop** — a container whose children are
+  all conditional renders as a 0x0 box. Both `--crop` and `--highlight` skip
+  anything under 1px, since there is nothing on screen to ring. That is a
+  finding about the component, not a failure of the run: it is in the tree and
+  invisible.
+
+A story logged `viewport-sized content, stopped chasing Npx` is shot back at
+`--height` with its own scrollbar, and what is below the fold there is laid out
+but never painted. The crops of such a story are taken at the chased height
+instead, so they are not the black rectangles the page shot would give; the
+`--highlight` shot still shows only what fits the viewport.
 
 ## What makes a shot reproducible
 
@@ -292,3 +361,6 @@ for `--ignore` when a region cannot be settled.
 - **Stories behind a hover, drawer or modal** only render what their `play`
   reaches. If a state is missing from the shot, the story needs the `play`, not
   the script.
+- **The caption's temporary file is written beside the shot**, not in the system
+  temp directory. `/tmp` is often a different filesystem, and the rename back
+  over the shot then fails with `EXDEV: cross-device link not permitted`.
