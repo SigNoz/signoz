@@ -23,6 +23,11 @@ jest.mock(
 	}),
 );
 
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/hooks/useDashboardVariableNames',
+	() => ({ useDashboardVariableNames: (): string[] => [] }),
+);
+
 function textSpec(): DashboardtypesPanelSpecDTO {
 	return {
 		display: { name: 'Runbook', description: 'steps' },
