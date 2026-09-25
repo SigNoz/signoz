@@ -342,3 +342,22 @@ export const getMs = (value: string): string =>
 			})
 			.format('SSS'),
 	).toFixed(2);
+
+/** `overrideFormat`, when given, wins over the same-day check. */
+export const formatTimestampOmittingTodaysDate = (
+	timestampMs: number,
+	timezone: string,
+	overrideFormat?: string,
+): string => {
+	const time = dayjs(timestampMs).tz(timezone);
+
+	if (overrideFormat) {
+		return time.format(overrideFormat);
+	}
+
+	return time.format(
+		time.isSame(dayjs().tz(timezone), 'day')
+			? DATE_TIME_FORMATS.TIME_SECONDS
+			: DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS,
+	);
+};

@@ -145,6 +145,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 			Deprecated:          false,
+			Stability:           handler.StabilityDevelopment,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbCreate)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
@@ -173,6 +174,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
 			Deprecated:          false,
+			Stability:           handler.StabilityDevelopment,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbList)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
@@ -199,6 +201,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			Deprecated:          false,
+			Stability:           handler.StabilityDevelopment,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbRead)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
@@ -226,6 +229,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			Deprecated:          false,
+			Stability:           handler.StabilityDevelopment,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbUpdate)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
@@ -253,6 +257,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			Deprecated:          false,
+			Stability:           handler.StabilityDevelopment,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbDelete)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
@@ -281,6 +286,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			Deprecated:          false,
+			Stability:           handler.StabilityDevelopment,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbUpdate)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
@@ -308,6 +314,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
 			Deprecated:          false,
+			Stability:           handler.StabilityDevelopment,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbCreate)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
