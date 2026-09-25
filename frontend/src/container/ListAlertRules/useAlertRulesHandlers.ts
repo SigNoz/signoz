@@ -36,11 +36,6 @@ export function useAlertRulesHandlers(
 				encodeURIComponent(JSON.stringify(compositeQuery)),
 			);
 
-			const panelType = rule.condition.compositeQuery.panelType;
-			if (panelType) {
-				params.set(QueryParams.panelTypes, panelType);
-			}
-
 			params.set(QueryParams.ruleId, rule.id);
 
 			return `${ROUTES.ALERT_OVERVIEW}?${params.toString()}`;
