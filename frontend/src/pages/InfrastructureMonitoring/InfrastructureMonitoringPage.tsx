@@ -13,8 +13,11 @@ export default function InfrastructureMonitoringPage(): JSX.Element {
 	const routes: TabRoutes[] = [Hosts, Kubernetes];
 
 	return (
-		<div className="infra-monitoring-module-container">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
-		</div>
+		<RouteTab
+			className="infra-monitoring-module-container"
+			routes={routes}
+			activeKey={pathname}
+			history={history}
+		/>
 	);
 }

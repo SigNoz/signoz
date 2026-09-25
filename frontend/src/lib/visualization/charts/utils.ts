@@ -2,6 +2,8 @@ import {
 	LEGEND_MAX_BOTTOM_ROWS,
 	MIN_LEGEND_ITEM_WIDTH,
 	LEGEND_COLUMN_GAP,
+	LEGEND_TOOLBAR_GAP,
+	LEGEND_TOOLBAR_HEIGHT,
 	LEGEND_ITEM_EXTRA_WIDTH,
 	LEGEND_ROW_GAP,
 	LEGEND_ROW_HEIGHT,
@@ -15,6 +17,8 @@ export interface ChartDimensions {
 	legendWidth: number;
 	legendHeight: number;
 	averageLegendWidth: number;
+	/** For a BOTTOM legend that row's height is inside `legendHeight`. */
+	showLegendSearch: boolean;
 }
 
 const AVG_CHAR_WIDTH = 8;
@@ -76,6 +80,8 @@ export function calculateAverageLegendWidth(legends: string[]): number {
  *   - `legendHeight` is exactly those rows plus the wrapper's bottom padding, so
  *     the rectangle never clips a row or reserves space for half of one. Two
  *     rows that would take half a short panel fall back to one row.
+ *   - A grid overflowing those rows also gets a search row, whose height is
+ *     part of `legendHeight`.
  *   - Chart height is `containerHeight - legendHeight`, never below 0.
  * - `legendsPerSet` is the number of legend items that fit horizontally, based on the same text-width approximation.
  *
@@ -101,6 +107,7 @@ export function calculateChartDimensions({
 			legendWidth: 0,
 			legendHeight: 0,
 			averageLegendWidth: 0,
+			showLegendSearch: false,
 		};
 	}
 
@@ -140,6 +147,7 @@ export function calculateChartDimensions({
 			legendHeight: containerHeight,
 			// Single vertical list on the right.
 			averageLegendWidth: rightLegendWidth,
+			showLegendSearch: legendItemCount > 0,
 		};
 	}
 
@@ -158,18 +166,25 @@ export function calculateChartDimensions({
 		),
 	);
 
-	// The wrapper's bottom padding is inside this height (border-box).
-	const heightForRows = (rowCount: number): number =>
+	// The wrapper's bottom padding and the search row are inside this height.
+	const heightForRows = (rowCount: number, withToolbar: boolean): number =>
 		rowCount * LEGEND_ROW_HEIGHT +
 		(rowCount - 1) * LEGEND_ROW_GAP +
-		LEGEND_PADDING;
+		LEGEND_PADDING +
+		(withToolbar ? LEGEND_TOOLBAR_HEIGHT + LEGEND_TOOLBAR_GAP : 0);
+
+	const shortPanelBudget = containerHeight * MAX_SHORT_PANEL_LEGEND_RATIO;
+	const gridRowCount = Math.ceil(legendItemCount / legendItemsPerRow);
+
+	// Only once rows overflow — below that every series is already on screen —
+	// and only while the row it costs leaves the legend inside the panel's share.
+	const showLegendSearch =
+		gridRowCount > LEGEND_MAX_BOTTOM_ROWS &&
+		heightForRows(1, true) <= shortPanelBudget;
 
 	const neededRowCount = Math.max(
 		1,
-		Math.min(
-			LEGEND_MAX_BOTTOM_ROWS,
-			Math.ceil(legendItemCount / legendItemsPerRow),
-		),
+		Math.min(LEGEND_MAX_BOTTOM_ROWS, gridRowCount),
 	);
 
 	// Without this, short grid panels hand most of their area to the legend and
@@ -177,11 +192,11 @@ export function calculateChartDimensions({
 	// row's items are clipped rather than removed, so they are scroll-only here.
 	const legendRowCount =
 		neededRowCount > 1 &&
-		heightForRows(neededRowCount) > containerHeight * MAX_SHORT_PANEL_LEGEND_RATIO
+		heightForRows(neededRowCount, showLegendSearch) > shortPanelBudget
 			? 1
 			: neededRowCount;
 
-	const bottomLegendHeight = heightForRows(legendRowCount);
+	const bottomLegendHeight = heightForRows(legendRowCount, showLegendSearch);
 
 	return {
 		width: containerWidth,
@@ -189,5 +204,6 @@ export function calculateChartDimensions({
 		legendWidth: containerWidth,
 		legendHeight: bottomLegendHeight,
 		averageLegendWidth: legendItemWidth,
+		showLegendSearch,
 	};
 }

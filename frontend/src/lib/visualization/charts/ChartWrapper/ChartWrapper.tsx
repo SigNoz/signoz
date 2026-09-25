@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
-import ChartLayout from 'lib/visualization/layout/ChartLayout/ChartLayout';
+import ChartLayout, {
+	LegendLayout,
+} from 'lib/visualization/layout/ChartLayout/ChartLayout';
 import UPlotLegend from 'lib/uPlotV2/components/Legend/UPlotLegend';
 import {
 	LegendPosition,
@@ -58,7 +60,7 @@ export default function ChartWrapper({
 	);
 
 	const legendComponent = useCallback(
-		(averageLegendWidth: number): React.ReactNode => {
+		({ averageLegendWidth, showSearch }: LegendLayout): React.ReactNode => {
 			if (!showLegend) {
 				return null;
 			}
@@ -67,6 +69,7 @@ export default function ChartWrapper({
 					config={config}
 					position={legendConfig.position}
 					averageLegendWidth={averageLegendWidth}
+					showSearch={showSearch}
 				/>
 			);
 		},

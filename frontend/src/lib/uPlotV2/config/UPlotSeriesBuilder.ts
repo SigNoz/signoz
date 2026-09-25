@@ -265,7 +265,7 @@ function getPathBuilder({
 	drawStyle,
 	lineInterpolation,
 	barAlignment = BarAlignment.Center,
-	barWidthFactor = 0.6,
+	barWidthFactor = 0.85,
 	barMaxWidth = 200,
 	stepInterval,
 }: {
