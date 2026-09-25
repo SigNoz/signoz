@@ -1,7 +1,8 @@
 import { type TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import { EQueryType } from 'types/common/dashboard';
+import { EQueryType, QueryMode } from 'types/common/dashboard';
 
 import { getPanelDefinition } from './registry';
+import { getQueryModeSignals } from './types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from './types/panelDefinition';
 import type { PanelKind } from './types/panelKind';
 
@@ -48,11 +49,17 @@ export function requireQueryPanelDefinition(
 	return definition;
 }
 
-/** Signals a kind can visualize. */
+const DEFAULT_QUERY_MODE = QueryMode.QUERY_BUILDER;
+
+/** Signals a kind can visualize in `mode`. */
 export function getSupportedSignals(
 	kind: PanelKind,
+	mode: QueryMode = DEFAULT_QUERY_MODE,
 ): TelemetrytypesSignalDTO[] {
-	return getQueryPanelDefinition(kind)?.supportedSignals ?? [];
+	return getQueryModeSignals(
+		getQueryPanelDefinition(kind)?.supportedQueryModes,
+		mode,
+	);
 }
 
 export function isSignalSupported(
@@ -62,9 +69,16 @@ export function isSignalSupported(
 	return getSupportedSignals(kind).includes(signal);
 }
 
+/** Authoring modes a kind supports, in tab order. */
+export function getSupportedQueryModes(kind: PanelKind): QueryMode[] {
+	const modes = getQueryPanelDefinition(kind)?.supportedQueryModes ?? {};
+	return Object.keys(modes) as QueryMode[];
+}
 /** Query languages a kind supports (Query Builder / ClickHouse / PromQL). */
 export function getSupportedQueryTypes(kind: PanelKind): EQueryType[] {
-	return getQueryPanelDefinition(kind)?.supportedQueryTypes ?? [];
+	return getSupportedQueryModes(kind).filter(
+		(mode): mode is EQueryType => mode !== QueryMode.AI_QUERY_BUILDER,
+	);
 }
 
 export function isQueryTypeSupportedByPanelKind(
@@ -102,19 +116,19 @@ export function isPanelCombinationValid({
 }
 
 /**
- * The query type to use for a kind given a `preferred` one: keep it if the kind
- * supports it, otherwise fall back to the kind's first supported type. Used when
- * switching panel kinds to coerce an unsupported active query type (e.g. PromQL → a
- * List panel coerces to Query Builder).
+ * The authoring mode to use for a kind given a `preferred` one: keep it if the kind
+ * supports it, otherwise fall back to the kind's first supported mode. Used when
+ * switching panel kinds to coerce an unsupported active mode (e.g. PromQL → a List
+ * panel coerces to Query Builder).
  */
-export function resolveQueryType(
+export function resolveQueryMode(
 	kind: PanelKind,
-	preferred: EQueryType,
-): EQueryType {
-	const supported = getSupportedQueryTypes(kind);
+	preferred: QueryMode,
+): QueryMode {
+	const supported = getSupportedQueryModes(kind);
 	if (supported.includes(preferred)) {
 		return preferred;
 	}
-	// A query-less kind has no supported types; the builder is the neutral answer.
-	return supported[0] ?? EQueryType.QUERY_BUILDER;
+	// A query-less kind has no supported modes; the builder is the neutral answer.
+	return supported[0] ?? DEFAULT_QUERY_MODE;
 }
