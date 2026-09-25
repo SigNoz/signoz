@@ -154,10 +154,6 @@ export const Logs = Loadable(
 	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
 );
 
-export const LiveLogs = Loadable(
-	() => import(/* webpackChunkName: "Live Logs" */ 'pages/LiveLogs'),
-);
-
 export const PipelinePage = Loadable(
 	() => import(/* webpackChunkName: "Pipelines" */ 'pages/LogsModulePage'),
 );

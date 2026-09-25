@@ -23,7 +23,6 @@ import {
 	LicensePage,
 	ListAllALertsPage,
 	LLMObservabilityPage,
-	LiveLogs,
 	Login,
 	Logs,
 	LogsIndexToFields,
@@ -283,13 +282,6 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
-		path: ROUTES.LIVE_LOGS,
-		exact: true,
-		component: LiveLogs,
-		key: 'LIVE_LOGS',
-		isPrivate: true,
-	},
-	{
 		path: ROUTES.LOGS_PIPELINES,
 		exact: true,
 		component: PipelinePage,
@@ -521,7 +513,6 @@ export const LIST_LICENSES: AppRoutes = {
 export const oldNewRoutesMapping: Record<string, string> = {
 	'/pipelines': '/logs/pipelines',
 	'/logs-explorer': '/logs/logs-explorer',
-	'/logs-explorer/live': '/logs/logs-explorer/live',
 	'/logs-save-views': '/logs/saved-views',
 	'/traces-save-views': '/traces/saved-views',
 	'/settings/access-tokens': '/settings/service-accounts',
