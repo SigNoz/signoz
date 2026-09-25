@@ -73,6 +73,10 @@
 
 	[role='tablist'] {
 		flex-shrink: 0;
+
+		// Default 20px badge is taller than the 16px tab icon and grows the tab bar.
+		--badge-height: 16px;
+		--badge-padding: 0 var(--spacing-3);
 	}
 
 	[class*='tabs__list-wrapper'] {
