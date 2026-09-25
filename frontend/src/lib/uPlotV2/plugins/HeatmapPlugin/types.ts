@@ -41,8 +41,18 @@ export interface HeatmapColorOptions {
 
 /** Row-height distribution of the bucket axis. */
 export enum HeatmapAxisScale {
-	Log = 'log',
+	/** Whichever of the three below the boundaries admit: log when they are all
+	 *  positive or sit above a zero, symmetric log when they reach below it,
+	 *  linear when they are all zero. The choice is a property of the data, so
+	 *  this is the default. */
+	Auto = 'auto',
 	Linear = 'linear',
+	/** Plain log10. A boundary at or below zero has no logarithm, so it is pinned
+	 *  one bucket below the smallest positive one — see `resolveHeatmapYAxis`. */
+	Log = 'log',
+	/** Linear within ±the smallest non-zero boundary, logarithmic beyond,
+	 *  mirrored across zero. The scale for boundaries that straddle zero. */
+	Symlog = 'symlog',
 }
 
 export interface HeatmapSeriesPoint {
@@ -58,10 +68,9 @@ export interface HeatmapSeriesLabel {
 }
 
 export interface HeatmapSeries {
-	/** Group label, as the legend names it. Empty when there is no grouping. */
+	/** Group label, as the legend and the tooltip name it. Empty when there is no
+	 *  grouping. */
 	label: string;
-	/** The pairs behind `label`, letting the tooltip name rows by value alone. */
-	labels?: HeatmapSeriesLabel[];
 	points: HeatmapSeriesPoint[];
 }
 

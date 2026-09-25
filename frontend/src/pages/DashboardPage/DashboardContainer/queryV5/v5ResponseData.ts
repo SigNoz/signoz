@@ -25,6 +25,17 @@ export function getTimeSeriesResults(
 		[]) as Querybuildertypesv5TimeSeriesDataDTO[];
 }
 
+/** The time-series tree with bucket bounds on each aggregation's `meta`. */
+export function getHeatmapResults(
+	response: QueryRangeV5200 | undefined,
+): Querybuildertypesv5TimeSeriesDataDTO[] {
+	if (response?.data?.type !== 'heatmap') {
+		return [];
+	}
+	return (response.data.data?.results ??
+		[]) as Querybuildertypesv5TimeSeriesDataDTO[];
+}
+
 export function getScalarResults(
 	response: QueryRangeV5200 | undefined,
 ): Querybuildertypesv5ScalarDataDTO[] {

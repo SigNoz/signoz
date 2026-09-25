@@ -3,14 +3,21 @@ import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter';
 import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { get, isEmpty } from 'lodash-es';
-import { BarChart, ChevronUp, ExternalLink, ScrollText } from '@signozhq/icons';
+import {
+	BarChart,
+	ChevronUp,
+	ExternalLink,
+	Grid3X3,
+	ScrollText,
+} from '@signozhq/icons';
+import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -25,6 +32,7 @@ import {
 	resolveQueryBuilderFields,
 } from '../../queryBuilderFields.utils';
 
+import BucketOptions from './BucketOptions/BucketOptions';
 import HavingFilter from './HavingFilter/HavingFilter';
 import { buildDefaultLegendFromGroupBy } from './utils';
 
@@ -57,6 +65,7 @@ const ADD_ONS_KEYS_TO_QUERY_PATH: Omit<
 	[QueryBuilderField.Limit]: 'limit',
 	[QueryBuilderField.Legend]: 'legend',
 	[QueryBuilderField.ReduceTo]: 'reduceTo',
+	[QueryBuilderField.BucketOptions]: 'bucketOptions',
 };
 
 const ADD_ONS: AddOn[] = [
@@ -114,6 +123,22 @@ const REDUCE_TO: AddOn = {
 		'Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value.',
 	docLink:
 		'https://signoz.io/docs/userguide/query-builder-v5/#result-manipulation',
+};
+
+// Offered only by a heatmap over metrics: the bucket axis is what a heatmap plots
+// against, and no other panel type sends one. A histogram brings its own buckets.
+const HISTOGRAM_ATTRIBUTE_TYPES = new Set<string>([
+	ATTRIBUTE_TYPES.HISTOGRAM,
+	ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
+]);
+
+const BUCKET_OPTIONS: AddOn = {
+	icon: <Grid3X3 size={14} />,
+	label: 'Bucket by',
+	key: QueryBuilderField.BucketOptions,
+	description:
+		'Choose how the bucket axis is spaced — logarithmically, so every band is the same height and the tail stays readable, or linearly up to a max value. Left to Auto, the query picks the finest log axis it can return.',
+	docLink: 'https://signoz.io/docs/userguide/query-builder-v5/',
 };
 
 const hasValue = (value: unknown): boolean =>
@@ -196,7 +221,7 @@ function QueryAddOns({
 		isForTraceOperator,
 	});
 
-	const { handleSetQueryData } = useQueryBuilder();
+	const { handleSetQueryData, currentQuery } = useQueryBuilder();
 
 	const supportedAddOns = useMemo((): AddOn[] => {
 		let addOns: AddOn[];
@@ -210,8 +235,25 @@ function QueryAddOns({
 			addOns = [...ADD_ONS];
 		}
 
-		return showReduceTo ? [...addOns, REDUCE_TO] : addOns;
-	}, [panelType, query.dataSource, showReduceTo]);
+		if (showReduceTo) {
+			addOns = [...addOns, REDUCE_TO];
+		}
+
+		if (
+			panelType === PANEL_TYPES.HEATMAP &&
+			query.dataSource === DataSource.METRICS &&
+			!HISTOGRAM_ATTRIBUTE_TYPES.has(query.aggregateAttribute?.type ?? '')
+		) {
+			addOns = [...addOns, BUCKET_OPTIONS];
+		}
+
+		return addOns;
+	}, [
+		panelType,
+		query.dataSource,
+		query.aggregateAttribute?.type,
+		showReduceTo,
+	]);
 
 	const resolvedFields = useMemo(
 		() =>
@@ -392,6 +434,13 @@ function QueryAddOns({
 		[handleChangeQueryData],
 	);
 
+	const handleChangeBucketOptions = useCallback(
+		(value: Querybuildertypesv5BucketOptionsDTO | undefined) => {
+			handleChangeQueryData('bucketOptions', value);
+		},
+		[handleChangeQueryData],
+	);
+
 	return (
 		<div className="query-add-ons" data-testid="query-add-ons">
 			{selectedViews.length > 0 && (
@@ -556,6 +605,19 @@ function QueryAddOns({
 								initialValue={isEmpty(query?.legend) ? undefined : query?.legend}
 								onClose={(): void => handleRemoveView(QueryBuilderField.Legend)}
 								closeIcon={<ChevronUp size={16} />}
+							/>
+						</div>
+					)}
+
+					{selectedViews.find(
+						(view) => view.key === QueryBuilderField.BucketOptions,
+					) && (
+						<div className="add-on-content" data-testid="bucket-options-content">
+							<BucketOptions
+								bucketOptions={query.bucketOptions}
+								unit={currentQuery.unit}
+								onChange={handleChangeBucketOptions}
+								onClose={(): void => handleRemoveView(QueryBuilderField.BucketOptions)}
 							/>
 						</div>
 					)}

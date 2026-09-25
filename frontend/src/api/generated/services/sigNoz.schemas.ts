@@ -5072,6 +5072,83 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesTextPanelSpecDTO;
 }
 
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind {
+	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
+}
+export enum DashboardtypesHeatmapYScaleDTO {
+	auto = 'auto',
+	linear = 'linear',
+	log = 'log',
+	symlog = 'symlog',
+}
+export interface DashboardtypesHeatmapAxesDTO {
+	yScale?: DashboardtypesHeatmapYScaleDTO;
+}
+
+export enum DashboardtypesHeatmapColorModeDTO {
+	palette = 'palette',
+	opacity = 'opacity',
+}
+export enum DashboardtypesHeatmapPaletteDTO {
+	ice = 'ice',
+	moss = 'moss',
+	rust = 'rust',
+	graphite = 'graphite',
+	ember = 'ember',
+	lagoon = 'lagoon',
+	orchid = 'orchid',
+	verdant = 'verdant',
+	lava = 'lava',
+	beacon = 'beacon',
+}
+export enum DashboardtypesHeatmapColorScaleDTO {
+	log = 'log',
+	sqrt = 'sqrt',
+	linear = 'linear',
+}
+export interface DashboardtypesHeatmapColorsDTO {
+	/**
+	 * @type string
+	 */
+	fill?: string;
+	/**
+	 * @type number,null
+	 */
+	maxCount?: number | null;
+	/**
+	 * @type number,null
+	 */
+	minCount?: number | null;
+	mode?: DashboardtypesHeatmapColorModeDTO;
+	palette?: DashboardtypesHeatmapPaletteDTO;
+	scale?: DashboardtypesHeatmapColorScaleDTO;
+	/**
+	 * @type integer
+	 */
+	steps?: number;
+}
+
+export interface DashboardtypesHeatmapChartAppearanceDTO {
+	colors?: DashboardtypesHeatmapColorsDTO;
+}
+
+export interface DashboardtypesHeatmapPanelSpecDTO {
+	axes?: DashboardtypesHeatmapAxesDTO;
+	chartAppearance?: DashboardtypesHeatmapChartAppearanceDTO;
+	formatting?: DashboardtypesPanelFormattingDTO;
+	legend?: DashboardtypesLegendDTO;
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO {
+	/**
+	 * @enum signoz/HeatmapPanel
+	 * @type string
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind;
+	spec: DashboardtypesHeatmapPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -5080,7 +5157,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -6005,6 +6083,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
 	'signoz/TextPanel' = 'signoz/TextPanel',
+	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 }
 /**
  * @nullable

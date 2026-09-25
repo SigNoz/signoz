@@ -6,6 +6,9 @@ export enum HeatmapTooltipBody {
 }
 
 export interface HeatmapBucketRow {
+	/** The bucket's row on the y axis. Labels are not unique — two boundaries can
+	 *  round to the same text — so this is what identifies a row. */
+	row: number;
 	label: string;
 	/** `null` where the bucket has no observation in that column, never a 0. */
 	count: number | null;
@@ -16,6 +19,4 @@ export interface HeatmapContributionRow {
 	label: string;
 	color: string;
 	count: number;
-	/** Share of the cell's total, 0..100. */
-	percent: number;
 }

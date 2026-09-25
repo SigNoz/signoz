@@ -2,6 +2,8 @@ import { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
+import timezonePlugin from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 import { formatRowLabel } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import {
 	HeatmapSeries,
@@ -14,10 +16,11 @@ import {
 	HeatmapTooltipBody,
 } from './types';
 
+dayjs.extend(utc);
+dayjs.extend(timezonePlugin);
+
 /** Rows shown either side of the hovered one. */
 const NEIGHBOUR_SPAN = 2;
-/** Below this share a percentage needs a decimal to stay informative. */
-const PERCENT_DECIMAL_THRESHOLD = 10;
 /** Below this, the header needs seconds to distinguish columns. */
 const SUB_MINUTE_STEP = 60;
 
@@ -31,8 +34,9 @@ export function resolveTooltipBody(visibleCount: number): HeatmapTooltipBody {
 		: HeatmapTooltipBody.Buckets;
 }
 
-/** A cell is an interval, so a single instant would misreport which observations
- *  it contains. The date is left to the x axis directly below. */
+/** A cell is an interval, so a single instant would misreport what it contains.
+ *  The start carries the date — the x axis prints one only where the day turns
+ *  over — and the end repeats it only across midnight. */
 export function formatColumnRange({
 	start,
 	step,
@@ -44,13 +48,15 @@ export function formatColumnRange({
 	step: number;
 	timezone: string;
 }): string {
-	const format =
+	const time =
 		step < SUB_MINUTE_STEP
 			? DATE_TIME_FORMATS.TIME_SECONDS
 			: DATE_TIME_FORMATS.TIME;
+	const dated = `${DATE_TIME_FORMATS.DATE_SHORT} ${time}`;
 	const from = dayjs(start * 1000).tz(timezone);
 	const to = dayjs((start + step) * 1000).tz(timezone);
-	return `${from.format(format)} → ${to.format(format)}`;
+	const toFormat = to.isSame(from, 'day') ? time : dated;
+	return `${from.format(dated)} → ${to.format(toFormat)}`;
 }
 
 /** Formatted with the panel's unit. */
@@ -76,38 +82,6 @@ export function formatBucketLabel({
 
 export function formatCount(count: number | null): string {
 	return count === null ? NO_DATA_LABEL : count.toLocaleString();
-}
-
-export function formatPercent(percent: number): string {
-	return percent >= PERCENT_DECIMAL_THRESHOLD
-		? `${Math.round(percent)}%`
-		: `${percent.toFixed(1)}%`;
-}
-
-/** Names the group the grid is currently isolated to. */
-export function formatGroupFilter(series: HeatmapSeries | undefined): string {
-	if (!series) {
-		return '';
-	}
-	if (!series.labels?.length) {
-		return series.label;
-	}
-	return series.labels
-		.map((label) => `${label.key} = ${label.value}`)
-		.join(', ');
-}
-
-/** The `groupBy` keys the breakdown is by. */
-export function resolveGroupByLabel(series: HeatmapSeries[]): string {
-	const keys = series[0]?.labels?.map((label) => label.key) ?? [];
-	return keys.join(', ');
-}
-
-function formatSeriesValue(series: HeatmapSeries): string {
-	if (!series.labels?.length) {
-		return series.label;
-	}
-	return series.labels.map((label) => label.value).join(', ');
 }
 
 /** Highest first, so the list reads in the same direction as the y axis. */
@@ -138,6 +112,7 @@ export function buildBucketRows({
 			continue;
 		}
 		rows.push({
+			row: index,
 			label: formatRowLabel(bucket, formatBucketValue),
 			count: counts[index]?.[column] ?? null,
 			isHovered: offset === 0,
@@ -161,21 +136,18 @@ export function buildContributionRows({
 	/** Column start, in seconds. */
 	timestamp: number;
 	row: number;
+	/** The grid's one colour; there is no per-series hue. */
 	color: string;
 }): HeatmapContributionRow[] {
-	const counts = series.map((entry) => {
-		const point = entry.points.find((item) => item.timestamp === timestamp);
-		// Absent or null contributed nothing to the sum, which is what this breaks down.
-		return point?.counts[row] ?? 0;
-	});
-	const total = counts.reduce((sum, count) => sum + count, 0);
-
 	return series
-		.map((entry, index) => ({
-			label: formatSeriesValue(entry),
-			color,
-			count: counts[index],
-			percent: total > 0 ? (counts[index] / total) * 100 : 0,
-		}))
+		.map((entry) => {
+			const point = entry.points.find((item) => item.timestamp === timestamp);
+			return {
+				label: entry.label,
+				color,
+				// Absent or null contributed nothing to the sum this breaks down.
+				count: point?.counts[row] ?? 0,
+			};
+		})
 		.sort((a, b) => b.count - a.count);
 }

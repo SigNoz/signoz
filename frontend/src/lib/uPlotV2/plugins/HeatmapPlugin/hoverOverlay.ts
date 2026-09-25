@@ -40,6 +40,10 @@ export function createHoverOverlay(isDarkMode: boolean): HeatmapHoverOverlay {
 	const container = createOverlayElement();
 	container.style.inset = '0';
 	container.style.display = 'none';
+	// The plot area's edge, as the canvas clip is to the cells: a cell at either end
+	// runs past the axis when its bucket or its time slice is only partly in view,
+	// and the highlight would otherwise be drawn over the axis and the panel.
+	container.style.overflow = 'hidden';
 	container.setAttribute('data-testid', 'heatmap-hover-overlay');
 
 	const dimColor = `${
