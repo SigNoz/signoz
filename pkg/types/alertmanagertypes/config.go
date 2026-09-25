@@ -60,6 +60,11 @@ type Config struct {
 	// storeableConfig is the representation of the config in the store
 	storeableConfig *StoreableConfig
 
+	// Retain the persisted hash across normalization and mutations for conditional writes.
+	originalHash      string
+	originalUpdatedAt time.Time
+	persisted         bool
+
 	// customConfigs holds the custom notifier configs upstream's
 	// config.Receiver cannot carry, keyed by receiver name.
 	customConfigs map[string]customReceiverConfigs
@@ -132,6 +137,9 @@ func NewConfigFromStoreableConfig(sc *StoreableConfig) (*Config, error) {
 		alertmanagerConfig: alertmanagerConfig,
 		customConfigs:      customConfigs,
 		storeableConfig:    sc,
+		originalHash:       sc.Hash,
+		originalUpdatedAt:  sc.UpdatedAt,
+		persisted:          true,
 	}, nil
 }
 
@@ -247,6 +255,9 @@ func (c *Config) Resolved() (*Config, error) {
 		alertmanagerConfig: alertmanagerConfig,
 		customConfigs:      customConfigs,
 		storeableConfig:    &storeableConfig,
+		originalHash:       c.originalHash,
+		originalUpdatedAt:  c.originalUpdatedAt,
+		persisted:          c.persisted,
 	}
 	resolved.applyNativeDefaults()
 
@@ -321,6 +332,24 @@ func (c *Config) AlertmanagerConfig() *config.Config {
 
 func (c *Config) StoreableConfig() *StoreableConfig {
 	return c.storeableConfig
+}
+
+// OriginalHash identifies the snapshot read from storage, not the pending content.
+// Read a new snapshot before another write; the enclosing transaction may still roll back.
+func (c *Config) OriginalHash() (string, bool) {
+	return c.originalHash, c.persisted
+}
+
+// OriginalUpdatedAt distinguishes revisions whose content hashes are identical.
+func (c *Config) OriginalUpdatedAt() time.Time {
+	return c.originalUpdatedAt
+}
+
+// ReplaceWith retains identity and the read precondition when reconciling derived content.
+func (c *Config) ReplaceWith(replacement *Config) {
+	c.alertmanagerConfig = replacement.alertmanagerConfig
+	c.customConfigs = replacement.customConfigs
+	c.flush()
 }
 
 func cloneReceiver(receiver *Receiver) (*Receiver, error) {
