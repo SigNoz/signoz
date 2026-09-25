@@ -1,7 +1,6 @@
 import {
 	isValidElement,
 	MouseEvent,
-	ReactNode,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -27,7 +26,7 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, MenuProps, Modal, Tooltip } from 'antd';
+import { Button, Modal, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { Logout } from 'api/utils';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -83,6 +82,8 @@ import {
 	helpSupportMenuItem,
 	primaryMenuItems,
 	aiAssistantMenuItem,
+	USER_SETTINGS_MENU_LABELS,
+	type UserSettingsMenuKey,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
 import {
@@ -507,22 +508,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		[pathname],
 	);
 
-	const userSettingsDropdownMenuItems: MenuProps['items'] = useMemo(
-		() =>
-			getUserSettingsDropdownMenuItems({
-				userEmail: user.email,
-				isWorkspaceBlocked,
-				isEnterpriseSelfHostedUser,
-				isCommunityEnterpriseUser,
-			}),
-		[
-			isEnterpriseSelfHostedUser,
-			isCommunityEnterpriseUser,
-			user.email,
-			isWorkspaceBlocked,
-		],
-	);
-
 	useEffect(() => {
 		if (isCloudUser) {
 			setLicenseTag('Cloud');
@@ -902,50 +887,39 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	};
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const handleSettingsMenuItemClick = (info: SidebarItem): void => {
-		const item = (userSettingsDropdownMenuItems ?? []).find(
-			(item) => item?.key === info.key,
-		);
-		let menuLabel = '';
-		if (
-			item &&
-			!('type' in item && item.type === 'divider') &&
-			typeof item.label === 'string'
-		) {
-			menuLabel = item.label;
-		}
-
+	const handleSettingsMenuItemClick = (
+		key: UserSettingsMenuKey,
+		event: MouseEvent,
+	): void => {
 		void logEvent('Settings Popover: Item clicked', {
-			menuRoute: item?.key,
-			menuLabel,
+			menuRoute: key,
+			menuLabel: USER_SETTINGS_MENU_LABELS[key],
 		});
 
-		const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
-
-		switch (info.key) {
+		switch (key) {
 			case 'account':
-				if (event && isModifierKeyPressed(event)) {
+				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.MY_SETTINGS);
 				} else {
 					history.push(ROUTES.MY_SETTINGS);
 				}
 				break;
 			case 'workspace':
-				if (event && isModifierKeyPressed(event)) {
+				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.SETTINGS);
 				} else {
 					history.push(ROUTES.SETTINGS);
 				}
 				break;
 			case 'license':
-				if (event && isModifierKeyPressed(event)) {
+				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.LIST_LICENSES);
 				} else {
 					history.push(ROUTES.LIST_LICENSES);
 				}
 				break;
 			case 'keyboard-shortcuts':
-				if (event && isModifierKeyPressed(event)) {
+				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.SHORTCUTS);
 				} else {
 					history.push(ROUTES.SHORTCUTS);
@@ -1003,54 +977,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		},
 	);
 
-	const userSettingsItems: DropdownItemType[] = (
-		userSettingsDropdownMenuItems ?? []
-	).flatMap((item, idx): DropdownItemType[] => {
-		if (!item) {
-			return [];
-		}
-
-		if ('type' in item && item.type === 'divider') {
-			return [{ type: 'separator', value: `settings-sep-${idx}` }];
-		}
-
-		const settingsItem = item as {
-			key?: string | number;
-			label?: ReactNode;
-			icon?: ReactNode;
-			disabled?: boolean;
-		};
-		const value = String(settingsItem.key ?? idx);
-		const onClick = (event: MouseEvent): void => {
-			handleSettingsMenuItemClick({
-				key: value,
-				domEvent: event.nativeEvent,
-			} as unknown as SidebarItem);
-		};
-
-		if (settingsItem.disabled) {
-			return [
-				{
-					type: 'item',
-					value,
-					label: settingsItem.label ?? '',
-					prefix: isValidElement(settingsItem.icon) ? settingsItem.icon : undefined,
-					disabled: true,
-					disabledTooltip: undefined,
-					onClick,
-				},
-			];
-		}
-
-		return [
-			{
-				type: 'item',
-				value,
-				label: settingsItem.label ?? '',
-				prefix: isValidElement(settingsItem.icon) ? settingsItem.icon : undefined,
-				onClick,
-			},
-		];
+	const userSettingsItems = getUserSettingsDropdownMenuItems({
+		userEmail: user.email,
+		isWorkspaceBlocked,
+		isEnterpriseSelfHostedUser,
+		isCommunityEnterpriseUser,
+		onSelect: handleSettingsMenuItemClick,
 	});
 
 	return (

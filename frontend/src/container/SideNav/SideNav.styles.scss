@@ -1047,14 +1047,11 @@
 		font-family: Inter;
 		font-size: var(--font-size-xs);
 		font-style: normal;
+		font-weight: var(--font-weight-normal);
 		line-height: normal;
 		letter-spacing: 0.14px;
+		text-transform: none;
 	}
-}
-
-.user-settings-dropdown-logout-section {
-	color: var(--danger-background);
-	pointer-events: auto;
 }
 
 .secondary-nav-items {
