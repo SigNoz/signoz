@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 
 import logEvent from 'api/common/logEvent';
@@ -10,6 +10,9 @@ import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyti
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
 import Noz from 'components/Noz/Noz';
+import { useBottomStripLeft } from 'container/BottomStrip/useBottomStripLeft';
+
+import StripInfo from './StripInfo/StripInfo';
 
 import styles from './AIAssistantPage.module.scss';
 import ConversationsList from 'container/AIAssistant/components/ConversationsList';
@@ -40,6 +43,8 @@ export default function AIAssistantPage(): JSX.Element {
 		// Only on mount; route param changes inside the same page aren't a re-open.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	useBottomStripLeft(useMemo(() => <StripInfo />, []));
 
 	const conversations = useAIAssistantStore((s) => s.conversations);
 	const activeConversationId = useAIAssistantStore(

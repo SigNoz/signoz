@@ -14,6 +14,9 @@ import { FilterConfirmProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
+import { useBottomStripLeft } from 'container/BottomStrip/useBottomStripLeft';
+
+import StripInfo from './StripInfo/StripInfo';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -159,6 +162,11 @@ function AllErrors(): JSX.Element {
 				enabled: !loading,
 			},
 		]);
+
+	const exceptionCount = errorCountResponse.data?.payload ?? 0;
+	useBottomStripLeft(
+		useMemo(() => <StripInfo count={exceptionCount} />, [exceptionCount]),
+	);
 
 	const isFetching = isErrorsFetching || errorCountResponse.isFetching;
 	useEffect(() => {

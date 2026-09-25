@@ -6,7 +6,10 @@ import localStorageSet from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import useErrorNotification from 'hooks/useErrorNotification';
+import { useBottomStripLeft } from 'container/BottomStrip/useBottomStripLeft';
 import { useQueryService } from 'hooks/useQueryService';
+
+import StripInfo from '../StripInfo/StripInfo';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
@@ -41,6 +44,10 @@ function ServiceTraces(): JSX.Element {
 	useErrorNotification(error);
 
 	const services = data || [];
+
+	useBottomStripLeft(
+		useMemo(() => <StripInfo count={services.length} />, [services.length]),
+	);
 
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',
