@@ -63,7 +63,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_zirh1_1"
+                        class="_badge_1dbjz_1"
                         data-base-ui-tooltip-trigger=""
                         data-color="primary"
                         data-slot="badge"
@@ -73,7 +73,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                         id="base-ui-:r1:"
                       >
                         <span
-                          class="_badge__label_zirh1_111"
+                          class="_badge__label_1dbjz_112"
                           data-slot="badge-label"
                         >
                           1
@@ -101,7 +101,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_zirh1_1"
+                        class="_badge_1dbjz_1"
                         data-base-ui-tooltip-trigger=""
                         data-color="primary"
                         data-slot="badge"
@@ -111,7 +111,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                         id="base-ui-:r3:"
                       >
                         <span
-                          class="_badge__label_zirh1_111"
+                          class="_badge__label_1dbjz_112"
                           data-slot="badge-label"
                         >
                           2
@@ -139,7 +139,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_zirh1_1"
+                        class="_badge_1dbjz_1"
                         data-base-ui-tooltip-trigger=""
                         data-color="primary"
                         data-slot="badge"
@@ -149,7 +149,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                         id="base-ui-:r5:"
                       >
                         <span
-                          class="_badge__label_zirh1_111"
+                          class="_badge__label_1dbjz_112"
                           data-slot="badge-label"
                         >
                           3

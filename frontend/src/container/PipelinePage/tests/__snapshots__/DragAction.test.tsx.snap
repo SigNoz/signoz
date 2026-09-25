@@ -27,7 +27,7 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
       data-checked=""
       data-color="primary"
       data-slot="switch"
-      id="base-ui-:r3:"
+      id="base-ui-:r2:"
       role="switch"
       tabindex="0"
     >
@@ -40,7 +40,7 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
     <input
       aria-hidden="true"
       checked=""
-      id="base-ui-:r4:"
+      id="base-ui-:r3:"
       style="clip-path: inset(50%); overflow: hidden; white-space: nowrap; border: 0px; padding: 0px; width: 1px; height: 1px; margin: -1px; position: fixed; top: 0px; left: 0px;"
       tabindex="-1"
       type="checkbox"

@@ -4,7 +4,7 @@ exports[`PipelinePage container test should render Tags section 1`] = `
 <DocumentFragment>
   <span>
     <span
-      class="_badge_zirh1_1"
+      class="_badge_1dbjz_1"
       data-base-ui-tooltip-trigger=""
       data-color="highlight-danger"
       data-slot="badge"
@@ -14,14 +14,14 @@ exports[`PipelinePage container test should render Tags section 1`] = `
       id="base-ui-:r1:"
     >
       <span
-        class="_badge__label_zirh1_111"
+        class="_badge__label_1dbjz_112"
         data-slot="badge-label"
       >
         server
       </span>
     </span>
     <span
-      class="_badge_zirh1_1"
+      class="_badge_1dbjz_1"
       data-base-ui-tooltip-trigger=""
       data-color="highlight-danger"
       data-slot="badge"
@@ -31,7 +31,7 @@ exports[`PipelinePage container test should render Tags section 1`] = `
       id="base-ui-:r3:"
     >
       <span
-        class="_badge__label_zirh1_111"
+        class="_badge__label_1dbjz_112"
         data-slot="badge-label"
       >
         app
