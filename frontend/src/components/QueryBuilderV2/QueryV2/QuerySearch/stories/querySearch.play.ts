@@ -55,41 +55,15 @@ const requestSuggestions = (editor: HTMLElement): void => {
 	);
 };
 
-/**
- * Asks for suggestions until the row shows. Focus and typing only open the
- * list once the keys have loaded, and moving the caret never does.
- */
-const requestUntilShown = (
+const currentView = (
 	canvasElement: HTMLElement,
-	editor: HTMLElement,
-	text: string,
-): Promise<HTMLElement> =>
-	waitFor(
-		() => {
-			const row = suggestionRow(canvasElement, text);
-
-			if (!row) {
-				requestSuggestions(editor);
-			}
-
-			return present(row, `suggestion "${text}"`);
-		},
-		{ ...untilLoaded, interval: 250 },
-	);
-
-const findView = async (
-	canvasElement: HTMLElement,
-): Promise<{ editor: HTMLElement; view: EditorView }> => {
+): { editor: HTMLElement; view: EditorView } => {
 	// An explorer renders one editor per query; the first is the one on screen.
-	const editor = await waitFor(
-		() =>
-			present(
-				canvasElement.querySelector<HTMLElement>(
-					'.code-mirror-where-clause .cm-content',
-				),
-				'filter editor',
-			),
-		untilLoaded,
+	const editor = present(
+		canvasElement.querySelector<HTMLElement>(
+			'.code-mirror-where-clause .cm-content',
+		),
+		'filter editor',
 	);
 
 	return {
@@ -99,51 +73,78 @@ const findView = async (
 };
 
 /**
- * Focuses the filter and waits for its suggestion list. Until the list first
- * opens the editor is still settling from the focus, and moves the caret back
- * to the start of the line once on the way.
+ * OverlayScrollbars hands focus back to whatever held it when one of its
+ * instances started initialising, and in a static build those inits finish
+ * after the play has focused the filter. The editor closes its suggestions on
+ * blur, so every wait takes the focus back first.
  */
-const focusFilter = async (
-	canvasElement: HTMLElement,
-): Promise<{ editor: HTMLElement; view: EditorView }> => {
-	const found = await findView(canvasElement);
-
-	found.view.focus();
-	await waitFor(
-		() => {
-			const list = suggestionList(canvasElement);
-
-			if (!list) {
-				requestSuggestions(found.editor);
-			}
-
-			return present(list, 'suggestion list');
-		},
-		{ ...untilLoaded, interval: 250 },
-	);
-
-	return found;
+const keepFocus = (view: EditorView): void => {
+	if (!view.hasFocus) {
+		view.focus();
+	}
 };
 
-/** Waits for a row of the open suggestion list. */
-export const findSuggestion = (
+/**
+ * Waits until `text` shows in the suggestion list, keeping the filter focused
+ * and asking for suggestions whenever the list is shut. Focus and typing only
+ * open it once the keys have loaded, and moving the caret never does.
+ */
+const waitForSuggestion = (
 	canvasElement: HTMLElement,
 	text: string,
 ): Promise<HTMLElement> =>
 	waitFor(
-		// Matched on text content: the typed prefix is split into its own span.
-		() => present(suggestionRow(canvasElement, text), `suggestion "${text}"`),
-		untilLoaded,
+		() => {
+			const { editor, view } = currentView(canvasElement);
+
+			keepFocus(view);
+
+			if (!suggestionList(canvasElement)) {
+				requestSuggestions(editor);
+			}
+
+			return present(suggestionRow(canvasElement, text), `suggestion "${text}"`);
+		},
+		{ ...untilLoaded, interval: 250 },
 	);
+
+/**
+ * Focuses the filter and waits for its suggestion list. Until the list first
+ * opens the editor is still settling from the focus, and moves the caret back
+ * to the start of the line once on the way.
+ */
+const focusFilter = async (canvasElement: HTMLElement): Promise<EditorView> => {
+	await waitFor(
+		() => {
+			const { editor, view } = currentView(canvasElement);
+
+			keepFocus(view);
+
+			if (!suggestionList(canvasElement)) {
+				requestSuggestions(editor);
+			}
+
+			return present(suggestionList(canvasElement), 'suggestion list');
+		},
+		{ ...untilLoaded, interval: 250 },
+	);
+
+	return currentView(canvasElement).view;
+};
+
+/** Waits for a row of the suggestion list. */
+export const findSuggestion = (
+	canvasElement: HTMLElement,
+	text: string,
+): Promise<HTMLElement> => waitForSuggestion(canvasElement, text);
 
 /** Focuses the empty filter: every key, with any recent filters above them. */
 export const openKeySuggestions = async (
 	canvasElement: HTMLElement,
 	row: string,
 ): Promise<void> => {
-	const { editor } = await focusFilter(canvasElement);
-
-	await requestUntilShown(canvasElement, editor, row);
+	await focusFilter(canvasElement);
+	await waitForSuggestion(canvasElement, row);
 };
 
 /**
@@ -159,10 +160,12 @@ export const typeFilter = async (
 	canvasElement: HTMLElement,
 	text: string,
 ): Promise<void> => {
-	const { view } = await focusFilter(canvasElement);
+	const view = await focusFilter(canvasElement);
 
 	for (const character of text) {
 		const at = view.state.doc.length;
+
+		keepFocus(view);
 
 		view.dispatch({
 			changes: { from: at, insert: character },
@@ -185,13 +188,13 @@ export const typeFilterWithCaretBack = async (
 ): Promise<void> => {
 	await typeFilter(canvasElement, text);
 
-	const { editor, view } = await findView(canvasElement);
+	const { view } = currentView(canvasElement);
 
 	view.dispatch({
 		selection: { anchor: view.state.doc.length - stepsBack },
 		userEvent: 'select',
 	});
-	await requestUntilShown(canvasElement, editor, row);
+	await waitForSuggestion(canvasElement, row);
 };
 
 /**
