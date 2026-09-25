@@ -1,0 +1,72 @@
+.container {
+	display: flex;
+	flex-direction: column;
+}
+
+.calendarHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	padding: var(--spacing-3) var(--spacing-4);
+	border-bottom: 1px solid var(--l2-border);
+}
+
+.calendarHeaderTitle {
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
+}
+
+.calendarBody {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+	padding: var(--spacing-3) var(--spacing-4) var(--spacing-4);
+}
+
+.controls {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	align-items: center;
+	gap: var(--spacing-2) var(--spacing-3);
+	width: 100%;
+	padding: var(--spacing-2) 0;
+	border-top: 1px solid var(--l2-border);
+}
+
+.controlLabel {
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
+	white-space: nowrap;
+}
+
+.offsetRow {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	width: 100%;
+}
+
+.offsetSelect {
+	flex: 1;
+	min-width: 0;
+}
+
+.offsetCustomInput {
+	flex: 1;
+	min-width: 0;
+	font-size: var(--periscope-font-size-small);
+}
+
+.offsetHint {
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
+	grid-column: 2;
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--spacing-3);
+	padding-top: var(--spacing-2);
+	border-top: 1px solid var(--l2-border);
+}
