@@ -14,6 +14,7 @@ import {
 	formatBytes,
 	getPodStatusItems,
 	POD_STATUS_COLORS,
+	POD_STATUS_LABELS,
 } from '../commonUtils';
 import {
 	EntityProgressBar,
@@ -110,7 +111,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 			}
 
 			const color = POD_STATUS_COLORS[row.podStatus] || POD_STATUS_COLORS.unknown;
-			const label = row.podStatus.charAt(0).toUpperCase() + row.podStatus.slice(1);
+			const label = POD_STATUS_LABELS[row.podStatus];
 			return (
 				<Badge color={color} variant="outline">
 					{label}
