@@ -33,8 +33,8 @@ let mockGlobalTimeState: {
 } | null = null;
 
 // Mock UpdateTimeInterval to update the mock state that useSelector will use
-jest.mock('store/actions', () => {
-	const originalModule = jest.requireActual('store/actions');
+jest.mock('store/actions/global', () => {
+	const originalModule = jest.requireActual('store/actions/global');
 	const GetMinMax = jest.requireActual('lib/getMinMax').default;
 
 	return {

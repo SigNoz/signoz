@@ -36,7 +36,7 @@ import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import { UpdateTimeInterval } from 'store/actions';
+import { UpdateTimeInterval } from 'store/actions/global';
 import { AppState } from 'store/reducers';
 import { SuccessResponse, Warning } from 'types/api';
 import { LegendPosition } from 'types/api/widgets/widget';

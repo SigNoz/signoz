@@ -291,6 +291,11 @@
     // Prevents the usage of specific antd components in favor of our lib
     "signoz/no-signozhq-ui-barrel": "error",
     // Forces subpath imports (@signozhq/ui/<component>) instead of the eagerly-loaded barrel
+    "signoz/no-antd-barrel": "off",
+    // Off until someone runs `oxlint --fix --rules signoz/no-antd-barrel` over
+    // src: 626 files still import the barrel and the autofix has not been
+    // reviewed against the production bundle. Same rationale as
+    // no-signozhq-ui-barrel above; the barrel is ~536 modules.
     "signoz/no-css-module-bracket-access": "warn",
     // Prevents bracket access on CSS modules (styles['kebab-case']) which fails with camelCaseOnly config
     "signoz/no-dashboard-fetch-outside-root": "error",
