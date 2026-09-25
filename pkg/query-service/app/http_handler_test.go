@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
 func TestPrepareQuery(t *testing.T) {
@@ -126,6 +127,52 @@ func TestPrepareQuery(t *testing.T) {
 				if query != tc.query {
 					t.Errorf("expected query: %s, but got: %s", tc.query, query)
 				}
+			}
+		})
+	}
+}
+
+// POST /api/v2/settings/ttl previously accepted payloads that decode to a
+// zero-value CustomRetentionTTLParams (e.g. the snake_case shape returned by
+// GET, or defaultTTLDays <= 0) and wrote _retention_days DEFAULT 0 to
+// ClickHouse, expiring new log rows immediately. The handler must reject
+// these with 400 before the reader is ever called (the reader is nil here,
+// so reaching it would panic).
+func TestSetCustomRetentionTTLRejectsInvalidPayload(t *testing.T) {
+	handler := &APIHandler{}
+
+	testCases := []struct {
+		name string
+		body string
+	}{
+		{
+			name: "snake_case payload from GET response shape",
+			body: `{"type":"logs","default_ttl_days":15,"ttl_conditions":[]}`,
+		},
+		{
+			name: "zero defaultTTLDays",
+			body: `{"type":"logs","defaultTTLDays":0}`,
+		},
+		{
+			name: "negative defaultTTLDays",
+			body: `{"type":"logs","defaultTTLDays":-5}`,
+		},
+		{
+			name: "missing type",
+			body: `{"defaultTTLDays":15}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/v2/settings/ttl", strings.NewReader(tc.body))
+			req = req.WithContext(authtypes.NewContextWithClaims(req.Context(), authtypes.Claims{OrgID: "test-org"}))
+			w := httptest.NewRecorder()
+
+			handler.setCustomRetentionTTL(w, req)
+
+			if w.Code != http.StatusBadRequest {
+				t.Errorf("expected status %d, got %d (body: %s)", http.StatusBadRequest, w.Code, w.Body.String())
 			}
 		})
 	}
