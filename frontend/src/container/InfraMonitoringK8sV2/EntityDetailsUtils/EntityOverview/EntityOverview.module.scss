@@ -1,0 +1,46 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	margin-top: 1rem;
+	min-height: 0;
+}
+
+.filterContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: var(--spacing-6);
+	border-radius: var(--radius);
+	border: 1px solid var(--l2-border);
+}
+
+.filterControls {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.filterControlsRight {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.resourceSelect {
+	min-width: 160px;
+}
+
+.table {
+	flex: 1;
+	min-height: 0;
+}
+
+.emptyState {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-6);
+}
