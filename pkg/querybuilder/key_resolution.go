@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -24,8 +25,9 @@ const (
 // ResolveLogicalFields picks which logical fields a filter term builds conditions
 // for. With 0 or 1 field it returns the input unchanged and no warning. When a
 // name is ambiguous (several logical fields — a family is one field and never
-// ambiguous with itself) it returns a warning; a resource+attribute mix defaults
-// to the resource fields (the common intent), noted in the warning.
+// ambiguous with itself) it returns a warning; a resource + other-context mix
+// (attribute, body, scope, …) defaults to the resource fields (the common
+// intent), noted in the warning.
 func ResolveLogicalFields(field *telemetrytypes.TelemetryFieldKey, logicalFields []*telemetrytypes.LogicalField) ([]*telemetrytypes.LogicalField, string) {
 	if len(logicalFields) <= 1 {
 		return logicalFields, ""
@@ -38,18 +40,17 @@ func ResolveLogicalFields(field *telemetrytypes.TelemetryFieldKey, logicalFields
 		logicalFields,
 	)
 
-	hasResource, hasAttribute := false, false
+	hasResource, hasOther := false, false
 	for _, item := range logicalFields {
-		switch item.FieldContext {
-		case telemetrytypes.FieldContextResource:
+		if item.FieldContext == telemetrytypes.FieldContextResource {
 			hasResource = true
-		case telemetrytypes.FieldContextAttribute:
-			hasAttribute = true
+		} else {
+			hasOther = true
 		}
 	}
 
-	// when there is both resource and attribute context, default to resource only
-	if hasResource && hasAttribute {
+	// with resource and any other context, default to resource only
+	if hasResource && hasOther {
 		filtered := make([]*telemetrytypes.LogicalField, 0, len(logicalFields))
 		for _, item := range logicalFields {
 			if item.FieldContext == telemetrytypes.FieldContextResource {
@@ -57,11 +58,33 @@ func ResolveLogicalFields(field *telemetrytypes.TelemetryFieldKey, logicalFields
 			}
 		}
 		logicalFields = filtered
-		warning += " " + "Using `resource` context by default. To query attributes explicitly, " +
-			fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s')", field.Name)
+		warning += " " + "Using `resource` context by default. To query another context explicitly, " +
+			fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s' or 'body.%s')", field.Name, field.Name)
 	}
 
 	return logicalFields, warning
+}
+
+// ColumnDataType is the field data type a table column reads as. A storage
+// stamps it on the column key its Fallback returns. The intrinsic-column
+// step can then drop a same-named metadata key of a contradicting type. A
+// time column has no field data type and matches none.
+func ColumnDataType(column *schema.Column) telemetrytypes.FieldDataType {
+	switch column.Type.GetType() {
+	case schema.ColumnTypeEnumBool:
+		return telemetrytypes.FieldDataTypeBool
+	case schema.ColumnTypeEnumInt8, schema.ColumnTypeEnumInt16, schema.ColumnTypeEnumInt32, schema.ColumnTypeEnumInt64,
+		schema.ColumnTypeEnumUInt8, schema.ColumnTypeEnumUInt16, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt64,
+		schema.ColumnTypeEnumFloat32, schema.ColumnTypeEnumFloat64:
+		return telemetrytypes.FieldDataTypeNumber
+	case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFixedString:
+		return telemetrytypes.FieldDataTypeString
+	case schema.ColumnTypeEnumLowCardinality:
+		if lc, ok := column.Type.(schema.LowCardinalityColumnType); ok && lc.ElementType.GetType() == schema.ColumnTypeEnumString {
+			return telemetrytypes.FieldDataTypeString
+		}
+	}
+	return telemetrytypes.FieldDataTypeUnspecified
 }
 
 // WrapAsLogicalFields wraps physical keys (candidate or synthesized) as
@@ -74,22 +97,14 @@ func WrapAsLogicalFields(requestedName string, keys []*telemetrytypes.TelemetryF
 	return fields
 }
 
-// SingleKeys flattens logical fields to their single members. It is the
-// adapter for signals whose fields are single-member by construction (every
-// signal without family support); their condition builders keep compiling per
-// physical key.
-func SingleKeys(fields []*telemetrytypes.LogicalField) []*telemetrytypes.TelemetryFieldKey {
-	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(fields))
-	for _, field := range fields {
-		keys = append(keys, field.Single())
+// NewKeyNotFoundError builds the error for a key that neither metadata nor
+// the storage can serve, with the closest known names as suggestions.
+func NewKeyNotFoundError(name string, known []string) error {
+	err := errors.NewInvalidInputf(errors.CodeInvalidInput, "key `%s` not found", name).WithUrl(KeyNotFoundDocURL)
+	if len(known) == 0 {
+		return err
 	}
-	return keys
-}
-
-// NewKeyNotFoundError builds the error a condition builder returns when a filter term
-// references a key it has no matching field key for.
-func NewKeyNotFoundError(name string) error {
-	return errors.NewInvalidInputf(errors.CodeInvalidInput, "key `%s` not found", name).WithUrl(KeyNotFoundDocURL)
+	return err.WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(name, errors.NounKeys, known)...)
 }
 
 // NewKeyNotFoundWarning is the warning surfaced when a referenced key is absent from
@@ -113,9 +128,14 @@ func SynthesizeKeys(field *telemetrytypes.TelemetryFieldKey, value any) []*telem
 		fieldDataType = telemetrytypes.FieldDataTypeString
 	}
 
-	// A set data type needs only one synthesized key.
+	// A set data type needs only one synthesized key. It keeps the request
+	// key's physical data (evolutions, materialization, JSON plan): a key the
+	// caller decorated reads through those even when metadata is silent.
 	if fieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, fieldContext, fieldDataType)}
+		key := *field
+		key.FieldContext = fieldContext
+		key.FieldDataType = fieldDataType
+		return []*telemetrytypes.TelemetryFieldKey{&key}
 	}
 
 	dataTypes := inferDataTypesFromOperand(value)

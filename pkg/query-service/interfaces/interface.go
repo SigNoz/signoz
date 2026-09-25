@@ -91,10 +91,6 @@ type Reader interface {
 
 	GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error)
 
-	// Query Progress tracking helpers.
-	ReportQueryStartForProgressTracking(queryId string) (reportQueryFinished func(), apiErr *model.ApiError)
-	SubscribeToQueryProgress(queryId string) (<-chan model.QueryProgress, func(), *model.ApiError)
-
 	//trace
 	GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	UpdateTraceField(ctx context.Context, field *model.UpdateField) *model.ApiError

@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"log/slog"
@@ -30,14 +30,12 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	_ "modernc.org/sqlite"
 
@@ -60,7 +58,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
@@ -116,11 +113,6 @@ type APIHandler struct {
 	// is registers.
 	SetupCompleted bool
 
-	// Websocket connection upgrader
-	Upgrader *websocket.Upgrader
-
-	LicensingAPI licensing.API
-
 	QueryParserAPI *queryparser.API
 
 	Signoz *signoz.SigNoz
@@ -138,8 +130,6 @@ type APIHandlerOpts struct {
 
 	// Flux Interval
 	FluxInterval time.Duration
-
-	LicensingAPI licensing.API
 
 	QueryParserAPI *queryparser.API
 
@@ -176,7 +166,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
-		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		QueryParserAPI:                opts.QueryParserAPI,
 	}
@@ -211,12 +200,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 	// If the root user is enabled, the setup is complete
 	if config.User.Root.Enabled {
 		aH.SetupCompleted = true
-	}
-
-	aH.Upgrader = &websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
 	}
 
 	return aH, nil
@@ -360,16 +343,8 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *middlew
 
 	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
 
-	// TODO(Raj): Remove this handler after /ws based path has been completely rolled out.
-	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
-
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.Signoz.Handlers.QuerierHandler.QueryRawStream)).Methods(http.MethodGet)
-}
-
-func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *middleware.AuthZ) {
-	subRouter := router.PathPrefix("/ws").Subrouter()
-	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *middleware.AuthZ) {
@@ -400,12 +375,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/rules/{id}/history/top_contributors", am.ViewAccess(aH.getRuleStateHistoryTopContributors)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rules/{id}/history/overall_status", am.ViewAccess(aH.getOverallStateTransitions)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.List)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{id}", am.ViewAccess(aH.Get)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Update)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Delete)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/dashboards/{id}/lock", am.EditAccess(aH.Signoz.Handlers.Dashboard.LockUnlock)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.Signoz.Handlers.SavedView.List)).Methods(http.MethodGet)
@@ -451,19 +420,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
-	// Quick Filters
+	// Quick Filters (v1 routes serve the legacy v3 shape; v2 lives in signozapiserver)
 	router.HandleFunc("/api/v1/orgs/me/filters", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetQuickFilters)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSignalFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSourceFilters)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.Signoz.Handlers.QuickFilter.UpdateQuickFilters)).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
-
-	router.HandleFunc("/api/v3/licenses", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
-		render.Success(rw, http.StatusOK, []any{})
-	})).Methods(http.MethodGet)
-	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
-		aH.LicensingAPI.Activate(rw, req)
-	})).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/span_percentile", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
 
@@ -861,12 +823,12 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
 
 				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()
-			} else if rule.AlertType == ruletypes.AlertTypeTraces {
+			} else if rule.AlertType == ruletypes.AlertTypeTraces || rule.AlertType == ruletypes.AlertTypeAITraces {
 				// TODO(srikanthccv): re-visit this and support multiple queries
 				var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
 
 				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder {
+					if query.Type == qbtypes.QueryTypeBuilder || query.Type == qbtypes.QueryTypeBuilderAI {
 						switch spec := query.Spec.(type) {
 						case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
 							q = spec
@@ -880,7 +842,7 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 				}
 
 				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause).Encode()
+				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause, rule.AlertType.BuilderQueryType()).Encode()
 			}
 		}
 	}
@@ -977,14 +939,6 @@ func prepareQuery(r *http.Request) (string, error) {
 	return newQuery, nil
 }
 
-func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
-	render.Error(rw, dashboardtypes.NewV1DeprecatedError("get a dashboard with GET /api/v2/dashboards/{id}"))
-}
-
-func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
-	render.Error(rw, dashboardtypes.NewV1DeprecatedError("list dashboards with GET /api/v2/dashboards"))
-}
-
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {
 	query, err := prepareQuery(r)
 	if err != nil {
@@ -992,7 +946,7 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	querybuilder.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
+	clickhousesql.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
 
 	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
@@ -1519,15 +1473,6 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseJSONBody.String()),
 		Active:     bodyJSONQuery,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
-
-	aiObservability := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureEnableAIObservability, evalCtx)
-	featureSet = append(featureSet, &licensetypes.Feature{
-		Name:       valuer.NewString(flagger.FeatureEnableAIObservability.String()),
-		Active:     aiObservability,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -3558,27 +3503,6 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	// Hook up query progress tracking if requested
-	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
-	if len(queryIdHeader) > 0 {
-		onQueryFinished, apiErr := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
-
-		if apiErr != nil {
-			aH.logger.ErrorContext(ctx, "failed to report query start for progress tracking",
-				"query_id", queryIdHeader, errors.Attr(apiErr),
-			)
-
-		} else {
-			// Adding queryId to the context signals clickhouse queries to report progress
-			//lint:ignore SA1029 ignore for now
-			ctx = context.WithValue(ctx, "queryId", queryIdHeader)
-
-			defer func() {
-				go onQueryFinished()
-			}()
-		}
-	}
-
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.CodeNamespace:    "app",
 		instrumentationtypes.CodeFunctionName: "QueryRange",
@@ -3758,73 +3682,6 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
-}
-
-func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Request) {
-	// Upgrade connection to websocket, sending back the requested protocol
-	// value for sec-websocket-protocol
-	//
-	// Since js websocket API doesn't allow setting headers, this header is often
-	// used for passing auth tokens. As per websocket spec the connection will only
-	// succeed if the requested `Sec-Websocket-Protocol` is sent back as a header
-	// in the upgrade response (signifying that the protocol is supported by the server).
-	upgradeResponseHeaders := http.Header{}
-	requestedProtocol := r.Header.Get("Sec-WebSocket-Protocol")
-	if len(requestedProtocol) > 0 {
-		upgradeResponseHeaders.Add("Sec-WebSocket-Protocol", requestedProtocol)
-	}
-
-	c, err := aH.Upgrader.Upgrade(w, r, upgradeResponseHeaders)
-	if err != nil {
-		RespondError(w, model.InternalError(fmt.Errorf(
-			"couldn't upgrade connection: %w", err,
-		)), nil)
-		return
-	}
-	defer c.Close()
-
-	// Websocket upgrade complete. Subscribe to query progress and send updates to client
-	//
-	// Note: we handle any subscription problems (queryId query param missing or query already complete etc)
-	// after the websocket connection upgrade by closing the channel.
-	// The other option would be to handle the errors before websocket upgrade by sending an
-	// error response instead of the upgrade response, but that leads to a generic websocket
-	// connection failure on the client.
-
-	queryId := r.URL.Query().Get("q")
-
-	progressCh, unsubscribe, apiErr := aH.reader.SubscribeToQueryProgress(queryId)
-	if apiErr != nil {
-		// Shouldn't happen unless query progress requested after query finished
-		aH.logger.WarnContext(r.Context(), "failed to subscribe to query progress",
-			"query_id", queryId, errors.Attr(apiErr),
-		)
-		return
-	}
-	defer func() { go unsubscribe() }()
-
-	for queryProgress := range progressCh {
-		msg, err := json.Marshal(queryProgress)
-		if err != nil {
-			aH.logger.ErrorContext(r.Context(), "failed to serialize progress message",
-				"query_id", queryId, "progress", queryProgress, errors.Attr(err),
-			)
-			continue
-		}
-
-		err = c.WriteMessage(websocket.TextMessage, msg)
-		if err != nil {
-			aH.logger.ErrorContext(r.Context(), "failed to write progress message to websocket",
-				"query_id", queryId, "msg", string(msg), errors.Attr(err),
-			)
-			break
-
-		} else {
-			aH.logger.DebugContext(r.Context(), "wrote progress message to websocket",
-				"query_id", queryId, "msg", string(msg),
-			)
-		}
-	}
 }
 
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
@@ -4189,20 +4046,20 @@ func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middlew
 		Methods(http.MethodPut)
 
 	// Analytics endpoints
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", aH.handleValidateTraces).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", aH.handleFunnelAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", aH.handleStepAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps/overview", aH.handleFunnelStepAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", aH.handleFunnelSlowTraces).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", aH.handleFunnelErrorTraces).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", am.ViewAccess(aH.handleValidateTraces)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", am.ViewAccess(aH.handleFunnelAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", am.ViewAccess(aH.handleStepAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps/overview", am.ViewAccess(aH.handleFunnelStepAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", am.ViewAccess(aH.handleFunnelSlowTraces)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", am.ViewAccess(aH.handleFunnelErrorTraces)).Methods("POST")
 
 	// Analytics endpoints
-	traceFunnelsRouter.HandleFunc("/analytics/validate", aH.handleValidateTracesWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/overview", aH.handleFunnelAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/steps", aH.handleStepAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/steps/overview", aH.handleFunnelStepAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/slow-traces", aH.handleFunnelSlowTracesWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/error-traces", aH.handleFunnelErrorTracesWithPayload).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/validate", am.ViewAccess(aH.handleValidateTracesWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/overview", am.ViewAccess(aH.handleFunnelAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/steps", am.ViewAccess(aH.handleStepAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/steps/overview", am.ViewAccess(aH.handleFunnelStepAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/slow-traces", am.ViewAccess(aH.handleFunnelSlowTracesWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/error-traces", am.ViewAccess(aH.handleFunnelErrorTracesWithPayload)).Methods("POST")
 }
 
 func (aH *APIHandler) handleValidateTraces(w http.ResponseWriter, r *http.Request) {

@@ -38,7 +38,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-jest.mock('container/GridCardLayout/useResolveQuery', () => ({
+jest.mock('container/WidgetCard/hooks/useResolveQuery', () => ({
 	__esModule: true,
 	default: (): any => ({
 		getUpdatedQuery: jest.fn().mockResolvedValue({}),
@@ -64,16 +64,6 @@ jest.mock('react-redux', () => ({
 			maxTime: 1713738000000,
 			minTime: 1713734400000,
 		},
-	}),
-}));
-
-jest.mock('container/QueryTable/Drilldown/useDashboardVarConfig', () => ({
-	__esModule: true,
-	default: (): any => ({
-		dashbaordVariablesConfig: {
-			items: <>items</>,
-		},
-		// contextItems: <></>,
 	}),
 }));
 

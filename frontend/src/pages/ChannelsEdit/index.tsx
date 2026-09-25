@@ -11,6 +11,9 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	GoogleChatChannel,
+	IncidentIOChannel,
+	JiraChannel,
+	JsmOpsChannel,
 	MsTeamsChannel,
 	PagerChannel,
 	SlackChannel,
@@ -60,17 +63,27 @@ function ChannelsEdit(): JSX.Element {
 
 	const prepChannelConfig = (): {
 		type: string;
-		channel: SlackChannel &
-			WebhookChannel &
-			PagerChannel &
-			MsTeamsChannel &
-			GoogleChatChannel;
+		channel: Partial<
+			SlackChannel &
+				WebhookChannel &
+				PagerChannel &
+				MsTeamsChannel &
+				GoogleChatChannel &
+				JiraChannel &
+				JsmOpsChannel &
+				IncidentIOChannel
+		>;
 	} => {
-		let channel: SlackChannel &
-			WebhookChannel &
-			PagerChannel &
-			MsTeamsChannel &
-			GoogleChatChannel = {
+		let channel: Partial<
+			SlackChannel &
+				WebhookChannel &
+				PagerChannel &
+				MsTeamsChannel &
+				GoogleChatChannel &
+				JiraChannel &
+				JsmOpsChannel &
+				IncidentIOChannel
+		> = {
 			name: '',
 		};
 
@@ -101,6 +114,19 @@ function ChannelsEdit(): JSX.Element {
 			};
 		}
 
+		if (value && 'jira_configs' in value) {
+			const [jiraConfig] = value.jira_configs;
+			channel = jiraConfig;
+			if (jiraConfig.http_config?.basic_auth) {
+				channel.username = jiraConfig.http_config.basic_auth.username;
+				channel.password = jiraConfig.http_config.basic_auth.password;
+			}
+			return {
+				type: ChannelType.Jira,
+				channel,
+			};
+		}
+
 		if (value && 'pagerduty_configs' in value) {
 			const pagerConfig = value.pagerduty_configs[0];
 			channel = pagerConfig;
@@ -108,6 +134,31 @@ function ChannelsEdit(): JSX.Element {
 			channel.detailsArray = { ...pagerConfig.details };
 			return {
 				type: ChannelType.Pagerduty,
+				channel,
+			};
+		}
+
+		if (value && 'incidentio_configs' in value) {
+			const [incidentIOConfig] = value.incidentio_configs;
+			channel = incidentIOConfig;
+			return {
+				type: ChannelType.IncidentIO,
+				channel,
+			};
+		}
+
+		if (value && 'jsmops_configs' in value) {
+			const [jsmopsConfig] = value.jsmops_configs;
+			channel = jsmopsConfig;
+			// backend stores tags as a comma-separated string; the form uses chips
+			channel.tags = jsmopsConfig.tags
+				? String(jsmopsConfig.tags)
+						.split(',')
+						.map((tag: string) => tag.trim())
+						.filter(Boolean)
+				: [];
+			return {
+				type: ChannelType.JsmOps,
 				channel,
 			};
 		}

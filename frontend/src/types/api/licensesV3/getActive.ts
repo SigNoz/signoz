@@ -1,57 +1,59 @@
 export enum LicenseEvent {
 	NO_EVENT = '',
-	DEFAULT = 'DEFAULT',
+	DEFAULT = 'default',
 }
 
 export enum LicenseStatus {
-	SUSPENDED = 'SUSPENDED',
-	VALID = 'VALID',
-	INVALID = 'INVALID',
+	SUSPENDED = 'suspended',
+	VALID = 'valid',
+	INVALID = 'invalid',
 }
 
 export enum LicenseState {
-	DEFAULTED = 'DEFAULTED',
-	ACTIVATED = 'ACTIVATED',
-	EXPIRED = 'EXPIRED',
-	ISSUED = 'ISSUED',
-	EVALUATING = 'EVALUATING',
-	EVALUATION_EXPIRED = 'EVALUATION_EXPIRED',
-	TERMINATED = 'TERMINATED',
-	CANCELLED = 'CANCELLED',
+	DEFAULTED = 'defaulted',
+	ACTIVATED = 'activated',
+	EXPIRED = 'expired',
+	ISSUED = 'issued',
+	EVALUATING = 'evaluating',
+	EVALUATION_EXPIRED = 'evaluation_expired',
+	TERMINATED = 'terminated',
+	CANCELLED = 'cancelled',
 }
 
 export enum LicensePlatform {
-	SELF_HOSTED = 'SELF_HOSTED',
-	CLOUD = 'CLOUD',
+	SELF_HOSTED = 'self_hosted',
+	CLOUD = 'cloud',
 }
+
+export type LicensePlanResModel = {
+	id: string;
+	name: string;
+	description: string;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+};
 
 export type LicenseEventQueueResModel = {
 	event: LicenseEvent;
 	status: string;
-	scheduled_at: string;
-	created_at: string;
-	updated_at: string;
+	scheduledAt: string;
+	createdAt: string;
+	updatedAt: string;
 };
 
 export type LicenseResModel = {
-	key: string;
+	id: string;
 	status: LicenseStatus;
 	state: LicenseState;
-	event_queue: LicenseEventQueueResModel;
 	platform: LicensePlatform;
-	created_at: string;
-	plan: {
-		created_at: string;
-		description: string;
-		is_active: boolean;
-		name: string;
-		updated_at: string;
-	};
-	plan_id: string;
-	free_until: string;
-	updated_at: string;
-	valid_from: number;
-	valid_until: number;
+	plan: LicensePlanResModel;
+	eventQueue: LicenseEventQueueResModel;
+	freeUntil: string;
+	createdAt: string;
+	updatedAt: string;
+	validFrom: number;
+	validUntil: number;
 };
 
 // Duplicate of old licenses API response, need to improve this later
@@ -63,8 +65,3 @@ export type TrialInfo = {
 	trialConvertedToSubscription: boolean;
 	gracePeriodEnd: number;
 };
-
-export interface PayloadProps {
-	data: LicenseEventQueueResModel;
-	status: string;
-}

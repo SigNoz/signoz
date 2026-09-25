@@ -68,8 +68,11 @@ export default function MessagingQueuesMainPage(): JSX.Element {
 	];
 
 	return (
-		<div className="messaging-queues-module-container">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
-		</div>
+		<RouteTab
+			className="messaging-queues-module-container"
+			routes={routes}
+			activeKey={pathname}
+			history={history}
+		/>
 	);
 }

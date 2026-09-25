@@ -52,7 +52,7 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	dashboard, err := module.Get(ctx, orgID, publicDashboard.DashboardID)
+	dashboard, err := module.GetV2(ctx, orgID, publicDashboard.DashboardID)
 	if err != nil {
 		return err
 	}
@@ -90,15 +90,6 @@ func (module *module) GetPublic(ctx context.Context, orgID valuer.UUID, dashboar
 	return dashboardtypes.NewPublicDashboardFromStorablePublicDashboard(storablePublicDashboard), nil
 }
 
-func (module *module) GetDashboardByPublicID(ctx context.Context, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
-	storableDashboard, err := module.store.GetDashboardByPublicID(ctx, id.StringValue())
-	if err != nil {
-		return nil, err
-	}
-
-	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
-}
-
 func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 	orgIDs := make([]string, len(orgs))
 	for idx, org := range orgs {
@@ -114,24 +105,6 @@ func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id 
 		coretypes.TypeMetaResource.MustSelector(id.StringValue()),
 		coretypes.TypeMetaResource.MustSelector(coretypes.WildCardSelectorString),
 	}, storableDashboard.OrgID, nil
-}
-
-func (module *module) GetPublicWidgetQueryRange(ctx context.Context, id valuer.UUID, widgetIdx, startTime, endTime uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.CodeNamespace:    "dashboard",
-		instrumentationtypes.CodeFunctionName: "GetPublicWidgetQueryRange",
-	})
-	dashboard, err := module.GetDashboardByPublicID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	query, err := dashboard.GetWidgetQuery(startTime, endTime, widgetIdx, module.settings.Logger())
-	if err != nil {
-		return nil, err
-	}
-
-	return module.querier.QueryRange(ctx, dashboard.OrgID, query)
 }
 
 func (module *module) GetDashboardByPublicIDV2(ctx context.Context, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
@@ -189,7 +162,7 @@ func (module *module) UpdatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	dashboard, err := module.Get(ctx, orgID, publicDashboard.DashboardID)
+	dashboard, err := module.GetV2(ctx, orgID, publicDashboard.DashboardID)
 	if err != nil {
 		return err
 	}
@@ -200,34 +173,13 @@ func (module *module) UpdatePublic(ctx context.Context, orgID valuer.UUID, publi
 	return module.store.UpdatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
 }
 
-func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
-	dashboard, err := module.Get(ctx, orgID, id)
-	if err != nil {
-		return err
-	}
-
-	if err := dashboard.ErrIfNotDeletable(); err != nil {
-		return err
-	}
-
-	if dashboard.Locked {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
-	}
-
-	return module.delete(ctx, orgID, id)
-}
-
-func (module *module) DeleteUnsafe(ctx context.Context, orgID, id valuer.UUID) error {
-	return module.delete(ctx, orgID, id)
-}
-
 func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	dashboard, err := module.Get(ctx, orgID, dashboardID)
+	dashboard, err := module.GetV2(ctx, orgID, dashboardID)
 	if err != nil {
 		return err
 	}
@@ -260,10 +212,6 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	return stats, nil
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.Create(ctx, orgID, createdBy, creator, source, data)
-}
-
 func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.CreateV2(ctx, orgID, createdBy, creator, source, postable)
 }
@@ -294,6 +242,15 @@ func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer
 			return err
 		}
 		return module.pkgDashboardModule.DeleteV2(ctx, orgID, id)
+	})
+}
+
+func (module *module) DeleteUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.DeletePublic(ctx, id.String()); err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return err
+		}
+		return module.pkgDashboardModule.DeleteUnsafeV2(ctx, orgID, id)
 	})
 }
 
@@ -337,28 +294,8 @@ func (module *module) DeleteView(ctx context.Context, orgID valuer.UUID, id valu
 	return module.pkgDashboardModule.DeleteView(ctx, orgID, id)
 }
 
-func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.Get(ctx, orgID, id)
-}
-
-func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error) {
-	return module.pkgDashboardModule.GetByMetricNames(ctx, orgID, metricNames)
-}
-
 func (module *module) GetByMetricNamesV2(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error) {
 	return module.pkgDashboardModule.GetByMetricNamesV2(ctx, orgID, metricNames)
-}
-
-func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.List(ctx, orgID)
-}
-
-func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.Update(ctx, orgID, id, updatedBy, data, diff)
-}
-
-func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
-	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, isAdmin, lock)
 }
 
 func (module *module) ReconcileSystemDashboards(ctx context.Context, orgID valuer.UUID) error {
@@ -367,13 +304,4 @@ func (module *module) ReconcileSystemDashboards(ctx context.Context, orgID value
 
 func (module *module) GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.GetSystemDashboard(ctx, orgID, name)
-}
-
-func (module *module) delete(ctx context.Context, orgID, id valuer.UUID) error {
-	return module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if err := module.store.DeletePublic(ctx, id.String()); err != nil && !errors.Ast(err, errors.TypeNotFound) {
-			return err
-		}
-		return module.store.Delete(ctx, orgID, id)
-	})
 }

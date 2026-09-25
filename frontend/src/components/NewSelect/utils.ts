@@ -1,10 +1,25 @@
-import { uniqueOptions } from 'container/DashboardContainer/DashboardVariablesSelection/util';
-
 import { OptionData } from './types';
 
 export const SPACEKEY = ' ';
 
 export const ALL_SELECTED_VALUE = '__ALL__'; // Constant for the special value
+
+/** De-duplicate options by `value`, keeping the first occurrence. */
+export const uniqueOptions = (options: OptionData[]): OptionData[] => {
+	const deduped: OptionData[] = [];
+	const seenValues = new Set<string>();
+
+	options.forEach((option) => {
+		const value = option.value || '';
+		if (seenValues.has(value)) {
+			return;
+		}
+		seenValues.add(value);
+		deduped.push(option);
+	});
+
+	return deduped;
+};
 
 export const prioritizeOrAddOptionForSingleSelect = (
 	options: OptionData[],

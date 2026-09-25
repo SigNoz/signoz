@@ -103,30 +103,30 @@ function createMockLicense(
 	overrides: Partial<LicenseResModel> = {},
 ): LicenseResModel {
 	return {
-		key: 'test-key',
-		event_queue: {
-			created_at: '0',
+		id: 'test-license-id',
+		eventQueue: {
+			createdAt: '0',
 			event: LicenseEvent.NO_EVENT,
-			scheduled_at: '0',
+			scheduledAt: '0',
 			status: '',
-			updated_at: '0',
+			updatedAt: '0',
 		},
 		state: LicenseState.ACTIVATED,
 		status: LicenseStatus.VALID,
 		platform: LicensePlatform.CLOUD,
-		created_at: '0',
+		createdAt: '0',
 		plan: {
-			created_at: '0',
+			id: '0',
+			createdAt: '0',
 			description: '',
-			is_active: true,
+			isActive: true,
 			name: '',
-			updated_at: '0',
+			updatedAt: '0',
 		},
-		plan_id: '0',
-		free_until: '0',
-		updated_at: '0',
-		valid_from: 0,
-		valid_until: 0,
+		freeUntil: '0',
+		updatedAt: '0',
+		validFrom: 0,
+		validUntil: 0,
 		...overrides,
 	};
 }
@@ -739,7 +739,7 @@ describe('PrivateRoute', () => {
 			assertStaysOnRoute(ROUTES.MY_SETTINGS);
 		});
 
-		it('should redirect VIEWER to workspace locked even when trying to access settings', async () => {
+		it('should allow VIEWER to access /settings when workspace is blocked', () => {
 			renderPrivateRoute({
 				initialRoute: ROUTES.SETTINGS,
 				appContext: {
@@ -752,10 +752,10 @@ describe('PrivateRoute', () => {
 				isCloudUser: true,
 			});
 
-			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
+			assertStaysOnRoute(ROUTES.SETTINGS);
 		});
 
-		it('should redirect VIEWER to workspace locked when trying to access billing', async () => {
+		it('should allow VIEWER to access /settings/billing when workspace is blocked', () => {
 			renderPrivateRoute({
 				initialRoute: ROUTES.BILLING,
 				appContext: {
@@ -768,7 +768,7 @@ describe('PrivateRoute', () => {
 				isCloudUser: true,
 			});
 
-			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
+			assertStaysOnRoute(ROUTES.BILLING);
 		});
 
 		it('should redirect VIEWER to workspace locked when trying to access org-settings', async () => {
@@ -819,7 +819,7 @@ describe('PrivateRoute', () => {
 			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
 		});
 
-		it('should redirect EDITOR to workspace locked when trying to access settings', async () => {
+		it('should allow EDITOR to access /settings when workspace is blocked', () => {
 			renderPrivateRoute({
 				initialRoute: ROUTES.SETTINGS,
 				appContext: {
@@ -832,7 +832,7 @@ describe('PrivateRoute', () => {
 				isCloudUser: true,
 			});
 
-			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
+			assertStaysOnRoute(ROUTES.SETTINGS);
 		});
 
 		it('should not redirect when already on workspace locked page', () => {
@@ -843,6 +843,22 @@ describe('PrivateRoute', () => {
 					isFetchingActiveLicense: false,
 					activeLicense: createMockLicense({ platform: LicensePlatform.CLOUD }),
 					trialInfo: createMockTrialInfo({ workSpaceBlock: true }),
+				},
+				isCloudUser: true,
+			});
+
+			assertStaysOnRoute(ROUTES.WORKSPACE_LOCKED);
+		});
+
+		it('should keep a custom role (ANONYMOUS) on workspace locked instead of bouncing to unauthorized', () => {
+			renderPrivateRoute({
+				initialRoute: ROUTES.WORKSPACE_LOCKED,
+				appContext: {
+					isLoggedIn: true,
+					isFetchingActiveLicense: false,
+					activeLicense: createMockLicense({ platform: LicensePlatform.CLOUD }),
+					trialInfo: createMockTrialInfo({ workSpaceBlock: true }),
+					user: createMockUser({ role: USER_ROLES.ANONYMOUS as ROLES }),
 				},
 				isCloudUser: true,
 			});
@@ -1017,6 +1033,24 @@ describe('PrivateRoute', () => {
 						platform: LicensePlatform.CLOUD,
 						state: LicenseState.DEFAULTED,
 					}),
+				},
+				isCloudUser: true,
+			});
+
+			assertStaysOnRoute(ROUTES.WORKSPACE_SUSPENDED);
+		});
+
+		it('should keep a custom role (ANONYMOUS) on workspace suspended instead of bouncing to unauthorized', () => {
+			renderPrivateRoute({
+				initialRoute: ROUTES.WORKSPACE_SUSPENDED,
+				appContext: {
+					isLoggedIn: true,
+					isFetchingActiveLicense: false,
+					activeLicense: createMockLicense({
+						platform: LicensePlatform.CLOUD,
+						state: LicenseState.DEFAULTED,
+					}),
+					user: createMockUser({ role: USER_ROLES.ANONYMOUS as ROLES }),
 				},
 				isCloudUser: true,
 			});
@@ -1524,6 +1558,18 @@ describe('PrivateRoute', () => {
 			keyof typeof routeWithInitialAuthZSupport,
 			AuthzRouteCase
 		> = {
+			ALL_DASHBOARD: { path: ROUTES.ALL_DASHBOARD, deniedRoles: DENIED_ROLES },
+			DASHBOARD: {
+				path: ROUTES.DASHBOARD.replace(':dashboardId', 'dashboard-id-1'),
+				deniedRoles: DENIED_ROLES,
+			},
+			DASHBOARD_PANEL_EDITOR: {
+				path: ROUTES.DASHBOARD_PANEL_EDITOR.replace(
+					':dashboardId',
+					'dashboard-id-1',
+				).replace(':panelId', 'panel-id-1'),
+				deniedRoles: DENIED_ROLES,
+			},
 			// Everything under /settings resolves to the non-exact SETTINGS route
 			SETTINGS: { path: ROUTES.SETTINGS, deniedRoles: DENIED_ROLES },
 			MY_SETTINGS: { path: ROUTES.MY_SETTINGS, deniedRoles: DENIED_ROLES },
@@ -1542,13 +1588,8 @@ describe('PrivateRoute', () => {
 				deniedRoles: DENIED_ROLES,
 			},
 			TRACES_EXPLORER: { path: ROUTES.TRACES_EXPLORER, deniedRoles: DENIED_ROLES },
-			TRACE: { path: ROUTES.TRACE, deniedRoles: DENIED_ROLES },
 			TRACE_DETAIL: {
 				path: ROUTES.TRACE_DETAIL.replace(':id', 'trace-id-1'),
-				deniedRoles: DENIED_ROLES,
-			},
-			TRACE_DETAIL_OLD: {
-				path: ROUTES.TRACE_DETAIL_OLD.replace(':id', 'trace-id-1'),
 				deniedRoles: DENIED_ROLES,
 			},
 			// LOGS and LOGS_EXPLORER share a path - matchPath resolves it to whichever
@@ -1556,10 +1597,6 @@ describe('PrivateRoute', () => {
 			LOGS: { path: ROUTES.LOGS, deniedRoles: DENIED_ROLES },
 			LOGS_EXPLORER: { path: ROUTES.LOGS_EXPLORER, deniedRoles: DENIED_ROLES },
 			LIVE_LOGS: { path: ROUTES.LIVE_LOGS, deniedRoles: DENIED_ROLES },
-			OLD_LOGS_EXPLORER: {
-				path: ROUTES.OLD_LOGS_EXPLORER,
-				deniedRoles: DENIED_ROLES,
-			},
 			METRICS_EXPLORER: {
 				path: ROUTES.METRICS_EXPLORER,
 				deniedRoles: DENIED_ROLES,
@@ -1580,6 +1617,19 @@ describe('PrivateRoute', () => {
 				path: ROUTES.SUPPORT,
 				deniedRoles: [USER_ROLES.AUTHOR as ROLES],
 			},
+			WORKSPACE_LOCKED: {
+				path: ROUTES.WORKSPACE_LOCKED,
+				deniedRoles: DENIED_ROLES,
+			},
+			WORKSPACE_SUSPENDED: {
+				path: ROUTES.WORKSPACE_SUSPENDED,
+				deniedRoles: DENIED_ROLES,
+			},
+			WORKSPACE_ACCESS_RESTRICTED: {
+				path: ROUTES.WORKSPACE_ACCESS_RESTRICTED,
+				deniedRoles: DENIED_ROLES,
+			},
+			BILLING: { path: ROUTES.BILLING, deniedRoles: DENIED_ROLES },
 		};
 
 		const authzRouteRolePairs: [string, string, ROLES][] = Object.entries(

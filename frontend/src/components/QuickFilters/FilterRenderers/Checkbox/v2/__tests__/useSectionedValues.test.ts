@@ -17,6 +17,7 @@ describe('useSectionedValues', () => {
 		isSomeFilterPresentForCurrentAttribute: false,
 		isNotInOperator: false,
 		hasExistingQuery: false,
+		isRelatedValuesSupported: true,
 		visibleItemsCount: 10,
 		relatedExclusions: [] as string[],
 	};
@@ -26,6 +27,7 @@ describe('useSectionedValues', () => {
 			useSectionedValues({
 				...baseInput,
 				hasExistingQuery: false,
+				isRelatedValuesSupported: true,
 				isSomeFilterPresentForCurrentAttribute: false,
 			}),
 		);
@@ -43,6 +45,7 @@ describe('useSectionedValues', () => {
 			useSectionedValues({
 				...baseInput,
 				hasExistingQuery: true,
+				isRelatedValuesSupported: true,
 				isSomeFilterPresentForCurrentAttribute: false,
 			}),
 		);
@@ -71,6 +74,7 @@ describe('useSectionedValues', () => {
 			useSectionedValues({
 				...baseInput,
 				hasExistingQuery: true,
+				isRelatedValuesSupported: true,
 				isSomeFilterPresentForCurrentAttribute: true,
 				currentFilterState: { val1: true, val2: false, val3: false },
 			}),
@@ -88,6 +92,7 @@ describe('useSectionedValues', () => {
 			useSectionedValues({
 				...baseInput,
 				hasExistingQuery: true,
+				isRelatedValuesSupported: true,
 				isSomeFilterPresentForCurrentAttribute: true,
 				isNotInOperator: true,
 				currentFilterState: { val1: false, val2: true, val3: true },
@@ -110,6 +115,7 @@ describe('useSectionedValues', () => {
 				relatedValues: ['zebra', 'apple', 'mango'],
 				allValues: ['zebra', 'apple', 'mango'],
 				hasExistingQuery: false,
+				isRelatedValuesSupported: true,
 				isSomeFilterPresentForCurrentAttribute: false,
 			}),
 		);
@@ -126,6 +132,7 @@ describe('useSectionedValues', () => {
 				useSectionedValues({
 					...baseInput,
 					hasExistingQuery: true,
+					isRelatedValuesSupported: true,
 					isSomeFilterPresentForCurrentAttribute: true,
 					currentFilterState: { val1: true },
 				}),
@@ -143,6 +150,7 @@ describe('useSectionedValues', () => {
 					relatedValues: [],
 					allValues: [],
 					hasExistingQuery: true,
+					isRelatedValuesSupported: true,
 					isSomeFilterPresentForCurrentAttribute: false,
 					currentFilterState: {},
 				}),
@@ -159,6 +167,7 @@ describe('useSectionedValues', () => {
 					relatedValues: [],
 					allValues: ['other1', 'other2', 'other3'],
 					hasExistingQuery: true,
+					isRelatedValuesSupported: true,
 					isSomeFilterPresentForCurrentAttribute: false,
 				}),
 			);
@@ -178,6 +187,7 @@ describe('useSectionedValues', () => {
 					relatedValues: ['pod-a-1', 'pod-b-1', 'pod-c-1'],
 					allValues: ['pod-a-2', 'pod-b-2', 'pod-c-2'],
 					hasExistingQuery: true,
+					isRelatedValuesSupported: true,
 					isSomeFilterPresentForCurrentAttribute: false,
 				}),
 			);
@@ -218,6 +228,7 @@ describe('useSectionedValues', () => {
 					currentFilterState: { newValue: true },
 					isSomeFilterPresentForCurrentAttribute: true,
 					hasExistingQuery: true,
+					isRelatedValuesSupported: true,
 					// stale API data kept via keepPreviousData
 					relatedValues: ['oldSelected', 'otherRelated'],
 					allValues: ['newValue'],
@@ -246,6 +257,7 @@ describe('useSectionedValues', () => {
 					currentFilterState: { newValue: true },
 					isSomeFilterPresentForCurrentAttribute: true,
 					hasExistingQuery: true,
+					isRelatedValuesSupported: true,
 					// oldSelected was just de-selected; the rest are genuinely related
 					relatedValues: ['oldSelected', 'relatedA', 'relatedB', 'relatedC'],
 					allValues: ['newValue'],
@@ -275,6 +287,7 @@ describe('useSectionedValues', () => {
 					currentFilterState: { newValue: true },
 					isSomeFilterPresentForCurrentAttribute: true,
 					hasExistingQuery: true,
+					isRelatedValuesSupported: true,
 					relatedValues: ['oldSelected', 'otherRelated'],
 					allValues: ['newValue'],
 					relatedExclusions: ['oldSelected'],
@@ -293,6 +306,7 @@ describe('useSectionedValues', () => {
 					currentFilterState: { newValue: true },
 					isSomeFilterPresentForCurrentAttribute: true,
 					hasExistingQuery: true,
+					isRelatedValuesSupported: true,
 					relatedValues: ['oldSelected', 'otherRelated'],
 					allValues: ['newValue'],
 					relatedExclusions: [],
@@ -314,6 +328,7 @@ describe('useSectionedValues', () => {
 					relatedValues: ['related1'],
 					allValues: ['all1'],
 					hasExistingQuery: true,
+					isRelatedValuesSupported: true,
 					isSomeFilterPresentForCurrentAttribute: true,
 					currentFilterState: { selected1: true },
 				}),
@@ -337,6 +352,7 @@ describe('useSectionedValues', () => {
 					relatedValues: ['r1', 'r2', 'r3', 'r4', 'r5'],
 					allValues: ['a1', 'a2', 'a3', 'a4', 'a5'],
 					hasExistingQuery: true,
+					isRelatedValuesSupported: true,
 					isSomeFilterPresentForCurrentAttribute: false,
 					visibleItemsCount: 100,
 				}),
@@ -355,6 +371,7 @@ describe('useSectionedValues', () => {
 					relatedValues: ['r1', 'r2', 'r3'],
 					allValues: ['a1', 'a2', 'a3'],
 					hasExistingQuery: true,
+					isRelatedValuesSupported: true,
 					isSomeFilterPresentForCurrentAttribute: false,
 					visibleItemsCount: 4,
 				}),

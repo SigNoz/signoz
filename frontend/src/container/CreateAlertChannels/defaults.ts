@@ -2,6 +2,9 @@ import {
 	ChannelType,
 	EmailChannel,
 	GoogleChatChannel,
+	IncidentIOChannel,
+	JiraChannel,
+	JsmOpsChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -44,6 +47,23 @@ export const GoogleChatInitialConfig: Partial<GoogleChatChannel> = {
 **Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}
 **Summary:** {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
 **Description:** {{ .Annotations.description }}{{ end }}
+{{ end }}`,
+};
+
+// mirrors DefaultJiraSummaryTemplate / DefaultJiraDescriptionTemplate in
+// pkg/types/alertmanagertypes/jira.go, which the backend applies when the
+// summary / description are left empty. The description is markdown here and is
+// wrapped in the ADF status panel + deep-links server-side.
+export const JiraInitialConfig: Partial<JiraChannel> = {
+	issue_type: 'Task',
+	summary: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	description: `{{ range .Alerts -}}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
+{{ if .Annotations.summary }}
+**Summary:** {{ .Annotations.summary }}
+{{ end }}{{ if .Annotations.description }}
+**Description:** {{ .Annotations.description }}
+{{ end }}
 {{ end }}`,
 };
 
@@ -96,6 +116,56 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 	{{- end }}`,
 	priority:
 		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
+};
+
+// mirrors DefaultJSMOpsMessageTemplate / DefaultJSMOpsDescriptionTemplate in
+// pkg/types/alertmanagertypes/jsmops.go, applied by the backend when message /
+// description are left empty. send_resolved is seeded on so JSM alerts close on
+// resolve (the backend cannot default it, see jsmops.go). priority mirrors the
+// Opsgenie template mapping severity to P1-P5.
+export const JsmOpsInitialConfig: Partial<JsmOpsChannel> = {
+	send_resolved: true,
+	message: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	description: `{{ range .Alerts -}}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
+
+{{ if .Annotations.summary }}**Summary:** {{ .Annotations.summary }}
+
+{{ end }}{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}
+
+{{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})
+
+{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
+
+{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})
+
+{{ end }}{{ end }}`,
+	priority:
+		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
+	tags: ['signoz-alert'],
+};
+
+// mirrors DefaultIncidentIOTitleTemplate / DefaultIncidentIODescriptionTemplate
+// in pkg/types/alertmanagertypes/incidentio.go, applied by the backend when
+// title / description are left empty. send_resolved is seeded on so incident.io
+// alerts resolve with the rule (the backend cannot default it).
+export const IncidentIOInitialConfig: Partial<IncidentIOChannel> = {
+	send_resolved: true,
+	title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	description: `{{ range .Alerts -}}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
+
+{{ if .Annotations.summary }}**Summary:** {{ .Annotations.summary }}
+
+{{ end }}{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}
+
+{{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})
+
+{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
+
+{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})
+
+{{ end }}{{ end }}`,
 };
 
 export const EmailInitialConfig: Partial<EmailChannel> = {
@@ -505,12 +575,18 @@ export const ChannelInitialConfig: Record<
 			MsTeamsChannel &
 			OpsgenieChannel &
 			EmailChannel &
-			GoogleChatChannel
+			GoogleChatChannel &
+			JiraChannel &
+			JsmOpsChannel &
+			IncidentIOChannel
 	>
 > = {
 	[ChannelType.Slack]: SlackInitialConfig,
 	[ChannelType.MsTeams]: SlackInitialConfig,
 	[ChannelType.GoogleChat]: GoogleChatInitialConfig,
+	[ChannelType.Jira]: JiraInitialConfig,
+	[ChannelType.JsmOps]: JsmOpsInitialConfig,
+	[ChannelType.IncidentIO]: IncidentIOInitialConfig,
 	[ChannelType.Pagerduty]: PagerInitialConfig,
 	[ChannelType.Opsgenie]: OpsgenieInitialConfig,
 	[ChannelType.Email]: EmailInitialConfig,

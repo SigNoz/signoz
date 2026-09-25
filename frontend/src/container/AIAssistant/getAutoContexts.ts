@@ -2,7 +2,7 @@ import type { MessageContext } from 'api/ai-assistant/chat';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { AlertListTabs } from 'pages/AlertList/types';
-import { NEW_PANEL_ID } from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/newPanelRoute';
+import { NEW_PANEL_ID } from 'pages/DashboardPage/DashboardContainer/PanelEditor/newPanelRoute';
 import { matchPath } from 'react-router-dom';
 
 /**

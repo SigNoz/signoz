@@ -452,15 +452,15 @@ function ExplorerOptions({
 			if (handleChangeSelectedView) {
 				handleChangeSelectedView(panelTypeToExplorerView[currentPanelType], {
 					query,
-					name,
-					id,
+					viewName: name,
+					viewKey: id,
 				});
 			} else {
 				// to remove this after traces cleanup
 				handleExplorerTabChange(currentPanelType, {
 					query,
-					name,
-					id,
+					viewName: name,
+					viewKey: id,
 				});
 			}
 		},

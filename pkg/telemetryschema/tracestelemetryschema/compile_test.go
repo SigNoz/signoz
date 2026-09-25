@@ -1,0 +1,789 @@
+package tracestelemetryschema
+
+import (
+	"context"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"testing"
+	"time"
+
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/huandu/go-sqlbuilder"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestConditionFor(t *testing.T) {
+	ctx := context.Background()
+
+	mockEvolution := MockEvolutionData(time.Date(2025, 10, 26, 0, 10, 0, 0, time.UTC))
+	testCases := []struct {
+		name          string
+		key           telemetrytypes.TelemetryFieldKey
+		operator      qbtypes.FilterOperator
+		value         any
+		expectedSQL   string
+		expectedArgs  []any
+		expectedError error
+	}{
+		{
+			name: "Not Equal operator - timestamp",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "timestamp",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			operator:      qbtypes.FilterOperatorNotEqual,
+			value:         uint64(1617979338000000000),
+			expectedSQL:   "timestamp <> ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
+			expectedError: nil,
+		},
+		{
+			name: "Greater Than operator - number attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "request.duration",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			},
+			operator:      qbtypes.FilterOperatorGreaterThan,
+			value:         float64(100),
+			expectedSQL:   "(toFloat64(attributes_number['request.duration']) > ? AND mapContains(attributes_number, 'request.duration'))",
+			expectedArgs:  []any{float64(100)},
+			expectedError: nil,
+		},
+		{
+			name: "Less Than operator - number attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "request.size",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			},
+			operator:      qbtypes.FilterOperatorLessThan,
+			value:         float64(1024),
+			expectedSQL:   "(toFloat64(attributes_number['request.size']) < ? AND mapContains(attributes_number, 'request.size'))",
+			expectedArgs:  []any{float64(1024)},
+			expectedError: nil,
+		},
+		{
+			name: "Greater Than Or Equal operator - timestamp",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "timestamp",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			operator:      qbtypes.FilterOperatorGreaterThanOrEq,
+			value:         uint64(1617979338000000000),
+			expectedSQL:   "timestamp >= ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
+			expectedError: nil,
+		},
+		{
+			name: "Less Than Or Equal operator - timestamp",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "timestamp",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			operator:      qbtypes.FilterOperatorLessThanOrEq,
+			value:         uint64(1617979338000000000),
+			expectedSQL:   "timestamp <= ?",
+			expectedArgs:  []any{uint64(1617979338000000000)},
+			expectedError: nil,
+		},
+		{
+			name: "ILike operator - string attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorILike,
+			value:         "%admin%",
+			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id'))",
+			expectedArgs:  []any{"%admin%"},
+			expectedError: nil,
+		},
+		{
+			name: "Not ILike operator - string attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorNotILike,
+			value:         "%admin%",
+			expectedSQL:   "WHERE LOWER(attributes_string['user.id']) NOT LIKE LOWER(?)",
+			expectedArgs:  []any{"%admin%", true},
+			expectedError: nil,
+		},
+		{
+			name: "Contains operator - string attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorContains,
+			value:         521509198310,
+			expectedSQL:   "LOWER(attributes_string['user.id']) LIKE LOWER(?)",
+			expectedArgs:  []any{"%521509198310%"},
+			expectedError: nil,
+		},
+		{
+			name: "LIKE operator - string attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorLike,
+			value:         521509198310,
+			expectedSQL:   "attributes_string['user.id'] LIKE ?",
+			expectedArgs:  []any{"521509198310", true},
+			expectedError: nil,
+		},
+		{
+			name: "Between operator - timestamp",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "timestamp",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			operator:      qbtypes.FilterOperatorBetween,
+			value:         []any{uint64(1617979338000000000), uint64(1617979348000000000)},
+			expectedSQL:   "timestamp BETWEEN ? AND ?",
+			expectedArgs:  []any{uint64(1617979338000000000), uint64(1617979348000000000)},
+			expectedError: nil,
+		},
+		{
+			name: "Between operator - invalid value",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "timestamp",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			operator:      qbtypes.FilterOperatorBetween,
+			value:         "invalid",
+			expectedSQL:   "",
+			expectedError: qbtypes.ErrBetweenValues,
+		},
+		{
+			name: "Between operator - insufficient values",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "timestamp",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			operator:      qbtypes.FilterOperatorBetween,
+			value:         []any{uint64(1617979338000000000)},
+			expectedSQL:   "",
+			expectedError: qbtypes.ErrBetweenValues,
+		},
+		{
+			name: "Not Between operator - timestamp",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "timestamp",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			operator:      qbtypes.FilterOperatorNotBetween,
+			value:         []any{uint64(1617979338000000000), uint64(1617979348000000000)},
+			expectedSQL:   "timestamp NOT BETWEEN ? AND ?",
+			expectedArgs:  []any{uint64(1617979338000000000), uint64(1617979348000000000)},
+			expectedError: nil,
+		},
+		{
+			name: "Exists operator - map field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorExists,
+			value:         nil,
+			expectedSQL:   "mapContains(attributes_string, 'user.id')",
+			expectedError: nil,
+		},
+		{
+			name: "Not Exists operator - map field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorNotExists,
+			value:         nil,
+			expectedSQL:   "NOT mapContains(attributes_string, 'user.id')",
+			expectedError: nil,
+		},
+		{
+			name: "Exists operator - json field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    mockEvolution,
+			},
+			operator:      qbtypes.FilterOperatorExists,
+			value:         nil,
+			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
+			expectedError: nil,
+		},
+		{
+			name: "Not Exists operator - json field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    mockEvolution,
+			},
+			operator:      qbtypes.FilterOperatorNotExists,
+			value:         nil,
+			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NULL",
+			expectedError: nil,
+		},
+		{
+			name: "Contains operator - map field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorContains,
+			value:         "admin",
+			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND mapContains(attributes_string, 'user.id'))",
+			expectedArgs:  []any{"%admin%"},
+			expectedError: nil,
+		},
+		{
+			name: "In operator - map field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorIn,
+			value:         []any{"admin", "user"},
+			expectedSQL:   "((attributes_string['user.id'] = ? OR attributes_string['user.id'] = ?) AND mapContains(attributes_string, 'user.id'))",
+			expectedArgs:  []any{"admin", "user"},
+			expectedError: nil,
+		},
+		{
+			name: "Not In operator - map field",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "user.id",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorNotIn,
+			value:         []any{"admin", "user"},
+			expectedSQL:   "(attributes_string['user.id'] <> ? AND attributes_string['user.id'] <> ?)",
+			expectedArgs:  []any{"admin", "user", true},
+			expectedError: nil,
+		},
+		{
+			name: "Non-existent column",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "nonexistent_field",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			operator:      qbtypes.FilterOperatorEqual,
+			value:         "value",
+			expectedSQL:   "",
+			expectedError: qbtypes.ErrColumnNotFound,
+		},
+	}
+
+	storage := NewStorage()
+
+	for _, tc := range testCases {
+		sb := sqlbuilder.NewSelectBuilder()
+		t.Run(tc.name, func(t *testing.T) {
+			cond, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: 1761437108000000000, EndNs: 1761458708000000000}, storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
+			sb.Where(cond...)
+
+			if tc.expectedError != nil {
+				assert.Equal(t, tc.expectedError, err)
+			} else {
+				require.NoError(t, err)
+				sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+				assert.Contains(t, sql, tc.expectedSQL)
+			}
+		})
+	}
+}
+
+func TestConditionForResourceWithEvolution(t *testing.T) {
+	ctx := context.Background()
+	releaseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	evolutions := MockEvolutionData(releaseTime)
+
+	testCases := []struct {
+		name        string
+		key         telemetrytypes.TelemetryFieldKey
+		operator    qbtypes.FilterOperator
+		tsStart     uint64
+		tsEnd       uint64
+		expectedSQL string
+	}{
+		{
+			name: "Exists - window after release - JSON only",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    evolutions,
+			},
+			operator:    qbtypes.FilterOperatorExists,
+			tsStart:     uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:       uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedSQL: "WHERE resource.`service.name` IS NOT NULL",
+		},
+		{
+			name: "NotExists - window after release - JSON only",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    evolutions,
+			},
+			operator:    qbtypes.FilterOperatorNotExists,
+			tsStart:     uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:       uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedSQL: "WHERE resource.`service.name` IS NULL",
+		},
+		{
+			name: "Exists - window before release - map only",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    evolutions,
+			},
+			operator:    qbtypes.FilterOperatorExists,
+			tsStart:     uint64(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:       uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedSQL: "WHERE mapContains(resources_string, 'service.name')",
+		},
+		{
+			name: "Exists - window straddles release - multiIf null check",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    evolutions,
+			},
+			operator:    qbtypes.FilterOperatorExists,
+			tsStart:     uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:       uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedSQL: "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
+		},
+	}
+
+	storage := NewStorage()
+
+	for _, tc := range testCases {
+		sb := sqlbuilder.NewSelectBuilder()
+		t.Run(tc.name, func(t *testing.T) {
+			cond, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: tc.tsStart, EndNs: tc.tsEnd}, storage, &tc.key, tc.operator, nil, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
+			require.NoError(t, err)
+			sb.Where(cond...)
+			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			assert.Contains(t, sql, tc.expectedSQL)
+		})
+	}
+}
+
+// TestConditionForScopeIntrinsicFields covers the scope.name/scope.version intrinsic
+// fields against the "scope" JSON column. These are *declared* String paths on that
+// column, so a row without a scope reads as ” and never NULL: presence must be an
+// empty-string check, since "IS NOT NULL" would hold for every row. That also rules
+// out treating them as nested attribute keys under scope.attributes, which are
+// undeclared (Dynamic) paths and genuinely NULL when absent.
+func TestConditionForScopeIntrinsicFields(t *testing.T) {
+	ctx := context.Background()
+	storage := NewStorage()
+
+	testCases := []struct {
+		name        string
+		key         telemetrytypes.TelemetryFieldKey
+		operator    qbtypes.FilterOperator
+		value       any
+		expectedSQL string
+	}{
+		{
+			name: "Equal - scope.name",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "scope.name",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "io.signoz.payment",
+			expectedSQL: "(scope.name::String = ? AND scope.name::String <> '')",
+		},
+		{
+			name: "Equal - scope.version",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "scope.version",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "2.3.1",
+			expectedSQL: "(scope.version::String = ? AND scope.version::String <> '')",
+		},
+		{
+			name: "Exists - scope.name",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "scope.name",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:    qbtypes.FilterOperatorExists,
+			value:       nil,
+			expectedSQL: "scope.name::String <> ''",
+		},
+		{
+			name: "NotExists - scope.version",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "scope.version",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:    qbtypes.FilterOperatorNotExists,
+			value:       nil,
+			expectedSQL: "scope.version::String = ''",
+		},
+		{
+			// `scope.attribute.name` (normalized to {attribute.name, scope}) addresses the scope
+			// attribute named `name` — the declared `scope.name` path is never reached this way.
+			name: "Equal - scope.attribute.name reaches the named scope attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "attribute.name",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "io.signoz.checkout",
+			expectedSQL: "scope.attributes.`name`::String = ?",
+		},
+	}
+
+	for _, tc := range testCases {
+		sb := sqlbuilder.NewSelectBuilder()
+		t.Run(tc.name, func(t *testing.T) {
+			conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
+			require.NoError(t, err)
+			sb.Where(conds...)
+			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			assert.Contains(t, sql, tc.expectedSQL)
+			assert.NotContains(t, sql, "scope.`scope.", "must not double-prefix the scope JSON path")
+		})
+	}
+}
+
+// TestConditionForSynthesizedKeys covers the KeyNotFound fallback: when a
+// referenced attribute key has no metadata match, the builder synthesizes key(s) from
+// user input and queries anyway, emitting a warning instead of failing.
+func TestConditionForSynthesizedKeys(t *testing.T) {
+	ctx := context.Background()
+	storage := NewStorage()
+
+	// no metadata matches -> the builder must synthesize from user input
+	var noMatches map[string][]*telemetrytypes.TelemetryFieldKey
+
+	t.Run("bare key with string operand -> attribute string", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "error.type"}
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "timeout", noMatches, false, sb)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, warnings, "a not-found warning should be emitted")
+		sb.Where(conds...)
+		sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_string['error.type']")
+		assert.Contains(t, args, "timeout")
+	})
+
+	t.Run("scope context with no metadata -> scope attribute", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "custom.attr", FieldContext: telemetrytypes.FieldContextScope}
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "v", noMatches, false, sb)
+		assert.NoError(t, err, "an undeclared scope attribute must still be filterable")
+		assert.NotEmpty(t, warnings)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "scope.attributes.`custom.attr`")
+		// `scope.` can be part of the attribute's own name, so the literal spelling is a
+		// candidate too — the caller ORs the two.
+		assert.Contains(t, sql, "scope.attributes.`scope.custom.attr`")
+	})
+
+	t.Run("bare key with number operand -> attribute number", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "http.status"}
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorGreaterThan, float64(5), noMatches, false, sb)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, warnings)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_number['http.status']")
+	})
+
+	t.Run("bare key with bool operand -> attribute bool", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "sampled"}
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, true, noMatches, false, sb)
+		assert.NoError(t, err)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_bool['sampled']")
+	})
+
+	t.Run("exists with no operand fans out across type variants", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "exception.type"}
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorExists, nil, noMatches, false, sb)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, warnings)
+		assert.Len(t, conds, 3, "exists should fan out to string/number/bool")
+		sb.Where(sb.Or(conds...))
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "mapContains(attributes_string, 'exception.type')")
+		assert.Contains(t, sql, "mapContains(attributes_number, 'exception.type')")
+		assert.Contains(t, sql, "mapContains(attributes_bool, 'exception.type')")
+	})
+
+	t.Run("qualified data type honored without fanout", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "custom.key", FieldDataType: telemetrytypes.FieldDataTypeString}
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "v", noMatches, false, sb)
+		assert.NoError(t, err)
+		assert.Len(t, conds, 1)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_string['custom.key']")
+	})
+
+	t.Run("bare intrinsic column resolves to the column, not synthesized attributes", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "duration_nano"}
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorGreaterThan, float64(100), noMatches, false, sb)
+		require.NoError(t, err)
+		require.Len(t, conds, 1)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "duration_nano > ?")
+		assert.NotContains(t, sql, "attributes_string")
+		assert.NotContains(t, sql, "attributes_number")
+	})
+
+	t.Run("bare deprecated alias resolves to the calculated column", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "httpMethod"}
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "GET", noMatches, false, sb)
+		require.NoError(t, err)
+		require.Len(t, conds, 1)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "http_method = ?")
+		assert.NotContains(t, sql, "attributes_string")
+	})
+
+	t.Run("span-context key that is a real column stays the column", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "duration_nano", FieldContext: telemetrytypes.FieldContextSpan}
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorGreaterThan, float64(100), noMatches, false, sb)
+		require.NoError(t, err)
+		require.Len(t, conds, 1)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "duration_nano > ?")
+		assert.NotContains(t, sql, "attributes_")
+	})
+
+	t.Run("span-context key not a column is corrected to a stripped-name metadata match", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "http.method", FieldContext: telemetrytypes.FieldContextSpan}
+		keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
+			"http.method": {{Name: "http.method", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString}},
+		}
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "GET", keysMap, false, sb)
+		require.NoError(t, err)
+		assert.Empty(t, warnings, "the stripped name matches metadata, not a guess")
+		require.Len(t, conds, 1)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_string['http.method']")
+		assert.NotContains(t, sql, "attributes_string['span.http.method']")
+	})
+
+	t.Run("span-context key absent from metadata synthesizes the stripped name", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "custom.attr", FieldContext: telemetrytypes.FieldContextSpan}
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "v", noMatches, false, sb)
+		require.NoError(t, err)
+		assert.NotEmpty(t, warnings)
+		require.Len(t, conds, 1)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_string['custom.attr']")
+		assert.NotContains(t, sql, "span.custom.attr")
+	})
+
+	t.Run("qualified resource context honored with literal spelling second", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "k8s.cluster.name", FieldContext: telemetrytypes.FieldContextResource}
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "prod", noMatches, false, sb)
+		assert.NoError(t, err)
+		assert.Len(t, conds, 2, "stripped interpretation first, literal `resource.` spelling second")
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "resources_string['k8s.cluster.name']")
+		assert.Contains(t, sql, "resources_string['resource.k8s.cluster.name']")
+	})
+
+	t.Run("synthesized resource key survives skip-resource-filter", func(t *testing.T) {
+		// the resource sub-query never covered a key absent from metadata
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "deployment.environment", FieldContext: telemetrytypes.FieldContextResource}
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "prod", nil, true, sb)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, warnings)
+		assert.Len(t, conds, 2, "the synthesized resource conditions must not be dropped")
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "resources_string['deployment.environment']")
+		assert.Contains(t, sql, "resources_string['resource.deployment.environment']")
+	})
+
+	t.Run("metadata-backed resource key still dropped under skip-resource-filter", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource}
+		keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
+			"service.name": {{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString}},
+		}
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "redis", keysMap, true, sb)
+		assert.NoError(t, err)
+		assert.Empty(t, conds, "the resource CTE covers metadata-backed keys")
+	})
+
+	t.Run("synthesized resource key coerces numeric operand", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "replica.count", FieldContext: telemetrytypes.FieldContextResource}
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, float64(3), noMatches, false, sb)
+		assert.NoError(t, err)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "toFloat64OrNull(")
+		assert.Contains(t, sql, "resources_string['replica.count']")
+	})
+
+	t.Run("negative operator builds without exists guard (matches-everything semantics)", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "error.type"}
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorNotEqual, "fatal", noMatches, false, sb)
+		assert.NoError(t, err)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "attributes_string['error.type'] <> ?")
+		assert.NotContains(t, sql, "mapContains")
+	})
+}
+
+// A bare or span-qualified name that is a real column resolves to the column
+// first. When metadata does not report the column, a same-named attribute
+// joins only when its data type fits the column. When metadata reports both,
+// every match reads. A span-qualified column never fans out to the
+// attribute, with or without a metadata entry for the column.
+func TestIntrinsicColumnFirst(t *testing.T) {
+	ctx := context.Background()
+	storage := NewStorage()
+	q := qbtypes.QueryInfo{StartNs: 1761437108000000000, EndNs: 1761458708000000000}
+	attr := func(name string, dataType telemetrytypes.FieldDataType) *telemetrytypes.TelemetryFieldKey {
+		return &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: dataType}
+	}
+	span := func(name string, dataType telemetrytypes.FieldDataType) *telemetrytypes.TelemetryFieldKey {
+		return &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: dataType}
+	}
+
+	testCases := []struct {
+		name        string
+		key         telemetrytypes.TelemetryFieldKey
+		keys        map[string][]*telemetrytypes.TelemetryFieldKey
+		operator    qbtypes.FilterOperator
+		value       any
+		expectedSQL string
+		noWarning   bool
+	}{
+		{
+			name:        "bare time column drops a string attribute of the same name",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "timestamp"},
+			keys:        map[string][]*telemetrytypes.TelemetryFieldKey{"timestamp": {attr("timestamp", telemetrytypes.FieldDataTypeString)}},
+			operator:    qbtypes.FilterOperatorGreaterThan,
+			value:       float64(1761437108000000000),
+			expectedSQL: "WHERE timestamp > ?",
+		},
+		{
+			name:        "bare string column keeps a string attribute of the same name",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "name"},
+			keys:        map[string][]*telemetrytypes.TelemetryFieldKey{"name": {attr("name", telemetrytypes.FieldDataTypeString)}},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "GET /api",
+			expectedSQL: "WHERE (name = ? OR (attributes_string['name'] = ? AND mapContains(attributes_string, 'name')))",
+		},
+		{
+			name:        "bare string column drops a numeric attribute of the same name",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "name"},
+			keys:        map[string][]*telemetrytypes.TelemetryFieldKey{"name": {attr("name", telemetrytypes.FieldDataTypeFloat64)}},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "GET /api",
+			expectedSQL: "WHERE name = ?",
+		},
+		{
+			name:        "bare string column keeps a numeric attribute when metadata reports both",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "name"},
+			keys:        map[string][]*telemetrytypes.TelemetryFieldKey{"name": {span("name", telemetrytypes.FieldDataTypeString), attr("name", telemetrytypes.FieldDataTypeFloat64)}},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "42",
+			expectedSQL: "WHERE (name = ? OR (toString(attributes_number['name']) = ? AND mapContains(attributes_number, 'name')))",
+		},
+		{
+			name:        "span context without a metadata entry for the column still reads the column alone",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextSpan},
+			keys:        map[string][]*telemetrytypes.TelemetryFieldKey{"name": {attr("name", telemetrytypes.FieldDataTypeString)}},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "GET /api",
+			expectedSQL: "WHERE name = ?",
+			noWarning:   true,
+		},
+		{
+			name:        "span context matches the span entry alone",
+			key:         telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextSpan},
+			keys:        map[string][]*telemetrytypes.TelemetryFieldKey{"name": {span("name", telemetrytypes.FieldDataTypeString), attr("name", telemetrytypes.FieldDataTypeString)}},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "GET /api",
+			expectedSQL: "WHERE name = ?",
+			noWarning:   true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sb := sqlbuilder.NewSelectBuilder()
+			conds, warnings, err := querybuilder.Conditions(ctx, q, storage, &tc.key, tc.operator, tc.value, tc.keys, false, sb)
+			require.NoError(t, err)
+			if len(conds) == 1 {
+				sb.Where(conds[0])
+			} else {
+				sb.Where(sb.Or(conds...))
+			}
+			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			assert.Equal(t, tc.expectedSQL, sql)
+			if tc.noWarning {
+				assert.Empty(t, warnings)
+			}
+		})
+	}
+
+	t.Run("declared scope path selects without a literal spelling", func(t *testing.T) {
+		key := telemetrytypes.TelemetryFieldKey{Name: "scope.version", FieldContext: telemetrytypes.FieldContextScope}
+		expr, err := querybuilder.ResolveColumn(ctx, q, storage, &key, telemetrytypes.FieldDataTypeUnspecified, map[string][]*telemetrytypes.TelemetryFieldKey{})
+		require.NoError(t, err)
+		assert.Equal(t, "multiIf(scope.version::String <> '', scope.version::String, NULL)", expr)
+	})
+}

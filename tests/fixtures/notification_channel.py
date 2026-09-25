@@ -210,6 +210,32 @@ def create_notification_channel(
             logger.error("Failed to delete channel: %s", {"channel_id": channel_id, "status": response.status_code, "response": response.text})
 
 
+@pytest.fixture(name="cleanup_notification_channels", scope="function")
+def cleanup_notification_channels(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> Callable[[], list]:
+    """Yields a list to append channel IDs to; each is deleted on teardown.
+
+    Deletion goes through v1, which owns the same rows as v2.
+    """
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    channel_ids = []
+
+    yield channel_ids
+
+    for channel_id in channel_ids:
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v1/channels/{channel_id}"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        if response.status_code != HTTPStatus.NO_CONTENT:
+            logger.error("Failed to delete channel: %s", {"channel_id": channel_id, "status": response.status_code, "response": response.text})
+
+
 @pytest.fixture(name="create_webhook_notification_channel", scope="function")
 def create_webhook_notification_channel(
     signoz: types.SigNoz,

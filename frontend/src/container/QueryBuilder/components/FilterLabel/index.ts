@@ -1,1 +1,0 @@
-export { FilterLabel } from './FilterLabel';

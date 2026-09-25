@@ -1,5 +1,5 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { Format } from 'container/NewWidget/RightContainer/types';
+import { Format } from 'constants/formats/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
@@ -8,6 +8,7 @@ import {
 } from 'types/common/queryBuilder';
 
 import {
+	BuilderQueryType,
 	Filter,
 	Having as HavingV5,
 	LogAggregation,
@@ -90,6 +91,7 @@ export type IBuilderQuery = {
 	offset?: number;
 	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
 	source?: 'meter' | '';
+	builderQueryType?: BuilderQueryType;
 };
 
 export interface IClickHouseQuery {

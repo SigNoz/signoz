@@ -108,6 +108,20 @@ func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID v
 	}, nil
 }
 
+func (provider *Provider) GetIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string) (*gatewaytypes.IngestionKey, error) {
+	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/v1/workspaces/me/keys/"+keyID, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var ingestionKey gatewaytypes.IngestionKey
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &ingestionKey); err != nil {
+		return nil, err
+	}
+
+	return &ingestionKey, nil
+}
+
 func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.GettableCreatedIngestionKey, error) {
 	requestBody := gatewaytypes.PostableIngestionKey{
 		Name:      name,
@@ -161,7 +175,7 @@ func (provider *Provider) DeleteIngestionKey(ctx context.Context, orgID valuer.U
 }
 
 func (provider *Provider) CreateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, keyID string, signal string, limitConfig gatewaytypes.LimitConfig, tags []string) (*gatewaytypes.GettableCreatedIngestionKeyLimit, error) {
-	requestBody := gatewaytypes.PostableIngestionKeyLimit{
+	requestBody := gatewaytypes.DeprecatedPostableIngestionKeyLimit{
 		Signal: signal,
 		Config: limitConfig,
 		Tags:   tags,
@@ -182,6 +196,34 @@ func (provider *Provider) CreateIngestionKeyLimit(ctx context.Context, orgID val
 	}
 
 	return &createdIngestionKeyLimitResponse, nil
+}
+
+func (provider *Provider) GetIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string) (*gatewaytypes.Limit, error) {
+	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/v1/workspaces/me/limits/"+limitID, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var limit gatewaytypes.Limit
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &limit); err != nil {
+		return nil, err
+	}
+
+	return &limit, nil
+}
+
+func (provider *Provider) GetIngestionKeyLimits(ctx context.Context, orgID valuer.UUID, keyID string) ([]gatewaytypes.Limit, error) {
+	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/v1/workspaces/me/keys/"+keyID+"/limits", nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var limits []gatewaytypes.Limit
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &limits); err != nil {
+		return nil, err
+	}
+
+	return limits, nil
 }
 
 func (provider *Provider) UpdateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string, limitConfig gatewaytypes.LimitConfig, tags []string) error {

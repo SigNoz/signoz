@@ -4,14 +4,17 @@
 		flex-direction: column;
 		justify-content: flex-start;
 		&.funnel-details-page {
-			height: calc(
-				100vh - 170px
-			); // 64px bottom bar + 61px configuration header + 45px page navbar
+			flex: 1;
+			min-height: 0;
+			// .steps-footer is absolute against the config column, so its 64px is
+			// reserved rather than laid out.
+			margin-bottom: 64px;
 			overflow: auto;
 		}
 	}
 
 	&__header {
+		flex-shrink: 0;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;

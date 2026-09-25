@@ -35,6 +35,7 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -44,7 +45,6 @@ import (
 
 	"log/slog"
 
-	queryprogress "github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader/query_progress"
 	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
 	"github.com/SigNoz/signoz/pkg/query-service/app/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/traces/smart"
@@ -145,7 +145,6 @@ type ClickHouseReader struct {
 	logsResourceKeys        string
 	logsTagAttributeTableV2 string
 	logger                  *slog.Logger
-	queryProgressTracker    queryprogress.QueryProgressTracker
 
 	logsTableV2              string
 	logsLocalTableV2         string
@@ -214,7 +213,6 @@ func NewReader(
 		logsTagAttributeTableV2:  options.primary.LogsTagAttributeTableV2,
 		liveTailRefreshSeconds:   options.primary.LiveTailRefreshSeconds,
 		cluster:                  cluster,
-		queryProgressTracker:     queryprogress.NewQueryProgressTracker(logger),
 		logsTableV2:              options.primary.LogsTableV2,
 		logsLocalTableV2:         options.primary.LogsLocalTableV2,
 		logsResourceTableV2:      options.primary.LogsResourceTableV2,
@@ -233,41 +231,43 @@ func NewReader(
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-	qry, err := r.prometheus.Engine().NewInstantQuery(ctx, r.prometheus.Storage(), nil, queryParams.Query, queryParams.Time)
+	res, err := r.prometheus.Query(ctx, queryParams.Query, queryParams.Time)
+	var qs stats.QueryStats
 	if err != nil {
-		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		var parseErrs parser.ParseErrors
+		if errorsV2.As(err, &parseErrs) {
+			return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+		// Evaluation errors travel inside the result, as the engine reports
+		// them; the handler maps them from there.
+		return &promql.Result{Err: err}, &qs, nil
 	}
-
-	res := qry.Exec(ctx)
 
 	// Optional stats field in response if parameter "stats" is not empty.
-	var qs stats.QueryStats
-	if queryParams.Stats != "" {
-		qs = stats.NewQueryStats(qry.Stats())
+	if queryParams.Stats != "" && res.Stats != nil {
+		qs = stats.NewQueryStats(res.Stats)
 	}
 
-	qry.Close()
-	return res, &qs, nil
-
+	return &promql.Result{Value: res.Value, Warnings: res.Warnings}, &qs, nil
 }
 
 func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-	qry, err := r.prometheus.Engine().NewRangeQuery(ctx, r.prometheus.Storage(), nil, query.Query, query.Start, query.End, query.Step)
-
+	res, err := r.prometheus.QueryRange(ctx, query.Query, query.Start, query.End, query.Step)
+	var qs stats.QueryStats
 	if err != nil {
-		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		var parseErrs parser.ParseErrors
+		if errorsV2.As(err, &parseErrs) {
+			return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+		return &promql.Result{Err: err}, &qs, nil
 	}
-
-	res := qry.Exec(ctx)
 
 	// Optional stats field in response if parameter "stats" is not empty.
-	var qs stats.QueryStats
-	if query.Stats != "" {
-		qs = stats.NewQueryStats(qry.Stats())
+	if query.Stats != "" && res.Stats != nil {
+		qs = stats.NewQueryStats(res.Stats)
 	}
 
-	qry.Close()
-	return res, &qs, nil
+	return &promql.Result{Value: res.Value, Warnings: res.Warnings}, &qs, nil
 }
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
@@ -4024,27 +4024,6 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
 		instrumentationtypes.CodeFunctionName: "GetTimeSeriesResultV3",
 	})
-	// Hook up query progress reporting if requested.
-	queryId := ctx.Value("queryId")
-	if queryId != nil {
-		qid, ok := queryId.(string)
-		if !ok {
-			r.logger.Error("GetTimeSeriesResultV3: queryId in ctx not a string as expected", "queryId", queryId)
-
-		} else {
-			ctx = clickhouse.Context(ctx, clickhouse.WithProgress(
-				func(p *clickhouse.Progress) {
-					go func() {
-						err := r.queryProgressTracker.ReportQueryProgress(qid, p)
-						if err != nil {
-							r.logger.Error("Couldn't report query progress", "queryId", qid, errorsV2.Attr(err))
-						}
-					}()
-				},
-			))
-		}
-	}
-
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
@@ -5003,18 +4982,6 @@ func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, 
 	r.logger.Debug("GetMinAndMaxTimestampForTraceID", "minTime", minTime, "maxTime", maxTime)
 
 	return minTime.UnixNano(), maxTime.UnixNano(), nil
-}
-
-func (r *ClickHouseReader) ReportQueryStartForProgressTracking(
-	queryId string,
-) (func(), *model.ApiError) {
-	return r.queryProgressTracker.ReportQueryStarted(queryId)
-}
-
-func (r *ClickHouseReader) SubscribeToQueryProgress(
-	queryId string,
-) (<-chan model.QueryProgress, func(), *model.ApiError) {
-	return r.queryProgressTracker.SubscribeToQueryProgress(queryId)
 }
 
 func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *model.UpdateMetricsMetadata) *model.ApiError {
