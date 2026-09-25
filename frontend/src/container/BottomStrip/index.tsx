@@ -1,5 +1,9 @@
 import { useLayoutEffect } from 'react';
-import { useAppContext } from 'providers/App/App';
+
+import AskNoz from './AskNoz/AskNoz';
+import LeftSlot from './LeftSlot/LeftSlot';
+import StripSeparator from './components/StripSeparator/StripSeparator';
+import SupportButton from './SupportButton/SupportButton';
 
 import styles from './BottomStrip.module.scss';
 
@@ -9,9 +13,6 @@ export const BOTTOM_STRIP_ON_CLASS = 'bottom-strip-on';
 export const BOTTOM_STRIP_HEIGHT_VAR = '--bottom-strip-height';
 
 function BottomStrip(): JSX.Element {
-	const { versionData } = useAppContext();
-	const version = versionData?.version?.trim();
-
 	useLayoutEffect(() => {
 		document.body.classList.add(BOTTOM_STRIP_ON_CLASS);
 		document.body.style.setProperty(
@@ -28,13 +29,13 @@ function BottomStrip(): JSX.Element {
 	return (
 		<div className={styles.strip} data-testid="bottom-strip">
 			<div className={styles.left}>
-				{version && (
-					<span className={styles.version} data-testid="bottom-strip-version">
-						{version}
-					</span>
-				)}
+				<LeftSlot />
 			</div>
-			<div className={styles.right} />
+			<div className={styles.right}>
+				<AskNoz />
+				<StripSeparator />
+				<SupportButton />
+			</div>
 		</div>
 	);
 }

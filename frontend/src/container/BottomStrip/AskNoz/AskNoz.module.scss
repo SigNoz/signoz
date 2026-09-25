@@ -1,0 +1,36 @@
+.askNoz {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.badge {
+	flex-shrink: 0;
+	display: inline-flex;
+	line-height: 0;
+	color: var(--accent-primary);
+}
+
+.pulseDot {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 0;
+	animation: askNozDotPulse 1.5s ease-in-out infinite;
+	transform: scale(0.8);
+	margin-right: -12px;
+}
+
+@keyframes askNozDotPulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	50% {
+		opacity: 0.35;
+		transform: scale(0.82);
+	}
+}

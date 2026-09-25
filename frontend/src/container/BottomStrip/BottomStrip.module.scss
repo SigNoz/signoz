@@ -11,6 +11,8 @@
 	background: var(--l2-background);
 	border-top: 1px solid var(--l2-border);
 
+	--button-font-size: 12px;
+
 	font-family: var(--font-family-sf-mono, monospace);
 
 	// Above page content, below the body-portalled overlays that are meant to
@@ -23,8 +25,12 @@
 .right {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-6);
+	gap: var(--spacing-4);
 	min-width: 0;
+}
+
+.left {
+	cursor: default;
 }
 
 // Temporary placeholder for the left slot. Replaced later.
