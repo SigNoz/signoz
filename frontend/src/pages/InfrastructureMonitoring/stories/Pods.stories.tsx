@@ -107,8 +107,16 @@ export const TooltipsInOptionsPanel: StoryObj<PodsArgs> = {
 	},
 };
 
+/**
+ * The pod list re-renders the filter when the viewport grows, and each render
+ * reconfigures the editor, which closes its suggestions. Shot at the height
+ * the page opened at.
+ */
+const heldViewport = { sbshot: { viewport: { height: 1200 } } };
+
 /** The pod filter focused: the Kubernetes keys pods can be narrowed by. */
 export const FilterKeySuggestions: StoryObj<PodsArgs> = {
+	parameters: heldViewport,
 	play: async ({ canvasElement }): Promise<void> => {
 		await openKeySuggestions(canvasElement, 'k8s.node.name');
 	},
@@ -116,6 +124,7 @@ export const FilterKeySuggestions: StoryObj<PodsArgs> = {
 
 /** The pod filter on a namespace: the namespaces the pods run in. */
 export const FilterValueSuggestions: StoryObj<PodsArgs> = {
+	parameters: heldViewport,
 	play: async ({ canvasElement }): Promise<void> => {
 		await typeFilter(canvasElement, 'k8s.namespace.name = ');
 		await findSuggestion(canvasElement, 'kube-system');
