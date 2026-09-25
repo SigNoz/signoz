@@ -55,6 +55,37 @@ For substantial changes, please split your contribution into multiple PRs:
 2. Second PR: Core implementation (split further if needed)
 3. Final PR: Documentation updates and end-to-end tests
 
+### First Contribution Workflow
+
+For your first contribution, the following workflow can help you get started:
+
+1. Fork the repository on GitHub.
+2. Clone your fork locally and add the SigNoz repository as the `upstream` remote.
+3. Create a focused branch from the latest `main` branch.
+4. Make the required change and run the relevant tests locally.
+5. Commit your changes using the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format.
+6. Push your branch to your fork and open a pull request against `SigNoz/signoz:main`.
+
+Example Git commands:
+
+```bash
+git clone https://github.com/<your-username>/signoz.git
+cd signoz
+git remote add upstream https://github.com/SigNoz/signoz.git
+git fetch upstream
+git checkout -b <your-branch> upstream/main
+```
+
+After making and testing your changes:
+
+```bash
+git add <files>
+git commit -m "docs: describe the contribution workflow"
+git push origin <your-branch>
+```
+
+Then open the pull request from your fork to `SigNoz/signoz` and link it to the issue you are addressing.
+
 ### Commit Convention
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). All commits and PRs should include type specifiers (e.g., `feat:`, `fix:`, `docs:`, etc.).
