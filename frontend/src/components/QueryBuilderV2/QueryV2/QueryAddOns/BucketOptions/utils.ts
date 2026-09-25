@@ -50,10 +50,8 @@ export const logScaleOf = (
 		? (bucketOptions.spec.scale ?? MAX_LOG_SCALE)
 		: MAX_LOG_SCALE;
 
+/** A log axis places `2^scale` bounds per doubling. */
 export const bandsPerDoublingFromScale = (scale: number): number => 2 ** scale;
-
-export const scaleFromBandsPerDoubling = (bands: number): number =>
-	Math.round(Math.log2(bands));
 
 export const kindOptionOf = (
 	bucketOptions: Querybuildertypesv5BucketOptionsDTO | undefined,

@@ -1,4 +1,4 @@
-import { formatCount } from './heatmapTooltipContent';
+import { formatCount, formatShare } from './heatmapTooltipContent';
 import { HeatmapContributionRow } from './types';
 
 import Styles from './HeatmapTooltip.module.scss';
@@ -11,6 +11,10 @@ export default function HeatmapContributionList({
 }): JSX.Element {
 	return (
 		<div className={Styles.rows} data-testid="heatmap-tooltip-contribution">
+			<div className={Styles.columnHeader}>
+				<span>Group</span>
+				<span>Contribution</span>
+			</div>
 			{rows.map((row) => (
 				<div
 					key={row.label}
@@ -25,6 +29,12 @@ export default function HeatmapContributionList({
 					<span className={Styles.rowLabel}>{row.label}</span>
 					<span className={Styles.rowSeparator} style={{ borderColor: row.color }} />
 					<span className={Styles.rowValue}>{formatCount(row.count)}</span>
+					<span
+						className={Styles.rowShare}
+						data-testid="heatmap-tooltip-contribution-share"
+					>
+						{formatShare(row.share)}
+					</span>
 				</div>
 			))}
 		</div>

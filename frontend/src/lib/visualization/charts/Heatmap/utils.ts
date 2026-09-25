@@ -15,6 +15,7 @@ import {
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/heatmapPlugin';
 import {
 	HeatmapGrid,
+	HeatmapSeries,
 	HeatmapYAxis,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import uPlot from 'uplot';
@@ -72,6 +73,30 @@ export function resolveBoundaryPrecision({
 	};
 
 	return candidates.find(separates) ?? candidates[candidates.length - 1];
+}
+
+function totalCount(entry: HeatmapSeries): number {
+	let total = 0;
+	entry.points.forEach((point) => {
+		point.counts.forEach((count) => {
+			total += count ?? 0;
+		});
+	});
+	return total;
+}
+
+/** Largest contributor first, as the tooltip already breaks a cell down. Response
+ *  order says nothing about a legend where every swatch is the same colour. */
+export function resolveGroupOrder(series: HeatmapSeries[]): string[] {
+	return series
+		.map((entry) => ({ label: entry.label, total: totalCount(entry) }))
+		.sort((a, b) => b.total - a.total || a.label.localeCompare(b.label))
+		.map((entry) => entry.label);
+}
+
+/** Whether any cell is a gap rather than a count. */
+export function hasMissingCells(counts: Array<Array<number | null>>): boolean {
+	return counts.some((row) => row.some((count) => count === null));
 }
 
 /**

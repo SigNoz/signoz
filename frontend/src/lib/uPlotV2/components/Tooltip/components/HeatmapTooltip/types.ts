@@ -19,4 +19,6 @@ export interface HeatmapContributionRow {
 	label: string;
 	color: string;
 	count: number;
+	/** Fraction of the cell this group contributed, 0..1. */
+	share: number;
 }

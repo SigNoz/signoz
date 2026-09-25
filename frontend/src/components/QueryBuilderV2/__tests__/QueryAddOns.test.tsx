@@ -409,7 +409,7 @@ describe('QueryAddOns', () => {
 
 			expect(screen.getByTestId('bucket-options-content')).toBeInTheDocument();
 			expect(screen.getByRole('radio', { name: 'Log' })).toBeChecked();
-			expect(screen.getByRole('radio', { name: '1' })).toBeChecked();
+			expect(screen.getByRole('radio', { name: '0' })).toBeChecked();
 		});
 
 		it('sends no options for Auto', async () => {
@@ -424,15 +424,27 @@ describe('QueryAddOns', () => {
 			);
 		});
 
-		it('sends the scale the picked bands per doubling resolve to', async () => {
+		it('sends the picked scale', async () => {
 			const user = userEvent.setup();
 			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 4 } } });
 
-			await user.click(screen.getByRole('radio', { name: '1' }));
+			await user.click(screen.getByRole('radio', { name: '0' }));
 
 			expect(mockHandleChangeQueryData).toHaveBeenCalledWith('bucketOptions', {
 				kind: 'log',
 				spec: { scale: 0 },
+			});
+		});
+
+		it('offers the coarser scales the request accepts below one band per doubling', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			await user.click(screen.getByRole('radio', { name: '-4' }));
+
+			expect(mockHandleChangeQueryData).toHaveBeenCalledWith('bucketOptions', {
+				kind: 'log',
+				spec: { scale: -4 },
 			});
 		});
 

@@ -7,11 +7,11 @@ import {
 	linearBuckets,
 	logBuckets,
 	previewUpperBounds,
-	scaleFromBandsPerDoubling,
 } from '../utils';
 
 describe('bucket option scales', () => {
 	it.each([
+		[-2, 0.25],
 		[0, 1],
 		[1, 2],
 		[2, 4],
@@ -19,7 +19,6 @@ describe('bucket option scales', () => {
 		[4, 16],
 	])('scale %i is %i bands per doubling', (scale, bands) => {
 		expect(bandsPerDoublingFromScale(scale)).toBe(bands);
-		expect(scaleFromBandsPerDoubling(bands)).toBe(scale);
 	});
 });
 

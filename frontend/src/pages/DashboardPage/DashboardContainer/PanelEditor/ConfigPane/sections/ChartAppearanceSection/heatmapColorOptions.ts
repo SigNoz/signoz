@@ -21,7 +21,11 @@ export const COLOR_SCALE_OPTIONS: ConfigSegmentedItem[] = [
 		label: 'Log',
 		icon: 'scale-log',
 	},
-	{ value: DashboardtypesHeatmapColorScaleDTO.sqrt, label: 'Sqrt' },
+	{
+		value: DashboardtypesHeatmapColorScaleDTO.sqrt,
+		label: 'Sqrt',
+		icon: 'scale-sqrt',
+	},
 	{
 		value: DashboardtypesHeatmapColorScaleDTO.linear,
 		label: 'Linear',

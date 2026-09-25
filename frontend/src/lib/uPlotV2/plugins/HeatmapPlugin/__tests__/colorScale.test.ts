@@ -1,3 +1,5 @@
+import { Color } from '@signozhq/design-tokens';
+
 import {
 	clampColorSteps,
 	createHeatmapColorResolver,
@@ -224,8 +226,28 @@ describe('createHeatmapColorResolver', () => {
 		expect(resolver.positionOf(null)).toBeNull();
 	});
 
-	it('gives a zero count the bottom colour, not the null treatment', () => {
+	it('recedes a zero count into the surface, not the null treatment', () => {
+		const dark = build();
+		const light = build({}, false);
+
+		expect(dark.colorFor(0)).toBe(Color.BG_INK_500);
+		expect(light.colorFor(0)).toBe(Color.BG_VANILLA_100);
+	});
+
+	it('keeps the bottom of the ramp for the smallest count that occurred', () => {
 		const resolver = build();
+
+		// Zero and the floor both sit at position 0; only the floor takes a colour.
+		expect(resolver.colorFor(1)).toBe(resolver.ramp[0]);
+	});
+
+	it('colours zero off the ramp once an explicit minimum lifts it off the bottom', () => {
+		const resolver = createHeatmapColorResolver({
+			options: { ...DEFAULT_HEATMAP_COLORS, minCount: 5 },
+			domain: { min: 5, max: 1000, logFloor: 5 },
+			isDarkMode: true,
+			seriesColor: SERIES_COLOR,
+		});
 
 		expect(resolver.colorFor(0)).toBe(resolver.ramp[0]);
 	});

@@ -1,20 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { InputNumber } from '@signozhq/ui/input-number';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
-import { ChevronUp } from '@signozhq/icons';
+import { ChevronUp, Info } from '@signozhq/icons';
 import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
 
 import {
 	BUCKET_KIND_HINTS,
 	BUCKET_KIND_OPTIONS,
 	DEFAULT_NUM_BUCKETS,
-	LOG_BANDS_OPTIONS,
+	LOG_SCALE_OPTIONS,
 	MAX_NUM_BUCKETS,
 } from './constants';
 import {
-	bandsPerDoublingFromScale,
 	BucketKindOption,
 	formatUpperBound,
 	hasBoundsBeyondPreview,
@@ -24,7 +23,6 @@ import {
 	logBuckets,
 	logScaleOf,
 	previewUpperBounds,
-	scaleFromBandsPerDoubling,
 } from './utils';
 
 import styles from './BucketOptions.module.scss';
@@ -96,13 +94,13 @@ function BucketOptions({
 		[emitLinear, logScale, maxValue, numBuckets, onChange],
 	);
 
-	const handleBandsChange = useCallback(
+	const handleScaleChange = useCallback(
 		(value: string): void => {
 			if (!value) {
 				return;
 			}
 
-			const nextScale = scaleFromBandsPerDoubling(Number(value));
+			const nextScale = Number(value);
 			setLogScale(nextScale);
 			onChange(logBuckets(nextScale));
 		},
@@ -139,9 +137,9 @@ function BucketOptions({
 		[],
 	);
 
-	const bandItems = useMemo(
+	const scaleItems = useMemo(
 		() =>
-			LOG_BANDS_OPTIONS.map(({ value, label }) => ({
+			LOG_SCALE_OPTIONS.map(({ value, label }) => ({
 				value,
 				label: <span className={styles.toggleLabel}>{label}</span>,
 				'aria-label': label,
@@ -184,13 +182,13 @@ function BucketOptions({
 
 				{kind === 'log' && (
 					<div className={styles.field}>
-						<span className={styles.label}>Bands per doubling</span>
+						<span className={styles.label}>Scale</span>
 						<ToggleGroupSimple
 							type="single"
-							value={String(bandsPerDoublingFromScale(logScale))}
-							items={bandItems}
-							onChange={handleBandsChange}
-							testId="bucket-options-bands"
+							value={String(logScale)}
+							items={scaleItems}
+							onChange={handleScaleChange}
+							testId="bucket-options-scale"
 						/>
 					</div>
 				)}
@@ -218,7 +216,7 @@ function BucketOptions({
 								precision={0}
 								value={numBuckets}
 								onChange={handleNumBucketsChange}
-								placeholder={String(DEFAULT_NUM_BUCKETS)}
+								placeholder={`Default ${DEFAULT_NUM_BUCKETS}`}
 								data-testid="bucket-options-num-buckets"
 							/>
 						</div>
@@ -236,7 +234,12 @@ function BucketOptions({
 			</div>
 
 			<div className={styles.bounds} data-testid="bucket-options-bounds">
-				<span className={styles.label}>Bounds</span>
+				<span className={styles.label}>
+					Bounds
+					<Tooltip title={BUCKET_KIND_HINTS[kind]} placement="top">
+						<Info size={12} className={styles.hintIcon} />
+					</Tooltip>
+				</span>
 				{bounds ? (
 					<>
 						{bounds.map((bound) => (
@@ -253,8 +256,6 @@ function BucketOptions({
 					<span className={styles.muted}>Set a max value to see the bounds</span>
 				)}
 			</div>
-
-			<p className={styles.hint}>{BUCKET_KIND_HINTS[kind]}</p>
 		</div>
 	);
 }

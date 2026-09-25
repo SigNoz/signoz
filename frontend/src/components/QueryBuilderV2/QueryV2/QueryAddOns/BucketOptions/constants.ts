@@ -11,16 +11,19 @@
  */
 export const MAX_LOG_SCALE = 4;
 
+/** One band per 16x, the coarsest axis worth rendering. */
+export const MIN_LOG_SCALE = -4;
+
 export const MAX_NUM_BUCKETS = 512;
 
 export const DEFAULT_NUM_BUCKETS = 60;
 
-/**
- * The bands-per-doubling the toggle offers, coarsest first. Each is 2^scale for a
- * scale in [0, MAX_LOG_SCALE]: a negative scale is a whole number of doublings per
- * band instead, which has no bands-per-doubling label.
- */
-export const LOG_BANDS_PER_DOUBLING = [1, 2, 4, 8, 16] as const;
+/** Every scale the request accepts, coarsest first. The bounds strip below says
+ *  how coarse a given one is, so the numbers stand alone. */
+export const LOG_SCALES = Array.from(
+	{ length: MAX_LOG_SCALE - MIN_LOG_SCALE + 1 },
+	(_, index) => MIN_LOG_SCALE + index,
+);
 
 /** How many leading upper bounds the bounds strip previews before eliding. */
 export const PREVIEW_BOUND_COUNT = 8;
@@ -32,15 +35,15 @@ export const BUCKET_KIND_OPTIONS = [
 	{ value: 'linear', label: 'Linear' },
 ];
 
-export const LOG_BANDS_OPTIONS = LOG_BANDS_PER_DOUBLING.map((bands) => ({
-	value: String(bands),
-	label: String(bands),
+export const LOG_SCALE_OPTIONS = LOG_SCALES.map((scale) => ({
+	value: String(scale),
+	label: String(scale),
 }));
 
 export const BUCKET_KIND_HINTS = {
 	auto:
-		'Bounds are picked for you: a log axis at 16 bands per doubling, the finest the query can return.',
-	log: 'Bounds are spaced evenly on a log axis, so every band is the same height on screen and the tail stays readable. Fewer bands per doubling means fewer, coarser bands.',
+		'Bounds are picked for you: a log axis at scale 4, the finest the query can return.',
+	log: 'Bounds are spaced evenly on a log axis, so every band is the same height on screen and the tail stays readable. A lower scale means fewer, coarser bands.',
 	linear:
 		'Bounds are spaced evenly from 0 up to the max value, so a band covers the same width wherever it sits. Everything above the max value lands in a single overflow band.',
 };

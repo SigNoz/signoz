@@ -3,6 +3,7 @@ import { DEFAULT_HEATMAP_COLORS } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorS
 import {
 	HeatmapAxisScale,
 	HeatmapGrid,
+	HeatmapSeries,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import type uPlot from 'uplot';
 
@@ -10,8 +11,10 @@ import { PrecisionOptionsEnum } from 'components/Graph/types';
 
 import {
 	buildHeatmapConfig,
+	hasMissingCells,
 	prepareHeatmapChartData,
 	resolveBoundaryPrecision,
+	resolveGroupOrder,
 } from '../utils';
 
 const GRID: HeatmapGrid = {
@@ -258,5 +261,56 @@ describe('buildHeatmapConfig', () => {
 		expect(hooks?.draw).toHaveLength(1);
 		expect(hooks?.setCursor).toHaveLength(1);
 		expect(hooks?.destroy).toHaveLength(1);
+	});
+});
+
+describe('resolveGroupOrder', () => {
+	const group = (
+		label: string,
+		counts: Array<number | null>,
+	): HeatmapSeries => ({
+		label,
+		points: [{ timestamp: 1000, counts }],
+	});
+
+	it('puts the biggest contributor first', () => {
+		expect(
+			resolveGroupOrder([
+				group('small', [1, 1]),
+				group('big', [40, 2]),
+				group('middling', [5, 5]),
+			]),
+		).toStrictEqual(['big', 'middling', 'small']);
+	});
+
+	it('sums every column, not just the first', () => {
+		expect(
+			resolveGroupOrder([
+				{ label: 'steady', points: [{ timestamp: 1000, counts: [5] }, { timestamp: 1060, counts: [5] }] },
+				{ label: 'spike', points: [{ timestamp: 1000, counts: [9] }] },
+			]),
+		).toStrictEqual(['steady', 'spike']);
+	});
+
+	it('breaks a tie alphabetically, so the order is stable across refetches', () => {
+		expect(
+			resolveGroupOrder([group('b', [1]), group('a', [1])]),
+		).toStrictEqual(['a', 'b']);
+	});
+
+	it('counts a no-data cell as no contribution', () => {
+		expect(
+			resolveGroupOrder([group('gaps', [null, null]), group('counts', [1])]),
+		).toStrictEqual(['counts', 'gaps']);
+	});
+});
+
+describe('hasMissingCells', () => {
+	it('finds a gap anywhere in the grid', () => {
+		expect(hasMissingCells([[1, 2], [3, null]])).toBe(true);
+	});
+
+	it('does not mistake a zero for a gap', () => {
+		expect(hasMissingCells([[0, 0], [0, 1]])).toBe(false);
 	});
 });
