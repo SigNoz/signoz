@@ -1,12 +1,11 @@
 import { Color as DesignToken } from '@signozhq/design-tokens';
 import Color from 'color';
 
-import { getPaletteStops } from './palettes';
+import { DEFAULT_HEATMAP_PALETTE, getPaletteStops } from './palettes';
 import {
 	HeatmapColorMode,
 	HeatmapColorOptions,
 	HeatmapColorScale,
-	HeatmapColorPalette,
 } from './types';
 
 export const MIN_COLOR_STEPS = 2;
@@ -37,7 +36,7 @@ export const DEFAULT_HEATMAP_COLORS: HeatmapColorOptions = {
 	scale: HeatmapColorScale.Log,
 	minCount: null,
 	maxCount: null,
-	palette: HeatmapColorPalette.Lava,
+	palette: DEFAULT_HEATMAP_PALETTE,
 	steps: DEFAULT_COLOR_STEPS,
 	fill: '',
 };
@@ -236,7 +235,8 @@ export function createHeatmapColorResolver({
 	};
 
 	// An explicit `minCount` above zero makes it a clamped value like any other.
-	const zeroFill = domain.min <= 0 ? ZERO_FILL[isDarkMode ? 'dark' : 'light'] : null;
+	const zeroFill =
+		domain.min <= 0 ? ZERO_FILL[isDarkMode ? 'dark' : 'light'] : null;
 
 	return {
 		positionOf,

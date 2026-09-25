@@ -64,7 +64,7 @@ export default function ChartWrapper({
 			if (!showLegend) {
 				return null;
 			}
-			// Charts whose legend does not list uPlot series supply their own.
+			// A pie's slices and a heatmap's groups are not uPlot series.
 			if (customLegend) {
 				return customLegend(averageLegendWidth);
 			}
@@ -107,7 +107,7 @@ export default function ChartWrapper({
 				containerHeight={containerHeight}
 				legendConfig={legendConfig}
 				legendComponent={legendComponent}
-				seriesLabels={legendLabels}
+				seriesLabelsOverride={legendLabels}
 				contentFooter={contentFooter}
 				layoutChildren={layoutChildren}
 			>

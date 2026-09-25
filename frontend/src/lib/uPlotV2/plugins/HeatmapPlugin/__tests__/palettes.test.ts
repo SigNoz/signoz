@@ -55,14 +55,6 @@ describe('getPaletteStops', () => {
 		expect(first).toStrictEqual(second);
 	});
 
-	it('falls back to the first ramp for an unknown palette', () => {
-		const unknown = 'nope' as HeatmapColorPalette;
-
-		expect(getPaletteStops(unknown, true)).toStrictEqual(
-			getPaletteStops(HeatmapColorPalette.Ice, true),
-		);
-	});
-
 	it('offers a neutral ramp for panels that already spend colour elsewhere', () => {
 		const stops = getPaletteStops(HeatmapColorPalette.Graphite, true);
 

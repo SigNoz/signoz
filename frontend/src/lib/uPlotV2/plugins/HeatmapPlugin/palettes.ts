@@ -1,5 +1,7 @@
 import { HeatmapColorPalette } from './types';
 
+export const DEFAULT_HEATMAP_PALETTE = HeatmapColorPalette.Lava;
+
 interface PaletteDefinition {
 	/** Evenly spaced, one end of the ramp to the other. */
 	stops: string[];
@@ -160,7 +162,7 @@ export function getPaletteStops(
 	palette: HeatmapColorPalette,
 	isDarkMode: boolean,
 ): string[] {
-	const definition = PALETTES[palette] ?? PALETTES[HeatmapColorPalette.Ice];
+	const definition = PALETTES[palette];
 	return definition.darkFirst === isDarkMode
 		? definition.stops
 		: [...definition.stops].reverse();

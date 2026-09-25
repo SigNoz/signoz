@@ -16,9 +16,9 @@ import {
 	formatBucketLabel,
 	formatColumnRange,
 	formatCount,
-	HeatmapTooltipBody,
 	resolveTooltipBody,
 } from './heatmapTooltipContent';
+import { HeatmapTooltipBody } from './types';
 
 import Styles from './HeatmapTooltip.module.scss';
 

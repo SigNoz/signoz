@@ -26,7 +26,7 @@ import {
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 import { HeatmapChartProps } from 'lib/visualization/charts/types';
-import { useHeatmapGroupLegend } from './useHeatmapGroupLegend';
+import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
 import {
 	buildHeatmapConfig,
 	hasMissingCells,
@@ -109,8 +109,11 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 		seriesColor: resolvedSeriesColor,
 	});
 
-	const { visibleGroups, focusedSeriesIndex, onLegendAction } =
-		useHeatmapGroupLegend({ groups });
+	const {
+		visibleKeys: visibleGroups,
+		focusedSeriesIndex,
+		onLegendAction,
+	} = useLegendVisibility({ keys: groups, indexOffset: 1, id });
 
 	const grid = useMemo(
 		() => resolveHeatmapGrid({ buckets, step, series, visibleGroups }),
@@ -118,7 +121,8 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 	);
 
 	const yAxis = useMemo(
-		() => cropHeatmapYAxis(resolveHeatmapYAxis(grid.bounds, axisScale), grid.counts),
+		() =>
+			cropHeatmapYAxis(resolveHeatmapYAxis(grid.bounds, axisScale), grid.counts),
 		[grid.bounds, grid.counts, axisScale],
 	);
 
