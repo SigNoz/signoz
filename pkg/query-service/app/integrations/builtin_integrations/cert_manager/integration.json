@@ -1,0 +1,72 @@
+{
+  "id": "cert_manager",
+  "title": "cert-manager",
+  "description": "Monitor cert-manager certificate health, issuer readiness, challenge state, and ACME activity",
+  "author": {
+    "name": "SigNoz",
+    "email": "integrations@signoz.io",
+    "homepage": "https://signoz.io"
+  },
+  "icon": "file://icon.svg",
+  "categories": ["Kubernetes", "Security"],
+  "overview": "file://overview.md",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "file://config/prerequisites.md"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "file://config/collect-metrics.md"
+    }
+  ],
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": ["file://assets/dashboards/overview.json"],
+    "alerts": []
+  },
+  "connection_tests": {},
+  "data_collected": {
+    "logs": [],
+    "metrics": [
+      {
+        "name": "certmanager_certificate_expiration_timestamp_seconds",
+        "type": "gauge",
+        "unit": "seconds",
+        "description": "Unix timestamp at which a managed certificate expires."
+      },
+      {
+        "name": "certmanager_certificate_ready_status",
+        "type": "gauge",
+        "unit": "number",
+        "description": "Ready condition for a managed certificate."
+      },
+      {
+        "name": "certmanager_issuer_ready_status",
+        "type": "gauge",
+        "unit": "number",
+        "description": "Ready condition for a namespaced issuer."
+      },
+      {
+        "name": "certmanager_clusterissuer_ready_status",
+        "type": "gauge",
+        "unit": "number",
+        "description": "Ready condition for a cluster issuer."
+      },
+      {
+        "name": "certmanager_certificate_challenge_status",
+        "type": "gauge",
+        "unit": "number",
+        "description": "Current status of ACME certificate challenges."
+      },
+      {
+        "name": "certmanager_http_acme_client_request_count",
+        "type": "sum",
+        "unit": "number",
+        "description": "Total number of outbound ACME HTTP requests."
+      }
+    ]
+  }
+}
