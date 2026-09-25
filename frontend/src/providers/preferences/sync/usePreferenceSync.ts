@@ -1,12 +1,14 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useEffect, useState } from 'react';
+import { useListSavedViews } from 'api/generated/services/saved-view';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import {
 	defaultLogsSelectedColumns,
+	defaultTraceSelectedColumns,
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
-import { defaultSelectedColumns as defaultTracesSelectedColumns } from 'container/TracesExplorer/ListView/configs';
-import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
+import { FontSize, LogViewMode } from 'container/OptionsMenu/types';
+import { findSavedView, toSavedViewSource } from 'container/SavedViews/utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
@@ -28,16 +30,16 @@ export function usePreferenceSync({
 	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
-	const { data: viewsData } = useGetAllViews(
-		dataSource,
-		mode === PreferenceMode.SAVED_VIEW,
+	const { data: viewsData } = useListSavedViews(
+		{ source: toSavedViewSource(dataSource) },
+		{ query: { enabled: mode === PreferenceMode.SAVED_VIEW } },
 	);
 
 	const [savedViewPreferences, setSavedViewPreferences] =
 		useState<Preferences | null>(null);
 
-	const updateExtraDataSelectColumns = (
-		columns: TelemetryFieldKey[],
+	const withColumnNames = (
+		columns: TelemetryFieldKey[] | undefined,
 	): TelemetryFieldKey[] | null => {
 		if (!columns) {
 			return null;
@@ -49,27 +51,28 @@ export function usePreferenceSync({
 	};
 
 	useEffect(() => {
-		const extraData = viewsData?.data?.data?.find(
-			(view) => view.id === savedViewId,
-		)?.extraData;
+		const spec = savedViewId
+			? findSavedView(viewsData?.data, savedViewId)?.spec
+			: undefined;
+		const selectedFields = spec?.selectedFields as
+			| TelemetryFieldKey[]
+			| undefined;
 
-		const parsedExtraData = JSON.parse(extraData || '{}');
 		let columns: TelemetryFieldKey[] = [];
 		let formatting: FormattingOptions | undefined;
 		if (dataSource === DataSource.LOGS) {
 			columns = ensureLogsRequiredColumns(
-				updateExtraDataSelectColumns(parsedExtraData?.selectColumns) ||
-					defaultLogsSelectedColumns,
+				withColumnNames(selectedFields) || defaultLogsSelectedColumns,
 			);
 			formatting = {
-				maxLines: parsedExtraData?.maxLines ?? 1,
-				format: parsedExtraData?.format ?? 'table',
-				fontSize: parsedExtraData?.fontSize ?? 'small',
-				version: parsedExtraData?.version ?? 1,
+				maxLines: spec?.display?.maxLines || 1,
+				format: (spec?.display?.format as LogViewMode) || 'table',
+				fontSize: (spec?.display?.fontSize as FontSize) || FontSize.SMALL,
+				version: 1,
 			};
 		}
 		if (dataSource === DataSource.TRACES) {
-			columns = parsedExtraData?.selectColumns || defaultTracesSelectedColumns;
+			columns = selectedFields || defaultTraceSelectedColumns;
 		}
 		setSavedViewPreferences({ columns, formatting });
 	}, [viewsData, dataSource, savedViewId, mode]);
