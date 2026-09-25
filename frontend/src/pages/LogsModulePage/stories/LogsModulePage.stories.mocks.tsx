@@ -25,6 +25,11 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import {
+	RESPONSE_STATES,
+	type ResponseState,
+	respondWith,
+} from '@/storybook/runtime/responseState';
 
 import {
 	logsSavedViewsResponse,
@@ -44,6 +49,8 @@ import {
 	logRowsResponse,
 	QUICK_FILTER_MAX,
 	logsQuickFiltersResponse,
+	RECENT_FILTER_MAX,
+	recentFiltersStorage,
 	RELATIVE_TIME,
 	timeRangeState,
 } from './__story_mockdata__/logs';
@@ -158,6 +165,20 @@ export const logsMocks = defineStoryMocks({
 			value: QUICK_FILTER_MAX,
 			max: QUICK_FILTER_MAX,
 		}),
+		filterValues: choiceControl<ResponseState>('Filter values', {
+			group: FILTERS,
+			description:
+				'How `/fields/values` answers once a key and an operator are typed in the filter, apart from the page-wide Data control.',
+			options: RESPONSE_STATES,
+			value: 'loaded',
+		}),
+		recentFilters: countControl('Recent filters', {
+			group: FILTERS,
+			description:
+				'Filters run before in this browser, which the filter offers above its key suggestions.',
+			value: 0,
+			max: RECENT_FILTER_MAX,
+		}),
 		savedViews: countControl('Saved views', {
 			group: FILTERS,
 			description: 'The views the view picker above the query builder lists.',
@@ -217,7 +238,7 @@ export const logsMocks = defineStoryMocks({
 
 			rest.get(
 				'http://localhost/api/v1/fields/values',
-				response.json((req) =>
+				respondWith(values.filterValues, (req) =>
 					logFieldValuesResponse(
 						req.url.searchParams.get('name') ?? '',
 						req.url.searchParams.get('searchText') ?? '',
@@ -264,8 +285,16 @@ export const logsMocks = defineStoryMocks({
 				}
 			: {},
 	}),
-	effect: ({ frequencyChart, filtersPanel, format, maxLines, fontSize }) => {
+	effect: ({
+		frequencyChart,
+		filtersPanel,
+		format,
+		maxLines,
+		fontSize,
+		recentFilters,
+	}) => {
 		setLocalStorage(LOCALSTORAGE.SHOW_FREQUENCY_CHART, String(frequencyChart));
+		setLocalStorage(...recentFiltersStorage(recentFilters));
 		setLocalStorage(LOCALSTORAGE.SHOW_LOGS_QUICK_FILTERS, String(filtersPanel));
 
 		// The preferences loader reads localStorage ahead of the URL, so this is
