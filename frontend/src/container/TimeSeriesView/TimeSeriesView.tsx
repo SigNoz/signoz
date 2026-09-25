@@ -1,5 +1,6 @@
 import {
 	Dispatch,
+	ReactNode,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -66,6 +67,7 @@ function TimeSeriesView({
 	allowExport = false,
 	exportFileName,
 	onYAxisUnitChange,
+	headerActions,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -252,7 +254,7 @@ function TimeSeriesView({
 	);
 
 	const showExport = allowExport && !!data?.rawV5Response;
-	const showHeader = showExport || !!onYAxisUnitChange;
+	const showHeader = showExport || !!onYAxisUnitChange || !!headerActions;
 
 	return (
 		<div className="time-series-view">
@@ -265,15 +267,18 @@ function TimeSeriesView({
 							<BuilderUnitsFilter onChange={onYAxisUnitChange} yAxisUnit={yAxisUnit} />
 						)}
 					</div>
-					{showExport && data?.rawV5Response && (
-						<ExportMenu
-							dataSource={dataSource}
-							yAxisUnit={yAxisUnit}
-							data={data}
-							query={currentQuery}
-							fileName={exportFileName ?? `${dataSource}-timeseries`}
-						/>
-					)}
+					<div className="time-series-view__header-actions">
+						{headerActions}
+						{showExport && data?.rawV5Response && (
+							<ExportMenu
+								dataSource={dataSource}
+								yAxisUnit={yAxisUnit}
+								data={data}
+								query={currentQuery}
+								fileName={exportFileName ?? `${dataSource}-timeseries`}
+							/>
+						)}
+					</div>
 				</div>
 			)}
 
@@ -344,6 +349,8 @@ interface TimeSeriesViewProps {
 	// Opt-in: render the y-axis unit selector in the header (views without their
 	// own selector, e.g. Logs). Metrics keeps its separate YAxisUnitSelector.
 	onYAxisUnitChange?: (value: string) => void;
+	// Rendered in the header ahead of the export menu.
+	headerActions?: ReactNode;
 }
 
 TimeSeriesView.defaultProps = {

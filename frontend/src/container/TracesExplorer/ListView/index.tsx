@@ -2,6 +2,7 @@ import {
 	Dispatch,
 	memo,
 	MutableRefObject,
+	ReactNode,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -55,6 +56,7 @@ interface ListViewProps {
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 	queryKeyRef?: MutableRefObject<any>;
+	headerActions?: ReactNode;
 }
 
 function ListView({
@@ -62,6 +64,7 @@ function ListView({
 	setWarning,
 	setIsLoadingQueries,
 	queryKeyRef,
+	headerActions,
 }: ListViewProps): JSX.Element {
 	const { stagedQuery, panelType: panelTypeFromQueryBuilder } =
 		useQueryBuilder();
@@ -227,6 +230,7 @@ function ListView({
 	return (
 		<div className={styles.container}>
 			<div className="trace-explorer-controls">
+				{headerActions}
 				<div className="order-by-container">
 					<div className="order-by-label">
 						Order by <Minus size={14} /> <ArrowUp10 size={14} />
@@ -272,6 +276,7 @@ function ListView({
 
 ListView.defaultProps = {
 	queryKeyRef: undefined,
+	headerActions: undefined,
 };
 
 export default memo(ListView);

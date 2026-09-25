@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import { Warning } from 'types/api';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface TimeSeriesProps {
 	onFetchingStateChange?: (isFetching: boolean) => void;
@@ -17,4 +18,5 @@ export interface TimeSeriesProps {
 	setYAxisUnit: (unit: string) => void;
 	showYAxisUnitSelector: boolean;
 	isCancelled?: boolean;
+	exportDefaultQuery: Query;
 }

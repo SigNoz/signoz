@@ -394,6 +394,7 @@ function Explorer(): JSX.Element {
 						setYAxisUnit={setYAxisUnit}
 						showYAxisUnitSelector={showYAxisUnitSelector}
 						isCancelled={isCancelled}
+						exportDefaultQuery={exportDefaultQuery}
 					/>
 				</div>
 			</div>

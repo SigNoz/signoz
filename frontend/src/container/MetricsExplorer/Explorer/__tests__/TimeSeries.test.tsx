@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
+import { initialQueriesMap } from 'constants/queryBuilder';
 
 import TimeSeries from '../TimeSeries';
 import { TimeSeriesProps } from '../types';
@@ -71,6 +72,7 @@ function renderTimeSeries(
 			yAxisUnit="count"
 			setYAxisUnit={mockSetYAxisUnit}
 			showYAxisUnitSelector={false}
+			exportDefaultQuery={initialQueriesMap.metrics}
 			{...overrides}
 		/>,
 	);

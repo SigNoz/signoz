@@ -13,6 +13,8 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
+import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
+import { getExportPanelType } from 'container/ExplorerActions/utils';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
@@ -194,6 +196,24 @@ function TracesExplorer(): JSX.Element {
 		[stagedQuery, panelType],
 	);
 
+	const exportDashboardQuery = useMemo(
+		() =>
+			getExportQueryData(
+				exportDefaultQuery,
+				getExportPanelType(panelType),
+				options,
+			),
+		[exportDefaultQuery, panelType, options],
+	);
+
+	const explorerActions = (
+		<ExplorerActions
+			query={stagedQuery ? exportDefaultQuery : null}
+			dashboardQuery={stagedQuery ? exportDashboardQuery : null}
+			sourcepage={DataSource.TRACES}
+		/>
+	);
+
 	const handleExport = useCallback(
 		(dashboard: ExportDashboard | null, isNewDashboard?: boolean): void => {
 			if (!dashboard || !panelType) {
@@ -318,6 +338,7 @@ function TracesExplorer(): JSX.Element {
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
+									headerActions={explorerActions}
 								/>
 							</div>
 						)}
@@ -329,6 +350,7 @@ function TracesExplorer(): JSX.Element {
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
+									headerActions={explorerActions}
 								/>
 							</div>
 						)}
@@ -341,6 +363,7 @@ function TracesExplorer(): JSX.Element {
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
+									headerActions={explorerActions}
 								/>
 							</div>
 						)}
@@ -351,6 +374,7 @@ function TracesExplorer(): JSX.Element {
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}
 									queryKeyRef={listQueryKeyRef}
+									headerActions={explorerActions}
 								/>
 							</div>
 						)}
