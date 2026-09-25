@@ -149,9 +149,9 @@ function HeaderRightSection({
 					onOpenChange={handleOpenFeedbackModalChange}
 				>
 					<Button
-						color="secondary"
-						variant="ghost"
-						size="sm"
+						color="primary"
+						variant="link"
+						size="md"
 						icon
 						aria-label="Feedback"
 						onClick={handleOpenFeedbackModal}
@@ -174,9 +174,9 @@ function HeaderRightSection({
 					onOpenChange={handleOpenAnnouncementsModalChange}
 				>
 					<Button
-						color="secondary"
-						variant="ghost"
-						size="sm"
+						color="primary"
+						variant="link"
+						size="md"
 						icon
 						aria-label="Announcements"
 						onClick={(): void => {
@@ -203,9 +203,9 @@ function HeaderRightSection({
 					onOpenChange={handleOpenShareURLModalChange}
 				>
 					<Button
-						color="secondary"
-						variant="ghost"
-						size="sm"
+						color="primary"
+						variant="link"
+						size="md"
 						icon
 						aria-label="Share"
 						onClick={handleOpenShareURLModal}
