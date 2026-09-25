@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Skeleton } from 'antd';
+import classNames from 'classnames';
 import { Typography } from '@signozhq/ui/typography';
 import { LoaderCircle } from '@signozhq/icons';
 import {
@@ -15,7 +16,7 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { NON_SELECTED_OPERATORS } from '../checkboxFilterQuery';
-import useActiveQueryIndex from '../useActiveQueryIndex';
+import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryIndex';
 import useCheckboxDisclosure from '../useCheckboxDisclosure';
 import useCheckboxFilterActions from '../useCheckboxFilterActions';
 import useCheckboxFilterState from '../useCheckboxFilterState';
@@ -44,7 +45,13 @@ export default function CheckboxFilterV2(
 	const { source, filter, onFilterChange, onQuickFilterChange, useFieldApis } =
 		props;
 	const [searchText, setSearchText] = useState<string>('');
+	const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
 	const [userToggleState, setUserToggleState] = useState<boolean | null>(null);
+
+	const handleToggleSearch = (): void => {
+		setIsSearchOpen((prev) => !prev);
+		setSearchText('');
+	};
 
 	const { currentQuery } = useQueryBuilder();
 	const activeQueryIndex = useActiveQueryIndex(source);
@@ -74,6 +81,7 @@ export default function CheckboxFilterV2(
 		searchText,
 		existingQuery,
 		metricNamespace: useFieldApis.metricNamespace,
+		source,
 		startUnixMilli: useFieldApis.startUnixMilli,
 		endUnixMilli: useFieldApis.endUnixMilli,
 		enabled: isOpen,
@@ -153,6 +161,7 @@ export default function CheckboxFilterV2(
 		isSomeFilterPresentForCurrentAttribute,
 		isNotInOperator,
 		hasExistingQuery,
+		isRelatedValuesSupported: useFieldApis.existingQuery !== null,
 		visibleItemsCount,
 		relatedExclusions,
 	});
@@ -162,12 +171,15 @@ export default function CheckboxFilterV2(
 			<CheckboxFilterV2Header
 				title={filter.title}
 				isOpen={isOpen}
-				showClearAll={!!attributeValues.length}
-				onToggleOpen={onToggleOpen}
-				onClear={onClear}
-				isSomeFilterPresentForCurrentAttribute={
-					isSomeFilterPresentForCurrentAttribute
+				actionsClassName={classNames(styles.sectionActions, {
+					[styles.sectionActionsPinned]: isSearchOpen,
+				})}
+				resetActionClassName={
+					isSearchOpen ? styles.sectionActionHoverOnly : undefined
 				}
+				onToggleOpen={onToggleOpen}
+				onToggleSearch={handleToggleSearch}
+				onClear={onClear}
 			/>
 			{isOpen && isLoading && !hasLoadedOnce.current && (
 				<section>
@@ -176,23 +188,26 @@ export default function CheckboxFilterV2(
 			)}
 			{isOpen && (!isLoading || hasLoadedOnce.current) && (
 				<>
-					<section className={styles.search}>
-						<Input
-							placeholder="Filter values"
-							onChange={(e): void => setSearchTextDebounced(e.target.value)}
-							disabled={isFilterDisabled}
-							data-testid="checkbox-filter-search"
-							suffix={
-								isFetching ? (
-									<LoaderCircle
-										size={14}
-										className={styles.searchSpinner}
-										data-testid="checkbox-filter-search-loading"
-									/>
-								) : null
-							}
-						/>
-					</section>
+					{isSearchOpen && (
+						<section className={styles.search}>
+							<Input
+								autoFocus
+								placeholder="Filter values"
+								onChange={(e): void => setSearchTextDebounced(e.target.value)}
+								disabled={isFilterDisabled}
+								data-testid="checkbox-filter-search"
+								suffix={
+									isFetching ? (
+										<LoaderCircle
+											size={14}
+											className={styles.searchSpinner}
+											data-testid="checkbox-filter-search-loading"
+										/>
+									) : null
+								}
+							/>
+						</section>
+					)}
 
 					{totalCount > 0 && (
 						<section className={styles.values}>

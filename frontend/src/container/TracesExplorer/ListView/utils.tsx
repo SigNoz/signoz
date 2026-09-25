@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { generatePath, Link } from 'react-router-dom';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
@@ -7,8 +7,8 @@ import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFie
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
-import { formUrlParams } from 'container/TraceDetail/utils';
+import { getMs } from 'utils/timeUtils';
+import { formUrlParams } from 'utils/traceUtils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
@@ -53,7 +53,11 @@ export const getTraceLink = (record: Record<string, unknown>): string => {
 	const traceId = readId(record.traceID) || readId(record.trace_id);
 	const spanId = readId(record.spanID) || readId(record.span_id);
 
-	return `${ROUTES.TRACE}/${traceId}${formUrlParams({
+	if (!traceId) {
+		return '';
+	}
+
+	return `${generatePath(ROUTES.TRACE_DETAIL, { id: traceId })}${formUrlParams({
 		spanId,
 		levelUp: 0,
 		levelDown: 0,

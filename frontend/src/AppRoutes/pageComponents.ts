@@ -53,17 +53,6 @@ export const TracesFunnelDetails = Loadable(
 		),
 );
 
-export const TraceFilter = Loadable(
-	() => import(/* webpackChunkName: "Trace Filter Page" */ 'pages/Trace'),
-);
-
-export const TraceDetailOldRedirect = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "TraceDetailOldRedirect" */ 'pages/TraceDetailOldRedirect/index'
-		),
-);
-
 export const TraceDetailV3 = Loadable(
 	() =>
 		import(
@@ -94,23 +83,18 @@ export const OnboardingV2 = Loadable(
 export const DashboardsListPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "DashboardsListPage" */ 'pages/DashboardsListPageV2'
+			/* webpackChunkName: "DashboardsListPage" */ 'pages/DashboardsListPage'
 		),
 );
 
 export const DashboardPage = Loadable(
-	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPageV2'),
-);
-
-export const DashboardWidget = Loadable(
-	() =>
-		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
+	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPage'),
 );
 
 export const DashboardPanelEditorPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPageV2/PanelEditorPage/PanelEditorPage'
+			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPage/PanelEditorPage/PanelEditorPage'
 		),
 );
 
@@ -168,14 +152,6 @@ export const MySettings = Loadable(
 
 export const Logs = Loadable(
 	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
-);
-
-export const LogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsModulePage'),
-);
-
-export const OldLogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/Logs'),
 );
 
 export const LiveLogs = Loadable(

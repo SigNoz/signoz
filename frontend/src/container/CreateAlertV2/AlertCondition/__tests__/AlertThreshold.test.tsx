@@ -98,7 +98,7 @@ jest.mock('api/channels/getAll', () => ({
 }));
 
 // Mock alert format categories
-jest.mock('container/NewWidget/RightContainer/alertFomatCategories', () => ({
+jest.mock('constants/formats/alertFormatCategories', () => ({
 	getCategoryByOptionId: jest.fn(() => ({ name: 'bytes' })),
 	getCategorySelectOptionByName: jest.fn(() => [
 		{ label: 'Bytes', value: 'bytes' },

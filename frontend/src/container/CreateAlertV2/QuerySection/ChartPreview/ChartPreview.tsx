@@ -8,7 +8,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryParams } from 'constants/query';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
-import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
+import PlotTag from 'components/PlotTag/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
 import { AppState } from 'store/reducers';

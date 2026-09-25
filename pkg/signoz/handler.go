@@ -55,6 +55,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -79,6 +80,7 @@ type Handlers struct {
 	AuthzHandler            authz.Handler
 	ZeusHandler             zeus.Handler
 	LicensingHandler        licensing.Handler
+	SubscriptionHandler     subscription.Handler
 	QuerierHandler          querier.Handler
 	ServiceAccountHandler   serviceaccount.Handler
 	RegistryHandler         factory.Handler
@@ -105,6 +107,7 @@ func NewHandlers(
 	telemetryMetadataStore telemetrytypes.MetadataStore,
 	authz authz.AuthZ,
 	zeusService zeus.Zeus,
+	subscriptionService subscription.Subscription,
 	registryHandler factory.Handler,
 	alertmanagerService alertmanager.Alertmanager,
 	prometheusService prometheus.Prometheus,
@@ -131,6 +134,7 @@ func NewHandlers(
 		AuthzHandler:            signozauthzapi.NewHandler(authz),
 		ZeusHandler:             zeus.NewHandler(zeusService, licensingService),
 		LicensingHandler:        licensing.NewHandler(licensingService),
+		SubscriptionHandler:     subscription.NewHandler(subscriptionService),
 		QuerierHandler:          querierHandler,
 		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount, modules.ServiceAccountGetter),
 		RegistryHandler:         registryHandler,

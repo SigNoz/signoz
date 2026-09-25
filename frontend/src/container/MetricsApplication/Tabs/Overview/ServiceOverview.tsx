@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridCardLayout/GridCard';
+import Graph from 'container/WidgetCard/Card';
 import {
 	GraphTitle,
 	SERVICE_CHART_ID,

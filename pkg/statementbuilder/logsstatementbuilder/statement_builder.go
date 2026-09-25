@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -34,8 +35,7 @@ func bodyAliasExpression(bodyJSONEnabled bool) string {
 type logQueryStatementBuilder struct {
 	logger                         *slog.Logger
 	metadataStore                  telemetrytypes.MetadataStore
-	fm                             qbtypes.FieldMapper
-	cb                             qbtypes.ConditionBuilder
+	storage                        qbtypes.Storage
 	resourceFilterResolver         *resourcefilter.ResourceFingerprintResolver[qbtypes.LogAggregation]
 	aggExprRewriter                qbtypes.AggExprRewriter
 	fl                             flagger.Flagger
@@ -49,7 +49,7 @@ type logQueryStatementBuilder struct {
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*logQueryStatementBuilder)(nil)
 
 // NewFactory returns a provider factory for the logs statement builder. Its New
-// internalizes the FieldMapper, ConditionBuilder, and AggExprRewriter, and reads
+// internalizes the storage and the AggExprRewriter, and reads
 // SkipResourceFingerprint and the search() scan budgets from the config.
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
@@ -59,11 +59,10 @@ func NewFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("logs"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.LogAggregation], error) {
-			fm := logstelemetryschema.NewFieldMapper(fl)
-			cb := logstelemetryschema.NewConditionBuilder(fm, fl)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, logstelemetryschema.DefaultFullTextColumn, fm, cb, fl)
+			storage := logstelemetryschema.NewStorage()
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, logstelemetryschema.DefaultFullTextColumn, storage, fl, telemetrytypes.SignalLogs)
 			return NewLogQueryStatementBuilder(
-				settings, metadataStore, fm, cb, aggExprRewriter, logstelemetryschema.DefaultFullTextColumn,
+				settings, metadataStore, storage, aggExprRewriter, logstelemetryschema.DefaultFullTextColumn,
 				fl, telemetryStore, cfg,
 			), nil
 		},
@@ -73,8 +72,7 @@ func NewFactory(
 func NewLogQueryStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
+	storage qbtypes.Storage,
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fl flagger.Flagger,
@@ -99,8 +97,7 @@ func NewLogQueryStatementBuilder(
 	b := &logQueryStatementBuilder{
 		logger:                         logsSettings.Logger(),
 		metadataStore:                  metadataStore,
-		fm:                             fieldMapper,
-		cb:                             conditionBuilder,
+		storage:                        storage,
 		resourceFilterResolver:         resourceFilterResolver,
 		aggExprRewriter:                aggExprRewriter,
 		fl:                             fl,
@@ -301,6 +298,20 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 	return query
 }
 
+// columnKey keeps the logs column read for a qualified attribute key that
+// names a column and carries no data type: `attribute.severity_text` in a
+// select field, group by, or order by reads the column, as it always did. A
+// key with a data type addresses the attribute it names.
+func columnKey(key *telemetrytypes.TelemetryFieldKey) *telemetrytypes.TelemetryFieldKey {
+	if key.FieldContext != telemetrytypes.FieldContextAttribute || key.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+		return key
+	}
+	if _, ok := logstelemetryschema.IntrinsicFields[key.Name]; !ok {
+		return key
+	}
+	return telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextLog, key.FieldDataType)
+}
+
 func (b *logQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
 	// First check if it matches with any intrinsic fields
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
@@ -322,6 +333,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
 
 	var (
 		cteFragments []string
@@ -349,7 +361,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(logstelemetryschema.LogsV2SeverityNumberColumn)
 		sb.SelectMore(logstelemetryschema.LogsV2ScopeNameColumn)
 		sb.SelectMore(logstelemetryschema.LogsV2ScopeVersionColumn)
-		sb.SelectMore(bodyAliasExpression(b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))))
+		sb.SelectMore(bodyAliasExpression(info.BodyJSONOn))
 		sb.SelectMore(logstelemetryschema.LogsV2AttributesStringColumn)
 		sb.SelectMore(logstelemetryschema.LogsV2AttributesNumberColumn)
 		sb.SelectMore(logstelemetryschema.LogsV2AttributesBoolColumn)
@@ -364,11 +376,11 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			}
 
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], telemetrytypes.FieldDataTypeUnspecified, keys)
+			colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&query.SelectFields[index]), telemetrytypes.FieldDataTypeUnspecified, keys)
 			if err != nil {
 				return nil, err
 			}
-			sb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colExpr), selectColumnAlias(index, query.SelectFields[index].Name)))
+			sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", colExpr, selectColumnAlias(index, query.SelectFields[index].Name))))
 		}
 	}
 
@@ -383,7 +395,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	// Add order by
 	for _, orderBy := range query.Order {
 
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&orderBy.Key.TelemetryFieldKey), telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -447,20 +459,20 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	))
 
 	// Keep original column expressions so we can build the tuple
-	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for i, gb := range query.GroupBy {
-		if !bodyJSONEnabled && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
+		if !info.BodyJSONOn && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
 
 		fieldAlias := groupByColumnAlias(i, gb.Name)
-		sb.SelectMore(fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), fieldAlias))
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", fieldAlias))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
+		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
 	}
 
 	// Aggregations
@@ -522,11 +534,11 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					orderCol := orderBy.Key.Name
+					orderCol := clickhousesql.Identifier(orderBy.Key.Name)
 					if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
 						orderCol = alias
 					}
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderCol), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -555,11 +567,11 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					orderCol := orderBy.Key.Name
+					orderCol := clickhousesql.Identifier(orderBy.Key.Name)
 					if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
 						orderCol = alias
 					}
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderCol), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -612,20 +624,20 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	allAggChArgs := []any{}
 
-	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for i, gb := range query.GroupBy {
-		if !bodyJSONEnabled && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
+		if !info.BodyJSONOn && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
 
 		fieldAlias := groupByColumnAlias(i, gb.Name)
-		sb.SelectMore(fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), fieldAlias))
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", fieldAlias))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
+		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
 	}
 
 	// for scalar queries, the rate would be end-start
@@ -676,11 +688,11 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		if ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			orderCol := orderBy.Key.Name
+			orderCol := clickhousesql.Identifier(orderBy.Key.Name)
 			if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
 				orderCol = alias
 			}
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderCol), orderBy.Direction.StringValue()))
 		}
 	}
 
@@ -731,16 +743,13 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 		// add filter expression
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
-			OrgID:              orgID,
+			Query:              querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end),
+			Storage:            b.storage,
 			Logger:             b.logger,
-			FieldMapper:        b.fm,
-			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			SkipResourceFilter: skipResourceFilter,
 			FullTextColumn:     b.fullTextColumn,
 			Variables:          variables,
-			StartNs:            start,
-			EndNs:              end,
 		})
 
 		if err != nil {
@@ -781,11 +790,11 @@ func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.LogAggreg
 }
 
 func groupByColumnAlias(i int, name string) string {
-	return fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name)
+	return clickhousesql.Identifier(fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name))
 }
 
 func selectColumnAlias(i int, name string) string {
-	return fmt.Sprintf("__SELECT_KEY_%d_%s", i, name)
+	return clickhousesql.Identifier(fmt.Sprintf("__SELECT_KEY_%d_%s", i, name))
 }
 
 func groupByOrderAlias(orderKey string, groupBy []qbtypes.GroupByKey) (string, bool) {

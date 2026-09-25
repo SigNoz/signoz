@@ -1,8 +1,7 @@
-import { useMemo } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Button } from 'antd';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
-import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { SignalType } from '../types';
 import AddedFilters from './AddedFilters';
@@ -19,7 +18,7 @@ function QuickFiltersSettings({
 }: {
 	signal: SignalType | undefined;
 	setIsSettingsOpen: (isSettingsOpen: boolean) => void;
-	customFilters: FilterType[];
+	customFilters: TelemetryFieldKey[];
 	refetchCustomFilters: () => void;
 }): JSX.Element {
 	const {
@@ -28,6 +27,7 @@ function QuickFiltersSettings({
 		addedFilters,
 		setAddedFilters,
 		handleSaveChanges,
+		hasUnsavedChanges,
 		isUpdatingCustomFilters,
 		inputValue,
 		handleInputChange,
@@ -38,18 +38,6 @@ function QuickFiltersSettings({
 		refetchCustomFilters,
 		signal,
 	});
-
-	const hasUnsavedChanges = useMemo(
-		() =>
-			// check if both arrays have the same length and same order of elements
-			!(
-				addedFilters.length === customFilters.length &&
-				addedFilters.every(
-					(filter, index) => filter.key === customFilters[index].key,
-				)
-			),
-		[addedFilters, customFilters],
-	);
 
 	return (
 		<>

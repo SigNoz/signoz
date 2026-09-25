@@ -3,35 +3,45 @@ import {
 	memo,
 	MutableRefObject,
 	SetStateAction,
+	useCallback,
 	useEffect,
 	useMemo,
+	useState,
 } from 'react';
 import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
+import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ENTITY_VERSION_V5 } from 'constants/app';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import TraceExplorerControls from 'container/TracesExplorer/Controls';
-import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
-import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
-import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
-import TracesTable from 'container/TracesExplorer/TracesTable/TracesTable';
+import { getTraceLink } from '../ListView/utils';
+import { TracesTableRow } from '../TracesTable/getFieldColumn';
+import TracesTable from '../TracesTable/TracesTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { ArrowUp10, Minus } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import DOCLINKS from 'utils/docLinks';
 
-import { columns, PER_PAGE_OPTIONS } from './configs';
+import TraceExplorerControls from '../Controls';
+import {
+	TRACE_VIEW_BUILDER_QUERY_TYPE,
+	TRACE_VIEW_COLUMN_EXTRA_FIELDS,
+	TRACE_VIEW_DEFAULT_ORDER_BY,
+	TRACE_VIEW_FIELD_KEYS,
+	TRACE_VIEW_ORDER_BY_EXTRA_FIELDS,
+} from '../constants';
+import { getListViewQuery } from '../explorerUtils';
+import { PER_PAGE_OPTIONS } from './configs';
+import { useTraceViewColumns } from './useTraceViewColumns';
 import styles from './TracesView.module.scss';
 
 interface TracesViewProps {
@@ -49,6 +59,17 @@ function TracesView({
 }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
+	const [orderBy, setOrderBy] = useState<string>(TRACE_VIEW_DEFAULT_ORDER_BY);
+
+	const {
+		columns,
+		selectedFields,
+		onFieldsChange,
+		requiredFields,
+		isLoading: isColumnsLoading,
+		canPersistColumns,
+	} = useTraceViewColumns();
+
 	const {
 		selectedTime: globalSelectedTime,
 		maxTime,
@@ -60,8 +81,8 @@ function TracesView({
 	);
 
 	const transformedQuery = useMemo(
-		() => getListViewQuery(stagedQuery || initialQueriesMap.traces),
-		[stagedQuery],
+		() => getListViewQuery(stagedQuery || initialQueryAIWithType, orderBy),
+		[stagedQuery, orderBy],
 	);
 
 	const queryKey = useMemo(
@@ -73,6 +94,7 @@ function TracesView({
 			stagedQuery,
 			panelType,
 			paginationQueryData,
+			orderBy,
 		],
 		[
 			globalSelectedTime,
@@ -81,6 +103,7 @@ function TracesView({
 			stagedQuery,
 			panelType,
 			paginationQueryData,
+			orderBy,
 		],
 	);
 
@@ -136,44 +159,78 @@ function TracesView({
 
 	useEffect(() => {
 		if (!isLoading && !isFetching && !isError && rows.length !== 0) {
-			void logEvent('Traces Explorer: Data present', {
+			void logEvent('AI Observability Explorer: Data present', {
 				panelType: 'TRACE',
 			});
 		}
 	}, [isLoading, isFetching, isError, rows.length]);
 
+	const handleOrderChange = useCallback((value: string): void => {
+		setOrderBy(value);
+	}, []);
+
+	// Without the full column set there is no pool to pick from, so the control is dropped.
+	const fieldsSelectorConfig = useMemo(
+		() =>
+			canPersistColumns
+				? { fieldsSelector: { value: selectedFields, onFieldsChange } }
+				: null,
+		[canPersistColumns, selectedFields, onFieldsChange],
+	);
+
+	// Rendering the pool unfiltered would surface columns the defaults keep hidden.
+	const tableColumns = useMemo(
+		() =>
+			canPersistColumns
+				? columns
+				: columns.filter((column) => column.defaultVisibility !== false),
+		[canPersistColumns, columns],
+	);
+
 	return (
 		<div className={styles.container}>
 			<div className={styles.actionsContainer}>
-				<Typography>
-					This tab only shows Root Spans. More details
-					<Typography.Link href={DOCLINKS.TRACES_DETAILS_LINK} target="_blank">
-						{' '}
-						here
-					</Typography.Link>
-				</Typography>
-
 				<div className="trace-explorer-controls">
-					<DownloadOptionsMenu
-						dataSource={DataSource.TRACES}
-						panelType={PANEL_TYPES.TRACE}
-					/>
+					<div className={styles.orderByContainer}>
+						<div className={styles.orderByLabel}>
+							Order by <Minus size={14} /> <ArrowUp10 size={14} />
+						</div>
+
+						<ListViewOrderBy
+							value={orderBy}
+							onChange={handleOrderChange}
+							dataSource={DataSource.TRACES}
+							fieldKeysConfig={TRACE_VIEW_FIELD_KEYS}
+							builderQueryType={TRACE_VIEW_BUILDER_QUERY_TYPE}
+							extraFields={TRACE_VIEW_ORDER_BY_EXTRA_FIELDS}
+						/>
+					</div>
 
 					<TraceExplorerControls
 						isLoading={isLoading}
 						totalCount={rows.length}
 						perPageOptions={PER_PAGE_OPTIONS}
+						config={fieldsSelectorConfig}
+						fieldKeysConfig={TRACE_VIEW_FIELD_KEYS}
+						builderQueryType={TRACE_VIEW_BUILDER_QUERY_TYPE}
+						extraFields={TRACE_VIEW_COLUMN_EXTRA_FIELDS}
+						requiredFields={requiredFields}
 					/>
 				</div>
 			</div>
 
 			<TracesTable
 				data={rows}
-				columns={columns}
+				columns={tableColumns}
+				columnStorageKey={
+					canPersistColumns
+						? LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS
+						: undefined
+				}
 				respectColumnOrder
 				panelType="TRACE"
 				getRowHref={getTraceLink}
-				isLoading={isLoading}
+				isLoading={isLoading || isColumnsLoading}
 				isFetching={isFetching}
 				isError={isError}
 				error={error}

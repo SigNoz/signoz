@@ -1,6 +1,6 @@
 import Uplot from 'components/Uplot';
-import GridTableComponent from 'container/GridTableComponent';
-import GridValueComponent from 'container/GridValueComponent';
+import GridTableComponent from 'container/WidgetCard/Panels/TablePanel';
+import GridValueComponent from 'container/WidgetCard/Panels/ValuePanel';
 import LogsPanelComponent from 'container/LogsPanelTable/LogsPanelComponent';
 import TracesTableComponent from 'container/TracesTableComponent/TracesTableComponent';
 import { DataSource } from 'types/common/queryBuilder';
@@ -29,8 +29,11 @@ export const getComponentForPanelType = (
 		[PANEL_TYPES.LIST]:
 			dataSource === DataSource.LOGS ? LogsPanelComponent : TracesTableComponent,
 		[PANEL_TYPES.BAR]: Uplot,
+		[PANEL_TYPES.AREA]: Uplot,
 		[PANEL_TYPES.PIE]: null,
 		[PANEL_TYPES.HISTOGRAM]: Uplot,
+		// Dashboards v2 renders this kind; nothing reaches the V1 chart map for it.
+		[PANEL_TYPES.TEXT]: null,
 		[PANEL_TYPES.EMPTY_WIDGET]: null,
 	};
 

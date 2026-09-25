@@ -72,7 +72,6 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	CHANNELS_EDIT: ['ADMIN'],
 	CHANNELS_NEW: ['ADMIN'],
 	DASHBOARD: ['ADMIN', 'EDITOR', 'VIEWER'],
-	DASHBOARD_WIDGET: ['ADMIN', 'EDITOR', 'VIEWER'],
 	DASHBOARD_PANEL_EDITOR: ['ADMIN', 'EDITOR', 'VIEWER'],
 	EDIT_ALERTS: ['ADMIN', 'EDITOR'],
 	ERROR_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -88,9 +87,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SIGN_UP: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACES_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
-	TRACE: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
-	TRACE_DETAIL_OLD: ['ADMIN', 'EDITOR', 'VIEWER'],
 	// Every role must be able to land here - a role missing from this list is
 	// redirected to /un-authorized and then redirected off it again, looping.
 	UN_AUTHORIZED: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS', 'AUTHOR'],
@@ -113,7 +110,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	ROLE_EDIT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	MEMBERS_SETTINGS: ['ADMIN'],
 	SERVICE_ACCOUNTS_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
-	BILLING: ['ADMIN'],
+	BILLING: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SUPPORT: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
 	SOMETHING_WENT_WRONG: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS_SAVE_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -121,7 +118,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	TRACES_FUNNELS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACES_FUNNELS_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
-	OLD_LOGS_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
+	TRACE_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SHORTCUTS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	INTEGRATIONS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	INTEGRATIONS_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -163,12 +160,13 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
  * This prevents us from adding `ANONYMOUS` on the `routePermission`
  */
 export const routeWithInitialAuthZSupport = {
+	ALL_DASHBOARD: true,
+	DASHBOARD: true,
+	DASHBOARD_PANEL_EDITOR: true,
 	MY_SETTINGS: true,
 	SETTINGS: true,
 	TRACES_EXPLORER: true,
-	TRACE: true,
 	TRACE_DETAIL: true,
-	TRACE_DETAIL_OLD: true,
 	LOGS: true,
 	LOGS_EXPLORER: true,
 	LIVE_LOGS: true,
@@ -178,7 +176,6 @@ export const routeWithInitialAuthZSupport = {
 	ROLE_EDIT: true,
 	SERVICE_ACCOUNTS_SETTINGS: true,
 	SUPPORT: true,
-	OLD_LOGS_EXPLORER: true,
 	METRICS_EXPLORER: true,
 	METRICS_EXPLORER_EXPLORER: true,
 	METRICS_EXPLORER_VOLUME_CONTROL: true,
@@ -187,4 +184,5 @@ export const routeWithInitialAuthZSupport = {
 	WORKSPACE_LOCKED: true,
 	WORKSPACE_SUSPENDED: true,
 	WORKSPACE_ACCESS_RESTRICTED: true,
+	BILLING: true,
 } as const satisfies Partial<Record<keyof typeof ROUTES, true>>;

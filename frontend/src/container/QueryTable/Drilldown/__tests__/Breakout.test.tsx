@@ -38,7 +38,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-jest.mock('container/GridCardLayout/useResolveQuery', () => ({
+jest.mock('container/WidgetCard/hooks/useResolveQuery', () => ({
 	__esModule: true,
 	default: (): any => ({
 		getUpdatedQuery: jest.fn().mockResolvedValue({}),

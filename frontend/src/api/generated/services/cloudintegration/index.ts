@@ -51,6 +51,26 @@ import type {
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
+
 /**
  * [Deprecated] This endpoint is called by the deployed agent to check in
  * @deprecated
@@ -199,7 +219,7 @@ export const getListAccountsQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!cloudProvider,
+		enabled: cloudProvider !== null && cloudProvider !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof listAccounts>>,
@@ -236,7 +256,7 @@ export function useListAccounts<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -480,7 +500,11 @@ export const getGetAccountQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!(cloudProvider && id),
+		enabled:
+			cloudProvider !== null &&
+			cloudProvider !== undefined &&
+			id !== null &&
+			id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<Awaited<ReturnType<typeof getAccount>>, TError, TData> & {
 		queryKey: QueryKey;
@@ -515,7 +539,7 @@ export function useGetAccount<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -683,7 +707,11 @@ export const getListAccountServicesMetadataQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!(cloudProvider && id),
+		enabled:
+			cloudProvider !== null &&
+			cloudProvider !== undefined &&
+			id !== null &&
+			id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof listAccountServicesMetadata>>,
@@ -724,7 +752,7 @@ export function useListAccountServicesMetadata<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -795,7 +823,13 @@ export const getGetAccountServiceQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!(cloudProvider && id && serviceId),
+		enabled:
+			cloudProvider !== null &&
+			cloudProvider !== undefined &&
+			id !== null &&
+			id !== undefined &&
+			serviceId !== null &&
+			serviceId !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getAccountService>>,
@@ -835,7 +869,7 @@ export function useGetAccountService<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1099,7 +1133,7 @@ export const getGetConnectionCredentialsQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!cloudProvider,
+		enabled: cloudProvider !== null && cloudProvider !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getConnectionCredentials>>,
@@ -1140,7 +1174,7 @@ export function useGetConnectionCredentials<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1205,7 +1239,7 @@ export const getListServicesMetadataQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!cloudProvider,
+		enabled: cloudProvider !== null && cloudProvider !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof listServicesMetadata>>,
@@ -1245,7 +1279,7 @@ export function useListServicesMetadata<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1313,7 +1347,11 @@ export const getGetServiceQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!(cloudProvider && serviceId),
+		enabled:
+			cloudProvider !== null &&
+			cloudProvider !== undefined &&
+			serviceId !== null &&
+			serviceId !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<Awaited<ReturnType<typeof getService>>, TError, TData> & {
 		queryKey: QueryKey;
@@ -1351,7 +1389,7 @@ export function useGetService<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**

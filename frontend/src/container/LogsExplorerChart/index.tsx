@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
-import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
+import BarChart from 'lib/visualization/charts/BarChart/BarChart';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';

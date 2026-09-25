@@ -8,22 +8,18 @@ import Legend from './Legend';
 
 /**
  * uPlot legend controller. Derives the legend items + focus/visibility state
- * from the chart config (useLegendsSync) and the toggle/focus interactions from
- * the plot context (useLegendActions), then renders the presentational Legend.
+ * from the chart config (useLegendsSync) and the series interactions from the
+ * plot context (useLegendActions), then renders the presentational Legend.
  * Must be rendered inside a PlotContextProvider.
  */
 export default function UPlotLegend({
 	position = LegendPosition.BOTTOM,
 	config,
 	averageLegendWidth,
+	showSearch,
 }: UPlotLegendProps): JSX.Element {
-	const { legendItemsMap, focusedSeriesIndex, setFocusedSeriesIndex } =
-		useLegendsSync({ config });
-	const { onLegendClick, onLegendMouseMove, onLegendMouseLeave } =
-		useLegendActions({
-			setFocusedSeriesIndex,
-			focusedSeriesIndex,
-		});
+	const { legendItemsMap, focusedSeriesIndex } = useLegendsSync({ config });
+	const onAction = useLegendActions();
 
 	const items = useMemo(() => Object.values(legendItemsMap), [legendItemsMap]);
 
@@ -32,10 +28,9 @@ export default function UPlotLegend({
 			items={items}
 			position={position}
 			averageLegendWidth={averageLegendWidth}
+			showSearch={showSearch}
 			focusedSeriesIndex={focusedSeriesIndex}
-			onClick={onLegendClick}
-			onMouseMove={onLegendMouseMove}
-			onMouseLeave={onLegendMouseLeave}
+			onAction={onAction}
 		/>
 	);
 }
