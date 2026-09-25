@@ -8,11 +8,11 @@ import (
 )
 
 type Module interface {
-	ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetypes.PromotePath, error)
-	PromoteAndIndexPaths(ctx context.Context, paths ...*promotetypes.PromotePath) error
+	ListPromotedPaths(ctx context.Context, target promotetypes.Target) ([]promotetypes.PromotePath, error)
+	PromotePaths(ctx context.Context, target promotetypes.Target, paths ...*promotetypes.PromotePath) error
 }
 
 type Handler interface {
-	HandlePromoteAndIndexPaths(w http.ResponseWriter, r *http.Request)
-	ListPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Request)
+	PromotePaths(w http.ResponseWriter, r *http.Request)
+	ListPromotedPaths(w http.ResponseWriter, r *http.Request)
 }
