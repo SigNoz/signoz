@@ -1,4 +1,4 @@
-import { Channels } from 'types/api/channels/getAll';
+import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 export interface RoutingPolicy {
 	id: string;
@@ -62,7 +62,7 @@ export interface RoutingPolicyDetailsProps {
 	routingPolicy: RoutingPolicy | null;
 	closeModal: () => void;
 	mode: PolicyDetailsModalMode;
-	channels: Channels[];
+	channels: ChannelOption[];
 	isErrorChannels: boolean;
 	isLoadingChannels: boolean;
 	handlePolicyDetailsModalAction: HandlePolicyDetailsModalAction;
@@ -86,7 +86,7 @@ export interface UseRoutingPoliciesReturn {
 	isErrorRoutingPolicies: boolean;
 	refetchRoutingPolicies: () => void;
 	// Channels
-	channels: Channels[];
+	channels: ChannelOption[];
 	isLoadingChannels: boolean;
 	isErrorChannels: boolean;
 	refreshChannels: () => void;

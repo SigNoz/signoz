@@ -7,17 +7,9 @@ import { Typography } from '@signozhq/ui/typography';
 import type { Store } from 'antd/lib/form/interface';
 import ROUTES from 'constants/routes';
 import {
-	ChannelType,
-	EmailChannel,
-	GoogleChatChannel,
-	IncidentIOChannel,
-	JiraChannel,
-	JsmOpsChannel,
-	OpsgenieChannel,
-	PagerChannel,
-	SlackChannel,
-	WebhookChannel,
-} from 'container/CreateAlertChannels/config';
+	ChannelKind,
+	ChannelSpecFormValues,
+} from 'container/CreateAlertChannels/types';
 import history from 'lib/history';
 
 import EmailSettings from './Settings/Email';
@@ -49,30 +41,41 @@ function FormAlertChannels({
 
 	const renderSettings = (): ReactElement | null => {
 		switch (type) {
-			case ChannelType.Slack:
-				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.Webhook:
+			case ChannelKind.slack:
+				return (
+					<SlackSettings
+						setSelectedConfig={setSelectedConfig}
+						initialFields={initialValue?.fields as ChannelSpecFormValues['fields']}
+						initialActions={initialValue?.actions as ChannelSpecFormValues['actions']}
+					/>
+				);
+			case ChannelKind.webhook:
 				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.Pagerduty:
-				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.MsTeams:
+			case ChannelKind.pagerduty:
+				return (
+					<PagerSettings
+						setSelectedConfig={setSelectedConfig}
+						initialDetails={initialValue?.details as Record<string, string>}
+					/>
+				);
+			case ChannelKind.msteams:
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.GoogleChat:
+			case ChannelKind.googlechat:
 				return <GoogleChatSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.Jira:
+			case ChannelKind.jira:
 				return <JiraSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.JsmOps:
+			case ChannelKind.jsmops:
 				return <JsmOpsSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.IncidentIO:
+			case ChannelKind.incidentio:
 				return (
 					<IncidentIOSettings
 						setSelectedConfig={setSelectedConfig}
 						initialMetadata={initialValue?.metadata as Record<string, string>}
 					/>
 				);
-			case ChannelType.Opsgenie:
+			case ChannelKind.opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
-			case ChannelType.Email:
+			case ChannelKind.email:
 				return <EmailSettings setSelectedConfig={setSelectedConfig} />;
 			default:
 				return null;
@@ -86,7 +89,12 @@ function FormAlertChannels({
 			</Typography.Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
-				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
+				<Form.Item
+					label={t('field_channel_name')}
+					labelAlign="left"
+					name="name"
+					extra={editing ? t('help_channel_name_immutable') : undefined}
+				>
 					<Input
 						data-testid="channel-name-textbox"
 						disabled={editing}
@@ -102,15 +110,15 @@ function FormAlertChannels({
 				<Form.Item
 					label={t('field_send_resolved')}
 					labelAlign="left"
-					name="send_resolved"
+					name="sendResolved"
 				>
 					<Switch
-						defaultValue={initialValue?.send_resolved}
+						defaultValue={initialValue?.sendResolved}
 						testId="field-send-resolved-checkbox"
 						onChange={(value): void => {
 							setSelectedConfig((state) => ({
 								...state,
-								send_resolved: value,
+								sendResolved: value,
 							}));
 						}}
 					/>
@@ -213,25 +221,11 @@ function FormAlertChannels({
 
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;
-	type: ChannelType;
-	setSelectedConfig: Dispatch<
-		SetStateAction<
-			Partial<
-				SlackChannel &
-					WebhookChannel &
-					PagerChannel &
-					OpsgenieChannel &
-					EmailChannel &
-					GoogleChatChannel &
-					JiraChannel &
-					JsmOpsChannel &
-					IncidentIOChannel
-			>
-		>
-	>;
-	onTypeChangeHandler: (value: ChannelType) => void;
-	onSaveHandler: (props: ChannelType) => void;
-	onTestHandler: (props: ChannelType) => void;
+	type: ChannelKind;
+	setSelectedConfig: Dispatch<SetStateAction<ChannelSpecFormValues>>;
+	onTypeChangeHandler: (value: ChannelKind) => void;
+	onSaveHandler: (props: ChannelKind) => void;
+	onTestHandler: (props: ChannelKind) => void;
 	testingState: boolean;
 	savingState: boolean;
 	title: string;

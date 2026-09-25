@@ -77,12 +77,14 @@ jest.mock('hooks/routingPolicies/useDeleteRoutingPolicy', () => ({
 		isLoading: false,
 	}),
 }));
-jest.mock('api/channels/getAll', () => ({
+jest.mock('hooks/notificationChannels/useChannelOptions', () => ({
 	__esModule: true,
-	default: (): any =>
-		Promise.resolve({
-			data: [MOCK_CHANNEL_1, MOCK_CHANNEL_2],
-		}),
+	useChannelOptions: (): any => ({
+		data: [MOCK_CHANNEL_1, MOCK_CHANNEL_2],
+		isLoading: false,
+		isError: false,
+		refetch: jest.fn(),
+	}),
 }));
 
 const ROUTING_POLICY_1_NAME = 'Routing Policy 1';

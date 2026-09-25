@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Collapse, Form, Input, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
-import { JsmOpsChannel } from '../../CreateAlertChannels/config';
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 
 function JsmOpsSettings({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 
-	const update = (patch: Partial<JsmOpsChannel>): void =>
+	const update = (patch: Partial<ChannelSpecFormValues>): void =>
 		setSelectedConfig((value) => ({ ...value, ...patch }));
 
 	const advanced = (
@@ -29,12 +29,17 @@ function JsmOpsSettings({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 				name="tags"
 				label={t('field_jsmops_tags')}
 				help={t('help_jsmops_tags')}
+				// the API takes one comma-separated string, the control edits chips
+				getValueProps={(value: string | undefined): { value: string[] } => ({
+					value: value ? value.split(',') : [],
+				})}
+				normalize={(value: string[]): string => value.join(',')}
 			>
 				<Select
 					mode="tags"
 					open={false}
 					placeholder={t('placeholder_jsmops_tags')}
-					onChange={(value): void => update({ tags: value as string[] })}
+					onChange={(value): void => update({ tags: (value as string[]).join(',') })}
 					data-testid="jsmops-tags-select"
 				/>
 			</Form.Item>
@@ -60,14 +65,14 @@ function JsmOpsSettings({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 			</Typography.Text>
 
 			<Form.Item
-				name="api_key"
+				name="apiKey"
 				label={t('field_jsmops_api_key')}
 				help={t('help_jsmops_api_key')}
 				required
 			>
 				<Input
 					type="password"
-					onChange={(event): void => update({ api_key: event.target.value })}
+					onChange={(event): void => update({ apiKey: event.target.value })}
 					data-testid="jsmops-api-key-textbox"
 				/>
 			</Form.Item>
@@ -111,7 +116,7 @@ function JsmOpsSettings({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 }
 
 interface JsmOpsProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<JsmOpsChannel>>>;
+	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
 }
 
 export default JsmOpsSettings;
