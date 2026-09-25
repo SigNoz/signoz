@@ -128,11 +128,13 @@ function ViewsRail({
 					onClick={(): void => onSelect(row.id)}
 					testId={`dashboards-view-${row.id}`}
 					prefix={<Icon size={16} className={styles.itemIcon} />}
+					suffix={
+						active && isModified ? (
+							<div className={styles.dirtyDot} title="Unsaved changes" />
+						) : undefined
+					}
 				>
-					<Typography.Text className={styles.itemLabel}>{row.label}</Typography.Text>
-					{active && isModified && (
-						<div className={styles.dirtyDot} title="Unsaved changes" />
-					)}
+					{row.label}
 				</Button>
 				{row.deletable && (
 					<div className={styles.itemActions}>
