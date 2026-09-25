@@ -1,0 +1,131 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	padding: var(--spacing-4);
+	gap: var(--spacing-4);
+	width: 100%;
+}
+
+.controlsRow {
+	display: flex;
+	gap: var(--spacing-4);
+	width: 100%;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.dateTimeSelection {
+	margin-left: auto;
+	display: flex;
+	justify-content: flex-end;
+
+	--date-time-selector-border-color: var(--l2-border);
+
+	:global(.timeSelection-input) {
+		height: 32px;
+	}
+
+	:global(.ant-input-affix-wrapper) {
+		border-color: var(--l2-border);
+
+		&:hover {
+			border-color: var(--l2-border) !important;
+		}
+	}
+
+	:global(.refresh-actions .ant-form-item-control-input) {
+		&,
+		:global(.ant-btn) {
+			height: 30px;
+			min-height: unset;
+		}
+	}
+}
+
+.querySearch {
+	width: 100%;
+}
+
+.controls {
+	width: 100%;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.isWarning {
+	color: var(--callout-warning-title);
+	font-weight: 500;
+}
+
+.isNormal {
+	color: var(--l2-foreground);
+}
+
+.objectLink {
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	color: var(--primary);
+	font: inherit;
+	text-align: left;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+.expandIcon {
+	cursor: pointer;
+}
+
+.eventsTable {
+	:global(.ant-table) {
+		:global(.ant-table-thead) > tr > th {
+			padding: 12px;
+			font-size: 11px;
+			line-height: 18px;
+			background: var(--card);
+			border-bottom: none;
+			color: var(--l2-foreground);
+			font-family: Inter;
+			font-style: normal;
+			font-weight: 600;
+			letter-spacing: 0.44px;
+			text-transform: uppercase;
+
+			&::before {
+				background-color: transparent;
+			}
+		}
+
+		:global(.ant-table-cell) {
+			padding: 12px;
+			font-size: 13px;
+			line-height: 20px;
+			color: var(--l1-foreground);
+			background: var(--card);
+			border-bottom: none;
+		}
+
+		:global(.ant-table-tbody) > tr:hover > td {
+			background: color-mix(in srgb, var(--l1-foreground) 4%, transparent);
+		}
+
+		:global(.ant-table-tbody) > tr > td {
+			border-bottom: none;
+		}
+
+		:global(.ant-table-thead)
+			> tr
+			> th:not(:last-child):not(:global(.ant-table-selection-column)):not(
+				:global(.ant-table-row-expand-icon-cell)
+			):not([colspan])::before {
+			background-color: transparent;
+		}
+
+		:global(.ant-empty-normal) {
+			visibility: hidden;
+		}
+	}
+}
