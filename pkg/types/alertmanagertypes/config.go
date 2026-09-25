@@ -589,6 +589,11 @@ type ConfigStore interface {
 	// Set creates or updates a config.
 	Set(context.Context, *Config, ...StoreOption) error
 
+	// SetIfHash updates the config only if the current hash in the database
+	// matches expectedHash. Returns ErrCodeAlertmanagerConfigConflict if the
+	// hash does not match, indicating a concurrent mutation.
+	SetIfHash(context.Context, *Config, string) error
+
 	// Get returns the config for the given orgID
 	Get(context.Context, string) (*Config, error)
 

@@ -68,6 +68,43 @@ func (store *config) Set(ctx context.Context, config *alertmanagertypes.Config, 
 	}, opts...)
 }
 
+// SetIfHash implements optimistic concurrency control. It updates the config
+// only if the current hash in the database matches expectedHash. Returns
+// ErrCodeAlertmanagerConfigConflict if the hash does not match, indicating
+// a concurrent mutation has changed the config.
+func (store *config) SetIfHash(ctx context.Context, config *alertmanagertypes.Config, expectedHash string) error {
+	result, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
+		Model(config.StoreableConfig()).
+		Where("org_id = ?", config.StoreableConfig().OrgID).
+		Where("hash = ?", expectedHash).
+		Set("config = ?", config.StoreableConfig().Config).
+		Set("hash = ?", config.StoreableConfig().Hash).
+		Set("updated_at = ?", config.StoreableConfig().UpdatedAt).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.Newf(
+			errors.TypeConflict,
+			alertmanagertypes.ErrCodeAlertmanagerConfigConflict,
+			"concurrent modification detected for org %s: config was changed by another request, please retry",
+			config.StoreableConfig().OrgID,
+		)
+	}
+
+	return nil
+}
+
 func (store *config) CreateChannel(ctx context.Context, channel *alertmanagertypes.Channel, opts ...alertmanagertypes.StoreOption) error {
 	return store.wrap(ctx, func(ctx context.Context) error {
 		if _, err := store.
