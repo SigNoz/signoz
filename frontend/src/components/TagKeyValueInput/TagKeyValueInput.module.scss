@@ -13,17 +13,6 @@
 	padding: 6px 8px;
 	border-radius: 2px;
 	border: 1px solid var(--l2-border);
-
-	// The tag label is a bare, chrome-less button inside the Badge (double-click to
-	// edit); strip its Button styling.
-	--button-height: auto;
-	--button-padding: 0;
-	--button-gap: 0;
-	--button-variant-ghost-background-color: transparent;
-	--button-variant-ghost-hover-background-color: transparent;
-	--button-variant-ghost-color: currentColor;
-	--button-variant-ghost-hover-color: currentColor;
-	--button-cursor: text;
 }
 
 .input {
