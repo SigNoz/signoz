@@ -200,6 +200,15 @@ go.mod @therealpandey
 /frontend/src/container/ListAlertRules/ @SigNoz/pulse-frontend
 /frontend/src/container/TriggeredAlerts/ @SigNoz/pulse-frontend
 /frontend/src/container/AnomalyAlertEvaluationView/ @SigNoz/pulse-frontend
+/frontend/src/container/RoutingPolicies/ @SigNoz/pulse-frontend
+/frontend/src/components/AlertBreadcrumb/ @SigNoz/pulse-frontend
+/frontend/src/container/EditRules/ @SigNoz/pulse-frontend
+/frontend/src/components/AlertDetailsFilters/ @SigNoz/pulse-frontend
+/frontend/src/components/Alerts/ @SigNoz/pulse-frontend
+/frontend/src/hooks/routingPolicies/ @SigNoz/pulse-frontend
+/frontend/src/types/api/alerts/ @SigNoz/pulse-frontend
+/frontend/src/providers/Alert.tsx @SigNoz/pulse-frontend
+/frontend/src/constants/alerts.ts @SigNoz/pulse-frontend
 
 ## Notification Channels
 /frontend/src/pages/ChannelsEdit/ @SigNoz/pulse-frontend
@@ -207,6 +216,8 @@ go.mod @therealpandey
 /frontend/src/container/AllAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/container/CreateAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/container/EditAlertChannels/ @SigNoz/pulse-frontend
+/frontend/src/container/FormAlertChannels/ @SigNoz/pulse-frontend
+/frontend/src/hooks/notificationChannels/ @SigNoz/pulse-frontend
 
 ## OpenAPI Schema - Generated
 /frontend/src/api/generated/services/ @therealpandey @vikrantgupta25 @srikanthccv

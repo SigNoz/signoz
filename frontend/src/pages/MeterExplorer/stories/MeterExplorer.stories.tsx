@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, screen, userEvent, waitFor } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -18,6 +19,7 @@ const pageStory = storyMocks(meterMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Metering/Cost Meter',
+	tags: ['play'],
 	component: MeterExplorerPage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -26,6 +28,38 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<MeterArgs>;
+
+/** The page fetches before it renders its filters, which outlasts the 1s default. */
+const untilLoaded = { timeout: 15_000 };
+
+const openQuickFiltersSettings = async (): Promise<void> => {
+	// The settings control renders disabled while its permission check is in
+	// flight and is swapped for the enabled one once the check answers, so it is
+	// looked up again on every attempt; a click on the disabled one is dropped in
+	// silence.
+	const control = await waitFor(() => {
+		const settings = screen.getByTestId('settings-icon-container');
+
+		expect(settings).toBeEnabled();
+
+		return settings;
+	}, untilLoaded);
+
+	await userEvent.click(control);
+	await screen.findByText('Edit quick filters', undefined, untilLoaded);
+};
+
+const dirtyQuickFiltersSettings = async (): Promise<void> => {
+	await openQuickFiltersSettings();
+
+	// One Remove per added filter; the first row's is the one clicked.
+	const [removeFilter] = await screen.findAllByRole('button', {
+		name: 'Remove',
+	});
+
+	await userEvent.click(removeFilter);
+	await screen.findByRole('button', { name: 'Save changes' });
+};
 
 /**
  * The Meter tab over the last day: what the workspace ingested in total, then
@@ -87,4 +121,27 @@ export const ExplorerWithoutQuickFilters: Story = {
 /** The Views tab without any saved meter queries. */
 export const ViewsEmpty: Story = {
 	args: { tab: 'views', savedViews: 0 },
+};
+
+/** The editable quick-filter settings panel, which lives on the Explorer tab. */
+export const QuickFiltersSettings: Story = {
+	args: { tab: 'explorer' },
+	play: openQuickFiltersSettings,
+};
+
+/** Settings with an unsaved filter removal and the fixed action footer. */
+export const QuickFiltersSettingsDirty: Story = {
+	args: { tab: 'explorer' },
+	play: dirtyQuickFiltersSettings,
+};
+
+/**
+ * The same panel with a banner above the shell. The banner takes 48px off the
+ * layout, so this is the case where the footer used to be pushed off screen:
+ * the panel is sized from the filters pane rather than the viewport, which
+ * keeps Save changes reachable.
+ */
+export const QuickFiltersSettingsWithBanner: Story = {
+	args: { tab: 'explorer', banner: 'trial-expiry' },
+	play: dirtyQuickFiltersSettings,
 };

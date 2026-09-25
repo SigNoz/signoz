@@ -1,14 +1,17 @@
 import { ChangeEvent, useCallback } from 'react';
+import cx from 'classnames';
 import { Input } from 'antd';
 import { Search } from '@signozhq/icons';
+
+import { LegendPosition } from '../types';
 
 import styles from './LegendToolbar.module.scss';
 
 export interface LegendToolbarProps {
 	visibleCount: number;
 	totalCount: number;
-	/** Search is intrinsic to the right-positioned legend. */
-	showFilter: boolean;
+	/** Layout only: the column stacks, the bottom row does not. */
+	position: LegendPosition;
 	filterQuery: string;
 	onFilterQueryChange: (query: string) => void;
 }
@@ -17,7 +20,7 @@ export interface LegendToolbarProps {
 export default function LegendToolbar({
 	visibleCount,
 	totalCount,
-	showFilter,
+	position,
 	filterQuery,
 	onFilterQueryChange,
 }: LegendToolbarProps): JSX.Element {
@@ -27,30 +30,48 @@ export default function LegendToolbar({
 		[onFilterQueryChange],
 	);
 
-	return (
-		<>
-			{showFilter && (
+	const searchProps = {
+		allowClear: true,
+		prefix: <Search size={12} className={styles.searchIcon} />,
+		placeholder: 'Search...',
+		value: filterQuery,
+		onChange: handleFilterChange,
+		className: styles.searchInput,
+		'data-testid': 'legend-search-input',
+	};
+
+	const status = (
+		<span
+			className={cx(styles.status, {
+				[styles.statusInline]: position !== LegendPosition.RIGHT,
+			})}
+			aria-live="polite"
+			data-testid="legend-status"
+		>
+			{`Showing ${visibleCount} of ${totalCount} series`}
+		</span>
+	);
+
+	if (position === LegendPosition.RIGHT) {
+		return (
+			<>
 				<div className={styles.searchContainer}>
-					<Input
-						allowClear
-						prefix={<Search size={12} className={styles.searchIcon} />}
-						placeholder="Search..."
-						value={filterQuery}
-						onChange={handleFilterChange}
-						className={styles.searchInput}
-						data-testid="legend-search-input"
-					/>
+					<Input {...searchProps} />
 				</div>
-			)}
-			<div className={styles.toolbar}>
-				<span
-					className={styles.status}
-					aria-live="polite"
-					data-testid="legend-status"
-				>
-					{`Showing ${visibleCount} of ${totalCount} series`}
-				</span>
+				<div className={styles.toolbar}>{status}</div>
+			</>
+		);
+	}
+
+	return (
+		<div className={styles.inlineToolbar}>
+			<div className={styles.search}>
+				<Input
+					{...searchProps}
+					className={cx(styles.searchInput, styles.searchInputInline)}
+				/>
 			</div>
-		</>
+			{status}
+		</div>
 	);
 }

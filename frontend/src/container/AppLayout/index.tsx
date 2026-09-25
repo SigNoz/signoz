@@ -43,6 +43,7 @@ import { USER_PREFERENCES } from 'constants/userPreferences';
 import AIAssistantModal from 'container/AIAssistant/AIAssistantModal';
 import AIAssistantPanel from 'container/AIAssistant/AIAssistantPanel';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
+import BottomStrip from 'container/BottomStrip';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
@@ -51,6 +52,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import useTabVisibility from 'hooks/useTabFocus';
 import history from 'lib/history';
 import { isNull } from 'lodash-es';
@@ -402,6 +404,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [pathname]);
 
 	const isToDisplayLayout = isLoggedIn;
+	const isSavedViewEnabled = useSavedViewEnabled();
 
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
@@ -868,6 +871,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 								</OverlayScrollbar>
 							</LayoutContent>
 						</Sentry.ErrorBoundary>
+
+						{isSavedViewEnabled && isToDisplayLayout && !renderFullScreen && (
+							<BottomStrip />
+						)}
 					</div>
 
 					{isLoggedIn && isAIAssistantEnabled && (

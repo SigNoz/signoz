@@ -87,30 +87,68 @@ describe('UPlotLegend', () => {
 		jest.clearAllMocks();
 	});
 
-	const renderLegend = (position?: LegendPosition): RenderResult =>
+	const renderLegend = (
+		position?: LegendPosition,
+		showSearch = true,
+	): RenderResult =>
 		render(
 			<UPlotLegend
 				position={position}
+				showSearch={showSearch}
 				// config is consumed by the mocked useLegendsSync hook, not directly
 				config={{} as any}
 			/>,
 		);
 
 	describe('layout and position', () => {
-		it('renders the search input on a RIGHT legend', () => {
-			renderLegend(LegendPosition.RIGHT);
+		it.each([LegendPosition.RIGHT, LegendPosition.BOTTOM])(
+			'gives the legend a search box and a readout (%s)',
+			(position) => {
+				renderLegend(position);
 
-			expect(screen.getByTestId('legend-search-input')).toBeInTheDocument();
-		});
+				expect(screen.getByTestId('legend-search-input')).toBeInTheDocument();
+				expect(screen.getByTestId('legend-status')).toBeInTheDocument();
+			},
+		);
 
-		it('keeps a BOTTOM legend bare — its two rows all go to series', () => {
-			renderLegend();
+		it.each([LegendPosition.RIGHT, LegendPosition.BOTTOM])(
+			'counts down the readout as the search narrows the list (%s)',
+			async (position) => {
+				const user = userEvent.setup();
+				renderLegend(position);
+
+				// B is hidden.
+				expect(screen.getByTestId('legend-status')).toHaveTextContent(
+					'Showing 2 of 3 series',
+				);
+
+				await user.type(screen.getByTestId('legend-search-input'), 'a');
+
+				// Only A matches, counted against all three.
+				expect(screen.getByTestId('legend-status')).toHaveTextContent(
+					'Showing 1 of 3 series',
+				);
+			},
+		);
+
+		it('keeps a BOTTOM legend bare while every series is on screen', () => {
+			renderLegend(LegendPosition.BOTTOM, false);
 
 			expect(screen.queryByTestId('legend-search-input')).not.toBeInTheDocument();
 			expect(screen.queryByTestId('legend-status')).not.toBeInTheDocument();
 			// The row interactions are the same in both placements.
 			expect(screen.getByTestId('legend-item-0')).toBeInTheDocument();
 			expect(screen.getByTestId('legend-scope-0')).toBeInTheDocument();
+		});
+
+		it('filters a BOTTOM legend from its search box', async () => {
+			const user = userEvent.setup();
+			renderLegend(LegendPosition.BOTTOM);
+
+			await user.type(screen.getByTestId('legend-search-input'), 'b');
+
+			expect(screen.getByText('B')).toBeInTheDocument();
+			expect(screen.queryByText('A')).not.toBeInTheDocument();
 		});
 
 		it('renders the marker with the series colour, filled only when shown', () => {
