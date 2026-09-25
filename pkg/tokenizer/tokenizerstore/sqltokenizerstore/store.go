@@ -232,15 +232,16 @@ func (store *store) ListByUserID(ctx context.Context, userID valuer.UUID) ([]*au
 	return tokens, nil
 }
 
-func (store *store) UpdateLastObservedAtByAccessToken(ctx context.Context, accessTokenToLastObservedAt []map[string]any) error {
-	if len(accessTokenToLastObservedAt) == 0 {
+func (store *store) UpdateLastObservedAt(ctx context.Context, tokens []*authtypes.StorableToken) error {
+	if len(tokens) == 0 {
 		return nil
 	}
 
 	values := store.
 		sqlstore.
 		BunDBCtx(ctx).
-		NewValues(&accessTokenToLastObservedAt)
+		NewValues(&tokens).
+		Column("id", "last_observed_at", "updated_at")
 
 	_, err := store.
 		sqlstore.
@@ -250,8 +251,8 @@ func (store *store) UpdateLastObservedAtByAccessToken(ctx context.Context, acces
 		Model((*authtypes.StorableToken)(nil)).
 		TableExpr("update_cte").
 		Set("last_observed_at = update_cte.last_observed_at").
-		Where("auth_token.access_token = update_cte.access_token").
-		Where("auth_token.user_id = update_cte.user_id").
+		Set("updated_at = update_cte.updated_at").
+		Where("auth_token.id = update_cte.id").
 		Exec(ctx)
 	if err != nil {
 		return err
