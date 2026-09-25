@@ -152,6 +152,48 @@ func TestBuildFunnelStepOverviewQuery_WithLatencyPointer(t *testing.T) {
 	}
 }
 
+func TestBuildFunnelStepOverviewQuery_WithLatencyType(t *testing.T) {
+	tests := []struct {
+		name         string
+		latencyType  string
+		wantContains string
+	}{
+		{name: "p50 maps to the median quantile", latencyType: "p50", wantContains: "quantileIf(0.50)"},
+		{name: "p75 maps to the 75th percentile", latencyType: "p75", wantContains: "quantileIf(0.75)"},
+		{name: "p90 maps to the 90th percentile", latencyType: "p90", wantContains: "quantileIf(0.90)"},
+		{name: "p95 maps to the 95th percentile", latencyType: "p95", wantContains: "quantileIf(0.95)"},
+		{name: "p99 maps to the 99th percentile", latencyType: "p99", wantContains: "quantileIf(0.99)"},
+		{name: "fractional percentile keeps its precision", latencyType: "p99.9", wantContains: "quantileIf(0.999)"},
+		{name: "uppercase percentile is accepted", latencyType: "P50", wantContains: "quantileIf(0.50)"},
+		{name: "empty latency type falls back to p99", latencyType: "", wantContains: "quantileIf(0.99)"},
+		{name: "unsupported latency type falls back to p99", latencyType: "median", wantContains: "quantileIf(0.99)"},
+		{name: "out of range percentile falls back to p99", latencyType: "p100", wantContains: "quantileIf(0.99)"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			steps := []struct {
+				ServiceName    string
+				SpanName       string
+				ContainsError  int
+				LatencyPointer string
+				LatencyType    string
+				Clause         string
+			}{
+				{ServiceName: "service1", SpanName: "span1", ContainsError: 0, LatencyPointer: "start", LatencyType: "", Clause: ""},
+				{ServiceName: "service2", SpanName: "span2", ContainsError: 0, LatencyPointer: "start", LatencyType: tt.latencyType, Clause: ""},
+			}
+
+			query := BuildFunnelStepOverviewQuery(steps, 1000000000, 2000000000, 1, 2)
+
+			if !strings.Contains(query, tt.wantContains) {
+				t.Errorf("Query for latency_type %q missing expected content: %s", tt.latencyType, tt.wantContains)
+				t.Logf("Got query:\n%s", query)
+			}
+		})
+	}
+}
+
 func TestBuildFunnelTopSlowTracesQuery_WithLatencyPointer(t *testing.T) {
 	tests := []struct {
 		name             string
