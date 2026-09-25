@@ -68,7 +68,7 @@ export function usePanelActionItems({
 	panelActions,
 }: UsePanelActionItemsArgs): PanelActionItems {
 	const panelKind = panel.spec.plugin.kind;
-	// The editor and alert builder have no AI query mode. View in Logs/Traces stays on.
+	// The alert builder has no AI query mode. View in Logs/Traces stays on.
 	const isAIPanel = toQueryEnvelopes(panel.spec.queries).some(
 		isAIBuilderEnvelope,
 	);
@@ -131,21 +131,15 @@ export function usePanelActionItems({
 		if (panelCapabilities.view) {
 			panelGroup.push({
 				key: 'view-panel',
-				label: row('View', <Fullscreen size={14} />, {
-					checks: [],
-					disabledTooltip: isAIPanel ? AI_PANEL_REASON : undefined,
-				}),
-				disabled: isAIPanel,
+				label: row('View', <Fullscreen size={14} />, { checks: [] }),
 				onClick: (): void => openView(panelId, panel),
 			});
 		}
 		if (panelCapabilities.edit) {
 			panelGroup.push({
 				key: 'edit-panel',
-				label: row('Edit panel', <PenLine size={14} />, {
-					disabledTooltip: isAIPanel ? AI_PANEL_REASON : undefined,
-				}),
-				disabled: !isEditable || isAIPanel,
+				label: row('Edit panel', <PenLine size={14} />),
+				disabled: !isEditable,
 				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}

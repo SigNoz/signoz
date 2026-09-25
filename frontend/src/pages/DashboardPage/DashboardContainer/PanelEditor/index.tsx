@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
@@ -6,6 +7,7 @@ import QueryEditorBody from './QueryEditorBody';
 import StaticEditorBody from './StaticEditorBody';
 import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
 import { usePanelTypeSwitch } from './hooks/usePanelTypeSwitch';
+import { useQueryModeCacheStore } from '../store/useQueryModeCacheStore';
 
 export interface PanelEditorContainerProps {
 	dashboardId: string;
@@ -33,8 +35,12 @@ export interface PanelEditorContainerProps {
  * an editor pane over a live preview with no query machinery at all.
  */
 function PanelEditorContainer(props: PanelEditorContainerProps): JSX.Element {
-	const { panel, savedPanel } = props;
+	const { panel, savedPanel, panelId } = props;
 	const draftApi = usePanelEditorDraft(panel, savedPanel);
+	const clearQueryModeCache = useQueryModeCacheStore((store) => store.clear);
+
+	// Parked queries belong to one editing session; another panel must not inherit them.
+	useEffect(() => clearQueryModeCache, [panelId, clearQueryModeCache]);
 
 	const panelKind = draftApi.draft.spec.plugin.kind;
 	const panelDefinition = getPanelDefinition(panelKind);
