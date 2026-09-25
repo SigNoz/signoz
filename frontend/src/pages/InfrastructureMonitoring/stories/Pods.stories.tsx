@@ -52,7 +52,7 @@ export const DetailsDrawerLogsTab: StoryObj<PodsArgs> = {
 		await userEvent.click(
 			await drawer.findByText('Logs', {}, { timeout: 10000 }),
 		);
-		await drawer.findByRole('button', { name: /logs explorer/i });
+		await drawer.findAllByText(/handled request in/, {}, { timeout: 10000 });
 	},
 };
 

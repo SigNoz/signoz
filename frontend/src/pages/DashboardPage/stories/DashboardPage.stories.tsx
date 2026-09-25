@@ -290,7 +290,10 @@ export const PanelMoveToSectionSubmenu: Story = {
 	play: async (context) => {
 		await PanelActionsMenu.play?.(context);
 		await userEvent.hover(await screen.findByText('Move to section'));
-		await screen.findByText('Dashboard (root)', undefined, { timeout: 10000 });
+		// The submenu lists the sections the panel is not already in.
+		await waitFor(() => expect(screen.getAllByRole('menu')).toHaveLength(2), {
+			timeout: 10000,
+		});
 	},
 };
 
