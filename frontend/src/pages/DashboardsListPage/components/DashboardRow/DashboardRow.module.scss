@@ -66,11 +66,6 @@
 .pinButton {
 	display: inline-flex;
 	flex: none;
-	--button-variant-ghost-color: transparent;
-}
-
-.row:hover .pinButton {
-	--button-variant-ghost-color: var(--l3-foreground);
 }
 
 .pinButton:hover {
