@@ -18,12 +18,12 @@ type ChannelJiraConfig struct {
 	Summary           valuer.UnsetOrNonEmptyString `json:"summary,omitzero"`
 	Description       valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
 	Priority          string                       `json:"priority"`
-	Labels            []string                     `json:"labels,omitzero" nullable:"false"`
+	Labels            []string                     `json:"labels,omitzero"`
 	ResolveTransition string                       `json:"resolveTransition"`
 	ReopenTransition  string                       `json:"reopenTransition"`
 	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration,omitzero"`
 	WontFixResolution string                       `json:"wontFixResolution"`
-	CustomFields      map[string]any               `json:"customFields,omitzero" nullable:"false"`
+	CustomFields      map[string]any               `json:"customFields,omitzero"`
 
 	Email    string `json:"email" required:"true"`
 	APIToken string `json:"apiToken" required:"true" format:"password"`

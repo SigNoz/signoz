@@ -17,7 +17,7 @@ type ChannelEmailConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	To           string                       `json:"to" required:"true"`
 	HTML         valuer.UnsetOrNonEmptyString `json:"html,omitzero"`
-	Headers      map[string]string            `json:"headers,omitzero" nullable:"false"`
+	Headers      map[string]string            `json:"headers,omitzero"`
 }
 
 func (c *ChannelEmailConfig) UnmarshalJSON(data []byte) error {

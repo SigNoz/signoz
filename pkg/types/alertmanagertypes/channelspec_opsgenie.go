@@ -13,7 +13,7 @@ type ChannelOpsgenieConfig struct {
 	Message      valuer.UnsetOrNonEmptyString `json:"message,omitzero"`
 	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
 	Source       valuer.UnsetOrNonEmptyString `json:"source,omitzero"`
-	Details      map[string]string            `json:"details,omitzero" nullable:"false"`
+	Details      map[string]string            `json:"details,omitzero"`
 	Priority     string                       `json:"priority"`
 }
 

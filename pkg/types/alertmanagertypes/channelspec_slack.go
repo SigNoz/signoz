@@ -17,8 +17,8 @@ type ChannelSlackConfig struct {
 	Pretext      valuer.UnsetOrNonEmptyString `json:"pretext,omitzero"`
 	Fallback     valuer.UnsetOrNonEmptyString `json:"fallback,omitzero"`
 	Footer       valuer.UnsetOrNonEmptyString `json:"footer,omitzero"`
-	Fields       []ChannelSlackField          `json:"fields,omitzero" nullable:"false"`
-	Actions      []ChannelSlackAction         `json:"actions,omitzero" nullable:"false"`
+	Fields       []ChannelSlackField          `json:"fields,omitzero"`
+	Actions      []ChannelSlackAction         `json:"actions,omitzero"`
 }
 
 type ChannelSlackField struct {

@@ -3,7 +3,6 @@ package sqlmigration
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"maps"
 	"slices"
@@ -163,7 +162,7 @@ func channelConfigFromReceiverJSON(data string) (map[string]any, error) {
 
 		var list []notifierJSON
 		if err := json.Unmarshal(raw, &list); err != nil {
-			return nil, fmt.Errorf("%s: %w", key, err)
+			return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "%s", key)
 		}
 		total += len(list)
 		if len(list) == 0 {
@@ -179,10 +178,10 @@ func channelConfigFromReceiverJSON(data string) (map[string]any, error) {
 	}
 
 	if total > 1 {
-		return nil, fmt.Errorf("carries %d notifier configurations; only one per channel is supported", total)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "carries %d notifier configurations; only one per channel is supported", total)
 	}
 	if found == nil {
-		return nil, fmt.Errorf("carries no supported notifier configuration")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "carries no supported notifier configuration")
 	}
 
 	spec, err := found.convert(notifier)
@@ -212,7 +211,7 @@ func convertSlackNotifierJSON(notifier notifierJSON) (map[string]any, error) {
 		return nil, err
 	}
 	if spec["apiUrl"] == "" {
-		return nil, fmt.Errorf("slack: api_url is required")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "slack: api_url is required")
 	}
 
 	fields, err := notifier.objectList("fields")
@@ -277,7 +276,7 @@ func convertEmailNotifierJSON(notifier notifierJSON) (map[string]any, error) {
 		return nil, err
 	}
 	if spec["to"] == "" {
-		return nil, fmt.Errorf("email: to is required")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "email: to is required")
 	}
 	if err := notifier.copyNonEmptyObjects(spec, map[string]string{"headers": "headers"}); err != nil {
 		return nil, err
@@ -292,14 +291,14 @@ func convertWebhookNotifierJSON(notifier notifierJSON) (map[string]any, error) {
 		return nil, err
 	}
 	if spec["url"] == "" {
-		return nil, fmt.Errorf("webhook: url is required")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "webhook: url is required")
 	}
 
-	httpConfig, err := notifier.object("http_config")
-	if err != nil {
+	if err := rejectUnsupportedHTTPConfigJSON(notifier); err != nil {
 		return nil, err
 	}
-	if err := rejectUnsupportedHTTPConfigJSON(httpConfig); err != nil {
+	httpConfig, err := notifier.object("http_config")
+	if err != nil {
 		return nil, err
 	}
 
@@ -312,7 +311,7 @@ func convertWebhookNotifierJSON(notifier notifierJSON) (map[string]any, error) {
 		return nil, err
 	}
 	if (username != "" || password != "") && bearerToken != "" {
-		return nil, fmt.Errorf("webhook: basic auth and bearer token cannot be combined")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "webhook: basic auth and bearer token cannot be combined")
 	}
 	spec["username"], spec["password"], spec["bearerToken"] = username, password, bearerToken
 
@@ -332,7 +331,7 @@ func convertPagerdutyNotifierJSON(notifier notifierJSON) (map[string]any, error)
 		return nil, err
 	}
 	if spec["routingKey"] == "" {
-		return nil, fmt.Errorf("pagerduty: routing_key is required")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "pagerduty: routing_key is required")
 	}
 
 	details, err := notifier.object("details")
@@ -343,7 +342,7 @@ func convertPagerdutyNotifierJSON(notifier notifierJSON) (map[string]any, error)
 		for key, raw := range details {
 			var value string
 			if err := json.Unmarshal(raw, &value); err != nil {
-				return nil, fmt.Errorf("pagerduty: details.%s is not a string", key)
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "pagerduty: details.%s is not a string", key)
 			}
 		}
 		spec["details"] = notifier["details"]
@@ -365,7 +364,7 @@ func convertOpsgenieNotifierJSON(notifier notifierJSON) (map[string]any, error) 
 		return nil, err
 	}
 	if spec["apiKey"] == "" {
-		return nil, fmt.Errorf("opsgenie: api_key is required")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "opsgenie: api_key is required")
 	}
 	if err := notifier.copyNonEmptyObjects(spec, map[string]string{"details": "details"}); err != nil {
 		return nil, err
@@ -395,7 +394,7 @@ func convertWebhookURLNotifierJSON(name string, notifier notifierJSON) (map[stri
 		return nil, err
 	}
 	if spec["webhookUrl"] == "" {
-		return nil, fmt.Errorf("%s: webhook_url is required", name)
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "%s: webhook_url is required", name)
 	}
 
 	return spec, nil
@@ -421,15 +420,15 @@ func convertJiraNotifierJSON(notifier notifierJSON) (map[string]any, error) {
 		spec["labels"] = notifier["labels"]
 	}
 
+	if err := rejectUnsupportedHTTPConfigJSON(notifier); err != nil {
+		return nil, err
+	}
 	httpConfig, err := notifier.object("http_config")
 	if err != nil {
 		return nil, err
 	}
-	if err := rejectUnsupportedHTTPConfigJSON(httpConfig); err != nil {
-		return nil, err
-	}
 	if httpConfig.has("authorization") {
-		return nil, fmt.Errorf("jira: http_config.authorization is not supported")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "jira: http_config.authorization is not supported")
 	}
 	email, apiToken, err := extractBasicAuthJSON(httpConfig)
 	if err != nil {
@@ -439,7 +438,7 @@ func convertJiraNotifierJSON(notifier notifierJSON) (map[string]any, error) {
 
 	for _, required := range []string{"site", "project", "issueType", "email", "apiToken"} {
 		if spec[required] == "" {
-			return nil, fmt.Errorf("jira: %s is required", required)
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "jira: %s is required", required)
 		}
 	}
 
@@ -459,7 +458,7 @@ func convertJSMOpsNotifierJSON(notifier notifierJSON) (map[string]any, error) {
 		return nil, err
 	}
 	if spec["apiKey"] == "" {
-		return nil, fmt.Errorf("jsmops: api_key is required")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "jsmops: api_key is required")
 	}
 
 	return spec, nil
@@ -478,7 +477,7 @@ func convertIncidentIONotifierJSON(notifier notifierJSON) (map[string]any, error
 		return nil, err
 	}
 	if spec["url"] == "" || spec["token"] == "" {
-		return nil, fmt.Errorf("incidentio: url and token are required")
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "incidentio: url and token are required")
 	}
 	if err := notifier.copyNonEmptyObjects(spec, map[string]string{"metadata": "metadata"}); err != nil {
 		return nil, err
@@ -493,27 +492,31 @@ func rejectAnyHTTPAuthJSON(notifier notifierJSON) error {
 		return err
 	}
 	if httpConfig.has("basic_auth") {
-		return fmt.Errorf("http_config.basic_auth is not supported")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.basic_auth is not supported")
 	}
 	if httpConfig.has("authorization") {
-		return fmt.Errorf("http_config.authorization is not supported")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.authorization is not supported")
 	}
 
-	return rejectUnsupportedHTTPConfigJSON(httpConfig)
+	return rejectUnsupportedHTTPConfigJSON(notifier)
 }
 
 // rejectUnsupportedHTTPConfigJSON refuses every http_config setting the spec has
 // no field for, since a config that dropped it would unauthenticate or reroute
-// the channel on the next write. A nil http_config is fine; a present one must
-// carry the defaults for follow_redirects and enable_http2.
-func rejectUnsupportedHTTPConfigJSON(httpConfig notifierJSON) error {
-	if httpConfig == nil {
+// the channel on the next write. An absent http_config is fine; a present one
+// must carry the defaults for follow_redirects and enable_http2.
+func rejectUnsupportedHTTPConfigJSON(notifier notifierJSON) error {
+	if !notifier.has("http_config") {
 		return nil
+	}
+	httpConfig, err := notifier.object("http_config")
+	if err != nil {
+		return err
 	}
 
 	for _, key := range []string{"oauth2", "http_headers"} {
 		if httpConfig.has(key) {
-			return fmt.Errorf("http_config.%s is not supported", key)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.%s is not supported", key)
 		}
 	}
 	for _, key := range []string{"bearer_token", "bearer_token_file", "proxy_url", "no_proxy"} {
@@ -522,7 +525,7 @@ func rejectUnsupportedHTTPConfigJSON(httpConfig notifierJSON) error {
 			return err
 		}
 		if value != "" {
-			return fmt.Errorf("http_config.%s is not supported", key)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.%s is not supported", key)
 		}
 	}
 	if httpConfig.has("proxy_from_environment") {
@@ -531,7 +534,7 @@ func rejectUnsupportedHTTPConfigJSON(httpConfig notifierJSON) error {
 			return err
 		}
 		if fromEnvironment {
-			return fmt.Errorf("http_config.proxy_from_environment is not supported")
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.proxy_from_environment is not supported")
 		}
 	}
 
@@ -541,7 +544,7 @@ func rejectUnsupportedHTTPConfigJSON(httpConfig notifierJSON) error {
 	}
 	for key := range tlsConfig {
 		if key != "insecure_skip_verify" {
-			return fmt.Errorf("http_config.tls_config is not supported")
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.tls_config is not supported")
 		}
 	}
 	if tlsConfig.has("insecure_skip_verify") {
@@ -550,7 +553,7 @@ func rejectUnsupportedHTTPConfigJSON(httpConfig notifierJSON) error {
 			return err
 		}
 		if insecure {
-			return fmt.Errorf("http_config.tls_config is not supported")
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.tls_config is not supported")
 		}
 	}
 
@@ -560,7 +563,7 @@ func rejectUnsupportedHTTPConfigJSON(httpConfig notifierJSON) error {
 			return err
 		}
 		if !enabled {
-			return fmt.Errorf("http_config.%s is not supported", key)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.%s is not supported", key)
 		}
 	}
 
@@ -572,13 +575,13 @@ func extractBasicAuthJSON(httpConfig notifierJSON) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	if basicAuth == nil {
+	if len(basicAuth) == 0 {
 		return "", "", nil
 	}
 
 	for key := range basicAuth {
 		if key != "username" && key != "password" {
-			return "", "", fmt.Errorf("http_config.basic_auth.%s is not supported", key)
+			return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.basic_auth.%s is not supported", key)
 		}
 	}
 	username, err := basicAuth.stringValue("username")
@@ -594,17 +597,17 @@ func extractBasicAuthJSON(httpConfig notifierJSON) (string, string, error) {
 }
 
 func extractBearerTokenJSON(httpConfig notifierJSON) (string, error) {
+	if !httpConfig.has("authorization") {
+		return "", nil
+	}
 	authorization, err := httpConfig.object("authorization")
 	if err != nil {
 		return "", err
 	}
-	if authorization == nil {
-		return "", nil
-	}
 
 	for key := range authorization {
 		if key != "type" && key != "credentials" {
-			return "", fmt.Errorf("http_config.authorization.%s is not supported", key)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.authorization.%s is not supported", key)
 		}
 	}
 	scheme, err := authorization.stringValue("type")
@@ -612,7 +615,7 @@ func extractBearerTokenJSON(httpConfig notifierJSON) (string, error) {
 		return "", err
 	}
 	if !strings.EqualFold(scheme, "Bearer") {
-		return "", fmt.Errorf("http_config.authorization.type %q is not supported", scheme)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.authorization.type %q is not supported", scheme)
 	}
 
 	return authorization.stringValue("credentials")
@@ -630,7 +633,7 @@ func (n notifierJSON) stringValue(key string) (string, error) {
 	}
 	var value string
 	if err := json.Unmarshal(n[key], &value); err != nil {
-		return "", fmt.Errorf("%s: %w", key, err)
+		return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "%s", key)
 	}
 	return value, nil
 }
@@ -641,18 +644,20 @@ func (n notifierJSON) boolValue(key string) (bool, error) {
 	}
 	var value bool
 	if err := json.Unmarshal(n[key], &value); err != nil {
-		return false, fmt.Errorf("%s: %w", key, err)
+		return false, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "%s", key)
 	}
 	return value, nil
 }
 
+// object reads an absent key as an empty object; a caller that must tell the
+// two apart checks has first.
 func (n notifierJSON) object(key string) (notifierJSON, error) {
 	if !n.has(key) {
-		return nil, nil
+		return notifierJSON{}, nil
 	}
 	value := notifierJSON{}
 	if err := json.Unmarshal(n[key], &value); err != nil {
-		return nil, fmt.Errorf("%s: %w", key, err)
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "%s", key)
 	}
 	return value, nil
 }
@@ -663,7 +668,7 @@ func (n notifierJSON) list(key string) ([]json.RawMessage, error) {
 	}
 	var value []json.RawMessage
 	if err := json.Unmarshal(n[key], &value); err != nil {
-		return nil, fmt.Errorf("%s: %w", key, err)
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "%s", key)
 	}
 	return value, nil
 }
@@ -674,7 +679,7 @@ func (n notifierJSON) objectList(key string) ([]notifierJSON, error) {
 	}
 	var value []notifierJSON
 	if err := json.Unmarshal(n[key], &value); err != nil {
-		return nil, fmt.Errorf("%s: %w", key, err)
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "%s", key)
 	}
 	return value, nil
 }

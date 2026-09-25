@@ -18,7 +18,7 @@ type ChannelPagerdutyConfig struct {
 	Component    string                       `json:"component"`
 	Group        string                       `json:"group"`
 	Class        string                       `json:"class"`
-	Details      map[string]string            `json:"details,omitzero" nullable:"false"`
+	Details      map[string]string            `json:"details,omitzero"`
 }
 
 // UnmarshalJSON defaults source to client, as the notifier does, and gives an

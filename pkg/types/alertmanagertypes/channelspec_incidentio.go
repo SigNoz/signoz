@@ -12,7 +12,7 @@ type ChannelIncidentIOConfig struct {
 	Token        string                       `json:"token" required:"true" format:"password"`
 	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero"`
 	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
-	Metadata     map[string]string            `json:"metadata,omitzero" nullable:"false"`
+	Metadata     map[string]string            `json:"metadata,omitzero"`
 }
 
 func (c *ChannelIncidentIOConfig) UnmarshalJSON(data []byte) error {

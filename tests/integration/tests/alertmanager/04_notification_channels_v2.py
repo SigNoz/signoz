@@ -41,7 +41,7 @@ DNS1123_LABEL = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
                 "titleLink": "{{ .CommonLabels.ruleSource }}",
                 "footer": "platform · terraform",
                 "fields": [{"title": "Severity", "value": "{{ .CommonLabels.severity }}", "short": True}],
-                "actions": [{"type": "button", "text": "Open in SigNoz", "url": "{{ .CommonLabels.ruleSource }}"}],
+                "actions": [{"type": "button", "text": "Open in SigNoz", "url": "{{ .CommonLabels.ruleSource }}", "style": "primary", "name": "open", "value": "signoz"}],
             },
             id="slack_with_fields_and_actions",
         ),
@@ -276,7 +276,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
 
 
 @pytest.mark.parametrize(
-    "kind,request_spec,expected_defaults,fields_without_default",
+    "kind,request_spec,expected_defaults,fields_without_default,fields_read_as_null",
     [
         pytest.param(
             "slack",
@@ -292,6 +292,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                 "footer": '{{ template "slack.default.footer" . }}',
             },
             ["channel"],
+            ["fields", "actions"],
             id="slack",
         ),
         pytest.param(
@@ -302,6 +303,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                 "html": '{{ template "email.default.html" . }}',
             },
             [],
+            ["headers"],
             id="email",
         ),
         pytest.param(
@@ -311,6 +313,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                 "sendResolved": True,
             },
             ["username", "password", "bearerToken"],
+            [],
             id="webhook",
         ),
         pytest.param(
@@ -330,6 +333,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                 },
             },
             ["url", "severity", "component", "group", "class"],
+            [],
             id="pagerduty",
         ),
         pytest.param(
@@ -342,6 +346,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                 "source": '{{ template "opsgenie.default.source" . }}',
             },
             ["apiUrl", "priority"],
+            ["details"],
             id="opsgenie",
         ),
         pytest.param(
@@ -352,6 +357,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                 "title": '{{ template "msteamsv2.default.title" . }}',
                 "text": '{{ template "msteamsv2.default.text" . }}',
             },
+            [],
             [],
             id="msteams",
         ),
@@ -365,6 +371,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                     "{{ range .Alerts -}}\n**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}\n**Summary:** {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}\n**Description:** {{ .Annotations.description }}{{ end }}\n{{ end }}"
                 ),
             },
+            [],
             [],
             id="googlechat",
         ),
@@ -393,6 +400,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                 "reopenDuration": "3d",
             },
             ["priority", "resolveTransition", "reopenTransition", "wontFixResolution"],
+            ["labels", "customFields"],
             id="jira",
         ),
         pytest.param(
@@ -420,6 +428,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                 "tags": "signoz",
             },
             ["priority"],
+            [],
             id="jsmops",
         ),
         pytest.param(
@@ -449,6 +458,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                 ),
             },
             [],
+            ["metadata"],
             id="incidentio",
         ),
     ],
@@ -462,6 +472,7 @@ def test_create_minimal_channel(  # pylint: disable=too-many-arguments,too-many-
     request_spec: dict,
     expected_defaults: dict,
     fields_without_default: list[str],
+    fields_read_as_null: list[str],
 ) -> None:
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
@@ -484,8 +495,8 @@ def test_create_minimal_channel(  # pylint: disable=too-many-arguments,too-many-
     fetched = response.json()["data"]
 
     # Omitted fields read back as their default, as "" when they have none, and
-    # as absent when they are collections.
-    expected_spec = {**request_spec, **expected_defaults, **dict.fromkeys(fields_without_default, "")}
+    # as null when they are collections.
+    expected_spec = {**request_spec, **expected_defaults, **dict.fromkeys(fields_without_default, ""), **dict.fromkeys(fields_read_as_null, None)}
     assert created["config"]["spec"] == expected_spec
     assert fetched["config"]["spec"] == expected_spec
 
@@ -526,13 +537,13 @@ def test_create_with_generate_name_derives_a_distinct_dns1123_name(
 
 
 @pytest.mark.parametrize(
-    "create_spec,update_spec,expected_values_after_update,absent_fields_after_update",
+    "create_spec,update_spec,expected_values_after_update,fields_read_as_null_after_update",
     [
         pytest.param(
             {
                 "apiUrl": "https://hooks.slack.test/services/T/B/X",
                 "fields": [{"title": "Severity", "value": "{{ .CommonLabels.severity }}"}],
-                "actions": [{"type": "button", "text": "Open", "url": "{{ .CommonLabels.ruleSource }}"}],
+                "actions": [{"type": "button", "text": "Open", "url": "{{ .CommonLabels.ruleSource }}", "style": "primary", "name": "open", "value": "signoz"}],
             },
             {
                 "apiUrl": "https://hooks.slack.test/services/T/B/X",
@@ -565,7 +576,7 @@ def test_update_replaces_the_whole_spec(  # pylint: disable=too-many-arguments,t
     create_spec: dict,
     update_spec: dict,
     expected_values_after_update: dict,
-    absent_fields_after_update: list[str],
+    fields_read_as_null_after_update: list[str],
 ) -> None:
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
@@ -602,8 +613,8 @@ def test_update_replaces_the_whole_spec(  # pylint: disable=too-many-arguments,t
     for spec_read in (updated["config"]["spec"], fetched["config"]["spec"]):
         for field, value in expected_values_after_update.items():
             assert spec_read[field] == value, field
-        for field in absent_fields_after_update:
-            assert field not in spec_read, field
+        for field in fields_read_as_null_after_update:
+            assert spec_read[field] is None, field
 
 
 def test_notification_channel_v2_lifecycle(  # pylint: disable=too-many-statements
