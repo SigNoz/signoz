@@ -53,7 +53,7 @@ function EntityMetadataRow({
 					{service.entryPoint && (
 						<>
 							{' — '}
-							<Badge color="secondary" variant="outlined">
+							<Badge color="secondary" variant="outlined" textTransform="none">
 								{service.entryPoint}
 							</Badge>
 						</>

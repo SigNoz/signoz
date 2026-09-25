@@ -34,7 +34,11 @@ const valueBadge = (
 	value: string,
 	options?: { prefix?: ReactNode; color?: BadgeColorType },
 ): ReactNode => (
-	<Badge variant="solid" color={options?.color ?? 'secondary'}>
+	<Badge
+		variant="solid"
+		color={options?.color ?? 'secondary'}
+		textTransform="none"
+	>
 		{options?.prefix}
 		<span className={styles.badgeText} title={value}>
 			{value}
