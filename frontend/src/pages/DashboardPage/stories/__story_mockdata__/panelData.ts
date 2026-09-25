@@ -168,6 +168,15 @@ export const serviceVariableValues = (count: number): string[] =>
 	);
 
 /** Values the dynamic `namespace` variable resolves from the fields endpoint. */
+/** Attributes the dynamic variable editor offers a variable to read. */
+export const VARIABLE_ATTRIBUTES = [
+	'k8s.namespace.name',
+	'k8s.cluster.name',
+	'service.name',
+	'deployment.environment',
+	'host.name',
+];
+
 export const NAMESPACE_VALUES = [
 	'checkout-prod',
 	'payments-prod',
