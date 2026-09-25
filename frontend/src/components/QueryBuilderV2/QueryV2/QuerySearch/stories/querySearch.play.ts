@@ -73,21 +73,28 @@ const currentView = (
 };
 
 /**
- * OverlayScrollbars hands focus back to whatever held it when one of its
- * instances started initialising, and in a static build those inits finish
- * after the play has focused the filter. The editor closes its suggestions on
- * blur, so every wait takes the focus back first.
+ * The explorers wrap the filter in `OverlayScrollbar`, which initialises when
+ * the browser is idle. Initialising moves the content, the editor with it, and
+ * focuses the editor again through the DOM, which puts the caret back at the
+ * start and swaps the suggestions for the key list. Throws until every wrapper
+ * around the filter has initialised.
  */
-const keepFocus = (view: EditorView): void => {
-	if (!view.hasFocus) {
-		view.focus();
+const assertScrollbarsReady = (editor: HTMLElement): void => {
+	for (
+		let wrapper = editor.closest('.overlay-scrollbar');
+		wrapper;
+		wrapper = wrapper.parentElement?.closest('.overlay-scrollbar') ?? null
+	) {
+		if (!wrapper.hasAttribute('data-overlayscrollbars')) {
+			throw new Error('scrollbars around the filter still initialising');
+		}
 	}
 };
 
 /**
- * Waits until `text` shows in the suggestion list, keeping the filter focused
- * and asking for suggestions whenever the list is shut. Focus and typing only
- * open it once the keys have loaded, and moving the caret never does.
+ * Waits until `text` shows in the suggestion list, asking for suggestions
+ * whenever the list is shut. Focus and typing only open it once the keys have
+ * loaded, and moving the caret never does.
  */
 const waitForSuggestion = (
 	canvasElement: HTMLElement,
@@ -95,9 +102,7 @@ const waitForSuggestion = (
 ): Promise<HTMLElement> =>
 	waitFor(
 		() => {
-			const { editor, view } = currentView(canvasElement);
-
-			keepFocus(view);
+			const { editor } = currentView(canvasElement);
 
 			if (!suggestionList(canvasElement)) {
 				requestSuggestions(editor);
@@ -109,16 +114,19 @@ const waitForSuggestion = (
 	);
 
 /**
- * Focuses the filter and waits for its suggestion list. Until the list first
- * opens the editor is still settling from the focus, and moves the caret back
- * to the start of the line once on the way.
+ * Focuses the filter once the scrollbars around it have initialised, and waits
+ * for its suggestion list.
  */
 const focusFilter = async (canvasElement: HTMLElement): Promise<EditorView> => {
 	await waitFor(
 		() => {
 			const { editor, view } = currentView(canvasElement);
 
-			keepFocus(view);
+			assertScrollbarsReady(editor);
+
+			if (!view.hasFocus) {
+				view.focus();
+			}
 
 			if (!suggestionList(canvasElement)) {
 				requestSuggestions(editor);
@@ -164,8 +172,6 @@ export const typeFilter = async (
 
 	for (const character of text) {
 		const at = view.state.doc.length;
-
-		keepFocus(view);
 
 		view.dispatch({
 			changes: { from: at, insert: character },
