@@ -3,14 +3,42 @@ package alertmanagertypes
 import (
 	"encoding/json"
 	"reflect"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 )
 
 // ════════════════════════════════════════════════════════════════════════
 // API -> storage
 // ════════════════════════════════════════════════════════════════════════
+
+// ToChannel returns the receiver alongside because the alertmanager config is
+// updated from it, not from the channel.
+func (p *PostableNotificationChannel) ToChannel(orgID string) (*Channel, *Receiver, error) {
+	receiver, err := p.ToReceiver()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	data, err := json.Marshal(receiver)
+	if err != nil {
+		return nil, nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal receiver")
+	}
+
+	return &Channel{
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		Name:          p.Name,
+		DisplayName:   p.DisplayName,
+		Type:          p.Config.Kind.ToStoredType(),
+		Data:          string(data),
+		Config:        p.Config,
+		OrgID:         orgID,
+	}, receiver, nil
+}
 
 // ToReceiver hands the assembled receiver to newDefaultedReceiver, which is the
 // only place upstream applies a notifier's defaults and validation — several
@@ -45,22 +73,51 @@ func (t *TestableNotificationChannel) ToReceiver() (*Receiver, error) {
 	return postable.ToReceiver()
 }
 
+func (c *Channel) UpdateFromUpdatable(updatable UpdatableNotificationChannel) (*Receiver, error) {
+	receiver, err := updatable.ToReceiver(c.DisplayName)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := json.Marshal(receiver)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal receiver")
+	}
+
+	c.Type = updatable.Config.Kind.ToStoredType()
+	c.Data = string(data)
+	c.Config = updatable.Config
+	c.UpdatedAt = time.Now()
+
+	return receiver, nil
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // Storage -> API
 // ════════════════════════════════════════════════════════════════════════
 
-// toPostableNotificationChannel derives the kind from the config the receiver
-// actually carries rather than from Channel.Type, so a row written with several
-// notifier kinds is rejected instead of reported under whichever one
-// receiverChannelType happened to pick.
-func (c *Channel) toPostableNotificationChannel() (*PostableNotificationChannel, error) {
+// toChannelConfig returns the stored config. Only a row the migration could not
+// backfill has none, so deriving it here reports why.
+func (c *Channel) toChannelConfig() (ChannelConfig, error) {
+	if c.Config.IsZero() {
+		return c.deriveChannelConfig()
+	}
+
+	return c.Config, nil
+}
+
+// deriveChannelConfig derives the kind from the config the receiver actually
+// carries rather than from Channel.Type, so a row written with several notifier
+// kinds is rejected instead of reported under whichever one receiverChannelType
+// happened to pick.
+func (c *Channel) deriveChannelConfig() (ChannelConfig, error) {
 	receiver := &Receiver{Receiver: &config.Receiver{}}
 	if err := json.Unmarshal([]byte(c.Data), receiver); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "unmarshal channel %q", c.DisplayName)
+		return ChannelConfig{}, errors.WrapInternalf(err, errors.CodeInternal, "unmarshal channel %q", c.DisplayName)
 	}
 
 	if total := countNotifierConfigs(receiver); total > 1 {
-		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q carries %d notifier configurations; only one per channel is supported", c.DisplayName, total)
+		return ChannelConfig{}, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q carries %d notifier configurations; only one per channel is supported", c.DisplayName, total)
 	}
 
 	for _, channelKind := range channelKinds {
@@ -70,17 +127,21 @@ func (c *Channel) toPostableNotificationChannel() (*PostableNotificationChannel,
 
 		spec, err := channelKind.extractSpec(c.DisplayName, receiver)
 		if err != nil {
-			return nil, err
+			return ChannelConfig{}, err
 		}
 
-		return &PostableNotificationChannel{
-			Name:        c.Name,
-			DisplayName: c.DisplayName,
-			Config:      ChannelConfig{Kind: channelKind.kind, Spec: spec},
-		}, nil
+		// The derived config is stored and decoded back through the same
+		// validation a request goes through, so one that would not decode is
+		// unrepresentable rather than stored.
+		channelConfig := ChannelConfig{Kind: channelKind.kind, Spec: spec}
+		if err := channelConfig.Validate(); err != nil {
+			return ChannelConfig{}, errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "channel %q: %s", c.DisplayName, err.Error())
+		}
+
+		return channelConfig, nil
 	}
 
-	return nil, errors.NewInvalidInputf(ErrCodeChannelUnsupportedKind, "channel %q carries no supported notifier configuration", c.DisplayName)
+	return ChannelConfig{}, errors.NewInvalidInputf(ErrCodeChannelUnsupportedKind, "channel %q carries no supported notifier configuration", c.DisplayName)
 }
 
 // countNotifierConfigs totals every *_configs entry on the receiver, including
@@ -111,15 +172,15 @@ func countConfigsFields(v reflect.Value) int {
 }
 
 func (c *Channel) ToGettableNotificationChannel() (*GettableNotificationChannel, error) {
-	postable, err := c.toPostableNotificationChannel()
+	channelConfig, err := c.toChannelConfig()
 	if err != nil {
 		return nil, err
 	}
 
 	return &GettableNotificationChannel{
-		Name:        postable.Name,
-		DisplayName: postable.DisplayName,
-		Config:      postable.Config,
+		Name:        c.Name,
+		DisplayName: c.DisplayName,
+		Config:      channelConfig,
 		ID:          c.ID,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,

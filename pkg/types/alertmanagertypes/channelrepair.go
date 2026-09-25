@@ -93,7 +93,7 @@ func (c *Channel) Diagnose() *ChannelRepair {
 		return repair
 	}
 
-	if _, err := c.toPostableNotificationChannel(); err != nil {
+	if _, err := c.toChannelConfig(); err != nil {
 		repair.Defect, repair.Detail = ChannelDefectUnrepresentable, err.Error()
 		return repair
 	}
