@@ -9,6 +9,7 @@
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 	gap: 24px;
+	padding-top: var(--spacing-8);
 }
 
 .infra-metrics-card {

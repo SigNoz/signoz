@@ -35,12 +35,8 @@ function SignozRadioGroup({
 			disabledTooltip={disabledTooltip}
 			items={options.map((option) => ({
 				value: option.value,
-				label: (
-					<div className="view-title-container">
-						{option.icon && <div className="icon-container">{option.icon}</div>}
-						{option.label}
-					</div>
-				),
+				label: <div className="view-title-container">{option.label}</div>,
+				prefix: option.icon ? <>{option.icon}</> : undefined,
 			}))}
 		/>
 	);
