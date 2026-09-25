@@ -79,7 +79,7 @@ func (agent *Agent) KeepOnlyLast50Agents(ctx context.Context) {
 		Where("agent_id NOT IN (?)",
 			agent.store.BunDB().
 				NewSelect().
-				ColumnExpr("distinct(agent_id)").
+				Column("agent_id").
 				Model(new(opamptypes.StorableAgent)).
 				Where("org_id = ?", agent.OrgID).
 				OrderExpr("created_at DESC").
