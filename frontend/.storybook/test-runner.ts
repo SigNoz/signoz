@@ -23,6 +23,10 @@ const IGNORED_MESSAGES = [
 	// (YouTube embeds, the docs pane) so they hit the real network instead of
 	// an unanswered msw request; the block is the point, not a bug.
 	/violates the following Content Security Policy directive/,
+	// The filter editor's ANTLR parser reports every syntax error through
+	// `console.error` (`line 1:14 missing ...`), so each partial expression
+	// typed into it logs one; the editor shows the same errors on screen.
+	/^line \d+:\d+ /,
 ];
 
 interface CapturedMessage {

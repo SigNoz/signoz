@@ -5,7 +5,12 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { exceptionsMocks } from './AllErrors.stories.mocks';
+import {
+	commitFilter,
+	exceptionsMocks,
+	openResourceFilter,
+	pickSuggestion,
+} from './AllErrors.stories.mocks';
 import AllErrors from '../index';
 
 type AllErrorsArgs = PageStoryArgs<typeof exceptionsMocks>;
@@ -132,4 +137,109 @@ export const QuickFiltersSettingsWithBanner: Story = {
  */
 export const BottomStrip: Story = {
 	args: { bottomStrip: true },
+};
+
+/** The resource filter opened: every key the exceptions can be narrowed by. */
+export const FilterKeySuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openResourceFilter(canvasElement);
+		await screen.findByText('Suggested Filters', undefined, untilLoaded);
+	},
+};
+
+/** The key list grown past its first rows with the Show all shortcut. */
+export const FilterAllKeys: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openResourceFilter(canvasElement);
+		await screen.findByText('Show all filter items', undefined, untilLoaded);
+		await userEvent.keyboard('{Control>}/{/Control}');
+		await screen.findByText('cloud.region', undefined, untilLoaded);
+	},
+};
+
+/** A partial key: the typed text as a free search, then the keys that match. */
+export const FilterPartialKey: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const filter = await openResourceFilter(canvasElement);
+
+		await userEvent.type(within(filter).getByRole('combobox'), 'serv');
+		await screen.findByText('service.namespace', undefined, untilLoaded);
+	},
+};
+
+/** A key picked: the operators the exceptions page allows for it. */
+export const FilterOperatorSuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openResourceFilter(canvasElement);
+		await pickSuggestion('service.name');
+		await screen.findByText('Operator for', { exact: false }, untilLoaded);
+	},
+};
+
+/** A key and an operator picked: the values the key holds. */
+export const FilterValueSuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openResourceFilter(canvasElement);
+		await pickSuggestion('service.name');
+		await pickSuggestion('=');
+		await screen.findByText('Value(s) for', { exact: false }, untilLoaded);
+	},
+};
+
+/** Two conditions committed as chips, with the dropdown closed again. */
+export const FilterChips: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openResourceFilter(canvasElement);
+		await commitFilter('service.name', '=', 'checkout');
+		await commitFilter('deployment.environment', '!=', 'staging');
+		await userEvent.click(canvasElement.ownerDocument.body);
+		await within(canvasElement).findByText(
+			'deployment.environment != staging',
+			undefined,
+			untilLoaded,
+		);
+	},
+};
+
+/**
+ * A committed chip clicked to change it: its text goes back into the input,
+ * with the dropdown shut until the input is typed into.
+ */
+export const FilterEditChip: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openResourceFilter(canvasElement);
+		await commitFilter('service.name', '=', 'checkout');
+		await userEvent.click(
+			await within(canvasElement).findByText(
+				'service.name = checkout',
+				undefined,
+				untilLoaded,
+			),
+		);
+		// The select remounts whenever its chips change, so it is looked up again.
+		await waitFor(
+			() =>
+				expect(
+					within(within(canvasElement).getByTestId('qb-search-select')).getByRole(
+						'combobox',
+					),
+				).toHaveValue('service.name = checkout'),
+			untilLoaded,
+		);
+	},
+};
+
+/** The key list while its request is still in flight. */
+export const FilterKeysLoading: Story = {
+	args: { filterKeys: 'loading' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await openResourceFilter(canvasElement);
+		await waitFor(
+			() =>
+				expect(
+					document.querySelector('.query-builder-search .ant-spin'),
+				).not.toBeNull(),
+			untilLoaded,
+		);
+	},
 };
