@@ -108,7 +108,8 @@ function LogDetailInner({
 				target.closest('.cm-tooltip-autocomplete') ||
 				target.closest('.drawer-popover') ||
 				target.closest('.query-status-popover') ||
-				target.closest('[data-radix-popper-content-wrapper]')
+				target.closest('[data-radix-popper-content-wrapper]') ||
+				target.closest('[data-base-ui-portal]')
 			) {
 				return;
 			}

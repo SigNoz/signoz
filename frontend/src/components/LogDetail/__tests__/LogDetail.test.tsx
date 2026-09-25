@@ -133,6 +133,18 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 		});
 	});
 
+	it('keeps the drawer open when a ⋯ menu item is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onClose = jest.fn();
+
+		renderDrawer({ onClose });
+
+		await user.click(screen.getByTestId('log-details-header-menu'));
+		await user.click(await screen.findByText('Copy log'));
+
+		expect(onClose).not.toHaveBeenCalled();
+	});
+
 	it('shows "Open in Explorer" when a handleOpenInExplorer handler is provided', () => {
 		renderDrawer({ handleOpenInExplorer: jest.fn() });
 
