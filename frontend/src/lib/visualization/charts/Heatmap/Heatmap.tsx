@@ -23,7 +23,7 @@ import {
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 import { HeatmapChartProps } from 'lib/visualization/charts/types';
-import { useHeatmapGroupLegend } from './useHeatmapGroupLegend';
+import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
 import {
 	buildHeatmapConfig,
 	prepareHeatmapChartData,
@@ -104,8 +104,11 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 		seriesColor: resolvedSeriesColor,
 	});
 
-	const { visibleGroups, focusedSeriesIndex, onLegendAction } =
-		useHeatmapGroupLegend({ groups });
+	const {
+		visibleKeys: visibleGroups,
+		focusedSeriesIndex,
+		onLegendAction,
+	} = useLegendVisibility({ keys: groups, indexOffset: 1, id });
 
 	const grid = useMemo(
 		() => resolveHeatmapGrid({ buckets, step, series, visibleGroups }),

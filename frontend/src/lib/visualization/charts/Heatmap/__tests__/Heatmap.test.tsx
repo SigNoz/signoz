@@ -135,6 +135,9 @@ describe('Heatmap group legend', () => {
 	const CART = 'service.name=cart';
 	const CHECKOUT = 'service.name=checkout';
 
+	// The selection persists under the panel id, which every case here shares.
+	beforeEach(() => localStorage.clear());
+
 	function legendItem(label: string): HTMLElement {
 		return screen.getByRole('switch', { name: label });
 	}

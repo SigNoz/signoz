@@ -10,6 +10,12 @@ import {
 	HeatmapYAxis,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 
+import {
+	HeatmapBucketRow,
+	HeatmapContributionRow,
+	HeatmapTooltipBody,
+} from './types';
+
 dayjs.extend(utc);
 dayjs.extend(timezonePlugin);
 
@@ -19,31 +25,6 @@ const NEIGHBOUR_SPAN = 2;
 const SUB_MINUTE_STEP = 60;
 
 export const NO_DATA_LABEL = 'no data';
-
-/**
- * Which question the second block answers. A cell summed across several groups begs
- * "which group?"; a cell that is already one series begs "how does this bucket
- * compare with its neighbours?".
- */
-export enum HeatmapTooltipBody {
-	Buckets = 'buckets',
-	Contribution = 'contribution',
-}
-
-export interface HeatmapBucketRow {
-	/** The bucket's row on the y axis. Labels are not unique — two boundaries can
-	 *  round to the same text — so this is what identifies a row. */
-	row: number;
-	label: string;
-	count: number | null;
-	isHovered: boolean;
-}
-
-export interface HeatmapContributionRow {
-	label: string;
-	color: string;
-	count: number;
-}
 
 export function resolveTooltipBody(visibleCount: number): HeatmapTooltipBody {
 	// One enabled group contributes the whole cell, so there is nothing to break

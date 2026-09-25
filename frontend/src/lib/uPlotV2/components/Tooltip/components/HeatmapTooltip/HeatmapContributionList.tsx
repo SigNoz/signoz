@@ -1,4 +1,5 @@
-import { formatCount, HeatmapContributionRow } from './heatmapTooltipContent';
+import { formatCount } from './heatmapTooltipContent';
+import { HeatmapContributionRow } from './types';
 
 import Styles from './HeatmapTooltip.module.scss';
 
