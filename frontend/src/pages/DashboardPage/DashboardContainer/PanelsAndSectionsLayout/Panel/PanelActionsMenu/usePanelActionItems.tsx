@@ -28,11 +28,16 @@ import { useViewPanel } from '../hooks/useViewPanel';
 import { buildMoveItems } from '../utils/buildMoveItems';
 import MenuActionItem from '../../../components/MenuActionItem/MenuActionItem';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { isAIBuilderEnvelope } from '../../../queryV5/builderEnvelope';
+import { toQueryEnvelopes } from '../../../queryV5/buildQueryRangeRequest';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 // Stable fallback so renders without layout context don't churn the mutation
 // hooks' deps (a fresh [] each render would re-create their callbacks).
 const EMPTY_SECTIONS: DashboardSection[] = [];
+
+//TODO: @tewarig will enable these actions for AI Observability Panels
+const AI_PANEL_REASON = 'Coming Soon For AI Observability Panels';
 
 interface UsePanelActionItemsArgs {
 	panelId: string;
@@ -63,6 +68,10 @@ export function usePanelActionItems({
 	panelActions,
 }: UsePanelActionItemsArgs): PanelActionItems {
 	const panelKind = panel.spec.plugin.kind;
+	// The editor and alert builder have no AI query mode. View in Logs/Traces stays on.
+	const isAIPanel = toQueryEnvelopes(panel.spec.queries).some(
+		isAIBuilderEnvelope,
+	);
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
 	const openPanelEditor = useOpenPanelEditor();
@@ -103,13 +112,17 @@ export function usePanelActionItems({
 		const row = (
 			text: string,
 			icon: ReactElement,
-			opts: { checks?: BrandedPermission[]; destructive?: boolean } = {},
+			opts: {
+				checks?: BrandedPermission[];
+				destructive?: boolean;
+				disabledTooltip?: string;
+			} = {},
 		): ReactNode => (
 			<MenuActionItem
 				label={text}
 				icon={icon}
 				checks={opts.checks ?? editChecks}
-				disabledTooltip={editDisabledTooltip}
+				disabledTooltip={opts.disabledTooltip ?? editDisabledTooltip}
 				destructive={opts.destructive}
 			/>
 		);
@@ -118,15 +131,21 @@ export function usePanelActionItems({
 		if (panelCapabilities.view) {
 			panelGroup.push({
 				key: 'view-panel',
-				label: row('View', <Fullscreen size={14} />, { checks: [] }),
+				label: row('View', <Fullscreen size={14} />, {
+					checks: [],
+					disabledTooltip: isAIPanel ? AI_PANEL_REASON : undefined,
+				}),
+				disabled: isAIPanel,
 				onClick: (): void => openView(panelId, panel),
 			});
 		}
 		if (panelCapabilities.edit) {
 			panelGroup.push({
 				key: 'edit-panel',
-				label: row('Edit panel', <PenLine size={14} />),
-				disabled: !isEditable,
+				label: row('Edit panel', <PenLine size={14} />, {
+					disabledTooltip: isAIPanel ? AI_PANEL_REASON : undefined,
+				}),
+				disabled: !isEditable || isAIPanel,
 				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}
@@ -157,7 +176,11 @@ export function usePanelActionItems({
 		if (panelCapabilities.createAlert) {
 			dataGroup.push({
 				key: 'create-alert',
-				label: row('Create Alerts', <Bell size={14} />, { checks: [] }),
+				label: row('Create Alerts', <Bell size={14} />, {
+					checks: [],
+					disabledTooltip: isAIPanel ? AI_PANEL_REASON : undefined,
+				}),
+				disabled: isAIPanel,
 				onClick: (): void => createAlert(panel, panelId),
 			});
 		}
@@ -197,6 +220,7 @@ export function usePanelActionItems({
 		editChecks,
 		editDisabledTooltip,
 		panelCapabilities,
+		isAIPanel,
 		panel,
 		panelActions,
 		sections,

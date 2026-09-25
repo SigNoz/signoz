@@ -416,6 +416,41 @@ describe('usePanelActionItems', () => {
 		expect(mockOpenView).toHaveBeenCalledWith('panel-1', baseArgs.panel);
 	});
 
+	it('disables View, Edit, and Create Alerts on an AI query panel', () => {
+		const aiPanel = {
+			...mockPanel,
+			spec: {
+				...mockPanel.spec,
+				queries: [
+					{
+						kind: 'time_series',
+						spec: {
+							plugin: {
+								kind: 'signoz/CompositeQuery',
+								spec: {
+									queries: [
+										{
+											type: 'builder_ai_query',
+											spec: { name: 'A', signal: 'traces' },
+										},
+									],
+								},
+							},
+						},
+					},
+				],
+			},
+		} as unknown as DashboardtypesPanelDTO;
+
+		const { result } = renderHook(() =>
+			usePanelActionItems({ ...baseArgs, panel: aiPanel }),
+		);
+
+		expect(disabledKeys(result.current)).toStrictEqual(
+			expect.arrayContaining(['view-panel', 'edit-panel', 'create-alert']),
+		);
+	});
+
 	it('create-alert seeds an alert from this panel', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
 		const createAlert = result.current.items.find(
