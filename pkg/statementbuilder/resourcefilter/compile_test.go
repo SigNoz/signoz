@@ -42,8 +42,8 @@ func TestConditionBuilder(t *testing.T) {
 			},
 			op:           qbtypes.FilterOperatorNotEqual,
 			value:        "redis",
-			expected:     "simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND labels NOT LIKE ?",
-			expectedArgs: []any{"redis", `%k8s.namespace.name":"redis%`},
+			expected:     "WHERE simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?",
+			expectedArgs: []any{"redis"},
 		},
 		{
 			name: "string_like",
@@ -120,8 +120,8 @@ func TestConditionBuilder(t *testing.T) {
 			},
 			op:           qbtypes.FilterOperatorNotIn,
 			value:        []any{"watch", "redis"},
-			expected:     "(simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?) AND (labels NOT LIKE ? AND labels NOT LIKE ?)",
-			expectedArgs: []any{"watch", "redis", "%k8s.namespace.name\":\"watch%", "%k8s.namespace.name\":\"redis%"},
+			expected:     "WHERE (simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?)",
+			expectedArgs: []any{"watch", "redis"},
 		},
 		{
 			name: "string_exists",

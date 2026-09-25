@@ -138,9 +138,7 @@ func (b *storage) conditionForLogicalField(
 	column := columns[0]
 
 	members := logical.Members
-	isFamily := logical.IsFamily()
 	keyIdxFilter := keyIndexCondition(sb, column.Name, members)
-	singleValueIndexFilter := valueForIndexFilter(op, members[0], value)
 
 	logicalRead, err := querybuilder.LogicalRead(ctx, q, b, logical)
 	if err != nil {
@@ -156,15 +154,10 @@ func (b *storage) conditionForLogicalField(
 			valueIndexCondition(sb, column.Name, members, op, value, false),
 		), nil
 	case qbtypes.FilterOperatorNotEqual:
-		if isFamily {
-			// A negated value-index hint would drop rows where another member
-			// holds the value; the fingerprint scan is small enough without it.
-			return sb.NE(fieldName, formattedValue), nil
-		}
-		return sb.And(
-			sb.NE(fieldName, formattedValue),
-			sb.NotLike(column.Name, singleValueIndexFilter),
-		), nil
+		// No negated value-index hint: `%key":"value%` also matches values that
+		// start with value and keys that end with key (`peer.service.name`), so
+		// NOT LIKE would drop rows that do satisfy the filter.
+		return sb.NE(fieldName, formattedValue), nil
 	case qbtypes.FilterOperatorGreaterThan:
 		return sb.And(sb.GT(fieldName, formattedValue), keyIdxFilter), nil
 	case qbtypes.FilterOperatorGreaterThanOrEq:
@@ -231,20 +224,8 @@ func (b *storage) conditionForLogicalField(
 		for _, v := range values {
 			notInConditions = append(notInConditions, sb.NE(fieldName, querybuilder.FormatValueForContains(v)))
 		}
-		mainCondition := sb.And(notInConditions...)
-		if isFamily {
-			// A negated value-index hint would drop rows where another member
-			// holds the value; the fingerprint scan is small enough without it.
-			return mainCondition, nil
-		}
-		valConditions := make([]string, 0, len(values))
-		if valuesForIndexFilter, ok := singleValueIndexFilter.([]string); ok {
-			for _, v := range valuesForIndexFilter {
-				valConditions = append(valConditions, sb.NotLike(column.Name, v))
-			}
-		}
-		mainCondition = sb.And(mainCondition, sb.And(valConditions...))
-		return mainCondition, nil
+		// No negated value-index hint, for the same reason as not equal.
+		return sb.And(notInConditions...), nil
 
 	case qbtypes.FilterOperatorExists:
 		return sb.And(
