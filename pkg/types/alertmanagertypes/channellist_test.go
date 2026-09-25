@@ -65,10 +65,7 @@ func TestChannelKindMSTeamsIsStoredAsMSTeamsV2(t *testing.T) {
 		Config:      ChannelConfig{Kind: ChannelKindMSTeams, Spec: &ChannelMSTeamsConfig{WebhookURL: "https://a"}},
 	}
 
-	receiver, err := postable.ToReceiver()
-	require.NoError(t, err)
-
-	channel, err := NewChannelFromReceiverWithName(receiver, postable.Name, "org-1")
+	channel, _, err := postable.ToChannel("org-1")
 	require.NoError(t, err)
 
 	assert.Equal(t, "msteamsv2", channel.Type)

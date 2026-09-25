@@ -9,6 +9,7 @@ from fixtures.auth import (
     USER_ADMIN_EMAIL,
     USER_ADMIN_PASSWORD,
 )
+from fixtures.notification_channel import rewrite_channel_as_legacy_receiver
 
 TIMEOUT = 10
 
@@ -49,24 +50,45 @@ def test_repair_reports_nothing_for_a_readable_channel(
     assert [channel["id"] for channel in repair["channels"]] == [channel_id]
 
 
-def test_repair_deletes_a_v1_channel_of_an_unmodelled_kind(
+def test_repair_deletes_a_legacy_channel_of_an_unmodelled_kind(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     cleanup_notification_channels: list[str],
 ) -> None:
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    name = f"v1-telegram-{uuid.uuid4().hex[:8]}"
+    name = f"legacy-telegram-{uuid.uuid4().hex[:8]}"
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/channels"),
-        json={"name": name, "telegram_configs": [{"chat": 12345, "token": "telegram-bot-token"}]},
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        json={"name": name, "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X"}}},
         headers={"Authorization": f"Bearer {token}"},
         timeout=TIMEOUT,
     )
     assert response.status_code == HTTPStatus.CREATED, response.text
     channel_id = response.json()["data"]["id"]
     cleanup_notification_channels.append(channel_id)
+    rewrite_channel_as_legacy_receiver(signoz, channel_id, {"name": name, "telegram_configs": [{"chat": 12345, "token": "telegram-bot-token"}]})
+
+    # v2 lists the row with an empty kind and refuses to read it.
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        params={"query": name},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    listed = response.json()["data"]
+    assert listed["total"] == 1
+    assert listed["channels"][0]["displayName"] == name
+    assert listed["channels"][0]["kind"] == ""
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{channel_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{channel_id}/repair"),
@@ -111,29 +133,33 @@ def test_repair_deletes_a_v1_channel_of_an_unmodelled_kind(
     assert response.json()["data"]["total"] == 0
 
 
-def test_repair_splits_a_v1_channel_carrying_several_notifiers(
+def test_repair_splits_a_legacy_channel_carrying_several_notifiers(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     cleanup_notification_channels: list[str],
 ) -> None:
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    name = f"v1-fanout-{uuid.uuid4().hex[:8]}"
+    name = f"legacy-fanout-{uuid.uuid4().hex[:8]}"
 
-    # Only v1 accepts a receiver with more than one notifier configuration.
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/channels"),
-        json={
-            "name": name,
-            "slack_configs": [{"api_url": "https://hooks.slack.test/services/T/B/X", "channel": "#alerts"}],
-            "webhook_configs": [{"url": "https://webhook.test/hook"}],
-        },
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        json={"name": name, "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "channel": "#alerts"}}},
         headers={"Authorization": f"Bearer {token}"},
         timeout=TIMEOUT,
     )
     assert response.status_code == HTTPStatus.CREATED, response.text
     channel_id = response.json()["data"]["id"]
     cleanup_notification_channels.append(channel_id)
+    rewrite_channel_as_legacy_receiver(
+        signoz,
+        channel_id,
+        {
+            "name": name,
+            "slack_configs": [{"api_url": "https://hooks.slack.test/services/T/B/X", "channel": "#alerts"}],
+            "webhook_configs": [{"url": "https://webhook.test/hook"}],
+        },
+    )
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{channel_id}/repair"),
