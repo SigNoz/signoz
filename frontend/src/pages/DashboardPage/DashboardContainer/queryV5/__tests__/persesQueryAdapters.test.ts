@@ -2,7 +2,11 @@ import type {
 	DashboardtypesQueryDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialQueriesMap,
+	initialQueryAIWithType,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -190,6 +194,24 @@ describe('persesQueryAdapters', () => {
 			);
 			expect(restored.builder.queryData[0].queryName).toBe(
 				original.builder.queryData[0].queryName,
+			);
+		});
+
+		it('emits a bare signoz/AIBuilderQuery for an AI List panel', () => {
+			const result = toPerses(initialQueryAIWithType, PANEL_TYPES.LIST);
+
+			expect(result).toHaveLength(1);
+			expect(result[0].spec.plugin.kind).toBe('signoz/AIBuilderQuery');
+		});
+
+		// List rejects CompositeQuery backend-side, so the plugin kind is the only place
+		// the AI-ness can survive a save.
+		it('preserves an AI List query through toPerses → fromPerses', () => {
+			const perses = toPerses(initialQueryAIWithType, PANEL_TYPES.LIST);
+			const restored = fromPerses(perses, PANEL_TYPES.LIST);
+
+			expect(restored.builder.queryData[0].builderQueryType).toBe(
+				'builder_ai_query',
 			);
 		});
 
