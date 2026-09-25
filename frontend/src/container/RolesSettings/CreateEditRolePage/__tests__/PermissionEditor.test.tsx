@@ -25,20 +25,20 @@ describe('PermissionEditor', () => {
 		it('defaults to interactive mode', async () => {
 			await renderCreateRolePage();
 
-			const interactiveRadio = screen.getByTestId(
+			const interactiveToggle = screen.getByTestId(
 				'permission-editor-mode-interactive',
 			);
-			expect(interactiveRadio).toBeChecked();
+			expect(interactiveToggle).toHaveAttribute('aria-pressed', 'true');
 		});
 
 		it('switches to JSON mode when clicked', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
 
-			const jsonRadio = screen.getByTestId('permission-editor-mode-json');
-			await user.click(jsonRadio);
+			const jsonToggle = screen.getByTestId('permission-editor-mode-json');
+			await user.click(jsonToggle);
 
-			expect(jsonRadio).toBeChecked();
+			expect(jsonToggle).toHaveAttribute('aria-pressed', 'true');
 			expect(screen.getByTestId('json-editor')).toBeInTheDocument();
 		});
 
@@ -46,15 +46,15 @@ describe('PermissionEditor', () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
 
-			const jsonRadio = screen.getByTestId('permission-editor-mode-json');
-			await user.click(jsonRadio);
+			const jsonToggle = screen.getByTestId('permission-editor-mode-json');
+			await user.click(jsonToggle);
 
-			const interactiveRadio = screen.getByTestId(
+			const interactiveToggle = screen.getByTestId(
 				'permission-editor-mode-interactive',
 			);
-			await user.click(interactiveRadio);
+			await user.click(interactiveToggle);
 
-			expect(interactiveRadio).toBeChecked();
+			expect(interactiveToggle).toHaveAttribute('aria-pressed', 'true');
 			expect(screen.queryByTestId('json-editor')).not.toBeInTheDocument();
 		});
 	});

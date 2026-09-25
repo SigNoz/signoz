@@ -31,16 +31,16 @@ function renderPage(): ReturnType<typeof render> {
 
 async function switchToJsonMode(): Promise<void> {
 	const user = userEvent.setup();
-	const jsonRadio = await screen.findByTestId('permission-editor-mode-json');
-	await user.click(jsonRadio);
+	const jsonToggle = await screen.findByTestId('permission-editor-mode-json');
+	await user.click(jsonToggle);
 }
 
 async function switchToInteractiveMode(): Promise<void> {
 	const user = userEvent.setup();
-	const interactiveRadio = await screen.findByTestId(
+	const interactiveToggle = await screen.findByTestId(
 		'permission-editor-mode-interactive',
 	);
-	await user.click(interactiveRadio);
+	await user.click(interactiveToggle);
 }
 
 describe('JsonEditor', () => {
@@ -106,10 +106,10 @@ describe('JsonEditor', () => {
 
 			await switchToJsonMode();
 
-			const interactiveRadio = screen.getByTestId(
+			const interactiveToggle = screen.getByTestId(
 				'permission-editor-mode-interactive',
 			);
-			await user.click(interactiveRadio);
+			await user.click(interactiveToggle);
 
 			const scopeToggle = within(
 				screen.getByTestId('action-toggle-factor-api-key-create'),
@@ -190,10 +190,10 @@ describe('JsonEditor', () => {
 			await screen.findByTestId('permission-editor');
 			await switchToJsonMode();
 
-			const interactiveRadio = screen.getByTestId(
+			const interactiveToggle = screen.getByTestId(
 				'permission-editor-mode-interactive',
 			);
-			await user.click(interactiveRadio);
+			await user.click(interactiveToggle);
 
 			const apiKeyCard = await screen.findByTestId('resource-card-factor-api-key');
 			const header = within(apiKeyCard).getByTestId(

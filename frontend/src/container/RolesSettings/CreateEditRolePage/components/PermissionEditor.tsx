@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { SolidAlertTriangle } from '@signozhq/icons';
 import { ButtonGroup } from '@signozhq/ui/button-group';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
-import { RadioGroup } from '@signozhq/ui/radio-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import type { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
@@ -158,8 +158,11 @@ function PermissionEditor({
 					Transaction Groups
 				</Typography>
 				<hr className={styles.permissionEditorDivider} />
-				<RadioGroup
-					color="primary"
+				<ToggleGroup
+					variant="outlined"
+					color="secondary"
+					type="single"
+					size="sm"
 					value={mode}
 					onChange={handleModeChange}
 					testId="permission-editor-mode"

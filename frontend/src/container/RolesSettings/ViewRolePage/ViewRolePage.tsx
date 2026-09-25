@@ -3,7 +3,7 @@ import { ArrowLeft } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Divider } from '@signozhq/ui/divider';
-import { RadioGroup } from '@signozhq/ui/radio-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Tabs } from '@signozhq/ui/tabs';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
@@ -73,8 +73,11 @@ function ViewRoleContentInner({
 								Transaction Groups
 							</Typography>
 							<hr className={styles.permissionDivider} />
-							<RadioGroup
-								color="primary"
+							<ToggleGroup
+								variant="outlined"
+								color="secondary"
+								type="single"
+								size="sm"
 								value={viewMode}
 								onChange={handleModeChange}
 								testId="permission-view-mode"
