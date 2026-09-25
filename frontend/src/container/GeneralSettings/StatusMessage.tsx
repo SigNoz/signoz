@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { green, orange, volcano } from '@ant-design/colors';
 import { SolidInfoCircle } from '@signozhq/icons';
 import { Card, Col } from 'antd';
+import { ErrorText } from './styles';
 import { TStatus } from 'types/api/settings/getRetention';
 
 import { convertHoursValueToRelevantUnitString } from './utils';
@@ -11,6 +12,7 @@ function StatusMessage({
 	total_retention,
 	s3_retention,
 	status,
+	error_message,
 }: StatusMessageProps): JSX.Element | null {
 	const { t } = useTranslation(['generalSettings']);
 
@@ -70,6 +72,9 @@ function StatusMessage({
 					{statusMessage}
 				</Col>
 			</div>
+			{status === 'failed' && error_message && (
+				<ErrorText>{error_message}</ErrorText>
+			)}
 		</Card>
 	) : null;
 }
@@ -78,5 +83,7 @@ interface StatusMessageProps {
 	status: TStatus;
 	total_retention: number | undefined;
 	s3_retention: number | undefined;
+	error_message?: string;
+
 }
 export default StatusMessage;
