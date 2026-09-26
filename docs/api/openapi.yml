@@ -1763,12 +1763,15 @@ components:
           additionalProperties: {}
           nullable: true
           type: object
+        syncState:
+          $ref: '#/components/schemas/CloudintegrationtypesSyncState'
         timestampMillis:
           format: int64
           type: integer
       required:
       - timestampMillis
       - data
+      - syncState
       type: object
     CloudintegrationtypesAzureAccountConfig:
       properties:
@@ -2013,6 +2016,8 @@ components:
           format: date-time
           nullable: true
           type: string
+        syncState:
+          $ref: '#/components/schemas/CloudintegrationtypesSyncState'
       required:
       - account_id
       - cloud_account_id
@@ -2022,6 +2027,7 @@ components:
       - providerAccountId
       - integrationConfig
       - removedAt
+      - syncState
       type: object
     CloudintegrationtypesGettableServicesMetadata:
       properties:
@@ -2121,6 +2127,9 @@ components:
           type: object
         providerAccountId:
           type: string
+        syncedVersion:
+          nullable: true
+          type: integer
       required:
       - data
       type: object
@@ -2132,6 +2141,18 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAzureIntegrationConfig'
         gcp:
           $ref: '#/components/schemas/CloudintegrationtypesGCPIntegrationConfig'
+      type: object
+    CloudintegrationtypesRegionState:
+      enum:
+      - present
+      - removed
+      type: string
+    CloudintegrationtypesRegionSyncState:
+      properties:
+        state:
+          $ref: '#/components/schemas/CloudintegrationtypesRegionState'
+      required:
+      - state
       type: object
     CloudintegrationtypesService:
       properties:
@@ -2273,6 +2294,23 @@ components:
           type: boolean
         metrics:
           type: boolean
+      type: object
+    CloudintegrationtypesSyncState:
+      nullable: true
+      properties:
+        inSync:
+          type: boolean
+        regions:
+          additionalProperties:
+            $ref: '#/components/schemas/CloudintegrationtypesRegionSyncState'
+          type: object
+        version:
+          format: int64
+          type: integer
+      required:
+      - version
+      - inSync
+      - regions
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
