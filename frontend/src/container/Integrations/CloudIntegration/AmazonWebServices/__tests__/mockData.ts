@@ -24,6 +24,7 @@ const accountsResponse: ListAccounts200 = {
 				agentReport: {
 					timestampMillis: 1747114366214,
 					data: null,
+					syncState: null,
 				},
 				providerAccountId: PROVIDER_ACCOUNT_ID,
 				removedAt: null,

@@ -25,6 +25,17 @@ var (
 	ErrCodeServiceDefinitionNotFound            = errors.MustNewCode("service_definition_not_found")
 )
 
+var (
+	RegionStatePresent = RegionState{valuer.NewString("present")}
+	RegionStateRemoved = RegionState{valuer.NewString("removed")}
+)
+
+type RegionState struct{ valuer.String }
+
+func (RegionState) Enum() []any {
+	return []any{RegionStatePresent, RegionStateRemoved}
+}
+
 // StorableCloudIntegration represents a cloud integration stored in the database.
 // This is also referred as "Account" in the context of cloud integrations.
 type StorableCloudIntegration struct {
@@ -43,8 +54,16 @@ type StorableCloudIntegration struct {
 // StorableAgentReport represents the last heartbeat and arbitrary data sent by the agent
 // as of now there is no use case for Data field, but keeping it for backwards compatibility with older structure.
 type StorableAgentReport struct {
-	TimestampMillis int64          `json:"timestamp_millis"` // backward compatibility
-	Data            map[string]any `json:"data"`
+	TimestampMillis int64              `json:"timestamp_millis"` // backward compatibility
+	Data            map[string]any     `json:"data"`
+	SyncState       *StorableSyncState `json:"sync_state,omitempty"`
+}
+
+// StorableSyncState holds every region sent to the agent. A removed region is dropped only after the agent acks Version.
+type StorableSyncState struct {
+	Version int64                       `json:"version"`
+	InSync  bool                        `json:"in_sync"`
+	Regions map[string]*RegionSyncState `json:"regions"`
 }
 
 // StorableCloudIntegrationService is to store service config for a cloud integration, which is a cloud provider specific configuration.
@@ -148,10 +167,28 @@ func NewStorableCloudIntegration(account *Account) (*StorableCloudIntegration, e
 		storableAccount.LastAgentReport = &StorableAgentReport{
 			TimestampMillis: account.AgentReport.TimestampMillis,
 			Data:            account.AgentReport.Data,
+			SyncState:       NewStorableSyncState(account.AgentReport.SyncState),
 		}
 	}
 
 	return storableAccount, nil
+}
+
+func NewStorableSyncState(syncState *SyncState) *StorableSyncState {
+	if syncState == nil {
+		return nil
+	}
+
+	regions := make(map[string]*RegionSyncState, len(syncState.Regions))
+	for region, regionSyncState := range syncState.Regions {
+		regions[region] = &RegionSyncState{State: regionSyncState.State}
+	}
+
+	return &StorableSyncState{
+		Version: syncState.Version,
+		InSync:  syncState.InSync,
+		Regions: regions,
+	}
 }
 
 // NewStorableCloudIntegrationService creates a new StorableCloudIntegrationService with
@@ -172,6 +209,7 @@ func (account *StorableCloudIntegration) Update(providerAccountID *string, agent
 		account.LastAgentReport = &StorableAgentReport{
 			TimestampMillis: agentReport.TimestampMillis,
 			Data:            agentReport.Data,
+			SyncState:       NewStorableSyncState(agentReport.SyncState),
 		}
 	}
 }

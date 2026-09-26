@@ -26,6 +26,17 @@ type Account struct {
 type AgentReport struct {
 	TimestampMillis int64          `json:"timestampMillis" required:"true"`
 	Data            map[string]any `json:"data" required:"true" nullable:"true"`
+	SyncState       *SyncState     `json:"syncState" required:"true" nullable:"true"`
+}
+
+type SyncState struct {
+	Version int64                       `json:"version" required:"true"`
+	InSync  bool                        `json:"inSync" required:"true"`
+	Regions map[string]*RegionSyncState `json:"regions" required:"true" nullable:"false"`
+}
+
+type RegionSyncState struct {
+	State RegionState `json:"state" required:"true"`
 }
 
 type AccountConfig struct {
@@ -150,6 +161,7 @@ func NewAccountFromStorable(storableAccount *StorableCloudIntegration) (*Account
 		account.AgentReport = &AgentReport{
 			TimestampMillis: storableAccount.LastAgentReport.TimestampMillis,
 			Data:            storableAccount.LastAgentReport.Data,
+			SyncState:       NewSyncStateFromStorable(storableAccount.LastAgentReport.SyncState),
 		}
 	}
 
@@ -308,10 +320,101 @@ func NewAccountConfigFromUpdatable(provider CloudProviderType, config *Updatable
 	}
 }
 
-func NewAgentReport(data map[string]any) *AgentReport {
+func NewAgentReport(data map[string]any, syncState *SyncState) *AgentReport {
 	return &AgentReport{
 		TimestampMillis: time.Now().UnixMilli(),
 		Data:            data,
+		SyncState:       syncState,
+	}
+}
+
+// NewSyncState returns the sync state after a check-in without mutating previous.
+// The ack is applied before the config diff, so it is checked against the version the agent was last sent.
+func NewSyncState(previous *SyncState, regions []string, removed bool, syncedVersion *int64) *SyncState {
+	next := &SyncState{Version: 1, InSync: true, Regions: make(map[string]*RegionSyncState)}
+
+	// First check-in: seed from the config as in sync. Otherwise start from a copy of previous.
+	if previous == nil {
+		for _, region := range regions {
+			next.Regions[region] = &RegionSyncState{State: RegionStatePresent}
+		}
+	} else {
+		next.Version = previous.Version
+		next.InSync = previous.InSync
+		for region, regionSyncState := range previous.Regions {
+			next.Regions[region] = &RegionSyncState{State: regionSyncState.State}
+		}
+	}
+
+	// The agent synced this version, so its removed regions are cleaned up and can be dropped.
+	if syncedVersion != nil && *syncedVersion == next.Version {
+		next.InSync = true
+		for region, regionSyncState := range next.Regions {
+			if regionSyncState.State == RegionStateRemoved {
+				delete(next.Regions, region)
+			}
+		}
+	}
+
+	changed := false
+
+	if removed {
+		// Integration removed: every present region must be cleaned up.
+		for _, regionSyncState := range next.Regions {
+			if regionSyncState.State != RegionStateRemoved {
+				regionSyncState.State = RegionStateRemoved
+				changed = true
+			}
+		}
+	} else {
+		desiredRegions := make(map[string]struct{}, len(regions))
+		for _, region := range regions {
+			desiredRegions[region] = struct{}{}
+
+			regionSyncState, ok := next.Regions[region]
+			switch {
+			case !ok:
+				// Region added to the config.
+				next.Regions[region] = &RegionSyncState{State: RegionStatePresent}
+				changed = true
+			case regionSyncState.State == RegionStateRemoved:
+				// Region added back before its removal was acked.
+				regionSyncState.State = RegionStatePresent
+				changed = true
+			}
+		}
+
+		for region, regionSyncState := range next.Regions {
+			if _, desired := desiredRegions[region]; !desired && regionSyncState.State == RegionStatePresent {
+				// Region removed from the config.
+				regionSyncState.State = RegionStateRemoved
+				changed = true
+			}
+		}
+	}
+
+	if changed {
+		next.Version++
+		next.InSync = false
+	}
+
+	return next
+}
+
+func NewSyncStateFromStorable(storableSyncState *StorableSyncState) *SyncState {
+	if storableSyncState == nil {
+		return nil
+	}
+
+	regions := make(map[string]*RegionSyncState, len(storableSyncState.Regions))
+	for region, regionSyncState := range storableSyncState.Regions {
+		regions[region] = &RegionSyncState{State: regionSyncState.State}
+	}
+
+	return &SyncState{
+		Version: storableSyncState.Version,
+		InSync:  storableSyncState.InSync,
+		Regions: regions,
 	}
 }
 
@@ -333,6 +436,26 @@ func (account *Account) Update(provider CloudProviderType, config *AccountConfig
 	account.UpdatedAt = time.Now()
 
 	return nil
+}
+
+// NextSyncState returns the sync state for this check-in, or nil for providers without one.
+func (account *Account) NextSyncState(syncedVersion *int64) *SyncState {
+	if account.Provider != CloudProviderTypeAWS {
+		return nil
+	}
+
+	var previous *SyncState
+	if account.AgentReport != nil {
+		previous = account.AgentReport.SyncState
+	}
+
+	regions := account.Config.AWS.Regions
+	// Removed before the agent ever checked in: no region was sent to it, so there is nothing to clean up.
+	if account.AgentReport == nil && account.RemovedAt != nil {
+		regions = nil
+	}
+
+	return NewSyncState(previous, regions, account.RemovedAt != nil, syncedVersion)
 }
 
 func (postableAccount *PostableAccount) UnmarshalJSON(data []byte) error {
