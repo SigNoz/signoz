@@ -121,78 +121,26 @@
 }
 
 .feedback-modal-container {
-	.feedback-modal-tabs {
-		width: 100%;
+	.feedback-modal-tab-label {
 		display: flex;
+		align-items: center;
+		gap: 8px;
 
-		.ant-radio-button-wrapper {
-			flex: 1;
-			margin: 0px !important;
-
-			border: 1px solid var(--l1-border);
-
-			&:before {
-				display: none;
-			}
-
-			.ant-radio-button-checked {
-				background-color: var(--l3-background);
-			}
+		.tab-icon {
+			width: 6px;
+			height: 6px;
 		}
 
-		.feedback-modal-tab-label {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-
-			.tab-icon {
-				width: 6px;
-				height: 6px;
-			}
-
-			.feedback-tab {
-				background-color: var(--danger-background);
-			}
-
-			.bug-tab {
-				background-color: var(--warning-background);
-			}
-
-			.feature-tab {
-				background-color: var(--primary-background);
-			}
+		.feedback-tab {
+			background-color: var(--danger-background);
 		}
 
-		.ant-tabs-nav-list {
-			.ant-tabs-tab {
-				padding: 6px 16px;
+		.bug-tab {
+			background-color: var(--warning-background);
+		}
 
-				border-radius: 2px;
-				background: var(--l2-background);
-				box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
-				border: 1px solid var(--l1-border);
-
-				margin: 0 !important;
-
-				.ant-tabs-tab-btn {
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 20px; /* 166.667% */
-					letter-spacing: -0.06px;
-				}
-
-				&-active {
-					background: var(--l3-background);
-					color: var(--l1-foreground);
-
-					border-bottom: none !important;
-
-					.ant-tabs-tab-btn {
-						color: var(--l1-foreground);
-					}
-				}
-			}
+		.feature-tab {
+			background-color: var(--primary-background);
 		}
 	}
 

@@ -121,7 +121,6 @@ function EditTagsModal({
 						color="primary"
 						size="md"
 						loading={isLoading}
-						disabled={isLoading}
 						onClick={(): void => runSave()}
 						testId="edit-tags-submit"
 					>

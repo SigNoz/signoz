@@ -46,12 +46,7 @@ function PatternEditor({
 			<div className={styles.patternBox}>
 				<div className={styles.patternChips}>
 					{patterns.map((pattern) => (
-						<Badge
-							key={pattern}
-							color="vanilla"
-							variant="outline"
-							className={styles.patternChip}
-						>
+						<Badge key={pattern} color="secondary" variant="outlined">
 							{pattern}*
 							{!isReadOnly && (
 								<button
@@ -81,6 +76,7 @@ function PatternEditor({
 							testId="drawer-pattern-input"
 						/>
 						<Button
+							size="md"
 							variant="outlined"
 							color="secondary"
 							onClick={addPattern}

@@ -105,6 +105,8 @@ function FormAlertChannels({
 					name="send_resolved"
 				>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						defaultValue={initialValue?.send_resolved}
 						testId="field-send-resolved-checkbox"
 						onChange={(value): void => {

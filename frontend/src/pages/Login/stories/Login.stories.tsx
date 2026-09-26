@@ -41,7 +41,7 @@ const submitEmail = async (canvasElement: HTMLElement): Promise<void> => {
 	await userEvent.type(email, LOGIN_EMAIL);
 
 	const next = canvas.getByRole('button', { name: /next/i });
-	await waitFor(() => expect(next).toBeEnabled());
+	await waitFor(() => expect(next).not.toHaveAttribute('aria-disabled', 'true'));
 	await userEvent.click(next);
 };
 

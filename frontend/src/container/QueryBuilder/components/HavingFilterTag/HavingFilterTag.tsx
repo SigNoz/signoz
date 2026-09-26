@@ -1,3 +1,5 @@
+import { X } from '@signozhq/icons';
+
 import { HavingFilterTagProps } from './HavingFilterTag.interfaces';
 import { StyledTag, StyledText } from './HavingFilterTag.styled';
 
@@ -13,12 +15,20 @@ export function HavingFilterTag({
 
 	return (
 		<StyledTag
-			color="vanilla"
-			closable={closable}
-			onClose={(e): void => {
-				e.preventDefault();
-				onClose();
-			}}
+			suffix={
+				closable ? (
+					<button
+						type="button"
+						aria-label="Remove"
+						onClick={(e): void => {
+							e.preventDefault();
+							onClose();
+						}}
+					>
+						<X size={12} />
+					</button>
+				) : undefined
+			}
 		>
 			<span role="button" tabIndex={0} onClick={handleClick}>
 				<StyledText>{value}</StyledText>

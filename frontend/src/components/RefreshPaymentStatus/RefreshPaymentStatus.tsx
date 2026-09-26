@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { refreshLicense } from 'api/generated/services/licenses';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { RefreshCcw } from '@signozhq/icons';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { buildLicenseUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
@@ -10,11 +10,9 @@ import { useAppContext } from 'providers/App/App';
 
 function RefreshPaymentStatus({
 	type,
-	className,
 	withPortal,
 }: {
 	type?: 'button' | 'text' | 'tooltip';
-	className?: string;
 	withPortal?: false;
 }): JSX.Element {
 	const { t } = useTranslation(['failedPayment']);
@@ -49,9 +47,8 @@ function RefreshPaymentStatus({
 		>
 			<Button
 				variant="link"
-				color={type === 'text' ? 'none' : 'secondary'}
+				color="secondary"
 				size="md"
-				className={className}
 				onClick={handleRefreshPaymentStatus}
 				prefix={<RefreshCcw size={14} />}
 				loading={isLoading}
@@ -63,17 +60,14 @@ function RefreshPaymentStatus({
 
 	return (
 		<span className="refresh-payment-status-btn-wrapper">
-			{type === 'tooltip' ? (
-				<TooltipSimple title={t('refreshPaymentStatus')}>{button}</TooltipSimple>
-			) : (
-				button
-			)}
+			<Tooltip title={type === 'tooltip' ? t('refreshPaymentStatus') : undefined}>
+				{button}
+			</Tooltip>
 		</span>
 	);
 }
 RefreshPaymentStatus.defaultProps = {
 	type: 'button',
-	className: undefined,
 	withPortal: undefined,
 };
 

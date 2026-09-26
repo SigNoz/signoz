@@ -12,7 +12,7 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
 import { toast } from '@signozhq/ui/sonner';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import type { UploadFile } from 'antd';
 import getSessionStorage from 'api/browser/sessionstorage/get';
 import setSessionStorage from 'api/browser/sessionstorage/set';
@@ -72,6 +72,7 @@ interface ChatInputProps {
 	) => void;
 	onCancel?: () => void;
 	disabled?: boolean;
+	disabledTooltip?: string;
 	isStreaming?: boolean;
 	/**
 	 * URL-derived `source: 'auto'` contexts representing the page the user is
@@ -236,6 +237,7 @@ export default function ChatInput({
 	onSend,
 	onCancel,
 	disabled,
+	disabledTooltip,
 	isStreaming = false,
 	autoContexts,
 	onDismissAutoContext,
@@ -900,9 +902,10 @@ export default function ChatInput({
 						<div key={f.uid} className={styles.attachmentChip}>
 							<span className={styles.attachmentName}>{f.name}</span>
 							<Button
+								color="secondary"
 								variant="ghost"
-								size="icon"
-								className={styles.attachmentRemove}
+								size="sm"
+								icon
 								onClick={(): void => removeFile(f.uid)}
 								aria-label={`Remove ${f.name}`}
 							>
@@ -923,11 +926,7 @@ export default function ChatInput({
 						return (
 							<div key={key} className={cx(styles.contextTag, styles.auto)}>
 								<div className={styles.contextTagContent}>
-									<Badge
-										color="secondary"
-										variant="outline"
-										className={styles.contextTagCategory}
-									>
+									<Badge color="secondary" variant="outlined">
 										{category}
 									</Badge>
 									<span className={styles.contextTagLabel}>{label}</span>
@@ -935,13 +934,14 @@ export default function ChatInput({
 								{onDismissAutoContext && (
 									<Button
 										variant="link"
-										size="icon"
+										size="sm"
+										icon
 										color="secondary"
-										className={styles.contextTagRemove}
 										onClick={(): void => onDismissAutoContext(key)}
 										aria-label={`Remove ${category}: ${label} context`}
-										prefix={<X size={10} />}
-									></Button>
+									>
+										<X size={10} />
+									</Button>
 								)}
 							</div>
 						);
@@ -952,26 +952,23 @@ export default function ChatInput({
 							className={styles.contextTag}
 						>
 							<div className={styles.contextTagContent}>
-								<Badge
-									color="primary"
-									variant="outline"
-									className={styles.contextTagCategory}
-								>
+								<Badge color="primary" variant="outlined">
 									{contextItem.category}
 								</Badge>
 								<span className={styles.contextTagLabel}>{contextItem.value}</span>
 							</div>
 							<Button
 								variant="link"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
-								className={styles.contextTagRemove}
 								onClick={(): void =>
 									removeContext(contextItem.category, contextItem.entityId)
 								}
 								aria-label={`Remove ${contextItem.category}: ${contextItem.value} context`}
-								prefix={<X size={10} />}
-							></Button>
+							>
+								<X size={10} />
+							</Button>
 						</div>
 					))}
 				</div>
@@ -1020,6 +1017,7 @@ export default function ChatInput({
 					>
 						<PopoverTrigger asChild>
 							<Button
+								disabledTooltip={disabledTooltip}
 								variant="solid"
 								color="secondary"
 								size="sm"
@@ -1059,7 +1057,6 @@ export default function ChatInput({
 												variant="ghost"
 												color="secondary"
 												size="sm"
-												role="tab"
 												id={`ai-context-tab-${category}`}
 												// Single stable panel id shared by every tab: only the
 												// active category's tabpanel is rendered, so per-category
@@ -1072,9 +1069,7 @@ export default function ChatInput({
 												// the Tab sequence; arrow keys move between tabs.
 												tabIndex={isActive ? 0 : -1}
 												aria-selected={isActive}
-												className={cx(styles.contextPopoverCategoryItem, {
-													[styles.active]: isActive,
-												})}
+												width="100%"
 												onClick={(): void => {
 													setActiveContextCategory(category);
 													setPickerSearchQuery('');
@@ -1143,9 +1138,7 @@ export default function ChatInput({
 														color="secondary"
 														size="sm"
 														aria-pressed={isSelected}
-														className={cx(styles.contextPopoverEntityItem, {
-															[styles.selected]: isSelected,
-														})}
+														width="100%"
 														onClick={(): void =>
 															toggleContextSelection(
 																activeContextCategory,
@@ -1155,9 +1148,7 @@ export default function ChatInput({
 														}
 														onKeyDown={(e): void => handleEntityKeyDown(e, index)}
 													>
-														<span className={styles.contextPopoverEntityItemText}>
-															{option.value}
-														</span>
+														{option.value}
 													</Button>
 												);
 											})
@@ -1178,18 +1169,19 @@ export default function ChatInput({
 								aria-live="polite"
 								aria-label="Recording voice input"
 							>
-								<TooltipSimple title="Discard recording">
+								<Tooltip title="Discard recording">
 									<Button
 										type="button"
 										variant="ghost"
-										size="icon"
+										size="sm"
+										icon
 										color="secondary"
-										className={cx(styles.micDiscard, styles.secondary)}
 										onClick={handleDiscard}
 										aria-label="Discard recording"
-										prefix={<X size={12} />}
-									/>
-								</TooltipSimple>
+									>
+										<X size={12} />
+									</Button>
+								</Tooltip>
 								<span className={styles.micWaves} aria-hidden="true">
 									<span />
 									<span />
@@ -1200,56 +1192,65 @@ export default function ChatInput({
 									<span />
 									<span />
 								</span>
-								<TooltipSimple title="Stop and send">
+								<Tooltip title="Stop and send">
 									<Button
 										type="button"
-										variant="ghost"
-										size="icon"
-										color="destructive"
-										className={cx(styles.micStop, styles.destructive)}
+										variant="solid"
+										size="sm"
+										icon
+										color="danger"
 										onClick={handleStopAndSend}
 										aria-label="Stop and send"
-										prefix={<Square size={9} fill="currentColor" strokeWidth={0} />}
-									/>
-								</TooltipSimple>
+									>
+										<Square size={9} fill="currentColor" strokeWidth={0} />
+									</Button>
+								</Tooltip>
 							</div>
 						) : (
-							<TooltipSimple title="Voice input">
+							<Tooltip title="Voice input">
 								<Button
+									disabledTooltip={disabledTooltip}
+									color="secondary"
 									variant="ghost"
-									size="icon"
+									size="sm"
+									icon
 									onClick={(): void => startVoiceInput(VoiceInputSource.Button)}
 									disabled={disabled}
 									aria-label="Start voice input"
-									className={styles.micBtn}
-									prefix={<Mic size={14} />}
-								/>
-							</TooltipSimple>
+								>
+									<Mic size={14} />
+								</Button>
+							</Tooltip>
 						))}
 
 					{isStreaming && onCancel ? (
-						<TooltipSimple title="Stop generating">
+						<Tooltip title="Stop generating">
 							<Button
 								variant="solid"
-								size="icon"
-								color="destructive"
+								size="sm"
+								icon
+								color="danger"
 								onClick={onCancel}
 								aria-label="Stop generating"
-								prefix={<Square size={10} fill="currentColor" strokeWidth={0} />}
-							/>
-						</TooltipSimple>
+							>
+								<Square size={10} fill="currentColor" strokeWidth={0} />
+							</Button>
+						</Tooltip>
 					) : (
-						<TooltipSimple title="Send message">
+						<Tooltip title="Send message">
 							<Button
+								disabledTooltip={disabled ? disabledTooltip : 'Type a message first'}
 								variant="solid"
-								size="icon"
+								size="sm"
+								icon
 								color="primary"
 								onClick={isListening ? handleStopAndSend : handleSend}
 								disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
 								aria-label="Send message"
-								prefix={<Send size={14} />}
-							/>
-						</TooltipSimple>
+							>
+								<Send size={14} />
+							</Button>
+						</Tooltip>
 					)}
 				</div>
 			</div>

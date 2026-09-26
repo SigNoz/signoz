@@ -4,7 +4,7 @@ import { useCopyToClipboard } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Drawer, Tooltip } from 'antd';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
@@ -108,7 +108,8 @@ function LogDetailInner({
 				target.closest('.cm-tooltip-autocomplete') ||
 				target.closest('.drawer-popover') ||
 				target.closest('.query-status-popover') ||
-				target.closest('[data-radix-popper-content-wrapper]')
+				target.closest('[data-radix-popper-content-wrapper]') ||
+				target.closest('[data-base-ui-portal]')
 			) {
 				return;
 			}
@@ -323,41 +324,49 @@ function LogDetailInner({
 						<div className="log-detail-drawer__title-right">
 							<div className="log-arrows">
 								<Tooltip
-									title={isPrevDisabled ? '' : 'Move to previous log'}
+									title={isPrevDisabled ? undefined : 'Move to previous log'}
 									placement="top"
 									mouseLeaveDelay={0}
 								>
 									<Button
+										disabledTooltip="No previous log"
+										size="md"
 										variant="outlined"
 										color="secondary"
-										prefix={<ChevronUp size={14} />}
-										className="log-arrow-btn log-arrow-btn-up"
+										icon
+										aria-label="Move to previous log"
 										disabled={isPrevDisabled}
 										onClick={goToPrev}
-									/>
+									>
+										<ChevronUp size={14} />
+									</Button>
 								</Tooltip>
 								<Tooltip
-									title={isNextDisabled ? '' : 'Move to next log'}
+									title={isNextDisabled ? undefined : 'Move to next log'}
 									placement="top"
 									mouseLeaveDelay={0}
 								>
 									<Button
+										disabledTooltip="No next log"
+										size="md"
 										variant="outlined"
 										color="secondary"
-										prefix={<ChevronDown size={14} />}
-										className="log-arrow-btn log-arrow-btn-down"
+										icon
+										aria-label="Move to next log"
 										disabled={isNextDisabled}
 										onClick={goToNext}
-									/>
+									>
+										<ChevronDown size={14} />
+									</Button>
 								</Tooltip>
 							</div>
 							{handleOpenInExplorer && (
 								<div>
 									<Button
+										size="md"
 										variant="outlined"
 										color="secondary"
 										prefix={<Compass size={16} />}
-										className="open-in-explorer-btn"
 										onClick={handleOpenInExplorer}
 									>
 										Open in Explorer
@@ -410,9 +419,12 @@ function LogDetailInner({
 				{isLogDetailsV2 && <div className="log-detail-drawer__section-divider" />}
 
 				<div className="tabs-and-search">
-					<ToggleGroupSimple
+					<ToggleGroup
+						variant="outlined"
+						color="secondary"
+						size="sm"
 						type="single"
-						className="views-tabs"
+						testId="log-detail-views-tabs"
 						onChange={handleModeChange}
 						value={selectedView}
 						items={[
@@ -473,9 +485,12 @@ function LogDetailInner({
 									variant="link"
 									color="secondary"
 									size="sm"
-									prefix={<Filter size="lg" />}
+									icon
+									aria-label="Show Filters"
 									onClick={handleFilterVisible}
-								/>
+								>
+									<Filter size="lg" />
+								</Button>
 							</Tooltip>
 						)}
 
@@ -493,9 +508,14 @@ function LogDetailInner({
 									variant="link"
 									color="secondary"
 									size="sm"
-									prefix={<Copy size={12} />}
+									icon
+									aria-label={
+										selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'
+									}
 									onClick={selectedView === VIEW_TYPES.JSON ? handleJSONCopy : onLogCopy}
-								/>
+								>
+									<Copy size={12} />
+								</Button>
 							</Tooltip>
 						)}
 					</div>

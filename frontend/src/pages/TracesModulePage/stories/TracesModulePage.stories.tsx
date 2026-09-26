@@ -1,4 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import {
+	findSuggestion,
+	openKeySuggestions,
+	showFilterErrors,
+	typeFilter,
+} from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/querySearch.play';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { expect, screen, userEvent, waitFor } from 'storybook/test';
 
@@ -41,7 +47,7 @@ const openQuickFiltersSettings = async (): Promise<void> => {
 	const control = await waitFor(() => {
 		const settings = screen.getByTestId('settings-icon-container');
 
-		expect(settings).toBeEnabled();
+		expect(settings).not.toHaveAttribute('aria-disabled', 'true');
 
 		return settings;
 	}, untilLoaded);
@@ -141,4 +147,42 @@ export const QuickFiltersSettingsDirty: Story = {
 export const QuickFiltersSettingsWithBanner: Story = {
 	args: { banner: 'trial-expiry' },
 	play: dirtyQuickFiltersSettings,
+};
+
+/** The filter focused before anything is typed: span and resource keys together. */
+export const FilterKeySuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openKeySuggestions(canvasElement, 'status_code_string');
+	},
+};
+
+/** A context prefix: only the keys that live on the resource. */
+export const FilterResourceKeys: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'resource.');
+		await findSuggestion(canvasElement, 'resource.service.name');
+	},
+};
+
+/** A key and an operator: the services the spans came from. */
+export const FilterValueSuggestions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'service.name = ');
+		await findSuggestion(canvasElement, 'checkout');
+	},
+};
+
+/** A boolean key offers its two values. */
+export const FilterBooleanValues: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'has_error = ');
+		await findSuggestion(canvasElement, 'false');
+	},
+};
+
+/** A dangling conjunction after focus left: the marker and its errors. */
+export const FilterSyntaxError: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await showFilterErrors(canvasElement, 'has_error = true AND');
+	},
 };

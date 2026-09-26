@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Button, Popover, Tooltip } from 'antd';
-import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -68,10 +68,15 @@ export default function DownloadOptionsMenu({
 			>
 				<div className="export-format">
 					<Typography.Text className="title">FORMAT</Typography.Text>
-					<RadioGroup value={exportFormat} onChange={setExportFormat}>
-						<RadioGroupItem value={DownloadFormats.CSV}>csv</RadioGroupItem>
-						<RadioGroupItem value={DownloadFormats.JSONL}>jsonl</RadioGroupItem>
-					</RadioGroup>
+					<RadioGroup
+						color="primary"
+						value={exportFormat}
+						onChange={setExportFormat}
+						items={[
+							{ value: DownloadFormats.CSV, label: 'csv' },
+							{ value: DownloadFormats.JSONL, label: 'jsonl' },
+						]}
+					/>
 				</div>
 
 				<div className="horizontal-line" />
@@ -79,19 +84,15 @@ export default function DownloadOptionsMenu({
 				<div className="row-limit">
 					<Typography.Text className="title">Number of Rows</Typography.Text>
 					<RadioGroup
+						color="primary"
 						value={String(rowLimit)}
 						onChange={(value): void => setRowLimit(Number(value))}
-					>
-						<RadioGroupItem value={String(DownloadRowCounts.TEN_K)}>
-							10k
-						</RadioGroupItem>
-						<RadioGroupItem value={String(DownloadRowCounts.THIRTY_K)}>
-							30k
-						</RadioGroupItem>
-						<RadioGroupItem value={String(DownloadRowCounts.FIFTY_K)}>
-							50k
-						</RadioGroupItem>
-					</RadioGroup>
+						items={[
+							{ value: String(DownloadRowCounts.TEN_K), label: '10k' },
+							{ value: String(DownloadRowCounts.THIRTY_K), label: '30k' },
+							{ value: String(DownloadRowCounts.FIFTY_K), label: '50k' },
+						]}
+					/>
 				</div>
 
 				{dataSource !== DataSource.TRACES && (
@@ -100,12 +101,15 @@ export default function DownloadOptionsMenu({
 
 						<div className="columns-scope">
 							<Typography.Text className="title">Columns</Typography.Text>
-							<RadioGroup value={columnsScope} onChange={setColumnsScope}>
-								<RadioGroupItem value={DownloadColumnsScopes.ALL}>All</RadioGroupItem>
-								<RadioGroupItem value={DownloadColumnsScopes.SELECTED}>
-									Selected
-								</RadioGroupItem>
-							</RadioGroup>
+							<RadioGroup
+								color="primary"
+								value={columnsScope}
+								onChange={setColumnsScope}
+								items={[
+									{ value: DownloadColumnsScopes.ALL, label: 'All' },
+									{ value: DownloadColumnsScopes.SELECTED, label: 'Selected' },
+								]}
+							/>
 						</div>
 					</>
 				)}

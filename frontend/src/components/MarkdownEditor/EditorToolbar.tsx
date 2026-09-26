@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import {
 	Bold,
 	CodeXml,
@@ -11,16 +11,17 @@ import {
 	Type,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
+import { READ_ONLY_TOOLTIP } from './constants';
 import InsertVariableMenu from './InsertVariableMenu';
 import MarkdownHelp from './MarkdownHelp';
 import type { EditorCommand, EditorVariable } from './types';
 
 import styles from './MarkdownEditor.module.scss';
 
-const COMMAND_ICONS: Record<string, ReactNode> = {
+const COMMAND_ICONS: Record<string, ReactElement> = {
 	heading: <Heading size={14} />,
 	bold: <Bold size={14} />,
 	italic: <Italic size={14} />,
@@ -61,20 +62,22 @@ function EditorToolbar({
 			<span className={styles.toolbarDivider} />
 			<div className={styles.commands}>
 				{commands.map((command) => (
-					<TooltipSimple key={command.id} title={command.label}>
+					<Tooltip key={command.id} title={disabled ? undefined : command.label}>
 						<Button
+							disabledTooltip={READ_ONLY_TOOLTIP}
 							type="button"
 							variant="ghost"
 							color="secondary"
-							size="icon"
+							size="sm"
+							icon
 							disabled={disabled}
 							aria-label={command.label}
-							data-testid={`markdown-command-${command.id}`}
+							testId={`markdown-command-${command.id}`}
 							onClick={(): void => onRunCommand(command)}
 						>
 							{COMMAND_ICONS[command.id]}
 						</Button>
-					</TooltipSimple>
+					</Tooltip>
 				))}
 			</div>
 			<div className={styles.toolbarEnd}>

@@ -10,7 +10,7 @@ import { Key, LayoutGrid, Plus, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { toast } from '@signozhq/ui/sonner';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -375,11 +375,11 @@ function ServiceAccountDrawer({
 			activeTab === ServiceAccountDrawerTab.Overview && !isDeleted && open ? (
 				<div className="sa-drawer__footer">
 					<AuthZButton
+						size="md"
 						checks={[buildSADeletePermission(selectedAccountId ?? '')]}
 						authZEnabled={!!selectedAccountId}
-						withPortal={false}
 						variant="link"
-						color="destructive"
+						color="danger"
 						onClick={(): void => {
 							void setIsDeleteOpen(true);
 						}}
@@ -388,17 +388,22 @@ function ServiceAccountDrawer({
 						Delete Service Account
 					</AuthZButton>
 					<div className="sa-drawer__footer-right">
-						<Button variant="outlined" color="secondary" onClick={handleClose}>
-							<X size={14} />
+						<Button
+							size="md"
+							variant="outlined"
+							color="secondary"
+							onClick={handleClose}
+							prefix={<X size={14} />}
+						>
 							Cancel
 						</Button>
 						<AuthZButton
+							size="md"
 							checks={[
 								buildSAReadPermission(selectedAccountId ?? ''),
 								buildSAUpdatePermission(selectedAccountId ?? ''),
 							]}
 							authZEnabled={!!selectedAccountId}
-							withPortal={false}
 							variant="solid"
 							color="primary"
 							loading={isSaving}
@@ -426,7 +431,9 @@ function ServiceAccountDrawer({
 	const body = (
 		<div className="sa-drawer__layout">
 			<div className="sa-drawer__tabs">
-				<ToggleGroupSimple
+				<ToggleGroup
+					variant="outlined"
+					color="secondary"
 					type="single"
 					value={activeTab}
 					size="sm"
@@ -439,7 +446,6 @@ function ServiceAccountDrawer({
 							}
 						}
 					}}
-					className="sa-drawer__tab-group"
 					items={[
 						{
 							value: ServiceAccountDrawerTab.Overview,
@@ -471,7 +477,6 @@ function ServiceAccountDrawer({
 							buildSAAttachPermission(selectedAccountId ?? ''),
 						]}
 						authZEnabled={!isDeleted && !!selectedAccountId}
-						withPortal={false}
 						variant="outlined"
 						size="sm"
 						color="secondary"

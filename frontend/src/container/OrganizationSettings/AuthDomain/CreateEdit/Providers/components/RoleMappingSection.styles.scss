@@ -167,56 +167,6 @@
 		}
 	}
 
-	&__remove-btn {
-		flex-shrink: 0;
-		width: 32px !important;
-		height: 32px !important;
-		min-width: 32px !important;
-		padding: 0 !important;
-		border: none !important;
-		border-radius: 2px !important;
-		background: transparent !important;
-		color: var(--destructive) !important;
-		opacity: 0.6 !important;
-		cursor: pointer;
-		transition:
-			background-color 0.2s,
-			opacity 0.2s;
-		box-shadow: none !important;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-
-		svg {
-			color: var(--destructive) !important;
-			width: 12px !important;
-			height: 12px !important;
-		}
-
-		&:hover {
-			background: color-mix(
-				in srgb,
-				var(--danger-background) 10%,
-				transparent
-			) !important;
-			opacity: 0.9 !important;
-			color: var(--destructive) !important;
-
-			svg {
-				color: var(--destructive) !important;
-			}
-		}
-
-		&:active {
-			opacity: 0.7 !important;
-			background: color-mix(
-				in srgb,
-				var(--danger-background) 15%,
-				transparent
-			) !important;
-		}
-	}
-
 	&__add-btn {
 		width: 100%;
 

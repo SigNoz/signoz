@@ -33,27 +33,28 @@ export function GroupTagsCell({
 	return (
 		<div className={styles.groupCell}>
 			<Button
+				aria-label={localIsExpanded ? 'Collapse' : 'Expand'}
 				variant="ghost"
 				color="secondary"
-				size="icon"
+				size="sm"
+				icon
 				onClick={(e): void => {
 					e.stopPropagation();
 					setLocalIsExpanded((v) => !v);
 					toggleExpanded();
 				}}
-				prefix={
-					localIsExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-				}
 				testId="group-expand-toggle"
-			/>
+			>
+				{localIsExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+			</Button>
 			<div className={styles.tagsContainer}>
 				{tags.map((tag) => (
-					<Badge color="error" key={tag} variant="outline">
+					<Badge color="danger" key={tag} variant="outlined">
 						{tag}
 					</Badge>
 				))}
 				{tags.length === 0 ? (
-					<Badge color="secondary" variant="outline">
+					<Badge color="secondary" variant="outlined">
 						{'<no-value>'}
 					</Badge>
 				) : null}

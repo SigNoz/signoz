@@ -27,6 +27,7 @@ function DiscardChangesDialog({
 			footer={
 				<>
 					<Button
+						size="md"
 						variant="solid"
 						color="secondary"
 						onClick={onCancel}
@@ -36,8 +37,9 @@ function DiscardChangesDialog({
 						Keep editing
 					</Button>
 					<Button
+						size="md"
 						variant="solid"
-						color="destructive"
+						color="danger"
 						onClick={onConfirm}
 						prefix={<Trash2 size={12} />}
 						testId="discard-changes-confirm-btn"

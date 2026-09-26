@@ -41,21 +41,26 @@ export function RevokeKeyFooter({
 }: RevokeKeyFooterProps): JSX.Element {
 	return (
 		<>
-			<Button variant="solid" color="secondary" onClick={onCancel}>
-				<X size={12} />
+			<Button
+				size="md"
+				variant="solid"
+				color="secondary"
+				onClick={onCancel}
+				prefix={<X size={12} />}
+			>
 				Cancel
 			</Button>
 			<AuthZButton
+				size="md"
 				checks={[
 					buildAPIKeyDeletePermission(keyId ?? ''),
 					buildSADetachPermission(accountId ?? ''),
 				]}
 				authZEnabled={!!accountId && !!keyId}
 				variant="solid"
-				color="destructive"
+				color="danger"
 				loading={isRevoking}
 				onClick={onConfirm}
-				withPortal={false}
 			>
 				<Trash2 size={12} />
 				Revoke Key

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import Noz from 'components/Noz/Noz';
 import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
@@ -30,17 +30,19 @@ export default function NozButton(): JSX.Element | null {
 	}
 
 	return (
-		<TooltipSimple title={NOZ_TOOLTIP_TITLE}>
-			<Button
-				variant="ghost"
-				size="icon"
-				color="secondary"
-				className="noz-wave"
-				aria-label="Open Noz"
-				onClick={handleOpenNoz}
-			>
-				<Noz size={16} />
-			</Button>
-		</TooltipSimple>
+		<span className="noz-wave">
+			<Tooltip title={NOZ_TOOLTIP_TITLE}>
+				<Button
+					variant="ghost"
+					size="sm"
+					icon
+					color="secondary"
+					aria-label="Open Noz"
+					onClick={handleOpenNoz}
+				>
+					<Noz size={16} />
+				</Button>
+			</Tooltip>
+		</span>
 	);
 }

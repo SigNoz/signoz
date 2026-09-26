@@ -83,6 +83,11 @@
 	display: flex;
 	align-items: center;
 	gap: 2px;
+
+	> [data-slot='button'][aria-pressed='true'] {
+		--button-variant-ghost-background-color: var(--l2-background);
+		--button-variant-ghost-color: var(--accent-primary);
+	}
 }
 
 .body {
@@ -90,9 +95,4 @@
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
-}
-
-.toggleBtnActive {
-	background: var(--l2-background) !important;
-	color: var(--accent-primary) !important;
 }

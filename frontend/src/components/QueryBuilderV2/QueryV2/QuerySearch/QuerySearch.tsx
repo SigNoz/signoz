@@ -724,26 +724,62 @@ function QuerySearch({
 	// Helper function to render a badge for the current context mode
 	const renderContextBadge = (): JSX.Element => {
 		if (!editingMode) {
-			return <Badge color="vanilla">Unknown</Badge>;
+			return (
+				<Badge variant="solid" color="secondary">
+					Unknown
+				</Badge>
+			);
 		}
 
 		switch (editingMode) {
 			case 'key':
-				return <Badge color="robin">Key</Badge>;
+				return (
+					<Badge variant="solid" color="primary">
+						Key
+					</Badge>
+				);
 			case 'operator':
-				return <Badge color="sakura">Operator</Badge>;
+				return (
+					<Badge variant="solid" color="highlight-danger">
+						Operator
+					</Badge>
+				);
 			case 'value':
-				return <Badge color="forest">Value</Badge>;
+				return (
+					<Badge variant="solid" color="success">
+						Value
+					</Badge>
+				);
 			case 'conjunction':
-				return <Badge color="amber">Conjunction</Badge>;
+				return (
+					<Badge variant="solid" color="warning">
+						Conjunction
+					</Badge>
+				);
 			case 'function':
-				return <Badge color="aqua">Function</Badge>;
+				return (
+					<Badge variant="solid" color="info">
+						Function
+					</Badge>
+				);
 			case 'parenthesis':
-				return <Badge color="sakura">Parenthesis</Badge>;
+				return (
+					<Badge variant="solid" color="highlight-danger">
+						Parenthesis
+					</Badge>
+				);
 			case 'bracketList':
-				return <Badge color="cherry">Bracket List</Badge>;
+				return (
+					<Badge variant="solid" color="danger">
+						Bracket List
+					</Badge>
+				);
 			default:
-				return <Badge color="vanilla">Unknown</Badge>;
+				return (
+					<Badge variant="solid" color="secondary">
+						Unknown
+					</Badge>
+				);
 		}
 	};
 
@@ -1465,27 +1501,44 @@ function QuerySearch({
 					Currently editing: {renderContextBadge()}
 					{queryContext?.keyToken && (
 						<span className="triplet-info">
-							Key: <Badge color="vanilla">{queryContext.keyToken}</Badge>
+							Key:{' '}
+							<Badge variant="solid" color="secondary">
+								{queryContext.keyToken}
+							</Badge>
 						</span>
 					)}
 					{queryContext?.operatorToken && (
 						<span className="triplet-info">
-							Operator: <Badge color="vanilla">{queryContext.operatorToken}</Badge>
+							Operator:{' '}
+							<Badge variant="solid" color="secondary">
+								{queryContext.operatorToken}
+							</Badge>
 						</span>
 					)}
 					{queryContext?.valueToken && (
 						<span className="triplet-info">
-							Value: <Badge color="vanilla">{queryContext.valueToken}</Badge>
+							Value:{' '}
+							<Badge variant="solid" color="secondary">
+								{queryContext.valueToken}
+							</Badge>
 						</span>
 					)}
 					{queryContext?.currentPair && (
 						<span className="triplet-info query-pair-info">
-							Current pair: <Badge color="robin">{queryContext.currentPair.key}</Badge>
-							<Badge color="sakura">{queryContext.currentPair.operator}</Badge>
+							Current pair:{' '}
+							<Badge variant="solid" color="primary">
+								{queryContext.currentPair.key}
+							</Badge>
+							<Badge variant="solid" color="highlight-danger">
+								{queryContext.currentPair.operator}
+							</Badge>
 							{queryContext.currentPair.value && (
-								<Badge color="forest">{queryContext.currentPair.value}</Badge>
+								<Badge variant="solid" color="success">
+									{queryContext.currentPair.value}
+								</Badge>
 							)}
 							<Badge
+								variant="solid"
 								color={queryContext.currentPair.isComplete ? 'success' : 'warning'}
 							>
 								{queryContext.currentPair.isComplete ? 'Complete' : 'Incomplete'}
@@ -1495,7 +1548,9 @@ function QuerySearch({
 					{queryContext?.queryPairs && queryContext.queryPairs.length > 0 && (
 						<span className="triplet-info">
 							Total pairs:{' '}
-							<Badge color="robin">{queryContext.queryPairs.length}</Badge>
+							<Badge variant="solid" color="primary">
+								{queryContext.queryPairs.length}
+							</Badge>
 						</span>
 					)}
 				</div>

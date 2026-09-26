@@ -13,7 +13,6 @@ interface CheckBoxProps {
 		checked: boolean | 'indeterminate',
 		index: number,
 	) => void;
-	disabled?: boolean;
 }
 
 function CustomCheckBox({
@@ -21,7 +20,6 @@ function CustomCheckBox({
 	index,
 	graphVisibilityState = [],
 	checkBoxOnChangeHandler,
-	disabled = false,
 }: CheckBoxProps): JSX.Element {
 	const color = data[index]?.stroke?.toString() || grey[0];
 	const isChecked = graphVisibilityState[index] || false;
@@ -33,9 +31,9 @@ function CustomCheckBox({
 	return (
 		<span className={styles.wrapper} style={colorStyle}>
 			<Checkbox
+				color="primary"
 				onChange={(checked): void => checkBoxOnChangeHandler(checked, index)}
 				value={isChecked}
-				disabled={disabled}
 			/>
 		</span>
 	);

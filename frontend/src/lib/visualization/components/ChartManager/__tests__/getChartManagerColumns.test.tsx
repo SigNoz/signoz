@@ -162,6 +162,6 @@ describe('getChartManagerColumns', () => {
 
 		const checkbox = container.querySelector('[role="checkbox"]');
 		expect(checkbox).toBeInTheDocument();
-		expect(checkbox).toHaveAttribute('data-state', 'checked'); // graphVisibilityState[1] is true
+		expect(checkbox).toHaveAttribute('data-checked'); // graphVisibilityState[1] is true
 	});
 });

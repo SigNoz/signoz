@@ -123,7 +123,7 @@ export const getListColumns = (
 					) {
 						return (
 							<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-								<Badge data-testid={name} color="sakura" variant="outline">
+								<Badge testId={name} color="highlight-danger" variant="outlined">
 									{value}
 								</Badge>
 							</BlockLink>

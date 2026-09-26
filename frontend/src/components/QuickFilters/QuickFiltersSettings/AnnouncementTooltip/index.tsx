@@ -61,11 +61,11 @@ function AnnouncementTooltip({
 				<p className="announcement-tooltip__message">{message}</p>
 				<div className="announcement-tooltip__footer">
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
 						onClick={closeTooltip}
 						prefix={<Check size={16} />}
-						className="announcement-tooltip__footer__button"
 					>
 						Okay
 					</Button>

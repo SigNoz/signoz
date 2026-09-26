@@ -36,51 +36,6 @@
 	align-items: center;
 	gap: 16px;
 
-	.add-ons-tabs {
-		display: flex;
-		flex-wrap: wrap;
-
-		.add-on-tab-title {
-			display: flex;
-			gap: var(--margin-2);
-			align-items: center;
-			justify-content: center;
-			font-size: var(--font-size-xs);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-
-			color: var(--query-builder-v2-color, var(--l2-foreground));
-		}
-
-		> button {
-			border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
-			border-left: none;
-			min-width: 120px;
-			height: 36px;
-			line-height: 36px;
-
-			&:first-child {
-				border-left: 1px solid
-					var(--query-builder-v2-border-color, var(--l2-border));
-			}
-
-			&::before {
-				background: var(--query-builder-v2-border-color, var(--l2-border));
-			}
-
-			&[data-state='on'] {
-				color: var(--text-robin-500);
-				border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
-
-				display: none;
-
-				&::before {
-					background: var(--query-builder-v2-border-color, var(--l2-border));
-				}
-			}
-		}
-	}
-
 	.compass-button {
 		width: 30px;
 		height: 30px;

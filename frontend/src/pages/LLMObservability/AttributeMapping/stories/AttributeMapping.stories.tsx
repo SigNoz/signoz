@@ -69,3 +69,12 @@ export const GroupActionsMenu: Story = {
 		await screen.findByRole('menu');
 	},
 };
+
+/** The first mapping group's edit drawer, opened from its menu. */
+export const GroupFormDrawer: Story = {
+	play: async (context): Promise<void> => {
+		await GroupActionsMenu.play?.(context);
+		await userEvent.click(await screen.findByText('Edit'));
+		await screen.findByText('Edit group');
+	},
+};

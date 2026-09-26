@@ -1,4 +1,4 @@
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 
 import { SegmentIcon, type SegmentIconName } from '../segmentIcons';
 
@@ -30,10 +30,13 @@ function ConfigSegmented<T extends string = string>({
 	onChange,
 }: ConfigSegmentedProps<T>): JSX.Element {
 	return (
-		<ToggleGroupSimple
+		<ToggleGroup
+			variant="outlined"
+			color="secondary"
+			size="sm"
 			type="single"
 			testId={testId}
-			className={styles.group}
+			width="100%"
 			value={value}
 			items={items.map((item) => ({
 				value: item.value,
@@ -47,9 +50,9 @@ function ConfigSegmented<T extends string = string>({
 			}))}
 			// Single toggle-groups emit '' when the active segment is re-clicked; ignore that
 			// so a required choice (e.g. scale, position) can't be cleared to an empty value.
-			onChange={(next: T): void => {
+			onChange={(next: string): void => {
 				if (next) {
-					onChange(next);
+					onChange(next as T);
 				}
 			}}
 		/>

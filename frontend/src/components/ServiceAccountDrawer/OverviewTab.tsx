@@ -122,11 +122,13 @@ function OverviewTab({
 					<span className="sa-drawer__input-text">{account.id || '—'}</span>
 					{account.id && (
 						<Button
+							size="md"
 							variant="link"
 							color="secondary"
 							onClick={handleCopyId}
-							className="sa-drawer__copy-btn"
-							data-testid="copy-id-btn"
+							testId="copy-id-btn"
+							icon
+							aria-label={hasCopiedId ? 'Copied' : 'Copy ID'}
 						>
 							{hasCopiedId ? <Check size={14} /> : <Copy size={14} />}
 						</Button>
@@ -156,7 +158,7 @@ function OverviewTab({
 								localRoles.map((roleId) => {
 									const role = availableRoles.find((r) => r.id === roleId);
 									return (
-										<Badge key={roleId} color="vanilla">
+										<Badge variant="solid" key={roleId} color="secondary">
 											{role?.name ?? roleId}
 										</Badge>
 									);
@@ -187,15 +189,15 @@ function OverviewTab({
 				<div className="sa-drawer__meta-item">
 					<span className="sa-drawer__meta-label">Status</span>
 					{account.status?.toUpperCase() === 'ACTIVE' ? (
-						<Badge color="forest" variant="outline">
+						<Badge color="success" variant="outlined">
 							ACTIVE
 						</Badge>
 					) : account.status?.toUpperCase() === 'DELETED' ? (
-						<Badge color="cherry" variant="outline">
+						<Badge color="danger" variant="outlined">
 							DELETED
 						</Badge>
 					) : (
-						<Badge color="vanilla" variant="outline" className="sa-status-badge">
+						<Badge color="secondary" variant="outlined">
 							{account.status ? account.status.toUpperCase() : 'UNKNOWN'}
 						</Badge>
 					)}
@@ -203,12 +205,16 @@ function OverviewTab({
 
 				<div className="sa-drawer__meta-item">
 					<span className="sa-drawer__meta-label">Created At</span>
-					<Badge color="vanilla">{formatTimestamp(account.createdAt)}</Badge>
+					<Badge variant="solid" color="secondary">
+						{formatTimestamp(account.createdAt)}
+					</Badge>
 				</div>
 
 				<div className="sa-drawer__meta-item">
 					<span className="sa-drawer__meta-label">Updated At</span>
-					<Badge color="vanilla">{formatTimestamp(account.updatedAt)}</Badge>
+					<Badge variant="solid" color="secondary">
+						{formatTimestamp(account.updatedAt)}
+					</Badge>
 				</div>
 			</div>
 

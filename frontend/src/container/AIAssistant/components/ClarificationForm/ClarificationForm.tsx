@@ -140,6 +140,12 @@ export default function ClarificationForm({
 
 			<div className={styles.actions}>
 				<Button
+					disabledTooltip={
+						isStreaming
+							? 'Wait for the response to finish'
+							: 'Fill in the required fields first'
+					}
+					size="md"
 					variant="solid"
 					color="primary"
 					onClick={handleSubmit}
@@ -149,6 +155,8 @@ export default function ClarificationForm({
 					Submit
 				</Button>
 				<Button
+					disabledTooltip="Wait for the response to finish"
+					size="md"
 					variant="outlined"
 					color="secondary"
 					onClick={handleCancel}
@@ -310,7 +318,7 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 		return (
 			<div className={styles.field}>
 				<Checkbox
-					className={styles.checkboxLabel}
+					color="primary"
 					value={checked}
 					onChange={(): void => onChange(!checked)}
 				>
@@ -382,8 +390,8 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 				<div className={styles.checkboxGroup}>
 					{options?.map((opt) => (
 						<Checkbox
+							color="primary"
 							key={opt}
-							className={styles.checkboxLabel}
 							value={regularSelected.includes(opt)}
 							onChange={(): void => toggleRegular(opt)}
 						>
@@ -391,11 +399,7 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 						</Checkbox>
 					))}
 					{allowCustom && (
-						<Checkbox
-							className={styles.checkboxLabel}
-							value={isCustom}
-							onChange={toggleCustom}
-						>
+						<Checkbox color="primary" value={isCustom} onChange={toggleCustom}>
 							{CUSTOM_OPTION_LABEL}
 						</Checkbox>
 					)}

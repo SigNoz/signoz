@@ -1,8 +1,8 @@
-import { useCallback, useMemo } from 'react';
+import { type ReactElement, useCallback, useMemo } from 'react';
 import { JSONTree, KeyPath } from 'react-json-tree';
 import { useCopyToClipboard } from 'react-use';
 import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
-import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownActionItemType } from '@signozhq/ui/dropdown';
 import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -26,18 +26,10 @@ export interface FieldContext {
 	isNested: boolean;
 }
 
-interface MenuItem {
-	key: string;
-	label: React.ReactNode;
-	icon?: React.ReactNode;
-	disabled?: boolean;
-	onClick: () => void;
-}
-
 export interface PrettyViewAction {
 	key: string;
 	label: React.ReactNode;
-	icon?: React.ReactNode;
+	icon?: ReactElement;
 	onClick: (context: FieldContext) => void;
 	/**
 	 * If provided, action is hidden when this returns true. Receives the leaf
@@ -140,15 +132,16 @@ function PrettyView({
 	);
 
 	const buildMenuItems = useCallback(
-		(context: FieldContext): MenuItem[] => {
-			const items: MenuItem[] = [];
+		(context: FieldContext): DropdownActionItemType[] => {
+			const items: DropdownActionItemType[] = [];
 
 			// Copy Value action
 			if (isActionVisible('copy', context.isNested)) {
 				items.push({
-					key: 'copy-value',
+					type: 'item',
+					value: 'copy-value',
 					label: 'Copy Value',
-					icon: <Copy size={12} />,
+					prefix: <Copy size={12} />,
 					onClick: (): void => {
 						const text =
 							typeof context.fieldValue === 'object'
@@ -170,9 +163,10 @@ function PrettyView({
 				const pinned = isPinned(serialized);
 
 				items.push({
-					key: 'pin',
+					type: 'item',
+					value: 'pin',
 					label: pinned ? 'Unpin field' : 'Pin field',
-					icon: pinned ? <PinOff size={12} /> : <Pin size={12} />,
+					prefix: pinned ? <PinOff size={12} /> : <Pin size={12} />,
 					onClick: (): void => {
 						togglePin(resolvedPath);
 					},
@@ -194,9 +188,10 @@ function PrettyView({
 				);
 				visibleCustomActions.forEach((action) => {
 					items.push({
-						key: action.key,
+						type: 'item',
+						value: action.key,
 						label: action.label,
-						icon: action.icon,
+						prefix: action.icon,
 						onClick: (): void => {
 							action.onClick(context);
 						},
@@ -234,12 +229,10 @@ function PrettyView({
 				<span className="pretty-view__value-row">
 					<span>{content}</span>
 					<Dropdown
-						menu={{ items: menuItems }}
+						items={menuItems}
+						nativeButton={false}
 						align="start"
-						className="pretty-view-actions-dropdown"
-						// Stop click bubbling so item clicks don't reach clickable ancestors
-						// of the trigger through the React tree.
-						onClick={(e: React.MouseEvent): void => e.stopPropagation()}
+						side="bottom"
 					>
 						<span
 							className="pretty-view__actions"

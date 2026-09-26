@@ -16,7 +16,7 @@ import cx from 'classnames';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
-import { CalendarClock, PenLine, Trash2 } from '@signozhq/icons';
+import { CalendarClock, PenLine, Trash2, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -51,29 +51,32 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 				const tagElem = (
 					<Badge
 						key={tag.value}
-						color={index % 2 ? 'sakura' : 'robin'}
-						variant="outline"
-						className={cx(
-							{ 'red-tag': index % 2 },
-							{ 'non-closable-tag': !closable },
-						)}
-						closable={closable}
-						onClose={(e): void => {
-							e.preventDefault();
-							handleClose?.(tag?.value);
-						}}
+						color={index % 2 ? 'highlight-danger' : 'primary'}
+						variant="outlined"
+						suffix={
+							closable ? (
+								<button
+									type="button"
+									aria-label="Remove"
+									onClick={(e): void => {
+										e.preventDefault();
+										handleClose?.(tag?.value);
+									}}
+								>
+									<X size={12} />
+								</button>
+							) : undefined
+						}
 					>
 						{isLongTag
 							? `${(tag?.label as string | null)?.slice(0, 20)}...`
 							: tag?.label}
 					</Badge>
 				);
-				return isLongTag ? (
-					<Tooltip title={tag?.label} key={tag?.value}>
+				return (
+					<Tooltip title={isLongTag ? tag?.label : undefined} key={tag?.value}>
 						{tagElem}
 					</Tooltip>
-				) : (
-					tagElem
 				);
 			})}
 		</Space>
@@ -97,7 +100,9 @@ function HeaderComponent({
 		<Flex className="header-content" justify="space-between">
 			<Flex gap={8}>
 				<Typography>{name}</Typography>
-				<Badge color="vanilla">{duration}</Badge>
+				<Badge variant="solid" color="secondary">
+					{duration}
+				</Badge>
 			</Flex>
 
 			{isCrudEnabled && (
@@ -158,7 +163,11 @@ export function CollapseListContent({
 				created_by_name ? (
 					<Flex gap={8}>
 						<Typography>{created_by_name}</Typography>
-						{created_by_email && <Badge color="vanilla">{created_by_email}</Badge>}
+						{created_by_email && (
+							<Badge variant="solid" color="secondary">
+								{created_by_email}
+							</Badge>
+						)}
 					</Flex>
 				) : (
 					'-'
@@ -202,7 +211,7 @@ export function CollapseListContent({
 						selectedTags={alertOptions}
 					/>
 				) : (
-					<Badge className="all-alerts-tag" color="vanilla">
+					<Badge variant="solid" color="secondary">
 						All alert rules
 					</Badge>
 				),

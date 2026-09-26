@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
@@ -562,9 +562,11 @@ function QueryAddOns({
 				</div>
 			)}
 
-			<ToggleGroupSimple
+			<ToggleGroup
+				variant="outlined"
+				color="secondary"
+				size="sm"
 				type="multiple"
-				className="add-ons-tabs"
 				value={selectedViews.map((view) => view.key)}
 				onChange={(newKeys: string[]): void => {
 					const oldKeys: string[] = selectedViews.map((view) => view.key);

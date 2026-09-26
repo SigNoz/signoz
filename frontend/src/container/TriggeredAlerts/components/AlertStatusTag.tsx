@@ -9,25 +9,25 @@ function AlertStatusTag({ state, testId }: AlertStatusTagProps): JSX.Element {
 	switch (state) {
 		case 'unprocessed':
 			return (
-				<Badge color="success" variant="outline" testId={testId}>
+				<Badge color="success" variant="outlined" testId={testId}>
 					Unprocessed
 				</Badge>
 			);
 		case 'active':
 			return (
-				<Badge color="error" variant="outline" testId={testId}>
+				<Badge color="danger" variant="outlined" testId={testId}>
 					Firing
 				</Badge>
 			);
 		case 'suppressed':
 			return (
-				<Badge color="error" variant="outline" testId={testId}>
+				<Badge color="danger" variant="outlined" testId={testId}>
 					Suppressed
 				</Badge>
 			);
 		default:
 			return (
-				<Badge color="secondary" variant="outline" testId={testId}>
+				<Badge color="secondary" variant="outlined" testId={testId}>
 					Unknown
 				</Badge>
 			);

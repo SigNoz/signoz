@@ -159,7 +159,7 @@ export default function Dashboards({
 
 							<div className="alert-rule-item-description home-data-item-tag">
 								{dashboard.tags.map((tag) => (
-									<Badge color="sienna" variant="outline" key={tag}>
+									<Badge color="archive" variant="outlined" key={tag}>
 										{tag}
 									</Badge>
 								))}

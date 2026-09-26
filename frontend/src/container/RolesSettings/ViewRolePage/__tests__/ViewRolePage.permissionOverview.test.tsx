@@ -716,7 +716,7 @@ describe('ViewRolePage - JSON Viewer Copy Button', () => {
 		await user.click(jsonToggle);
 
 		const copyButton = screen.getByTestId('read-only-json-viewer-copy-button');
-		expect(copyButton).not.toBeDisabled();
+		expect(copyButton).not.toHaveAttribute('aria-disabled', 'true');
 		await user.click(copyButton);
 	});
 });

@@ -24,10 +24,12 @@ function KeyCreatedPhase({
 				<div className="add-key-modal__key-display">
 					<span className="add-key-modal__key-text">{createdKey.key}</span>
 					<Button
+						size="md"
 						variant="link"
 						color="secondary"
 						onClick={onCopy}
-						className="add-key-modal__copy-btn"
+						icon
+						aria-label={hasCopied ? 'Copied' : 'Copy key'}
 					>
 						{hasCopied ? <Check size={12} /> : <Copy size={12} />}
 					</Button>
@@ -36,7 +38,9 @@ function KeyCreatedPhase({
 
 			<div className="add-key-modal__expiry-meta">
 				<span className="add-key-modal__expiry-label">Expiration</span>
-				<Badge color="vanilla">{expiryLabel}</Badge>
+				<Badge variant="solid" color="secondary">
+					{expiryLabel}
+				</Badge>
 			</div>
 
 			<div className="add-key-modal__callout-wrapper">

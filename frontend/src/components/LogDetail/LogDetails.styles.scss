@@ -158,37 +158,14 @@
 		}
 	}
 
-	.views-tabs {
-		color: var(--l2-foreground);
-
-		.view-title {
-			display: flex;
-			gap: var(--margin-2);
-			align-items: center;
-			justify-content: center;
-			font-size: var(--font-size-xs);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-		}
-
-		> button {
-			border: 1px solid var(--l1-border);
-			width: 114px;
-
-			&::before {
-				background: var(--l1-border);
-			}
-
-			&[data-state='on'] {
-				background: var(--l3-background);
-				color: var(--l1-foreground);
-				border: 1px solid var(--l1-border);
-
-				&::before {
-					background: var(--l1-border);
-				}
-			}
-		}
+	.view-title {
+		display: flex;
+		gap: var(--margin-2);
+		align-items: center;
+		justify-content: center;
+		font-size: var(--font-size-xs);
+		font-style: normal;
+		font-weight: var(--font-weight-normal);
 	}
 
 	.search-input {
@@ -238,43 +215,5 @@
 		padding: 2px 6px;
 		align-items: center;
 		margin-left: 8px;
-	}
-
-	.log-arrow-btn {
-		padding: 0;
-		min-width: 28px;
-		height: 28px;
-		border-radius: 4px;
-		background: var(--l2-background);
-		color: var(--l2-foreground);
-		border: 1px solid var(--l1-border);
-		box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.08);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: background-color 0.2s ease-in-out;
-	}
-
-	.log-arrow-btn-up,
-	.log-arrow-btn-down {
-		background: var(--l2-background);
-	}
-
-	.log-arrow-btn:active,
-	.log-arrow-btn:focus {
-		background: var(--l3-background);
-		color: var(--l1-foreground);
-	}
-
-	.log-arrow-btn[disabled] {
-		opacity: 0.5;
-		cursor: not-allowed;
-		background: var(--l1-background);
-		color: var(--l3-foreground);
-
-		.log-arrow-btn:hover:not([disabled]) {
-			background: var(--l3-background);
-			color: var(--l1-foreground);
-		}
 	}
 }

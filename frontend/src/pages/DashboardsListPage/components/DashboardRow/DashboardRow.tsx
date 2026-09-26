@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { CalendarClock, LockKeyhole, Pin, PinOff } from '@signozhq/icons';
 import cx from 'classnames';
@@ -66,7 +66,7 @@ function DashboardRow({
 		DATE_TIME_FORMATS.DASH_DATETIME_UTC,
 	);
 
-	const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
+	const onClickHandler = (event: React.MouseEvent): void => {
 		// Clicks inside portaled overlays (the actions menu, edit modals) bubble here
 		// through React's tree even though they render outside the row in the DOM.
 		// Only navigate when the click actually landed inside the row.
@@ -103,12 +103,10 @@ function DashboardRow({
 	};
 
 	const pinLabel = isPinned ? 'Unpin dashboard' : 'Pin dashboard';
-	const pinTooltip = isLegacy
-		? "This dashboard isn't available in the new experience, so it can't be pinned"
-		: pinLabel;
+	const legacyPinTooltip =
+		"This dashboard isn't available in the new experience, so it can't be pinned";
 
-	// Only long titles are truncated, so only they need the full-name tooltip;
-	// wrapping conditionally avoids an empty hanging tooltip for short names.
+	// Only long titles are truncated, so only they need the full-name tooltip.
 	const titleLink = (
 		<div className={styles.titleLink} onClick={onClickHandler}>
 			<img src={image} alt="dashboard-image" className={styles.icon} />
@@ -126,23 +124,13 @@ function DashboardRow({
 			<div className={styles.row} onClick={onClickHandler}>
 				<div className={styles.titleWithAction}>
 					<div className={styles.titleBlock}>
-						{name.length > 50 ? (
-							<TooltipSimple
-								title={name}
-								side="bottom"
-								disableHoverableContent
-								tooltipContentProps={{ className: styles.nameTooltip }}
-							>
-								{titleLink}
-							</TooltipSimple>
-						) : (
-							titleLink
-						)}
+						<Tooltip title={name.length > 50 ? name : undefined} side="bottom">
+							{titleLink}
+						</Tooltip>
 						{isLegacy && (
 							<Badge
-								color="amber"
-								variant="outline"
-								className={styles.legacyBadge}
+								color="warning"
+								variant="outlined"
 								testId={`dashboard-legacy-${index}`}
 							>
 								Legacy
@@ -153,33 +141,33 @@ function DashboardRow({
 					<DashboardRowTags tags={tags} />
 
 					{isLocked && (
-						<TooltipSimple
-							title="This dashboard is locked"
-							side="top"
-							disableHoverableContent
-						>
+						<Tooltip title="This dashboard is locked" side="top">
 							<span
 								className={styles.lockIcon}
 								data-testid={`dashboard-lock-${index}`}
 							>
 								<LockKeyhole size={14} />
 							</span>
-						</TooltipSimple>
+						</Tooltip>
 					)}
 
-					<TooltipSimple title={pinTooltip} side="top" disableHoverableContent>
-						<span className={styles.pinButtonWrap}>
+					<span
+						className={cx(styles.pinButton, {
+							[styles.pinButtonOn]: isPinned && !isLegacy,
+						})}
+					>
+						<Tooltip title={isLegacy ? undefined : pinLabel} side="top">
 							<Button
+								disabledTooltip={legacyPinTooltip}
 								type="button"
 								variant="ghost"
 								color="secondary"
-								size="icon"
-								className={cx(styles.pinButton, {
-									[styles.pinButtonOn]: isPinned && !isLegacy,
-								})}
+								size="sm"
+								icon
 								aria-label={pinLabel}
-								data-testid={`dashboard-pin-${index}`}
-								disabled={isUpdating || isLegacy}
+								testId={`dashboard-pin-${index}`}
+								disabled={isLegacy}
+								loading={isUpdating}
 								onClick={onTogglePin}
 							>
 								{isPinned ? (
@@ -191,8 +179,8 @@ function DashboardRow({
 									<Pin size={14} />
 								)}
 							</Button>
-						</span>
-					</TooltipSimple>
+						</Tooltip>
+					</span>
 
 					<ActionsPopover
 						link={link}

@@ -1,10 +1,6 @@
 import { ChevronDown, ChevronUp, Info, Loader } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import {
-	TooltipContent,
-	TooltipRoot,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
@@ -49,8 +45,11 @@ function QueryResult({
 					{currentIndex + 1} / {total}
 				</Typography.Text>
 				<Button
+					aria-label="Action"
+					disabledTooltip="This is the first result"
 					variant="ghost"
-					size="icon"
+					size="sm"
+					icon
 					color="secondary"
 					disabled={currentIndex === 0}
 					onClick={onPrev}
@@ -58,8 +57,11 @@ function QueryResult({
 					<ChevronUp size={14} />
 				</Button>
 				<Button
+					aria-label="Action"
+					disabledTooltip="This is the last result"
 					variant="ghost"
-					size="icon"
+					size="sm"
+					icon
 					color="secondary"
 					disabled={currentIndex === total - 1}
 					onClick={onNext}
@@ -72,17 +74,12 @@ function QueryResult({
 		content = <Loader className="animate-spin" />;
 	} else if (error) {
 		content = (
-			<TooltipRoot>
-				<TooltipTrigger asChild>
-					<span className={cx(styles.filterStatus, styles.hasError)}>
-						<Info />
-						API error
-					</span>
-				</TooltipTrigger>
-				<TooltipContent>
-					{(error as AxiosError)?.message || 'Something went wrong'}
-				</TooltipContent>
-			</TooltipRoot>
+			<Tooltip title={(error as AxiosError)?.message || 'Something went wrong'}>
+				<span className={cx(styles.filterStatus, styles.hasError)}>
+					<Info />
+					API error
+				</span>
+			</Tooltip>
 		);
 	} else if (noData) {
 		content = (

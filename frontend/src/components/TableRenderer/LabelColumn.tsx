@@ -27,7 +27,7 @@ function LabelColumn({ labels, value }: LabelColumnProps): JSX.Element {
 							{labels.map(
 								(label: string): JSX.Element => (
 									<div key={label}>
-										<Badge className="label-column--tag" color="vanilla">
+										<Badge variant="solid" color="secondary">
 											{getLabelAndValueContent(label, value && value[label])}
 										</Badge>
 									</div>
@@ -37,7 +37,7 @@ function LabelColumn({ labels, value }: LabelColumnProps): JSX.Element {
 					}
 					trigger="hover"
 				>
-					<Badge className="label-column--tag" color="vanilla">
+					<Badge variant="solid" color="secondary">
 						+{remainingLabels.length}
 					</Badge>
 				</Popover>

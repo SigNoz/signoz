@@ -244,8 +244,8 @@ function SpanLogs({
 			</section>
 			<section className={styles.actionSection}>
 				<Button
-					className={styles.actionBtn}
-					variant="action"
+					color="primary"
+					variant="solid"
 					prefix={<Compass size={14} />}
 					onClick={handleExplorerPageRedirect}
 					size="md"

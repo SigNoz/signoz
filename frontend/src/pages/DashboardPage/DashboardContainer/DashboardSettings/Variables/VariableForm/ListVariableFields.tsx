@@ -52,9 +52,10 @@ function ListVariableFields({
 					) : (
 						previewValues.map((value, idx) => (
 							<Badge
+								variant="solid"
 								// eslint-disable-next-line react/no-array-index-key -- preview values are display-only and may contain duplicates
 								key={`${value}-${idx}`}
-								color="vanilla"
+								color="secondary"
 							>
 								{value.toString()}
 							</Badge>
@@ -85,6 +86,8 @@ function ListVariableFields({
 					Enable multiple values to be checked
 				</Typography.Text>
 				<Switch
+					color="primary"
+					textPlacement="right"
 					value={model.multiSelect}
 					onChange={(checked): void =>
 						onChange({
@@ -102,6 +105,8 @@ function ListVariableFields({
 						Include an option for ALL values
 					</Typography.Text>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						value={model.showAllOption}
 						onChange={(checked): void => onChange({ showAllOption: checked })}
 						testId="variable-all-switch"

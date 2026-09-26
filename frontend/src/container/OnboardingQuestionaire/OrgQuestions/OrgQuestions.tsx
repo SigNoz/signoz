@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import {
-	RadioGroup,
-	RadioGroupItem,
-	RadioGroupLabel,
-} from '@signozhq/ui/radio-group';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight } from '@signozhq/icons';
@@ -94,6 +90,19 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 		);
 	};
 
+	const getNextDisabledReason = (): string => {
+		if (!observabilityTool) {
+			return 'Select the observability tool you use';
+		}
+		if (observabilityTool === 'Others' && otherTool === '') {
+			return 'Enter the observability tool you use';
+		}
+		if (showMigrationQuestion && migrationTimeline === null) {
+			return 'Select your migration timeline';
+		}
+		return 'Tell us if you already use OpenTelemetry';
+	};
+
 	useEffect(() => {
 		const isValidObservability = isValidUsesObservability();
 		const isMigrationValid = !showMigrationQuestion || migrationTimeline !== null;
@@ -145,41 +154,29 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 							Which observability tool do you currently use?
 						</label>
 						<RadioGroup
-							value={observabilityTool || ''}
+							color="primary"
+							textOverflow="visible"
+							value={observabilityTool}
 							onChange={handleObservabilityToolChange}
-							className="observability-tools-radio-container"
-						>
-							{Object.entries(observabilityTools).map(([tool, label]) => {
-								if (tool === 'Others') {
-									return (
-										<div
-											key={tool}
-											className="radio-item observability-tool-radio-item observability-tool-others-item"
-										>
-											<RadioGroupItem value={tool} id={`radio-${tool}`} />
-											{observabilityTool === 'Others' ? (
-												<Input
-													type="text"
-													className="onboarding-questionaire-other-input"
-													placeholder="What tool do you currently use?"
-													value={otherTool || ''}
-													autoFocus
-													onChange={(e): void => setOtherTool(e.target.value)}
-												/>
-											) : (
-												<RadioGroupLabel htmlFor={`radio-${tool}`}>{label}</RadioGroupLabel>
-											)}
-										</div>
-									);
-								}
-								return (
-									<div key={tool} className="radio-item observability-tool-radio-item">
-										<RadioGroupItem value={tool} id={`radio-${tool}`} />
-										<RadioGroupLabel htmlFor={`radio-${tool}`}>{label}</RadioGroupLabel>
-									</div>
-								);
-							})}
-						</RadioGroup>
+							items={Object.entries(observabilityTools).map(([tool, label]) => ({
+								value: tool,
+								label:
+									tool === 'Others' && observabilityTool === 'Others' ? (
+										<Input
+											type="text"
+											className="onboarding-questionaire-other-input"
+											placeholder="What tool do you currently use?"
+											value={otherTool || ''}
+											autoFocus
+											style={{ userSelect: 'text' }}
+											onKeyDown={(e): void => e.stopPropagation()}
+											onChange={(e): void => setOtherTool(e.target.value)}
+										/>
+									) : (
+										label
+									),
+							}))}
+						/>
 					</div>
 
 					{showMigrationQuestion && (
@@ -188,47 +185,39 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 								What is your timeline for migrating to SigNoz?
 							</div>
 							<RadioGroup
-								value={migrationTimeline || ''}
+								color="primary"
+								value={migrationTimeline}
 								onChange={setMigrationTimeline}
-								className="migration-timeline-radio-container"
-							>
-								{Object.entries(migrationTimelineOptions).map(([key, label]) => (
-									<div key={key} className="radio-item migration-timeline-radio-item">
-										<RadioGroupItem value={key} id={`radio-migration-${key}`} />
-										<RadioGroupLabel htmlFor={`radio-migration-${key}`}>
-											{label}
-										</RadioGroupLabel>
-									</div>
-								))}
-							</RadioGroup>
+								items={Object.entries(migrationTimelineOptions).map(([key, label]) => ({
+									value: key,
+									label,
+								}))}
+							/>
 						</div>
 					)}
 
 					<div className="form-group">
 						<div className="question">Do you already use OpenTelemetry?</div>
 						<RadioGroup
-							value={usesOtel === true ? 'yes' : usesOtel === false ? 'no' : ''}
+							color="primary"
+							value={usesOtel === true ? 'yes' : usesOtel === false ? 'no' : null}
 							onChange={handleOtelChange}
-							className="opentelemetry-radio-container"
-						>
-							<div className="radio-item opentelemetry-radio-item">
-								<RadioGroupItem value="yes" id="radio-otel-yes" />
-								<RadioGroupLabel htmlFor="radio-otel-yes">Yes</RadioGroupLabel>
-							</div>
-							<div className="radio-item opentelemetry-radio-item">
-								<RadioGroupItem value="no" id="radio-otel-no" />
-								<RadioGroupLabel htmlFor="radio-otel-no">No</RadioGroupLabel>
-							</div>
-						</RadioGroup>
+							items={[
+								{ value: 'yes', label: 'Yes' },
+								{ value: 'no', label: 'No' },
+							]}
+						/>
 					</div>
 				</div>
 
 				<Button
+					size="md"
 					variant="solid"
 					color="primary"
-					className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
+					width="100%"
 					onClick={handleNext}
 					disabled={isNextDisabled}
+					disabledTooltip={getNextDisabledReason()}
 					suffix={<ArrowRight size={12} />}
 				>
 					Next

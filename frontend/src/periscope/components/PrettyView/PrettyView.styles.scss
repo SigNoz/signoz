@@ -259,9 +259,3 @@
 		}
 	}
 }
-
-// Field-action dropdown is rendered in a portal; bump above FloatingPanel
-// (z-index 999) so it stays visible when the consumer panel is floating.
-.pretty-view-actions-dropdown {
-	--dropdown-menu-content-z-index: 1000;
-}

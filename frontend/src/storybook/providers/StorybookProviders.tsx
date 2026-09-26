@@ -1,7 +1,6 @@
 import { ReactNode, useEffect, useMemo } from 'react';
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import AppPageProviders from '@/app/AppPageProviders';
 import AppProviders from '@/app/AppProviders';
 import AppShell from '@/app/AppShell';
@@ -49,9 +48,7 @@ const storyRouter: AppLayer = (children) => (
 
 const appLayout: AppLayer = (children) => <AppLayout>{children}</AppLayout>;
 
-const bareLayout: AppLayer = (children) => (
-	<TooltipProvider>{children}</TooltipProvider>
-);
+const bareLayout: AppLayer = (children) => children;
 
 function StorybookProviders({
 	children,

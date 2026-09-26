@@ -1,5 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import {
+	expect,
+	fireEvent,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -95,5 +102,125 @@ export const FilterAttributes: Story = {
 		// sits on never reaches the handler that opens the list.
 		await userEvent.click(within(filter).getByRole('combobox'));
 		await screen.findByText('k8s.cluster.name', undefined, untilLoaded);
+	},
+};
+
+/** Opens the select under a test id; it closes again after every pick. */
+const openSelect = async (
+	canvasElement: HTMLElement,
+	testId: string,
+): Promise<void> => {
+	const select = await within(canvasElement).findByTestId(
+		testId,
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(within(select).getByRole('combobox'));
+};
+
+const OPEN_DROPDOWN = '.ant-select-dropdown:not(.ant-select-dropdown-hidden)';
+
+/** antd keeps a hidden copy of each label for screen readers; the title skips it. */
+const visibleOption = (title: string): HTMLElement | null =>
+	document.querySelector<HTMLElement>(
+		`${OPEN_DROPDOWN} .ant-select-item-option[title="${title}"]`,
+	);
+
+/**
+ * Picks the option titled `title` in the open dropdown. `userEvent.click`
+ * moves focus off the select on the way, which closes it before the option
+ * takes the click.
+ */
+const pickOption = async (title: string): Promise<void> => {
+	const option = await waitFor(() => {
+		const match = visibleOption(title);
+
+		if (!match) {
+			throw new Error(`option "${title}" not found`);
+		}
+
+		return match;
+	}, untilLoaded);
+
+	await fireEvent.click(option);
+};
+
+/**
+ * Opens the attribute filter on its next step. Each single-choice pick closes
+ * the dropdown and swaps the select for the next step's, and a click that lands
+ * before the swap opens nothing, so it opens again until `title` shows.
+ */
+const openAttributeFilterOn = (
+	canvasElement: HTMLElement,
+	title: string,
+): Promise<void> =>
+	waitFor(
+		async () => {
+			if (visibleOption(title)) {
+				return;
+			}
+
+			if (!document.querySelector(OPEN_DROPDOWN)) {
+				await openSelect(canvasElement, 'resource-attributes-filter');
+			}
+
+			throw new Error(`option "${title}" not shown`);
+		},
+		{ ...untilLoaded, interval: 500 },
+	);
+
+/** Stages `k8s.cluster.name IN` and leaves the filter open on its values. */
+const stageClusterIn = async (canvasElement: HTMLElement): Promise<void> => {
+	await openAttributeFilterOn(canvasElement, 'k8s.cluster.name');
+	await pickOption('k8s.cluster.name');
+	await openAttributeFilterOn(canvasElement, 'IN');
+	await pickOption('IN');
+	await openAttributeFilterOn(canvasElement, 'staging-eu');
+};
+
+/** A key staged as a chip, the filter open again on how to match it. */
+export const FilterOperators: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openAttributeFilterOn(canvasElement, 'k8s.cluster.name');
+		await pickOption('k8s.cluster.name');
+		await openAttributeFilterOn(canvasElement, 'Not IN');
+	},
+};
+
+/** A key and `IN` staged, the filter open on the values the key holds. */
+export const FilterValues: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await stageClusterIn(canvasElement);
+	},
+};
+
+/** Two values ticked before the filter is left, which is what applies it. */
+export const FilterValuesSelected: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await stageClusterIn(canvasElement);
+		await pickOption('prod-us-east');
+		await pickOption('prod-eu-west');
+		await waitFor(
+			() =>
+				expect(
+					document.querySelectorAll('.ant-select-item-option-selected'),
+				).toHaveLength(2),
+			untilLoaded,
+		);
+	},
+};
+
+/** The environment selector open on the environments the calls came from. */
+export const EnvironmentOptions: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openSelect(canvasElement, 'resource-environment-filter');
+		await waitFor(
+			() =>
+				expect(
+					document.querySelector(`${OPEN_DROPDOWN} .ant-select-item-option`),
+				).not.toBeNull(),
+			untilLoaded,
+		);
 	},
 };

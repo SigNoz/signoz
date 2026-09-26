@@ -60,11 +60,10 @@ function MapperRow({
 				<Badge
 					color={
 						mapper.fieldContext === SpantypesFieldContextDTO.resource
-							? 'amber'
-							: 'robin'
+							? 'warning'
+							: 'primary'
 					}
-					variant="outline"
-					className={styles.targetContextBadge}
+					variant="outlined"
 				>
 					{mapper.fieldContext}
 				</Badge>
@@ -84,9 +83,8 @@ function MapperRow({
 					>
 						{visibleSources.map((source) => (
 							<Badge
-								variant="outline"
-								color="vanilla"
-								className={styles.sourceChip}
+								variant="outlined"
+								color="secondary"
 								key={`${source.context}:${source.key}`}
 							>
 								<span className={styles.sourceChipText} title={source.key}>
@@ -106,6 +104,8 @@ function MapperRow({
 				{canManage && (
 					<div className={styles.rowActions}>
 						<Switch
+							color="primary"
+							textPlacement="right"
 							value={mapper.enabled}
 							onChange={(checked): void => onToggle(mapper.localId, checked)}
 							testId={`mapper-enabled-${mapper.localId}`}

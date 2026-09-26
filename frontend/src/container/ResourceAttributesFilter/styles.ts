@@ -23,6 +23,9 @@ export const QueryChipContainer = styled.span`
 	}
 `;
 
-export const QueryChipItem = styled(Badge)`
+export const QueryChipItem = styled(Badge).attrs({
+	color: 'secondary' as const,
+	variant: 'solid' as const,
+})`
 	margin-right: 0.1rem;
 `;

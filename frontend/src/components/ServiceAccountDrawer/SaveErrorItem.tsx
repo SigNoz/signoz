@@ -40,8 +40,9 @@ function SaveErrorItem({
 				</span>
 				{onRetry && !isRetrying && (
 					<Button
+						size="md"
 						variant="link"
-						color="none"
+						color="secondary"
 						aria-label="Retry"
 						onClick={async (e): Promise<void> => {
 							e.stopPropagation();
@@ -53,6 +54,7 @@ function SaveErrorItem({
 								setIsRetrying(false);
 							}
 						}}
+						icon
 					>
 						<RotateCw size={12} color={Color.BG_CHERRY_400} />
 					</Button>

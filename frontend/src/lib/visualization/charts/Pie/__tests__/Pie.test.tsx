@@ -1,6 +1,5 @@
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 
@@ -42,20 +41,12 @@ const DATA: PieSlice[] = [
 function renderPie(
 	props: Partial<React.ComponentProps<typeof Pie>> = {},
 ): void {
-	render(
-		<TooltipProvider>
-			<Pie data={DATA} isDarkMode={false} data-testid="pie" {...props} />
-		</TooltipProvider>,
-	);
+	render(<Pie data={DATA} isDarkMode={false} data-testid="pie" {...props} />);
 }
 
 describe('Pie', () => {
 	it('renders the "No data" state for empty data', () => {
-		render(
-			<TooltipProvider>
-				<Pie data={[]} isDarkMode={false} data-testid="pie" />
-			</TooltipProvider>,
-		);
+		render(<Pie data={[]} isDarkMode={false} data-testid="pie" />);
 		expect(screen.getByText('No data')).toBeInTheDocument();
 	});
 
@@ -76,26 +67,22 @@ describe('Pie', () => {
 
 	it('lays the legend out in a row for the right position and a column for bottom', () => {
 		const { rerender } = render(
-			<TooltipProvider>
-				<Pie
-					data={DATA}
-					isDarkMode={false}
-					position={LegendPosition.RIGHT}
-					data-testid="pie"
-				/>
-			</TooltipProvider>,
+			<Pie
+				data={DATA}
+				isDarkMode={false}
+				position={LegendPosition.RIGHT}
+				data-testid="pie"
+			/>,
 		);
 		expect(screen.getByTestId('pie')).toHaveStyle({ flexDirection: 'row' });
 
 		rerender(
-			<TooltipProvider>
-				<Pie
-					data={DATA}
-					isDarkMode={false}
-					position={LegendPosition.BOTTOM}
-					data-testid="pie"
-				/>
-			</TooltipProvider>,
+			<Pie
+				data={DATA}
+				isDarkMode={false}
+				position={LegendPosition.BOTTOM}
+				data-testid="pie"
+			/>,
 		);
 		expect(screen.getByTestId('pie')).toHaveStyle({ flexDirection: 'column' });
 	});

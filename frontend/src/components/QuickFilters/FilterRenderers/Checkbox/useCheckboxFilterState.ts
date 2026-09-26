@@ -17,6 +17,9 @@ interface UseCheckboxFilterStateReturn {
 	isMultipleValuesTrueForTheKey: boolean;
 }
 
+export const FILTER_DISABLED_REASON =
+	'This attribute is used more than once in the filter bar';
+
 /**
  * Reads the active query and derives the per-value checked state for this
  * attribute, whether the filter is disabled (same key used more than once in

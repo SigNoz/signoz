@@ -75,18 +75,18 @@ describe('TriggeredAlerts — list rendering', () => {
 
 		expect(screen.getByTestId('alert-row-fp-critical-1-status')).toHaveAttribute(
 			'data-color',
-			'cherry',
+			'danger',
 		);
 		expect(screen.getByTestId('alert-row-fp-info-1-status')).toHaveAttribute(
 			'data-color',
-			'forest',
+			'success',
 		);
 		expect(
 			screen.getByTestId('alert-row-fp-critical-1-severity'),
-		).toHaveAttribute('data-color', 'cherry');
+		).toHaveAttribute('data-color', 'danger');
 		expect(screen.getByTestId('alert-row-fp-warning-1-severity')).toHaveAttribute(
 			'data-color',
-			'amber',
+			'warning',
 		);
 	});
 

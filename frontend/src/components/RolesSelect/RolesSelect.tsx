@@ -152,7 +152,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 				optionFilterProp="label"
 				optionRender={(option): JSX.Element => (
 					<div style={{ pointerEvents: 'none' }}>
-						<Checkbox value={value.includes(option.value as string)}>
+						<Checkbox color="primary" value={value.includes(option.value as string)}>
 							{option.label}
 						</Checkbox>
 					</div>

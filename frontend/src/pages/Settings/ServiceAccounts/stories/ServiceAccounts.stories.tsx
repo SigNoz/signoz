@@ -254,7 +254,7 @@ export const EditKeyThenRevokeConfirm: Story = {
 		const revoke = await waitFor(() => {
 			const button = screen.getByRole('button', { name: 'Revoke Key' });
 
-			expect(button).toBeEnabled();
+			expect(button).not.toHaveAttribute('aria-disabled', 'true');
 
 			return button;
 		}, untilLoaded);

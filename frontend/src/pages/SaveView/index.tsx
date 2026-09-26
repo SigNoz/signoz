@@ -339,24 +339,24 @@ function SaveView(): JSX.Element {
 				onCancel={hideDeleteViewModal}
 				footer={[
 					<Button
+						size="md"
 						key="cancel"
 						variant="solid"
 						color="secondary"
 						onClick={hideDeleteViewModal}
-						className="cancel-btn"
 						prefix={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
+						size="md"
 						key="submit"
 						variant="solid"
-						color="destructive"
+						color="danger"
 						prefix={<Trash2 size={16} />}
 						onClick={onDeleteHandler}
-						className="delete-btn"
-						disabled={isDeleteLoading}
-						data-testid="confirm-delete"
+						loading={isDeleteLoading}
+						testId="confirm-delete"
 					>
 						Delete view
 					</Button>,
@@ -377,13 +377,14 @@ function SaveView(): JSX.Element {
 				onCancel={hideEditViewModal}
 				footer={[
 					<Button
+						size="md"
 						key="submit"
 						variant="solid"
 						color="primary"
 						prefix={<Check size={16} color={Color.BG_VANILLA_100} />}
 						onClick={onUpdateQueryHandler}
-						disabled={isViewUpdating}
-						data-testid="save-view"
+						loading={isViewUpdating}
+						testId="save-view"
 					>
 						Save changes
 					</Button>,

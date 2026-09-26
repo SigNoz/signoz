@@ -28,34 +28,6 @@
 		border-top: 1px solid var(--l2-border);
 		padding: 16px !important;
 
-		.saveButton {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 4px;
-			color: var(--l1-foreground);
-			font-size: 12px;
-			font-weight: 500;
-			line-height: 24px;
-			width: 135px;
-
-			:global(.ant-btn-icon) {
-				display: flex;
-			}
-
-			&:disabled {
-				color: var(--l2-foreground);
-
-				:global(.ant-btn-icon svg) {
-					stroke: var(--l2-foreground);
-				}
-			}
-		}
-
-		.discardButton {
-			background: var(--l3-background);
-		}
-
 		:global(.ant-btn) {
 			border-radius: 2px;
 			padding: 4px 8px;
@@ -71,6 +43,10 @@
 	// Funnel-detail view overrides — only when the inner wrapper has
 	// `.isDetails` applied alongside `.root`.
 	&.isDetails {
+		> [data-slot='button'] {
+			margin-bottom: 14px;
+		}
+
 		:global(.traces-funnel-details) {
 			height: unset;
 
@@ -148,24 +124,6 @@
 	}
 }
 
-.createButton {
-	width: 153px;
-	padding: 4px 8px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 4px;
-	flex-shrink: 0;
-	border-radius: 2px;
-	background: var(--l3-background);
-	border: none;
-	box-shadow: none;
-	color: var(--l2-foreground);
-	font-size: 12px;
-	font-weight: 500;
-	line-height: 24px;
-}
-
 .list {
 	max-height: 400px;
 	overflow-y: scroll;
@@ -189,16 +147,6 @@
 
 .spinner {
 	height: 400px;
-}
-
-.backButton {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	color: var(--l2-foreground);
-	font-size: 14px;
-	line-height: 20px;
-	margin-bottom: 14px;
 }
 
 .detailsView {

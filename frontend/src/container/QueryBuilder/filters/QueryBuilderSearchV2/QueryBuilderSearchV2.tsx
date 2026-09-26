@@ -8,8 +8,8 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Select, Spin, Tooltip } from 'antd';
-import { Badge } from '@signozhq/ui/badge';
+import { Select, Spin } from 'antd';
+import { Pill } from '@signozhq/ui/pill';
 import cx from 'classnames';
 import {
 	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
@@ -54,7 +54,6 @@ import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
 import { PLACEHOLDER } from './constant';
-import { TypographyText } from './style';
 import {
 	checkCommaInValue,
 	getOperatorFromValue,
@@ -896,7 +895,6 @@ function QueryBuilderSearchV2(
 
 	const onTagRender = ({
 		value,
-		closable,
 		onClose,
 	}: CustomTagProps): React.ReactElement => {
 		const { tagOperator } = getTagToken(value);
@@ -924,35 +922,15 @@ function QueryBuilderSearchV2(
 			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
 		};
 
-		const isDisabled = !!searchValue;
-
 		return (
-			<span className="qb-search-bar-tokenised-tags">
-				<Badge
-					color="vanilla"
-					className={tagDetails?.key?.type || ''}
-					closable={!searchValue && closable}
-					onClose={(e): void => {
-						e.preventDefault();
-						onCloseHandler();
-					}}
-				>
-					<Tooltip title={chipValue}>
-						<TypographyText
-							className="qb-tag-text"
-							$isInNin={isInNin}
-							$isEnabled={!!searchValue}
-							onClick={(): void => {
-								if (!isDisabled) {
-									tagEditHandler(value);
-								}
-							}}
-						>
-							{chipValue}
-						</TypographyText>
-					</Tooltip>
-				</Badge>
-			</span>
+			<Pill.Closeable
+				disabled={!!searchValue}
+				maxWidth={isInNin ? '10rem' : '100%'}
+				onClick={(): void => tagEditHandler(value)}
+				onClose={onCloseHandler}
+			>
+				{chipValue}
+			</Pill.Closeable>
 		);
 	};
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Minus, Plus, X } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
@@ -159,62 +159,73 @@ export default function AIAssistantModal(): JSX.Element | null {
 						</div>
 
 						<div className={styles.actions}>
-							<TooltipSimple title={showHistory ? 'Back to chat' : 'Conversations'}>
+							<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
 								<Button
 									variant="ghost"
-									size="icon"
+									size="sm"
+									icon
 									color="secondary"
 									onClick={(): void => setShowHistory((v) => !v)}
 									aria-label="Toggle conversations"
-									className={showHistory ? styles.toggleBtnActive : ''}
-									prefix={<History size={14} />}
-								/>
-							</TooltipSimple>
+									aria-pressed={showHistory}
+								>
+									<History size={14} />
+								</Button>
+							</Tooltip>
 
-							<TooltipSimple title="New conversation">
+							<Tooltip title="New conversation">
 								<Button
 									variant="ghost"
-									size="icon"
+									size="sm"
+									icon
 									color="secondary"
 									onClick={handleNew}
 									aria-label="New conversation"
-									prefix={<Plus size={14} />}
-								/>
-							</TooltipSimple>
+								>
+									<Plus size={14} />
+								</Button>
+							</Tooltip>
 
-							<TooltipSimple title="Open full screen">
+							<Tooltip title="Open full screen">
 								<Button
+									disabledTooltip="Start a conversation first"
 									variant="ghost"
-									size="icon"
+									size="sm"
+									icon
 									color="secondary"
 									onClick={handleExpand}
 									disabled={!activeConversationId}
 									aria-label="Open full screen"
-									prefix={<Maximize2 size={14} />}
-								/>
-							</TooltipSimple>
+								>
+									<Maximize2 size={14} />
+								</Button>
+							</Tooltip>
 
-							<TooltipSimple title="Minimize to side panel">
+							<Tooltip title="Minimize to side panel">
 								<Button
 									variant="ghost"
-									size="icon"
+									size="sm"
+									icon
 									color="secondary"
 									onClick={handleMinimize}
 									aria-label="Minimize to side panel"
-									prefix={<Minus size={14} />}
-								/>
-							</TooltipSimple>
+								>
+									<Minus size={14} />
+								</Button>
+							</Tooltip>
 
-							<TooltipSimple title="Close">
+							<Tooltip title="Close">
 								<Button
 									variant="ghost"
-									size="icon"
+									size="sm"
+									icon
 									color="secondary"
 									onClick={closeModal}
 									aria-label="Close"
-									prefix={<X size={14} />}
-								/>
-							</TooltipSimple>
+								>
+									<X size={14} />
+								</Button>
+							</Tooltip>
 						</div>
 					</div>
 

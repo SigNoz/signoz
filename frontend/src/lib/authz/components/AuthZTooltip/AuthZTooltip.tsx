@@ -2,24 +2,14 @@ import {
 	cloneElement,
 	CSSProperties,
 	ReactElement,
-	useCallback,
 	useMemo,
 	useRef,
-	useState,
 } from 'react';
-import {
-	TooltipContent,
-	TooltipProvider,
-	TooltipRoot,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import { useAppContext } from 'providers/App/App';
-import cx from 'classnames';
-
-import styles from '../tooltipContent.module.scss';
+import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
 
 const DISABLED_STYLE: CSSProperties = {
 	pointerEvents: 'all',
@@ -56,18 +46,6 @@ interface AuthZTooltipProps {
 	withPortal?: false;
 }
 
-function formatDeniedMessage(
-	denied: BrandedPermission[],
-	userId: string,
-	override?: string,
-): string {
-	if (override) {
-		return override;
-	}
-	const permissions = denied.map(formatPermission).join(', ');
-	return `user/${userId} is not authorized to perform ${permissions}`;
-}
-
 function AuthZTooltip({
 	checks,
 	children,
@@ -78,8 +56,7 @@ function AuthZTooltip({
 	withPortal,
 }: AuthZTooltipProps): JSX.Element {
 	const { user } = useAppContext();
-	const isPointerOverRef = useRef(false);
-	const [isOpen, setIsOpen] = useState(false);
+	const inlineContainerRef = useRef<HTMLSpanElement>(null);
 
 	// The block the consumer passed is already decisive, so the check is not run.
 	const isBlocked = !!disabledTooltip;
@@ -93,20 +70,6 @@ function AuthZTooltip({
 		}
 		return checks.filter((p) => permissions[p]?.isGranted === false);
 	}, [checks, permissions]);
-
-	/**
-	 * Radix closes the tooltip on pointerdown and on click, and merges its own
-	 * handlers after the trigger's regardless of `preventDefault`, so the close is
-	 * filtered here. Clicking a dead control does nothing, which is exactly when
-	 * its reason is still wanted, so a close is ignored while the pointer remains
-	 * on it. Everything else stays Radix's to decide.
-	 */
-	const handleOpenChange = useCallback((next: boolean): void => {
-		if (!next && isPointerOverRef.current) {
-			return;
-		}
-		setIsOpen(next);
-	}, []);
 
 	if (shouldCheck && isLoading) {
 		return cloneElement(children, {
@@ -122,47 +85,46 @@ function AuthZTooltip({
 		return children;
 	}
 
-	const childTestId = (children.props as { testId?: string }).testId;
-
-	return (
-		<TooltipProvider>
-			<TooltipRoot open={isOpen} onOpenChange={handleOpenChange}>
-				<TooltipTrigger asChild testId={childTestId}>
-					{cloneElement(children, {
-						disabled: true,
-						style: DISABLED_STYLE,
-						onClick: noOp,
-						onMouseDown: noOp,
-						onPointerDown: noOp,
-						onPointerEnter: (): void => {
-							isPointerOverRef.current = true;
-						},
-						onPointerLeave: (): void => {
-							isPointerOverRef.current = false;
-						},
-						...(isBlocked
-							? {}
-							: { 'data-denied-permissions': deniedPermissions.join(',') }),
-					})}
-				</TooltipTrigger>
-				<TooltipContent
-					side={side}
-					// A denial has no arrow; a state the user can act on is not an error
-					// and reads as a normal tooltip.
-					arrow={isBlocked}
-					className={cx(
-						isBlocked ? styles.blockedContent : styles.errorContent,
-						styles.aboveOverlay,
-					)}
-					withPortal={withPortal}
-				>
-					{isBlocked
-						? disabledTooltip
-						: formatDeniedMessage(deniedPermissions, user.id, tooltipMessage)}
-				</TooltipContent>
-			</TooltipRoot>
-		</TooltipProvider>
+	const tooltip = (
+		<Tooltip
+			title={
+				isBlocked
+					? disabledTooltip
+					: formatDeniedMessage(deniedPermissions, user.id, tooltipMessage)
+			}
+			side={side}
+			container={withPortal === false ? inlineContainerRef : undefined}
+		>
+			{/*
+			 * A natively disabled control receives no hover, so the popup never
+			 * opens. The span is the trigger; the control stays disabled.
+			 */}
+			<span style={{ display: 'inline-flex' }}>
+				{cloneElement(children, {
+					disabled: true,
+					style: DISABLED_STYLE,
+					onClick: noOp,
+					onMouseDown: noOp,
+					onPointerDown: noOp,
+					...(isBlocked
+						? {}
+						: { 'data-denied-permissions': deniedPermissions.join(',') }),
+				})}
+			</span>
+		</Tooltip>
 	);
+
+	// A modal stacks above a body portal. Keep the popup in this subtree so it
+	// shares that stacking context.
+	if (withPortal === false) {
+		return (
+			<span ref={inlineContainerRef} style={{ display: 'contents' }}>
+				{tooltip}
+			</span>
+		);
+	}
+
+	return tooltip;
 }
 
 export default AuthZTooltip;

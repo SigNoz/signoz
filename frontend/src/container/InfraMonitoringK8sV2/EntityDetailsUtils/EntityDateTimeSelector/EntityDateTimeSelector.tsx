@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Undo } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
@@ -53,17 +53,18 @@ function EntityDateTimeSelector({
 	return (
 		<div className={styles.container}>
 			{hasTimeChanged && (
-				<TooltipSimple title="Reset to list time" side="bottom">
+				<Tooltip title="Reset to list time" side="bottom">
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						onClick={handleResetToParentTime}
-						data-testid="reset-to-list-time-button"
+						testId="reset-to-list-time-button"
 						prefix={<Undo size={14} />}
 					>
 						Reset
 					</Button>
-				</TooltipSimple>
+				</Tooltip>
 			)}
 			<DateTimeSelectionV2
 				showAutoRefresh

@@ -264,7 +264,7 @@ describe('Explorer', () => {
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		expect(oneChartPerQueryToggle).toBeChecked();
-		expect(oneChartPerQueryToggle).toBeDisabled();
+		expect(oneChartPerQueryToggle).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('should render empty y axis unit selector for a single metric with no unit', () => {
@@ -300,7 +300,7 @@ describe('Explorer', () => {
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		expect(oneChartPerQueryToggle).not.toBeChecked();
-		expect(oneChartPerQueryToggle).toBeDisabled();
+		expect(oneChartPerQueryToggle).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('one chart per query should enabled by default when there are multiple metrics with the same unit', () => {

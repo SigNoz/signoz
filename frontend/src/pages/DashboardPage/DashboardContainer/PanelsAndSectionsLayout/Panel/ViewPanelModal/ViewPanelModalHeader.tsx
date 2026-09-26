@@ -1,7 +1,6 @@
 import { PenLine, RotateCw } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import cx from 'classnames';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import type {
 	CustomTimeType,
@@ -90,22 +89,25 @@ function ViewPanelModalHeader(props: ViewPanelModalHeaderProps): JSX.Element {
 			</div>
 			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 				<Button
+					disabledTooltip={undefined}
+					size="md"
 					variant="outlined"
 					color="secondary"
 					prefix={<PenLine />}
 					disabled={!canSwitchToEdit}
 					onClick={onSwitchToEdit}
-					data-testid="view-panel-switch-to-edit"
+					testId="view-panel-switch-to-edit"
 				>
 					Switch to Edit Mode
 				</Button>
 			</AuthZTooltip>
 			{query && (
 				<Button
+					size="md"
 					variant="link"
 					color="primary"
 					onClick={query.onResetQuery}
-					data-testid="view-panel-reset-query"
+					testId="view-panel-reset-query"
 				>
 					Reset Query
 				</Button>
@@ -124,15 +126,16 @@ function ViewPanelModalHeader(props: ViewPanelModalHeaderProps): JSX.Element {
 						modalInitialEndTime={query.endMs}
 					/>
 					<Button
-						size="icon"
+						size="sm"
+						icon
 						variant="outlined"
 						color="secondary"
 						onClick={query.onRefresh}
-						disabled={query.isFetching}
+						loading={query.isFetching}
 						aria-label="Refresh"
-						data-testid="view-panel-refresh"
+						testId="view-panel-refresh"
 					>
-						<RotateCw className={cx({ 'animate-spin': query.isFetching })} />
+						<RotateCw />
 					</Button>
 				</div>
 			)}

@@ -69,10 +69,10 @@ function IntegrationDetailPage(): JSX.Element {
 		<div className="integration-details-container">
 			<Flex justify="space-between" align="center">
 				<Button
+					size="md"
 					variant="link"
 					color="secondary"
 					prefix={<ArrowLeft size={14} />}
-					className="all-integrations-btn"
 					onClick={(): void => {
 						history.push(ROUTES.INTEGRATIONS);
 					}}
@@ -90,6 +90,7 @@ function IntegrationDetailPage(): JSX.Element {
 						</Typography.Text>
 						<div className="error-btns">
 							<Button
+								size="md"
 								variant="solid"
 								color="secondary"
 								onClick={(): Promise<any> => refetch()}
@@ -98,6 +99,7 @@ function IntegrationDetailPage(): JSX.Element {
 								Retry
 							</Button>
 							<Button
+								size="md"
 								variant="solid"
 								color="secondary"
 								onClick={(): void => handleContactSupport(isCloudUserVal)}

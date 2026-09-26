@@ -46,14 +46,6 @@
 		:global(.ant-card) {
 			padding: var(--padding-3);
 		}
-
-		.billingManageBtn {
-			background: var(--l3-background);
-
-			&:hover {
-				background: var(--l3-background-hover);
-			}
-		}
 	}
 
 	.billingSummary {
@@ -161,14 +153,6 @@
 			padding: var(--padding-3) var(--padding-4);
 			border-top: 1px solid var(--l1-border);
 			background: var(--l2-background);
-
-			.billingFooterBtn {
-				background: var(--l3-background);
-
-				&:hover {
-					background: var(--l3-background-hover);
-				}
-			}
 		}
 	}
 

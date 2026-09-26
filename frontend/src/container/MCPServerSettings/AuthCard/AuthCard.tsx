@@ -24,7 +24,7 @@ function AuthCard({
 	return (
 		<section className="mcp-auth-card">
 			<h3 className="mcp-auth-card__title">
-				<Badge color="secondary" variant="default">
+				<Badge color="secondary" variant="solid">
 					2
 				</Badge>
 				Authenticate from your client
@@ -44,7 +44,6 @@ function AuthCard({
 						<CopyIconButton
 							ariaLabel="Copy SigNoz instance URL"
 							onCopy={onCopyInstanceUrl}
-							disabled={isLoadingInstanceUrl}
 						/>
 					</div>
 				)}
@@ -55,6 +54,7 @@ function AuthCard({
 				{isAdmin ? (
 					<div className="mcp-auth-card__cta-row">
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
 							prefix={<KeyRound size={14} />}

@@ -74,11 +74,6 @@
 	gap: var(--spacing-3);
 }
 
-.actionButton {
-	flex: 0 0 auto;
-	height: 2rem;
-}
-
 .list {
 	display: flex;
 	flex: 1 1 auto;

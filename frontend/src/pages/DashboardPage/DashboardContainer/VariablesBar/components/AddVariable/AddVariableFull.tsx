@@ -2,7 +2,6 @@ import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
 import { useDashboardStore } from '../../../store/useDashboardStore';
-import styles from './AddVariable.module.scss';
 
 /**
  * Full-width labelled "Add variable" button shown in the empty state, before any
@@ -16,7 +15,6 @@ function AddVariableFull(): JSX.Element {
 			variant="outlined"
 			color="secondary"
 			size="md"
-			className={styles.addVariableNameWithIcon}
 			prefix={<Plus size={14} />}
 			testId="dashboard-variables-add"
 			onClick={(): void =>

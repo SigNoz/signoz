@@ -54,7 +54,7 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
-import { RadioGroupItem, RadioGroup } from '@signozhq/ui/radio-group';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 
 dayjs.locale('en');
 dayjs.extend(utc);
@@ -468,10 +468,13 @@ export function PlannedDowntimeForm(
 						initialValue="specific"
 						className="alert-rule-scope"
 					>
-						<RadioGroup className="silence-alerts-radio-group">
-							<RadioGroupItem value="all">All alert rules</RadioGroupItem>
-							<RadioGroupItem value="specific">Specific alert rules</RadioGroupItem>
-						</RadioGroup>
+						<RadioGroup
+							color="primary"
+							items={[
+								{ value: 'all', label: 'All alert rules' },
+								{ value: 'specific', label: 'Specific alert rules' },
+							]}
+						/>
 					</Form.Item>
 					{alertRuleScope === 'specific' && (
 						<>

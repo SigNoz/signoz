@@ -256,8 +256,14 @@ describe('MarkdownEditor', () => {
 			/>,
 		);
 
-		expect(screen.getByTestId('markdown-command-bold')).toBeDisabled();
-		expect(screen.getByTestId('markdown-insert-variable')).toBeDisabled();
+		expect(screen.getByTestId('markdown-command-bold')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+		expect(screen.getByTestId('markdown-insert-variable')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('hides the insert-variable control when none are available', () => {

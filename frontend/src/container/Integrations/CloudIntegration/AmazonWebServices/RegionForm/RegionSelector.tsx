@@ -31,6 +31,7 @@ export function RegionSelector({
 		<div className="region-selector">
 			<div className="select-all">
 				<Checkbox
+					color="primary"
 					value={allSelected ? true : someSelected ? 'indeterminate' : false}
 					onChange={(checked): void => handleSelectAll(checked === true)}
 				>
@@ -44,6 +45,7 @@ export function RegionSelector({
 						<h3>{region.name}</h3>
 						{region.subRegions.map((subRegion) => (
 							<Checkbox
+								color="primary"
 								key={subRegion.id}
 								value={selectedRegions.includes(subRegion.id)}
 								onChange={(): void => handleRegionSelect(subRegion.id)}

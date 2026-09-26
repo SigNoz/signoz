@@ -1,9 +1,4 @@
-import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
@@ -89,7 +84,6 @@ export function SpanTooltipContent({
  */
 export interface SpanHoverCardProps {
 	hoveredSpanId: string | null;
-	onOpenChange: (open: boolean) => void;
 	anchorLeft: number;
 	rowHeight: number;
 	spans: SpanV3[];
@@ -98,7 +92,6 @@ export interface SpanHoverCardProps {
 
 export function SpanHoverCard({
 	hoveredSpanId,
-	onOpenChange,
 	anchorLeft,
 	rowHeight,
 	spans,
@@ -150,27 +143,23 @@ export function SpanHoverCard({
 	]);
 
 	return (
-		<TooltipProvider>
-			<TooltipRoot open={hoverCardData !== null} onOpenChange={onOpenChange}>
-				<TooltipTrigger asChild>
-					<div
-						className={styles.anchor}
-						style={{
-							top: hoverCardData?.anchorTop ?? 0,
-							left: anchorLeft,
-							height: rowHeight,
-						}}
-					/>
-				</TooltipTrigger>
-				<TooltipContent
-					side="right"
-					align="start"
-					sideOffset={8}
-					className={styles.popover}
-				>
-					{hoverCardData && <SpanTooltipContent {...hoverCardData.tooltip} />}
-				</TooltipContent>
-			</TooltipRoot>
-		</TooltipProvider>
+		<Tooltip
+			open={hoverCardData !== null}
+			side="right"
+			align="start"
+			sideOffset={8}
+			title={
+				hoverCardData ? <SpanTooltipContent {...hoverCardData.tooltip} /> : null
+			}
+		>
+			<div
+				className={styles.anchor}
+				style={{
+					top: hoverCardData?.anchorTop ?? 0,
+					left: anchorLeft,
+					height: rowHeight,
+				}}
+			/>
+		</Tooltip>
 	);
 }

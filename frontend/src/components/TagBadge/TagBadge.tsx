@@ -1,34 +1,17 @@
-import { type MouseEvent, type ReactNode } from 'react';
-import { Badge } from '@signozhq/ui/badge';
-import cx from 'classnames';
-
-import styles from './TagBadge.module.scss';
+import { type ReactNode } from 'react';
+import { Badge, type BadgeProps } from '@signozhq/ui/badge';
 
 interface TagBadgeProps {
 	children: ReactNode;
-	// Show a remove button (editable contexts: create modal, settings drawer).
-	closable?: boolean;
-	onClose?: (event: MouseEvent<HTMLButtonElement>) => void;
-	className?: string;
+	maxWidth?: BadgeProps['maxWidth'];
 }
 
-// The single sienna tag chip used everywhere dashboards render tags — list rows,
-// the details header, and the tag editors. Kept as one component so the tag
+// The single sienna tag chip used wherever dashboards display tags — list rows
+// and the details header. Kept as one component so the tag
 // styling stays identical across all of them.
-function TagBadge({
-	children,
-	closable,
-	onClose,
-	className,
-}: TagBadgeProps): JSX.Element {
+function TagBadge({ children, maxWidth }: TagBadgeProps): JSX.Element {
 	return (
-		<Badge
-			color="sienna"
-			variant="outline"
-			className={cx(styles.static, className)}
-			closable={closable}
-			onClose={onClose}
-		>
+		<Badge color="archive" variant="outlined" maxWidth={maxWidth}>
 			{children}
 		</Badge>
 	);

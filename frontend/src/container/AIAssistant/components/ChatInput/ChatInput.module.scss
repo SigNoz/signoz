@@ -60,10 +60,6 @@
 	gap: 8px;
 	max-width: 220px;
 
-	.contextTagCategory {
-		flex-shrink: 0;
-	}
-
 	.contextTagLabel {
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -71,21 +67,10 @@
 	}
 }
 
-.contextTagCategory {
-	flex-shrink: 0;
-}
-
 .contextTagLabel {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-
-.contextTagRemove {
-	flex-shrink: 0;
-	padding: 0 !important;
-	height: auto !important;
-	min-height: 0 !important;
 }
 
 .attachmentChip {
@@ -104,13 +89,6 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-
-.attachmentRemove {
-	flex-shrink: 0;
-	padding: 0 !important;
-	height: auto !important;
-	min-height: 0 !important;
 }
 
 .row {
@@ -248,43 +226,15 @@
 	gap: 6px;
 	padding: 8px;
 	border-right: 1px solid var(--l2-border);
-}
-
-.contextPopoverCategoryItem {
-	// Override DS Button's centered layout.
 	--button-justify-content: flex-start;
-	display: flex;
-	align-items: center;
-	justify-content: flex-start;
-	gap: 8px;
-	width: 100%;
-	height: 32px;
-	padding: 0 8px;
-	background: transparent;
-	color: inherit;
-	font: inherit;
-	font-size: 12px;
-	font-weight: 550;
-	text-align: left;
-	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
-	border-radius: var(--radius-2);
-	appearance: none;
-	cursor: pointer;
-	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		color 0.15s ease;
 
-	&:hover {
-		background: var(--l2-background);
-		color: var(--l1-foreground);
-		border-color: var(--l2-border);
-	}
-
-	&.active {
-		background: color-mix(in srgb, var(--accent-primary), transparent 86%);
-		color: var(--l1-foreground);
-		border-color: color-mix(in srgb, var(--accent-primary), transparent 64%);
+	> [data-slot='button'][aria-selected='true'] {
+		--button-variant-ghost-background-color: color-mix(
+			in srgb,
+			var(--accent-primary),
+			transparent 86%
+		);
+		--button-variant-ghost-color: var(--l1-foreground);
 	}
 }
 
@@ -321,59 +271,16 @@
 	padding: 8px;
 	min-width: 0;
 	@include scrollbar(0.2rem);
-}
-
-.contextPopoverEntityItem {
-	// Override DS Button's centered layout.
 	--button-justify-content: flex-start;
-	display: flex;
-	align-items: center;
-	justify-content: flex-start;
-	gap: 10px;
-	width: 100%;
-	padding: 8px;
-	background: transparent;
-	color: var(--l1-foreground);
-	font: inherit;
-	font-size: 12px;
-	font-weight: 500;
-	line-height: 1.35;
-	text-align: left;
-	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
-	border-radius: var(--radius-2);
-	appearance: none;
-	cursor: pointer;
-	// Required for the inner span's `text-overflow: ellipsis` to engage —
-	// flex items default to `min-width: auto` (intrinsic width) and would
-	// otherwise grow past their parent's width to fit long titles.
-	min-width: 0;
 
-	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		transform 0.15s ease;
-
-	&:hover {
-		background: var(--l2-background);
-		border-color: var(--l2-border);
-		transform: translateY(-1px);
+	> [data-slot='button'][aria-pressed='true'] {
+		--button-variant-ghost-background-color: color-mix(
+			in srgb,
+			var(--accent-primary),
+			transparent 86%
+		);
+		--button-variant-ghost-color: var(--l1-foreground);
 	}
-
-	&.selected {
-		background: color-mix(in srgb, var(--accent-primary), transparent 86%);
-		border-color: color-mix(in srgb, var(--accent-primary), transparent 64%);
-
-		span {
-			color: var(--l1-foreground);
-			font-weight: 600;
-		}
-	}
-}
-
-.contextPopoverEntityItemText {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .contextPopoverEmpty {
@@ -421,10 +328,6 @@
 	overflow-wrap: anywhere;
 }
 
-.contextPopoverEmptyCta {
-	max-width: 100%;
-}
-
 .contextPopoverEmptyCtaLabel {
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
@@ -436,10 +339,6 @@
 	text-align: center;
 }
 
-.micBtn {
-	flex-shrink: 0;
-}
-
 .micRecording {
 	display: flex;
 	align-items: center;
@@ -448,34 +347,6 @@
 	padding: 2px;
 	gap: 0;
 	flex-shrink: 0;
-}
-
-.micDiscard,
-.micStop {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	width: 24px;
-	height: 24px;
-	border-radius: 50%;
-	border: none;
-	cursor: pointer;
-	// Reset native <button> defaults so the 24px circle isn't inflated by
-	// browser-default padding / font metrics.
-	padding: 0;
-	font: inherit;
-	appearance: none;
-}
-
-.micDiscard {
-	background: var(--l2-background);
-	color: var(--l2-foreground);
-	transition: color 0.12s;
-
-	&:hover {
-		color: var(--l1-foreground);
-	}
 }
 
 .micWaves {
@@ -529,15 +400,5 @@
 	50% {
 		height: 12px;
 		opacity: 1;
-	}
-}
-
-.micStop {
-	background: var(--accent-cherry);
-	color: var(--accent-cherry-foreground);
-	transition: opacity 0.12s;
-
-	&:hover {
-		opacity: 0.85;
 	}
 }

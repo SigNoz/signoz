@@ -1,32 +1,58 @@
-import { getUserSettingsDropdownMenuItems } from 'container/SideNav/menuItems';
+import type { MouseEvent } from 'react';
+import type {
+	DropdownActionItemType,
+	DropdownItemType,
+} from '@signozhq/ui/dropdown';
+import {
+	getUserSettingsDropdownMenuItems,
+	WORKSPACE_LOCKED_TOOLTIP,
+} from 'container/SideNav/menuItems';
 
 const BASE_PARAMS = {
 	userEmail: 'test@signoz.io',
 	isWorkspaceBlocked: false,
 	isEnterpriseSelfHostedUser: false,
 	isCommunityEnterpriseUser: false,
+	onSelect: jest.fn(),
 };
 
+function settingsRows(items: DropdownItemType[]): DropdownActionItemType[] {
+	const group = items.find((item) => item.type === 'group');
+	if (group?.type !== 'group') {
+		throw new Error('No logged-in-as group');
+	}
+	return group.items.filter(
+		(row): row is DropdownActionItemType => row.type === 'item',
+	);
+}
+
+function settingsRow(
+	items: DropdownItemType[],
+	value: string,
+): DropdownActionItemType {
+	const row = settingsRows(items).find((r) => r.value === value);
+	if (!row) {
+		throw new Error(`No "${value}" row`);
+	}
+	return row;
+}
+
 describe('getUserSettingsDropdownMenuItems', () => {
-	it('always includes logged-in-as label, workspace, account, keyboard shortcuts, and sign out', () => {
+	it('heads the settings rows with the logged-in user, then signs out below a separator', () => {
 		const items = getUserSettingsDropdownMenuItems(BASE_PARAMS);
-		const keys = items?.map((item) => item?.key);
 
-		expect(keys).toContain('label');
-		expect(keys).toContain('workspace');
-		expect(keys).toContain('account');
-		expect(keys).toContain('keyboard-shortcuts');
-		expect(keys).toContain('logout');
-
-		// workspace item is enabled when workspace is not blocked
-		const workspaceItem = items?.find(
-			(item: any) => item.key === 'workspace',
-		) as any;
-
-		expect(workspaceItem?.disabled).toBe(false);
-
-		// does not include license item for regular cloud user
-		expect(keys).not.toContain('license');
+		expect(items.map((item) => item.type)).toStrictEqual([
+			'group',
+			'separator',
+			'item',
+		]);
+		expect(items[0]).toHaveProperty('testId', 'logged-in-as-nav-item');
+		expect(items[2]).toMatchObject({ value: 'logout', danger: true });
+		expect(settingsRows(items).map((row) => row.value)).toStrictEqual([
+			'workspace',
+			'account',
+			'keyboard-shortcuts',
+		]);
 	});
 
 	it('includes manage license item for enterprise self-hosted users', () => {
@@ -34,9 +60,8 @@ describe('getUserSettingsDropdownMenuItems', () => {
 			...BASE_PARAMS,
 			isEnterpriseSelfHostedUser: true,
 		});
-		const keys = items?.map((item) => item?.key);
 
-		expect(keys).toContain('license');
+		expect(settingsRows(items).map((row) => row.value)).toContain('license');
 	});
 
 	it('includes manage license item for community enterprise users', () => {
@@ -44,31 +69,35 @@ describe('getUserSettingsDropdownMenuItems', () => {
 			...BASE_PARAMS,
 			isCommunityEnterpriseUser: true,
 		});
-		const keys = items?.map((item) => item?.key);
 
-		expect(keys).toContain('license');
+		expect(settingsRows(items).map((row) => row.value)).toContain('license');
 	});
 
-	it('workspace item is disabled when workspace is blocked', () => {
+	it('workspace item is enabled when workspace is not blocked', () => {
+		const items = getUserSettingsDropdownMenuItems(BASE_PARAMS);
+
+		expect(settingsRow(items, 'workspace').disabled).toBe(false);
+	});
+
+	it('workspace item is disabled with the reason when workspace is blocked', () => {
 		const items = getUserSettingsDropdownMenuItems({
 			...BASE_PARAMS,
 			isWorkspaceBlocked: true,
 		});
-		const workspaceItem = items?.find(
-			(item: any) => item.key === 'workspace',
-		) as any;
 
-		expect(workspaceItem?.disabled).toBe(true);
+		expect(settingsRow(items, 'workspace')).toMatchObject({
+			disabled: true,
+			disabledTooltip: WORKSPACE_LOCKED_TOOLTIP,
+		});
 	});
 
-	it('returns items in correct order: label, divider, workspace, account, ..., shortcuts, divider, logout', () => {
-		const items = getUserSettingsDropdownMenuItems(BASE_PARAMS) ?? [];
-		const keys = items.map((item: any) => item.key ?? item.type);
+	it('reports the picked row by key', () => {
+		const onSelect = jest.fn();
+		const items = getUserSettingsDropdownMenuItems({ ...BASE_PARAMS, onSelect });
+		const event = {} as MouseEvent;
 
-		expect(keys[0]).toBe('label');
-		expect(keys[1]).toBe('divider');
-		expect(keys[2]).toBe('workspace');
-		expect(keys[3]).toBe('account');
-		expect(keys[keys.length - 1]).toBe('logout');
+		settingsRow(items, 'account').onClick?.(event);
+
+		expect(onSelect).toHaveBeenCalledWith('account', event);
 	});
 });

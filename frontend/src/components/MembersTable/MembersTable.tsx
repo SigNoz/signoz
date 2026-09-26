@@ -55,14 +55,14 @@ function NameEmailCell({
 function StatusBadge({ status }: { status: MemberRow['status'] }): JSX.Element {
 	if (status === MemberStatus.Active) {
 		return (
-			<Badge color="forest" variant="outline">
+			<Badge color="success" variant="outlined">
 				ACTIVE
 			</Badge>
 		);
 	}
 	if (status === MemberStatus.Deleted) {
 		return (
-			<Badge color="cherry" variant="outline">
+			<Badge color="danger" variant="outlined">
 				DELETED
 			</Badge>
 		);
@@ -70,13 +70,17 @@ function StatusBadge({ status }: { status: MemberRow['status'] }): JSX.Element {
 
 	if (status === MemberStatus.Invited) {
 		return (
-			<Badge color="amber" variant="outline">
+			<Badge color="warning" variant="outlined">
 				INVITED
 			</Badge>
 		);
 	}
 
-	return <Badge color="vanilla">⎯</Badge>;
+	return (
+		<Badge variant="solid" color="secondary">
+			⎯
+		</Badge>
+	);
 }
 
 function MembersEmptyState({

@@ -50,10 +50,11 @@ function RolesSettings(): JSX.Element {
 					</AuthZTooltip>
 					{isRolesEnabled && (
 						<AuthZButton
+							size="md"
 							checks={[RoleCreatePermission]}
 							variant="solid"
 							color="primary"
-							className={styles.roleSettingsToolbarButton}
+							width={156}
 							onClick={(): void => history.push(ROUTES.ROLE_CREATE)}
 						>
 							<Plus size={14} />

@@ -88,7 +88,6 @@ export function GroupedStatusCounts({
 					key={item.label}
 					rowId={rowId}
 					title={buildTooltipContent(item)}
-					arrow
 					align="start"
 				>
 					{item.value ? (

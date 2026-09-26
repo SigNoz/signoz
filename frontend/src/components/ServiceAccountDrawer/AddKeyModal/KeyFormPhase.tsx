@@ -2,7 +2,7 @@ import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
@@ -68,7 +68,9 @@ function KeyFormPhase({
 								name="expiryMode"
 								control={control}
 								render={({ field }): JSX.Element => (
-									<ToggleGroupSimple
+									<ToggleGroup
+										variant="outlined"
+										color="secondary"
 										type="single"
 										value={field.value}
 										onChange={(val: string): void => {
@@ -77,7 +79,7 @@ function KeyFormPhase({
 											}
 										}}
 										size="sm"
-										className="add-key-modal__expiry-toggle"
+										width="60%"
 										items={[
 											{ value: ExpiryMode.NONE, label: 'No Expiration' },
 											{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
@@ -117,6 +119,7 @@ function KeyFormPhase({
 			<div className="add-key-modal__footer">
 				<div className="add-key-modal__footer-right">
 					<Button
+						size="md"
 						variant="solid"
 						color="secondary"
 						onClick={onClose}
@@ -125,16 +128,21 @@ function KeyFormPhase({
 						Cancel
 					</Button>
 					<AuthZButton
+						size="md"
 						checks={checks}
 						authZEnabled={!!accountId}
-						withPortal={false}
-						type="submit"
-						form={FORM_ID}
+						type="button"
 						variant="solid"
 						color="primary"
 						loading={isSubmitting}
 						disabled={!isValid}
 						testId="add-key-submit-btn"
+						onClick={(): void => {
+							const form = document.getElementById(FORM_ID);
+							if (form instanceof HTMLFormElement) {
+								form.requestSubmit();
+							}
+						}}
 					>
 						Create Key
 					</AuthZButton>

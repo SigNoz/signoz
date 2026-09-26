@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Search, X } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
@@ -43,20 +43,20 @@ function PanelHeaderSearch({
 
 	if (!expanded) {
 		return (
-			<TooltipSimple title="Search" arrow>
+			<Tooltip title="Search">
 				<Button
 					type="button"
 					variant="ghost"
 					color="secondary"
-					size="icon"
+					size="sm"
+					icon
 					onClick={(): void => setExpanded(true)}
-					className={styles.searchTrigger}
-					data-testid="panel-header-search-trigger"
+					testId="panel-header-search-trigger"
 					aria-label="Search"
 				>
 					<Search size={14} />
 				</Button>
-			</TooltipSimple>
+			</Tooltip>
 		);
 	}
 
@@ -74,10 +74,10 @@ function PanelHeaderSearch({
 					type="button"
 					variant="ghost"
 					color="secondary"
-					size="icon"
-					className={styles.clear}
+					size="sm"
+					icon
 					onClick={clear}
-					data-testid="panel-header-search-clear"
+					testId="panel-header-search-clear"
 					aria-label="Clear search"
 				>
 					<X size={14} />

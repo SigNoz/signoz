@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { BadgeColor } from '@signozhq/ui/badge';
+import type { BadgeColorType } from '@signozhq/ui/badge';
 import {
 	InframonitoringtypesContainerCountsByReadyDTO,
 	InframonitoringtypesContainerCountsByStatusDTO,
@@ -50,22 +50,22 @@ export function getContainerPodUID(
 
 export const CONTAINER_STATUS_COLORS: Record<
 	InframonitoringtypesContainerStatusDTO,
-	BadgeColor
+	BadgeColorType
 > = {
-	[InframonitoringtypesContainerStatusDTO.running]: 'forest',
-	[InframonitoringtypesContainerStatusDTO.completed]: 'robin',
-	[InframonitoringtypesContainerStatusDTO.waiting]: 'amber',
-	[InframonitoringtypesContainerStatusDTO.containercreating]: 'amber',
-	[InframonitoringtypesContainerStatusDTO.terminated]: 'sienna',
-	[InframonitoringtypesContainerStatusDTO.unknown]: 'vanilla',
-	[InframonitoringtypesContainerStatusDTO.no_data]: 'vanilla',
-	[InframonitoringtypesContainerStatusDTO.crashloopbackoff]: 'cherry',
-	[InframonitoringtypesContainerStatusDTO.imagepullbackoff]: 'cherry',
-	[InframonitoringtypesContainerStatusDTO.errimagepull]: 'cherry',
-	[InframonitoringtypesContainerStatusDTO.createcontainerconfigerror]: 'cherry',
-	[InframonitoringtypesContainerStatusDTO.oomkilled]: 'cherry',
-	[InframonitoringtypesContainerStatusDTO.error]: 'cherry',
-	[InframonitoringtypesContainerStatusDTO.containercannotrun]: 'cherry',
+	[InframonitoringtypesContainerStatusDTO.running]: 'success',
+	[InframonitoringtypesContainerStatusDTO.completed]: 'primary',
+	[InframonitoringtypesContainerStatusDTO.waiting]: 'warning',
+	[InframonitoringtypesContainerStatusDTO.containercreating]: 'warning',
+	[InframonitoringtypesContainerStatusDTO.terminated]: 'archive',
+	[InframonitoringtypesContainerStatusDTO.unknown]: 'secondary',
+	[InframonitoringtypesContainerStatusDTO.no_data]: 'secondary',
+	[InframonitoringtypesContainerStatusDTO.crashloopbackoff]: 'danger',
+	[InframonitoringtypesContainerStatusDTO.imagepullbackoff]: 'danger',
+	[InframonitoringtypesContainerStatusDTO.errimagepull]: 'danger',
+	[InframonitoringtypesContainerStatusDTO.createcontainerconfigerror]: 'danger',
+	[InframonitoringtypesContainerStatusDTO.oomkilled]: 'danger',
+	[InframonitoringtypesContainerStatusDTO.error]: 'danger',
+	[InframonitoringtypesContainerStatusDTO.containercannotrun]: 'danger',
 };
 
 /** kubectl prints these as single CamelCase words, so the enum value alone is not a usable label. */
@@ -143,11 +143,11 @@ export function getContainerStatusItems(
 
 export const CONTAINER_READY_COLORS: Record<
 	InframonitoringtypesContainerReadyDTO,
-	BadgeColor
+	BadgeColorType
 > = {
-	[InframonitoringtypesContainerReadyDTO.ready]: 'forest',
-	[InframonitoringtypesContainerReadyDTO.not_ready]: 'cherry',
-	[InframonitoringtypesContainerReadyDTO.no_data]: 'vanilla',
+	[InframonitoringtypesContainerReadyDTO.ready]: 'success',
+	[InframonitoringtypesContainerReadyDTO.not_ready]: 'danger',
+	[InframonitoringtypesContainerReadyDTO.no_data]: 'secondary',
 };
 
 export const CONTAINER_READY_LABELS: Record<

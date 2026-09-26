@@ -128,10 +128,6 @@
 		flex-shrink: 0;
 	}
 
-	&__tooltip-wrapper {
-		display: inline-flex;
-	}
-
 	&__footer-btn {
 		display: inline-flex;
 		align-items: center;
@@ -219,9 +215,5 @@
 		color: var(--l2-foreground);
 		line-height: var(--line-height-18);
 		letter-spacing: -0.07px;
-	}
-
-	&__copy-btn {
-		border-left: 1px solid var(--l1-border);
 	}
 }

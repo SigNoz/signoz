@@ -1,4 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import {
+	findSuggestion,
+	openKeySuggestions,
+	typeFilter,
+} from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/querySearch.play';
 import { screen, userEvent, within } from 'storybook/test';
 import { VIEWS } from 'container/InfraMonitoringK8sV2/constants';
 
@@ -39,6 +44,21 @@ export const Default: StoryObj<PodsArgs> = {};
 /** The selected pod's Kubernetes events tab, opened through its detail route. */
 export const PodDetailsEvents: StoryObj<PodsArgs> = {
 	args: { drawer: true, drawerTab: VIEWS.EVENTS },
+};
+
+/** The selected pod's details drawer, switched to its logs tab. */
+export const DetailsDrawerLogsTab: StoryObj<PodsArgs> = {
+	args: { drawer: true },
+	play: async () => {
+		const drawer = within(
+			await screen.findByRole('dialog', {}, { timeout: 10000 }),
+		);
+
+		await userEvent.click(
+			await drawer.findByText('Logs', {}, { timeout: 10000 }),
+		);
+		await drawer.findAllByText(/handled request in/, {}, { timeout: 10000 });
+	},
 };
 
 /**
@@ -84,5 +104,29 @@ export const TooltipsInOptionsPanel: StoryObj<PodsArgs> = {
 		);
 
 		await screen.findByText('Columns');
+	},
+};
+
+/**
+ * The pod list re-renders the filter when the viewport grows, and each render
+ * reconfigures the editor, which closes its suggestions. Shot at the height
+ * the page opened at.
+ */
+const heldViewport = { sbshot: { viewport: { height: 1200 } } };
+
+/** The pod filter focused: the Kubernetes keys pods can be narrowed by. */
+export const FilterKeySuggestions: StoryObj<PodsArgs> = {
+	parameters: heldViewport,
+	play: async ({ canvasElement }): Promise<void> => {
+		await openKeySuggestions(canvasElement, 'k8s.node.name');
+	},
+};
+
+/** The pod filter on a namespace: the namespaces the pods run in. */
+export const FilterValueSuggestions: StoryObj<PodsArgs> = {
+	parameters: heldViewport,
+	play: async ({ canvasElement }): Promise<void> => {
+		await typeFilter(canvasElement, 'k8s.namespace.name = ');
+		await findSuggestion(canvasElement, 'kube-system');
 	},
 };

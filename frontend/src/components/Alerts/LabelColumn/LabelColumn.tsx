@@ -1,11 +1,7 @@
 import { Copy } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
+import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 import { toast } from '@signozhq/ui/sonner';
-import {
-	TooltipContent,
-	TooltipRoot,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
@@ -16,20 +12,7 @@ import { BADGE_GAP, estimateBadgeWidth, OVERFLOW_BADGE_WIDTH } from './utils';
 
 export interface LabelColumnProps {
 	labels: string[];
-	color?:
-		| 'primary'
-		| 'secondary'
-		| 'success'
-		| 'error'
-		| 'warning'
-		| 'robin'
-		| 'forest'
-		| 'amber'
-		| 'sienna'
-		| 'cherry'
-		| 'sakura'
-		| 'aqua'
-		| 'vanilla';
+	color?: BadgeColorType;
 	value?: { [key: string]: string };
 }
 
@@ -104,20 +87,10 @@ function LabelColumn({
 				<LabelTag key={label} label={label} color={color} value={value?.[label]} />
 			))}
 			{remainingLabels.length > 0 && (
-				<TooltipRoot>
-					<TooltipTrigger asChild>
-						<span>
-							<Badge
-								color={color}
-								className={styles.overflowBadge}
-								variant="outline"
-								data-testid="label-overflow-badge"
-							>
-								+{remainingLabels.length}
-							</Badge>
-						</span>
-					</TooltipTrigger>
-					<TooltipContent side="bottom" align="end">
+				<Tooltip
+					side="bottom"
+					align="end"
+					title={
 						<div className={styles.tooltipContent}>
 							<span>
 								{remainingLabels
@@ -140,8 +113,14 @@ function LabelColumn({
 								<Copy size={12} />
 							</button>
 						</div>
-					</TooltipContent>
-				</TooltipRoot>
+					}
+				>
+					<span>
+						<Badge color={color} variant="outlined" testId="label-overflow-badge">
+							+{remainingLabels.length}
+						</Badge>
+					</span>
+				</Tooltip>
 			)}
 		</div>
 	);

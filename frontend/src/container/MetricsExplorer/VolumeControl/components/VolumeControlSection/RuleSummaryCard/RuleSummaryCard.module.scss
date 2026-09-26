@@ -12,6 +12,10 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
+
+	> [data-slot='button'] {
+		margin-left: auto;
+	}
 }
 
 .statusIndicator {
@@ -27,10 +31,6 @@
 
 .statusPending {
 	background: var(--bg-amber-500, #ffcc56);
-}
-
-.editButton {
-	margin-left: auto;
 }
 
 .chips {

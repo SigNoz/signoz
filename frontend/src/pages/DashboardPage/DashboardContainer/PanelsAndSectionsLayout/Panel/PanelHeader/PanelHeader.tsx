@@ -20,7 +20,7 @@ import {
 	panelStatusFromWarning,
 } from '../PanelStatus/utils';
 import styles from './PanelHeader.module.scss';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 interface PanelHeaderBaseProps {
 	panelId: string;
@@ -105,17 +105,13 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 			<div className={styles.headerLeft}>
 				<Typography.Text className={styles.headerTitle}>{name}</Typography.Text>
 				{description && (
-					<TooltipSimple
-						title={description}
-						arrow
-						tooltipContentProps={{ className: styles.descriptionTooltip }}
-					>
+					<Tooltip title={description}>
 						<Info
 							className={styles.headerInfoIcon}
 							size={14}
 							data-testid="panel-header-info-icon"
 						/>
-					</TooltipSimple>
+					</Tooltip>
 				)}
 				{query?.isFetching && (
 					<Loader
@@ -135,11 +131,11 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 					/>
 				)}
 				{query?.timeLabel && (
-					<TooltipSimple title={query.timeLabel.full} arrow>
+					<Tooltip title={query.timeLabel.full}>
 						<span className={styles.timePill} data-testid="panel-time-preference">
 							{query.timeLabel.short}
 						</span>
-					</TooltipSimple>
+					</Tooltip>
 				)}
 				{errorDetail && <PanelStatusPopover variant="error" detail={errorDetail} />}
 				{warningDetail && (

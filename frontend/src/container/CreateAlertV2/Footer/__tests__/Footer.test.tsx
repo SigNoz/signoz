@@ -79,11 +79,6 @@ const SAVE_ALERT_RULE_TEXT = 'Save Alert Rule';
 const TEST_NOTIFICATION_TEXT = 'Test Notification';
 const DISCARD_TEXT = 'Discard';
 
-const SAVE_ALERT_RULE_CHECK_ICON = 'save-alert-rule-check-icon';
-const SAVE_ALERT_RULE_LOADER_ICON = 'save-alert-rule-loader-icon';
-const TEST_NOTIFICATION_LOADER_ICON = 'test-notification-loader-icon';
-const TEST_NOTIFICATION_SEND_ICON = 'test-notification-send-icon';
-
 describe('Footer', () => {
 	beforeEach(() => {
 		useQueryBuilder.mockReturnValue({
@@ -147,11 +142,14 @@ describe('Footer', () => {
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
-		).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
 		expect(
 			screen.getByRole('button', { name: /test notification/i }),
-		).toBeDisabled();
-		expect(screen.getByRole('button', { name: /discard/i })).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
+		expect(screen.getByRole('button', { name: /discard/i })).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('all buttons are disabled when updating alert rule', () => {
@@ -164,11 +162,14 @@ describe('Footer', () => {
 		// Target the button elements directly instead of the text spans inside them
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
-		).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
 		expect(
 			screen.getByRole('button', { name: /test notification/i }),
-		).toBeDisabled();
-		expect(screen.getByRole('button', { name: /discard/i })).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
+		expect(screen.getByRole('button', { name: /discard/i })).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('all buttons are disabled when testing alert rule', () => {
@@ -181,11 +182,14 @@ describe('Footer', () => {
 		// Target the button elements directly instead of the text spans inside them
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
-		).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
 		expect(
 			screen.getByRole('button', { name: /test notification/i }),
-		).toBeDisabled();
-		expect(screen.getByRole('button', { name: /discard/i })).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
+		expect(screen.getByRole('button', { name: /discard/i })).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('create and test buttons are disabled when alert name is missing', () => {
@@ -200,10 +204,10 @@ describe('Footer', () => {
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
-		).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
 		expect(
 			screen.getByRole('button', { name: /test notification/i }),
-		).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('create and test buttons are disabled when notifcation channels are missing and routing policies are disabled', () => {
@@ -228,10 +232,10 @@ describe('Footer', () => {
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
-		).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
 		expect(
 			screen.getByRole('button', { name: /test notification/i }),
-		).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('buttons are enabled even with no notification channels when routing policies are enabled', () => {
@@ -256,55 +260,49 @@ describe('Footer', () => {
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
-		).toBeEnabled();
+		).not.toHaveAttribute('aria-disabled', 'true');
 		expect(
 			screen.getByRole('button', { name: /test notification/i }),
-		).toBeEnabled();
-		expect(screen.getByRole('button', { name: /discard/i })).toBeEnabled();
+		).not.toHaveAttribute('aria-disabled', 'true');
+		expect(screen.getByRole('button', { name: /discard/i })).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
-	it('should show loader icon on test notification button when testing alert rule', () => {
+	it('should show loading state on test notification button when testing alert rule', () => {
 		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isTestingAlertRule: true,
 		});
 		render(<WrappedFooter />);
 
-		// When testing alert rule, the play icon is replaced with a loader icon
 		expect(
-			screen.queryByTestId(TEST_NOTIFICATION_SEND_ICON),
-		).not.toBeInTheDocument();
-
-		expect(screen.getByTestId(TEST_NOTIFICATION_LOADER_ICON)).toBeInTheDocument();
+			screen.getByRole('button', { name: /test notification/i }),
+		).toHaveAttribute('aria-busy', 'true');
 	});
 
-	it('should not show check icon on save alert rule button when updating alert rule', () => {
+	it('should show loading state on save alert rule button when updating alert rule', () => {
 		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isUpdatingAlertRule: true,
 		});
 		render(<WrappedFooter />);
 
-		// When updating alert rule, the check icon is replaced with a loader icon
 		expect(
-			screen.queryByTestId(SAVE_ALERT_RULE_CHECK_ICON),
-		).not.toBeInTheDocument();
-
-		expect(screen.getByTestId(SAVE_ALERT_RULE_LOADER_ICON)).toBeInTheDocument();
+			screen.getByRole('button', { name: /save alert rule/i }),
+		).toHaveAttribute('aria-busy', 'true');
 	});
 
-	it('should not show check icon on save alert rule button when creating alert rule', () => {
+	it('should show loading state on save alert rule button when creating alert rule', () => {
 		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			isCreatingAlertRule: true,
 		});
 		render(<WrappedFooter />);
 
-		// When creating alert rule, the check icon is replaced with a loader icon
 		expect(
-			screen.queryByTestId(SAVE_ALERT_RULE_CHECK_ICON),
-		).not.toBeInTheDocument();
-
-		expect(screen.getByTestId(SAVE_ALERT_RULE_LOADER_ICON)).toBeInTheDocument();
+			screen.getByRole('button', { name: /save alert rule/i }),
+		).toHaveAttribute('aria-busy', 'true');
 	});
 });

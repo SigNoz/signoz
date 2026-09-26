@@ -4,7 +4,7 @@ import { LockKeyhole, Trash2, X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
@@ -103,7 +103,9 @@ function EditKeyForm({
 						name="expiryMode"
 						control={control}
 						render={({ field }): JSX.Element => (
-							<ToggleGroupSimple
+							<ToggleGroup
+								variant="outlined"
+								color="secondary"
 								type="single"
 								value={field.value}
 								onChange={(val: string): void => {
@@ -113,7 +115,10 @@ function EditKeyForm({
 								}}
 								size="sm"
 								disabled={!canUpdate}
-								className="edit-key-modal__expiry-toggle"
+								disabledTooltip={
+									canUpdate ? undefined : 'You do not have permission to update this key'
+								}
+								width="60%"
 								items={[
 									{ value: ExpiryMode.NONE, label: 'No Expiration' },
 									{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
@@ -150,7 +155,7 @@ function EditKeyForm({
 
 				<div className="edit-key-modal__meta">
 					<span className="edit-key-modal__meta-label">Last Observed At</span>
-					<Badge color="vanilla">
+					<Badge variant="solid" color="secondary">
 						{formatLastObservedAt(
 							keyItem?.lastObservedAt ?? null,
 							formatTimezoneAdjustedTimestamp,
@@ -161,34 +166,44 @@ function EditKeyForm({
 
 			<div className="edit-key-modal__footer">
 				<AuthZButton
+					size="md"
 					checks={[
 						buildAPIKeyDeletePermission(keyItem?.id ?? ''),
 						buildSADetachPermission(accountId ?? ''),
 					]}
 					authZEnabled={!!accountId && !!keyItem?.id}
 					variant="link"
-					color="destructive"
+					color="danger"
 					onClick={onRevokeClick}
-					withPortal={false}
 				>
 					<Trash2 size={12} />
 					Revoke Key
 				</AuthZButton>
 				<div className="edit-key-modal__footer-right">
-					<Button variant="solid" color="secondary" onClick={onClose}>
-						<X size={12} />
+					<Button
+						size="md"
+						variant="solid"
+						color="secondary"
+						onClick={onClose}
+						prefix={<X size={12} />}
+					>
 						Cancel
 					</Button>
 					<AuthZButton
+						size="md"
 						checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
 						authZEnabled={!!accountId && !!keyItem?.id}
-						type="submit"
-						form={FORM_ID}
+						type="button"
 						variant="solid"
 						color="primary"
 						loading={isSaving}
 						disabled={!isDirty}
-						withPortal={false}
+						onClick={(): void => {
+							const form = document.getElementById(FORM_ID);
+							if (form instanceof HTMLFormElement) {
+								form.requestSubmit();
+							}
+						}}
 					>
 						Save Changes
 					</AuthZButton>

@@ -436,7 +436,14 @@ export default function BillingContainer(): JSX.Element {
 					<Flex vertical gap={8}>
 						<p className={styles.pageInfoTitle}>
 							{isCloudUserVal ? t('teams_cloud') : t('teams')}{' '}
-							{isFreeTrial ? <Badge color="success"> Free Trial </Badge> : ''}
+							{isFreeTrial ? (
+								<Badge variant="solid" color="success">
+									{' '}
+									Free Trial{' '}
+								</Badge>
+							) : (
+								''
+							)}
 						</p>
 
 						{billingData && !isFetchingBillingData && !showGracePeriodMessage ? (
@@ -455,7 +462,6 @@ export default function BillingContainer(): JSX.Element {
 						disabled={isLoading}
 						onClick={handleBilling}
 						prefix={<Landmark size={14} />}
-						className={styles.billingManageBtn}
 					>
 						{trialInfo?.trialConvertedToSubscription
 							? t('manage_billing')
@@ -539,14 +545,10 @@ export default function BillingContainer(): JSX.Element {
 									onClick={handleCsvDownload}
 									prefix={<MonitorDown size={14} />}
 									testId="download-csv-button"
-									className={styles.billingFooterBtn}
 								>
 									Download CSV
 								</Button>
-								<RefreshPaymentStatus
-									type="button"
-									className={styles.billingFooterBtn}
-								/>
+								<RefreshPaymentStatus type="button" />
 							</div>
 						)}
 					</div>

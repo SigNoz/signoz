@@ -64,8 +64,9 @@ function LogsActionsContainer({
 						<div className="frequency-chart-view-controller">
 							<Typography>Frequency chart</Typography>
 							<Switch
+								color="primary"
+								textPlacement="right"
 								value={showFrequencyChart}
-								defaultValue
 								onChange={handleToggleFrequencyChart}
 							/>
 						</div>

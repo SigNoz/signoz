@@ -86,18 +86,22 @@ export function AlertsEmptyState({
 						<div className={styles.actionContainer}>
 							<div className={styles.buttonGroup}>
 								<Button
+									size="md"
+									variant="solid"
+									color="primary"
 									onClick={onClickNewAlertHandler}
 									disabled={!addNewAlert}
+									disabledTooltip="You need permission to create alert rules"
 									loading={loading}
 									testId="add-alert"
+									prefix={<Plus size="md" />}
 								>
-									<span className={styles.buttonContent}>
-										<Plus size="md" />
-										New Alert Rule
-									</span>
+									New Alert Rule
 								</Button>
 								{onRefresh && (
 									<Button
+										size="md"
+										variant="solid"
 										onClick={onRefresh}
 										prefix={<RefreshCw />}
 										color="secondary"

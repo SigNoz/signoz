@@ -1,5 +1,4 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { TEXT_BACKGROUND_PAIRS } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/presets';
 import {
 	PanelTheme,
@@ -14,16 +13,14 @@ function renderRow(
 ): jest.Mock {
 	const onChange = jest.fn();
 	render(
-		<TooltipProvider>
-			<BackgroundSwatches
-				testId="background"
-				label="Panel background"
-				theme={PanelTheme.Dark}
-				value={TextBackgroundKind.Default}
-				onChange={onChange}
-				{...props}
-			/>
-		</TooltipProvider>,
+		<BackgroundSwatches
+			testId="background"
+			label="Panel background"
+			theme={PanelTheme.Dark}
+			value={TextBackgroundKind.Default}
+			onChange={onChange}
+			{...props}
+		/>,
 	);
 	return onChange;
 }

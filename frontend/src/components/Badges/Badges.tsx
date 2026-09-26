@@ -48,14 +48,21 @@ function Badges({ tags, setTags }: AddTagsProps): JSX.Element {
 		<div className="tags-container">
 			{tags.map<React.ReactNode>((tag) => (
 				<Badge
+					variant="solid"
 					key={tag}
-					color="vanilla"
-					style={{ userSelect: 'none' }}
-					closable
-					onClose={(e): void => {
-						e.preventDefault();
-						handleClose(tag);
-					}}
+					color="secondary"
+					suffix={
+						<button
+							type="button"
+							aria-label={`Remove ${tag}`}
+							onClick={(e): void => {
+								e.preventDefault();
+								handleClose(tag);
+							}}
+						>
+							<X size={12} />
+						</button>
+					}
 				>
 					{tag}
 				</Badge>

@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -282,6 +282,67 @@ export const SectionActionsMenu: Story = {
 		);
 		await userEvent.click(firstSection);
 		await screen.findByRole('menu');
+	},
+};
+
+/** The panel menu's move-to-section submenu, open on the sections it can go to. */
+export const PanelMoveToSectionSubmenu: Story = {
+	play: async (context) => {
+		await PanelActionsMenu.play?.(context);
+		await userEvent.hover(await screen.findByText('Move to section'));
+		// The submenu lists the sections the panel is not already in.
+		await waitFor(() => expect(screen.getAllByRole('menu')).toHaveLength(2), {
+			timeout: 10000,
+		});
+	},
+};
+
+/** Dashboard settings on the Publish tab, where the public link is managed. */
+export const SettingsPublicDashboard: Story = {
+	play: async ({ canvasElement }) => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: 'Configure' },
+				{ timeout: 10000 },
+			),
+		);
+		await userEvent.click(await screen.findByRole('tab', { name: 'Publish' }));
+		await screen.findByText('Default time range');
+	},
+};
+
+/** The Publish tab with its default time range select open. */
+export const SettingsPublicDashboardSelectOpen: Story = {
+	play: async (context) => {
+		await SettingsPublicDashboard.play?.(context);
+		await userEvent.click(
+			within(screen.getByRole('tabpanel')).getByRole('combobox'),
+		);
+		await screen.findByRole('listbox');
+	},
+};
+
+/** The Variables tab of dashboard settings with a new variable's form open. */
+export const SettingsVariablesNew: Story = {
+	play: async ({ canvasElement }) => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: 'Configure' },
+				{ timeout: 10000 },
+			),
+		);
+		await userEvent.click(await screen.findByRole('tab', { name: 'Variables' }));
+		const add = await within(await screen.findByRole('tabpanel')).findByRole(
+			'button',
+			{ name: 'Add variable' },
+		);
+
+		// The button stays disabled until its permission check resolves.
+		await waitFor(() => expect(add).toBeEnabled(), { timeout: 10000 });
+		await userEvent.click(add);
+		await screen.findByText('Variable Type');
 	},
 };
 

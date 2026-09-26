@@ -66,7 +66,13 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 					<AlertTypeCard
 						key={option.selection}
 						title={option.title}
-						extra={option.isBeta ? <Badge color="robin">Beta</Badge> : undefined}
+						extra={
+							option.isBeta ? (
+								<Badge variant="solid" color="primary">
+									Beta
+								</Badge>
+							) : undefined
+						}
 						onClick={(e): void => {
 							onSelect(option.selection, isModifierKeyPressed(e));
 						}}

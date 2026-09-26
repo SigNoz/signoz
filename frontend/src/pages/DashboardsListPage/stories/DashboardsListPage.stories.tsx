@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, screen, within } from 'storybook/test';
+import { expect, userEvent, screen, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -112,6 +112,72 @@ export const NewDashboardImportJsonInvalid: Story = {
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
 	parameters: { msw: { handlers: [overflowingRows] } },
+};
+
+/** Opens the actions menu of the row at `index`. */
+const openRowActions = async (
+	canvasElement: HTMLElement,
+	index: number,
+): Promise<void> => {
+	// The icon-only trigger carries no accessible name.
+	const triggers = await within(canvasElement).findAllByTestId(
+		'dashboard-action-icon',
+		{},
+		{ timeout: 10000 },
+	);
+
+	await userEvent.click(triggers[index]);
+	await screen.findByText('Rename');
+};
+
+/** Picks a row action, retrying while its permission check still disables it. */
+const pickRowAction = async (label: string | RegExp): Promise<void> => {
+	await waitFor(
+		async () => {
+			await userEvent.click(screen.getByText(label));
+			await screen.findByRole('dialog', {}, { timeout: 500 });
+		},
+		{ timeout: 10000 },
+	);
+};
+
+/** The first row's actions menu, open over the list. */
+export const RowActionsMenu: Story = {
+	play: async ({ canvasElement }) => {
+		await openRowActions(canvasElement, 0);
+	},
+};
+
+/** The rename dialog, opened from the menu of the second row (the first is locked). */
+export const RenameDashboardDialog: Story = {
+	play: async ({ canvasElement }) => {
+		await openRowActions(canvasElement, 1);
+		await pickRowAction('Rename');
+		await screen.findByRole('dialog', { name: 'Rename dashboard' });
+	},
+};
+
+/** The tags dialog, opened from the menu of the second row (the first is locked). */
+export const EditTagsDialog: Story = {
+	play: async ({ canvasElement }) => {
+		await openRowActions(canvasElement, 1);
+		await pickRowAction(/^(Edit|Add) Tags$/);
+		await screen.findByRole('dialog', { name: /^(Edit|Add) tags$/ });
+	},
+};
+
+/** The popover that names the current filters as a new saved view. */
+export const SaveViewPopover: Story = {
+	play: async ({ canvasElement }) => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: 'Save current filters as a view' },
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByText('Save as view');
+	},
 };
 
 /**

@@ -34,21 +34,23 @@ function ErrorEmptyState({
 			</div>
 			<div className={styles.actions}>
 				<Button
+					size="md"
 					variant="solid"
 					color="secondary"
 					prefix={<LifeBuoy size={14} />}
 					onClick={onContactSupport}
-					data-testid="error-contact-support-button"
+					testId="error-contact-support-button"
 				>
 					Contact Support
 				</Button>
 				{onRefresh && (
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						prefix={<RefreshCw size={14} />}
 						onClick={onRefresh}
-						data-testid="error-refresh-button"
+						testId="error-refresh-button"
 					>
 						Refresh
 					</Button>
