@@ -38,7 +38,6 @@ jobs:
       fail-fast: false
       matrix:
         suite:
-          - alerts
           - alertmanager
           - alertmanagerrotation
           - basepath
@@ -64,6 +63,7 @@ jobs:
           - querierauthz
           - role
           - rootuser
+          - ruler
           - savedview
           - semconvfamilies
           - serviceaccount

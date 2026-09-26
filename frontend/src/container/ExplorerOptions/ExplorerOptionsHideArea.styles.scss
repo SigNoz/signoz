@@ -1,6 +1,8 @@
 .explorer-option-droppable-container {
 	position: fixed;
-	bottom: 0;
+	// Lifted above the bottom strip. Don't extend this pattern — new fixed-bottom
+	// UI belongs in the bounded layout, not in another offset here.
+	bottom: var(--bottom-strip-height, 0px);
 	width: -webkit-fill-available;
 	height: 24px;
 	display: flex;
