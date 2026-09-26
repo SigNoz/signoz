@@ -81,6 +81,7 @@ func New(
 	bucketCache BucketCache,
 	flagger flagger.Flagger,
 	logTraceIDWindowPadding time.Duration,
+	traceIDWindowPadding time.Duration,
 	maxConcurrentQueries int,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
@@ -104,6 +105,7 @@ func New(
 		liveDataRefresh:          5 * time.Second,
 		builderConfig: builderConfig{
 			logTraceIDWindowPaddingMS: uint64(logTraceIDWindowPadding.Milliseconds()),
+			traceIDWindowPadding:      traceIDWindowPadding,
 		},
 		maxConcurrentQueries: maxConcurrentQueries,
 	}
