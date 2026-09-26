@@ -1,0 +1,56 @@
+{
+  "uuid": "kong-gateway-monitoring-v1",
+  "title": "Kong Gateway Monitoring (Full)",
+  "description": "Complete Kong Monitoring for SigNoz",
+  "tags": ["kong"],
+  "variables": {
+    "cluster": {
+      "name": "cluster",
+      "queryValue": "SELECT DISTINCT label_value FROM signoz_metrics.distributed_tag_attributes WHERE tag_key = 'cluster' AND metric_name = 'kong_http_status'",
+      "type": "QUERY"
+    },
+    "namespace": {
+      "name": "namespace",
+      "queryValue": "SELECT DISTINCT label_value FROM signoz_metrics.distributed_tag_attributes WHERE tag_key = 'namespace' AND metric_name = 'kong_http_status'",
+      "type": "QUERY"
+    }
+  },
+  "widgets": [
+    {
+      "title": "Total Requests",
+      "panelType": "graph",
+      "query": {
+        "promql": "sum(rate(kong_http_status{cluster=\"$cluster\", namespace=\"$namespace\"}[5m]))",
+        "queryType": "promql"
+      },
+      "layout": { "h": 6, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "title": "P99 Request Latency",
+      "panelType": "graph",
+      "query": {
+        "promql": "histogram_quantile(0.99, sum by (le) (rate(kong_latency_bucket{type=\"request\", cluster=\"$cluster\", namespace=\"$namespace\"}[5m])))",
+        "queryType": "promql"
+      },
+      "layout": { "h": 6, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "title": "CPU Usage",
+      "panelType": "graph",
+      "query": {
+        "promql": "sum(rate(container_cpu_usage_seconds_total{container=\"kong\", cluster=\"$cluster\", namespace=\"$namespace\"}[5m]))",
+        "queryType": "promql"
+      },
+      "layout": { "h": 6, "w": 12, "x": 0, "y": 6 }
+    },
+    {
+      "title": "Memory Usage",
+      "panelType": "graph",
+      "query": {
+        "promql": "sum(container_memory_usage_bytes{container=\"kong\", cluster=\"$cluster\", namespace=\"$namespace\"})",
+        "queryType": "promql"
+      },
+      "layout": { "h": 6, "w": 12, "x": 12, "y": 6 }
+    }
+  ]
+}
