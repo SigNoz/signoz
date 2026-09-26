@@ -74,6 +74,18 @@ Need assistance? Join our Slack community:
 - [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M)
 - [`#contributing-frontend`](https://signoz-community.slack.com/archives/C027134DM8B)
 
+## Code of Conduct
+
+SigNoz is committed to providing a welcoming, inclusive, and harassment-free experience for everyone in the community, regardless of background or identity.
+
+All contributors, maintainers, and community members are expected to follow our Code of Conduct in all project spaces, including GitHub issues, pull requests, discussions, and community channels.
+
+Please take a moment to review our Code of Conduct before contributing:
+
+👉 https://github.com/SigNoz/signoz/blob/main/CODE_OF_CONDUCT.md
+
+If you experience or witness unacceptable behavior, please report it according to the guidelines outlined in the Code of Conduct.
+
 ## Where do I go from here?
 
 - Set up your [development environment](docs/contributing/development.md)
