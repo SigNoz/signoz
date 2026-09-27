@@ -63,7 +63,10 @@ describe('PanelTypeSelectionModal', () => {
 
 		fireEvent.click(screen.getByTestId('panel-type-confirm'));
 
-		expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', 0);
+		expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', {
+			type: 'section',
+			layoutIndex: 0,
+		});
 	});
 
 	it('selects a tile, then adds it on confirm', () => {
@@ -77,7 +80,10 @@ describe('PanelTypeSelectionModal', () => {
 		);
 
 		fireEvent.click(screen.getByTestId('panel-type-confirm'));
-		expect(onSelect).toHaveBeenCalledWith('signoz/TablePanel', 0);
+		expect(onSelect).toHaveBeenCalledWith('signoz/TablePanel', {
+			type: 'section',
+			layoutIndex: 0,
+		});
 	});
 
 	it('hides the section picker when the dashboard has a single layout', () => {
@@ -93,7 +99,10 @@ describe('PanelTypeSelectionModal', () => {
 		expect(screen.getByText('Add to section')).toBeInTheDocument();
 		fireEvent.click(screen.getByTestId('panel-type-confirm'));
 
-		expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', 1);
+		expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', {
+			type: 'section',
+			layoutIndex: 1,
+		});
 	});
 
 	it('filters tiles by search and offers to clear an empty result', () => {

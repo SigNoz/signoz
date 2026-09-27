@@ -154,11 +154,17 @@ export function addPanelToSectionOps({
 	];
 }
 
+export type NewPanelTarget =
+	| { type: 'section'; layoutIndex: number }
+	| { type: 'newSection'; title: string }
+	/** Created at the top when missing. */
+	| { type: 'root' };
+
 interface CreatePanelOpsArgs {
 	/** Current sections, used to resolve the target and the next free row. */
 	layouts: DashboardtypesLayoutDTO[];
-	/** Preferred section (from a section's "Add panel" trigger); falls back to the root (first) section. */
-	layoutIndex: number | undefined;
+	/** Omitted, or a stale section → the first section. */
+	target?: NewPanelTarget;
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
 }
@@ -242,12 +248,11 @@ export function findFreeSlot(
 
 /**
  * Ops to persist a brand-new panel (editor save path): resolve the target
- * section (requested index if valid, else the root/first section, else a
- * freshly-created one) and place the panel via `findFreeSlot`.
+ * section, creating it when needed, and place the panel via `findFreeSlot`.
  */
 export function createPanelOps({
 	layouts,
-	layoutIndex,
+	target,
 	panelId,
 	panel,
 }: CreatePanelOpsArgs): DashboardtypesJSONPatchOperationDTO[] {
@@ -255,10 +260,23 @@ export function createPanelOps({
 
 	let targetIndex: number;
 	let items: DashboardGridItemDTO[];
-	if (layoutIndex !== undefined && layouts[layoutIndex] !== undefined) {
+	const newSectionTitle =
+		target?.type === 'newSection' ? target.title.trim() : '';
+	if (newSectionTitle) {
+		ops.push(...titleLooseLayoutsOps(layouts), addSectionOp(newSectionTitle));
+		targetIndex = layouts.length;
+		items = [];
+	} else if (target?.type === 'root' && layouts[0]?.spec?.display?.title) {
+		ops.push({ op: add, path: '/spec/layouts/0', value: newGridLayout('') });
+		targetIndex = 0;
+		items = [];
+	} else if (
+		target?.type === 'section' &&
+		layouts[target.layoutIndex] !== undefined
+	) {
 		// Explicit section — a section's own "New Panel" trigger.
-		targetIndex = layoutIndex;
-		items = layouts[layoutIndex]?.spec.items ?? [];
+		targetIndex = target.layoutIndex;
+		items = layouts[target.layoutIndex]?.spec.items ?? [];
 	} else if (layouts.length > 0) {
 		// No section specified (toolbar "New Panel") → the root (first) section.
 		targetIndex = 0;
@@ -332,6 +350,22 @@ export function titleUntitledSectionOp(
 		path: `/spec/layouts/${layoutIndex}/spec/display`,
 		value: { title },
 	};
+}
+
+/** Titles loose layouts ("Section 1", …) on a free-flowing dashboard, as panels can't stay loose once a section exists. */
+export function titleLooseLayoutsOps(
+	layouts: DashboardtypesLayoutDTO[],
+): DashboardtypesJSONPatchOperationDTO[] {
+	if (layouts.some((layout) => layout.spec?.display?.title)) {
+		return [];
+	}
+	const ops: DashboardtypesJSONPatchOperationDTO[] = [];
+	layouts.forEach((layout, index) => {
+		if ((layout.spec?.items ?? []).length > 0) {
+			ops.push(titleUntitledSectionOp(index, `Section ${ops.length + 1}`));
+		}
+	});
+	return ops;
 }
 
 /** Remove a section. Panel cleanup (orphaned refs) is handled by the caller. */

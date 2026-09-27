@@ -6,6 +6,7 @@ import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { useDashboardSections } from '../../../hooks/useDashboardSections';
 import { releasePanelPickerTarget } from '../../../store/usePanelPickerTargetStore';
 import { getPanelDefinition } from '../../../Panels/registry';
+import type { NewPanelTarget } from '../../../patchOps';
 import type { PanelKind } from '../../../Panels/types/panelKind';
 import PanelTypeBrowser from './PanelTypeBrowser';
 import SectionPicker from './SectionPicker';
@@ -19,7 +20,7 @@ const DEFAULT_PANEL_KIND: PanelKind = 'signoz/TimeSeriesPanel';
 interface PanelTypeSelectionModalProps {
 	open: boolean;
 	onClose: () => void;
-	onSelect: (panelKind: PanelKind, layoutIndex?: number) => void;
+	onSelect: (panelKind: PanelKind, target?: NewPanelTarget) => void;
 	/** Section the picker opens on; omit → the first section. */
 	defaultLayoutIndex?: number;
 }
@@ -56,7 +57,12 @@ function PanelTypeSelectionModal({
 
 	const handleConfirm = (): void => {
 		releasePanelPickerTarget(false);
-		onSelect(selectedKind, selectedLayoutIndex);
+		onSelect(
+			selectedKind,
+			selectedLayoutIndex === undefined
+				? undefined
+				: { type: 'section', layoutIndex: selectedLayoutIndex },
+		);
 	};
 
 	const selectedName = getPanelDefinition(selectedKind).displayName;
