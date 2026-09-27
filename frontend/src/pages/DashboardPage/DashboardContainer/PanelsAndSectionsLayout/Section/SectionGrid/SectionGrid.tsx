@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import GridLayout, { WidthProvider, type Layout } from 'react-grid-layout';
+import cx from 'classnames';
 
 import { newPanelSlot } from '../../../patchOps';
 import type { PanelKind } from '../../../Panels/types/panelKind';
@@ -51,7 +52,7 @@ function SectionGrid({
 
 	return (
 		<ResponsiveGridLayout
-			className={styles.grid}
+			className={cx(styles.grid, { [styles.instantHeight]: !!placeholderKind })}
 			cols={12}
 			rowHeight={GRID_ROW_HEIGHT}
 			autoSize

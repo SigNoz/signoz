@@ -2,6 +2,10 @@
 export function getScrollParent(element: HTMLElement): HTMLElement {
 	let node = element.parentElement;
 	while (node) {
+		// OverlayScrollbars marks its viewport scrollable only after it notices new overflow.
+		if (node.hasAttribute('data-overlayscrollbars-viewport')) {
+			return node;
+		}
 		const { overflowY } = getComputedStyle(node);
 		if (
 			(overflowY === 'auto' || overflowY === 'scroll') &&
