@@ -1,22 +1,36 @@
 import { create } from 'zustand';
 
+import type { PanelKind } from '../Panels/types/panelKind';
+
 export interface ScrollOrigin {
 	element: HTMLElement;
 	top: number;
 }
 
+export interface PanelPickerTarget {
+	layoutIndex: number;
+	panelKind: PanelKind;
+	/** Outline the section; off when there's only one place to add to. */
+	outline: boolean;
+}
+
+export interface PanelPickerDraftSection {
+	title: string;
+	panelKind: PanelKind;
+}
+
 /**
- * The section the open new-panel picker targets, so it can be highlighted behind the
- * drawer. `scrollOrigin` is the scroll position before the first reveal, restored if
- * the picker is dismissed.
+ * Where the open new-panel picker will add its panel, so the dashboard can mark the
+ * section and preview the slot behind the drawer. `scrollOrigin` is the scroll
+ * position before the first reveal, restored if the picker is dismissed.
  */
 export interface PanelPickerTargetStore {
-	targetLayoutIndex: number | null;
-	/** Name typed for a section the picker will create; null when not creating one. */
-	draftSectionTitle: string | null;
+	target: PanelPickerTarget | null;
+	/** Section the picker will create; null when not creating one. */
+	draftSection: PanelPickerDraftSection | null;
 	scrollOrigin: ScrollOrigin | null;
-	setTargetLayoutIndex: (layoutIndex: number | null) => void;
-	setDraftSectionTitle: (title: string | null) => void;
+	setTarget: (target: PanelPickerTarget | null) => void;
+	setDraftSection: (draft: PanelPickerDraftSection | null) => void;
 	/** No-op once an origin is recorded, so later reveals keep the first position. */
 	rememberScrollOrigin: (origin: ScrollOrigin) => void;
 	reset: () => void;
@@ -24,14 +38,14 @@ export interface PanelPickerTargetStore {
 
 export const usePanelPickerTargetStore = create<PanelPickerTargetStore>(
 	(set, get) => ({
-		targetLayoutIndex: null,
-		draftSectionTitle: null,
+		target: null,
+		draftSection: null,
 		scrollOrigin: null,
-		setTargetLayoutIndex: (targetLayoutIndex): void => {
-			set({ targetLayoutIndex });
+		setTarget: (target): void => {
+			set({ target });
 		},
-		setDraftSectionTitle: (draftSectionTitle): void => {
-			set({ draftSectionTitle });
+		setDraftSection: (draftSection): void => {
+			set({ draftSection });
 		},
 		rememberScrollOrigin: (origin): void => {
 			if (!get().scrollOrigin) {
@@ -40,8 +54,8 @@ export const usePanelPickerTargetStore = create<PanelPickerTargetStore>(
 		},
 		reset: (): void => {
 			set({
-				targetLayoutIndex: null,
-				draftSectionTitle: null,
+				target: null,
+				draftSection: null,
 				scrollOrigin: null,
 			});
 		},

@@ -246,6 +246,11 @@ export function findFreeSlot(
 	return bottomRowSlot(items);
 }
 
+/** Where a brand-new panel lands in a section: its free slot plus the default size. */
+export function newPanelSlot(items: PlacedItem[]): Required<PlacedItem> {
+	return { ...findFreeSlot(items, NEW_PANEL_SIZE.width), ...NEW_PANEL_SIZE };
+}
+
 /**
  * Ops to persist a brand-new panel (editor save path): resolve the target
  * section, creating it when needed, and place the panel via `findFreeSlot`.
@@ -288,16 +293,13 @@ export function createPanelOps({
 		items = [];
 	}
 
-	const { x, y } = findFreeSlot(items, NEW_PANEL_SIZE.width);
 	ops.push(
 		...addPanelToSectionOps({
 			panelId,
 			panel,
 			layoutIndex: targetIndex,
 			item: {
-				x,
-				y,
-				...NEW_PANEL_SIZE,
+				...newPanelSlot(items),
 				content: { $ref: panelRef(panelId) },
 			},
 		}),

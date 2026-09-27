@@ -174,18 +174,25 @@ describe('PanelTypeSelectionModal', () => {
 			});
 		});
 
-		it('publishes the typed name for the dashboard preview', () => {
-			const draft = (): string | null =>
-				usePanelPickerTargetStore.getState().draftSectionTitle;
+		it('publishes the draft for the dashboard preview', () => {
+			const draft = (): unknown =>
+				usePanelPickerTargetStore.getState().draftSection;
 			renderDrawer();
 
 			fireEvent.click(screen.getByTestId('panel-section-create'));
-			expect(draft()).toBe('');
+			expect(draft()).toStrictEqual({
+				title: '',
+				panelKind: 'signoz/TimeSeriesPanel',
+			});
 
 			fireEvent.change(screen.getByTestId('panel-section-name'), {
 				target: { value: 'Errors' },
 			});
-			expect(draft()).toBe('Errors');
+			fireEvent.click(screen.getByTestId('panel-type-signoz/TablePanel'));
+			expect(draft()).toStrictEqual({
+				title: 'Errors',
+				panelKind: 'signoz/TablePanel',
+			});
 
 			fireEvent.click(screen.getByTestId('panel-section-name-cancel'));
 			expect(draft()).toBeNull();
@@ -208,20 +215,37 @@ describe('PanelTypeSelectionModal', () => {
 	});
 
 	describe('section highlight', () => {
-		const target = (): number | null =>
-			usePanelPickerTargetStore.getState().targetLayoutIndex;
+		const target = (): unknown => usePanelPickerTargetStore.getState().target;
 
-		it('does not publish a target without a section picker', () => {
+		it('targets the only section without outlining it', () => {
 			renderDrawer();
 
-			expect(target()).toBeNull();
+			expect(target()).toStrictEqual({
+				layoutIndex: 0,
+				panelKind: 'signoz/TimeSeriesPanel',
+				outline: false,
+			});
 		});
 
-		it('publishes the chosen section while open', () => {
+		it('publishes the chosen section and kind while open', () => {
 			mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
 			renderDrawer({ defaultLayoutIndex: 1 });
 
-			expect(target()).toBe(1);
+			fireEvent.click(screen.getByTestId('panel-type-signoz/TablePanel'));
+
+			expect(target()).toStrictEqual({
+				layoutIndex: 1,
+				panelKind: 'signoz/TablePanel',
+				outline: true,
+			});
+		});
+
+		it('drops the target while a new section is being named', () => {
+			renderDrawer();
+
+			fireEvent.click(screen.getByTestId('panel-section-create'));
+
+			expect(target()).toBeNull();
 		});
 
 		it('restores the pre-reveal scroll position on cancel', () => {

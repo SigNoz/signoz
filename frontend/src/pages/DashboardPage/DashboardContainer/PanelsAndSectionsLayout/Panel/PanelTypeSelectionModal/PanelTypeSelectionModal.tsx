@@ -53,11 +53,13 @@ function PanelTypeSelectionModal({
 	const selectedTarget = options.find((o) => o.value === selectedValue)?.target;
 	const selectedLayoutIndex =
 		selectedTarget?.type === 'section' ? selectedTarget.layoutIndex : undefined;
-	usePanelPickerTarget(
-		selectedLayoutIndex,
-		open && hasSectionPicker && !isCreatingSection,
-	);
-	usePanelPickerDraftSection(newSectionTitle, open);
+	usePanelPickerTarget({
+		open: open && !isCreatingSection,
+		layoutIndex: selectedLayoutIndex,
+		panelKind: selectedKind,
+		outline: hasSectionPicker,
+	});
+	usePanelPickerDraftSection(newSectionTitle, selectedKind, open);
 
 	const handleClose = (): void => {
 		releasePanelPickerTarget(true);

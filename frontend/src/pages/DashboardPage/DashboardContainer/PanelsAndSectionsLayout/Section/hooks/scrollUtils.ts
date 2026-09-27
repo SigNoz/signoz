@@ -13,3 +13,17 @@ export function getScrollParent(element: HTMLElement): HTMLElement {
 	}
 	return (document.scrollingElement as HTMLElement) ?? document.documentElement;
 }
+
+/** `scrollTop` for `scroller` that centers `element` vertically in its visible area. */
+export function centeredScrollTop(
+	scroller: HTMLElement,
+	element: HTMLElement,
+): number {
+	const isDocument = scroller === document.scrollingElement;
+	const viewTop = isDocument ? 0 : scroller.getBoundingClientRect().top;
+	const viewHeight = isDocument ? window.innerHeight : scroller.clientHeight;
+	const rect = element.getBoundingClientRect();
+	return (
+		scroller.scrollTop + rect.top - viewTop - (viewHeight - rect.height) / 2
+	);
+}
