@@ -1,5 +1,15 @@
 .select {
 	width: 100%;
+
+	:global(.ant-select-selector) {
+		border-color: var(--l2-border) !important;
+		background: var(--l2-background) !important;
+		box-shadow: none !important;
+	}
+
+	&:hover :global(.ant-select-selector) {
+		border-color: var(--l3-border) !important;
+	}
 }
 
 .dropdown {
