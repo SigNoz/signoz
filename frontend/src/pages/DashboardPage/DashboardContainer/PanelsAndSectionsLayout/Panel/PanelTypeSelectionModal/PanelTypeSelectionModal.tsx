@@ -9,7 +9,7 @@ import { getPanelDefinition } from '../../../Panels/registry';
 import type { NewPanelTarget } from '../../../patchOps';
 import type { PanelKind } from '../../../Panels/types/panelKind';
 import PanelTypeBrowser from './PanelTypeBrowser';
-import SectionPicker from './SectionPicker';
+import SectionTarget from './SectionTarget';
 import { usePanelPickerTarget } from './usePanelPickerTarget';
 import { buildSectionOptions, resolveDefaultSectionValue } from './utils';
 
@@ -38,35 +38,46 @@ function PanelTypeSelectionModal({
 	const [selectedValue, setSelectedValue] = useState('');
 	const [selectedKind, setSelectedKind] =
 		useState<PanelKind>(DEFAULT_PANEL_KIND);
+	const [newSectionTitle, setNewSectionTitle] = useState<string | null>(null);
+	const isCreatingSection = newSectionTitle !== null;
 
 	useEffect(() => {
 		if (open) {
 			setSelectedValue(resolveDefaultSectionValue(options, defaultLayoutIndex));
 			setSelectedKind(DEFAULT_PANEL_KIND);
+			setNewSectionTitle(null);
 		}
 	}, [open, options, defaultLayoutIndex]);
 
+	const selectedTarget = options.find((o) => o.value === selectedValue)?.target;
 	const selectedLayoutIndex =
-		selectedValue === '' ? undefined : Number(selectedValue);
-	usePanelPickerTarget(selectedLayoutIndex, open && hasSectionPicker);
+		selectedTarget?.type === 'section' ? selectedTarget.layoutIndex : undefined;
+	usePanelPickerTarget(
+		selectedLayoutIndex,
+		open && hasSectionPicker && !isCreatingSection,
+	);
 
 	const handleClose = (): void => {
 		releasePanelPickerTarget(true);
 		onClose();
 	};
 
+	const sectionTitle = newSectionTitle?.trim() ?? '';
+
 	const handleConfirm = (): void => {
+		if (isCreatingSection && !sectionTitle) {
+			return;
+		}
 		releasePanelPickerTarget(false);
 		onSelect(
 			selectedKind,
-			selectedLayoutIndex === undefined
-				? undefined
-				: { type: 'section', layoutIndex: selectedLayoutIndex },
+			isCreatingSection
+				? { type: 'newSection', title: sectionTitle }
+				: selectedTarget,
 		);
 	};
 
 	const selectedName = getPanelDefinition(selectedKind).displayName;
-	const targetLabel = options.find((o) => o.value === selectedValue)?.label;
 
 	return (
 		<DrawerWrapper
@@ -85,13 +96,15 @@ function PanelTypeSelectionModal({
 			footer={
 				<div className={styles.footer}>
 					<span className={styles.summary}>
-						{selectedName}
-						{hasSectionPicker && targetLabel && (
-							<>
-								{' in '}
-								<span className={styles.summaryTarget}>{targetLabel}</span>
-							</>
-						)}
+						<span className={styles.summaryKind}>{selectedName}</span>
+						<SectionTarget
+							options={options}
+							value={selectedValue}
+							onChange={setSelectedValue}
+							newSectionTitle={newSectionTitle}
+							onNewSectionTitleChange={setNewSectionTitle}
+							onSubmit={handleConfirm}
+						/>
 					</span>
 					<Button
 						variant="outlined"
@@ -106,6 +119,7 @@ function PanelTypeSelectionModal({
 						size="md"
 						prefix={<Plus size={16} />}
 						onClick={handleConfirm}
+						disabled={isCreatingSection && !sectionTitle}
 						testId="panel-type-confirm"
 					>
 						Add panel
@@ -113,16 +127,6 @@ function PanelTypeSelectionModal({
 				</div>
 			}
 		>
-			{hasSectionPicker && (
-				<div className={styles.sectionField}>
-					<span className={styles.fieldLabel}>Add to section</span>
-					<SectionPicker
-						options={options}
-						value={selectedValue}
-						onChange={setSelectedValue}
-					/>
-				</div>
-			)}
 			<PanelTypeBrowser selectedKind={selectedKind} onSelect={setSelectedKind} />
 		</DrawerWrapper>
 	);

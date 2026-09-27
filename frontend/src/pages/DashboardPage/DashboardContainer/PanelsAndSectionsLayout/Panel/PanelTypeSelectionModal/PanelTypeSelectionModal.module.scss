@@ -9,17 +9,6 @@
 	@include custom-scrollbar;
 }
 
-.sectionField {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-}
-
-.fieldLabel {
-	color: var(--l3-foreground);
-	font-size: 12px;
-}
-
 .footer {
 	display: flex;
 	align-items: center;
@@ -28,15 +17,17 @@
 }
 
 .summary {
+	display: flex;
 	flex: 1;
+	align-items: center;
+	gap: 8px;
 	min-width: 0;
-	overflow: hidden;
 	color: var(--l3-foreground);
 	font-size: 12.5px;
-	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.summaryTarget {
-	color: var(--l2-foreground);
+.summaryKind {
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
