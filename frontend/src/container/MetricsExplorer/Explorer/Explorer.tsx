@@ -10,6 +10,8 @@ import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
@@ -347,57 +349,62 @@ function Explorer(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div className="metrics-explorer-explore-container">
-				<div className="explore-header">
-					<div className="explore-header-left-actions">
-						<span>1 chart/query</span>
-						<Tooltip
-							open={disableOneChartPerQuery ? undefined : false}
-							title={oneChartPerQueryDisabledTooltip}
-						>
-							<Switch
-								value={showOneChartPerQuery}
-								onChange={handleToggleShowOneChartPerQuery}
-								disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
+			<QuickFiltersLayout
+				showFilters
+				savedViewProps={{ source: SavedviewtypesSourceDTO.metrics }}
+			>
+				<div className="metrics-explorer-explore-container">
+					<div className="explore-header">
+						<div className="explore-header-left-actions">
+							<span>1 chart/query</span>
+							<Tooltip
+								open={disableOneChartPerQuery ? undefined : false}
+								title={oneChartPerQueryDisabledTooltip}
+							>
+								<Switch
+									value={showOneChartPerQuery}
+									onChange={handleToggleShowOneChartPerQuery}
+									disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
+								/>
+							</Tooltip>
+						</div>
+						<div className="explore-header-right-actions">
+							{!isEmpty(warning) && <WarningPopover warningData={warning} />}
+							<DateTimeSelector showAutoRefresh />
+							<RightToolbarActions
+								onStageRunQuery={(): void => handleRunQuery()}
+								isLoadingQueries={isLoadingQueries}
+								handleCancelQuery={handleCancelQuery}
 							/>
-						</Tooltip>
+						</div>
 					</div>
-					<div className="explore-header-right-actions">
-						{!isEmpty(warning) && <WarningPopover warningData={warning} />}
-						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions
-							onStageRunQuery={(): void => handleRunQuery()}
-							isLoadingQueries={isLoadingQueries}
-							handleCancelQuery={handleCancelQuery}
+					<QueryBuilderV2
+						config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
+						panelType={PANEL_TYPES.TIME_SERIES}
+						showFunctions={false}
+						version="v3"
+					/>
+					<div className="explore-content">
+						<TimeSeries
+							onFetchingStateChange={setIsLoadingQueries}
+							showOneChartPerQuery={showOneChartPerQuery}
+							setWarning={setWarning}
+							areAllMetricUnitsSame={areAllMetricUnitsSame}
+							isMetricUnitsLoading={isMetricUnitsLoading}
+							isMetricUnitsError={isMetricUnitsError}
+							metricUnits={units}
+							metricNames={metricNames}
+							metrics={metrics}
+							handleOpenMetricDetails={handleOpenMetricDetails}
+							yAxisUnit={yAxisUnit}
+							setYAxisUnit={setYAxisUnit}
+							showYAxisUnitSelector={showYAxisUnitSelector}
+							isCancelled={isCancelled}
+							exportDefaultQuery={exportDefaultQuery}
 						/>
 					</div>
 				</div>
-				<QueryBuilderV2
-					config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
-					panelType={PANEL_TYPES.TIME_SERIES}
-					showFunctions={false}
-					version="v3"
-				/>
-				<div className="explore-content">
-					<TimeSeries
-						onFetchingStateChange={setIsLoadingQueries}
-						showOneChartPerQuery={showOneChartPerQuery}
-						setWarning={setWarning}
-						areAllMetricUnitsSame={areAllMetricUnitsSame}
-						isMetricUnitsLoading={isMetricUnitsLoading}
-						isMetricUnitsError={isMetricUnitsError}
-						metricUnits={units}
-						metricNames={metricNames}
-						metrics={metrics}
-						handleOpenMetricDetails={handleOpenMetricDetails}
-						yAxisUnit={yAxisUnit}
-						setYAxisUnit={setYAxisUnit}
-						showYAxisUnitSelector={showYAxisUnitSelector}
-						isCancelled={isCancelled}
-						exportDefaultQuery={exportDefaultQuery}
-					/>
-				</div>
-			</div>
+			</QuickFiltersLayout>
 			<ExplorerOptionWrapper
 				disabled={!stagedQuery}
 				query={exportDefaultQuery}
