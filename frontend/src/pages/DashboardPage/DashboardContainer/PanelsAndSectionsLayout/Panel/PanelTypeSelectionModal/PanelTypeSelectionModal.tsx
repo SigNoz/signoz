@@ -10,6 +10,7 @@ import type { NewPanelTarget } from '../../../patchOps';
 import type { PanelKind } from '../../../Panels/types/panelKind';
 import PanelTypeBrowser from './PanelTypeBrowser';
 import SectionTarget from './SectionTarget';
+import { usePanelPickerDraftSection } from './usePanelPickerDraftSection';
 import { usePanelPickerTarget } from './usePanelPickerTarget';
 import { buildSectionOptions, resolveDefaultSectionValue } from './utils';
 
@@ -56,6 +57,7 @@ function PanelTypeSelectionModal({
 		selectedLayoutIndex,
 		open && hasSectionPicker && !isCreatingSection,
 	);
+	usePanelPickerDraftSection(newSectionTitle, open);
 
 	const handleClose = (): void => {
 		releasePanelPickerTarget(true);

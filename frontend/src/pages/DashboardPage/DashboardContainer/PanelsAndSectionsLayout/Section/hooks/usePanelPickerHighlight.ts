@@ -1,7 +1,7 @@
-import { RefObject, useEffect } from 'react';
+import { RefObject } from 'react';
 
 import { usePanelPickerTargetStore } from '../../../store/usePanelPickerTargetStore';
-import { getScrollParent } from './scrollUtils';
+import { usePanelPickerReveal } from './usePanelPickerReveal';
 
 /**
  * Whether the open new-panel picker targets this section. When it becomes the target,
@@ -14,19 +14,7 @@ export function usePanelPickerHighlight(
 	const isTarget = usePanelPickerTargetStore(
 		(s) => s.targetLayoutIndex === layoutIndex,
 	);
-	const rememberScrollOrigin = usePanelPickerTargetStore(
-		(s) => s.rememberScrollOrigin,
-	);
-
-	useEffect(() => {
-		const element = ref.current;
-		if (!isTarget || !element) {
-			return;
-		}
-		const scroller = getScrollParent(element);
-		rememberScrollOrigin({ element: scroller, top: scroller.scrollTop });
-		element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-	}, [isTarget, ref, rememberScrollOrigin]);
+	usePanelPickerReveal(ref, isTarget);
 
 	return isTarget;
 }
