@@ -35,7 +35,7 @@ function StaticEditorBody({
 	dashboardId,
 	panelId,
 	isNew = false,
-	layoutIndex,
+	target,
 	onClose,
 	onSaved,
 	draftApi,
@@ -54,7 +54,7 @@ function StaticEditorBody({
 		dashboardId,
 		panelId,
 		isNew,
-		layoutIndex,
+		target,
 	});
 
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
