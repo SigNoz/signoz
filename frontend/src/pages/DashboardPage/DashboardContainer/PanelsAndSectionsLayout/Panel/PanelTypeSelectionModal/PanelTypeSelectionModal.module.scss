@@ -1,69 +1,42 @@
-.panelTypeSection {
+@use '../../../../../../styles/scrollbar' as *;
+
+.body {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
-	align-items: center;
+	gap: 16px;
+	min-height: 0;
+	overflow-y: auto;
+	@include custom-scrollbar;
 }
 
-.grid {
-	align-self: stretch;
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 8px;
-}
-
-.panelTypeCard {
+.sectionField {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	border: 1px solid var(--l2-border);
-	background: var(--l2-background);
-	padding: 12px;
-	gap: 12px;
-	cursor: pointer;
-	font: inherit;
-	border-radius: 4px;
-	color: var(--l1-foreground);
-	transition:
-		transform 180ms ease,
-		border-color 180ms ease;
-
-	&:hover {
-		background-color: var(--l2-background-hover);
-		border-color: var(--bg-robin-400);
-	}
-	&:active {
-		transform: translateY(2px);
-	}
+	gap: 6px;
 }
 
-.panelTypeCardSelected {
-	border-color: var(--bg-robin-400);
-	background-color: var(--l2-background-hover);
-	box-shadow: inset 0 0 0 1px var(--bg-robin-400);
+.fieldLabel {
+	color: var(--l3-foreground);
+	font-size: 12px;
 }
 
-.footerActions {
+.footer {
 	display: flex;
-	align-items: flex-end;
-	justify-content: flex-end;
-	gap: 8px;
+	align-items: center;
+	gap: 10px;
 	width: 100%;
 }
 
-.footerPicker {
-	// Take all the width left over by the (natural-width) confirm button.
-	display: flex;
+.summary {
 	flex: 1;
-	flex-direction: column;
-	gap: 6px;
 	min-width: 0;
+	overflow: hidden;
+	color: var(--l3-foreground);
+	font-size: 12.5px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
-.pickerLabel {
-	color: var(--l3-foreground);
-	font-size: 11px;
-	font-weight: 500;
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
+.summaryTarget {
+	color: var(--l2-foreground);
 }

@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Color } from '@signozhq/design-tokens';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import cx from 'classnames';
+import { Plus } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper } from '@signozhq/ui/drawer';
 
 import { useDashboardSections } from '../../../hooks/useDashboardSections';
-import { PANEL_OPTIONS } from '../../../Panels/registry';
+import { getPanelDefinition } from '../../../Panels/registry';
 import type { PanelKind } from '../../../Panels/types/panelKind';
-import PanelTypeSelectionModalFooter from './PanelTypeSelectionModalFooter';
+import PanelTypeBrowser from './PanelTypeBrowser';
+import SectionPicker from './SectionPicker';
 import { buildSectionOptions, resolveDefaultSectionValue } from './utils';
+
 import styles from './PanelTypeSelectionModal.module.scss';
+
+const DEFAULT_PANEL_KIND: PanelKind = 'signoz/TimeSeriesPanel';
 
 interface PanelTypeSelectionModalProps {
 	open: boolean;
@@ -26,89 +30,86 @@ function PanelTypeSelectionModal({
 }: PanelTypeSelectionModalProps): JSX.Element {
 	const sections = useDashboardSections();
 	const options = useMemo(() => buildSectionOptions(sections), [sections]);
-
-	// With more than one section the user must pick a target section, so we keep
-	// the select-then-confirm flow. Otherwise there's nothing to choose: hide the
-	// footer and let a tile click create the panel outright.
 	const hasSectionPicker = options.length > 1;
 
 	const [selectedValue, setSelectedValue] = useState('');
-	const [selectedPanelKind, setSelectedPanelKind] = useState<PanelKind | null>(
-		null,
-	);
+	const [selectedKind, setSelectedKind] =
+		useState<PanelKind>(DEFAULT_PANEL_KIND);
 
-	// Seed the target section on open.
 	useEffect(() => {
 		if (open) {
 			setSelectedValue(resolveDefaultSectionValue(options, defaultLayoutIndex));
-			setSelectedPanelKind(null);
+			setSelectedKind(DEFAULT_PANEL_KIND);
 		}
 	}, [open, options, defaultLayoutIndex]);
 
-	const createPanel = (panelKind: PanelKind): void => {
-		const layoutIndex = selectedValue === '' ? undefined : Number(selectedValue);
-		onSelect(panelKind, layoutIndex);
-	};
-
-	const handleTileClick = (panelKind: PanelKind): void => {
-		if (hasSectionPicker) {
-			setSelectedPanelKind(panelKind);
-			return;
-		}
-		createPanel(panelKind);
-	};
+	const selectedLayoutIndex =
+		selectedValue === '' ? undefined : Number(selectedValue);
 
 	const handleConfirm = (): void => {
-		if (selectedPanelKind === null) {
-			return;
-		}
-		createPanel(selectedPanelKind);
+		onSelect(selectedKind, selectedLayoutIndex);
 	};
 
+	const selectedName = getPanelDefinition(selectedKind).displayName;
+	const targetLabel = options.find((o) => o.value === selectedValue)?.label;
+
 	return (
-		<DialogWrapper
+		<DrawerWrapper
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
 					onClose();
 				}
 			}}
-			title="New Panel"
+			title="New panel"
+			subTitle="Pick a visualization. You can change it later."
+			direction="right"
+			width="wide"
+			testId="panel-type-drawer"
+			drawerDescriptionProps={{ className: styles.body }}
 			footer={
-				hasSectionPicker ? (
-					<PanelTypeSelectionModalFooter
-						options={options}
-						selectedValue={selectedValue}
-						onSectionChange={setSelectedValue}
-						isConfirmDisabled={selectedPanelKind === null}
-						onConfirm={handleConfirm}
-					/>
-				) : undefined
+				<div className={styles.footer}>
+					<span className={styles.summary}>
+						{selectedName}
+						{hasSectionPicker && targetLabel && (
+							<>
+								{' in '}
+								<span className={styles.summaryTarget}>{targetLabel}</span>
+							</>
+						)}
+					</span>
+					<Button
+						variant="outlined"
+						color="secondary"
+						size="md"
+						onClick={onClose}
+					>
+						Cancel
+					</Button>
+					<Button
+						color="primary"
+						size="md"
+						prefix={<Plus size={16} />}
+						onClick={handleConfirm}
+						testId="panel-type-confirm"
+					>
+						Add panel
+					</Button>
+				</div>
 			}
 		>
-			<div className={styles.panelTypeSection}>
-				{hasSectionPicker && (
-					<span className={styles.pickerLabel}>Select panel type</span>
-				)}
-				<div className={styles.grid}>
-					{PANEL_OPTIONS.map(({ kind, displayName, icon: Icon }) => (
-						<button
-							key={kind}
-							type="button"
-							className={cx(styles.panelTypeCard, {
-								[styles.panelTypeCardSelected]: kind === selectedPanelKind,
-							})}
-							data-testid={`panel-type-${kind}`}
-							aria-pressed={kind === selectedPanelKind}
-							onClick={(): void => handleTileClick(kind)}
-						>
-							<Icon size={24} color={Color.BG_ROBIN_400} />
-							{displayName}
-						</button>
-					))}
+			{hasSectionPicker && (
+				<div className={styles.sectionField}>
+					<span className={styles.fieldLabel}>Add to section</span>
+					<SectionPicker
+						options={options}
+						value={selectedValue}
+						onChange={setSelectedValue}
+					/>
 				</div>
-			</div>
-		</DialogWrapper>
+			)}
+			<PanelTypeBrowser selectedKind={selectedKind} onSelect={setSelectedKind} />
+		</DrawerWrapper>
 	);
 }
 
