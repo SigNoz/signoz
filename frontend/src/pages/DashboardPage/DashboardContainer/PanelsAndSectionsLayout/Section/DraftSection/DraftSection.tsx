@@ -1,38 +1,42 @@
-import { useRef } from 'react';
 import { ChevronDown } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 
 import { NEW_PANEL_SIZE } from '../../../patchOps';
 import { usePanelPickerTargetStore } from '../../../store/usePanelPickerTargetStore';
-import { usePanelPickerReveal } from '../hooks/usePanelPickerReveal';
-import { gridHeight } from '../SectionGrid/gridMetrics';
+import {
+	GRID_MARGIN,
+	gridItemHeight,
+	gridItemWidth,
+} from '../SectionGrid/gridMetrics';
+import NewPanelPlaceholder from '../SectionGrid/NewPanelPlaceholder';
 
 import styles from './DraftSection.module.scss';
 
 function DraftSection(): JSX.Element | null {
-	const title = usePanelPickerTargetStore((s) => s.draftSectionTitle);
-	const ref = useRef<HTMLDivElement>(null);
-	usePanelPickerReveal(ref, title !== null);
+	const draft = usePanelPickerTargetStore((s) => s.draftSection);
 
-	if (title === null) {
+	if (draft === null) {
 		return null;
 	}
+	const title = draft.title.trim();
 
 	return (
-		<div ref={ref} className={styles.draftSection} data-testid="draft-section">
+		<div className={styles.draftSection} data-testid="draft-section">
 			<div className={styles.header}>
 				<ChevronDown size={14} />
-				<Typography.Text
-					className={title.trim() ? styles.title : styles.placeholder}
-				>
-					{title.trim() || 'New section'}
+				<Typography.Text className={title ? styles.title : styles.placeholder}>
+					{title || 'New section'}
 				</Typography.Text>
 			</div>
-			<div
-				className={styles.body}
-				style={{ height: gridHeight(NEW_PANEL_SIZE.height) }}
-			>
-				New panel will be added here
+			<div style={{ padding: GRID_MARGIN }}>
+				<div
+					style={{
+						width: gridItemWidth(NEW_PANEL_SIZE.width),
+						height: gridItemHeight(NEW_PANEL_SIZE.height),
+					}}
+				>
+					<NewPanelPlaceholder kind={draft.panelKind} />
+				</div>
 			</div>
 		</div>
 	);

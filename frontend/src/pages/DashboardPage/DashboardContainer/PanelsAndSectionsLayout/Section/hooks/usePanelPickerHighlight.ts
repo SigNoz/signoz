@@ -1,20 +1,13 @@
-import { RefObject } from 'react';
+import {
+	type PanelPickerTarget,
+	usePanelPickerTargetStore,
+} from '../../../store/usePanelPickerTargetStore';
 
-import { usePanelPickerTargetStore } from '../../../store/usePanelPickerTargetStore';
-import { usePanelPickerReveal } from './usePanelPickerReveal';
-
-/**
- * Whether the open new-panel picker targets this section. When it becomes the target,
- * records the pre-reveal scroll position and brings the section into view.
- */
+/** The open new-panel picker's target when it's this section, else null. */
 export function usePanelPickerHighlight(
 	layoutIndex: number,
-	ref: RefObject<HTMLElement>,
-): boolean {
-	const isTarget = usePanelPickerTargetStore(
-		(s) => s.targetLayoutIndex === layoutIndex,
+): PanelPickerTarget | null {
+	return usePanelPickerTargetStore((s) =>
+		s.target?.layoutIndex === layoutIndex ? s.target : null,
 	);
-	usePanelPickerReveal(ref, isTarget);
-
-	return isTarget;
 }

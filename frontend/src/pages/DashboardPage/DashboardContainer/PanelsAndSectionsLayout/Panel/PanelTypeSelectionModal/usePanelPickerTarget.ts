@@ -1,22 +1,37 @@
 import { useEffect } from 'react';
 
+import type { PanelKind } from '../../../Panels/types/panelKind';
 import { usePanelPickerTargetStore } from '../../../store/usePanelPickerTargetStore';
 
-/** Publishes the picker's chosen section while open so it's highlighted behind the drawer. */
-export function usePanelPickerTarget(
-	layoutIndex: number | undefined,
-	enabled: boolean,
-): void {
-	const setTargetLayoutIndex = usePanelPickerTargetStore(
-		(s) => s.setTargetLayoutIndex,
-	);
+interface UsePanelPickerTargetArgs {
+	open: boolean;
+	layoutIndex: number | undefined;
+	panelKind: PanelKind;
+	outline: boolean;
+}
+
+/** Publishes where the open picker will add its panel, for the dashboard behind the drawer. */
+export function usePanelPickerTarget({
+	open,
+	layoutIndex,
+	panelKind,
+	outline,
+}: UsePanelPickerTargetArgs): void {
+	const setTarget = usePanelPickerTargetStore((s) => s.setTarget);
 
 	// Only the open picker writes, so the closed instances mounted per section don't clobber it.
 	useEffect(() => {
-		if (!enabled || layoutIndex === undefined) {
+		if (open) {
+			setTarget(
+				layoutIndex === undefined ? null : { layoutIndex, panelKind, outline },
+			);
+		}
+	}, [open, layoutIndex, panelKind, outline, setTarget]);
+
+	useEffect(() => {
+		if (!open) {
 			return undefined;
 		}
-		setTargetLayoutIndex(layoutIndex);
-		return (): void => setTargetLayoutIndex(null);
-	}, [enabled, layoutIndex, setTargetLayoutIndex]);
+		return (): void => setTarget(null);
+	}, [open, setTarget]);
 }

@@ -12,6 +12,7 @@ import {
 	createPanelOps,
 	findFreeSlot,
 	itemsOverlap,
+	newPanelSlot,
 	setPanelTextOp,
 	titleLooseLayoutsOps,
 } from '../patchOps';
@@ -398,5 +399,16 @@ describe('titleLooseLayoutsOps', () => {
 		expect(
 			titleLooseLayoutsOps([untitled([item(0, 6)]), section([])]),
 		).toStrictEqual([]);
+	});
+});
+
+describe('newPanelSlot', () => {
+	it('sizes the free slot like a saved new panel', () => {
+		expect(newPanelSlot([item(0, 6)])).toStrictEqual({
+			x: 6,
+			y: 0,
+			width: 6,
+			height: 6,
+		});
 	});
 });
