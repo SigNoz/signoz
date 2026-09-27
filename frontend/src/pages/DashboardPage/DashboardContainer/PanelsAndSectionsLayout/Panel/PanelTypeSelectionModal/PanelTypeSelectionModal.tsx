@@ -4,10 +4,12 @@ import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 
 import { useDashboardSections } from '../../../hooks/useDashboardSections';
+import { releasePanelPickerTarget } from '../../../store/usePanelPickerTargetStore';
 import { getPanelDefinition } from '../../../Panels/registry';
 import type { PanelKind } from '../../../Panels/types/panelKind';
 import PanelTypeBrowser from './PanelTypeBrowser';
 import SectionPicker from './SectionPicker';
+import { usePanelPickerTarget } from './usePanelPickerTarget';
 import { buildSectionOptions, resolveDefaultSectionValue } from './utils';
 
 import styles from './PanelTypeSelectionModal.module.scss';
@@ -45,8 +47,15 @@ function PanelTypeSelectionModal({
 
 	const selectedLayoutIndex =
 		selectedValue === '' ? undefined : Number(selectedValue);
+	usePanelPickerTarget(selectedLayoutIndex, open && hasSectionPicker);
+
+	const handleClose = (): void => {
+		releasePanelPickerTarget(true);
+		onClose();
+	};
 
 	const handleConfirm = (): void => {
+		releasePanelPickerTarget(false);
 		onSelect(selectedKind, selectedLayoutIndex);
 	};
 
@@ -58,7 +67,7 @@ function PanelTypeSelectionModal({
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
-					onClose();
+					handleClose();
 				}
 			}}
 			title="New panel"
@@ -82,7 +91,7 @@ function PanelTypeSelectionModal({
 						variant="outlined"
 						color="secondary"
 						size="md"
-						onClick={onClose}
+						onClick={handleClose}
 					>
 						Cancel
 					</Button>

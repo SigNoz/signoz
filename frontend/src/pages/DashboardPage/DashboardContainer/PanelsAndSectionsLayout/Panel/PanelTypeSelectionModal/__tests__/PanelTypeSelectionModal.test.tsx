@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { useDashboardSections } from '../../../../hooks/useDashboardSections';
+import { usePanelPickerTargetStore } from '../../../../store/usePanelPickerTargetStore';
 import PanelTypeSelectionModal from '../PanelTypeSelectionModal';
 
 // Stub the registry so the test doesn't pull in the real renderers and chart libs.
@@ -54,6 +55,7 @@ function renderDrawer(
 describe('PanelTypeSelectionModal', () => {
 	beforeEach(() => {
 		mockUseDashboardSections.mockReturnValue(ROOT_ONLY);
+		usePanelPickerTargetStore.getState().reset();
 	});
 
 	it('adds the default Time Series panel when confirmed untouched', () => {
@@ -131,5 +133,58 @@ describe('PanelTypeSelectionModal', () => {
 
 		expect(onClose).toHaveBeenCalled();
 		expect(onSelect).not.toHaveBeenCalled();
+	});
+
+	describe('section highlight', () => {
+		const target = (): number | null =>
+			usePanelPickerTargetStore.getState().targetLayoutIndex;
+
+		it('does not publish a target without a section picker', () => {
+			renderDrawer();
+
+			expect(target()).toBeNull();
+		});
+
+		it('publishes the chosen section while open', () => {
+			mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
+			renderDrawer({ defaultLayoutIndex: 1 });
+
+			expect(target()).toBe(1);
+		});
+
+		it('restores the pre-reveal scroll position on cancel', () => {
+			mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
+			renderDrawer({ defaultLayoutIndex: 1 });
+			const scrollTo = jest.fn();
+			// jsdom elements have no scrollTo.
+			const scroller = { scrollTo } as unknown as HTMLElement;
+			usePanelPickerTargetStore
+				.getState()
+				.rememberScrollOrigin({ element: scroller, top: 120 });
+
+			fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+			expect(scrollTo).toHaveBeenCalledWith({
+				top: 120,
+				behavior: 'smooth',
+			});
+			expect(target()).toBeNull();
+		});
+
+		it('keeps the scroll position when a panel is added', () => {
+			mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
+			renderDrawer({ defaultLayoutIndex: 1 });
+			const scrollTo = jest.fn();
+			// jsdom elements have no scrollTo.
+			const scroller = { scrollTo } as unknown as HTMLElement;
+			usePanelPickerTargetStore
+				.getState()
+				.rememberScrollOrigin({ element: scroller, top: 120 });
+
+			fireEvent.click(screen.getByTestId('panel-type-confirm'));
+
+			expect(scrollTo).not.toHaveBeenCalled();
+			expect(usePanelPickerTargetStore.getState().scrollOrigin).toBeNull();
+		});
 	});
 });

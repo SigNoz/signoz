@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import cx from 'classnames';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -9,6 +10,7 @@ import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import { useCloneSection } from '../hooks/useCloneSection';
 import { useDeleteSection } from '../hooks/useDeleteSection';
+import { usePanelPickerHighlight } from '../hooks/usePanelPickerHighlight';
 import { useRenameSection } from '../hooks/useRenameSection';
 import { useScrollIntoView } from '../hooks/useScrollIntoView';
 import { useToggleSectionCollapse } from '../hooks/useToggleSectionCollapse';
@@ -67,6 +69,10 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 
 	const sectionRef = useRef<HTMLDivElement>(null);
 	useScrollIntoView(section.id, sectionRef);
+	const isPickerTarget = usePanelPickerHighlight(
+		section.layoutIndex,
+		sectionRef,
+	);
 
 	const grid = (
 		<SectionGrid
@@ -81,6 +87,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 		return (
 			<div
 				ref={sectionRef}
+				className={cx({ [styles.pickerTarget]: isPickerTarget })}
 				data-testid={`dashboard-section-${section.id}`}
 				data-section-layout-index={section.layoutIndex}
 			>
@@ -92,7 +99,9 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 	return (
 		<div
 			ref={sectionRef}
-			className={styles.section}
+			className={cx(styles.section, {
+				[styles.pickerTarget]: isPickerTarget,
+			})}
 			data-testid={`dashboard-section-${section.id}`}
 			data-section-layout-index={section.layoutIndex}
 		>
