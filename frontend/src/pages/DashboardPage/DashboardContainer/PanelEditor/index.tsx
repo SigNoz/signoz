@@ -38,6 +38,7 @@ function PanelEditorContainer(props: PanelEditorContainerProps): JSX.Element {
 
 	const panelKind = draftApi.draft.spec.plugin.kind;
 	const panelDefinition = getPanelDefinition(panelKind);
+	const originalPanelKind = (savedPanel ?? panel).spec.plugin.kind;
 
 	const { onChangePanelKind } = usePanelTypeSwitch({
 		spec: draftApi.draft.spec,
@@ -52,6 +53,7 @@ function PanelEditorContainer(props: PanelEditorContainerProps): JSX.Element {
 				draftApi={draftApi}
 				panelDefinition={panelDefinition}
 				onChangePanelKind={onChangePanelKind}
+				originalPanelKind={originalPanelKind}
 			/>
 		);
 	}
@@ -62,6 +64,7 @@ function PanelEditorContainer(props: PanelEditorContainerProps): JSX.Element {
 			draftApi={draftApi}
 			panelDefinition={panelDefinition}
 			onChangePanelKind={onChangePanelKind}
+			originalPanelKind={originalPanelKind}
 		/>
 	);
 }

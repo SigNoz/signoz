@@ -23,6 +23,7 @@ interface StaticEditorBodyProps extends PanelEditorContainerProps {
 	draftApi: PanelEditorDraftApi;
 	panelDefinition: RenderableStaticPanelDefinition;
 	onChangePanelKind: (kind: PanelKind) => void;
+	originalPanelKind?: PanelKind;
 }
 
 /**
@@ -41,6 +42,7 @@ function StaticEditorBody({
 	draftApi,
 	panelDefinition,
 	onChangePanelKind,
+	originalPanelKind,
 }: StaticEditorBodyProps): JSX.Element {
 	// Read here rather than taken as props: this renders inside a loaded dashboard
 	// subtree, so it resolves the same context every other consumer does.
@@ -122,6 +124,7 @@ function StaticEditorBody({
 					spec={spec}
 					onChangeSpec={setSpec}
 					onChangePanelKind={onChangePanelKind}
+					originalPanelKind={originalPanelKind}
 					queryType={EQueryType.QUERY_BUILDER}
 					legendSeries={[]}
 					tableColumns={[]}

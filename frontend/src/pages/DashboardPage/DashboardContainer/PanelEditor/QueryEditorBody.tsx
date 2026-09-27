@@ -70,6 +70,7 @@ interface QueryEditorBodyProps {
 	panelDefinition: RenderableQueryPanelDefinition;
 	/** Kind switch, owned by the shell (its cache must survive the fork swap). */
 	onChangePanelKind: (kind: PanelKind) => void;
+	originalPanelKind?: PanelKind;
 }
 
 /**
@@ -90,6 +91,7 @@ function QueryEditorBody({
 	draftApi,
 	panelDefinition,
 	onChangePanelKind,
+	originalPanelKind,
 }: QueryEditorBodyProps): JSX.Element {
 	// Read here rather than taken as props: this renders inside a loaded dashboard
 	// subtree, so it resolves the same context every other consumer does.
@@ -319,6 +321,7 @@ function QueryEditorBody({
 					spec={spec}
 					onChangeSpec={setSpec}
 					onChangePanelKind={onChangePanelKind}
+					originalPanelKind={originalPanelKind}
 					queryType={currentQuery.queryType}
 					legendSeries={legendSeries}
 					tableColumns={tableColumns}
