@@ -1,0 +1,36 @@
+.draftSection {
+	margin-bottom: 12px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	outline: 1px dashed var(--bg-robin-500);
+	outline-offset: 2px;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--l1-border);
+	color: var(--l2-foreground);
+}
+
+.title {
+	color: var(--l1-foreground);
+	font-weight: 500;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.placeholder {
+	color: var(--l3-foreground);
+	font-weight: 500;
+}
+
+.body {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--l3-foreground);
+}

@@ -3,6 +3,7 @@ import GridLayout, { WidthProvider, type Layout } from 'react-grid-layout';
 
 import type { DashboardSection } from '../../../utils';
 import { usePersistLayout } from '../hooks/usePersistLayout';
+import { GRID_MARGIN, GRID_ROW_HEIGHT } from './gridMetrics';
 import SectionGridItem from './SectionGridItem';
 import styles from './SectionGrid.module.scss';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
@@ -41,7 +42,7 @@ function SectionGrid({
 		<ResponsiveGridLayout
 			className={styles.grid}
 			cols={12}
-			rowHeight={45}
+			rowHeight={GRID_ROW_HEIGHT}
 			autoSize
 			useCSSTransforms
 			layout={rglLayout}
@@ -51,7 +52,7 @@ function SectionGrid({
 			isResizable={isEditable}
 			onDragStop={handleLayoutChange}
 			onResizeStop={handleLayoutChange}
-			margin={[8, 8]}
+			margin={[GRID_MARGIN, GRID_MARGIN]}
 		>
 			{items.map((item) => (
 				// A layout item can reference a panel id that no longer exists in the

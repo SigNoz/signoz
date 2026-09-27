@@ -169,7 +169,7 @@ interface CreatePanelOpsArgs {
 	panel: DashboardtypesPanelDTO;
 }
 
-const NEW_PANEL_SIZE = { width: 6, height: 6 };
+export const NEW_PANEL_SIZE = { width: 6, height: 6 };
 
 /** Columns in the section grid — mirrors `cols` on SectionGrid's GridLayout. */
 export const GRID_COLS = 12;

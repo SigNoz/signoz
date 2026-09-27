@@ -174,6 +174,23 @@ describe('PanelTypeSelectionModal', () => {
 			});
 		});
 
+		it('publishes the typed name for the dashboard preview', () => {
+			const draft = (): string | null =>
+				usePanelPickerTargetStore.getState().draftSectionTitle;
+			renderDrawer();
+
+			fireEvent.click(screen.getByTestId('panel-section-create'));
+			expect(draft()).toBe('');
+
+			fireEvent.change(screen.getByTestId('panel-section-name'), {
+				target: { value: 'Errors' },
+			});
+			expect(draft()).toBe('Errors');
+
+			fireEvent.click(screen.getByTestId('panel-section-name-cancel'));
+			expect(draft()).toBeNull();
+		});
+
 		it('returns to the section picker when the draft is cancelled', () => {
 			mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
 			renderDrawer();

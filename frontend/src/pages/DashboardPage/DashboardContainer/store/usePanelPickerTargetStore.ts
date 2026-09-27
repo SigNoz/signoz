@@ -12,8 +12,11 @@ export interface ScrollOrigin {
  */
 export interface PanelPickerTargetStore {
 	targetLayoutIndex: number | null;
+	/** Name typed for a section the picker will create; null when not creating one. */
+	draftSectionTitle: string | null;
 	scrollOrigin: ScrollOrigin | null;
 	setTargetLayoutIndex: (layoutIndex: number | null) => void;
+	setDraftSectionTitle: (title: string | null) => void;
 	/** No-op once an origin is recorded, so later reveals keep the first position. */
 	rememberScrollOrigin: (origin: ScrollOrigin) => void;
 	reset: () => void;
@@ -22,9 +25,13 @@ export interface PanelPickerTargetStore {
 export const usePanelPickerTargetStore = create<PanelPickerTargetStore>(
 	(set, get) => ({
 		targetLayoutIndex: null,
+		draftSectionTitle: null,
 		scrollOrigin: null,
 		setTargetLayoutIndex: (targetLayoutIndex): void => {
 			set({ targetLayoutIndex });
+		},
+		setDraftSectionTitle: (draftSectionTitle): void => {
+			set({ draftSectionTitle });
 		},
 		rememberScrollOrigin: (origin): void => {
 			if (!get().scrollOrigin) {
@@ -32,7 +39,11 @@ export const usePanelPickerTargetStore = create<PanelPickerTargetStore>(
 			}
 		},
 		reset: (): void => {
-			set({ targetLayoutIndex: null, scrollOrigin: null });
+			set({
+				targetLayoutIndex: null,
+				draftSectionTitle: null,
+				scrollOrigin: null,
+			});
 		},
 	}),
 );
