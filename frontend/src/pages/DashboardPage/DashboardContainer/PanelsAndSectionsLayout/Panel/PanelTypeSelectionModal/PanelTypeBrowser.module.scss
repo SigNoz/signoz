@@ -114,6 +114,15 @@
 	background: var(--l3-background);
 }
 
+.tileDisabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+
+	&:hover {
+		background: var(--l2-background);
+	}
+}
+
 .tileText {
 	display: flex;
 	flex-direction: column;

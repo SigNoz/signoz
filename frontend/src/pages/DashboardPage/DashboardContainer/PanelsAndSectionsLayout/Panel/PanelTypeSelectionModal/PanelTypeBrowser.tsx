@@ -17,12 +17,14 @@ type CategoryId = PanelTypeGroupId | 'all';
 interface PanelTypeBrowserProps {
 	selectedKind: PanelKind;
 	onSelect: (kind: PanelKind) => void;
+	getDisabledReason?: (kind: PanelKind) => string | undefined;
 }
 
 /** Searchable, category-filtered grid of panel types, grouped by purpose. */
 function PanelTypeBrowser({
 	selectedKind,
 	onSelect,
+	getDisabledReason,
 }: PanelTypeBrowserProps): JSX.Element {
 	const [query, setQuery] = useState('');
 	const [category, setCategory] = useState<CategoryId>('all');
@@ -89,6 +91,7 @@ function PanelTypeBrowser({
 									key={item.kind}
 									item={item}
 									isSelected={item.kind === selectedKind}
+									disabledReason={getDisabledReason?.(item.kind)}
 									onSelect={(): void => onSelect(item.kind)}
 								/>
 							))}

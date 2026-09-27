@@ -19,7 +19,11 @@ import styles from './VisualizationSection.module.scss';
 type VisualizationSectionProps = SectionEditorProps<SectionKind.Visualization> &
 	Pick<
 		SectionEditorContext,
-		'panelKind' | 'onChangePanelKind' | 'signal' | 'queryType'
+		| 'panelKind'
+		| 'onChangePanelKind'
+		| 'originalPanelKind'
+		| 'signal'
+		| 'queryType'
 	>;
 
 /**
@@ -35,6 +39,7 @@ function VisualizationSection({
 	onChange,
 	panelKind,
 	onChangePanelKind,
+	originalPanelKind,
 	queryType,
 	signal,
 }: VisualizationSectionProps): JSX.Element {
@@ -47,6 +52,7 @@ function VisualizationSection({
 					// supplied in practice; default to Query Builder at this boundary.
 					queryType={queryType ?? EQueryType.QUERY_BUILDER}
 					signal={signal}
+					originalPanelKind={originalPanelKind}
 					onChange={onChangePanelKind}
 				/>
 			)}
