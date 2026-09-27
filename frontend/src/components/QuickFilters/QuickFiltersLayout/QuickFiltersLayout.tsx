@@ -1,6 +1,9 @@
-import { ComponentProps, ReactNode } from 'react';
+import { ComponentProps, ReactNode, useState } from 'react';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import SavedViewsHeader from 'container/SavedViews/SavedViewsHeader';
+import SavedViewsPanel from 'container/SavedViews/SavedViewsPanel';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 
 import QuickFilters from '../QuickFilters';
 
@@ -12,8 +15,15 @@ type QuickFiltersElementProps = JSX.LibraryManagedAttributes<
 	ComponentProps<typeof QuickFilters>
 >;
 
+// What the page configures; the layout adds the open / close wiring.
+type SavedViewsElementProps = Omit<
+	ComponentProps<typeof SavedViewsPanel>,
+	'onClose'
+>;
+
 export interface QuickFiltersLayoutProps {
-	quickFilterProps: QuickFiltersElementProps;
+	quickFilterProps?: QuickFiltersElementProps;
+	savedViewProps?: SavedViewsElementProps;
 	showFilters: boolean;
 	className?: string;
 	contentClassName?: string;
@@ -23,20 +33,60 @@ export interface QuickFiltersLayoutProps {
 
 function QuickFiltersLayout({
 	quickFilterProps,
+	savedViewProps,
 	showFilters,
 	className,
 	contentClassName,
 	testId,
 	children,
 }: QuickFiltersLayoutProps): JSX.Element {
+	const [isViewsOpen, setIsViewsOpen] = useState(false);
+	const isSavedViewEnabled = useSavedViewEnabled();
+
+	const hasQuickFilters = !!quickFilterProps;
+	const hasSavedViews = !!savedViewProps && isSavedViewEnabled;
+
+	const showSidebar = showFilters && (hasQuickFilters || hasSavedViews);
+
+	const isPanelPinned = hasSavedViews && !hasQuickFilters;
+
+	const isSliding = hasQuickFilters && isViewsOpen;
+
+	const savedViewsHeader = hasSavedViews ? (
+		<SavedViewsHeader
+			{...savedViewProps}
+			onOpenViews={isPanelPinned ? undefined : (): void => setIsViewsOpen(true)}
+		/>
+	) : undefined;
+
 	return (
 		<div className={cx(styles.layout, className)} data-testid={testId}>
-			{showFilters && (
+			{showSidebar && (
 				<aside
-					className={styles.filters}
+					className={cx(styles.sidebar, { [styles.isStatic]: !hasQuickFilters })}
 					data-testid="quick-filters-layout-filters"
 				>
-					<QuickFilters {...quickFilterProps} />
+					<div
+						className={cx(styles.quickFilters, { [styles.isOpen]: isSliding })}
+						data-testid="quick-filters-layout-drawer"
+					>
+						{hasQuickFilters ? (
+							<QuickFilters
+								{...quickFilterProps}
+								savedViewsHeader={savedViewsHeader}
+							/>
+						) : (
+							savedViewsHeader
+						)}
+					</div>
+					<div className={styles.savedViews}>
+						{hasSavedViews && (isPanelPinned || isViewsOpen) && (
+							<SavedViewsPanel
+								{...savedViewProps}
+								onClose={isPanelPinned ? undefined : (): void => setIsViewsOpen(false)}
+							/>
+						)}
+					</div>
 				</aside>
 			)}
 			<section
@@ -44,7 +94,7 @@ function QuickFiltersLayout({
 				data-testid="quick-filters-layout-content"
 			>
 				<OverlayScrollbar>
-					<div>{children}</div>
+					<div className={styles.contentInner}>{children}</div>
 				</OverlayScrollbar>
 			</section>
 		</div>
