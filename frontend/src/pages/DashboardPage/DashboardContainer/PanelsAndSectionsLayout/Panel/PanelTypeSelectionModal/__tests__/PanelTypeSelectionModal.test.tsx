@@ -89,19 +89,30 @@ describe('PanelTypeSelectionModal', () => {
 	it('hides the section picker when the dashboard has a single layout', () => {
 		renderDrawer();
 
-		expect(screen.queryByText('Add to section')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('panel-section-select')).not.toBeInTheDocument();
 	});
 
 	it('targets the section it was opened against', () => {
 		mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
 		const { onSelect } = renderDrawer({ defaultLayoutIndex: 1 });
 
-		expect(screen.getByText('Add to section')).toBeInTheDocument();
+		expect(screen.getByTestId('panel-section-select')).toBeInTheDocument();
 		fireEvent.click(screen.getByTestId('panel-type-confirm'));
 
 		expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', {
 			type: 'section',
 			layoutIndex: 1,
+		});
+	});
+
+	it('defaults to the root on a sectioned dashboard, even one without a root', () => {
+		mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
+		const { onSelect } = renderDrawer();
+
+		fireEvent.click(screen.getByTestId('panel-type-confirm'));
+
+		expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', {
+			type: 'root',
 		});
 	});
 
@@ -142,6 +153,41 @@ describe('PanelTypeSelectionModal', () => {
 
 		expect(onClose).toHaveBeenCalled();
 		expect(onSelect).not.toHaveBeenCalled();
+	});
+
+	describe('new section', () => {
+		it('asks for the named section, created when the panel is saved', () => {
+			const { onSelect } = renderDrawer();
+
+			fireEvent.click(screen.getByTestId('panel-section-create'));
+			const confirm = screen.getByTestId('panel-type-confirm');
+			expect(confirm).toBeDisabled();
+
+			fireEvent.change(screen.getByTestId('panel-section-name'), {
+				target: { value: '  Errors ' },
+			});
+			fireEvent.click(confirm);
+
+			expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', {
+				type: 'newSection',
+				title: 'Errors',
+			});
+		});
+
+		it('returns to the section picker when the draft is cancelled', () => {
+			mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
+			renderDrawer();
+
+			fireEvent.mouseDown(screen.getByRole('combobox'));
+			fireEvent.click(screen.getByTestId('panel-section-create'));
+			expect(screen.getByTestId('panel-section-name')).toBeInTheDocument();
+
+			fireEvent.keyDown(screen.getByTestId('panel-section-name'), {
+				key: 'Escape',
+			});
+			expect(screen.queryByTestId('panel-section-name')).not.toBeInTheDocument();
+			expect(screen.getByTestId('panel-section-select')).toBeInTheDocument();
+		});
 	});
 
 	describe('section highlight', () => {
