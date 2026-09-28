@@ -18,8 +18,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metertelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -476,7 +476,7 @@ func TestCreateRangedQuery_MetricsPieceReadsTheTablesOfTheRequest(t *testing.T) 
 	ranged := q.createRangedQuery(bq, gap)
 	require.NotNil(t, ranged)
 
-	want := metricsstatementbuilder.TableHintsForWindow(request.From, request.To, spec.Aggregations[0])
+	want := metricstelemetryschema.TableHintsForWindow(request.From, request.To, spec.Aggregations[0].Type, spec.Aggregations[0].TimeAggregation, false, nil)
 	require.NotNil(t, want)
 	got := ranged.(*builderQuery[qbtypes.MetricAggregation]).spec.Aggregations[0].TableHints
 	assert.Equal(t, want, got)
@@ -518,4 +518,34 @@ func TestTrimsHeatmapAxis_OnlyForAnAxisComputedFromTheData(t *testing.T) {
 	assert.True(t, trimsHeatmapAxis(metricHeatmap(&qbtypes.HeatmapBucketing{Kind: qbtypes.BucketsKindLog})), "a gauge heatmap buckets the served values")
 	assert.False(t, trimsHeatmapAxis(metricHeatmap(nil)), "a histogram reports its own le buckets")
 	assert.False(t, trimsHeatmapAxis(newPromqlQuery(instrumentationtest.New().Logger(), nil, qbtypes.PromQuery{Query: "up", Step: minuteStep()}, qbtypes.TimeRange{From: epochMs, To: epochMs + minuteStepMs}, qbtypes.RequestTypeHeatmap, nil)))
+}
+
+func TestBuildQueries_PromQLWindowIsMovedToTheStepGridUnlessAskedNotTo(t *testing.T) {
+	q := &querier{logger: instrumentationtest.New().Logger()}
+	req := &qbtypes.QueryRangeRequest{
+		Start: epochMs + 17_000, End: epochMs + 10*minuteStepMs + 45_000, RequestType: qbtypes.RequestTypeTimeSeries,
+		CompositeQuery: qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{{Type: qbtypes.QueryTypePromQL, Spec: qbtypes.PromQuery{Name: "A", Query: "up", Step: minuteStep()}}}},
+	}
+
+	queries, _, err := q.buildQueries(valuer.GenerateUUID(), req, nil, nil, &qbtypes.QBEvent{})
+	require.NoError(t, err)
+	assert.Equal(t, qbtypes.TimeRange{From: epochMs, To: epochMs + 10*minuteStepMs}, queries["A"].(*promqlQuery).tr)
+	assert.NotEmpty(t, queries["A"].Fingerprint())
+
+	req.NoStepAlignment = true
+	queries, _, err = q.buildQueries(valuer.GenerateUUID(), req, nil, nil, &qbtypes.QBEvent{})
+	require.NoError(t, err)
+	assert.Equal(t, qbtypes.TimeRange{From: req.Start, To: req.End}, queries["A"].(*promqlQuery).tr)
+	assert.Empty(t, queries["A"].Fingerprint(), "a window kept off the grid is not cached")
+}
+
+func TestPromQLFingerprint_StartOrEndModifierIsNotCached(t *testing.T) {
+	fingerprint := func(expr string) string {
+		return newPromqlQuery(instrumentationtest.New().Logger(), nil, qbtypes.PromQuery{Query: expr, Step: minuteStep()}, qbtypes.TimeRange{From: epochMs, To: epochMs + 10*minuteStepMs}, qbtypes.RequestTypeTimeSeries, nil).Fingerprint()
+	}
+	assert.NotEmpty(t, fingerprint("sum(rate(up[5m]))"))
+	assert.NotEmpty(t, fingerprint("up @ 1672531200"), "a fixed instant means the same in every piece")
+	assert.Empty(t, fingerprint("up @ end()"))
+	assert.Empty(t, fingerprint("sum(up @ start())"))
+	assert.Empty(t, fingerprint("max_over_time(up[5m:1m] @ end())"))
 }

@@ -121,7 +121,8 @@ func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) *qbty
 		CompositeQuery: qbtypes.CompositeQuery{
 			Queries: make([]qbtypes.QueryEnvelope, 0),
 		},
-		NoCache: true,
+		NoCache:         true,
+		NoStepAlignment: true,
 	}
 	req.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(r.Condition().CompositeQuery.Queries))
 	copy(req.CompositeQuery.Queries, r.Condition().CompositeQuery.Queries)

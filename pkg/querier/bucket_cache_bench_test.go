@@ -156,13 +156,13 @@ func BenchmarkBucketCache_Decode(b *testing.B) {
 				result := createBenchmarkResultWithSeries(startMs, startMs+10000, tc.numSeries, 10)
 				value, err := json.Marshal(result.Value)
 				require.NoError(b, err)
-				buckets[i] = &qbtypes.CachedBucket{StartMs: startMs, EndMs: startMs + 10000, Type: qbtypes.RequestTypeTimeSeries, Value: value}
+				buckets[i] = &qbtypes.CachedBucket{StartMs: startMs, EndMs: startMs + 10000, WrittenAtMs: time.Now().UnixMilli(), Type: qbtypes.RequestTypeTimeSeries, Value: value}
 			}
 
 			b.ResetTimer()
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
-				_ = bc.decode(context.Background(), buckets)
+				_ = bc.decode(context.Background(), buckets, qbtypes.TimeRange{To: ^uint64(0)})
 			}
 		})
 	}

@@ -9794,6 +9794,10 @@ export interface Querybuildertypesv5QueryRangeRequestDTO {
 	 * @type boolean
 	 */
 	noCache?: boolean;
+	/**
+	 * @type boolean
+	 */
+	noStepAlignment?: boolean;
 	requestType?: Querybuildertypesv5RequestTypeDTO;
 	/**
 	 * @type string

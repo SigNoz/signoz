@@ -21,9 +21,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder/meterstatementbuilder"
-	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metertelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -220,7 +220,11 @@ func (q *querier) buildQueries(
 			if !ok {
 				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query spec %T", query.Spec)
 			}
-			promqlQuery := newPromqlQuery(q.logger, q.promEngine, promQuery, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars)
+			timeRange := qbtypes.TimeRange{From: req.Start, To: req.End}
+			if !req.NoStepAlignment {
+				timeRange = alignWindowToStep(timeRange, promQuery.Step)
+			}
+			promqlQuery := newPromqlQuery(q.logger, q.promEngine, promQuery, timeRange, req.RequestType, tmplVars)
 			queries[promQuery.Name] = promqlQuery
 			steps[promQuery.Name] = promQuery.Step
 		case qbtypes.QueryTypeClickHouseSQL:
@@ -907,12 +911,12 @@ func (q *querier) createRangedQuery(original qbtypes.Query, timeRange qbtypes.Ti
 		specCopy := qt.spec.Copy()
 		// The builder picks its tables from the window it is given; a piece
 		// must read the tables the whole request reads.
-		tableHints := metricsstatementbuilder.TableHintsForWindow
-		if specCopy.Source == telemetrytypes.SourceMeter {
-			tableHints = meterstatementbuilder.TableHintsForWindow
-		}
-		for i := range specCopy.Aggregations {
-			specCopy.Aggregations[i].TableHints = tableHints(qt.fromMS, qt.toMS, specCopy.Aggregations[i])
+		for i, agg := range specCopy.Aggregations {
+			if specCopy.Source == telemetrytypes.SourceMeter {
+				specCopy.Aggregations[i].TableHints = metertelemetryschema.TableHintsForWindow(qt.fromMS, qt.toMS, agg.Type, agg.TimeAggregation, agg.TableHints)
+			} else {
+				specCopy.Aggregations[i].TableHints = metricstelemetryschema.TableHintsForWindow(qt.fromMS, qt.toMS, agg.Type, agg.TimeAggregation, agg.Reduced, agg.TableHints)
+			}
 		}
 		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, specCopy, timeRange, qt.kind, qt.variables, qt.builderConfig)
 
@@ -969,6 +973,17 @@ func mergeResults(req CacheRequest, cached *qbtypes.Result, fresh []*qbtypes.Res
 		return ts >= windowStart && ts < req.Window.To
 	})
 	return merged
+}
+
+// alignWindowToStep moves both ends of a window down to the step grid, the
+// way a query frontend does before a results cache: PromQL evaluates at
+// start + k*step, so only windows on one grid share instants.
+func alignWindowToStep(window qbtypes.TimeRange, step qbtypes.Step) qbtypes.TimeRange {
+	stepMs := uint64(step.Milliseconds())
+	if stepMs == 0 {
+		return window
+	}
+	return qbtypes.TimeRange{From: window.From - window.From%stepMs, To: window.To - window.To%stepMs}
 }
 
 // queryKind is the request type a query answers with.

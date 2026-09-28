@@ -500,7 +500,8 @@ func TestBucketCache_StatsCountEachFetchOnce(t *testing.T) {
 
 	cached, missing = get(bc, second, step)
 	require.Empty(t, missing)
-	assert.Equal(t, uint64(110), cached.Stats.RowsScanned)
+	// 110 rows were scanned for 61 minutes; the window covers 60 of them.
+	assert.InDelta(t, 110, cached.Stats.RowsScanned, 2)
 }
 
 func TestBucketCache_WarningsBelongToTheWindowThatProducedThem(t *testing.T) {
@@ -561,7 +562,7 @@ func TestBucketCache_UnreadableBucketIsFetchedAgain(t *testing.T) {
 	}
 	for name, payload := range payloads {
 		t.Run(name, func(t *testing.T) {
-			bucket := &qbtypes.CachedBucket{StartMs: query.startMs, EndMs: query.endMs, Type: qbtypes.RequestTypeTimeSeries, Value: json.RawMessage(payload)}
+			bucket := &qbtypes.CachedBucket{StartMs: query.startMs, EndMs: query.endMs, WrittenAtMs: time.Now().UnixMilli(), Type: qbtypes.RequestTypeTimeSeries, Value: json.RawMessage(payload)}
 			if payload == "" {
 				bucket = nil
 			}
@@ -750,4 +751,36 @@ func TestBucketCache_HeatmapKeepsAxisAndTrimsItWhenAsked(t *testing.T) {
 	agg = cached.Value.(*qbtypes.TimeSeriesData).Aggregations[0]
 	assert.Equal(t, []float64{2, 4}, agg.Meta.Buckets, "bands no served column reached are trimmed")
 	assert.Equal(t, []float64{5, 6, 7}, agg.Series[0].Values[0].Values)
+}
+
+func TestBucketCache_BucketsExpireOnTheirOwnWriteTime(t *testing.T) {
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), createTestCache(t), time.Hour, defaultFluxInterval).(*bucketCache)
+	step := minuteStep()
+	old := &mockQuery{fingerprint: "expiry", startMs: epochMs, endMs: epochMs + 10*minuteStepMs}
+	put(bc, old, step, seriesResult(1, minuteSeries("a", old.startMs, old.endMs, 1)))
+
+	// The entry's TTL restarts on every write, so age the first bucket by hand.
+	data := storedEntry(t, bc, valuer.UUID{}, "expiry")
+	data.Buckets[0].WrittenAtMs = time.Now().Add(-2 * time.Hour).UnixMilli()
+	require.NoError(t, bc.cache.Set(context.Background(), valuer.UUID{}, CacheKey("expiry"), data, time.Hour))
+
+	recent := &mockQuery{fingerprint: "expiry", startMs: epochMs + 10*minuteStepMs, endMs: epochMs + 20*minuteStepMs}
+	put(bc, recent, step, seriesResult(1, minuteSeries("a", recent.startMs, recent.endMs, 1)))
+
+	whole := &mockQuery{fingerprint: "expiry", startMs: epochMs, endMs: epochMs + 20*minuteStepMs}
+	_, missing := get(bc, whole, step)
+	assert.Equal(t, []qbtypes.TimeRange{{From: epochMs, To: epochMs + 10*minuteStepMs}}, missing, "the expired bucket is fetched again, the recent one is served")
+}
+
+func TestBucketCache_StatsAreSharedByTheServedPartOfABucket(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := minuteStep()
+	wide := &mockQuery{fingerprint: "stats-share", startMs: epochMs, endMs: epochMs + 100*minuteStepMs}
+	put(bc, wide, step, seriesResult(1000, minuteSeries("a", wide.startMs, wide.endMs, 1)))
+
+	narrow := &mockQuery{fingerprint: "stats-share", startMs: epochMs, endMs: epochMs + 10*minuteStepMs}
+	cached, missing := get(bc, narrow, step)
+
+	require.Empty(t, missing)
+	assert.Equal(t, uint64(100), cached.Stats.RowsScanned)
 }

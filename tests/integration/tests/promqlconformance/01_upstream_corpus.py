@@ -55,7 +55,8 @@ def test_upstream_promqltest_corpus(
         }
         case_id = f"{case['source']}[{case['variant']}]"
 
-        response = make_query_request(signoz, token, req_start_ms, end_ms, [query])
+        # the expected values were computed at the case's own instants
+        response = make_query_request(signoz, token, req_start_ms, end_ms, [query], no_step_alignment=True)
         if response.status_code != HTTPStatus.OK:
             failures.append(f"{case_id}: HTTP {response.status_code} for {case['expr']!r}: {response.text[:200]}")
             continue

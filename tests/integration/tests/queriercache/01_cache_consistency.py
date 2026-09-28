@@ -218,10 +218,9 @@ def test_promql_unaligned_start_partial_hit_matches_no_cache(
 
     Tests:
     Two PromQL requests whose starts sit at different offsets inside the
-    step (17s, then 43s), as relative dashboard windows do. The second,
-    partially cached, response equals the request with noCache. PromQL
-    evaluates at start + k*step, so points cached from the first request sit
-    on a different phase than the points the second request evaluates.
+    step (17s, then 43s), as relative dashboard windows do. Both are moved
+    onto the step grid, so the second request is a partial hit on the
+    first one's entry, and its response equals the request with noCache.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric = f"cache_gauge_{uuid4().hex[:8]}"
@@ -258,7 +257,7 @@ def test_promql_unaligned_start_partial_hit_matches_no_cache(
     fresh_points = series_points_by_label(fresh.json(), "A", label="service")
     assert set(fresh_points) == {"svc-a", "svc-b"}, fresh_points
     phases = {ts % (STEP * 1000) for points in fresh_points.values() for ts in points}
-    assert phases == {second_start_ms % (STEP * 1000)}, phases
+    assert phases == {0}, phases
     assert_series_points_equal(cached.json(), fresh.json(), "A", "PromQL after a partial cache hit with an unaligned start", label="service")
 
 
@@ -595,9 +594,8 @@ def test_promql_sub_step_window_at_flux_boundary_matches_no_cache(
 
     Tests:
     A one minute window centred on the flux boundary (now - 5m) with a
-    5 minute step evaluates once, at its start, as with noCache. The cache
-    splits the window at the boundary into two fragments, and the second
-    fragment adds an evaluation at the boundary.
+    5 minute step evaluates once, at the grid instant its start is moved
+    to, with the cache as with noCache.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric = f"cache_flux_{uuid4().hex[:8]}"
@@ -630,7 +628,7 @@ def test_promql_sub_step_window_at_flux_boundary_matches_no_cache(
     assert fresh.status_code == HTTPStatus.OK, fresh.text
 
     fresh_points = series_points_by_label(fresh.json(), "A", label="service")
-    assert fresh_points == {"svc-a": {start_ms: 10}}, fresh_points
+    assert fresh_points == {"svc-a": {start_ms - start_ms % (300 * 1000): 10}}, fresh_points
     assert_series_points_equal(cached.json(), fresh.json(), "A", "PromQL window shorter than the step at the flux boundary", label="service")
 
 

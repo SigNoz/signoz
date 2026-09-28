@@ -8374,6 +8374,8 @@ components:
           $ref: '#/components/schemas/Querybuildertypesv5FormatOptions'
         noCache:
           type: boolean
+        noStepAlignment:
+          type: boolean
         requestType:
           $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         schemaVersion:

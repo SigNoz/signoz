@@ -143,7 +143,7 @@ func (b *StatementBuilder) buildPipelineStatement(
 	// samples_v4/agg (unioned with the reduced tables) otherwise. The buffer is
 	// shaped exactly like samples_v4 / time_series_v4, so once the table names are
 	// chosen the rest of the pipeline is unchanged.
-	useBuffer := usesBuffer(start, end, agg)
+	useBuffer := metricstelemetryschema.UsesBuffer(start, end, agg.Reduced, agg.TableHints)
 
 	samplesTable, _ := metricstelemetryschema.WhichSamplesTableToUse(start, end, agg.Type, agg.TimeAggregation, useBuffer, agg.TableHints)
 	tsStart, tsEnd, _, tsTable := metricstelemetryschema.WhichTSTableToUse(start, end, useBuffer, agg.TableHints)

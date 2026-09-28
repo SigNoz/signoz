@@ -8,6 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -55,18 +58,36 @@ type bucketCache struct {
 	// keyLocks serialises read-modify-write cycles of one key inside this
 	// process; two refreshes of the same panel must not drop each other's
 	// buckets.
-	keyLocks [64]sync.Mutex
+	keyLocks       [64]sync.Mutex
+	requests       metric.Int64Counter
+	droppedBuckets metric.Int64Counter
 }
 
 var _ BucketCache = (*bucketCache)(nil)
 
 func NewBucketCache(settings factory.ProviderSettings, cache cache.Cache, cacheTTL time.Duration, fluxInterval time.Duration) BucketCache {
 	cacheSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier/bucket_cache")
-	return &bucketCache{
+	bc := &bucketCache{
 		cache:        cache,
 		logger:       cacheSettings.Logger(),
 		cacheTTL:     cacheTTL,
 		fluxInterval: fluxInterval,
+	}
+	var err error
+	bc.requests, err = cacheSettings.Meter().Int64Counter("signoz.querier.bucket_cache.request.count", metric.WithDescription("Cache lookups by result: hit, partial or miss."), metric.WithUnit("{request}"))
+	if err != nil {
+		bc.logger.Warn("bucket cache request counter unavailable", errors.Attr(err))
+	}
+	bc.droppedBuckets, err = cacheSettings.Meter().Int64Counter("signoz.querier.bucket_cache.dropped_bucket.count", metric.WithDescription("Cached buckets dropped on read by reason: expired or undecodable."), metric.WithUnit("{bucket}"))
+	if err != nil {
+		bc.logger.Warn("bucket cache dropped bucket counter unavailable", errors.Attr(err))
+	}
+	return bc
+}
+
+func (bc *bucketCache) count(ctx context.Context, counter metric.Int64Counter, key, value string) {
+	if counter != nil {
+		counter.Add(ctx, 1, metric.WithAttributes(attribute.String(key, value)))
 	}
 }
 
@@ -112,21 +133,32 @@ func alignUp(ts, stepMs uint64) uint64 {
 }
 
 // decodedBucket is a stored bucket with its value decoded. Buckets whose
-// value does not decode are dropped by the reader, which reports their range
-// as missing so the next write replaces them.
+// value does not decode, or whose points are older than the TTL, are dropped
+// by the reader, which reports their range as missing so the next write
+// replaces them.
 type decodedBucket struct {
 	*qbtypes.CachedBucket
 	data *qbtypes.TimeSeriesData
 }
 
-func (bc *bucketCache) decode(ctx context.Context, buckets []*qbtypes.CachedBucket) []decodedBucket {
+// decode returns the decoded buckets that overlap window, sorted by start.
+func (bc *bucketCache) decode(ctx context.Context, buckets []*qbtypes.CachedBucket, window qbtypes.TimeRange) []decodedBucket {
+	expiry := time.Now().Add(-bc.cacheTTL).UnixMilli()
 	decoded := make([]decodedBucket, 0, len(buckets))
 	for _, bucket := range buckets {
 		if bucket == nil || bucket.EndMs <= bucket.StartMs {
 			continue
 		}
+		if bucket.StartMs >= window.To || bucket.EndMs <= window.From {
+			continue
+		}
+		if bucket.WrittenAtMs < expiry {
+			bc.count(ctx, bc.droppedBuckets, "reason", "expired")
+			continue
+		}
 		data, err := decodeBucketValue(bucket.Value)
 		if err != nil {
+			bc.count(ctx, bc.droppedBuckets, "reason", "undecodable")
 			bc.logger.WarnContext(ctx, "dropping cached bucket that does not decode", errors.Attr(err), slog.Uint64("start", bucket.StartMs), slog.Uint64("end", bucket.EndMs))
 			continue
 		}
@@ -158,9 +190,10 @@ func (bc *bucketCache) GetMissRanges(ctx context.Context, orgID valuer.UUID, req
 		if !errors.Ast(err, errors.TypeNotFound) {
 			bc.logger.DebugContext(ctx, "cache read failed, treating as miss", errors.Attr(err))
 		}
+		bc.count(ctx, bc.requests, "result", "miss")
 		return nil, []qbtypes.TimeRange{window}
 	}
-	buckets := bc.decode(ctx, data.Buckets)
+	buckets := bc.decode(ctx, data.Buckets, window)
 	grid := gridOf(window, stepMs)
 
 	var served []decodedBucket
@@ -260,7 +293,13 @@ func mergeAdjacent(ranges []qbtypes.TimeRange) []qbtypes.TimeRange {
 // inside window and the metadata of the buckets that contributed.
 func (bc *bucketCache) serve(ctx context.Context, req CacheRequest, window qbtypes.TimeRange, served []decodedBucket, missing []qbtypes.TimeRange) (*qbtypes.Result, []qbtypes.TimeRange) {
 	if len(served) == 0 {
+		bc.count(ctx, bc.requests, "result", "miss")
 		return nil, missing
+	}
+	if len(missing) == 0 {
+		bc.count(ctx, bc.requests, "result", "hit")
+	} else {
+		bc.count(ctx, bc.requests, "result", "partial")
 	}
 	stepMs := uint64(req.Step.Milliseconds())
 	parts := make([]*qbtypes.TimeSeriesData, 0, len(served))
@@ -274,9 +313,12 @@ func (bc *bucketCache) serve(ctx context.Context, req CacheRequest, window qbtyp
 			}
 			return ts >= keep.From && ts+stepMs <= keep.To
 		}))
-		result.Stats.RowsScanned += bucket.Stats.RowsScanned
-		result.Stats.BytesScanned += bucket.Stats.BytesScanned
-		result.Stats.DurationMS += bucket.Stats.DurationMS
+		// A body bucket may span far more than the window; its stats are
+		// attributed to the window in proportion to the part served.
+		share := float64(keep.To-keep.From) / float64(bucket.EndMs-bucket.StartMs)
+		result.Stats.RowsScanned += uint64(float64(bucket.Stats.RowsScanned) * share)
+		result.Stats.BytesScanned += uint64(float64(bucket.Stats.BytesScanned) * share)
+		result.Stats.DurationMS += uint64(float64(bucket.Stats.DurationMS) * share)
 		result.Warnings = append(result.Warnings, bucket.Warnings...)
 		if result.WarningsDocURL == "" {
 			result.WarningsDocURL = bucket.WarningsDocURL
@@ -338,10 +380,11 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, req CacheRequ
 	if data == nil {
 		data = &qbtypes.TimeSeriesData{}
 	}
-	boundary := uint64(time.Now().Add(-bc.fluxInterval).UnixMilli())
+	now := time.Now()
+	boundary := uint64(now.Add(-bc.fluxInterval).UnixMilli())
 	grid := gridOf(window, stepMs)
 
-	var incoming []*qbtypes.CachedBucket
+	var incoming []decodedBucket
 	newBucket := func(edge qbtypes.CachedBucketEdge, r qbtypes.TimeRange, keep func(ts uint64) bool) {
 		points := selectPoints(data, func(v *qbtypes.TimeSeriesValue) bool { return keep(uint64(v.Timestamp)) })
 		value, err := encodeBucketValue(points)
@@ -349,9 +392,12 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, req CacheRequ
 			bc.logger.WarnContext(ctx, "not caching result that does not serialise", errors.Attr(err))
 			return
 		}
-		incoming = append(incoming, &qbtypes.CachedBucket{
-			StartMs: r.From, EndMs: r.To, Edge: edge, Type: fresh.Type, Value: value,
-			Stats: fresh.Stats, Warnings: fresh.Warnings, WarningsDocURL: fresh.WarningsDocURL,
+		incoming = append(incoming, decodedBucket{
+			CachedBucket: &qbtypes.CachedBucket{
+				StartMs: r.From, EndMs: r.To, Edge: edge, WrittenAtMs: now.UnixMilli(), Type: fresh.Type, Value: value,
+				Stats: fresh.Stats, Warnings: fresh.Warnings, WarningsDocURL: fresh.WarningsDocURL,
+			},
+			data: points,
 		})
 	}
 	// A partial end covers rows up to its window end, so it is final once
@@ -391,7 +437,8 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, req CacheRequ
 	if err := bc.cache.Get(ctx, orgID, req.Key, &existing); err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		bc.logger.DebugContext(ctx, "cache read failed before write, starting a new entry", errors.Attr(err))
 	}
-	entry := bc.merge(ctx, bc.decode(ctx, existing.Buckets), incoming)
+	// Every bucket of the entry is kept, so the read spans all time.
+	entry := bc.merge(ctx, bc.decode(ctx, existing.Buckets, qbtypes.TimeRange{To: ^uint64(0)}), incoming)
 	if err := bc.cache.Set(ctx, orgID, req.Key, &entry, bc.cacheTTL); err != nil {
 		bc.logger.WarnContext(ctx, "cache write failed", errors.Attr(err))
 	}
@@ -407,12 +454,12 @@ func keyShard(key string) int {
 // every body bucket it touches, an edge bucket replaces the edge bucket with
 // the same range. The result is sorted body buckets followed by edge buckets,
 // the newest edge buckets last.
-func (bc *bucketCache) merge(ctx context.Context, existing []decodedBucket, incoming []*qbtypes.CachedBucket) qbtypes.CachedData {
-	var bodies []*qbtypes.CachedBucket
+func (bc *bucketCache) merge(ctx context.Context, existing []decodedBucket, incoming []decodedBucket) qbtypes.CachedData {
+	var bodies []decodedBucket
 	var edges []*qbtypes.CachedBucket
 	for _, bucket := range existing {
 		if bucket.Edge == qbtypes.CachedBucketBody {
-			bodies = append(bodies, bucket.CachedBucket)
+			bodies = append(bodies, bucket)
 		} else {
 			edges = append(edges, bucket.CachedBucket)
 		}
@@ -422,7 +469,7 @@ func (bc *bucketCache) merge(ctx context.Context, existing []decodedBucket, inco
 			edges = slices.DeleteFunc(edges, func(e *qbtypes.CachedBucket) bool {
 				return e.Edge == bucket.Edge && e.StartMs == bucket.StartMs && e.EndMs == bucket.EndMs
 			})
-			edges = append(edges, bucket)
+			edges = append(edges, bucket.CachedBucket)
 			continue
 		}
 		bodies = bc.coalesce(ctx, bodies, bucket)
@@ -430,7 +477,7 @@ func (bc *bucketCache) merge(ctx context.Context, existing []decodedBucket, inco
 	if len(edges) > maxEdgeBuckets {
 		edges = edges[len(edges)-maxEdgeBuckets:]
 	}
-	slices.SortStableFunc(bodies, func(a, b *qbtypes.CachedBucket) int {
+	slices.SortStableFunc(bodies, func(a, b decodedBucket) int {
 		if a.StartMs < b.StartMs {
 			return -1
 		}
@@ -439,31 +486,34 @@ func (bc *bucketCache) merge(ctx context.Context, existing []decodedBucket, inco
 		}
 		return 0
 	})
-	return qbtypes.CachedData{Buckets: append(bodies, edges...)}
+	entry := qbtypes.CachedData{Buckets: make([]*qbtypes.CachedBucket, 0, len(bodies)+len(edges))}
+	for _, bucket := range bodies {
+		entry.Buckets = append(entry.Buckets, bucket.CachedBucket)
+	}
+	entry.Buckets = append(entry.Buckets, edges...)
+	return entry
 }
 
 // coalesce replaces the body buckets that touch or overlap fresh with one
 // bucket spanning them all. Points of fresh win inside its range; points of
-// the older buckets outside it are kept.
-func (bc *bucketCache) coalesce(ctx context.Context, bodies []*qbtypes.CachedBucket, fresh *qbtypes.CachedBucket) []*qbtypes.CachedBucket {
+// the older buckets outside it are kept. The oldest write time is kept, so
+// the whole bucket expires when its oldest points do.
+func (bc *bucketCache) coalesce(ctx context.Context, bodies []decodedBucket, fresh decodedBucket) []decodedBucket {
 	var parts []*qbtypes.TimeSeriesData
-	merged := *fresh
+	merged := *fresh.CachedBucket
 	kept := bodies[:0:0]
 	for _, bucket := range bodies {
 		if bucket.EndMs < fresh.StartMs || bucket.StartMs > fresh.EndMs {
 			kept = append(kept, bucket)
 			continue
 		}
-		data, err := decodeBucketValue(bucket.Value)
-		if err != nil {
-			continue
-		}
-		parts = append(parts, selectPoints(data, func(v *qbtypes.TimeSeriesValue) bool {
+		parts = append(parts, selectPoints(bucket.data, func(v *qbtypes.TimeSeriesValue) bool {
 			ts := uint64(v.Timestamp)
 			return ts < fresh.StartMs || ts >= fresh.EndMs
 		}))
 		merged.StartMs = min(merged.StartMs, bucket.StartMs)
 		merged.EndMs = max(merged.EndMs, bucket.EndMs)
+		merged.WrittenAtMs = min(merged.WrittenAtMs, bucket.WrittenAtMs)
 		merged.Stats.RowsScanned += bucket.Stats.RowsScanned
 		merged.Stats.BytesScanned += bucket.Stats.BytesScanned
 		merged.Stats.DurationMS += bucket.Stats.DurationMS
@@ -472,19 +522,18 @@ func (bc *bucketCache) coalesce(ctx context.Context, bodies []*qbtypes.CachedBuc
 			merged.WarningsDocURL = bucket.WarningsDocURL
 		}
 	}
-	if len(parts) > 0 {
-		if freshData, err := decodeBucketValue(fresh.Value); err == nil {
-			value, err := encodeBucketValue(mergeTimeSeriesData(append(parts, freshData)))
-			if err == nil {
-				merged.Value = value
-			} else {
-				bc.logger.WarnContext(ctx, "coalesced bucket does not serialise, keeping the fresh bucket alone", errors.Attr(err))
-				merged.StartMs, merged.EndMs = fresh.StartMs, fresh.EndMs
-			}
-		}
+	if len(parts) == 0 {
+		return append(kept, fresh)
 	}
+	data := mergeTimeSeriesData(append(parts, fresh.data))
+	value, err := encodeBucketValue(data)
+	if err != nil {
+		bc.logger.WarnContext(ctx, "coalesced bucket does not serialise, keeping the fresh bucket alone", errors.Attr(err))
+		return append(kept, fresh)
+	}
+	merged.Value = value
 	merged.Warnings = dedupeWarnings(merged.Warnings)
-	return append(kept, &merged)
+	return append(kept, decodedBucket{CachedBucket: &merged, data: data})
 }
 
 // mergeTimeSeriesData joins parts by aggregation index and series labels.

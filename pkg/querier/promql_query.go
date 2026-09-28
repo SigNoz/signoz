@@ -163,6 +163,15 @@ func (q *promqlQuery) Fingerprint() string {
 		q.logger.ErrorContext(context.TODO(), "failed render template variables", slog.String("query", q.query.Query))
 		return ""
 	}
+	// @ start() and @ end() resolve to the window of the evaluation, so a
+	// piece of the window evaluates something else than the whole.
+	exprParser := q.parser
+	if exprParser == nil {
+		exprParser = prometheus.NewParser()
+	}
+	if expr, err := exprParser.ParseExpr(query); err != nil || usesStartOrEnd(expr) {
+		return ""
+	}
 	parts := []string{
 		"promql",
 		// one expression returns a different shape per request type
@@ -172,6 +181,20 @@ func (q *promqlQuery) Fingerprint() string {
 	}
 
 	return strings.Join(parts, "&")
+}
+
+func usesStartOrEnd(expr parser.Expr) bool {
+	found := false
+	parser.Inspect(expr, func(node parser.Node, _ []parser.Node) error {
+		switch n := node.(type) {
+		case *parser.VectorSelector:
+			found = found || n.StartOrEnd != 0
+		case *parser.SubqueryExpr:
+			found = found || n.StartOrEnd != 0
+		}
+		return nil
+	})
+	return found
 }
 
 // Window is the range of instants the query evaluates, half-open on the step

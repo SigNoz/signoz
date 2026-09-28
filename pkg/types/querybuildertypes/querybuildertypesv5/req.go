@@ -388,6 +388,12 @@ type QueryRangeRequest struct {
 	// NoCache is a flag to disable caching for the request.
 	NoCache bool `json:"noCache,omitempty"`
 
+	// NoStepAlignment evaluates PromQL queries at the request's own start and
+	// end instead of moving both down to the step grid. Every client gets the
+	// grid by default so that windows a fraction of a step apart evaluate the
+	// same instants; a query kept off the grid is not cached.
+	NoStepAlignment bool `json:"noStepAlignment,omitempty"`
+
 	FormatOptions *FormatOptions `json:"formatOptions,omitempty"`
 }
 

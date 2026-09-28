@@ -487,8 +487,8 @@ def test_promql_shifting_the_time_range(
     query = [{"type": "promql", "spec": {"name": "A", "query": f"sum by (le) (max_over_time({metric_name}[2m]))", "step": 60}}]
 
     # a sample every 30s, each `le` counting up by its own fixed amount every
-    # time. The two queries report 30s apart, so they land on different samples
-    # and share no count between them
+    # time, so the instants on the grid and the instants half a step off it
+    # land on different samples
     le_to_arrivals_per_sample = {"1": 100, "2": 300, "4": 600, "+Inf": 1000}
     insert_metrics(
         [
@@ -510,37 +510,34 @@ def test_promql_shifting_the_time_range(
     aligned_and_cached = make_query_request(signoz, token, aligned_start_time_ms, aligned_end_time_ms, query, request_type=RequestType.HEATMAP, no_cache=False)
     assert aligned_and_cached.status_code == HTTPStatus.OK, aligned_and_cached.text
 
-    # what the cache now holds, and what the unaligned query must not be served
-    assert get_heatmap_buckets(aligned_and_cached.json(), "A") == [1, 2, 4]
     ## each column reads the counters at their latest sample at or before its
     ## timestamp, and a bucket holds its own `le`'s count less the one below it.
-    assert [(column["timestamp"], column["values"]) for column in get_heatmap_columns(aligned_and_cached.json(), "A")] == [
+    on_the_grid = [
         (aligned_start_time_ms, [400, 800, 1200, 1600]),  # t = 0, the fourth sample
         (aligned_start_time_ms + MINUTE_MS, [600, 1200, 1800, 2400]),  # t = 1m, the sixth
         (aligned_start_time_ms + 2 * MINUTE_MS, [800, 1600, 2400, 3200]),  # t = 2m, the eighth
         (aligned_end_time_ms, [1000, 2000, 3000, 4000]),  # t = 3m, the tenth
     ]
+    assert get_heatmap_buckets(aligned_and_cached.json(), "A") == [1, 2, 4]
+    assert [(column["timestamp"], column["values"]) for column in get_heatmap_columns(aligned_and_cached.json(), "A")] == on_the_grid
 
-    ## every column falls on a sample the aligned run never reported, so being
-    ## served the cached run's answer shows up in the counts and not only the
-    ## timestamps.
-    unaligned_columns = [
+    # a window half a step off the grid is moved onto it, cached or not
+    for no_cache in (True, False):
+        shifted = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, request_type=RequestType.HEATMAP, no_cache=no_cache)
+        assert shifted.status_code == HTTPStatus.OK, shifted.text
+        assert get_heatmap_buckets(shifted.json(), "A") == [1, 2, 4], f"shifted window, no_cache={no_cache}"
+        assert [(column["timestamp"], column["values"]) for column in get_heatmap_columns(shifted.json(), "A")] == on_the_grid, f"shifted window, no_cache={no_cache}"
+
+    ## every column of the exact window falls on a sample the grid run never
+    ## reported, so being served the grid entry would show in the counts
+    off_the_grid = [
         (unaligned_start_time_ms, [500, 1000, 1500, 2000]),  # t = 30s, the fifth sample
         (unaligned_start_time_ms + MINUTE_MS, [700, 1400, 2100, 2800]),  # t = 1m30s, the seventh
         (unaligned_start_time_ms + 2 * MINUTE_MS, [900, 1800, 2700, 3600]),  # t = 2m30s, the ninth
         (unaligned_end_time_ms, [1100, 2200, 3300, 4400]),  # t = 3m30s, the eleventh
     ]
-
-    unaligned_and_uncached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, request_type=RequestType.HEATMAP, no_cache=True)
-    assert unaligned_and_uncached.status_code == HTTPStatus.OK, unaligned_and_uncached.text
-    assert get_heatmap_buckets(unaligned_and_uncached.json(), "A") == [1, 2, 4], "unaligned query, uncached"
-    assert [(column["timestamp"], column["values"]) for column in get_heatmap_columns(unaligned_and_uncached.json(), "A")] == unaligned_columns, "unaligned query, uncached"
-
-    # promql reports at the range start plus whole steps, so these columns sit
-    # 30s off the cached ones. The first run stores them, the second reads them back
-    for run in ("first", "second"):
-        unaligned_and_cached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, request_type=RequestType.HEATMAP, no_cache=False)
-        assert unaligned_and_cached.status_code == HTTPStatus.OK, unaligned_and_cached.text
-        assert get_heatmap_buckets(unaligned_and_cached.json(), "A") == [1, 2, 4], f"unaligned query, {run} run"
-        assert [(column["timestamp"], column["values"]) for column in get_heatmap_columns(unaligned_and_cached.json(), "A")] == unaligned_columns, f"unaligned query, {run} run"
-        assert_identical_query_response(unaligned_and_cached, unaligned_and_uncached)
+    for no_cache in (True, False):
+        exact = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, request_type=RequestType.HEATMAP, no_cache=no_cache, no_step_alignment=True)
+        assert exact.status_code == HTTPStatus.OK, exact.text
+        assert get_heatmap_buckets(exact.json(), "A") == [1, 2, 4], f"exact window, no_cache={no_cache}"
+        assert [(column["timestamp"], column["values"]) for column in get_heatmap_columns(exact.json(), "A")] == off_the_grid, f"exact window, no_cache={no_cache}"

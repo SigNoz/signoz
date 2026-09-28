@@ -27,14 +27,18 @@ const (
 // CachedBucket holds the points of one query for [StartMs, EndMs) on the step
 // grid, and nothing outside it.
 type CachedBucket struct {
-	StartMs        uint64           `json:"startMs"`
-	EndMs          uint64           `json:"endMs"`
-	Edge           CachedBucketEdge `json:"edge,omitempty"`
-	Type           RequestType      `json:"type"`
-	Value          json.RawMessage  `json:"value"`
-	Stats          ExecStats        `json:"stats"`
-	Warnings       []string         `json:"warnings,omitempty"`
-	WarningsDocURL string           `json:"warningsDocURL,omitempty"`
+	StartMs uint64           `json:"startMs"`
+	EndMs   uint64           `json:"endMs"`
+	Edge    CachedBucketEdge `json:"edge,omitempty"`
+	// WrittenAtMs is when the oldest points of the bucket were fetched; a
+	// bucket expires on its own clock, since the entry's TTL restarts on
+	// every write.
+	WrittenAtMs    int64           `json:"writtenAtMs"`
+	Type           RequestType     `json:"type"`
+	Value          json.RawMessage `json:"value"`
+	Stats          ExecStats       `json:"stats"`
+	Warnings       []string        `json:"warnings,omitempty"`
+	WarningsDocURL string          `json:"warningsDocURL,omitempty"`
 }
 
 func (c *CachedBucket) Clone() *CachedBucket {
@@ -42,6 +46,7 @@ func (c *CachedBucket) Clone() *CachedBucket {
 		StartMs:        c.StartMs,
 		EndMs:          c.EndMs,
 		Edge:           c.Edge,
+		WrittenAtMs:    c.WrittenAtMs,
 		Type:           c.Type,
 		Value:          bytes.Clone(c.Value),
 		Stats:          c.Stats.Clone(),

@@ -216,8 +216,8 @@ def test_promql_shifting_the_time_range(
 
     query = [{"type": "promql", "spec": {"name": "A", "query": f"max_over_time({metric_name}[2m])", "step": 60}}]
 
-    # a sample every 30s, rising by 100 each time. The two queries report 30s
-    # apart, so they land on different samples and share no value between them
+    # a sample every 30s, rising by 100 each time, so the instants on the grid
+    # and the instants half a step off it land on different samples
     insert_metrics(
         [
             Metrics(
@@ -237,39 +237,39 @@ def test_promql_shifting_the_time_range(
     aligned_and_cached = make_query_request(signoz, token, aligned_start_time_ms, aligned_end_time_ms, query, no_cache=False)
     assert aligned_and_cached.status_code == HTTPStatus.OK, aligned_and_cached.text
 
-    # what the cache now holds, and what the unaligned query must not be served
-    points = sorted(get_series_values(aligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
-    returned_points = [(point["timestamp"], point["value"]) for point in points]
     ## at each timestamp t, promql takes the highest sample in (t-2minutes, t],
     ## which is the one at t itself since the gauge only rises.
-    assert returned_points == [
+    on_the_grid = [
         (aligned_start_time_ms, 400),  # t = 0
         (aligned_start_time_ms + MINUTE_MS, 600),  # t = 1m
         (aligned_start_time_ms + 2 * MINUTE_MS, 800),  # t = 2m
         (aligned_end_time_ms, 1000),  # t = 3m
     ]
+    points = sorted(get_series_values(aligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
+    assert [(point["timestamp"], point["value"]) for point in points] == on_the_grid
 
-    unaligned_and_uncached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=True)
-    assert unaligned_and_uncached.status_code == HTTPStatus.OK, unaligned_and_uncached.text
+    # a window half a step off the grid is moved onto it, cached or not, so
+    # every client evaluates the same instants and shares the cache entry
+    for no_cache in (True, False):
+        shifted = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=no_cache)
+        assert shifted.status_code == HTTPStatus.OK, shifted.text
+        points = sorted(get_series_values(shifted.json(), "A"), key=lambda point: point["timestamp"])
+        assert [(point["timestamp"], point["value"]) for point in points] == on_the_grid, f"shifted window, no_cache={no_cache}"
 
-    # promql reports at the range start plus whole steps, so these points sit 30s
-    # off the cached ones. The first run stores them, the second reads them back
-    for run in ("first", "second"):
-        unaligned_and_cached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=False)
-        assert unaligned_and_cached.status_code == HTTPStatus.OK, unaligned_and_cached.text
-        assert_results_equal(unaligned_and_cached.json(), unaligned_and_uncached.json(), "A", f"unaligned query, {run} run")
-
-        points = sorted(get_series_values(unaligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
-        returned_points = [(point["timestamp"], point["value"]) for point in points]
-        ## every point falls on a sample the aligned run never reported, so being
-        ## served the cached run's answer shows up in the values and not only the
-        ## timestamps.
-        assert returned_points == [
-            (unaligned_start_time_ms, 500),  # t = 30s
-            (unaligned_start_time_ms + MINUTE_MS, 700),  # t = 1m30s
-            (unaligned_start_time_ms + 2 * MINUTE_MS, 900),  # t = 2m30s
-            (unaligned_end_time_ms, 1100),  # t = 3m30s
-        ], f"unaligned query, {run} run"
+    # a client that asks for its own instants gets them, and they are not
+    # served from the grid entry: every point falls on a sample the grid run
+    # never reported
+    off_the_grid = [
+        (unaligned_start_time_ms, 500),  # t = 30s
+        (unaligned_start_time_ms + MINUTE_MS, 700),  # t = 1m30s
+        (unaligned_start_time_ms + 2 * MINUTE_MS, 900),  # t = 2m30s
+        (unaligned_end_time_ms, 1100),  # t = 3m30s
+    ]
+    for no_cache in (True, False):
+        exact = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=no_cache, no_step_alignment=True)
+        assert exact.status_code == HTTPStatus.OK, exact.text
+        points = sorted(get_series_values(exact.json(), "A"), key=lambda point: point["timestamp"])
+        assert [(point["timestamp"], point["value"]) for point in points] == off_the_grid, f"exact window, no_cache={no_cache}"
 
 
 def test_builder_refreshing_a_sliding_time_range(

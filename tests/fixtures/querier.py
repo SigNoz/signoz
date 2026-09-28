@@ -175,6 +175,7 @@ def make_query_request(
     format_options: dict | None = None,
     variables: dict | None = None,
     no_cache: bool = True,
+    no_step_alignment: bool = False,
     timeout: int = QUERY_TIMEOUT,
 ) -> requests.Response:
     if format_options is None:
@@ -191,6 +192,8 @@ def make_query_request(
     }
     if variables:
         payload["variables"] = variables
+    if no_step_alignment:
+        payload["noStepAlignment"] = True
 
     return requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
