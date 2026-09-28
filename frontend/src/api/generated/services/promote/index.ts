@@ -57,7 +57,7 @@ export const listPromotedPaths = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<ListPromotedPaths200>({
-		url: `/api/v1/promote_paths/${telemetrySignal}/${context}`,
+		url: `/api/v1/promoted_path/${telemetrySignal}/${context}`,
 		method: 'GET',
 		signal,
 	});
@@ -67,7 +67,7 @@ export const getListPromotedPathsQueryKey = ({
 	telemetrySignal,
 	context,
 }: ListPromotedPathsPathParameters) => {
-	return [`/api/v1/promote_paths/${telemetrySignal}/${context}`] as const;
+	return [`/api/v1/promoted_path/${telemetrySignal}/${context}`] as const;
 };
 
 export const getListPromotedPathsQueryOptions = <
@@ -171,7 +171,7 @@ export const promotePaths = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
-		url: `/api/v1/promote_paths/${telemetrySignal}/${context}`,
+		url: `/api/v1/promoted_path/${telemetrySignal}/${context}`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: promotetypesPromotePathDTONull,
