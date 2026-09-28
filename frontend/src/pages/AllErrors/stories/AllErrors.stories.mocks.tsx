@@ -6,7 +6,7 @@
 import { rest } from 'msw';
 import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { fireEvent, screen, userEvent, waitFor, within } from 'storybook/test';
+import { screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	choiceControl,
@@ -150,12 +150,17 @@ export const openResourceFilter = async (
  * Clicks the visible row whose label is `text`. The dropdown renders in the
  * body, a key row carries its type beside the label, and antd keeps a hidden
  * copy of each label for screen readers that takes no clicks.
+ *
+ * The key list renders twice after the filter opens, since a second key
+ * request empties it until it answers. The click happens in the same task as
+ * the lookup: `fireEvent` from `storybook/test` dispatches a tick later, which
+ * can land on a row already removed and never reach React.
  */
 export const pickSuggestion = async (text: string): Promise<void> => {
-	const row = await waitFor(() => {
+	await waitFor(() => {
 		const match = Array.from(
 			document.querySelectorAll<HTMLElement>(
-				'.query-builder-search.ant-select-dropdown .ant-select-item-option',
+				'.query-builder-search.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option',
 			),
 		).find((option) =>
 			Array.from(option.querySelectorAll('*')).some(
@@ -167,12 +172,10 @@ export const pickSuggestion = async (text: string): Promise<void> => {
 			throw new Error(`suggestion "${text}" not found`);
 		}
 
-		return match;
+		// `userEvent.click` moves focus off the search input on the way, which closes
+		// the dropdown before the row takes the click.
+		match.click();
 	}, untilLoaded);
-
-	// `userEvent.click` moves focus off the search input on the way, which closes
-	// the dropdown before the row takes the click.
-	await fireEvent.click(row);
 };
 
 export const commitFilter = async (
