@@ -95,13 +95,18 @@ func enhancePromQLError(query string, parseErr error) error {
 }
 
 type promqlQuery struct {
-	logger      *slog.Logger
-	promEngine  prometheus.Prometheus
-	parser      parser.Parser
-	query       qbv5.PromQuery
-	tr          qbv5.TimeRange
-	requestType qbv5.RequestType
-	vars        map[string]qbv5.VariableItem
+	logger     *slog.Logger
+	promEngine prometheus.Prometheus
+	parser     parser.Parser
+	query      qbv5.PromQuery
+	// tr is the evaluation range: instants tr.From, tr.From+step, ... <= tr.To.
+	tr qbv5.TimeRange
+	// requestWindow is the window of the request this query answers. A
+	// query ranged over a gap of it renders $start_timestamp and friends
+	// from here, not from the gap.
+	requestWindow qbv5.TimeRange
+	requestType   qbv5.RequestType
+	vars          map[string]qbv5.VariableItem
 }
 
 var _ qbv5.Query = (*promqlQuery)(nil)
@@ -116,15 +121,28 @@ func newPromqlQuery(
 	variables map[string]qbv5.VariableItem,
 ) *promqlQuery {
 	return &promqlQuery{
-		logger:      logger,
-		promEngine:  promEngine,
-		parser:      prometheus.NewParser(),
-		query:       query,
-		tr:          tr,
-		requestType: requestType,
-		vars:        variables,
+		logger:        logger,
+		promEngine:    promEngine,
+		parser:        prometheus.NewParser(),
+		query:         query,
+		tr:            tr,
+		requestWindow: tr,
+		requestType:   requestType,
+		vars:          variables,
 	}
 }
+
+// ranged copies the query over a gap [from, to) of its request window as the
+// cache reports it: to is exclusive on the step grid, so the last instant to
+// evaluate is one step before it.
+func (q *promqlQuery) ranged(gap qbv5.TimeRange) *promqlQuery {
+	copied := *q
+	copied.query = q.query.Copy()
+	copied.tr = qbv5.TimeRange{From: gap.From, To: gap.To - uint64(q.query.Step.Milliseconds())}
+	return &copied
+}
+
+func (q *promqlQuery) stepMs() uint64 { return uint64(q.query.Step.Milliseconds()) }
 
 func (q *promqlQuery) Fingerprint() string {
 	switch q.requestType {
@@ -133,7 +151,14 @@ func (q *promqlQuery) Fingerprint() string {
 		return ""
 	}
 
-	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	// Evaluation instants are start + k*step. Only a start on the step grid
+	// shares instants with other windows of the same query; anything else is
+	// served without the cache rather than mixed with grid points.
+	if stepMs := q.stepMs(); stepMs == 0 || q.tr.From%stepMs != 0 {
+		return ""
+	}
+
+	query, err := q.renderVars(q.query.Query, q.vars, q.requestWindow.From, q.requestWindow.To)
 	if err != nil {
 		q.logger.ErrorContext(context.TODO(), "failed render template variables", slog.String("query", q.query.Query))
 		return ""
@@ -146,17 +171,19 @@ func (q *promqlQuery) Fingerprint() string {
 		q.query.Step.String(),
 	}
 
-	// Two windows a fraction of a step apart describe different instants, so
-	// they must not share an entry.
-	if stepMs := uint64(q.query.Step.Milliseconds()); stepMs > 0 && q.tr.From%stepMs != 0 {
-		parts = append(parts, fmt.Sprintf("offset=%d", q.tr.From%stepMs))
-	}
-
 	return strings.Join(parts, "&")
 }
 
+// Window is the range of instants the query evaluates, half-open on the step
+// grid: the last instant is tr.To (or the last grid point before it), and the
+// window ends one step after it.
 func (q *promqlQuery) Window() (uint64, uint64) {
-	return q.tr.From, q.tr.To
+	stepMs := q.stepMs()
+	if stepMs == 0 || q.tr.To < q.tr.From {
+		return q.tr.From, q.tr.To
+	}
+	last := q.tr.From + (q.tr.To-q.tr.From)/stepMs*stepMs
+	return q.tr.From, last + stepMs
 }
 
 // removeAllVarMatchers removes label matchers from a PromQL query that reference variables with __all__ value.
@@ -242,7 +269,7 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 // Statement renders the PromQL string (no SQL args) without executing it, for
 // the preview path.
 func (q *promqlQuery) Statement(_ context.Context) (*qbv5.Statement, error) {
-	rendered, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.requestWindow.From, q.requestWindow.To)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +279,7 @@ func (q *promqlQuery) Statement(_ context.Context) (*qbv5.Statement, error) {
 // PreviewStatements returns the ClickHouse statement(s) this PromQL query
 // would run on the engine path, captured without executing them.
 func (q *promqlQuery) PreviewStatements(ctx context.Context) ([]prometheus.CapturedStatement, error) {
-	rendered, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.requestWindow.From, q.requestWindow.To)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +304,7 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	start := int64(querybuilder.ToNanoSecs(q.tr.From))
 	end := int64(querybuilder.ToNanoSecs(q.tr.To))
 
-	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	query, err := q.renderVars(q.query.Query, q.vars, q.requestWindow.From, q.requestWindow.To)
 	if err != nil {
 		return nil, err
 	}

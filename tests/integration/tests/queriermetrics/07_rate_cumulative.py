@@ -125,9 +125,10 @@ def test_rate_group_by_endpoint(
         assert v["value"] == 0.167, f"Expected /health rate 0.167, got {v['value']}"
 
     # /products: 51 data points with 10-minute gap (t20-t29 missing), steady +20/min
-    # rate = 20/60 = 0.333, gap causes lower averaged rate at boundary
+    # rate = 20/60 = 0.333; the bucket after the gap has no sample within the
+    # rate lookback and gets no value
     products_values = endpoint_values["/products"]
-    assert len(products_values) >= 49, f"Expected >= 49 values for /products, got {len(products_values)}"
+    assert len(products_values) >= 48, f"Expected >= 48 values for /products, got {len(products_values)}"
     count_steady_products = sum(1 for v in products_values if v["value"] == 0.333)
 
     # most values should be 0.333, some boundary values differ due to 10-min gap

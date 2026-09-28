@@ -291,8 +291,10 @@ func GetUniqueSeriesKey(labels []*Label) string {
 	if len(labels) == 0 {
 		return ""
 	}
+	// Values are quoted so that a value holding "=" or "," cannot read as
+	// another label set.
 	if len(labels) == 1 {
-		return fmt.Sprintf("%s=%v,", labels[0].Key.Name, labels[0].Value)
+		return labels[0].Key.Name + "=" + strconv.Quote(labelValueString(labels[0].Value)) + ","
 	}
 
 	// Use a map to collect labels for consistent ordering without copying
@@ -304,13 +306,9 @@ func GetUniqueSeriesKey(labels []*Label) string {
 	for _, label := range labels {
 		if _, exists := labelMap[label.Key.Name]; !exists {
 			keys = append(keys, label.Key.Name)
-			estimatedSize += len(label.Key.Name) + 2 // key + '=' + ','
+			estimatedSize += len(label.Key.Name) + 4 // key + '=' + quotes + ','
 		}
-		// get the value as string
-		value, ok := label.Value.(string)
-		if !ok {
-			value = fmt.Sprintf("%v", label.Value)
-		}
+		value := labelValueString(label.Value)
 		estimatedSize += len(value)
 
 		labelMap[label.Key.Name] = value
@@ -326,11 +324,19 @@ func GetUniqueSeriesKey(labels []*Label) string {
 	for _, k := range keys {
 		key.WriteString(k)
 		key.WriteByte('=')
-		key.WriteString(labelMap[k])
+		key.WriteString(strconv.Quote(labelMap[k]))
 		key.WriteByte(',')
 	}
 
 	return key.String()
+}
+
+// labelValueString is the value as a string, as the response prints it.
+func labelValueString(value any) string {
+	if s, ok := value.(string); ok {
+		return s
+	}
+	return fmt.Sprintf("%v", value)
 }
 
 type TimeSeriesValue struct {

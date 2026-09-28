@@ -2,14 +2,17 @@ package querier
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"log/slog"
+	"slices"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -22,7 +25,6 @@ const (
 	defaultFluxInterval = 5 * time.Minute
 )
 
-// Helper function to create test cache.
 func createTestCache(t *testing.T) cache.Cache {
 	config := cache.Config{
 		Provider: "memory",
@@ -36,7 +38,7 @@ func createTestCache(t *testing.T) cache.Cache {
 	return memCache
 }
 
-// mockQuery implements the Query interface for testing.
+// mockQuery is the query a cache test speaks about: a fingerprint and a window.
 type mockQuery struct {
 	fingerprint string
 	startMs     uint64
@@ -44,1438 +46,708 @@ type mockQuery struct {
 	result      *qbtypes.Result
 }
 
-func (m *mockQuery) Fingerprint() string {
-	return m.fingerprint
-}
+func (m *mockQuery) Fingerprint() string      { return m.fingerprint }
+func (m *mockQuery) Window() (uint64, uint64) { return m.startMs, m.endMs }
 
-func (m *mockQuery) Window() (uint64, uint64) {
-	return m.startMs, m.endMs
-}
-
-func (m *mockQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
+func (m *mockQuery) Execute(context.Context) (*qbtypes.Result, error) {
 	if m.result != nil {
 		return m.result, nil
 	}
-	// Default result
 	return &qbtypes.Result{
 		Type:  qbtypes.RequestTypeTimeSeries,
 		Value: &qbtypes.TimeSeriesData{},
-		Stats: qbtypes.ExecStats{
-			RowsScanned:  100,
-			BytesScanned: 1000,
-			DurationMS:   10,
-		},
+		Stats: qbtypes.ExecStats{RowsScanned: 100, BytesScanned: 1000, DurationMS: 10},
 	}, nil
 }
 
-// createTestBucketCache creates a test bucket cache.
-func createTestBucketCache(t *testing.T) *bucketCache {
-	memCache := createTestCache(t)
-	return NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval).(*bucketCache)
+func (m *mockQuery) window() qbtypes.TimeRange {
+	return qbtypes.TimeRange{From: m.startMs, To: m.endMs}
 }
+
+func cacheRequest(q *mockQuery, step qbtypes.Step) CacheRequest {
+	return CacheRequest{Key: CacheKey(q.fingerprint), Window: q.window(), Step: step, Kind: qbtypes.RequestTypeTimeSeries}
+}
+
+// put stores result as the answer for the query's whole window.
+func put(bc BucketCache, q *mockQuery, step qbtypes.Step, result *qbtypes.Result) {
+	bc.Put(context.Background(), valuer.UUID{}, cacheRequest(q, step), q.window(), result)
+}
+
+func get(bc BucketCache, q *mockQuery, step qbtypes.Step) (*qbtypes.Result, []qbtypes.TimeRange) {
+	return bc.GetMissRanges(context.Background(), valuer.UUID{}, cacheRequest(q, step))
+}
+
+func createTestBucketCache(t *testing.T) *bucketCache {
+	return NewBucketCache(instrumentationtest.New().ToProviderSettings(), createTestCache(t), cacheTTL, defaultFluxInterval).(*bucketCache)
+}
+
+func stepOf(d time.Duration) qbtypes.Step { return qbtypes.Step{Duration: d} }
 
 func createTestTimeSeries(queryName string, startMs, endMs uint64, step uint64) *qbtypes.TimeSeriesData {
 	series := &qbtypes.TimeSeries{
 		Labels: []*qbtypes.Label{
-			{
-				Key: telemetrytypes.TelemetryFieldKey{
-					Name:          "method",
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-				},
-				Value: "GET",
-			},
-			{
-				Key: telemetrytypes.TelemetryFieldKey{
-					Name:          "status",
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-				},
-				Value: "200",
-			},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "method", FieldDataType: telemetrytypes.FieldDataTypeString}, Value: "GET"},
+			{Key: telemetrytypes.TelemetryFieldKey{Name: "status", FieldDataType: telemetrytypes.FieldDataTypeString}, Value: "200"},
 		},
-		Values: []*qbtypes.TimeSeriesValue{},
 	}
-
-	// Generate values for each step
 	for ts := startMs; ts < endMs; ts += step {
-		series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
-			Timestamp: int64(ts),
-			Value:     float64(ts % 100),
-		})
+		series.Values = append(series.Values, &qbtypes.TimeSeriesValue{Timestamp: int64(ts), Value: float64(ts % 100)})
 	}
-
 	return &qbtypes.TimeSeriesData{
-		QueryName: queryName,
-		Aggregations: []*qbtypes.AggregationBucket{
-			{
-				Index:  0,
-				Series: []*qbtypes.TimeSeries{series},
-			},
-		},
+		QueryName:    queryName,
+		Aggregations: []*qbtypes.AggregationBucket{{Index: 0, Alias: "__result_0", Series: []*qbtypes.TimeSeries{series}}},
 	}
 }
 
-func TestBucketCache_GetMissRanges_EmptyCache(t *testing.T) {
-	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
-
-	query := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     1000,
-		endMs:       5000,
+func timestampsOf(t *testing.T, result *qbtypes.Result) []int64 {
+	t.Helper()
+	require.NotNil(t, result)
+	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
+	require.True(t, ok)
+	var out []int64
+	for _, agg := range tsData.Aggregations {
+		for _, s := range agg.Series {
+			for _, v := range s.Values {
+				out = append(out, v.Timestamp)
+			}
+		}
 	}
+	return out
+}
 
-	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
+func TestBucketCache_EmptyCacheIsTheWholeWindow(t *testing.T) {
+	bc := createTestBucketCache(t)
+	query := &mockQuery{fingerprint: "test-query", startMs: 1000, endMs: 5000}
+
+	cached, missing := get(bc, query, stepOf(time.Second))
 
 	assert.Nil(t, cached)
-	assert.Len(t, missing, 1)
-	assert.Equal(t, uint64(1000), missing[0].From)
-	assert.Equal(t, uint64(5000), missing[0].To)
+	assert.Equal(t, []qbtypes.TimeRange{{From: 1000, To: 5000}}, missing)
 }
 
-func TestBucketCache_Put_And_Get(t *testing.T) {
-	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
+func TestBucketCache_FullHitReturnsPointsStatsWarningsAndMetadata(t *testing.T) {
+	bc := createTestBucketCache(t)
+	query := &mockQuery{fingerprint: "test-query", startMs: 1000, endMs: 5000}
+	data := createTestTimeSeries("A", 1000, 5000, 1000)
+	data.Aggregations[0].Meta.Unit = "ms"
+	put(bc, query, stepOf(time.Second), &qbtypes.Result{
+		Type:           qbtypes.RequestTypeTimeSeries,
+		Value:          data,
+		Stats:          qbtypes.ExecStats{RowsScanned: 100, BytesScanned: 1000, DurationMS: 10},
+		Warnings:       []string{"test warning"},
+		WarningsDocURL: "https://example.test/warnings",
+	})
 
-	// Create a query and result
-	query := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     1000,
-		endMs:       5000,
-	}
+	cached, missing := get(bc, query, stepOf(time.Second))
 
-	result := &qbtypes.Result{
-		Type:  qbtypes.RequestTypeTimeSeries,
-		Value: createTestTimeSeries("A", 1000, 5000, 1000),
-		Stats: qbtypes.ExecStats{
-			RowsScanned:  100,
-			BytesScanned: 1000,
-			DurationMS:   10,
-		},
-		Warnings: []string{"test warning"},
-	}
-
-	// Store in cache
-	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-
-	// Wait a bit for cache to be written
-	time.Sleep(10 * time.Millisecond)
-
-	// Retrieve from cache
-	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	assert.NotNil(t, cached.Value)
-	assert.Len(t, missing, 0)
+	require.NotNil(t, cached)
+	assert.Empty(t, missing)
 	assert.Equal(t, qbtypes.RequestTypeTimeSeries, cached.Type)
 	assert.Equal(t, uint64(100), cached.Stats.RowsScanned)
 	assert.Equal(t, []string{"test warning"}, cached.Warnings)
-
-	// Verify the time series data
-	_, ok := cached.Value.(*qbtypes.TimeSeriesData)
-	require.True(t, ok)
+	assert.Equal(t, "https://example.test/warnings", cached.WarningsDocURL)
+	assert.Equal(t, []int64{1000, 2000, 3000, 4000}, timestampsOf(t, cached))
+	tsData := cached.Value.(*qbtypes.TimeSeriesData)
+	assert.Equal(t, "__result_0", tsData.Aggregations[0].Alias)
+	assert.Equal(t, "ms", tsData.Aggregations[0].Meta.Unit)
 }
 
-func TestBucketCache_PartialHit(t *testing.T) {
-	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
-
-	// First query: cache data for 1000-3000ms
-	query1 := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     1000,
-		endMs:       3000,
-	}
-	result1 := &qbtypes.Result{
-		Type:  qbtypes.RequestTypeTimeSeries,
-		Value: createTestTimeSeries("A", 1000, 3000, 1000),
-	}
-	bc.Put(context.Background(), valuer.UUID{}, query1, qbtypes.Step{Duration: 1000 * time.Millisecond}, result1)
-
-	// Wait for cache write
-	time.Sleep(10 * time.Millisecond)
-
-	// Second query: request 2000-5000ms (partial overlap)
-	query2 := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     2000,
-		endMs:       5000,
-	}
-
-	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query2, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// Should have cached data
-	assert.NotNil(t, cached.Value)
-
-	// Should have one missing range: 3000-5000
-	assert.Len(t, missing, 1)
-	assert.Equal(t, uint64(3000), missing[0].From)
-	assert.Equal(t, uint64(5000), missing[0].To)
-}
-
-func TestBucketCache_MultipleBuckets(t *testing.T) {
-	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
-
-	// Cache multiple non-contiguous ranges
-	query1 := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     1000,
-		endMs:       2000,
-	}
-	bc.Put(context.Background(), valuer.UUID{}, query1, qbtypes.Step{Duration: 100 * time.Millisecond}, &qbtypes.Result{
-		Type:  qbtypes.RequestTypeTimeSeries,
-		Value: createTestTimeSeries("A", 1000, 2000, 100),
-	})
-
-	query2 := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     3000,
-		endMs:       4000,
-	}
-	bc.Put(context.Background(), valuer.UUID{}, query2, qbtypes.Step{Duration: 100 * time.Millisecond}, &qbtypes.Result{
-		Type:  qbtypes.RequestTypeTimeSeries,
-		Value: createTestTimeSeries("A", 3000, 4000, 100),
-	})
-
-	// Wait for cache writes
-	time.Sleep(10 * time.Millisecond)
-
-	// Query spanning all ranges
-	query3 := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     500,
-		endMs:       4500,
-	}
-
-	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query3, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// Should have cached data
-	assert.NotNil(t, cached.Value)
-
-	// Should have three missing ranges: 500-1000, 2000-3000, 4000-4500
-	assert.Len(t, missing, 3)
-	assert.Equal(t, uint64(500), missing[0].From)
-	assert.Equal(t, uint64(1000), missing[0].To)
-	assert.Equal(t, uint64(2000), missing[1].From)
-	assert.Equal(t, uint64(3000), missing[1].To)
-	assert.Equal(t, uint64(4000), missing[2].From)
-	assert.Equal(t, uint64(4500), missing[2].To)
-}
-
-func TestBucketCache_FluxInterval(t *testing.T) {
-	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
-
-	// Try to cache data too close to current time
-	currentMs := uint64(time.Now().UnixMilli())
-	query := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     currentMs - 60000, // 1 minute ago
-		endMs:       currentMs,         // now
-	}
-
-	result := &qbtypes.Result{
-		Type:  qbtypes.RequestTypeTimeSeries,
-		Value: createTestTimeSeries("A", query.startMs, query.endMs, 1000),
-	}
-
-	// This should not be cached due to flux interval
-	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-
-	// Wait a bit
-	time.Sleep(10 * time.Millisecond)
-
-	// Try to get the data
-	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// Should have no cached data
-	assert.Nil(t, cached)
-	assert.Len(t, missing, 1)
-}
-
-func TestBucketCache_MergeTimeSeriesResults(t *testing.T) {
-	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
-
-	// Create time series with same labels but different time ranges
-	series1 := &qbtypes.TimeSeries{
-		Labels: []*qbtypes.Label{
-			{
-				Key: telemetrytypes.TelemetryFieldKey{
-					Name:          "method",
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-				},
-				Value: "GET",
-			},
-			{
-				Key: telemetrytypes.TelemetryFieldKey{
-					Name:          "status",
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-				},
-				Value: "200",
-			},
-		},
-		Values: []*qbtypes.TimeSeriesValue{
-			{Timestamp: 1000, Value: 10},
-			{Timestamp: 2000, Value: 20},
-		},
-	}
-
-	series2 := &qbtypes.TimeSeries{
-		Labels: []*qbtypes.Label{
-			{
-				Key: telemetrytypes.TelemetryFieldKey{
-					Name:          "method",
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-				},
-				Value: "GET",
-			},
-			{
-				Key: telemetrytypes.TelemetryFieldKey{
-					Name:          "status",
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-				},
-				Value: "200",
-			},
-		},
-		Values: []*qbtypes.TimeSeriesValue{
-			{Timestamp: 3000, Value: 30},
-			{Timestamp: 4000, Value: 40},
-		},
-	}
-
-	// Cache first part
-	query1 := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     1000,
-		endMs:       3000,
-	}
-	bc.Put(context.Background(), valuer.UUID{}, query1, qbtypes.Step{Duration: 1000 * time.Millisecond}, &qbtypes.Result{
-		Type: qbtypes.RequestTypeTimeSeries,
-		Value: &qbtypes.TimeSeriesData{
-			QueryName: "A",
-			Aggregations: []*qbtypes.AggregationBucket{
-				{Series: []*qbtypes.TimeSeries{series1}},
-			},
-		},
-	})
-
-	// Cache second part
-	query2 := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     3000,
-		endMs:       5000,
-	}
-	bc.Put(context.Background(), valuer.UUID{}, query2, qbtypes.Step{Duration: 1000 * time.Millisecond}, &qbtypes.Result{
-		Type: qbtypes.RequestTypeTimeSeries,
-		Value: &qbtypes.TimeSeriesData{
-			QueryName: "A",
-			Aggregations: []*qbtypes.AggregationBucket{
-				{Series: []*qbtypes.TimeSeries{series2}},
-			},
-		},
-	})
-
-	// Wait for cache writes
-	time.Sleep(10 * time.Millisecond)
-
-	// Query full range
-	query3 := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     1000,
-		endMs:       5000,
-	}
-
-	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query3, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// Should have no missing ranges
-	assert.Len(t, missing, 0)
-
-	// Verify merged series
-	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
-	require.True(t, ok)
-	assert.Len(t, tsData.Aggregations[0].Series, 1)
-
-	// Should have all 4 values merged and sorted
-	values := tsData.Aggregations[0].Series[0].Values
-	assert.Len(t, values, 4)
-	assert.Equal(t, int64(1000), values[0].Timestamp)
-	assert.Equal(t, int64(2000), values[1].Timestamp)
-	assert.Equal(t, int64(3000), values[2].Timestamp)
-	assert.Equal(t, int64(4000), values[3].Timestamp)
-}
-
-func TestBucketCache_RawData(t *testing.T) {
-	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
-
-	// Test with raw data type
-	query := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     1000,
-		endMs:       5000,
-	}
-
-	rawData := &qbtypes.RawData{
-		QueryName: "test",
-		Rows: []*qbtypes.RawRow{
-			{
-				Timestamp: time.Unix(1, 0),
-				Data: map[string]any{
-					"value": 10.5,
-					"label": "test1",
-				},
-			},
-			{
-				Timestamp: time.Unix(2, 0),
-				Data: map[string]any{
-					"value": 20.5,
-					"label": "test2",
-				},
-			},
-		},
-	}
-
-	result := &qbtypes.Result{
-		Type:  qbtypes.RequestTypeRaw,
-		Value: rawData,
-	}
-
-	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-	time.Sleep(10 * time.Millisecond)
-
-	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// Raw data should not be cached
-	assert.Nil(t, cached)
-	assert.Len(t, missing, 1)
-	assert.Equal(t, query.startMs, missing[0].From)
-	assert.Equal(t, query.endMs, missing[0].To)
-}
-
-func TestBucketCache_ScalarData(t *testing.T) {
-	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
-
-	query := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     1000,
-		endMs:       5000,
-	}
-
-	scalarData := &qbtypes.ScalarData{
-		Columns: []*qbtypes.ColumnDescriptor{
-			{
-				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "value"},
-				QueryName:         "test",
-				Type:              qbtypes.ColumnTypeAggregation,
-			},
-		},
-		Data: [][]any{
-			{42.5},
-		},
-	}
-
-	result := &qbtypes.Result{
-		Type:  qbtypes.RequestTypeScalar,
-		Value: scalarData,
-	}
-
-	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-	time.Sleep(10 * time.Millisecond)
-
-	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// Scalar data should not be cached
-	assert.Nil(t, cached)
-	assert.Len(t, missing, 1)
-	assert.Equal(t, query.startMs, missing[0].From)
-	assert.Equal(t, query.endMs, missing[0].To)
-}
-
-func TestBucketCache_EmptyFingerprint(t *testing.T) {
-	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
-
-	// Query with empty fingerprint should generate a fallback key
-	query := &mockQuery{
-		fingerprint: "",
-		startMs:     1000,
-		endMs:       5000,
-	}
-
-	result := &qbtypes.Result{
-		Type:  qbtypes.RequestTypeTimeSeries,
-		Value: createTestTimeSeries("A", 1000, 5000, 1000),
-	}
-
-	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-	time.Sleep(10 * time.Millisecond)
-
-	// Should still be able to retrieve
-	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-	assert.NotNil(t, cached.Value)
-	assert.Len(t, missing, 0)
-}
-
-func TestBucketCache_FindMissingRanges_EdgeCases(t *testing.T) {
-	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval).(*bucketCache)
-
-	// Test with buckets that have gaps and overlaps
-	buckets := []*qbtypes.CachedBucket{
-		{StartMs: 1000, EndMs: 2000},
-		{StartMs: 2500, EndMs: 3500},
-		{StartMs: 3000, EndMs: 4000}, // Overlaps with previous
-		{StartMs: 5000, EndMs: 6000},
-	}
-
-	// Query range that spans all buckets
-	missing := bc.findMissingRangesWithStep(buckets, 500, 6500, 500, 0)
-
-	// Expected missing ranges: 500-1000, 2000-2500, 4000-5000, 6000-6500
-	assert.Len(t, missing, 4)
-	assert.Equal(t, uint64(500), missing[0].From)
-	assert.Equal(t, uint64(1000), missing[0].To)
-	assert.Equal(t, uint64(2000), missing[1].From)
-	assert.Equal(t, uint64(2500), missing[1].To)
-	assert.Equal(t, uint64(4000), missing[2].From)
-	assert.Equal(t, uint64(5000), missing[2].To)
-	assert.Equal(t, uint64(6000), missing[3].From)
-	assert.Equal(t, uint64(6500), missing[3].To)
-}
-
-func TestBucketCache_ConcurrentAccess(t *testing.T) {
-	memCache := createTestCache(t)
-	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval)
-
-	// Test concurrent puts and gets
-	done := make(chan bool)
-
-	// Multiple writers
-	for i := 0; i < 5; i++ {
-		go func(id int) {
-			query := &mockQuery{
-				fingerprint: fmt.Sprintf("query-%d", id),
-				startMs:     uint64(id * 1000),
-				endMs:       uint64((id + 1) * 1000),
-			}
-			result := &qbtypes.Result{
-				Type:  qbtypes.RequestTypeTimeSeries,
-				Value: createTestTimeSeries(fmt.Sprintf("Q%d", id), query.startMs, query.endMs, 100),
-			}
-			bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 100 * time.Microsecond}, result)
-			done <- true
-		}(i)
-	}
-
-	// Multiple readers
-	for i := 0; i < 5; i++ {
-		go func(id int) {
-			query := &mockQuery{
-				fingerprint: fmt.Sprintf("query-%d", id),
-				startMs:     uint64(id * 1000),
-				endMs:       uint64((id + 1) * 1000),
-			}
-			bc.GetMissRanges(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-			done <- true
-		}(i)
-	}
-
-	// Wait for all goroutines
-	for i := 0; i < 10; i++ {
-		<-done
-	}
-}
-
-func TestBucketCache_GetMissRanges_FluxInterval(t *testing.T) {
+func TestBucketCache_PartialHitReportsTheGap(t *testing.T) {
 	bc := createTestBucketCache(t)
-	ctx := context.Background()
-	orgID := valuer.UUID{}
+	step := stepOf(time.Second)
+	first := &mockQuery{fingerprint: "test-query", startMs: 1000, endMs: 3000}
+	put(bc, first, step, &qbtypes.Result{Type: qbtypes.RequestTypeTimeSeries, Value: createTestTimeSeries("A", 1000, 3000, 1000)})
 
-	// Create test query
-	query := &mockQuery{
-		fingerprint: "test-query",
-		startMs:     1000,
-		endMs:       10000,
-	}
+	second := &mockQuery{fingerprint: "test-query", startMs: 2000, endMs: 5000}
+	cached, missing := get(bc, second, step)
 
-	// Pre-populate cache with data that's outside flux interval
-	currentMs := uint64(time.Now().UnixMilli())
-	fluxBoundary := currentMs - uint64(defaultFluxInterval.Milliseconds())
-
-	cachedResult := &qbtypes.Result{
-		Type: qbtypes.RequestTypeTimeSeries,
-		Value: &qbtypes.TimeSeriesData{
-			QueryName: "A",
-			Aggregations: []*qbtypes.AggregationBucket{
-				{
-					Series: []*qbtypes.TimeSeries{
-						{
-							Values: []*qbtypes.TimeSeriesValue{
-								{Timestamp: 1000, Value: 10},
-								{Timestamp: 2000, Value: 20},
-								{Timestamp: int64(fluxBoundary - 1000), Value: 30},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, cachedResult)
-
-	// Get miss ranges
-	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-	assert.NotNil(t, cached)
-	t.Logf("Missing ranges: %+v, query range: %d-%d", missing, query.startMs, query.endMs)
-
-	// The cache implementation with flux interval handling should either:
-	// 1. Have no missing ranges if all data is cached and within bounds
-	// 2. Have missing ranges for data beyond flux boundary
-	// Since we're caching data that includes a point at fluxBoundary-1000,
-	// and our query extends to 10000 (which is way in the past),
-	// we expect the entire range to be considered cached
+	assert.Equal(t, []int64{2000}, timestampsOf(t, cached))
+	assert.Equal(t, []qbtypes.TimeRange{{From: 3000, To: 5000}}, missing)
 }
 
-func TestBucketCache_Put_FluxIntervalTrimming(t *testing.T) {
+func TestBucketCache_GapsBetweenBucketsAreMissingAndAdjacentGapsMerge(t *testing.T) {
 	bc := createTestBucketCache(t)
-	ctx := context.Background()
-	orgID := valuer.UUID{}
-
-	// Calculate flux boundary
-	currentMs := uint64(time.Now().UnixMilli())
-	fluxBoundary := currentMs - uint64(defaultFluxInterval.Milliseconds())
-
-	// Create a query that spans before and after flux boundary
-	query := &mockQuery{
-		fingerprint: "test-trim-query",
-		startMs:     fluxBoundary - 10000, // 10 seconds before flux boundary
-		endMs:       currentMs,            // current time
+	step := stepOf(100 * time.Millisecond)
+	for _, window := range [][2]uint64{{1000, 2000}, {3000, 4000}} {
+		query := &mockQuery{fingerprint: "test-query", startMs: window[0], endMs: window[1]}
+		put(bc, query, step, &qbtypes.Result{Type: qbtypes.RequestTypeTimeSeries, Value: createTestTimeSeries("A", window[0], window[1], 100)})
 	}
 
-	// Create result with data points before and after flux boundary
-	result := &qbtypes.Result{
-		Type: qbtypes.RequestTypeTimeSeries,
-		Value: &qbtypes.TimeSeriesData{
-			QueryName: "A",
-			Aggregations: []*qbtypes.AggregationBucket{
-				{
-					Series: []*qbtypes.TimeSeries{
-						{
-							Labels: []*qbtypes.Label{
-								{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "server1"},
-							},
-							Values: []*qbtypes.TimeSeriesValue{
-								{Timestamp: int64(fluxBoundary - 5000), Value: 10}, // Should be cached
-								{Timestamp: int64(fluxBoundary - 1000), Value: 20}, // Should be cached
-								{Timestamp: int64(fluxBoundary + 1000), Value: 30}, // Should NOT be cached
-								{Timestamp: int64(fluxBoundary + 5000), Value: 40}, // Should NOT be cached
-							},
-						},
-					},
-				},
-			},
-		},
-		Stats: qbtypes.ExecStats{
-			RowsScanned:  100,
-			BytesScanned: 1000,
-			DurationMS:   10,
-		},
-	}
+	query := &mockQuery{fingerprint: "test-query", startMs: 500, endMs: 4500}
+	cached, missing := get(bc, query, step)
 
-	// Put the result
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-
-	// Retrieve cached data
-	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// Should have cached data
-	assert.NotNil(t, cached)
-
-	// Verify that only data before flux boundary was cached
-	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
-	require.True(t, ok)
-	require.Len(t, tsData.Aggregations, 1)
-	require.Len(t, tsData.Aggregations[0].Series, 1)
-
-	series := tsData.Aggregations[0].Series[0]
-	assert.Len(t, series.Values, 2) // Only 2 values should be cached
-
-	// Verify the cached values are the ones before flux boundary
-	assert.Equal(t, int64(fluxBoundary-5000), series.Values[0].Timestamp)
-	assert.Equal(t, float64(10), series.Values[0].Value)
-	assert.Equal(t, int64(fluxBoundary-1000), series.Values[1].Timestamp)
-	assert.Equal(t, float64(20), series.Values[1].Value)
-
-	// Should have missing ranges - one for the gap and one after flux boundary
-	t.Logf("Missing ranges: %+v, fluxBoundary: %d", missing, fluxBoundary)
-	// We may have multiple missing ranges due to gaps
-	assert.True(t, len(missing) >= 1)
-
-	// The last missing range should be after or at the flux boundary
-	lastMissing := missing[len(missing)-1]
-	assert.True(t, lastMissing.From >= fluxBoundary || lastMissing.To >= fluxBoundary)
-}
-
-func TestBucketCache_Put_EntireRangeInFluxInterval(t *testing.T) {
-	bc := createTestBucketCache(t)
-	ctx := context.Background()
-	orgID := valuer.UUID{}
-
-	// Calculate flux boundary
-	currentMs := uint64(time.Now().UnixMilli())
-	fluxBoundary := currentMs - uint64(defaultFluxInterval.Milliseconds())
-
-	// Create a query entirely within flux interval
-	query := &mockQuery{
-		fingerprint: "test-flux-query",
-		startMs:     fluxBoundary + 1000,
-		endMs:       currentMs,
-	}
-
-	// Create result
-	result := &qbtypes.Result{
-		Type: qbtypes.RequestTypeTimeSeries,
-		Value: &qbtypes.TimeSeriesData{
-			QueryName: "A",
-			Aggregations: []*qbtypes.AggregationBucket{
-				{
-					Series: []*qbtypes.TimeSeries{
-						{
-							Values: []*qbtypes.TimeSeriesValue{
-								{Timestamp: int64(fluxBoundary + 2000), Value: 10},
-								{Timestamp: int64(fluxBoundary + 3000), Value: 20},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Put the result - should not cache anything
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-
-	// Try to get cached data - should have no cached data
-	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// Should have no cached value
-	assert.Nil(t, cached)
-
-	// Entire range should be missing
-	assert.Len(t, missing, 1)
-	assert.Equal(t, query.startMs, missing[0].From)
-	assert.Equal(t, query.endMs, missing[0].To)
-}
-
-func TestBucketCache_EmptyDataHandling(t *testing.T) {
-	bc := createTestBucketCache(t)
-	ctx := context.Background()
-	orgID := valuer.UUID{}
-
-	tests := []struct {
-		name        string
-		result      *qbtypes.Result
-		shouldCache bool
-		description string
-	}{
-		{
-			name: "filtered_empty_time_series",
-			result: &qbtypes.Result{
-				Type: qbtypes.RequestTypeTimeSeries,
-				Value: &qbtypes.TimeSeriesData{
-					QueryName: "A",
-					Aggregations: []*qbtypes.AggregationBucket{
-						{
-							Index:  0,
-							Series: []*qbtypes.TimeSeries{}, // No series but has aggregation
-						},
-					},
-				},
-			},
-			shouldCache: true,
-			description: "Has aggregations but no series - data was filtered out - should cache",
-		},
-		{
-			name: "series_with_no_values",
-			result: &qbtypes.Result{
-				Type: qbtypes.RequestTypeTimeSeries,
-				Value: &qbtypes.TimeSeriesData{
-					QueryName: "A",
-					Aggregations: []*qbtypes.AggregationBucket{
-						{
-							Index: 0,
-							Series: []*qbtypes.TimeSeries{
-								{
-									Labels: []*qbtypes.Label{
-										{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "server1"},
-									},
-									Values: []*qbtypes.TimeSeriesValue{}, // Series exists but no values
-								},
-							},
-						},
-					},
-				},
-			},
-			shouldCache: true,
-			description: "Has series but no values - data was filtered - should cache",
-		},
-		{
-			name: "empty_raw_data",
-			result: &qbtypes.Result{
-				Type: qbtypes.RequestTypeRaw,
-				Value: &qbtypes.RawData{
-					QueryName: "test",
-					Rows:      []*qbtypes.RawRow{},
-				},
-			},
-			shouldCache: false,
-			description: "Empty raw data - should not cache",
-		},
-		{
-			name: "empty_scalar_data",
-			result: &qbtypes.Result{
-				Type: qbtypes.RequestTypeScalar,
-				Value: &qbtypes.ScalarData{
-					Columns: []*qbtypes.ColumnDescriptor{},
-					Data:    [][]any{},
-				},
-			},
-			shouldCache: false,
-			description: "Empty scalar data - should not cache",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Use timestamps that are definitely outside flux interval (1 hour ago)
-			currentMs := uint64(time.Now().UnixMilli())
-			startMs := currentMs - (60 * 60 * 1000) // 1 hour ago
-			endMs := startMs + 4000                 // 4 seconds range
-
-			query := &mockQuery{
-				fingerprint: "test-empty-" + tt.name,
-				startMs:     startMs,
-				endMs:       endMs,
-			}
-
-			// Put the result
-			bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, tt.result)
-
-			// Wait a bit for cache to be written
-			time.Sleep(10 * time.Millisecond)
-
-			// Try to get cached data
-			cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-			if tt.shouldCache {
-				assert.NotNil(t, cached, tt.description)
-			} else {
-				assert.Nil(t, cached, tt.description)
-				assert.Len(t, missing, 1, "Should have entire range as missing when data is not cached")
-				if len(missing) > 0 {
-					assert.Equal(t, query.startMs, missing[0].From)
-					assert.Equal(t, query.endMs, missing[0].To)
-				}
-			}
-		})
-	}
-}
-
-func TestBucketCache_PartialValues(t *testing.T) {
-	bc := createTestBucketCache(t)
-	ctx := context.Background()
-	orgID := valuer.UUID{}
-
-	// Create a query with partial values
-	query := &mockQuery{
-		fingerprint: "test-partial-query",
-		startMs:     1000,
-		endMs:       5000,
-	}
-
-	// Create result with both partial and non-partial values
-	result := &qbtypes.Result{
-		Type: qbtypes.RequestTypeTimeSeries,
-		Value: &qbtypes.TimeSeriesData{
-			QueryName: "A",
-			Aggregations: []*qbtypes.AggregationBucket{
-				{
-					Series: []*qbtypes.TimeSeries{
-						{
-							Labels: []*qbtypes.Label{
-								{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "server1"},
-							},
-							Values: []*qbtypes.TimeSeriesValue{
-								{Timestamp: 1000, Value: 10, Partial: true},  // Partial value - should not be cached
-								{Timestamp: 2000, Value: 20, Partial: false}, // Normal value - should be cached
-								{Timestamp: 3000, Value: 30, Partial: false}, // Normal value - should be cached
-								{Timestamp: 4000, Value: 40, Partial: true},  // Partial value - should not be cached
-							},
-						},
-					},
-				},
-			},
-		},
-		Stats: qbtypes.ExecStats{
-			RowsScanned:  100,
-			BytesScanned: 1000,
-			DurationMS:   10,
-		},
-	}
-
-	// Put the result
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-
-	// Wait for cache to be written
-	time.Sleep(10 * time.Millisecond)
-
-	// Get cached data
-	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// Should have cached data
-	assert.NotNil(t, cached)
-	assert.NotNil(t, cached.Value)
-	assert.Len(t, missing, 0) // No missing ranges since we cached the valid values
-
-	// Verify that only non-partial values were cached
-	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
-	require.True(t, ok)
-	require.Len(t, tsData.Aggregations, 1)
-	require.Len(t, tsData.Aggregations[0].Series, 1)
-
-	series := tsData.Aggregations[0].Series[0]
-	assert.Len(t, series.Values, 2) // Only 2 non-partial values should be cached
-
-	// Verify the cached values are the non-partial ones
-	assert.Equal(t, int64(2000), series.Values[0].Timestamp)
-	assert.Equal(t, float64(20), series.Values[0].Value)
-	assert.False(t, series.Values[0].Partial)
-
-	assert.Equal(t, int64(3000), series.Values[1].Timestamp)
-	assert.Equal(t, float64(30), series.Values[1].Value)
-	assert.False(t, series.Values[1].Partial)
-}
-
-func TestBucketCache_AllPartialValues(t *testing.T) {
-	bc := createTestBucketCache(t)
-	ctx := context.Background()
-	orgID := valuer.UUID{}
-
-	// Create a query with all partial values
-	query := &mockQuery{
-		fingerprint: "test-all-partial-query",
-		startMs:     1000,
-		endMs:       5000,
-	}
-
-	// Create result with only partial values
-	result := &qbtypes.Result{
-		Type: qbtypes.RequestTypeTimeSeries,
-		Value: &qbtypes.TimeSeriesData{
-			QueryName: "A",
-			Aggregations: []*qbtypes.AggregationBucket{
-				{
-					Series: []*qbtypes.TimeSeries{
-						{
-							Labels: []*qbtypes.Label{
-								{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "server1"},
-							},
-							Values: []*qbtypes.TimeSeriesValue{
-								{Timestamp: 1000, Value: 10, Partial: true},
-								{Timestamp: 2000, Value: 20, Partial: true},
-								{Timestamp: 3000, Value: 30, Partial: true},
-								{Timestamp: 4000, Value: 40, Partial: true},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Put the result
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-
-	// Wait for cache to be written
-	time.Sleep(10 * time.Millisecond)
-
-	// Get cached data
-	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// When all values are partial and filtered out, the result is cached as empty
-	// This prevents re-querying for the same misaligned time range
-	assert.NotNil(t, cached)
-	assert.NotNil(t, cached.Value)
-	assert.Len(t, missing, 0)
-
-	// Verify the cached result is empty (all partial values were filtered)
-	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
-	require.True(t, ok)
-	require.Len(t, tsData.Aggregations, 1)
-	require.Len(t, tsData.Aggregations[0].Series, 1)
-
-	series := tsData.Aggregations[0].Series[0]
-	assert.Len(t, series.Values, 0) // All values were partial and filtered out
-}
-
-func TestBucketCache_FilteredCachedResults(t *testing.T) {
-	bc := createTestBucketCache(t)
-	ctx := context.Background()
-	orgID := valuer.UUID{}
-
-	// First, cache data for a wide time range (1000-5000ms)
-	query1 := &mockQuery{
-		fingerprint: "test-filter-query",
-		startMs:     1000,
-		endMs:       5000,
-	}
-
-	result1 := &qbtypes.Result{
-		Type: qbtypes.RequestTypeTimeSeries,
-		Value: &qbtypes.TimeSeriesData{
-			QueryName: "A",
-			Aggregations: []*qbtypes.AggregationBucket{
-				{
-					Series: []*qbtypes.TimeSeries{
-						{
-							Labels: []*qbtypes.Label{
-								{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "server1"},
-							},
-							Values: []*qbtypes.TimeSeriesValue{
-								{Timestamp: 1000, Value: 10},
-								{Timestamp: 2000, Value: 20},
-								{Timestamp: 3000, Value: 30},
-								{Timestamp: 4000, Value: 40},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Cache the wide range
-	bc.Put(ctx, orgID, query1, qbtypes.Step{Duration: 1000 * time.Millisecond}, result1)
-	time.Sleep(10 * time.Millisecond)
-
-	// Now query for a smaller range (2000-3500ms)
-	query2 := &mockQuery{
-		fingerprint: "test-filter-query",
-		startMs:     2000,
-		endMs:       3500,
-	}
-
-	// Get cached data - should be filtered to requested range
-	cached, missing := bc.GetMissRanges(ctx, orgID, query2, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// The value at 3000 stands for the whole step to 4000, which reaches past the
-	// window, so it is left to be recomputed as a partial rather than served.
-	require.Len(t, missing, 1)
-	assert.Equal(t, uint64(3000), missing[0].From)
-	assert.Equal(t, uint64(3500), missing[0].To)
-	assert.NotNil(t, cached)
-
-	// Verify the cached result only contains values within the requested range
-	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
-	require.True(t, ok)
-	require.Len(t, tsData.Aggregations, 1)
-	require.Len(t, tsData.Aggregations[0].Series, 1)
-
-	series := tsData.Aggregations[0].Series[0]
-	require.Len(t, series.Values, 1)
-
-	// Verify the exact values
-	assert.Equal(t, int64(2000), series.Values[0].Timestamp)
-	assert.Equal(t, float64(20), series.Values[0].Value)
-
-	// Value at 1000 should not be included (before requested range)
-	// Value at 4000 should not be included (after requested range)
-}
-
-// A promql value is the query evaluated at a single moment rather than over a
-// span, so the one at the window's end belongs to it and has to survive caching.
-func TestBucketCache_PromQLKeepsTheValueAtTheWindowEnd(t *testing.T) {
-	bc := createTestBucketCache(t)
-	ctx := context.Background()
-	orgID := valuer.UUID{}
-	step := qbtypes.Step{Duration: time.Minute}
-
-	query := &promqlQuery{
-		logger:      slog.Default(),
-		query:       qbtypes.PromQuery{Query: "up", Step: step},
-		tr:          qbtypes.TimeRange{From: 600_000, To: 780_000},
-		requestType: qbtypes.RequestTypeTimeSeries,
-	}
-
-	bc.Put(ctx, orgID, query, step, &qbtypes.Result{
-		Type: qbtypes.RequestTypeTimeSeries,
-		Value: &qbtypes.TimeSeriesData{
-			QueryName: "A",
-			Aggregations: []*qbtypes.AggregationBucket{{
-				Series: []*qbtypes.TimeSeries{{
-					Values: []*qbtypes.TimeSeriesValue{
-						{Timestamp: 600_000, Value: 1},
-						{Timestamp: 660_000, Value: 2},
-						{Timestamp: 720_000, Value: 3},
-						{Timestamp: 780_000, Value: 4},
-					},
-				}},
-			}},
-		},
-	})
-	time.Sleep(10 * time.Millisecond)
-
-	cached, missing := bc.GetMissRanges(ctx, orgID, query, step)
-	assert.Empty(t, missing)
 	require.NotNil(t, cached)
-
-	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
-	require.True(t, ok)
-	require.Len(t, tsData.Aggregations, 1)
-	require.Len(t, tsData.Aggregations[0].Series, 1)
-
-	timestamps := []int64{}
-	for _, value := range tsData.Aggregations[0].Series[0].Values {
-		timestamps = append(timestamps, value.Timestamp)
-	}
-	assert.Equal(t, []int64{600_000, 660_000, 720_000, 780_000}, timestamps)
+	assert.Equal(t, []qbtypes.TimeRange{{From: 500, To: 1000}, {From: 2000, To: 3000}, {From: 4000, To: 4500}}, missing)
 }
 
-func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
+func TestBucketCache_WindowInsideFluxIntervalIsNotCached(t *testing.T) {
 	bc := createTestBucketCache(t)
+	step := stepOf(time.Second)
+	nowMs := uint64(time.Now().UnixMilli())
+	query := &mockQuery{fingerprint: "test-query", startMs: nowMs - 60_000, endMs: nowMs}
+	put(bc, query, step, &qbtypes.Result{Type: qbtypes.RequestTypeTimeSeries, Value: createTestTimeSeries("A", query.startMs, query.endMs, 1000)})
 
-	tests := []struct {
-		name          string
-		buckets       []*qbtypes.CachedBucket
-		startMs       uint64
-		endMs         uint64
-		stepMs        uint64
-		startOffsetMs uint64
-		expectedMiss  []*qbtypes.TimeRange
-		description   string
-	}{
-		{
-			name:    "start_not_aligned_to_step",
-			buckets: []*qbtypes.CachedBucket{},
-			startMs: 1500, // Not aligned to 1000ms step
-			endMs:   5000,
-			stepMs:  1000,
-			expectedMiss: []*qbtypes.TimeRange{
-				{From: 1500, To: 2000}, // Partial window at start
-				{From: 2000, To: 5000}, // Rest of the range
+	cached, missing := get(bc, query, step)
+
+	assert.Nil(t, cached)
+	assert.Equal(t, []qbtypes.TimeRange{query.window()}, missing)
+}
+
+func TestBucketCache_OnlyIntervalsOlderThanTheFluxBoundaryAreCached(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := stepOf(time.Second)
+	boundary := uint64(time.Now().Add(-defaultFluxInterval).UnixMilli())
+	boundary -= boundary % 1000
+	query := &mockQuery{fingerprint: "test-query", startMs: boundary - 10_000, endMs: boundary + 10_000}
+	put(bc, query, step, &qbtypes.Result{Type: qbtypes.RequestTypeTimeSeries, Value: createTestTimeSeries("A", query.startMs, query.endMs, 1000)})
+
+	cached, missing := get(bc, query, step)
+
+	require.NotNil(t, cached)
+	for _, ts := range timestampsOf(t, cached) {
+		assert.LessOrEqual(t, uint64(ts)+1000, boundary, "a point whose interval reaches past the boundary was cached")
+	}
+	require.Len(t, missing, 1)
+	assert.LessOrEqual(t, missing[0].From, boundary)
+	assert.Equal(t, query.endMs, missing[0].To)
+}
+
+func TestBucketCache_RawAndScalarResultsAreNotCached(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := stepOf(time.Second)
+	for name, result := range map[string]*qbtypes.Result{
+		"raw":    {Type: qbtypes.RequestTypeRaw, Value: &qbtypes.RawData{Rows: []*qbtypes.RawRow{{Timestamp: time.Unix(1, 0), Data: map[string]any{"value": 10.5}}}}},
+		"scalar": {Type: qbtypes.RequestTypeScalar, Value: &qbtypes.ScalarData{Data: [][]any{{42.5}}}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			query := &mockQuery{fingerprint: "test-" + name, startMs: 1000, endMs: 5000}
+			put(bc, query, step, result)
+			cached, missing := get(bc, query, step)
+			assert.Nil(t, cached)
+			assert.Equal(t, []qbtypes.TimeRange{{From: 1000, To: 5000}}, missing)
+		})
+	}
+}
+
+func TestBucketCache_EmptyResultIsCachedAsNoData(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := stepOf(time.Second)
+	query := &mockQuery{fingerprint: "test-query", startMs: 1000, endMs: 5000}
+	put(bc, query, step, &qbtypes.Result{Type: qbtypes.RequestTypeTimeSeries, Value: &qbtypes.TimeSeriesData{}})
+
+	cached, missing := get(bc, query, step)
+
+	require.NotNil(t, cached)
+	assert.Empty(t, missing)
+	assert.Empty(t, cached.Value.(*qbtypes.TimeSeriesData).Aggregations)
+}
+
+func TestBucketCache_PartialPointsServeOnlyTheSameWindowEnd(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := stepOf(time.Second)
+	query := &mockQuery{fingerprint: "test-query", startMs: 1500, endMs: 4500}
+	put(bc, query, step, &qbtypes.Result{
+		Type: qbtypes.RequestTypeTimeSeries,
+		Value: &qbtypes.TimeSeriesData{Aggregations: []*qbtypes.AggregationBucket{{Series: []*qbtypes.TimeSeries{{
+			Labels: []*qbtypes.Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "server1"}},
+			Values: []*qbtypes.TimeSeriesValue{
+				{Timestamp: 1000, Value: 10, Partial: true},
+				{Timestamp: 2000, Value: 20},
+				{Timestamp: 3000, Value: 30},
+				{Timestamp: 4000, Value: 40, Partial: true},
 			},
-			description: "Start not aligned to step should create partial window",
+		}}}}},
+	})
+
+	cached, missing := get(bc, query, step)
+	assert.Empty(t, missing, "the identical window is a full hit, partial ends included")
+	assert.Equal(t, []int64{1000, 2000, 3000, 4000}, timestampsOf(t, cached))
+	partials := 0
+	for _, v := range cached.Value.(*qbtypes.TimeSeriesData).Aggregations[0].Series[0].Values {
+		if v.Partial {
+			partials++
+		}
+	}
+	assert.Equal(t, 2, partials, "partial points keep their flag")
+
+	other := &mockQuery{fingerprint: "test-query", startMs: 1500, endMs: 4200}
+	cached, missing = get(bc, other, step)
+	assert.Equal(t, []int64{1000, 2000, 3000}, timestampsOf(t, cached))
+	assert.Equal(t, []qbtypes.TimeRange{{From: 4000, To: 4200}}, missing, "a different partial end must be fetched")
+}
+
+func TestBucketCache_NarrowerWindowServesOnlyWholeIntervalsInsideIt(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := stepOf(time.Second)
+	wide := &mockQuery{fingerprint: "test-query", startMs: 1000, endMs: 5000}
+	put(bc, wide, step, &qbtypes.Result{Type: qbtypes.RequestTypeTimeSeries, Value: createTestTimeSeries("A", 1000, 5000, 1000)})
+
+	narrow := &mockQuery{fingerprint: "test-query", startMs: 2000, endMs: 3500}
+	cached, missing := get(bc, narrow, step)
+
+	assert.Equal(t, []int64{2000}, timestampsOf(t, cached))
+	assert.Equal(t, []qbtypes.TimeRange{{From: 3000, To: 3500}}, missing, "the interval the window ends inside is fetched as a partial")
+}
+
+func TestBucketCache_PromQLWindowKeepsTheInstantAtItsEnd(t *testing.T) {
+	// A PromQL query reports its window half-open on the grid, one step past
+	// the last evaluated instant, so that instant is inside the window.
+	bc := createTestBucketCache(t)
+	step := stepOf(time.Minute)
+	query := &mockQuery{fingerprint: "promql", startMs: 600_000, endMs: 900_000 + 60_000}
+	put(bc, query, step, &qbtypes.Result{Type: qbtypes.RequestTypeTimeSeries, Value: createTestTimeSeries("A", 600_000, 960_000, 60_000)})
+
+	cached, missing := get(bc, query, step)
+
+	assert.Empty(t, missing)
+	assert.Equal(t, []int64{600_000, 660_000, 720_000, 780_000, 840_000, 900_000}, timestampsOf(t, cached))
+}
+
+func TestBucketCache_StepZeroIsNeverCached(t *testing.T) {
+	bc := createTestBucketCache(t)
+	query := &mockQuery{fingerprint: "test-query", startMs: 1000, endMs: 5000}
+	put(bc, query, qbtypes.Step{}, &qbtypes.Result{Type: qbtypes.RequestTypeTimeSeries, Value: createTestTimeSeries("A", 1000, 5000, 1000)})
+
+	cached, missing := get(bc, query, qbtypes.Step{})
+
+	assert.Nil(t, cached)
+	assert.Equal(t, []qbtypes.TimeRange{{From: 1000, To: 5000}}, missing)
+}
+
+func TestBucketCache_KeyIsHashedAndVersioned(t *testing.T) {
+	key := CacheKey("builder&signal=logs&filter=service.name = 'a'")
+	assert.Regexp(t, `^v5:query:`+cacheSchemaVersion+`:[0-9a-f]{40}$`, key)
+	assert.NotEqual(t, key, CacheKey("builder&signal=logs&filter=service.name = 'b'"))
+}
+
+const (
+	// 2023-01-01T00:00:00Z, far older than any flux interval and on every grid.
+	epochMs      = uint64(1672531200000)
+	minuteStepMs = uint64(60_000)
+)
+
+func minuteStep() qbtypes.Step { return qbtypes.Step{Duration: time.Minute} }
+
+// minuteSeries is one series labelled service=<name> with one point per
+// minute in [startMs, endMs).
+func minuteSeries(name string, startMs, endMs uint64, value float64) *qbtypes.TimeSeries {
+	s := &qbtypes.TimeSeries{
+		Labels: []*qbtypes.Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "service"}, Value: name}},
+	}
+	for ts := startMs; ts < endMs; ts += minuteStepMs {
+		s.Values = append(s.Values, &qbtypes.TimeSeriesValue{Timestamp: int64(ts), Value: value})
+	}
+	return s
+}
+
+func seriesResult(rows uint64, series ...*qbtypes.TimeSeries) *qbtypes.Result {
+	return &qbtypes.Result{
+		Type: qbtypes.RequestTypeTimeSeries,
+		Value: &qbtypes.TimeSeriesData{
+			Aggregations: []*qbtypes.AggregationBucket{{Index: 0, Alias: "__result_0", Series: series}},
 		},
-		{
-			name:    "end_not_aligned_to_step",
-			buckets: []*qbtypes.CachedBucket{},
-			startMs: 1000,
-			endMs:   4500, // Not aligned to 1000ms step
-			stepMs:  1000,
-			expectedMiss: []*qbtypes.TimeRange{
-				{From: 1000, To: 4500},
-			},
-			description: "End not aligned to step should be included",
-		},
-		{
-			name: "bucket_boundaries_not_aligned",
-			buckets: []*qbtypes.CachedBucket{
-				{StartMs: 1500, EndMs: 2500}, // Not aligned
-			},
-			startMs: 1000,
-			endMs:   4000,
-			stepMs:  1000,
-			expectedMiss: []*qbtypes.TimeRange{
-				{From: 1000, To: 2000}, // Gap before aligned bucket start
-				{From: 2000, To: 4000}, // Gap after aligned bucket end
-			},
-			description: "Bucket boundaries should be aligned to step",
-		},
-		{
-			name:    "small_window_less_than_step",
-			buckets: []*qbtypes.CachedBucket{},
-			startMs: 1000,
-			endMs:   1500, // Less than one step
-			stepMs:  1000,
-			expectedMiss: []*qbtypes.TimeRange{
-				{From: 1000, To: 1500},
-			},
-			description: "Window smaller than step should use basic algorithm",
-		},
-		{
-			name:          "start_aligned_to_its_own_offset",
-			buckets:       []*qbtypes.CachedBucket{},
-			startMs:       1500,
-			endMs:         5000,
-			stepMs:        1000,
-			startOffsetMs: 500,
-			expectedMiss: []*qbtypes.TimeRange{
-				{From: 1500, To: 5000},
-			},
-			description: "A query reporting every 1000ms from 1500 needs no partial window at its own start",
-		},
-		{
-			name: "gap_lands_on_the_offset",
-			buckets: []*qbtypes.CachedBucket{
-				{StartMs: 1500, EndMs: 3500},
-			},
-			startMs:       1500,
-			endMs:         5500,
-			stepMs:        1000,
-			startOffsetMs: 500,
-			expectedMiss: []*qbtypes.TimeRange{
-				{From: 3500, To: 5500},
-			},
-			description: "The refetched range starts where the cached one ends, on an instant the query reports at",
-		},
-		{
-			name:    "zero_step_uses_basic_algorithm",
-			buckets: []*qbtypes.CachedBucket{},
-			startMs: 1000,
-			endMs:   5000,
-			stepMs:  0,
-			expectedMiss: []*qbtypes.TimeRange{
-				{From: 1000, To: 5000},
-			},
-			description: "Zero step should use basic algorithm",
-		},
+		Stats: qbtypes.ExecStats{RowsScanned: rows},
+	}
+}
+
+func storedEntry(t *testing.T, bc *bucketCache, orgID valuer.UUID, fingerprint string) *qbtypes.CachedData {
+	t.Helper()
+	data := &qbtypes.CachedData{}
+	require.NoError(t, bc.cache.Get(context.Background(), orgID, CacheKey(fingerprint), data))
+	return data
+}
+
+func bucketTimestamps(t *testing.T, bucket *qbtypes.CachedBucket) []uint64 {
+	t.Helper()
+	tsData, err := decodeBucketValue(bucket.Value)
+	require.NoError(t, err)
+	var out []uint64
+	for _, agg := range tsData.Aggregations {
+		for _, s := range agg.Series {
+			for _, v := range s.Values {
+				out = append(out, uint64(v.Timestamp))
+			}
+		}
+	}
+	return out
+}
+
+func TestBucketCache_BucketsHoldOnlyThePointsOfTheirRange(t *testing.T) {
+	bc := createTestBucketCache(t)
+	orgID := valuer.UUID{}
+
+	// Both ends 30s off the grid: a head, a body and a tail bucket.
+	query := &mockQuery{fingerprint: "bounds", startMs: epochMs + 30_000, endMs: epochMs + 10*minuteStepMs + 30_000}
+	series := minuteSeries("a", epochMs, epochMs+11*minuteStepMs, 1)
+	series.Values[0].Partial, series.Values[10].Partial = true, true
+	bc.Put(context.Background(), orgID, cacheRequest(query, minuteStep()), query.window(), seriesResult(1, series))
+
+	data := storedEntry(t, bc, orgID, query.fingerprint)
+	require.Len(t, data.Buckets, 3)
+	for _, bucket := range data.Buckets {
+		timestamps := bucketTimestamps(t, bucket)
+		switch bucket.Edge {
+		case qbtypes.CachedBucketBody:
+			assert.Equal(t, qbtypes.TimeRange{From: epochMs + minuteStepMs, To: epochMs + 10*minuteStepMs}, qbtypes.TimeRange{From: bucket.StartMs, To: bucket.EndMs})
+			for _, ts := range timestamps {
+				assert.True(t, ts >= bucket.StartMs && ts+minuteStepMs <= bucket.EndMs, "point %d is outside the body bucket [%d, %d)", ts, bucket.StartMs, bucket.EndMs)
+			}
+			assert.Len(t, timestamps, 9)
+		case qbtypes.CachedBucketHead:
+			assert.Equal(t, []uint64{epochMs}, timestamps, "the head bucket holds the partial first step only")
+		case qbtypes.CachedBucketTail:
+			assert.Equal(t, []uint64{epochMs + 10*minuteStepMs}, timestamps, "the tail bucket holds the partial last step only")
+		default:
+			t.Fatalf("unexpected edge %q", bucket.Edge)
+		}
+	}
+}
+
+func TestBucketCache_WindowInsideTwoPartialStepsKeepsBothPoints(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := minuteStep()
+	query := &mockQuery{fingerprint: "two-partials", startMs: epochMs + 30_000, endMs: epochMs + 90_000}
+	series := minuteSeries("a", epochMs, epochMs+2*minuteStepMs, 1)
+	series.Values[0].Partial, series.Values[1].Partial = true, true
+	put(bc, query, step, seriesResult(1, series))
+
+	cached, missing := get(bc, query, step)
+
+	assert.Empty(t, missing)
+	assert.Equal(t, []int64{int64(epochMs), int64(epochMs + minuteStepMs)}, timestampsOf(t, cached))
+}
+
+func TestBucketCache_IntervalStraddlingTheFluxBoundaryIsNotCached(t *testing.T) {
+	now := time.Now()
+	// The boundary sits 30s into a step so a few ms of drift between this
+	// test and Put cannot move it to another step.
+	intervalStart := now.Truncate(time.Minute).Add(-5 * time.Minute)
+	boundary := intervalStart.Add(30 * time.Second)
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), createTestCache(t), time.Hour, now.Sub(boundary)).(*bucketCache)
+	orgID := valuer.UUID{}
+
+	query := &mockQuery{fingerprint: "flux-straddle", startMs: uint64(intervalStart.Add(-10 * time.Minute).UnixMilli()), endMs: uint64(now.UnixMilli())}
+	result := seriesResult(1, minuteSeries("a", query.startMs, uint64(intervalStart.Add(2*time.Minute).UnixMilli()), 1))
+	bc.Put(context.Background(), orgID, cacheRequest(query, minuteStep()), query.window(), result)
+
+	boundaryMs := uint64(boundary.UnixMilli())
+	data := storedEntry(t, bc, orgID, query.fingerprint)
+	require.NotEmpty(t, data.Buckets)
+	for _, bucket := range data.Buckets {
+		assert.LessOrEqual(t, bucket.EndMs, boundaryMs)
+		for _, ts := range bucketTimestamps(t, bucket) {
+			assert.LessOrEqual(t, ts+minuteStepMs, boundaryMs, "the step starting at %d reaches past the flux boundary %d", ts, boundaryMs)
+		}
+	}
+	cached, _ := get(bc, query, minuteStep())
+	assert.NotContains(t, timestampsOf(t, cached), intervalStart.UnixMilli())
+}
+
+func TestBucketCache_SlidingWindowCoalescesIntoOneBodyBucket(t *testing.T) {
+	bc := createTestBucketCache(t)
+	orgID := valuer.UUID{}
+	window := uint64(time.Hour.Milliseconds())
+
+	single := &mockQuery{fingerprint: "single", startMs: epochMs, endMs: epochMs + window}
+	put(bc, single, minuteStep(), seriesResult(100, minuteSeries("a", single.startMs, single.endMs, 1)))
+	oneWindowCost := storedEntry(t, bc, orgID, single.fingerprint).Cost()
+
+	for i := uint64(0); i < 10; i++ {
+		startMs := epochMs + i*minuteStepMs
+		query := &mockQuery{fingerprint: "sliding", startMs: startMs, endMs: startMs + window}
+		put(bc, query, minuteStep(), seriesResult(100, minuteSeries("a", startMs, startMs+window, 1)))
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Mock current time for flux boundary tests
-			result := bc.findMissingRangesWithStep(tt.buckets, tt.startMs, tt.endMs, tt.stepMs, tt.startOffsetMs)
+	data := storedEntry(t, bc, orgID, "sliding")
+	require.Len(t, data.Buckets, 1)
+	assert.Equal(t, qbtypes.TimeRange{From: epochMs, To: epochMs + window + 9*minuteStepMs}, qbtypes.TimeRange{From: data.Buckets[0].StartMs, To: data.Buckets[0].EndMs})
+	assert.LessOrEqual(t, data.Cost(), oneWindowCost+oneWindowCost/4)
+}
 
-			// Compare lengths first
-			assert.Len(t, result, len(tt.expectedMiss), tt.description)
+func TestBucketCache_FreshPointsReplaceOlderOnesWhenBucketsCoalesce(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := minuteStep()
+	first := &mockQuery{fingerprint: "coalesce", startMs: epochMs, endMs: epochMs + 4*minuteStepMs}
+	put(bc, first, step, seriesResult(1, minuteSeries("a", first.startMs, first.endMs, 1)))
+	second := &mockQuery{fingerprint: "coalesce", startMs: epochMs + 2*minuteStepMs, endMs: epochMs + 6*minuteStepMs}
+	put(bc, second, step, seriesResult(1, minuteSeries("a", second.startMs, second.endMs, 2)))
 
-			// Compare individual ranges
-			for i, expected := range tt.expectedMiss {
-				if i < len(result) {
-					assert.Equal(t, expected.From, result[i].From,
-						"Range %d From mismatch: %s", i, tt.description)
-					assert.Equal(t, expected.To, result[i].To,
-						"Range %d To mismatch: %s", i, tt.description)
+	whole := &mockQuery{fingerprint: "coalesce", startMs: epochMs, endMs: epochMs + 6*minuteStepMs}
+	cached, missing := get(bc, whole, step)
+
+	require.Empty(t, missing)
+	var values []float64
+	for _, v := range cached.Value.(*qbtypes.TimeSeriesData).Aggregations[0].Series[0].Values {
+		values = append(values, v.Value)
+	}
+	assert.Equal(t, []float64{1, 1, 2, 2, 2, 2}, values)
+}
+
+func TestBucketCache_StatsCountEachFetchOnce(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := minuteStep()
+	window := uint64(time.Hour.Milliseconds())
+
+	first := &mockQuery{fingerprint: "stats", startMs: epochMs, endMs: epochMs + window}
+	put(bc, first, step, seriesResult(100, minuteSeries("a", first.startMs, first.endMs, 1)))
+
+	// The window slides by one step; only the new minute is fetched.
+	second := &mockQuery{fingerprint: "stats", startMs: epochMs + minuteStepMs, endMs: epochMs + window + minuteStepMs}
+	cached, missing := get(bc, second, step)
+	require.NotNil(t, cached)
+	require.Equal(t, []qbtypes.TimeRange{{From: epochMs + window, To: epochMs + window + minuteStepMs}}, missing)
+	bc.Put(context.Background(), valuer.UUID{}, cacheRequest(second, step), missing[0], seriesResult(10, minuteSeries("a", missing[0].From, missing[0].To, 1)))
+
+	cached, missing = get(bc, second, step)
+	require.Empty(t, missing)
+	assert.Equal(t, uint64(110), cached.Stats.RowsScanned)
+}
+
+func TestBucketCache_WarningsBelongToTheWindowThatProducedThem(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := minuteStep()
+	warned := &mockQuery{fingerprint: "warnings", startMs: epochMs, endMs: epochMs + 10*minuteStepMs}
+	withWarning := seriesResult(1, minuteSeries("a", warned.startMs, warned.endMs, 1))
+	withWarning.Warnings = []string{"trace lies outside the selected time range"}
+	put(bc, warned, step, withWarning)
+	clean := &mockQuery{fingerprint: "warnings", startMs: epochMs + 20*minuteStepMs, endMs: epochMs + 30*minuteStepMs}
+	put(bc, clean, step, seriesResult(1, minuteSeries("a", clean.startMs, clean.endMs, 1)))
+
+	cached, missing := get(bc, clean, step)
+	require.Empty(t, missing)
+	assert.Empty(t, cached.Warnings)
+
+	cached, _ = get(bc, warned, step)
+	assert.Equal(t, withWarning.Warnings, cached.Warnings)
+}
+
+func TestBucketCache_AggregationsKeepIndexOrder(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := minuteStep()
+	for attempt := 0; attempt < 8; attempt++ {
+		query := &mockQuery{fingerprint: fmt.Sprintf("agg-order-%d", attempt), startMs: epochMs, endMs: epochMs + 10*minuteStepMs}
+		tsData := &qbtypes.TimeSeriesData{}
+		for idx := 2; idx >= 0; idx-- {
+			tsData.Aggregations = append(tsData.Aggregations, &qbtypes.AggregationBucket{
+				Index:  idx,
+				Alias:  fmt.Sprintf("__result_%d", idx),
+				Series: []*qbtypes.TimeSeries{minuteSeries("a", query.startMs, query.endMs, float64(idx))},
+			})
+		}
+		put(bc, query, step, &qbtypes.Result{Type: qbtypes.RequestTypeTimeSeries, Value: tsData})
+
+		cached, _ := get(bc, query, step)
+		got := cached.Value.(*qbtypes.TimeSeriesData)
+		require.Len(t, got.Aggregations, 3)
+		for idx, agg := range got.Aggregations {
+			assert.Equal(t, idx, agg.Index)
+			assert.Equal(t, fmt.Sprintf("__result_%d", idx), agg.Alias)
+		}
+	}
+}
+
+func TestBucketCache_UnreadableBucketIsFetchedAgain(t *testing.T) {
+	bc := createTestBucketCache(t)
+	orgID := valuer.GenerateUUID()
+	ctx := context.Background()
+	step := minuteStep()
+	query := &mockQuery{fingerprint: "unreadable", startMs: epochMs, endMs: epochMs + 10*minuteStepMs}
+
+	payloads := map[string]string{
+		"incompatible_json":  `{"aggregations":"not-a-list"}`,
+		"null_point_element": `{"aggregations":[{"index":0,"series":[{"labels":[],"points":[null]}]}]}`,
+		"null_series":        `{"aggregations":[{"index":0,"series":[null]}]}`,
+		"null_bucket":        "",
+	}
+	for name, payload := range payloads {
+		t.Run(name, func(t *testing.T) {
+			bucket := &qbtypes.CachedBucket{StartMs: query.startMs, EndMs: query.endMs, Type: qbtypes.RequestTypeTimeSeries, Value: json.RawMessage(payload)}
+			if payload == "" {
+				bucket = nil
+			}
+			require.NoError(t, bc.cache.Set(ctx, orgID, CacheKey(query.fingerprint), &qbtypes.CachedData{Buckets: []*qbtypes.CachedBucket{bucket}}, time.Hour))
+
+			var missing []qbtypes.TimeRange
+			require.NotPanics(t, func() { _, missing = bc.GetMissRanges(ctx, orgID, cacheRequest(query, step)) })
+			assert.Equal(t, []qbtypes.TimeRange{query.window()}, missing)
+
+			// The next write replaces the unreadable bucket.
+			bc.Put(ctx, orgID, cacheRequest(query, step), query.window(), seriesResult(1, minuteSeries("a", query.startMs, query.endMs, 1)))
+			_, missing = bc.GetMissRanges(ctx, orgID, cacheRequest(query, step))
+			assert.Empty(t, missing)
+		})
+	}
+}
+
+func TestBucketCache_PartiallyCoveredStepIsFetched(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := minuteStep()
+	warm := &mockQuery{fingerprint: "partial-step", startMs: epochMs, endMs: epochMs + 10*minuteStepMs}
+	put(bc, warm, step, seriesResult(1, minuteSeries("a", warm.startMs, warm.endMs, 1)))
+
+	cases := map[string]struct {
+		startMs, endMs uint64
+		missing        []qbtypes.TimeRange
+	}{
+		"window_shorter_than_a_step": {
+			startMs: epochMs + 10_000, endMs: epochMs + 40_000,
+			missing: []qbtypes.TimeRange{{From: epochMs + 10_000, To: epochMs + 40_000}},
+		},
+		"window_ends_inside_a_step": {
+			startMs: epochMs, endMs: epochMs + 5*minuteStepMs + 30_000,
+			missing: []qbtypes.TimeRange{{From: epochMs + 5*minuteStepMs, To: epochMs + 5*minuteStepMs + 30_000}},
+		},
+		"window_starts_inside_a_step": {
+			startMs: epochMs + 30_000, endMs: epochMs + 5*minuteStepMs,
+			missing: []qbtypes.TimeRange{{From: epochMs + 30_000, To: epochMs + minuteStepMs}},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			query := &mockQuery{fingerprint: "partial-step", startMs: tc.startMs, endMs: tc.endMs}
+			cached, missing := get(bc, query, step)
+			assert.Equal(t, tc.missing, missing)
+			if cached != nil {
+				for _, ts := range timestampsOf(t, cached) {
+					assert.True(t, uint64(ts) >= tc.startMs && uint64(ts)+minuteStepMs <= tc.endMs, "served the whole step at %d for [%d, %d)", ts, tc.startMs, tc.endMs)
 				}
 			}
 		})
 	}
 }
 
-func TestBucketCache_PartialValueDetection(t *testing.T) {
-	bc := createTestBucketCache(t)
-	ctx := context.Background()
-	orgID := valuer.UUID{}
+func TestBucketCache_SubStepWindowIsOneRangeAcrossTheFluxBoundary(t *testing.T) {
+	flux := 5 * time.Minute
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), createTestCache(t), time.Hour, flux).(*bucketCache)
+	step := qbtypes.Step{Duration: 5 * time.Minute}
+	older := &mockQuery{fingerprint: "flux-split", startMs: epochMs, endMs: epochMs + 60*minuteStepMs}
+	put(bc, older, step, seriesResult(1, minuteSeries("a", older.startMs, older.endMs, 1)))
 
-	// Test case 1: Query with misaligned start time
-	t.Run("misaligned_start_time", func(t *testing.T) {
-		// Query from 1500ms to 5000ms with 1000ms step
-		// First value at 1500ms should be marked as partial
-		query := &mockQuery{
-			fingerprint: "test-partial-start",
-			startMs:     1500, // Not aligned to 1000ms step
-			endMs:       5000,
-		}
+	boundary := time.Now().Add(-flux)
+	query := &mockQuery{fingerprint: "flux-split", startMs: uint64(boundary.Add(-30 * time.Second).UnixMilli()), endMs: uint64(boundary.Add(30 * time.Second).UnixMilli())}
+	_, missing := get(bc, query, step)
 
-		result := &qbtypes.Result{
-			Type: qbtypes.RequestTypeTimeSeries,
-			Value: &qbtypes.TimeSeriesData{
-				QueryName: "A",
-				Aggregations: []*qbtypes.AggregationBucket{
-					{
-						Series: []*qbtypes.TimeSeries{
-							{
-								Labels: []*qbtypes.Label{
-									{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "server1"},
-								},
-								Values: []*qbtypes.TimeSeriesValue{
-									{Timestamp: 1500, Value: 10, Partial: true},  // Partial - misaligned start
-									{Timestamp: 2000, Value: 20, Partial: false}, // Complete interval
-									{Timestamp: 3000, Value: 30, Partial: false}, // Complete interval
-									{Timestamp: 4000, Value: 40, Partial: false}, // Complete interval
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-
-		// Put the result
-		bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-		time.Sleep(10 * time.Millisecond)
-
-		// Get cached data
-		cached, _ := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-		// Should have cached data
-		assert.NotNil(t, cached)
-		tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
-		require.True(t, ok)
-
-		// Verify that the partial value was excluded from cache
-		series := tsData.Aggregations[0].Series[0]
-		assert.Len(t, series.Values, 3) // Only 3 non-partial values
-		assert.Equal(t, int64(2000), series.Values[0].Timestamp)
-		assert.Equal(t, int64(3000), series.Values[1].Timestamp)
-		assert.Equal(t, int64(4000), series.Values[2].Timestamp)
-	})
-
-	// Test case 2: Query with misaligned end time
-	t.Run("misaligned_end_time", func(t *testing.T) {
-		// Query from 1000ms to 4500ms with 1000ms step
-		// Last value at 4000ms should be marked as partial (doesn't cover full interval to 5000ms)
-		query := &mockQuery{
-			fingerprint: "test-partial-end",
-			startMs:     1000,
-			endMs:       4500, // Not aligned to 1000ms step
-		}
-
-		result := &qbtypes.Result{
-			Type: qbtypes.RequestTypeTimeSeries,
-			Value: &qbtypes.TimeSeriesData{
-				QueryName: "A",
-				Aggregations: []*qbtypes.AggregationBucket{
-					{
-						Series: []*qbtypes.TimeSeries{
-							{
-								Labels: []*qbtypes.Label{
-									{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "server1"},
-								},
-								Values: []*qbtypes.TimeSeriesValue{
-									{Timestamp: 1000, Value: 10, Partial: false}, // Complete interval
-									{Timestamp: 2000, Value: 20, Partial: false}, // Complete interval
-									{Timestamp: 3000, Value: 30, Partial: false}, // Complete interval
-									{Timestamp: 4000, Value: 40, Partial: true},  // Partial - doesn't cover to 5000ms
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-
-		// Put the result
-		bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-		time.Sleep(10 * time.Millisecond)
-
-		// Get cached data
-		cached, _ := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-		// Should have cached data
-		assert.NotNil(t, cached)
-		tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
-		require.True(t, ok)
-
-		// Verify that the partial value was excluded from cache
-		series := tsData.Aggregations[0].Series[0]
-		assert.Len(t, series.Values, 3) // Only 3 non-partial values
-		assert.Equal(t, int64(1000), series.Values[0].Timestamp)
-		assert.Equal(t, int64(2000), series.Values[1].Timestamp)
-		assert.Equal(t, int64(3000), series.Values[2].Timestamp)
-	})
-
-	// Test case 3: Query with both misaligned start and end
-	t.Run("misaligned_both_start_and_end", func(t *testing.T) {
-		query := &mockQuery{
-			fingerprint: "test-partial-both",
-			startMs:     1500, // Not aligned
-			endMs:       4500, // Not aligned
-		}
-
-		result := &qbtypes.Result{
-			Type: qbtypes.RequestTypeTimeSeries,
-			Value: &qbtypes.TimeSeriesData{
-				QueryName: "A",
-				Aggregations: []*qbtypes.AggregationBucket{
-					{
-						Series: []*qbtypes.TimeSeries{
-							{
-								Labels: []*qbtypes.Label{
-									{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "server1"},
-								},
-								Values: []*qbtypes.TimeSeriesValue{
-									{Timestamp: 1500, Value: 10, Partial: true},  // Partial - misaligned start
-									{Timestamp: 2000, Value: 20, Partial: false}, // Complete interval
-									{Timestamp: 3000, Value: 30, Partial: false}, // Complete interval
-									{Timestamp: 4000, Value: 40, Partial: true},  // Partial - misaligned end
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-
-		// Put the result
-		bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-		time.Sleep(10 * time.Millisecond)
-
-		// Get cached data
-		cached, _ := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-		// Should have cached data
-		assert.NotNil(t, cached)
-		tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
-		require.True(t, ok)
-
-		// Verify that both partial values were excluded from cache
-		series := tsData.Aggregations[0].Series[0]
-		assert.Len(t, series.Values, 2) // Only 2 non-partial values
-		assert.Equal(t, int64(2000), series.Values[0].Timestamp)
-		assert.Equal(t, int64(3000), series.Values[1].Timestamp)
-	})
+	assert.Equal(t, []qbtypes.TimeRange{query.window()}, missing)
 }
 
-func TestBucketCache_NoCache(t *testing.T) {
+func TestBucketCache_EdgeBucketsAreBounded(t *testing.T) {
 	bc := createTestBucketCache(t)
-	ctx := context.Background()
 	orgID := valuer.UUID{}
-
-	// Create a query
-	query := &mockQuery{
-		fingerprint: "test-nocache-query",
-		startMs:     1000,
-		endMs:       5000,
+	step := minuteStep()
+	for i := uint64(1); i <= uint64(maxEdgeBuckets)+3; i++ {
+		query := &mockQuery{fingerprint: "edges", startMs: epochMs, endMs: epochMs + 10*minuteStepMs + i*1000}
+		series := minuteSeries("a", query.startMs, query.endMs, 1)
+		series.Values[len(series.Values)-1].Partial = true
+		put(bc, query, step, seriesResult(1, series))
 	}
 
-	// Create result
-	result := &qbtypes.Result{
-		Type: qbtypes.RequestTypeTimeSeries,
-		Value: &qbtypes.TimeSeriesData{
-			QueryName: "A",
-			Aggregations: []*qbtypes.AggregationBucket{
-				{
-					Series: []*qbtypes.TimeSeries{
-						{
-							Labels: []*qbtypes.Label{
-								{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "server1"},
-							},
-							Values: []*qbtypes.TimeSeriesValue{
-								{Timestamp: 1000, Value: 10},
-								{Timestamp: 2000, Value: 20},
-								{Timestamp: 3000, Value: 30},
-								{Timestamp: 4000, Value: 40},
-							},
-						},
-					},
-				},
-			},
-		},
+	data := storedEntry(t, bc, orgID, "edges")
+	edges := 0
+	for _, bucket := range data.Buckets {
+		if bucket.Edge != qbtypes.CachedBucketBody {
+			edges++
+		}
 	}
+	assert.Equal(t, maxEdgeBuckets, edges)
+	newest := &mockQuery{fingerprint: "edges", startMs: epochMs, endMs: epochMs + 10*minuteStepMs + (uint64(maxEdgeBuckets)+3)*1000}
+	_, missing := get(bc, newest, step)
+	assert.Empty(t, missing, "the newest partial end is kept")
+}
 
-	// Put the result in cache
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-	time.Sleep(10 * time.Millisecond)
+// slowGetCache holds every Get long enough for two concurrent Puts to read
+// the same entry, the interleaving a busy dashboard produces.
+type slowGetCache struct {
+	cache.Cache
+	delay time.Duration
+}
 
-	// Verify data is cached
-	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-	assert.NotNil(t, cached)
-	assert.Len(t, missing, 0)
+func (c slowGetCache) Get(ctx context.Context, orgID valuer.UUID, key string, dest cachetypes.Cacheable) error {
+	time.Sleep(c.delay)
+	return c.Cache.Get(ctx, orgID, key, dest)
+}
 
-	// Test NoCache behavior in querier would bypass the cache entirely
-	// The actual NoCache logic is implemented in querier.run(), not in bucket cache
-	// This test verifies that the cache works normally and NoCache bypasses it at a higher level
+func TestBucketCache_ConcurrentWritesKeepEveryRange(t *testing.T) {
+	bc := NewBucketCache(instrumentationtest.New().ToProviderSettings(), slowGetCache{Cache: createTestCache(t), delay: 50 * time.Millisecond}, time.Hour, 5*time.Minute).(*bucketCache)
+	step := minuteStep()
+	first := &mockQuery{fingerprint: "concurrent", startMs: epochMs, endMs: epochMs + 2*minuteStepMs}
+	put(bc, first, step, seriesResult(1, minuteSeries("a", first.startMs, first.endMs, 1)))
+
+	var wg sync.WaitGroup
+	for _, window := range []qbtypes.TimeRange{
+		{From: epochMs + 2*minuteStepMs, To: epochMs + 4*minuteStepMs},
+		{From: epochMs + 4*minuteStepMs, To: epochMs + 6*minuteStepMs},
+	} {
+		wg.Add(1)
+		go func(window qbtypes.TimeRange) {
+			defer wg.Done()
+			query := &mockQuery{fingerprint: "concurrent", startMs: window.From, endMs: window.To}
+			put(bc, query, step, seriesResult(1, minuteSeries("a", window.From, window.To, 1)))
+		}(window)
+	}
+	wg.Wait()
+
+	whole := &mockQuery{fingerprint: "concurrent", startMs: epochMs, endMs: epochMs + 6*minuteStepMs}
+	_, missing := get(bc, whole, step)
+	assert.Empty(t, missing)
+}
+
+func TestBucketCache_SeriesWithoutPointsInTheWindowAreNotServed(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := minuteStep()
+	warm := &mockQuery{fingerprint: "empty-series", startMs: epochMs, endMs: epochMs + 10*minuteStepMs}
+	put(bc, warm, step, seriesResult(1,
+		minuteSeries("always", warm.startMs, warm.endMs, 1),
+		minuteSeries("first-half-only", warm.startMs, warm.startMs+5*minuteStepMs, 1),
+	))
+
+	query := &mockQuery{fingerprint: "empty-series", startMs: epochMs + 5*minuteStepMs, endMs: epochMs + 10*minuteStepMs}
+	cached, missing := get(bc, query, step)
+
+	require.Empty(t, missing)
+	series := cached.Value.(*qbtypes.TimeSeriesData).Aggregations[0].Series
+	require.Len(t, series, 1)
+	assert.Equal(t, "always", series[0].Labels[0].Value)
+}
+
+func TestBucketCache_HeatmapKeepsAxisAndTrimsItWhenAsked(t *testing.T) {
+	bc := createTestBucketCache(t)
+	step := minuteStep()
+	heatmap := func(startMs, endMs uint64, axis []float64, counts []float64) *qbtypes.Result {
+		series := &qbtypes.TimeSeries{}
+		for ts := startMs; ts < endMs; ts += minuteStepMs {
+			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{Timestamp: int64(ts), Values: slices.Clone(counts)})
+		}
+		return &qbtypes.Result{
+			Type: qbtypes.RequestTypeHeatmap,
+			Value: &qbtypes.TimeSeriesData{Aggregations: []*qbtypes.AggregationBucket{{
+				Index: 0, Alias: "__result_0", Meta: qbtypes.AggregationMeta{Unit: "By", Buckets: axis}, Series: []*qbtypes.TimeSeries{series},
+			}}},
+		}
+	}
+	first := &mockQuery{fingerprint: "heatmap", startMs: epochMs, endMs: epochMs + 2*minuteStepMs}
+	req := cacheRequest(first, step)
+	req.Kind, req.TrimHeatmapAxis = qbtypes.RequestTypeHeatmap, true
+	bc.Put(context.Background(), valuer.UUID{}, req, first.window(), heatmap(first.startMs, first.endMs, []float64{1, 4, 16}, []float64{1, 2, 3, 4}))
+	second := &mockQuery{fingerprint: "heatmap", startMs: epochMs + 2*minuteStepMs, endMs: epochMs + 4*minuteStepMs}
+	bc.Put(context.Background(), valuer.UUID{}, req, second.window(), heatmap(second.startMs, second.endMs, []float64{2, 4}, []float64{5, 6, 7}))
+
+	whole := &mockQuery{fingerprint: "heatmap", startMs: epochMs, endMs: epochMs + 4*minuteStepMs}
+	req.Window = whole.window()
+	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, req)
+
+	require.Empty(t, missing)
+	agg := cached.Value.(*qbtypes.TimeSeriesData).Aggregations[0]
+	assert.Equal(t, "__result_0", agg.Alias)
+	assert.Equal(t, "By", agg.Meta.Unit)
+	assert.Equal(t, []float64{1, 2, 4, 16}, agg.Meta.Buckets)
+	require.Len(t, agg.Series, 1)
+	require.Len(t, agg.Series[0].Values, 4)
+	assert.Equal(t, []float64{1, 0, 2, 3, 4}, agg.Series[0].Values[0].Values)
+	assert.Equal(t, []float64{0, 5, 6, 0, 7}, agg.Series[0].Values[2].Values)
+
+	req.Window = second.window()
+	cached, _ = bc.GetMissRanges(context.Background(), valuer.UUID{}, req)
+	agg = cached.Value.(*qbtypes.TimeSeriesData).Aggregations[0]
+	assert.Equal(t, []float64{2, 4}, agg.Meta.Buckets, "bands no served column reached are trimmed")
+	assert.Equal(t, []float64{5, 6, 7}, agg.Series[0].Values[0].Values)
 }

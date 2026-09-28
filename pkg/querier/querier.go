@@ -21,6 +21,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/meterstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -671,13 +673,21 @@ func (q *querier) run(
 	eg, egCtx := errgroup.WithContext(ctx)
 	for i, name := range names {
 		query := qs[name]
-		eg.Go(func() error {
+		eg.Go(func() (err error) {
+			// A panic here would end the process: errgroup does not recover
+			// and the HTTP recovery middleware only covers the handler goroutine.
+			defer func() {
+				if r := recover(); r != nil {
+					q.logger.ErrorContext(egCtx, "query execution panicked", slog.String("query", name), slog.Any("panic", r))
+					err = errors.NewInternalf(errors.CodeInternal, "query %s failed", name)
+				}
+			}()
 			// Skip cache if NoCache is set, or if cache is not available
 			if req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" {
 				if req.NoCache {
 					q.logger.DebugContext(egCtx, "NoCache flag set, bypassing cache", slog.String("query", name))
 				} else {
-					q.logger.InfoContext(egCtx, "no bucket cache or fingerprint, executing query", slog.String("fingerprint", query.Fingerprint()))
+					q.logger.DebugContext(egCtx, "no bucket cache or fingerprint, executing query", slog.String("query", name))
 				}
 				sem <- struct{}{}
 				result, err := query.Execute(egCtx)
@@ -777,120 +787,107 @@ func (q *querier) run(
 	return resp, nil
 }
 
-// executeWithCache executes a query using the bucket cache. sem limits how
-// many queries run at once for the whole request.
+// executeWithCache serves a query from the bucket cache: the cached part of
+// the window plus one statement per missing range, merged and written back
+// range by range. sem limits how many statements run at once for the whole
+// request.
 func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query qbtypes.Query, step qbtypes.Step, sem chan struct{}) (*qbtypes.Result, error) {
-	// Get cached data and missing ranges
-	cachedResult, missingRanges := q.bucketCache.GetMissRanges(ctx, orgID, query, step)
-
-	// If no missing ranges, return cached result
-	if len(missingRanges) == 0 && cachedResult != nil {
-		return cachedResult, nil
+	from, to := query.Window()
+	stepMs := uint64(step.Milliseconds())
+	// Functions such as runningDiff need the step before the window; the
+	// cache window includes it so a hit carries it too.
+	lookbackMs := uint64(lookbackSteps(query)) * stepMs
+	req := CacheRequest{
+		Key:             CacheKey(query.Fingerprint()),
+		Window:          qbtypes.TimeRange{From: from - min(lookbackMs, from), To: to},
+		Step:            step,
+		Kind:            queryKind(query),
+		TrimHeatmapAxis: trimsHeatmapAxis(query),
 	}
 
-	// If entire range is missing, execute normally
-	if cachedResult == nil && len(missingRanges) == 1 {
-		startMs, endMs := query.Window()
-		if missingRanges[0].From == startMs && missingRanges[0].To == endMs {
-			sem <- struct{}{}
-			result, err := query.Execute(ctx)
-			<-sem
-			if err != nil {
-				return nil, err
-			}
-			// Store in cache for future use
-			q.bucketCache.Put(ctx, orgID, query, step, result)
-			return result, nil
+	execute := func(qry qbtypes.Query) (*qbtypes.Result, error) {
+		sem <- struct{}{}
+		defer func() { <-sem }()
+		return qry.Execute(ctx)
+	}
+
+	cached, missing := q.bucketCache.GetMissRanges(ctx, orgID, req)
+	if len(missing) == 0 && cached != nil {
+		flagPartialPoints(query, cached, from, to, stepMs)
+		return cached, nil
+	}
+	// A statement that ranks or limits over its window cannot be assembled
+	// from pieces, and a window that is entirely missing is cheaper as one
+	// statement; both run the original query over its own window.
+	entirelyMissing := cached == nil && len(missing) == 1 && missing[0] == req.Window
+	if entirelyMissing || wholeWindowOnly(query) || len(missing) == 0 {
+		result, err := execute(query)
+		if err != nil {
+			return nil, err
 		}
+		q.bucketCache.Put(ctx, orgID, req, req.Window, result)
+		return result, nil
 	}
 
-	// Execute queries for missing ranges with bounded parallelism
-	freshResults := make([]*qbtypes.Result, len(missingRanges))
-	errs := make([]error, len(missingRanges))
-	totalStats := qbtypes.ExecStats{}
-
-	q.logger.DebugContext(ctx, "executing queries for missing ranges",
-		slog.Int("missing_ranges_count", len(missingRanges)),
-		slog.Any("ranges", missingRanges))
-
+	fresh := make([]*qbtypes.Result, len(missing))
+	errs := make([]error, len(missing))
 	var wg sync.WaitGroup
-
-	for i, timeRange := range missingRanges {
+	for i, timeRange := range missing {
 		wg.Add(1)
-		go func(idx int, tr *qbtypes.TimeRange) {
+		go func(i int, timeRange qbtypes.TimeRange) {
 			defer wg.Done()
-
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
-			// Create a new query with the missing time range
-			rangedQuery := q.createRangedQuery(orgID, query, *tr)
-			if rangedQuery == nil {
-				errs[idx] = errors.NewInternalf(errors.CodeInternal, "failed to create ranged query for range %d-%d", tr.From, tr.To)
+			ranged := q.createRangedQuery(query, timeRange)
+			if ranged == nil {
+				errs[i] = errors.NewInternalf(errors.CodeInternal, "cannot range query over %d-%d", timeRange.From, timeRange.To)
 				return
 			}
-
-			// Execute the ranged query
-			result, err := rangedQuery.Execute(ctx)
-			if err != nil {
-				errs[idx] = err
-				return
-			}
-
-			freshResults[idx] = result
+			fresh[i], errs[i] = execute(ranged)
 		}(i, timeRange)
 	}
-
-	// Wait for all queries to complete
 	wg.Wait()
-
-	// Check for errors
 	for _, err := range errs {
 		if err != nil {
-			// If any query failed, fall back to full execution
-			q.logger.ErrorContext(ctx, "parallel query execution failed", errors.Attr(err))
-			sem <- struct{}{}
-			result, err := query.Execute(ctx)
-			<-sem
-			if err != nil {
-				return nil, err
-			}
-			q.bucketCache.Put(ctx, orgID, query, step, result)
-			return result, nil
+			return nil, err
 		}
 	}
 
-	// Calculate total stats and filter out nil results
-	validResults := make([]*qbtypes.Result, 0, len(freshResults))
-	for _, result := range freshResults {
-		if result != nil {
-			validResults = append(validResults, result)
-			totalStats.RowsScanned += result.Stats.RowsScanned
-			totalStats.BytesScanned += result.Stats.BytesScanned
-			totalStats.DurationMS += result.Stats.DurationMS
-		}
+	merged := mergeResults(req, cached, fresh)
+	for i, timeRange := range missing {
+		q.bucketCache.Put(ctx, orgID, req, timeRange, fresh[i])
 	}
-	freshResults = validResults
-
-	// Merge cached and fresh results
-	mergedResult := q.mergeResults(cachedResult, freshResults)
-	mergedResult.Stats.RowsScanned += totalStats.RowsScanned
-	mergedResult.Stats.BytesScanned += totalStats.BytesScanned
-	mergedResult.Stats.DurationMS += totalStats.DurationMS
-
-	// Store merged result in cache
-	q.bucketCache.Put(ctx, orgID, query, step, mergedResult)
-
-	return mergedResult, nil
+	flagPartialPoints(query, merged, from, to, stepMs)
+	return merged, nil
 }
 
-// createRangedQuery creates a copy of the query with a different time range.
-func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, timeRange qbtypes.TimeRange) qbtypes.Query {
-	// this is called in a goroutine, so we create a copy of the query to avoid race conditions
-	switch qt := originalQuery.(type) {
+// flagPartialPoints marks the points of a served result the way consume
+// marks them for the query's own window: a bucket holds the flag of the
+// window that fetched it, and a piece is fetched over a window of its own.
+// PromQL evaluates instants and has no partial points.
+func flagPartialPoints(query qbtypes.Query, result *qbtypes.Result, from, to, stepMs uint64) {
+	if _, ok := query.(*promqlQuery); ok || result == nil {
+		return
+	}
+	data, ok := result.Value.(*qbtypes.TimeSeriesData)
+	if !ok || data == nil {
+		return
+	}
+	window := &qbtypes.TimeRange{From: from, To: to}
+	for _, agg := range data.Aggregations {
+		for _, s := range agg.Series {
+			for _, v := range s.Values {
+				v.Partial = isPartialValue(v.Timestamp, window, stepMs)
+			}
+		}
+	}
+}
+
+// createRangedQuery copies a query over another window. The window is in the
+// query's own clock: a timeShift query already reports a shifted window, so
+// the copy takes the range as it is.
+func (q *querier) createRangedQuery(original qbtypes.Query, timeRange qbtypes.TimeRange) qbtypes.Query {
+	switch qt := original.(type) {
 	case *promqlQuery:
-		queryCopy := qt.query.Copy()
-		return newPromqlQuery(q.logger, qt.promEngine, queryCopy, timeRange, qt.requestType, qt.vars)
+		return qt.ranged(timeRange)
 
 	case *chSQLQuery:
 		queryCopy := qt.query.Copy()
@@ -899,40 +896,34 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 		return newchSQLQuery(q.logger, q.telemetryStore, queryCopy, argsCopy, timeRange, qt.kind, qt.vars)
 
 	case *builderQuery[qbtypes.TraceAggregation]:
-		specCopy := qt.spec.Copy()
-		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
-		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
 		// reuse the original query's statement builder and type so an AI query
 		// keeps its AI builder and cache key
-		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, qt.builderConfig)
+		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, qt.spec.Copy(), timeRange, qt.kind, qt.variables, qt.builderConfig)
 
 	case *builderQuery[qbtypes.LogAggregation]:
-		specCopy := qt.spec.Copy()
-		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
-		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
-		shiftStmtBuilder := q.logStmtBuilder
-		if qt.spec.Source == telemetrytypes.SourceAudit {
-			shiftStmtBuilder = q.auditStmtBuilder
-		}
-		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, shiftStmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, q.builderConfig)
+		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, qt.spec.Copy(), timeRange, qt.kind, qt.variables, qt.builderConfig)
 
 	case *builderQuery[qbtypes.MetricAggregation]:
 		specCopy := qt.spec.Copy()
-		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
-		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
-		if qt.spec.Source == telemetrytypes.SourceMeter {
-			return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, q.meterStmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, builderConfig{})
+		// The builder picks its tables from the window it is given; a piece
+		// must read the tables the whole request reads.
+		tableHints := metricsstatementbuilder.TableHintsForWindow
+		if specCopy.Source == telemetrytypes.SourceMeter {
+			tableHints = meterstatementbuilder.TableHintsForWindow
 		}
-		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, q.metricStmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, builderConfig{})
+		for i := range specCopy.Aggregations {
+			specCopy.Aggregations[i].TableHints = tableHints(qt.fromMS, qt.toMS, specCopy.Aggregations[i])
+		}
+		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, specCopy, timeRange, qt.kind, qt.variables, qt.builderConfig)
+
 	case *traceOperatorQuery:
-		specCopy := qt.spec.Copy()
 		return &traceOperatorQuery{
 			telemetryStore: q.telemetryStore,
 			orgID:          qt.orgID,
 			stmtBuilder:    q.traceOperatorStmtBuilder,
-			spec:           specCopy,
-			fromMS:         uint64(timeRange.From),
-			toMS:           uint64(timeRange.To),
+			spec:           qt.spec.Copy(),
+			fromMS:         timeRange.From,
+			toMS:           timeRange.To,
 			compositeQuery: qt.compositeQuery,
 			kind:           qt.kind,
 		}
@@ -941,217 +932,106 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 	}
 }
 
-// mergeResults merges cached result with fresh results.
-func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) *qbtypes.Result {
-	if cached == nil {
-		if len(fresh) == 1 {
-			return fresh[0]
+// mergeResults joins the cached part with the fresh pieces. Fresh points win
+// over cached points at the same timestamp, and a partial point never wins
+// over a whole one (a metrics piece returns the step before its range as a
+// partial point that the cached part already holds whole).
+func mergeResults(req CacheRequest, cached *qbtypes.Result, fresh []*qbtypes.Result) *qbtypes.Result {
+	merged := &qbtypes.Result{Type: req.Kind}
+	parts := make([]*qbtypes.TimeSeriesData, 0, len(fresh)+1)
+	add := func(result *qbtypes.Result) {
+		if result == nil {
+			return
 		}
-		if len(fresh) == 0 {
-			return nil
+		if data, ok := result.Value.(*qbtypes.TimeSeriesData); ok && data != nil {
+			parts = append(parts, data)
 		}
-		// If cached is nil but we have multiple fresh results, we need to merge them
-		// We need to merge all fresh results properly to avoid duplicates
-		merged := &qbtypes.Result{
-			Type:           fresh[0].Type,
-			Stats:          fresh[0].Stats,
-			Warnings:       fresh[0].Warnings,
-			WarningsDocURL: fresh[0].WarningsDocURL,
+		merged.Stats.RowsScanned += result.Stats.RowsScanned
+		merged.Stats.BytesScanned += result.Stats.BytesScanned
+		merged.Stats.DurationMS += result.Stats.DurationMS
+		merged.Warnings = append(merged.Warnings, result.Warnings...)
+		if merged.WarningsDocURL == "" {
+			merged.WarningsDocURL = result.WarningsDocURL
 		}
-
-		// Merge all fresh results including the first one
-		switch merged.Type {
-		case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
-			// Pass nil as cached value to ensure proper merging of all fresh results
-			merged.Value = q.mergeTimeSeriesResults(nil, fresh)
-		}
-
-		return merged
 	}
-
-	// Start with cached result
-	merged := &qbtypes.Result{
-		Type:           cached.Type,
-		Value:          cached.Value,
-		Stats:          cached.Stats,
-		Warnings:       cached.Warnings,
-		WarningsDocURL: cached.WarningsDocURL,
+	add(cached)
+	for _, result := range fresh {
+		add(result)
 	}
-
-	// If no fresh results, return cached
-	if len(fresh) == 0 {
-		return merged
-	}
-
-	switch merged.Type {
-	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
-		merged.Value = q.mergeTimeSeriesResults(cached.Value.(*qbtypes.TimeSeriesData), fresh)
-	}
-
-	if len(fresh) > 0 {
-		totalWarnings := len(merged.Warnings)
-		for _, result := range fresh {
-			totalWarnings += len(result.Warnings)
-		}
-
-		allWarnings := make([]string, 0, totalWarnings)
-		allWarnings = append(allWarnings, merged.Warnings...)
-		for _, result := range fresh {
-			allWarnings = append(allWarnings, result.Warnings...)
-		}
-		merged.Warnings = allWarnings
-	}
-
+	merged.Warnings = dedupeWarnings(merged.Warnings)
+	stepMs := uint64(req.Step.Milliseconds())
+	windowStart := req.Window.From - req.Window.From%stepMs
+	// A piece widened by the builder reports points before its own range;
+	// only the ones inside the request window (and its partial first step)
+	// belong to the answer, as with one statement over the whole window.
+	merged.Value = selectPoints(mergeTimeSeriesData(parts), func(v *qbtypes.TimeSeriesValue) bool {
+		ts := uint64(v.Timestamp)
+		return ts >= windowStart && ts < req.Window.To
+	})
 	return merged
 }
 
-func mergeBucketUpperBounds(cachedValue *qbtypes.TimeSeriesData, freshResults []*qbtypes.Result) map[int][]float64 {
-	upperBoundSources := make([]*qbtypes.TimeSeriesData, 0, len(freshResults)+1)
-	upperBoundSources = append(upperBoundSources, cachedValue)
-	for _, result := range freshResults {
-		freshTS, _ := result.Value.(*qbtypes.TimeSeriesData)
-		upperBoundSources = append(upperBoundSources, freshTS)
+// queryKind is the request type a query answers with.
+func queryKind(query qbtypes.Query) qbtypes.RequestType {
+	switch qt := query.(type) {
+	case *promqlQuery:
+		return qt.requestType
+	case *builderQuery[qbtypes.TraceAggregation]:
+		return qt.kind
+	case *builderQuery[qbtypes.LogAggregation]:
+		return qt.kind
+	case *builderQuery[qbtypes.MetricAggregation]:
+		return qt.kind
+	case *chSQLQuery:
+		return qt.kind
+	case *traceOperatorQuery:
+		return qt.kind
 	}
-	return qbtypes.MergeBucketUpperBounds(upperBoundSources...)
+	return qbtypes.RequestTypeTimeSeries
 }
 
-// mergeTimeSeriesResults merges time series data.
-func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, freshResults []*qbtypes.Result) *qbtypes.TimeSeriesData {
+// wholeWindowOnly reports whether the query's statement depends on the
+// whole window, so its cached result serves only the identical window.
+func wholeWindowOnly(query qbtypes.Query) bool {
+	switch qt := query.(type) {
+	case *builderQuery[qbtypes.TraceAggregation]:
+		return qt.wholeWindowOnly()
+	case *builderQuery[qbtypes.LogAggregation]:
+		return qt.wholeWindowOnly()
+	case *builderQuery[qbtypes.MetricAggregation]:
+		return qt.wholeWindowOnly()
+	}
+	return false
+}
 
-	// Map to store merged series by aggregation index and series key
-	seriesMap := make(map[int]map[string]*qbtypes.TimeSeries)
-	// Map to store aggregation bucket metadata
-	bucketMetadata := make(map[int]*qbtypes.AggregationBucket)
+// lookbackSteps is how many steps before the window the answer must carry.
+func lookbackSteps(query qbtypes.Query) int {
+	if qt, ok := query.(*builderQuery[qbtypes.MetricAggregation]); ok {
+		return qt.lookbackSteps()
+	}
+	return 0
+}
 
-	mergedUpperBounds := mergeBucketUpperBounds(cachedValue, freshResults)
-
-	// Process cached data if available
-	if cachedValue != nil && cachedValue.Aggregations != nil {
-		for _, aggBucket := range cachedValue.Aggregations {
-			if seriesMap[aggBucket.Index] == nil {
-				seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
-			}
-			aggBucket.ReindexValuesToNewUpperBounds(mergedUpperBounds[aggBucket.Index])
-			if bucketMetadata[aggBucket.Index] == nil {
-				bucketMetadata[aggBucket.Index] = aggBucket
-			}
-			for _, series := range aggBucket.Series {
-				key := qbtypes.GetUniqueSeriesKey(series.Labels)
-				if existingSeries, ok := seriesMap[aggBucket.Index][key]; ok {
-					// Merge values from duplicate series in cached data, avoiding duplicate timestamps
-					timestampMap := make(map[int64]bool)
-					for _, v := range existingSeries.Values {
-						timestampMap[v.Timestamp] = true
-					}
-
-					// Only add values with new timestamps
-					for _, v := range series.Values {
-						if !timestampMap[v.Timestamp] {
-							existingSeries.Values = append(existingSeries.Values, v)
-						}
-					}
-				} else {
-					// Create a copy to avoid modifying the cached data
-					seriesCopy := &qbtypes.TimeSeries{
-						Labels: series.Labels,
-						Values: make([]*qbtypes.TimeSeriesValue, len(series.Values)),
-					}
-					copy(seriesCopy.Values, series.Values)
-					seriesMap[aggBucket.Index][key] = seriesCopy
-				}
+// trimsHeatmapAxis reports whether the query computes its heatmap axis from
+// the served columns. A histogram metric, promql and clickhouse name their
+// own buckets, and an empty one of theirs still belongs on the axis.
+func trimsHeatmapAxis(query qbtypes.Query) bool {
+	switch qt := query.(type) {
+	case *builderQuery[qbtypes.TraceAggregation]:
+		return qt.kind == qbtypes.RequestTypeHeatmap
+	case *builderQuery[qbtypes.LogAggregation]:
+		return qt.kind == qbtypes.RequestTypeHeatmap
+	case *builderQuery[qbtypes.MetricAggregation]:
+		if qt.kind != qbtypes.RequestTypeHeatmap {
+			return false
+		}
+		for _, agg := range qt.spec.Aggregations {
+			if agg.HeatmapBucketing != nil {
+				return true
 			}
 		}
 	}
-
-	// Add fresh series
-	for _, result := range freshResults {
-		freshTS, ok := result.Value.(*qbtypes.TimeSeriesData)
-		if !ok || freshTS == nil || freshTS.Aggregations == nil {
-			continue
-		}
-
-		for _, aggBucket := range freshTS.Aggregations {
-			if seriesMap[aggBucket.Index] == nil {
-				seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
-			}
-			// Prefer fresh metadata over cached metadata
-			if aggBucket.Alias != "" || aggBucket.Meta.Unit != "" {
-				bucketMetadata[aggBucket.Index] = aggBucket
-			} else if bucketMetadata[aggBucket.Index] == nil {
-				bucketMetadata[aggBucket.Index] = aggBucket
-			}
-		}
-
-		for _, aggBucket := range freshTS.Aggregations {
-			aggBucket.ReindexValuesToNewUpperBounds(mergedUpperBounds[aggBucket.Index])
-			for _, series := range aggBucket.Series {
-				key := qbtypes.GetUniqueSeriesKey(series.Labels)
-
-				if existingSeries, ok := seriesMap[aggBucket.Index][key]; ok {
-					// Merge values, avoiding duplicate timestamps
-					// Create a map to track existing timestamps
-					timestampMap := make(map[int64]bool)
-					for _, v := range existingSeries.Values {
-						timestampMap[v.Timestamp] = true
-					}
-
-					// Only add values with new timestamps
-					for _, v := range series.Values {
-						if !timestampMap[v.Timestamp] {
-							existingSeries.Values = append(existingSeries.Values, v)
-						}
-					}
-				} else {
-					// New series
-					seriesMap[aggBucket.Index][key] = series
-				}
-			}
-		}
-	}
-
-	result := &qbtypes.TimeSeriesData{
-		Aggregations: []*qbtypes.AggregationBucket{},
-	}
-
-	// Set QueryName from cached or first fresh result
-	if cachedValue != nil {
-		result.QueryName = cachedValue.QueryName
-	} else if len(freshResults) > 0 {
-		if freshTS, ok := freshResults[0].Value.(*qbtypes.TimeSeriesData); ok && freshTS != nil {
-			result.QueryName = freshTS.QueryName
-		}
-	}
-
-	for index, series := range seriesMap {
-		var aggSeries []*qbtypes.TimeSeries
-		for _, s := range series {
-			// Sort values by timestamp
-			slices.SortFunc(s.Values, func(a, b *qbtypes.TimeSeriesValue) int {
-				if a.Timestamp < b.Timestamp {
-					return -1
-				}
-				if a.Timestamp > b.Timestamp {
-					return 1
-				}
-				return 0
-			})
-			aggSeries = append(aggSeries, s)
-		}
-
-		// Preserve bucket metadata from either cached or fresh results
-		bucket := &qbtypes.AggregationBucket{
-			Index:  index,
-			Series: aggSeries,
-		}
-		if metadata, ok := bucketMetadata[index]; ok {
-			bucket.Alias = metadata.Alias
-			bucket.Meta = metadata.Meta
-		}
-
-		result.Aggregations = append(result.Aggregations, bucket)
-	}
-
-	return result
+	return false
 }
 
 func secondsStep(s uint64) qbtypes.Step {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -62,6 +63,11 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	if err := queryRangeRequest.Validate(); err != nil {
 		render.Error(rw, err)
 		return
+	}
+	// The standard way for a client to ask for a fresh answer; the body flag
+	// stays for callers that build the request themselves.
+	if strings.Contains(strings.ToLower(req.Header.Get("Cache-Control")), "no-cache") {
+		queryRangeRequest.NoCache = true
 	}
 
 	orgID, err := valuer.NewUUID(claims.OrgID)

@@ -151,8 +151,9 @@ def test_group_by_endpoint(
         assert v["value"] == stable_health_value, f"Expected /health rate {stable_health_value}, got {v['value']}"
 
     # /products: 51 data points with 10-minute gap (t20-t29 missing), steady +20/min
+    # the bucket after the gap has no sample within the rate lookback and gets no value
     products_values = endpoint_values["/products"]
-    assert len(products_values) >= 49, f"Expected >= 49 values for /products, got {len(products_values)}"
+    assert len(products_values) >= 48, f"Expected >= 48 values for /products, got {len(products_values)}"
     count_steady_products = sum(1 for v in products_values if v["value"] == stable_products_value)
 
     # most values should be stable, some boundary values differ due to 10-min gap

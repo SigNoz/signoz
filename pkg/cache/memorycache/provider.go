@@ -120,7 +120,12 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 		span.SetAttributes(attribute.Bool("memory.cloneable", true))
 		span.SetAttributes(attribute.Int64("memory.cost", cost))
 		toCache := cloneable.Clone()
-		if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, cost, ttl); !ok {
+		// ristretto updates an existing key in place without admission, so an
+		// entry that grows would take the cache past MaxCost; delete first so
+		// the new cost is admitted like a new key.
+		key := strings.Join([]string{orgID.StringValue(), cacheKey}, "::")
+		provider.cc.Del(key)
+		if ok := provider.cc.SetWithTTL(key, toCache, cost, ttl); !ok {
 			return errors.New(errors.TypeInternal, errors.CodeInternal, "error writing to cache")
 		}
 
@@ -137,7 +142,9 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	span.SetAttributes(attribute.Bool("memory.cloneable", false))
 	span.SetAttributes(attribute.Int64("memory.cost", cost))
 
-	if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, cost, ttl); !ok {
+	key := strings.Join([]string{orgID.StringValue(), cacheKey}, "::")
+	provider.cc.Del(key)
+	if ok := provider.cc.SetWithTTL(key, toCache, cost, ttl); !ok {
 		return errors.New(errors.TypeInternal, errors.CodeInternal, "error writing to cache")
 	}
 

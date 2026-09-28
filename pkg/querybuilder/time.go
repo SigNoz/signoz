@@ -176,6 +176,31 @@ func MinAllowedStepIntervalForMetric(start, end uint64) uint64 {
 	return minAllowed
 }
 
+// RateLookbackMs is how far before a bucket the previous sample of a
+// cumulative series may lie for rate and increase to use it. The bound makes
+// the value of a bucket depend only on the samples within the lookback, not
+// on where the statement window starts, so a window served in pieces agrees
+// with one statement over the whole window. Five minutes is the Prometheus
+// lookback; a step longer than that keeps one step.
+func RateLookbackMs(stepMs uint64) uint64 {
+	return max(stepMs, uint64((5 * time.Minute).Milliseconds()))
+}
+
+// MetricRateLookbackMs is the lookback the statement of mq reads before its
+// window, or zero when mq computes no rate. A histogram percentile or count
+// computes a rate or increase over its buckets whatever time aggregation the
+// query names.
+func MetricRateLookbackMs(stepMs uint64, mq qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) uint64 {
+	agg := mq.Aggregations[0]
+	usesRate := agg.TimeAggregation == metrictypes.TimeAggregationRate ||
+		agg.TimeAggregation == metrictypes.TimeAggregationIncrease ||
+		agg.Type == metrictypes.HistogramType
+	if !usesRate || agg.Temporality == metrictypes.Delta {
+		return 0
+	}
+	return RateLookbackMs(stepMs)
+}
+
 func AdjustedMetricTimeRange(start, end, step uint64, mq qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) (uint64, uint64) {
 	// align the start to the step interval
 	start = start - (start % (step * 1000))
@@ -188,10 +213,7 @@ func AdjustedMetricTimeRange(start, end, step uint64, mq qbtypes.QueryBuilderQue
 			break
 		}
 	}
-	if (mq.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate || mq.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationIncrease) &&
-		mq.Aggregations[0].Temporality != metrictypes.Delta {
-		start -= step * 1000
-	}
+	start -= MetricRateLookbackMs(step*1000, mq)
 	if hasRunningDiff {
 		start -= step * 1000
 	}

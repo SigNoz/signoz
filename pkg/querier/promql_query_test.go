@@ -448,35 +448,36 @@ func TestQuotedMetricOutsideBracesPattern(t *testing.T) {
 	}
 }
 
-// promql reports at the window start and every step after it, so a window
-// starting later inside the step describes instants the earlier one never does.
-func TestFingerprintSeparatesWindowsInsideAStep(t *testing.T) {
+// promql reports at the window start and every step after it, so only a
+// window that starts on the step grid shares instants with other windows of
+// the same query and is cached.
+func TestFingerprintCachesOnlyWindowsOnTheStepGrid(t *testing.T) {
 	minuteStep := qbv5.Step{Duration: time.Minute}
+	fingerprint := func(tr qbv5.TimeRange) string {
+		return newPromqlQuery(slog.Default(), nil, qbv5.PromQuery{Query: "up", Step: minuteStep}, tr, qbv5.RequestTypeTimeSeries, nil).Fingerprint()
+	}
 
-	onTheMinute := (&promqlQuery{
-		logger:      slog.Default(),
-		query:       qbv5.PromQuery{Query: "up", Step: minuteStep},
-		tr:          qbv5.TimeRange{From: 600_000, To: 1_200_000},
-		requestType: qbv5.RequestTypeTimeSeries,
-	}).Fingerprint()
-
-	halfAStepLater := (&promqlQuery{
-		logger:      slog.Default(),
-		query:       qbv5.PromQuery{Query: "up", Step: minuteStep},
-		tr:          qbv5.TimeRange{From: 630_000, To: 1_230_000},
-		requestType: qbv5.RequestTypeTimeSeries,
-	}).Fingerprint()
-
-	aWholeMinuteLater := (&promqlQuery{
-		logger:      slog.Default(),
-		query:       qbv5.PromQuery{Query: "up", Step: minuteStep},
-		tr:          qbv5.TimeRange{From: 900_000, To: 1_500_000},
-		requestType: qbv5.RequestTypeTimeSeries,
-	}).Fingerprint()
+	onTheMinute := fingerprint(qbv5.TimeRange{From: 600_000, To: 1_200_000})
+	halfAStepLater := fingerprint(qbv5.TimeRange{From: 630_000, To: 1_230_000})
+	aWholeMinuteLater := fingerprint(qbv5.TimeRange{From: 900_000, To: 1_500_000})
 
 	require.NotEmpty(t, onTheMinute)
-	assert.NotEqual(t, onTheMinute, halfAStepLater, "windows half a step apart share no instants")
+	assert.Empty(t, halfAStepLater, "a window off the grid is not cached")
 	assert.Equal(t, onTheMinute, aWholeMinuteLater, "windows whole steps apart report at the same instants")
+}
+
+func TestPromQLWindowIsHalfOpenOnTheStepGrid(t *testing.T) {
+	minuteStep := qbv5.Step{Duration: time.Minute}
+	window := func(tr qbv5.TimeRange) qbv5.TimeRange {
+		from, to := newPromqlQuery(slog.Default(), nil, qbv5.PromQuery{Query: "up", Step: minuteStep}, tr, qbv5.RequestTypeTimeSeries, nil).Window()
+		return qbv5.TimeRange{From: from, To: to}
+	}
+
+	assert.Equal(t, qbv5.TimeRange{From: 600_000, To: 1_260_000}, window(qbv5.TimeRange{From: 600_000, To: 1_200_000}), "the instant at the end is evaluated and lies inside the window")
+	assert.Equal(t, qbv5.TimeRange{From: 600_000, To: 1_260_000}, window(qbv5.TimeRange{From: 600_000, To: 1_230_000}), "the last instant is the last grid point at or before the end")
+
+	ranged := newPromqlQuery(slog.Default(), nil, qbv5.PromQuery{Query: "up", Step: minuteStep}, qbv5.TimeRange{From: 600_000, To: 1_200_000}, qbv5.RequestTypeTimeSeries, nil).ranged(qbv5.TimeRange{From: 900_000, To: 1_260_000})
+	assert.Equal(t, qbv5.TimeRange{From: 900_000, To: 1_200_000}, ranged.tr, "a gap of the window evaluates up to the instant before its end")
 }
 
 func TestToResultDropsNonFiniteValues(t *testing.T) {

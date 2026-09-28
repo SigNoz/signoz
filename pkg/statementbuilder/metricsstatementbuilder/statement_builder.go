@@ -8,7 +8,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -24,17 +23,7 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-const (
-	RateTmpl = `multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) / (ts - lagInFrame(ts, 1) OVER rate_window))`
-
-	IncreaseTmpl = `multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value, per_series_value - lagInFrame(per_series_value, 1) OVER rate_window)`
-
-	RateMultiTemporalityTmpl = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, multiIf(row_number() OVER rate_window = 1, nan, (%s - lagInFrame(%s, 1) OVER rate_window) < 0, %s / (ts - lagInFrame(ts, 1) OVER rate_window), (%s - lagInFrame(%s, 1) OVER rate_window) / (ts - lagInFrame(ts, 1) OVER rate_window))) AS per_series_value`
-
-	IncreaseMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, multiIf(row_number() OVER rate_window = 1, nan, (%s - lagInFrame(%s, 1) OVER rate_window) < 0, %s, (%s - lagInFrame(%s, 1) OVER rate_window))) AS per_series_value`
-
-	OthersMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, %s) AS per_series_value`
-)
+const OthersMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, %s) AS per_series_value`
 
 type StatementBuilder struct {
 	logger        *slog.Logger
@@ -154,9 +143,7 @@ func (b *StatementBuilder) buildPipelineStatement(
 	// samples_v4/agg (unioned with the reduced tables) otherwise. The buffer is
 	// shaped exactly like samples_v4 / time_series_v4, so once the table names are
 	// chosen the rest of the pipeline is unchanged.
-	useBuffer := agg.Reduced &&
-		end-start < metricstelemetryschema.OneDayInMilliseconds &&
-		start >= uint64(time.Now().UnixMilli())-metricstelemetryschema.OneDayInMilliseconds
+	useBuffer := usesBuffer(start, end, agg)
 
 	samplesTable, _ := metricstelemetryschema.WhichSamplesTableToUse(start, end, agg.Type, agg.TimeAggregation, useBuffer, agg.TableHints)
 	tsStart, tsEnd, _, tsTable := metricstelemetryschema.WhichTSTableToUse(start, end, useBuffer, agg.TableHints)
@@ -199,6 +186,9 @@ func (b *StatementBuilder) buildPipelineStatement(
 	if agg.Reduced && !useBuffer {
 		var tsCTE string
 		var tsArgs []any
+		// The reduced rows hold per-bucket values that need no predecessor,
+		// so this half starts where the answer starts.
+		start := start + querybuilder.MetricRateLookbackMs(uint64(query.StepInterval.Milliseconds()), cteQuery)
 		// time series rows are written on hour boundaries
 		tsStart := start - (start % metricstelemetryschema.OneHourInMilliseconds)
 		if tsCTE, tsArgs, err = b.buildReducedTimeSeriesCTE(ctx, orgID, tsStart, end, cteQuery, keys, variables); err != nil {
@@ -652,31 +642,28 @@ func (b *StatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 
 	innerQuery, innerArgs := baseSb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
 
+	lookbackSec := querybuilder.RateLookbackMs(uint64(stepSec)*1000) / 1000
+	var expr string
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
-		wrapped := sqlbuilder.NewSelectBuilder()
-		wrapped.Select("ts")
-		for i, g := range query.GroupBy {
-			wrapped.SelectMore(sqlbuilder.Escape(GroupByColumnAlias(i, g.Name)))
-		}
-		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", RateTmpl))
-		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", sqlbuilder.Escape(innerQuery)))
-		q, args := wrapped.BuildWithFlavor(sqlbuilder.ClickHouse, innerArgs...)
-		return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, nil
-
+		expr = RateExpr(lookbackSec)
 	case metrictypes.TimeAggregationIncrease:
-		wrapped := sqlbuilder.NewSelectBuilder()
-		wrapped.Select("ts")
-		for i, g := range query.GroupBy {
-			wrapped.SelectMore(sqlbuilder.Escape(GroupByColumnAlias(i, g.Name)))
-		}
-		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", IncreaseTmpl))
-		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", sqlbuilder.Escape(innerQuery)))
-		q, args := wrapped.BuildWithFlavor(sqlbuilder.ClickHouse, innerArgs...)
-		return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, nil
+		expr = IncreaseExpr(lookbackSec)
 	default:
 		return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", innerQuery), innerArgs, nil
 	}
+	wrapped := sqlbuilder.NewSelectBuilder()
+	wrapped.Select("ts")
+	for i, g := range query.GroupBy {
+		wrapped.SelectMore(sqlbuilder.Escape(GroupByColumnAlias(i, g.Name)))
+	}
+	wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", expr))
+	wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", sqlbuilder.Escape(innerQuery)))
+	q, args := wrapped.BuildWithFlavor(sqlbuilder.ClickHouse, innerArgs...)
+	// The lookback rows exist to give the first buckets a predecessor; they
+	// are not part of the answer.
+	q = fmt.Sprintf("SELECT * FROM (%s) WHERE ts >= toDateTime(%d)", q, (start+querybuilder.RateLookbackMs(uint64(stepSec)*1000))/1000)
+	return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, nil
 }
 
 func (b *StatementBuilder) buildTemporalAggForMultipleTemporalities(
@@ -710,21 +697,15 @@ func (b *StatementBuilder) buildTemporalAggForMultipleTemporalities(
 		aggForDeltaTemporality = fmt.Sprintf("%s/%d", aggForDeltaTemporality, stepSec)
 	}
 
+	lookbackSec := querybuilder.RateLookbackMs(uint64(stepSec)*1000) / 1000
+	usesLookback := false
 	switch query.Aggregations[0].TimeAggregation {
 	case metrictypes.TimeAggregationRate:
-		rateExpr := fmt.Sprintf(RateMultiTemporalityTmpl,
-			aggForDeltaTemporality,
-			aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality,
-			aggForCumulativeTemporality, aggForCumulativeTemporality,
-		)
-		sb.SelectMore(rateExpr)
+		sb.SelectMore(rateMultiTemporalityExpr(lookbackSec, aggForDeltaTemporality, aggForCumulativeTemporality))
+		usesLookback = true
 	case metrictypes.TimeAggregationIncrease:
-		increaseExpr := fmt.Sprintf(IncreaseMultiTemporality,
-			aggForDeltaTemporality,
-			aggForCumulativeTemporality, aggForCumulativeTemporality, aggForCumulativeTemporality,
-			aggForCumulativeTemporality, aggForCumulativeTemporality,
-		)
-		sb.SelectMore(increaseExpr)
+		sb.SelectMore(increaseMultiTemporalityExpr(lookbackSec, aggForDeltaTemporality, aggForCumulativeTemporality))
+		usesLookback = true
 	default:
 		expr := fmt.Sprintf(OthersMultiTemporality, aggForDeltaTemporality, aggForCumulativeTemporality)
 		sb.SelectMore(expr)
@@ -741,6 +722,9 @@ func (b *StatementBuilder) buildTemporalAggForMultipleTemporalities(
 	sb.GroupBy(GroupByAliases(query.GroupBy)...)
 	queryWithoutWindow, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, timeSeriesCTEArgs...)
 	queryWithWindowAndOrder := queryWithoutWindow + " WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint ASC, ts ASC) ORDER BY ts"
+	if usesLookback {
+		queryWithWindowAndOrder = fmt.Sprintf("SELECT * FROM (%s) WHERE ts >= toDateTime(%d)", queryWithWindowAndOrder, (start+querybuilder.RateLookbackMs(uint64(stepSec)*1000))/1000)
+	}
 	return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", queryWithWindowAndOrder), args, nil
 }
 

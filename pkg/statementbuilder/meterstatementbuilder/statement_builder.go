@@ -364,7 +364,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		for i, g := range query.GroupBy {
 			wrapped.SelectMore(sqlbuilder.Escape(metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
 		}
-		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", metricsstatementbuilder.RateTmpl))
+		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", metricsstatementbuilder.RateExpr(querybuilder.RateLookbackMs(uint64(query.StepInterval.Milliseconds()))/1000)))
 		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
 		q, args := wrapped.BuildWithFlavor(sqlbuilder.ClickHouse, innerArgs...)
 		return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, nil
@@ -375,7 +375,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		for i, g := range query.GroupBy {
 			wrapped.SelectMore(sqlbuilder.Escape(metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
 		}
-		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", metricsstatementbuilder.IncreaseTmpl))
+		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", metricsstatementbuilder.IncreaseExpr(querybuilder.RateLookbackMs(uint64(query.StepInterval.Milliseconds()))/1000)))
 		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
 		q, args := wrapped.BuildWithFlavor(sqlbuilder.ClickHouse, innerArgs...)
 		return fmt.Sprintf("__temporal_aggregation_cte AS (%s)", q), args, nil

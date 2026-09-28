@@ -2,38 +2,64 @@ package querier
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"hash/fnv"
 	"log/slog"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// BucketCache is the interface for bucket-based caching.
-type BucketCache interface {
-	// cached portion + list of gaps to fetch
-	GetMissRanges(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step) (cached *qbtypes.Result, missing []*qbtypes.TimeRange)
-	// store fresh buckets for future hits
-	Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result)
+// cacheSchemaVersion is part of every key. Bump it when the stored shape or
+// its meaning changes so entries written by an older build are never read.
+const cacheSchemaVersion = "2"
+
+// maxEdgeBuckets bounds the partial-end buckets kept per key; every distinct
+// unaligned window end would otherwise add one.
+const maxEdgeBuckets = 8
+
+// CacheRequest identifies what a query wants from the cache.
+type CacheRequest struct {
+	// Key is the cache key of the query, computed once per request so the
+	// read and the write use the same entry.
+	Key string
+	// Window is [From, To) in epoch ms. A point at ts covers [ts, ts+step),
+	// so a point belongs to the window when ts >= From and ts+step <= To.
+	Window qbtypes.TimeRange
+	Step   qbtypes.Step
+	Kind   qbtypes.RequestType
+	// TrimHeatmapAxis drops axis buckets that no served column reached; only
+	// builder heatmaps compute their axis from the served columns.
+	TrimHeatmapAxis bool
 }
 
-// bucketCache implements the BucketCache interface.
+// BucketCache stores time series results per step-grid range and serves the
+// cached part of a window together with the ranges still to be fetched.
+type BucketCache interface {
+	GetMissRanges(ctx context.Context, orgID valuer.UUID, req CacheRequest) (cached *qbtypes.Result, missing []qbtypes.TimeRange)
+	// Put stores the result of fetching window, which must be inside req.Window.
+	Put(ctx context.Context, orgID valuer.UUID, req CacheRequest, window qbtypes.TimeRange, fresh *qbtypes.Result)
+}
+
 type bucketCache struct {
 	cache        cache.Cache
 	logger       *slog.Logger
 	cacheTTL     time.Duration
 	fluxInterval time.Duration
+	// keyLocks serialises read-modify-write cycles of one key inside this
+	// process; two refreshes of the same panel must not drop each other's
+	// buckets.
+	keyLocks [64]sync.Mutex
 }
 
 var _ BucketCache = (*bucketCache)(nil)
 
-// NewBucketCache creates a new BucketCache implementation.
 func NewBucketCache(settings factory.ProviderSettings, cache cache.Cache, cacheTTL time.Duration, fluxInterval time.Duration) BucketCache {
 	cacheSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier/bucket_cache")
 	return &bucketCache{
@@ -44,872 +70,540 @@ func NewBucketCache(settings factory.ProviderSettings, cache cache.Cache, cacheT
 	}
 }
 
-// GetMissRanges returns cached data and missing time ranges.
-func (bc *bucketCache) GetMissRanges(
-	ctx context.Context,
-	orgID valuer.UUID,
-	q qbtypes.Query,
-	step qbtypes.Step,
-) (cached *qbtypes.Result, missing []*qbtypes.TimeRange) {
-
-	// Get query window
-	startMs, endMs := q.Window()
-
-	stepMs := uint64(step.Milliseconds())
-	startOffsetMs := calculateStartOffset(q, startMs, stepMs)
-
-	bc.logger.DebugContext(ctx, "getting miss ranges", slog.String("fingerprint", q.Fingerprint()), slog.Uint64("start", startMs), slog.Uint64("end", endMs))
-
-	// Generate cache key
-	cacheKey := bc.generateCacheKey(q)
-
-	bc.logger.DebugContext(ctx, "cache key", slog.String("cache_key", cacheKey))
-
-	// Try to get cached data
-	var data qbtypes.CachedData
-	err := bc.cache.Get(ctx, orgID, cacheKey, &data)
-	if err != nil {
-		if !errors.Ast(err, errors.TypeNotFound) {
-			bc.logger.ErrorContext(ctx, "error getting cached data", errors.Attr(err))
-		}
-		// No cached data, need to fetch entire range
-		missing = []*qbtypes.TimeRange{{From: startMs, To: endMs}}
-		return nil, missing
-	}
-
-	// Find missing ranges with step alignment
-	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs, startOffsetMs)
-	bc.logger.DebugContext(ctx, "missing ranges", slog.Any("missing", missing), slog.Uint64("step", stepMs))
-
-	// If no cached data overlaps with requested range, return empty result
-	if len(data.Buckets) == 0 {
-		return nil, missing
-	}
-
-	// Extract relevant buckets and merge them
-	relevantBuckets := bc.filterRelevantBuckets(data.Buckets, startMs, endMs)
-	if len(relevantBuckets) == 0 {
-		return nil, missing
-	}
-
-	// Merge buckets into a single result
-	mergedResult := bc.mergeBuckets(ctx, relevantBuckets, data.Warnings)
-
-	mergedResult = bc.filterResultToTimeRange(mergedResult, q, startMs, endMs, stepMs)
-
-	return mergedResult, missing
+// CacheKey derives the cache key of a query fingerprint.
+func CacheKey(fingerprint string) string {
+	return "v5:query:" + cacheSchemaVersion + ":" + cachetypes.NewSha1CacheKey(fingerprint)
 }
 
-// Put stores fresh query results in the cache.
-func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result) {
-	// Get query window
-	startMs, endMs := q.Window()
-
-	stepMs := uint64(step.Milliseconds())
-	startOffsetMs := calculateStartOffset(q, startMs, stepMs)
-
-	// Calculate the flux boundary - data after this point should not be cached
-	currentMs := uint64(time.Now().UnixMilli())
-	fluxBoundary := currentMs - uint64(bc.fluxInterval.Milliseconds())
-
-	// If the entire range is within flux interval, skip caching
-	if startMs >= fluxBoundary {
-		bc.logger.DebugContext(ctx, "entire range within flux interval, skipping cache",
-			slog.Uint64("start", startMs),
-			slog.Uint64("end", endMs),
-			slog.Uint64("flux_boundary", fluxBoundary))
-		return
-	}
-
-	// Adjust endMs to not include data within flux interval
-	cachableEndMs := endMs
-	if endMs > fluxBoundary {
-		cachableEndMs = fluxBoundary
-		bc.logger.DebugContext(ctx, "adjusting end time to exclude flux interval",
-			slog.Uint64("original_end", endMs),
-			slog.Uint64("cachable_end", cachableEndMs))
-	}
-
-	// Generate cache key
-	cacheKey := bc.generateCacheKey(q)
-
-	// Get existing cached data
-	var existingData qbtypes.CachedData
-	if err := bc.cache.Get(ctx, orgID, cacheKey, &existingData); err != nil {
-		existingData = qbtypes.CachedData{}
-	}
-
-	// Trim the result to exclude data within flux interval
-	trimmedResult := bc.trimResultToFluxBoundary(fresh, cachableEndMs)
-	if trimmedResult == nil {
-		// Result type is not cacheable (raw or scalar)
-		return
-	}
-
-	// Adjust start and end times to only cache complete intervals
-	cachableStartMs := startMs
-
-	// If we have a step interval, adjust boundaries to only cache complete intervals
-	if stepMs > 0 {
-		// If start is not aligned, round up to next step boundary (first complete interval)
-		cachableStartMs = alignUpToStep(startMs, stepMs, startOffsetMs)
-
-		// If end is not aligned, round down to previous step boundary (last complete interval)
-		cachableEndMs = alignDownToStep(cachableEndMs, stepMs, startOffsetMs)
-
-		// If after adjustment we have no complete intervals, don't cache
-		if cachableStartMs >= cachableEndMs {
-			bc.logger.DebugContext(ctx, "no complete intervals to cache",
-				slog.Uint64("original_start", startMs),
-				slog.Uint64("original_end", endMs),
-				slog.Uint64("adjusted_start", cachableStartMs),
-				slog.Uint64("adjusted_end", cachableEndMs),
-				slog.Uint64("step", stepMs))
-			return
-		}
-	}
-
-	// Convert trimmed result to buckets with adjusted boundaries
-	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs)
-
-	// If no fresh buckets and no existing data, don't cache
-	if len(freshBuckets) == 0 && len(existingData.Buckets) == 0 {
-		return
-	}
-
-	// Merge with existing buckets
-	mergedBuckets := bc.mergeAndDeduplicateBuckets(existingData.Buckets, freshBuckets)
-
-	// Update warnings
-	allWarnings := append(existingData.Warnings, trimmedResult.Warnings...)
-	uniqueWarnings := bc.deduplicateWarnings(allWarnings)
-
-	// Create updated cached data
-	updatedData := qbtypes.CachedData{
-		Buckets:  mergedBuckets,
-		Warnings: uniqueWarnings,
-	}
-
-	// Marshal and store in cache
-	if err := bc.cache.Set(ctx, orgID, cacheKey, &updatedData, bc.cacheTTL); err != nil {
-		bc.logger.ErrorContext(ctx, "error setting cached data", errors.Attr(err))
-	}
+// windowGrid splits a window into the whole steps it contains (body) and the
+// partial step at each end. A window shorter than one step, or one that sits
+// inside a single step, is one partial range (whole).
+type windowGrid struct {
+	head, body, tail, whole *qbtypes.TimeRange
 }
 
-// generateCacheKey creates a unique cache key based on query fingerprint.
-func (bc *bucketCache) generateCacheKey(q qbtypes.Query) string {
-	fingerprint := q.Fingerprint()
-
-	return fmt.Sprintf("v5:query:%s", fingerprint)
+func gridOf(window qbtypes.TimeRange, stepMs uint64) windowGrid {
+	from, to := window.From, window.To
+	gridStart := alignUp(from, stepMs)
+	gridEnd := alignDown(to, stepMs)
+	if gridStart > gridEnd || (gridStart == gridEnd && from%stepMs != 0 && to%stepMs != 0) {
+		return windowGrid{whole: &qbtypes.TimeRange{From: from, To: to}}
+	}
+	var g windowGrid
+	if from < gridStart {
+		g.head = &qbtypes.TimeRange{From: from, To: gridStart}
+	}
+	if gridStart < gridEnd {
+		g.body = &qbtypes.TimeRange{From: gridStart, To: gridEnd}
+	}
+	if gridEnd < to {
+		g.tail = &qbtypes.TimeRange{From: gridEnd, To: to}
+	}
+	return g
 }
 
-// findMissingRangesWithStep identifies time ranges not covered by cached buckets
-// with step alignment. Boundaries are whole steps from startOffsetMs.
-func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64, startOffsetMs uint64) []*qbtypes.TimeRange {
-	// When step is 0 or window is too small to be cached, use simple algorithm
-	if stepMs == 0 || (startMs+stepMs) > endMs {
-		return bc.findMissingRangesBasic(buckets, startMs, endMs)
+func alignDown(ts, stepMs uint64) uint64 { return ts - ts%stepMs }
+
+func alignUp(ts, stepMs uint64) uint64 {
+	if ts%stepMs == 0 {
+		return ts
 	}
+	return ts - ts%stepMs + stepMs
+}
 
-	// When no buckets exist, handle partial windows specially
-	if len(buckets) == 0 {
-		missing := make([]*qbtypes.TimeRange, 0, 3)
+// decodedBucket is a stored bucket with its value decoded. Buckets whose
+// value does not decode are dropped by the reader, which reports their range
+// as missing so the next write replaces them.
+type decodedBucket struct {
+	*qbtypes.CachedBucket
+	data *qbtypes.TimeSeriesData
+}
 
-		currentMs := startMs
-
-		// Check if start is not aligned - add partial window
-		if nextAggStart := alignUpToStep(startMs, stepMs, startOffsetMs); nextAggStart != startMs {
-			missing = append(missing, &qbtypes.TimeRange{
-				From: startMs,
-				To:   min(nextAggStart, endMs),
-			})
-			currentMs = nextAggStart
+func (bc *bucketCache) decode(ctx context.Context, buckets []*qbtypes.CachedBucket) []decodedBucket {
+	decoded := make([]decodedBucket, 0, len(buckets))
+	for _, bucket := range buckets {
+		if bucket == nil || bucket.EndMs <= bucket.StartMs {
+			continue
 		}
-
-		// Add the main range if needed
-		if currentMs < endMs {
-			missing = append(missing, &qbtypes.TimeRange{
-				From: currentMs,
-				To:   endMs,
-			})
+		data, err := decodeBucketValue(bucket.Value)
+		if err != nil {
+			bc.logger.WarnContext(ctx, "dropping cached bucket that does not decode", errors.Attr(err), slog.Uint64("start", bucket.StartMs), slog.Uint64("end", bucket.EndMs))
+			continue
 		}
-
-		return missing
+		decoded = append(decoded, decodedBucket{CachedBucket: bucket, data: data})
 	}
-
-	// Check if already sorted before sorting
-	needsSort := false
-	for i := 1; i < len(buckets); i++ {
-		if buckets[i].StartMs < buckets[i-1].StartMs {
-			needsSort = true
-			break
-		}
-	}
-
-	if needsSort {
-		slices.SortFunc(buckets, func(a, b *qbtypes.CachedBucket) int {
+	slices.SortStableFunc(decoded, func(a, b decodedBucket) int {
+		if a.StartMs != b.StartMs {
 			if a.StartMs < b.StartMs {
 				return -1
 			}
-			if a.StartMs > b.StartMs {
-				return 1
-			}
-			return 0
-		})
-	}
-
-	// Pre-allocate with reasonable capacity
-	missing := make([]*qbtypes.TimeRange, 0, len(buckets)+2)
-
-	currentMs := startMs
-
-	// Check if start is not aligned - add partial window
-	if nextAggStart := alignUpToStep(startMs, stepMs, startOffsetMs); nextAggStart != startMs {
-		missing = append(missing, &qbtypes.TimeRange{
-			From: startMs,
-			To:   min(nextAggStart, endMs),
-		})
-		currentMs = nextAggStart
-	}
-
-	for _, bucket := range buckets {
-		// Skip buckets that end before current position
-		if bucket.EndMs <= currentMs {
-			continue
+			return 1
 		}
-		// Stop processing if we've reached the end time
-		if bucket.StartMs >= endMs {
-			break
-		}
-
-		// Align bucket boundaries to step intervals
-		alignedBucketStart := alignUpToStep(bucket.StartMs, stepMs, startOffsetMs)
-
-		// Add gap before this bucket if needed
-		if currentMs < alignedBucketStart && currentMs < endMs {
-			missing = append(missing, &qbtypes.TimeRange{
-				From: currentMs,
-				To:   min(alignedBucketStart, endMs),
-			})
-		}
-
-		// Update current position to the end of this bucket
-		// But ensure it's aligned to step boundary
-		bucketEnd := min(bucket.EndMs, endMs)
-		// The step the window ends inside reaches past it, so that stretch is
-		// missing however far the bucket runs.
-		bucketEnd = min(bucketEnd, alignDownToStep(endMs, stepMs, startOffsetMs))
-		if bucketEnd < endMs {
-			// Round down to step boundary
-			bucketEnd = alignDownToStep(bucketEnd, stepMs, startOffsetMs)
-		}
-		currentMs = max(currentMs, bucketEnd)
-	}
-
-	// Add final gap if needed
-	if currentMs < endMs {
-		missing = append(missing, &qbtypes.TimeRange{
-			From: currentMs,
-			To:   endMs,
-		})
-	}
-
-	// Don't merge ranges - keep partial windows separate for proper handling
-	return missing
-}
-
-// calculateStartOffset returns how far into a step a query's values sit. Only
-// promql reports at the window start and every step after it; the rest report
-// on absolute step boundaries.
-func calculateStartOffset(q qbtypes.Query, startMs, stepMs uint64) uint64 {
-	if _, isPromQL := q.(*promqlQuery); !isPromQL || stepMs == 0 {
 		return 0
-	}
-	return startMs % stepMs
+	})
+	return decoded
 }
 
-// With a 5m step and no offset the times seen by a query are 10:00, 10:05, 10:10. So 10:07
-// is at an offset of 2m, and 10:05 is at 0.
-//
-// With a 1m step and a 30s offset the times seen are 10:00:30, 10:01:30, 10:02:30. So 10:01:00
-// is at an offset of 30s.
-func calculateOffsetIntoStep(timestampMs, stepMs, startOffsetMs uint64) uint64 {
+func (bc *bucketCache) GetMissRanges(ctx context.Context, orgID valuer.UUID, req CacheRequest) (*qbtypes.Result, []qbtypes.TimeRange) {
+	window, stepMs := req.Window, uint64(req.Step.Milliseconds())
+	if window.From >= window.To {
+		return nil, nil
+	}
 	if stepMs == 0 {
-		return 0
+		return nil, []qbtypes.TimeRange{window}
 	}
-	return ((timestampMs % stepMs) + stepMs - startOffsetMs%stepMs) % stepMs
-}
 
-// alignUpToStep returns the first time seen by a query at or after timestampMs.
-func alignUpToStep(timestampMs, stepMs, startOffsetMs uint64) uint64 {
-	offset := calculateOffsetIntoStep(timestampMs, stepMs, startOffsetMs)
-	if offset == 0 {
-		return timestampMs
+	var data qbtypes.CachedData
+	if err := bc.cache.Get(ctx, orgID, req.Key, &data); err != nil {
+		if !errors.Ast(err, errors.TypeNotFound) {
+			bc.logger.DebugContext(ctx, "cache read failed, treating as miss", errors.Attr(err))
+		}
+		return nil, []qbtypes.TimeRange{window}
 	}
-	return timestampMs - offset + stepMs
-}
+	buckets := bc.decode(ctx, data.Buckets)
+	grid := gridOf(window, stepMs)
 
-// alignDownToStep returns the last time seen by a query at or before timestampMs.
-func alignDownToStep(timestampMs, stepMs, startOffsetMs uint64) uint64 {
-	return timestampMs - calculateOffsetIntoStep(timestampMs, stepMs, startOffsetMs)
-}
-
-// findMissingRangesBasic is the simple algorithm without step alignment.
-func (bc *bucketCache) findMissingRangesBasic(buckets []*qbtypes.CachedBucket, startMs, endMs uint64) []*qbtypes.TimeRange {
-	// Check if already sorted before sorting
-	needsSort := false
-	for i := 1; i < len(buckets); i++ {
-		if buckets[i].StartMs < buckets[i-1].StartMs {
-			needsSort = true
-			break
+	var served []decodedBucket
+	var missing []qbtypes.TimeRange
+	if grid.whole != nil {
+		if edge, ok := findEdge(buckets, qbtypes.CachedBucketWhole, *grid.whole); ok {
+			served = append(served, edge)
+		} else {
+			missing = append(missing, *grid.whole)
+		}
+		return bc.serve(ctx, req, window, served, missing)
+	}
+	if grid.head != nil {
+		if edge, ok := findEdge(buckets, qbtypes.CachedBucketHead, *grid.head); ok {
+			served = append(served, edge)
+		} else {
+			missing = append(missing, *grid.head)
 		}
 	}
-
-	if needsSort {
-		slices.SortFunc(buckets, func(a, b *qbtypes.CachedBucket) int {
-			if a.StartMs < b.StartMs {
-				return -1
-			}
-			if a.StartMs > b.StartMs {
-				return 1
-			}
-			return 0
-		})
+	if grid.body != nil {
+		covering, gaps := coverBody(buckets, *grid.body)
+		served = append(served, covering...)
+		missing = append(missing, gaps...)
 	}
+	if grid.tail != nil {
+		if edge, ok := findEdge(buckets, qbtypes.CachedBucketTail, *grid.tail); ok {
+			served = append(served, edge)
+		} else {
+			missing = append(missing, *grid.tail)
+		}
+	}
+	return bc.serve(ctx, req, window, served, mergeAdjacent(missing))
+}
 
-	// Pre-allocate with reasonable capacity
-	missing := make([]*qbtypes.TimeRange, 0, len(buckets)+1)
-	currentMs := startMs
-
+func findEdge(buckets []decodedBucket, edge qbtypes.CachedBucketEdge, r qbtypes.TimeRange) (decodedBucket, bool) {
 	for _, bucket := range buckets {
-		// Skip buckets that end before start time
-		if bucket.EndMs <= startMs {
+		if bucket.Edge == edge && bucket.StartMs == r.From && bucket.EndMs == r.To {
+			return bucket, true
+		}
+	}
+	return decodedBucket{}, false
+}
+
+// coverBody returns the body buckets that overlap body and the parts of body
+// no bucket covers. Body buckets are disjoint and sorted.
+func coverBody(buckets []decodedBucket, body qbtypes.TimeRange) ([]decodedBucket, []qbtypes.TimeRange) {
+	var covering []decodedBucket
+	var gaps []qbtypes.TimeRange
+	cursor := body.From
+	for _, bucket := range buckets {
+		if bucket.Edge != qbtypes.CachedBucketBody || bucket.EndMs <= body.From {
 			continue
 		}
-		// Stop processing if we've reached the end time
-		if bucket.StartMs >= endMs {
+		if bucket.StartMs >= body.To {
 			break
 		}
-
-		// Add gap before this bucket if needed
-		if currentMs < bucket.StartMs {
-			missing = append(missing, &qbtypes.TimeRange{
-				From: currentMs,
-				To:   min(bucket.StartMs, endMs),
-			})
+		if cursor < bucket.StartMs {
+			gaps = append(gaps, qbtypes.TimeRange{From: cursor, To: bucket.StartMs})
 		}
-
-		// Update current position, but don't go past the end time
-		currentMs = max(currentMs, min(bucket.EndMs, endMs))
+		covering = append(covering, bucket)
+		cursor = max(cursor, min(bucket.EndMs, body.To))
 	}
-
-	// Add final gap if needed
-	if currentMs < endMs {
-		// Check if we need to limit due to flux interval
-		currentTime := uint64(time.Now().UnixMilli())
-		fluxBoundary := currentTime - uint64(bc.fluxInterval.Milliseconds())
-
-		// If the missing range extends beyond flux boundary, limit it
-		if currentMs < fluxBoundary {
-			// Add range up to flux boundary
-			missing = append(missing, &qbtypes.TimeRange{
-				From: currentMs,
-				To:   min(endMs, fluxBoundary),
-			})
-			// If endMs is beyond flux boundary, add that as another missing range
-			if endMs > fluxBoundary {
-				missing = append(missing, &qbtypes.TimeRange{
-					From: fluxBoundary,
-					To:   endMs,
-				})
-			}
-		} else {
-			// Entire missing range is within flux interval
-			missing = append(missing, &qbtypes.TimeRange{
-				From: currentMs,
-				To:   endMs,
-			})
-		}
+	if cursor < body.To {
+		gaps = append(gaps, qbtypes.TimeRange{From: cursor, To: body.To})
 	}
-
-	// Don't merge ranges - keep partial windows separate for proper handling
-	return missing
+	return covering, gaps
 }
 
-// filterRelevantBuckets returns buckets that overlap with the requested time range.
-func (bc *bucketCache) filterRelevantBuckets(buckets []*qbtypes.CachedBucket, startMs, endMs uint64) []*qbtypes.CachedBucket {
-	// Pre-allocate with estimated capacity
-	relevant := make([]*qbtypes.CachedBucket, 0, len(buckets))
-
-	for _, bucket := range buckets {
-		// Check if bucket overlaps with requested range
-		if bucket.EndMs > startMs && bucket.StartMs < endMs {
-			relevant = append(relevant, bucket)
-		}
+// mergeAdjacent joins ranges that touch, so a partial first step and the
+// whole steps after it run as one statement.
+func mergeAdjacent(ranges []qbtypes.TimeRange) []qbtypes.TimeRange {
+	if len(ranges) == 0 {
+		return nil
 	}
-
-	// Sort by start time
-	slices.SortFunc(relevant, func(a, b *qbtypes.CachedBucket) int {
-		if a.StartMs < b.StartMs {
+	slices.SortFunc(ranges, func(a, b qbtypes.TimeRange) int {
+		if a.From < b.From {
 			return -1
 		}
-		if a.StartMs > b.StartMs {
+		if a.From > b.From {
 			return 1
 		}
 		return 0
 	})
-
-	return relevant
-}
-
-// mergeBuckets combines multiple cached buckets into a single result.
-func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.CachedBucket, warnings []string) *qbtypes.Result {
-	if len(buckets) == 0 {
-		return &qbtypes.Result{}
-	}
-
-	// All buckets should have the same type
-	resultType := buckets[0].Type
-
-	// Aggregate stats
-	var totalStats qbtypes.ExecStats
-	for _, bucket := range buckets {
-		totalStats.RowsScanned += bucket.Stats.RowsScanned
-		totalStats.BytesScanned += bucket.Stats.BytesScanned
-		totalStats.DurationMS += bucket.Stats.DurationMS
-	}
-
-	// Merge values based on type
-	var mergedValue any
-	switch resultType {
-	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
-		mergedValue = bc.mergeTimeSeriesValues(ctx, buckets)
-		// Raw and Scalar types are not cached, so no merge needed
-	}
-
-	return &qbtypes.Result{
-		Type:     resultType,
-		Value:    mergedValue,
-		Stats:    totalStats,
-		Warnings: warnings,
-	}
-}
-
-// mergeTimeSeriesValues merges time series data from multiple buckets.
-func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbtypes.CachedBucket) *qbtypes.TimeSeriesData {
-	// Estimate capacity based on bucket count
-	estimatedSeries := len(buckets) * 10
-
-	// Flat map with composite key for better performance
-	type seriesKey struct {
-		aggIndex int
-		key      string
-	}
-	seriesMap := make(map[seriesKey]*qbtypes.TimeSeries, estimatedSeries)
-
-	decodedTimeSeriesData := make([]*qbtypes.TimeSeriesData, 0, len(buckets))
-
-	// Alias and Meta are taken from whichever cached bucket covers the latest
-	// range, and the buckets do not arrive in StartMs order, so keep the winner
-	// per AggregationBucket.Index alongside the StartMs that won it.
-	aggregationIndexToLatest := map[int]*qbtypes.AggregationBucket{}
-	aggregationIndexToLatestStartMs := map[int]uint64{}
-
-	for _, bucket := range buckets {
-		var tsData *qbtypes.TimeSeriesData
-		if err := json.Unmarshal(bucket.Value, &tsData); err != nil {
-			bc.logger.ErrorContext(ctx, "failed to unmarshal time series data", errors.Attr(err))
+	merged := []qbtypes.TimeRange{ranges[0]}
+	for _, r := range ranges[1:] {
+		last := &merged[len(merged)-1]
+		if r.From <= last.To {
+			last.To = max(last.To, r.To)
 			continue
 		}
-		decodedTimeSeriesData = append(decodedTimeSeriesData, tsData)
-
-		for _, aggBucket := range tsData.Aggregations {
-			if _, seen := aggregationIndexToLatest[aggBucket.Index]; !seen || bucket.StartMs >= aggregationIndexToLatestStartMs[aggBucket.Index] {
-				aggregationIndexToLatest[aggBucket.Index] = aggBucket
-				aggregationIndexToLatestStartMs[aggBucket.Index] = bucket.StartMs
-			}
-		}
+		merged = append(merged, r)
 	}
-
-	mergedUpperBounds := qbtypes.MergeBucketUpperBounds(decodedTimeSeriesData...)
-
-	for _, tsData := range decodedTimeSeriesData {
-		for _, aggBucket := range tsData.Aggregations {
-			aggBucket.ReindexValuesToNewUpperBounds(mergedUpperBounds[aggBucket.Index])
-
-			for _, series := range aggBucket.Series {
-				// Create series key from labels
-				key := seriesKey{
-					aggIndex: aggBucket.Index,
-					key:      qbtypes.GetUniqueSeriesKey(series.Labels),
-				}
-
-				if existingSeries, ok := seriesMap[key]; ok {
-					// Merge values, avoiding duplicate timestamps
-					timestampMap := make(map[int64]bool)
-					for _, v := range existingSeries.Values {
-						timestampMap[v.Timestamp] = true
-					}
-
-					// Pre-allocate capacity for merged values
-					newCap := len(existingSeries.Values) + len(series.Values)
-					if cap(existingSeries.Values) < newCap {
-						newValues := make([]*qbtypes.TimeSeriesValue, len(existingSeries.Values), newCap)
-						copy(newValues, existingSeries.Values)
-						existingSeries.Values = newValues
-					}
-
-					// Only add values with new timestamps
-					for _, v := range series.Values {
-						if !timestampMap[v.Timestamp] {
-							existingSeries.Values = append(existingSeries.Values, v)
-						}
-					}
-				} else {
-					// New series
-					seriesMap[key] = series
-				}
-			}
-		}
-	}
-
-	// Group series by aggregation index
-	aggMap := make(map[int][]*qbtypes.TimeSeries)
-	for key, series := range seriesMap {
-		aggMap[key.aggIndex] = append(aggMap[key.aggIndex], series)
-	}
-
-	// Convert map back to slice
-	result := &qbtypes.TimeSeriesData{
-		Aggregations: make([]*qbtypes.AggregationBucket, 0, len(aggMap)),
-	}
-
-	for index, seriesList := range aggMap {
-		// Sort values by timestamp for each series
-		for _, s := range seriesList {
-			// Check if already sorted before sorting
-			needsSort := false
-			for i := 1; i < len(s.Values); i++ {
-				if s.Values[i].Timestamp < s.Values[i-1].Timestamp {
-					needsSort = true
-					break
-				}
-			}
-
-			if needsSort {
-				slices.SortFunc(s.Values, func(a, b *qbtypes.TimeSeriesValue) int {
-					if a.Timestamp < b.Timestamp {
-						return -1
-					}
-					if a.Timestamp > b.Timestamp {
-						return 1
-					}
-					return 0
-				})
-			}
-		}
-
-		aggBucket := &qbtypes.AggregationBucket{
-			Index:  index,
-			Series: seriesList,
-		}
-		if latest, ok := aggregationIndexToLatest[index]; ok {
-			aggBucket.Alias = latest.Alias
-			aggBucket.Meta = latest.Meta
-		}
-		result.Aggregations = append(result.Aggregations, aggBucket)
-	}
-
-	return result
+	return merged
 }
 
-// isEmptyResult checks if a result is truly empty (no data exists) vs filtered empty (data was filtered out).
-func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFiltered bool) {
-	if result.Value == nil {
-		return true, false
+// serve assembles the response of the served buckets, keeping the points
+// inside window and the metadata of the buckets that contributed.
+func (bc *bucketCache) serve(ctx context.Context, req CacheRequest, window qbtypes.TimeRange, served []decodedBucket, missing []qbtypes.TimeRange) (*qbtypes.Result, []qbtypes.TimeRange) {
+	if len(served) == 0 {
+		return nil, missing
 	}
+	stepMs := uint64(req.Step.Milliseconds())
+	parts := make([]*qbtypes.TimeSeriesData, 0, len(served))
+	result := &qbtypes.Result{Type: req.Kind}
+	for _, bucket := range served {
+		keep := qbtypes.TimeRange{From: max(bucket.StartMs, window.From), To: min(bucket.EndMs, window.To)}
+		parts = append(parts, selectPoints(bucket.data, func(v *qbtypes.TimeSeriesValue) bool {
+			ts := uint64(v.Timestamp)
+			if bucket.Edge != qbtypes.CachedBucketBody {
+				return true
+			}
+			return ts >= keep.From && ts+stepMs <= keep.To
+		}))
+		result.Stats.RowsScanned += bucket.Stats.RowsScanned
+		result.Stats.BytesScanned += bucket.Stats.BytesScanned
+		result.Stats.DurationMS += bucket.Stats.DurationMS
+		result.Warnings = append(result.Warnings, bucket.Warnings...)
+		if result.WarningsDocURL == "" {
+			result.WarningsDocURL = bucket.WarningsDocURL
+		}
+	}
+	result.Warnings = dedupeWarnings(result.Warnings)
+	data := mergeTimeSeriesData(parts)
+	if req.TrimHeatmapAxis {
+		for _, agg := range data.Aggregations {
+			agg.TrimAxisToCountedBuckets()
+		}
+	}
+	result.Value = data
+	bc.logger.DebugContext(ctx, "served from cache", slog.String("key", req.Key), slog.Int("buckets", len(served)), slog.Any("missing", missing))
+	return result, missing
+}
 
-	switch result.Type {
+// selectPoints copies data keeping only the points keep accepts and only the
+// series and aggregations that still have points, which is what an uncached
+// query over the same window returns.
+func selectPoints(data *qbtypes.TimeSeriesData, keep func(*qbtypes.TimeSeriesValue) bool) *qbtypes.TimeSeriesData {
+	out := &qbtypes.TimeSeriesData{QueryName: data.QueryName}
+	for _, agg := range data.Aggregations {
+		outAgg := &qbtypes.AggregationBucket{Index: agg.Index, Alias: agg.Alias, Meta: agg.Meta}
+		for _, s := range agg.Series {
+			values := make([]*qbtypes.TimeSeriesValue, 0, len(s.Values))
+			for _, v := range s.Values {
+				if keep(v) {
+					values = append(values, v)
+				}
+			}
+			if len(values) == 0 {
+				continue
+			}
+			outAgg.Series = append(outAgg.Series, &qbtypes.TimeSeries{Labels: s.Labels, Values: values})
+		}
+		if len(outAgg.Series) > 0 {
+			out.Aggregations = append(out.Aggregations, outAgg)
+		}
+	}
+	return out
+}
+
+// Put stores the points of fresh that lie in window, split into a body bucket
+// of whole steps and edge buckets for the partial ends, and drops what is
+// still inside the flux interval. Body buckets that touch or overlap the new
+// one are coalesced into it, with the new points replacing the old ones.
+func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, req CacheRequest, window qbtypes.TimeRange, fresh *qbtypes.Result) {
+	stepMs := uint64(req.Step.Milliseconds())
+	if fresh == nil || stepMs == 0 || window.From >= window.To {
+		return
+	}
+	switch fresh.Type {
 	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
-		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
-			// No aggregations at all means truly empty
-			if len(tsData.Aggregations) == 0 {
-				return true, false
-			}
-
-			// Check if we have aggregations but no series (filtered out)
-			totalSeries := 0
-			for _, agg := range tsData.Aggregations {
-				totalSeries += len(agg.Series)
-			}
-
-			if totalSeries == 0 {
-				// We have aggregations but no series - data was filtered out
-				return true, true
-			}
-
-			// Check if all series have no values
-			hasValues := false
-			for _, agg := range tsData.Aggregations {
-				for _, series := range agg.Series {
-					if len(series.Values) > 0 {
-						hasValues = true
-						break
-					}
-				}
-				if hasValues {
-					break
-				}
-			}
-
-			return !hasValues, !hasValues && totalSeries > 0
-		}
-
-	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeScalar, qbtypes.RequestTypeTrace:
-		// Raw and scalar data are not cached
-		return true, false
-	}
-
-	return true, false
-}
-
-// resultToBuckets converts a query result into time-based buckets.
-func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Result, startMs, endMs uint64) []*qbtypes.CachedBucket {
-	// Check if result is empty
-	isEmpty, isFiltered := bc.isEmptyResult(result)
-
-	// Don't cache if result is empty but not filtered
-	// Empty filtered results should be cached to avoid re-querying
-	if isEmpty && !isFiltered {
-		bc.logger.DebugContext(ctx, "skipping cache for empty non-filtered result")
-		return nil
-	}
-
-	// For now, create a single bucket for the entire range
-	// In the future, we could split large ranges into smaller buckets
-	valueBytes, err := json.Marshal(result.Value)
-	if err != nil {
-		bc.logger.ErrorContext(ctx, "failed to marshal result value", errors.Attr(err))
-		return nil
-	}
-
-	// Always create a bucket, even for empty filtered results
-	// This ensures we don't re-query for data that doesn't exist
-	return []*qbtypes.CachedBucket{
-		{
-			StartMs: startMs,
-			EndMs:   endMs,
-			Type:    result.Type,
-			Value:   valueBytes,
-			Stats:   result.Stats,
-		},
-	}
-}
-
-// mergeAndDeduplicateBuckets combines and deduplicates bucket lists.
-func (bc *bucketCache) mergeAndDeduplicateBuckets(existing, fresh []*qbtypes.CachedBucket) []*qbtypes.CachedBucket {
-	// Create a map to deduplicate by time range
-	bucketMap := make(map[string]*qbtypes.CachedBucket)
-
-	// Add existing buckets
-	for _, bucket := range existing {
-		key := fmt.Sprintf("%d-%d", bucket.StartMs, bucket.EndMs)
-		bucketMap[key] = bucket
-	}
-
-	// Add/update with fresh buckets
-	for _, bucket := range fresh {
-		key := fmt.Sprintf("%d-%d", bucket.StartMs, bucket.EndMs)
-		bucketMap[key] = bucket
-	}
-
-	// Convert back to slice with pre-allocated capacity
-	result := make([]*qbtypes.CachedBucket, 0, len(bucketMap))
-	for _, bucket := range bucketMap {
-		result = append(result, bucket)
-	}
-
-	// Sort by start time
-	slices.SortFunc(result, func(a, b *qbtypes.CachedBucket) int {
-		if a.StartMs < b.StartMs {
-			return -1
-		}
-		if a.StartMs > b.StartMs {
-			return 1
-		}
-		return 0
-	})
-
-	return result
-}
-
-// deduplicateWarnings removes duplicate warnings.
-func (bc *bucketCache) deduplicateWarnings(warnings []string) []string {
-	return dedupeWarnings(warnings)
-}
-
-// trimResultToFluxBoundary trims the result to exclude data points beyond the flux boundary.
-func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoundary uint64) *qbtypes.Result {
-	trimmedResult := &qbtypes.Result{
-		Type:     result.Type,
-		Stats:    result.Stats,
-		Warnings: result.Warnings,
-	}
-
-	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
-		// Trim time series data
-		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && tsData != nil {
-			trimmedData := &qbtypes.TimeSeriesData{}
-
-			for _, aggBucket := range tsData.Aggregations {
-				// Meta has to survive the trim: a heatmap's counts are
-				// positional against Meta.Buckets, so a cached bucket that
-				// lost its axis cannot be read back against anything.
-				trimmedBucket := &qbtypes.AggregationBucket{
-					Index: aggBucket.Index,
-					Alias: aggBucket.Alias,
-					Meta:  aggBucket.Meta,
-				}
-
-				for _, series := range aggBucket.Series {
-					trimmedSeries := &qbtypes.TimeSeries{
-						Labels: series.Labels,
-					}
-
-					// Filter values to exclude those beyond flux boundary and partial values
-					for _, value := range series.Values {
-						// Skip partial values - they cannot be cached
-						if value.Partial {
-							continue
-						}
-						if uint64(value.Timestamp) <= fluxBoundary {
-							trimmedSeries.Values = append(trimmedSeries.Values, value)
-						}
-					}
-
-					// Always add the series to preserve filtered empty results
-					trimmedBucket.Series = append(trimmedBucket.Series, trimmedSeries)
-				}
-
-				// Always add the bucket to preserve aggregation structure
-				trimmedData.Aggregations = append(trimmedData.Aggregations, trimmedBucket)
-			}
-
-			// Always set the value to preserve empty filtered results
-			trimmedResult.Value = trimmedData
-		}
-
-	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeScalar, qbtypes.RequestTypeTrace:
-		// Don't cache raw or scalar data
-		return nil
-	}
-
-	return trimmedResult
-}
-
-func min(a, b uint64) uint64 {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b uint64) uint64 {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-// filterResultToTimeRange narrows the cached result to the requested window, both
-// the values in it and the heatmap axis under them.
-func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, q qbtypes.Query, startMs, endMs, stepMs uint64) *qbtypes.Result {
-	if result == nil || result.Value == nil {
-		return result
-	}
-
-	_, isPromQL := q.(*promqlQuery)
-	maxTimestampMs := endMs
-	// A promql value at T is the query evaluated at T, so T == endMs is inside the
-	// requested range. For every other query type the value at T aggregates
-	// [T, T+stepMs), which the requested range contains only when T <= endMs-stepMs.
-	if !isPromQL {
-		if stepMs > 0 {
-			maxTimestampMs = endMs - stepMs
-		} else {
-			maxTimestampMs = endMs - 1
-		}
-	}
-
-	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
-		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
-			filteredData := &qbtypes.TimeSeriesData{
-				Aggregations: make([]*qbtypes.AggregationBucket, 0, len(tsData.Aggregations)),
-			}
-
-			for _, aggBucket := range tsData.Aggregations {
-				filteredBucket := &qbtypes.AggregationBucket{
-					Index:  aggBucket.Index,
-					Alias:  aggBucket.Alias,
-					Meta:   aggBucket.Meta,
-					Series: make([]*qbtypes.TimeSeries, 0, len(aggBucket.Series)),
-				}
-
-				for _, series := range aggBucket.Series {
-					filteredSeries := &qbtypes.TimeSeries{
-						Labels: series.Labels,
-						Values: make([]*qbtypes.TimeSeriesValue, 0, len(series.Values)),
-					}
-
-					// Filter values to only include those within the requested time range
-					for _, value := range series.Values {
-						timestampMs := uint64(value.Timestamp)
-						if timestampMs >= startMs && timestampMs <= maxTimestampMs {
-							filteredSeries.Values = append(filteredSeries.Values, value)
-						}
-					}
-
-					// Always add series to preserve structure (even if empty)
-					filteredBucket.Series = append(filteredBucket.Series, filteredSeries)
-				}
-
-				// Only add bucket if it has series
-				if len(filteredBucket.Series) > 0 {
-					filteredData.Aggregations = append(filteredData.Aggregations, filteredBucket)
-				}
-			}
-
-			bc.trimHeatmapAxisToTheWindow(q, filteredData)
-
-			// Create a new result with the filtered data
-			return &qbtypes.Result{
-				Type:     result.Type,
-				Value:    filteredData,
-				Stats:    result.Stats,
-				Warnings: result.Warnings,
-			}
-		}
-	}
-
-	// For non-time series data, return as is
-	return result
-}
-
-// a cached range covers more than the window now being asked for, so its axis
-// carries buckets only the dropped columns reached. Left there, they show as
-// empty rows the same window never has when the cache did not answer it.
-func (bc *bucketCache) trimHeatmapAxisToTheWindow(q qbtypes.Query, tsData *qbtypes.TimeSeriesData) {
-	// promql and clickhouse name their own buckets, and an empty one of theirs
-	// still belongs on the axis
-	switch q.(type) {
-	case *builderQuery[qbtypes.MetricAggregation], *builderQuery[qbtypes.LogAggregation], *builderQuery[qbtypes.TraceAggregation]:
 	default:
 		return
 	}
-
-	for _, aggBucket := range tsData.Aggregations {
-		aggBucket.TrimAxisToCountedBuckets()
+	data, _ := fresh.Value.(*qbtypes.TimeSeriesData)
+	if data == nil {
+		data = &qbtypes.TimeSeriesData{}
 	}
+	boundary := uint64(time.Now().Add(-bc.fluxInterval).UnixMilli())
+	grid := gridOf(window, stepMs)
+
+	var incoming []*qbtypes.CachedBucket
+	newBucket := func(edge qbtypes.CachedBucketEdge, r qbtypes.TimeRange, keep func(ts uint64) bool) {
+		points := selectPoints(data, func(v *qbtypes.TimeSeriesValue) bool { return keep(uint64(v.Timestamp)) })
+		value, err := encodeBucketValue(points)
+		if err != nil {
+			bc.logger.WarnContext(ctx, "not caching result that does not serialise", errors.Attr(err))
+			return
+		}
+		incoming = append(incoming, &qbtypes.CachedBucket{
+			StartMs: r.From, EndMs: r.To, Edge: edge, Type: fresh.Type, Value: value,
+			Stats: fresh.Stats, Warnings: fresh.Warnings, WarningsDocURL: fresh.WarningsDocURL,
+		})
+	}
+	// A partial end covers rows up to its window end, so it is final once
+	// that end is older than the boundary.
+	if grid.whole != nil {
+		if grid.whole.To <= boundary {
+			start, end := alignDown(grid.whole.From, stepMs), grid.whole.To
+			newBucket(qbtypes.CachedBucketWhole, *grid.whole, func(ts uint64) bool { return ts >= start && ts < end })
+		}
+	} else {
+		if grid.head != nil && grid.head.To <= boundary {
+			start := alignDown(grid.head.From, stepMs)
+			newBucket(qbtypes.CachedBucketHead, *grid.head, func(ts uint64) bool { return ts == start })
+		}
+		if grid.body != nil {
+			body := *grid.body
+			if boundary < body.To {
+				body.To = alignDown(boundary, stepMs)
+			}
+			if body.From < body.To {
+				newBucket(qbtypes.CachedBucketBody, body, func(ts uint64) bool { return ts >= body.From && ts+stepMs <= body.To })
+			}
+		}
+		if grid.tail != nil && grid.tail.To <= boundary {
+			newBucket(qbtypes.CachedBucketTail, *grid.tail, func(ts uint64) bool { return ts == grid.tail.From })
+		}
+	}
+	if len(incoming) == 0 {
+		return
+	}
+
+	lock := &bc.keyLocks[keyShard(req.Key)]
+	lock.Lock()
+	defer lock.Unlock()
+
+	var existing qbtypes.CachedData
+	if err := bc.cache.Get(ctx, orgID, req.Key, &existing); err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		bc.logger.DebugContext(ctx, "cache read failed before write, starting a new entry", errors.Attr(err))
+	}
+	entry := bc.merge(ctx, bc.decode(ctx, existing.Buckets), incoming)
+	if err := bc.cache.Set(ctx, orgID, req.Key, &entry, bc.cacheTTL); err != nil {
+		bc.logger.WarnContext(ctx, "cache write failed", errors.Attr(err))
+	}
+}
+
+func keyShard(key string) int {
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(key))
+	return int(h.Sum32() % 64)
+}
+
+// merge folds incoming buckets into the decoded entry: a body bucket absorbs
+// every body bucket it touches, an edge bucket replaces the edge bucket with
+// the same range. The result is sorted body buckets followed by edge buckets,
+// the newest edge buckets last.
+func (bc *bucketCache) merge(ctx context.Context, existing []decodedBucket, incoming []*qbtypes.CachedBucket) qbtypes.CachedData {
+	var bodies []*qbtypes.CachedBucket
+	var edges []*qbtypes.CachedBucket
+	for _, bucket := range existing {
+		if bucket.Edge == qbtypes.CachedBucketBody {
+			bodies = append(bodies, bucket.CachedBucket)
+		} else {
+			edges = append(edges, bucket.CachedBucket)
+		}
+	}
+	for _, bucket := range incoming {
+		if bucket.Edge != qbtypes.CachedBucketBody {
+			edges = slices.DeleteFunc(edges, func(e *qbtypes.CachedBucket) bool {
+				return e.Edge == bucket.Edge && e.StartMs == bucket.StartMs && e.EndMs == bucket.EndMs
+			})
+			edges = append(edges, bucket)
+			continue
+		}
+		bodies = bc.coalesce(ctx, bodies, bucket)
+	}
+	if len(edges) > maxEdgeBuckets {
+		edges = edges[len(edges)-maxEdgeBuckets:]
+	}
+	slices.SortStableFunc(bodies, func(a, b *qbtypes.CachedBucket) int {
+		if a.StartMs < b.StartMs {
+			return -1
+		}
+		if a.StartMs > b.StartMs {
+			return 1
+		}
+		return 0
+	})
+	return qbtypes.CachedData{Buckets: append(bodies, edges...)}
+}
+
+// coalesce replaces the body buckets that touch or overlap fresh with one
+// bucket spanning them all. Points of fresh win inside its range; points of
+// the older buckets outside it are kept.
+func (bc *bucketCache) coalesce(ctx context.Context, bodies []*qbtypes.CachedBucket, fresh *qbtypes.CachedBucket) []*qbtypes.CachedBucket {
+	var parts []*qbtypes.TimeSeriesData
+	merged := *fresh
+	kept := bodies[:0:0]
+	for _, bucket := range bodies {
+		if bucket.EndMs < fresh.StartMs || bucket.StartMs > fresh.EndMs {
+			kept = append(kept, bucket)
+			continue
+		}
+		data, err := decodeBucketValue(bucket.Value)
+		if err != nil {
+			continue
+		}
+		parts = append(parts, selectPoints(data, func(v *qbtypes.TimeSeriesValue) bool {
+			ts := uint64(v.Timestamp)
+			return ts < fresh.StartMs || ts >= fresh.EndMs
+		}))
+		merged.StartMs = min(merged.StartMs, bucket.StartMs)
+		merged.EndMs = max(merged.EndMs, bucket.EndMs)
+		merged.Stats.RowsScanned += bucket.Stats.RowsScanned
+		merged.Stats.BytesScanned += bucket.Stats.BytesScanned
+		merged.Stats.DurationMS += bucket.Stats.DurationMS
+		merged.Warnings = append(merged.Warnings, bucket.Warnings...)
+		if merged.WarningsDocURL == "" {
+			merged.WarningsDocURL = bucket.WarningsDocURL
+		}
+	}
+	if len(parts) > 0 {
+		if freshData, err := decodeBucketValue(fresh.Value); err == nil {
+			value, err := encodeBucketValue(mergeTimeSeriesData(append(parts, freshData)))
+			if err == nil {
+				merged.Value = value
+			} else {
+				bc.logger.WarnContext(ctx, "coalesced bucket does not serialise, keeping the fresh bucket alone", errors.Attr(err))
+				merged.StartMs, merged.EndMs = fresh.StartMs, fresh.EndMs
+			}
+		}
+	}
+	merged.Warnings = dedupeWarnings(merged.Warnings)
+	return append(kept, &merged)
+}
+
+// mergeTimeSeriesData joins parts by aggregation index and series labels.
+// For one timestamp a later part replaces an earlier one, except that a
+// partial point never replaces a whole one. Aggregations come back sorted by
+// index and values by timestamp; the metadata of the first part that carries
+// an aggregation is kept. Heatmap parts are re-indexed onto the union of
+// their axes, since each part holds only the bands its own data reached.
+func mergeTimeSeriesData(parts []*qbtypes.TimeSeriesData) *qbtypes.TimeSeriesData {
+	type seriesKey struct {
+		index int
+		key   string
+	}
+	aggregations := map[int]*qbtypes.AggregationBucket{}
+	series := map[seriesKey]*qbtypes.TimeSeries{}
+	points := map[seriesKey]map[int64]*qbtypes.TimeSeriesValue{}
+	axes := qbtypes.MergeBucketUpperBounds(parts...)
+	out := &qbtypes.TimeSeriesData{}
+	for _, part := range parts {
+		if part == nil {
+			continue
+		}
+		if out.QueryName == "" {
+			out.QueryName = part.QueryName
+		}
+		for _, agg := range part.Aggregations {
+			if agg == nil {
+				continue
+			}
+			agg = reindexedOnto(agg, axes[agg.Index])
+			if _, ok := aggregations[agg.Index]; !ok {
+				aggregations[agg.Index] = &qbtypes.AggregationBucket{Index: agg.Index, Alias: agg.Alias, Meta: agg.Meta}
+			}
+			for _, s := range agg.Series {
+				if s == nil {
+					continue
+				}
+				k := seriesKey{index: agg.Index, key: qbtypes.GetUniqueSeriesKey(s.Labels)}
+				if _, ok := series[k]; !ok {
+					series[k] = &qbtypes.TimeSeries{Labels: s.Labels}
+					points[k] = map[int64]*qbtypes.TimeSeriesValue{}
+				}
+				for _, v := range s.Values {
+					if v == nil {
+						continue
+					}
+					if current, ok := points[k][v.Timestamp]; ok && v.Partial && !current.Partial {
+						continue
+					}
+					points[k][v.Timestamp] = v
+				}
+			}
+		}
+	}
+	indexes := make([]int, 0, len(aggregations))
+	for index := range aggregations {
+		indexes = append(indexes, index)
+	}
+	slices.Sort(indexes)
+	keys := make([]seriesKey, 0, len(series))
+	for k := range series {
+		keys = append(keys, k)
+	}
+	slices.SortFunc(keys, func(a, b seriesKey) int {
+		if a.index != b.index {
+			return a.index - b.index
+		}
+		if a.key < b.key {
+			return -1
+		}
+		if a.key > b.key {
+			return 1
+		}
+		return 0
+	})
+	for _, k := range keys {
+		s := series[k]
+		s.Values = make([]*qbtypes.TimeSeriesValue, 0, len(points[k]))
+		for _, v := range points[k] {
+			s.Values = append(s.Values, v)
+		}
+		slices.SortFunc(s.Values, func(a, b *qbtypes.TimeSeriesValue) int {
+			if a.Timestamp < b.Timestamp {
+				return -1
+			}
+			if a.Timestamp > b.Timestamp {
+				return 1
+			}
+			return 0
+		})
+		aggregations[k.index].Series = append(aggregations[k.index].Series, s)
+	}
+	for _, index := range indexes {
+		out.Aggregations = append(out.Aggregations, aggregations[index])
+	}
+	return out
+}
+
+// reindexedOnto returns agg with its heatmap counts moved onto the axis
+// onto, copying the points so the caller's data is left as it is.
+func reindexedOnto(agg *qbtypes.AggregationBucket, onto []float64) *qbtypes.AggregationBucket {
+	if len(onto) == 0 || slices.Equal(agg.Meta.Buckets, onto) {
+		return agg
+	}
+	copied := &qbtypes.AggregationBucket{Index: agg.Index, Alias: agg.Alias, Meta: agg.Meta, Series: make([]*qbtypes.TimeSeries, 0, len(agg.Series))}
+	for _, s := range agg.Series {
+		if s == nil {
+			continue
+		}
+		values := make([]*qbtypes.TimeSeriesValue, 0, len(s.Values))
+		for _, v := range s.Values {
+			if v == nil {
+				continue
+			}
+			point := *v
+			values = append(values, &point)
+		}
+		copied.Series = append(copied.Series, &qbtypes.TimeSeries{Labels: s.Labels, Values: values})
+	}
+	copied.ReindexValuesToNewUpperBounds(onto)
+	return copied
 }

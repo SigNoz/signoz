@@ -1215,3 +1215,38 @@ def run_query_case(signoz: types.SigNoz, token: str, now: datetime, case: dict[s
     )
     assert response.status_code == 200, f"HTTP {response.status_code} for case '{case['name']}': {response.text}"
     assert case["validate"](response), f"Validation failed for case '{case['name']}': {response.json()}"
+
+
+def series_points_by_label(response_json: dict, query_name: str, label: str = "service.name") -> dict[str, dict[int, float]]:
+    """Points of every series of the named result keyed by the series' value for `label`, as {timestamp_ms: value}."""
+    by_label = index_series_by_label(get_all_series(response_json, query_name), label)
+    return {value: {point["timestamp"]: point["value"] for point in series["values"]} for value, series in by_label.items()}
+
+
+def assert_series_points_equal(
+    response_json: dict,
+    expected_json: dict,
+    query_name: str,
+    context: str,
+    label: str = "service.name",
+) -> None:
+    """assert_all_series_equal with a failure message that names the series and points that differ."""
+    got = series_points_by_label(response_json, query_name, label)
+    want = series_points_by_label(expected_json, query_name, label)
+    problems = []
+    if set(got) != set(want):
+        problems.append(f"series: got={sorted(got)} expected={sorted(want)}")
+    for value in sorted(set(got) & set(want)):
+        got_points, want_points = got[value], want[value]
+        missing = sorted(set(want_points) - set(got_points))
+        extra = sorted(set(got_points) - set(want_points))
+        changed = sorted(ts for ts in set(got_points) & set(want_points) if not compare_values(got_points[ts], want_points[ts]))
+        if missing:
+            problems.append(f"{value}: {len(missing)} of {len(want_points)} expected points missing, first at {datetime.fromtimestamp(missing[0] / 1000, tz=UTC).isoformat()}")
+        if extra:
+            problems.append(f"{value}: {len(extra)} unexpected points, first at {datetime.fromtimestamp(extra[0] / 1000, tz=UTC).isoformat()}")
+        if changed:
+            first = changed[0]
+            problems.append(f"{value}: {len(changed)} values differ, first at {datetime.fromtimestamp(first / 1000, tz=UTC).isoformat()}: got={got_points[first]} expected={want_points[first]}")
+    assert not problems, f"{context}: response differs from the expected response:\n  " + "\n  ".join(problems)
+    assert_all_series_equal(response_json, expected_json, query_name, context)

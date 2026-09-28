@@ -3,8 +3,10 @@ package querier
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -147,10 +149,21 @@ func (q *builderQuery[T]) Fingerprint() string {
 	if q.spec.Filter != nil && q.spec.Filter.Expression != "" {
 		parts = append(parts, fmt.Sprintf("filter=%s", q.spec.Filter.Expression))
 
-		for name, item := range q.variables {
+		// Sorted so the key is the same on every call, and JSON so that
+		// ["a b"] and ["a", "b"], or 1 and "1", get different keys.
+		names := make([]string, 0, len(q.variables))
+		for name := range q.variables {
 			if strings.Contains(q.spec.Filter.Expression, "$"+name) {
-				parts = append(parts, fmt.Sprintf("%s=%s", name, fmt.Sprint(item.Value)))
+				names = append(names, name)
 			}
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			value, err := json.Marshal(q.variables[name].Value)
+			if err != nil {
+				value = []byte(fmt.Sprint(q.variables[name].Value))
+			}
+			parts = append(parts, fmt.Sprintf("%s=%s", name, value))
 		}
 	}
 
@@ -189,7 +202,35 @@ func (q *builderQuery[T]) Fingerprint() string {
 		parts = append(parts, fmt.Sprintf("shiftby=%d", q.spec.ShiftBy))
 	}
 
+	// A top-N is ranked over the statement window, so its result serves only
+	// the identical window.
+	if q.wholeWindowOnly() {
+		parts = append(parts, fmt.Sprintf("window=%d-%d", q.fromMS, q.toMS))
+	}
+
 	return strings.Join(parts, "&")
+}
+
+// wholeWindowOnly reports whether the statement ranks or limits groups over
+// its window (the top-N CTE of logs and traces), which pieces of the window
+// cannot reproduce. Metrics apply their limit after the statement.
+func (q *builderQuery[T]) wholeWindowOnly() bool {
+	if q.spec.Limit <= 0 || len(q.spec.GroupBy) == 0 {
+		return false
+	}
+	return q.spec.Signal == telemetrytypes.SignalLogs || q.spec.Signal == telemetrytypes.SignalTraces
+}
+
+// lookbackSteps is how many steps before the window the result must carry.
+// runningDiff drops its first point, so the metrics builder fetches one step
+// before the window to give the first interval a difference.
+func (q *builderQuery[T]) lookbackSteps() int {
+	for _, fn := range q.spec.Functions {
+		if fn.Name == qbtypes.FunctionNameRunningDiff {
+			return 1
+		}
+	}
+	return 0
 }
 
 // fingerprintHeatmapBucketing captures only what changes the rows ClickHouse

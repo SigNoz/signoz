@@ -714,3 +714,27 @@ def remove_logs_ttl_settings(signoz: types.SigNoz):
                 signoz.telemetrystore.conn.query(alter_query)
         except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Error removing TTL from table {table}: {e}")
+
+
+def minutely_logs(
+    start: datetime.datetime,
+    end: datetime.datetime,
+    per_minute: dict[str, int],
+    attributes: dict[str, Any] | None = None,
+) -> list[Logs]:
+    """per_minute[service] logs with resource service.name=service in every whole minute of [start, end), one second apart from the minute start."""
+    logs = []
+    minute = start
+    while minute < end:
+        for service, count in per_minute.items():
+            for i in range(count):
+                logs.append(
+                    Logs(
+                        timestamp=minute + datetime.timedelta(seconds=1 + i),
+                        resources={"service.name": service},
+                        attributes=attributes or {},
+                        body=f"{service} {minute.isoformat()} {i}",
+                    )
+                )
+        minute += datetime.timedelta(minutes=1)
+    return logs

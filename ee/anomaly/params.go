@@ -90,7 +90,7 @@ func prepareAnomalyQueryParams(req *qbtypes.QueryRangeRequest, seasonality Seaso
 		End:            end,
 		RequestType:    qbtypes.RequestTypeTimeSeries,
 		CompositeQuery: req.CompositeQuery,
-		NoCache:        false,
+		NoCache:        req.NoCache,
 	}
 
 	var pastPeriodStart, pastPeriodEnd uint64
@@ -115,7 +115,7 @@ func prepareAnomalyQueryParams(req *qbtypes.QueryRangeRequest, seasonality Seaso
 		End:            pastPeriodEnd,
 		RequestType:    qbtypes.RequestTypeTimeSeries,
 		CompositeQuery: req.CompositeQuery,
-		NoCache:        false,
+		NoCache:        req.NoCache,
 	}
 
 	// seasonality growth trend
@@ -137,7 +137,7 @@ func prepareAnomalyQueryParams(req *qbtypes.QueryRangeRequest, seasonality Seaso
 		End:            currentGrowthPeriodEnd,
 		RequestType:    qbtypes.RequestTypeTimeSeries,
 		CompositeQuery: req.CompositeQuery,
-		NoCache:        false,
+		NoCache:        req.NoCache,
 	}
 
 	var pastGrowthPeriodStart, pastGrowthPeriodEnd uint64
@@ -158,7 +158,7 @@ func prepareAnomalyQueryParams(req *qbtypes.QueryRangeRequest, seasonality Seaso
 		End:            pastGrowthPeriodEnd,
 		RequestType:    qbtypes.RequestTypeTimeSeries,
 		CompositeQuery: req.CompositeQuery,
-		NoCache:        false,
+		NoCache:        req.NoCache,
 	}
 
 	var past2GrowthPeriodStart, past2GrowthPeriodEnd uint64
@@ -179,7 +179,7 @@ func prepareAnomalyQueryParams(req *qbtypes.QueryRangeRequest, seasonality Seaso
 		End:            past2GrowthPeriodEnd,
 		RequestType:    qbtypes.RequestTypeTimeSeries,
 		CompositeQuery: req.CompositeQuery,
-		NoCache:        false,
+		NoCache:        req.NoCache,
 	}
 
 	var past3GrowthPeriodStart, past3GrowthPeriodEnd uint64
@@ -200,7 +200,7 @@ func prepareAnomalyQueryParams(req *qbtypes.QueryRangeRequest, seasonality Seaso
 		End:            past3GrowthPeriodEnd,
 		RequestType:    qbtypes.RequestTypeTimeSeries,
 		CompositeQuery: req.CompositeQuery,
-		NoCache:        false,
+		NoCache:        req.NoCache,
 	}
 
 	return &anomalyQueryParams{

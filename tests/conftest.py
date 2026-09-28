@@ -112,6 +112,13 @@ def pytest_addoption(parser: pytest.Parser):
         help="clickhouse version",
     )
     parser.addoption(
+        "--cache-fuzz-seed",
+        action="store",
+        type=int,
+        default=20260910,
+        help="seed for the randomised cache differential test (integration/tests/queriercache/02_differential.py)",
+    )
+    parser.addoption(
         "--schema-migrator-version",
         action="store",
         default="v0.144.9",  # todo(nikhil): change to 0.144.10
