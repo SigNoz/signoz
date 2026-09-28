@@ -7,18 +7,6 @@ import (
 	commoncfg "github.com/prometheus/common/config"
 )
 
-// send_resolved has no omitempty upstream, so a var default here is overwritten
-// by the yaml round-trip to the request value (false when omitted); the UI sends
-// it explicitly, defaulted on, so JSM alerts close on resolve.
-var DefaultJSMOpsReceiverConfig = JSMOpsReceiverConfig{
-	NotifierConfig: config.NotifierConfig{
-		VSendResolved: false,
-	},
-	Message:     DefaultJSMOpsMessageTemplate,
-	Description: DefaultJSMOpsDescriptionTemplate,
-	Tags:        "signoz",
-}
-
 // ChannelJSMOpsConfig carries no API URL: JSM Ops is a single global gateway
 // keyed by the integration API key, which the notifier pins itself.
 type ChannelJSMOpsConfig struct {
@@ -113,6 +101,18 @@ type JSMOpsReceiverConfig struct {
 	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
 	Priority    string        `yaml:"priority,omitempty" json:"priority,omitempty"`
 	Tags        string        `yaml:"tags,omitempty" json:"tags,omitempty"`
+}
+
+// send_resolved has no omitempty upstream, so a var default here is overwritten
+// by the yaml round-trip to the request value (false when omitted); the UI sends
+// it explicitly, defaulted on, so JSM alerts close on resolve.
+var DefaultJSMOpsReceiverConfig = JSMOpsReceiverConfig{
+	NotifierConfig: config.NotifierConfig{
+		VSendResolved: false,
+	},
+	Message:     DefaultJSMOpsMessageTemplate,
+	Description: DefaultJSMOpsDescriptionTemplate,
+	Tags:        "signoz",
 }
 
 func (c *JSMOpsReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {

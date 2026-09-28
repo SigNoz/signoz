@@ -90,17 +90,6 @@ const (
 {{ end }}{{ end }}`
 )
 
-// send_resolved has no omitempty upstream, so a var default here is overwritten
-// by the yaml round-trip to the request value (false when omitted); the UI sends
-// it explicitly, defaulted on, so incident.io alerts resolve with the rule.
-var DefaultIncidentIOReceiverConfig = IncidentIOReceiverConfig{
-	NotifierConfig: config.NotifierConfig{
-		VSendResolved: false,
-	},
-	Title:       DefaultIncidentIOTitleTemplate,
-	Description: DefaultIncidentIODescriptionTemplate,
-}
-
 // IncidentIOReceiverConfig is the SigNoz incident.io receiver, backed by an
 // incident.io HTTP alert source. URL is the per-source alert events endpoint
 // and Token its secret, both copied from the source's setup page.
@@ -116,6 +105,17 @@ type IncidentIOReceiverConfig struct {
 	// Metadata is merged into the event's metadata on top of the group's common
 	// labels (channel wins on key clash). Values are template-expanded.
 	Metadata map[string]string `yaml:"metadata,omitempty" json:"metadata,omitempty"`
+}
+
+// send_resolved has no omitempty upstream, so a var default here is overwritten
+// by the yaml round-trip to the request value (false when omitted); the UI sends
+// it explicitly, defaulted on, so incident.io alerts resolve with the rule.
+var DefaultIncidentIOReceiverConfig = IncidentIOReceiverConfig{
+	NotifierConfig: config.NotifierConfig{
+		VSendResolved: false,
+	},
+	Title:       DefaultIncidentIOTitleTemplate,
+	Description: DefaultIncidentIODescriptionTemplate,
 }
 
 func (c *IncidentIOReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
