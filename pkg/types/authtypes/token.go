@@ -258,6 +258,6 @@ type TokenStore interface {
 	// Delete a token by userID.
 	DeleteByUserID(context.Context, valuer.UUID) error
 
-	// Update last observed at by access token.
-	UpdateLastObservedAtByAccessToken(context.Context, []map[string]any) error
+	// Update last observed at of the given tokens.
+	UpdateLastObservedAt(context.Context, []*StorableToken) error
 }
