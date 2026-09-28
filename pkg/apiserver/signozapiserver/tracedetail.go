@@ -67,5 +67,23 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/traces/{traceID}/thread", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.traceDetailHandler.GetThread),
+		handler.OpenAPIDef{
+			ID:                  "GetTraceThread",
+			Tags:                []string{"tracedetail"},
+			Summary:             "Get thread view for a trace",
+			Description:         "Returns the spans carrying gen_ai input or output messages in timestamp order, each with the messages normalised into formatted_input and formatted_output. Pages are fetched with the returned nextCursor.",
+			RequestQuery:        new(spantypes.PostableThreadQuery),
+			Response:            new(spantypes.GettableTraceThread),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }

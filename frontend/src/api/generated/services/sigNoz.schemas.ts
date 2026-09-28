@@ -4,6 +4,61 @@
  * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
+export enum AiobservabilitytypesPartTypeDTO {
+	text = 'text',
+	thinking = 'thinking',
+	tool_call = 'tool_call',
+	tool_result = 'tool_result',
+	generic = 'generic',
+}
+export interface AiobservabilitytypesPartDTO {
+	arguments?: unknown;
+	/**
+	 * @type string
+	 */
+	content?: string;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type boolean
+	 */
+	isError?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type boolean
+	 */
+	redacted?: boolean;
+	/**
+	 * @type boolean
+	 */
+	server?: boolean;
+	/**
+	 * @type string
+	 */
+	toolCallId?: string;
+	type: AiobservabilitytypesPartTypeDTO;
+}
+
+export interface AiobservabilitytypesMessageDTO {
+	/**
+	 * @type array
+	 */
+	content: AiobservabilitytypesPartDTO[];
+	/**
+	 * @type string
+	 */
+	finishReason?: string;
+	/**
+	 * @type string
+	 */
+	role?: string;
+}
+
 export interface AlertmanagertypesChannelDTO {
 	/**
 	 * @type string
@@ -11142,6 +11197,165 @@ export interface SpantypesOtelSpanRefDTO {
 	traceId?: string;
 }
 
+export type SpantypesThreadSpanDTOAttributesAnyOf = { [key: string]: unknown };
+
+/**
+ * @nullable
+ */
+export type SpantypesThreadSpanDTOAttributes =
+	SpantypesThreadSpanDTOAttributesAnyOf | null;
+
+export type SpantypesThreadSpanDTOResourceAnyOf = { [key: string]: string };
+
+/**
+ * @nullable
+ */
+export type SpantypesThreadSpanDTOResource =
+	SpantypesThreadSpanDTOResourceAnyOf | null;
+
+export interface SpantypesThreadSpanDTO {
+	/**
+	 * @type object,null
+	 */
+	attributes?: SpantypesThreadSpanDTOAttributes;
+	/**
+	 * @type string
+	 */
+	db_name?: string;
+	/**
+	 * @type string
+	 */
+	db_operation?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	duration_nano?: number;
+	/**
+	 * @type array,null
+	 */
+	events?: SpantypesEventDTO[] | null;
+	/**
+	 * @type string
+	 */
+	external_http_method?: string;
+	/**
+	 * @type string
+	 */
+	external_http_url?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	flags?: number;
+	/**
+	 * @type array
+	 */
+	formatted_input?: AiobservabilitytypesMessageDTO[];
+	/**
+	 * @type array
+	 */
+	formatted_output?: AiobservabilitytypesMessageDTO[];
+	/**
+	 * @type boolean
+	 */
+	has_children?: boolean;
+	/**
+	 * @type boolean
+	 */
+	has_error?: boolean;
+	/**
+	 * @type string
+	 */
+	http_host?: string;
+	/**
+	 * @type string
+	 */
+	http_method?: string;
+	/**
+	 * @type string
+	 */
+	http_url?: string;
+	/**
+	 * @type string
+	 */
+	is_remote?: string;
+	/**
+	 * @type string
+	 */
+	kind_string?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	level?: number;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	parent_span_id?: string;
+	/**
+	 * @type array
+	 */
+	references: SpantypesOtelSpanRefDTO[];
+	/**
+	 * @type object,null
+	 */
+	resource?: SpantypesThreadSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	response_status_code?: string;
+	/**
+	 * @type string
+	 */
+	span_id?: string;
+	/**
+	 * @type integer
+	 */
+	status_code?: number;
+	/**
+	 * @type string
+	 */
+	status_code_string?: string;
+	/**
+	 * @type string
+	 */
+	status_message?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	sub_tree_node_count?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	time_unix?: number;
+	/**
+	 * @type string
+	 */
+	trace_id?: string;
+	/**
+	 * @type string
+	 */
+	trace_state?: string;
+}
+
+export interface SpantypesGettableTraceThreadDTO {
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type array
+	 */
+	spans: SpantypesThreadSpanDTO[];
+}
+
 export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
 	[key: string]: unknown;
 };
@@ -12809,6 +13023,30 @@ export type GetTraceAggregationsPathParameters = {
 };
 export type GetTraceAggregations200 = {
 	data: SpantypesGettableTraceAggregationsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetTraceThreadPathParameters = {
+	traceID: string;
+};
+export type GetTraceThreadParams = {
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	cursor?: string;
+};
+
+export type GetTraceThread200 = {
+	data: SpantypesGettableTraceThreadDTO;
 	/**
 	 * @type string
 	 */

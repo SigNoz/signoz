@@ -1,5 +1,48 @@
 components:
   schemas:
+    AiobservabilitytypesMessage:
+      properties:
+        content:
+          items:
+            $ref: '#/components/schemas/AiobservabilitytypesPart'
+          type: array
+        finishReason:
+          type: string
+        role:
+          type: string
+      required:
+      - content
+      type: object
+    AiobservabilitytypesPart:
+      properties:
+        arguments: {}
+        content:
+          type: string
+        id:
+          type: string
+        isError:
+          type: boolean
+        name:
+          type: string
+        redacted:
+          type: boolean
+        server:
+          type: boolean
+        toolCallId:
+          type: string
+        type:
+          $ref: '#/components/schemas/AiobservabilitytypesPartType'
+      required:
+      - type
+      type: object
+    AiobservabilitytypesPartType:
+      enum:
+      - text
+      - thinking
+      - tool_call
+      - tool_result
+      - generic
+      type: string
     AlertmanagertypesChannel:
       properties:
         createdAt:
@@ -9647,6 +9690,17 @@ components:
       required:
       - aggregations
       type: object
+    SpantypesGettableTraceThread:
+      properties:
+        nextCursor:
+          type: string
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesThreadSpan'
+          type: array
+      required:
+      - spans
+      type: object
     SpantypesGettableWaterfallTrace:
       properties:
         endTimestampMillis:
@@ -9960,6 +10014,92 @@ components:
           additionalProperties: {}
           nullable: true
           type: object
+      type: object
+    SpantypesThreadSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        db_name:
+          type: string
+        db_operation:
+          type: string
+        duration_nano:
+          minimum: 0
+          type: integer
+        events:
+          items:
+            $ref: '#/components/schemas/SpantypesEvent'
+          nullable: true
+          type: array
+        external_http_method:
+          type: string
+        external_http_url:
+          type: string
+        flags:
+          minimum: 0
+          type: integer
+        formatted_input:
+          items:
+            $ref: '#/components/schemas/AiobservabilitytypesMessage'
+          type: array
+        formatted_output:
+          items:
+            $ref: '#/components/schemas/AiobservabilitytypesMessage'
+          type: array
+        has_children:
+          type: boolean
+        has_error:
+          type: boolean
+        http_host:
+          type: string
+        http_method:
+          type: string
+        http_url:
+          type: string
+        is_remote:
+          type: string
+        kind_string:
+          type: string
+        level:
+          minimum: 0
+          type: integer
+        name:
+          type: string
+        parent_span_id:
+          type: string
+        references:
+          items:
+            $ref: '#/components/schemas/SpantypesOtelSpanRef'
+          type: array
+        resource:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        response_status_code:
+          type: string
+        span_id:
+          type: string
+        status_code:
+          type: integer
+        status_code_string:
+          type: string
+        status_message:
+          type: string
+        sub_tree_node_count:
+          minimum: 0
+          type: integer
+        time_unix:
+          minimum: 0
+          type: integer
+        trace_id:
+          type: string
+        trace_state:
+          type: string
+      required:
+      - references
       type: object
     SpantypesUpdatableSpanMapper:
       properties:
@@ -15682,6 +15822,81 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get aggregations for a trace
+      tags:
+      - tracedetail
+      x-signoz-stability: alpha
+  /api/v1/traces/{traceID}/thread:
+    get:
+      deprecated: false
+      description: Returns the spans carrying gen_ai input or output messages in timestamp
+        order, each with the messages normalised into formatted_input and formatted_output.
+        Pages are fetched with the returned nextCursor.
+      operationId: GetTraceThread
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: cursor
+        schema:
+          type: string
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceThread'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get thread view for a trace
       tags:
       - tracedetail
       x-signoz-stability: alpha

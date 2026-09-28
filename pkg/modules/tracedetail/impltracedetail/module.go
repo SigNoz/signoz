@@ -173,6 +173,19 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpan
 	), nil
 }
 
+func (m *module) GetThread(ctx context.Context, traceID string, query *spantypes.ThreadQuery) (*spantypes.GettableTraceThread, error) {
+	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+
+	spans, err := m.store.GetThreadSpans(ctx, traceID, summary, query.Cursor, query.Limit+1)
+	if err != nil {
+		return nil, err
+	}
+	return spantypes.NewGettableTraceThread(traceID, spans, query.Limit), nil
+}
+
 func (m *module) getFullFlamegraph(ctx context.Context, traceID string, summary *spantypes.TraceSummary, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
 	fullSpans, err := m.store.GetFlamegraphSpans(ctx, traceID, summary.Start, summary.End, nil)
 	if err != nil {

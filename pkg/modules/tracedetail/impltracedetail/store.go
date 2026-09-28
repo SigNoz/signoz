@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -11,11 +12,22 @@ import (
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
+
+var fullSpanColumns = []string{
+	"duration_nano", "span_id", "has_error", "kind",
+	colServiceName, "name",
+	"attributes_string", "attributes_number", "attributes_bool", "resources_string",
+	"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
+	"flags", "is_remote", "trace_state", "status_code",
+	"db_name", "db_operation", "http_method", "http_url", "http_host",
+	"external_http_method", "external_http_url", "response_status_code", "links as references",
+}
 
 func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
 	switch fieldKey.FieldContext {
@@ -68,18 +80,11 @@ func (s *traceStore) GetTraceSummary(ctx context.Context, traceID string) (*span
 func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary *spantypes.TraceSummary) ([]spantypes.StorableSpan, error) {
 	// DISTINCT ON (span_id) is ClickHouse-specific syntax not supported by sqlbuilder
 	query := fmt.Sprintf(`
-		SELECT DISTINCT ON (span_id)
-			timestamp, duration_nano, span_id, has_error, kind,
-			resource_string_service$$name, name,
-			attributes_string, attributes_number, attributes_bool, resources_string,
-			events, status_message, status_code_string, kind_string, parent_span_id,
-			flags, is_remote, trace_state, status_code,
-			db_name, db_operation, http_method, http_url, http_host,
-			external_http_method, external_http_url, response_status_code, links as references
+		SELECT DISTINCT ON (span_id) timestamp, %s
 		FROM %s.%s
 		WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
 		ORDER BY timestamp ASC, name ASC`,
-		spantypes.TraceDB, spantypes.TraceTable,
+		strings.Join(fullSpanColumns, ", "), spantypes.TraceDB, spantypes.TraceTable,
 	)
 	var spanItems []spantypes.StorableSpan
 	err := s.telemetryStore.ClickhouseDB().Select(
@@ -123,16 +128,8 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 		return []spantypes.StorableSpan{}, nil
 	}
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"DISTINCT ON (span_id) timestamp",
-		"duration_nano", "span_id", "has_error", "kind",
-		colServiceName, "name",
-		"attributes_string", "attributes_number", "attributes_bool", "resources_string",
-		"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
-		"flags", "is_remote", "trace_state", "status_code",
-		"db_name", "db_operation", "http_method", "http_url", "http_host",
-		"external_http_method", "external_http_url", "response_status_code", "links as references",
-	)
+	sb.Select("DISTINCT ON (span_id) timestamp")
+	sb.SelectMore(fullSpanColumns...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	ids := make([]any, len(spanIDs))
 	for i, id := range spanIDs {
@@ -151,6 +148,36 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 	var spans []spantypes.StorableSpan
 	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &spans, query, args...); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace spans by IDs")
+	}
+	return spans, nil
+}
+
+func (s *traceStore) GetThreadSpans(ctx context.Context, traceID string, summary *spantypes.TraceSummary, cursor *spantypes.ThreadCursor, limit int) ([]spantypes.StorableSpan, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("DISTINCT ON (span_id) timestamp")
+	sb.SelectMore(fullSpanColumns...)
+	sb.SelectMore("attributes")
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", summary.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", summary.End.Unix()),
+		sb.Or(
+			sqlbuilder.Escape(fmt.Sprintf("attributes.%s IS NOT NULL", clickhousesql.Identifier(aiobservabilitytypes.GenAIInputMessages))),
+			sqlbuilder.Escape(fmt.Sprintf("attributes.%s IS NOT NULL", clickhousesql.Identifier(aiobservabilitytypes.GenAIOutputMessages))),
+		),
+	)
+	if cursor != nil {
+		sb.Where(sb.GT("(toUnixTimestamp64Nano(timestamp), span_id)", sqlbuilder.Tuple(cursor.TimeUnixNano, cursor.SpanID)))
+	}
+	sb.OrderByAsc("timestamp")
+	sb.OrderByAsc("span_id")
+	sb.Limit(limit)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var spans []spantypes.StorableSpan
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &spans, query, args...); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying thread spans")
 	}
 	return spans, nil
 }
