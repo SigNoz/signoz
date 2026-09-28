@@ -3,6 +3,7 @@ package cloudintegrationtypes
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -328,79 +329,6 @@ func NewAgentReport(data map[string]any, syncState *SyncState) *AgentReport {
 	}
 }
 
-// NewSyncState returns the sync state after a check-in without mutating previous.
-// The ack is applied before the config diff, so it is checked against the version the agent was last sent.
-func NewSyncState(previous *SyncState, regions []string, removed bool, syncedVersion *int64) *SyncState {
-	next := &SyncState{Version: 1, InSync: true, Regions: make(map[string]*RegionSyncState)}
-
-	// First check-in: seed from the config as in sync. Otherwise start from a copy of previous.
-	if previous == nil {
-		for _, region := range regions {
-			next.Regions[region] = &RegionSyncState{State: RegionStatePresent}
-		}
-	} else {
-		next.Version = previous.Version
-		next.InSync = previous.InSync
-		for region, regionSyncState := range previous.Regions {
-			next.Regions[region] = &RegionSyncState{State: regionSyncState.State}
-		}
-	}
-
-	// The agent synced this version, so its removed regions are cleaned up and can be dropped.
-	if syncedVersion != nil && *syncedVersion == next.Version {
-		next.InSync = true
-		for region, regionSyncState := range next.Regions {
-			if regionSyncState.State == RegionStateRemoved {
-				delete(next.Regions, region)
-			}
-		}
-	}
-
-	changed := false
-
-	if removed {
-		// Integration removed: every present region must be cleaned up.
-		for _, regionSyncState := range next.Regions {
-			if regionSyncState.State != RegionStateRemoved {
-				regionSyncState.State = RegionStateRemoved
-				changed = true
-			}
-		}
-	} else {
-		desiredRegions := make(map[string]struct{}, len(regions))
-		for _, region := range regions {
-			desiredRegions[region] = struct{}{}
-
-			regionSyncState, ok := next.Regions[region]
-			switch {
-			case !ok:
-				// Region added to the config.
-				next.Regions[region] = &RegionSyncState{State: RegionStatePresent}
-				changed = true
-			case regionSyncState.State == RegionStateRemoved:
-				// Region added back before its removal was acked.
-				regionSyncState.State = RegionStatePresent
-				changed = true
-			}
-		}
-
-		for region, regionSyncState := range next.Regions {
-			if _, desired := desiredRegions[region]; !desired && regionSyncState.State == RegionStatePresent {
-				// Region removed from the config.
-				regionSyncState.State = RegionStateRemoved
-				changed = true
-			}
-		}
-	}
-
-	if changed {
-		next.Version++
-		next.InSync = false
-	}
-
-	return next
-}
-
 func NewSyncStateFromStorable(storableSyncState *StorableSyncState) *SyncState {
 	if storableSyncState == nil {
 		return nil
@@ -438,6 +366,20 @@ func (account *Account) Update(provider CloudProviderType, config *AccountConfig
 	return nil
 }
 
+func (account *Account) UpdateAgentReport(providerAccountID *string, agentReport *AgentReport) {
+	account.ProviderAccountID = providerAccountID
+	account.AgentReport = agentReport
+}
+
+// UpdateSyncState keeps the rest of the agent report, and is a no-op when the agent has never checked in.
+func (account *Account) UpdateSyncState(syncState *SyncState) {
+	if account.AgentReport == nil {
+		return
+	}
+
+	account.AgentReport.SyncState = syncState
+}
+
 // NextSyncState returns the sync state for this check-in, or nil for providers without one.
 func (account *Account) NextSyncState(syncedVersion *int64) *SyncState {
 	if account.Provider != CloudProviderTypeAWS {
@@ -455,7 +397,7 @@ func (account *Account) NextSyncState(syncedVersion *int64) *SyncState {
 		regions = nil
 	}
 
-	return NewSyncState(previous, regions, account.RemovedAt != nil, syncedVersion)
+	return newSyncState(previous, regions, account.RemovedAt != nil, syncedVersion)
 }
 
 func (postableAccount *PostableAccount) UnmarshalJSON(data []byte) error {
@@ -528,4 +470,80 @@ func (config *AccountConfig) ToJSON() ([]byte, error) {
 
 func NewIngestionKeyName(provider CloudProviderType) string {
 	return fmt.Sprintf("%s-integration", provider.StringValue())
+}
+
+// newSyncState returns the sync state after a check-in without mutating previous.
+func newSyncState(previous *SyncState, regions []string, removed bool, syncedVersion *int64) *SyncState {
+	if previous == nil {
+		previous = newSyncStateFromRegions(regions)
+	}
+
+	next := previous.copy()
+
+	// The agent synced this version, so its disabled regions are cleaned up and can be dropped.
+	if syncedVersion != nil && *syncedVersion == next.Version {
+		next.InSync = true
+		maps.DeleteFunc(next.Regions, func(_ string, regionSyncState *RegionSyncState) bool {
+			return regionSyncState.State == RegionStateDisabled
+		})
+	}
+
+	// Once the integration is removed, every region is disabled.
+	if removed {
+		regions = nil
+	}
+
+	changed := false
+	desiredRegionsMap := make(map[string]struct{}, len(regions))
+
+	for _, region := range regions {
+		desiredRegionsMap[region] = struct{}{}
+
+		if regionSyncState, ok := next.Regions[region]; ok && regionSyncState.State == RegionStateEnabled {
+			continue
+		}
+
+		next.Regions[region] = &RegionSyncState{State: RegionStateEnabled}
+		changed = true
+	}
+
+	for region, regionSyncState := range next.Regions {
+		_, ok := desiredRegionsMap[region]
+		if ok && regionSyncState.State == RegionStateEnabled {
+			continue
+		}
+
+		if !ok && regionSyncState.State == RegionStateDisabled {
+			continue
+		}
+
+		regionSyncState.State = RegionStateDisabled
+		changed = true
+	}
+
+	if changed {
+		next.Version++
+		next.InSync = false
+	}
+
+	return next
+}
+
+// newSyncStateFromRegions is used on the first check-in, when the agent has already deployed regions, so it starts in sync.
+func newSyncStateFromRegions(regions []string) *SyncState {
+	syncState := &SyncState{Version: 1, InSync: true, Regions: make(map[string]*RegionSyncState, len(regions))}
+	for _, region := range regions {
+		syncState.Regions[region] = &RegionSyncState{State: RegionStateEnabled}
+	}
+
+	return syncState
+}
+
+func (syncState *SyncState) copy() *SyncState {
+	regions := make(map[string]*RegionSyncState, len(syncState.Regions))
+	for region, regionSyncState := range syncState.Regions {
+		regions[region] = &RegionSyncState{State: regionSyncState.State}
+	}
+
+	return &SyncState{Version: syncState.Version, InSync: syncState.InSync, Regions: regions}
 }

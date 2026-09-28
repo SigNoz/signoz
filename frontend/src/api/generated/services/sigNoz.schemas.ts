@@ -3367,8 +3367,8 @@ export interface CloudintegrationtypesAWSServiceConfigDTO {
 }
 
 export enum CloudintegrationtypesRegionStateDTO {
-	present = 'present',
-	removed = 'removed',
+	enabled = 'enabled',
+	disabled = 'disabled',
 }
 export interface CloudintegrationtypesRegionSyncStateDTO {
 	state: CloudintegrationtypesRegionStateDTO;

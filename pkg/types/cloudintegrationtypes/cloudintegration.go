@@ -26,14 +26,14 @@ var (
 )
 
 var (
-	RegionStatePresent = RegionState{valuer.NewString("present")}
-	RegionStateRemoved = RegionState{valuer.NewString("removed")}
+	RegionStateEnabled  = RegionState{valuer.NewString("enabled")}
+	RegionStateDisabled = RegionState{valuer.NewString("disabled")}
 )
 
 type RegionState struct{ valuer.String }
 
 func (RegionState) Enum() []any {
-	return []any{RegionStatePresent, RegionStateRemoved}
+	return []any{RegionStateEnabled, RegionStateDisabled}
 }
 
 // StorableCloudIntegration represents a cloud integration stored in the database.
@@ -59,7 +59,7 @@ type StorableAgentReport struct {
 	SyncState       *StorableSyncState `json:"sync_state,omitempty"`
 }
 
-// StorableSyncState holds every region sent to the agent. A removed region is dropped only after the agent acks Version.
+// StorableSyncState holds every region sent to the agent. A disabled region is dropped only after the agent acks Version.
 type StorableSyncState struct {
 	Version int64                       `json:"version"`
 	InSync  bool                        `json:"in_sync"`

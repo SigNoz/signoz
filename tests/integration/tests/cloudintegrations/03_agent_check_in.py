@@ -181,15 +181,15 @@ def test_sync_state_drops_removed_region_after_ack(
     assert response.json()["data"]["syncState"] == {
         "version": 2,
         "inSync": False,
-        "regions": {"us-east-1": {"state": "present"}, "us-west-2": {"state": "removed"}},
-    }, "removed region should be marked removed and the version bumped"
+        "regions": {"us-east-1": {"state": "enabled"}, "us-west-2": {"state": "disabled"}},
+    }, "removed region should be marked disabled and the version bumped"
 
     response = simulate_agent_checkin(signoz, admin_token, "aws", account_id, provider_account_id, synced_version=2)
     assert response.status_code == HTTPStatus.OK, response.text
     assert response.json()["data"]["syncState"] == {
         "version": 2,
         "inSync": True,
-        "regions": {"us-east-1": {"state": "present"}},
+        "regions": {"us-east-1": {"state": "enabled"}},
     }, "acked removed region should be dropped"
 
 
@@ -221,7 +221,7 @@ def test_sync_state_keeps_removed_region_without_ack(
         assert response.json()["data"]["syncState"] == {
             "version": 2,
             "inSync": False,
-            "regions": {"us-east-1": {"state": "present"}, "us-west-2": {"state": "removed"}},
+            "regions": {"us-east-1": {"state": "enabled"}, "us-west-2": {"state": "disabled"}},
         }, "unacked removed region should stay without bumping the version"
 
 
@@ -258,7 +258,7 @@ def test_sync_state_ignores_mismatched_ack(
     expected_sync_state = {
         "version": 3,
         "inSync": False,
-        "regions": {"us-east-1": {"state": "present"}, "us-west-2": {"state": "removed"}, "eu-west-1": {"state": "present"}},
+        "regions": {"us-east-1": {"state": "enabled"}, "us-west-2": {"state": "disabled"}, "eu-west-1": {"state": "enabled"}},
     }
     assert response.json()["data"]["syncState"] == expected_sync_state
 
@@ -296,7 +296,7 @@ def test_sync_state_applies_ack_before_config_change(
     assert response.json()["data"]["syncState"] == {
         "version": 3,
         "inSync": False,
-        "regions": {"us-east-1": {"state": "present"}, "eu-west-1": {"state": "present"}},
+        "regions": {"us-east-1": {"state": "enabled"}, "eu-west-1": {"state": "enabled"}},
     }, "ack should drop the removed region before the new region bumps the version"
 
 
@@ -318,7 +318,7 @@ def test_sync_state_region_removed_during_sync(
     assert response.json()["data"]["syncState"] == {
         "version": 1,
         "inSync": True,
-        "regions": {"us-east-1": {"state": "present"}, "us-west-2": {"state": "present"}},
+        "regions": {"us-east-1": {"state": "enabled"}, "us-west-2": {"state": "enabled"}},
     }
 
     response = requests.put(
@@ -334,15 +334,15 @@ def test_sync_state_region_removed_during_sync(
     assert response.json()["data"]["syncState"] == {
         "version": 2,
         "inSync": False,
-        "regions": {"us-east-1": {"state": "present"}, "us-west-2": {"state": "removed"}},
-    }, "region removed mid-sync should be marked removed"
+        "regions": {"us-east-1": {"state": "enabled"}, "us-west-2": {"state": "disabled"}},
+    }, "region removed mid-sync should be marked disabled"
 
     response = simulate_agent_checkin(signoz, admin_token, "aws", account_id, provider_account_id, synced_version=2)
     assert response.status_code == HTTPStatus.OK, response.text
     assert response.json()["data"]["syncState"] == {
         "version": 2,
         "inSync": True,
-        "regions": {"us-east-1": {"state": "present"}},
+        "regions": {"us-east-1": {"state": "enabled"}},
     }
 
 
@@ -373,8 +373,8 @@ def test_sync_state_after_disconnect(
         assert response.json()["data"]["syncState"] == {
             "version": 2,
             "inSync": False,
-            "regions": {"us-east-1": {"state": "removed"}, "us-west-2": {"state": "removed"}},
-        }, "every region should be removed once, without bumping the version on later check-ins"
+            "regions": {"us-east-1": {"state": "disabled"}, "us-west-2": {"state": "disabled"}},
+        }, "every region should be disabled once, without bumping the version on later check-ins"
 
     for _ in range(2):
         response = simulate_agent_checkin(signoz, admin_token, "aws", account_id, provider_account_id, synced_version=2)

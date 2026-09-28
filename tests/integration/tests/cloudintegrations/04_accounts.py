@@ -24,7 +24,7 @@ AWS_ACCOUNT_SPEC = ProviderAccountSpec(
     expected_sync_state=lambda p: {
         "version": 1,
         "inSync": True,
-        "regions": {region: {"state": "present"} for region in p["regions"]},
+        "regions": {region: {"state": "enabled"} for region in p["regions"]},
     },
 )
 
