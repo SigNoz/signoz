@@ -3,9 +3,17 @@ package spantypes
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/stretchr/testify/assert"
 )
+
+func makeAttributesJSON(paths map[string]any) chcol.JSON {
+	j := chcol.NewJSON()
+	for path, value := range paths {
+		j.SetValueAtPath(path, value)
+	}
+	return *j
+}
 
 // The trace span reads suppress whichever attribute home is empty per row, so a StorableSpan
 // carries its attributes in the legacy maps or in AttributesJSON, never duplicated. The merged
@@ -25,12 +33,13 @@ func TestStorableSpanAttributesHomes(t *testing.T) {
 		}, span.Attributes())
 	})
 
-	t.Run("json-only span flattens the nested document", func(t *testing.T) {
+	t.Run("json-only span reads its flattened paths", func(t *testing.T) {
 		span := &StorableSpan{
-			AttributesJSON: telemetrystoretypes.JSONValue{
-				"http":      map[string]any{"route": "/a", "retry": map[string]any{"count": float64(2)}},
-				"cache.hit": true,
-			},
+			AttributesJSON: makeAttributesJSON(map[string]any{
+				"http.route":       "/a",
+				"http.retry.count": float64(2),
+				"cache.hit":        true,
+			}),
 		}
 
 		assert.Equal(t, map[string]any{
@@ -40,10 +49,24 @@ func TestStorableSpanAttributesHomes(t *testing.T) {
 		}, span.Attributes())
 	})
 
+	t.Run("a scalar and an object under one key stay distinct paths", func(t *testing.T) {
+		span := &StorableSpan{
+			AttributesJSON: makeAttributesJSON(map[string]any{
+				"db.function":           "node_refresh",
+				"db.function.arg_count": float64(2),
+			}),
+		}
+
+		assert.Equal(t, map[string]any{
+			"db.function":           "node_refresh",
+			"db.function.arg_count": float64(2),
+		}, span.Attributes())
+	})
+
 	t.Run("map entries win over same-named json paths", func(t *testing.T) {
 		span := &StorableSpan{
 			AttributesString: map[string]string{"http.route": "/a"},
-			AttributesJSON:   telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/stale"}},
+			AttributesJSON:   makeAttributesJSON(map[string]any{"http.route": "/stale"}),
 		}
 
 		assert.Equal(t, "/a", span.Attributes()["http.route"])
@@ -52,7 +75,7 @@ func TestStorableSpanAttributesHomes(t *testing.T) {
 	t.Run("empty json document contributes nothing", func(t *testing.T) {
 		span := &StorableSpan{
 			AttributesString: map[string]string{"http.route": "/a"},
-			AttributesJSON:   telemetrystoretypes.JSONValue{},
+			AttributesJSON:   makeAttributesJSON(nil),
 		}
 
 		assert.Equal(t, map[string]any{"http.route": "/a"}, span.Attributes())

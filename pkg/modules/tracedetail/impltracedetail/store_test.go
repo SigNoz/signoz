@@ -91,11 +91,13 @@ func TestGetSpanCountByField(t *testing.T) {
 	}
 }
 
-// attrHomeSQL pins the per-row home-suppression fragment shared by the span reads: the legacy
-// maps are always selected and the JSON column is emptied when any map carries the row's
-// attributes, so dual-written rows resolve map-side (maps win on collision).
-const attrHomeSQL = `attributes_string, attributes_number, attributes_bool, ` +
-	`if\(notEmpty\(attributes_string\) OR notEmpty\(attributes_number\) OR notEmpty\(attributes_bool\), CAST\('\{\}', 'JSON'\), attributes\) AS attributes, resources_string`
+// attrHomeSQL pins the per-row home-suppression fragment shared by the span reads: the JSON column
+// is read as-is (CAST normalises its wire type for a native decode) and each legacy map is emptied
+// when the JSON column carries the row, so JSON is preferred and the maps are the fallback.
+const attrHomeSQL = `if\(notEmpty\(attributes\), map\(\), attributes_string\) AS attributes_string, ` +
+	`if\(notEmpty\(attributes\), map\(\), attributes_number\) AS attributes_number, ` +
+	`if\(notEmpty\(attributes\), map\(\), attributes_bool\) AS attributes_bool, ` +
+	`CAST\(attributes, 'JSON'\) AS attributes, resources_string`
 
 func TestGetTraceSpans(t *testing.T) {
 	s := newTestStore(sqlmock.QueryMatcherRegexp)
@@ -114,12 +116,12 @@ func TestGetTraceSpansByIDs(t *testing.T) {
 }
 
 func TestGetFlamegraphSpans(t *testing.T) {
-	// The map columns are aggregated as-is and the JSON column is wrapped in per-row home
-	// suppression (emptied when any legacy map carries the row's attributes).
-	anyAttrSQL := "any(attributes_string) AS attributes_string, " +
-		"any(attributes_number) AS attributes_number, " +
-		"any(attributes_bool) AS attributes_bool, " +
-		"any(if(notEmpty(attributes_string) OR notEmpty(attributes_number) OR notEmpty(attributes_bool), CAST('{}', 'JSON'), attributes)) AS attributes"
+	// Each legacy map is emptied when the JSON column carries the row, and the JSON column is read
+	// as-is (CAST normalises its wire type for a native decode); JSON is preferred, maps fall back.
+	anyAttrSQL := "any(if(notEmpty(attributes), map(), attributes_string)) AS attributes_string, " +
+		"any(if(notEmpty(attributes), map(), attributes_number)) AS attributes_number, " +
+		"any(if(notEmpty(attributes), map(), attributes_bool)) AS attributes_bool, " +
+		"any(CAST(attributes, 'JSON')) AS attributes"
 	baseSQL := "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, " + anyAttrSQL + ", any(resources_string) AS resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY span_id ORDER BY timestamp ASC, name ASC"
 	withSpanIDsSQL := "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, " + anyAttrSQL + ", any(resources_string) AS resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND span_id IN (?, ?) GROUP BY span_id ORDER BY timestamp ASC, name ASC"
 

@@ -7,8 +7,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -94,39 +94,39 @@ type WaterfallSpan struct {
 
 // StorableSpan is the ClickHouse scan struct for the v3 waterfall query.
 type StorableSpan struct {
-	StartTime          time.Time          `ch:"timestamp"`
-	DurationNano       uint64             `ch:"duration_nano"`
-	SpanID             string             `ch:"span_id"`
-	HasError           bool               `ch:"has_error"`
-	Kind               int8               `ch:"kind"`
-	ServiceName        string             `ch:"resource_string_service$$name"`
-	Name               string             `ch:"name"`
-	AttributesString   map[string]string  `ch:"attributes_string"`
-	AttributesNumber   map[string]float64 `ch:"attributes_number"`
-	AttributesBool     map[string]bool    `ch:"attributes_bool"`
+	StartTime        time.Time          `ch:"timestamp"`
+	DurationNano     uint64             `ch:"duration_nano"`
+	SpanID           string             `ch:"span_id"`
+	HasError         bool               `ch:"has_error"`
+	Kind             int8               `ch:"kind"`
+	ServiceName      string             `ch:"resource_string_service$$name"`
+	Name             string             `ch:"name"`
+	AttributesString map[string]string  `ch:"attributes_string"`
+	AttributesNumber map[string]float64 `ch:"attributes_number"`
+	AttributesBool   map[string]bool    `ch:"attributes_bool"`
 	// AttributesJSON is the `attributes` JSON column: post-rollout rows carry their attributes
 	// here instead of the maps above. The trace span reads suppress whichever home is empty per
 	// row, so at most one of (maps, AttributesJSON) holds data for a span.
-	AttributesJSON    telemetrystoretypes.JSONValue `ch:"attributes"`
-	ResourcesString   map[string]string             `ch:"resources_string"`
-	Events             []string           `ch:"events"`
-	StatusMessage      string             `ch:"status_message"`
-	StatusCodeString   string             `ch:"status_code_string"`
-	SpanKind           string             `ch:"kind_string"`
-	ParentSpanID       string             `ch:"parent_span_id"`
-	Flags              uint32             `ch:"flags"`
-	IsRemote           string             `ch:"is_remote"`
-	TraceState         string             `ch:"trace_state"`
-	StatusCode         int16              `ch:"status_code"`
-	DBName             string             `ch:"db_name"`
-	DBOperation        string             `ch:"db_operation"`
-	HTTPMethod         string             `ch:"http_method"`
-	HTTPURL            string             `ch:"http_url"`
-	HTTPHost           string             `ch:"http_host"`
-	ExternalHTTPMethod string             `ch:"external_http_method"`
-	ExternalHTTPURL    string             `ch:"external_http_url"`
-	ResponseStatusCode string             `ch:"response_status_code"`
-	References         string             `ch:"references"`
+	AttributesJSON     chcol.JSON        `ch:"attributes"`
+	ResourcesString    map[string]string `ch:"resources_string"`
+	Events             []string          `ch:"events"`
+	StatusMessage      string            `ch:"status_message"`
+	StatusCodeString   string            `ch:"status_code_string"`
+	SpanKind           string            `ch:"kind_string"`
+	ParentSpanID       string            `ch:"parent_span_id"`
+	Flags              uint32            `ch:"flags"`
+	IsRemote           string            `ch:"is_remote"`
+	TraceState         string            `ch:"trace_state"`
+	StatusCode         int16             `ch:"status_code"`
+	DBName             string            `ch:"db_name"`
+	DBOperation        string            `ch:"db_operation"`
+	HTTPMethod         string            `ch:"http_method"`
+	HTTPURL            string            `ch:"http_url"`
+	HTTPHost           string            `ch:"http_host"`
+	ExternalHTTPMethod string            `ch:"external_http_method"`
+	ExternalHTTPURL    string            `ch:"external_http_url"`
+	ResponseStatusCode string            `ch:"response_status_code"`
+	References         string            `ch:"references"`
 }
 
 // MinimalSpan with only the fields needed to build the parent-child tree.
@@ -270,11 +270,16 @@ func (ws *WaterfallSpan) getPathToSelectedSpanID(selectedSpanID string) ([]strin
 }
 
 func (item *StorableSpan) Attributes() map[string]any {
-	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool)+len(item.AttributesJSON))
-	// The JSON document is flattened in first and the legacy maps laid over it, so a map entry
-	// wins a same-named JSON path — same precedence as the querier's list-view bag.
-	if len(item.AttributesJSON) > 0 {
-		telemetrystoretypes.FlattenJSONPaths("", item.AttributesJSON, attributes)
+	jsonPaths := item.AttributesJSON.ValuesByPath()
+	attributes := make(map[string]any, len(jsonPaths)+len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool))
+	// The JSON column is read by its flattened paths, so a key stored as both a scalar and an object
+	// stays two distinct paths; the legacy maps are laid over it as the pre-rollout fallback.
+	for path, value := range jsonPaths {
+		if dynamic, ok := value.(chcol.Variant); ok {
+			attributes[path] = dynamic.Any()
+		} else {
+			attributes[path] = value
+		}
 	}
 	for k, v := range item.AttributesString {
 		attributes[k] = v
