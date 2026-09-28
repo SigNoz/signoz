@@ -39,7 +39,7 @@ export const SlackInitialConfig: Partial<SlackChannel> = {
      {{- end }}`,
 };
 
-// mirrors DefaultGoogleChatReceiverConfig in pkg/types/alertmanagertypes/channel_googlechat.go,
+// mirrors DefaultGoogleChatReceiverConfig in pkg/types/alertmanagertypes/googlechat.go,
 // which the backend applies when title / text are left empty
 export const GoogleChatInitialConfig: Partial<GoogleChatChannel> = {
 	title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
@@ -51,7 +51,7 @@ export const GoogleChatInitialConfig: Partial<GoogleChatChannel> = {
 };
 
 // mirrors DefaultJiraSummaryTemplate / DefaultJiraDescriptionTemplate in
-// pkg/types/alertmanagertypes/channel_jira.go, which the backend applies when the
+// pkg/types/alertmanagertypes/jira.go, which the backend applies when the
 // summary / description are left empty. The description is markdown here and is
 // wrapped in the ADF status panel + deep-links server-side.
 export const JiraInitialConfig: Partial<JiraChannel> = {
@@ -119,7 +119,7 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 };
 
 // mirrors DefaultJSMOpsMessageTemplate / DefaultJSMOpsDescriptionTemplate in
-// pkg/types/alertmanagertypes/channel_jsmops.go, applied by the backend when message /
+// pkg/types/alertmanagertypes/jsmops.go, applied by the backend when message /
 // description are left empty. send_resolved is seeded on so JSM alerts close on
 // resolve (the backend cannot default it, see channel_jsmops.go). priority mirrors the
 // Opsgenie template mapping severity to P1-P5.
@@ -146,7 +146,7 @@ export const JsmOpsInitialConfig: Partial<JsmOpsChannel> = {
 };
 
 // mirrors DefaultIncidentIOTitleTemplate / DefaultIncidentIODescriptionTemplate
-// in pkg/types/alertmanagertypes/channel_incidentio.go, applied by the backend when
+// in pkg/types/alertmanagertypes/incidentio.go, applied by the backend when
 // title / description are left empty. send_resolved is seeded on so incident.io
 // alerts resolve with the rule (the backend cannot default it).
 export const IncidentIOInitialConfig: Partial<IncidentIOChannel> = {
