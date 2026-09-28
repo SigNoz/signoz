@@ -20,8 +20,9 @@ import (
 // member reads, current member first. It is present when any member is
 // present, and absent when no member is present. A row without any member
 // reads what the tail of the merge reads: the sentinel for a string family,
-// NULL for the others. A member with a value map reads in the current
-// vocabulary.
+// NULL for the others. When every member reads its sentinel as a value, so
+// does the family, and the keyless contract of the signal survives the
+// merge. A member with a value map reads in the current vocabulary.
 func LogicalRead(ctx context.Context, q qbtypes.QueryInfo, storage qbtypes.Storage, logical *telemetrytypes.LogicalField) (qbtypes.Read, error) {
 	if !logical.IsFamily() {
 		return memberRead(ctx, q, storage, logical, 0)
@@ -35,7 +36,7 @@ func LogicalRead(ctx context.Context, q qbtypes.QueryInfo, storage qbtypes.Stora
 		reads = append(reads, read)
 	}
 
-	merged := qbtypes.Read{WhenAbsent: familyAbsence(logical)}
+	merged := qbtypes.Read{WhenAbsent: familyAbsence(logical, reads)}
 	guards := make([]string, 0, len(reads))
 	for _, read := range reads {
 		guards = append(guards, read.Presence)
@@ -97,10 +98,16 @@ func clickHouseStringArray(values []string) string {
 }
 
 // familyAbsence is what the merged read yields for a row without any
-// member: the sentinel tail of a string family, NULL for the others.
-func familyAbsence(logical *telemetrytypes.LogicalField) qbtypes.Absent {
-	if logical.FieldDataType == telemetrytypes.FieldDataTypeString {
-		return qbtypes.AbsentIsSentinel
+// member: the sentinel tail of a string family, NULL for the others. When
+// every member's sentinel is a value, the tail is one too.
+func familyAbsence(logical *telemetrytypes.LogicalField, reads []qbtypes.Read) qbtypes.Absent {
+	if logical.FieldDataType != telemetrytypes.FieldDataTypeString {
+		return qbtypes.AbsentIsNull
 	}
-	return qbtypes.AbsentIsNull
+	for _, read := range reads {
+		if read.WhenAbsent != qbtypes.AbsentIsValue {
+			return qbtypes.AbsentIsSentinel
+		}
+	}
+	return qbtypes.AbsentIsValue
 }

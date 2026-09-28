@@ -369,6 +369,9 @@ func (q *querier) populateQBEvent(event *qbtypes.QBEvent, queries []qbtypes.Quer
 //     resolved: never-seen metrics and dormant metrics (seen but no data in
 //     the query window).
 //   - err: Internal when a metadata fetch fails.
+//
+// Metric metadata resolves through every storage name of a metric-name
+// family, the same names the statement builder unions.
 func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, queries []qbtypes.QueryEnvelope, start, end uint64, requestType qbtypes.RequestType) (missingMetricQueries []string, metricWarnings []string, err error) {
 	metricNames := make([]string, 0)
 	for idx := range queries {
@@ -381,7 +384,7 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 		}
 		for _, agg := range spec.Aggregations {
 			if agg.MetricName != "" {
-				metricNames = append(metricNames, agg.MetricName)
+				metricNames = append(metricNames, querybuilder.FamilyMetricNames(ctx, orgID, q.fl, agg.MetricName)...)
 			}
 		}
 	}
@@ -409,14 +412,16 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 
 		presentAggregations := make([]qbtypes.MetricAggregation, 0, len(spec.Aggregations))
 		for i := range spec.Aggregations {
+			familyNames := querybuilder.FamilyMetricNames(ctx, orgID, q.fl, spec.Aggregations[i].MetricName)
 			if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
-				if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && temp != metrictypes.Unknown {
-					spec.Aggregations[i].Temporality = temp
-				}
+				spec.Aggregations[i].Temporality = familyTemporality(metricTemporality, familyNames)
 			}
 			if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
-				if foundMetricType, ok := metricTypes[spec.Aggregations[i].MetricName]; ok && foundMetricType != metrictypes.UnspecifiedType {
-					spec.Aggregations[i].Type = foundMetricType
+				for _, member := range familyNames {
+					if foundMetricType, ok := metricTypes[member]; ok && foundMetricType != metrictypes.UnspecifiedType {
+						spec.Aggregations[i].Type = foundMetricType
+						break
+					}
 				}
 			}
 			if spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
@@ -434,8 +439,11 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 					return nil, nil, err
 				}
 			}
-			if reducedMetricsSet[spec.Aggregations[i].MetricName] {
-				spec.Aggregations[i].Reduced = true
+			for _, member := range familyNames {
+				if reducedMetricsSet[member] {
+					spec.Aggregations[i].Reduced = true
+					break
+				}
 			}
 			presentAggregations = append(presentAggregations, spec.Aggregations[i])
 		}
@@ -503,6 +511,27 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 		warnings = append(warnings, fmt.Sprintf("no data found for the following metrics in the query time range: %s", strings.Join(parts, ", ")))
 	}
 	return missingMetricQueries, warnings, nil
+}
+
+// familyTemporality is the one temporality the names of a metric-name family
+// share. When the names hold data of different temporalities, the query
+// must read each series with its own, so the result is Multiple.
+func familyTemporality(temporalities map[string]metrictypes.Temporality, names []string) metrictypes.Temporality {
+	found := metrictypes.Unknown
+	for _, name := range names {
+		temporality, ok := temporalities[name]
+		if !ok || temporality == metrictypes.Unknown {
+			continue
+		}
+		if found == metrictypes.Unknown {
+			found = temporality
+			continue
+		}
+		if found != temporality {
+			return metrictypes.Multiple
+		}
+	}
+	return found
 }
 
 func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream) {
