@@ -29,37 +29,26 @@ type StorableRuleView struct {
 	types.Identifiable
 	types.TimeAuditable
 
-	Name  string      `bun:"name,type:text,notnull"`
-	Data  string      `bun:"data,type:text,notnull"`
-	OrgID valuer.UUID `bun:"org_id,type:text,notnull"`
+	Name  string               `bun:"name,type:text,notnull"`
+	Data  storableRuleViewData `bun:"data,type:text,notnull"`
+	OrgID valuer.UUID          `bun:"org_id,type:text,notnull"`
 }
 
-func (s *StorableRuleView) ToGettableRuleView() (*GettableRuleView, error) {
-	data := RuleViewData{}
-	if err := json.Unmarshal([]byte(s.Data), &data); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't decode rule view %s", s.ID)
-	}
-
+func (s *StorableRuleView) ToGettableRuleView() *GettableRuleView {
 	return &GettableRuleView{
 		ID:        s.ID,
 		Name:      s.Name,
-		Data:      data,
+		Data:      s.Data.toRuleViewData(),
 		OrgID:     s.OrgID,
 		CreatedAt: s.CreatedAt,
 		UpdatedAt: s.UpdatedAt,
-	}, nil
+	}
 }
 
-func (s *StorableRuleView) Update(updatable UpdatableRuleView) error {
-	data, err := json.Marshal(updatable.Data)
-	if err != nil {
-		return errors.WrapInternalf(err, errors.CodeInternal, "couldn't encode rule view %s", s.ID)
-	}
-
+func (s *StorableRuleView) Update(updatable UpdatableRuleView) {
 	s.Name = updatable.Name
-	s.Data = string(data)
+	s.Data = newStorableRuleViewData(updatable.Data)
 	s.UpdatedAt = time.Now()
-	return nil
 }
 
 type GettableRuleView struct {
@@ -109,43 +98,60 @@ func (p *PostableRuleView) Validate() error {
 	return p.Data.Validate()
 }
 
-func (p PostableRuleView) ToStorableRuleView(orgID valuer.UUID) (*StorableRuleView, error) {
-	data, err := json.Marshal(p.Data)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't encode rule view %q", p.Name)
-	}
-
+func (p PostableRuleView) ToStorableRuleView(orgID valuer.UUID) *StorableRuleView {
 	now := time.Now()
 	return &StorableRuleView{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
 		Name:          p.Name,
-		Data:          string(data),
+		Data:          newStorableRuleViewData(p.Data),
 		OrgID:         orgID,
-	}, nil
+	}
 }
 
 type UpdatableRuleView = PostableRuleView
 
-// NewGettableRuleViewsFromStorableRuleViews converts rows; corrupt rows come back keyed by view id for the caller to log.
-func NewGettableRuleViewsFromStorableRuleViews(storables []*StorableRuleView) ([]*GettableRuleView, map[string]error) {
+func NewGettableRuleViewsFromStorableRuleViews(storables []*StorableRuleView) []*GettableRuleView {
 	views := make([]*GettableRuleView, 0, len(storables))
-	errByViewID := make(map[string]error)
-
 	for _, storable := range storables {
-		view, err := storable.ToGettableRuleView()
-		if err != nil {
-			errByViewID[storable.ID.StringValue()] = err
-			continue
-		}
-		views = append(views, view)
+		views = append(views, storable.ToGettableRuleView())
 	}
-
-	return views, errByViewID
+	return views
 }
 
 type ListableRuleViews struct {
 	Views []*GettableRuleView `json:"views" required:"true" nullable:"false"`
+}
+
+// storableRuleViewData owns the persisted blob format; wire tag changes must not affect stored rows.
+type storableRuleViewData struct {
+	Version string   `json:"version"`
+	Query   string   `json:"query"`
+	States  []string `json:"states"`
+	Sort    string   `json:"sort"`
+	Order   string   `json:"order"`
+}
+
+func newStorableRuleViewData(data RuleViewData) storableRuleViewData {
+	return storableRuleViewData{
+		Version: data.Version,
+		Query:   data.Query,
+		States:  data.States,
+		Sort:    data.Sort.StringValue(),
+		Order:   data.Order.StringValue(),
+	}
+}
+
+func (d storableRuleViewData) toRuleViewData() RuleViewData {
+	return RuleViewData{
+		Version: d.Version,
+		ListFilter: ListFilter{
+			Query:  d.Query,
+			States: d.States,
+			Sort:   ListSort{valuer.NewString(d.Sort)},
+			Order:  ListOrder{valuer.NewString(d.Order)},
+		},
+	}
 }
 
 func validateRuleViewName(name string) error {
