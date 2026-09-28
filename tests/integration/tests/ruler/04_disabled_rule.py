@@ -40,7 +40,7 @@ def test_disabled_rule_does_not_evaluate_or_notify(
     A rule created with disabled: true must not be evaluated: its state must
     stay "disabled" and it must not send any notification, even though the
     inserted data would fire the rule if it were evaluated. The companion
-    scenario threshold_above_at_least_once in 02_basic_alert_conditions.py
+    scenario threshold_above_at_least_once in 01_basic_alert_conditions.py
     uses the same data shape and fires when the rule is enabled.
     """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -78,12 +78,12 @@ def test_disabled_rule_does_not_evaluate_or_notify(
 
     # Insert alert data that would fire the rule if it were evaluated
     insert_alert_data(
-        [types.AlertData(type="metrics", data_path="alerts/test_scenarios/disabled_rule/alert_data.jsonl")],
+        [types.AlertData(type="metrics", data_path="ruler/test_scenarios/disabled_rule/alert_data.jsonl")],
         base_time=datetime.now(tz=UTC) - timedelta(minutes=5),
     )
 
     # Create the disabled alert rule
-    rule_path = get_testdata_file_path("alerts/test_scenarios/disabled_rule/rule.json")
+    rule_path = get_testdata_file_path("ruler/test_scenarios/disabled_rule/rule.json")
     with open(rule_path, encoding="utf-8") as f:
         rule_data = json.loads(f.read())
     update_rule_channel_name(rule_data, notification_channel_name)

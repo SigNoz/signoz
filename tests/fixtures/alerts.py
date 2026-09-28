@@ -108,14 +108,23 @@ def delete_all_rules(signoz: types.SigNoz, token: str) -> None:
 def seed_alert_rules(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
+    notification_channel: types.TestContainerDocker,
     create_notification_channel: Callable[[dict], str],
     create_alert_rule: Callable[[dict], str],
-) -> Callable[[dict, list[dict]], None]:
+) -> Callable[[str, list[dict]], None]:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    def _seed_alert_rules(channel_config: dict, rules: list[dict]) -> None:
+    # create_notification_channel rather than create_webhook_notification_channel:
+    # only the former deletes on teardown, and callers reuse one channel name
+    # across tests, so a leaked channel fails the next create as a duplicate.
+    def _seed_alert_rules(channel_name: str, rules: list[dict]) -> None:
         delete_all_rules(signoz, admin_token)
-        create_notification_channel(channel_config)
+        create_notification_channel(
+            {
+                "name": channel_name,
+                "webhook_configs": [{"url": notification_channel.container_configs["8080"].get(f"/alert/{channel_name}"), "send_resolved": False}],
+            }
+        )
         for rule in rules:
             create_alert_rule(rule)
 
