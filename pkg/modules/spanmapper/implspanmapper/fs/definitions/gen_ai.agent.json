@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "definition": {
     "name": "gen_ai.agent",
     "condition": {
@@ -68,7 +68,7 @@
             {
               "key": "final_result",
               "context": "attribute",
-              "operation": "copy",
+              "operation": "move",
               "priority": 10
             }
           ]

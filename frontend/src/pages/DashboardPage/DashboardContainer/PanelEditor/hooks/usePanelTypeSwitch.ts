@@ -7,10 +7,8 @@ import type {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
-import {
-	handleQueryChange,
-	type PartialPanelTypes,
-} from 'lib/query/panelQuery';
+import { handleQueryChange } from 'lib/query/panelQuery';
+import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import type {

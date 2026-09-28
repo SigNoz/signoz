@@ -30,6 +30,8 @@ interface CapturedMessage {
 	text: string;
 }
 
+const PREPARE_TIMEOUT_MS = 180_000;
+
 const messagesByPage = new WeakMap<Page, CapturedMessage[]>();
 
 /**
@@ -52,6 +54,15 @@ const config: TestRunnerConfig = {
 	// msw logs every mocked request at `log`; keep it out of the failure dump
 	// unless the job is re-run with debug logging (GitHub sets RUNNER_DEBUG=1).
 	logLevel: process.env.RUNNER_DEBUG === '1' ? 'info' : 'warn',
+	// The runner's default prepare, minus Playwright's 30s navigation timeout: on
+	// a cold dev server the first load compiles the whole preview, which outlasts
+	// it on a shared CI runner.
+	async prepare({ page }): Promise<void> {
+		await page.goto(new URL('iframe.html', process.env.TARGET_URL).toString(), {
+			waitUntil: 'load',
+			timeout: PREPARE_TIMEOUT_MS,
+		});
+	},
 	async preVisit(page): Promise<void> {
 		const existing = messagesByPage.get(page);
 		if (existing) {

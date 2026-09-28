@@ -1,6 +1,7 @@
 import type { Preview } from '@storybook/react-vite';
 import type { SetupWorker } from 'msw';
 import { setupWorker } from 'msw';
+import { configure } from 'storybook/test';
 
 import { settleForCapture } from '../src/storybook/visual/settleForCapture';
 import PageDocs from '../src/storybook/docs/PageDocs';
@@ -82,6 +83,10 @@ const translationsReady = i18n.loadNamespaces(
 		path.slice(path.lastIndexOf('/') + 1, -'.json'.length),
 	),
 );
+
+// testing-library's 1s default for `findBy*` and `waitFor` is shorter than a
+// popup or a query takes to land on a loaded CI runner.
+configure({ asyncUtilTimeout: 10_000 });
 
 const preview: Preview = {
 	parameters: {

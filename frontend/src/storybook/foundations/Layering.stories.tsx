@@ -1,12 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import {
-	expect,
-	screen,
-	userEvent,
-	waitFor,
-	waitForElementToBeRemoved,
-	within,
-} from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import LayeringFixture from './LayeringFixture';
 
@@ -53,7 +46,9 @@ export const SelectOverDrawer: Story = {
 		const drawer = await screen.findByRole('dialog', { name: 'Layering drawer' });
 
 		await userEvent.keyboard('{Escape}');
-		await waitForElementToBeRemoved(drawer);
+		// The close can finish before this runs, which `waitForElementToBeRemoved`
+		// rejects instead of passing.
+		await waitFor(() => expect(drawer).not.toBeInTheDocument());
 		await userEvent.click(trigger);
 		await userEvent.click(
 			await screen.findByRole('combobox', { name: 'Drawer environment' }),

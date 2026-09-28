@@ -67,6 +67,8 @@ export const NoPreviewData: Story = {
 /** The editor remains usable while the independently fetched preview has failed. */
 export const PreviewQueryError: Story = {
 	args: { dataState: 'error' },
+	// The mocked queries deliberately fail; the resulting console errors are the state under test.
+	parameters: { allowConsoleErrors: true },
 };
 
 /** A locked dashboard: the editor still opens, but it cannot save. */

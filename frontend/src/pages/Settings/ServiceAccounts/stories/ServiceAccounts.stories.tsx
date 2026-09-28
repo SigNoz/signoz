@@ -106,7 +106,11 @@ export const SearchNoResults: Story = {
 
 /** Error: the list request failed while the rest of the settings shell stays usable. */
 export const LoadError: Story = {
-	parameters: { msw: { handlers: [accountsLoadError] } },
+	// The deliberate 500 is the state under test.
+	parameters: {
+		msw: { handlers: [accountsLoadError] },
+		allowConsoleErrors: true,
+	},
 };
 
 /** An account opened up: the name and the roles it acts under. */

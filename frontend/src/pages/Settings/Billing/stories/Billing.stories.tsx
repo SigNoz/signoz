@@ -170,4 +170,6 @@ export const Loading: Story = {
 /** Error: the usage request failed, leaving the plan card with nothing to report. */
 export const Error: Story = {
 	args: { dataState: 'error' },
+	// The mocked usage request deliberately fails; the resulting console errors are the state under test.
+	parameters: { allowConsoleErrors: true },
 };
