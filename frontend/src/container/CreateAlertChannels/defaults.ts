@@ -121,7 +121,7 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 // mirrors DefaultJSMOpsMessageTemplate / DefaultJSMOpsDescriptionTemplate in
 // pkg/types/alertmanagertypes/jsmops.go, applied by the backend when message /
 // description are left empty. send_resolved is seeded on so JSM alerts close on
-// resolve (the backend cannot default it, see channel_jsmops.go). priority mirrors the
+// resolve (the backend cannot default it, see jsmops.go). priority mirrors the
 // Opsgenie template mapping severity to P1-P5.
 export const JsmOpsInitialConfig: Partial<JsmOpsChannel> = {
 	send_resolved: true,
