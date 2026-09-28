@@ -239,7 +239,7 @@ func (ic *LogParsingPipelineController) getNormalizePipeline() pipelinetypes.Get
 		},
 		Config: []pipelinetypes.PipelineOperator{
 			{
-				ID:      uuid.NewString(),
+				ID:      "normalize_body_default",
 				Type:    "normalize",
 				Enabled: true,
 				If:      "body != nil",
