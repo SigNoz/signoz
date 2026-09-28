@@ -15,10 +15,14 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { MockResolver } from '@/storybook/msw/types';
 
 import {
+	CREATE_OUTCOMES,
+	type CreateOutcome,
 	EXPIRIES,
 	type Expiry,
+	ingestionKeyCreateError,
 	ingestionKeysResponse,
 	KEYS_PER_PAGE,
 	legacyIngestionResponse,
@@ -28,6 +32,11 @@ import {
 
 const KEYS = 'Ingestion · keys';
 const LIMITS = 'Ingestion · limits';
+
+const rejectCreate: MockResolver = (_req, res, ctx) =>
+	res(ctx.status(409), ctx.json(ingestionKeyCreateError()));
+
+const holdCreate: MockResolver = (_req, res, ctx) => res(ctx.delay('infinite'));
 
 export const ingestionMocks = defineStoryMocks({
 	controls: {
@@ -49,6 +58,13 @@ export const ingestionMocks = defineStoryMocks({
 				'When the keys run out. `soon` is inside the window the row warns about; `expired` is past it.',
 			options: EXPIRIES,
 			value: 'none',
+		}),
+		create: choiceControl<CreateOutcome>('Creating a key', {
+			group: KEYS,
+			description:
+				'What the create behind the new key form answers. `hangs` holds the submit button in its loading state.',
+			options: CREATE_OUTCOMES,
+			value: 'succeeds',
 		}),
 		limits: multiChoiceControl<LimitSignal>('Signals with a limit', {
 			group: LIMITS,
@@ -85,10 +101,14 @@ export const ingestionMocks = defineStoryMocks({
 
 		rest.post(
 			'http://localhost/api/v2/gateway/ingestion_keys',
-			response.json(() => ({
-				status: 'success',
-				data: { id: 'ingestion-key-new', value: 'sk_new' },
-			})),
+			{
+				succeeds: response.json(() => ({
+					status: 'success',
+					data: { id: 'ingestion-key-new', value: 'sk_new' },
+				})),
+				fails: rejectCreate,
+				hangs: holdCreate,
+			}[values.create],
 		),
 
 		rest.patch(
