@@ -15,10 +15,10 @@ logger = setup_logger(__name__)
 
 def test_webhook_notification_channel(
     signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     notification_channel: types.TestContainerDocker,
     make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
-    create_webhook_notification_channel: Callable[[str, str, dict, bool], str],
 ) -> None:
     logger.info("Setting up notification channel")
 
@@ -43,14 +43,6 @@ def test_webhook_notification_channel(
                 persistent=False,
             )
         ],
-    )
-
-    # Create an alert channel using the given route
-    create_webhook_notification_channel(
-        channel_name=notification_channel_name,
-        webhook_url=webhook_endpoint,
-        http_config={},
-        send_resolved=True,
     )
 
     # TODO: @abhishekhugetech # pylint: disable=W0511
