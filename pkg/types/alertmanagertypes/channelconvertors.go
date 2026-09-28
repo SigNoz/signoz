@@ -28,25 +28,34 @@ func (p *PostableNotificationChannel) ToChannel(orgID string) (*Channel, *Receiv
 		return nil, nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal receiver")
 	}
 
-	return &Channel{
+	spec, err := p.Config.toChannelSpec()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	channel := &Channel{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		Name:          p.Name,
 		DisplayName:   p.DisplayName,
 		Type:          p.Config.Kind.ToStoredType(),
 		Data:          string(data),
-		Config:        p.Config,
 		OrgID:         orgID,
-	}, receiver, nil
+	}
+	if err := channel.fillSpec(spec); err != nil {
+		return nil, nil, err
+	}
+
+	return channel, receiver, nil
 }
 
 // ToReceiver hands the assembled receiver to newDefaultedReceiver, which is the
 // only place upstream applies a notifier's defaults and validation — several
 // integrations panic without them.
 func (p *PostableNotificationChannel) ToReceiver() (*Receiver, error) {
-	spec, ok := p.Config.Spec.(ChannelSpec)
-	if !ok {
-		return nil, errors.NewInternalf(errors.CodeInternal, "config.spec was not decoded into a known type")
+	spec, err := p.Config.toChannelSpec()
+	if err != nil {
+		return nil, err
 	}
 
 	receiver, err := spec.toUndefaultedReceiver(p.DisplayName)
@@ -84,9 +93,16 @@ func (c *Channel) UpdateFromUpdatable(updatable UpdatableNotificationChannel) (*
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal receiver")
 	}
 
+	spec, err := updatable.Config.toChannelSpec()
+	if err != nil {
+		return nil, err
+	}
+	if err := c.fillSpec(spec); err != nil {
+		return nil, err
+	}
+
 	c.Type = updatable.Config.Kind.ToStoredType()
 	c.Data = string(data)
-	c.Config = updatable.Config
 	c.UpdatedAt = time.Now()
 
 	return receiver, nil
@@ -96,14 +112,19 @@ func (c *Channel) UpdateFromUpdatable(updatable UpdatableNotificationChannel) (*
 // Storage -> API
 // ════════════════════════════════════════════════════════════════════════
 
-// toChannelConfig returns the stored config. Only a row the migration could not
-// backfill has none, so deriving it here reports why.
+// toChannelConfig pairs the scanned spec with the kind Type names. Only a row
+// the migration could not backfill has none, so deriving it here reports why.
 func (c *Channel) toChannelConfig() (ChannelConfig, error) {
-	if c.Config.IsZero() {
+	if c.Spec == nil {
 		return c.deriveChannelConfig()
 	}
 
-	return c.Config, nil
+	channelKind, ok := parseStoredChannelType(c.Type)
+	if !ok {
+		return ChannelConfig{}, errors.NewInternalf(errors.CodeInternal, "channel %q carries a spec under unmodelled type %q", c.DisplayName, c.Type)
+	}
+
+	return ChannelConfig{Kind: channelKind, Spec: c.Spec}, nil
 }
 
 // deriveChannelConfig derives the kind from the config the receiver actually

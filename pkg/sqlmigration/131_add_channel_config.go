@@ -15,12 +15,12 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type addChannelConfig struct {
+type addChannelSpec struct {
 	sqlschema sqlschema.SQLSchema
 	logger    *slog.Logger
 }
 
-type channelConfigBackfillRow struct {
+type channelSpecBackfillRow struct {
 	bun.BaseModel `bun:"table:notification_channel"`
 
 	ID    string `bun:"id,pk"`
@@ -32,50 +32,50 @@ type channelConfigBackfillRow struct {
 // notification_channel.data.
 type notifierJSON map[string]json.RawMessage
 
-type channelConfigBackfillKind struct {
+type channelSpecBackfillKind struct {
 	configsKey string
-	kind       string
 	convert    func(notifierJSON) (map[string]any, error)
 }
 
-var channelConfigBackfillKinds = []channelConfigBackfillKind{
-	{configsKey: "slack_configs", kind: "slack", convert: convertSlackNotifierJSON},
-	{configsKey: "email_configs", kind: "email", convert: convertEmailNotifierJSON},
-	{configsKey: "webhook_configs", kind: "webhook", convert: convertWebhookNotifierJSON},
-	{configsKey: "pagerduty_configs", kind: "pagerduty", convert: convertPagerdutyNotifierJSON},
-	{configsKey: "opsgenie_configs", kind: "opsgenie", convert: convertOpsgenieNotifierJSON},
-	{configsKey: "msteamsv2_configs", kind: "msteams", convert: convertMSTeamsNotifierJSON},
-	{configsKey: "googlechat_configs", kind: "googlechat", convert: convertGoogleChatNotifierJSON},
-	{configsKey: "jira_configs", kind: "jira", convert: convertJiraNotifierJSON},
-	{configsKey: "jsmops_configs", kind: "jsmops", convert: convertJSMOpsNotifierJSON},
-	{configsKey: "incidentio_configs", kind: "incidentio", convert: convertIncidentIONotifierJSON},
+var channelSpecBackfillKinds = []channelSpecBackfillKind{
+	{configsKey: "slack_configs", convert: convertSlackNotifierJSON},
+	{configsKey: "email_configs", convert: convertEmailNotifierJSON},
+	{configsKey: "webhook_configs", convert: convertWebhookNotifierJSON},
+	{configsKey: "pagerduty_configs", convert: convertPagerdutyNotifierJSON},
+	{configsKey: "opsgenie_configs", convert: convertOpsgenieNotifierJSON},
+	{configsKey: "msteamsv2_configs", convert: convertMSTeamsNotifierJSON},
+	{configsKey: "googlechat_configs", convert: convertGoogleChatNotifierJSON},
+	{configsKey: "jira_configs", convert: convertJiraNotifierJSON},
+	{configsKey: "jsmops_configs", convert: convertJSMOpsNotifierJSON},
+	{configsKey: "incidentio_configs", convert: convertIncidentIONotifierJSON},
 }
 
-func NewAddChannelConfigFactory(sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+func NewAddChannelSpecFactory(sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
-		factory.MustNewName("add_channel_config"),
+		factory.MustNewName("add_channel_spec"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &addChannelConfig{sqlschema: sqlschema, logger: ps.Logger}, nil
+			return &addChannelSpec{sqlschema: sqlschema, logger: ps.Logger}, nil
 		},
 	)
 }
 
-func (migration *addChannelConfig) Register(migrations *migrate.Migrations) error {
+func (migration *addChannelSpec) Register(migrations *migrate.Migrations) error {
 	return migrations.Register(migration.Up, migration.Down)
 }
 
 // Up adds the column and fills it from each channel's receiver, as a write
-// through a receiver does. A receiver v2 cannot represent, such as one carrying
-// several notifiers or a notifier kind v2 does not model, stays NULL and is
-// logged; the repair endpoint is the remedy for those.
-func (migration *addChannelConfig) Up(ctx context.Context, db *bun.DB) error {
+// through a receiver does, pinning type to the notifier the spec came from
+// because a read decodes the spec under it. A receiver v2 cannot represent,
+// such as one carrying several notifiers or a notifier kind v2 does not model,
+// stays NULL and is logged; the repair endpoint is the remedy for those.
+func (migration *addChannelSpec) Up(ctx context.Context, db *bun.DB) error {
 	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("notification_channel"))
 	if err != nil {
 		return err
 	}
 
 	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, &sqlschema.Column{
-		Name:     sqlschema.ColumnName("config"),
+		Name:     sqlschema.ColumnName("spec"),
 		DataType: sqlschema.DataTypeText,
 		Nullable: true,
 	}, nil)
@@ -94,8 +94,8 @@ func (migration *addChannelConfig) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	rows := make([]*channelConfigBackfillRow, 0)
-	if err := tx.NewSelect().Model(&rows).Where("config IS NULL").OrderExpr("org_id, id").Scan(ctx); err != nil {
+	rows := make([]*channelSpecBackfillRow, 0)
+	if err := tx.NewSelect().Model(&rows).Where("spec IS NULL").OrderExpr("org_id, id").Scan(ctx); err != nil {
 		return err
 	}
 
@@ -109,21 +109,22 @@ func (migration *addChannelConfig) Up(ctx context.Context, db *bun.DB) error {
 		}
 		stats.total++
 
-		channelConfig, err := channelConfigFromReceiverJSON(row.Data)
+		storedType, spec, err := channelSpecFromReceiverJSON(row.Data)
 		if err != nil {
 			stats.unrepresentable++
-			migration.logger.WarnContext(ctx, "leaving notification channel without a v2 config", slog.String("org_id", row.OrgID), slog.String("channel_id", row.ID), errors.Attr(err))
+			migration.logger.WarnContext(ctx, "leaving notification channel without a v2 spec", slog.String("org_id", row.OrgID), slog.String("channel_id", row.ID), errors.Attr(err))
 			continue
 		}
 
-		encoded, err := marshalUnescaped(channelConfig)
+		encoded, err := marshalUnescaped(spec)
 		if err != nil {
 			return err
 		}
 
 		if _, err := tx.NewUpdate().
-			Model((*channelConfigBackfillRow)(nil)).
-			Set("config = ?", string(encoded)).
+			Model((*channelSpecBackfillRow)(nil)).
+			Set("spec = ?", string(encoded)).
+			Set("type = ?", storedType).
 			Where("id = ?", row.ID).
 			Exec(ctx); err != nil {
 			return err
@@ -133,27 +134,28 @@ func (migration *addChannelConfig) Up(ctx context.Context, db *bun.DB) error {
 
 	for _, orgID := range slices.Sorted(maps.Keys(statsByOrg)) {
 		stats := statsByOrg[orgID]
-		migration.logger.InfoContext(ctx, "filled v2 config on notification channels", slog.String("org_id", orgID), slog.Int("total", stats.total), slog.Int("filled", stats.filled), slog.Int("unrepresentable", stats.unrepresentable))
+		migration.logger.InfoContext(ctx, "filled v2 spec on notification channels", slog.String("org_id", orgID), slog.Int("total", stats.total), slog.Int("filled", stats.filled), slog.Int("unrepresentable", stats.unrepresentable))
 	}
 
 	return tx.Commit()
 }
 
-func (migration *addChannelConfig) Down(context.Context, *bun.DB) error {
+func (migration *addChannelSpec) Down(context.Context, *bun.DB) error {
 	return nil
 }
 
-// channelConfigFromReceiverJSON mirrors the v2 read of a stored receiver: one
+// channelSpecFromReceiverJSON mirrors the v2 read of a stored receiver: one
 // notifier of a modelled kind, with the receiver's field names renamed to the
-// spec's and its unset templates left out.
-func channelConfigFromReceiverJSON(data string) (map[string]any, error) {
+// spec's and its unset templates left out. The type alongside is what a read
+// decodes the spec under.
+func channelSpecFromReceiverJSON(data string) (string, map[string]any, error) {
 	receiver := map[string]json.RawMessage{}
 	if err := json.Unmarshal([]byte(data), &receiver); err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	total := 0
-	var found *channelConfigBackfillKind
+	var found *channelSpecBackfillKind
 	var notifier notifierJSON
 	for key, raw := range receiver {
 		if !strings.HasSuffix(key, "_configs") {
@@ -162,40 +164,40 @@ func channelConfigFromReceiverJSON(data string) (map[string]any, error) {
 
 		var list []notifierJSON
 		if err := json.Unmarshal(raw, &list); err != nil {
-			return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "%s", key)
+			return "", nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "%s", key)
 		}
 		total += len(list)
 		if len(list) == 0 {
 			continue
 		}
 
-		for i := range channelConfigBackfillKinds {
-			if channelConfigBackfillKinds[i].configsKey == key {
-				found = &channelConfigBackfillKinds[i]
+		for i := range channelSpecBackfillKinds {
+			if channelSpecBackfillKinds[i].configsKey == key {
+				found = &channelSpecBackfillKinds[i]
 				notifier = list[0]
 			}
 		}
 	}
 
 	if total > 1 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "carries %d notifier configurations; only one per channel is supported", total)
+		return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "carries %d notifier configurations; only one per channel is supported", total)
 	}
 	if found == nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "carries no supported notifier configuration")
+		return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "carries no supported notifier configuration")
 	}
 
 	spec, err := found.convert(notifier)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	sendResolved, err := notifier.boolValue("send_resolved")
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 	spec["sendResolved"] = sendResolved
 
-	return map[string]any{"kind": found.kind, "spec": spec}, nil
+	return strings.TrimSuffix(found.configsKey, "_configs"), spec, nil
 }
 
 func convertSlackNotifierJSON(notifier notifierJSON) (map[string]any, error) {

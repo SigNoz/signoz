@@ -53,9 +53,9 @@ func (c ChannelConfig) Validate() error {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec is required")
 	}
 
-	spec, ok := c.Spec.(ChannelSpec)
-	if !ok {
-		return errors.NewInternalf(errors.CodeInternal, "config.spec was not decoded into a known type")
+	spec, err := c.toChannelSpec()
+	if err != nil {
+		return err
 	}
 
 	// Only a config assembled in Go gets here, and one can pair a spec with the
@@ -66,12 +66,6 @@ func (c ChannelConfig) Validate() error {
 	}
 
 	return spec.Validate()
-}
-
-// IsZero is what bun's nullzero consults, so a channel with no stored config is
-// written as NULL rather than as an envelope with an empty kind.
-func (c ChannelConfig) IsZero() bool {
-	return c.Kind.IsZero() && c.Spec == nil
 }
 
 // ChannelConfigVariant names one branch of the union. Each instantiation becomes
@@ -136,6 +130,18 @@ func schemaRef(name string) string {
 // qualified type argument.
 func channelVariantRef(spec string) string {
 	return schemaRef("AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypes" + spec)
+}
+
+// toChannelSpec asserts what UnmarshalJSON decoded. Spec is any rather than
+// ChannelSpec because the OpenAPI reflector turns an interface field into an
+// empty component.
+func (c ChannelConfig) toChannelSpec() (ChannelSpec, error) {
+	spec, ok := c.Spec.(ChannelSpec)
+	if !ok {
+		return nil, errors.NewInternalf(errors.CodeInternal, "config.spec was not decoded into a known type")
+	}
+
+	return spec, nil
 }
 
 // markDiscriminator tags a oneOf schema with x-signoz-discriminator, keyed on

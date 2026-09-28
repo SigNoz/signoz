@@ -65,14 +65,13 @@ func (PostableChannel) JSONSchema() (jsonschema.Schema, error) {
 
 // NewChannelFromReceiver builds the channel a v1 write carries. The receiver is
 // all there is, so the name is generated from its display name and the type and
-// config derived from it.
+// spec derived from it.
 func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) {
 	if receiver.Name == DefaultReceiverName {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "cannot use %s name as a channel name", receiver.Name)
 	}
 
-	channelType := receiverChannelType(receiver)
-	if channelType == "" {
+	if receiverChannelType(receiver) == "" {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "channel '%s' must have at least one notification configuration (e.g., email_configs, webhook_configs, slack_configs)", receiver.Name)
 	}
 
@@ -86,17 +85,24 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		Name:          generateChannelName(receiver.Name),
 		DisplayName:   receiver.Name,
-		Type:          channelType,
 		Data:          string(data),
 		OrgID:         orgID,
 	}
 
 	// A receiver v2 cannot represent is refused rather than stored, so every
 	// row written from here on reads through v2.
-	channel.Config, err = channel.deriveChannelConfig()
+	channelConfig, err := channel.deriveChannelConfig()
 	if err != nil {
 		return nil, err
 	}
+	spec, err := channelConfig.toChannelSpec()
+	if err != nil {
+		return nil, err
+	}
+	if err := channel.fillSpec(spec); err != nil {
+		return nil, err
+	}
+	channel.Type = channelConfig.Kind.ToStoredType()
 
 	return channel, nil
 }
@@ -113,7 +119,7 @@ func (c *Channel) Update(receiver *Receiver) error {
 
 	c.Type = channel.Type
 	c.Data = channel.Data
-	c.Config = channel.Config
+	c.Spec, c.StoredSpec = channel.Spec, channel.StoredSpec
 	c.UpdatedAt = time.Now()
 
 	return nil

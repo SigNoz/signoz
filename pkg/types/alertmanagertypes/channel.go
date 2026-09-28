@@ -1,7 +1,9 @@
 package alertmanagertypes
 
 import (
+	"context"
 	"crypto/rand"
+	"encoding/json"
 	"regexp"
 	"strings"
 
@@ -37,11 +39,48 @@ type Channel struct {
 	DisplayName string `json:"name" required:"true" bun:"display_name"`
 	Type        string `json:"type" required:"true" bun:"type"`
 	Data        string `json:"data" required:"true" bun:"data"`
-	// Config is the v2 config a read returns. A v2 write stores it as the caller
-	// wrote it and a v1 write derives it from the defaulted receiver. Only a row
-	// the migration could not backfill has none.
-	Config ChannelConfig `json:"-" bun:"config,type:text,nullzero"`
-	OrgID  string        `json:"orgId" required:"true" bun:"org_id"`
+	OrgID       string `json:"orgId" required:"true" bun:"org_id"`
+
+	// Spec is the v2 spec a read returns, of the kind Type names. A v2 write
+	// stores it as the caller wrote it and a v1 write derives it from the
+	// defaulted receiver. Only a row the migration could not backfill has none.
+	// StoredSpec is the column, written by fillSpec and decoded by AfterScanRow.
+	Spec       ChannelSpec `json:"-" bun:"-"`
+	StoredSpec string      `json:"-" bun:"spec,type:text,nullzero"`
+}
+
+var _ bun.AfterScanRowHook = (*Channel)(nil)
+
+// AfterScanRow decodes the stored spec under Type, which bun cannot do column by
+// column because the spec's Go type depends on it.
+func (c *Channel) AfterScanRow(context.Context) error {
+	if c.StoredSpec == "" {
+		c.Spec = nil
+		return nil
+	}
+
+	channelKind, ok := parseStoredChannelType(c.Type)
+	if !ok {
+		return errors.NewInternalf(errors.CodeInternal, "channel %q stores a spec under unmodelled type %q", c.DisplayName, c.Type)
+	}
+
+	spec, _ := buildEmptyChannelSpecForKind(channelKind)
+	if err := json.Unmarshal([]byte(c.StoredSpec), spec); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "unmarshal channel %q spec", c.DisplayName)
+	}
+	c.Spec = spec
+
+	return nil
+}
+
+func (c *Channel) fillSpec(spec ChannelSpec) error {
+	stored, err := json.Marshal(spec)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "marshal channel %q spec", c.DisplayName)
+	}
+	c.Spec, c.StoredSpec = spec, string(stored)
+
+	return nil
 }
 
 const channelNameSuffixLen = 8
