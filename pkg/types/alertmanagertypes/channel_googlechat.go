@@ -13,8 +13,21 @@ import (
 type ChannelGoogleChatConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title"`
-	Text         valuer.UnsetOrNonEmptyString `json:"text"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero"`
+}
+
+func (c *ChannelGoogleChatConfig) UnmarshalJSON(data []byte) error {
+	type alias ChannelGoogleChatConfig
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
+		return err
+	}
+
+	fillSendResolved(&c.SendResolved, DefaultGoogleChatReceiverConfig.VSendResolved)
+	c.Title.SetIfUnset(DefaultGoogleChatReceiverConfig.Title)
+	c.Text.SetIfUnset(DefaultGoogleChatReceiverConfig.Text)
+
+	return c.Validate()
 }
 
 func (c ChannelGoogleChatConfig) Validate() error {
