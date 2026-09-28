@@ -21,6 +21,11 @@ AWS_ACCOUNT_SPEC = ProviderAccountSpec(
     updated_params={"deployment_region": "us-east-1", "regions": ["us-east-1", "us-west-2", "eu-west-1"]},
     build_config=lambda p: {"aws": {"deploymentRegion": p["deployment_region"], "regions": p["regions"]}},
     expected_config=lambda p: {"regions": p["regions"]},
+    expected_sync_state=lambda p: {
+        "version": 1,
+        "inSync": True,
+        "regions": {region: {"state": "present"} for region in p["regions"]},
+    },
 )
 
 GCP_ACCOUNT_SPEC = ProviderAccountSpec(
@@ -128,6 +133,7 @@ def test_list_accounts_after_checkin(
     assert found["providerAccountId"] == provider_account_id, "providerAccountId should match"
     assert found["config"][spec.provider] == spec.expected_config(spec.initial_params), "config should match account config"
     assert found["agentReport"] is not None, "agentReport should be present after check-in"
+    assert found["agentReport"]["syncState"] == spec.expected_sync_state(spec.initial_params), "syncState should be seeded from the account regions on first check-in"
     assert found["removedAt"] is None, "removedAt should be null for a live account"
 
 
@@ -282,6 +288,7 @@ def test_update_account_after_checkin_preserves_connected_status(
     assert found_after is not None, "Account must still be listed after config update (account_id should not be reset)"
     assert found_after["providerAccountId"] == provider_account_id, "providerAccountId should be preserved after update"
     assert found_after["agentReport"] is not None, "agentReport should be preserved after update"
+    assert found_after["agentReport"]["syncState"] == found_before["agentReport"]["syncState"], "config update must not change syncState"
     assert found_after["config"][spec.provider] == spec.expected_config(spec.updated_params), "Config should reflect the update"
     assert found_after["removedAt"] is None, "removedAt should still be null"
 
