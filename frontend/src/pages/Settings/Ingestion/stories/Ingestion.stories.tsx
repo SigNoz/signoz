@@ -76,16 +76,49 @@ export const KeyLimits: Story = {
 	},
 };
 
+async function openCreateKey(
+	canvasElement: HTMLElement,
+): Promise<ReturnType<typeof within>> {
+	await userEvent.click(
+		await within(canvasElement).findByText(
+			'New Ingestion key',
+			undefined,
+			untilLoaded,
+		),
+	);
+	return within(
+		await screen.findByRole(
+			'dialog',
+			{ name: 'Create new ingestion key' },
+			untilLoaded,
+		),
+	);
+}
+
 /** The form a new key is named and dated in. */
 export const CreateKey: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByText(
-				'New Ingestion key',
-				undefined,
-				untilLoaded,
-			),
-		);
-		await screen.findByText('Create new ingestion key', undefined, untilLoaded);
+		await openCreateKey(canvasElement);
+	},
+};
+
+/** A tag typed on the new key and not confirmed yet. */
+export const CreateKeyAddingTag: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const dialog = await openCreateKey(canvasElement);
+		await userEvent.click(dialog.getByRole('button', { name: /New Tag/ }));
+		await userEvent.keyboard('team-payments');
+	},
+};
+
+/** The new key with its tags confirmed, each one removable. */
+export const CreateKeyTagsAdded: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const dialog = await openCreateKey(canvasElement);
+		for (const tag of ['team-payments', 'env:production']) {
+			await userEvent.click(dialog.getByRole('button', { name: /New Tag/ }));
+			await userEvent.keyboard(`${tag}{Enter}`);
+			await dialog.findByText(tag);
+		}
 	},
 };
