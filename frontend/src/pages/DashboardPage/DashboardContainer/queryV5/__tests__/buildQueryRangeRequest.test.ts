@@ -104,6 +104,23 @@ describe('toQueryEnvelopes', () => {
 		);
 	});
 
+	it('wraps a bare AI builder plugin as a builder_ai_query envelope', () => {
+		const ai = [
+			{
+				kind: 'TimeSeriesQuery',
+				spec: {
+					plugin: {
+						kind: 'signoz/AIBuilderQuery',
+						spec: { name: 'A', signal: 'traces' },
+					},
+				},
+			},
+		] as unknown as DashboardtypesQueryDTO[];
+		expect(toQueryEnvelopes(ai)).toStrictEqual([
+			{ type: 'builder_ai_query', spec: { name: 'A', signal: 'traces' } },
+		]);
+	});
+
 	it('wraps PromQL and ClickHouse plugins with their envelope types', () => {
 		const prom = [
 			{

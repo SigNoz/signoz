@@ -15,7 +15,10 @@ export const transformQueryBuilderDataModel = (
 	data: BuilderQueryDataResourse,
 	queryTypes?: Record<
 		string,
-		'builder_query' | 'builder_formula' | 'builder_trace_operator'
+		| 'builder_query'
+		| 'builder_ai_query'
+		| 'builder_formula'
+		| 'builder_trace_operator'
 	>,
 ): QueryBuilderData => {
 	const queryData: QueryBuilderData['queryData'] = [];

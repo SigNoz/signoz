@@ -4144,6 +4144,71 @@ export interface DashboardGridLayoutSpecDTO {
 	repeatVariable?: string;
 }
 
+export enum DashboardtypesAIBuilderQuerySpecDTOSignal {
+	traces = 'traces',
+}
+export interface DashboardtypesAIBuilderQuerySpecDTO {
+	/**
+	 * @type array,null
+	 */
+	aggregations?: Querybuildertypesv5TraceAggregationDTO[] | null;
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
+	/**
+	 * @type string
+	 */
+	cursor?: string;
+	/**
+	 * @type boolean
+	 */
+	disabled?: boolean;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array,null
+	 */
+	functions?: Querybuildertypesv5FunctionDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	having?: Querybuildertypesv5HavingDTO;
+	/**
+	 * @type string
+	 */
+	legend?: string;
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	limitBy?: Querybuildertypesv5LimitByDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	/**
+	 * @type array,null
+	 */
+	order?: Querybuildertypesv5OrderByDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
+	/**
+	 * @enum traces
+	 * @type string
+	 */
+	signal: DashboardtypesAIBuilderQuerySpecDTOSignal;
+	source?: TelemetrytypesSourceDTO;
+	stepInterval?: Querybuildertypesv5StepDTO;
+}
+
 export enum DashboardtypesAreaFillModeDTO {
 	solid = 'solid',
 	gradient = 'gradient',
@@ -5255,6 +5320,18 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesBuilderQuerySpecDTO;
 }
 
+export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind {
+	'signoz/AIBuilderQuery' = 'signoz/AIBuilderQuery',
+}
+export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTO {
+	/**
+	 * @enum signoz/AIBuilderQuery
+	 * @type string
+	 */
+	kind: DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind;
+	spec: DashboardtypesAIBuilderQuerySpecDTO;
+}
+
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind {
 	'signoz/CompositeQuery' = 'signoz/CompositeQuery',
 }
@@ -5546,6 +5623,7 @@ export interface DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQu
 
 export type DashboardtypesQueryPluginDTO =
 	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTO
+	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTO
 	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTO
 	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormulaDTO
 	| DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQueryDTO
@@ -6223,6 +6301,7 @@ export interface DashboardtypesPostablePublicDashboardDTO {
 
 export enum DashboardtypesQueryPluginKindDTO {
 	'signoz/BuilderQuery' = 'signoz/BuilderQuery',
+	'signoz/AIBuilderQuery' = 'signoz/AIBuilderQuery',
 	'signoz/CompositeQuery' = 'signoz/CompositeQuery',
 	'signoz/Formula' = 'signoz/Formula',
 	'signoz/PromQLQuery' = 'signoz/PromQLQuery',
