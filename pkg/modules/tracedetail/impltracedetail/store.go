@@ -18,24 +18,13 @@ import (
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
 
-// attrAnyMapNonEmpty probes whether any legacy attribute map holds data for the row: pre-rollout
-// and dual-written rows populate the maps, json-only rows leave all three empty. Probing the
-// maps (not the JSON column) is what tells dual-written rows apart from json-only ones.
-const attrAnyMapNonEmpty = `notEmpty(attributes_string) OR notEmpty(attributes_number) OR notEmpty(attributes_bool)`
-
-// attrJSONIfMapsEmpty suppresses the `attributes` JSON document to an empty object when any
-// legacy map carries the row's attributes, so the result set carries one attribute home per
-// span instead of both (the Go merge flattens JSON first and lays the maps over it, so the
-// maps win on collision, matching the querier's list view).
-var attrJSONIfMapsEmpty = fmt.Sprintf("if(%s, CAST('{}', 'JSON'), attributes)", attrAnyMapNonEmpty)
-
-// spanAttributeHomeSelection is the SELECT fragment for the span attribute homes: the three
-// legacy maps plus the conditionally suppressed JSON column.
+// Each span carries one attribute home: the JSON column is read as-is and the legacy maps are
+// blanked when it holds the row, so JSON is preferred and the maps are the pre-rollout fallback.
 var spanAttributeHomeSelection = strings.Join([]string{
-	"attributes_string",
-	"attributes_number",
-	"attributes_bool",
-	attrJSONIfMapsEmpty + " AS attributes",
+	"if(notEmpty(attributes), map(), attributes_string) AS attributes_string",
+	"if(notEmpty(attributes), map(), attributes_number) AS attributes_number",
+	"if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool",
+	"attributes",
 }, ", ")
 
 func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
@@ -190,10 +179,10 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 		"any(has_error) AS has_error",
 		"any(name) AS name",
 		"any(events) AS events",
-		"any(attributes_string) AS attributes_string",
-		"any(attributes_number) AS attributes_number",
-		"any(attributes_bool) AS attributes_bool",
-		fmt.Sprintf("any(%s) AS attributes", attrJSONIfMapsEmpty),
+		"any(if(notEmpty(attributes), map(), attributes_string)) AS attributes_string",
+		"any(if(notEmpty(attributes), map(), attributes_number)) AS attributes_number",
+		"any(if(notEmpty(attributes), map(), attributes_bool)) AS attributes_bool",
+		"any(attributes) AS attributes",
 		"any(resources_string) AS resources_string",
 	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
