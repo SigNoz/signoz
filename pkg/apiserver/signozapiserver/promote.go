@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addPromoteRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/promote_paths/{telemetry_signal}/{context}", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.PromotePaths), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/promoted_path/{telemetry_signal}/{context}", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.PromotePaths), handler.OpenAPIDef{
 		ID:                  "PromotePaths",
 		Tags:                []string{"promote"},
 		Summary:             "Promote paths",
@@ -26,7 +26,7 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/promote_paths/{telemetry_signal}/{context}", handler.New(provider.authzMiddleware.ViewAccess(provider.promoteHandler.ListPromotedPaths), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/promoted_path/{telemetry_signal}/{context}", handler.New(provider.authzMiddleware.ViewAccess(provider.promoteHandler.ListPromotedPaths), handler.OpenAPIDef{
 		ID:                  "ListPromotedPaths",
 		Tags:                []string{"promote"},
 		Summary:             "List promoted paths",

@@ -13271,7 +13271,7 @@ paths:
       tags:
       - preferences
       x-signoz-stability: alpha
-  /api/v1/promote_paths/{telemetry_signal}/{context}:
+  /api/v1/promoted_path/{telemetry_signal}/{context}:
     get:
       deprecated: false
       description: This endpoint lists the promoted paths of a JSON column. The promotion
