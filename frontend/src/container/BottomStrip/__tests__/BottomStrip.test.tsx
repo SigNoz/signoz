@@ -9,14 +9,12 @@ import BottomStrip, {
 	BOTTOM_STRIP_ON_CLASS,
 } from '..';
 import { useBottomStripStore } from '../store/useBottomStripStore';
-import { useBottomStripLeft } from '../useBottomStripLeft';
+import { useBottomStrip } from '../useBottomStrip';
 import { StripItemKind } from '../types';
 
 /** Stands in for a page that puts something on the left of the strip. */
 function Page({ text }: { text: string }): null {
-	useBottomStripLeft(
-		useMemo(() => [{ kind: StripItemKind.Text, text }], [text]),
-	);
+	useBottomStrip(useMemo(() => [{ kind: StripItemKind.Text, text }], [text]));
 	return null;
 }
 
@@ -25,9 +23,7 @@ function Page({ text }: { text: string }): null {
  * the config still takes a node, so it is the only way a page can break it.
  */
 function BoomPage(): null {
-	useBottomStripLeft([
-		{ kind: StripItemKind.Text, text: 'boom', prefix: <Boom /> },
-	]);
+	useBottomStrip([{ kind: StripItemKind.Text, text: 'boom', prefix: <Boom /> }]);
 	return null;
 }
 
@@ -35,7 +31,7 @@ function BoomPage(): null {
 function ChangingPage(): JSX.Element {
 	const [count, setCount] = useState(600);
 
-	useBottomStripLeft(
+	useBottomStrip(
 		useMemo(
 			() => [{ kind: StripItemKind.Text, text: `${count} traces` }],
 			[count],

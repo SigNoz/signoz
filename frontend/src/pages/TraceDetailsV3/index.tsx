@@ -14,7 +14,7 @@ import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { useBottomStripLeft } from 'container/BottomStrip/useBottomStripLeft';
+import { useBottomStrip } from 'container/BottomStrip/useBottomStrip';
 import useGetTraceV4 from 'hooks/trace/useGetTraceV4';
 import { useStripInfo } from './useStripInfo';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -153,7 +153,7 @@ function TraceDetailsV3(): JSX.Element {
 		totalErrorSpansCount,
 	});
 
-	useBottomStripLeft(stripConfig);
+	useBottomStrip(stripConfig);
 
 	const isFullDataLoaded =
 		totalSpansCount > 0 && totalSpansCount <= allSpans.length;
