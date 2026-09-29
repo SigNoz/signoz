@@ -90,7 +90,7 @@ func TestUnwrapVariant(t *testing.T) {
 	j.SetValueAtPath("attrs.code", int64(500))
 	assert.Equal(t, map[string]any{
 		"level": "error",
-		"attrs": map[string]any{"code": int64(500)},
+		"attrs": map[string]any{"code": float64(500)},
 	}, unwrapVariant(*j))
 }
 

@@ -1,34 +1,21 @@
 package telemetrystoretypes
 
-import "github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
+import (
+	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
+	"github.com/bytedance/sonic"
+)
 
-// NestedJSON decodes a native JSON column into a nested document, unwrapping the driver's
-// chcol.Variant envelope. A key stored as both a scalar and an object collapses, as the nested
-// form cannot hold both.
+// NestedJSON decodes a native JSON column into a nested document via the driver's own marshaler, so
+// arrays of objects and typed sub-paths survive and Dynamic values arrive unwrapped. A key stored as
+// both a scalar and an object collapses, as the nested form cannot hold both.
 func NestedJSON(j chcol.JSON) map[string]any {
-	return unwrapNested(j.NestedMap())
-}
-
-func unwrapNested(m map[string]any) map[string]any {
-	out := make(map[string]any, len(m))
-	for key, value := range m {
-		out[key] = unwrapValue(value)
+	raw, err := j.MarshalJSON()
+	if err != nil {
+		return nil
+	}
+	var out map[string]any
+	if err := sonic.Unmarshal(raw, &out); err != nil {
+		return nil
 	}
 	return out
-}
-
-func unwrapValue(value any) any {
-	switch v := value.(type) {
-	case chcol.Variant:
-		return unwrapValue(v.Any())
-	case map[string]any:
-		return unwrapNested(v)
-	case []any:
-		for i := range v {
-			v[i] = unwrapValue(v[i])
-		}
-		return v
-	default:
-		return value
-	}
 }
