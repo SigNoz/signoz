@@ -39,10 +39,13 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 			req.Body = io.NopCloser(bytes.NewReader(body))
 		}
 
-		decoded, err := decodeRequest(provider.Request(), body)
-		if err != nil {
-			render.Error(rw, err)
-			return
+		var decoded any
+		if prototype := provider.Request(); prototype != nil {
+			decoded = reflect.New(reflect.TypeOf(prototype).Elem()).Interface()
+			if err := binding.JSON.BindBody(bytes.NewReader(body), decoded); err != nil {
+				render.Error(rw, err)
+				return
+			}
 		}
 
 		extractorCtx := coretypes.ExtractorContext{
@@ -56,19 +59,6 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 		ctx = coretypes.NewContextWithResolvedResources(ctx, resolved)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
-}
-
-func decodeRequest(prototype any, body []byte) (any, error) {
-	if prototype == nil {
-		return nil, nil
-	}
-
-	decoded := reflect.New(reflect.TypeOf(prototype).Elem()).Interface()
-	if err := binding.JSON.BindBody(bytes.NewReader(body), decoded); err != nil {
-		return nil, err
-	}
-
-	return decoded, nil
 }
 
 func handlerFromRequest(req *http.Request) handler.Handler {

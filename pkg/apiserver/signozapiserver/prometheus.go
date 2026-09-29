@@ -79,6 +79,10 @@ func (h *prometheusOpenAPIHandler) ResourceDefs() []handler.ResourceDef {
 	}}
 }
 
+func (h *prometheusOpenAPIHandler) Request() any {
+	return nil
+}
+
 func (provider *provider) addPrometheusRoutes(router *mux.Router) error {
 	if err := router.Handle("/prometheus/api/v1/query", &prometheusOpenAPIHandler{
 		handlerFunc: provider.authzMiddleware.CheckResources(provider.prometheusHandler.Query, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
