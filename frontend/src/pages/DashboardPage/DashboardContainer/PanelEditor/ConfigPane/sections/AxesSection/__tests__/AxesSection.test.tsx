@@ -90,25 +90,20 @@ describe('AxesSection', () => {
 			<AxesSection value={undefined} controls={{ y: true }} onChange={onChange} />,
 		);
 
-		const trigger = screen.getByTestId('panel-editor-v2-y-scale');
-		await user.click(
-			trigger.querySelector('.ant-select-selector') as HTMLElement,
+		['auto', 'linear', 'log', 'symlog'].forEach((scale) =>
+			expect(
+				screen.getByTestId(`panel-editor-v2-y-scale-${scale}`),
+			).toBeInTheDocument(),
 		);
 
-		await expect(
-			screen.findByRole('option', { name: /Auto/ }),
-		).resolves.toBeInTheDocument();
-		expect(screen.getByRole('option', { name: /Log/ })).toBeInTheDocument();
-		expect(screen.getByRole('option', { name: /Linear/ })).toBeInTheDocument();
-
-		await user.click(screen.getByRole('option', { name: /Symmetric log/ }));
+		await user.click(screen.getByTestId('panel-editor-v2-y-scale-symlog'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			y: { scale: DashboardtypesHeatmapYScaleDTO.symlog },
 		});
 	});
 
-	it('shows the scale the spec asks for', () => {
+	it('shows the help for the scale the spec asks for', () => {
 		render(
 			<AxesSection
 				value={{ y: { scale: DashboardtypesHeatmapYScaleDTO.symlog } }}
@@ -117,7 +112,9 @@ describe('AxesSection', () => {
 			/>,
 		);
 
-		expect(screen.getByText('Symmetric log')).toBeInTheDocument();
+		expect(
+			screen.getByText(/mirrored across zero/),
+		).toBeInTheDocument();
 	});
 
 	it('toggles the logarithmic scale through onChange', async () => {
@@ -131,8 +128,25 @@ describe('AxesSection', () => {
 			/>,
 		);
 
-		await user.click(screen.getByText('Log'));
+		await user.click(screen.getByTestId('panel-editor-v2-log-scale-log'));
 
 		expect(onChange).toHaveBeenCalledWith({ isLogScale: true });
+	});
+
+	it('flags a soft min above the soft max', () => {
+		render(
+			<AxesSection
+				value={{ softMin: 23, softMax: 12 }}
+				controls={{ minMax: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByText("Min can't be greater than Max."),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText(/The axis always shows at least this range/),
+		).not.toBeInTheDocument();
 	});
 });

@@ -88,6 +88,16 @@ export const TILE_DRAWINGS = {
 			<path d="M4 20 C 8 8, 20 5, 60 4" />
 		</TileSvg>
 	),
+	scaleAuto: (
+		<TileSvg tone="robin">
+			<path d="M4 20 L60 4" strokeDasharray="3 3" />
+		</TileSvg>
+	),
+	scaleSymlog: (
+		<TileSvg tone="robin">
+			<path d="M4 20 C 20 20, 22 12, 32 12 S 44 4, 60 4" />
+		</TileSvg>
+	),
 	barsSideBySide: (
 		<TileSvg tone="robin">
 			<rect x={10} y={10} width={7} height={12} {...FILLED} opacity={0.5} />

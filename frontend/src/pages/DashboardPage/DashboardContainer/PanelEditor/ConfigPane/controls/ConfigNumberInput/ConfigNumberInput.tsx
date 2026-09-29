@@ -5,7 +5,10 @@ import ConfigField from '../ConfigField/ConfigField';
 
 interface ConfigNumberInputProps {
 	testId: string;
-	label: string;
+	/** Omitted for an input whose row already names it. */
+	label?: string;
+	placeholder?: string;
+	invalid?: boolean;
 	value: number | null | undefined;
 	onChange: (next: number | null) => void;
 }
@@ -14,6 +17,8 @@ interface ConfigNumberInputProps {
 function ConfigNumberInput({
 	testId,
 	label,
+	placeholder = 'Auto',
+	invalid,
 	value,
 	onChange,
 }: ConfigNumberInputProps): JSX.Element {
@@ -22,16 +27,23 @@ function ConfigNumberInput({
 		onChange(raw === '' || Number.isNaN(Number(raw)) ? null : Number(raw));
 	};
 
-	return (
+	const input = (
+		<Input
+			data-testid={testId}
+			type="number"
+			placeholder={placeholder}
+			status={invalid ? 'error' : undefined}
+			value={value ?? ''}
+			onChange={handleChange}
+		/>
+	);
+
+	return label ? (
 		<ConfigField label={label} plain>
-			<Input
-				data-testid={testId}
-				type="number"
-				placeholder="Auto"
-				value={value ?? ''}
-				onChange={handleChange}
-			/>
+			{input}
 		</ConfigField>
+	) : (
+		input
 	);
 }
 
