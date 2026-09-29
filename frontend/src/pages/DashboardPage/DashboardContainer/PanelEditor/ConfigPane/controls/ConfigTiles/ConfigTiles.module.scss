@@ -1,0 +1,110 @@
+.container {
+	container-type: inline-size;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+}
+
+.tile {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	min-width: 0;
+	height: 52px;
+	padding: 0 14px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	background: var(--l2-background);
+	color: var(--l2-foreground);
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+	transition:
+		border-color 150ms,
+		background 150ms;
+
+	&:hover {
+		border-color: var(--l2-border);
+	}
+
+	&:has(:focus-visible) {
+		outline: 1px solid var(--bg-robin-500);
+		outline-offset: 1px;
+	}
+}
+
+.input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.selected {
+	border-color: var(--bg-robin-500);
+	background: color-mix(in srgb, var(--bg-robin-500) 12%, var(--l1-background));
+	color: var(--l1-foreground);
+
+	&:hover {
+		border-color: var(--bg-robin-500);
+	}
+}
+
+.label {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+@mixin stacked-tiles($columns) {
+	grid-template-columns: repeat($columns, minmax(0, 1fr));
+
+	.tile {
+		flex-direction: column;
+		justify-content: center;
+		gap: 10px;
+		height: 88px;
+		padding: 0 4px;
+	}
+}
+
+@container (min-width: 200px) {
+	.grid[data-count='2'] {
+		@include stacked-tiles(2);
+	}
+}
+
+@container (min-width: 216px) {
+	.grid[data-count='3'] {
+		@include stacked-tiles(3);
+	}
+}
+
+@container (min-width: 220px) {
+	.grid[data-count='4'] {
+		@include stacked-tiles(2);
+	}
+}
+
+@container (min-width: 312px) {
+	.grid[data-count='4'] {
+		@include stacked-tiles(4);
+	}
+}
+
+.grid.compact {
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(0, 1fr);
+	gap: 6px;
+
+	.tile {
+		justify-content: center;
+		height: 36px;
+		padding: 0 4px;
+	}
+}

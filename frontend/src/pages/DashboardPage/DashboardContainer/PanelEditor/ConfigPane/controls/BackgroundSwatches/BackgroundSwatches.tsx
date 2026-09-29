@@ -8,30 +8,13 @@ import {
 } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/presets';
 import type {
 	PanelTheme,
-	TextBackgroundPreset,
 	TextBackgroundSelection,
 } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/types';
 import { TextBackgroundKind } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/types';
 
+import { BASE_TITLES, type BaseSelection, PRESET_TITLES } from './titles';
+
 import styles from './BackgroundSwatches.module.scss';
-
-const PRESET_TITLES: Record<TextBackgroundPreset, string> = {
-	robin: 'Robin',
-	purple: 'Purple',
-	sakura: 'Sakura',
-	cherry: 'Cherry',
-	amber: 'Amber',
-	forest: 'Forest',
-	sienna: 'Sienna',
-	slate: 'Slate',
-};
-
-type BaseSelection = TextBackgroundKind.None | TextBackgroundKind.Default;
-
-const BASE_TITLES: Record<BaseSelection, string> = {
-	none: 'Transparent',
-	default: 'Default panel',
-};
 
 /** Neither base swatch shows a colour, so its tooltip says what it does. */
 const BASE_TOOLTIPS: Record<BaseSelection, string> = {

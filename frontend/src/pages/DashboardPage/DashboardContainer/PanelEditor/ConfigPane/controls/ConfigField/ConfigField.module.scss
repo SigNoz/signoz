@@ -1,0 +1,48 @@
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	min-width: 0;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: 18px;
+}
+
+.label {
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	color: var(--l2-foreground);
+}
+
+.plainLabel {
+	font-size: 13px;
+	color: var(--l1-foreground);
+}
+
+.reset {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	font-size: 12px;
+	color: var(--bg-robin-400);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--bg-robin-300);
+	}
+}
+
+.help {
+	font-size: 12px;
+	line-height: 17px;
+	color: var(--l2-foreground);
+}
