@@ -11,22 +11,22 @@ func TestFlattenJSON(t *testing.T) {
 	testCases := []struct {
 		name  string
 		paths map[string]any
-		want  JSONValue
+		want  map[string]any
 	}{
 		{
 			name:  "Empty",
 			paths: nil,
-			want:  JSONValue{},
+			want:  map[string]any{},
 		},
 		{
 			name:  "FlatScalars",
 			paths: map[string]any{"level": "error", "status": float64(500)},
-			want:  JSONValue{"level": "error", "status": float64(500)},
+			want:  map[string]any{"level": "error", "status": float64(500)},
 		},
 		{
 			name:  "ScalarAndObjectKey_StaysDistinctPaths",
 			paths: map[string]any{"db.function": "node_refresh", "db.function.arg_count": float64(2)},
-			want:  JSONValue{"db.function": "node_refresh", "db.function.arg_count": float64(2)},
+			want:  map[string]any{"db.function": "node_refresh", "db.function.arg_count": float64(2)},
 		},
 	}
 

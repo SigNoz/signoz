@@ -62,7 +62,7 @@ func labelValue(val any) string {
 	if val == nil {
 		return ""
 	}
-	if v, ok := val.(telemetrystoretypes.JSONValue); ok {
+	if v, ok := val.(map[string]any); ok {
 		if raw, err := json.Marshal(v); err == nil {
 			return string(raw)
 		}
@@ -580,8 +580,6 @@ func flattenJSONPaths(prefix string, m map[string]any, out map[string]any) {
 		switch child := v.(type) {
 		case map[string]any:
 			flattenJSONPaths(key, child, out)
-		case telemetrystoretypes.JSONValue:
-			flattenJSONPaths(key, child, out)
 		default:
 			out[key] = v
 		}
@@ -597,7 +595,7 @@ func mergeSpanAttributeColumns(data map[string]any) {
 	attrStr, hasStr := data["attributes_string"]
 	attrNum, hasNum := data["attributes_number"]
 	attrBool, hasBool := data["attributes_bool"]
-	attrJSON, _ := data["attributes"].(telemetrystoretypes.JSONValue)
+	attrJSON, _ := data["attributes"].(map[string]any)
 	// todo(nitya): move to resource json
 	resStr, hasRes := data["resources_string"]
 	if hasStr || hasNum || hasBool || attrJSON != nil || hasRes {

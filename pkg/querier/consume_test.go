@@ -6,7 +6,6 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -90,7 +89,7 @@ func TestUnwrapVariant(t *testing.T) {
 	j := chcol.NewJSON()
 	j.SetValueAtPath("db.function", "node_refresh")
 	j.SetValueAtPath("db.function.arg_count", float64(2))
-	assert.Equal(t, telemetrystoretypes.JSONValue{
+	assert.Equal(t, map[string]any{
 		"db.function":           "node_refresh",
 		"db.function.arg_count": float64(2),
 	}, unwrapVariant(*j))
@@ -123,7 +122,7 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 		{
 			name: "JSONOnly_FlattensNestedPaths_PreservesTypes",
 			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{
+				"attributes": map[string]any{
 					"http":      map[string]any{"route": "/api/pay", "retry": map[string]any{"count": float64(3)}},
 					"cache.hit": true,
 				},
@@ -135,7 +134,7 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 			data: map[string]any{
 				"attributes_string": map[string]string{"http.route": "/old", "only.map": "m"},
 				"attributes_number": map[string]float64{"http.status": 500},
-				"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/new"}, "only.json": "j"},
+				"attributes":        map[string]any{"http": map[string]any{"route": "/new"}, "only.json": "j"},
 			},
 			want: map[string]any{"http.route": "/old", "only.map": "m", "http.status": float64(500), "only.json": "j"},
 		},
@@ -145,7 +144,7 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 				"attributes_string": map[string]string{"http.route": "/map"},
 				"attributes_number": map[string]float64{"http.status": 200},
 				"attributes_bool":   map[string]bool{"cache.hit": true},
-				"attributes":        telemetrystoretypes.JSONValue{},
+				"attributes":        map[string]any{},
 			},
 			want: map[string]any{"http.route": "/map", "http.status": float64(200), "cache.hit": true},
 		},
@@ -153,28 +152,28 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 			name: "MapOnly_NilJSON_BehavesAsAbsent",
 			data: map[string]any{
 				"attributes_string": map[string]string{"http.route": "/map"},
-				"attributes":        telemetrystoretypes.JSONValue(nil),
+				"attributes":        map[string]any(nil),
 			},
 			want: map[string]any{"http.route": "/map"},
 		},
 		{
 			name: "Arrays_StayLeafValues",
 			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"tags": []any{"a", "b"}, "codes": []any{float64(1), float64(2)}}},
+				"attributes": map[string]any{"http": map[string]any{"tags": []any{"a", "b"}, "codes": []any{float64(1), float64(2)}}},
 			},
 			want: map[string]any{"http.tags": []any{"a", "b"}, "http.codes": []any{float64(1), float64(2)}},
 		},
 		{
 			name: "TopLevelArrayOfMaps_StaysNativeLeaf",
 			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
+				"attributes": map[string]any{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
 			},
 			want: map[string]any{"key": []any{map[string]any{"a": float64(1)}, map[string]any{"b": float64(2)}}},
 		},
 		{
 			name: "NestedArrayOfMaps_StaysNativeLeaf_NoIndexPaths",
 			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
+				"attributes": map[string]any{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
 			},
 			want: map[string]any{"http.items": []any{map[string]any{"a": float64(1)}}},
 		},
@@ -182,28 +181,28 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 			name: "DualWritten_NestedArray_IndexKeysAndJSONArrayCoexist",
 			data: map[string]any{
 				"attributes_number": map[string]float64{"http.items.0.a": 1},
-				"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
+				"attributes":        map[string]any{"http": map[string]any{"items": []any{map[string]any{"a": float64(1)}}}},
 			},
 			want: map[string]any{"http.items.0.a": float64(1), "http.items": []any{map[string]any{"a": float64(1)}}},
 		},
 		{
 			name: "JSONNull_KeptAsNil",
 			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"k": nil},
+				"attributes": map[string]any{"k": nil},
 			},
 			want: map[string]any{"k": nil},
 		},
 		{
 			name: "KeyIsLeafValue_NotFlattened",
 			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"http": "plaintext"},
+				"attributes": map[string]any{"http": "plaintext"},
 			},
 			want: map[string]any{"http": "plaintext"},
 		},
 		{
 			name: "KeyIsParent_FlattensToDottedPath",
 			data: map[string]any{
-				"attributes": telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/a"}},
+				"attributes": map[string]any{"http": map[string]any{"route": "/a"}},
 			},
 			want: map[string]any{"http.route": "/a"},
 		},
