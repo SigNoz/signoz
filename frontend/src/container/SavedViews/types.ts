@@ -60,7 +60,6 @@ export interface UseRestoreLastUsedViewArgs {
 export type SaveViewModalMode = 'create' | 'saveAsNew';
 
 export interface SaveViewModalProps {
-	open: boolean;
 	mode: SaveViewModalMode;
 	isSaving: boolean;
 	onClose: () => void;
