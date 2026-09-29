@@ -14,9 +14,8 @@ import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { useBottomStrip } from 'container/BottomStrip/useBottomStrip';
 import useGetTraceV4 from 'hooks/trace/useGetTraceV4';
-import { useStripInfo } from './useStripInfo';
+import { useTraceDetailsStripInfo } from './useTraceDetailsStripInfo';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ResizableBox } from 'periscope/components/ResizableBox';
@@ -148,12 +147,7 @@ function TraceDetailsV3(): JSX.Element {
 	const totalSpansCount = traceData?.payload?.totalSpansCount || 0;
 	const totalErrorSpansCount = traceData?.payload?.totalErrorSpansCount || 0;
 
-	const stripConfig = useStripInfo({
-		totalSpansCount,
-		totalErrorSpansCount,
-	});
-
-	useBottomStrip(stripConfig);
+	useTraceDetailsStripInfo({ totalSpansCount, totalErrorSpansCount });
 
 	const isFullDataLoaded =
 		totalSpansCount > 0 && totalSpansCount <= allSpans.length;

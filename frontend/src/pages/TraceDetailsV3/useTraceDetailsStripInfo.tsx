@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import { ChartNoAxesGantt, TriangleAlert } from '@signozhq/icons';
+import { useBottomStrip } from 'container/BottomStrip/useBottomStrip';
 import {
 	type StripItem,
 	StripItemKind,
 	StripTone,
 } from 'container/BottomStrip/types';
 
-interface UseStripInfoArgs {
+interface UseTraceDetailsStripInfoArgs {
 	totalSpansCount: number;
 	totalErrorSpansCount: number;
 }
@@ -15,11 +16,11 @@ interface UseStripInfoArgs {
  * Takes the counts rather than fetching them: the trace query key includes the
  * selected span, so a fetch here would fire on every span click.
  */
-export function useStripInfo({
+export function useTraceDetailsStripInfo({
 	totalSpansCount,
 	totalErrorSpansCount,
-}: UseStripInfoArgs): StripItem[] {
-	return useMemo(
+}: UseTraceDetailsStripInfoArgs): void {
+	const items = useMemo<StripItem[]>(
 		() => [
 			{
 				kind: StripItemKind.KeyValue,
@@ -37,4 +38,6 @@ export function useStripInfo({
 		],
 		[totalSpansCount, totalErrorSpansCount],
 	);
+
+	useBottomStrip(items);
 }
