@@ -1,5 +1,4 @@
-import { useCallback, useMemo } from 'react';
-import { useWindowSize } from 'react-use';
+import { useCallback, useMemo, useRef } from 'react';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
 import { Empty, Select, Skeleton, Tooltip } from 'antd';
@@ -7,6 +6,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { HierarchyNode, stratify, treemapBinary } from 'd3-hierarchy';
+import { useResizeObserver } from 'hooks/useDimensions';
 import { Info } from '@signozhq/icons';
 
 import {
@@ -33,17 +33,9 @@ function MetricsTreemapInternal({
 	data,
 	viewType,
 	openMetricDetails,
+	containerWidth,
 }: MetricsTreemapInternalProps): JSX.Element {
-	const { width: windowWidth } = useWindowSize();
-
-	const treemapWidth = useMemo(
-		() =>
-			Math.max(
-				windowWidth - TREEMAP_MARGINS.LEFT - TREEMAP_MARGINS.RIGHT - 70,
-				300,
-			),
-		[windowWidth],
-	);
+	const treemapWidth = useMemo(() => Math.max(containerWidth, 300), [containerWidth]);
 
 	const treemapData = useMemo(() => {
 		const extracedTreemapData =
@@ -185,6 +177,9 @@ function MetricsTreemap({
 	openMetricDetails,
 	setHeatmapView,
 }: MetricsTreemapProps): JSX.Element {
+	const treemapContainerRef = useRef<HTMLDivElement>(null);
+	const { width: containerWidth } = useResizeObserver(treemapContainerRef);
+
 	return (
 		<div
 			className="metrics-treemap-container"
@@ -207,14 +202,17 @@ function MetricsTreemap({
 					disabled={isLoading}
 				/>
 			</div>
-			<MetricsTreemapInternal
-				isLoading={isLoading}
-				isError={isError}
-				error={error}
-				data={data}
-				viewType={viewType}
-				openMetricDetails={openMetricDetails}
-			/>
+			<div className="metrics-treemap-content" ref={treemapContainerRef}>
+				<MetricsTreemapInternal
+					isLoading={isLoading}
+					isError={isError}
+					error={error}
+					data={data}
+					viewType={viewType}
+					openMetricDetails={openMetricDetails}
+					containerWidth={containerWidth}
+				/>
+			</div>
 		</div>
 	);
 }
