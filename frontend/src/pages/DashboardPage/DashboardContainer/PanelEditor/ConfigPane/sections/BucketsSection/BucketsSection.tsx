@@ -1,21 +1,14 @@
-import type { ChangeEvent } from 'react';
-import { Typography } from '@signozhq/ui/typography';
-import { Input } from 'antd';
-import type { DashboardtypesHistogramBucketsDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
+import ConfigField from '../../controls/ConfigField/ConfigField';
+import ConfigFieldRow from '../../controls/ConfigFieldRow/ConfigFieldRow';
+import ConfigNumberInput from '../../controls/ConfigNumberInput/ConfigNumberInput';
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
-
-import styles from './BucketsSection.module.scss';
-
-// The two numeric bounds of the histogram-buckets spec (derived from the BE DTO).
-type NumericBound = keyof Pick<
-	DashboardtypesHistogramBucketsDTO,
-	'bucketCount' | 'bucketWidth'
->;
+import { SWITCH_SKETCHES } from '../../controls/drawings/switchSketches';
+import { createFieldResetter } from '../../utils/changes';
 
 /**
  * Edits the `histogramBuckets` slice of a Histogram panel spec: bucket count / width
@@ -24,55 +17,51 @@ type NumericBound = keyof Pick<
  */
 function BucketsSection({
 	value,
+	defaultValue,
 	controls,
 	onChange,
 }: SectionEditorProps<SectionKind.Buckets>): JSX.Element {
-	// Empty clears the bound to null (chart auto-sizes); otherwise parse to a number,
-	// ignoring transient non-numeric input by leaving it unset.
-	const handleNumber =
-		(bound: NumericBound) =>
-		(e: ChangeEvent<HTMLInputElement>): void => {
-			const raw = e.target.value;
-			const next = raw === '' || Number.isNaN(Number(raw)) ? null : Number(raw);
-			onChange({ ...value, [bound]: next });
-		};
+	const reset = createFieldResetter(value, defaultValue, onChange);
 
 	return (
 		<>
-			{controls.count && (
-				<div className={styles.field}>
-					<Typography.Text>Bucket count</Typography.Text>
-					<Input
-						data-testid="panel-editor-v2-bucket-count"
-						type="number"
-						placeholder="Auto"
-						value={value?.bucketCount ?? ''}
-						onChange={handleNumber('bucketCount')}
-					/>
-				</div>
-			)}
-
-			{controls.width && (
-				<div className={styles.field}>
-					<Typography.Text>Bucket width</Typography.Text>
-					<Input
-						data-testid="panel-editor-v2-bucket-width"
-						type="number"
-						placeholder="Auto"
-						value={value?.bucketWidth ?? ''}
-						onChange={handleNumber('bucketWidth')}
-					/>
-				</div>
+			{(controls.count || controls.width) && (
+				<ConfigField
+					label="Buckets"
+					help="How values are grouped into bars. Leave on Auto to size buckets from the data."
+					{...reset('bucketCount', 'bucketWidth')}
+				>
+					<ConfigFieldRow>
+						{controls.count && (
+							<ConfigNumberInput
+								testId="panel-editor-v2-bucket-count"
+								label="Count"
+								value={value?.bucketCount}
+								onChange={(bucketCount): void => onChange({ ...value, bucketCount })}
+							/>
+						)}
+						{controls.width && (
+							<ConfigNumberInput
+								testId="panel-editor-v2-bucket-width"
+								label="Width"
+								value={value?.bucketWidth}
+								onChange={(bucketWidth): void => onChange({ ...value, bucketWidth })}
+							/>
+						)}
+					</ConfigFieldRow>
+				</ConfigField>
 			)}
 
 			{controls.mergeQueries && (
 				<ConfigSwitch
 					testId="panel-editor-v2-merge-queries"
-					title="Merge active queries"
-					description="Bucket all active queries together into one distribution"
+					title="Combine queries"
+					description="Puts every active query into one distribution. Hides the legend."
+					sketch={SWITCH_SKETCHES.combine}
+					changed={reset('mergeAllActiveQueries').changed}
 					value={value?.mergeAllActiveQueries ?? false}
-					onChange={(checked): void =>
-						onChange({ ...value, mergeAllActiveQueries: checked })
+					onChange={(mergeAllActiveQueries): void =>
+						onChange({ ...value, mergeAllActiveQueries })
 					}
 				/>
 			)}
