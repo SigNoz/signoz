@@ -8,7 +8,7 @@ import { QueryParams } from 'constants/query';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { usePanelEditorDraft } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelEditorDraft';
-import { usePanelTypeSwitch } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelTypeSwitch';
+import { usePanelKindAndQueryModeSwitch } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelKindAndQueryModeSwitch';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { buildViewPanelSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/buildViewPanelSpec';
@@ -73,11 +73,12 @@ function ViewPanelModalContent({
 	const draftKind = draftApi.draft.spec.plugin.kind;
 	const panelDefinition = getPanelDefinition(draftKind);
 
-	const { onChangePanelKind } = usePanelTypeSwitch({
-		spec: draftApi.draft.spec,
-		panelType: toPanelType(draftKind),
-		setSpec: draftApi.setSpec,
-	});
+	const { onChangePanelKind, onChangeQueryMode } =
+		usePanelKindAndQueryModeSwitch({
+			spec: draftApi.draft.spec,
+			panelType: toPanelType(draftKind),
+			setSpec: draftApi.setSpec,
+		});
 
 	if (panelDefinition.mode === 'static') {
 		return (
@@ -97,6 +98,7 @@ function ViewPanelModalContent({
 			onClose={onClose}
 			draftApi={draftApi}
 			onChangePanelKind={onChangePanelKind}
+			onChangeQueryMode={onChangeQueryMode}
 		/>
 	);
 }
