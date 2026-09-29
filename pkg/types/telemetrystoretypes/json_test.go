@@ -45,3 +45,38 @@ func TestNestedJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestFlattenJSON(t *testing.T) {
+	testCases := []struct {
+		name  string
+		paths map[string]any
+		want  map[string]any
+	}{
+		{
+			name:  "Empty",
+			paths: nil,
+			want:  map[string]any{},
+		},
+		{
+			name:  "DottedPathsStayFlat",
+			paths: map[string]any{"http.method": "GET", "level": "error"},
+			want:  map[string]any{"http.method": "GET", "level": "error"},
+		},
+		{
+			// A scalar and an object under the same prefix survive as two distinct dotted keys.
+			name:  "ScalarAndObjectKey_BothSurvive",
+			paths: map[string]any{"scope": "x", "scope.attributes.name": "y"},
+			want:  map[string]any{"scope": "x", "scope.attributes.name": "y"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			j := chcol.NewJSON()
+			for path, value := range testCase.paths {
+				j.SetValueAtPath(path, value)
+			}
+			assert.Equal(t, testCase.want, FlattenJSON(*j))
+		})
+	}
+}

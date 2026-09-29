@@ -540,7 +540,14 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 			name := stripKeyAlias(colNames[i])
 
 			// de-reference the typed pointer to any
-			val := unwrapVariant(reflect.ValueOf(cellPtr).Elem().Interface())
+			raw := reflect.ValueOf(cellPtr).Elem().Interface()
+			// the attributes bag is flattened to dotted keys downstream; decode it flat so a key stored as both a scalar and an object is not collapsed into a mislabeled key.
+			var val any
+			if j, ok := raw.(chcol.JSON); ok && name == "attributes" {
+				val = telemetrystoretypes.FlattenJSON(j)
+			} else {
+				val = unwrapVariant(raw)
+			}
 
 			// special-case: timestamp column
 			if name == "timestamp" || name == "timestamp_datetime" {
