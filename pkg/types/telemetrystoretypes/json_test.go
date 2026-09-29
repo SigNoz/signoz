@@ -11,22 +11,22 @@ func TestNestedJSON(t *testing.T) {
 	testCases := []struct {
 		name  string
 		paths map[string]any
-		want  JSONValue
+		want  map[string]any
 	}{
 		{
 			name:  "Empty",
 			paths: nil,
-			want:  JSONValue{},
+			want:  map[string]any{},
 		},
 		{
 			name:  "FlatScalars",
 			paths: map[string]any{"level": "error", "status": int64(500)},
-			want:  JSONValue{"level": "error", "status": int64(500)},
+			want:  map[string]any{"level": "error", "status": int64(500)},
 		},
 		{
 			name:  "DottedPathsBecomeNested",
 			paths: map[string]any{"attrs.code": int64(500), "attrs.path": "/checkout"},
-			want:  JSONValue{"attrs": JSONValue{"code": int64(500), "path": "/checkout"}},
+			want:  map[string]any{"attrs": map[string]any{"code": int64(500), "path": "/checkout"}},
 		},
 	}
 

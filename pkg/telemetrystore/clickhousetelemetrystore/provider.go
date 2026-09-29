@@ -184,7 +184,7 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 	}
 
 	return &rowsWithHooks{
-		Rows:    telemetrystore.WrapRows(rows),
+		Rows:    rows,
 		ctx:     ctx,
 		event:   event,
 		onClose: func() { telemetrystore.WrapAfterQuery(p.hooks, ctx, event) },

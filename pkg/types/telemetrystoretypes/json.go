@@ -2,18 +2,15 @@ package telemetrystoretypes
 
 import "github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 
-// JSONValue is the decoded form of a ClickHouse JSON column: a nested document whose leaf values
-// are unwrapped from the driver's chcol.Variant envelope.
-type JSONValue map[string]any
-
-// NestedJSON decodes a native JSON column into a nested document. Dotted leaf paths become nested
-// maps; a key stored as both a scalar and an object collapses, as the nested form cannot hold both.
-func NestedJSON(j chcol.JSON) JSONValue {
+// NestedJSON decodes a native JSON column into a nested document, unwrapping the driver's
+// chcol.Variant envelope. A key stored as both a scalar and an object collapses, as the nested
+// form cannot hold both.
+func NestedJSON(j chcol.JSON) map[string]any {
 	return unwrapNested(j.NestedMap())
 }
 
-func unwrapNested(m map[string]any) JSONValue {
-	out := make(JSONValue, len(m))
+func unwrapNested(m map[string]any) map[string]any {
+	out := make(map[string]any, len(m))
 	for key, value := range m {
 		out[key] = unwrapValue(value)
 	}
