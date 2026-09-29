@@ -28,6 +28,7 @@ import FormattingSection from './sections/FormattingSection/FormattingSection';
 import { DEFAULT_DECIMAL_PRECISION } from './sections/FormattingSection/options';
 import { summarizeFormatting } from './sections/FormattingSection/summary';
 import LegendSection from './sections/LegendSection/LegendSection';
+import { summarizeLegend } from './sections/LegendSection/summary';
 import PanelHeaderSection from './sections/PanelHeaderSection/PanelHeaderSection';
 import TextLayoutSection from './sections/TextLayoutSection/TextLayoutSection';
 import ThresholdsSection from './sections/ThresholdsSection/ThresholdsSection';
@@ -109,6 +110,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<DashboardtypesLegendDTO>(spec, 'legend'),
 		update: (spec, legend): PanelSpec =>
 			updatePluginSlice(spec, 'legend', legend),
+		summarize: summarizeLegend,
 	},
 	[SectionKind.ChartAppearance]: {
 		Component: ChartAppearanceSection,
