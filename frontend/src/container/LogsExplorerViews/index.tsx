@@ -141,8 +141,11 @@ function LogsExplorerViewsContainer({
 		[selectedPanelType, requestData],
 	);
 
-	const explorerActions = (
-		<ExplorerActions query={exportDefaultQuery} sourcepage={DataSource.LOGS} />
+	const explorerActions = useMemo(
+		() => (
+			<ExplorerActions query={exportDefaultQuery} sourcepage={DataSource.LOGS} />
+		),
+		[exportDefaultQuery],
 	);
 
 	const {

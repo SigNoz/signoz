@@ -206,12 +206,15 @@ function TracesExplorer(): JSX.Element {
 		[exportDefaultQuery, panelType, options],
 	);
 
-	const explorerActions = (
-		<ExplorerActions
-			query={stagedQuery ? exportDefaultQuery : null}
-			dashboardQuery={stagedQuery ? exportDashboardQuery : null}
-			sourcepage={DataSource.TRACES}
-		/>
+	const explorerActions = useMemo(
+		() => (
+			<ExplorerActions
+				query={stagedQuery ? exportDefaultQuery : null}
+				dashboardQuery={stagedQuery ? exportDashboardQuery : null}
+				sourcepage={DataSource.TRACES}
+			/>
+		),
+		[stagedQuery, exportDefaultQuery, exportDashboardQuery],
 	);
 
 	const handleExport = useCallback(
