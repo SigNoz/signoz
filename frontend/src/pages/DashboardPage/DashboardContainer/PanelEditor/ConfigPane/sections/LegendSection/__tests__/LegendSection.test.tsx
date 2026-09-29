@@ -16,8 +16,8 @@ describe('LegendSection', () => {
 		expect(
 			screen.getByTestId('panel-editor-v2-legend-position'),
 		).toBeInTheDocument();
-		expect(screen.getByText('Bottom')).toBeInTheDocument();
-		expect(screen.getByText('Right')).toBeInTheDocument();
+		expect(screen.getByText('Below chart')).toBeInTheDocument();
+		expect(screen.getByText('Right of chart')).toBeInTheDocument();
 	});
 
 	it('renders nothing when position is not enabled', () => {
@@ -40,7 +40,7 @@ describe('LegendSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByText('Right'));
+		fireEvent.click(screen.getByTestId('panel-editor-v2-legend-position-right'));
 
 		expect(onChange).toHaveBeenCalledWith({ position: 'right' });
 	});
@@ -58,7 +58,7 @@ describe('LegendSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByText('Right'));
+		fireEvent.click(screen.getByTestId('panel-editor-v2-legend-position-right'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			position: 'right',
