@@ -1,7 +1,8 @@
 .row {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: 6px;
+	gap: 8px 6px;
 }
 
 .swatch {
