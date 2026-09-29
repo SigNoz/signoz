@@ -23,6 +23,7 @@ import AxesSection from './sections/AxesSection/AxesSection';
 import { summarizeAxes } from './sections/AxesSection/summary';
 import BucketsSection from './sections/BucketsSection/BucketsSection';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
+import { summarizeChartAppearance } from './sections/ChartAppearanceSection/summary';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
 import FormattingSection from './sections/FormattingSection/FormattingSection';
 import { DEFAULT_DECIMAL_PRECISION } from './sections/FormattingSection/options';
@@ -118,6 +119,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<PanelChartAppearanceSlice>(spec, 'chartAppearance'),
 		update: (spec, chartAppearance): PanelSpec =>
 			updatePluginSlice(spec, 'chartAppearance', chartAppearance),
+		summarize: summarizeChartAppearance,
 	},
 	[SectionKind.Visualization]: {
 		Component: VisualizationSection,
