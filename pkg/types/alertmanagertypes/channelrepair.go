@@ -117,7 +117,10 @@ func (c *Channel) Retype() error {
 
 // SplitByNotifier turns a receiver carrying several notifier configurations into
 // one channel per configuration. The first keeps this channel's identity so
-// references to it stay valid; the rest are new channels numbered after it.
+// references to it stay valid; the rest are new channels numbered after it. A
+// part of a kind v2 does not model is kept without a spec, as the migration
+// leaves such a row, so v1 still delivers through it until its own repair
+// deletes it.
 func (c *Channel) SplitByNotifier() ([]*Channel, error) {
 	receiver, err := NewReceiver(c.Data)
 	if err != nil {
@@ -129,21 +132,28 @@ func (c *Channel) SplitByNotifier() ([]*Channel, error) {
 		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q carries %d notifier configuration; nothing to split", c.DisplayName, len(singles))
 	}
 
-	if err := c.Update(singles[0]); err != nil {
-		return nil, err
-	}
+	parts := make([]*Channel, 0, len(singles))
+	for i, single := range singles {
+		if i > 0 {
+			single.Name = fmt.Sprintf("%s (%d)", c.DisplayName, i+1)
+		}
 
-	channels := []*Channel{c}
-	for i, single := range singles[1:] {
-		single.Name = fmt.Sprintf("%s (%d)", c.DisplayName, i+2)
-		channel, err := NewChannelFromReceiver(single, c.OrgID)
+		var part *Channel
+		if hasModelledNotifier(single) {
+			part, err = NewChannelFromReceiver(single, c.OrgID)
+		} else {
+			part, err = newChannelWithoutSpec(single, c.OrgID)
+		}
 		if err != nil {
 			return nil, err
 		}
-		channels = append(channels, channel)
+		parts = append(parts, part)
 	}
 
-	return channels, nil
+	c.Type, c.Data, c.Spec, c.StoredSpec = parts[0].Type, parts[0].Data, parts[0].Spec, parts[0].StoredSpec
+	c.UpdatedAt = time.Now()
+
+	return append([]*Channel{c}, parts[1:]...), nil
 }
 
 func hasModelledNotifier(receiver *Receiver) bool {

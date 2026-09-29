@@ -67,26 +67,9 @@ func (PostableChannel) JSONSchema() (jsonschema.Schema, error) {
 // all there is, so the name is generated from its display name and the type and
 // spec derived from it.
 func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) {
-	if receiver.Name == DefaultReceiverName {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "cannot use %s name as a channel name", receiver.Name)
-	}
-
-	if receiverChannelType(receiver) == "" {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "channel '%s' must have at least one notification configuration (e.g., email_configs, webhook_configs, slack_configs)", receiver.Name)
-	}
-
-	data, err := json.Marshal(receiver)
+	channel, err := newChannelWithoutSpec(receiver, orgID)
 	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "marshal receiver")
-	}
-
-	channel := &Channel{
-		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
-		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
-		Name:          generateChannelName(receiver.Name),
-		DisplayName:   receiver.Name,
-		Data:          string(data),
-		OrgID:         orgID,
+		return nil, err
 	}
 
 	// A receiver v2 cannot represent is refused rather than stored, so every
@@ -102,7 +85,6 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 	if err := channel.fillSpec(spec); err != nil {
 		return nil, err
 	}
-	channel.Type = channelConfig.Kind.ToStoredType()
 
 	return channel, nil
 }
@@ -123,6 +105,32 @@ func (c *Channel) Update(receiver *Receiver) error {
 	c.UpdatedAt = time.Now()
 
 	return nil
+}
+
+func newChannelWithoutSpec(receiver *Receiver, orgID string) (*Channel, error) {
+	if receiver.Name == DefaultReceiverName {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "cannot use %s name as a channel name", receiver.Name)
+	}
+
+	channelType := receiverChannelType(receiver)
+	if channelType == "" {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "channel '%s' must have at least one notification configuration (e.g., email_configs, webhook_configs, slack_configs)", receiver.Name)
+	}
+
+	data, err := json.Marshal(receiver)
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot save channel %q notification configuration", receiver.Name)
+	}
+
+	return &Channel{
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		Name:          generateChannelName(receiver.Name),
+		DisplayName:   receiver.Name,
+		Type:          channelType,
+		Data:          string(data),
+		OrgID:         orgID,
+	}, nil
 }
 
 // receiverChannelType returns the channel.Type discriminator. Walks

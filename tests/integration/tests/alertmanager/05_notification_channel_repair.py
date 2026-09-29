@@ -215,3 +215,65 @@ def test_repair_splits_a_legacy_channel_carrying_several_notifiers(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     assert response.json()["data"]["config"]["kind"] == "slack"
+
+
+def test_repair_splits_off_an_unmodelled_notifier_for_its_own_delete(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    cleanup_notification_channels: list[str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    name = f"legacy-mixed-{uuid.uuid4().hex[:8]}"
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        json={"name": name, "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "channel": "#alerts"}}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    channel_id = response.json()["data"]["id"]
+    cleanup_notification_channels.append(channel_id)
+    rewrite_channel_as_legacy_receiver(
+        signoz,
+        channel_id,
+        {
+            "name": name,
+            "slack_configs": [{"api_url": "https://hooks.slack.test/services/T/B/X", "channel": "#alerts"}],
+            "telegram_configs": [{"chat": 12345, "token": "telegram-bot-token"}],
+        },
+    )
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{channel_id}/repair"),
+        params={"apply": "true"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    repair = response.json()["data"]
+    assert repair["defect"] == "multiple_notifiers"
+    assert repair["applied"] is True
+    assert [channel["displayName"] for channel in repair["channels"]] == [name, f"{name} (2)"]
+    assert [channel["kind"] for channel in repair["channels"]] == ["slack", ""]
+    telegram_id = repair["channels"][1]["id"]
+    cleanup_notification_channels.append(telegram_id)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{channel_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["config"]["kind"] == "slack"
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{telegram_id}/repair"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    repair = response.json()["data"]
+    assert repair["defect"] == "unsupported_notifier"
+    assert repair["action"] == "delete"
