@@ -15,70 +15,58 @@ func resourceField(name string) telemetrytypes.TelemetryFieldKey {
 	return telemetrytypes.TelemetryFieldKey{Name: name, FieldContext: telemetrytypes.FieldContextResource}
 }
 
-// The flamegraph selectFields read resolves attribute fields from the span's merged bag, which
-// is built at most once per span no matter how many attribute fields are selected.
+// selectFields resolve from the span's merged attribute bag (JSON or legacy maps) and from
+// resources_string; leaf-only, empties and missing keys contribute nothing.
 func TestNewFlamegraphSpanFromStorableSelectFields(t *testing.T) {
-	t.Run("attribute fields resolve through the flattened json paths", func(t *testing.T) {
-		span := &StorableSpan{
-			SpanID: "s1",
-			AttributesJSON: makeAttributesJSON(map[string]any{
-				"http.route": "/a", "http.retry.count": float64(2),
-			}),
-		}
+	testCases := []struct {
+		name         string
+		span         *StorableSpan
+		selectFields []telemetrytypes.TelemetryFieldKey
+		wantAttrs    map[string]any
+		wantResource map[string]string
+	}{
+		{
+			name:         "AttributeFields_ResolveFromFlattenedJSONPaths",
+			span:         &StorableSpan{SpanID: "s1", AttributesJSON: makeAttributesJSON(map[string]any{"http.route": "/a", "http.retry.count": float64(2)})},
+			selectFields: []telemetrytypes.TelemetryFieldKey{attributeField("http.route"), attributeField("http.retry.count"), attributeField("http"), attributeField("missing")},
+			wantAttrs:    map[string]any{"http.route": "/a", "http.retry.count": float64(2)},
+			wantResource: map[string]string{},
+		},
+		{
+			name:         "AttributeFields_ResolveFromLegacyMaps",
+			span:         &StorableSpan{SpanID: "s1", AttributesString: map[string]string{"http.route": "/a"}, AttributesNumber: map[string]float64{"http.retry.count": 2}},
+			selectFields: []telemetrytypes.TelemetryFieldKey{attributeField("http.route"), attributeField("http.retry.count"), attributeField("missing")},
+			wantAttrs:    map[string]any{"http.route": "/a", "http.retry.count": float64(2)},
+			wantResource: map[string]string{},
+		},
+		{
+			name:         "JSONNullValues_AreSkipped",
+			span:         &StorableSpan{SpanID: "s1", AttributesJSON: makeAttributesJSON(map[string]any{"k": nil})},
+			selectFields: []telemetrytypes.TelemetryFieldKey{attributeField("k")},
+			wantAttrs:    map[string]any{},
+			wantResource: map[string]string{},
+		},
+		{
+			name:         "ResourceFields_ComeFromResourcesStringEmptiesSkipped",
+			span:         &StorableSpan{SpanID: "s1", ResourcesString: map[string]string{"service.name": "api", "deployment.environment": ""}},
+			selectFields: []telemetrytypes.TelemetryFieldKey{resourceField("service.name"), resourceField("deployment.environment"), resourceField("missing")},
+			wantAttrs:    map[string]any{},
+			wantResource: map[string]string{"service.name": "api"},
+		},
+		{
+			name:         "NoSelectFields_EmptyBags",
+			span:         &StorableSpan{SpanID: "s1", AttributesString: map[string]string{"http.route": "/a"}},
+			selectFields: nil,
+			wantAttrs:    map[string]any{},
+			wantResource: map[string]string{},
+		},
+	}
 
-		flat := NewFlamegraphSpanFromStorable(span, 0, []telemetrytypes.TelemetryFieldKey{
-			attributeField("http.route"), attributeField("http.retry.count"),
-			attributeField("http"), attributeField("missing"),
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			flat := NewFlamegraphSpanFromStorable(testCase.span, 0, testCase.selectFields)
+			assert.Equal(t, testCase.wantAttrs, flat.Attributes)
+			assert.Equal(t, testCase.wantResource, flat.Resource)
 		})
-
-		assert.Equal(t, map[string]any{"http.route": "/a", "http.retry.count": float64(2)}, flat.Attributes,
-			"leaves resolve; a parent path and a missing key contribute nothing")
-	})
-
-	t.Run("attribute fields resolve from the legacy maps", func(t *testing.T) {
-		span := &StorableSpan{
-			SpanID:           "s1",
-			AttributesString: map[string]string{"http.route": "/a"},
-			AttributesNumber: map[string]float64{"http.retry.count": 2},
-		}
-
-		flat := NewFlamegraphSpanFromStorable(span, 0, []telemetrytypes.TelemetryFieldKey{
-			attributeField("http.route"), attributeField("http.retry.count"), attributeField("missing"),
-		})
-
-		assert.Equal(t, map[string]any{"http.route": "/a", "http.retry.count": float64(2)}, flat.Attributes)
-	})
-
-	t.Run("json null values are skipped", func(t *testing.T) {
-		span := &StorableSpan{
-			SpanID:         "s1",
-			AttributesJSON: makeAttributesJSON(map[string]any{"k": nil}),
-		}
-
-		flat := NewFlamegraphSpanFromStorable(span, 0, []telemetrytypes.TelemetryFieldKey{attributeField("k")})
-
-		assert.Empty(t, flat.Attributes)
-	})
-
-	t.Run("resource fields come from resources_string, empties skipped", func(t *testing.T) {
-		span := &StorableSpan{
-			SpanID:          "s1",
-			ResourcesString: map[string]string{"service.name": "api", "deployment.environment": ""},
-		}
-
-		flat := NewFlamegraphSpanFromStorable(span, 0, []telemetrytypes.TelemetryFieldKey{
-			resourceField("service.name"), resourceField("deployment.environment"), resourceField("missing"),
-		})
-
-		assert.Equal(t, map[string]string{"service.name": "api"}, flat.Resource)
-	})
-
-	t.Run("no selectFields means empty bags", func(t *testing.T) {
-		span := &StorableSpan{SpanID: "s1", AttributesString: map[string]string{"http.route": "/a"}}
-
-		flat := NewFlamegraphSpanFromStorable(span, 0, nil)
-
-		assert.Empty(t, flat.Attributes)
-		assert.Empty(t, flat.Resource)
-	})
+	}
 }

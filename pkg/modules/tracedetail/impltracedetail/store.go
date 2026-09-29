@@ -76,11 +76,7 @@ func (s *traceStore) GetTraceSummary(ctx context.Context, traceID string) (*span
 }
 
 func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary *spantypes.TraceSummary) ([]spantypes.StorableSpan, error) {
-	// DISTINCT ON (span_id) is ClickHouse-specific syntax not supported by sqlbuilder
-	//
-	// %s carries the span-attribute home selection: rows hold their attributes either in the
-	// legacy maps or in the `attributes` JSON column (never only partially), so per row the
-	// empty home is suppressed to keep the result set at one home per span.
+	// DISTINCT ON (span_id) is ClickHouse-specific syntax not supported by sqlbuilder.
 	query := fmt.Sprintf(`
 		SELECT DISTINCT ON (span_id)
 			timestamp, duration_nano, span_id, has_error, kind,
