@@ -40,11 +40,15 @@ func stripKeyAlias(name string) string {
 	return keyAliasRe.ReplaceAllString(name, "")
 }
 
-// unwrapVariant returns the concrete value inside the chcol.Variant envelope the driver scans a
-// Dynamic column — a JSON path such as body_v2.level — into.
+// unwrapVariant returns the concrete value inside the driver's scan envelopes: chcol.Variant for a
+// Dynamic column (a JSON path such as body_v2.level), and chcol.JSON for a whole JSON column, which
+// is flattened to its leaf paths so a key stored as both a scalar and an object is not collapsed.
 func unwrapVariant(val any) any {
-	if v, ok := val.(chcol.Variant); ok {
+	switch v := val.(type) {
+	case chcol.Variant:
 		return v.Any()
+	case chcol.JSON:
+		return telemetrystoretypes.FlattenJSON(v)
 	}
 	return val
 }
@@ -204,7 +208,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 					Value: *val,
 				})
 
-			case *telemetrystoretypes.JSONValue, *chcol.Variant:
+			case *chcol.JSON, *chcol.Variant:
 				val := labelValue(derefValue(ptr))
 				lblVals = append(lblVals, val)
 				lblObjs = append(lblObjs, &qbtypes.Label{
