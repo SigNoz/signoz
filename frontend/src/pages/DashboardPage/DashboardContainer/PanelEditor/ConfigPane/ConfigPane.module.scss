@@ -8,6 +8,7 @@
 	background-color: var(--l1-background);
 	overflow-y: auto;
 	overflow-x: hidden;
+	scrollbar-gutter: stable;
 	padding-bottom: 44px;
 
 	@include custom-scrollbar;
