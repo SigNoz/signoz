@@ -22,6 +22,7 @@ import type { SectionEditorContext } from './sectionContext';
 import AxesSection from './sections/AxesSection/AxesSection';
 import { summarizeAxes } from './sections/AxesSection/summary';
 import BucketsSection from './sections/BucketsSection/BucketsSection';
+import { summarizeBuckets } from './sections/BucketsSection/summary';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
 import { summarizeChartAppearance } from './sections/ChartAppearanceSection/summary';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
@@ -135,6 +136,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<DashboardtypesHistogramBucketsDTO>(spec, 'histogramBuckets'),
 		update: (spec, buckets): PanelSpec =>
 			updatePluginSlice(spec, 'histogramBuckets', buckets),
+		summarize: summarizeBuckets,
 	},
 	[SectionKind.TextLayout]: {
 		Component: TextLayoutSection,
