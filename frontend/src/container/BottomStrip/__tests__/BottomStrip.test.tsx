@@ -1,8 +1,9 @@
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import { fireEvent } from '@testing-library/react';
 import { render } from 'tests/test-utils';
 import { Info } from 'types/api/v1/version/get';
 
+import StripTypography from '../components/StripTypography/StripTypography';
 import BottomStrip, {
 	BOTTOM_STRIP_HEIGHT,
 	BOTTOM_STRIP_HEIGHT_VAR,
@@ -12,8 +13,18 @@ import { useBottomStripStore } from '../store/useBottomStripStore';
 import { useBottomStripLeft } from '../useBottomStripLeft';
 
 /** Stands in for a page that puts something on the left of the strip. */
-function Page({ children }: { children: ReactNode }): null {
-	useBottomStripLeft(children);
+function Page({ text }: { text: string }): null {
+	useBottomStripLeft(<StripTypography>{text}</StripTypography>);
+	return null;
+}
+
+/** A page whose strip node throws when the strip renders it. */
+function BoomPage(): null {
+	useBottomStripLeft(
+		<StripTypography>
+			<Boom />
+		</StripTypography>,
+	);
 	return null;
 }
 
@@ -21,7 +32,7 @@ function Page({ children }: { children: ReactNode }): null {
 function ChangingPage(): JSX.Element {
 	const [count, setCount] = useState(600);
 
-	useBottomStripLeft(`${count} traces`);
+	useBottomStripLeft(<StripTypography>{count} traces</StripTypography>);
 
 	return (
 		<button type="button" onClick={(): void => setCount(42)}>
@@ -92,7 +103,7 @@ describe('BottomStrip', () => {
 	// separate trees instead, which the module-level store lets them share.
 	describe('left slot', () => {
 		it('shows what the page put there instead of the version', () => {
-			render(<Page>600 traces</Page>);
+			render(<Page text="600 traces" />);
 			const { getByText, queryByText } = render(
 				<BottomStrip />,
 				undefined,
@@ -104,7 +115,7 @@ describe('BottomStrip', () => {
 		});
 
 		it('falls back to the version once the page is gone', () => {
-			const page = render(<Page>600 traces</Page>);
+			const page = render(<Page text="600 traces" />);
 			const { getByText } = render(<BottomStrip />, undefined, withVersion);
 
 			page.unmount();
@@ -133,11 +144,7 @@ describe('BottomStrip', () => {
 				.spyOn(console, 'error')
 				.mockImplementation(() => {});
 
-			render(
-				<Page>
-					<Boom />
-				</Page>,
-			);
+			render(<BoomPage />);
 			const { getByTestId, getByText } = render(
 				<BottomStrip />,
 				undefined,
@@ -153,8 +160,8 @@ describe('BottomStrip', () => {
 		it('keeps the new page value when the old page unmounts after it', () => {
 			// Navigation order: the next page mounts before the last one unmounts,
 			// so without the owner guard the outgoing page wipes the incoming value.
-			const pageA = render(<Page>page A</Page>);
-			render(<Page>page B</Page>);
+			const pageA = render(<Page text="page A" />);
+			render(<Page text="page B" />);
 			const { getByText } = render(<BottomStrip />, undefined, withVersion);
 
 			pageA.unmount();

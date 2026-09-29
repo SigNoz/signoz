@@ -33,10 +33,13 @@
 	cursor: default;
 }
 
-// Temporary placeholder for the left slot. Replaced later.
-.version {
-	color: var(--l2-foreground);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+// separator b/w strip entities
+.left > *:not(:last-child)::after,
+.right > *:not(:last-child)::after {
+	content: '';
+	flex-shrink: 0;
+	width: 1px;
+	height: 14px;
+	background: var(--l2-border);
+	margin-left: var(--spacing-4);
 }
