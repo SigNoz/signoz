@@ -51,9 +51,13 @@ function LogsExplorer(): JSX.Element {
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(
-		() => panelTypeToExplorerView[panelTypesFromUrl],
-	);
+	const selectedView = panelTypeToExplorerView[panelTypesFromUrl];
+
+	useEffect(() => {
+		if (selectedView !== ExplorerViews.LIST) {
+			setShowLiveLogs(false);
+		}
+	}, [selectedView]);
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
@@ -116,15 +120,10 @@ function LogsExplorer(): JSX.Element {
 			);
 
 			handleSetConfig(nextPanelType, DataSource.LOGS);
-			setSelectedView(view);
-
-			if (view !== ExplorerViews.LIST) {
-				setShowLiveLogs(false);
-			}
 
 			handleExplorerTabChange(nextPanelType, querySearchParameters);
 		},
-		[handleSetConfig, handleExplorerTabChange, setSelectedView],
+		[handleSetConfig, handleExplorerTabChange],
 	);
 
 	// ─── AI Assistant page actions (only when license feature is on) ───────────
