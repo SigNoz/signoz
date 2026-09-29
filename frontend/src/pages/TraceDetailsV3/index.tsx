@@ -16,7 +16,7 @@ import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useBottomStripLeft } from 'container/BottomStrip/useBottomStripLeft';
 import useGetTraceV4 from 'hooks/trace/useGetTraceV4';
-import StripInfo from './StripInfo/StripInfo';
+import { useStripInfo } from './useStripInfo';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ResizableBox } from 'periscope/components/ResizableBox';
@@ -148,17 +148,13 @@ function TraceDetailsV3(): JSX.Element {
 	const totalSpansCount = traceData?.payload?.totalSpansCount || 0;
 	const totalErrorSpansCount = traceData?.payload?.totalErrorSpansCount || 0;
 
-	useBottomStripLeft(
-		useMemo(
-			() => (
-				<StripInfo
-					totalSpansCount={totalSpansCount}
-					totalErrorSpansCount={totalErrorSpansCount}
-				/>
-			),
-			[totalSpansCount, totalErrorSpansCount],
-		),
-	);
+	const stripConfig = useStripInfo({
+		totalSpansCount,
+		totalErrorSpansCount,
+	});
+
+	useBottomStripLeft(stripConfig);
+
 	const isFullDataLoaded =
 		totalSpansCount > 0 && totalSpansCount <= allSpans.length;
 

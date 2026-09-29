@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { fireEvent } from '@testing-library/react';
 import { render } from 'tests/test-utils';
 import { Info } from 'types/api/v1/version/get';
 
-import StripTypography from '../components/StripTypography/StripTypography';
 import BottomStrip, {
 	BOTTOM_STRIP_HEIGHT,
 	BOTTOM_STRIP_HEIGHT_VAR,
@@ -11,20 +10,24 @@ import BottomStrip, {
 } from '..';
 import { useBottomStripStore } from '../store/useBottomStripStore';
 import { useBottomStripLeft } from '../useBottomStripLeft';
+import { StripItemKind } from '../types';
 
 /** Stands in for a page that puts something on the left of the strip. */
 function Page({ text }: { text: string }): null {
-	useBottomStripLeft(<StripTypography>{text}</StripTypography>);
+	useBottomStripLeft(
+		useMemo(() => [{ kind: StripItemKind.Text, text }], [text]),
+	);
 	return null;
 }
 
-/** A page whose strip node throws when the strip renders it. */
+/**
+ * A page whose icon throws when the strip renders it. `prefix` is the one place
+ * the config still takes a node, so it is the only way a page can break it.
+ */
 function BoomPage(): null {
-	useBottomStripLeft(
-		<StripTypography>
-			<Boom />
-		</StripTypography>,
-	);
+	useBottomStripLeft([
+		{ kind: StripItemKind.Text, text: 'boom', prefix: <Boom /> },
+	]);
 	return null;
 }
 
@@ -32,7 +35,12 @@ function BoomPage(): null {
 function ChangingPage(): JSX.Element {
 	const [count, setCount] = useState(600);
 
-	useBottomStripLeft(<StripTypography>{count} traces</StripTypography>);
+	useBottomStripLeft(
+		useMemo(
+			() => [{ kind: StripItemKind.Text, text: `${count} traces` }],
+			[count],
+		),
+	);
 
 	return (
 		<button type="button" onClick={(): void => setCount(42)}>

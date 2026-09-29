@@ -1,23 +1,24 @@
-import { type ReactNode, useEffect, useId } from 'react';
+import { useEffect, useId } from 'react';
 
 import { useBottomStripStore } from './store/useBottomStripStore';
+import type { StripItem } from './types';
 
 /**
- * Puts `node` on the left of the bottom strip for as long as the calling page is
- * mounted. Pass null to show nothing and let the version through.
+ * Puts `items` on the left of the bottom strip for as long as the calling page
+ * is mounted. Pass null to show nothing and let the version through.
  *
  * There is no refresh API by design: a page that refetches re-renders, which
- * produces a new node, which re-runs this effect. Wrap the node in `useMemo`
- * keyed on the values it shows, or the store is written on every render.
+ * produces new items, which re-runs this effect. Memoise the array where it is
+ * built, or the store is written on every render.
  */
-export function useBottomStripLeft(node: ReactNode | null): void {
+export function useBottomStripLeft(items: StripItem[] | null): void {
 	const ownerId = useId();
 	const setLeft = useBottomStripStore((state) => state.setLeft);
 	const clearLeft = useBottomStripStore((state) => state.clearLeft);
 
 	useEffect(() => {
-		setLeft(ownerId, node);
+		setLeft(ownerId, items);
 
 		return (): void => clearLeft(ownerId);
-	}, [node, ownerId, setLeft, clearLeft]);
+	}, [items, ownerId, setLeft, clearLeft]);
 }

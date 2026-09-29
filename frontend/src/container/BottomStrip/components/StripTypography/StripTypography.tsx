@@ -5,15 +5,11 @@ import styles from './StripTypography.module.scss';
 
 interface StripTypographyProps {
 	children: ReactNode;
-	/** Leading icon, aligned and spaced for you. Same shape as `Button`'s. */
+	/** Leading icon. Same shape as `Button`'s. */
 	prefix?: ReactNode;
 }
 
-/**
- * A single phrase in the strip: the version, or a count a page states in its own
- * words. A labelled number belongs in `StripKeyValue` instead. There is no
- * `className`; everything the strip renders looks the same by construction.
- */
+/** A single phrase. A labelled number belongs in `StripKeyValue`. */
 function StripTypography({
 	children,
 	prefix,

@@ -1,12 +1,13 @@
-import type { ReactNode } from 'react';
 import { create } from 'zustand';
+
+import type { StripItem } from '../types';
 
 interface BottomStripState {
 	/** What the strip shows on the left, or null to fall back to the version. */
-	left: ReactNode | null;
+	left: StripItem[] | null;
 	/** Which page owns the current value — see `clearLeft`. */
 	ownerId: string | null;
-	setLeft: (ownerId: string, left: ReactNode) => void;
+	setLeft: (ownerId: string, left: StripItem[] | null) => void;
 	clearLeft: (ownerId: string) => void;
 }
 

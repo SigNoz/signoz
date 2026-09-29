@@ -1,5 +1,7 @@
 import { render } from 'tests/test-utils';
 
+import { StripTone } from '../../../types';
+
 import StripKeyValue from '../StripKeyValue';
 
 describe('StripKeyValue', () => {
@@ -19,7 +21,7 @@ describe('StripKeyValue', () => {
 			<StripKeyValue
 				label="Errors"
 				value={4}
-				tone="error"
+				tone={StripTone.Error}
 				prefix={<svg data-testid="icon" />}
 			/>,
 		);
