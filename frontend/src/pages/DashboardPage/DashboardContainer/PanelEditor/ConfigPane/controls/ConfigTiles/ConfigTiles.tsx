@@ -6,6 +6,8 @@ import styles from './ConfigTiles.module.scss';
 export interface ConfigTileItem<T extends string = string> {
 	value: T;
 	label: string;
+	/** Accessible name when `label` alone is ambiguous (e.g. a bare symbol). */
+	ariaLabel?: string;
 	drawing?: ReactNode;
 }
 
@@ -56,7 +58,7 @@ function ConfigTiles<T extends string>({
 								name={name}
 								value={item.value}
 								checked={selected}
-								aria-label={item.label}
+								aria-label={item.ariaLabel ?? item.label}
 								onChange={(): void => onChange(item.value)}
 							/>
 							{item.drawing}
