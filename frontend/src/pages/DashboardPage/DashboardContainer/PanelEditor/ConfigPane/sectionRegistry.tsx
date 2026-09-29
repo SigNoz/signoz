@@ -12,9 +12,11 @@ import {
 	type PanelChartAppearanceSlice,
 	type PanelFormattingSlice,
 	type PanelVisualizationSlice,
+	type SectionControlsOf,
 	type SectionEditorProps,
 	type SectionSpecMap,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
+import type { SeededPluginSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/buildPluginSpec';
 
 import type { SectionEditorContext } from './sectionContext';
 import AxesSection from './sections/AxesSection/AxesSection';
@@ -27,6 +29,7 @@ import PanelHeaderSection from './sections/PanelHeaderSection/PanelHeaderSection
 import TextLayoutSection from './sections/TextLayoutSection/TextLayoutSection';
 import ThresholdsSection from './sections/ThresholdsSection/ThresholdsSection';
 import VisualizationSection from './sections/VisualizationSection/VisualizationSection';
+import { countSummary } from './utils/summary';
 
 type PanelSpec = DashboardtypesPanelSpecDTO;
 
@@ -39,6 +42,12 @@ export interface SectionDescriptor<K extends SectionKind> {
 	Component: ComponentType<SectionEditorProps<K>>;
 	get: (spec: PanelSpec) => SectionSpecMap[K] | undefined;
 	update: (spec: PanelSpec, value: SectionSpecMap[K]) => PanelSpec;
+	/** Collapsed-header digest of the slice. */
+	summarize?: (
+		value: SectionSpecMap[K] | undefined,
+		controls: SectionControlsOf<K>,
+		ctx: SectionEditorContext,
+	) => string;
 }
 
 // The plugin spec is a discriminated union over panel kinds; reading/writing a shared
@@ -135,6 +144,7 @@ export const SECTION_REGISTRY: {
 		// Panel-level slice (spec.links), not under the plugin spec — no cast needed.
 		get: (spec): DashboardtypesLinkDTO[] => spec.links || [],
 		update: (spec, links): PanelSpec => ({ ...spec, links }),
+		summarize: (links): string => countSummary(links, 'link'),
 	},
 	// One editor for every threshold variant (label / comparison / table); the kind's
 	// `controls.variant` picks the row editor + element shape. All persist to the same
@@ -145,6 +155,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<AnyThreshold[]>(spec, 'thresholds'),
 		update: (spec, thresholds): PanelSpec =>
 			updatePluginSlice(spec, 'thresholds', thresholds),
+		summarize: (thresholds): string => countSummary(thresholds, 'threshold'),
 	},
 };
 
@@ -159,12 +170,18 @@ export interface ErasedSectionDescriptor {
 	Component: ComponentType<
 		{
 			value: unknown;
+			defaultValue?: unknown;
 			controls?: unknown;
 			onChange: (next: unknown) => void;
 		} & SectionEditorContext
 	>;
 	get: (spec: PanelSpec) => unknown;
 	update: (spec: PanelSpec, value: unknown) => PanelSpec;
+	summarize?: (
+		value: unknown,
+		controls: unknown,
+		ctx: SectionEditorContext,
+	) => string;
 }
 
 export function resolveSectionEditor(
@@ -173,4 +190,17 @@ export function resolveSectionEditor(
 	return SECTION_REGISTRY[kind] as unknown as
 		| ErasedSectionDescriptor
 		| undefined;
+}
+
+/** A slice's default, read through the same lens from the kind's seeded plugin spec. */
+export function getSectionDefault(
+	editor: ErasedSectionDescriptor,
+	spec: PanelSpec,
+	defaults: SeededPluginSpec,
+): unknown {
+	return editor.get({
+		...spec,
+		links: [],
+		plugin: { ...spec.plugin, spec: defaults },
+	} as PanelSpec);
 }

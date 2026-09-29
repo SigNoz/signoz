@@ -91,7 +91,7 @@
 	}
 }
 
-@container (min-width: 312px) {
+@container (min-width: 420px) {
 	.grid[data-count='4'] {
 		@include stacked-tiles(4);
 	}
