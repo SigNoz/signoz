@@ -4,12 +4,12 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
 
-// WrapRows reports JSONValue as the scan type of every JSON column. Nested JSON — Array(JSON),
-// Map(String, JSON) — is not covered.
+// WrapRows reports chcol.JSON as the scan type of every JSON column, so the driver decodes it as a
+// native document. Nested JSON — Array(JSON), Map(String, JSON) — is not covered.
 func WrapRows(rows driver.Rows) driver.Rows {
 	return &rowsWithJSONScanType{Rows: rows}
 }
@@ -35,5 +35,5 @@ type jsonColumnType struct {
 }
 
 func (jsonColumnType) ScanType() reflect.Type {
-	return reflect.TypeFor[telemetrystoretypes.JSONValue]()
+	return reflect.TypeFor[chcol.JSON]()
 }

@@ -1,35 +1,37 @@
 package telemetrystoretypes
 
-import (
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/bytedance/sonic"
-)
+import "github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 
-var ErrCodeUnmarshalJSONColumn = errors.MustNewCode("fail_unmarshal_json_column")
-
-// JSONValue is the scan target for a ClickHouse JSON column, read in the flattened native serialization the driver decodes into this map.
+// JSONValue is the decoded form of a ClickHouse JSON column: a nested document whose leaf values
+// are unwrapped from the driver's chcol.Variant envelope.
 type JSONValue map[string]any
 
-// Scan decodes into a fresh map every time: a scan target is reused across rows, and unmarshalling
-// into the map already there would both keep its keys and hand every row the same map.
-func (v *JSONValue) Scan(src any) error {
-	var raw []byte
-	switch value := src.(type) {
-	case nil:
-		*v = nil
-		return nil
-	case string:
-		raw = []byte(value)
-	case []byte:
-		raw = value
-	default:
-		return errors.NewInternalf(ErrCodeUnmarshalJSONColumn, "cannot decode %T as a JSON column", src)
-	}
+// NestedJSON decodes a native JSON column into a nested document. Dotted leaf paths become nested
+// maps; a key stored as both a scalar and an object collapses, as the nested form cannot hold both.
+func NestedJSON(j chcol.JSON) JSONValue {
+	return unwrapNested(j.NestedMap())
+}
 
-	decoded := JSONValue{}
-	if err := sonic.Unmarshal(raw, &decoded); err != nil {
-		return errors.WrapInternalf(err, ErrCodeUnmarshalJSONColumn, "failed to unmarshal JSON column")
+func unwrapNested(m map[string]any) JSONValue {
+	out := make(JSONValue, len(m))
+	for key, value := range m {
+		out[key] = unwrapValue(value)
 	}
-	*v = decoded
-	return nil
+	return out
+}
+
+func unwrapValue(value any) any {
+	switch v := value.(type) {
+	case chcol.Variant:
+		return unwrapValue(v.Any())
+	case map[string]any:
+		return unwrapNested(v)
+	case []any:
+		for i := range v {
+			v[i] = unwrapValue(v[i])
+		}
+		return v
+	default:
+		return value
+	}
 }
