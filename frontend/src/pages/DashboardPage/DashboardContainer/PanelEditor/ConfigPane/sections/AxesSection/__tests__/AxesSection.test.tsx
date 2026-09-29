@@ -75,7 +75,7 @@ describe('AxesSection', () => {
 			/>,
 		);
 
-		await user.click(screen.getByText('Log'));
+		await user.click(screen.getByTestId('panel-editor-v2-log-scale-log'));
 
 		expect(onChange).toHaveBeenCalledWith({ isLogScale: true });
 	});

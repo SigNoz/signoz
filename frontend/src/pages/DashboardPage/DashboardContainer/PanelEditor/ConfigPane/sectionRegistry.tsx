@@ -20,6 +20,7 @@ import type { SeededPluginSpec } from 'pages/DashboardPage/DashboardContainer/Pa
 
 import type { SectionEditorContext } from './sectionContext';
 import AxesSection from './sections/AxesSection/AxesSection';
+import { summarizeAxes } from './sections/AxesSection/summary';
 import BucketsSection from './sections/BucketsSection/BucketsSection';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
@@ -96,6 +97,7 @@ export const SECTION_REGISTRY: {
 		get: (spec): DashboardtypesAxesDTO | undefined =>
 			getPluginSlice<DashboardtypesAxesDTO>(spec, 'axes'),
 		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
+		summarize: summarizeAxes,
 	},
 	[SectionKind.Legend]: {
 		Component: LegendSection,
