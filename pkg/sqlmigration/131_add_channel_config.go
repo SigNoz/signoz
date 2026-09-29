@@ -15,28 +15,6 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type addChannelSpec struct {
-	sqlschema sqlschema.SQLSchema
-	logger    *slog.Logger
-}
-
-type channelSpecBackfillRow struct {
-	bun.BaseModel `bun:"table:notification_channel"`
-
-	ID    string `bun:"id,pk"`
-	OrgID string `bun:"org_id"`
-	Data  string `bun:"data"`
-}
-
-// notifierJSON is one entry of a receiver's *_configs list as stored in
-// notification_channel.data.
-type notifierJSON map[string]json.RawMessage
-
-type channelSpecBackfillKind struct {
-	configsKey string
-	convert    func(notifierJSON) (map[string]any, error)
-}
-
 var channelSpecBackfillKinds = []channelSpecBackfillKind{
 	{configsKey: "slack_configs", convert: convertSlackNotifierJSON},
 	{configsKey: "email_configs", convert: convertEmailNotifierJSON},
@@ -142,6 +120,28 @@ func (migration *addChannelSpec) Up(ctx context.Context, db *bun.DB) error {
 
 func (migration *addChannelSpec) Down(context.Context, *bun.DB) error {
 	return nil
+}
+
+type addChannelSpec struct {
+	sqlschema sqlschema.SQLSchema
+	logger    *slog.Logger
+}
+
+type channelSpecBackfillRow struct {
+	bun.BaseModel `bun:"table:notification_channel"`
+
+	ID    string `bun:"id,pk"`
+	OrgID string `bun:"org_id"`
+	Data  string `bun:"data"`
+}
+
+// notifierJSON is one entry of a receiver's *_configs list as stored in
+// notification_channel.data.
+type notifierJSON map[string]json.RawMessage
+
+type channelSpecBackfillKind struct {
+	configsKey string
+	convert    func(notifierJSON) (map[string]any, error)
 }
 
 // channelSpecFromReceiverJSON mirrors the v2 read of a stored receiver: one
