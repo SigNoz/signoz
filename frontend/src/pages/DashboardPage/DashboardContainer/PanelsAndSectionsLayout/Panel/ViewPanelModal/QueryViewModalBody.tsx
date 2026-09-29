@@ -31,6 +31,8 @@ interface QueryViewModalBodyProps {
 	draftApi: PanelEditorDraftApi;
 	/** Kind switch, owned by the shell (its cache must survive the fork swap). */
 	onChangePanelKind: (kind: PanelKind) => void;
+	/** Tab switch, owned by the shell alongside the kind switch it shares memory with. */
+	onChangeQueryMode: (key: string) => void;
 }
 
 /**
@@ -45,6 +47,7 @@ function QueryViewModalBody({
 	onClose,
 	draftApi,
 	onChangePanelKind,
+	onChangeQueryMode,
 }: QueryViewModalBodyProps): JSX.Element | null {
 	const {
 		timeOverride,
@@ -162,6 +165,7 @@ function QueryViewModalBody({
 					panelDefinition={panelDefinition}
 					signal={signal}
 					isLoadingQueries={isFetching}
+					onChangeQueryMode={onChangeQueryMode}
 					onStageRunQuery={runQuery}
 					onCancelQuery={cancelQuery}
 					stickyHeader={false}
