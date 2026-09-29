@@ -124,21 +124,15 @@ export function usePanelActionItems({
 		if (panelCapabilities.view) {
 			panelGroup.push({
 				key: 'view-panel',
-				label: row('View', <Fullscreen size={14} />, {
-					checks: [],
-					disabledTooltip: blocked.view,
-				}),
-				disabled: !!blocked.view,
+				label: row('View', <Fullscreen size={14} />, { checks: [] }),
 				onClick: (): void => openView(panelId, panel),
 			});
 		}
 		if (panelCapabilities.edit) {
 			panelGroup.push({
 				key: 'edit-panel',
-				label: row('Edit panel', <PenLine size={14} />, {
-					disabledTooltip: blocked.edit,
-				}),
-				disabled: !isEditable || !!blocked.edit,
+				label: row('Edit panel', <PenLine size={14} />),
+				disabled: !isEditable,
 				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}
