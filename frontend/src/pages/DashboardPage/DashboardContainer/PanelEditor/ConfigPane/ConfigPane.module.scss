@@ -42,11 +42,12 @@
 
 .eyebrow {
 	display: block;
-	font-size: 11px;
-	font-weight: 600;
-	padding: 16px;
-	letter-spacing: 0.06em;
-	color: var(--l1-foreground);
+	padding: 18px 20px 12px;
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--l2-foreground);
 }
 
 .group {
@@ -73,9 +74,5 @@
 .sections {
 	display: flex;
 	flex-direction: column;
-
-	& > * {
-		padding: 0 16px;
-		border-top: 1px solid var(--l1-border);
-	}
+	border-bottom: 1px solid var(--l1-border);
 }

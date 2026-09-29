@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type {
@@ -7,6 +8,7 @@ import type {
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { SectionKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { getSupportedSignals } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import { buildPluginSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/buildPluginSpec';
 import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
 import type { EQueryType } from 'types/common/dashboard';
 
@@ -78,6 +80,11 @@ function ConfigPane({
 		(config) => config.kind !== SectionKind.PanelHeader,
 	);
 
+	const defaults = useMemo(
+		() => buildPluginSpec(definition.sections),
+		[definition],
+	);
+
 	const signal = resolveSignal(spec.queries, getSupportedSignals(panelKind)[0]);
 
 	// Title/description are just a slice of the spec — edit them through the same
@@ -122,6 +129,7 @@ function ConfigPane({
 						config={headerSection}
 						spec={spec}
 						onChangeSpec={onChangeSpec}
+						defaults={defaults}
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
 						signal={signal}
@@ -147,6 +155,7 @@ function ConfigPane({
 									config={config}
 									spec={spec}
 									onChangeSpec={onChangeSpec}
+									defaults={defaults}
 									legendSeries={legendSeries}
 									tableColumns={tableColumns}
 									signal={signal}
