@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -24,6 +25,8 @@ func (bespokeOpenAPIHandler) ServeOpenAPI(opCtx openapi.OperationContext) {
 func (bespokeOpenAPIHandler) ResourceDefs() []ResourceDef { return nil }
 
 func (bespokeOpenAPIHandler) Request() any { return nil }
+
+func (bespokeOpenAPIHandler) BindBodyOptions() []binding.BindBodyOption { return nil }
 
 func TestNewPanicsWhenBodyExtractorHasNoPointerRequest(t *testing.T) {
 	type body struct{ ID string }

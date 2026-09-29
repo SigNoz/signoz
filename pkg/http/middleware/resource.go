@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
@@ -39,26 +38,37 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 			req.Body = io.NopCloser(bytes.NewReader(body))
 		}
 
+		defs := provider.ResourceDefs()
+
 		var decoded any
-		if handler.RequiresBody(provider.ResourceDefs()) {
-			decoded = reflect.New(reflect.TypeOf(provider.Request()).Elem()).Interface()
-			if err := binding.JSON.BindBody(bytes.NewReader(body), decoded); err != nil {
-				render.Error(rw, err)
-				return
-			}
+		var decodeErr error
+		if handler.RequiresBody(defs) {
+			decoded, decodeErr = decodeBody(provider.Request(), body, provider.BindBodyOptions()...)
 		}
 
-		extractorCtx := coretypes.ExtractorContext{
-			Request:     req,
-			RequestBody: body,
-			Body:        decoded,
+		extractorCtx := coretypes.ExtractorContext{Request: req, RequestBody: body, Body: decoded}
+
+		var resolved []coretypes.ResolvedResource
+		if decodeErr != nil {
+			// authz renders the error inside the audit middleware, so the request is still logged
+			resolved = []coretypes.ResolvedResource{coretypes.NewResolvedResourceWithError(coretypes.Verb{}, coretypes.ActionCategory{}, decodeErr)}
+		} else {
+			resolved = handler.ResolveRequest(defs, extractorCtx)
 		}
-		resolved := handler.ResolveRequest(provider.ResourceDefs(), extractorCtx)
 
 		ctx := coretypes.NewContextWithExtractorContext(req.Context(), extractorCtx)
 		ctx = coretypes.NewContextWithResolvedResources(ctx, resolved)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
+}
+
+func decodeBody(prototype any, body []byte, opts ...binding.BindBodyOption) (any, error) {
+	decoded := reflect.New(reflect.TypeOf(prototype).Elem()).Interface()
+	if err := binding.JSON.BindBody(bytes.NewReader(body), decoded, opts...); err != nil {
+		return nil, err
+	}
+
+	return decoded, nil
 }
 
 func handlerFromRequest(req *http.Request) handler.Handler {

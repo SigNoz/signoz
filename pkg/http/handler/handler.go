@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi3"
@@ -19,12 +20,14 @@ type Handler interface {
 	ServeOpenAPI(openapi.OperationContext)
 	ResourceDefs() []ResourceDef
 	Request() any
+	BindBodyOptions() []binding.BindBodyOption
 }
 
 type handler struct {
-	handlerFunc  http.HandlerFunc
-	openAPIDef   OpenAPIDef
-	resourceDefs []ResourceDef
+	handlerFunc     http.HandlerFunc
+	openAPIDef      OpenAPIDef
+	resourceDefs    []ResourceDef
+	bindBodyOptions []binding.BindBodyOption
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
@@ -145,4 +148,8 @@ func (handler *handler) ResourceDefs() []ResourceDef {
 
 func (handler *handler) Request() any {
 	return handler.openAPIDef.Request
+}
+
+func (handler *handler) BindBodyOptions() []binding.BindBodyOption {
+	return handler.bindBodyOptions
 }
