@@ -99,6 +99,17 @@ func (c *Channel) Update(receiver *Receiver) error {
 	return nil
 }
 
+// ToV1Channel copies the channel with its type named as v1 always has, after
+// upstream's msteamsv2_configs list rather than the kind. Goes with the v1 API.
+func (c *Channel) ToV1Channel() *Channel {
+	v1 := *c
+	if c.Type == ChannelKindMSTeams.StringValue() {
+		v1.Type = "msteamsv2"
+	}
+
+	return &v1
+}
+
 func newChannelWithoutSpec(receiver *Receiver, orgID string) (*Channel, error) {
 	if receiver.Name == DefaultReceiverName {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "cannot use %s name as a channel name", receiver.Name)
@@ -125,10 +136,16 @@ func newChannelWithoutSpec(receiver *Receiver, orgID string) (*Channel, error) {
 	}, nil
 }
 
-// receiverChannelType returns the channel.Type discriminator. Walks
-// Receiver's own fields first (native), then the embed (upstream); first
-// non-empty *_configs slice wins.
+// receiverChannelType returns the type a channel is stored under: the kind for
+// a notifier v2 models, else the notifier's own *_configs name. For the latter
+// it walks Receiver's own fields first (native), then the embed (upstream);
+// first non-empty *_configs slice wins.
 func receiverChannelType(receiver *Receiver) string {
+	for _, channelKind := range channelKinds {
+		if channelKind.countConfigs(receiver) > 0 {
+			return channelKind.kind.StringValue()
+		}
+	}
 	if t := nonEmptyConfigsField(reflect.ValueOf(*receiver)); t != "" {
 		return t
 	}

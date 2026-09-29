@@ -43,30 +43,19 @@ func (t ChannelKind) IsValid() bool {
 	return slices.ContainsFunc(t.Enum(), func(v any) bool { return v == t })
 }
 
-// ToStoredType returns the Channel.Type a channel of this kind is stored under,
-// which matches the kind for all but msteams.
-func (t ChannelKind) ToStoredType() string {
-	if t == ChannelKindMSTeams {
-		return "msteamsv2"
-	}
-
-	return t.StringValue()
-}
-
 func ErrUnsupportedChannelKind(s string) error {
 	return errors.Newf(errors.TypeInvalidInput, ErrCodeChannelUnsupportedKind, "unknown notification channel kind %q; allowed values: %s", s, allowedValuesForChannelKind())
 }
 
-// parseStoredChannelType inverts ToStoredType. It reports false for the notifier
+// parseChannelKind reads a stored type. It reports false for the notifier
 // kinds v1 accepted but v2 does not model.
-func parseStoredChannelType(stored string) (ChannelKind, bool) {
-	for _, channelKind := range channelKinds {
-		if channelKind.kind.ToStoredType() == stored {
-			return channelKind.kind, true
-		}
+func parseChannelKind(storedType string) (ChannelKind, bool) {
+	channelKind := ChannelKind{valuer.NewString(storedType)}
+	if !channelKind.IsValid() {
+		return ChannelKind{}, false
 	}
 
-	return ChannelKind{}, false
+	return channelKind, true
 }
 
 func allowedValuesForChannelKind() string {

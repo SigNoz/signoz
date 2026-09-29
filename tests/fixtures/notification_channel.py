@@ -50,11 +50,13 @@ def assert_email_channel_payload_clean(payload: str) -> None:
 
 def rewrite_channel_as_legacy_receiver(signoz: types.SigNoz, channel_id: str, receiver: dict) -> None:
     """Overwrite a channel row, and its receiver in the org's alertmanager config,
-    the way v1 stored them before the spec column existed. Neither API writes
+    the way the spec migration leaves a row it cannot fill. Neither API writes
     such rows any more, so tests that need one seed it here. The receiver's name
     must be the channel's display name. The alertmanager picks the swapped
     receiver up on its next poll of the stored config."""
-    notifier_type = next(key.removesuffix("_configs") for key in receiver if key.endswith("_configs"))
+    configs_key = next(key for key in receiver if key.endswith("_configs"))
+    # Storage names the kind; only msteams differs from its upstream configs list.
+    notifier_type = "msteams" if configs_key == "msteamsv2_configs" else configs_key.removesuffix("_configs")
     with signoz.sqlstore.conn.connect() as conn:
         conn.execute(
             sql.text("UPDATE notification_channel SET type = :type, data = :data, spec = NULL WHERE id = :id"),

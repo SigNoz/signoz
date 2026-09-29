@@ -38,7 +38,7 @@ func (p *PostableNotificationChannel) ToChannel(orgID string) (*Channel, *Receiv
 		TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		Name:          p.Name,
 		DisplayName:   p.DisplayName,
-		Type:          p.Config.Kind.ToStoredType(),
+		Type:          p.Config.Kind.StringValue(),
 		Data:          string(data),
 		OrgID:         orgID,
 	}
@@ -101,7 +101,7 @@ func (c *Channel) UpdateFromUpdatable(updatable UpdatableNotificationChannel) (*
 		return nil, err
 	}
 
-	c.Type = updatable.Config.Kind.ToStoredType()
+	c.Type = updatable.Config.Kind.StringValue()
 	c.Data = string(data)
 	c.UpdatedAt = time.Now()
 
@@ -119,7 +119,7 @@ func (c *Channel) toChannelConfig() (ChannelConfig, error) {
 		return c.deriveChannelConfig()
 	}
 
-	channelKind, ok := parseStoredChannelType(c.Type)
+	channelKind, ok := parseChannelKind(c.Type)
 	if !ok {
 		return ChannelConfig{}, errors.NewInternalf(errors.CodeInternal, "channel %q carries a spec under unmodelled type %q", c.DisplayName, c.Type)
 	}
@@ -212,7 +212,7 @@ func (c *Channel) ToGettableNotificationChannel() (*GettableNotificationChannel,
 // no ChannelKind models, which v1 allowed because it accepted every upstream
 // notifier kind. One such row must not fail the whole page.
 func (c *Channel) ToListedNotificationChannel() *ListedNotificationChannel {
-	channelKind, _ := parseStoredChannelType(c.Type)
+	channelKind, _ := parseChannelKind(c.Type)
 
 	return &ListedNotificationChannel{
 		ID:          c.ID,

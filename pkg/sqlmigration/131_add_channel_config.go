@@ -16,16 +16,16 @@ import (
 )
 
 var channelSpecBackfillKinds = []channelSpecBackfillKind{
-	{configsKey: "slack_configs", convert: convertSlackNotifierJSON},
-	{configsKey: "email_configs", convert: convertEmailNotifierJSON},
-	{configsKey: "webhook_configs", convert: convertWebhookNotifierJSON},
-	{configsKey: "pagerduty_configs", convert: convertPagerdutyNotifierJSON},
-	{configsKey: "opsgenie_configs", convert: convertOpsgenieNotifierJSON},
-	{configsKey: "msteamsv2_configs", convert: convertMSTeamsNotifierJSON},
-	{configsKey: "googlechat_configs", convert: convertGoogleChatNotifierJSON},
-	{configsKey: "jira_configs", convert: convertJiraNotifierJSON},
-	{configsKey: "jsmops_configs", convert: convertJSMOpsNotifierJSON},
-	{configsKey: "incidentio_configs", convert: convertIncidentIONotifierJSON},
+	{kind: "slack", configsKey: "slack_configs", convert: convertSlackNotifierJSON},
+	{kind: "email", configsKey: "email_configs", convert: convertEmailNotifierJSON},
+	{kind: "webhook", configsKey: "webhook_configs", convert: convertWebhookNotifierJSON},
+	{kind: "pagerduty", configsKey: "pagerduty_configs", convert: convertPagerdutyNotifierJSON},
+	{kind: "opsgenie", configsKey: "opsgenie_configs", convert: convertOpsgenieNotifierJSON},
+	{kind: "msteams", configsKey: "msteamsv2_configs", convert: convertMSTeamsNotifierJSON},
+	{kind: "googlechat", configsKey: "googlechat_configs", convert: convertGoogleChatNotifierJSON},
+	{kind: "jira", configsKey: "jira_configs", convert: convertJiraNotifierJSON},
+	{kind: "jsmops", configsKey: "jsmops_configs", convert: convertJSMOpsNotifierJSON},
+	{kind: "incidentio", configsKey: "incidentio_configs", convert: convertIncidentIONotifierJSON},
 }
 
 func NewAddChannelSpecFactory(sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
@@ -42,10 +42,12 @@ func (migration *addChannelSpec) Register(migrations *migrate.Migrations) error 
 }
 
 // Up adds the column and fills it from each channel's receiver, as a write
-// through a receiver does, pinning type to the notifier the spec came from
-// because a read decodes the spec under it. A receiver v2 cannot represent,
-// such as one carrying several notifiers or a notifier kind v2 does not model,
-// stays NULL and is logged; the repair endpoint is the remedy for those.
+// through a receiver does, pinning type to the kind the spec came from because
+// a read decodes the spec under it. The msteams kind, which v1 stored as
+// msteamsv2 after upstream's configs list, is renamed on every row. A receiver
+// v2 cannot represent, such as one carrying several notifiers or a notifier
+// kind v2 does not model, stays NULL and is logged; the repair endpoint is the
+// remedy for those.
 func (migration *addChannelSpec) Up(ctx context.Context, db *bun.DB) error {
 	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("notification_channel"))
 	if err != nil {
@@ -70,6 +72,10 @@ func (migration *addChannelSpec) Up(ctx context.Context, db *bun.DB) error {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}
+	}
+
+	if _, err := tx.NewUpdate().Model((*channelSpecBackfillRow)(nil)).Set("type = ?", "msteams").Where("type = ?", "msteamsv2").Exec(ctx); err != nil {
+		return err
 	}
 
 	rows := make([]*channelSpecBackfillRow, 0)
@@ -140,6 +146,7 @@ type channelSpecBackfillRow struct {
 type notifierJSON map[string]json.RawMessage
 
 type channelSpecBackfillKind struct {
+	kind       string
 	configsKey string
 	convert    func(notifierJSON) (map[string]any, error)
 }
@@ -197,7 +204,7 @@ func channelSpecFromReceiverJSON(data string) (string, map[string]any, error) {
 	}
 	spec["sendResolved"] = sendResolved
 
-	return strings.TrimSuffix(found.configsKey, "_configs"), spec, nil
+	return found.kind, spec, nil
 }
 
 func convertSlackNotifierJSON(notifier notifierJSON) (map[string]any, error) {
@@ -376,7 +383,7 @@ func convertOpsgenieNotifierJSON(notifier notifierJSON) (map[string]any, error) 
 }
 
 func convertMSTeamsNotifierJSON(notifier notifierJSON) (map[string]any, error) {
-	return convertWebhookURLNotifierJSON("msteamsv2", notifier)
+	return convertWebhookURLNotifierJSON("msteams", notifier)
 }
 
 func convertGoogleChatNotifierJSON(notifier notifierJSON) (map[string]any, error) {

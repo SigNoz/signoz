@@ -37,9 +37,10 @@ type Channel struct {
 	// reference, so it keeps the v1 wire tag and Name stays off the v1 contract.
 	Name        string `json:"-" bun:"name"`
 	DisplayName string `json:"name" required:"true" bun:"display_name"`
-	Type        string `json:"type" required:"true" bun:"type"`
-	Data        string `json:"data" required:"true" bun:"data"`
-	OrgID       string `json:"orgId" required:"true" bun:"org_id"`
+	// TODO: type this as ChannelKind once v1 is gone.
+	Type  string `json:"type" required:"true" bun:"type"`
+	Data  string `json:"data" required:"true" bun:"data"`
+	OrgID string `json:"orgId" required:"true" bun:"org_id"`
 
 	// Spec is the v2 spec a read returns, of the kind Type names. A v2 write
 	// stores it as the caller wrote it and a v1 write derives it from the
@@ -59,7 +60,7 @@ func (c *Channel) AfterScanRow(context.Context) error {
 		return nil
 	}
 
-	channelKind, ok := parseStoredChannelType(c.Type)
+	channelKind, ok := parseChannelKind(c.Type)
 	if !ok {
 		return errors.NewInternalf(errors.CodeInternal, "channel %q stores a spec under unmodelled type %q", c.DisplayName, c.Type)
 	}
