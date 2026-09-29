@@ -24,6 +24,8 @@ import BucketsSection from './sections/BucketsSection/BucketsSection';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
 import FormattingSection from './sections/FormattingSection/FormattingSection';
+import { DEFAULT_DECIMAL_PRECISION } from './sections/FormattingSection/options';
+import { summarizeFormatting } from './sections/FormattingSection/summary';
 import LegendSection from './sections/LegendSection/LegendSection';
 import PanelHeaderSection from './sections/PanelHeaderSection/PanelHeaderSection';
 import TextLayoutSection from './sections/TextLayoutSection/TextLayoutSection';
@@ -43,6 +45,8 @@ export interface SectionDescriptor<K extends SectionKind> {
 	Component: ComponentType<SectionEditorProps<K>>;
 	get: (spec: PanelSpec) => SectionSpecMap[K] | undefined;
 	update: (spec: PanelSpec, value: SectionSpecMap[K]) => PanelSpec;
+	/** Values an unset field renders with, when the kind's seed leaves it unset. */
+	renderedDefaults?: Partial<SectionSpecMap[K]>;
 	/** Collapsed-header digest of the slice. */
 	summarize?: (
 		value: SectionSpecMap[K] | undefined,
@@ -88,6 +92,8 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<PanelFormattingSlice>(spec, 'formatting'),
 		update: (spec, formatting): PanelSpec =>
 			updatePluginSlice(spec, 'formatting', formatting),
+		renderedDefaults: { decimalPrecision: DEFAULT_DECIMAL_PRECISION },
+		summarize: summarizeFormatting,
 	},
 	[SectionKind.Axes]: {
 		Component: AxesSection,
@@ -179,6 +185,7 @@ export interface ErasedSectionDescriptor {
 	>;
 	get: (spec: PanelSpec) => unknown;
 	update: (spec: PanelSpec, value: unknown) => PanelSpec;
+	renderedDefaults?: object;
 	summarize?: (
 		value: unknown,
 		controls: unknown,
@@ -200,9 +207,13 @@ export function getSectionDefault(
 	spec: PanelSpec,
 	defaults: SeededPluginSpec,
 ): unknown {
-	return editor.get({
+	const seeded = editor.get({
 		...spec,
 		links: [],
 		plugin: { ...spec.plugin, spec: defaults },
 	} as PanelSpec);
+	if (!editor.renderedDefaults) {
+		return seeded;
+	}
+	return { ...editor.renderedDefaults, ...(seeded as object | undefined) };
 }

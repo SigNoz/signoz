@@ -96,3 +96,27 @@ describe('SectionSlot header summary', () => {
 		expect(screen.queryByText(/threshold$/)).not.toBeInTheDocument();
 	});
 });
+
+describe('SectionSlot rendered defaults', () => {
+	it('does not mark an explicit value that matches what unset renders as', () => {
+		const spec = {
+			display: { name: 'CPU' },
+			plugin: {
+				kind: 'signoz/TimeSeriesPanel',
+				spec: { formatting: { decimalPrecision: '2' } },
+			},
+			queries: [],
+		} as unknown as DashboardtypesPanelSpecDTO;
+
+		render(
+			<SectionSlot
+				config={{ kind: SectionKind.Formatting, controls: { decimals: true } }}
+				spec={spec}
+				defaults={{}}
+				onChangeSpec={jest.fn()}
+			/>,
+		);
+
+		expect(screen.queryByTestId('config-changed-dot')).not.toBeInTheDocument();
+	});
+});
