@@ -505,8 +505,8 @@ func rejectAnyHTTPAuthJSON(notifier notifierJSON) error {
 
 // rejectUnsupportedHTTPConfigJSON refuses every http_config setting the spec has
 // no field for, since a config that dropped it would unauthenticate or reroute
-// the channel on the next write. An absent http_config is fine; a present one
-// must carry the defaults for follow_redirects and enable_http2.
+// the channel on the next write. An absent follow_redirects or enable_http2 is
+// the upstream default, true; only an explicit false is refused.
 func rejectUnsupportedHTTPConfigJSON(notifier notifierJSON) error {
 	if !notifier.has("http_config") {
 		return nil
@@ -560,12 +560,15 @@ func rejectUnsupportedHTTPConfigJSON(notifier notifierJSON) error {
 	}
 
 	for _, key := range []string{"follow_redirects", "enable_http2"} {
+		if !httpConfig.has(key) {
+			continue
+		}
 		enabled, err := httpConfig.boolValue(key)
 		if err != nil {
 			return err
 		}
 		if !enabled {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.%s is not supported", key)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "http_config.%s cannot be disabled", key)
 		}
 	}
 
