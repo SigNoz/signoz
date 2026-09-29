@@ -17,7 +17,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import AddToDashboardButton from '../AddToDashboardButton';
-import { EXPLORER_ACTION_EVENTS, getExportPanelType } from '../utils';
+import { getExportPanelType } from '../utils';
 
 const DASHBOARD = { id: 'dash-1', title: 'Dash 1' };
 
@@ -149,24 +149,27 @@ describe('AddToDashboardButton', () => {
 		);
 	});
 
-	it('logs open and success with the source page', async () => {
+	it("logs the explorer's own open and success events", async () => {
 		const query = stagedQuery(DataSource.TRACES);
 
 		await exportTo(query, DataSource.TRACES, PANEL_TYPES.TABLE);
 
 		expect(mockedLogEvent).toHaveBeenCalledWith(
-			EXPLORER_ACTION_EVENTS.addToDashboard,
+			'Traces Explorer: Add to dashboard clicked',
 			{
 				sourcepage: DataSource.TRACES,
 				panelType: PANEL_TYPES.TABLE,
 			},
 		);
-		expect(mockedLogEvent).toHaveBeenCalledWith(EXPLORER_ACTION_EVENTS.exported, {
-			sourcepage: DataSource.TRACES,
-			panelType: PANEL_TYPES.TABLE,
-			isNewDashboard: undefined,
-			dashboardName: DASHBOARD.title,
-		});
+		expect(mockedLogEvent).toHaveBeenCalledWith(
+			'Traces Explorer: Add to dashboard successful',
+			{
+				sourcepage: DataSource.TRACES,
+				panelType: PANEL_TYPES.TABLE,
+				isNewDashboard: undefined,
+				dashboardName: DASHBOARD.title,
+			},
+		);
 	});
 
 	it('a panel type from the page wins over the fold of the context one', async () => {

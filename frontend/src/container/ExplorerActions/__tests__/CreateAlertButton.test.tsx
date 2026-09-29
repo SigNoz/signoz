@@ -14,7 +14,6 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import CreateAlertButton from '../CreateAlertButton';
-import { EXPLORER_ACTION_EVENTS } from '../utils';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -101,16 +100,38 @@ describe('CreateAlertButton', () => {
 		expect(mockPush).not.toHaveBeenCalled();
 	});
 
-	it('logs one event with the source page', async () => {
+	it("logs the explorer's own create alert event", async () => {
 		const query = stagedQuery(DataSource.TRACES, StringOperators.COUNT);
 
 		await clickCreateAlert(query, DataSource.TRACES, PANEL_TYPES.TIME_SERIES);
 
+		expect(mockedLogEvent).toHaveBeenCalledWith('Traces Explorer: Create alert', {
+			sourcepage: DataSource.TRACES,
+			panelType: PANEL_TYPES.TIME_SERIES,
+		});
+	});
+
+	it('one chart per query on metrics: icon only, and the event carries the layout', async () => {
+		setPanelType(PANEL_TYPES.TIME_SERIES);
+		render(
+			<CreateAlertButton
+				query={stagedQuery(DataSource.METRICS, StringOperators.COUNT)}
+				sourcepage={DataSource.METRICS}
+				isOneChartPerQuery
+			/>,
+		);
+		const button = screen.getByTestId('explorer-create-alert');
+		expect(button).not.toHaveTextContent('Create an alert');
+
+		await userEvent.setup().click(button);
+
 		expect(mockedLogEvent).toHaveBeenCalledWith(
-			EXPLORER_ACTION_EVENTS.createAlert,
+			'Metrics Explorer: Add to alert clicked',
 			{
-				sourcepage: DataSource.TRACES,
+				sourcepage: DataSource.METRICS,
 				panelType: PANEL_TYPES.TIME_SERIES,
+				tab: 'explorer',
+				oneChartPerQueryEnabled: true,
 			},
 		);
 	});

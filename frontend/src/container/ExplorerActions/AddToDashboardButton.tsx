@@ -13,16 +13,22 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-import { EXPLORER_ACTION_EVENTS, getExportPanelType } from './utils';
+import {
+	EXPLORER_ACTION_EVENTS,
+	getExplorerActionEventPayload,
+	getExportPanelType,
+} from './utils';
 
 function AddToDashboardButton({
 	query,
 	sourcepage,
 	panelType,
+	isOneChartPerQuery = false,
 }: {
 	query: Query | null;
 	sourcepage: DataSource;
 	panelType?: PANEL_TYPES;
+	isOneChartPerQuery?: boolean;
 }): JSX.Element {
 	const [queryToExport, setQueryToExport] = useState<Query | null>(null);
 	const { panelType: contextPanelType } = useQueryBuilder();
@@ -33,10 +39,14 @@ function AddToDashboardButton({
 		if (!query) {
 			return;
 		}
-		void logEvent(EXPLORER_ACTION_EVENTS.addToDashboard, {
-			sourcepage,
-			panelType: contextPanelType,
-		});
+		void logEvent(
+			EXPLORER_ACTION_EVENTS[sourcepage].addToDashboard,
+			getExplorerActionEventPayload({
+				sourcepage,
+				panelType: contextPanelType,
+				isOneChartPerQuery,
+			}),
+		);
 		setQueryToExport(query);
 	};
 
@@ -49,9 +59,12 @@ function AddToDashboardButton({
 		}
 		const exportPanelType = panelType ?? getExportPanelType(contextPanelType);
 
-		void logEvent(EXPLORER_ACTION_EVENTS.exported, {
-			sourcepage,
-			panelType: exportPanelType,
+		void logEvent(EXPLORER_ACTION_EVENTS[sourcepage].exported, {
+			...getExplorerActionEventPayload({
+				sourcepage,
+				panelType: contextPanelType,
+				isOneChartPerQuery,
+			}),
 			isNewDashboard,
 			dashboardName: dashboard.title,
 		});

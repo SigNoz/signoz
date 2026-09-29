@@ -10,26 +10,27 @@ function ExplorerActions({
 	dashboardQuery = query,
 	sourcepage,
 	panelType,
-	iconOnly,
+	isOneChartPerQuery,
 }: {
 	query: Query | null;
 	// When the dashboard export differs from the alert one (traces list injects columns).
 	dashboardQuery?: Query | null;
 	sourcepage: DataSource;
 	panelType?: PANEL_TYPES;
-	iconOnly?: boolean;
+	isOneChartPerQuery?: boolean;
 }): JSX.Element {
 	return (
 		<>
 			<CreateAlertButton
 				query={query}
 				sourcepage={sourcepage}
-				iconOnly={iconOnly}
+				isOneChartPerQuery={isOneChartPerQuery}
 			/>
 			<AddToDashboardButton
 				query={dashboardQuery}
 				sourcepage={sourcepage}
 				panelType={panelType}
+				isOneChartPerQuery={isOneChartPerQuery}
 			/>
 		</>
 	);

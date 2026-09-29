@@ -322,7 +322,7 @@ function TimeSeries({
 											query={stagedQuery ? exportQuery : null}
 											sourcepage={DataSource.METRICS}
 											panelType={PANEL_TYPES.TIME_SERIES}
-											iconOnly={changeLayoutForOneChartPerQuery}
+											isOneChartPerQuery={changeLayoutForOneChartPerQuery}
 										/>
 									}
 								/>

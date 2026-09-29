@@ -7,16 +7,20 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { EXPLORER_ACTION_EVENTS, getCreateAlertLink } from './utils';
+import {
+	EXPLORER_ACTION_EVENTS,
+	getCreateAlertLink,
+	getExplorerActionEventPayload,
+} from './utils';
 
 function CreateAlertButton({
 	query,
 	sourcepage,
-	iconOnly = false,
+	isOneChartPerQuery = false,
 }: {
 	query: Query | null;
 	sourcepage: DataSource;
-	iconOnly?: boolean;
+	isOneChartPerQuery?: boolean;
 }): JSX.Element {
 	const history = useHistory();
 	const { panelType } = useQueryBuilder();
@@ -25,7 +29,10 @@ function CreateAlertButton({
 		if (!query) {
 			return;
 		}
-		void logEvent(EXPLORER_ACTION_EVENTS.createAlert, { sourcepage, panelType });
+		void logEvent(
+			EXPLORER_ACTION_EVENTS[sourcepage].createAlert,
+			getExplorerActionEventPayload({ sourcepage, panelType, isOneChartPerQuery }),
+		);
 		history.push(getCreateAlertLink({ query, panelType }));
 	};
 
@@ -33,18 +40,18 @@ function CreateAlertButton({
 		<Button
 			variant="ghost"
 			color="secondary"
-			size={iconOnly ? 'icon' : 'md'}
+			size={isOneChartPerQuery ? 'icon' : 'md'}
 			disabled={!query}
 			onClick={createAlert}
 			prefix={<ConciergeBell size={16} />}
 			aria-label="Create an alert"
 			data-testid="explorer-create-alert"
 		>
-			{!iconOnly && 'Create an alert'}
+			{!isOneChartPerQuery && 'Create an alert'}
 		</Button>
 	);
 
-	return iconOnly ? (
+	return isOneChartPerQuery ? (
 		<TooltipSimple title="Create an alert">{button}</TooltipSimple>
 	) : (
 		button
