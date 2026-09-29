@@ -64,7 +64,7 @@ def test_thread_returns_message_spans_in_order(
     assert input_only["formatted_input"] == [{"role": "tool", "content": [{"type": "tool_result", "toolCallId": "call_1", "content": "sunny"}]}]
     assert "formatted_output" not in input_only
     assert "formatted_input" not in output_only
-    assert output_only["formatted_output"] == [{"content": [{"type": "generic", "content": "It is sunny in Bangalore."}]}]
+    assert output_only["formatted_output"] == [{"content": [{"type": "text", "content": "It is sunny in Bangalore."}]}]
 
 
 def test_thread_paginates_with_cursor(

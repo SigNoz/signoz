@@ -2,6 +2,7 @@ package genaimessages
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 )
@@ -11,20 +12,17 @@ var converters = []converter{
 	convertSemconvMessages,
 	convertChatMessageList,
 	convertToolCallList,
-	convertContentBlockList,
 	convertChatRequest,
 	convertChatResponse,
 	convertResponsesAPIResponse,
 	convertGeminiResponse,
 	convertLegacyCompletion,
 	convertLangChainGenerations,
-	convertMessageObject,
 }
 
-var finishReasonKeys = []string{"finish_reason", "finishReason", "stop_reason", "stopReason", "done_reason"}
-
-// Normalize converts a gen_ai.*.messages value, a JSON string or a
-// decoded value; unknown formats become one generic part holding the original.
+// Normalize converts a gen_ai.*.messages value, a JSON string or a decoded value.
+// A string that is not JSON becomes one text part; JSON in no known format becomes
+// one generic part holding the original.
 func Normalize(raw any) []aiobservabilitytypes.Message {
 	var (
 		value    any
@@ -34,13 +32,19 @@ func Normalize(raw any) []aiobservabilitytypes.Message {
 	case nil:
 		return []aiobservabilitytypes.Message{}
 	case string:
+		if strings.TrimSpace(v) == "" {
+			return []aiobservabilitytypes.Message{}
+		}
 		original = v
 		if err := json.Unmarshal([]byte(v), &value); err != nil {
-			return genericMessages(original)
+			return []aiobservabilitytypes.Message{{Content: []aiobservabilitytypes.Part{textPart(v)}}}
 		}
 	default:
 		value = v
 		original = stringOf(v)
+	}
+	if value == nil {
+		return []aiobservabilitytypes.Message{}
 	}
 
 	if list, ok := value.([]any); ok {
@@ -48,7 +52,7 @@ func Normalize(raw any) []aiobservabilitytypes.Message {
 			return []aiobservabilitytypes.Message{}
 		}
 		// [[...]]: some SDKs wrap the conversation in one more list
-		if _, nested := list[0].([]any); nested {
+		if _, nested := firstItem(list).([]any); nested {
 			value = flattenOnce(list)
 		}
 		// ["{...}", "{...}"]: an array attribute holding one JSON message per element
@@ -65,35 +69,3 @@ func Normalize(raw any) []aiobservabilitytypes.Message {
 }
 
 type converter func(value any) (messages []aiobservabilitytypes.Message, ok bool)
-
-func genericMessages(content string) []aiobservabilitytypes.Message {
-	return []aiobservabilitytypes.Message{{Content: []aiobservabilitytypes.Part{genericPart(content)}}}
-}
-
-// withFinishReason sets reason on the last message that has none.
-func withFinishReason(messages []aiobservabilitytypes.Message, reason string) []aiobservabilitytypes.Message {
-	if len(messages) == 0 {
-		return messages
-	}
-	last := &messages[len(messages)-1]
-	if last.FinishReason == "" {
-		last.FinishReason = normalizeFinishReason(reason)
-	}
-	return messages
-}
-
-func finishReasonOf(m map[string]any) string {
-	return stringOf(firstOf(m, finishReasonKeys...))
-}
-
-func textPart(content string) aiobservabilitytypes.Part {
-	return aiobservabilitytypes.Part{Type: aiobservabilitytypes.PartTypeText, Content: content}
-}
-
-func genericPart(value any) aiobservabilitytypes.Part {
-	return aiobservabilitytypes.Part{Type: aiobservabilitytypes.PartTypeGeneric, Content: stringOf(value)}
-}
-
-func textMessage(role aiobservabilitytypes.MessageRole, content string) aiobservabilitytypes.Message {
-	return aiobservabilitytypes.Message{Role: role, Content: []aiobservabilitytypes.Part{textPart(content)}}
-}

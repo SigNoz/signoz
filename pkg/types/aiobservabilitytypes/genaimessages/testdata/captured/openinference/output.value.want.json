@@ -1,0 +1,17 @@
+[
+	{
+		"role": "assistant",
+		"content": [
+			{
+				"type": "tool_call",
+				"id": "call_MdYKTRrkshuBG9W5oBXYZaRc",
+				"name": "get_current_weather",
+				"arguments": {
+					"city": "Bengaluru",
+					"unit": "c"
+				}
+			}
+		],
+		"finishReason": "tool_call"
+	}
+]

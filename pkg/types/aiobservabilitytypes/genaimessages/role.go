@@ -6,6 +6,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 )
 
+var finishReasonKeys = []string{"finish_reason", "finishReason", "stop_reason"}
+
 // normalizeRole keeps an unknown role, lowercased.
 func normalizeRole(role string) aiobservabilitytypes.MessageRole {
 	if known := standardRole(role); known != "" {
@@ -45,4 +47,8 @@ func standardRole(role string) aiobservabilitytypes.MessageRole {
 		return aiobservabilitytypes.MessageRoleTool
 	}
 	return ""
+}
+
+func finishReasonOf(m object) string {
+	return stringOf(m.first(finishReasonKeys...))
 }

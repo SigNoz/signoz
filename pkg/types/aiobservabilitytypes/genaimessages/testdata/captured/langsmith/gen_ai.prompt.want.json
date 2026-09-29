@@ -1,0 +1,43 @@
+[
+	{
+		"role": "system",
+		"content": [
+			{
+				"type": "text",
+				"content": "You are a weather assistant. Call get_weather once per city."
+			}
+		]
+	},
+	{
+		"role": "user",
+		"content": [
+			{
+				"type": "text",
+				"content": "What's the weather in Bengaluru?"
+			}
+		]
+	},
+	{
+		"role": "assistant",
+		"content": [
+			{
+				"type": "tool_call",
+				"id": "call_nbrbkc5fom95q8uMA2bCvH6s",
+				"name": "get_weather",
+				"arguments": {
+					"city": "Bengaluru"
+				}
+			}
+		]
+	},
+	{
+		"role": "tool",
+		"content": [
+			{
+				"type": "tool_result",
+				"content": "{\"city\": \"Bengaluru\", \"temp_c\": 18, \"summary\": \"Clear\"}",
+				"toolCallId": "call_nbrbkc5fom95q8uMA2bCvH6s"
+			}
+		]
+	}
+]

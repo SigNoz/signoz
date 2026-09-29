@@ -1,0 +1,33 @@
+[
+	{
+		"role": "user",
+		"content": [
+			{
+				"type": "text",
+				"content": "What's the weather in Bengaluru? Use the tool."
+			}
+		]
+	},
+	{
+		"role": "assistant",
+		"content": [
+			{
+				"type": "tool_call",
+				"id": "call_yGnJsGOZMnHKTA2x1XM8897b",
+				"name": "get_current_weather",
+				"arguments": {
+					"city": "Bengaluru"
+				}
+			}
+		]
+	},
+	{
+		"role": "tool",
+		"content": [
+			{
+				"type": "tool_result",
+				"content": "{\"city\": \"Bengaluru\", \"temp_c\": 28, \"summary\": \"Partly cloudy\"}"
+			}
+		]
+	}
+]

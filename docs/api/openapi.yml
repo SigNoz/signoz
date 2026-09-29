@@ -24,10 +24,6 @@ components:
           type: boolean
         name:
           type: string
-        redacted:
-          type: boolean
-        server:
-          type: boolean
         toolCallId:
           type: string
         type:

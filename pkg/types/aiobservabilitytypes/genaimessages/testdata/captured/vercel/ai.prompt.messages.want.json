@@ -1,0 +1,36 @@
+[
+	{
+		"role": "user",
+		"content": [
+			{
+				"type": "text",
+				"content": "What is the weather in Bengaluru in celsius?"
+			}
+		]
+	},
+	{
+		"role": "assistant",
+		"content": [
+			{
+				"type": "tool_call",
+				"id": "call_l0ycKcmt1uPCdGWR4SkwoLBv",
+				"name": "get_current_weather",
+				"arguments": {
+					"city": "Bengaluru",
+					"unit": "c"
+				}
+			}
+		]
+	},
+	{
+		"role": "tool",
+		"content": [
+			{
+				"type": "tool_result",
+				"content": "{\"city\":\"Bengaluru\",\"condition\":\"partly cloudy\",\"temperature\":27,\"unit\":\"c\"}",
+				"name": "get_current_weather",
+				"toolCallId": "call_l0ycKcmt1uPCdGWR4SkwoLBv"
+			}
+		]
+	}
+]

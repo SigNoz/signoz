@@ -30,14 +30,6 @@ export interface AiobservabilitytypesPartDTO {
 	 */
 	name?: string;
 	/**
-	 * @type boolean
-	 */
-	redacted?: boolean;
-	/**
-	 * @type boolean
-	 */
-	server?: boolean;
-	/**
 	 * @type string
 	 */
 	toolCallId?: string;

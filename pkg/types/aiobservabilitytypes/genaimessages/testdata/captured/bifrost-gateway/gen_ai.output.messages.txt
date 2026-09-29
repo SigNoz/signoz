@@ -1,0 +1,1 @@
+[{"role":"assistant","content":"","tool_calls":[{"id":"call_yGnJsGOZMnHKTA2x1XM8897b","type":"function","name":"get_current_weather","args":"{\"city\":\"Bengaluru\"}"}]}]
