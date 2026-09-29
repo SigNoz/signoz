@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Check, Pencil, Trash2, X } from '@signozhq/icons';
+import { Pencil, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
 import styles from '../../ThresholdsSection.module.scss';
@@ -79,17 +79,15 @@ function ThresholdRowShell({
 					type="button"
 					variant="outlined"
 					color="secondary"
-					prefix={<X size={14} />}
 					data-testid={`${testIdPrefix}-discard-${index}`}
 					onClick={onDiscard}
 				>
-					Discard
+					Cancel
 				</Button>
 				<Button
 					type="button"
 					variant="solid"
 					color="primary"
-					prefix={<Check size={14} />}
 					data-testid={`${testIdPrefix}-save-${index}`}
 					onClick={onSave}
 				>

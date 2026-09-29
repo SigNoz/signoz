@@ -1,32 +1,41 @@
 .list {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 14px;
+}
+
+.help {
+	font-size: 13px;
+	line-height: 19px;
+	color: var(--l2-foreground);
 }
 
 // ── View mode: compact summary row ──────────────────────────────────────────
 .viewRow {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	height: 40px;
-	padding: 0 4px 0 10px;
-	border: 1px solid var(--l2-border);
+	gap: 14px;
+	padding: 8px 10px 8px 16px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
 	background-color: var(--l2-background);
-	border-radius: 6px;
+
+	&:hover {
+		border-color: var(--l2-border);
+	}
 }
 
 .viewValue {
 	flex: none;
+	font-family: 'Geist Mono', monospace;
 	font-size: 13px;
-	font-weight: 500;
-	color: var(--text-vanilla-100);
+	color: var(--l1-foreground);
 }
 
 .viewLabel {
 	overflow: hidden;
 	font-size: 12px;
-	color: var(--text-vanilla-400);
+	color: var(--l2-foreground);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
@@ -39,11 +48,11 @@
 .editRow {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
-	padding: 12px;
+	gap: 14px;
+	padding: 16px;
+	border: 1px solid var(--bg-robin-500);
+	border-radius: 4px;
 	background-color: var(--l2-background);
-	border: 1px solid var(--bg-robin-400);
-	border-radius: 6px;
 }
 
 .field {
@@ -53,8 +62,8 @@
 }
 
 .fieldLabel {
-	font-size: 12px;
-	color: var(--text-vanilla-400);
+	font-size: 13px;
+	color: var(--l1-foreground);
 }
 
 .actions {
@@ -65,8 +74,8 @@
 
 // ── Shared ──────────────────────────────────────────────────────────────────
 .dot {
-	width: 12px;
-	height: 12px;
+	width: 10px;
+	height: 10px;
 	flex: none;
 	border-radius: 50%;
 }

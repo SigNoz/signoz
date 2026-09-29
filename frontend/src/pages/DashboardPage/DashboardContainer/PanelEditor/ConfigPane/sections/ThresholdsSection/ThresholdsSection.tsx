@@ -25,6 +25,14 @@ import styles from './ThresholdsSection.module.scss';
 // New thresholds default to red (the first palette preset); the user recolors per rule.
 const DEFAULT_THRESHOLD_COLOR = ThresholdColor.RED;
 
+const HELP: Record<ThresholdVariant, string> = {
+	label:
+		'Draws a dashed line across the chart at a value, so you can see when data crosses it.',
+	comparison:
+		'Changes the number’s color when it crosses a value. Useful for green / amber / red status.',
+	table: 'Colors cells in a column when their value crosses a limit.',
+};
+
 // Add-button testId per variant — kept stable so existing E2E/unit selectors hold.
 const ADD_TESTID: Record<ThresholdVariant, string> = {
 	label: 'panel-editor-v2-add-threshold',
@@ -188,6 +196,7 @@ function ThresholdsSection({
 
 	return (
 		<div className={styles.list}>
+			<span className={styles.help}>{HELP[variant]}</span>
 			{thresholds.map(renderRow)}
 
 			<Button
