@@ -5,8 +5,11 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"reflect"
 
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
@@ -23,8 +26,8 @@ func NewResource(logger *slog.Logger) *Resource {
 
 func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		defs := resourceDefsFromRequest(req)
-		if len(defs) == 0 {
+		provider := handlerFromRequest(req)
+		if provider == nil || len(provider.ResourceDefs()) == 0 {
 			next.ServeHTTP(rw, req)
 			return
 		}
@@ -36,18 +39,39 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 			req.Body = io.NopCloser(bytes.NewReader(body))
 		}
 
+		decoded, err := decodeRequest(provider.Request(), body)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
 		extractorCtx := coretypes.ExtractorContext{
 			Request:     req,
 			RequestBody: body,
+			Body:        decoded,
 		}
-		resolved := handler.ResolveRequest(defs, extractorCtx)
+		resolved := handler.ResolveRequest(provider.ResourceDefs(), extractorCtx)
 
-		ctx := coretypes.NewContextWithResolvedResources(req.Context(), resolved)
+		ctx := coretypes.NewContextWithExtractorContext(req.Context(), extractorCtx)
+		ctx = coretypes.NewContextWithResolvedResources(ctx, resolved)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
 
-func resourceDefsFromRequest(req *http.Request) []handler.ResourceDef {
+func decodeRequest(prototype any, body []byte) (any, error) {
+	if prototype == nil {
+		return nil, nil
+	}
+
+	decoded := reflect.New(reflect.TypeOf(prototype).Elem()).Interface()
+	if err := binding.JSON.BindBody(bytes.NewReader(body), decoded); err != nil {
+		return nil, err
+	}
+
+	return decoded, nil
+}
+
+func handlerFromRequest(req *http.Request) handler.Handler {
 	route := mux.CurrentRoute(req)
 	if route == nil {
 		return nil
@@ -63,5 +87,5 @@ func resourceDefsFromRequest(req *http.Request) []handler.ResourceDef {
 		return nil
 	}
 
-	return provider.ResourceDefs()
+	return provider
 }

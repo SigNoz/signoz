@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
+	"reflect"
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,6 +18,7 @@ type Handler interface {
 	http.Handler
 	ServeOpenAPI(openapi.OperationContext)
 	ResourceDefs() []ResourceDef
+	Request() any
 }
 
 type handler struct {
@@ -45,6 +48,10 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Ha
 
 	for _, opt := range opts {
 		opt(handler)
+	}
+
+	if len(handler.resourceDefs) > 0 && openAPIDef.Request != nil && reflect.TypeOf(openAPIDef.Request).Kind() != reflect.Pointer {
+		panic(fmt.Sprintf("handler %s: OpenAPIDef.Request must be a pointer, got %T", openAPIDef.ID, openAPIDef.Request))
 	}
 
 	return handler
@@ -134,4 +141,8 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 
 func (handler *handler) ResourceDefs() []ResourceDef {
 	return handler.resourceDefs
+}
+
+func (handler *handler) Request() any {
+	return handler.openAPIDef.Request
 }

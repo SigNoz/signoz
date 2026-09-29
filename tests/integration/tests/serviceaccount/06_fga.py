@@ -246,6 +246,15 @@ def test_attach_detach_dual_scoped(
     )
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"assign viewer to target: expected 403, got {resp.status_code}: {resp.text}"
 
+    # duplicate roleId: the server binds the last one (viewer) -> forbidden. Raw string, json= would collapse the key.
+    resp = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/service_account_roles"),
+        data=f'{{"serviceAccountId": "{target_id}", "roleId": "{editor_role_id}", "roleId": "{viewer_role_id}"}}',
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.FORBIDDEN, f"assign duplicate roleId to target: expected 403, got {resp.status_code}: {resp.text}"
+
     # Both SA-detach (target id) and role-detach (editor) present -> remove allowed.
     resp = requests.delete(
         signoz.self.host_configs["8080"].get(f"/api/v1/service_account_roles/{editor_entry_id}"),

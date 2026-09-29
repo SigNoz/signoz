@@ -55,6 +55,10 @@ func (handler *healthOpenAPIHandler) ResourceDefs() []pkghandler.ResourceDef {
 	return nil
 }
 
+func (handler *healthOpenAPIHandler) Request() any {
+	return nil
+}
+
 func (provider *provider) addRegistryRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/healthz", newHealthOpenAPIHandler(
 		provider.authzMiddleware.OpenAccess(provider.factoryHandler.Healthz),

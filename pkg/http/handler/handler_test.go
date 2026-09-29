@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,6 +22,20 @@ func (bespokeOpenAPIHandler) ServeOpenAPI(opCtx openapi.OperationContext) {
 }
 
 func (bespokeOpenAPIHandler) ResourceDefs() []ResourceDef { return nil }
+
+func (bespokeOpenAPIHandler) Request() any { return nil }
+
+func TestNewPanicsOnNonPointerRequestWithResourceDefs(t *testing.T) {
+	def := BasicResourceDef{Resource: coretypes.ResourceRole, Verb: coretypes.VerbRead, ID: coretypes.PathParam("id"), Selector: coretypes.IDSelector}
+
+	assert.Panics(t, func() {
+		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "Value", Request: struct{}{}}, WithResourceDefs(def))
+	})
+	assert.NotPanics(t, func() {
+		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "Pointer", Request: new(struct{})}, WithResourceDefs(def))
+		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "NoDefs", Request: struct{}{}})
+	})
+}
 
 func TestAttachStabilities(t *testing.T) {
 	router := mux.NewRouter()
