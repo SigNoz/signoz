@@ -2,13 +2,23 @@ package querybuilder
 
 import (
 	"context"
+	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func queryRangeExtractorContext(t *testing.T, body string) coretypes.ExtractorContext {
+	t.Helper()
+	req := new(qbtypes.QueryRangeRequest)
+	require.NoError(t, binding.JSON.BindBody(strings.NewReader(body), req))
+	return coretypes.ExtractorContext{DecodedRequestBody: req}
+}
 
 func builderQueryBody(signal, filterExpression string) string {
 	return `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"` + signal + `","filter":{"expression":"` + filterExpression + `"}}}]}}`
@@ -143,6 +153,13 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
+			name: "duplicate signal key resolves to the last value like encoding/json",
+			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","signal":"traces","filter":{"expression":"signoz.workspace.key.id = 'a'"}}}]}}`,
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id/a"},
+			},
+		},
+		{
 			name: "duplicate queries dedupe",
 			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"signoz.workspace.key.id = 'a'"}}},{"type":"builder_query","spec":{"signal":"logs","filter":{"expression":"signoz.workspace.key.id='a'"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
@@ -153,7 +170,7 @@ func TestQueryRangeResources(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			refs, err := QueryRangeResources(coretypes.ExtractorContext{RequestBody: []byte(testCase.body)})
+			refs, err := QueryRangeResources(queryRangeExtractorContext(t, testCase.body))
 			require.NoError(t, err)
 			assert.Equal(t, testCase.expected, refs)
 		})
@@ -165,13 +182,19 @@ func TestQueryRangeResourcesErrors(t *testing.T) {
 		`{"compositeQuery":{"queries":[]}}`,
 		`{}`,
 		builderQueryBody("logs", "signoz.workspace.key.id = "),
-		`{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"unknown"}}]}}`,
-		`{"compositeQuery":{"queries":[{"type":"unknown_type"}]}}`,
 	}
 
 	for _, body := range bodies {
-		_, err := QueryRangeResources(coretypes.ExtractorContext{RequestBody: []byte(body)})
+		_, err := QueryRangeResources(queryRangeExtractorContext(t, body))
 		assert.Error(t, err, "body %s", body)
+	}
+
+	// rejected by the decode the middleware runs, before any extractor
+	for _, body := range []string{
+		`{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"unknown"}}]}}`,
+		`{"compositeQuery":{"queries":[{"type":"unknown_type"}]}}`,
+	} {
+		assert.Error(t, binding.JSON.BindBody(strings.NewReader(body), new(qbtypes.QueryRangeRequest)), "body %s", body)
 	}
 }
 

@@ -24,12 +24,12 @@ type ExtractPhase int
 
 type extractorContextKey struct{}
 
-// ExtractorContext carries everything an extractor may read: Request + RequestBody
-// are filled pre-handler, ResponseBody post-handler. DecodedRequestBody is
-// RequestBody decoded by the resource middleware into the route's declared request type.
+// ExtractorContext carries everything an extractor may read: Request +
+// DecodedRequestBody are filled pre-handler, ResponseBody post-handler.
+// DecodedRequestBody is the body decoded by the resource middleware into the
+// route's declared request type.
 type ExtractorContext struct {
 	Request            *http.Request
-	RequestBody        []byte
 	DecodedRequestBody any
 	ResponseBody       []byte
 }
@@ -143,29 +143,6 @@ func BodyFields[T any](pick func(*T) []string) ResourceIDsExtractor {
 		}
 
 		return pick(req), nil
-	}}
-}
-
-func BodyJSONPath(path string) ResourceIDExtractor {
-	return ResourceIDExtractor{Phase: PhaseRequest, Fn: func(ec ExtractorContext) (string, error) {
-		return gjson.GetBytes(ec.RequestBody, path).String(), nil
-	}}
-}
-
-func BodyJSONArray(path string) ResourceIDsExtractor {
-	return ResourceIDsExtractor{Phase: PhaseRequest, Fn: func(ec ExtractorContext) ([]string, error) {
-		result := gjson.GetBytes(ec.RequestBody, path)
-		if !result.Exists() {
-			return nil, nil
-		}
-
-		array := result.Array()
-		ids := make([]string, 0, len(array))
-		for _, r := range array {
-			ids = append(ids, r.String())
-		}
-
-		return ids, nil
 	}}
 }
 

@@ -350,7 +350,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceMetaResourceCloudIntegration,
 			Verb:     coretypes.VerbRead,
 			Category: coretypes.ActionCategoryDataAccess,
-			ID:       coretypes.BodyJSONPath("account_id"),
+			ID:       coretypes.BodyField(func(req *citypes.PostableAgentCheckIn) string { return req.ID }),
 			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
@@ -377,7 +377,12 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceMetaResourceCloudIntegration,
 			Verb:     coretypes.VerbRead,
 			Category: coretypes.ActionCategoryDataAccess,
-			ID:       coretypes.BodyJSONPath("cloudIntegrationId"),
+			ID: coretypes.BodyField(func(req *citypes.PostableAgentCheckIn) string {
+				if req.CloudIntegrationID.IsZero() {
+					return ""
+				}
+				return req.CloudIntegrationID.StringValue()
+			}),
 			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
