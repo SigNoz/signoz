@@ -153,7 +153,7 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
-			name: "duplicate signal key resolves to the last value like encoding/json",
+			name: "DuplicateSignalKey_LastValueWins",
 			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs","signal":"traces","filter":{"expression":"signoz.workspace.key.id = 'a'"}}}]}}`,
 			expected: []coretypes.ResourceWithID{
 				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id/a"},
