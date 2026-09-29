@@ -28,6 +28,7 @@ import LegendSection from './sections/LegendSection/LegendSection';
 import PanelHeaderSection from './sections/PanelHeaderSection/PanelHeaderSection';
 import TextLayoutSection from './sections/TextLayoutSection/TextLayoutSection';
 import ThresholdsSection from './sections/ThresholdsSection/ThresholdsSection';
+import { summarizeVisualization } from './sections/VisualizationSection/summary';
 import VisualizationSection from './sections/VisualizationSection/VisualizationSection';
 import { countSummary } from './utils/summary';
 
@@ -114,6 +115,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<PanelVisualizationSlice>(spec, 'visualization'),
 		update: (spec, visualization): PanelSpec =>
 			updatePluginSlice(spec, 'visualization', visualization),
+		summarize: summarizeVisualization,
 	},
 	[SectionKind.Buckets]: {
 		Component: BucketsSection,
