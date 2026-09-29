@@ -8,7 +8,7 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { EQueryType } from 'types/common/dashboard';
+import { QueryMode } from 'types/common/dashboard';
 
 export const definition: PanelDefinition<'signoz/AreaChartPanel'> = {
 	kind: 'signoz/AreaChartPanel',
@@ -18,16 +18,22 @@ export const definition: PanelDefinition<'signoz/AreaChartPanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	supportedSignals: [
-		TelemetrytypesSignalDTO.metrics,
-		TelemetrytypesSignalDTO.logs,
-		TelemetrytypesSignalDTO.traces,
-	],
-	supportedQueryTypes: [
-		EQueryType.QUERY_BUILDER,
-		EQueryType.CLICKHOUSE,
-		EQueryType.PROM,
-	],
+	supportedQueryModes: {
+		[QueryMode.QUERY_BUILDER]: {
+			kind: 'signal',
+			signals: [
+				TelemetrytypesSignalDTO.metrics,
+				TelemetrytypesSignalDTO.logs,
+				TelemetrytypesSignalDTO.traces,
+			],
+		},
+		[QueryMode.CLICKHOUSE]: { kind: 'signal-less' },
+		[QueryMode.PROM]: { kind: 'signal-less' },
+		[QueryMode.AI_QUERY_BUILDER]: {
+			kind: 'signal',
+			signals: [TelemetrytypesSignalDTO.traces],
+		},
+	},
 	queryBuilderFields: {},
 	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.time_series,

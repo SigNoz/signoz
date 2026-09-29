@@ -8,7 +8,7 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { EQueryType } from 'types/common/dashboard';
+import { QueryMode } from 'types/common/dashboard';
 
 export const definition: PanelDefinition<'signoz/BarChartPanel'> = {
 	kind: 'signoz/BarChartPanel',
@@ -18,16 +18,22 @@ export const definition: PanelDefinition<'signoz/BarChartPanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	supportedSignals: [
-		TelemetrytypesSignalDTO.metrics,
-		TelemetrytypesSignalDTO.logs,
-		TelemetrytypesSignalDTO.traces,
-	],
-	supportedQueryTypes: [
-		EQueryType.QUERY_BUILDER,
-		EQueryType.CLICKHOUSE,
-		EQueryType.PROM,
-	],
+	supportedQueryModes: {
+		[QueryMode.QUERY_BUILDER]: {
+			kind: 'signal',
+			signals: [
+				TelemetrytypesSignalDTO.metrics,
+				TelemetrytypesSignalDTO.logs,
+				TelemetrytypesSignalDTO.traces,
+			],
+		},
+		[QueryMode.CLICKHOUSE]: { kind: 'signal-less' },
+		[QueryMode.PROM]: { kind: 'signal-less' },
+		[QueryMode.AI_QUERY_BUILDER]: {
+			kind: 'signal',
+			signals: [TelemetrytypesSignalDTO.traces],
+		},
+	},
 	queryBuilderFields: {},
 	// Bars are binned client-side from a raw time series, so the request asks for a
 	// step interval wide enough to keep the bar count readable (V1 parity).
