@@ -24,6 +24,7 @@ import BucketsSection from './sections/BucketsSection/BucketsSection';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
 import FormattingSection from './sections/FormattingSection/FormattingSection';
+import { summarizeFormatting } from './sections/FormattingSection/summary';
 import LegendSection from './sections/LegendSection/LegendSection';
 import PanelHeaderSection from './sections/PanelHeaderSection/PanelHeaderSection';
 import TextLayoutSection from './sections/TextLayoutSection/TextLayoutSection';
@@ -88,6 +89,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<PanelFormattingSlice>(spec, 'formatting'),
 		update: (spec, formatting): PanelSpec =>
 			updatePluginSlice(spec, 'formatting', formatting),
+		summarize: summarizeFormatting,
 	},
 	[SectionKind.Axes]: {
 		Component: AxesSection,
