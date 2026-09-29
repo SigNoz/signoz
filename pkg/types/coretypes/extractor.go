@@ -25,13 +25,13 @@ type ExtractPhase int
 type extractorContextKey struct{}
 
 // ExtractorContext carries everything an extractor may read: Request + RequestBody
-// are filled pre-handler, ResponseBody post-handler. Body is RequestBody decoded
-// by the resource middleware into the route's declared request type.
+// are filled pre-handler, ResponseBody post-handler. DecodedRequestBody is
+// RequestBody decoded by the resource middleware into the route's declared request type.
 type ExtractorContext struct {
-	Request      *http.Request
-	RequestBody  []byte
-	Body         any
-	ResponseBody []byte
+	Request            *http.Request
+	RequestBody        []byte
+	DecodedRequestBody any
+	ResponseBody       []byte
 }
 
 func NewContextWithExtractorContext(ctx context.Context, ec ExtractorContext) context.Context {
@@ -48,13 +48,13 @@ func ExtractorContextFromContext(ctx context.Context) (ExtractorContext, error) 
 }
 
 func BodyAs[T any](ec ExtractorContext) (*T, error) {
-	if ec.Body == nil {
+	if ec.DecodedRequestBody == nil {
 		return nil, errors.New(errors.TypeInternal, errCodeRequestTypeUndeclared, "route does not declare a request type")
 	}
 
-	typed, ok := ec.Body.(*T)
+	typed, ok := ec.DecodedRequestBody.(*T)
 	if !ok {
-		return nil, errors.Newf(errors.TypeInternal, errCodeRequestTypeMismatch, "route declares request type %T, expected %T", ec.Body, (*T)(nil))
+		return nil, errors.Newf(errors.TypeInternal, errCodeRequestTypeMismatch, "route declares request type %T, expected %T", ec.DecodedRequestBody, (*T)(nil))
 	}
 
 	return typed, nil
