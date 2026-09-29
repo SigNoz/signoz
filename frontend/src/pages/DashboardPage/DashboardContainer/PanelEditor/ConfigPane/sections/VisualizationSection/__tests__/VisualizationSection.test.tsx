@@ -112,7 +112,9 @@ describe('VisualizationSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('panel-editor-v2-stacked-bar-chart'));
+		fireEvent.click(
+			screen.getByTestId('panel-editor-v2-stacked-bar-chart-stacked'),
+		);
 
 		expect(onChange).toHaveBeenCalledWith({
 			timePreference: 'global_time',
@@ -120,7 +122,7 @@ describe('VisualizationSection', () => {
 		});
 	});
 
-	it('writes the chosen stack mode through the segmented control', async () => {
+	it('writes the chosen stack mode through the tiles', async () => {
 		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
@@ -132,7 +134,7 @@ describe('VisualizationSection', () => {
 		);
 
 		expect(screen.getByTestId('panel-editor-v2-stack-mode')).toBeInTheDocument();
-		await user.click(screen.getByText('Percent'));
+		await user.click(screen.getByTestId('panel-editor-v2-stack-mode-percent'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			fillSpans: true,

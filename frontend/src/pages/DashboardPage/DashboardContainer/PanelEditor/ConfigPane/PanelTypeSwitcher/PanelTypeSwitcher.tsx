@@ -2,13 +2,13 @@ import { useCallback, useState } from 'react';
 import { ArrowRightLeft, Undo2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
-import { Typography } from '@signozhq/ui/typography';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { EQueryType } from 'types/common/dashboard';
 
 import PanelTypeBrowser from '../../../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeBrowser';
 import { getPanelDefinition } from '../../../Panels/registry';
 import type { PanelKind } from '../../../Panels/types/panelKind';
+import ConfigField from '../controls/ConfigField/ConfigField';
 
 import styles from './PanelTypeSwitcher.module.scss';
 import { getPanelTypeDisabledReason } from './utils';
@@ -64,8 +64,7 @@ function PanelTypeSwitcher({
 	};
 
 	return (
-		<div className={styles.field}>
-			<Typography.Text>Panel Type</Typography.Text>
+		<ConfigField label="Panel type" plain>
 			<button
 				type="button"
 				className={styles.trigger}
@@ -110,7 +109,7 @@ function PanelTypeSwitcher({
 					getDisabledReason={getDisabledReason}
 				/>
 			</DrawerWrapper>
-		</div>
+		</ConfigField>
 	);
 }
 
