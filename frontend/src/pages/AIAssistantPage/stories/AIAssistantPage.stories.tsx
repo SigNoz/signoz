@@ -10,6 +10,8 @@ import AIAssistantPage from '../AIAssistantPage';
 import {
 	aiAssistantMocks,
 	longActionTooltipHandlers,
+	speak,
+	startVoiceInput,
 } from './AIAssistantPage.stories.mocks';
 import type { ThreadPart } from './__story_mockdata__/aiAssistant';
 
@@ -173,6 +175,18 @@ export const ApprovalDiff: Story = {
 	play: openApprovalDiff,
 };
 
+/**
+ * Dictating a question: the mic listening, the words heard so far in the
+ * composer, and the controls to discard them or stop and send.
+ */
+export const VoiceRecording: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await startVoiceInput(canvasElement);
+		speak('why did checkout p99 jump after the 14:00 deploy');
+		await within(canvasElement).findByDisplayValue(/checkout p99 jump/);
+	},
+};
+
 /** The comment box a thumbs down opens, which a thumbs up does not. */
 export const NegativeFeedback: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
@@ -242,4 +256,14 @@ export const Tooltips: Story = {
 export const TooltipsInApprovalDiff: Story = {
 	args: { tooltipsOpen: true, agent: 'awaiting-approval', contents: BRIEF },
 	play: openApprovalDiff,
+};
+
+/**
+ * The recording controls' tooltips, held open: discard, stop and send, and the
+ * send button beside them, which waits for words.
+ */
+export const TooltipsInVoiceRecording: Story = {
+	args: { tooltipsOpen: true, contents: BRIEF },
+	play: async ({ canvasElement }): Promise<void> =>
+		startVoiceInput(canvasElement),
 };
