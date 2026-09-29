@@ -54,12 +54,7 @@ func (t ChannelKind) ToStoredType() string {
 }
 
 func ErrUnsupportedChannelKind(s string) error {
-	return errors.Newf(
-		errors.TypeInvalidInput,
-		ErrCodeChannelUnsupportedKind,
-		"unknown notification channel kind %q; allowed values: %s",
-		s, allowedValuesForChannelKind(),
-	)
+	return errors.Newf(errors.TypeInvalidInput, ErrCodeChannelUnsupportedKind, "unknown notification channel kind %q; allowed values: %s", s, allowedValuesForChannelKind())
 }
 
 // parseStoredChannelType inverts ToStoredType. It reports false for the notifier
