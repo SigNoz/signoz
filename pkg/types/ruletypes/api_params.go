@@ -17,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+const noRenotifyInterval = 8760 * time.Hour //1 year for no renotify substitute
+
 type AlertType string
 
 const (
@@ -100,12 +102,7 @@ type Renotify struct {
 	AlertStates      []AlertState        `json:"alertStates,omitzero"`
 }
 
-// noRenotifyInterval stands in for "never renotify".
-const noRenotifyInterval = 8760 * time.Hour
-
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
-	// A state left out of alertStates must not renotify. A zero interval here
-	// would fall through to the route's default repeat interval instead.
 	renotifyInterval := noRenotifyInterval
 	noDataRenotifyInterval := noRenotifyInterval
 	if ns.Renotify != nil && ns.Renotify.Enabled {

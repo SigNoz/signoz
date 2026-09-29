@@ -1356,25 +1356,25 @@ func TestVersionDefaultsToV5(t *testing.T) {
 
 func TestGetAlertManagerNotificationConfigRenotify(t *testing.T) {
 	day := valuer.MustParseTextDuration("24h")
-	cases := []struct {
+	testCases := []struct {
 		name       string
 		renotify   *Renotify
 		wantFiring time.Duration
 		wantNoData time.Duration
 	}{
-		{"nil", nil, noRenotifyInterval, noRenotifyInterval},
-		{"disabled", &Renotify{Enabled: false, ReNotifyInterval: day}, noRenotifyInterval, noRenotifyInterval},
-		{"enabled without states", &Renotify{Enabled: true, ReNotifyInterval: day}, noRenotifyInterval, noRenotifyInterval},
-		{"firing only", &Renotify{Enabled: true, ReNotifyInterval: day, AlertStates: []AlertState{StateFiring}}, 24 * time.Hour, noRenotifyInterval},
-		{"nodata only", &Renotify{Enabled: true, ReNotifyInterval: day, AlertStates: []AlertState{StateNoData}}, noRenotifyInterval, 24 * time.Hour},
-		{"both", &Renotify{Enabled: true, ReNotifyInterval: day, AlertStates: []AlertState{StateFiring, StateNoData}}, 24 * time.Hour, 24 * time.Hour},
+		{"RenotifyNil", nil, noRenotifyInterval, noRenotifyInterval},
+		{"RenotifyDisabled", &Renotify{Enabled: false, ReNotifyInterval: day}, noRenotifyInterval, noRenotifyInterval},
+		{"RenotifyEnabled_NoAlertStates", &Renotify{Enabled: true, ReNotifyInterval: day}, noRenotifyInterval, noRenotifyInterval},
+		{"RenotifyEnabled_FiringOnly", &Renotify{Enabled: true, ReNotifyInterval: day, AlertStates: []AlertState{StateFiring}}, 24 * time.Hour, noRenotifyInterval},
+		{"RenotifyEnabled_NoDataOnly", &Renotify{Enabled: true, ReNotifyInterval: day, AlertStates: []AlertState{StateNoData}}, noRenotifyInterval, 24 * time.Hour},
+		{"RenotifyEnabled_FiringAndNoData", &Renotify{Enabled: true, ReNotifyInterval: day, AlertStates: []AlertState{StateFiring, StateNoData}}, 24 * time.Hour, 24 * time.Hour},
 	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			ns := &NotificationSettings{Renotify: tc.renotify}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			ns := &NotificationSettings{Renotify: testCase.renotify}
 			config := ns.GetAlertManagerNotificationConfig()
-			assert.Equal(t, tc.wantFiring, config.Renotify.RenotifyInterval)
-			assert.Equal(t, tc.wantNoData, config.Renotify.NoDataInterval)
+			assert.Equal(t, testCase.wantFiring, config.Renotify.RenotifyInterval)
+			assert.Equal(t, testCase.wantNoData, config.Renotify.NoDataInterval)
 		})
 	}
 }
