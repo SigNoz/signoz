@@ -32,6 +32,7 @@ import { summarizeFormatting } from './sections/FormattingSection/summary';
 import LegendSection from './sections/LegendSection/LegendSection';
 import { summarizeLegend } from './sections/LegendSection/summary';
 import PanelHeaderSection from './sections/PanelHeaderSection/PanelHeaderSection';
+import { summarizeTextLayout } from './sections/TextLayoutSection/summary';
 import TextLayoutSection from './sections/TextLayoutSection/TextLayoutSection';
 import ThresholdsSection from './sections/ThresholdsSection/ThresholdsSection';
 import { summarizeVisualization } from './sections/VisualizationSection/summary';
@@ -144,6 +145,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<SectionSpecMap[SectionKind.TextLayout]>(spec, 'presentation'),
 		update: (spec, presentation): PanelSpec =>
 			updatePluginSlice(spec, 'presentation', presentation),
+		summarize: summarizeTextLayout,
 	},
 	[SectionKind.PanelHeader]: {
 		Component: PanelHeaderSection,
