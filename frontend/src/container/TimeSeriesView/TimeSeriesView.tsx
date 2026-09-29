@@ -11,6 +11,7 @@ import {
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Uplot from 'components/Uplot';
@@ -51,7 +52,7 @@ import { getTimeRange } from 'utils/getTimeRange';
 
 import ExportMenu from 'components/ExportMenu/ExportMenu';
 
-import './TimeSeriesView.styles.scss';
+import styles from './TimeSeriesView.module.scss';
 
 function TimeSeriesView({
 	data,
@@ -257,17 +258,17 @@ function TimeSeriesView({
 	const showHeader = showExport || !!onYAxisUnitChange || !!headerActions;
 
 	return (
-		<div className="time-series-view">
+		<div className={cx('time-series-view', styles.timeSeriesView)}>
 			{isError && error && <ErrorInPlace error={error as APIError} />}
 
 			{showHeader && (
-				<div className="time-series-view__header">
+				<div className={styles.header} data-testid="time-series-view-header">
 					<div>
 						{onYAxisUnitChange && (
 							<BuilderUnitsFilter onChange={onYAxisUnitChange} yAxisUnit={yAxisUnit} />
 						)}
 					</div>
-					<div className="time-series-view__header-actions">
+					<div className={styles.headerActions}>
 						{headerActions}
 						{showExport && data?.rawV5Response && (
 							<ExportMenu
