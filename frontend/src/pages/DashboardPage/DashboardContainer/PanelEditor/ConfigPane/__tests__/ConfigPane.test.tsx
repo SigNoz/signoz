@@ -108,7 +108,7 @@ describe('ConfigPane', () => {
 
 		const toggle = screen.getByTestId('panel-header-hide');
 		expect(toggle).toBeInTheDocument();
-		expect(screen.getByText('Hide header')).toBeInTheDocument();
+		expect(screen.getByText('Hide panel header')).toBeInTheDocument();
 		// No collapsible wrapper of its own.
 		expect(screen.queryByText('Panel header')).not.toBeInTheDocument();
 	});

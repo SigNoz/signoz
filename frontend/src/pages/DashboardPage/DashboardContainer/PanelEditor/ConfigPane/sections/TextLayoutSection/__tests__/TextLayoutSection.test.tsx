@@ -4,6 +4,7 @@ import {
 	render as rtlRender,
 	type RenderResult,
 	screen,
+	within,
 } from '@testing-library/react';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import {
@@ -33,7 +34,7 @@ describe('TextLayoutSection', () => {
 		const onChange = jest.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
-		fireEvent.click(screen.getByText('Center'));
+		fireEvent.click(screen.getByTestId('text-layout-align-top-center'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			...value,
@@ -45,7 +46,7 @@ describe('TextLayoutSection', () => {
 		const onChange = jest.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
-		fireEvent.click(screen.getByText('Bottom'));
+		fireEvent.click(screen.getByTestId('text-layout-align-bottom-left'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			...value,
@@ -129,7 +130,7 @@ describe('TextLayoutSection', () => {
 			'#3A2A64',
 		);
 		expect(
-			screen
+			within(screen.getByRole('radiogroup', { name: 'Panel background' }))
 				.getAllByRole<HTMLInputElement>('radio')
 				.filter((swatch) => swatch.checked),
 		).toHaveLength(0);

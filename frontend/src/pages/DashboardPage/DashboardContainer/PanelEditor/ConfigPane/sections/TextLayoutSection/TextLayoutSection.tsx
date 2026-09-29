@@ -2,7 +2,6 @@ import {
 	DashboardtypesTextAlignDTO,
 	DashboardtypesVerticalAlignDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	resolveTextBackground,
@@ -19,23 +18,12 @@ import type {
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
+import AlignmentGrid from '../../controls/AlignmentGrid/AlignmentGrid';
 import BackgroundSwatches from '../../controls/BackgroundSwatches/BackgroundSwatches';
 import CustomBackgroundRow from '../../controls/BackgroundSwatches/CustomBackgroundRow';
-import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
-
-import styles from './TextLayoutSection.module.scss';
-
-const HORIZONTAL_OPTIONS = [
-	{ value: DashboardtypesTextAlignDTO.left, label: 'Left' },
-	{ value: DashboardtypesTextAlignDTO.center, label: 'Center' },
-	{ value: DashboardtypesTextAlignDTO.right, label: 'Right' },
-];
-
-const VERTICAL_OPTIONS = [
-	{ value: DashboardtypesVerticalAlignDTO.top, label: 'Top' },
-	{ value: DashboardtypesVerticalAlignDTO.center, label: 'Middle' },
-	{ value: DashboardtypesVerticalAlignDTO.bottom, label: 'Bottom' },
-];
+import { backgroundTitle } from '../../controls/BackgroundSwatches/titles';
+import ConfigField from '../../controls/ConfigField/ConfigField';
+import { createFieldResetter } from '../../utils/changes';
 
 /**
  * Edits the Text panel's `presentation` slice: body alignment and the card
@@ -43,33 +31,31 @@ const VERTICAL_OPTIONS = [
  */
 function TextLayoutSection({
 	value,
+	defaultValue,
 	onChange,
 }: SectionEditorProps<SectionKind.TextLayout>): JSX.Element {
 	const theme = useIsDarkMode() ? PanelTheme.Dark : PanelTheme.Light;
 	const background = resolveTextBackground(value?.background, theme);
+	const reset = createFieldResetter(value, defaultValue, onChange);
 
 	return (
-		<div className={styles.section}>
-			<div className={styles.field}>
-				<Typography.Text>Horizontal alignment</Typography.Text>
-				<ConfigSegmented
-					testId="text-layout-horizontal-align"
-					items={HORIZONTAL_OPTIONS}
-					value={value?.textAlign ?? DashboardtypesTextAlignDTO.left}
-					onChange={(textAlign): void => onChange({ ...value, textAlign })}
+		<>
+			<ConfigField label="Text position" {...reset('textAlign', 'verticalAlign')}>
+				<AlignmentGrid
+					testId="text-layout-align"
+					description="Where the text sits inside the panel."
+					value={{
+						textAlign: value?.textAlign ?? DashboardtypesTextAlignDTO.left,
+						verticalAlign: value?.verticalAlign ?? DashboardtypesVerticalAlignDTO.top,
+					}}
+					onChange={(alignment): void => onChange({ ...value, ...alignment })}
 				/>
-			</div>
-			<div className={styles.field}>
-				<Typography.Text>Vertical alignment</Typography.Text>
-				<ConfigSegmented
-					testId="text-layout-vertical-align"
-					items={VERTICAL_OPTIONS}
-					value={value?.verticalAlign ?? DashboardtypesVerticalAlignDTO.top}
-					onChange={(verticalAlign): void => onChange({ ...value, verticalAlign })}
-				/>
-			</div>
-			<div className={styles.field}>
-				<Typography.Text>Background</Typography.Text>
+			</ConfigField>
+			<ConfigField
+				label="Background"
+				help={`Selected: ${backgroundTitle(background)}`}
+				{...reset('background')}
+			>
 				<BackgroundSwatches
 					testId="text-layout-background"
 					label="Panel background"
@@ -91,8 +77,8 @@ function TextLayoutSection({
 					}
 					onChange={(hex): void => onChange({ ...value, background: hex })}
 				/>
-			</div>
-		</div>
+			</ConfigField>
+		</>
 	);
 }
 
