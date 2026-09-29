@@ -70,13 +70,15 @@ func BodyFromContext[T any](ctx context.Context) (*T, error) {
 }
 
 type ResourceIDExtractor struct {
-	Phase ExtractPhase
-	Fn    func(ExtractorContext) (string, error)
+	Phase        ExtractPhase
+	RequiresBody bool
+	Fn           func(ExtractorContext) (string, error)
 }
 
 type ResourceIDsExtractor struct {
-	Phase ExtractPhase
-	Fn    func(ExtractorContext) ([]string, error)
+	Phase        ExtractPhase
+	RequiresBody bool
+	Fn           func(ExtractorContext) ([]string, error)
 }
 
 func NewResourceIDExtractor(phase ExtractPhase, fn func(ExtractorContext) (string, error)) ResourceIDExtractor {
@@ -97,7 +99,7 @@ func OneID(extractor ResourceIDExtractor) ResourceIDsExtractor {
 		return ResourceIDsExtractor{}
 	}
 
-	return ResourceIDsExtractor{Phase: extractor.Phase, Fn: func(ec ExtractorContext) ([]string, error) {
+	return ResourceIDsExtractor{Phase: extractor.Phase, RequiresBody: extractor.RequiresBody, Fn: func(ec ExtractorContext) ([]string, error) {
 		id, err := extractor.Fn(ec)
 		if err != nil || id == "" {
 			return nil, err
@@ -123,7 +125,7 @@ func PathParam(name string) ResourceIDExtractor {
 }
 
 func BodyField[T any](pick func(*T) string) ResourceIDExtractor {
-	return ResourceIDExtractor{Phase: PhaseRequest, Fn: func(ec ExtractorContext) (string, error) {
+	return ResourceIDExtractor{Phase: PhaseRequest, RequiresBody: true, Fn: func(ec ExtractorContext) (string, error) {
 		req, err := BodyAs[T](ec)
 		if err != nil {
 			return "", err
@@ -134,7 +136,7 @@ func BodyField[T any](pick func(*T) string) ResourceIDExtractor {
 }
 
 func BodyFields[T any](pick func(*T) []string) ResourceIDsExtractor {
-	return ResourceIDsExtractor{Phase: PhaseRequest, Fn: func(ec ExtractorContext) ([]string, error) {
+	return ResourceIDsExtractor{Phase: PhaseRequest, RequiresBody: true, Fn: func(ec ExtractorContext) ([]string, error) {
 		req, err := BodyAs[T](ec)
 		if err != nil {
 			return nil, err

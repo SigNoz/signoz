@@ -33,6 +33,10 @@ func TestBodyAs(t *testing.T) {
 func TestBodyFieldAndBodyFields(t *testing.T) {
 	ec := ExtractorContext{Body: &roleAssignment{RoleID: "r1", Roles: []string{"a", "b"}}}
 
+	assert.True(t, BodyField(func(req *roleAssignment) string { return req.RoleID }).RequiresBody)
+	assert.True(t, OneID(BodyField(func(req *roleAssignment) string { return req.RoleID })).RequiresBody)
+	assert.False(t, PathParam("id").RequiresBody)
+
 	id, err := BodyField(func(req *roleAssignment) string { return req.RoleID }).Fn(ec)
 	require.NoError(t, err)
 	assert.Equal(t, "r1", id)

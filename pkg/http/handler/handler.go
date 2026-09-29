@@ -50,8 +50,8 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Ha
 		opt(handler)
 	}
 
-	if len(handler.resourceDefs) > 0 && openAPIDef.Request != nil && reflect.TypeOf(openAPIDef.Request).Kind() != reflect.Pointer {
-		panic(fmt.Sprintf("handler %s: OpenAPIDef.Request must be a pointer, got %T", openAPIDef.ID, openAPIDef.Request))
+	if RequiresBody(handler.resourceDefs) && (openAPIDef.Request == nil || reflect.TypeOf(openAPIDef.Request).Kind() != reflect.Pointer) {
+		panic(fmt.Sprintf("handler %s: a body extractor needs OpenAPIDef.Request to be a pointer, got %T", openAPIDef.ID, openAPIDef.Request))
 	}
 
 	return handler

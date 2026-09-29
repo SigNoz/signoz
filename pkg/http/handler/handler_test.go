@@ -25,15 +25,20 @@ func (bespokeOpenAPIHandler) ResourceDefs() []ResourceDef { return nil }
 
 func (bespokeOpenAPIHandler) Request() any { return nil }
 
-func TestNewPanicsOnNonPointerRequestWithResourceDefs(t *testing.T) {
-	def := BasicResourceDef{Resource: coretypes.ResourceRole, Verb: coretypes.VerbRead, ID: coretypes.PathParam("id"), Selector: coretypes.IDSelector}
+func TestNewPanicsWhenBodyExtractorHasNoPointerRequest(t *testing.T) {
+	type body struct{ ID string }
+	bodyDef := BasicResourceDef{Resource: coretypes.ResourceRole, Verb: coretypes.VerbRead, ID: coretypes.BodyField(func(req *body) string { return req.ID }), Selector: coretypes.IDSelector}
+	pathDef := BasicResourceDef{Resource: coretypes.ResourceRole, Verb: coretypes.VerbRead, ID: coretypes.PathParam("id"), Selector: coretypes.IDSelector}
 
 	assert.Panics(t, func() {
-		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "Value", Request: struct{}{}}, WithResourceDefs(def))
+		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "Value", Request: body{}}, WithResourceDefs(bodyDef))
+	})
+	assert.Panics(t, func() {
+		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "Missing"}, WithResourceDefs(bodyDef))
 	})
 	assert.NotPanics(t, func() {
-		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "Pointer", Request: new(struct{})}, WithResourceDefs(def))
-		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "NoDefs", Request: struct{}{}})
+		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "Pointer", Request: new(body)}, WithResourceDefs(bodyDef))
+		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "PathOnly", Request: body{}}, WithResourceDefs(pathDef))
 	})
 }
 

@@ -40,8 +40,8 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 		}
 
 		var decoded any
-		if prototype := provider.Request(); prototype != nil {
-			decoded = reflect.New(reflect.TypeOf(prototype).Elem()).Interface()
+		if handler.RequiresBody(provider.ResourceDefs()) {
+			decoded = reflect.New(reflect.TypeOf(provider.Request()).Elem()).Interface()
 			if err := binding.JSON.BindBody(bytes.NewReader(body), decoded); err != nil {
 				render.Error(rw, err)
 				return
