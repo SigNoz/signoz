@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -99,4 +101,49 @@ func TestNewGettableTraceThread(t *testing.T) {
 		})
 	}
 
+}
+
+func TestNewThreadSpan(t *testing.T) {
+	userHi := []aiobservabilitytypes.Message{{
+		Role:    aiobservabilitytypes.MessageRoleUser,
+		Content: []aiobservabilitytypes.Part{{Type: aiobservabilitytypes.PartTypeText, Content: "hi"}},
+	}}
+	assistantHello := []aiobservabilitytypes.Message{{
+		Role:         aiobservabilitytypes.MessageRoleAssistant,
+		Content:      []aiobservabilitytypes.Part{{Type: aiobservabilitytypes.PartTypeText, Content: "hello"}},
+		FinishReason: aiobservabilitytypes.FinishReasonStop,
+	}}
+
+	testCases := []struct {
+		name       string
+		span       StorableSpan
+		wantInput  []aiobservabilitytypes.Message
+		wantOutput []aiobservabilitytypes.Message
+	}{
+		{
+			name: "InputAndOutput_BothFormatted",
+			span: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{
+				"input":  map[string]any{"messages": `[{"role":"user","parts":[{"type":"text","content":"hi"}]}]`},
+				"output": map[string]any{"messages": `[{"role":"assistant","parts":[{"type":"text","content":"hello"}],"finish_reason":"stop"}]`},
+			}}},
+			wantInput:  userHi,
+			wantOutput: assistantHello,
+		},
+		{
+			name:      "InputOnly_OutputUnset",
+			span:      StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"gen_ai": map[string]any{"input": map[string]any{"messages": `[{"role":"user","content":"hi"}]`}}}},
+			wantInput: userHi,
+		},
+		{
+			name: "NoMessages_BothUnset",
+			span: StorableSpan{AttributesJSON: telemetrystoretypes.JSONValue{"http": map[string]any{"method": "GET"}}},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			span := newThreadSpan("trace-1", &testCase.span)
+			assert.Equal(t, testCase.wantInput, span.FormattedInput)
+			assert.Equal(t, testCase.wantOutput, span.FormattedOutput)
+		})
+	}
 }
