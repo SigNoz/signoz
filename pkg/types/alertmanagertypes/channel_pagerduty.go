@@ -21,9 +21,6 @@ type ChannelPagerdutyConfig struct {
 	Details      map[string]string            `json:"details,omitzero"`
 }
 
-// UnmarshalJSON defaults source to client, as the notifier does, and gives an
-// omitted details map the notifier's own entries. A details map the caller
-// sent is kept as sent; the notifier still adds its entries when delivering.
 func (c *ChannelPagerdutyConfig) UnmarshalJSON(data []byte) error {
 	type alias ChannelPagerdutyConfig
 	if err := decodeStrict(data, (*alias)(c)); err != nil {
@@ -118,7 +115,6 @@ func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (Cha
 	}, nil
 }
 
-// PagerDuty is the one notifier whose details upstream types as map[string]any.
 func newUpstreamDetails(details map[string]string) map[string]any {
 	if details == nil {
 		return nil
