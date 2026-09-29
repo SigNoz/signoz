@@ -32,6 +32,7 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 
 	if ctx.Value(ctxtypes.ClickhouseContextReadJSONNativeKey) != nil {
 		settings["output_format_native_write_json_as_string"] = 0
+		settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
 	}
 
 	if ctx.Value("enforce_max_result_rows") != nil {

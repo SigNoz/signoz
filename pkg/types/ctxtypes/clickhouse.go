@@ -14,8 +14,7 @@ func SetClickhouseMaxThreads(ctx context.Context, maxThreads int) context.Contex
 	return context.WithValue(ctx, ClickhouseContextMaxThreadsKey, maxThreads)
 }
 
-// SetClickhouseReadJSONNative marks the query to read JSON columns as native documents
-// (output_format_native_write_json_as_string=0) instead of collapsed strings.
+// SetClickhouseReadJSONNative marks the query to read JSON columns as native documents instead of collapsed strings.
 func SetClickhouseReadJSONNative(ctx context.Context) context.Context {
 	return context.WithValue(ctx, ClickhouseContextReadJSONNativeKey, true)
 }

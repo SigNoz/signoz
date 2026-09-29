@@ -19,22 +19,13 @@ import (
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
 
-// Each span carries one attribute home: the JSON column is read as-is and the legacy maps are
-// blanked when it holds the row, so JSON is preferred and the maps are the pre-rollout fallback.
+// JSON is the preferred attribute home; each legacy map is blanked when the JSON column holds the row.
 var spanAttributeHomeSelection = strings.Join([]string{
 	"if(notEmpty(attributes), map(), attributes_string) AS attributes_string",
 	"if(notEmpty(attributes), map(), attributes_number) AS attributes_number",
 	"if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool",
-	// CAST re-serializes to default JSON params the driver can decode natively; reading the stored
-	// JSON(max_dynamic_paths=0) column directly desyncs the native protocol (clickhouse-go #1854).
-	"CAST(attributes, 'JSON') AS attributes",
+	"attributes",
 }, ", ")
-
-// nativeJSONReadCtx marks the query to read the attributes column as a native document rather than
-// a collapsed string, so a key stored as both a scalar and an object survives as distinct paths.
-func nativeJSONReadCtx(ctx context.Context) context.Context {
-	return ctxtypes.SetClickhouseReadJSONNative(ctx)
-}
 
 func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
 	switch fieldKey.FieldContext {
@@ -106,7 +97,7 @@ func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary 
 	)
 	var spanItems []spantypes.StorableSpan
 	err := s.telemetryStore.ClickhouseDB().Select(
-		nativeJSONReadCtx(ctx), &spanItems, query,
+		ctxtypes.SetClickhouseReadJSONNative(ctx), &spanItems, query,
 		traceID,
 		summary.Start.Unix()-1800,
 		summary.End.Unix(),
@@ -172,7 +163,7 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	var spans []spantypes.StorableSpan
-	if err := s.telemetryStore.ClickhouseDB().Select(nativeJSONReadCtx(ctx), &spans, query, args...); err != nil {
+	if err := s.telemetryStore.ClickhouseDB().Select(ctxtypes.SetClickhouseReadJSONNative(ctx), &spans, query, args...); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace spans by IDs")
 	}
 	return spans, nil
@@ -191,7 +182,7 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 		"any(if(notEmpty(attributes), map(), attributes_string)) AS attributes_string",
 		"any(if(notEmpty(attributes), map(), attributes_number)) AS attributes_number",
 		"any(if(notEmpty(attributes), map(), attributes_bool)) AS attributes_bool",
-		"any(CAST(attributes, 'JSON')) AS attributes",
+		"any(attributes) AS attributes",
 		"any(resources_string) AS resources_string",
 	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
@@ -214,7 +205,7 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	var spans []spantypes.StorableSpan
-	if err := s.telemetryStore.ClickhouseDB().Select(nativeJSONReadCtx(ctx), &spans, query, args...); err != nil {
+	if err := s.telemetryStore.ClickhouseDB().Select(ctxtypes.SetClickhouseReadJSONNative(ctx), &spans, query, args...); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying flamegraph spans")
 	}
 	return spans, nil

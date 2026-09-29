@@ -104,9 +104,7 @@ type StorableSpan struct {
 	AttributesString map[string]string  `ch:"attributes_string"`
 	AttributesNumber map[string]float64 `ch:"attributes_number"`
 	AttributesBool   map[string]bool    `ch:"attributes_bool"`
-	// AttributesJSON is the `attributes` JSON column: post-rollout rows carry their attributes
-	// here instead of the maps above. The trace span reads suppress whichever home is empty per
-	// row, so at most one of (maps, AttributesJSON) holds data for a span.
+	// AttributesJSON is the post-rollout home; the reads suppress the empty home, so a span holds its attributes here or in the maps, never both.
 	AttributesJSON     chcol.JSON        `ch:"attributes"`
 	ResourcesString    map[string]string `ch:"resources_string"`
 	Events             []string          `ch:"events"`
@@ -272,8 +270,7 @@ func (ws *WaterfallSpan) getPathToSelectedSpanID(selectedSpanID string) ([]strin
 func (item *StorableSpan) Attributes() map[string]any {
 	jsonPaths := item.AttributesJSON.ValuesByPath()
 	attributes := make(map[string]any, len(jsonPaths)+len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool))
-	// The JSON column is read by its flattened paths, so a key stored as both a scalar and an object
-	// stays two distinct paths; the legacy maps are laid over it as the pre-rollout fallback.
+	// JSON paths first (a scalar-and-object key stays two distinct paths), then legacy maps overlaid as the fallback.
 	for path, value := range jsonPaths {
 		if dynamic, ok := value.(chcol.Variant); ok {
 			attributes[path] = dynamic.Any()
