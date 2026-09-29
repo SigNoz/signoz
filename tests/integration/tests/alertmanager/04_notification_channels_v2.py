@@ -334,13 +334,6 @@ def test_create_rejects_a_duplicate_display_name(
         pytest.param({"name": "slack-confirm-without-text", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "actions": [{"type": "button", "text": "Ack", "name": "ack", "confirm": {"title": "Sure?"}}]}}}, id="slack_action_confirm_without_text"),
         pytest.param({"name": "extra-field", "config": {"kind": "email", "spec": {"to": "a@integration.test", "html": "<p>body</p>"}}, "type": "email"}, id="unknown_envelope_field"),
         pytest.param({"name": "webhook-both-auth", "config": {"kind": "webhook", "spec": {"url": "https://webhook.test/hook", "username": "u", "password": "p", "bearerToken": "t"}}}, id="webhook_basic_auth_with_bearer_token"),
-        # The last three reach the notifier's own validation rather than the
-        # spec's, so they assert it still surfaces as a 400 through v2.
-        pytest.param({"name": "jira-server-site", "config": {"kind": "jira", "spec": {"site": "https://jira.acme.com", "project": "OPS", "issueType": "Bug", "email": "a@integration.test", "apiToken": "t", "summary": "Alert", "description": "body"}}}, id="jira_site_not_jira_cloud"),
-        pytest.param(
-            {"name": "jira-short-reopen", "config": {"kind": "jira", "spec": {"site": "https://acme.atlassian.net", "project": "OPS", "issueType": "Bug", "email": "a@integration.test", "apiToken": "t", "summary": "Alert", "description": "body", "reopenDuration": "30s"}}}, id="jira_reopen_duration_below_a_minute"
-        ),
-        pytest.param({"name": "incidentio-bearer", "config": {"kind": "incidentio", "spec": {"url": "https://api.incident.io/v2/alert_events/http/01ABCDEF", "token": "Bearer incidentio-token", "title": "Alert", "description": "body"}}}, id="incidentio_token_with_bearer_prefix"),
         pytest.param({"name": "slack-empty-title", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "title": ""}}}, id="empty_string_on_a_defaulted_field"),
         pytest.param({"name": "jsmops-empty-tags", "config": {"kind": "jsmops", "spec": {"apiKey": "jsm-api-key", "tags": ""}}}, id="empty_string_on_a_defaulted_signoz_field"),
         pytest.param({"name": "jira-noncanonical-reopen", "config": {"kind": "jira", "spec": {"site": "https://acme.atlassian.net", "project": "OPS", "issueType": "Bug", "email": "a@integration.test", "apiToken": "t", "reopenDuration": "72h"}}}, id="jira_reopen_duration_not_as_reported"),

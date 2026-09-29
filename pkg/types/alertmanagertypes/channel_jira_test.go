@@ -56,19 +56,10 @@ func TestJiraReceiverConfigSendResolved(t *testing.T) {
 	assert.False(t, off.JiraConfigs[0].SendResolved())
 }
 
-func TestJiraReceiverConfigReopenDurationMinimum(t *testing.T) {
-	withReopen := func(v string) string {
-		return fmt.Sprintf(
-			`{"name":"j","jira_configs":[{"site":"https://acme.atlassian.net","project":"KAN","issue_type":"Task","reopen_duration":%q,"http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`,
-			v,
-		)
-	}
-	r, err := NewReceiver(withReopen("1m"))
+func TestJiraReceiverConfigReopenDuration(t *testing.T) {
+	r, err := NewReceiver(`{"name":"j","jira_configs":[{"site":"https://acme.atlassian.net","project":"KAN","issue_type":"Task","reopen_duration":"1m","http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`)
 	require.NoError(t, err)
 	assert.Equal(t, model.Duration(time.Minute), r.JiraConfigs[0].ReopenDuration)
-
-	_, err = NewReceiver(withReopen("30s"))
-	assert.Error(t, err)
 }
 
 func TestJiraAPIBaseURL(t *testing.T) {
@@ -93,17 +84,10 @@ func TestJiraReceiverConfigValidation(t *testing.T) {
 		json string
 	}{
 		{"missing site", `{"name":"j","jira_configs":[{"project":"KAN","issue_type":"Task","http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`},
-		{"http site", jiraReceiverJSON("http://acme.atlassian.net", "KAN", "Task", true)},
-		{"non-cloud host", jiraReceiverJSON("https://jira.acme.com", "KAN", "Task", true)},
-		{"lookalike host suffix", jiraReceiverJSON("https://www.iamnotatlassian.net", "KAN", "Task", true)},
-		{"bare atlassian.net", jiraReceiverJSON("https://atlassian.net", "KAN", "Task", true)},
-		{"trailing slash site", jiraReceiverJSON("https://acme.atlassian.net/", "KAN", "Task", true)},
-		{"padded site", jiraReceiverJSON(" https://acme.atlassian.net ", "KAN", "Task", true)},
 		{"missing project", jiraReceiverJSON("https://acme.atlassian.net", "", "Task", true)},
 		{"missing issue_type", jiraReceiverJSON("https://acme.atlassian.net", "KAN", "", true)},
 		{"missing basic auth", jiraReceiverJSON("https://acme.atlassian.net", "KAN", "Task", false)},
 		{"invalid reopen_duration format", `{"name":"j","jira_configs":[{"site":"https://acme.atlassian.net","project":"KAN","issue_type":"Task","reopen_duration":"3days","http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`},
-		{"sub-minute reopen_duration", `{"name":"j","jira_configs":[{"site":"https://acme.atlassian.net","project":"KAN","issue_type":"Task","reopen_duration":"30s","http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

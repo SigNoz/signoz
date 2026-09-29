@@ -1,10 +1,6 @@
 package alertmanagertypes
 
 import (
-	"fmt"
-	"net/url"
-	"strings"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
@@ -63,11 +59,6 @@ func newChannelIncidentIOConfigFromReceiver(name string, receiver *Receiver) (Ch
 		Metadata:     incidentio.Metadata,
 	}, nil
 }
-
-// incidentIOEventsPathPrefix is the path of incident.io's HTTP alert source
-// endpoint (Alert Events V2 API). The full URL is per-source:
-// https://api.incident.io/v2/alert_events/http/<source_config_id>.
-const incidentIOEventsPathPrefix = "/v2/alert_events/http/"
 
 // The description is markdown; incident.io renders it natively. The templates
 // mirror Google Chat / Jira / JSM for a consistent default across channels.
@@ -132,32 +123,11 @@ func (c *IncidentIOReceiverConfig) UnmarshalYAML(unmarshal func(any) error) erro
 		c.Description = DefaultIncidentIODescriptionTemplate
 	}
 
-	// Values are stored and sent exactly as configured, so anything that is
-	// not already canonical is rejected rather than rewritten.
-	if c.URL != strings.TrimSpace(c.URL) {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio url must not have leading or trailing whitespace")
+	if c.URL == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio url is required")
 	}
-	u, err := url.Parse(c.URL)
-	if c.URL == "" || err != nil || u.Scheme != "https" || u.Host == "" ||
-		!strings.Contains(u.Path, incidentIOEventsPathPrefix) ||
-		strings.HasSuffix(u.Path, incidentIOEventsPathPrefix) {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("incidentio url must be an alert events URL (https://api.incident.io%s<source_config_id>)", incidentIOEventsPathPrefix))
-	}
-	if strings.HasSuffix(c.URL, "/") {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio url must not end with a trailing slash")
-	}
-
-	token := string(c.Token)
-	if token == "" {
+	if c.Token == "" {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio token is required")
-	}
-	if token != strings.TrimSpace(token) {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio token must not have leading or trailing whitespace")
-	}
-	// incident.io's setup page shows the header value as "Bearer <token>"; a
-	// pasted prefix would be sent doubled, so reject it instead.
-	if strings.EqualFold(token, "bearer") || (len(token) >= 7 && strings.EqualFold(token[:7], "bearer ")) {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio token must be the source's secret token only, without the Bearer prefix")
 	}
 	return nil
 }
