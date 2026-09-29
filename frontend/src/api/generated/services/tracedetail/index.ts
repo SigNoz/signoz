@@ -157,7 +157,7 @@ export const useGetTraceAggregations = <
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
 };
 /**
- * Returns the spans carrying gen_ai input or output messages in timestamp order, each with the messages normalised into formatted_input and formatted_output. Pages are fetched with the returned nextCursor.
+ * Returns the spans carrying gen_ai input or output messages in timestamp order. Pages are fetched with the returned nextCursor.
  * @summary Get thread view for a trace
  */
 export const getTraceThread = (

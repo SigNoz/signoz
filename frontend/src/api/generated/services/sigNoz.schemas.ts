@@ -4,61 +4,6 @@
  * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
-export enum AiobservabilitytypesPartTypeDTO {
-	text = 'text',
-	thinking = 'thinking',
-	tool_call = 'tool_call',
-	tool_result = 'tool_result',
-	generic = 'generic',
-}
-export interface AiobservabilitytypesPartDTO {
-	arguments?: unknown;
-	/**
-	 * @type string
-	 */
-	content?: string;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type boolean
-	 */
-	isError?: boolean;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	redacted?: boolean;
-	/**
-	 * @type boolean
-	 */
-	server?: boolean;
-	/**
-	 * @type string
-	 */
-	toolCallId?: string;
-	type: AiobservabilitytypesPartTypeDTO;
-}
-
-export interface AiobservabilitytypesMessageDTO {
-	/**
-	 * @type array
-	 */
-	content: AiobservabilitytypesPartDTO[];
-	/**
-	 * @type string
-	 */
-	finishReason?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-}
-
 export interface AlertmanagertypesChannelDTO {
 	/**
 	 * @type string
@@ -11248,14 +11193,6 @@ export interface SpantypesThreadSpanDTO {
 	 * @minimum 0
 	 */
 	flags?: number;
-	/**
-	 * @type array
-	 */
-	formatted_input?: AiobservabilitytypesMessageDTO[];
-	/**
-	 * @type array
-	 */
-	formatted_output?: AiobservabilitytypesMessageDTO[];
 	/**
 	 * @type boolean
 	 */

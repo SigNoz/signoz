@@ -162,13 +162,21 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, traceID string, summary
 		sb.E("trace_id", traceID),
 		sb.GE("ts_bucket_start", summary.Start.Unix()-1800),
 		sb.LE("ts_bucket_start", summary.End.Unix()),
+		// Reads only the JSON column; spans with messages only in the legacy maps are skipped.
+		// todo(nitya): pick the column from the attribute evolution metadata.
 		sb.Or(
 			sqlbuilder.Escape(fmt.Sprintf("attributes.%s IS NOT NULL", clickhousesql.Identifier(aiobservabilitytypes.GenAIInputMessages))),
 			sqlbuilder.Escape(fmt.Sprintf("attributes.%s IS NOT NULL", clickhousesql.Identifier(aiobservabilitytypes.GenAIOutputMessages))),
 		),
 	)
 	if cursor != nil {
-		sb.Where(sb.GT("(toUnixTimestamp64Nano(timestamp), span_id)", sqlbuilder.Tuple(cursor.TimeUnixNano, cursor.SpanID)))
+		// ClickHouse can't use an index for a tuple comparison, so the separate timestamp and
+		// ts_bucket_start bounds are what skip the data before the cursor.
+		sb.Where(
+			sb.GE("ts_bucket_start", int64(cursor.TimeUnixNano/uint64(time.Second))-1800),
+			sb.GE("timestamp", fmt.Sprintf("%d", cursor.TimeUnixNano)),
+			sb.GT("(toUnixTimestamp64Nano(timestamp), span_id)", sqlbuilder.Tuple(cursor.TimeUnixNano, cursor.SpanID)),
+		)
 	}
 	sb.OrderByAsc("timestamp")
 	sb.OrderByAsc("span_id")

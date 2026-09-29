@@ -77,7 +77,7 @@ func (h *handler) GetFlamegraph(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetThread(rw http.ResponseWriter, r *http.Request) {
-	req := new(spantypes.PostableThreadQuery)
+	req := new(spantypes.QueryableThread)
 	if err := binding.Query.BindQuery(r.URL.Query(), req); err != nil {
 		render.Error(rw, err)
 		return

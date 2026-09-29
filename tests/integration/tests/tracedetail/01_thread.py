@@ -48,18 +48,11 @@ def test_thread_returns_message_spans_in_order(
     assert first["time_unix"] == int((now - timedelta(seconds=8)).timestamp() * 1000)
     assert first["attributes"]["gen_ai.input.messages"] == first_input
     assert first["attributes"]["gen_ai.request.model"] == "gpt-4o"
-    assert first["formatted_input"] == [{"role": "user", "content": [{"type": "text", "content": "weather in Bangalore?"}]}]
-    assert first["formatted_output"] == [
-        {
-            "role": "assistant",
-            "content": [{"type": "tool_call", "id": "call_1", "name": "get_weather", "arguments": {"city": "Bangalore"}}],
-            "finishReason": "tool_call",
-        }
-    ]
-    assert input_only["formatted_input"] == [{"role": "tool", "content": [{"type": "tool_result", "toolCallId": "call_1", "content": "sunny"}]}]
-    assert "formatted_output" not in input_only
-    assert "formatted_input" not in output_only
-    assert output_only["formatted_output"] == [{"content": [{"type": "generic", "content": "It is sunny in Bangalore."}]}]
+    assert first["attributes"]["gen_ai.output.messages"] == first_output
+    assert input_only["attributes"]["gen_ai.input.messages"] == second_input
+    assert "gen_ai.output.messages" not in input_only["attributes"]
+    assert "gen_ai.input.messages" not in output_only["attributes"]
+    assert output_only["attributes"]["gen_ai.output.messages"] == "It is sunny in Bangalore."
 
 
 def test_thread_paginates_with_cursor(

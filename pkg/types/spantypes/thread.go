@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 )
 
 const (
@@ -18,7 +17,7 @@ var (
 	ErrCodeThreadInvalidCursor = errors.MustNewCode("trace_thread_invalid_cursor")
 )
 
-type PostableThreadQuery struct {
+type QueryableThread struct {
 	// Limit is the page size; 0 means 100.
 	Limit int `query:"limit"`
 	// Cursor is the nextCursor of the previous page; empty for the first page.
@@ -30,8 +29,8 @@ type ThreadQuery struct {
 	Cursor *ThreadCursor
 }
 
-func NewThreadQuery(postable *PostableThreadQuery) (*ThreadQuery, error) {
-	query := &ThreadQuery{Limit: postable.Limit}
+func NewThreadQuery(queryable *QueryableThread) (*ThreadQuery, error) {
+	query := &ThreadQuery{Limit: queryable.Limit}
 	if query.Limit < 0 {
 		return nil, errors.NewInvalidInputf(ErrCodeThreadInvalidLimit, "limit cannot be negative, got %d", query.Limit)
 	}
@@ -41,8 +40,8 @@ func NewThreadQuery(postable *PostableThreadQuery) (*ThreadQuery, error) {
 	if query.Limit > threadMaxLimit {
 		return nil, errors.NewInvalidInputf(ErrCodeThreadInvalidLimit, "limit cannot exceed %d, got %d", threadMaxLimit, query.Limit)
 	}
-	if postable.Cursor != "" {
-		cursor, err := DecodeThreadCursor(postable.Cursor)
+	if queryable.Cursor != "" {
+		cursor, err := DecodeThreadCursor(queryable.Cursor)
 		if err != nil {
 			return nil, err
 		}
@@ -82,11 +81,8 @@ type GettableTraceThread struct {
 	NextCursor string        `json:"nextCursor,omitempty"`
 }
 
-// ThreadSpan sets the formatted fields only when the span has the matching gen_ai messages attribute.
 type ThreadSpan struct {
 	WaterfallSpan
-	FormattedInput  []aiobservabilitytypes.Message `json:"formatted_input,omitempty"`
-	FormattedOutput []aiobservabilitytypes.Message `json:"formatted_output,omitempty"`
 }
 
 // NewGettableTraceThread expects limit+1 spans; the extra one only signals a next page.
@@ -113,11 +109,5 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	span := &ThreadSpan{WaterfallSpan: *storable.ToWaterfallSpan(traceID)}
 	// client expects millis, as in the waterfall
 	span.TimeUnix = span.TimeUnix / 1_000_000
-	if v, ok := span.Attributes[aiobservabilitytypes.GenAIInputMessages]; ok {
-		span.FormattedInput = aiobservabilitytypes.NormalizeMessages(v)
-	}
-	if v, ok := span.Attributes[aiobservabilitytypes.GenAIOutputMessages]; ok {
-		span.FormattedOutput = aiobservabilitytypes.NormalizeMessages(v)
-	}
 	return span
 }
