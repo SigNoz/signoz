@@ -11,19 +11,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func jiraReceiverJSON(site, project, issueType string, withAuth bool) string {
+func jiraReceiverJSON(project, issueType string, withAuth bool) string {
 	auth := ""
 	if withAuth {
 		auth = `,"http_config":{"basic_auth":{"username":"me@acme.com","password":"token"}}`
 	}
 	return fmt.Sprintf(
-		`{"name":"jira","jira_configs":[{"site":%q,"project":%q,"issue_type":%q%s}]}`,
-		site, project, issueType, auth,
+		`{"name":"jira","jira_configs":[{"site":"https://acme.atlassian.net","project":%q,"issue_type":%q%s}]}`,
+		project, issueType, auth,
 	)
 }
 
 func TestJiraReceiverConfigDefaults(t *testing.T) {
-	r, err := NewReceiver(jiraReceiverJSON("https://acme.atlassian.net", "KAN", "Task", true))
+	r, err := NewReceiver(jiraReceiverJSON("KAN", "Task", true))
 	require.NoError(t, err)
 	require.Len(t, r.JiraConfigs, 1)
 
@@ -84,9 +84,9 @@ func TestJiraReceiverConfigValidation(t *testing.T) {
 		json string
 	}{
 		{"missing site", `{"name":"j","jira_configs":[{"project":"KAN","issue_type":"Task","http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`},
-		{"missing project", jiraReceiverJSON("https://acme.atlassian.net", "", "Task", true)},
-		{"missing issue_type", jiraReceiverJSON("https://acme.atlassian.net", "KAN", "", true)},
-		{"missing basic auth", jiraReceiverJSON("https://acme.atlassian.net", "KAN", "Task", false)},
+		{"missing project", jiraReceiverJSON("", "Task", true)},
+		{"missing issue_type", jiraReceiverJSON("KAN", "", true)},
+		{"missing basic auth", jiraReceiverJSON("KAN", "Task", false)},
 		{"invalid reopen_duration format", `{"name":"j","jira_configs":[{"site":"https://acme.atlassian.net","project":"KAN","issue_type":"Task","reopen_duration":"3days","http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`},
 	}
 	for _, c := range cases {
