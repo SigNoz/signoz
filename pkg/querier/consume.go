@@ -40,15 +40,11 @@ func stripKeyAlias(name string) string {
 	return keyAliasRe.ReplaceAllString(name, "")
 }
 
-// unwrapVariant returns the concrete value inside the driver's scan envelopes: chcol.Variant for a
-// Dynamic column (a JSON path such as body_v2.level), and chcol.JSON for a whole JSON column, which
-// is flattened to its leaf paths so a key stored as both a scalar and an object is not collapsed.
+// unwrapVariant returns the concrete value inside the chcol.Variant envelope the driver scans a
+// Dynamic column — a JSON path such as body_v2.level — into.
 func unwrapVariant(val any) any {
-	switch v := val.(type) {
-	case chcol.Variant:
+	if v, ok := val.(chcol.Variant); ok {
 		return v.Any()
-	case chcol.JSON:
-		return telemetrystoretypes.FlattenJSON(v)
 	}
 	return val
 }
@@ -62,7 +58,7 @@ func labelValue(val any) string {
 	if val == nil {
 		return ""
 	}
-	if v, ok := val.(map[string]any); ok {
+	if v, ok := val.(telemetrystoretypes.JSONValue); ok {
 		if raw, err := json.Marshal(v); err == nil {
 			return string(raw)
 		}
@@ -208,7 +204,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 					Value: *val,
 				})
 
-			case *chcol.JSON, *chcol.Variant:
+			case *telemetrystoretypes.JSONValue, *chcol.Variant:
 				val := labelValue(derefValue(ptr))
 				lblVals = append(lblVals, val)
 				lblObjs = append(lblObjs, &qbtypes.Label{
@@ -580,6 +576,8 @@ func flattenJSONPaths(prefix string, m map[string]any, out map[string]any) {
 		switch child := v.(type) {
 		case map[string]any:
 			flattenJSONPaths(key, child, out)
+		case telemetrystoretypes.JSONValue:
+			flattenJSONPaths(key, child, out)
 		default:
 			out[key] = v
 		}
@@ -595,7 +593,7 @@ func mergeSpanAttributeColumns(data map[string]any) {
 	attrStr, hasStr := data["attributes_string"]
 	attrNum, hasNum := data["attributes_number"]
 	attrBool, hasBool := data["attributes_bool"]
-	attrJSON, _ := data["attributes"].(map[string]any)
+	attrJSON, _ := data["attributes"].(telemetrystoretypes.JSONValue)
 	// todo(nitya): move to resource json
 	resStr, hasRes := data["resources_string"]
 	if hasStr || hasNum || hasBool || attrJSON != nil || hasRes {

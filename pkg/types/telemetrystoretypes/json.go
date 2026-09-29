@@ -1,17 +1,35 @@
 package telemetrystoretypes
 
-import "github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
+import (
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/bytedance/sonic"
+)
 
-// FlattenJSON reads a native JSON column by its flattened leaf paths, so a key stored as both a scalar and an object survives as distinct dotted keys; unwraps the Dynamic envelope each value arrives in.
-func FlattenJSON(j chcol.JSON) map[string]any {
-	paths := j.ValuesByPath()
-	out := make(map[string]any, len(paths))
-	for path, value := range paths {
-		if dynamic, ok := value.(chcol.Variant); ok {
-			out[path] = dynamic.Any()
-		} else {
-			out[path] = value
-		}
+var ErrCodeUnmarshalJSONColumn = errors.MustNewCode("fail_unmarshal_json_column")
+
+// JSONValue is the scan target for a ClickHouse JSON column, read in the flattened native serialization the driver decodes into this map.
+type JSONValue map[string]any
+
+// Scan decodes into a fresh map every time: a scan target is reused across rows, and unmarshalling
+// into the map already there would both keep its keys and hand every row the same map.
+func (v *JSONValue) Scan(src any) error {
+	var raw []byte
+	switch value := src.(type) {
+	case nil:
+		*v = nil
+		return nil
+	case string:
+		raw = []byte(value)
+	case []byte:
+		raw = value
+	default:
+		return errors.NewInternalf(ErrCodeUnmarshalJSONColumn, "cannot decode %T as a JSON column", src)
 	}
-	return out
+
+	decoded := JSONValue{}
+	if err := sonic.Unmarshal(raw, &decoded); err != nil {
+		return errors.WrapInternalf(err, ErrCodeUnmarshalJSONColumn, "failed to unmarshal JSON column")
+	}
+	*v = decoded
+	return nil
 }
