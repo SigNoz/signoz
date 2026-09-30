@@ -30,10 +30,6 @@
 	}
 }
 
-.closeButton {
-	--button-padding: var(--spacing-2);
-}
-
 .title {
 	font-family: var(--periscope-font-family-mono);
 
@@ -67,13 +63,9 @@
 	justify-content: space-between;
 	align-items: center;
 
-	[data-slot='toggle-group-item'] {
+	[data-slot='toggle-group-button'] {
 		width: 114px;
 	}
-}
-
-.viewsTabs {
-	color: var(--l2-foreground);
 }
 
 .viewTitle {
@@ -81,13 +73,4 @@
 	gap: var(--margin-2);
 	align-items: center;
 	justify-content: center;
-}
-
-.compassButton {
-	width: 30px;
-	height: 30px;
-	border-radius: 2px;
-	border: 1px solid var(--l1-border);
-	background: var(--l3-background);
-	box-shadow: 0 0 8px 0 var(--l1-shadow);
 }
