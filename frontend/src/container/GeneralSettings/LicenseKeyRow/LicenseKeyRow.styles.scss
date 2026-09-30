@@ -35,31 +35,13 @@
 		padding: 1px 2px;
 		border-radius: 2px 0 0 2px;
 		background: var(--l3-background);
-		border: 1px solid var(--l1-border);
 		color: var(--l2-foreground);
 		font-family: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
 		font-size: var(--paragraph-base-400-font-size);
 		line-height: var(--line-height-20);
 		white-space: nowrap;
 		margin-right: -1px;
-	}
-
-	&__copy-btn {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 26px;
-		padding: 1px 2px;
-		border-radius: 0 2px 2px 0;
-		background: var(--l3-background);
-		border: 1px solid var(--l1-border);
-		color: var(--l2-foreground);
-		cursor: pointer;
-		flex-shrink: 0;
 		height: 24px;
-
-		&:hover {
-			background: var(--l3-background-hover);
-		}
+		border: 1px solid var(--l3-border);
 	}
 }

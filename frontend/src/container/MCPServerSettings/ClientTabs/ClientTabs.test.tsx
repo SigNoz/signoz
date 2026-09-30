@@ -65,7 +65,7 @@ describe('ClientTabs', () => {
 		const installBtn = screen.getByRole('button', {
 			name: 'Add to Cursor',
 		});
-		expect(installBtn).toBeEnabled();
+		expect(installBtn).not.toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('shows disabled install button when endpoint is missing (Cursor)', () => {
@@ -74,7 +74,7 @@ describe('ClientTabs', () => {
 		const installBtn = screen.getByRole('button', {
 			name: 'Add to Cursor',
 		});
-		expect(installBtn).toBeDisabled();
+		expect(installBtn).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('calls onCopySnippet with client key and snippet on copy', async () => {
@@ -103,6 +103,6 @@ describe('ClientTabs', () => {
 			name: `Copy ${cursorClient.label} config`,
 		});
 
-		expect(copyBtn).toBeDisabled();
+		expect(copyBtn).toHaveAttribute('aria-disabled', 'true');
 	});
 });

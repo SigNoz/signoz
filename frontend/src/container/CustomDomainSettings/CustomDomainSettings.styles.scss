@@ -362,10 +362,6 @@
 	}
 }
 
-.edit-modal-apply-btn {
-	width: 100%;
-}
-
 .custom-domain-toast {
 	display: flex;
 	align-items: center;
@@ -392,24 +388,6 @@
 		align-items: center;
 		gap: var(--spacing-4);
 		flex-shrink: 0;
-	}
-
-	.custom-domain-toast-visit-btn {
-		text-decoration: none;
-		background: var(--bg-robin-600);
-
-		&:hover {
-			background: var(--primary-background-hover);
-		}
-	}
-
-	.custom-domain-toast-dismiss-btn {
-		color: var(--callout-primary-icon);
-		height: 24px;
-		width: 24px;
-
-		&:hover {
-			background: var(--primary-background-hover);
-		}
+		--button-variant-ghost-color: var(--bg-base-white);
 	}
 }

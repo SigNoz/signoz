@@ -81,12 +81,6 @@
 			font-weight: 400;
 			line-height: normal;
 		}
-
-		// Loosen the design-system default (grid gap 0.5rem) between options.
-		.silence-alerts-radio-group {
-			margin-top: 8px;
-			gap: 12px;
-		}
 	}
 
 	.alert-rule-all-warning {
@@ -105,12 +99,6 @@
 		font-size: 12px;
 		font-weight: 400;
 		color: var(--l2-foreground);
-	}
-}
-
-.alert-rule-tags {
-	.non-closable-tag {
-		padding-right: 7px;
 	}
 }
 

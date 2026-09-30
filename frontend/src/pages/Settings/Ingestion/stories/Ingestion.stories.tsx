@@ -200,7 +200,7 @@ export const CreateKeySubmitting: Story = {
 		await waitFor(() =>
 			expect(
 				dialog.getByRole('button', { name: 'Create new Ingestion key' }),
-			).toBeDisabled(),
+			).toHaveAttribute('aria-busy', 'true'),
 		);
 	},
 };

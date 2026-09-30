@@ -10,6 +10,7 @@ import { docsUrl, MCP_CLIENTS, McpClient } from '../clients';
 import './ClientTabs.styles.scss';
 
 const ENDPOINT_PLACEHOLDER = 'https://mcp.<region>.signoz.cloud/mcp';
+const ENTER_REGION_FIRST = 'Enter your Cloud region first';
 
 interface ClientTabsProps {
 	endpoint: string;
@@ -50,6 +51,7 @@ function ClientTabs({
 									<CopyIconButton
 										ariaLabel={`Copy ${client.label} config`}
 										disabled={!endpoint}
+										disabledTooltip={ENTER_REGION_FIRST}
 										onCopy={(): void => onCopySnippet(client.key, snippet)}
 									/>
 								</div>
@@ -62,6 +64,7 @@ function ClientTabs({
 										<CopyIconButton
 											ariaLabel="Copy MCP endpoint"
 											disabled={!endpoint}
+											disabledTooltip={ENTER_REGION_FIRST}
 											onCopy={(): void => onCopySnippet(client.key, endpoint)}
 										/>
 									</div>
@@ -75,6 +78,7 @@ function ClientTabs({
 								<div className="mcp-client-tabs__install-row">
 									{installHref ? (
 										<Button
+											size="md"
 											variant="solid"
 											color="primary"
 											prefix={<Download size={14} />}
@@ -87,9 +91,11 @@ function ClientTabs({
 										</Button>
 									) : (
 										<Button
+											size="md"
 											variant="solid"
 											color="primary"
 											disabled
+											disabledTooltip={ENTER_REGION_FIRST}
 											prefix={<Download size={14} />}
 										>
 											{installLabel}
@@ -116,6 +122,9 @@ function ClientTabs({
 
 	return (
 		<Tabs
+			variant="primary"
+			orientation="horizontal"
+			alignment="start"
 			className="mcp-client-tabs-root"
 			value={activeTab}
 			onChange={onTabChange}
