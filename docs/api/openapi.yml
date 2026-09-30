@@ -21140,9 +21140,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - role:read
+        - user:list
       - tokenizer:
-        - ADMIN
+        - role:read
+        - user:list
       summary: Get users by role id
       tags:
       - users
@@ -25728,9 +25730,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - user:attach
+        - role:attach
       summary: Create user role
       tags:
       - users
@@ -25781,9 +25785,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:detach
+        - role:detach
       - tokenizer:
-        - ADMIN
+        - user:detach
+        - role:detach
       summary: Delete user role
       tags:
       - users
@@ -25845,9 +25851,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:read
       - tokenizer:
-        - ADMIN
+        - user:read
       summary: Get user role
       tags:
       - users
@@ -25894,9 +25900,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:list
       - tokenizer:
-        - ADMIN
+        - user:list
       summary: List users v2
       tags:
       - users
@@ -25957,9 +25963,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:create
+        - user:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - user:create
+        - user:attach
+        - role:attach
       summary: Create user
       tags:
       - users
@@ -26004,9 +26014,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:delete
       - tokenizer:
-        - ADMIN
+        - user:delete
       summary: Delete user
       tags:
       - users
@@ -26062,9 +26072,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:read
       - tokenizer:
-        - ADMIN
+        - user:read
       summary: Get user by user id
       tags:
       - users
@@ -26119,9 +26129,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:update
       - tokenizer:
-        - ADMIN
+        - user:update
       summary: Update user v2
       tags:
       - users
@@ -26178,9 +26188,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-password:read
+        - user:read
       - tokenizer:
-        - ADMIN
+        - factor-password:read
+        - user:read
       summary: Get reset password token for a user
       tags:
       - users
@@ -26244,9 +26256,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-password:create
+        - user:attach
       - tokenizer:
-        - ADMIN
+        - factor-password:create
+        - user:attach
       summary: Create or regenerate reset password token for a user
       tags:
       - users
@@ -26305,9 +26319,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:read
       - tokenizer:
-        - ADMIN
+        - user:read
       summary: Get user roles
       tags:
       - users
@@ -26621,10 +26635,7 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
+      - tokenizer: []
       summary: Updates my password
       tags:
       - users
