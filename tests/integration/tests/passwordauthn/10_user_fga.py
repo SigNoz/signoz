@@ -150,7 +150,7 @@ def test_reset_password_token_scoped_to_granted_user(signoz: types.SigNoz, get_t
             transaction_group("read", "user", "user", [target_id]),
             transaction_group("attach", "user", "user", [target_id]),
             transaction_group("create", "metaresource", "factor-password", ["*"]),
-            transaction_group("read", "metaresource", "factor-password", ["*"]),
+            transaction_group("list", "metaresource", "factor-password", ["*"]),
         ],
     )
     token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)

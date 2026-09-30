@@ -237,14 +237,14 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			ErrorStatusCodes:    []int{http.StatusNotFound},
 			Deprecated:          false,
 			SecuritySchemes: newScopedSecuritySchemes([]string{
-				coretypes.ResourceMetaResourceFactorPassword.Scope(coretypes.VerbRead),
+				coretypes.ResourceMetaResourceFactorPassword.Scope(coretypes.VerbList),
 				coretypes.ResourceUser.Scope(coretypes.VerbRead),
 			}),
 		},
 		handler.WithResourceDefs(
 			handler.BasicResourceDef{
 				Resource: coretypes.ResourceMetaResourceFactorPassword,
-				Verb:     coretypes.VerbRead,
+				Verb:     coretypes.VerbList,
 				Category: coretypes.ActionCategoryAccessControl,
 				ID:       coretypes.ResponseJSONPath("data.id"),
 				Selector: coretypes.WildcardSelector,
