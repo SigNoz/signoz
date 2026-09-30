@@ -25,13 +25,12 @@ type ExtractPhase int
 type extractorContextKey struct{}
 
 // ExtractorContext carries everything an extractor may read: Request + RequestBody
-// are filled pre-handler, ResponseBody post-handler. DecodedRequestBody is
-// RequestBody decoded by the resource middleware into the route's declared request type.
+// are filled pre-handler, ResponseBody post-handler. RequestBody is the body
+// decoded by the resource middleware into the route's declared request type.
 type ExtractorContext struct {
-	Request            *http.Request
-	RequestBody        []byte
-	DecodedRequestBody any
-	ResponseBody       []byte
+	Request      *http.Request
+	RequestBody  any
+	ResponseBody []byte
 }
 
 func NewContextWithExtractorContext(ctx context.Context, ec ExtractorContext) context.Context {
@@ -48,13 +47,13 @@ func ExtractorContextFromContext(ctx context.Context) (ExtractorContext, error) 
 }
 
 func BodyAs[T any](ec ExtractorContext) (*T, error) {
-	if ec.DecodedRequestBody == nil {
+	if ec.RequestBody == nil {
 		return nil, errors.New(errors.TypeInternal, errCodeRequestTypeUndeclared, "route does not declare a request type")
 	}
 
-	typed, ok := ec.DecodedRequestBody.(*T)
+	typed, ok := ec.RequestBody.(*T)
 	if !ok {
-		return nil, errors.Newf(errors.TypeInternal, errCodeRequestTypeMismatch, "route declares request type %T, expected %T", ec.DecodedRequestBody, (*T)(nil))
+		return nil, errors.Newf(errors.TypeInternal, errCodeRequestTypeMismatch, "route declares request type %T, expected %T", ec.RequestBody, (*T)(nil))
 	}
 
 	return typed, nil
@@ -143,29 +142,6 @@ func BodyFields[T any](pick func(*T) []string) ResourceIDsExtractor {
 		}
 
 		return pick(req), nil
-	}}
-}
-
-func BodyJSONPath(path string) ResourceIDExtractor {
-	return ResourceIDExtractor{Phase: PhaseRequest, Fn: func(ec ExtractorContext) (string, error) {
-		return gjson.GetBytes(ec.RequestBody, path).String(), nil
-	}}
-}
-
-func BodyJSONArray(path string) ResourceIDsExtractor {
-	return ResourceIDsExtractor{Phase: PhaseRequest, Fn: func(ec ExtractorContext) ([]string, error) {
-		result := gjson.GetBytes(ec.RequestBody, path)
-		if !result.Exists() {
-			return nil, nil
-		}
-
-		array := result.Array()
-		ids := make([]string, 0, len(array))
-		for _, r := range array {
-			ids = append(ids, r.String())
-		}
-
-		return ids, nil
 	}}
 }
 

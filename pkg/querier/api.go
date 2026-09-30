@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -52,8 +53,8 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var queryRangeRequest qbtypes.QueryRangeRequest
-	if err := binding.JSON.BindBody(req.Body, &queryRangeRequest); err != nil {
+	queryRangeRequest, err := coretypes.BodyFromContext[qbtypes.QueryRangeRequest](req.Context())
+	if err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -70,7 +71,7 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	queryRangeResponse, err := handler.querier.QueryRange(ctx, orgID, &queryRangeRequest)
+	queryRangeResponse, err := handler.querier.QueryRange(ctx, orgID, queryRangeRequest)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -96,8 +97,8 @@ func (handler *handler) QueryRangePreview(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	var queryRangeRequest qbtypes.QueryRangeRequest
-	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
+	queryRangeRequest, err := coretypes.BodyFromContext[qbtypes.QueryRangeRequest](req.Context())
+	if err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -118,7 +119,7 @@ func (handler *handler) QueryRangePreview(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	preview, err := handler.querier.QueryRangePreview(ctx, orgID, &queryRangeRequest, previewOpts)
+	preview, err := handler.querier.QueryRangePreview(ctx, orgID, queryRangeRequest, previewOpts)
 	if err != nil {
 		render.Error(rw, err)
 		return

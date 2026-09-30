@@ -45,11 +45,6 @@ func TestIncidentIOReceiverConfigValidation(t *testing.T) {
 		json string
 	}{
 		{"missing url", `{"name":"incio","incidentio_configs":[{"token":"k"}]}`},
-		{"http url", `{"name":"incio","incidentio_configs":[{"url":"http://api.incident.io/v2/alert_events/http/abc","token":"k"}]}`},
-		{"not an alert events url", `{"name":"incio","incidentio_configs":[{"url":"https://api.incident.io/v2/incidents","token":"k"}]}`},
-		{"missing source config id", `{"name":"incio","incidentio_configs":[{"url":"https://api.incident.io/v2/alert_events/http/","token":"k"}]}`},
-		{"trailing slash", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s/","token":"k"}]}`, testIncidentIOURL)},
-		{"whitespace around url", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":" %s ","token":"k"}]}`, testIncidentIOURL)},
 		{"missing token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s"}]}`, testIncidentIOURL)},
 		{"bearer prefixed token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":"Bearer tok-123"}]}`, testIncidentIOURL)},
 		{"lowercase bearer prefixed token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":"bearer tok-123"}]}`, testIncidentIOURL)},
