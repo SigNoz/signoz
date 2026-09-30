@@ -2,7 +2,6 @@ package alertmanagertypes
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 	"time"
 
@@ -153,7 +152,6 @@ const defaultJiraReopenDuration = model.Duration(3 * 24 * time.Hour)
 // Service accounts authenticate against the api.atlassian.com gateway (keyed by
 // cloud id) instead of the site host; they are identified by their email domain.
 const (
-	jiraCloudHostSuffix           = ".atlassian.net"
 	jiraServiceAccountEmailDomain = "@serviceaccount.atlassian.com"
 	jiraGatewayBaseURL            = "https://api.atlassian.com/ex/jira/"
 )
@@ -204,11 +202,13 @@ func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	if c.ReopenDuration <= 0 {
 		c.ReopenDuration = defaultJiraReopenDuration
 	}
+
 	// sub-minute windows truncate to 0 in the reopen JQL and silently disable
 	// reopening, so reject them.
 	if c.ReopenDuration < model.Duration(time.Minute) {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira reopen_duration must be at least 1m")
 	}
+
 	if c.Summary == "" {
 		c.Summary = DefaultJiraSummaryTemplate
 	}
@@ -216,19 +216,9 @@ func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 		c.Description = DefaultJiraDescriptionTemplate
 	}
 
-	// Values are stored and sent exactly as configured, so anything that is
-	// not already canonical is rejected rather than rewritten.
-	if c.Site != strings.TrimSpace(c.Site) {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira site must not have leading or trailing whitespace")
+	if c.Site == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira site is required")
 	}
-	u, err := url.Parse(c.Site)
-	if c.Site == "" || err != nil || u.Scheme != "https" || !strings.HasSuffix(strings.ToLower(u.Hostname()), jiraCloudHostSuffix) {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("jira site must be a Jira Cloud URL (https://<site>%s)", jiraCloudHostSuffix))
-	}
-	if strings.HasSuffix(c.Site, "/") {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira site must not end with a trailing slash")
-	}
-
 	if c.Project == "" {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira project is required")
 	}
