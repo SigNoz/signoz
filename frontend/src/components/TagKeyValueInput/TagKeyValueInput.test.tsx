@@ -8,7 +8,7 @@ const TID = 'tag-key-value-input';
 type User = ReturnType<typeof userEvent.setup>;
 
 const startEditingFirstChip = async (user: User): Promise<HTMLElement> => {
-	await user.dblClick(screen.getAllByTestId(`${TID}-chip`)[0]);
+	await user.click(screen.getAllByTestId(`${TID}-chip`)[0]);
 	return screen.getByTestId(`${TID}-edit`);
 };
 

@@ -1,10 +1,9 @@
 import { type ChangeEvent, type KeyboardEvent, useState } from 'react';
-import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { Pill } from '@signozhq/ui/pill';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
-import TagBadge from '../TagBadge/TagBadge';
 import { validateTag } from './utils';
 
 import styles from './TagKeyValueInput.module.scss';
@@ -21,7 +20,7 @@ interface TagKeyValueInputProps {
 
 // Strict key:value tag editor. A tag is committed only on Enter and only when
 // it parses to a valid `key:value` pair — bare values are rejected with an
-// inline error. Existing chips can be edited inline (double-click), and removed.
+// inline error. Existing chips can be edited inline (click), and removed.
 function TagKeyValueInput({
 	tags,
 	onTagsChange,
@@ -132,23 +131,15 @@ function TagKeyValueInput({
 							onBlur={(): void => commitEdit(true)}
 						/>
 					) : (
-						<TagBadge
+						<Pill.Closeable
 							key={tag}
-							className={styles.tag}
-							closable
+							maxWidth={240}
+							testId={`${testId}-chip`}
+							onClick={(): void => startEdit(index)}
 							onClose={(): void => removeTag(tag)}
 						>
-							<Button
-								variant="ghost"
-								color="secondary"
-								className={styles.tagLabel}
-								title="Double-click to edit"
-								testId={`${testId}-chip`}
-								onDoubleClick={(): void => startEdit(index)}
-							>
-								{tag}
-							</Button>
-						</TagBadge>
+							{tag}
+						</Pill.Closeable>
 					),
 				)}
 				<Input

@@ -1,6 +1,8 @@
 // The body is persisted inline in the dashboard JSON, so its length is capped.
 export const MARKDOWN_MAX_LENGTH = 16000;
 
+export const READ_ONLY_TOOLTIP = 'The editor is read-only';
+
 /** The canonical syntax; the renderer resolves the other three too. */
 export const formatVariableToken = (name: string): string => `$${name}`;
 

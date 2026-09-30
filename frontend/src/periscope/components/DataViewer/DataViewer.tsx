@@ -1,5 +1,5 @@
 import { CSSProperties, useMemo, useState } from 'react';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import logEvent from 'api/common/logEvent';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { JsonView } from 'periscope/components/JsonView';
@@ -71,7 +71,9 @@ function DataViewer({
 			}
 		>
 			<div className="data-viewer__toolbar">
-				<ToggleGroupSimple
+				<ToggleGroup
+					variant="outlined"
+					color="secondary"
 					type="single"
 					size="sm"
 					value={viewMode}
