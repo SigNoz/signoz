@@ -66,13 +66,13 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 		wantJSONDataType telemetrytypes.JSONDataType
 	}{
 		{
-			name:     "ValidPath_BodyPrefixStripped",
-			path:     &PromotePath{Path: "body.user.name", Promote: true},
+			name:     "BarePath_KeptAsIs",
+			path:     &PromotePath{Path: "user.name", Promote: true},
 			wantPath: "user.name",
 		},
 		{
-			name:    "PathWithoutBodyPrefix_Rejected",
-			path:    &PromotePath{Path: "user.name", Promote: true},
+			name:    "BodyPrefixedPath_Rejected",
+			path:    &PromotePath{Path: "body.user.name", Promote: true},
 			wantErr: true,
 		},
 		{
@@ -113,7 +113,7 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 		{
 			name: "ValidIndex_JSONDataTypeDefaulted",
 			path: &PromotePath{
-				Path: "body.user.name",
+				Path: "user.name",
 				Indexes: []WrappedIndex{
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
 				},
@@ -124,7 +124,7 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 		{
 			name: "UnsupportedColumnTypeIndex_Rejected",
 			path: &PromotePath{
-				Path:    "body.user.active",
+				Path:    "user.active",
 				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeBool, Type: "minmax", Granularity: 1}},
 			},
 			wantErr: true,
@@ -132,7 +132,7 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 		{
 			name: "IndexWithoutType_Rejected",
 			path: &PromotePath{
-				Path:    "body.user.name",
+				Path:    "user.name",
 				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Granularity: 1}},
 			},
 			wantErr: true,
@@ -140,7 +140,7 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 		{
 			name: "IndexWithoutGranularity_Rejected",
 			path: &PromotePath{
-				Path:    "body.user.name",
+				Path:    "user.name",
 				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "minmax"}},
 			},
 			wantErr: true,
@@ -168,15 +168,27 @@ func TestValidateAndSetDefaultsTracesAttributes(t *testing.T) {
 	target := NewTracesAttributesTarget()
 
 	testCases := []struct {
-		name     string
-		path     *PromotePath
-		wantErr  bool
-		wantPath string
+		name             string
+		path             *PromotePath
+		wantErr          bool
+		wantPath         string
+		wantJSONDataType telemetrytypes.JSONDataType
 	}{
 		{
 			name:     "BareAttributeName_KeptAsIs",
 			path:     &PromotePath{Path: "http.method", Promote: true},
 			wantPath: "http.method",
+		},
+		{
+			name: "ValidIndex_JSONDataTypeDefaulted",
+			path: &PromotePath{
+				Path: "http.method",
+				Indexes: []WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+				},
+			},
+			wantPath:         "http.method",
+			wantJSONDataType: telemetrytypes.String,
 		},
 		{
 			name:    "AttributesPrefixedPath_Rejected",
@@ -214,6 +226,10 @@ func TestValidateAndSetDefaultsTracesAttributes(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, testCase.wantPath, testCase.path.Path)
+			if testCase.wantJSONDataType != (telemetrytypes.JSONDataType{}) {
+				require.Len(t, testCase.path.Indexes, 1)
+				assert.Equal(t, testCase.wantJSONDataType, testCase.path.Indexes[0].JSONDataType)
+			}
 		})
 	}
 }
