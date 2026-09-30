@@ -43,6 +43,7 @@ function GroupFormDrawer({
 			footer={
 				<div className={styles.groupFormFooter}>
 					<Button
+						size="md"
 						variant="ghost"
 						color="secondary"
 						onClick={onClose}
@@ -51,10 +52,12 @@ function GroupFormDrawer({
 						Cancel
 					</Button>
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
 						onClick={onSave}
 						disabled={!isValid}
+						disabledTooltip="Enter a group name first"
 						testId="group-form-save"
 					>
 						{isEdit ? 'Save group' : 'Create group'}
@@ -78,6 +81,8 @@ function GroupFormDrawer({
 				<div className={`${styles.groupFormField} ${styles.groupFormFieldRow}`}>
 					<span className={styles.groupFormLabel}>Enabled</span>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						value={draft.enabled}
 						onChange={(checked): void => setDraft({ ...draft, enabled: checked })}
 						testId="group-form-enabled"
