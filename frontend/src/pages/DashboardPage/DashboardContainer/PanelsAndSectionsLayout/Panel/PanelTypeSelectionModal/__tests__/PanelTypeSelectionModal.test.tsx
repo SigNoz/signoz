@@ -1,4 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 
 import { useDashboardSections } from '../../../../hooks/useDashboardSections';
 import { usePanelPickerTargetStore } from '../../../../store/usePanelPickerTargetStore';
@@ -36,20 +38,40 @@ const WITH_SECTIONS = [
 	{ layoutIndex: 1, title: 'Latency', panelIds: [] },
 ];
 
+type User = ReturnType<typeof userEvent.setup>;
+
 function renderDrawer(
 	props: Partial<Parameters<typeof PanelTypeSelectionModal>[0]> = {},
-): { onSelect: jest.Mock; onClose: jest.Mock } {
+): {
+	onSelect: jest.Mock;
+	onClose: jest.Mock;
+	user: User;
+} {
+	// The open drawer sets `pointer-events: none` on the body.
+	const user = userEvent.setup({ pointerEventsCheck: 0 });
 	const onSelect = jest.fn();
 	const onClose = jest.fn();
 	render(
-		<PanelTypeSelectionModal
-			open
-			onClose={onClose}
-			onSelect={onSelect}
-			{...props}
-		/>,
+		<TooltipProvider>
+			<PanelTypeSelectionModal
+				open
+				onClose={onClose}
+				onSelect={onSelect}
+				{...props}
+			/>
+		</TooltipProvider>,
 	);
-	return { onSelect, onClose };
+	return { onSelect, onClose, user };
+}
+
+async function openSectionMenu(user: User): Promise<void> {
+	await user.click(screen.getByRole('button', { name: 'Choose section' }));
+}
+
+async function startNewSection(user: User): Promise<void> {
+	await openSectionMenu(user);
+	await user.click(screen.getByTestId('panel-section-create'));
+	await screen.findByTestId('panel-section-name');
 }
 
 describe('PanelTypeSelectionModal', () => {
@@ -58,10 +80,10 @@ describe('PanelTypeSelectionModal', () => {
 		usePanelPickerTargetStore.getState().reset();
 	});
 
-	it('adds the default Time Series panel when confirmed untouched', () => {
-		const { onSelect } = renderDrawer();
+	it('adds the default Time Series panel when confirmed untouched', async () => {
+		const { onSelect, user } = renderDrawer();
 
-		fireEvent.click(screen.getByTestId('panel-type-confirm'));
+		await user.click(screen.getByTestId('panel-type-confirm'));
 
 		expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', {
 			type: 'section',
@@ -69,35 +91,38 @@ describe('PanelTypeSelectionModal', () => {
 		});
 	});
 
-	it('selects a tile, then adds it on confirm', () => {
-		const { onSelect } = renderDrawer();
+	it('selects a tile, then adds it on confirm', async () => {
+		const { onSelect, user } = renderDrawer();
 
-		fireEvent.click(screen.getByTestId('panel-type-signoz/TablePanel'));
+		await user.click(screen.getByTestId('panel-type-signoz/TablePanel'));
 		expect(onSelect).not.toHaveBeenCalled();
 		expect(screen.getByTestId('panel-type-signoz/TablePanel')).toHaveAttribute(
 			'aria-pressed',
 			'true',
 		);
 
-		fireEvent.click(screen.getByTestId('panel-type-confirm'));
+		await user.click(screen.getByTestId('panel-type-confirm'));
 		expect(onSelect).toHaveBeenCalledWith('signoz/TablePanel', {
 			type: 'section',
 			layoutIndex: 0,
 		});
 	});
 
-	it('hides the section picker when the dashboard has a single layout', () => {
+	it('names no section in the CTA when the dashboard has a single layout', () => {
 		renderDrawer();
 
-		expect(screen.queryByTestId('panel-section-select')).not.toBeInTheDocument();
+		expect(screen.getByTestId('panel-type-confirm')).toHaveTextContent(
+			'Add panel',
+		);
 	});
 
-	it('targets the section it was opened against', () => {
+	it('targets the section it was opened against', async () => {
 		mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
-		const { onSelect } = renderDrawer({ defaultLayoutIndex: 1 });
+		const { onSelect, user } = renderDrawer({ defaultLayoutIndex: 1 });
 
-		expect(screen.getByTestId('panel-section-select')).toBeInTheDocument();
-		fireEvent.click(screen.getByTestId('panel-type-confirm'));
+		const confirm = screen.getByTestId('panel-type-confirm');
+		expect(confirm).toHaveTextContent('Add to Latency');
+		await user.click(confirm);
 
 		expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', {
 			type: 'section',
@@ -105,40 +130,58 @@ describe('PanelTypeSelectionModal', () => {
 		});
 	});
 
-	it('defaults to the root on a sectioned dashboard, even one without a root', () => {
+	it('switches the target section from the menu', async () => {
 		mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
-		const { onSelect } = renderDrawer();
+		const { onSelect, user } = renderDrawer({ defaultLayoutIndex: 1 });
 
-		fireEvent.click(screen.getByTestId('panel-type-confirm'));
+		await openSectionMenu(user);
+		await user.click(screen.getByTestId('panel-section-option-0'));
+		const confirm = screen.getByTestId('panel-type-confirm');
+		expect(confirm).toHaveTextContent('Add to Overview');
+		await user.click(confirm);
+
+		expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', {
+			type: 'section',
+			layoutIndex: 0,
+		});
+	});
+
+	it('defaults to the root on a sectioned dashboard, even one without a root', async () => {
+		mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
+		const { onSelect, user } = renderDrawer();
+
+		await user.click(screen.getByTestId('panel-type-confirm'));
 
 		expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', {
 			type: 'root',
 		});
 	});
 
-	it('filters tiles by search and offers to clear an empty result', () => {
-		renderDrawer();
+	it('filters tiles by search and offers to clear an empty result', async () => {
+		const { user } = renderDrawer();
 		const search = screen.getByTestId('panel-type-search');
 
-		fireEvent.change(search, { target: { value: 'markdown' } });
+		await user.clear(search);
+		await user.type(search, 'markdown');
 		expect(screen.getByTestId('panel-type-signoz/TextPanel')).toBeInTheDocument();
 		expect(
 			screen.queryByTestId('panel-type-signoz/TablePanel'),
 		).not.toBeInTheDocument();
 
-		fireEvent.change(search, { target: { value: 'zzz' } });
+		await user.clear(search);
+		await user.type(search, 'zzz');
 		expect(screen.getByText('No panel types match “zzz”')).toBeInTheDocument();
 
-		fireEvent.click(screen.getByText('Clear search'));
+		await user.click(screen.getByText('Clear search'));
 		expect(
 			screen.getByTestId('panel-type-signoz/TablePanel'),
 		).toBeInTheDocument();
 	});
 
-	it('narrows tiles to the chosen category', () => {
-		renderDrawer();
+	it('narrows tiles to the chosen category', async () => {
+		const { user } = renderDrawer();
 
-		fireEvent.click(screen.getByRole('button', { name: /Raw records/ }));
+		await user.click(screen.getByRole('button', { name: /Raw records/ }));
 
 		expect(screen.getByTestId('panel-type-signoz/ListPanel')).toBeInTheDocument();
 		expect(
@@ -146,27 +189,26 @@ describe('PanelTypeSelectionModal', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('closes on Cancel', () => {
-		const { onClose, onSelect } = renderDrawer();
+	it('closes on Cancel', async () => {
+		const { onClose, onSelect, user } = renderDrawer();
 
-		fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+		await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
 		expect(onClose).toHaveBeenCalled();
 		expect(onSelect).not.toHaveBeenCalled();
 	});
 
 	describe('new section', () => {
-		it('asks for the named section, created when the panel is saved', () => {
-			const { onSelect } = renderDrawer();
+		it('asks for the named section, created when the panel is saved', async () => {
+			const { onSelect, user } = renderDrawer();
 
-			fireEvent.click(screen.getByTestId('panel-section-create'));
+			await startNewSection(user);
 			const confirm = screen.getByTestId('panel-type-confirm');
 			expect(confirm).toBeDisabled();
+			expect(confirm).toHaveTextContent('Add to new section');
 
-			fireEvent.change(screen.getByTestId('panel-section-name'), {
-				target: { value: '  Errors ' },
-			});
-			fireEvent.click(confirm);
+			await user.type(screen.getByTestId('panel-section-name'), '  Errors ');
+			await user.click(confirm);
 
 			expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', {
 				type: 'newSection',
@@ -174,43 +216,40 @@ describe('PanelTypeSelectionModal', () => {
 			});
 		});
 
-		it('publishes the draft for the dashboard preview', () => {
+		it('publishes the draft for the dashboard preview', async () => {
 			const draft = (): unknown =>
 				usePanelPickerTargetStore.getState().draftSection;
-			renderDrawer();
+			const { user } = renderDrawer();
 
-			fireEvent.click(screen.getByTestId('panel-section-create'));
+			await startNewSection(user);
 			expect(draft()).toStrictEqual({
 				title: '',
 				panelKind: 'signoz/TimeSeriesPanel',
 			});
 
-			fireEvent.change(screen.getByTestId('panel-section-name'), {
-				target: { value: 'Errors' },
-			});
-			fireEvent.click(screen.getByTestId('panel-type-signoz/TablePanel'));
+			await user.type(screen.getByTestId('panel-section-name'), 'Errors');
+			await user.click(screen.getByTestId('panel-type-signoz/TablePanel'));
 			expect(draft()).toStrictEqual({
 				title: 'Errors',
 				panelKind: 'signoz/TablePanel',
 			});
 
-			fireEvent.click(screen.getByTestId('panel-section-name-cancel'));
+			await user.click(screen.getByTestId('panel-section-name-cancel'));
 			expect(draft()).toBeNull();
 		});
 
-		it('returns to the section picker when the draft is cancelled', () => {
+		it('returns to the section picker when the draft is cancelled', async () => {
 			mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
-			renderDrawer();
+			const { user } = renderDrawer();
 
-			fireEvent.mouseDown(screen.getByRole('combobox'));
-			fireEvent.click(screen.getByTestId('panel-section-create'));
+			await startNewSection(user);
 			expect(screen.getByTestId('panel-section-name')).toBeInTheDocument();
 
-			fireEvent.keyDown(screen.getByTestId('panel-section-name'), {
-				key: 'Escape',
-			});
+			await user.keyboard('{Escape}');
 			expect(screen.queryByTestId('panel-section-name')).not.toBeInTheDocument();
-			expect(screen.getByTestId('panel-section-select')).toBeInTheDocument();
+			expect(screen.getByTestId('panel-type-confirm')).toHaveTextContent(
+				'Add to Dashboard (root)',
+			);
 		});
 	});
 
@@ -227,11 +266,11 @@ describe('PanelTypeSelectionModal', () => {
 			});
 		});
 
-		it('publishes the chosen section and kind while open', () => {
+		it('publishes the chosen section and kind while open', async () => {
 			mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
-			renderDrawer({ defaultLayoutIndex: 1 });
+			const { user } = renderDrawer({ defaultLayoutIndex: 1 });
 
-			fireEvent.click(screen.getByTestId('panel-type-signoz/TablePanel'));
+			await user.click(screen.getByTestId('panel-type-signoz/TablePanel'));
 
 			expect(target()).toStrictEqual({
 				layoutIndex: 1,
@@ -240,17 +279,17 @@ describe('PanelTypeSelectionModal', () => {
 			});
 		});
 
-		it('drops the target while a new section is being named', () => {
-			renderDrawer();
+		it('drops the target while a new section is being named', async () => {
+			const { user } = renderDrawer();
 
-			fireEvent.click(screen.getByTestId('panel-section-create'));
+			await startNewSection(user);
 
 			expect(target()).toBeNull();
 		});
 
-		it('restores the pre-reveal scroll position on cancel', () => {
+		it('restores the pre-reveal scroll position on cancel', async () => {
 			mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
-			renderDrawer({ defaultLayoutIndex: 1 });
+			const { user } = renderDrawer({ defaultLayoutIndex: 1 });
 			const scrollTo = jest.fn();
 			// jsdom elements have no scrollTo.
 			const scroller = { scrollTo } as unknown as HTMLElement;
@@ -258,7 +297,7 @@ describe('PanelTypeSelectionModal', () => {
 				.getState()
 				.rememberScrollOrigin({ element: scroller, top: 120 });
 
-			fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+			await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
 			expect(scrollTo).toHaveBeenCalledWith({
 				top: 120,
@@ -267,9 +306,9 @@ describe('PanelTypeSelectionModal', () => {
 			expect(target()).toBeNull();
 		});
 
-		it('keeps the scroll position when a panel is added', () => {
+		it('keeps the scroll position when a panel is added', async () => {
 			mockUseDashboardSections.mockReturnValue(WITH_SECTIONS);
-			renderDrawer({ defaultLayoutIndex: 1 });
+			const { user } = renderDrawer({ defaultLayoutIndex: 1 });
 			const scrollTo = jest.fn();
 			// jsdom elements have no scrollTo.
 			const scroller = { scrollTo } as unknown as HTMLElement;
@@ -277,7 +316,7 @@ describe('PanelTypeSelectionModal', () => {
 				.getState()
 				.rememberScrollOrigin({ element: scroller, top: 120 });
 
-			fireEvent.click(screen.getByTestId('panel-type-confirm'));
+			await user.click(screen.getByTestId('panel-type-confirm'));
 
 			expect(scrollTo).not.toHaveBeenCalled();
 			expect(usePanelPickerTargetStore.getState().scrollOrigin).toBeNull();

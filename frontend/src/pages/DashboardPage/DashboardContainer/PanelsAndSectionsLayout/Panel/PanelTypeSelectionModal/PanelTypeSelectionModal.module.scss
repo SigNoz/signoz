@@ -12,22 +12,7 @@
 .footer {
 	display: flex;
 	align-items: center;
+	justify-content: flex-end;
 	gap: 10px;
 	width: 100%;
-}
-
-.summary {
-	display: flex;
-	flex: 1;
-	align-items: center;
-	gap: 8px;
-	min-width: 0;
-	color: var(--l3-foreground);
-	font-size: 12.5px;
-	white-space: nowrap;
-}
-
-.summaryKind {
-	overflow: hidden;
-	text-overflow: ellipsis;
 }
