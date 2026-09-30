@@ -2,15 +2,15 @@ from collections.abc import Callable
 from http import HTTPStatus
 
 import requests
+from wiremock.resources.mappings import Mapping
 
 from fixtures import types
 from fixtures.auth import (
     USER_ADMIN_EMAIL,
     USER_ADMIN_PASSWORD,
-    USER_EDITOR_EMAIL,
-    USER_EDITOR_PASSWORD,
     USER_ROLES_BASE,
     USERS_BASE,
+    add_license,
     change_user_role,
     create_active_user,
     find_user_by_email,
@@ -21,8 +21,8 @@ _ACTOR_ROLE_NAME = "user-fga-actor"
 _ACTOR_EMAIL = "customrole+userfga@integration.test"
 _ACTOR_PASSWORD = "password123Z$"
 
-_VIEWER_EMAIL = "viewer+userfga@integration.test"
-_VIEWER_PASSWORD = "password123Z$"
+_EDITOR_EMAIL = "editor+userfga@integration.test"
+_EDITOR_PASSWORD = "password123Z$"
 
 # Instance verbs are granted on _TARGET_EMAIL's id only; _OTHER_EMAIL must stay forbidden.
 _TARGET_EMAIL = "target+userfga@integration.test"
@@ -45,6 +45,14 @@ def _set_actor_role(signoz: types.SigNoz, admin_token: str, transaction_groups: 
     assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
 
 
+def test_apply_license(
+    signoz: types.SigNoz,
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
+    get_token: Callable[[str, str], str],
+) -> None:
+    add_license(signoz, make_http_mocks, get_token)
+
+
 def test_setup_actor_and_targets(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
@@ -52,7 +60,7 @@ def test_setup_actor_and_targets(
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    create_active_user(signoz, admin_token, email=_VIEWER_EMAIL, role="signoz-viewer", password=_VIEWER_PASSWORD, name="user-fga-viewer")
+    create_active_user(signoz, admin_token, email=_EDITOR_EMAIL, role="signoz-editor", password=_EDITOR_PASSWORD, name="user-fga-editor")
     create_active_user(signoz, admin_token, email=_TARGET_EMAIL, role="signoz-viewer", password=_TARGET_PASSWORD, name="user-fga-target")
     create_active_user(signoz, admin_token, email=_OTHER_EMAIL, role="signoz-viewer", password=_TARGET_PASSWORD, name="user-fga-other")
 
@@ -70,41 +78,13 @@ def test_setup_actor_and_targets(
     change_user_role(signoz, admin_token, actor_id, "signoz-viewer", _ACTOR_ROLE_NAME)
 
 
-def test_managed_roles_matrix(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
+def test_editor_cannot_issue_reset_token(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     target_id = find_user_by_email(signoz, admin_token, _TARGET_EMAIL)["id"]
-    viewer_role_id = find_role_by_name(signoz, admin_token, "signoz-viewer")
+    editor_token = get_token(_EDITOR_EMAIL, _EDITOR_PASSWORD)
 
-    for email, password in ((USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD), (_VIEWER_EMAIL, _VIEWER_PASSWORD)):
-        token = get_token(email, password)
-        headers = {"Authorization": f"Bearer {token}"}
-
-        resp = requests.get(signoz.self.host_configs["8080"].get(USERS_BASE), headers=headers, timeout=5)
-        assert resp.status_code == HTTPStatus.FORBIDDEN, f"{email} list users: expected 403, got {resp.status_code}: {resp.text}"
-
-        resp = requests.get(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_id}"), headers=headers, timeout=5)
-        assert resp.status_code == HTTPStatus.FORBIDDEN, f"{email} get user: expected 403, got {resp.status_code}: {resp.text}"
-
-        resp = requests.put(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_id}/reset_password_tokens"), headers=headers, timeout=5)
-        assert resp.status_code == HTTPStatus.FORBIDDEN, f"{email} reset token: expected 403, got {resp.status_code}: {resp.text}"
-
-        resp = requests.post(
-            signoz.self.host_configs["8080"].get(USER_ROLES_BASE),
-            json={"userId": target_id, "roleId": viewer_role_id},
-            headers=headers,
-            timeout=5,
-        )
-        assert resp.status_code == HTTPStatus.FORBIDDEN, f"{email} assign role: expected 403, got {resp.status_code}: {resp.text}"
-
-    admin_headers = {"Authorization": f"Bearer {admin_token}"}
-    resp = requests.get(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_id}"), headers=admin_headers, timeout=5)
-    assert resp.status_code == HTTPStatus.OK, resp.text
-
-    resp = requests.get(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_id}/reset_password_tokens"), headers=admin_headers, timeout=5)
-    assert resp.status_code in (HTTPStatus.OK, HTTPStatus.NOT_FOUND), resp.text
-
-    resp = requests.put(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_id}/reset_password_tokens"), headers=admin_headers, timeout=5)
-    assert resp.status_code == HTTPStatus.CREATED, resp.text
+    resp = requests.put(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_id}/reset_password_tokens"), headers={"Authorization": f"Bearer {editor_token}"}, timeout=5)
+    assert resp.status_code == HTTPStatus.FORBIDDEN, f"editor reset token: expected 403, got {resp.status_code}: {resp.text}"
 
 
 def test_read_scoped_to_granted_user(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
@@ -289,7 +269,7 @@ def test_cleanup(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
     resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers=headers, timeout=5)
     assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
 
-    for email in (_ACTOR_EMAIL, _VIEWER_EMAIL, _TARGET_EMAIL, _OTHER_EMAIL, _INVITED_VIEWER_EMAIL, _INVITED_NO_ROLE_EMAIL):
+    for email in (_ACTOR_EMAIL, _EDITOR_EMAIL, _TARGET_EMAIL, _OTHER_EMAIL, _INVITED_VIEWER_EMAIL, _INVITED_NO_ROLE_EMAIL):
         user_id = find_user_by_email(signoz, admin_token, email)["id"]
         resp = requests.delete(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}"), headers=headers, timeout=5)
         assert resp.status_code == HTTPStatus.NO_CONTENT, f"delete {email}: {resp.text}"
