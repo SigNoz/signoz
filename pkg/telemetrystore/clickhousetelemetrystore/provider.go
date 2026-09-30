@@ -97,7 +97,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	options.MaxIdleConns = config.Connection.MaxIdleConns
 	options.MaxOpenConns = config.Connection.MaxOpenConns
 	options.DialTimeout = config.Connection.DialTimeout
-	// Decode JSON columns via the flattened native serialization (CH 25.6+); without it clickhouse-go mis-decodes the SharedData layout of JSON(max_dynamic_paths=0) columns and desyncs the native protocol.
+	// Native flattened JSON serialization (CH 25.6+): clickhouse-go mis-decodes JSON(max_dynamic_paths=0) columns without it.
 	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
 
 	chConn, err := clickhouse.Open(options)

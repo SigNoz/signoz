@@ -78,9 +78,6 @@ func TestMergeSpanAttributeColumns_ParsesEventsAndLinks(t *testing.T) {
 	}
 }
 
-// A JSON path (e.g. `body_v2.level`) comes back as a Dynamic column, which the driver scans into a
-// chcol.Variant envelope; a whole JSON column comes back as chcol.JSON. The attributes column decodes
-// flat, every other JSON column nested.
 func TestUnwrapVariant(t *testing.T) {
 	j := chcol.NewJSON()
 	j.SetValueAtPath("level", "error")
@@ -106,8 +103,6 @@ func TestUnwrapVariant(t *testing.T) {
 	}
 }
 
-// labelValue renders a JSON group-by value as a stable, sorted-key string so structurally equal
-// documents share a series.
 func TestLabelValue(t *testing.T) {
 	testCases := []struct {
 		name  string

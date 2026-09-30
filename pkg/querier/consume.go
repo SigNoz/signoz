@@ -39,11 +39,9 @@ func stripKeyAlias(name string) string {
 	return keyAliasRe.ReplaceAllString(name, "")
 }
 
-// unwrapVariant decodes a scan envelope into a plain value: chcol.Variant (a JSON path such as
-// body_v2.level) to its concrete value, and a whole chcol.JSON column to a map[string]any whose
-// chcol.Variant leaves serialize themselves. The attributes bag decodes to flat dotted paths, since
-// its keys merge with the legacy attribute maps and a key stored as both a scalar and an object must
-// stay two keys; every other JSON column decodes to a nested document.
+// unwrapVariant decodes a scan envelope: a chcol.Variant to its value, a chcol.JSON column to a map.
+// The attributes bag decodes flat so its dotted keys merge with the legacy attribute maps and a
+// scalar-and-object key stays two keys; every other JSON column decodes nested.
 func unwrapVariant(name string, val any) any {
 	switch v := val.(type) {
 	case chcol.Variant:
