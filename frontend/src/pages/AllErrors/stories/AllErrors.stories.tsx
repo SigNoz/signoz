@@ -44,7 +44,7 @@ const openQuickFiltersSettings = async (): Promise<void> => {
 	const control = await waitFor(() => {
 		const settings = screen.getByTestId('settings-icon-container');
 
-		expect(settings).toBeEnabled();
+		expect(settings).not.toHaveAttribute('aria-disabled', 'true');
 
 		return settings;
 	}, untilLoaded);
