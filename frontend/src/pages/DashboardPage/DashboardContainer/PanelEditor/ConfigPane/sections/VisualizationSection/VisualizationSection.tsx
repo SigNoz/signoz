@@ -1,14 +1,17 @@
 import { Typography } from '@signozhq/ui/typography';
+import type { DashboardtypesStackModeDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { EQueryType } from 'types/common/dashboard';
 
+import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
 import PanelTypeSwitcher from '../../PanelTypeSwitcher/PanelTypeSwitcher';
 import type { SectionEditorContext } from '../../sectionContext';
+import { STACK_MODE_OPTIONS } from './stackModeOptions';
 import { TIME_PREFERENCE_OPTIONS } from './timePreferenceOptions';
 
 import styles from './VisualizationSection.module.scss';
@@ -21,9 +24,10 @@ type VisualizationSectionProps = SectionEditorProps<SectionKind.Visualization> &
 
 /**
  * Edits the `visualization` slice: the panel-type switcher (`switchPanelKind`, every
- * kind), the per-panel time preference, bar stacking (`stackedBarChart`, Bar only), and
- * gap filling (`fillSpans`, TimeSeries only). Each control is gated by its `controls`
- * flag, so a kind only renders — and only writes — the fields its spec supports.
+ * kind), the per-panel time preference, bar stacking (`stackedBarChart`, Bar only),
+ * area stacking (`stack`, Area only) and gap filling (`fillSpans`). Each control is
+ * gated by its `controls` flag, so a kind only renders — and only writes — the fields
+ * its spec supports.
  */
 function VisualizationSection({
 	value,
@@ -75,6 +79,20 @@ function VisualizationSection({
 						onChange({ ...value, stackedBarChart: checked })
 					}
 				/>
+			)}
+
+			{controls.stackMode && (
+				<div className={styles.field}>
+					<Typography.Text>Stack series</Typography.Text>
+					<ConfigSegmented
+						testId="panel-editor-v2-stack-mode"
+						value={value?.stack}
+						items={STACK_MODE_OPTIONS}
+						onChange={(next): void =>
+							onChange({ ...value, stack: next as DashboardtypesStackModeDTO })
+						}
+					/>
+				</div>
 			)}
 
 			{controls.fillSpans && (

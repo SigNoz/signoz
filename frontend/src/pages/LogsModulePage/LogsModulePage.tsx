@@ -13,8 +13,11 @@ export default function LogsModulePage(): JSX.Element {
 	const routes: TabRoutes[] = [logsExplorer, logsPipelines, logSaveView];
 
 	return (
-		<div className="logs-module-container">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
-		</div>
+		<RouteTab
+			className="logs-module-container"
+			routes={routes}
+			activeKey={pathname}
+			history={history}
+		/>
 	);
 }

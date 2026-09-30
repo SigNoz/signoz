@@ -461,7 +461,7 @@ func TestConditionFor(t *testing.T) {
 			evolutions:    mockEvolution,
 			operator:      qbtypes.FilterOperatorRegexp,
 			value:         "frontend-.*",
-			expectedSQL:   "WHERE (match(`resource_string_service$$name`, ?) AND `resource_string_service$$name_exists`)",
+			expectedSQL:   "WHERE (match(`resource_string_service$$name`, ?) AND `resource_string_service$$name_exists` = true)",
 			expectedArgs:  []any{"frontend-.*"},
 			expectedError: nil,
 		},

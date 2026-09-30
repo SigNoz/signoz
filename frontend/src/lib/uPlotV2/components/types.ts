@@ -145,6 +145,8 @@ export interface LegendProps {
 	/** Legend placement; always supplied by the container. */
 	position: LegendPosition;
 	averageLegendWidth?: number;
+	/** Set by the chart layout, which reserves the height for it. */
+	showSearch?: boolean;
 	/** Series index highlighted by the chart cursor. */
 	focusedSeriesIndex: number | null;
 	onAction: OnLegendAction;
@@ -158,6 +160,7 @@ export interface UPlotLegendProps {
 	position?: LegendPosition;
 	config: UPlotConfigBuilder;
 	averageLegendWidth?: number;
+	showSearch?: boolean;
 }
 
 export interface TooltipContentItem {

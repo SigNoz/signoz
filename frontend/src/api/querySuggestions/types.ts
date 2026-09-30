@@ -1,21 +1,15 @@
 import type {
 	GetAIObservabilityFieldsKeys200,
 	GetAIObservabilityFieldsValues200,
-	GetAIObservabilityFieldsKeysParams,
-	GetAIObservabilityFieldsValuesParams,
 	GetFieldsKeys200,
 	GetFieldsKeysParams,
 	GetFieldsValues200,
 	GetFieldsValuesParams,
 } from 'api/generated/services/sigNoz.schemas';
 
-export type FieldKeysConfig =
-	| GetFieldsKeysParams
-	| GetAIObservabilityFieldsKeysParams;
+export type FieldKeysConfig = GetFieldsKeysParams;
 
-export type FieldValuesConfig =
-	| GetFieldsValuesParams
-	| GetAIObservabilityFieldsValuesParams;
+export type FieldValuesConfig = GetFieldsValuesParams;
 
 export type FieldKeysConfigProp = Omit<
 	FieldKeysConfig,

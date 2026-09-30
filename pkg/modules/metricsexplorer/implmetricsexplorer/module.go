@@ -23,7 +23,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
@@ -390,18 +389,6 @@ func (m *module) GetMetricAlerts(ctx context.Context, orgID valuer.UUID, metricN
 	}, nil
 }
 
-func (m *module) GetMetricDashboards(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardsResponse, error) {
-	if metricName == "" {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
-	}
-	data, err := m.dashboardModule.GetByMetricNames(ctx, orgID, []string{metricName})
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get dashboards for metric")
-	}
-
-	return newMetricDashboardsResponse(data[metricName]), nil
-}
-
 func (m *module) GetMetricDashboardsV2(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardPanelsResponse, error) {
 	if metricName == "" {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
@@ -412,22 +399,6 @@ func (m *module) GetMetricDashboardsV2(ctx context.Context, orgID valuer.UUID, m
 	}
 
 	return metricsexplorertypes.NewMetricDashboardPanelsResponse(data[metricName]), nil
-}
-
-func newMetricDashboardsResponse(dashboardList []dashboardtypes.DashboardPanelRef) *metricsexplorertypes.MetricDashboardsResponse {
-	dashboards := make([]metricsexplorertypes.MetricDashboard, 0, len(dashboardList))
-	for _, item := range dashboardList {
-		dashboards = append(dashboards, metricsexplorertypes.MetricDashboard{
-			DashboardName: item.DashboardName,
-			DashboardID:   item.DashboardID,
-			WidgetID:      item.PanelID,
-			WidgetName:    item.PanelName,
-		})
-	}
-
-	return &metricsexplorertypes.MetricDashboardsResponse{
-		Dashboards: dashboards,
-	}
 }
 
 // GetMetricHighlights returns highlights for a metric including data points, last received, total time series, and active time series.

@@ -1,4 +1,4 @@
-import { OperatorValues } from 'types/reducer/trace';
+import { OperatorValues } from 'hooks/useResourceAttribute/types';
 
 export const OperatorConversions: Array<{
 	label: string;

@@ -218,6 +218,12 @@ func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
 	))
 }
 
+// FieldKeyToMaterializedExistsCondition compares the exists column explicitly: a bare bool
+// column defeats skip-index pruning across OR.
+func FieldKeyToMaterializedExistsCondition(key *TelemetryFieldKey, exists bool) string {
+	return fmt.Sprintf("%s = %t", FieldKeyToMaterializedColumnNameForExists(key), exists)
+}
+
 type TelemetryFieldValues struct {
 	StringValues  []string  `json:"stringValues,omitempty"`
 	BoolValues    []bool    `json:"boolValues,omitempty"`

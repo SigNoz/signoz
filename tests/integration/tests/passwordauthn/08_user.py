@@ -10,6 +10,7 @@ from fixtures.auth import (
     USER_EDITOR_EMAIL,
     USER_EDITOR_PASSWORD,
     assert_user_has_role,
+    create_active_user,
     find_user_by_email,
     find_user_with_roles_by_email,
 )
@@ -185,3 +186,31 @@ def test_editor_cannot_update_other_user(signoz: types.SigNoz, get_token: Callab
         timeout=5,
     )
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_deleted_user_session_is_revoked(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
+    """Verify a deleted user's existing session stops authenticating immediately."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    user_id = create_active_user(signoz, admin_token, "revoked@integration.test", "signoz-viewer", "password123Z$", "revoked")
+    user_token = get_token("revoked@integration.test", "password123Z$")
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
+        headers={"Authorization": f"Bearer {user_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
+        headers={"Authorization": f"Bearer {user_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED

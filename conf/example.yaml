@@ -341,7 +341,7 @@ gateway:
 ##################### Tokenizer #####################
 tokenizer:
   # Specifies the tokenizer provider to use.
-  provider: jwt
+  provider: opaque
   lifetime:
     # The duration for which a user can be idle before being required to authenticate.
     idle: 168h

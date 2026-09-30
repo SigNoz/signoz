@@ -1,19 +1,15 @@
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { type TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
 import { getPanelDefinition } from './registry';
-import {
-	mergeQueryBuilderFieldRule,
-	type FilterConfigsPartial,
-} from './types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from './types/panelDefinition';
 import type { PanelKind } from './types/panelKind';
 
 /**
  * The single deterministic guard for V2 dashboards. Every "what works with what"
- * question — panel kind × query type × signal, and which query-builder fields a kind
- * hides — is answered here by reading each kind's declared capabilities from the panel
- * registry. Adding a new kind means declaring its capabilities once in its definition;
+ * question — panel kind × query type × signal — is answered here by reading each kind's
+ * declared capabilities from the panel registry. Adding a new kind means declaring its
+ * capabilities once in its definition;
  * these functions then cover it automatically. Pure and side-effect free.
  */
 
@@ -121,17 +117,4 @@ export function resolveQueryType(
 	}
 	// A query-less kind has no supported types; the builder is the neutral answer.
 	return supported[0] ?? EQueryType.QUERY_BUILDER;
-}
-
-/**
- * Query-builder field visibility for a kind + signal: the kind's `default` rule with
- * its per-signal overrides merged over it (signal wins). `{}` when the kind hides
- * nothing, i.e. the builder shows every field.
- */
-export function getHiddenQueryBuilderFields(
-	kind: PanelKind,
-	signal: TelemetrytypesSignalDTO,
-): FilterConfigsPartial {
-	const rule = getQueryPanelDefinition(kind)?.queryBuilderFields ?? {};
-	return mergeQueryBuilderFieldRule(rule, signal);
 }

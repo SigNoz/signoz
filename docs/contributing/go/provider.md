@@ -17,7 +17,7 @@ For example, the [prometheus](/pkg/prometheus) provider delivers a prometheus en
 
 - `pkg/prometheus/prometheus.go` - Interface definition
 - `pkg/prometheus/config.go` - Configuration
-- `pkg/prometheus/clickhouseprometheus/provider.go` - Clickhouse-powered implementation
+- `pkg/prometheus/clickhouseprometheusv2/provider.go` - Clickhouse-powered implementation
 - `pkg/prometheus/prometheustest/provider.go` - Mock implementation
 
 ## How to wire it up?

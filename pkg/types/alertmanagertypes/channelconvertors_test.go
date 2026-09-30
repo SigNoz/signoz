@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
@@ -19,8 +18,9 @@ import (
 // field fails rather than going unasserted. Webhook is covered by
 // TestPostableChannelToReceiverRoundTripsWebhookAuthModes, whose auth modes are
 // mutually exclusive and so cannot all be set at once.
-func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
+func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 	sendResolved := true
+	short := true
 
 	testCases := []struct {
 		description       string
@@ -37,6 +37,16 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Channel:      "#alerts",
 				Title:        valuer.MustNewUnsetOrNonEmptyString("slack title"),
 				Text:         valuer.MustNewUnsetOrNonEmptyString("slack text"),
+				Color:        valuer.MustNewUnsetOrNonEmptyString("#439FE0"),
+				TitleLink:    valuer.MustNewUnsetOrNonEmptyString("{{ .CommonLabels.ruleSource }}"),
+				Pretext:      valuer.MustNewUnsetOrNonEmptyString("slack pretext"),
+				Fallback:     valuer.MustNewUnsetOrNonEmptyString("slack fallback"),
+				Footer:       valuer.MustNewUnsetOrNonEmptyString("slack footer"),
+				Fields:       []ChannelSlackField{{Title: "Severity", Value: "{{ .CommonLabels.severity }}", Short: &short}},
+				Actions: []ChannelSlackAction{
+					{Type: "button", Text: "Open in SigNoz", URL: "{{ .CommonLabels.ruleSource }}", Style: "primary"},
+					{Type: "button", Text: "Acknowledge", Name: "ack", Value: "ack", Confirm: &ChannelSlackConfirmation{Text: "Acknowledge this alert?", Title: "Confirm", OkText: "Yes", DismissText: "No"}},
+				},
 			},
 			expectedRoundTrip: &ChannelSlackConfig{
 				SendResolved: &sendResolved,
@@ -44,6 +54,16 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Channel:      "#alerts",
 				Title:        valuer.MustNewUnsetOrNonEmptyString("slack title"),
 				Text:         valuer.MustNewUnsetOrNonEmptyString("slack text"),
+				Color:        valuer.MustNewUnsetOrNonEmptyString("#439FE0"),
+				TitleLink:    valuer.MustNewUnsetOrNonEmptyString("{{ .CommonLabels.ruleSource }}"),
+				Pretext:      valuer.MustNewUnsetOrNonEmptyString("slack pretext"),
+				Fallback:     valuer.MustNewUnsetOrNonEmptyString("slack fallback"),
+				Footer:       valuer.MustNewUnsetOrNonEmptyString("slack footer"),
+				Fields:       []ChannelSlackField{{Title: "Severity", Value: "{{ .CommonLabels.severity }}", Short: &short}},
+				Actions: []ChannelSlackAction{
+					{Type: "button", Text: "Open in SigNoz", URL: "{{ .CommonLabels.ruleSource }}", Style: "primary"},
+					{Type: "button", Text: "Acknowledge", Name: "ack", Value: "ack", Confirm: &ChannelSlackConfirmation{Text: "Acknowledge this alert?", Title: "Confirm", OkText: "Yes", DismissText: "No"}},
+				},
 			},
 		},
 		{
@@ -249,18 +269,14 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			}
 			require.NoError(t, postable.Validate())
 
-			receiver, err := postable.ToReceiver()
+			channel, _, err := postable.ToChannel("org-1")
 			require.NoError(t, err)
 
-			channel, err := NewChannelFromReceiverWithName(receiver, postable.Name, "org-1")
+			derived, err := channel.deriveChannelConfig()
 			require.NoError(t, err)
 
-			roundTripped, err := channel.toPostableNotificationChannel()
-			require.NoError(t, err)
-
-			assert.Equal(t, postable.Name, roundTripped.Name)
-			assert.Equal(t, testCase.kind, roundTripped.Config.Kind)
-			assert.Equal(t, testCase.expectedRoundTrip, roundTripped.Config.Spec)
+			assert.Equal(t, testCase.kind, derived.Kind)
+			assert.Equal(t, testCase.expectedRoundTrip, derived.Spec)
 		})
 	}
 }
@@ -278,10 +294,7 @@ func TestPostableChannelToReceiverOmitsEmailTransportCredentials(t *testing.T) {
 		},
 	}
 
-	receiver, err := postable.ToReceiver()
-	require.NoError(t, err)
-
-	channel, err := NewChannelFromReceiverWithName(receiver, postable.Name, "org-1")
+	channel, _, err := postable.ToChannel("org-1")
 	require.NoError(t, err)
 
 	for _, credentialKey := range []string{"auth_username", "auth_password", "auth_secret", "tls_config"} {
@@ -333,38 +346,15 @@ func TestPostableChannelToReceiverRoundTripsWebhookAuthModes(t *testing.T) {
 			}
 			require.NoError(t, postable.Validate())
 
-			receiver, err := postable.ToReceiver()
-			require.NoError(t, err)
-
-			channel, err := NewChannelFromReceiverWithName(receiver, postable.Name, "org-1")
+			channel, _, err := postable.ToChannel("org-1")
 			require.NoError(t, err)
 			assert.Contains(t, channel.Data, testCase.expectedInData)
 
-			roundTripped, err := channel.toPostableNotificationChannel()
+			derived, err := channel.deriveChannelConfig()
 			require.NoError(t, err)
-			assert.Equal(t, testCase.expectedRoundTrip, roundTripped.Config.Spec)
+			assert.Equal(t, testCase.expectedRoundTrip, derived.Spec)
 		})
 	}
-}
-
-// The SigNoz notifiers validate in their UnmarshalYAML, which ToReceiver reaches
-// only through the defaulting round-trip. A spec that passes Validate can still
-// be rejected there, and the request has to fail as invalid input rather than as
-// an internal error.
-func TestPostableChannelToReceiverReportsNotifierValidationAsInvalidInput(t *testing.T) {
-	postable := PostableNotificationChannel{
-		Name:        "channel",
-		DisplayName: "channel",
-		Config: ChannelConfig{Kind: ChannelKindIncidentIO, Spec: &ChannelIncidentIOConfig{
-			URL: "https://api.incident.io/v2/incidents", Token: "token",
-			Title: valuer.MustNewUnsetOrNonEmptyString("incidentio title"), Description: valuer.MustNewUnsetOrNonEmptyString("incidentio description"),
-		}},
-	}
-	require.NoError(t, postable.Validate())
-
-	_, err := postable.ToReceiver()
-	require.Error(t, err)
-	assert.True(t, errors.Ast(err, errors.TypeInvalidInput), "got %v", err)
 }
 
 // rejectUnsupportedHTTPConfig enumerates the fields it rejects, so one added
@@ -375,7 +365,7 @@ func TestRejectUnrepresentableHTTPConfigCoversEveryUpstreamMember(t *testing.T) 
 	assert.Equal(t, 5, reflect.TypeFor[commoncfg.ProxyConfig]().NumField())
 }
 
-func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
+func TestDeriveChannelConfigRejectsUnrepresentableChannels(t *testing.T) {
 	testCases := []struct {
 		description string
 		channel     Channel
@@ -537,7 +527,7 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			_, err := testCase.channel.toPostableNotificationChannel()
+			_, err := testCase.channel.deriveChannelConfig()
 			assert.Error(t, err)
 		})
 	}
@@ -545,7 +535,7 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 
 // The HTTP auth scheme is case-insensitive (RFC 7235) and Alertmanager sends
 // the stored spelling verbatim, so a hand-written receiver may carry any casing.
-func TestChannelToPostableChannelReadsWebhookBearerSchemeCaseInsensitively(t *testing.T) {
+func TestDeriveChannelConfigReadsWebhookBearerSchemeCaseInsensitively(t *testing.T) {
 	sendResolved := config.DefaultWebhookConfig.VSendResolved
 
 	testCases := []struct {
@@ -574,10 +564,10 @@ func TestChannelToPostableChannelReadsWebhookBearerSchemeCaseInsensitively(t *te
 		t.Run(testCase.name, func(t *testing.T) {
 			channel := Channel{DisplayName: "hook", Data: testCase.storedChannelData}
 
-			postable, err := channel.toPostableNotificationChannel()
+			derived, err := channel.deriveChannelConfig()
 			require.NoError(t, err)
-			assert.Equal(t, ChannelKindWebhook, postable.Config.Kind)
-			assert.Equal(t, testCase.expectedWebhookSpec, postable.Config.Spec)
+			assert.Equal(t, ChannelKindWebhook, derived.Kind)
+			assert.Equal(t, testCase.expectedWebhookSpec, derived.Spec)
 		})
 	}
 }

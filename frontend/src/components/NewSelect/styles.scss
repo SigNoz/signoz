@@ -258,6 +258,10 @@ $custom-border-color: #2c3044;
 		overflow: hidden;
 
 		.group-label {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+
 			font-weight: 500;
 			padding: 4px 12px;
 			font-size: 13px;
@@ -442,7 +446,7 @@ $custom-border-color: #2c3044;
 		.group-label {
 			display: flex;
 			align-items: center;
-			justify-content: space-between;
+			gap: 4px;
 
 			font-weight: 500;
 			padding: 4px 12px;

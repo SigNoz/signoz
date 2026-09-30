@@ -12,11 +12,12 @@ cd frontend && pnpm storybook --ci --quiet   # :6006, background it
 A newly added `.stories.tsx` takes a few seconds to appear in `index.json` on an
 already-running server; an empty first poll is not a broken `stories` glob.
 
-Story ids come from the meta title: `Pages/Services` → `pages-services`, plus the
-story export in kebab-case. Render one story on its own:
+Story ids come from the meta title: `Pages/Services/List` →
+`pages-services-list`, plus the story export in kebab-case. Render one story on
+its own:
 
 ```
-http://localhost:6006/iframe.html?id=pages-services--default&viewMode=story
+http://localhost:6006/iframe.html?id=pages-services-list--default&viewMode=story
 ```
 
 ## Flip controls from the URL

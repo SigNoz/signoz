@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { render, screen } from '@testing-library/react';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
@@ -146,9 +147,11 @@ function renderExplorer(): void {
 		<QueryClientProvider client={queryClient}>
 			<MemoryRouter>
 				<Provider store={store}>
-					<ErrorModalProvider>
-						<Explorer />
-					</ErrorModalProvider>
+					<TooltipProvider>
+						<ErrorModalProvider>
+							<Explorer />
+						</ErrorModalProvider>
+					</TooltipProvider>
 				</Provider>
 			</MemoryRouter>
 		</QueryClientProvider>,

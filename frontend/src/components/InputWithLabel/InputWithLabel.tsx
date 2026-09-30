@@ -17,6 +17,7 @@ function InputWithLabel({
 	onChange,
 	className,
 	closeIcon,
+	disabled,
 }: {
 	label: string;
 	initialValue?: string | number | null;
@@ -27,6 +28,7 @@ function InputWithLabel({
 	onChange: (value: string) => void;
 	className?: string;
 	closeIcon?: React.ReactNode;
+	disabled?: boolean;
 }): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>(
 		initialValue ? initialValue.toString() : '',
@@ -53,6 +55,7 @@ function InputWithLabel({
 				type={type}
 				value={inputValue}
 				onChange={handleChange}
+				disabled={disabled}
 				name={label.toLowerCase()}
 				data-testid={`input-${label}`}
 			/>

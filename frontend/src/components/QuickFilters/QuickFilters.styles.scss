@@ -2,6 +2,8 @@
 	display: flex;
 	flex-direction: row;
 	position: relative;
+	flex: 1;
+	min-height: 0;
 
 	.quick-filters-settings-container {
 		flex: 0 0 0;
