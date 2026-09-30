@@ -91,16 +91,10 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "array paths can not be promoted or indexed")
 	}
 
-	if strings.HasPrefix(i.Path, target.BaseColumnPrefix()) || strings.HasPrefix(i.Path, target.PromotedColumnPrefix()) {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "`%s`, `%s` don't add these prefixes to the path", target.BaseColumnPrefix(), target.PromotedColumnPrefix())
-	}
-
-	if target.RequiredPathPrefix != "" {
-		if !strings.HasPrefix(i.Path, target.RequiredPathPrefix) {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must start with `%s`", target.RequiredPathPrefix)
+	for _, prefix := range target.RejectedPathPrefixes() {
+		if strings.HasPrefix(i.Path, prefix) {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must be a bare attribute name, without the `%s` prefix", prefix)
 		}
-		// remove the required prefix from the path
-		i.Path = strings.TrimPrefix(i.Path, target.RequiredPathPrefix)
 	}
 
 	isCardinal := keycheck.IsCardinal(i.Path)

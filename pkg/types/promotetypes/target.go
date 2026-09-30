@@ -1,6 +1,11 @@
 package promotetypes
 
 import (
+	"fmt"
+	"strings"
+
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
@@ -11,12 +16,11 @@ import (
 // per promoted path, the table per-path indexes are created on, and the API
 // path rules.
 type Target struct {
-	Entry              telemetrytypes.EvolutionEntry // evolution row template; FieldName and ReleaseTime are set per write
-	DBName             string                        // index DDL database, used only when IndexesSupported
-	LocalTableName     string                        // index DDL local table, used only when IndexesSupported
-	BaseColumn         string                        // column holding every path; indexes for unpromoted paths are created on it
-	RequiredPathPrefix string                        // prefix API paths must carry, stripped before storing; empty for bare names
-	IndexesSupported   bool                          // whether per-path skip indexes can be created for this domain
+	Entry            telemetrytypes.EvolutionEntry // evolution row template; FieldName and ReleaseTime are set per write
+	DBName           string                        // index DDL database, used only when IndexesSupported
+	LocalTableName   string                        // index DDL local table, used only when IndexesSupported
+	BaseColumn       string                        // column holding every path; indexes for unpromoted paths are created on it
+	IndexesSupported bool                          // whether per-path skip indexes can be created for this domain
 }
 
 func (t Target) PromotedColumn() string { return t.Entry.ColumnName }
@@ -25,15 +29,67 @@ func (t Target) BaseColumnPrefix() string { return t.BaseColumn + "." }
 
 func (t Target) PromotedColumnPrefix() string { return t.PromotedColumn() + "." }
 
+// RejectedPathPrefixes lists the prefixes API paths must not carry: the
+// column prefixes of the domain, and for logs body the legacy `body.` context
+// prefix (the context is already named by the API URL).
+func (t Target) RejectedPathPrefixes() []string {
+	switch t.Entry.Signal {
+	case telemetrytypes.SignalLogs:
+		return []string{telemetrytypes.BodyJSONStringSearchPrefix, t.BaseColumnPrefix(), t.PromotedColumnPrefix()}
+	default:
+		return []string{t.BaseColumnPrefix(), t.PromotedColumnPrefix()}
+	}
+}
+
+// IndexExpression renders the skip-index expression for a path of the given
+// parent column. Logs indexes fold strings to lower case over assumeNotNull
+// for case-insensitive LIKE searches; traces indexes are a bare JSON type
+// cast.
+func (t Target) IndexExpression(column, path, jsonDataType string) string {
+	switch t.Entry.Signal {
+	case telemetrytypes.SignalLogs:
+		return schemamigrator.JSONSubColumnIndexExpr(column, path, jsonDataType)
+	default:
+		return simpleJSONSubColumnIndexExpr(column, path, jsonDataType)
+	}
+}
+
+// simpleJSONSubColumnIndexExpr renders `column.path::Type`: a bare type cast
+// of the JSON sub-column. The cast unwraps the Nullable the sub-column access
+// returns, which bloom filter indexes reject. Path segments that need it are
+// backticked.
+func simpleJSONSubColumnIndexExpr(column, path, jsonDataType string) string {
+	parts := strings.Split(column+"."+path, ".")
+	for idx, part := range parts {
+		if keycheck.IsBacktickRequired(part) {
+			part := strings.Trim(part, "`") // trim if already present
+			parts[idx] = "`" + part + "`"
+		}
+	}
+	return fmt.Sprintf("%s::%s", strings.Join(parts, "."), jsonDataType)
+}
+
+// IndexSource returns the table and column facts used to list the per-path
+// skip indexes of this domain.
+func (t Target) IndexSource() telemetrytypes.JSONIndexSource {
+	return telemetrytypes.JSONIndexSource{
+		Signal:               t.Entry.Signal,
+		FieldContext:         t.Entry.FieldContext,
+		DBName:               t.DBName,
+		LocalTableName:       t.LocalTableName,
+		BaseColumnPrefix:     t.BaseColumnPrefix(),
+		PromotedColumnPrefix: t.PromotedColumnPrefix(),
+	}
+}
+
 // NewTarget creates the Target for a promotion domain.
-func NewTarget(entry telemetrytypes.EvolutionEntry, dbName, localTableName, baseColumn, requiredPathPrefix string, indexesSupported bool) Target {
+func NewTarget(entry telemetrytypes.EvolutionEntry, dbName, localTableName, baseColumn string, indexesSupported bool) Target {
 	return Target{
-		Entry:              entry,
-		DBName:             dbName,
-		LocalTableName:     localTableName,
-		BaseColumn:         baseColumn,
-		RequiredPathPrefix: requiredPathPrefix,
-		IndexesSupported:   indexesSupported,
+		Entry:            entry,
+		DBName:           dbName,
+		LocalTableName:   localTableName,
+		BaseColumn:       baseColumn,
+		IndexesSupported: indexesSupported,
 	}
 }
 
@@ -50,13 +106,13 @@ func NewLogsBodyTarget() Target {
 		logstelemetryschema.DBName,
 		logstelemetryschema.LogsV2LocalTableName,
 		logstelemetryschema.LogsV2BodyV2Column,
-		telemetrytypes.BodyJSONStringSearchPrefix,
 		true,
 	)
 }
 
 // NewTracesAttributesTarget returns the domain for the spans attributes JSON
-// column (attributes -> attributes_promoted); promotion only for now.
+// column (attributes -> attributes_promoted), with per-path skip index
+// support.
 func NewTracesAttributesTarget() Target {
 	return NewTarget(
 		telemetrytypes.EvolutionEntry{
@@ -68,8 +124,7 @@ func NewTracesAttributesTarget() Target {
 		tracestelemetryschema.DBName,
 		tracestelemetryschema.SpanIndexV3LocalTableName,
 		tracestelemetryschema.SpanAttributesColumn,
-		"",
-		false,
+		true,
 	)
 }
 
