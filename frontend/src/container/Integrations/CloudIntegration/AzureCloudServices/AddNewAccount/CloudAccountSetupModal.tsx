@@ -138,6 +138,7 @@ function CloudAccountSetupModal({
 		<div className="cloud-account-setup-modal__footer">
 			{modalState === ModalStateEnum.FORM && (
 				<Button
+					size="md"
 					variant="solid"
 					color="primary"
 					prefix={<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />}
@@ -219,11 +220,15 @@ function CloudAccountSetupModal({
 						}`}
 					>
 						<Button
+							size="md"
 							variant="link"
 							color="secondary"
+							icon
+							aria-label="How it works"
 							onClick={(): void => setIsHowItWorksOpen(!isHowItWorksOpen)}
-							prefix={isHowItWorksOpen ? <ChevronDown /> : <ChevronRight />}
-						/>
+						>
+							{isHowItWorksOpen ? <ChevronDown /> : <ChevronRight />}
+						</Button>
 
 						<span className="cloud-account-setup-how-it-works-accordion__title-text">
 							How it works?
@@ -321,6 +326,8 @@ function CloudAccountSetupModal({
 									</div>
 								</div>
 								<Tabs
+									orientation="horizontal"
+									alignment="start"
 									className="cloud-account-setup-form__code-block-tabs"
 									items={[
 										{

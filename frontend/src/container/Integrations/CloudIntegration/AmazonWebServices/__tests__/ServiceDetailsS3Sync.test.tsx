@@ -109,7 +109,10 @@ describe('ServiceDetails for S3 Sync service', () => {
 
 		await waitFor(() => {
 			expect(screen.getByLabelText(newBucketName)).toBeInTheDocument();
-			expect(screen.getByRole('button', { name: /save/i })).toBeEnabled();
+			expect(screen.getByRole('button', { name: /save/i })).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -141,7 +144,10 @@ describe('ServiceDetails for S3 Sync service', () => {
 
 		await waitFor(() => {
 			expect(screen.getByLabelText(newBucketName)).toBeInTheDocument();
-			expect(screen.getByRole('button', { name: /save/i })).toBeEnabled();
+			expect(screen.getByRole('button', { name: /save/i })).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
