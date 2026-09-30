@@ -12,7 +12,6 @@ import (
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -36,8 +35,8 @@ func (handler *handler) CreateUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, err := coretypes.BodyFromContext[authtypes.PostableUser](r.Context())
-	if err != nil {
+	req := new(authtypes.PostableUser)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -426,8 +425,8 @@ func (handler *handler) CreateUserRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, err := coretypes.BodyFromContext[authtypes.PostableUserRole](r.Context())
-	if err != nil {
+	req := new(authtypes.PostableUserRole)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(w, err)
 		return
 	}

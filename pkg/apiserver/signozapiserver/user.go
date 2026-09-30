@@ -107,16 +107,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
 				SourceSelector: coretypes.WildcardSelector,
 				TargetResource: coretypes.ResourceRole,
-				TargetIDs: coretypes.BodyFields(func(req *authtypes.PostableUser) []string {
-					roleIDs := make([]string, 0, len(req.UserRoles))
-					for _, userRole := range req.UserRoles {
-						if userRole == nil {
-							continue
-						}
-						roleIDs = append(roleIDs, userRole.ID.StringValue())
-					}
-					return roleIDs
-				}),
+				TargetIDs:      coretypes.BodyJSONArray("userRoles.#.id"),
 				TargetSelector: provider.roleSelector,
 			},
 		),
@@ -432,20 +423,10 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			Verb:           coretypes.VerbAttach,
 			Category:       coretypes.ActionCategoryAccessControl,
 			SourceResource: coretypes.ResourceUser,
-			SourceIDs: coretypes.OneID(coretypes.BodyField(func(req *authtypes.PostableUserRole) string {
-				if req.UserID.IsZero() {
-					return ""
-				}
-				return req.UserID.StringValue()
-			})),
+			SourceIDs:      coretypes.OneID(coretypes.BodyJSONPath("userId")),
 			SourceSelector: coretypes.IDSelector,
 			TargetResource: coretypes.ResourceRole,
-			TargetIDs: coretypes.OneID(coretypes.BodyField(func(req *authtypes.PostableUserRole) string {
-				if req.RoleID.IsZero() {
-					return ""
-				}
-				return req.RoleID.StringValue()
-			})),
+			TargetIDs:      coretypes.OneID(coretypes.BodyJSONPath("roleId")),
 			TargetSelector: provider.roleSelector,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
