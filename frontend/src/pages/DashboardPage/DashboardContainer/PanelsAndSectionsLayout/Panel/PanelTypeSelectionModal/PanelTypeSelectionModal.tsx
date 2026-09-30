@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 
 import { useDashboardSections } from '../../../hooks/useDashboardSections';
 import { releasePanelPickerTarget } from '../../../store/usePanelPickerTargetStore';
-import { getPanelDefinition } from '../../../Panels/registry';
 import type { NewPanelTarget } from '../../../patchOps';
 import type { PanelKind } from '../../../Panels/types/panelKind';
+import AddPanelSplitButton from './AddPanelSplitButton';
+import NewSectionNameInput from './NewSectionNameInput';
 import PanelTypeBrowser from './PanelTypeBrowser';
-import SectionTarget from './SectionTarget';
 import { usePanelPickerDraftSection } from './usePanelPickerDraftSection';
 import { usePanelPickerTarget } from './usePanelPickerTarget';
 import { buildSectionOptions, resolveDefaultSectionValue } from './utils';
@@ -50,7 +49,8 @@ function PanelTypeSelectionModal({
 		}
 	}, [open, options, defaultLayoutIndex]);
 
-	const selectedTarget = options.find((o) => o.value === selectedValue)?.target;
+	const selectedOption = options.find((o) => o.value === selectedValue);
+	const selectedTarget = selectedOption?.target;
 	const selectedLayoutIndex =
 		selectedTarget?.type === 'section' ? selectedTarget.layoutIndex : undefined;
 	usePanelPickerTarget({
@@ -81,7 +81,17 @@ function PanelTypeSelectionModal({
 		);
 	};
 
-	const selectedName = getPanelDefinition(selectedKind).displayName;
+	const handleSectionChange = (value: string): void => {
+		setSelectedValue(value);
+		setNewSectionTitle(null);
+	};
+
+	let confirmLabel = 'Add panel';
+	if (isCreatingSection) {
+		confirmLabel = 'Add to new section';
+	} else if (hasSectionPicker && selectedOption) {
+		confirmLabel = `Add to ${selectedOption.label}`;
+	}
 
 	return (
 		<DrawerWrapper
@@ -99,17 +109,14 @@ function PanelTypeSelectionModal({
 			drawerDescriptionProps={{ className: styles.body }}
 			footer={
 				<div className={styles.footer}>
-					<span className={styles.summary}>
-						<span className={styles.summaryKind}>{selectedName}</span>
-						<SectionTarget
-							options={options}
-							value={selectedValue}
-							onChange={setSelectedValue}
-							newSectionTitle={newSectionTitle}
-							onNewSectionTitleChange={setNewSectionTitle}
+					{isCreatingSection && (
+						<NewSectionNameInput
+							value={newSectionTitle}
+							onChange={setNewSectionTitle}
+							onCancel={(): void => setNewSectionTitle(null)}
 							onSubmit={handleConfirm}
 						/>
-					</span>
+					)}
 					<Button
 						variant="outlined"
 						color="secondary"
@@ -118,16 +125,15 @@ function PanelTypeSelectionModal({
 					>
 						Cancel
 					</Button>
-					<Button
-						color="primary"
-						size="md"
-						prefix={<Plus size={16} />}
-						onClick={handleConfirm}
+					<AddPanelSplitButton
+						label={confirmLabel}
+						options={options}
+						value={isCreatingSection ? null : selectedValue}
+						onChange={handleSectionChange}
+						onCreate={(): void => setNewSectionTitle('')}
+						onConfirm={handleConfirm}
 						disabled={isCreatingSection && !sectionTitle}
-						testId="panel-type-confirm"
-					>
-						Add panel
-					</Button>
+					/>
 				</div>
 			}
 		>
