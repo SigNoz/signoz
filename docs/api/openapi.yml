@@ -26233,10 +26233,8 @@ paths:
       security:
       - api_key:
         - factor-password:list
-        - user:read
       - tokenizer:
         - factor-password:list
-        - user:read
       summary: Get reset password token for a user
       tags:
       - users
