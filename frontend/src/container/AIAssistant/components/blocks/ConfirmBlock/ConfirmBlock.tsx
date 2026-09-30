@@ -83,16 +83,22 @@ export default function ConfirmBlock({
 		<div className={blockStyles.block}>
 			{message && <p className={styles.message}>{message}</p>}
 			<div className={styles.actions}>
-				<Button variant="solid" size="sm" onClick={(): void => handle('accepted')}>
-					<Check size={12} />
+				<Button
+					color="primary"
+					variant="solid"
+					size="sm"
+					onClick={(): void => handle('accepted')}
+					prefix={<Check size={12} />}
+				>
 					{acceptLabel}
 				</Button>
 				<Button
+					color="secondary"
 					variant="outlined"
 					size="sm"
 					onClick={(): void => handle('rejected')}
+					prefix={<X size={12} />}
 				>
-					<X size={12} />
 					{rejectLabel}
 				</Button>
 			</div>
