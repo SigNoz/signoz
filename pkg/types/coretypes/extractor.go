@@ -100,7 +100,7 @@ func OneID(extractor ResourceIDExtractor) ResourceIDsExtractor {
 
 	return ResourceIDsExtractor{Phase: extractor.Phase, RequiresBody: extractor.RequiresBody, Fn: func(ec ExtractorContext) ([]string, error) {
 		id, err := extractor.Fn(ec)
-		if err != nil || id == "" {
+		if err != nil {
 			return nil, err
 		}
 		return []string{id}, nil

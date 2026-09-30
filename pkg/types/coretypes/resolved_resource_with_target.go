@@ -12,6 +12,7 @@ type resolvedResourceWithTarget struct {
 	targetExtractor ResourceIDsExtractor
 	targetIDs       []string
 	parentChild     bool
+	noLinks         bool
 	err             error
 }
 
@@ -44,29 +45,40 @@ func NewResolvedResourceWithTarget(
 }
 
 func (resolved *resolvedResourceWithTarget) fill(phase ExtractPhase, ec ExtractorContext) {
-	if resolved.sourceExtractor.IsPhase(phase) {
-		ids, err := resolved.sourceExtractor.Fn(ec)
-		if err != nil && phase == PhaseRequest {
-			resolved.err = err
-			return
-		}
-
-		if len(ids) > 0 {
-			resolved.sourceIDs = ids
-		}
+	if err := resolved.fillSide(phase, ec, resolved.sourceExtractor, &resolved.sourceIDs); err != nil {
+		resolved.err = err
+		return
 	}
 
-	if resolved.targetExtractor.IsPhase(phase) {
-		ids, err := resolved.targetExtractor.Fn(ec)
-		if err != nil && phase == PhaseRequest {
-			resolved.err = err
-			return
+	if err := resolved.fillSide(phase, ec, resolved.targetExtractor, &resolved.targetIDs); err != nil {
+		resolved.err = err
+	}
+}
+
+func (resolved *resolvedResourceWithTarget) fillSide(phase ExtractPhase, ec ExtractorContext, extractor ResourceIDsExtractor, ids *[]string) error {
+	if !extractor.IsPhase(phase) {
+		return nil
+	}
+
+	extracted, err := extractor.Fn(ec)
+	if err != nil {
+		if phase == PhaseRequest {
+			return err
 		}
 
-		if len(ids) > 0 {
-			resolved.targetIDs = ids
-		}
+		return nil
 	}
+
+	if len(extracted) == 0 {
+		if phase == PhaseRequest {
+			resolved.noLinks = true
+		}
+
+		return nil
+	}
+
+	*ids = extracted
+	return nil
 }
 
 func (resolved *resolvedResourceWithTarget) Err() error {
@@ -115,6 +127,10 @@ func (resolved *resolvedResourceWithTarget) TargetSelector() SelectorFunc {
 
 func (resolved *resolvedResourceWithTarget) IsParentChild() bool {
 	return resolved.parentChild
+}
+
+func (resolved *resolvedResourceWithTarget) HasNoLinks() bool {
+	return resolved.noLinks
 }
 
 func (resolved *resolvedResourceWithTarget) ResolveResponse(ec ExtractorContext) {

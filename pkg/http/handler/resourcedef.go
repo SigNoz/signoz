@@ -72,20 +72,23 @@ type AttachDetachSiblingResourceDef struct {
 }
 
 func (def AttachDetachSiblingResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
-	return []coretypes.ResolvedResource{
-		coretypes.NewResolvedResourceWithTarget(
-			def.Verb,
-			def.Category,
-			def.SourceResource,
-			def.SourceIDs,
-			def.SourceSelector,
-			def.TargetResource,
-			def.TargetIDs,
-			def.TargetSelector,
-			false,
-			ec,
-		),
+	resolved := coretypes.NewResolvedResourceWithTarget(
+		def.Verb,
+		def.Category,
+		def.SourceResource,
+		def.SourceIDs,
+		def.SourceSelector,
+		def.TargetResource,
+		def.TargetIDs,
+		def.TargetSelector,
+		false,
+		ec,
+	)
+	if resolved.HasNoLinks() {
+		return nil
 	}
+
+	return []coretypes.ResolvedResource{resolved}
 }
 
 func (def AttachDetachSiblingResourceDef) requiresBody() bool {
