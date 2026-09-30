@@ -96,7 +96,10 @@ describe('CreateAlertButton', () => {
 	it('is disabled and does nothing without a query', async () => {
 		await clickCreateAlert(null, DataSource.LOGS, PANEL_TYPES.LIST);
 
-		expect(screen.getByTestId('explorer-create-alert')).toBeDisabled();
+		expect(screen.getByTestId('explorer-create-alert')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 		expect(mockPush).not.toHaveBeenCalled();
 	});
 

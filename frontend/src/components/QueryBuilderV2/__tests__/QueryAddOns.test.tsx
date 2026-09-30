@@ -303,6 +303,29 @@ describe('QueryAddOns', () => {
 		);
 	});
 
+	it('closes the only open add-on when its tab is clicked again', async () => {
+		const user = userEvent.setup();
+
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isRawQuery={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		const legendTab = screen.getByTestId('query-add-on-legend_format');
+		await user.click(legendTab);
+		expect(screen.getByTestId('legend-format-content')).toBeInTheDocument();
+
+		await user.click(legendTab);
+		expect(screen.queryByTestId('legend-format-content')).not.toBeInTheDocument();
+	});
+
 	it('does not override existing legend when enabling Legend format', async () => {
 		const user = userEvent.setup();
 		const query = baseQuery({
