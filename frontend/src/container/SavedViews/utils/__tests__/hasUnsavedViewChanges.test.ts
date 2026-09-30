@@ -204,6 +204,42 @@ describe('hasUnsavedViewChanges', () => {
 		});
 	});
 
+	it('ignores fields the save path never writes, kept by older views', () => {
+		const metricsView = viewFrom(
+			toSavedViewSpec({
+				query: query(DataSource.METRICS, ''),
+				panelType: PANEL_TYPES.TIME_SERIES,
+				displayName: 'Old metrics view',
+			}),
+		);
+		const [storedQuery] = metricsView.spec.queries;
+		const olderView = {
+			...metricsView,
+			spec: {
+				...metricsView.spec,
+				queries: [
+					{
+						...storedQuery,
+						spec: {
+							...storedQuery.spec,
+							aggregations: [
+								{ metricName: 'erlang_vm_msacc_sleep_seconds_total', reduceTo: 'avg' },
+							],
+						},
+					},
+				],
+			},
+		} as SavedviewtypesSavedViewDTO;
+
+		expect(
+			hasUnsavedViewChanges({
+				view: olderView,
+				stagedQuery: stagedFrom(olderView, DataSource.METRICS),
+				panelType: PANEL_TYPES.TIME_SERIES,
+			}),
+		).toBe(false);
+	});
+
 	it('ignores formatting on traces', () => {
 		expect(
 			hasUnsavedViewChanges({
