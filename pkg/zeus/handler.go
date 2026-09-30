@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -95,8 +94,8 @@ func (h *handler) PutHost(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, err := coretypes.BodyFromContext[zeustypes.PostableHost](r.Context())
-	if err != nil {
+	req := new(zeustypes.PostableHost)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}

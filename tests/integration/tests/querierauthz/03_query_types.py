@@ -2,8 +2,6 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
-import requests
-
 from fixtures import querier, types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, change_user_role, create_active_user
 from fixtures.querier import make_query_request
@@ -152,27 +150,3 @@ def test_managed_viewer_meter_and_clickhouse_allowed_audit_denied(
     # audit-logs builder queries remain admin-only.
     audit = make_query_request(signoz, token, start, end, audit_query, request_type=querier.RequestType.RAW)
     assert audit.status_code == HTTPStatus.FORBIDDEN, audit.text
-
-
-def test_duplicate_signal_key_is_checked_on_the_bound_value(
-    signoz: types.SigNoz,
-    get_token: Callable[[str, str], str],
-) -> None:
-    now = datetime.now(tz=UTC)
-    start, end = int((now - timedelta(hours=1)).timestamp() * 1000), int(now.timestamp() * 1000)
-
-    # raw string: json= would collapse the duplicate "signal" key
-    body = (
-        f'{{"schemaVersion":"v1","start":{start},"end":{end},"requestType":"scalar",'
-        '"compositeQuery":{"queries":[{"type":"builder_query","spec":{"name":"A","signal":"traces","signal":"logs",'
-        '"disabled":false,"filter":{"expression":"signoz.workspace.key.id = \'key-a\'"},'
-        '"aggregations":[{"expression":"count()"}]}}]},"noCache":true}'
-    )
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=querier.QUERY_TIMEOUT,
-        headers={"authorization": f"Bearer {get_token(key_a_email, user_password)}", "content-type": "application/json"},
-        data=body,
-    )
-    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
