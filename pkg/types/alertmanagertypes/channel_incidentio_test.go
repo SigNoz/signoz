@@ -46,6 +46,10 @@ func TestIncidentIOReceiverConfigValidation(t *testing.T) {
 	}{
 		{"missing url", `{"name":"incio","incidentio_configs":[{"token":"k"}]}`},
 		{"missing token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s"}]}`, testIncidentIOURL)},
+		{"bearer prefixed token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":"Bearer tok-123"}]}`, testIncidentIOURL)},
+		{"lowercase bearer prefixed token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":"bearer tok-123"}]}`, testIncidentIOURL)},
+		{"bearer only token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":"Bearer"}]}`, testIncidentIOURL)},
+		{"whitespace around token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":" tok-123 "}]}`, testIncidentIOURL)},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

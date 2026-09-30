@@ -56,10 +56,19 @@ func TestJiraReceiverConfigSendResolved(t *testing.T) {
 	assert.False(t, off.JiraConfigs[0].SendResolved())
 }
 
-func TestJiraReceiverConfigReopenDuration(t *testing.T) {
-	r, err := NewReceiver(`{"name":"j","jira_configs":[{"site":"https://acme.atlassian.net","project":"KAN","issue_type":"Task","reopen_duration":"1m","http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`)
+func TestJiraReceiverConfigReopenDurationMinimum(t *testing.T) {
+	withReopen := func(v string) string {
+		return fmt.Sprintf(
+			`{"name":"j","jira_configs":[{"site":"https://acme.atlassian.net","project":"KAN","issue_type":"Task","reopen_duration":%q,"http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`,
+			v,
+		)
+	}
+	r, err := NewReceiver(withReopen("1m"))
 	require.NoError(t, err)
 	assert.Equal(t, model.Duration(time.Minute), r.JiraConfigs[0].ReopenDuration)
+
+	_, err = NewReceiver(withReopen("30s"))
+	assert.Error(t, err)
 }
 
 func TestJiraAPIBaseURL(t *testing.T) {

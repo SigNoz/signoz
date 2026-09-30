@@ -1,6 +1,8 @@
 package alertmanagertypes
 
 import (
+	"strings"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
@@ -126,8 +128,18 @@ func (c *IncidentIOReceiverConfig) UnmarshalYAML(unmarshal func(any) error) erro
 	if c.URL == "" {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio url is required")
 	}
-	if c.Token == "" {
+
+	token := string(c.Token)
+	if token == "" {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio token is required")
+	}
+	if token != strings.TrimSpace(token) {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio token must not have leading or trailing whitespace")
+	}
+	// incident.io's setup page shows the header value as "Bearer <token>"; a
+	// pasted prefix would be sent doubled, so reject it instead.
+	if strings.EqualFold(token, "bearer") || (len(token) >= 7 && strings.EqualFold(token[:7], "bearer ")) {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio token must be the source's secret token only, without the Bearer prefix")
 	}
 	return nil
 }
