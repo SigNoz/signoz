@@ -134,6 +134,7 @@ const preview: Preview = {
 								'Authz',
 							],
 							'Panel Editor',
+							['Overview', 'Chart Options', 'Thresholds and Links'],
 							'Public',
 						],
 						'Services',

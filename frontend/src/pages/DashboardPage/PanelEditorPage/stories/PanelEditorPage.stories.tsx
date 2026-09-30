@@ -22,8 +22,8 @@ const pageStory = storyMocks(panelEditorMocks, { layout: 'app' });
  * Route: `/dashboard/:dashboardId/panel/:panelId`.
  */
 const meta = {
-	title: 'Pages/Dashboards/Panel Editor',
-	tags: ['play'],
+	title: 'Pages/Dashboards/Panel Editor/Overview',
+	tags: ['authz', 'play'],
 	// The page is wrapped in `withAuthZPage`, which types its props as an index
 	// signature; the story's args are what the controls resolve to.
 	component: PanelEditorPage as ComponentType<PanelEditorArgs>,
@@ -68,6 +68,21 @@ export const Default: Story = {};
 /** The create route, seeding an unsaved panel of the chosen kind. */
 export const NewPanel: Story = {
 	args: { panel: 'new' },
+};
+
+/** A number panel: one value, formatted, with comparison thresholds. */
+export const NumberPanel: Story = {
+	args: { panel: 'p99-latency' },
+};
+
+/** A bar chart, whose Visualization section offers stacking. */
+export const BarChartPanel: Story = {
+	args: { panel: 'errors-by-status' },
+};
+
+/** A pie chart, with a legend per slice and no axes. */
+export const PieChartPanel: Story = {
+	args: { panel: 'traffic-share' },
 };
 
 /** A list panel, where the config pane is the column editor. */
