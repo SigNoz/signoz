@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/http/binding"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,41 +21,6 @@ func (bespokeOpenAPIHandler) ServeOpenAPI(opCtx openapi.OperationContext) {
 }
 
 func (bespokeOpenAPIHandler) ResourceDefs() []ResourceDef { return nil }
-
-func (bespokeOpenAPIHandler) Request() any { return nil }
-
-func (bespokeOpenAPIHandler) BindBodyOptions() []binding.BindBodyOption { return nil }
-
-func TestNewPanicsWhenBodyExtractorHasNoPointerRequest(t *testing.T) {
-	type body struct{ ID string }
-	bodyDef := BasicResourceDef{Resource: coretypes.ResourceRole, Verb: coretypes.VerbRead, ID: coretypes.BodyField(func(req *body) string { return req.ID }), Selector: coretypes.IDSelector}
-	pathDef := BasicResourceDef{Resource: coretypes.ResourceRole, Verb: coretypes.VerbRead, ID: coretypes.PathParam("id"), Selector: coretypes.IDSelector}
-
-	testCases := []struct {
-		name    string
-		request any
-		def     ResourceDef
-		panics  bool
-	}{
-		{name: "BodyExtractor_ValueRequest_Panics", request: body{}, def: bodyDef, panics: true},
-		{name: "BodyExtractor_NilRequest_Panics", request: nil, def: bodyDef, panics: true},
-		{name: "BodyExtractor_PointerRequest_Registers", request: new(body), def: bodyDef, panics: false},
-		{name: "PathExtractor_ValueRequest_Registers", request: body{}, def: pathDef, panics: false},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			register := func() {
-				New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: testCase.name, Request: testCase.request}, WithResourceDefs(testCase.def))
-			}
-			if testCase.panics {
-				assert.Panics(t, register)
-			} else {
-				assert.NotPanics(t, register)
-			}
-		})
-	}
-}
 
 func TestAttachStabilities(t *testing.T) {
 	router := mux.NewRouter()

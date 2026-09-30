@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -32,8 +32,8 @@ func (handler *handler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body, err := coretypes.BodyFromContext[authtypes.PostableAuthDomain](req.Context())
-	if err != nil {
+	body := new(authtypes.PostableAuthDomain)
+	if err := binding.JSON.BindBody(req.Body, body); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -142,8 +142,8 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := coretypes.BodyFromContext[authtypes.UpdatableAuthDomain](r.Context())
-	if err != nil {
+	body := new(authtypes.UpdatableAuthDomain)
+	if err := binding.JSON.BindBody(r.Body, body); err != nil {
 		render.Error(rw, err)
 		return
 	}

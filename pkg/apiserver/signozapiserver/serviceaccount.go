@@ -358,20 +358,10 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Verb:           coretypes.VerbAttach,
 			Category:       coretypes.ActionCategoryAccessControl,
 			SourceResource: coretypes.ResourceServiceAccount,
-			SourceIDs: coretypes.OneID(coretypes.BodyField(func(req *serviceaccounttypes.PostableServiceAccountRole) string {
-				if req.ServiceAccountID.IsZero() {
-					return ""
-				}
-				return req.ServiceAccountID.StringValue()
-			})),
+			SourceIDs:      coretypes.OneID(coretypes.BodyJSONPath("serviceAccountId")),
 			SourceSelector: coretypes.IDSelector,
 			TargetResource: coretypes.ResourceRole,
-			TargetIDs: coretypes.OneID(coretypes.BodyField(func(req *serviceaccounttypes.PostableServiceAccountRole) string {
-				if req.RoleID.IsZero() {
-					return ""
-				}
-				return req.RoleID.StringValue()
-			})),
+			TargetIDs:      coretypes.OneID(coretypes.BodyJSONPath("roleId")),
 			TargetSelector: provider.roleSelector,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {

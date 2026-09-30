@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/http/binding"
 	pkghandler "github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/gorilla/mux"
@@ -53,14 +52,6 @@ func (handler *healthOpenAPIHandler) ServeOpenAPI(opCtx openapi.OperationContext
 
 func (handler *healthOpenAPIHandler) ResourceDefs() []pkghandler.ResourceDef {
 	// Health endpoints don't act on resources.
-	return nil
-}
-
-func (handler *healthOpenAPIHandler) Request() any {
-	return nil
-}
-
-func (handler *healthOpenAPIHandler) BindBodyOptions() []binding.BindBodyOption {
 	return nil
 }
 

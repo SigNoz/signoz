@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -9,6 +10,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/tidwall/gjson"
 )
 
 func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string, _ valuer.UUID) ([]coretypes.Selector, error) {
@@ -27,19 +29,20 @@ func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string
 }
 
 func QueryRangeResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
-	req, err := coretypes.BodyAs[qbtypes.QueryRangeRequest](ec)
+	queries := gjson.GetBytes(ec.RequestBody, "compositeQuery.queries")
+	if !queries.IsArray() || len(queries.Array()) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "atleast one query is required")
+	}
+
+	variables, err := queryRangeVariables(ec.RequestBody)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(req.CompositeQuery.Queries) == 0 {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "atleast one query is required")
-	}
-
-	refs := make([]coretypes.ResourceWithID, 0, len(req.CompositeQuery.Queries))
+	refs := make([]coretypes.ResourceWithID, 0, len(queries.Array()))
 	seen := make(map[string]struct{})
-	for _, query := range req.CompositeQuery.Queries {
-		queryRefs, err := resourcesForQuery(query, req.Variables)
+	for _, query := range queries.Array() {
+		queryRefs, err := resourcesForQuery(query, variables)
 		if err != nil {
 			return nil, err
 		}
@@ -57,6 +60,21 @@ func QueryRangeResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWit
 	return refs, nil
 }
 
+func queryRangeVariables(body []byte) (map[string]qbtypes.VariableItem, error) {
+	variables := make(map[string]qbtypes.VariableItem)
+
+	raw := gjson.GetBytes(body, "variables")
+	if !raw.Exists() {
+		return variables, nil
+	}
+
+	if err := json.Unmarshal([]byte(raw.Raw), &variables); err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid variables in query range request")
+	}
+
+	return variables, nil
+}
+
 // PromQLResources is the resource set of a bare PromQL query: metrics on
 // the promql wildcard, the same ID resourcesForQuery assigns to a PromQL
 // query inside a composite — one grant covers both entry points.
@@ -67,53 +85,42 @@ func PromQLResources(coretypes.ExtractorContext) ([]coretypes.ResourceWithID, er
 	}}, nil
 }
 
-func resourcesForQuery(query qbtypes.QueryEnvelope, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
-	queryType := query.Type.StringValue()
+func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
+	queryType := query.Get("type").String()
 	typeWildcard := queryType + "/" + coretypes.WildCardSelectorString
 
-	switch query.Type {
-	case qbtypes.QueryTypeBuilder, qbtypes.QueryTypeSubQuery:
-		return resourcesForBuilderQuery(queryType, query.Spec, variables)
-	case qbtypes.QueryTypeBuilderAI:
+	switch queryType {
+	case qbtypes.QueryTypeBuilder.StringValue(), qbtypes.QueryTypeSubQuery.StringValue():
+		return resourcesForBuilderQuery(queryType, query.Get("spec"), variables)
+	case qbtypes.QueryTypeBuilderAI.StringValue():
 		// always a traces query; the signal may be absent from the payload
-		_, _, expression, err := builderQuerySpec(query.Spec)
-		if err != nil {
-			return nil, err
-		}
-
-		return builderQueryResourceRefs(queryType, coretypes.ResourceTelemetryResourceTraces, expression, variables)
-	case qbtypes.QueryTypePromQL:
+		return builderQueryResourceRefs(queryType, coretypes.ResourceTelemetryResourceTraces, query.Get("spec"), variables)
+	case qbtypes.QueryTypePromQL.StringValue():
 		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: typeWildcard}}, nil
-	case qbtypes.QueryTypeClickHouseSQL:
+	case qbtypes.QueryTypeClickHouseSQL.StringValue():
 		return []coretypes.ResourceWithID{
 			{Resource: coretypes.ResourceTelemetryResourceLogs, ID: typeWildcard},
 			{Resource: coretypes.ResourceTelemetryResourceTraces, ID: typeWildcard},
 			{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: typeWildcard},
 			{Resource: coretypes.ResourceTelemetryResourceMeterMetrics, ID: typeWildcard},
 		}, nil
-	case qbtypes.QueryTypeFormula, qbtypes.QueryTypeJoin, qbtypes.QueryTypeTraceOperator:
+	case qbtypes.QueryTypeFormula.StringValue(), qbtypes.QueryTypeJoin.StringValue(), qbtypes.QueryTypeTraceOperator.StringValue():
 		return nil, nil
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query type %q", queryType)
 	}
 }
 
-func resourcesForBuilderQuery(queryType string, spec any, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
-	signal, source, expression, err := builderQuerySpec(spec)
+func resourcesForBuilderQuery(queryType string, spec gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
+	resource, err := builderQueryResource(spec)
 	if err != nil {
 		return nil, err
 	}
-
-	resource, err := builderQueryResource(signal, source)
-	if err != nil {
-		return nil, err
-	}
-
-	return builderQueryResourceRefs(queryType, resource, expression, variables)
+	return builderQueryResourceRefs(queryType, resource, spec, variables)
 }
 
-func builderQueryResourceRefs(queryType string, resource coretypes.Resource, expression string, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
-	ids, err := builderQuerySelectors(queryType, expression, variables)
+func builderQueryResourceRefs(queryType string, resource coretypes.Resource, spec gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
+	ids, err := builderQuerySelectors(queryType, spec.Get("filter.expression").String(), variables)
 	if err != nil {
 		return nil, err
 	}
@@ -126,44 +133,25 @@ func builderQueryResourceRefs(queryType string, resource coretypes.Resource, exp
 	return refs, nil
 }
 
-func builderQueryResource(signal telemetrytypes.Signal, source telemetrytypes.Source) (coretypes.Resource, error) {
-	switch signal {
-	case telemetrytypes.SignalTraces:
+func builderQueryResource(spec gjson.Result) (coretypes.Resource, error) {
+	source := spec.Get("source").String()
+
+	switch spec.Get("signal").String() {
+	case telemetrytypes.SignalTraces.StringValue():
 		return coretypes.ResourceTelemetryResourceTraces, nil
-	case telemetrytypes.SignalLogs:
-		if source == telemetrytypes.SourceAudit {
+	case telemetrytypes.SignalLogs.StringValue():
+		if source == telemetrytypes.SourceAudit.StringValue() {
 			return coretypes.ResourceTelemetryResourceAuditLogs, nil
 		}
 		return coretypes.ResourceTelemetryResourceLogs, nil
-	case telemetrytypes.SignalMetrics:
-		if source == telemetrytypes.SourceMeter {
+	case telemetrytypes.SignalMetrics.StringValue():
+		if source == telemetrytypes.SourceMeter.StringValue() {
 			return coretypes.ResourceTelemetryResourceMeterMetrics, nil
 		}
 		return coretypes.ResourceTelemetryResourceMetrics, nil
 	default:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported signal %q", signal.StringValue())
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported signal %q", spec.Get("signal").String())
 	}
-}
-
-func builderQuerySpec(spec any) (telemetrytypes.Signal, telemetrytypes.Source, string, error) {
-	switch typed := spec.(type) {
-	case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-		return typed.Signal, typed.Source, filterExpression(typed.Filter), nil
-	case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-		return typed.Signal, typed.Source, filterExpression(typed.Filter), nil
-	case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
-		return typed.Signal, typed.Source, filterExpression(typed.Filter), nil
-	default:
-		return telemetrytypes.Signal{}, telemetrytypes.Source{}, "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "unexpected builder query spec %T", spec)
-	}
-}
-
-func filterExpression(filter *qbtypes.Filter) string {
-	if filter == nil {
-		return ""
-	}
-
-	return filter.Expression
 }
 
 func builderQuerySelectors(queryType, expression string, variables map[string]qbtypes.VariableItem) ([]string, error) {
