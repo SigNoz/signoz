@@ -21,25 +21,30 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
 <div
     class="c0"
   >
-    <div
-      class="_switch-wrapper_1a8sn_6"
+    <span
+      aria-checked="true"
+      class="_switch_1ul3x_1"
+      data-checked=""
+      data-color="primary"
+      data-slot="switch"
+      id="base-ui-:r2:"
+      role="switch"
+      tabindex="0"
     >
-      <button
-        aria-checked="true"
-        class="_switch_1a8sn_6"
-        data-color="robin"
-        data-state="checked"
-        id=":r0:"
-        role="switch"
-        type="button"
-        value="on"
-      >
-        <span
-          class="_switch__thumb_1a8sn_71"
-          data-state="checked"
-        />
-      </button>
-    </div>
+      <span
+        class="_switch__thumb_1ul3x_90"
+        data-checked=""
+        data-slot="switch-thumb"
+      />
+    </span>
+    <input
+      aria-hidden="true"
+      checked=""
+      id="base-ui-:r3:"
+      style="clip-path: inset(50%); overflow: hidden; white-space: nowrap; border: 0px; padding: 0px; width: 1px; height: 1px; margin: -1px; position: fixed; top: 0px; left: 0px;"
+      tabindex="-1"
+      type="checkbox"
+    />
     <svg
       style="font-size: 1rem; cursor: move;"
     />
