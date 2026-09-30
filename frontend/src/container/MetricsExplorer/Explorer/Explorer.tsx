@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { Tooltip } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
@@ -351,16 +350,14 @@ function Explorer(): JSX.Element {
 				<div className="explore-header">
 					<div className="explore-header-left-actions">
 						<span>1 chart/query</span>
-						<Tooltip
-							open={disableOneChartPerQuery ? undefined : false}
-							title={oneChartPerQueryDisabledTooltip}
-						>
-							<Switch
-								value={showOneChartPerQuery}
-								onChange={handleToggleShowOneChartPerQuery}
-								disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
-							/>
-						</Tooltip>
+						<Switch
+							color="primary"
+							textPlacement="right"
+							value={showOneChartPerQuery}
+							onChange={handleToggleShowOneChartPerQuery}
+							disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
+							disabledTooltip={oneChartPerQueryDisabledTooltip}
+						/>
 					</div>
 					<div className="explore-header-right-actions">
 						{!isEmpty(warning) && <WarningPopover warningData={warning} />}

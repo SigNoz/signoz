@@ -2,11 +2,8 @@
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
+	gap: 12px;
 	border: 1px dashed var(--bg-slate-300, #242834);
 	border-radius: 6px;
 	padding: 14px;
-}
-
-.setupButton {
-	margin-top: 12px;
 }
