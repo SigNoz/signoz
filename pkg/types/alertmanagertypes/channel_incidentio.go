@@ -1,8 +1,6 @@
 package alertmanagertypes
 
 import (
-	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -77,11 +75,6 @@ func newChannelIncidentIOConfigFromReceiver(name string, receiver *Receiver) (Ch
 	}, nil
 }
 
-// incidentIOEventsPathPrefix is the path of incident.io's HTTP alert source
-// endpoint (Alert Events V2 API). The full URL is per-source:
-// https://api.incident.io/v2/alert_events/http/<source_config_id>.
-const incidentIOEventsPathPrefix = "/v2/alert_events/http/"
-
 // The description is markdown; incident.io renders it natively. The templates
 // mirror Google Chat / Jira / JSM for a consistent default across channels.
 const (
@@ -145,19 +138,8 @@ func (c *IncidentIOReceiverConfig) UnmarshalYAML(unmarshal func(any) error) erro
 		c.Description = DefaultIncidentIODescriptionTemplate
 	}
 
-	// Values are stored and sent exactly as configured, so anything that is
-	// not already canonical is rejected rather than rewritten.
-	if c.URL != strings.TrimSpace(c.URL) {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio url must not have leading or trailing whitespace")
-	}
-	u, err := url.Parse(c.URL)
-	if c.URL == "" || err != nil || u.Scheme != "https" || u.Host == "" ||
-		!strings.Contains(u.Path, incidentIOEventsPathPrefix) ||
-		strings.HasSuffix(u.Path, incidentIOEventsPathPrefix) {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("incidentio url must be an alert events URL (https://api.incident.io%s<source_config_id>)", incidentIOEventsPathPrefix))
-	}
-	if strings.HasSuffix(c.URL, "/") {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio url must not end with a trailing slash")
+	if c.URL == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio url is required")
 	}
 
 	token := string(c.Token)

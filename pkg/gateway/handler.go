@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/gatewaytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -284,8 +285,8 @@ func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
-	var req gatewaytypes.PostableIngestionKeyLimit
-	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
+	req, err := coretypes.BodyFromContext[gatewaytypes.PostableIngestionKeyLimit](r.Context())
+	if err != nil {
 		render.Error(rw, err)
 		return
 	}

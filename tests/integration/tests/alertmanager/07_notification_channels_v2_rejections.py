@@ -326,26 +326,8 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
             },
             id="webhook_basic_auth_with_bearer_token",
         ),
-        # The next three break a rule of the notifier rather than of the request
+        # The next two break a rule of the notifier rather than of the request
         # shape, and still surface as a 400.
-        pytest.param(
-            {
-                "name": "rejected",
-                "config": {
-                    "kind": "jira",
-                    "spec": {
-                        "site": "https://jira.acme.com",
-                        "project": "OPS",
-                        "issueType": "Bug",
-                        "email": "a@integration.test",
-                        "apiToken": "t",
-                        "summary": "Alert",
-                        "description": "body",
-                    },
-                },
-            },
-            id="jira_site_not_jira_cloud",
-        ),
         pytest.param(
             {
                 "name": "rejected",

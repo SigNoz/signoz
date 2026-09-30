@@ -1,10 +1,13 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
+	"reflect"
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi3"
@@ -16,12 +19,15 @@ type Handler interface {
 	http.Handler
 	ServeOpenAPI(openapi.OperationContext)
 	ResourceDefs() []ResourceDef
+	Request() any
+	BindBodyOptions() []binding.BindBodyOption
 }
 
 type handler struct {
-	handlerFunc  http.HandlerFunc
-	openAPIDef   OpenAPIDef
-	resourceDefs []ResourceDef
+	handlerFunc     http.HandlerFunc
+	openAPIDef      OpenAPIDef
+	resourceDefs    []ResourceDef
+	bindBodyOptions []binding.BindBodyOption
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
@@ -45,6 +51,10 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Ha
 
 	for _, opt := range opts {
 		opt(handler)
+	}
+
+	if RequiresBody(handler.resourceDefs) && (openAPIDef.Request == nil || reflect.TypeOf(openAPIDef.Request).Kind() != reflect.Pointer) {
+		panic(fmt.Sprintf("handler %s: a body extractor needs OpenAPIDef.Request to be a pointer, got %T", openAPIDef.ID, openAPIDef.Request))
 	}
 
 	return handler
@@ -134,4 +144,12 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 
 func (handler *handler) ResourceDefs() []ResourceDef {
 	return handler.resourceDefs
+}
+
+func (handler *handler) Request() any {
+	return handler.openAPIDef.Request
+}
+
+func (handler *handler) BindBodyOptions() []binding.BindBodyOption {
+	return handler.bindBodyOptions
 }

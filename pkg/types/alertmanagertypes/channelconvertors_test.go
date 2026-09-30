@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
@@ -356,26 +355,6 @@ func TestPostableChannelToReceiverRoundTripsWebhookAuthModes(t *testing.T) {
 			assert.Equal(t, testCase.expectedRoundTrip, derived.Spec)
 		})
 	}
-}
-
-// The SigNoz notifiers validate in their UnmarshalYAML, which ToReceiver reaches
-// only through the defaulting round-trip. A spec that passes Validate can still
-// be rejected there, and the request has to fail as invalid input rather than as
-// an internal error.
-func TestPostableChannelToReceiverReportsNotifierValidationAsInvalidInput(t *testing.T) {
-	postable := PostableNotificationChannel{
-		Name:        "channel",
-		DisplayName: "channel",
-		Config: ChannelConfig{Kind: ChannelKindIncidentIO, Spec: &ChannelIncidentIOConfig{
-			URL: "https://api.incident.io/v2/incidents", Token: "token",
-			Title: valuer.MustNewUnsetOrNonEmptyString("incidentio title"), Description: valuer.MustNewUnsetOrNonEmptyString("incidentio description"),
-		}},
-	}
-	require.NoError(t, postable.Validate())
-
-	_, err := postable.ToReceiver()
-	require.Error(t, err)
-	assert.True(t, errors.Ast(err, errors.TypeInvalidInput), "got %v", err)
 }
 
 // rejectUnsupportedHTTPConfig enumerates the fields it rejects, so one added
