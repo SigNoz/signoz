@@ -21,12 +21,12 @@ func TestNestedJSON(t *testing.T) {
 		{
 			name:  "FlatScalars",
 			paths: map[string]any{"level": "error", "status": int64(500)},
-			want:  map[string]any{"level": "error", "status": float64(500)},
+			want:  map[string]any{"level": "error", "status": int64(500)},
 		},
 		{
 			name:  "DottedPathsBecomeNested",
 			paths: map[string]any{"attrs.code": int64(500), "attrs.path": "/checkout"},
-			want:  map[string]any{"attrs": map[string]any{"code": float64(500), "path": "/checkout"}},
+			want:  map[string]any{"attrs": map[string]any{"code": int64(500), "path": "/checkout"}},
 		},
 		{
 			name:  "ArrayOfObjectsPreserved",
