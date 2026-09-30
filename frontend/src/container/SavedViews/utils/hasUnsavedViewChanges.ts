@@ -3,6 +3,7 @@ import isEqual from 'lodash-es/isEqual';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { HasUnsavedViewChangesArgs } from '../types';
+import { getSavedViewQuery } from './getSavedViewQuery';
 import { toSavedViewPanelType } from './toSavedViewSpec';
 import { getViewColumnsAndFormatting } from './getViewColumnsAndFormatting';
 
@@ -27,8 +28,8 @@ function withoutEmptyValues(value: unknown): unknown {
 	return value;
 }
 
-// Compared as stored (v5 envelopes): mapped back to the builder's shape, each
-// side gets different defaults.
+// Both sides go through the v5 mapper, so fields it never writes (reduceTo on
+// a graph in older views) drop out; the builder's shape gets different defaults.
 export function hasUnsavedViewChanges({
 	view,
 	stagedQuery,
@@ -42,15 +43,16 @@ export function hasUnsavedViewChanges({
 		return true;
 	}
 
+	const { queries: storedQueries } = mapCompositeQueryFromQuery(
+		getSavedViewQuery(view),
+		panelType,
+	);
 	const { queries: stagedQueries } = mapCompositeQueryFromQuery(
 		stagedQuery,
 		panelType,
 	);
 	if (
-		!isEqual(
-			withoutEmptyValues(view.spec.queries),
-			withoutEmptyValues(stagedQueries),
-		)
+		!isEqual(withoutEmptyValues(storedQueries), withoutEmptyValues(stagedQueries))
 	) {
 		return true;
 	}
