@@ -39,6 +39,9 @@ function NewDashboardModal({ open, onClose }: Props): JSX.Element {
 			}}
 		>
 			<Tabs
+				variant="primary"
+				orientation="horizontal"
+				alignment="start"
 				value={tab}
 				onChange={handleTabChange}
 				items={[
