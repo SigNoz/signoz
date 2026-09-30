@@ -17,7 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -41,18 +40,19 @@ func stripKeyAlias(name string) string {
 }
 
 // unwrapVariant decodes a scan envelope into a plain value: chcol.Variant (a JSON path such as
-// body_v2.level) to its concrete value, and a whole chcol.JSON column to a document. The attributes
-// bag decodes flat, since its dotted keys merge with the legacy attribute maps and a key stored as
-// both a scalar and an object must stay two keys; every other JSON column decodes nested.
+// body_v2.level) to its concrete value, and a whole chcol.JSON column to a map[string]any whose
+// chcol.Variant leaves serialize themselves. The attributes bag decodes to flat dotted paths, since
+// its keys merge with the legacy attribute maps and a key stored as both a scalar and an object must
+// stay two keys; every other JSON column decodes to a nested document.
 func unwrapVariant(name string, val any) any {
 	switch v := val.(type) {
 	case chcol.Variant:
 		return v.Any()
 	case chcol.JSON:
 		if name == "attributes" {
-			return telemetrystoretypes.FlattenJSON(v)
+			return v.ValuesByPath()
 		}
-		return telemetrystoretypes.NestedJSON(v)
+		return v.NestedMap()
 	}
 	return val
 }
