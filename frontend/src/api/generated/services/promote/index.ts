@@ -19,8 +19,6 @@ import type {
 
 import type {
 	ListPromotedPaths200,
-	ListPromotedPathsPathParameters,
-	PromotePathsPathParameters,
 	PromotetypesPromotePathDTO,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
@@ -49,60 +47,40 @@ const withQueryKey = <T extends object, K>(
 };
 
 /**
- * This endpoint lists the promoted paths of a JSON column. The promotion domain is identified by the telemetry_signal and context path variables, e.g. traces/attribute.
+ * This endpoint lists the promoted paths of every JSON column, each annotated with its signal and context.
  * @summary List promoted paths
  */
-export const listPromotedPaths = (
-	{ telemetrySignal, context }: ListPromotedPathsPathParameters,
-	signal?: AbortSignal,
-) => {
+export const listPromotedPaths = (signal?: AbortSignal) => {
 	return GeneratedAPIInstance<ListPromotedPaths200>({
-		url: `/api/v1/promoted_path/${telemetrySignal}/${context}`,
+		url: `/api/v1/promoted_path`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getListPromotedPathsQueryKey = ({
-	telemetrySignal,
-	context,
-}: ListPromotedPathsPathParameters) => {
-	return [`/api/v1/promoted_path/${telemetrySignal}/${context}`] as const;
+export const getListPromotedPathsQueryKey = () => {
+	return [`/api/v1/promoted_path`] as const;
 };
 
 export const getListPromotedPathsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listPromotedPaths>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ telemetrySignal, context }: ListPromotedPathsPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof listPromotedPaths>>,
-			TError,
-			TData
-		>;
-	},
-) => {
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listPromotedPaths>>,
+		TError,
+		TData
+	>;
+}) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ??
-		getListPromotedPathsQueryKey({ telemetrySignal, context });
+	const queryKey = queryOptions?.queryKey ?? getListPromotedPathsQueryKey();
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof listPromotedPaths>>
-	> = ({ signal }) => listPromotedPaths({ telemetrySignal, context }, signal);
+	> = ({ signal }) => listPromotedPaths(signal);
 
-	return {
-		queryKey,
-		queryFn,
-		enabled:
-			telemetrySignal !== null &&
-			telemetrySignal !== undefined &&
-			context !== null &&
-			context !== undefined,
-		...queryOptions,
-	} as UseQueryOptions<
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof listPromotedPaths>>,
 		TError,
 		TData
@@ -121,20 +99,14 @@ export type ListPromotedPathsQueryError = ErrorType<RenderErrorResponseDTO>;
 export function useListPromotedPaths<
 	TData = Awaited<ReturnType<typeof listPromotedPaths>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ telemetrySignal, context }: ListPromotedPathsPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof listPromotedPaths>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListPromotedPathsQueryOptions(
-		{ telemetrySignal, context },
-		options,
-	);
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listPromotedPaths>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListPromotedPathsQueryOptions(options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -148,11 +120,10 @@ export function useListPromotedPaths<
  */
 export const invalidateListPromotedPaths = async (
 	queryClient: QueryClient,
-	{ telemetrySignal, context }: ListPromotedPathsPathParameters,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getListPromotedPathsQueryKey({ telemetrySignal, context }) },
+		{ queryKey: getListPromotedPathsQueryKey() },
 		options,
 	);
 
@@ -160,18 +131,17 @@ export const invalidateListPromotedPaths = async (
 };
 
 /**
- * This endpoint promotes paths of a JSON column to its promoted column. The promotion domain is identified by the telemetry_signal and context path variables, e.g. traces/attribute.
+ * This endpoint promotes paths of JSON columns to their promoted columns. Each path names its promotion domain with its signal and context, e.g. traces/attribute.
  * @summary Promote paths
  */
 export const promotePaths = (
-	{ telemetrySignal, context }: PromotePathsPathParameters,
 	promotetypesPromotePathDTONull?: BodyType<
 		PromotetypesPromotePathDTO[] | null
 	> | null,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
-		url: `/api/v1/promoted_path/${telemetrySignal}/${context}`,
+		url: `/api/v1/promoted_path`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: promotetypesPromotePathDTONull,
@@ -186,19 +156,13 @@ export const getPromotePathsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof promotePaths>>,
 		TError,
-		{
-			pathParams: PromotePathsPathParameters;
-			data?: BodyType<PromotetypesPromotePathDTO[] | null>;
-		},
+		{ data?: BodyType<PromotetypesPromotePathDTO[] | null> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof promotePaths>>,
 	TError,
-	{
-		pathParams: PromotePathsPathParameters;
-		data?: BodyType<PromotetypesPromotePathDTO[] | null>;
-	},
+	{ data?: BodyType<PromotetypesPromotePathDTO[] | null> },
 	TContext
 > => {
 	const mutationKey = ['promotePaths'];
@@ -212,14 +176,11 @@ export const getPromotePathsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof promotePaths>>,
-		{
-			pathParams: PromotePathsPathParameters;
-			data?: BodyType<PromotetypesPromotePathDTO[] | null>;
-		}
+		{ data?: BodyType<PromotetypesPromotePathDTO[] | null> }
 	> = (props) => {
-		const { pathParams, data } = props ?? {};
+		const { data } = props ?? {};
 
-		return promotePaths(pathParams, data);
+		return promotePaths(data);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -243,19 +204,13 @@ export const usePromotePaths = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof promotePaths>>,
 		TError,
-		{
-			pathParams: PromotePathsPathParameters;
-			data?: BodyType<PromotetypesPromotePathDTO[] | null>;
-		},
+		{ data?: BodyType<PromotetypesPromotePathDTO[] | null> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof promotePaths>>,
 	TError,
-	{
-		pathParams: PromotePathsPathParameters;
-		data?: BodyType<PromotetypesPromotePathDTO[] | null>;
-	},
+	{ data?: BodyType<PromotetypesPromotePathDTO[] | null> },
 	TContext
 > => {
 	return useMutation(getPromotePathsMutationOptions(options));
