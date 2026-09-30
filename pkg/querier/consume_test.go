@@ -82,32 +82,48 @@ func TestMergeSpanAttributeColumns_ParsesEventsAndLinks(t *testing.T) {
 // chcol.Variant envelope; a whole JSON column comes back as chcol.JSON. The attributes column decodes
 // flat, every other JSON column nested.
 func TestUnwrapVariant(t *testing.T) {
-	assert.Equal(t, "error", unwrapVariant("", chcol.NewDynamicWithType("error", "String")))
-	assert.Nil(t, unwrapVariant("", chcol.Dynamic{}))
-	assert.Equal(t, uint64(3), unwrapVariant("", uint64(3)))
-
 	j := chcol.NewJSON()
 	j.SetValueAtPath("level", "error")
 	j.SetValueAtPath("attrs.code", int64(500))
-	assert.Equal(t, map[string]any{
-		"level": "error",
-		"attrs": map[string]any{"code": int64(500)},
-	}, unwrapVariant("body_v2", *j))
-	assert.Equal(t, map[string]any{
-		"level":      "error",
-		"attrs.code": int64(500),
-	}, unwrapVariant("attributes", *j))
+
+	testCases := []struct {
+		name   string
+		column string
+		input  any
+		want   any
+	}{
+		{name: "VariantScalar", column: "", input: chcol.NewDynamicWithType("error", "String"), want: "error"},
+		{name: "EmptyDynamic", column: "", input: chcol.Dynamic{}, want: nil},
+		{name: "PlainValuePassthrough", column: "", input: uint64(3), want: uint64(3)},
+		{name: "JSONColumnNested", column: "body_v2", input: *j, want: map[string]any{"level": "error", "attrs": map[string]any{"code": int64(500)}}},
+		{name: "AttributesColumnFlat", column: "attributes", input: *j, want: map[string]any{"level": "error", "attrs.code": int64(500)}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, unwrapVariant(testCase.column, testCase.input))
+		})
+	}
 }
 
 // labelValue renders a JSON group-by value as a stable, sorted-key string so structurally equal
 // documents share a series.
 func TestLabelValue(t *testing.T) {
-	assert.Equal(t, "", labelValue(nil))
-	assert.Equal(t, "error", labelValue(chcol.NewDynamicWithType("error", "String")))
-	assert.Equal(t, `{"attrs":{"code":500},"level":"error"}`, labelValue(map[string]any{
-		"level": "error",
-		"attrs": map[string]any{"code": 500},
-	}))
+	testCases := []struct {
+		name  string
+		input any
+		want  string
+	}{
+		{name: "Nil", input: nil, want: ""},
+		{name: "Variant", input: chcol.NewDynamicWithType("error", "String"), want: "error"},
+		{name: "JSONMap", input: map[string]any{"level": "error", "attrs": map[string]any{"code": 500}}, want: `{"attrs":{"code":500},"level":"error"}`},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, labelValue(testCase.input))
+		})
+	}
 }
 
 func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
