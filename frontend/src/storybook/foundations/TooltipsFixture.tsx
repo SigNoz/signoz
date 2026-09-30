@@ -88,7 +88,7 @@ function TooltipsFixture({ site }: TooltipsFixtureProps): JSX.Element {
 		return (
 			<div className={styles.fixture}>
 				<AuthZTooltip checks={DENIED_CHECKS}>
-					<Button color="primary" variant="solid">
+					<Button size="md" color="primary" variant="solid">
 						Create service account
 					</Button>
 				</AuthZTooltip>
