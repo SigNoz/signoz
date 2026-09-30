@@ -22,11 +22,9 @@ def test_traces_scalar_and_object_key_both_survive(
     insert_traces: Callable[[list[Traces]], None],
     seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
-    """`db.function` is stored as both a scalar ("refresh") and an object prefix
-    (`db.function.arg` = 2) within one span's attributes JSON — the engineering-pod#6072 shape.
-    Reading the column natively keeps both as distinct dotted keys; the removed read-as-string
-    path serialized the column to duplicate-key text and dropped the scalar. json_only isolates
-    the assertion to the native JSON read (no legacy attribute maps to backfill it)."""
+    """A span attribute stored as both a scalar and an object prefix (db.function and
+    db.function.arg) keeps both dotted keys through the native JSON read. json_only writes only the
+    JSON column, so no legacy attribute map backfills the keys."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
