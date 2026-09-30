@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -467,8 +468,8 @@ func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(cloudintegrationtypes.PostableAgentCheckIn)
-	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+	req, err := coretypes.BodyFromContext[cloudintegrationtypes.PostableAgentCheckIn](r.Context())
+	if err != nil {
 		render.Error(rw, err)
 		return
 	}

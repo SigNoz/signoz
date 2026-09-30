@@ -46,7 +46,7 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 			decoded, decodeErr = decodeBody(provider.Request(), body, provider.BindBodyOptions()...)
 		}
 
-		extractorCtx := coretypes.ExtractorContext{Request: req, RequestBody: body, DecodedRequestBody: decoded}
+		extractorCtx := coretypes.ExtractorContext{Request: req, RequestBody: decoded}
 
 		var resolved []coretypes.ResolvedResource
 		if decodeErr != nil {
