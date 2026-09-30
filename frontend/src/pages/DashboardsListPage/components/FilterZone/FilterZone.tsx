@@ -153,7 +153,8 @@ function FilterZone({
 						/>
 						{!isEmpty && (
 							<Button
-								variant="outlined"
+								disabledTooltip={undefined}
+								variant="solid"
 								color="primary"
 								size="sm"
 								prefix={<X size={12} />}

@@ -80,25 +80,37 @@ function LegacyDashboardDialog({
 						variant="ghost"
 						color="secondary"
 						size="md"
-						disabled={isMigrating}
+						loading={isMigrating}
 						onClick={onClose}
 						testId="legacy-dashboard-close"
 					>
 						Close
 					</Button>
-					<Button
-						variant={canEdit ? 'outlined' : 'solid'}
-						color={canEdit ? 'secondary' : 'primary'}
-						size="md"
-						suffix={<ArrowUpRight size={14} />}
-						onClick={onContactSupport}
-						testId="legacy-dashboard-contact-support"
-					>
-						Contact Support
-					</Button>
+					{canEdit ? (
+						<Button
+							variant="outlined"
+							color="secondary"
+							size="md"
+							suffix={<ArrowUpRight size={14} />}
+							onClick={onContactSupport}
+							testId="legacy-dashboard-contact-support"
+						>
+							Contact Support
+						</Button>
+					) : (
+						<Button
+							variant="solid"
+							color="primary"
+							size="md"
+							suffix={<ArrowUpRight size={14} />}
+							onClick={onContactSupport}
+							testId="legacy-dashboard-contact-support"
+						>
+							Contact Support
+						</Button>
+					)}
 					<AuthZButton
 						checks={editChecks}
-						withPortal={false}
 						variant="solid"
 						color="primary"
 						size="md"
@@ -135,12 +147,14 @@ function LegacyDashboardDialog({
 						<Button
 							variant="ghost"
 							color="secondary"
-							size="icon"
-							prefix={<Copy size={14} />}
+							size="sm"
+							icon
 							aria-label="Copy dashboard ID"
 							onClick={onCopyId}
 							testId="legacy-dashboard-copy-id"
-						/>
+						>
+							<Copy size={14} />
+						</Button>
 					</div>
 				</div>
 			</div>

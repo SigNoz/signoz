@@ -55,13 +55,21 @@ describe('ViewsRail - AuthZ', () => {
 
 		renderRail();
 
-		// Radix's asChild clone swallows the trigger's testId, so match its title.
+		// Radix's asChild clone swallows the trigger's testId, so match its label.
 		await expect(
-			screen.findByTitle('Save current filters as a view'),
-		).resolves.toBeEnabled();
-		expect(screen.getByTestId('dashboards-view-save-changes')).toBeEnabled();
-		expect(screen.getByLabelText('Rename view')).toBeEnabled();
-		expect(screen.getByLabelText('Delete view')).toBeEnabled();
+			screen.findByLabelText('Save current filters as a view'),
+		).resolves.not.toHaveAttribute('aria-disabled', 'true');
+		expect(
+			screen.getByTestId('dashboards-view-save-changes'),
+		).not.toHaveAttribute('aria-disabled', 'true');
+		expect(screen.getByLabelText('Rename view')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+		expect(screen.getByLabelText('Delete view')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('offers save-as-new-view on a builtin view with unsaved filters', async () => {
@@ -71,6 +79,6 @@ describe('ViewsRail - AuthZ', () => {
 
 		await expect(
 			screen.findByTestId('dashboards-view-save-as-new'),
-		).resolves.toBeEnabled();
+		).resolves.not.toHaveAttribute('aria-disabled', 'true');
 	});
 });
