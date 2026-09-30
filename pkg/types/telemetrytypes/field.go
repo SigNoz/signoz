@@ -398,6 +398,15 @@ func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType 
 	}
 }
 
+type JSONIndexSource struct {
+	Signal               Signal
+	FieldContext         FieldContext
+	DBName               string
+	LocalTableName       string
+	BaseColumnPrefix     string
+	PromotedColumnPrefix string
+}
+
 type TelemetryFieldKeySkipIndex struct {
 	Name            string        `json:"name"` // Name is TelemetryFieldKey.Name not IndexName from ClickHouse
 	FieldContext    FieldContext  `json:"fieldContext,omitzero"`
