@@ -27,6 +27,8 @@ export const SAVED_VIEW_URL_PARAMS = [
 
 export const MY_VIEW_NAME = 'My view';
 
+export const SAVED_VIEW_LOAD_FAILED_NAME = 'Saved view failed to load';
+
 export const SAVE_VIEW_MODAL_TITLE: Record<SaveViewModalMode, string> = {
 	create: 'Create new view',
 	saveAsNew: 'Save as new view',

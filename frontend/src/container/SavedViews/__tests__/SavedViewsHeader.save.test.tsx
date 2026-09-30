@@ -112,7 +112,7 @@ describe('SavedViewsHeader saving', () => {
 				),
 			);
 			expect(toast.success).toHaveBeenCalledWith(
-				'You have created a new view.',
+				'View created',
 				expect.objectContaining({ position: 'top-right' }),
 			);
 			await waitFor(() => expect(isModalOpen()).toBe(false));

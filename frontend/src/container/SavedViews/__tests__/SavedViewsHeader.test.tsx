@@ -130,16 +130,6 @@ describe('SavedViewsHeader', () => {
 		expect(isDirty()).toBe(false);
 	});
 
-	it('falls back to My view when the view in the url does not load', async () => {
-		mockSavedViewsApi([]);
-		renderHeader(viewUrl(PATH, errors));
-
-		await waitFor(() =>
-			expect(screen.queryByTestId('saved-views-loading')).toBeNull(),
-		);
-		expect(chip()).toHaveTextContent('My view');
-	});
-
 	it('marks the view dirty once the query changes, swapping in save and discard', async () => {
 		mockSavedViewsApi([errors]);
 		const { history } = renderHeader(viewUrl(PATH, errors));

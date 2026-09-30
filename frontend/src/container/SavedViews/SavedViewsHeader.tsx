@@ -6,8 +6,13 @@ import { toast } from '@signozhq/ui/sonner';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { MY_VIEW_NAME, SAVED_VIEW_TOAST_POSITION } from './constants';
+import {
+	MY_VIEW_NAME,
+	SAVED_VIEW_LOAD_FAILED_NAME,
+	SAVED_VIEW_TOAST_POSITION,
+} from './constants';
 import { useActiveSavedView } from './hooks/useActiveSavedView';
+import { useSaveNewView } from './hooks/useSaveNewView';
 import { useSavedViewActions } from './hooks/useSavedViewActions';
 import SaveChangesMenu from './SaveChangesMenu';
 import SavedViewsIconButton from './SavedViewsIconButton';
@@ -24,26 +29,14 @@ function SavedViewsHeader({
 	// Absent while the list is on screen.
 	onOpenViews?: () => void;
 }): JSX.Element {
-	const { view, isLoading, hasUnsavedChanges } = useActiveSavedView(source);
+	const { view, isLoading, isError, hasUnsavedChanges } =
+		useActiveSavedView(source);
 	const { revertView, clearView, createView, updateView, isSaving } =
 		useSavedViewActions(source);
 
 	const [modalMode, setModalMode] = useState<SaveViewModalMode | null>(null);
 
-	const handleSave = useCallback(
-		async (displayName: string): Promise<boolean> => {
-			const id = await createView(displayName);
-			if (!id) {
-				return false;
-			}
-			toast.success('You have created a new view.', {
-				position: SAVED_VIEW_TOAST_POSITION,
-				...(onOpenViews && { action: { label: 'View', onClick: onOpenViews } }),
-			});
-			return true;
-		},
-		[createView, onOpenViews],
-	);
+	const handleSave = useSaveNewView(createView);
 
 	const handleUpdate = useCallback(async (): Promise<void> => {
 		if (view && (await updateView(view))) {
@@ -54,12 +47,17 @@ function SavedViewsHeader({
 	const openSaveAsNew = useCallback((): void => setModalMode('saveAsNew'), []);
 	const closeModal = useCallback((): void => setModalMode(null), []);
 
-	const name = view?.spec.displayName ?? MY_VIEW_NAME;
-	const isDirty = !!view && hasUnsavedChanges;
+	const name = isError
+		? SAVED_VIEW_LOAD_FAILED_NAME
+		: (view?.spec.displayName ?? MY_VIEW_NAME);
+	const isDirty = !isError && !!view && hasUnsavedChanges;
 
 	return (
 		<div
-			className={cx(styles.header, { [styles.isDirty]: isDirty })}
+			className={cx(styles.header, {
+				[styles.isDirty]: isDirty,
+				[styles.isError]: isError,
+			})}
 			data-testid="saved-views-header"
 			data-source={source}
 		>
@@ -73,7 +71,10 @@ function SavedViewsHeader({
 			) : (
 				<TooltipSimple title={name}>
 					<span
-						className={cx(styles.name, { [styles.isDirty]: isDirty })}
+						className={cx(styles.name, {
+							[styles.isDirty]: isDirty,
+							[styles.isError]: isError,
+						})}
 						data-testid="saved-views-name"
 					>
 						{isDirty && <span className={styles.dot} />}
@@ -83,7 +84,7 @@ function SavedViewsHeader({
 			)}
 
 			<div className={styles.actions}>
-				{!view && (
+				{!view && !isError && (
 					<SavedViewsIconButton
 						title="Create new view"
 						icon={<Plus size={14} />}
@@ -92,7 +93,7 @@ function SavedViewsHeader({
 						testId="saved-views-create"
 					/>
 				)}
-				{view && !isDirty && (
+				{view && !isDirty && !isError && (
 					<SavedViewsIconButton
 						title="Clear view"
 						icon={<Undo2 size={14} />}
