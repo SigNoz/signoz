@@ -4,7 +4,6 @@ import { useLocation } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
 import {
 	invalidateGetSavedView,
-	invalidateListSavedViews,
 	useCreateSavedView,
 	useUpdateSavedView,
 } from 'api/generated/services/saved-view';
@@ -33,6 +32,7 @@ import {
 } from '../constants';
 import { UseSavedViewActionsResult } from '../types';
 import { getSavedViewQuery } from '../utils/getSavedViewQuery';
+import { invalidateSavedViews } from '../utils/invalidateSavedViews';
 import { toSavedViewSpec } from '../utils/toSavedViewSpec';
 import { useLastUsedView } from './useLastUsedView';
 
@@ -61,14 +61,7 @@ export function useSavedViewActions(
 		useUpdateSavedView();
 
 	const invalidateViews = useCallback(
-		async (id?: string): Promise<void> => {
-			await Promise.all([
-				invalidateListSavedViews(queryClient),
-				id ? invalidateGetSavedView(queryClient, { id }) : undefined,
-				// The saved views bar still lists through v1.
-				queryClient.invalidateQueries([{ sourcepage: source }]),
-			]);
-		},
+		(id?: string): Promise<void> => invalidateSavedViews(queryClient, source, id),
 		[queryClient, source],
 	);
 
@@ -95,11 +88,11 @@ export function useSavedViewActions(
 		[handleExplorerTabChange, setLastUsedView],
 	);
 
-	// The preference provider re-reads a view's columns only when its list
-	// changes, so the list is refetched as the view is applied again.
+	// The preference provider re-reads a view's columns only when the view is
+	// fetched, so it is refetched as the view is applied again.
 	const revertView = useCallback(
 		(view: SavedviewtypesSavedViewDTO): void => {
-			void invalidateListSavedViews(queryClient);
+			void invalidateGetSavedView(queryClient, { id: view.id });
 			selectView(view);
 		},
 		[queryClient, selectView],
