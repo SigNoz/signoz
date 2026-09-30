@@ -35,7 +35,13 @@ function ConfigSwitch({
 					</Typography.Text>
 				)}
 			</div>
-			<Switch testId={testId} value={value} onChange={onChange} />
+			<Switch
+				color="primary"
+				textPlacement="right"
+				testId={testId}
+				value={value}
+				onChange={onChange}
+			/>
 		</div>
 	);
 }

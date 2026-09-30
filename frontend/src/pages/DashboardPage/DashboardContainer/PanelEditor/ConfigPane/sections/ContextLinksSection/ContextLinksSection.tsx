@@ -74,11 +74,12 @@ function ContextLinksSection({
 			))}
 
 			<Button
+				size="md"
 				type="button"
 				variant="dashed"
 				color="secondary"
 				prefix={<Plus size={14} />}
-				data-testid="panel-editor-v2-add-link"
+				testId="panel-editor-v2-add-link"
 				onClick={openAddDialog}
 			>
 				Add Context Link

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
+import type { DropdownSubmenuItemType } from '@signozhq/ui/dropdown';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	DownloadFormat,
@@ -27,7 +27,7 @@ export function useDownloadPanelMenuItem({
 	panel,
 	data,
 	actions,
-}: UseDownloadPanelMenuItemArgs): MenuItem | null {
+}: UseDownloadPanelMenuItemArgs): DropdownSubmenuItemType | null {
 	const panelName = panel.spec.display.name;
 	const downloadPanelCsv = useDownloadPanelCsv({
 		panel,

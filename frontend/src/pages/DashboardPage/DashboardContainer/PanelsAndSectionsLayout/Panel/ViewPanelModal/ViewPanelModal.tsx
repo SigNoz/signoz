@@ -5,7 +5,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@signozhq/ui/dialog';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { ConfigProvider } from 'antd';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
@@ -54,11 +54,11 @@ function ViewPanelModal({
 			>
 				<DialogHeader>
 					<DialogTitle>
-						<TooltipSimple title={name} arrow>
+						<Tooltip title={name}>
 							<Typography.Text className={styles.title}>
 								{name ? `${name} - (View mode)` : 'View mode'}
 							</Typography.Text>
-						</TooltipSimple>
+						</Tooltip>
 					</DialogTitle>
 				</DialogHeader>
 				<DialogCloseButton />

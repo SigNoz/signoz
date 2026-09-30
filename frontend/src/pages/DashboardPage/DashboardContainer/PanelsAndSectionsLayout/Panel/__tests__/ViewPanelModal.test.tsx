@@ -1,4 +1,3 @@
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
@@ -147,7 +146,7 @@ jest.mock(
 );
 
 const renderWithProvider = (ui: ReactElement): ReturnType<typeof render> =>
-	render(<TooltipProvider>{ui}</TooltipProvider>);
+	render(ui);
 
 function makePanel(kind: string, name = 'My panel'): DashboardtypesPanelDTO {
 	return {

@@ -119,6 +119,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 					<div className={styles.emptySection}>
 						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 							<Button
+								size="md"
 								type="button"
 								variant="dashed"
 								color="secondary"
