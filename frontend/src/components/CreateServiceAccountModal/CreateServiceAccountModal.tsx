@@ -134,26 +134,27 @@ function CreateServiceAccountModal(): JSX.Element {
 
 			<DialogFooter className="create-sa-modal__footer">
 				<Button
+					size="md"
 					type="button"
 					variant="solid"
 					color="secondary"
 					onClick={handleClose}
-					data-testid="create-sa-cancel-btn"
+					testId="create-sa-cancel-btn"
+					prefix={<X size={12} />}
 				>
-					<X size={12} />
 					Cancel
 				</Button>
 
 				<AuthZButton
+					size="md"
 					checks={[SACreatePermission]}
-					withPortal={false}
 					type="submit"
 					form="create-sa-form"
 					variant="solid"
 					color="primary"
 					loading={isSubmitting}
 					disabled={!isValid}
-					data-testid="create-sa-submit-btn"
+					testId="create-sa-submit-btn"
 				>
 					Create Service Account
 				</AuthZButton>

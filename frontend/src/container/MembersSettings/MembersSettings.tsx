@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Input } from '@signozhq/ui/input';
 import { useListUsers } from 'api/generated/services/users';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
@@ -98,9 +98,10 @@ function MembersSettings(): JSX.Element {
 	).length;
 	const totalCount = allMembers.length;
 
-	const filterMenuItems: MenuItem[] = [
+	const filterMenuItems: DropdownItemType[] = [
 		{
-			key: FilterMode.All,
+			type: 'item',
+			value: FilterMode.All,
 			label: (
 				<div className="members-filter-option">
 					<span>All members ⎯ {totalCount}</span>
@@ -113,7 +114,8 @@ function MembersSettings(): JSX.Element {
 			},
 		},
 		{
-			key: FilterMode.Invited,
+			type: 'item',
+			value: FilterMode.Invited,
 			label: (
 				<div className="members-filter-option">
 					<span>Pending invites ⎯ {pendingCount}</span>
@@ -126,7 +128,8 @@ function MembersSettings(): JSX.Element {
 			},
 		},
 		{
-			key: FilterMode.Deleted,
+			type: 'item',
+			value: FilterMode.Deleted,
 			label: (
 				<div className="members-filter-option">
 					<span>Deleted ⎯ {deletedCount}</span>
@@ -174,19 +177,18 @@ function MembersSettings(): JSX.Element {
 				</div>
 
 				<div className="members-settings__controls">
-					<DropdownMenuSimple
-						menu={{ items: filterMenuItems }}
-						className="members-filter-dropdown"
-					>
+					<Dropdown items={filterMenuItems} nativeButton align="end" side="bottom">
 						<Button
+							size="md"
 							variant="solid"
 							color="secondary"
-							className="members-filter-trigger"
+							suffix={
+								<ChevronDown size={12} className="members-filter-trigger__chevron" />
+							}
 						>
 							<span>{filterLabel}</span>
-							<ChevronDown size={12} className="members-filter-trigger__chevron" />
 						</Button>
-					</DropdownMenuSimple>
+					</Dropdown>
 
 					<div className="members-settings__search">
 						<Input
@@ -203,11 +205,12 @@ function MembersSettings(): JSX.Element {
 					</div>
 
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
 						onClick={(): void => void setIsInviteModalOpen(true)}
+						prefix={<Plus size={12} />}
 					>
-						<Plus size={12} />
 						Invite member
 					</Button>
 				</div>

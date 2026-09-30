@@ -3,7 +3,8 @@ import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/s
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { submitImplicitly } from 'tests/submitImplicitly';
+import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditKeyModal from '../EditKeyModal';
 
@@ -82,7 +83,10 @@ describe('EditKeyModal (URL-controlled)', () => {
 		await expect(
 			screen.findByDisplayValue('Original Key Name'),
 		).resolves.toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
+		expect(screen.getByRole('button', { name: /Save Changes/i })).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('save calls update API, shows toast, and closes modal', async () => {
@@ -102,6 +106,56 @@ describe('EditKeyModal (URL-controlled)', () => {
 		await waitFor(() => {
 			expect(screen.queryByTestId('edit-key-modal')).not.toBeInTheDocument();
 		});
+	});
+
+	it('pressing Enter again while saving sends one request', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let requests = 0;
+		server.use(
+			rest.put(SA_KEY_ENDPOINT, (_, res, ctx) => {
+				requests += 1;
+				return res(
+					ctx.delay(100),
+					ctx.status(200),
+					ctx.json({ status: 'success', data: {} }),
+				);
+			}),
+		);
+		renderModal();
+
+		const nameInput =
+			await screen.findByPlaceholderText<HTMLInputElement>(/Enter key name/i);
+		await user.clear(nameInput);
+		await user.type(nameInput, 'Updated Key Name');
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+
+		submitImplicitly(nameInput);
+		await waitFor(() => expect(saveBtn).toHaveAttribute('aria-busy', 'true'));
+		submitImplicitly(nameInput);
+
+		await waitFor(() => {
+			expect(mockToast.success).toHaveBeenCalledWith('Key updated successfully');
+		});
+		expect(requests).toBe(1);
+	});
+
+	it('pressing Enter without changes does not save', async () => {
+		let requests = 0;
+		server.use(
+			rest.put(SA_KEY_ENDPOINT, (_, res, ctx) => {
+				requests += 1;
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+		);
+		renderModal();
+
+		const nameInput =
+			await screen.findByDisplayValue<HTMLInputElement>('Original Key Name');
+		submitImplicitly(nameInput);
+
+		await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
+		expect(requests).toBe(0);
+		expect(screen.getByTestId('edit-key-modal')).toBeInTheDocument();
 	});
 
 	it('cancel clears edit-key param and closes modal', async () => {

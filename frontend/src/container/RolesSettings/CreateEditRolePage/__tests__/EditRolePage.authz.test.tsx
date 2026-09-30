@@ -83,7 +83,10 @@ describe('EditRolePage - AuthZ', () => {
 				screen.findByText(`Role - ${EDIT_ROLE_NAME}`),
 			).resolves.toBeInTheDocument();
 			expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
-			expect(screen.getByTestId('save-button')).toBeDisabled();
+			expect(screen.getByTestId('save-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 
 			expect(
 				screen.queryByTestId('role-description-input'),
@@ -101,7 +104,7 @@ describe('EditRolePage - AuthZ', () => {
 			).resolves.toBeInTheDocument();
 
 			const saveButton = await screen.findByTestId('save-button');
-			expect(saveButton).toBeDisabled();
+			expect(saveButton).toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 

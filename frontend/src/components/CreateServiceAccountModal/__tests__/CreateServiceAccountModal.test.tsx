@@ -5,6 +5,7 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import { submitImplicitly } from 'tests/submitImplicitly';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
@@ -60,7 +61,10 @@ describe('CreateServiceAccountModal', () => {
 		await screen.findByTestId('create-sa-name-input');
 
 		await waitFor(() =>
-			expect(screen.getByTestId('create-sa-submit-btn')).toBeDisabled(),
+			expect(screen.getByTestId('create-sa-submit-btn')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
 		);
 	});
 
@@ -72,10 +76,14 @@ describe('CreateServiceAccountModal', () => {
 		const submitBtn = await screen.findByTestId('create-sa-submit-btn');
 
 		await user.type(nameInput, 'test');
-		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 
 		await user.clear(nameInput);
-		await waitFor(() => expect(submitBtn).toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).toHaveAttribute('aria-disabled', 'true'),
+		);
 	});
 
 	it('successful submit shows toast.success and closes modal', async () => {
@@ -86,7 +94,9 @@ describe('CreateServiceAccountModal', () => {
 		await user.type(nameInput, 'Deploy Bot');
 
 		const submitBtn = screen.getByTestId('create-sa-submit-btn');
-		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(submitBtn);
 
 		await waitFor(() => {
@@ -100,6 +110,40 @@ describe('CreateServiceAccountModal', () => {
 				screen.queryByTestId('create-service-account-modal'),
 			).not.toBeInTheDocument();
 		});
+	});
+
+	it('pressing Enter again while creating sends one request', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let requests = 0;
+		server.use(
+			rest.post(SERVICE_ACCOUNTS_ENDPOINT, (_, res, ctx) => {
+				requests += 1;
+				return res(
+					ctx.delay(100),
+					ctx.status(201),
+					ctx.json({ status: 'success', data: {} }),
+				);
+			}),
+		);
+		renderModal();
+
+		const nameInput = await screen.findByTestId<HTMLInputElement>(
+			'create-sa-name-input',
+		);
+		await user.type(nameInput, 'Deploy Bot');
+		const submitBtn = screen.getByTestId('create-sa-submit-btn');
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
+
+		submitImplicitly(nameInput);
+		await waitFor(() => expect(submitBtn).toHaveAttribute('aria-busy', 'true'));
+		submitImplicitly(nameInput);
+
+		await waitFor(() => {
+			expect(mockToast.success).toHaveBeenCalled();
+		});
+		expect(requests).toBe(1);
 	});
 
 	it('shows toast.error on API error and keeps modal open', async () => {
@@ -120,7 +164,9 @@ describe('CreateServiceAccountModal', () => {
 		await user.type(nameInput, 'Dupe Bot');
 
 		const submitBtn = screen.getByTestId('create-sa-submit-btn');
-		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(submitBtn);
 
 		await waitFor(() => {
@@ -180,7 +226,10 @@ describe('CreateServiceAccountModal', () => {
 		).resolves.toBeInTheDocument();
 
 		// The footer lives outside the guard: submit is gated, Cancel still works.
-		expect(screen.getByTestId('create-sa-submit-btn')).toBeDisabled();
+		expect(screen.getByTestId('create-sa-submit-btn')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		await user.click(screen.getByTestId('create-sa-cancel-btn'));
 
