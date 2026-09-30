@@ -47,10 +47,10 @@ function PatternEditor({
 				<div className={styles.patternChips}>
 					{patterns.map((pattern) => (
 						<Badge
+							textTransform="none"
 							key={pattern}
-							color="vanilla"
-							variant="outline"
-							className={styles.patternChip}
+							color="secondary"
+							variant="outlined"
 						>
 							{pattern}*
 							{!isReadOnly && (
@@ -81,6 +81,7 @@ function PatternEditor({
 							testId="drawer-pattern-input"
 						/>
 						<Button
+							size="md"
 							variant="outlined"
 							color="secondary"
 							onClick={addPattern}
