@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 
@@ -222,10 +222,12 @@ describe('PanelTypeSelectionModal', () => {
 			const { user } = renderDrawer();
 
 			await startNewSection(user);
-			expect(draft()).toStrictEqual({
-				title: '',
-				panelKind: 'signoz/TimeSeriesPanel',
-			});
+			await waitFor(() =>
+				expect(draft()).toStrictEqual({
+					title: '',
+					panelKind: 'signoz/TimeSeriesPanel',
+				}),
+			);
 
 			await user.type(screen.getByTestId('panel-section-name'), 'Errors');
 			await user.click(screen.getByTestId('panel-type-signoz/TablePanel'));
@@ -284,7 +286,7 @@ describe('PanelTypeSelectionModal', () => {
 
 			await startNewSection(user);
 
-			expect(target()).toBeNull();
+			await waitFor(() => expect(target()).toBeNull());
 		});
 
 		it('restores the pre-reveal scroll position on cancel', async () => {
