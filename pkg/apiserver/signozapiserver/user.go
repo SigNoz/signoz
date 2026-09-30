@@ -537,8 +537,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 
 func (provider *provider) userRoleUserIDExtractor() coretypes.ResourceIDExtractor {
 	return coretypes.NewResourceIDExtractor(coretypes.PhaseRequest, func(ec coretypes.ExtractorContext) (string, error) {
-		userRole, err := provider.userRoleFromRequest(ec)
-		if err != nil || userRole == nil {
+		if ec.Request == nil {
+			return "", nil
+		}
+
+		userRole, err := provider.userRoleFromRequest(ec.Request)
+		if err != nil {
 			return "", err
 		}
 
@@ -548,8 +552,12 @@ func (provider *provider) userRoleUserIDExtractor() coretypes.ResourceIDExtracto
 
 func (provider *provider) userRoleRoleIDExtractor() coretypes.ResourceIDExtractor {
 	return coretypes.NewResourceIDExtractor(coretypes.PhaseRequest, func(ec coretypes.ExtractorContext) (string, error) {
-		userRole, err := provider.userRoleFromRequest(ec)
-		if err != nil || userRole == nil {
+		if ec.Request == nil {
+			return "", nil
+		}
+
+		userRole, err := provider.userRoleFromRequest(ec.Request)
+		if err != nil {
 			return "", err
 		}
 
@@ -557,20 +565,16 @@ func (provider *provider) userRoleRoleIDExtractor() coretypes.ResourceIDExtracto
 	})
 }
 
-func (provider *provider) userRoleFromRequest(ec coretypes.ExtractorContext) (*authtypes.UserRole, error) {
-	if ec.Request == nil {
-		return nil, nil
-	}
-
-	claims, err := authtypes.ClaimsFromContext(ec.Request.Context())
+func (provider *provider) userRoleFromRequest(req *http.Request) (*authtypes.UserRole, error) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
 	if err != nil {
 		return nil, err
 	}
 
-	userRoleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
+	userRoleID, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
 		return nil, err
 	}
 
-	return provider.userGetter.GetUserRoleByOrgIDAndID(ec.Request.Context(), valuer.MustNewUUID(claims.OrgID), userRoleID)
+	return provider.userGetter.GetUserRoleByOrgIDAndID(req.Context(), valuer.MustNewUUID(claims.OrgID), userRoleID)
 }
