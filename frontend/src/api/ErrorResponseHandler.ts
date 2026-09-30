@@ -41,17 +41,16 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 			message: data?.error,
 		};
 	}
+	// Avoid logging error when the request was just cancelled for whatever reason
+	if (isCancel(error)) {
+		return {
+			statusCode: 500,
+			payload: null,
+			error: 'Something went wrong',
+			message: null,
+		};
+	}
 	if (request) {
-		// Avoid logging error when the request was just cancelled for whatever reason
-		if (isCancel(error)) {
-			return {
-				statusCode: 500,
-				payload: null,
-				error: 'Something went wrong',
-				message: null,
-			};
-		}
-
 		// client never received a response, or request never left
 		console.error('client never received a response, or request never left');
 
