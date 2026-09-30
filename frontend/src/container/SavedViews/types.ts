@@ -81,3 +81,9 @@ export interface SavedViewsIconButtonProps {
 	disabled?: boolean;
 	onClick?: () => void;
 }
+
+export interface HighlightedQueryPart {
+	from: number;
+	text: string;
+	color?: string;
+}
