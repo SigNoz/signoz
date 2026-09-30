@@ -54,10 +54,12 @@ export function getGroupByEl<
 		<div className={styles.itemDataGroup}>
 			{groupByValues.map((value, index) => (
 				<Badge
+					textTransform="none"
+					variant="solid"
 					// oxlint-disable-next-line react/no-array-index-key
 					key={`${index}-${value}`}
 					color="secondary"
-					className={styles.itemDataGroupTagItem}
+					maxWidth="100%"
 				>
 					{value === '' ? '<no-value>' : value}
 				</Badge>
