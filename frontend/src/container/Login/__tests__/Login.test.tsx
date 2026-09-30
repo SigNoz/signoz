@@ -161,7 +161,10 @@ describe('Login Component', () => {
 
 			const { getByTestId } = render(<Login />);
 
-			expect(getByTestId('initiate_login')).toBeDisabled();
+			expect(getByTestId('initiate_login')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -229,7 +232,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -271,7 +274,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -304,7 +307,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -341,7 +344,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -383,7 +386,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -422,7 +425,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -459,7 +462,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -495,7 +498,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -538,7 +541,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -588,7 +591,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -645,7 +648,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -726,7 +729,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -778,7 +781,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -825,14 +828,14 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
 			await user.click(nextButton);
 
 			// Button should be disabled during API call
-			expect(nextButton).toBeDisabled();
+			expect(nextButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('shows correct button text for each auth method', async () => {
@@ -860,7 +863,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -902,7 +905,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -955,7 +958,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 

@@ -84,7 +84,7 @@ describe('SignUp Component - Regular Signup', () => {
 				name: /access my workspace/i,
 			});
 
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('disables submit button for partially filled fields', async () => {
@@ -104,19 +104,19 @@ describe('SignUp Component - Regular Signup', () => {
 			// Missing email
 			await user.type(passwordInput, 'password123');
 			await user.type(confirmPasswordInput, 'password123');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 
 			// Missing password
 			await user.clear(passwordInput);
 			await user.clear(confirmPasswordInput);
 			await user.type(emailInput, 'test@signoz.io');
 			await user.type(confirmPasswordInput, 'password123');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 
 			// Missing confirm password
 			await user.clear(confirmPasswordInput);
 			await user.type(passwordInput, 'password123');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('shows error when passwords do not match', async () => {
@@ -209,7 +209,7 @@ describe('SignUp Component - Regular Signup', () => {
 			await user.type(confirmPasswordInput, 'password123');
 
 			await waitFor(() => {
-				expect(submitButton).not.toBeDisabled();
+				expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 			});
 
 			await user.click(submitButton);
@@ -257,7 +257,7 @@ describe('SignUp Component - Regular Signup', () => {
 			await user.type(confirmPasswordInput, 'password123');
 
 			await waitFor(() => {
-				expect(submitButton).not.toBeDisabled();
+				expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 			});
 
 			await user.click(submitButton);
