@@ -45,23 +45,6 @@
 	&__footer {
 		display: flex;
 		justify-content: flex-end;
-
-		// TODO: Need to override the button styles for this component due to container styles.
-		// Fix - @aks07
-
-		&__button {
-			margin-top: 12px;
-			color: var(--base-black);
-			background-color: var(--base-white);
-			border: none;
-			padding: 6px 12px;
-			border-radius: 4px;
-			cursor: pointer;
-
-			&:hover {
-				background-color: var(--base-white);
-				color: var(--bg-robin-500);
-			}
-		}
+		margin-top: 12px;
 	}
 }

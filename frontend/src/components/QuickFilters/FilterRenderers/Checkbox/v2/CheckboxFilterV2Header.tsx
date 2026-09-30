@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { ChevronDown, ChevronRight, Search, Undo2 } from '@signozhq/icons';
 
@@ -62,13 +62,7 @@ export function CheckboxFilterV2Header({
 				) : (
 					<ChevronRight size={13} cursor="pointer" />
 				)}
-				{isTitleTruncated ? (
-					<TooltipSimple title={title} delayDuration={400}>
-						{titleText}
-					</TooltipSimple>
-				) : (
-					titleText
-				)}
+				<Tooltip title={isTitleTruncated ? title : undefined}>{titleText}</Tooltip>
 			</section>
 			{isOpen && (
 				<section className={classNames(styles.rightAction, actionsClassName)}>

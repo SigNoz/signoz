@@ -77,8 +77,7 @@ function ExportPanelContainer({
 		onExport(selectedDashboard, false);
 	}, [selectedDashboard, onExport]);
 
-	const isExportDisabled =
-		isAllDashboardsLoading || !selectedDashboard || isLoading;
+	const isExportDisabled = isAllDashboardsLoading || !selectedDashboard;
 
 	return (
 		<DialogWrapper
@@ -102,6 +101,12 @@ function ExportPanelContainer({
 						Cancel
 					</Button>
 					<Button
+						disabledTooltip={
+							isAllDashboardsLoading
+								? 'Wait for the dashboards to load'
+								: 'Select a dashboard first'
+						}
+						variant="solid"
 						color="primary"
 						size="md"
 						loading={isLoading}
@@ -140,7 +145,6 @@ function ExportPanelContainer({
 						size="md"
 						prefix={<Plus size={14} />}
 						loading={createDashboardLoading}
-						disabled={createDashboardLoading}
 						onClick={createNewDashboard}
 						testId="export-panel-new-dashboard"
 					>
