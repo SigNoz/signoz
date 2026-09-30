@@ -262,7 +262,7 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 }
 
 func (provider *provider) CreateNotificationChannel(ctx context.Context, orgID string, postable alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error) {
-	receiver, err := postable.ToReceiver()
+	channel, receiver, err := postable.ToChannel(orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -277,11 +277,6 @@ func (provider *provider) CreateNotificationChannel(ctx context.Context, orgID s
 	}
 
 	if err := config.CreateReceiverV2(receiver); err != nil {
-		return nil, err
-	}
-
-	channel, err := alertmanagertypes.NewChannelFromReceiverWithName(receiver, postable.Name, orgID)
-	if err != nil {
 		return nil, err
 	}
 
@@ -304,12 +299,8 @@ func (provider *provider) UpdateNotificationChannel(ctx context.Context, orgID s
 		return nil, err
 	}
 
-	receiver, err := updatable.ToReceiver(channel.DisplayName)
+	receiver, err := channel.UpdateFromUpdatable(updatable)
 	if err != nil {
-		return nil, err
-	}
-
-	if err := channel.Update(receiver); err != nil {
 		return nil, err
 	}
 

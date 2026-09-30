@@ -16,8 +16,20 @@ import (
 type ChannelEmailConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	To           string                       `json:"to" required:"true"`
-	HTML         valuer.UnsetOrNonEmptyString `json:"html"`
-	Headers      map[string]string            `json:"headers,omitempty"`
+	HTML         valuer.UnsetOrNonEmptyString `json:"html,omitzero"`
+	Headers      map[string]string            `json:"headers,omitzero"`
+}
+
+func (c *ChannelEmailConfig) UnmarshalJSON(data []byte) error {
+	type alias ChannelEmailConfig
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
+		return err
+	}
+
+	fillSendResolved(&c.SendResolved, config.DefaultEmailConfig.VSendResolved)
+	c.HTML.SetIfUnset(config.DefaultEmailConfig.HTML)
+
+	return c.Validate()
 }
 
 func (c ChannelEmailConfig) Validate() error {

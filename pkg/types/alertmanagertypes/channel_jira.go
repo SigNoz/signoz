@@ -19,18 +19,33 @@ type ChannelJiraConfig struct {
 	Site              string                       `json:"site" required:"true"`
 	Project           string                       `json:"project" required:"true"`
 	IssueType         string                       `json:"issueType" required:"true"`
-	Summary           valuer.UnsetOrNonEmptyString `json:"summary"`
-	Description       valuer.UnsetOrNonEmptyString `json:"description"`
+	Summary           valuer.UnsetOrNonEmptyString `json:"summary,omitzero"`
+	Description       valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
 	Priority          string                       `json:"priority"`
-	Labels            []string                     `json:"labels,omitempty"`
+	Labels            []string                     `json:"labels,omitzero"`
 	ResolveTransition string                       `json:"resolveTransition"`
 	ReopenTransition  string                       `json:"reopenTransition"`
-	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration"`
+	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration,omitzero"`
 	WontFixResolution string                       `json:"wontFixResolution"`
-	CustomFields      map[string]any               `json:"customFields,omitempty"`
+	CustomFields      map[string]any               `json:"customFields,omitzero"`
 
 	Email    string `json:"email" required:"true"`
 	APIToken string `json:"apiToken" required:"true" format:"password"`
+}
+
+// UnmarshalJSON seeds send_resolved off, as JiraReceiverConfig does.
+func (c *ChannelJiraConfig) UnmarshalJSON(data []byte) error {
+	type alias ChannelJiraConfig
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
+		return err
+	}
+
+	fillSendResolved(&c.SendResolved, false)
+	c.Summary.SetIfUnset(DefaultJiraSummaryTemplate)
+	c.Description.SetIfUnset(DefaultJiraDescriptionTemplate)
+	c.ReopenDuration.SetIfUnset(defaultJiraReopenDuration.String())
+
+	return c.Validate()
 }
 
 func (c ChannelJiraConfig) Validate() error {

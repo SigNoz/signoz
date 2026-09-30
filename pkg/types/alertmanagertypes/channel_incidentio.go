@@ -13,9 +13,22 @@ type ChannelIncidentIOConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	URL          string                       `json:"url" required:"true"`
 	Token        string                       `json:"token" required:"true" format:"password"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description"`
-	Metadata     map[string]string            `json:"metadata,omitempty"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
+	Metadata     map[string]string            `json:"metadata,omitzero"`
+}
+
+func (c *ChannelIncidentIOConfig) UnmarshalJSON(data []byte) error {
+	type alias ChannelIncidentIOConfig
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
+		return err
+	}
+
+	fillSendResolved(&c.SendResolved, DefaultIncidentIOReceiverConfig.VSendResolved)
+	c.Title.SetIfUnset(DefaultIncidentIOReceiverConfig.Title)
+	c.Description.SetIfUnset(DefaultIncidentIOReceiverConfig.Description)
+
+	return c.Validate()
 }
 
 func (c ChannelIncidentIOConfig) Validate() error {
