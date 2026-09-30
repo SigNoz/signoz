@@ -175,7 +175,8 @@ describe('VisualizationSection', () => {
 		expect(onChange).toHaveBeenCalledWith({ fillSpans: true });
 	});
 
-	it('renders the type switcher and switches kind when switchPanelKind is set', () => {
+	it('renders the type switcher and switches kind when switchPanelKind is set', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onChangePanelKind = jest.fn();
 		render(
 			<VisualizationSection
@@ -191,8 +192,8 @@ describe('VisualizationSection', () => {
 			screen.getByTestId('panel-editor-v2-type-switcher'),
 		).toBeInTheDocument();
 
-		fireEvent.click(screen.getByTestId('panel-editor-v2-type-switcher'));
-		fireEvent.click(screen.getByTestId('panel-type-signoz/TablePanel'));
+		await user.click(screen.getByTestId('panel-editor-v2-type-switcher'));
+		await user.click(screen.getByTestId('panel-type-signoz/TablePanel'));
 		expect(onChangePanelKind).toHaveBeenCalledWith('signoz/TablePanel');
 	});
 
