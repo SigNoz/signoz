@@ -33,16 +33,30 @@ func TestNewPanicsWhenBodyExtractorHasNoPointerRequest(t *testing.T) {
 	bodyDef := BasicResourceDef{Resource: coretypes.ResourceRole, Verb: coretypes.VerbRead, ID: coretypes.BodyField(func(req *body) string { return req.ID }), Selector: coretypes.IDSelector}
 	pathDef := BasicResourceDef{Resource: coretypes.ResourceRole, Verb: coretypes.VerbRead, ID: coretypes.PathParam("id"), Selector: coretypes.IDSelector}
 
-	assert.Panics(t, func() {
-		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "Value", Request: body{}}, WithResourceDefs(bodyDef))
-	})
-	assert.Panics(t, func() {
-		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "Missing"}, WithResourceDefs(bodyDef))
-	})
-	assert.NotPanics(t, func() {
-		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "Pointer", Request: new(body)}, WithResourceDefs(bodyDef))
-		New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "PathOnly", Request: body{}}, WithResourceDefs(pathDef))
-	})
+	testCases := []struct {
+		name    string
+		request any
+		def     ResourceDef
+		panics  bool
+	}{
+		{name: "BodyExtractor_ValueRequest_Panics", request: body{}, def: bodyDef, panics: true},
+		{name: "BodyExtractor_NilRequest_Panics", request: nil, def: bodyDef, panics: true},
+		{name: "BodyExtractor_PointerRequest_Registers", request: new(body), def: bodyDef, panics: false},
+		{name: "PathExtractor_ValueRequest_Registers", request: body{}, def: pathDef, panics: false},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			register := func() {
+				New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: testCase.name, Request: testCase.request}, WithResourceDefs(testCase.def))
+			}
+			if testCase.panics {
+				assert.Panics(t, register)
+			} else {
+				assert.NotPanics(t, register)
+			}
+		})
+	}
 }
 
 func TestAttachStabilities(t *testing.T) {
