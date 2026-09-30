@@ -1,10 +1,15 @@
 package alertmanagertypes
 
 import (
+	"strings"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
 )
+
+// bearerAuthorizationType is the scheme SigNoz writes for token auth.
+const bearerAuthorizationType = "Bearer"
 
 // ChannelWebhookConfig splits apart the two authentication modes the legacy API
 // overloaded onto one password field, where an empty username meant the password
@@ -16,6 +21,17 @@ type ChannelWebhookConfig struct {
 	Username     string `json:"username"`
 	Password     string `json:"password" format:"password"`
 	BearerToken  string `json:"bearerToken" format:"password"`
+}
+
+func (c *ChannelWebhookConfig) UnmarshalJSON(data []byte) error {
+	type alias ChannelWebhookConfig
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
+		return err
+	}
+
+	fillSendResolved(&c.SendResolved, config.DefaultWebhookConfig.VSendResolved)
+
+	return c.Validate()
 }
 
 func (c ChannelWebhookConfig) Validate() error {
@@ -95,4 +111,17 @@ func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (Chann
 	}
 
 	return webhook, nil
+}
+
+func rejectHTTPAuthorizationBeyondBearer(channelName string, httpConfig *commoncfg.HTTPClientConfig) error {
+	if httpConfig == nil || httpConfig.Authorization == nil {
+		return nil
+	}
+
+	authorization := httpConfig.Authorization
+	if !strings.EqualFold(authorization.Type, bearerAuthorizationType) || *authorization != (commoncfg.Authorization{Type: authorization.Type, Credentials: authorization.Credentials}) {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization with fields other than a bearer token, which is not supported", channelName)
+	}
+
+	return nil
 }

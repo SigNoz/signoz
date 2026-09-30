@@ -10,15 +10,15 @@ type ChannelSlackConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	APIURL       string                       `json:"apiUrl" required:"true" format:"password"`
 	Channel      string                       `json:"channel"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title"`
-	Text         valuer.UnsetOrNonEmptyString `json:"text"`
-	Color        valuer.UnsetOrNonEmptyString `json:"color"`
-	TitleLink    valuer.UnsetOrNonEmptyString `json:"titleLink"`
-	Pretext      valuer.UnsetOrNonEmptyString `json:"pretext"`
-	Fallback     valuer.UnsetOrNonEmptyString `json:"fallback"`
-	Footer       valuer.UnsetOrNonEmptyString `json:"footer"`
-	Fields       []ChannelSlackField          `json:"fields,omitempty"`
-	Actions      []ChannelSlackAction         `json:"actions,omitempty"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero"`
+	Color        valuer.UnsetOrNonEmptyString `json:"color,omitzero"`
+	TitleLink    valuer.UnsetOrNonEmptyString `json:"titleLink,omitzero"`
+	Pretext      valuer.UnsetOrNonEmptyString `json:"pretext,omitzero"`
+	Fallback     valuer.UnsetOrNonEmptyString `json:"fallback,omitzero"`
+	Footer       valuer.UnsetOrNonEmptyString `json:"footer,omitzero"`
+	Fields       []ChannelSlackField          `json:"fields,omitzero"`
+	Actions      []ChannelSlackAction         `json:"actions,omitzero"`
 }
 
 type ChannelSlackField struct {
@@ -44,6 +44,24 @@ type ChannelSlackConfirmation struct {
 	Title       string `json:"title"`
 	OkText      string `json:"okText"`
 	DismissText string `json:"dismissText"`
+}
+
+func (c *ChannelSlackConfig) UnmarshalJSON(data []byte) error {
+	type alias ChannelSlackConfig
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
+		return err
+	}
+
+	fillSendResolved(&c.SendResolved, config.DefaultSlackConfig.VSendResolved)
+	c.Title.SetIfUnset(config.DefaultSlackConfig.Title)
+	c.Text.SetIfUnset(config.DefaultSlackConfig.Text)
+	c.Color.SetIfUnset(config.DefaultSlackConfig.Color)
+	c.TitleLink.SetIfUnset(config.DefaultSlackConfig.TitleLink)
+	c.Pretext.SetIfUnset(config.DefaultSlackConfig.Pretext)
+	c.Fallback.SetIfUnset(config.DefaultSlackConfig.Fallback)
+	c.Footer.SetIfUnset(config.DefaultSlackConfig.Footer)
+
+	return c.Validate()
 }
 
 func (c ChannelSlackConfig) Validate() error {
