@@ -8,8 +8,8 @@ import (
 )
 
 type Module interface {
-	ListPromotedPaths(ctx context.Context, target promotetypes.Target) ([]promotetypes.PromotePath, error)
-	PromotePaths(ctx context.Context, target promotetypes.Target, paths ...*promotetypes.PromotePath) error
+	ListPromotedPaths(ctx context.Context) ([]promotetypes.PromotePath, error)
+	PromotePaths(ctx context.Context, paths ...*promotetypes.PromotePath) error
 }
 
 type Handler interface {

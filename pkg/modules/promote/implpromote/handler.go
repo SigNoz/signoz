@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
-	"github.com/gorilla/mux"
 )
 
 type handler struct {
@@ -21,15 +20,8 @@ func NewHandler(module promote.Module) promote.Handler {
 }
 
 func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	target, err := promotetypes.NewTargetFromPath(vars["telemetry_signal"], vars["context"])
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
 	// TODO(Nitya): Use in multi tenant setup
-	_, err = authtypes.ClaimsFromContext(r.Context())
+	_, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, errors.NewInternalf(errors.CodeInternal, "failed to get org id from context"))
 		return
@@ -41,7 +33,7 @@ func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.module.PromotePaths(r.Context(), target, req...)
+	err = h.module.PromotePaths(r.Context(), req...)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -51,21 +43,14 @@ func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	target, err := promotetypes.NewTargetFromPath(vars["telemetry_signal"], vars["context"])
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
 	// TODO(Nitya): Use in multi tenant setup
-	_, err = authtypes.ClaimsFromContext(r.Context())
+	_, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, errors.NewInternalf(errors.CodeInternal, "failed to get org id from context"))
 		return
 	}
 
-	paths, err := h.module.ListPromotedPaths(r.Context(), target)
+	paths, err := h.module.ListPromotedPaths(r.Context())
 	if err != nil {
 		render.Error(w, err)
 		return
