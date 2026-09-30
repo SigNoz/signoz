@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -78,14 +77,6 @@ func (h *prometheusOpenAPIHandler) ResourceDefs() []handler.ResourceDef {
 		Selector:  querybuilder.TelemetrySelector,
 		Resources: querybuilder.PromQLResources,
 	}}
-}
-
-func (h *prometheusOpenAPIHandler) Request() any {
-	return nil
-}
-
-func (h *prometheusOpenAPIHandler) BindBodyOptions() []binding.BindBodyOption {
-	return nil
 }
 
 func (provider *provider) addPrometheusRoutes(router *mux.Router) error {
