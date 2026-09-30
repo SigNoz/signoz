@@ -9,6 +9,7 @@ type ResourceDef interface {
 	// resolveRequest is unexported to seal the interface. It returns a slice so a
 	// single def can fan out (e.g. a telemetry query touching multiple signals).
 	resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource
+	requiresBody() bool
 }
 
 func ResolveRequest(defs []ResourceDef, ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
@@ -18,6 +19,17 @@ func ResolveRequest(defs []ResourceDef, ec coretypes.ExtractorContext) []coretyp
 	}
 
 	return resolved
+}
+
+// RequiresBody reports whether any def needs the decoded request body.
+func RequiresBody(defs []ResourceDef) bool {
+	for _, def := range defs {
+		if def.requiresBody() {
+			return true
+		}
+	}
+
+	return false
 }
 
 // BasicResourceDef checks a single resource for one verb.
@@ -40,6 +52,10 @@ func (def BasicResourceDef) resolveRequest(ec coretypes.ExtractorContext) []core
 			ec,
 		),
 	}
+}
+
+func (def BasicResourceDef) requiresBody() bool {
+	return def.ID.RequiresBody
 }
 
 // AttachDetachSiblingResourceDef checks an attach/detach between peer resources;
@@ -72,6 +88,10 @@ func (def AttachDetachSiblingResourceDef) resolveRequest(ec coretypes.ExtractorC
 	}
 }
 
+func (def AttachDetachSiblingResourceDef) requiresBody() bool {
+	return def.SourceIDs.RequiresBody || def.TargetIDs.RequiresBody
+}
+
 // AttachDetachParentChildResourceDef authz-checks only the parent; the child
 // rides along for audit context.
 type AttachDetachParentChildResourceDef struct {
@@ -101,11 +121,20 @@ func (def AttachDetachParentChildResourceDef) resolveRequest(ec coretypes.Extrac
 	}
 }
 
+func (def AttachDetachParentChildResourceDef) requiresBody() bool {
+	return def.ParentID.RequiresBody || def.ChildIDs.RequiresBody
+}
+
 type TelemetryResourceDef struct {
-	Verb      coretypes.Verb
-	Category  coretypes.ActionCategory
-	Selector  coretypes.SelectorFunc
-	Resources coretypes.ResourceExtractor
+	Verb         coretypes.Verb
+	Category     coretypes.ActionCategory
+	Selector     coretypes.SelectorFunc
+	Resources    coretypes.ResourceExtractor
+	RequiresBody bool
+}
+
+func (def TelemetryResourceDef) requiresBody() bool {
+	return def.RequiresBody
 }
 
 func (def TelemetryResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {

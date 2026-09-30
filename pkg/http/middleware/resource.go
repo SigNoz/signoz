@@ -5,7 +5,9 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"reflect"
 
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
@@ -23,8 +25,8 @@ func NewResource(logger *slog.Logger) *Resource {
 
 func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		defs := resourceDefsFromRequest(req)
-		if len(defs) == 0 {
+		provider := handlerFromRequest(req)
+		if provider == nil || len(provider.ResourceDefs()) == 0 {
 			next.ServeHTTP(rw, req)
 			return
 		}
@@ -36,18 +38,40 @@ func (middleware *Resource) Wrap(next http.Handler) http.Handler {
 			req.Body = io.NopCloser(bytes.NewReader(body))
 		}
 
-		extractorCtx := coretypes.ExtractorContext{
-			Request:     req,
-			RequestBody: body,
-		}
-		resolved := handler.ResolveRequest(defs, extractorCtx)
+		defs := provider.ResourceDefs()
 
-		ctx := coretypes.NewContextWithResolvedResources(req.Context(), resolved)
+		var decoded any
+		var decodeErr error
+		if handler.RequiresBody(defs) {
+			decoded, decodeErr = decodeBody(provider.Request(), body, provider.BindBodyOptions()...)
+		}
+
+		extractorCtx := coretypes.ExtractorContext{Request: req, RequestBody: body, DecodedRequestBody: decoded}
+
+		var resolved []coretypes.ResolvedResource
+		if decodeErr != nil {
+			// authz renders the error inside the audit middleware, so the request is still logged
+			resolved = []coretypes.ResolvedResource{coretypes.NewResolvedResourceWithError(coretypes.Verb{}, coretypes.ActionCategory{}, decodeErr)}
+		} else {
+			resolved = handler.ResolveRequest(defs, extractorCtx)
+		}
+
+		ctx := coretypes.NewContextWithExtractorContext(req.Context(), extractorCtx)
+		ctx = coretypes.NewContextWithResolvedResources(ctx, resolved)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
 
-func resourceDefsFromRequest(req *http.Request) []handler.ResourceDef {
+func decodeBody(prototype any, body []byte, opts ...binding.BindBodyOption) (any, error) {
+	decoded := reflect.New(reflect.TypeOf(prototype).Elem()).Interface()
+	if err := binding.JSON.BindBody(bytes.NewReader(body), decoded, opts...); err != nil {
+		return nil, err
+	}
+
+	return decoded, nil
+}
+
+func handlerFromRequest(req *http.Request) handler.Handler {
 	route := mux.CurrentRoute(req)
 	if route == nil {
 		return nil
@@ -63,5 +87,5 @@ func resourceDefsFromRequest(req *http.Request) []handler.ResourceDef {
 		return nil
 	}
 
-	return provider.ResourceDefs()
+	return provider
 }
