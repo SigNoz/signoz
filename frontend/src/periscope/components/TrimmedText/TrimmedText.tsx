@@ -18,12 +18,10 @@ function TrimmedText({
 		}
 	}, [text, maxCharacters]);
 
-	return text.length > maxCharacters ? (
-		<Tooltip title={text}>
+	return (
+		<Tooltip title={text.length > maxCharacters ? text : undefined}>
 			<span>{displayText}</span>
 		</Tooltip>
-	) : (
-		<span>{displayText}</span>
 	);
 }
 

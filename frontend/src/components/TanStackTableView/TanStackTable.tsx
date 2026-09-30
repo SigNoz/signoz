@@ -18,7 +18,6 @@ import {
 	SortableContext,
 } from '@dnd-kit/sortable';
 import { ComboboxSimple } from '@signozhq/ui/combobox';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { Pagination } from '@signozhq/ui/pagination';
 import type { Row } from '@tanstack/react-table';
 import {
@@ -576,110 +575,108 @@ function TanStackTableInner<TData, TItemKey = string>(
 					isInfiniteScrollMode={isInfiniteScrollMode}
 				/>
 				<ColumnVisibilitySync visibility={effectiveVisibility} />
-				<TooltipProvider>
-					{disableVirtualScroll ? (
-						<div
-							className={virtuosoClassName}
-							{...restTableScrollerProps}
-							data-testid={testId}
-						>
-							<table className={tableStyles.tanStackTable} style={virtuosoTableStyle}>
-								<VirtuosoTableColGroup columns={effectiveColumns} table={table} />
-								<thead>{tableHeader()}</thead>
-								<tbody>
-									{(isLoading && data.length === 0
-										? flatItems.slice(0, skeletonRowCount)
-										: flatItems
-									).map((item, index) => (
-										<TanStackCustomTableRow
-											key={
-												item.kind === 'expansion' ? `${item.row.id}-expansion` : item.row.id
-											}
-											item={item}
-											context={virtuosoContext}
-											data-index={index}
-											data-item-index={index}
-											data-known-size={0}
-										/>
-									))}
-								</tbody>
-							</table>
-						</div>
-					) : (
-						<TableVirtuoso<FlatItem<TData>, TableRowContext<TData, TItemKey>>
-							className={virtuosoClassName}
-							ref={virtuosoRef}
-							{...restTableScrollerProps}
-							data={flatItems}
-							totalCount={flatItems.length}
-							context={virtuosoContext}
-							increaseViewportBy={INCREASE_VIEWPORT_BY}
-							initialTopMostItemIndex={
-								flatIndexForActiveRow >= 0 ? flatIndexForActiveRow : 0
-							}
-							fixedHeaderContent={tableHeader}
-							style={virtuosoTableStyle}
-							components={virtuosoComponents}
-							endReached={onEndReached ? handleEndReached : undefined}
-							data-testid={testId}
-						/>
-					)}
-					{showInfiniteScrollLoader && (
-						<div
-							className={viewStyles.tanstackLoadingOverlay}
-							data-testid="tanstack-infinite-loader"
-						>
-							<Spin
-								indicator={<Loader className="animate-spin" />}
-								tip="Loading more..."
-							/>
-						</div>
-					)}
-					{showPagination && pagination && (
-						<div className={cx(viewStyles.paginationContainer, paginationClassname)}>
-							{prefixPaginationContent}
-							{pagination.showTotalCount && effectiveTotalCount > 0 && (
-								<span
-									className={viewStyles.paginationTotalCount}
-									data-testid="pagination-total-count"
-								>
-									Showing {(page - 1) * limit + 1} -{' '}
-									{Math.min(page * limit, effectiveTotalCount)} of {effectiveTotalCount}
-									{pagination.totalCountLabel ? ` ${pagination.totalCountLabel}` : ''}
-								</span>
-							)}
-							<Pagination
-								current={page}
-								pageSize={limit}
-								total={effectiveTotalCount}
-								onPageChange={(p): void => {
-									setPage(p);
-									pagination.onPageChange?.(p);
-								}}
-							/>
-							{pagination.showPageSize !== false && (
-								<div className={viewStyles.paginationPageSize}>
-									<ComboboxSimple
-										testId="pagination-page-size"
-										value={limit?.toString()}
-										defaultValue="10"
-										onChange={(value): void => {
-											value ??= '10';
-											setLimit(+value);
-											pagination.onLimitChange?.(+value);
-											if (page !== 1) {
-												setPage(1);
-												pagination.onPageChange?.(1);
-											}
-										}}
-										items={pageSizeItems}
+				{disableVirtualScroll ? (
+					<div
+						className={virtuosoClassName}
+						{...restTableScrollerProps}
+						data-testid={testId}
+					>
+						<table className={tableStyles.tanStackTable} style={virtuosoTableStyle}>
+							<VirtuosoTableColGroup columns={effectiveColumns} table={table} />
+							<thead>{tableHeader()}</thead>
+							<tbody>
+								{(isLoading && data.length === 0
+									? flatItems.slice(0, skeletonRowCount)
+									: flatItems
+								).map((item, index) => (
+									<TanStackCustomTableRow
+										key={
+											item.kind === 'expansion' ? `${item.row.id}-expansion` : item.row.id
+										}
+										item={item}
+										context={virtuosoContext}
+										data-index={index}
+										data-item-index={index}
+										data-known-size={0}
 									/>
-								</div>
-							)}
-							{suffixPaginationContent}
-						</div>
-					)}
-				</TooltipProvider>
+								))}
+							</tbody>
+						</table>
+					</div>
+				) : (
+					<TableVirtuoso<FlatItem<TData>, TableRowContext<TData, TItemKey>>
+						className={virtuosoClassName}
+						ref={virtuosoRef}
+						{...restTableScrollerProps}
+						data={flatItems}
+						totalCount={flatItems.length}
+						context={virtuosoContext}
+						increaseViewportBy={INCREASE_VIEWPORT_BY}
+						initialTopMostItemIndex={
+							flatIndexForActiveRow >= 0 ? flatIndexForActiveRow : 0
+						}
+						fixedHeaderContent={tableHeader}
+						style={virtuosoTableStyle}
+						components={virtuosoComponents}
+						endReached={onEndReached ? handleEndReached : undefined}
+						data-testid={testId}
+					/>
+				)}
+				{showInfiniteScrollLoader && (
+					<div
+						className={viewStyles.tanstackLoadingOverlay}
+						data-testid="tanstack-infinite-loader"
+					>
+						<Spin
+							indicator={<Loader className="animate-spin" />}
+							tip="Loading more..."
+						/>
+					</div>
+				)}
+				{showPagination && pagination && (
+					<div className={cx(viewStyles.paginationContainer, paginationClassname)}>
+						{prefixPaginationContent}
+						{pagination.showTotalCount && effectiveTotalCount > 0 && (
+							<span
+								className={viewStyles.paginationTotalCount}
+								data-testid="pagination-total-count"
+							>
+								Showing {(page - 1) * limit + 1} -{' '}
+								{Math.min(page * limit, effectiveTotalCount)} of {effectiveTotalCount}
+								{pagination.totalCountLabel ? ` ${pagination.totalCountLabel}` : ''}
+							</span>
+						)}
+						<Pagination
+							current={page}
+							pageSize={limit}
+							total={effectiveTotalCount}
+							onPageChange={(p): void => {
+								setPage(p);
+								pagination.onPageChange?.(p);
+							}}
+						/>
+						{pagination.showPageSize !== false && (
+							<div className={viewStyles.paginationPageSize}>
+								<ComboboxSimple
+									testId="pagination-page-size"
+									value={limit?.toString()}
+									defaultValue="10"
+									onChange={(value): void => {
+										value ??= '10';
+										setLimit(+value);
+										pagination.onLimitChange?.(+value);
+										if (page !== 1) {
+											setPage(1);
+											pagination.onPageChange?.(1);
+										}
+									}}
+									items={pageSizeItems}
+								/>
+							</div>
+						)}
+						{suffixPaginationContent}
+					</div>
+				)}
 			</TanStackTableStateProvider>
 		</div>
 	);
