@@ -30,8 +30,8 @@ const pageStory = storyMocks(dashboardMocks, { layout: 'app' });
  * Route: `/dashboard/:dashboardId`.
  */
 const meta = {
-	title: 'Pages/Dashboards/Detail',
-	tags: ['role-gated', 'play'],
+	title: 'Pages/Dashboards/Detail/Overview',
+	tags: ['authz', 'play'],
 	// The page is wrapped in `withAuthZPage`, which types its props as an index
 	// signature; the story's args are what the controls resolve to.
 	component: DashboardPage as ComponentType<DashboardArgs>,
@@ -160,53 +160,6 @@ export const TooltipsInJsonDrawer: Story = {
 };
 
 /**
- * The Overview tab of dashboard settings, where Cross-Panel Sync explains what
- * syncing the crosshair does and links out to the docs.
- */
-export const TooltipsInSettings: Story = {
-	args: { tooltipsOpen: true },
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(
-			await canvas.findByTestId('show-drawer', {}, { timeout: 10000 }),
-		);
-		await screen.findByText('Sync Mode');
-	},
-};
-
-/**
- * The Variables tab of dashboard settings, where a dynamic variable's Apply to
- * all says whether it is already a filter on every panel. The row keeps its
- * actions invisible until it is hovered, which the story does first.
- */
-export const TooltipsInVariableSettings: Story = {
-	args: { tooltipsOpen: true },
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(
-			await canvas.findByTestId('show-drawer', {}, { timeout: 10000 }),
-		);
-		await userEvent.click(await screen.findByRole('tab', { name: 'Variables' }));
-
-		// The tooltip trigger's Slot merge drops the button's own test id.
-		await userEvent.hover(
-			await screen.findByRole(
-				'button',
-				{ name: 'Apply to all' },
-				{ timeout: 10000 },
-			),
-		);
-		await screen.findByText(
-			'Add this variable as a filter to every panel',
-			undefined,
-			{ timeout: 10000 },
-		);
-	},
-};
-
-/**
  * A panel expanded into view mode, whose header carries the full panel name its
  * title truncates, over the dashboard's own tooltips behind the dialog.
  *
@@ -294,55 +247,6 @@ export const PanelMoveToSectionSubmenu: Story = {
 		await waitFor(() => expect(screen.getAllByRole('menu')).toHaveLength(2), {
 			timeout: 10000,
 		});
-	},
-};
-
-/** Dashboard settings on the Publish tab, where the public link is managed. */
-export const SettingsPublicDashboard: Story = {
-	play: async ({ canvasElement }) => {
-		await userEvent.click(
-			await within(canvasElement).findByRole(
-				'button',
-				{ name: 'Configure' },
-				{ timeout: 10000 },
-			),
-		);
-		await userEvent.click(await screen.findByRole('tab', { name: 'Publish' }));
-		await screen.findByText('Default time range');
-	},
-};
-
-/** The Publish tab with its default time range select open. */
-export const SettingsPublicDashboardSelectOpen: Story = {
-	play: async (context) => {
-		await SettingsPublicDashboard.play?.(context);
-		await userEvent.click(
-			within(screen.getByRole('tabpanel')).getByRole('combobox'),
-		);
-		await screen.findByRole('listbox');
-	},
-};
-
-/** The Variables tab of dashboard settings with a new variable's form open. */
-export const SettingsVariablesNew: Story = {
-	play: async ({ canvasElement }) => {
-		await userEvent.click(
-			await within(canvasElement).findByRole(
-				'button',
-				{ name: 'Configure' },
-				{ timeout: 10000 },
-			),
-		);
-		await userEvent.click(await screen.findByRole('tab', { name: 'Variables' }));
-		const add = await within(await screen.findByRole('tabpanel')).findByRole(
-			'button',
-			{ name: 'Add variable' },
-		);
-
-		// The button stays disabled until its permission check resolves.
-		await waitFor(() => expect(add).toBeEnabled(), { timeout: 10000 });
-		await userEvent.click(add);
-		await screen.findByText('Variable Type');
 	},
 };
 
