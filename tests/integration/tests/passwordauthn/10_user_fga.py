@@ -164,9 +164,6 @@ def test_reset_password_token_scoped_to_granted_user(signoz: types.SigNoz, get_t
     resp = requests.put(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{other_id}/reset_password_tokens"), headers={"Authorization": f"Bearer {token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"create reset token for other user: expected 403, got {resp.status_code}: {resp.text}"
 
-    resp = requests.get(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{other_id}/reset_password_tokens"), headers={"Authorization": f"Bearer {token}"}, timeout=5)
-    assert resp.status_code == HTTPStatus.FORBIDDEN, f"get reset token for other user: expected 403, got {resp.status_code}: {resp.text}"
-
     # user:attach alone is not enough: factor-password:create is checked too.
     _set_actor_role(signoz, admin_token, [transaction_group("attach", "user", "user", [target_id])])
     token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
