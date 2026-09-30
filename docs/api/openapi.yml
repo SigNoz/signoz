@@ -21141,10 +21141,8 @@ paths:
       security:
       - api_key:
         - role:read
-        - user:list
       - tokenizer:
         - role:read
-        - user:list
       summary: Get users by role id
       tags:
       - users
