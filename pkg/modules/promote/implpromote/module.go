@@ -28,9 +28,24 @@ func NewModule(metadataStore telemetrytypes.MetadataStore, telemetrystore teleme
 	return &module{metadataStore: metadataStore, telemetryStore: telemetrystore}
 }
 
-// ListPromotedPaths lists the promoted paths of the target JSON column,
+// ListPromotedPaths lists the promoted paths of every promotion domain, each
+// annotated with its signal and context, merged with per-path index metadata
+// where the domain supports indexes.
+func (m *module) ListPromotedPaths(ctx context.Context) ([]promotetypes.PromotePath, error) {
+	response := make([]promotetypes.PromotePath, 0)
+	for _, target := range promotetypes.Targets() {
+		paths, err := m.listPromotedPaths(ctx, target)
+		if err != nil {
+			return nil, err
+		}
+		response = append(response, paths...)
+	}
+	return response, nil
+}
+
+// listPromotedPaths lists the promoted paths of the target JSON column,
 // merged with per-path index metadata where the target supports indexes.
-func (m *module) ListPromotedPaths(ctx context.Context, target promotetypes.Target) ([]promotetypes.PromotePath, error) {
+func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Target) ([]promotetypes.PromotePath, error) {
 	promotedPaths, err := m.metadataStore.GetPromotedPaths(ctx, target.Entry)
 	if err != nil {
 		return nil, err
@@ -39,6 +54,8 @@ func (m *module) ListPromotedPaths(ctx context.Context, target promotetypes.Targ
 	response := make([]promotetypes.PromotePath, 0, len(promotedPaths))
 	for path := range promotedPaths {
 		response = append(response, promotetypes.PromotePath{
+			Signal:  target.Entry.Signal.StringValue(),
+			Context: target.Entry.FieldContext.StringValue(),
 			Path:    target.RequiredPathPrefix + path,
 			Promote: true,
 		})
@@ -80,6 +97,8 @@ func (m *module) ListPromotedPaths(ctx context.Context, target promotetypes.Targ
 		path = strings.TrimPrefix(path, target.PromotedColumnPrefix())
 		path = target.RequiredPathPrefix + path
 		response = append(response, promotetypes.PromotePath{
+			Signal:  target.Entry.Signal.StringValue(),
+			Context: target.Entry.FieldContext.StringValue(),
 			Path:    path,
 			Indexes: indexes,
 		})
@@ -87,20 +106,45 @@ func (m *module) ListPromotedPaths(ctx context.Context, target promotetypes.Targ
 	return response, nil
 }
 
-// PromotePaths records new promotions of the target JSON column in the column
-// evolution table and, for targets with index support, creates the requested
+// PromotePaths validates the paths, groups them by their promotion domain,
+// and records the new promotions of each domain in the column evolution
+// table; for domains with index support it also creates the requested
 // per-path skip indexes.
-func (m *module) PromotePaths(ctx context.Context, target promotetypes.Target, paths ...*promotetypes.PromotePath) error {
+func (m *module) PromotePaths(ctx context.Context, paths ...*promotetypes.PromotePath) error {
 	if len(paths) == 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty")
 	}
 
-	pathsStr := []string{}
-	// validate the paths
+	byTarget := map[promotetypes.Target][]*promotetypes.PromotePath{}
+	targets := []promotetypes.Target{}
 	for _, path := range paths {
+		target, err := path.Target()
+		if err != nil {
+			return err
+		}
 		if err := path.ValidateAndSetDefaults(target); err != nil {
 			return err
 		}
+		if _, ok := byTarget[target]; !ok {
+			targets = append(targets, target)
+		}
+		byTarget[target] = append(byTarget[target], path)
+	}
+
+	for _, target := range targets {
+		if err := m.promotePaths(ctx, target, byTarget[target]...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// promotePaths records new promotions of the target JSON column in the column
+// evolution table and, for targets with index support, creates the requested
+// per-path skip indexes.
+func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, paths ...*promotetypes.PromotePath) error {
+	pathsStr := []string{}
+	for _, path := range paths {
 		pathsStr = append(pathsStr, path.Path)
 	}
 

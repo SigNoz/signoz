@@ -8,6 +8,53 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestPromotePathTarget(t *testing.T) {
+	testCases := []struct {
+		name    string
+		path    *PromotePath
+		want    Target
+		wantErr bool
+	}{
+		{
+			name: "LogsBody_Resolved",
+			path: &PromotePath{Signal: "logs", Context: "body", Path: "body.user.name"},
+			want: NewLogsBodyTarget(),
+		},
+		{
+			name: "TracesAttribute_Resolved",
+			path: &PromotePath{Signal: "traces", Context: "attribute", Path: "http.method"},
+			want: NewTracesAttributesTarget(),
+		},
+		{
+			name:    "InvalidSignal_Rejected",
+			path:    &PromotePath{Signal: "events", Context: "attribute", Path: "http.method"},
+			wantErr: true,
+		},
+		{
+			name:    "InvalidContext_Rejected",
+			path:    &PromotePath{Signal: "logs", Context: "span", Path: "user.name"},
+			wantErr: true,
+		},
+		{
+			name:    "UnsupportedDomain_Rejected",
+			path:    &PromotePath{Signal: "metrics", Context: "attribute", Path: "http.method"},
+			wantErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			target, err := testCase.path.Target()
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, testCase.want, target)
+		})
+	}
+}
+
 func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 	target := NewLogsBodyTarget()
 

@@ -16,10 +16,17 @@ type WrappedIndex struct {
 }
 
 type PromotePath struct {
+	Signal  string `json:"signal"`
+	Context string `json:"context"`
 	Path    string `json:"path"`
 	Promote bool   `json:"promote,omitempty"`
 
 	Indexes []WrappedIndex `json:"indexes,omitempty"`
+}
+
+// Target resolves the promotion domain the signal and context name.
+func (i *PromotePath) Target() (Target, error) {
+	return NewTargetFromText(i.Signal, i.Context)
 }
 
 func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
