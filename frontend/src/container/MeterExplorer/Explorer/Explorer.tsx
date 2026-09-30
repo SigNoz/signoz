@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/react';
 import { Button, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
@@ -123,6 +124,7 @@ function Explorer(): JSX.Element {
 			<QuickFiltersLayout
 				className="meter-explorer-container"
 				showFilters={showQuickFilters}
+				savedViewProps={{ source: SavedviewtypesSourceDTO.meter }}
 				quickFilterProps={{
 					className: 'qf-meter-explorer',
 					source: QuickFiltersSource.METER_EXPLORER,
