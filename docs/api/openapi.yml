@@ -7756,6 +7756,8 @@ components:
       type: object
     PromotetypesPromotePath:
       properties:
+        context:
+          type: string
         indexes:
           items:
             $ref: '#/components/schemas/PromotetypesWrappedIndex'
@@ -7764,6 +7766,8 @@ components:
           type: string
         promote:
           type: boolean
+        signal:
+          type: string
       type: object
     PromotetypesWrappedIndex:
       properties:
@@ -13603,24 +13607,12 @@ paths:
       tags:
       - preferences
       x-signoz-stability: alpha
-  /api/v1/promoted_path/{telemetry_signal}/{context}:
+  /api/v1/promoted_path:
     get:
       deprecated: false
-      description: This endpoint lists the promoted paths of a JSON column. The promotion
-        domain is identified by the telemetry_signal and context path variables, e.g.
-        traces/attribute.
+      description: This endpoint lists the promoted paths of every JSON column, each
+        annotated with its signal and context.
       operationId: ListPromotedPaths
-      parameters:
-      - in: path
-        name: telemetry_signal
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: context
-        required: true
-        schema:
-          type: string
       responses:
         "200":
           content:
@@ -13674,21 +13666,10 @@ paths:
       x-signoz-stability: alpha
     post:
       deprecated: false
-      description: This endpoint promotes paths of a JSON column to its promoted column.
-        The promotion domain is identified by the telemetry_signal and context path
-        variables, e.g. traces/attribute.
+      description: This endpoint promotes paths of JSON columns to their promoted
+        columns. Each path names its promotion domain with its signal and context,
+        e.g. traces/attribute.
       operationId: PromotePaths
-      parameters:
-      - in: path
-        name: telemetry_signal
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: context
-        required: true
-        schema:
-          type: string
       requestBody:
         content:
           application/json:
