@@ -111,6 +111,7 @@ function AddNewPipeline({
 				<Form.Item>
 					<ModalButtonWrapper>
 						<Button
+							size="md"
 							key="submit"
 							variant="solid"
 							color="primary"
@@ -119,6 +120,7 @@ function AddNewPipeline({
 							{isEdit ? t('update') : t('create')}
 						</Button>
 						<Button
+							size="md"
 							key="cancel"
 							variant="solid"
 							color="secondary"
