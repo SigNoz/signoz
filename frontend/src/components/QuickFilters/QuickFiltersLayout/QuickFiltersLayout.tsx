@@ -1,5 +1,6 @@
 import { ComponentProps, ReactNode, useState } from 'react';
 import cx from 'classnames';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import SavedViewsHeader from 'container/SavedViews/SavedViewsHeader';
 import SavedViewsPanel from 'container/SavedViews/SavedViewsPanel';
@@ -7,6 +8,7 @@ import SavedViewsRestore from 'container/SavedViews/SavedViewsRestore';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 
 import QuickFilters from '../QuickFilters';
+import { SIDEBAR_TOOLTIP_DELAY_MS } from './constants';
 
 import styles from './QuickFiltersLayout.module.scss';
 
@@ -71,29 +73,31 @@ function QuickFiltersLayout({
 					className={cx(styles.sidebar, { [styles.isStatic]: !hasQuickFilters })}
 					data-testid="quick-filters-layout-filters"
 				>
-					<div
-						className={cx(styles.quickFilters, { [styles.isOpen]: isSliding })}
-						data-testid="quick-filters-layout-drawer"
-					>
-						{hasQuickFilters ? (
-							<QuickFilters
-								{...quickFilterProps}
-								savedViewsHeader={savedViewsHeader}
-							/>
-						) : (
-							savedViewsHeader
-						)}
-					</div>
-					<div className={styles.savedViews}>
-						{hasSavedViews && isViewsListVisible && (
-							<SavedViewsPanel
-								{...savedViewProps}
-								onClose={
-									isViewsListPinned ? undefined : (): void => setIsViewsListOpen(false)
-								}
-							/>
-						)}
-					</div>
+					<TooltipProvider delayDuration={SIDEBAR_TOOLTIP_DELAY_MS}>
+						<div
+							className={cx(styles.quickFilters, { [styles.isOpen]: isSliding })}
+							data-testid="quick-filters-layout-drawer"
+						>
+							{hasQuickFilters ? (
+								<QuickFilters
+									{...quickFilterProps}
+									savedViewsHeader={savedViewsHeader}
+								/>
+							) : (
+								savedViewsHeader
+							)}
+						</div>
+						<div className={styles.savedViews}>
+							{hasSavedViews && isViewsListVisible && (
+								<SavedViewsPanel
+									{...savedViewProps}
+									onClose={
+										isViewsListPinned ? undefined : (): void => setIsViewsListOpen(false)
+									}
+								/>
+							)}
+						</div>
+					</TooltipProvider>
 				</aside>
 			)}
 			<section
