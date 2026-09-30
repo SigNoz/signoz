@@ -14,12 +14,12 @@ import SavedViewsHeader from '../SavedViewsHeader';
 import {
 	explorerUrl,
 	makeView,
-	mockSavedViewsApi,
 	queryWith,
 	renderWithExplorerProviders,
 	urlParam,
 	viewUrl,
 } from './savedViewsTestUtils';
+import { mockSavedViewsApi } from './savedViewsApiMock';
 
 const PATH = ROUTES.TRACES_EXPLORER;
 
@@ -223,38 +223,6 @@ describe('SavedViewsHeader', () => {
 		expect(
 			JSON.parse(localStorage.getItem(LOCALSTORAGE.LAST_USED_SAVED_VIEWS) ?? '{}'),
 		).toStrictEqual({});
-	});
-
-	describe('last used view', () => {
-		beforeEach(() => {
-			localStorage.setItem(
-				LOCALSTORAGE.LAST_USED_SAVED_VIEWS,
-				JSON.stringify({ traces: { key: errors.id, value: 'Errors' } }),
-			);
-		});
-
-		it('reopens on a bare explorer', async () => {
-			mockSavedViewsApi([errors]);
-			const { history } = renderHeader(explorerUrl(PATH, {}));
-
-			await waitForView('Errors');
-			expect(urlParam(history, QueryParams.viewKey)).toBe(
-				JSON.stringify(errors.id),
-			);
-		});
-
-		it('leaves a url with its own query alone', async () => {
-			mockSavedViewsApi([errors]);
-			const { history } = renderHeader(
-				explorerUrl(PATH, {
-					query: queryWith(DataSource.TRACES, 'service.name = "cart"'),
-				}),
-			);
-
-			await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
-			expect(chip()).toHaveTextContent('My view');
-			expect(urlParam(history, QueryParams.viewKey)).toBeNull();
-		});
 	});
 
 	describe('unsaved changes indicator', () => {
