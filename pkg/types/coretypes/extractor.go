@@ -1,8 +1,10 @@
 package coretypes
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/gorilla/mux"
 	"github.com/tidwall/gjson"
 )
@@ -12,24 +14,70 @@ const (
 	PhaseResponse
 )
 
+var (
+	errCodeExtractorContextNotFound = errors.MustNewCode("extractor_context_not_found")
+	errCodeRequestTypeUndeclared    = errors.MustNewCode("request_type_undeclared")
+	errCodeRequestTypeMismatch      = errors.MustNewCode("request_type_mismatch")
+)
+
 type ExtractPhase int
 
+type extractorContextKey struct{}
+
 // ExtractorContext carries everything an extractor may read: Request + RequestBody
-// are filled pre-handler, ResponseBody post-handler.
+// are filled pre-handler, ResponseBody post-handler. RequestBody is the body
+// decoded by the resource middleware into the route's declared request type.
 type ExtractorContext struct {
 	Request      *http.Request
-	RequestBody  []byte
+	RequestBody  any
 	ResponseBody []byte
 }
 
+func NewContextWithExtractorContext(ctx context.Context, ec ExtractorContext) context.Context {
+	return context.WithValue(ctx, extractorContextKey{}, ec)
+}
+
+func ExtractorContextFromContext(ctx context.Context) (ExtractorContext, error) {
+	ec, ok := ctx.Value(extractorContextKey{}).(ExtractorContext)
+	if !ok {
+		return ExtractorContext{}, errors.New(errors.TypeInternal, errCodeExtractorContextNotFound, "extractor context not found in context")
+	}
+
+	return ec, nil
+}
+
+func BodyAs[T any](ec ExtractorContext) (*T, error) {
+	if ec.RequestBody == nil {
+		return nil, errors.New(errors.TypeInternal, errCodeRequestTypeUndeclared, "route does not declare a request type")
+	}
+
+	typed, ok := ec.RequestBody.(*T)
+	if !ok {
+		return nil, errors.Newf(errors.TypeInternal, errCodeRequestTypeMismatch, "route declares request type %T, expected %T", ec.RequestBody, (*T)(nil))
+	}
+
+	return typed, nil
+}
+
+func BodyFromContext[T any](ctx context.Context) (*T, error) {
+	ec, err := ExtractorContextFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return BodyAs[T](ec)
+}
+
 type ResourceIDExtractor struct {
-	Phase ExtractPhase
-	Fn    func(ExtractorContext) (string, error)
+	Phase        ExtractPhase
+	RequiresBody bool
+	Fn           func(ExtractorContext) (string, error)
 }
 
 type ResourceIDsExtractor struct {
-	Phase ExtractPhase
-	Fn    func(ExtractorContext) ([]string, error)
+	Phase        ExtractPhase
+	RequiresBody bool
+	Fn           func(ExtractorContext) ([]string, error)
 }
 
 func NewResourceIDExtractor(phase ExtractPhase, fn func(ExtractorContext) (string, error)) ResourceIDExtractor {
@@ -50,7 +98,7 @@ func OneID(extractor ResourceIDExtractor) ResourceIDsExtractor {
 		return ResourceIDsExtractor{}
 	}
 
-	return ResourceIDsExtractor{Phase: extractor.Phase, Fn: func(ec ExtractorContext) ([]string, error) {
+	return ResourceIDsExtractor{Phase: extractor.Phase, RequiresBody: extractor.RequiresBody, Fn: func(ec ExtractorContext) ([]string, error) {
 		id, err := extractor.Fn(ec)
 		if err != nil || id == "" {
 			return nil, err
@@ -75,26 +123,25 @@ func PathParam(name string) ResourceIDExtractor {
 	}}
 }
 
-func BodyJSONPath(path string) ResourceIDExtractor {
-	return ResourceIDExtractor{Phase: PhaseRequest, Fn: func(ec ExtractorContext) (string, error) {
-		return gjson.GetBytes(ec.RequestBody, path).String(), nil
+func BodyField[T any](pick func(*T) string) ResourceIDExtractor {
+	return ResourceIDExtractor{Phase: PhaseRequest, RequiresBody: true, Fn: func(ec ExtractorContext) (string, error) {
+		req, err := BodyAs[T](ec)
+		if err != nil {
+			return "", err
+		}
+
+		return pick(req), nil
 	}}
 }
 
-func BodyJSONArray(path string) ResourceIDsExtractor {
-	return ResourceIDsExtractor{Phase: PhaseRequest, Fn: func(ec ExtractorContext) ([]string, error) {
-		result := gjson.GetBytes(ec.RequestBody, path)
-		if !result.Exists() {
-			return nil, nil
+func BodyFields[T any](pick func(*T) []string) ResourceIDsExtractor {
+	return ResourceIDsExtractor{Phase: PhaseRequest, RequiresBody: true, Fn: func(ec ExtractorContext) ([]string, error) {
+		req, err := BodyAs[T](ec)
+		if err != nil {
+			return nil, err
 		}
 
-		array := result.Array()
-		ids := make([]string, 0, len(array))
-		for _, r := range array {
-			ids = append(ids, r.String())
-		}
-
-		return ids, nil
+		return pick(req), nil
 	}}
 }
 

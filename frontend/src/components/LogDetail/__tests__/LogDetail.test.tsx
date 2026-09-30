@@ -19,10 +19,6 @@ jest.mock('periscope/components/DataViewer', () => ({
 }));
 
 // Force v2 for these tests regardless of route.
-jest.mock('../useIsLogDetailsV2', () => ({
-	useIsLogDetailsV2: (): boolean => true,
-}));
-
 const mockLog: ILog = {
 	id: 'log-1',
 	timestamp: '2024-01-15T09:45:30Z',
@@ -58,7 +54,7 @@ function renderDrawer(props: Partial<LogDetailProps> = {}): void {
 	);
 }
 
-describe('LogDetail drawer — header (isLogDetailsV2)', () => {
+describe('LogDetail drawer — header', () => {
 	afterEach(() => {
 		jest.clearAllMocks();
 		localStorage.clear();
