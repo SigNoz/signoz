@@ -17,7 +17,7 @@ func queryRangeExtractorContext(t *testing.T, body string) coretypes.ExtractorCo
 	t.Helper()
 	req := new(qbtypes.QueryRangeRequest)
 	require.NoError(t, binding.JSON.BindBody(strings.NewReader(body), req))
-	return coretypes.ExtractorContext{DecodedRequestBody: req}
+	return coretypes.ExtractorContext{RequestBody: req}
 }
 
 func builderQueryBody(signal, filterExpression string) string {
