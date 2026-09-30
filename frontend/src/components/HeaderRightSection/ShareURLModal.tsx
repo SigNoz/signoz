@@ -149,6 +149,9 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 								<Info size={14} color={Color.BG_AMBER_600} />
 							)}
 							<Switch
+								color="primary"
+								textPlacement="right"
+								disabledTooltip="Please select / enter valid relative time to toggle."
 								value={enableAbsoluteTime}
 								disabled={!isValidateRelativeTime}
 								onChange={(): void => {
@@ -173,6 +176,8 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 					</Typography.Text>
 					<div className="absolute-relative-time-toggler">
 						<Switch
+							color="primary"
+							textPlacement="right"
 							value={enableExtraOption}
 							onChange={(): void => setEnableExtraOption((prev) => !prev)}
 						/>

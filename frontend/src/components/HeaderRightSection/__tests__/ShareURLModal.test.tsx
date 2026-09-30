@@ -176,7 +176,7 @@ describe('ShareURLModal', () => {
 		expect(
 			screen.getByText('Please select / enter valid relative time to toggle.'),
 		).toBeInTheDocument();
-		expect(screen.getByRole('switch')).toBeDisabled();
+		expect(screen.getByRole('switch')).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('should process URL with absolute time for non-custom time', async () => {
