@@ -7,6 +7,7 @@ import { rest } from 'msw';
 import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import type { GetPublicDashboard200 } from 'api/generated/services/sigNoz.schemas';
+import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPreference';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import {
@@ -23,6 +24,7 @@ import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/q
 
 import {
 	currentDashboardDocument,
+	cyclicVariablesDashboardResponse,
 	patchDashboardDocument,
 	PANEL_IDS,
 	seedDashboardDocument,
@@ -32,8 +34,8 @@ import {
 	type VariableKind,
 } from './__story_mockdata__/dashboard';
 import {
+	attributeValues,
 	emptyPanelResponse,
-	NAMESPACE_VALUES,
 	VARIABLE_ATTRIBUTES,
 	panelResponse,
 	serviceVariableValues,
@@ -68,6 +70,14 @@ const NOT_FOUND = {
 };
 
 const ok = { status: 'success', data: null };
+
+// The editor rewrites any `Syntax error:` into its own hint, so the ClickHouse
+// wording only shows through the variable bar.
+const VARIABLE_QUERY_ERROR = {
+	status: 'error',
+	error:
+		"Code: 62. DB::Exception: Syntax error: failed at position 58 ('$environment'). (SYNTAX_ERROR)",
+};
 
 const publicMeta = (): GetPublicDashboard200 => ({
 	status: 'success',
@@ -140,6 +150,12 @@ export const dashboardMocks = defineStoryMocks({
 			description: 'Values the query-backed `service` variable resolves to.',
 			value: 4,
 			max: 12,
+		}),
+		variableQueryFails: toggleControl('Variable query fails', {
+			group: DATA,
+			description:
+				"The query-backed `service` variable answers with a ClickHouse syntax error, which the variable bar and the editor's Test Run both report.",
+			value: false,
 		}),
 		noData: toggleControl('Panels return nothing', {
 			group: DATA,
@@ -232,18 +248,29 @@ export const dashboardMocks = defineStoryMocks({
 			// The variable bar resolves before the panels and stays laid out while
 			// they load or fail, so its two endpoints answer on their own rather
 			// than through the Data control.
-			rest.post('http://localhost/api/v2/variables/query', (_req, res, ctx) =>
+			values.variableQueryFails
+				? rest.post('http://localhost/api/v2/variables/query', (_req, res, ctx) =>
+						res(ctx.status(400), ctx.json(VARIABLE_QUERY_ERROR)),
+					)
+				: rest.post('http://localhost/api/v2/variables/query', (_req, res, ctx) =>
+						res(
+							ctx.status(200),
+							ctx.json({
+								status: 'success',
+								data: {
+									variableValues: serviceVariableValues(values.variableValues),
+								},
+							}),
+						),
+					),
+
+			rest.get('http://localhost/api/v1/fields/values', (req, res, ctx) =>
 				res(
 					ctx.status(200),
-					ctx.json({
-						status: 'success',
-						data: { variableValues: serviceVariableValues(values.variableValues) },
-					}),
+					ctx.json(
+						fieldValuesResponse(attributeValues(req.url.searchParams.get('name'))),
+					),
 				),
-			),
-
-			rest.get('http://localhost/api/v1/fields/values', (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(fieldValuesResponse(NAMESPACE_VALUES))),
 			),
 
 			// The dynamic variable editor lists the attributes a variable can read.
@@ -283,6 +310,9 @@ export const dashboardMocks = defineStoryMocks({
 			variables: values.variables,
 			locked: values.locked,
 		});
+		// The sync mode persists per dashboard, so one story's pick would open the
+		// next one on it.
+		useDashboardPreferencesStore.setState({ preferences: {} });
 	},
 });
 
@@ -340,4 +370,10 @@ export const metricsListHandler = rest.get(
 	'http://localhost/api/v2/metrics',
 	(_req, res, ctx) =>
 		res(ctx.status(200), ctx.json({ status: 'success', data: { metrics: [] } })),
+);
+
+export const cyclicVariablesDashboardHandler = rest.get(
+	'http://localhost/api/v2/dashboards/:id',
+	(_req, res, ctx) =>
+		res(ctx.status(200), ctx.json(cyclicVariablesDashboardResponse())),
 );
