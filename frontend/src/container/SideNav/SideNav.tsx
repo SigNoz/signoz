@@ -1,6 +1,6 @@
 import {
+	isValidElement,
 	MouseEvent,
-	ReactNode,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -26,14 +26,7 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from '@signozhq/ui/dropdown-menu';
-import { Button, MenuProps, Modal, Tooltip } from 'antd';
+import { Button, Modal, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { Logout } from 'api/utils';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -67,6 +60,7 @@ import {
 	ScrollText,
 	X,
 } from '@signozhq/icons';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -88,6 +82,8 @@ import {
 	helpSupportMenuItem,
 	primaryMenuItems,
 	aiAssistantMenuItem,
+	USER_SETTINGS_MENU_LABELS,
+	type UserSettingsMenuKey,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
 import {
@@ -512,22 +508,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		[pathname],
 	);
 
-	const userSettingsDropdownMenuItems: MenuProps['items'] = useMemo(
-		() =>
-			getUserSettingsDropdownMenuItems({
-				userEmail: user.email,
-				isWorkspaceBlocked,
-				isEnterpriseSelfHostedUser,
-				isCommunityEnterpriseUser,
-			}),
-		[
-			isEnterpriseSelfHostedUser,
-			isCommunityEnterpriseUser,
-			user.email,
-			isWorkspaceBlocked,
-		],
-	);
-
 	useEffect(() => {
 		if (isCloudUser) {
 			setLicenseTag('Cloud');
@@ -907,50 +887,39 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	};
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const handleSettingsMenuItemClick = (info: SidebarItem): void => {
-		const item = (userSettingsDropdownMenuItems ?? []).find(
-			(item) => item?.key === info.key,
-		);
-		let menuLabel = '';
-		if (
-			item &&
-			!('type' in item && item.type === 'divider') &&
-			typeof item.label === 'string'
-		) {
-			menuLabel = item.label;
-		}
-
+	const handleSettingsMenuItemClick = (
+		key: UserSettingsMenuKey,
+		event: MouseEvent,
+	): void => {
 		void logEvent('Settings Popover: Item clicked', {
-			menuRoute: item?.key,
-			menuLabel,
+			menuRoute: key,
+			menuLabel: USER_SETTINGS_MENU_LABELS[key],
 		});
 
-		const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
-
-		switch (info.key) {
+		switch (key) {
 			case 'account':
-				if (event && isModifierKeyPressed(event)) {
+				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.MY_SETTINGS);
 				} else {
 					history.push(ROUTES.MY_SETTINGS);
 				}
 				break;
 			case 'workspace':
-				if (event && isModifierKeyPressed(event)) {
+				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.SETTINGS);
 				} else {
 					history.push(ROUTES.SETTINGS);
 				}
 				break;
 			case 'license':
-				if (event && isModifierKeyPressed(event)) {
+				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.LIST_LICENSES);
 				} else {
 					history.push(ROUTES.LIST_LICENSES);
 				}
 				break;
 			case 'keyboard-shortcuts':
-				if (event && isModifierKeyPressed(event)) {
+				if (isModifierKeyPressed(event)) {
 					openInNewTab(ROUTES.SHORTCUTS);
 				} else {
 					history.push(ROUTES.SHORTCUTS);
@@ -985,6 +954,36 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isCloudUser,
 		isEnterpriseSelfHostedUser,
 	]);
+
+	const helpSupportItems: DropdownItemType[] = helpSupportDropdownMenuItems.map(
+		(item, idx): DropdownItemType => {
+			if ('type' in item) {
+				return { type: 'separator', value: `help-sep-${idx}` };
+			}
+
+			return {
+				type: 'item',
+				value: String(item.key),
+				label: item.label ?? '',
+				prefix: isValidElement(item.icon) ? item.icon : undefined,
+				onClick: (event: MouseEvent): void => {
+					handleHelpSupportMenuItemClick({
+						...item,
+						key: String(item.key),
+						domEvent: event.nativeEvent,
+					} as unknown as SidebarItem);
+				},
+			};
+		},
+	);
+
+	const userSettingsItems = getUserSettingsDropdownMenuItems({
+		userEmail: user.email,
+		isWorkspaceBlocked,
+		isEnterpriseSelfHostedUser,
+		isCommunityEnterpriseUser,
+		onSelect: handleSettingsMenuItemClick,
+	});
 
 	return (
 		<div className={cx('sidenav-container', isPinned && 'pinned')}>
@@ -1219,95 +1218,40 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							{isAIAssistantEnabled && renderNavItems([aiAssistantMenuItem], false)}
 
 							<div className="nav-dropdown-item">
-								<DropdownMenu onOpenChange={handleDropdownOpenChange}>
-									<DropdownMenuTrigger asChild>
-										<div className="nav-item">
-											<div className="nav-item-data" data-testid="help-support-nav-item">
-												<div className="nav-item-icon">{helpSupportMenuItem.icon}</div>
+								<Dropdown
+									items={helpSupportItems}
+									nativeButton={false}
+									side="top"
+									align="start"
+									onOpenChange={handleDropdownOpenChange}
+								>
+									<div className="nav-item">
+										<div className="nav-item-data" data-testid="help-support-nav-item">
+											<div className="nav-item-icon">{helpSupportMenuItem.icon}</div>
 
-												<div className="nav-item-label">{helpSupportMenuItem.label}</div>
-											</div>
+											<div className="nav-item-label">{helpSupportMenuItem.label}</div>
 										</div>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent
-										side="top"
-										align="start"
-										className="nav-dropdown-overlay help-support-dropdown"
-									>
-										{helpSupportDropdownMenuItems.map((item, idx) => {
-											if ('type' in item) {
-												// eslint-disable-next-line react/no-array-index-key
-												return <DropdownMenuSeparator key={`help-sep-${idx}`} />;
-											}
-											return (
-												<DropdownMenuItem
-													key={String(item.key)}
-													leftIcon={item.icon}
-													onClick={(e): void =>
-														handleHelpSupportMenuItemClick({
-															...item,
-															key: String(item.key),
-															domEvent: e.nativeEvent,
-														} as unknown as SidebarItem)
-													}
-												>
-													{item.label}
-												</DropdownMenuItem>
-											);
-										})}
-									</DropdownMenuContent>
-								</DropdownMenu>
+									</div>
+								</Dropdown>
 							</div>
 
 							<div className="nav-dropdown-item">
-								<DropdownMenu onOpenChange={handleDropdownOpenChange}>
-									<DropdownMenuTrigger asChild>
-										<div className={cx('nav-item', isSettingsPage && 'active')}>
-											<div className="nav-item-active-marker" />
-											<div className="nav-item-data" data-testid="settings-nav-item">
-												<div className="nav-item-icon">{userSettingsMenuItem.icon}</div>
+								<Dropdown
+									items={userSettingsItems}
+									nativeButton={false}
+									side="top"
+									align="start"
+									onOpenChange={handleDropdownOpenChange}
+								>
+									<div className={cx('nav-item', isSettingsPage && 'active')}>
+										<div className="nav-item-active-marker" />
+										<div className="nav-item-data" data-testid="settings-nav-item">
+											<div className="nav-item-icon">{userSettingsMenuItem.icon}</div>
 
-												<div className="nav-item-label">{userSettingsMenuItem.label}</div>
-											</div>
+											<div className="nav-item-label">{userSettingsMenuItem.label}</div>
 										</div>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent
-										side="top"
-										align="start"
-										className="nav-dropdown-overlay settings-dropdown"
-									>
-										{(userSettingsDropdownMenuItems ?? []).map((item, idx) => {
-											if (!item) {
-												return null;
-											}
-											if ('type' in item && item.type === 'divider') {
-												// eslint-disable-next-line react/no-array-index-key
-												return <DropdownMenuSeparator key={`settings-sep-${idx}`} />;
-											}
-											const settingsItem = item as {
-												key?: string | number;
-												label?: ReactNode;
-												icon?: ReactNode;
-												disabled?: boolean;
-											};
-											return (
-												<DropdownMenuItem
-													key={String(settingsItem.key)}
-													leftIcon={settingsItem.icon}
-													disabled={settingsItem.disabled}
-													onClick={(e): void =>
-														handleSettingsMenuItemClick({
-															key: String(settingsItem.key),
-															domEvent: e.nativeEvent,
-														} as unknown as SidebarItem)
-													}
-												>
-													{settingsItem.label}
-												</DropdownMenuItem>
-											);
-										})}
-									</DropdownMenuContent>
-								</DropdownMenu>
+									</div>
+								</Dropdown>
 							</div>
 						</div>
 					</div>
