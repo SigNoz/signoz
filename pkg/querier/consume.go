@@ -40,14 +40,18 @@ func stripKeyAlias(name string) string {
 	return keyAliasRe.ReplaceAllString(name, "")
 }
 
-// unwrapVariant returns the concrete value inside the driver's scan envelopes: chcol.Variant for a
-// Dynamic column (a JSON path such as body_v2.level), and chcol.JSON for a whole JSON column, decoded
-// into a nested document.
-func unwrapVariant(val any) any {
+// unwrapVariant decodes a scan envelope into a plain value: chcol.Variant (a JSON path such as
+// body_v2.level) to its concrete value, and a whole chcol.JSON column to a document. The attributes
+// bag decodes flat, since its dotted keys merge with the legacy attribute maps and a key stored as
+// both a scalar and an object must stay two keys; every other JSON column decodes nested.
+func unwrapVariant(name string, val any) any {
 	switch v := val.(type) {
 	case chcol.Variant:
 		return v.Any()
 	case chcol.JSON:
+		if name == "attributes" {
+			return telemetrystoretypes.FlattenJSON(v)
+		}
 		return telemetrystoretypes.NestedJSON(v)
 	}
 	return val
@@ -58,7 +62,7 @@ func unwrapVariant(val any) any {
 // series. JSON goes through encoding/json for its sorted map keys: ClickHouse groups documents by
 // structure, so two rows it considers equal have to produce the same label.
 func labelValue(val any) string {
-	val = unwrapVariant(val)
+	val = unwrapVariant("", val)
 	if val == nil {
 		return ""
 	}
@@ -482,7 +486,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		// 2. deref each slot into the output row
 		row := make([]any, len(scan))
 		for i, cell := range scan {
-			row[i] = unwrapVariant(derefValue(cell))
+			row[i] = unwrapVariant(cd[i].Name, derefValue(cell))
 		}
 		data = append(data, row)
 	}
@@ -540,14 +544,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 			name := stripKeyAlias(colNames[i])
 
 			// de-reference the typed pointer to any
-			raw := reflect.ValueOf(cellPtr).Elem().Interface()
-			// the attributes bag is flattened to dotted keys downstream; decode it flat so a key stored as both a scalar and an object is not collapsed into a mislabeled key.
-			var val any
-			if j, ok := raw.(chcol.JSON); ok && name == "attributes" {
-				val = telemetrystoretypes.FlattenJSON(j)
-			} else {
-				val = unwrapVariant(raw)
-			}
+			val := unwrapVariant(name, reflect.ValueOf(cellPtr).Elem().Interface())
 
 			// special-case: timestamp column
 			if name == "timestamp" || name == "timestamp_datetime" {

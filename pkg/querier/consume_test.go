@@ -79,11 +79,12 @@ func TestMergeSpanAttributeColumns_ParsesEventsAndLinks(t *testing.T) {
 }
 
 // A JSON path (e.g. `body_v2.level`) comes back as a Dynamic column, which the driver scans into a
-// chcol.Variant envelope; a whole JSON column comes back as chcol.JSON, decoded into a nested document.
+// chcol.Variant envelope; a whole JSON column comes back as chcol.JSON. The attributes column decodes
+// flat, every other JSON column nested.
 func TestUnwrapVariant(t *testing.T) {
-	assert.Equal(t, "error", unwrapVariant(chcol.NewDynamicWithType("error", "String")))
-	assert.Nil(t, unwrapVariant(chcol.Dynamic{}))
-	assert.Equal(t, uint64(3), unwrapVariant(uint64(3)))
+	assert.Equal(t, "error", unwrapVariant("", chcol.NewDynamicWithType("error", "String")))
+	assert.Nil(t, unwrapVariant("", chcol.Dynamic{}))
+	assert.Equal(t, uint64(3), unwrapVariant("", uint64(3)))
 
 	j := chcol.NewJSON()
 	j.SetValueAtPath("level", "error")
@@ -91,7 +92,11 @@ func TestUnwrapVariant(t *testing.T) {
 	assert.Equal(t, map[string]any{
 		"level": "error",
 		"attrs": map[string]any{"code": int64(500)},
-	}, unwrapVariant(*j))
+	}, unwrapVariant("body_v2", *j))
+	assert.Equal(t, map[string]any{
+		"level":      "error",
+		"attrs.code": int64(500),
+	}, unwrapVariant("attributes", *j))
 }
 
 // labelValue renders a JSON group-by value as a stable, sorted-key string so structurally equal
