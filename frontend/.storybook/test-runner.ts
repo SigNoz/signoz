@@ -27,6 +27,9 @@ const IGNORED_MESSAGES = [
 	// `console.error` (`line 1:14 missing ...`), so each partial expression
 	// typed into it logs one; the editor shows the same errors on screen.
 	/^line \d+:\d+ /,
+	// Chromium's echo of a 4xx/5xx response, which the `[response]` entry below
+	// already reports with its URL and the time its request left.
+	/^Failed to load resource: the server responded with a status of /,
 ];
 
 interface CapturedMessage {
@@ -90,7 +93,9 @@ const config: TestRunnerConfig = {
 		page.on('response', (response) => {
 			if (response.status() >= 400) {
 				messages.push({
-					at: Date.now(),
+					// The browser's clock, when the request left: a busy runner receives
+					// the outgoing story's responses after the next story has started.
+					at: response.request().timing().startTime,
 					text: `[response] ${response.status()} ${response.url()}`,
 				});
 			}
