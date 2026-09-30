@@ -26188,10 +26188,10 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - factor-password:read
+        - factor-password:list
         - user:read
       - tokenizer:
-        - factor-password:read
+        - factor-password:list
         - user:read
       summary: Get reset password token for a user
       tags:
