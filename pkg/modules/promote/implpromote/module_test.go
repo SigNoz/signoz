@@ -20,48 +20,59 @@ func TestPromotePaths(t *testing.T) {
 
 	testCases := []struct {
 		name         string
-		target       promotetypes.Target
 		paths        []*promotetypes.PromotePath
 		promoteTwice bool
 		wantErr      bool
 		wantPromoted []string
 	}{
 		{
-			name:   "PromotesNewAttributes_Idempotent",
-			target: promotetypes.NewTracesAttributesTarget(),
+			name: "PromotesNewAttributes_Idempotent",
 			paths: []*promotetypes.PromotePath{
-				{Path: "http.method", Promote: true},
-				{Path: "span.operation", Promote: true},
+				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
+				{Signal: "traces", Context: "attribute", Path: "span.operation", Promote: true},
 			},
 			promoteTwice: true,
 			wantPromoted: []string{"http.method", "span.operation"},
 		},
 		{
-			name:   "NonPromoteEntries_NotRecorded",
-			target: promotetypes.NewTracesAttributesTarget(),
-			paths:  []*promotetypes.PromotePath{{Path: "http.method"}},
+			name: "MixedDomains_RecordedPerTarget",
+			paths: []*promotetypes.PromotePath{
+				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
+				{Signal: "logs", Context: "body", Path: "body.user.name", Promote: true},
+			},
+			wantPromoted: []string{"http.method", "user.name"},
+		},
+		{
+			name:  "NonPromoteEntries_NotRecorded",
+			paths: []*promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "http.method"}},
+		},
+		{
+			name:    "InvalidSignal_Rejected",
+			paths:   []*promotetypes.PromotePath{{Signal: "events", Context: "attribute", Path: "http.method", Promote: true}},
+			wantErr: true,
+		},
+		{
+			name:    "UnsupportedDomain_Rejected",
+			paths:   []*promotetypes.PromotePath{{Signal: "metrics", Context: "attribute", Path: "http.method", Promote: true}},
+			wantErr: true,
 		},
 		{
 			name:    "ColumnPrefixedPath_Rejected",
-			target:  promotetypes.NewTracesAttributesTarget(),
-			paths:   []*promotetypes.PromotePath{{Path: "attributes.http.method", Promote: true}},
+			paths:   []*promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "attributes.http.method", Promote: true}},
 			wantErr: true,
 		},
 		{
 			name:    "EmptyPath_Rejected",
-			target:  promotetypes.NewTracesAttributesTarget(),
-			paths:   []*promotetypes.PromotePath{{Path: "", Promote: true}},
+			paths:   []*promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "", Promote: true}},
 			wantErr: true,
 		},
 		{
 			name:    "EmptyRequest_Rejected",
-			target:  promotetypes.NewTracesAttributesTarget(),
 			wantErr: true,
 		},
 		{
 			name:         "PromotesBodyPath_PrefixStripped",
-			target:       promotetypes.NewLogsBodyTarget(),
-			paths:        []*promotetypes.PromotePath{{Path: "body.user.name", Promote: true}},
+			paths:        []*promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "body.user.name", Promote: true}},
 			wantPromoted: []string{"user.name"},
 		},
 	}
@@ -71,7 +82,7 @@ func TestPromotePaths(t *testing.T) {
 			store := telemetrytypestest.NewMockMetadataStore()
 			m := NewModule(store, nil)
 
-			err := m.PromotePaths(ctx, testCase.target, testCase.paths...)
+			err := m.PromotePaths(ctx, testCase.paths...)
 			if testCase.wantErr {
 				assert.Error(t, err)
 				assert.Empty(t, store.PromotedPathsMap)
@@ -86,7 +97,7 @@ func TestPromotePaths(t *testing.T) {
 
 			if testCase.promoteTwice {
 				// promoting again must not fail
-				require.NoError(t, m.PromotePaths(ctx, testCase.target, testCase.paths...))
+				require.NoError(t, m.PromotePaths(ctx, testCase.paths...))
 				assert.Len(t, store.PromotedPathsMap, len(testCase.wantPromoted))
 			}
 		})
@@ -105,6 +116,8 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 		{
 			name: "NewPromotion_IndexesPromotedColumn",
 			path: &promotetypes.PromotePath{
+				Signal:  "logs",
+				Context: "body",
 				Path:    "body.user.name",
 				Promote: true,
 				Indexes: []promotetypes.WrappedIndex{
@@ -117,7 +130,9 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 			name:     "AlreadyPromoted_IndexesPromotedColumn",
 			promoted: map[string]bool{"user.name": true},
 			path: &promotetypes.PromotePath{
-				Path: "body.user.name",
+				Signal:  "logs",
+				Context: "body",
+				Path:    "body.user.name",
 				Indexes: []promotetypes.WrappedIndex{
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
 				},
@@ -127,7 +142,9 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 		{
 			name: "UnpromotedPath_IndexesBaseColumn",
 			path: &promotetypes.PromotePath{
-				Path: "body.user.name",
+				Signal:  "logs",
+				Context: "body",
+				Path:    "body.user.name",
 				Indexes: []promotetypes.WrappedIndex{
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
 				},
@@ -146,7 +163,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 			m := NewModule(store, ts)
 
 			ts.Mock().ExpectExec("ADD INDEX (.+)" + regexp.QuoteMeta(testCase.wantDDLColumn)).WillReturnError(nil)
-			require.NoError(t, m.PromotePaths(ctx, promotetypes.NewLogsBodyTarget(), testCase.path))
+			require.NoError(t, m.PromotePaths(ctx, testCase.path))
 			assert.NoError(t, ts.Mock().ExpectationsWereMet())
 		})
 	}
@@ -157,22 +174,20 @@ func TestListPromotedPaths(t *testing.T) {
 
 	testCases := []struct {
 		name      string
-		target    promotetypes.Target
 		promoted  map[string]bool
 		indexes   []telemetrytypes.TelemetryFieldKeySkipIndex
 		wantPaths []promotetypes.PromotePath
 	}{
 		{
-			name:     "TracesAttributes_PromotedPaths",
-			target:   promotetypes.NewTracesAttributesTarget(),
+			name:     "PromotedPaths_EveryDomainAnnotated",
 			promoted: map[string]bool{"http.method": true},
 			wantPaths: []promotetypes.PromotePath{
-				{Path: "http.method", Promote: true},
+				{Signal: "logs", Context: "body", Path: "body.http.method", Promote: true},
+				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
 			},
 		},
 		{
-			name:     "LogsBody_PromotedAndIndexedPaths",
-			target:   promotetypes.NewLogsBodyTarget(),
+			name:     "IndexedPaths_MergedForSupportingDomains",
 			promoted: map[string]bool{"user.name": true},
 			indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{
 				{
@@ -194,6 +209,8 @@ func TestListPromotedPaths(t *testing.T) {
 			},
 			wantPaths: []promotetypes.PromotePath{
 				{
+					Signal:  "logs",
+					Context: "body",
 					Path:    "body.user.name",
 					Promote: true,
 					Indexes: []promotetypes.WrappedIndex{
@@ -201,10 +218,18 @@ func TestListPromotedPaths(t *testing.T) {
 					},
 				},
 				{
-					Path: "body.request.duration",
+					Signal:  "logs",
+					Context: "body",
+					Path:    "body.request.duration",
 					Indexes: []promotetypes.WrappedIndex{
 						{FieldDataType: telemetrytypes.FieldDataTypeFloat64, Type: "minmax", Granularity: 1},
 					},
+				},
+				{
+					Signal:  "traces",
+					Context: "attribute",
+					Path:    "user.name",
+					Promote: true,
 				},
 			},
 		},
@@ -217,17 +242,18 @@ func TestListPromotedPaths(t *testing.T) {
 			store.LogsJSONIndexes = testCase.indexes
 			m := NewModule(store, nil)
 
-			paths, err := m.ListPromotedPaths(ctx, testCase.target)
+			paths, err := m.ListPromotedPaths(ctx)
 			require.NoError(t, err)
 			require.Len(t, paths, len(testCase.wantPaths))
 
-			byPath := map[string]promotetypes.PromotePath{}
+			byDomainPath := map[string]promotetypes.PromotePath{}
 			for _, path := range paths {
-				byPath[path.Path] = path
+				byDomainPath[path.Signal+"/"+path.Context+"/"+path.Path] = path
 			}
 			for _, want := range testCase.wantPaths {
-				require.Contains(t, byPath, want.Path)
-				assert.Equal(t, want, byPath[want.Path])
+				key := want.Signal + "/" + want.Context + "/" + want.Path
+				require.Contains(t, byDomainPath, key)
+				assert.Equal(t, want, byDomainPath[key])
 			}
 		})
 	}
