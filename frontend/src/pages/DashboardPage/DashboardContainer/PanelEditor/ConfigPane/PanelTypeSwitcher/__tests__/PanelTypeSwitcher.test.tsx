@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
@@ -35,9 +36,13 @@ const SUPPORTED_QUERY_TYPES: Record<string, EQueryType[]> = {
 	'signoz/PieChartPanel': [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
 };
 
-function renderSwitcher(
+type User = ReturnType<typeof userEvent.setup>;
+
+async function renderSwitcher(
 	props: Partial<Parameters<typeof PanelTypeSwitcher>[0]> = {},
-): jest.Mock {
+): Promise<{ onChange: jest.Mock; user: User }> {
+	// The open drawer sets `pointer-events: none` on the body.
+	const user = userEvent.setup({ pointerEventsCheck: 0 });
 	const onChange = jest.fn();
 	render(
 		<TooltipProvider>
@@ -49,8 +54,8 @@ function renderSwitcher(
 			/>
 		</TooltipProvider>,
 	);
-	fireEvent.click(screen.getByTestId('panel-editor-v2-type-switcher'));
-	return onChange;
+	await user.click(screen.getByTestId('panel-editor-v2-type-switcher'));
+	return { onChange, user };
 }
 
 function disabledKinds(): (string | undefined)[] {
@@ -81,41 +86,43 @@ describe('PanelTypeSwitcher', () => {
 		}));
 	});
 
-	it('shows the current type and switches to the chosen one', () => {
-		const onChange = renderSwitcher();
+	it('shows the current type and switches to the chosen one', async () => {
+		const { onChange, user } = await renderSwitcher();
 
 		expect(screen.getByTestId('panel-editor-v2-type-switcher')).toHaveTextContent(
 			'Time SeriesChange',
 		);
-		fireEvent.click(screen.getByTestId('panel-type-signoz/ListPanel'));
+		await user.click(screen.getByTestId('panel-type-signoz/ListPanel'));
 
 		expect(onChange).toHaveBeenCalledWith('signoz/ListPanel');
 	});
 
-	it('does not fire onChange when the current type is picked again', () => {
-		const onChange = renderSwitcher();
+	it('does not fire onChange when the current type is picked again', async () => {
+		const { onChange, user } = await renderSwitcher();
 
-		fireEvent.click(screen.getByTestId('panel-type-signoz/TimeSeriesPanel'));
+		await user.click(screen.getByTestId('panel-type-signoz/TimeSeriesPanel'));
 
 		expect(onChange).not.toHaveBeenCalled();
 	});
 
-	it('disables types whose supported signals exclude the current signal', () => {
-		const onChange = renderSwitcher({ signal: TelemetrytypesSignalDTO.metrics });
+	it('disables types whose supported signals exclude the current signal', async () => {
+		const { onChange, user } = await renderSwitcher({
+			signal: TelemetrytypesSignalDTO.metrics,
+		});
 
 		expect(disabledKinds()).toStrictEqual(['signoz/ListPanel']);
-		fireEvent.click(screen.getByTestId('panel-type-signoz/ListPanel'));
+		await user.click(screen.getByTestId('panel-type-signoz/ListPanel'));
 		expect(onChange).not.toHaveBeenCalled();
 	});
 
-	it('does not disable any type when the signal is unknown (builder, no signal)', () => {
-		renderSwitcher();
+	it('does not disable any type when the signal is unknown (builder, no signal)', async () => {
+		await renderSwitcher();
 
 		expect(disabledKinds()).toHaveLength(0);
 	});
 
-	it('disables Query-Builder-only kinds under PromQL even without a signal', () => {
-		renderSwitcher({ queryType: EQueryType.PROM });
+	it('disables Query-Builder-only kinds under PromQL even without a signal', async () => {
+		await renderSwitcher({ queryType: EQueryType.PROM });
 
 		expect(disabledKinds()).toStrictEqual(
 			expect.arrayContaining([
@@ -128,8 +135,8 @@ describe('PanelTypeSwitcher', () => {
 		expect(disabledKinds()).not.toContain('signoz/TextPanel');
 	});
 
-	it('disables List under ClickHouse while Table/Pie stay enabled', () => {
-		renderSwitcher({
+	it('disables List under ClickHouse while Table/Pie stay enabled', async () => {
+		await renderSwitcher({
 			panelKind: 'signoz/TablePanel',
 			queryType: EQueryType.CLICKHOUSE,
 		});
@@ -138,29 +145,29 @@ describe('PanelTypeSwitcher', () => {
 	});
 
 	describe('revert', () => {
-		it('is hidden while the type is the original one', () => {
-			renderSwitcher({ originalPanelKind: 'signoz/TimeSeriesPanel' });
+		it('is hidden while the type is the original one', async () => {
+			await renderSwitcher({ originalPanelKind: 'signoz/TimeSeriesPanel' });
 
 			expect(
 				screen.queryByTestId('panel-editor-v2-type-revert'),
 			).not.toBeInTheDocument();
 		});
 
-		it('switches back to the original type', () => {
-			const onChange = renderSwitcher({
+		it('switches back to the original type', async () => {
+			const { onChange, user } = await renderSwitcher({
 				panelKind: 'signoz/TablePanel',
 				originalPanelKind: 'signoz/TimeSeriesPanel',
 			});
 
 			const revert = screen.getByTestId('panel-editor-v2-type-revert');
 			expect(revert).toHaveTextContent('Revert to Time Series');
-			fireEvent.click(revert);
+			await user.click(revert);
 
 			expect(onChange).toHaveBeenCalledWith('signoz/TimeSeriesPanel');
 		});
 
-		it('is disabled when the original type no longer fits the query', () => {
-			renderSwitcher({
+		it('is disabled when the original type no longer fits the query', async () => {
+			await renderSwitcher({
 				panelKind: 'signoz/TimeSeriesPanel',
 				originalPanelKind: 'signoz/ListPanel',
 				queryType: EQueryType.PROM,
