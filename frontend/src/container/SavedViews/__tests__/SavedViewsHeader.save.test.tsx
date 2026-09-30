@@ -11,12 +11,12 @@ import SavedViewsHeader from '../SavedViewsHeader';
 import {
 	explorerUrl,
 	makeView,
-	mockSavedViewsApi,
 	queryWith,
 	renderWithExplorerProviders,
 	urlParam,
 	viewUrl,
 } from './savedViewsTestUtils';
+import { mockSavedViewsApi } from './savedViewsApiMock';
 
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),
