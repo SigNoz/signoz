@@ -8,18 +8,6 @@
 	pointer-events: none;
 }
 
-.popover {
-	// Hover card may be rendered while the SpanDetailsPanel is docked as
-	// a FloatingPanel (z-index 999); bump above the default tooltip z-index.
-	--tooltip-z-index: 1000;
-	background-color: var(--l1-background);
-	padding: 8px 12px;
-	border-radius: 4px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-	border: 1px solid var(--l2-border);
-	color: var(--l1-foreground);
-}
-
 .content {
 	font-size: 12px;
 	color: var(--l1-foreground);

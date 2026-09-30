@@ -153,11 +153,7 @@ export const Tooltips: Story = {
 		}, untilLoaded);
 
 		// The dot opens its card on a 200ms timer rather than on the event itself.
-		await waitFor(() => {
-			if (!document.querySelector('[class*="popover"]')) {
-				throw new Error('event popover did not open');
-			}
-		}, untilLoaded);
+		await screen.findByRole('tooltip', { name: /event details/i }, untilLoaded);
 	},
 };
 
