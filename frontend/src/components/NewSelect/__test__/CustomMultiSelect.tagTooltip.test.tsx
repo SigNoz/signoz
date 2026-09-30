@@ -1,6 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 
@@ -14,15 +13,13 @@ const SELECTED = ['checkout-service-prod', 'payments-service-prod'];
 
 function renderSelect(): void {
 	render(
-		<TooltipProvider>
-			<CustomMultiSelect
-				options={OPTIONS}
-				value={SELECTED}
-				maxTagCount={1}
-				maxTagTextLength={10}
-				maxTagPlaceholder={(omitted): string => `+${omitted.length}`}
-			/>
-		</TooltipProvider>,
+		<CustomMultiSelect
+			options={OPTIONS}
+			value={SELECTED}
+			maxTagCount={1}
+			maxTagTextLength={10}
+			maxTagPlaceholder={(omitted): string => `+${omitted.length}`}
+		/>,
 	);
 }
 

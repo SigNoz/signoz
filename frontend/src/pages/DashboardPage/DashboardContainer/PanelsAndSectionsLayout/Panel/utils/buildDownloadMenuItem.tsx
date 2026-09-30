@@ -4,7 +4,10 @@ import {
 	FileImage,
 	FileSpreadsheet,
 } from '@signozhq/icons';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
+import type {
+	DropdownActionItemType,
+	DropdownSubmenuItemType,
+} from '@signozhq/ui/dropdown';
 import {
 	DownloadFormat,
 	type PanelActionCapabilities,
@@ -44,27 +47,31 @@ interface DownloadMenuItemArgs {
 export function buildDownloadMenuItem({
 	supported,
 	onDownload,
-}: DownloadMenuItemArgs): MenuItem | null {
+}: DownloadMenuItemArgs): DropdownSubmenuItemType | null {
 	if (!supported) {
 		return null;
 	}
 
-	const children: MenuItem[] = DOWNLOAD_FORMAT_OPTIONS.filter(
+	const items = DOWNLOAD_FORMAT_OPTIONS.filter(
 		({ format }) => supported[format],
-	).map(({ format, label, icon }) => ({
-		key: `download-${format}`,
-		label,
-		icon,
-		onClick: (): void => onDownload(format),
-	}));
+	).map(
+		({ format, label, icon }): DropdownActionItemType => ({
+			type: 'item',
+			value: `download-${format}`,
+			label,
+			prefix: icon,
+			onClick: (): void => onDownload(format),
+		}),
+	);
 
-	if (children.length === 0) {
+	if (items.length === 0) {
 		return null;
 	}
 	return {
-		key: 'download',
+		type: 'submenu',
+		value: 'download',
 		label: 'Download',
-		icon: <CloudDownload size={14} />,
-		children,
+		prefix: <CloudDownload size={14} />,
+		items,
 	};
 }

@@ -1,4 +1,3 @@
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
@@ -7,11 +6,6 @@ import type { ReactElement } from 'react';
 import type { Warning } from 'types/api';
 
 import PanelHeader from '../PanelHeader/PanelHeader';
-
-// Status indicators use a radix tooltip, which needs a TooltipProvider ancestor
-// (supplied globally by AppLayout at runtime).
-const renderWithProvider = (ui: ReactElement): ReturnType<typeof render> =>
-	render(<TooltipProvider>{ui}</TooltipProvider>);
 
 // Stub the actions menu (its gating logic is tested separately) so this asserts
 // only whether the menu mounts, per the `hideActions` switch.
@@ -96,12 +90,12 @@ const warning: Warning = {
 
 describe('PanelHeader title and description', () => {
 	it('renders the panel name', () => {
-		renderWithProvider(<PanelHeader {...baseProps} />);
+		render(<PanelHeader {...baseProps} />);
 		expect(screen.getByText('My panel')).toBeInTheDocument();
 	});
 
 	it('shows the description info icon when a description is provided', () => {
-		renderWithProvider(
+		render(
 			<PanelHeader
 				{...baseProps}
 				panel={makePanel({ description: 'What this panel measures' })}
@@ -111,7 +105,7 @@ describe('PanelHeader title and description', () => {
 	});
 
 	it('renders no description info icon when there is no description', () => {
-		renderWithProvider(<PanelHeader {...baseProps} />);
+		render(<PanelHeader {...baseProps} />);
 		expect(
 			screen.queryByTestId('panel-header-info-icon'),
 		).not.toBeInTheDocument();
@@ -120,17 +114,17 @@ describe('PanelHeader title and description', () => {
 
 describe('PanelHeader status indicators', () => {
 	it('shows the error indicator whenever an error is present', () => {
-		renderWithProvider(<PanelHeader {...baseProps} error={new Error('boom')} />);
+		render(<PanelHeader {...baseProps} error={new Error('boom')} />);
 		expect(screen.getByTestId('panel-status-error')).toBeInTheDocument();
 	});
 
 	it('shows the warning indicator whenever a warning is present', () => {
-		renderWithProvider(<PanelHeader {...baseProps} warning={warning} />);
+		render(<PanelHeader {...baseProps} warning={warning} />);
 		expect(screen.getByTestId('panel-status-warning')).toBeInTheDocument();
 	});
 
 	it('renders no status indicators when there is no error or warning', () => {
-		renderWithProvider(<PanelHeader {...baseProps} />);
+		render(<PanelHeader {...baseProps} />);
 		expect(screen.queryByTestId('panel-status-error')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('panel-status-warning')).not.toBeInTheDocument();
 	});
@@ -138,7 +132,7 @@ describe('PanelHeader status indicators', () => {
 
 describe('PanelHeader multi-query config warning (issue #9512)', () => {
 	it('warns when a Number panel has more than one enabled query', () => {
-		renderWithProvider(
+		render(
 			<PanelHeader
 				{...baseProps}
 				panel={makePanelWithQueries('signoz/NumberPanel', 2)}
@@ -148,7 +142,7 @@ describe('PanelHeader multi-query config warning (issue #9512)', () => {
 	});
 
 	it('does not warn when only one query is enabled (others disabled)', () => {
-		renderWithProvider(
+		render(
 			<PanelHeader
 				{...baseProps}
 				panel={makePanelWithQueries('signoz/NumberPanel', 1, 2)}
@@ -160,7 +154,7 @@ describe('PanelHeader multi-query config warning (issue #9512)', () => {
 	});
 
 	it('does not warn for non-Number panels with multiple enabled queries', () => {
-		renderWithProvider(
+		render(
 			<PanelHeader
 				{...baseProps}
 				panel={makePanelWithQueries('signoz/TimeSeriesPanel', 3)}
@@ -172,7 +166,7 @@ describe('PanelHeader multi-query config warning (issue #9512)', () => {
 	});
 
 	it('shows the warning in the editor preview (hideActions, no title)', () => {
-		renderWithProvider(
+		render(
 			<PanelHeader
 				{...baseProps}
 				panel={makePanelWithQueries('signoz/NumberPanel', 2)}
@@ -185,7 +179,7 @@ describe('PanelHeader multi-query config warning (issue #9512)', () => {
 
 describe('PanelHeader search', () => {
 	it('renders no search affordance when the panel is not searchable', () => {
-		renderWithProvider(<PanelHeader {...baseProps} />);
+		render(<PanelHeader {...baseProps} />);
 		expect(
 			screen.queryByTestId('panel-header-search-trigger'),
 		).not.toBeInTheDocument();
@@ -194,7 +188,7 @@ describe('PanelHeader search', () => {
 	it('expands the collapsed trigger into an input and reports changes', async () => {
 		const user = userEvent.setup();
 		const onSearchChange = jest.fn();
-		renderWithProvider(
+		render(
 			<PanelHeader
 				{...baseProps}
 				searchable
@@ -215,7 +209,7 @@ describe('PanelHeader search', () => {
 	it('clears the term and collapses when the clear button is pressed', async () => {
 		const user = userEvent.setup();
 		const onSearchChange = jest.fn();
-		renderWithProvider(
+		render(
 			<PanelHeader
 				{...baseProps}
 				searchable
@@ -234,21 +228,19 @@ describe('PanelHeader search', () => {
 
 describe('PanelHeader actions menu', () => {
 	it('mounts the actions menu by default', () => {
-		renderWithProvider(<PanelHeader {...baseProps} />);
+		render(<PanelHeader {...baseProps} />);
 		expect(screen.getByTestId('panel-actions-menu')).toBeInTheDocument();
 	});
 
 	it('hides the actions menu when hideActions is set (editor preview)', () => {
-		renderWithProvider(<PanelHeader {...baseProps} hideActions />);
+		render(<PanelHeader {...baseProps} hideActions />);
 		expect(screen.queryByTestId('panel-actions-menu')).not.toBeInTheDocument();
 	});
 });
 
 describe('PanelHeader static mode', () => {
 	it('renders the title and actions menu with no query-status chrome', () => {
-		renderWithProvider(
-			<PanelHeader mode="static" panelId="panel-1" panel={makePanel()} />,
-		);
+		render(<PanelHeader mode="static" panelId="panel-1" panel={makePanel()} />);
 		expect(screen.getByText('My panel')).toBeInTheDocument();
 		expect(screen.getByTestId('panel-actions-menu')).toBeInTheDocument();
 		expect(screen.queryByTestId('panel-refetching')).not.toBeInTheDocument();
@@ -262,7 +254,7 @@ describe('PanelHeader static mode', () => {
 
 describe('PanelHeader time-preference pill', () => {
 	it('shows the pill with the short label when the panel overrides the dashboard time', () => {
-		renderWithProvider(
+		render(
 			<PanelHeader
 				{...baseProps}
 				timeLabel={{ short: '6h', full: 'Last 6 hr' }}
@@ -272,7 +264,7 @@ describe('PanelHeader time-preference pill', () => {
 	});
 
 	it('renders no pill when the panel follows the dashboard time', () => {
-		renderWithProvider(<PanelHeader {...baseProps} timeLabel={null} />);
+		render(<PanelHeader {...baseProps} timeLabel={null} />);
 		expect(screen.queryByTestId('panel-time-preference')).not.toBeInTheDocument();
 	});
 });

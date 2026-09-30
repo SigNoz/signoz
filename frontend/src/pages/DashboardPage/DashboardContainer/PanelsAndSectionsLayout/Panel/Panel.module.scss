@@ -32,7 +32,7 @@
 // panel — without this the trigger fades while its menu stays up.
 .panel:hover .hiddenHeaderControls,
 .hiddenHeaderControls:focus-within,
-.hiddenHeaderControls:has([data-state='open']) {
+.hiddenHeaderControls:has([data-popup-open]) {
 	opacity: 1;
 	pointer-events: auto;
 }

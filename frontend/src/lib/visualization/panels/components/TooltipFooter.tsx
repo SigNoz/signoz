@@ -69,9 +69,9 @@ export default function TooltipFooter({
 					size="sm"
 					onClick={handleUnpinClick}
 					aria-label="Unpin tooltip"
-					data-testid="uplot-tooltip-unpin"
+					testId="uplot-tooltip-unpin"
+					prefix={<X size={10} />}
 				>
-					<X size={10} />
 					<span>Unpin</span>
 				</Button>
 			)}

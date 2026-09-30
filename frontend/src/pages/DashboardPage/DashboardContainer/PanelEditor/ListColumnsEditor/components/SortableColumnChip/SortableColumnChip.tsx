@@ -27,6 +27,8 @@ function SortableColumnChip({
 		isDragging,
 	} = useSortable({ id });
 
+	const { role: _sortableRole, ...sortableAttributes } = attributes;
+
 	// dnd-kit drives the drag transform per-frame, so this must be inline.
 	const style: React.CSSProperties = {
 		transform: CSS.Transform.toString(transform),
@@ -36,18 +38,19 @@ function SortableColumnChip({
 
 	return (
 		<div ref={setNodeRef} style={style} className={styles.chip}>
-			<Button
-				type="button"
-				variant="ghost"
-				color="secondary"
-				size="icon"
-				className={styles.grip}
-				aria-label={`Reorder ${name}`}
-				{...attributes}
-				{...listeners}
-			>
-				<GripVertical size={12} />
-			</Button>
+			<span {...listeners} className={styles.grip}>
+				<Button
+					type="button"
+					variant="ghost"
+					color="secondary"
+					size="sm"
+					icon
+					aria-label={`Reorder ${name}`}
+					{...sortableAttributes}
+				>
+					<GripVertical size={12} />
+				</Button>
+			</span>
 			<span className={styles.chipName} title={name}>
 				{name}
 			</span>
@@ -55,8 +58,8 @@ function SortableColumnChip({
 				type="button"
 				variant="ghost"
 				color="secondary"
-				size="icon"
-				className={styles.remove}
+				size="sm"
+				icon
 				aria-label={`Remove ${name}`}
 				testId="list-column-remove"
 				onClick={(): void => onRemove(name)}

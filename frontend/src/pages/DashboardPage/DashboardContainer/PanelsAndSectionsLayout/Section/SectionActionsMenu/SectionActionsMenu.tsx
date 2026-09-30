@@ -1,12 +1,9 @@
-import { type ReactElement, type ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Copy, EllipsisVertical, PenLine, Plus, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
-import type { MenuItem } from '@signozhq/ui/dropdown-menu';
-
-import MenuActionItem from '../../../components/MenuActionItem/MenuActionItem';
-import menuStyles from '../../../components/MenuActionItem/MenuActionItem.module.scss';
-import styles from './SectionActionsMenu.module.scss';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
+import { blockedBy } from 'lib/authz/components/AuthZDropdown/utils';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 interface SectionActionsMenuProps {
@@ -14,7 +11,6 @@ interface SectionActionsMenuProps {
 	/** Present when edits are unavailable — items render disabled with its reason. */
 	disabledChecks?: BrandedPermission[];
 	disabledTooltip?: string;
-	disabled?: boolean;
 	onAddPanel?: () => void;
 	onRename?: () => void;
 	onCloneSection?: () => void;
@@ -24,70 +20,61 @@ interface SectionActionsMenuProps {
 function SectionActionsMenu({
 	sectionId,
 	disabledChecks = [],
-	disabledTooltip,
-	disabled = false,
+	disabledTooltip = '',
 	onAddPanel,
 	onRename,
 	onCloneSection,
 	onDeleteSection,
 }: SectionActionsMenuProps): JSX.Element {
-	const items = useMemo<MenuItem[]>(() => {
-		// The row is a button, so it carries its own icon, disabled state and
-		// reason — the dropdown item just hosts it.
-		const row = (
-			text: string,
-			icon: ReactElement,
-			opts: { destructive?: boolean } = {},
-		): ReactNode => (
-			<MenuActionItem
-				label={text}
-				icon={icon}
-				checks={disabledChecks}
-				disabledTooltip={disabledTooltip}
-				destructive={opts.destructive}
-			/>
-		);
-		const result: MenuItem[] = [];
+	const items = useMemo<AuthZDropdownItemType[]>(() => {
+		const gate = { checks: disabledChecks, ...blockedBy(disabledTooltip) };
+		const result: AuthZDropdownItemType[] = [];
 		if (onAddPanel) {
 			result.push({
-				key: 'add-panel',
-				label: row('Add panel', <Plus size={14} />),
-				disabled,
+				type: 'item',
+				value: 'add-panel',
+				label: 'Add panel',
+				prefix: <Plus size={14} />,
+				...gate,
 				onClick: onAddPanel,
 			});
 		}
 		if (onRename) {
 			result.push({
-				key: 'rename',
-				label: row('Rename section', <PenLine size={14} />),
-				disabled,
+				type: 'item',
+				value: 'rename',
+				label: 'Rename section',
+				prefix: <PenLine size={14} />,
+				...gate,
 				onClick: onRename,
 			});
 		}
 		if (onCloneSection) {
 			result.push({
-				key: 'clone-section',
-				label: row('Clone section', <Copy size={14} />),
-				disabled,
+				type: 'item',
+				value: 'clone-section',
+				label: 'Clone section',
+				prefix: <Copy size={14} />,
+				...gate,
 				onClick: onCloneSection,
 			});
 		}
 		if (onDeleteSection) {
 			result.push(
-				{ type: 'divider' },
+				{ type: 'separator', value: 'before-delete-section' },
 				{
-					key: 'delete-section',
-					label: row('Delete section', <Trash2 size={14} />, {
-						destructive: true,
-					}),
-					disabled,
+					type: 'item',
+					value: 'delete-section',
+					label: 'Delete section',
+					prefix: <Trash2 size={14} />,
+					danger: true,
+					...gate,
 					onClick: onDeleteSection,
 				},
 			);
 		}
 		return result;
 	}, [
-		disabled,
 		disabledChecks,
 		disabledTooltip,
 		onAddPanel,
@@ -97,19 +84,24 @@ function SectionActionsMenu({
 	]);
 
 	return (
-		<DropdownMenuSimple menu={{ items }} className={menuStyles.menuContent}>
+		<AuthZDropdown
+			items={items}
+			nativeButton
+			align="end"
+			side="bottom"
+			testId={`dashboard-section-actions-${sectionId}`}
+		>
 			<Button
 				type="button"
 				variant="ghost"
 				color="secondary"
-				size="icon"
-				className={styles.trigger}
+				size="sm"
+				icon
 				aria-label="Section actions"
-				data-testid={`dashboard-section-actions-${sectionId}`}
 			>
 				<EllipsisVertical size={14} />
 			</Button>
-		</DropdownMenuSimple>
+		</AuthZDropdown>
 	);
 }
 
