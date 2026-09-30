@@ -1,0 +1,131 @@
+.list {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	margin-bottom: var(--spacing-6);
+
+	&:first-child:not(:last-child) {
+		max-height: 40%;
+	}
+
+	&:last-child {
+		flex: 1;
+	}
+}
+
+.sectionList {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.sectionTitle {
+	padding: var(--spacing-4) var(--spacing-6);
+	color: var(--muted-foreground);
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-medium);
+	line-height: var(--line-height-18);
+	letter-spacing: 0.88px;
+	text-transform: uppercase;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	height: var(--spacing-16);
+	padding-right: var(--spacing-4);
+	border-radius: var(--radius-2);
+	transition: background-color 0.2s ease-in-out;
+
+	&:hover {
+		background-color: var(--l2-background);
+	}
+
+	&.isActive {
+		background-color: var(--l3-background);
+
+		.rowName {
+			--button-variant-ghost-color: var(--l1-foreground);
+			--button-variant-ghost-hover-color: var(--l1-foreground);
+		}
+	}
+}
+
+.rowMenu {
+	display: flex;
+	width: 0;
+	overflow: hidden;
+	opacity: 0;
+	transition: opacity 0.2s ease-in-out;
+}
+
+.row:hover .rowMenu,
+.row:focus-within .rowMenu,
+.rowMenu:has([data-state='open']) {
+	width: auto;
+	opacity: 1;
+}
+
+.rowButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: var(--spacing-12);
+	height: var(--spacing-12);
+	padding: var(--spacing-1);
+}
+
+.rowName {
+	--button-height: 100%;
+	--button-padding: 0 var(--spacing-6);
+	--button-justify-content: flex-start;
+	--button-font-size: var(--periscope-font-size-base);
+	--button-variant-ghost-color: var(--l2-foreground);
+	--button-variant-ghost-hover-color: var(--l2-foreground);
+	--button-variant-ghost-hover-background-color: transparent;
+
+	flex: 1;
+	min-width: 0;
+}
+
+.rowNameText {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.loading {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	padding: var(--spacing-4) var(--spacing-6);
+}
+
+.state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--spacing-4);
+	padding: var(--spacing-8) var(--spacing-6);
+	text-align: center;
+}
+
+.stateTitle {
+	color: var(--l1-foreground);
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-medium);
+}
+
+.stateText {
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-base);
+}
