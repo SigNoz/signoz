@@ -28,6 +28,8 @@ import (
 func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector {
 	lexer := grammar.NewFilterQueryLexer(antlr.NewInputStream(query))
 	keys := []*telemetrytypes.FieldKeySelector{}
+	// exact(key) is EXACT LPAREN KEY; the two previous tokens mark the key.
+	previous := make([]int, 0, 2)
 	for {
 		tok := lexer.NextToken()
 		if tok.GetTokenType() == antlr.TokenEOF {
@@ -36,11 +38,15 @@ func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector
 
 		if tok.GetTokenType() == grammar.FilterQueryLexerKEY {
 			key := telemetrytypes.GetFieldKeyFromKeyText(tok.GetText())
+			if len(previous) == 2 && previous[0] == grammar.FilterQueryLexerEXACT && previous[1] == grammar.FilterQueryLexerLPAREN {
+				key.FieldResolution = telemetrytypes.FieldResolutionExact
+			}
 			keys = append(keys, &telemetrytypes.FieldKeySelector{
-				Name:          key.Name,
-				Signal:        key.Signal,
-				FieldContext:  key.FieldContext,
-				FieldDataType: key.FieldDataType,
+				Name:            key.Name,
+				Signal:          key.Signal,
+				FieldContext:    key.FieldContext,
+				FieldDataType:   key.FieldDataType,
+				FieldResolution: key.FieldResolution,
 			})
 
 			if key.FieldContext == telemetrytypes.FieldContextLog ||
@@ -50,10 +56,11 @@ func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector
 				// span.kind in metrics or metric.max_count in span etc.. should get the search on span.kind
 				// see note in where_clause_visitor.go in VisitKey(...)
 				keys = append(keys, &telemetrytypes.FieldKeySelector{
-					Name:          key.FieldContext.StringValue() + "." + key.Name,
-					Signal:        key.Signal,
-					FieldContext:  telemetrytypes.FieldContextAttribute, // do not keep the original context because this is attribute
-					FieldDataType: key.FieldDataType,
+					Name:            key.FieldContext.StringValue() + "." + key.Name,
+					Signal:          key.Signal,
+					FieldContext:    telemetrytypes.FieldContextAttribute, // do not keep the original context because this is attribute
+					FieldDataType:   key.FieldDataType,
+					FieldResolution: key.FieldResolution,
 				})
 			}
 
@@ -61,12 +68,17 @@ func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector
 			// https://github.com/SigNoz/signoz/issues/11374
 			if key.FieldContext == telemetrytypes.FieldContextScope {
 				keys = append(keys, &telemetrytypes.FieldKeySelector{
-					Name:          key.FieldContext.StringValue() + "." + key.Name,
-					Signal:        key.Signal,
-					FieldContext:  telemetrytypes.FieldContextUnspecified, // this allows 'scope.' prefix for keys with other context as well
-					FieldDataType: key.FieldDataType,
+					Name:            key.FieldContext.StringValue() + "." + key.Name,
+					Signal:          key.Signal,
+					FieldContext:    telemetrytypes.FieldContextUnspecified, // this allows 'scope.' prefix for keys with other context as well
+					FieldDataType:   key.FieldDataType,
+					FieldResolution: key.FieldResolution,
 				})
 			}
+		}
+		previous = append(previous, tok.GetTokenType())
+		if len(previous) > 2 {
+			previous = previous[1:]
 		}
 	}
 

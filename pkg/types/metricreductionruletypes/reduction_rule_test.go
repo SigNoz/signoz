@@ -17,6 +17,8 @@ func TestUpdatableReductionRuleValidate(t *testing.T) {
 		{"invalid match type", &metricreductionruletypes.UpdatableReductionRule{Labels: []string{"host"}}, true},
 		{"empty labels", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop}, true},
 		{"drop protected label", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop, Labels: []string{"host", "le"}}, true},
+		{"drop current environment label", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop, Labels: []string{"deployment.environment.name"}}, true},
+		{"drop old environment label", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop, Labels: []string{"deployment.environment"}}, true},
 		{"keep protected label is allowed", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeKeep, Labels: []string{"le"}}, false},
 		{"valid drop", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop, Labels: []string{"host"}}, false},
 	}

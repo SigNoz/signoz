@@ -19,13 +19,17 @@ class TelemetryFieldKey:
     name: str
     field_data_type: str | None = None
     field_context: str | None = None
+    field_resolution: str | None = None
 
     def to_dict(self) -> dict:
-        return {
+        field = {
             "name": self.name,
             "fieldDataType": self.field_data_type,
             "fieldContext": self.field_context,
         }
+        if self.field_resolution is not None:
+            field["fieldResolution"] = self.field_resolution
+        return field
 
 
 class RequestType:

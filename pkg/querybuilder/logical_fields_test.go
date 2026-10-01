@@ -342,4 +342,9 @@ func TestExpandKeySelectorsForFamiliesDeduplicatesAndSkipsFuzzy(t *testing.T) {
 		{Name: "deployment.environment.name", Signal: telemetrytypes.SignalTraces, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy},
 	}
 	assert.Len(t, ExpandKeySelectorsForFamilies(context.Background(), valuer.UUID{}, familiesOn(t), fuzzy), 1, "fuzzy (search-style) selectors never expand")
+
+	exact := []*telemetrytypes.FieldKeySelector{
+		{Name: "deployment.environment.name", Signal: telemetrytypes.SignalTraces, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact, FieldResolution: telemetrytypes.FieldResolutionExact},
+	}
+	assert.Len(t, ExpandKeySelectorsForFamilies(context.Background(), valuer.UUID{}, familiesOn(t), exact), 1, "an exact selector reads its own spelling alone")
 }

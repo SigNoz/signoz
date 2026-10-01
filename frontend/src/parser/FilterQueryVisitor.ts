@@ -21,6 +21,8 @@ import { FunctionParamContext } from "./FilterQueryParser.js";
 import { ArrayContext } from "./FilterQueryParser.js";
 import { ValueContext } from "./FilterQueryParser.js";
 import { KeyContext } from "./FilterQueryParser.js";
+import { FieldContext } from "./FilterQueryParser.js";
+import { ExactCallContext } from "./FilterQueryParser.js";
 
 
 /**
@@ -139,5 +141,17 @@ export default class FilterQueryVisitor<Result> extends ParseTreeVisitor<Result>
 	 * @return the visitor result
 	 */
 	visitKey?: (ctx: KeyContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FilterQueryParser.field`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitField?: (ctx: FieldContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FilterQueryParser.exactCall`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitExactCall?: (ctx: ExactCallContext) => Result;
 }
 

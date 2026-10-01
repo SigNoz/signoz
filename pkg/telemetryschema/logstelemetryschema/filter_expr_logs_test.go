@@ -112,7 +112,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Single word",
 			query:                 "<script>alert('xss')</script>",
 			shouldPass:            false,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got '<'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got '<'",
 		},
 
 		// Single word searches with spaces
@@ -178,7 +178,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 "[tracing]",
 			shouldPass:            false,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got '['",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got '['",
 		},
 		{
 			category:              "Special characters",
@@ -208,7 +208,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 "ERROR: cannot execute update() in a read-only context",
 			shouldPass:            false,
-			expectedErrorContains: "expecting one of {(, AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got ')'",
+			expectedErrorContains: "expecting one of {(, AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got ')'",
 		},
 		{
 			category:              "Special characters",
@@ -630,7 +630,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "expecting one of {(, ), FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'and'",
+			expectedErrorContains: "expecting one of {(, ), FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'and'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -638,7 +638,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'or'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'or'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -646,7 +646,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "expecting one of {(, ), FREETEXT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got EOF",
+			expectedErrorContains: "expecting one of {(, ), FREETEXT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got EOF",
 		},
 		{
 			category:              "Keyword conflict",
@@ -654,7 +654,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'like'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'like'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -662,7 +662,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'between'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'between'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -670,7 +670,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'in'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'in'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -678,7 +678,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'exists'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'exists'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -686,7 +686,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'regexp'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'regexp'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -694,7 +694,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'contains'",
+			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'contains'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -2062,9 +2062,9 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedErrorContains: "",
 		},
 
-		{category: "Only keywords", query: "AND", shouldPass: false, expectedErrorContains: "expecting one of {(, ), FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'AND'"},
-		{category: "Only keywords", query: "OR", shouldPass: false, expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'OR'"},
-		{category: "Only keywords", query: "NOT", shouldPass: false, expectedErrorContains: "expecting one of {(, ), FREETEXT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got EOF"},
+		{category: "Only keywords", query: "AND", shouldPass: false, expectedErrorContains: "expecting one of {(, ), FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'AND'"},
+		{category: "Only keywords", query: "OR", shouldPass: false, expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'OR'"},
+		{category: "Only keywords", query: "NOT", shouldPass: false, expectedErrorContains: "expecting one of {(, ), FREETEXT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got EOF"},
 
 		{category: "Only functions", query: "has", shouldPass: false, expectedErrorContains: "expecting one of {(, )} but got EOF"},
 		{category: "Only functions", query: "hasAny", shouldPass: false, expectedErrorContains: "expecting one of {(, )} but got EOF"},
@@ -2206,7 +2206,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "line 1:0 expecting one of {(, ), FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'and'",
+			expectedErrorContains: "line 1:0 expecting one of {(, ), FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'and'",
 		},
 		{
 			category:              "Operator keywords as keys",
@@ -2214,7 +2214,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'or'",
+			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'or'",
 		},
 		{
 			category:              "Operator keywords as keys",
@@ -2222,7 +2222,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "line 1:3 expecting one of {(, ), FREETEXT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got '='",
+			expectedErrorContains: "line 1:3 expecting one of {(, ), FREETEXT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got '='",
 		},
 		{
 			category:              "Operator keywords as keys",
@@ -2230,7 +2230,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'between'",
+			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'between'",
 		},
 		{
 			category:              "Operator keywords as keys",
@@ -2238,7 +2238,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'in'",
+			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, exact(), has(), hasAll(), hasAny(), hasToken(), number, quoted text, search()} but got 'in'",
 		},
 
 		// Using function keywords as keys

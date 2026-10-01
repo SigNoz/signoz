@@ -35,13 +35,7 @@ export default function CeleryOverviewDetails({
 						? undefined
 						: getFiltersFromKeyValue('messaging.system', value, 'tag');
 				case 'destination':
-					return getFiltersFromKeyValue(
-						details.messaging_system === 'celery'
-							? 'messaging.destination'
-							: 'messaging.destination.name',
-						value,
-						'tag',
-					);
+					return getFiltersFromKeyValue('messaging.destination.name', value, 'tag');
 				case 'kind_string':
 					return getFiltersFromKeyValue('kind_string', value, '');
 				default:

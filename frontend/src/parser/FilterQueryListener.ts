@@ -21,6 +21,8 @@ import { FunctionParamContext } from "./FilterQueryParser.js";
 import { ArrayContext } from "./FilterQueryParser.js";
 import { ValueContext } from "./FilterQueryParser.js";
 import { KeyContext } from "./FilterQueryParser.js";
+import { FieldContext } from "./FilterQueryParser.js";
+import { ExactCallContext } from "./FilterQueryParser.js";
 
 
 /**
@@ -208,5 +210,25 @@ export default class FilterQueryListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitKey?: (ctx: KeyContext) => void;
+	/**
+	 * Enter a parse tree produced by `FilterQueryParser.field`.
+	 * @param ctx the parse tree
+	 */
+	enterField?: (ctx: FieldContext) => void;
+	/**
+	 * Exit a parse tree produced by `FilterQueryParser.field`.
+	 * @param ctx the parse tree
+	 */
+	exitField?: (ctx: FieldContext) => void;
+	/**
+	 * Enter a parse tree produced by `FilterQueryParser.exactCall`.
+	 * @param ctx the parse tree
+	 */
+	enterExactCall?: (ctx: ExactCallContext) => void;
+	/**
+	 * Exit a parse tree produced by `FilterQueryParser.exactCall`.
+	 * @param ctx the parse tree
+	 */
+	exitExactCall?: (ctx: ExactCallContext) => void;
 }
 

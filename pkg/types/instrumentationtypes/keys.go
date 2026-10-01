@@ -7,11 +7,11 @@ import semconv "go.opentelemetry.io/collector/semconv/v1.6.1"
 // (https://pkg.go.dev/go.opentelemetry.io/otel/semconv); custom keys are namespaced.
 const (
 	// CodeFunctionName is the fully-qualified function or method name (OTel code.function.name).
-	CodeFunctionName = semconv.AttributeCodeFunction
+	CodeFunctionName = "code.function.name"
 	// CodeFilePath is the source file path of the call site.
-	CodeFilePath = semconv.AttributeCodeFilepath
+	CodeFilePath = "code.file.path"
 	// CodeLineNumber is the source line number of the call site.
-	CodeLineNumber = semconv.AttributeCodeLineNumber
+	CodeLineNumber = "code.line.number"
 	// CodeNamespace is the logical module or component name (e.g. "dashboard", "anomaly").
 	CodeNamespace = semconv.AttributeCodeNamespace
 	// ExceptionType is the error type (errors.typ).

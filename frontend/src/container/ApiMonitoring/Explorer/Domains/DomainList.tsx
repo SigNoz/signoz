@@ -180,9 +180,8 @@ function DomainList(): JSX.Element {
 								</div>
 								<div className="no-domain-subtitle">
 									Ensure all HTTP client spans are being sent with kind as{' '}
-									<span className="attribute">Client</span> and url set in{' '}
-									<span className="attribute">url.full</span> or{' '}
-									<span className="attribute">http.url</span> attribute.
+									<span className="attribute">Client</span> and the URL set in the{' '}
+									<span className="attribute">url.full</span> attribute.
 								</div>
 								<a
 									href={DOCLINKS.EXTERNAL_API_MONITORING}

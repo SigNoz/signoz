@@ -61,7 +61,8 @@ func Resolve(
 	traits := storage.Traits()
 
 	lookup := key
-	matches := matchingLogicalFields(q.FamiliesOn, q.Signal, q.Metric, key, fieldKeys)
+	familiesOn := q.FamiliesOn && !key.FieldResolution.IsExact()
+	matches := matchingLogicalFields(familiesOn, q.Signal, q.Metric, key, fieldKeys)
 	if len(matches) == 0 && slices.Contains(traits.OwnContexts, key.FieldContext) {
 		// a column the storage knows under the key's own context is the key
 		// as written, and only a miss corrects to the bare spelling
@@ -71,7 +72,7 @@ func Resolve(
 			}
 		}
 		lookup = telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextUnspecified, key.FieldDataType)
-		matches = matchingLogicalFields(q.FamiliesOn, q.Signal, q.Metric, lookup, fieldKeys)
+		matches = matchingLogicalFields(familiesOn, q.Signal, q.Metric, lookup, fieldKeys)
 	}
 
 	resolved := qbtypes.Resolved{Key: key, Ambiguous: len(matches) > 1}

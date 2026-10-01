@@ -501,6 +501,68 @@ def test_response_meta_reports_the_resolved_family(
     } in response.json()["data"]["meta"]["semconvResolutions"]
 
 
+def test_exact_reads_one_spelling_and_reports_no_resolution(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    family_fleet: datetime,
+) -> None:
+    """exact(key) addresses the stored spelling alone, so a row that carries
+    only the old name is the only match and no family resolution applies."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((family_fleet - timedelta(minutes=2)).timestamp() * 1000),
+        end_ms=int((family_fleet + timedelta(minutes=1)).timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[
+            build_raw_query(
+                "A",
+                "traces",
+                limit=100,
+                filter_expression=f"exact(resource.{OLD_KEY}) EXISTS AND exact(resource.{CURRENT_KEY}) NOT EXISTS",
+                order=[build_order_by("timestamp", "asc")],
+                select_fields=[{"name": "span.name"}],
+            )
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    matched = {name for name in get_column_data_from_response(response.json(), "name") if name.startswith(PREFIX)}
+    assert matched == {OLD}, matched
+    assert not response.json()["data"]["meta"].get("semconvResolutions"), response.json()["data"]["meta"]
+
+
+def test_exact_group_by_keeps_stored_spellings_apart(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    family_fleet: datetime,
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((family_fleet - timedelta(minutes=2)).timestamp() * 1000),
+        end_ms=int((family_fleet + timedelta(minutes=1)).timestamp() * 1000),
+        request_type=RequestType.SCALAR,
+        queries=[
+            build_traces_scalar_query(
+                [build_aggregation("count_distinct(name)")],
+                filter_expression=f"service.name LIKE '{PREFIX}%'",
+                group_by=[{**build_group_by_field(OLD_KEY, "string", "resource"), "fieldResolution": "exact"}],
+            )
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert get_scalar_columns(response.json())[0]["name"] == OLD_KEY
+
+    # OLD and BOTH store production under the old spelling; NEW and NEITHER
+    # have no old spelling at all.
+    groups = {tuple(row) for row in get_scalar_table_data(response.json())}
+    assert groups == {("production", 2), (None, 2)}, groups
+
+
 def test_migration_report_lists_old_only_services(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument

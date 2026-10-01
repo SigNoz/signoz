@@ -1,3 +1,5 @@
+import { getSemconvMembers } from 'utils/semconv';
+
 // Field-name allowlists that drive signal-specific cell rendering. Both legacy
 // camelCase and snake_case variants are listed because the API has shipped both.
 
@@ -12,12 +14,10 @@ export const TIMESTAMP_FIELD_NAMES = new Set([
 export const STATUS_FIELD_NAMES = new Set([
 	'httpMethod',
 	'http_method',
-	'http.method',
-	'http.request.method',
+	...getSemconvMembers('http.request.method'),
 	'responseStatusCode',
 	'response_status_code',
-	'http.status_code',
-	'http.response.status_code',
+	...getSemconvMembers('http.response.status_code'),
 ]);
 
 // trace_/max_llm_duration_nano are trace-level durations the per-trace query computes.

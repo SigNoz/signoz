@@ -1,9 +1,69 @@
 package telemetrytypes
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestTelemetryFieldKeyJSONDecodesExactResolution(t *testing.T) {
+	var exact TelemetryFieldKey
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"name":"deployment.environment",
+		"signal":"traces",
+		"fieldContext":"resource",
+		"fieldDataType":"string",
+		"fieldResolution":"exact"
+	}`), &exact), "exact field fixture should decode")
+
+	assert.Equal(t, FieldResolutionExact, exact.FieldResolution, "fieldResolution should decode into the exact enum value")
+	assert.True(t, exact.FieldResolution.IsExact(), "decoded exact resolution should disable family expansion")
+}
+
+func TestTelemetryFieldKeyJSONEncodesExactResolution(t *testing.T) {
+	exact := TelemetryFieldKey{
+		Name:            "deployment.environment",
+		Signal:          SignalTraces,
+		FieldContext:    FieldContextResource,
+		FieldDataType:   FieldDataTypeString,
+		FieldResolution: FieldResolutionExact,
+	}
+
+	payload, err := json.Marshal(exact)
+	require.NoError(t, err, "exact field should encode")
+
+	assert.Contains(t, string(payload), `"fieldResolution":"exact"`, "encoded exact field should preserve its resolution")
+}
+
+func TestTelemetryFieldKeyJSONDefaultsToFamilyResolution(t *testing.T) {
+	var defaultResolution TelemetryFieldKey
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"name":"deployment.environment",
+		"signal":"traces",
+		"fieldContext":"resource",
+		"fieldDataType":"string"
+	}`), &defaultResolution), "field fixture without a resolution should decode")
+
+	assert.Equal(t, FieldResolutionUnspecified, defaultResolution.FieldResolution, "missing fieldResolution should use the family-resolving zero value")
+	assert.False(t, defaultResolution.FieldResolution.IsExact(), "default resolution should keep family expansion enabled")
+}
+
+func TestTelemetryFieldKeyJSONOmitsUnspecifiedResolution(t *testing.T) {
+	field := TelemetryFieldKey{
+		Name:          "deployment.environment",
+		Signal:        SignalTraces,
+		FieldContext:  FieldContextResource,
+		FieldDataType: FieldDataTypeString,
+	}
+
+	payload, err := json.Marshal(field)
+	require.NoError(t, err, "field with default resolution should encode")
+
+	assert.NotContains(t, string(payload), "fieldResolution", "zero-value fieldResolution should be omitted from JSON")
+}
 
 func TestGetFieldKeyFromKeyText(t *testing.T) {
 

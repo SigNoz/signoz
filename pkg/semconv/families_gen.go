@@ -6,10 +6,62 @@ import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
 var families = []Family{
 	{
+		current: "code.file.path",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "code.filepath"},
+		},
+	},
+	{
+		current: "code.function.name",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "code.function"},
+		},
+	},
+	{
+		current: "code.line.number",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "code.lineno"},
+		},
+	},
+	{
 		current: "container.cpu.usage",
 		kind:    KindMetric,
 		members: []Member{
 			{name: "container.cpu.utilization"},
+		},
+	},
+	{
+		current: "container.runtime.name",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "container.runtime"},
+		},
+	},
+	{
+		current: "db.namespace",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "db.elasticsearch.cluster.name", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
+			{name: "db.name", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
+			{name: "db.cassandra.keyspace", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
+			{name: "db.hbase.namespace", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
+		},
+	},
+	{
+		current: "db.operation.name",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "db.operation", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
+		},
+	},
+	{
+		current: "db.query.text",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "db.statement", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
 		},
 	},
 	{
@@ -20,6 +72,20 @@ var families = []Family{
 		},
 		contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource},
 		signals:  []telemetrytypes.Signal{telemetrytypes.SignalLogs, telemetrytypes.SignalMetrics, telemetrytypes.SignalTraces},
+	},
+	{
+		current: "http.request.method",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "http.method", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalLogs, telemetrytypes.SignalTraces}},
+		},
+	},
+	{
+		current: "http.response.status_code",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "http.status_code", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalLogs, telemetrytypes.SignalTraces}},
+		},
 	},
 	{
 		current: "k8s.node.cpu.usage",
@@ -34,5 +100,76 @@ var families = []Family{
 		members: []Member{
 			{name: "k8s.pod.cpu.utilization"},
 		},
+	},
+	{
+		current: "messaging.client.id",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "messaging.client_id", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalMetrics, telemetrytypes.SignalTraces}},
+			{name: "messaging.kafka.client_id", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
+			{name: "messaging.rocketmq.client_id", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
+		},
+	},
+	{
+		current: "messaging.consumer.group.name",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "messaging.eventhubs.consumer.group"},
+			{name: "messaging.kafka.consumer.group"},
+			{name: "messaging.rocketmq.client_group"},
+			{name: "messaging.kafka.consumer_group", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
+		},
+	},
+	{
+		current: "messaging.destination.name",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "messaging.destination", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
+		},
+	},
+	{
+		current: "messaging.operation.type",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "messaging.operation", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
+		},
+	},
+	{
+		current: "rpc.system.name",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "rpc.system"},
+		},
+	},
+	{
+		current: "service.peer.name",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "peer.service"},
+		},
+	},
+	{
+		current: "url.full",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "http.url", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalLogs, telemetrytypes.SignalTraces}},
+		},
+	},
+	{
+		current: "url.scheme",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "http.scheme", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalLogs, telemetrytypes.SignalTraces}},
+		},
+	},
+	{
+		current: "user_agent.original",
+		kind:    KindAttribute,
+		members: []Member{
+			{name: "browser.user_agent", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextResource}},
+			{name: "http.user_agent", contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute}, signals: []telemetrytypes.Signal{telemetrytypes.SignalTraces}},
+		},
+		contexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute},
+		signals:  []telemetrytypes.Signal{telemetrytypes.SignalLogs, telemetrytypes.SignalTraces},
 	},
 }

@@ -1,7 +1,6 @@
 // Code generated from FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
 
 package parser // FilterQuery
-
 import "github.com/antlr4-go/antlr/v4"
 
 // FilterQueryListener is a complete listener for a parse tree produced by FilterQueryParser.
@@ -62,6 +61,12 @@ type FilterQueryListener interface {
 	// EnterKey is called when entering the key production.
 	EnterKey(c *KeyContext)
 
+	// EnterField is called when entering the field production.
+	EnterField(c *FieldContext)
+
+	// EnterExactCall is called when entering the exactCall production.
+	EnterExactCall(c *ExactCallContext)
+
 	// ExitQuery is called when exiting the query production.
 	ExitQuery(c *QueryContext)
 
@@ -115,4 +120,10 @@ type FilterQueryListener interface {
 
 	// ExitKey is called when exiting the key production.
 	ExitKey(c *KeyContext)
+
+	// ExitField is called when exiting the field production.
+	ExitField(c *FieldContext)
+
+	// ExitExactCall is called when exiting the exactCall production.
+	ExitExactCall(c *ExactCallContext)
 }

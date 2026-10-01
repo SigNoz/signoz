@@ -146,7 +146,7 @@ func (v *Visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 }
 
 func (v *Visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
-	key := strings.TrimSpace(ctx.Key().GetText())
+	key := strings.TrimSpace(fieldKeyText(ctx.Field()))
 	operation, ok := v.extractOperation(ctx)
 	if !ok {
 		return ""
@@ -511,4 +511,12 @@ func trimQuotes(s string) string {
 	s = strings.ReplaceAll(s, `\\`, `\`)
 	s = strings.ReplaceAll(s, `\'`, `'`)
 	return s
+}
+
+// fieldKeyText reads the key of a field; exact() carries no meaning here.
+func fieldKeyText(field grammar.IFieldContext) string {
+	if exactCall := field.ExactCall(); exactCall != nil {
+		return exactCall.Key().GetText()
+	}
+	return field.Key().GetText()
 }

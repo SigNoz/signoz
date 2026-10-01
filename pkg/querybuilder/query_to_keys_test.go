@@ -34,6 +34,24 @@ func TestQueryToKeys(t *testing.T) {
 			},
 		},
 		{
+			query: `exact(resource.deployment.environment) EXISTS AND deployment.environment.name="prod"`,
+			expectedKeys: []telemetrytypes.FieldKeySelector{
+				{
+					Name:            "deployment.environment",
+					Signal:          telemetrytypes.SignalUnspecified,
+					FieldContext:    telemetrytypes.FieldContextResource,
+					FieldDataType:   telemetrytypes.FieldDataTypeUnspecified,
+					FieldResolution: telemetrytypes.FieldResolutionExact,
+				},
+				{
+					Name:          "deployment.environment.name",
+					Signal:        telemetrytypes.SignalUnspecified,
+					FieldContext:  telemetrytypes.FieldContextUnspecified,
+					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				},
+			},
+		},
+		{
 			query: `service.name="redis" AND http.status_code=200`,
 			expectedKeys: []telemetrytypes.FieldKeySelector{
 				{

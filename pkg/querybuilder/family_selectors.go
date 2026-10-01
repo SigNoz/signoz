@@ -44,7 +44,7 @@ func ExpandKeySelectorsForFamilies(ctx context.Context, orgID valuer.UUID, fl fl
 	}
 
 	for _, selector := range selectors {
-		if selector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeFuzzy {
+		if selector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeFuzzy || selector.FieldResolution.IsExact() {
 			continue
 		}
 		members := familySpellings(telemetrytypes.FieldKeySelector{

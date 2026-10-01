@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -95,15 +97,15 @@ type GettableReductionRule struct {
 	types.TimeAuditable
 	types.UserAuditable
 
-	MetricName       string    `json:"metricName" required:"true"`
-	MatchType        MatchType `json:"matchType" required:"true"`
-	Labels           []string  `json:"labels" required:"true" nullable:"true"`
-	EffectiveFrom    time.Time `json:"effectiveFrom" required:"true"`
-	Active           bool      `json:"active" required:"true"`
-	IngestedSeries   uint64    `json:"ingestedSeries" required:"true"`
-	RetainedSeries   uint64    `json:"retainedSeries" required:"true"`
-	IngestedSamples  uint64    `json:"ingestedSamples" required:"true"`
-	RetainedSamples  uint64    `json:"retainedSamples" required:"true"`
+	MetricName      string    `json:"metricName" required:"true"`
+	MatchType       MatchType `json:"matchType" required:"true"`
+	Labels          []string  `json:"labels" required:"true" nullable:"true"`
+	EffectiveFrom   time.Time `json:"effectiveFrom" required:"true"`
+	Active          bool      `json:"active" required:"true"`
+	IngestedSeries  uint64    `json:"ingestedSeries" required:"true"`
+	RetainedSeries  uint64    `json:"retainedSeries" required:"true"`
+	IngestedSamples uint64    `json:"ingestedSamples" required:"true"`
+	RetainedSamples uint64    `json:"retainedSamples" required:"true"`
 }
 
 type GettableReductionRules struct {
@@ -121,13 +123,22 @@ type PostableReductionRule struct {
 	UpdatableReductionRule
 }
 
-var protectedLabels = map[string]struct{}{
-	"le":                     {},
-	"quantile":               {},
-	"__name__":               {},
-	"__temporality__":        {},
-	"deployment.environment": {},
-}
+var protectedLabels = func() map[string]struct{} {
+	labels := map[string]struct{}{
+		"le":              {},
+		"quantile":        {},
+		"__name__":        {},
+		"__temporality__": {},
+	}
+	for _, member := range semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
+		Name:         "deployment.environment.name",
+		Signal:       telemetrytypes.SignalMetrics,
+		FieldContext: telemetrytypes.FieldContextResource,
+	}) {
+		labels[member] = struct{}{}
+	}
+	return labels
+}()
 
 // IsProtectedLabel reports whether a label is always retained regardless of a reduction rule.
 func IsProtectedLabel(label string) bool {

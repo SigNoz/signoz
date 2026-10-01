@@ -243,6 +243,14 @@ func TestNormalizeWhereClauseAtoms(t *testing.T) {
 	assert.ElementsMatch(t, expected, canonical.Conditions)
 }
 
+func TestNormalizeWhereClausePreservesExactField(t *testing.T) {
+	normalized, err := NormalizeWhereClause("EXACT(resource.deployment.environment:string) EXISTS", nil)
+	require.NoError(t, err, "valid exact expression should normalize")
+	assert.Equal(t, "exact(resource.deployment.environment:string) EXISTS", normalized.Expression, "normalization should preserve the exact wrapper")
+	require.Len(t, normalized.Conditions, 1, "exact expression should produce one canonical condition")
+	assert.Equal(t, "exact(resource.deployment.environment:string)", normalized.Conditions[0].Key, "canonical condition key should retain exact resolution")
+}
+
 func TestNormalizeWhereClauseTopLevel(t *testing.T) {
 	testCases := []struct {
 		name       string

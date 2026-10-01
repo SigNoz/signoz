@@ -126,6 +126,8 @@ func main() {
 	goOutput := flag.String("go-out", filepath.Join(root, "pkg/semconv/families_gen.go"), "generated Go output")
 	tsOutput := flag.String("ts-out", filepath.Join(root, "frontend/src/constants/generated/semconvFamilies.gen.ts"), "generated TypeScript output")
 	check := flag.Bool("check", false, "fail if generated files are stale")
+	lint := flag.Bool("lint", false, "fail on old-name literals in backend or frontend product code")
+	lintExceptions := flag.String("lint-exceptions", filepath.Join(root, "scripts/semconv/lint-exceptions.yaml"), "old-name literal lint exceptions")
 	flag.Parse()
 
 	if len(schemaPaths) == 0 {
@@ -149,6 +151,13 @@ func main() {
 		if err := checkFile(*tsOutput, tsBytes); err != nil {
 			fatal(err)
 		}
+	}
+	if *lint {
+		if err := lintRepository(root, families, *lintExceptions); err != nil {
+			fatal(err)
+		}
+	}
+	if *check || *lint {
 		return
 	}
 

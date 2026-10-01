@@ -421,6 +421,17 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 			},
 			expected: "message NOT CONTAINS 'debug'",
 		},
+		{
+			name:       "exact field with variable value",
+			expression: "exact(resource.deployment.environment) = $environment",
+			variables: map[string]qbtypes.VariableItem{
+				"environment": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "production",
+				},
+			},
+			expected: "exact(resource.deployment.environment) = 'production'",
+		},
 	}
 
 	for _, tt := range tests {

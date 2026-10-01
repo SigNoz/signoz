@@ -335,7 +335,7 @@ Response in query range `table` format
       "status": "1"
     },
     {
-      "attribute": "messaging.client_id",
+      "attribute": "messaging.client.id",
       "error_message": "",
       "status": "1"
     },
@@ -350,7 +350,7 @@ Response in query range `table` format
       "status": "1"
     },
     {
-      "attribute": "messaging.kafka.consumer.group",
+      "attribute": "messaging.consumer.group.name",
       "error_message": "",
       "status": "1"
     },
@@ -392,7 +392,7 @@ Response in query range `table` format
       "status": "0"
     },
     {
-      "attribute": "messaging.client_id",
+      "attribute": "messaging.client.id",
       "error_message": "",
       "status": "1"
     },
@@ -407,8 +407,8 @@ Response in query range `table` format
       "status": "1"
     },
     {
-      "attribute": "messaging.kafka.consumer.group",
-      "error_message": "messaging.kafka.consumer.group attribute is not present in your spans",
+      "attribute": "messaging.consumer.group.name",
+      "error_message": "messaging.consumer.group.name attribute is not present in your spans",
       "status": "0"
     },
     {

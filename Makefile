@@ -263,8 +263,8 @@ semconv-generate: ## Regenerate semantic-convention families for Go and TypeScri
 	@go run ./scripts/semconv
 
 .PHONY: semconv-check
-semconv-check: ## Fail if the generated semantic-convention files are stale
-	@go run ./scripts/semconv -check
+semconv-check: ## Verify generated semantic-convention files and reject old-name product literals
+	@go run ./scripts/semconv -check -lint
 
 .PHONY: gen-mocks
 gen-mocks:

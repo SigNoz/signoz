@@ -24,6 +24,37 @@ SPAN_METRIC = "signoz_calls_total"
 OLD_NAME_METRIC = "k8s.pod.cpu.utilization"
 CURRENT_NAME_METRIC = "k8s.pod.cpu.usage"
 
+ROLLOUT_PREFIX = "semconv-rollout"
+# (current, old, data type) for every attribute family the overlay enables
+# beyond deployment.environment.name.
+ROLLOUT_FAMILIES = [
+    ("db.namespace", "db.name", "string"),
+    ("db.operation.name", "db.operation", "string"),
+    ("db.query.text", "db.statement", "string"),
+    ("rpc.system.name", "rpc.system", "string"),
+    ("service.peer.name", "peer.service", "string"),
+    ("messaging.destination.name", "messaging.destination", "string"),
+    ("messaging.operation.type", "messaging.operation", "string"),
+    ("messaging.consumer.group.name", "messaging.kafka.consumer.group", "string"),
+    ("messaging.client.id", "messaging.client_id", "string"),
+    ("container.runtime.name", "container.runtime", "string"),
+    ("code.file.path", "code.filepath", "string"),
+    ("code.function.name", "code.function", "string"),
+    ("code.line.number", "code.lineno", "float64"),
+    ("http.request.method", "http.method", "string"),
+    ("http.response.status_code", "http.status_code", "float64"),
+    ("url.full", "http.url", "string"),
+    ("url.scheme", "http.scheme", "string"),
+    ("user_agent.original", "http.user_agent", "string"),
+]
+ROLLOUT_OLD = f"{ROLLOUT_PREFIX}-old"
+ROLLOUT_NEW = f"{ROLLOUT_PREFIX}-new"
+ROLLOUT_BOTH = f"{ROLLOUT_PREFIX}-both"  # current "match" and old "legacy" - the conflict row
+ROLLOUT_OTHER = f"{ROLLOUT_PREFIX}-other"
+ROLLOUT_NEITHER = f"{ROLLOUT_PREFIX}-neither"
+# Numeric families store the same three identities as 200, 400 and 500.
+ROLLOUT_VALUES = {"match": 200, "legacy": 400, "other": 500}
+
 _ROWS = [
     (OLD, {OLD_KEY: "production"}, timedelta(seconds=4)),
     (NEW, {CURRENT_KEY: "production"}, timedelta(seconds=3)),
@@ -68,6 +99,43 @@ def family_fleet(
             for identity, family, offset in _ROWS
         ]
     )
+    yield now
+
+
+@pytest.fixture(name="rollout_fleet", scope="function")
+def rollout_fleet(insert_traces: Callable[[list[Traces]], None]) -> Generator[datetime]:
+    """Inserts one span per identity carrying every rollout family under the
+    old spelling, the current spelling, both, or neither, and yields the base
+    timestamp."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=1)
+    rows = [
+        (ROLLOUT_OLD, {"old": "match"}, timedelta(seconds=5)),
+        (ROLLOUT_NEW, {"current": "match"}, timedelta(seconds=4)),
+        (ROLLOUT_BOTH, {"current": "match", "old": "legacy"}, timedelta(seconds=3)),
+        (ROLLOUT_OTHER, {"old": "other"}, timedelta(seconds=2)),
+        (ROLLOUT_NEITHER, {}, timedelta(seconds=1)),
+    ]
+    spans = []
+    for identity, spellings, offset in rows:
+        attributes: dict[str, str | int] = {}
+        for current, old, data_type in ROLLOUT_FAMILIES:
+            for spelling, value in spellings.items():
+                key = current if spelling == "current" else old
+                attributes[key] = value if data_type == "string" else ROLLOUT_VALUES[value]
+        spans.append(
+            Traces(
+                timestamp=now - offset,
+                duration=timedelta(milliseconds=10),
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                name=identity,
+                kind=TracesKind.SPAN_KIND_CLIENT,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                resources={"service.name": identity},
+                attributes=attributes,
+            )
+        )
+    insert_traces(spans)
     yield now
 
 
