@@ -41,6 +41,7 @@ import {
 } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
@@ -134,6 +135,7 @@ function TracesExplorer(): JSX.Element {
 
 	const quickFilterFieldApis = useSignalFieldApis();
 	const { safeNavigate } = useSafeNavigate();
+	const isSavedViewEnabled = useSavedViewEnabled();
 	const getExportToDashboardLink = useGetExportToDashboardLink();
 
 	const handleChangeSelectedView = useCallback(
@@ -382,13 +384,15 @@ function TracesExplorer(): JSX.Element {
 						)}
 					</div>
 
-					<ExplorerOptionWrapper
-						disabled={!stagedQuery}
-						query={exportDefaultQuery}
-						sourcepage={DataSource.TRACES}
-						onExport={handleExport}
-						handleChangeSelectedView={handleChangeSelectedView}
-					/>
+					{!isSavedViewEnabled && (
+						<ExplorerOptionWrapper
+							disabled={!stagedQuery}
+							query={exportDefaultQuery}
+							sourcepage={DataSource.TRACES}
+							onExport={handleExport}
+							handleChangeSelectedView={handleChangeSelectedView}
+						/>
+					)}
 				</div>
 			</QuickFiltersLayout>
 		</Sentry.ErrorBoundary>
