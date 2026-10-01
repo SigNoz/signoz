@@ -23,7 +23,7 @@ export function useActiveSavedView(
 		dataSource: optionsDataSource ?? DataSource.LOGS,
 	});
 
-	const { data, isLoading, isError } = useGetSavedView(
+	const { data, isLoading, isError, error } = useGetSavedView(
 		{ id: viewKey },
 		{ query: { enabled: !!viewKey } },
 	);
@@ -72,6 +72,7 @@ export function useActiveSavedView(
 		view,
 		isLoading: !!viewKey && isLoading,
 		isError: !!viewKey && isError,
+		isForbidden: !!viewKey && error?.response?.status === 403,
 		hasUnsavedChanges,
 	};
 }

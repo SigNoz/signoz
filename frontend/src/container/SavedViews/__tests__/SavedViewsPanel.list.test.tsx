@@ -161,7 +161,9 @@ describe('SavedViewsPanel list', () => {
 		const requests = mockSavedViewsApi([], { createdId: 'view-new' });
 		const { history } = renderPanel();
 
-		await userEvent.click(await screen.findByTestId('saved-views-list-create'));
+		const create = await screen.findByTestId('saved-views-list-create');
+		await waitFor(() => expect(create).toBeEnabled());
+		await userEvent.click(create);
 		await userEvent.type(screen.getByTestId('save-view-name'), 'First view');
 		await userEvent.click(screen.getByTestId('save-view-submit'));
 

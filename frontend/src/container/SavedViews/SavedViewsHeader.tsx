@@ -8,9 +8,15 @@ import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 import {
 	MY_VIEW_NAME,
+	SAVED_VIEW_FORBIDDEN_NAME,
 	SAVED_VIEW_LOAD_FAILED_NAME,
 	SAVED_VIEW_TOAST_POSITION,
 } from './constants';
+import {
+	SavedViewCreatePermission,
+	SavedViewListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+
 import { useActiveSavedView } from './hooks/useActiveSavedView';
 import { useRestoreLastUsedView } from './hooks/useRestoreLastUsedView';
 import { useSaveNewView } from './hooks/useSaveNewView';
@@ -32,7 +38,7 @@ function SavedViewsHeader({
 	onOpenViews?: () => void;
 	onCollapse?: () => void;
 }): JSX.Element {
-	const { view, isLoading, isError, hasUnsavedChanges } =
+	const { view, isLoading, isError, isForbidden, hasUnsavedChanges } =
 		useActiveSavedView(source);
 	const { selectView, revertView, clearView, createView, updateView, isSaving } =
 		useSavedViewActions(source);
@@ -51,9 +57,10 @@ function SavedViewsHeader({
 	const openSaveAsNew = useCallback((): void => setModalMode('saveAsNew'), []);
 	const closeModal = useCallback((): void => setModalMode(null), []);
 
-	const name = isError
-		? SAVED_VIEW_LOAD_FAILED_NAME
-		: (view?.spec.displayName ?? MY_VIEW_NAME);
+	const errorName = isForbidden
+		? SAVED_VIEW_FORBIDDEN_NAME
+		: SAVED_VIEW_LOAD_FAILED_NAME;
+	const name = isError ? errorName : (view?.spec.displayName ?? MY_VIEW_NAME);
 	const isDirty = !isError && !!view && hasUnsavedChanges;
 
 	return (
@@ -93,6 +100,7 @@ function SavedViewsHeader({
 						title="Create new view"
 						icon={<Plus size={14} />}
 						disabled={isLoading}
+						checks={[SavedViewCreatePermission]}
 						onClick={(): void => setModalMode('create')}
 						testId="saved-views-create"
 					/>
@@ -108,6 +116,7 @@ function SavedViewsHeader({
 				{view && isDirty && (
 					<>
 						<SaveChangesMenu
+							viewId={view.id}
 							disabled={isSaving}
 							onSaveAsNew={openSaveAsNew}
 							onUpdate={(): void => {
@@ -128,6 +137,7 @@ function SavedViewsHeader({
 					<SavedViewsIconButton
 						title="All views"
 						icon={<Menu size={14} />}
+						checks={[SavedViewListPermission]}
 						onClick={onOpenViews}
 						testId="saved-views-open"
 					/>

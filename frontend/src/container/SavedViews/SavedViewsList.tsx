@@ -7,6 +7,8 @@ import {
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
+import { SavedViewReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 import { SAVED_VIEWS_LIST_LOADING_ROWS } from './constants';
 import DeleteSavedViewDialog from './DeleteSavedViewDialog';
@@ -45,6 +47,10 @@ function SavedViewsList({
 	const [pendingAction, setPendingAction] =
 		useState<PendingSavedViewAction | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
+	const { deniedPermissions: deniedReadPermissions } = useAuthZ([
+		SavedViewReadPermission,
+	]);
+	const isReadDenied = deniedReadPermissions.length > 0;
 	const hoverCard = useSavedViewHoverCard();
 	const {
 		onRowEnter: onHoverCardRowEnter,
@@ -152,6 +158,7 @@ function SavedViewsList({
 					onClear={clearView}
 					onAction={handleAction}
 					hover={rowHover}
+					isReadDenied={isReadDenied}
 					testId="saved-views-created-by-me"
 				/>
 			)}
@@ -164,6 +171,7 @@ function SavedViewsList({
 					onClear={clearView}
 					onAction={handleAction}
 					hover={rowHover}
+					isReadDenied={isReadDenied}
 					testId="saved-views-created-by-others"
 				/>
 			)}
