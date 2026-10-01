@@ -343,10 +343,10 @@ type ScatterPlotPanelSpec struct {
 // use the Table column key, so formatting.columnUnits carries over between the
 // two kinds.
 type ScatterPlotDimensions struct {
-	X     string `json:"x" description:"Value column key (queryName, or queryName.expression for a multi-aggregation query) plotted on the x axis. Empty uses the first value column."`
-	Y     string `json:"y" description:"Value column key plotted on the y axis. Empty uses the second value column."`
-	Size  string `json:"size" description:"Value column key that scales dot size. Empty draws every dot at the default size."`
-	Color string `json:"color" description:"Group-by label name (e.g. k8s.namespace.name) that colours dots and drives the legend. Empty uses the renderer default."`
+	X     string   `json:"x" description:"Value column key (queryName, or queryName.expression for a multi-aggregation query) plotted on the x axis. Empty uses the first value column."`
+	Y     string   `json:"y" description:"Value column key plotted on the y axis. Empty uses the second value column."`
+	Size  string   `json:"size" description:"Value column key that scales dot size. Empty draws every dot at the default size."`
+	Color []string `json:"color" description:"Group-by label names (e.g. k8s.namespace.name) whose combined values colour dots and drive the legend. Empty colours by every group-by label."`
 }
 
 type ScatterPlotAxes struct {
@@ -358,6 +358,7 @@ type ScatterPlotAxis struct {
 	SoftMin *float64  `json:"softMin"`
 	SoftMax *float64  `json:"softMax"`
 	Scale   AxisScale `json:"scale"`
+	Label   string    `json:"label" description:"Axis title. Empty draws none."`
 }
 
 type TextPresentation struct {
