@@ -14,11 +14,10 @@ import (
 
 // Target identifies a promotion domain.
 type Target struct {
-	Entry            telemetrytypes.EvolutionEntry // evolution row template; FieldName and ReleaseTime are set per write
-	DBName           string                        // index DDL database, used only when IndexesSupported
-	LocalTableName   string                        // index DDL local table, used only when IndexesSupported
-	BaseColumn       string                        // column holding every path; indexes for unpromoted paths are created on it
-	IndexesSupported bool
+	Entry          telemetrytypes.EvolutionEntry // evolution row template; FieldName and ReleaseTime are set per write
+	DBName         string                        // index DDL database
+	LocalTableName string                        // index DDL local table
+	BaseColumn     string                        // column holding every path; indexes for unpromoted paths are created on it
 }
 
 func (t Target) PromotedColumn() string { return t.Entry.ColumnName }
@@ -72,13 +71,12 @@ func (t Target) IndexSource() telemetrytypes.JSONIndexSource {
 	}
 }
 
-func NewTarget(entry telemetrytypes.EvolutionEntry, dbName, localTableName, baseColumn string, indexesSupported bool) Target {
+func NewTarget(entry telemetrytypes.EvolutionEntry, dbName, localTableName, baseColumn string) Target {
 	return Target{
-		Entry:            entry,
-		DBName:           dbName,
-		LocalTableName:   localTableName,
-		BaseColumn:       baseColumn,
-		IndexesSupported: indexesSupported,
+		Entry:          entry,
+		DBName:         dbName,
+		LocalTableName: localTableName,
+		BaseColumn:     baseColumn,
 	}
 }
 
@@ -94,7 +92,6 @@ func NewLogsBodyTarget() Target {
 		logstelemetryschema.DBName,
 		logstelemetryschema.LogsV2LocalTableName,
 		logstelemetryschema.LogsV2BodyV2Column,
-		true,
 	)
 }
 
@@ -111,7 +108,6 @@ func NewTracesAttributesTarget() Target {
 		tracestelemetryschema.DBName,
 		tracestelemetryschema.SpanIndexV3LocalTableName,
 		tracestelemetryschema.SpanAttributesColumn,
-		true,
 	)
 }
 

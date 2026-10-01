@@ -100,10 +100,6 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cardinal paths can not be promoted or indexed")
 	}
 
-	if len(i.Indexes) > 0 && !target.IndexesSupported {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "indexes are not supported for %s %s", target.Entry.Signal.StringValue(), target.Entry.FieldContext.StringValue())
-	}
-
 	for idx, index := range i.Indexes {
 		if index.Type == "" {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index type is required")
