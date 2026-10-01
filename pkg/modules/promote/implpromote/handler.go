@@ -55,6 +55,10 @@ func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
+	if err := filters.Validate(); err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	paths, err := h.module.ListPromotedPaths(r.Context(), filters)
 	if err != nil {
