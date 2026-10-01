@@ -1869,6 +1869,185 @@ func TestInvalidateAreaChartPanelSpecValues(t *testing.T) {
 	}
 }
 
+func TestScatterPlotPanelDefaults(t *testing.T) {
+	data := []byte(`{
+		"variables": [],
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"links": [],
+					"plugin": {
+						"kind": "signoz/ScatterPlotPanel",
+						"spec": {}
+					},
+					"queries": [{"kind": "scalar", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+				}
+			}
+		},
+		"links": [],
+		"layouts": []
+	}`)
+	d, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &ScatterPlotPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+	spec := d.Panels["p1"].Spec.Plugin.Spec.(*ScatterPlotPanelSpec)
+
+	assert.Empty(t, spec.Dimensions.X, "an omitted x stays empty so the renderer picks the first value column")
+	assert.Empty(t, spec.Dimensions.Y, "an omitted y stays empty so the renderer picks the second value column")
+	assert.Equal(t, "auto", spec.Axes.X.Scale.ValueOrDefault(), "expected x scale default auto")
+	assert.Equal(t, "auto", spec.Axes.Y.Scale.ValueOrDefault(), "expected y scale default auto")
+	assert.Nil(t, spec.Axes.X.SoftMin, "expected x softMin unset")
+	assert.Equal(t, "2", spec.Formatting.DecimalPrecision.ValueOrDefault(), "expected DecimalPrecision default 2")
+	assert.Equal(t, "global_time", spec.Visualization.TimePreference.ValueOrDefault(), "expected TimePreference default global_time")
+	assert.Equal(t, "bottom", spec.Legend.Position.ValueOrDefault(), "expected LegendPosition default bottom")
+
+	output, err := json.Marshal(d)
+	require.NoError(t, err, "marshal dashboard failed")
+	assert.Contains(t, string(output), `"axes":{"x":{"softMin":null,"softMax":null,"scale":"auto"},"y":{"softMin":null,"softMax":null,"scale":"auto"}}`, "expected default axes in stored/response JSON")
+	assert.Contains(t, string(output), `"dimensions":{"x":"","y":"","size":"","color":""}`, "expected empty dimensions in stored/response JSON")
+}
+
+func TestScatterPlotPanelRoundTrip(t *testing.T) {
+	data := []byte(`{
+		"variables": [],
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"links": [],
+					"plugin": {
+						"kind": "signoz/ScatterPlotPanel",
+						"spec": {
+							"visualization": {"timePreference": "global_time"},
+							"dimensions": {"x": "A.count()", "y": "A.p99(duration_nano)", "size": "A.countIf(has_error = true)", "color": "k8s.namespace.name"},
+							"formatting": {"columnUnits": {"A.p99(duration_nano)": "ns"}, "decimalPrecision": "2"},
+							"axes": {"x": {"softMin": 0, "softMax": null, "scale": "log"}, "y": {"softMin": null, "softMax": 1000, "scale": "symlog"}},
+							"legend": {"position": "bottom", "mode": "list", "customColors": {}},
+							"thresholds": [{"value": 300, "unit": "ms", "color": "#f00", "label": "p99 SLO"}]
+						}
+					},
+					"queries": [{"kind": "scalar", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
+						"name": "A", "signal": "traces",
+						"aggregations": [{"expression": "count()"}, {"expression": "p99(duration_nano)"}, {"expression": "countIf(has_error = true)"}],
+						"groupBy": [{"name": "k8s.namespace.name"}]
+					}}}}]
+				}
+			}
+		},
+		"links": [],
+		"layouts": []
+	}`)
+	d, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &ScatterPlotPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+	spec := d.Panels["p1"].Spec.Plugin.Spec.(*ScatterPlotPanelSpec)
+
+	assert.Equal(t, ScatterPlotDimensions{X: "A.count()", Y: "A.p99(duration_nano)", Size: "A.countIf(has_error = true)", Color: "k8s.namespace.name"}, spec.Dimensions)
+	assert.Equal(t, "log", spec.Axes.X.Scale.ValueOrDefault(), "expected x scale log")
+	assert.Equal(t, "symlog", spec.Axes.Y.Scale.ValueOrDefault(), "expected y scale symlog")
+	require.NotNil(t, spec.Axes.X.SoftMin, "a zero softMin is a set value")
+	assert.Equal(t, 0.0, *spec.Axes.X.SoftMin)
+	require.NotNil(t, spec.Axes.Y.SoftMax)
+	assert.Equal(t, 1000.0, *spec.Axes.Y.SoftMax)
+	assert.Equal(t, "ns", spec.Formatting.ColumnUnits["A.p99(duration_nano)"])
+	require.Len(t, spec.Thresholds, 1)
+	assert.Equal(t, 300.0, spec.Thresholds[0].Value)
+
+	output, err := json.Marshal(d)
+	require.NoError(t, err, "marshal dashboard failed")
+	for _, want := range []string{
+		`"dimensions":{"x":"A.count()","y":"A.p99(duration_nano)","size":"A.countIf(has_error = true)","color":"k8s.namespace.name"}`,
+		`"x":{"softMin":0,"softMax":null,"scale":"log"}`,
+		`"y":{"softMin":null,"softMax":1000,"scale":"symlog"}`,
+	} {
+		assert.Contains(t, string(output), want, "expected stored/response JSON to contain %s", want)
+	}
+}
+
+func TestInvalidateScatterPlotPanelSpecValues(t *testing.T) {
+	tests := []struct {
+		scenario               string
+		panelKind              string
+		panelSpec              string
+		expectedErrorSubstring string
+	}{
+		{
+			scenario:               "unknown axis scale",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"axes": {"x": {"scale": "sqrt"}}}`,
+			expectedErrorSubstring: "invalid axis scale \"sqrt\": must be `auto`, `linear`, `log`, or `symlog`",
+		},
+		{
+			scenario:               "non-string axis scale",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"axes": {"y": {"scale": true}}}`,
+			expectedErrorSubstring: "cannot unmarshal bool",
+		},
+		{
+			scenario:               "isLogScale on a scatter plot axis",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"axes": {"x": {"isLogScale": true}}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
+			scenario:               "single-axis axes shape on a scatter plot panel",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"axes": {"softMin": 0}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
+			scenario:               "unknown dimension",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"dimensions": {"z": "A"}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
+			scenario:               "panel-wide unit on a scatter plot panel",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"formatting": {"unit": "ms"}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
+			scenario:               "threshold without a color",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"thresholds": [{"value": 300}]}`,
+			expectedErrorSubstring: "Thresholds[0].Color",
+		},
+		{
+			scenario:               "scale on a time series panel",
+			panelKind:              "signoz/TimeSeriesPanel",
+			panelSpec:              `{"axes": {"scale": "log"}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			data := []byte(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "` + test.panelKind + `", "spec": ` + test.panelSpec + `},
+							"queries": [{"kind": "scalar", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`)
+			_, err := unmarshalDashboard(data)
+			require.Error(t, err, "expected the spec to be rejected")
+			assert.Contains(t, err.Error(), test.expectedErrorSubstring, "unexpected error message: %s", err.Error())
+		})
+	}
+}
+
 func TestNumberPanelDefaults(t *testing.T) {
 	data := []byte(`{
 		"variables": [],
