@@ -13,9 +13,12 @@ import { SIDEBAR_TOOLTIP_DELAY_MS } from './constants';
 import styles from './QuickFiltersLayout.module.scss';
 
 // Same optionality as `<QuickFilters />` in JSX (honours its defaultProps).
-type QuickFiltersElementProps = JSX.LibraryManagedAttributes<
-	typeof QuickFilters,
-	ComponentProps<typeof QuickFilters>
+type QuickFiltersElementProps = Omit<
+	JSX.LibraryManagedAttributes<
+		typeof QuickFilters,
+		ComponentProps<typeof QuickFilters>
+	>,
+	'handleFilterVisibilityChange'
 >;
 
 // What the page configures; the layout adds the open / close wiring.
@@ -28,6 +31,7 @@ export interface QuickFiltersLayoutProps {
 	quickFilterProps?: QuickFiltersElementProps;
 	savedViewProps?: SavedViewsElementProps;
 	showFilters: boolean;
+	onToggleFilters?: () => void;
 	className?: string;
 	contentClassName?: string;
 	testId?: string;
@@ -38,6 +42,7 @@ function QuickFiltersLayout({
 	quickFilterProps,
 	savedViewProps,
 	showFilters,
+	onToggleFilters,
 	className,
 	contentClassName,
 	testId,
@@ -62,6 +67,7 @@ function QuickFiltersLayout({
 			onOpenViews={
 				isViewsListVisible ? undefined : (): void => setIsViewsListOpen(true)
 			}
+			onCollapse={hasQuickFilters ? undefined : onToggleFilters}
 		/>
 	) : undefined;
 
@@ -81,6 +87,7 @@ function QuickFiltersLayout({
 							{hasQuickFilters ? (
 								<QuickFilters
 									{...quickFilterProps}
+									handleFilterVisibilityChange={onToggleFilters}
 									savedViewsHeader={savedViewsHeader}
 								/>
 							) : (
