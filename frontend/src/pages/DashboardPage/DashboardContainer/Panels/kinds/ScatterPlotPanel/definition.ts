@@ -28,7 +28,11 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 		EQueryType.CLICKHOUSE,
 		EQueryType.PROM,
 	],
-	queryBuilderFields: {},
+	queryBuilderFields: {
+		legend_format: {
+			state: 'hidden',
+		},
+	},
 	// Same request as Table: one joined row per group, so x and y can come from
 	// different queries.
 	queryCapabilities: {
