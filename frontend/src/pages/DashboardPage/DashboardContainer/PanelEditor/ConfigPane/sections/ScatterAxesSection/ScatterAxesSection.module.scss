@@ -1,0 +1,16 @@
+.axes {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.axis + .axis {
+	padding-top: 24px;
+	border-top: 1px solid var(--l1-border);
+}
+
+.fields {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
