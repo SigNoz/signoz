@@ -63,10 +63,6 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 		})
 	}
 
-	if !target.IndexesSupported {
-		return response, nil
-	}
-
 	indexes, err := m.metadataStore.ListJSONIndexes(ctx, target.IndexSource())
 	if err != nil {
 		return nil, err
