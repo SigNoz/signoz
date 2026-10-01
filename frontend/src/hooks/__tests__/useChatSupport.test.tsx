@@ -31,6 +31,8 @@ function setup({
 	isLoggedIn = true,
 	pylonEnabled = true,
 	isFetchingFeatureFlags = false,
+	featureFlags = undefined as unknown,
+	featureFlagsFetchError = null as unknown,
 	activeLicense = {} as unknown,
 	trialInfo = {} as unknown,
 } = {}): void {
@@ -39,12 +41,15 @@ function setup({
 	} as never;
 
 	mockAppContext.mockReturnValue({
-		featureFlags: [
-			flag(FeatureKeys.CHAT_SUPPORT, chatSupport),
-			flag(FeatureKeys.PREMIUM_SUPPORT, premiumSupport),
-		],
+		featureFlags:
+			featureFlags === undefined
+				? [
+						flag(FeatureKeys.CHAT_SUPPORT, chatSupport),
+						flag(FeatureKeys.PREMIUM_SUPPORT, premiumSupport),
+					]
+				: featureFlags,
 		isFetchingFeatureFlags,
-		featureFlagsFetchError: null,
+		featureFlagsFetchError,
 		trialInfo: trialInfo && { trialConvertedToSubscription: trialConverted },
 		isLoggedIn,
 		activeLicense,
@@ -143,6 +148,42 @@ describe('useChatSupport', () => {
 			});
 
 			expect(state()).toBe(ChatSupportState.Unavailable);
+		});
+
+		it('offers nothing before trial info has loaded', () => {
+			setup({ trialInfo: null });
+
+			expect(state()).toBe(ChatSupportState.Unavailable);
+		});
+	});
+
+	describe('once the flags answer', () => {
+		it('reads a fetch error as an answer, not as still loading', () => {
+			setup({
+				featureFlags: null,
+				featureFlagsFetchError: new Error('flags unavailable'),
+			});
+
+			// Nothing is granted without flags, so the chat support flag is absent.
+			expect(state()).toBe(ChatSupportState.Unavailable);
+		});
+
+		it('settles once the flags finish loading', () => {
+			setup({ isFetchingFeatureFlags: true });
+			const { result, rerender } = renderHook(() => useChatSupport());
+
+			expect(result.current).toBe(ChatSupportState.Unavailable);
+
+			setup({ isFetchingFeatureFlags: false });
+			rerender();
+
+			expect(result.current).toBe(ChatSupportState.NeedsCard);
+		});
+
+		it('offers the card flow even when Pylon is not configured', () => {
+			setup({ trialConverted: false, pylonEnabled: false });
+
+			expect(state()).toBe(ChatSupportState.NeedsCard);
 		});
 	});
 });

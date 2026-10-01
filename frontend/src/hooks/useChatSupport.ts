@@ -45,7 +45,8 @@ export function useChatSupport(): ChatSupportState {
 			!trialInfo?.trialConvertedToSubscription;
 
 		if (needsCard) {
-			// The credit card flow is cloud-only
+			// The credit card flow is cloud-only.
+			// TODO: offered even where Pylon is not configured, which is probably wrong.
 			return isCloudUser
 				? ChatSupportState.NeedsCard
 				: ChatSupportState.Unavailable;
