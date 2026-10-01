@@ -36,6 +36,8 @@ export type ScatterPlotData =
 			/** `[seriesIndex][dataIndex]`: the point's group-by labels. */
 			pointLabels: ScatterPointLabel[][][];
 			channels: ScatterChannels;
+			/** The query each axis's column comes from, for drilldown. */
+			axisQueries: { x: string; y: string };
 			/** Rows the query returned. */
 			totalGroups: number;
 			/** Rows plotted. */

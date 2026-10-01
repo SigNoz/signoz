@@ -151,6 +151,7 @@ describe('prepareScatterPlotData', () => {
 		expect(result.channels.x.label).toBe('A.count()');
 		expect(result.channels.y.label).toBe('A.p99(duration_nano)');
 		expect(result.channels.size?.label).toBe('B.count()');
+		expect(result.axisQueries).toStrictEqual({ x: 'A', y: 'A' });
 	});
 
 	it('names an axis channel by its axis label when one is set', () => {
