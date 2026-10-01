@@ -4,12 +4,6 @@ import { userEvent, waitFor, within } from 'storybook/test';
 /** Suggestions wait on a 300ms debounce and a fetch, past the 1s default. */
 const untilLoaded = { timeout: 15_000 };
 
-/**
- * The editor is controlled: each change round-trips through React state before
- * the next one is applied on top of it. People type slower than this.
- */
-const KEYSTROKE_MS = 50;
-
 /** Throws until `found` holds something, which is what `waitFor` retries on. */
 const present = <TValue>(
 	found: TValue | null | undefined,
@@ -21,11 +15,6 @@ const present = <TValue>(
 
 	return found;
 };
-
-const pause = (ms: number): Promise<void> =>
-	new Promise((resolve) => {
-		setTimeout(resolve, ms);
-	});
 
 const suggestionList = (canvasElement: HTMLElement): HTMLElement | null =>
 	canvasElement.querySelector<HTMLElement>('.cm-tooltip-autocomplete');
@@ -178,7 +167,6 @@ export const typeFilter = async (
 			selection: { anchor: at + character.length },
 			userEvent: 'input.type',
 		});
-		await pause(KEYSTROKE_MS);
 	}
 };
 
