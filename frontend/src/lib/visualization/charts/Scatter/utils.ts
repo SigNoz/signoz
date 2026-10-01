@@ -158,8 +158,14 @@ function symmetricLogDistribution(minPositive: number): AxisDistribution {
 export function resolveAxisDistribution(
 	values: number[],
 	scale: ScatterAxisScale = ScatterAxisScale.Auto,
+	/**
+	 * Soft limits (and thresholds) the axis must reach. Only `auto` weighs them:
+	 * a soft min at or below zero rules out log. An explicit scale keeps its
+	 * choice, and a log axis drops a bound it cannot place.
+	 */
+	softLimits: Array<number | null | undefined> = [],
 ): AxisDistribution {
-	const { minPositive, maxPositive, hasNonPositive } = getPositiveRange(values);
+	const { minPositive, hasNonPositive } = getPositiveRange(values);
 	switch (scale) {
 		case ScatterAxisScale.Linear:
 			return { distribution: DistributionType.Linear };
@@ -171,10 +177,14 @@ export function resolveAxisDistribution(
 				: { distribution: DistributionType.Logarithmic };
 		case ScatterAxisScale.Auto:
 		default: {
+			const extent = getPositiveRange([
+				...values,
+				...softLimits.filter((limit): limit is number => limit != null),
+			]);
 			const spansDecades =
-				Number.isFinite(minPositive) &&
-				Math.log10(maxPositive / minPositive) >= AUTO_LOG_MIN_DECADES;
-			return !hasNonPositive && spansDecades
+				Number.isFinite(extent.minPositive) &&
+				Math.log10(extent.maxPositive / extent.minPositive) >= AUTO_LOG_MIN_DECADES;
+			return !extent.hasNonPositive && spansDecades
 				? { distribution: DistributionType.Logarithmic }
 				: { distribution: DistributionType.Linear };
 		}
@@ -215,13 +225,21 @@ export function buildScatterConfig({
 	// The last x label is centred on the plot's right edge; room for its unit.
 	builder.setPadding([16, X_AXIS_END_LABEL_PADDING_PX, 8, 8]);
 
+	const ySoftLimits = adjustSoftLimitsWithThresholds(
+		y.softMin ?? null,
+		y.softMax ?? null,
+		thresholds,
+		y.unit,
+	);
 	const xDistribution = resolveAxisDistribution(
 		series.flatMap((entry) => entry.xs),
 		x.scale,
+		[x.softMin, x.softMax],
 	);
 	const yDistribution = resolveAxisDistribution(
 		series.flatMap((entry) => entry.ys),
 		y.scale,
+		[ySoftLimits.softMin, ySoftLimits.softMax],
 	);
 
 	const yThresholds =
@@ -234,12 +252,6 @@ export function buildScatterConfig({
 		? pointSize.max
 		: pointSize.fixed;
 	const marginPx = largestDiameter / 2 + POINT_STROKE_WIDTH;
-	const ySoftLimits = adjustSoftLimitsWithThresholds(
-		y.softMin ?? null,
-		y.softMax ?? null,
-		thresholds,
-		y.unit,
-	);
 
 	builder.addScale({
 		scaleKey: 'x',

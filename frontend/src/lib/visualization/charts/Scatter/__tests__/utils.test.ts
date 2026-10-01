@@ -79,6 +79,12 @@ describe('resolveAxisDistribution', () => {
 		});
 	});
 
+	it('keeps an explicit log axis for a soft min it cannot place', () => {
+		expect(
+			resolveAxisDistribution([1, 100], ScatterAxisScale.Log, [-10]),
+		).toStrictEqual({ distribution: DistributionType.Logarithmic });
+	});
+
 	it('is a symmetric log when asked, even with only positive values', () => {
 		expect(
 			resolveAxisDistribution([2, 300], ScatterAxisScale.SymLog),
@@ -111,6 +117,18 @@ describe('resolveAxisDistribution', () => {
 			expect(resolveAxisDistribution(values, ScatterAxisScale.Auto)).toStrictEqual(
 				{ distribution },
 			);
+		});
+
+		it('stays linear when a soft limit reaches zero or below', () => {
+			expect(
+				resolveAxisDistribution([0.02, 5000], ScatterAxisScale.Auto, [-10]),
+			).toStrictEqual({ distribution: DistributionType.Linear });
+		});
+
+		it('counts a soft limit towards the decades it spans', () => {
+			expect(
+				resolveAxisDistribution([5, 50], ScatterAxisScale.Auto, [null, 5000]),
+			).toStrictEqual({ distribution: DistributionType.Logarithmic });
 		});
 
 		it('is the default', () => {
