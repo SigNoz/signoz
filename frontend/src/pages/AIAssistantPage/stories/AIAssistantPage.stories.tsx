@@ -49,11 +49,15 @@ type Story = StoryObj<AIAssistantArgs>;
 /** The thread list resolves before the thread does, which outlasts the 1s default. */
 const untilLoaded = { timeout: 15_000 };
 
+/** How long what a click opened has to stay on screen to count as open. */
+const HOLD_MS = 1_000;
+
 /**
  * Click something, and keep clicking until what it opens is on screen. The
  * message list remounts its items while it measures a freshly loaded thread, so
  * a single click can land on a row that is about to be replaced, taking the
- * state it just set with it.
+ * state it just set with it. The replacement can land after that state has
+ * rendered, so it has to still be there `HOLD_MS` later.
  */
 const clickUntil = async (
 	find: () => Promise<HTMLElement>,
@@ -62,6 +66,10 @@ const clickUntil = async (
 	await waitFor(async () => {
 		await userEvent.click(await find());
 		await screen.findByText(opens, undefined, { timeout: 1_000 });
+		await new Promise((resolve) => {
+			setTimeout(resolve, HOLD_MS);
+		});
+		screen.getByText(opens);
 	}, untilLoaded);
 };
 
