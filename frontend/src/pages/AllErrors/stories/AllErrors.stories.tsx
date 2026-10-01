@@ -125,3 +125,11 @@ export const QuickFiltersSettingsWithBanner: Story = {
 	args: { banner: 'trial-expiry' },
 	play: dirtyQuickFiltersSettings,
 };
+
+/**
+ * The exception count in the bottom strip, in place of the build version: the
+ * rows on the page against the total the count query returns.
+ */
+export const BottomStrip: Story = {
+	args: { bottomStrip: true },
+};

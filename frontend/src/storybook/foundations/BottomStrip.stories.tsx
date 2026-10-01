@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
+import { toast } from '@signozhq/ui/sonner';
 import { screen, userEvent, waitFor } from 'storybook/test';
 
 import type { GlobalMockArgs } from '../globals';
@@ -107,4 +108,25 @@ export const WithoutStripAddCardModal: Story = {
 			name: /Add Credit Card for Chat Support/i,
 		});
 	},
+};
+
+/** Raises a toast and waits for it, so the shot is taken with it on screen. */
+const raiseToast: NonNullable<Story['play']> = async () => {
+	toast.success('Service account deleted');
+	await screen.findByText('Service account deleted', undefined, untilLoaded);
+};
+
+/**
+ * A toast with the strip on. Sonner pins itself to the foot of the viewport, so
+ * without an offset it lands on top of Ask Noz and Support.
+ */
+export const WithToast: Story = {
+	args: { noz: true, support: 'pylon' },
+	play: raiseToast,
+};
+
+/** The same toast with the flag off, back at sonner's own inset from the viewport. */
+export const WithoutStripToast: Story = {
+	args: { bottomStrip: false, noz: true, support: 'pylon' },
+	play: raiseToast,
 };
