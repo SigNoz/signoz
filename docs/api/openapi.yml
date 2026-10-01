@@ -4424,6 +4424,9 @@ components:
       type: object
     DashboardtypesScatterPlotAxis:
       properties:
+        label:
+          description: Axis title. Empty draws none.
+          type: string
         scale:
           $ref: '#/components/schemas/DashboardtypesAxisScale'
         softMax:
@@ -4436,9 +4439,13 @@ components:
     DashboardtypesScatterPlotDimensions:
       properties:
         color:
-          description: Group-by label name (e.g. k8s.namespace.name) that colours
-            dots and drives the legend. Empty uses the renderer default.
-          type: string
+          description: Group-by label names (e.g. k8s.namespace.name) whose combined
+            values colour dots and drive the legend. Empty colours by every group-by
+            label.
+          items:
+            type: string
+          nullable: true
+          type: array
         size:
           description: Value column key that scales dot size. Empty draws every dot
             at the default size.
