@@ -14,14 +14,14 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type addUserTuples struct {
-	sqlstore sqlstore.SQLStore
-}
-
 func NewAddUserTuplesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("add_user_tuples"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 		return &addUserTuples{sqlstore: sqlstore}, nil
 	})
+}
+
+type addUserTuples struct {
+	sqlstore sqlstore.SQLStore
 }
 
 func (migration *addUserTuples) Register(migrations *migrate.Migrations) error {
