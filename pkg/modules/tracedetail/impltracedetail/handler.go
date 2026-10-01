@@ -32,7 +32,7 @@ func (h *handler) GetTraceSummary(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stats, err := h.module.GetTraceStats(r.Context(), orgID, mux.Vars(r)["traceID"])
+	stats, err := h.module.GetTraceSummary(r.Context(), orgID, mux.Vars(r)["traceID"])
 	if err != nil {
 		render.Error(rw, err)
 		return

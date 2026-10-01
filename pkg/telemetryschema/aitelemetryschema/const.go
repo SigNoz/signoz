@@ -15,12 +15,12 @@ var (
 		aiobservabilitytypes.GenAIAgentName:     genAIAttribute(aiobservabilitytypes.GenAIAgentName, telemetrytypes.FieldDataTypeString),
 		aiobservabilitytypes.GenAIProviderName:  genAIAttribute(aiobservabilitytypes.GenAIProviderName, telemetrytypes.FieldDataTypeString),
 
-		aiobservabilitytypes.GenAIUsageInputTokens:              genAIAttribute(aiobservabilitytypes.GenAIUsageInputTokens, telemetrytypes.FieldDataTypeFloat64),
-		aiobservabilitytypes.GenAIUsageOutputTokens:             genAIAttribute(aiobservabilitytypes.GenAIUsageOutputTokens, telemetrytypes.FieldDataTypeFloat64),
-		aiobservabilitytypes.GenAIUsageCacheReadInputTokens:     genAIAttribute(aiobservabilitytypes.GenAIUsageCacheReadInputTokens, telemetrytypes.FieldDataTypeFloat64),
-		aiobservabilitytypes.GenAIUsageCacheCreationInputTokens: genAIAttribute(aiobservabilitytypes.GenAIUsageCacheCreationInputTokens, telemetrytypes.FieldDataTypeFloat64),
-		aiobservabilitytypes.GenAIUsageReasoningOutputTokens:    genAIAttribute(aiobservabilitytypes.GenAIUsageReasoningOutputTokens, telemetrytypes.FieldDataTypeFloat64),
-		aiobservabilitytypes.SignozGenAITotalCost:               genAIAttribute(aiobservabilitytypes.SignozGenAITotalCost, telemetrytypes.FieldDataTypeFloat64),
+		aiobservabilitytypes.GenAIUsageInputTokens:              genAIAttribute(aiobservabilitytypes.GenAIUsageInputTokens, telemetrytypes.FieldDataTypeNumber),
+		aiobservabilitytypes.GenAIUsageOutputTokens:             genAIAttribute(aiobservabilitytypes.GenAIUsageOutputTokens, telemetrytypes.FieldDataTypeNumber),
+		aiobservabilitytypes.GenAIUsageCacheReadInputTokens:     genAIAttribute(aiobservabilitytypes.GenAIUsageCacheReadInputTokens, telemetrytypes.FieldDataTypeNumber),
+		aiobservabilitytypes.GenAIUsageCacheCreationInputTokens: genAIAttribute(aiobservabilitytypes.GenAIUsageCacheCreationInputTokens, telemetrytypes.FieldDataTypeNumber),
+		aiobservabilitytypes.GenAIUsageReasoningOutputTokens:    genAIAttribute(aiobservabilitytypes.GenAIUsageReasoningOutputTokens, telemetrytypes.FieldDataTypeNumber),
+		aiobservabilitytypes.SignozGenAITotalCost:               genAIAttribute(aiobservabilitytypes.SignozGenAITotalCost, telemetrytypes.FieldDataTypeNumber),
 
 		aiobservabilitytypes.GenAIInputMessages:  genAIAttribute(aiobservabilitytypes.GenAIInputMessages, telemetrytypes.FieldDataTypeString),
 		aiobservabilitytypes.GenAIOutputMessages: genAIAttribute(aiobservabilitytypes.GenAIOutputMessages, telemetrytypes.FieldDataTypeString),

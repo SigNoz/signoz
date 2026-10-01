@@ -40,7 +40,7 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 	return m
 }
 
-func (m *module) GetTraceStats(ctx context.Context, orgID valuer.UUID, traceID string) (*spantypes.TraceStats, error) {
+func (m *module) GetTraceSummary(ctx context.Context, orgID valuer.UUID, traceID string) (*spantypes.TraceStats, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
 		return nil, err

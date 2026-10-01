@@ -1,22 +1,5 @@
 package spantypes
 
-import "github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
-
-// TraceStatsGenAIColumns pairs each summed TraceStats column with the gen_ai attribute it sums.
-var TraceStatsGenAIColumns = []TraceStatsGenAIColumn{
-	{Column: "input_tokens", Key: aiobservabilitytypes.GenAIUsageInputTokens},
-	{Column: "output_tokens", Key: aiobservabilitytypes.GenAIUsageOutputTokens},
-	{Column: "cache_read_tokens", Key: aiobservabilitytypes.GenAIUsageCacheReadInputTokens},
-	{Column: "cache_write_tokens", Key: aiobservabilitytypes.GenAIUsageCacheCreationInputTokens},
-	{Column: "reasoning_tokens", Key: aiobservabilitytypes.GenAIUsageReasoningOutputTokens},
-	{Column: "total_cost", Key: aiobservabilitytypes.SignozGenAITotalCost},
-}
-
-type TraceStatsGenAIColumn struct {
-	Column string
-	Key    string
-}
-
 // TraceStats is the single-row result of the trace summary aggregate query.
 type TraceStats struct {
 	StartNs         uint64

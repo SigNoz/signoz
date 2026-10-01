@@ -59,7 +59,7 @@ def test_summary_ai_trace(
                     "gen_ai.usage.input_tokens": 100,
                     "gen_ai.usage.output_tokens": 20,
                     "gen_ai.usage.cache_read.input_tokens": 7,
-                    "_signoz.gen_ai.total_cost": 0.01,
+                    "signoz.gen_ai.usage.tokens.cost": 0.01,
                 },
                 attribute_write_mode=write_mode,
             ),
@@ -167,7 +167,7 @@ def test_summary_ai_trace_across_json_rollout(
                 kind=TracesKind.SPAN_KIND_CLIENT,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 resources=resources,
-                attributes={"gen_ai.request.model": "gpt-4o-mini", "gen_ai.usage.input_tokens": 100, "gen_ai.usage.output_tokens": 20, "_signoz.gen_ai.total_cost": 0.01},
+                attributes={"gen_ai.request.model": "gpt-4o-mini", "gen_ai.usage.input_tokens": 100, "gen_ai.usage.output_tokens": 20, "signoz.gen_ai.usage.tokens.cost": 0.01},
                 attribute_write_mode="legacy_only",
             ),
             Traces(
@@ -180,7 +180,7 @@ def test_summary_ai_trace_across_json_rollout(
                 kind=TracesKind.SPAN_KIND_CLIENT,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 resources=resources,
-                attributes={"gen_ai.request.model": "gpt-4o-mini", "gen_ai.usage.input_tokens": 50, "gen_ai.usage.output_tokens": 5, "_signoz.gen_ai.total_cost": 0.02},
+                attributes={"gen_ai.request.model": "gpt-4o-mini", "gen_ai.usage.input_tokens": 50, "gen_ai.usage.output_tokens": 5, "signoz.gen_ai.usage.tokens.cost": 0.02},
                 attribute_write_mode="json_only",
             ),
         ]

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"time"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -155,26 +156,26 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 // traces storage, so each attribute is read from the column its evolutions place it in
 // over the trace's own time window. Exists predicates bind their args into sb.
 func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, summary *spantypes.TraceSummary, sb *sqlbuilder.SelectBuilder) ([]string, error) {
-	// no data type: metadata reports token counts as number, so a float64 request would
-	// miss them and fall back to a map read without evolutions
-	attributeKey := func(name string) *telemetrytypes.TelemetryFieldKey {
-		return &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute}
+	attributeKey := func(name string, dataType telemetrytypes.FieldDataType) *telemetrytypes.TelemetryFieldKey {
+		return &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: dataType}
 	}
 
-	selectors := make([]*telemetrytypes.FieldKeySelector, 0, len(aiobservabilitytypes.GenAISpanGateKeys)+len(spantypes.TraceStatsGenAIColumns))
-	addSelector := func(name string) {
-		selectors = append(selectors, &telemetrytypes.FieldKeySelector{
-			Name:              name,
-			Signal:            telemetrytypes.SignalTraces,
-			FieldContext:      telemetrytypes.FieldContextAttribute,
-			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
-		})
+	values := []struct{ key, alias string }{
+		{aiobservabilitytypes.GenAIUsageInputTokens, "input_tokens_value"},
+		{aiobservabilitytypes.GenAIUsageOutputTokens, "output_tokens_value"},
+		{aiobservabilitytypes.GenAIUsageCacheReadInputTokens, "cache_read_tokens_value"},
+		{aiobservabilitytypes.GenAIUsageCacheCreationInputTokens, "cache_write_tokens_value"},
+		{aiobservabilitytypes.GenAIUsageReasoningOutputTokens, "reasoning_tokens_value"},
+		{aiobservabilitytypes.SignozGenAITotalCost, "total_cost_value"},
 	}
-	for _, name := range aiobservabilitytypes.GenAISpanGateKeys {
-		addSelector(name)
+
+	names := slices.Clone(aiobservabilitytypes.GenAISpanGateKeys)
+	for _, value := range values {
+		names = append(names, value.key)
 	}
-	for _, col := range spantypes.TraceStatsGenAIColumns {
-		addSelector(col.Key)
+	selectors := make([]*telemetrytypes.FieldKeySelector, 0, len(names))
+	for _, name := range names {
+		selectors = append(selectors, &telemetrytypes.FieldKeySelector{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact})
 	}
 	keys, _, err := s.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, s.flagger, selectors))
 	if err != nil {
@@ -185,7 +186,7 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, su
 
 	gate := make([]string, 0, len(aiobservabilitytypes.GenAISpanGateKeys))
 	for _, name := range aiobservabilitytypes.GenAISpanGateKeys {
-		conds, _, err := querybuilder.Conditions(ctx, q, s.storage, attributeKey(name), qbtypes.FilterOperatorExists, nil, keys, false, sb)
+		conds, _, err := querybuilder.Conditions(ctx, q, s.storage, attributeKey(name, telemetrytypes.FieldDataTypeString), qbtypes.FilterOperatorExists, nil, keys, false, sb)
 		if err != nil {
 			return nil, err
 		}
@@ -193,13 +194,14 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, su
 	}
 	columns := []string{sb.Or(gate...) + " AS is_gen_ai"}
 
-	for _, col := range spantypes.TraceStatsGenAIColumns {
-		expr, err := querybuilder.ResolveColumn(ctx, q, s.storage, attributeKey(col.Key), telemetrytypes.FieldDataTypeFloat64, keys)
+	for _, value := range values {
+		// lookup by number, the type metadata stores numeric attributes under; float64 is only the output cast
+		expr, err := querybuilder.ResolveColumn(ctx, q, s.storage, attributeKey(value.key, telemetrytypes.FieldDataTypeNumber), telemetrytypes.FieldDataTypeFloat64, keys)
 		if err != nil {
 			return nil, err
 		}
 		// a materialized column name carries `$$`, which Build would otherwise unescape
-		columns = append(columns, sqlbuilder.Escape(expr)+" AS "+col.Column+"_value")
+		columns = append(columns, sqlbuilder.Escape(expr)+" AS "+value.alias)
 	}
 	return columns, nil
 }
