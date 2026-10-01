@@ -79,27 +79,46 @@ export const NewDowntime: Story = {
 	},
 };
 
+const clickFirstRowAction = async (
+	canvasElement: HTMLElement,
+	action: 'edit' | 'delete',
+): Promise<void> => {
+	const icon = (
+		await within(canvasElement).findByText(
+			FIRST_DOWNTIME_NAME,
+			undefined,
+			untilLoaded,
+		)
+	)
+		.closest('.header-content')
+		// The row action holds edit then delete, neither of them labelled.
+		?.querySelectorAll('.action-btn svg')[action === 'edit' ? 0 : 1];
+
+	if (!icon) {
+		throw new Error(`Downtime ${action} action did not render`);
+	}
+
+	await userEvent.click(icon);
+};
+
 /** The deletion confirmation opened from the first schedule's real row action. */
 export const DeleteDowntimeConfirm: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
-		const action = (
-			await within(canvasElement).findByText(
-				FIRST_DOWNTIME_NAME,
-				undefined,
-				untilLoaded,
-			)
-		)
-			.closest('.header-content')
-			// The row action holds edit then delete, neither of them labelled.
-			?.querySelectorAll('.action-btn svg')[1];
-
-		if (!action) {
-			throw new Error('Downtime delete action did not render');
-		}
-
-		await userEvent.click(action);
+		await clickFirstRowAction(canvasElement, 'delete');
 		// The modal titles itself and its confirm button the same.
 		await screen.findByRole('button', { name: 'Delete Schedule' });
+	},
+};
+
+/**
+ * The first schedule opened for editing: the specific rules it silences sit
+ * above the rule picker, each with its own remove button.
+ */
+export const EditDowntime: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickFirstRowAction(canvasElement, 'edit');
+		await screen.findByText(/edit planned downtime/i);
+		await screen.findByText(/^Postgres connections/);
 	},
 };
 
