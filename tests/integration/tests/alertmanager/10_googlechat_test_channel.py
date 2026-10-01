@@ -15,28 +15,27 @@ from fixtures import types
 from fixtures.alerts import update_raw_channel_config
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
-from fixtures.notification_channel import INCIDENTIO_TEST_TOKEN, incidentio_config, incidentio_path
+from fixtures.notification_channel import googlechat_config
 
 logger = setup_logger(__name__)
 
 
 # channel test (POST /api/v1/channels/test) drives the notifier once, synchronously,
 # with a hardcoded test alert and no retry — the deterministic place to assert
-# permanent-failure behaviour. Rich events + retry are covered in alertmanager/09_incidentio.py.
-# Stub bodies are the recorded incident.io Alert Events V2 responses.
+# permanent-failure behaviour. Rich cards + retry are covered in alertmanager/09_googlechat.py.
 class TestChannelCase(NamedTuple):
     __test__ = False
     name: str
-    source: str
+    space: str
     status: int  # stub status
     body: dict  # stub body
     expect_delivered: bool  # expect channels/test 204
 
 
 TEST_CHANNEL_CASES = [
-    TestChannelCase("success", "inc-tc-ok", 202, {"status": "accepted", "message": "Event accepted for processing", "deduplication_key": "x"}, True),
-    TestChannelCase("permanent_401", "inc-tc-401", 401, {"type": "authentication_error", "status": 401, "errors": [{"code": "invalid_authentication_material", "message": "Secret token not valid"}]}, False),
-    TestChannelCase("permanent_422", "inc-tc-422", 422, {"type": "validation_error", "status": 422, "errors": [{"code": "missing_field", "message": '"title" is missing from body'}]}, False),
+    TestChannelCase("success", "gc-tc-ok", 200, {"name": "spaces/x/messages/x"}, True),
+    TestChannelCase("permanent_400", "gc-tc-400", 400, {"error": {"code": 400, "status": "INVALID_ARGUMENT", "message": "Message cannot be empty."}}, False),
+    TestChannelCase("permission_403", "gc-tc-403", 403, {"error": {"code": 403, "status": "PERMISSION_DENIED", "message": "Method doesn't allow unregistered callers"}}, False),
 ]
 
 
@@ -45,7 +44,7 @@ TEST_CHANNEL_CASES = [
     TEST_CHANNEL_CASES,
     ids=lambda c: c.name,
 )
-def test_incidentio_test_channel(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
+def test_googlechat_test_channel(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -53,7 +52,7 @@ def test_incidentio_test_channel(  # pylint: disable=too-many-arguments,too-many
     make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     case: TestChannelCase,
 ) -> None:
-    path = incidentio_path(case.source)
+    path = f"/v1/spaces/{case.space}/messages"
     make_http_mocks(
         notification_channel,
         [
@@ -65,7 +64,7 @@ def test_incidentio_test_channel(  # pylint: disable=too-many-arguments,too-many
     )
 
     channel_name = str(uuid.uuid4())
-    receiver = update_raw_channel_config(incidentio_config(case.source), channel_name, notification_channel)
+    receiver = update_raw_channel_config(googlechat_config(case.space), channel_name, notification_channel)
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
@@ -87,8 +86,8 @@ def test_incidentio_test_channel(  # pylint: disable=too-many-arguments,too-many
     if case.expect_delivered:
         assert response.status_code == HTTPStatus.NO_CONTENT, f"expected 204, got {response.status_code}: {response.text}"
     else:
-        # a downstream 401/422 surfaces as a 500 (untyped notify error) whose body
-        # carries the real downstream status code; pin it to distinguish 401 vs 422
+        # a downstream 400/403 surfaces as a 500 (untyped notify error) whose body
+        # carries the real downstream status code; pin it to distinguish 400 vs 403
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"expected 500, got {response.status_code}: {response.text}"
         assert f"unexpected status code {case.status}" in response.text, f"expected downstream {case.status} in error body: {response.text}"
 
@@ -100,21 +99,16 @@ def test_incidentio_test_channel(  # pylint: disable=too-many-arguments,too-many
     )
     assert count.json()["count"] == 1, f"expected exactly 1 request (no retry), got {count.text}"
 
-    find = requests.post(
-        notification_channel.host_configs["8080"].get("/__admin/requests/find"),
-        json={"method": "POST", "urlPath": path},
-        timeout=10,
-    )
-    req = find.json()["requests"][0]
-    # the configured url is posted verbatim, nothing appended, and the token is
-    # sent with a single Bearer prefix (header name lowercased on the wire by h2)
-    assert req["url"] == path, f"expected alert events url {path} posted verbatim, got {req['url']}"
-    headers = {name.lower(): value for name, value in req["headers"].items()}
-    assert headers.get("authorization") == f"Bearer {INCIDENTIO_TEST_TOKEN}", f"expected single Bearer prefix, got {headers.get('authorization')}"
-
     if case.expect_delivered:
-        # alert event shape with the hardcoded test alert
-        event = json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8"))
-        assert re.search(r"\[FIRING:1\] Test Alert \(", event["title"]), f"unexpected title: {event['title']}"
-        assert event["status"] == "firing"
-        assert event["deduplication_key"], "expected a non-empty deduplication_key"
+        find = requests.post(
+            notification_channel.host_configs["8080"].get("/__admin/requests/find"),
+            json={"method": "POST", "urlPath": path},
+            timeout=10,
+        )
+        req = find.json()["requests"][0]
+        # the configured webhook url is posted verbatim, nothing appended
+        assert req["url"] == path, f"expected webhook url {path} posted verbatim, got {req['url']}"
+        # cardsV2 shape with the hardcoded test alert
+        card = json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8"))
+        assert card["cardsV2"][0]["cardId"] == "signoz-alert"
+        assert re.search(r"Test Alert \(", card["cardsV2"][0]["card"]["header"]["title"])

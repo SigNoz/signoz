@@ -30,7 +30,7 @@ logger = setup_logger(__name__)
 # channel test (POST /api/v1/channels/test) drives the notifier once, synchronously,
 # with a hardcoded firing test alert and no retry: create alert on the JSM Ops
 # gateway, then append a timeline note. Default-template events + retry are in
-# alertmanager/13_jsmops.py.
+# alertmanager/15_jsmops.py.
 
 
 def test_jsmops_create_alert_with_note(

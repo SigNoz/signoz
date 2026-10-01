@@ -406,7 +406,6 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
                     distributed_ddl_path=distributed_ddl_path,
                 )
 
-                
                 tmp_dir = tmpfs(f"clickhouse-{suffix}-{i:02d}")
                 cluster_config_file_path = os.path.join(tmp_dir, "cluster.xml")
                 with open(cluster_config_file_path, "w", encoding="utf-8") as f:

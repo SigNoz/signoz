@@ -36,7 +36,7 @@ logger = setup_logger(__name__)
 # channel test (POST /api/v1/channels/test) drives the notifier once, synchronously,
 # with a hardcoded firing test alert and no retry. The search stub decides which
 # branch runs (create / update / reopen), so the whole issue lifecycle is
-# deterministic here; default-template events + retry are in alertmanager/11_jira.py.
+# deterministic here; default-template events + retry are in alertmanager/13_jira.py.
 
 BASIC_AUTH = "Basic " + base64.b64encode(f"{JIRA_TEST_EMAIL}:{JIRA_TEST_TOKEN}".encode()).decode()
 
