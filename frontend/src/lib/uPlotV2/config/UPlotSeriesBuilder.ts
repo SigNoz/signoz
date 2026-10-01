@@ -87,6 +87,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			lineConfig.fill = finalFillColor;
 		} else if (this.props.drawStyle === DrawStyle.Histogram) {
 			lineConfig.fill = `${finalFillColor}40`;
+		} else if (this.props.drawStyle === DrawStyle.Scatter) {
+			lineConfig.fill = `${finalFillColor}${toAlphaHex(resolveFillOpacity(fillOpacity))}`;
 		} else if (fillMode && fillMode !== FillMode.None) {
 			const resolvedOpacity = resolveFillOpacity(fillOpacity);
 			if (fillMode === FillMode.Solid) {
@@ -122,7 +124,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			return { paths: pathBuilder };
 		}
 
-		if (drawStyle === DrawStyle.Points) {
+		// Scatter without a `pathBuilder` has nothing to draw its discs with.
+		if (drawStyle === DrawStyle.Points || drawStyle === DrawStyle.Scatter) {
 			return { paths: (): null => null };
 		}
 
@@ -194,6 +197,10 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 		if (drawStyle === DrawStyle.Points) {
 			return true;
 		}
+		// The discs are the series path; uPlot's own points would double-draw them.
+		if (drawStyle === DrawStyle.Scatter) {
+			return false;
+		}
 		return !!showPoints;
 	}
 
@@ -218,7 +225,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 	}
 
 	getConfig(): ExtendedSeries {
-		const { scaleKey, label, spanGaps, show = true, metric } = this.props;
+		const { scaleKey, label, spanGaps, show = true, metric, facets } = this.props;
 
 		const resolvedLineColor = this.getLineColor();
 
@@ -246,6 +253,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			...pathConfig,
 			points: Object.keys(pointsConfig).length > 0 ? pointsConfig : undefined,
 			metric,
+			...(facets && { facets }),
 		};
 	}
 }

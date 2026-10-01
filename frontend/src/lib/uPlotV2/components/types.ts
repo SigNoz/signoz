@@ -5,6 +5,10 @@ import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { LegendItem } from '../config/types';
+import type {
+	ScatterChannels,
+	ScatterPointLabel,
+} from '../plugins/ScatterPlugin/types';
 import { SyncTooltipFilterMode } from '../plugins/TooltipPlugin/types';
 
 /**
@@ -102,6 +106,17 @@ export interface BarTooltipProps extends BaseTooltipProps, TooltipRenderArgs {
 
 export interface HistogramTooltipProps
 	extends BaseTooltipProps, TooltipRenderArgs {}
+
+/** Not part of `TooltipProps`: it describes one point's channels, not a series list. */
+export interface ScatterTooltipProps
+	extends BaseTooltipProps, TooltipRenderArgs {
+	channels: ScatterChannels;
+	/** The group values behind a point, e.g. `service.name` → `cart`. */
+	resolvePointLabels?: (
+		seriesIndex: number,
+		dataIndex: number,
+	) => ScatterPointLabel[];
+}
 
 export type TooltipProps =
 	| TimeSeriesTooltipProps

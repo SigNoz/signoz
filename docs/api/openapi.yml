@@ -3379,6 +3379,13 @@ components:
           nullable: true
           type: number
       type: object
+    DashboardtypesAxisScale:
+      enum:
+      - auto
+      - linear
+      - log
+      - symlog
+      type: string
     DashboardtypesBarChartPanelSpec:
       properties:
         axes:
@@ -4042,6 +4049,7 @@ components:
           signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
           signoz/NumberPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
           signoz/PieChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
+          signoz/ScatterPlotPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec'
           signoz/TablePanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
           signoz/TextPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
           signoz/TimeSeriesPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
@@ -4056,6 +4064,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -4068,6 +4077,7 @@ components:
       - signoz/HistogramPanel
       - signoz/ListPanel
       - signoz/TextPanel
+      - signoz/ScatterPlotPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
       properties:
@@ -4137,6 +4147,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesPieChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/ScatterPlotPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesScatterPlotPanelSpec'
       required:
       - kind
       - spec
@@ -4220,6 +4242,16 @@ components:
         visualization:
           $ref: '#/components/schemas/DashboardtypesBasicVisualization'
       type: object
+    DashboardtypesPointDiameter:
+      maximum: 40
+      minimum: 2
+      nullable: true
+      type: integer
+    DashboardtypesPointOpacity:
+      maximum: 1
+      minimum: 0.1
+      nullable: true
+      type: number
     DashboardtypesPostableDashboardV2:
       properties:
         generateName:
@@ -4392,6 +4424,87 @@ components:
           type: string
       required:
       - queryValue
+      type: object
+    DashboardtypesScatterPlotAxes:
+      properties:
+        x:
+          $ref: '#/components/schemas/DashboardtypesScatterPlotAxis'
+        "y":
+          $ref: '#/components/schemas/DashboardtypesScatterPlotAxis'
+      type: object
+    DashboardtypesScatterPlotAxis:
+      properties:
+        label:
+          description: Axis title. Empty draws none.
+          type: string
+        scale:
+          $ref: '#/components/schemas/DashboardtypesAxisScale'
+        softMax:
+          nullable: true
+          type: number
+        softMin:
+          nullable: true
+          type: number
+      type: object
+    DashboardtypesScatterPlotChartAppearance:
+      properties:
+        points:
+          $ref: '#/components/schemas/DashboardtypesScatterPlotPoints'
+      type: object
+    DashboardtypesScatterPlotDimensions:
+      properties:
+        color:
+          description: Group-by label names (e.g. k8s.namespace.name) whose combined
+            values colour dots and drive the legend. Empty colours by every group-by
+            label.
+          items:
+            type: string
+          nullable: true
+          type: array
+        size:
+          description: Value column key that scales dot size. Empty draws every dot
+            at the default size.
+          type: string
+        x:
+          description: Value column key (queryName, or queryName.expression for a
+            multi-aggregation query) plotted on the x axis. Empty uses the first value
+            column.
+          type: string
+        "y":
+          description: Value column key plotted on the y axis. Empty uses the second
+            value column.
+          type: string
+      type: object
+    DashboardtypesScatterPlotPanelSpec:
+      properties:
+        axes:
+          $ref: '#/components/schemas/DashboardtypesScatterPlotAxes'
+        chartAppearance:
+          $ref: '#/components/schemas/DashboardtypesScatterPlotChartAppearance'
+        dimensions:
+          $ref: '#/components/schemas/DashboardtypesScatterPlotDimensions'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesTableFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
+    DashboardtypesScatterPlotPoints:
+      properties:
+        maxSize:
+          $ref: '#/components/schemas/DashboardtypesPointDiameter'
+        minSize:
+          $ref: '#/components/schemas/DashboardtypesPointDiameter'
+        opacity:
+          $ref: '#/components/schemas/DashboardtypesPointOpacity'
+        size:
+          $ref: '#/components/schemas/DashboardtypesPointDiameter'
       type: object
     DashboardtypesSource:
       enum:
