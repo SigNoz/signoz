@@ -535,6 +535,40 @@ describe('buildPluginSpec', () => {
 			});
 		});
 
+		it('carries per-column units between kinds that both key them by column (Table ↔ Scatter Plot)', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.Formatting,
+					controls: { decimals: true, columnUnits: true },
+				},
+			];
+			const oldSpec = oldSpecWith(
+				{
+					formatting: {
+						columnUnits: { 'A.count()': 'short', 'A.p99(duration_nano)': 'ns' },
+						decimalPrecision: 1,
+					},
+				},
+				[builderQueryNamed('A')],
+			);
+
+			expect(buildPluginSpec(sections, { oldSpec }).formatting).toStrictEqual({
+				decimalPrecision: 1,
+				columnUnits: { 'A.count()': 'short', 'A.p99(duration_nano)': 'ns' },
+			});
+		});
+
+		it('keeps an emptied column unit map empty rather than fanning a unit out', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Formatting, controls: { columnUnits: true } },
+			];
+			const oldSpec = oldSpecWith({ formatting: { columnUnits: {} } }, [
+				builderQueryNamed('A'),
+			]);
+
+			expect(buildPluginSpec(sections, { oldSpec }).formatting).toBeUndefined();
+		});
+
 		it('never seeds a panel-wide unit from per-column units (Table → TimeSeries)', () => {
 			const sections: SectionConfig[] = [
 				{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },
