@@ -28,7 +28,7 @@ function InfraMetrics({
 	dataSource = DataSource.LOGS,
 }: MetricsDataProps): JSX.Element {
 	const [selectedView, setSelectedView] = useState<string>(() =>
-		podName ? VIEW_TYPES.POD : VIEW_TYPES.NODE,
+		nodeName || hostName ? VIEW_TYPES.NODE : VIEW_TYPES.POD,
 	);
 
 	const viewOptions = useMemo(() => {
@@ -60,6 +60,10 @@ function InfraMetrics({
 	}, [podName]);
 
 	const handleModeChange = (value: string): void => {
+		// single toggle-group emits '' on re-click of the pressed item
+		if (!value) {
+			return;
+		}
 		setSelectedView(value);
 	};
 

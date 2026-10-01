@@ -81,6 +81,11 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 			return comparison("<>", "0"), nil
 		}
 		return comparison("=", "0"), nil
+	case schema.ColumnTypeEnumArray:
+		if exists {
+			return fmt.Sprintf("notEmpty(%s)", fieldExpression), nil
+		}
+		return fmt.Sprintf("empty(%s)", fieldExpression), nil
 	case schema.ColumnTypeEnumMap:
 		keyType := column.Type.(schema.MapColumnType).KeyType
 		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
@@ -89,10 +94,10 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 
 		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
 		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
-			leftOperand := fmt.Sprintf("mapContains(%s, %s)", column.Name, clickhousesql.StringLiteral(key.Name))
 			if key.Materialized {
-				leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+				return telemetrytypes.FieldKeyToMaterializedExistsCondition(key, exists), nil
 			}
+			leftOperand := fmt.Sprintf("mapContains(%s, %s)", column.Name, clickhousesql.StringLiteral(key.Name))
 			if exists {
 				return leftOperand, nil
 			}

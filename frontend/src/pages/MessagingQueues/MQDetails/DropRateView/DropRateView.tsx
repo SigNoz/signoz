@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
+import { generatePath } from 'react-router-dom';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Table } from 'antd';
@@ -95,7 +96,7 @@ export function getColumns(
 											key={item}
 											className="traceid-text"
 											onClick={(): void => {
-												openInNewTab(`${ROUTES.TRACE}/${item}`);
+												openInNewTab(generatePath(ROUTES.TRACE_DETAIL, { id: item }));
 												logEvent(`MQ Kafka: Drop Rate - traceid navigation`, {
 													item,
 												});

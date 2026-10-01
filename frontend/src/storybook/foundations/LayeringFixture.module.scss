@@ -1,0 +1,20 @@
+.fixture {
+	padding: 24px;
+}
+
+.overlayContent {
+	min-height: 180px;
+}
+
+.scrollPanel {
+	height: 280px;
+	max-width: 480px;
+	overflow: auto;
+	padding: 16px;
+	border: 1px solid var(--bg-slate-200);
+	border-radius: 4px;
+}
+
+.scrollSpacer {
+	height: 220px;
+}

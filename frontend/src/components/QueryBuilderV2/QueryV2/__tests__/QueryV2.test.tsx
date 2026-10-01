@@ -142,7 +142,6 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			isMetricsDataSource: false,
 			operators: [],
 			spaceAggregationOptions: [],
-			listOfAdditionalFilters: [],
 			handleChangeOperator: jest.fn(),
 			handleSpaceAggregationChange: jest.fn(),
 			handleChangeAggregatorAttribute: jest.fn(),
@@ -152,7 +151,6 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 				jest.fn() as unknown as ReturnType<UseQueryOperations>['handleChangeQueryData'],
 			handleChangeFormulaData: jest.fn(),
 			handleQueryFunctionsUpdates: handleQueryFunctionsUpdatesMock,
-			listOfAdditionalFormulaFilters: [],
 		});
 	});
 

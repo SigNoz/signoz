@@ -24,8 +24,7 @@ type module struct {
 	telemetryStore         telemetrystore.TelemetryStore
 	telemetryMetadataStore telemetrytypes.MetadataStore
 	querier                querier.Querier
-	fieldMapper            qbtypes.FieldMapper
-	condBuilder            qbtypes.ConditionBuilder
+	storage                qbtypes.Storage
 	logger                 *slog.Logger
 	config                 inframonitoring.Config
 	fl                     flagger.Flagger
@@ -40,14 +39,11 @@ func NewModule(
 	providerSettings factory.ProviderSettings,
 	cfg inframonitoring.Config,
 ) inframonitoring.Module {
-	fieldMapper := metricstelemetryschema.NewFieldMapper()
-	condBuilder := metricstelemetryschema.NewConditionBuilder(fieldMapper)
 	return &module{
 		telemetryStore:         telemetryStore,
 		telemetryMetadataStore: telemetryMetadataStore,
 		querier:                querier,
-		fieldMapper:            fieldMapper,
-		condBuilder:            condBuilder,
+		storage:                metricstelemetryschema.NewStorage(),
 		logger:                 providerSettings.Logger,
 		config:                 cfg,
 		fl:                     fl,

@@ -12,8 +12,11 @@ export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {
 	[PANEL_TYPES.TABLE]: ExplorerViews.TABLE,
 	[PANEL_TYPES.VALUE]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.BAR]: ExplorerViews.TIMESERIES,
+	[PANEL_TYPES.AREA]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.PIE]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.HISTOGRAM]: ExplorerViews.TIMESERIES,
+	// Dashboard-only visualisation; explorers never offer it.
+	[PANEL_TYPES.TEXT]: ExplorerViews.LIST,
 	[PANEL_TYPES.EMPTY_WIDGET]: ExplorerViews.LIST,
 };
 

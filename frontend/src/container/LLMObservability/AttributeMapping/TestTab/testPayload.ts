@@ -51,13 +51,9 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+// Any other top-level key (a real span carries name, spanId, kind...) is trimmed.
 function isSpanEnvelope(parsed: Record<string, unknown>): boolean {
-	const keys = Object.keys(parsed);
-	return (
-		keys.length > 0 &&
-		keys.every((key) => key === 'attributes' || key === 'resource') &&
-		(isPlainObject(parsed.attributes) || isPlainObject(parsed.resource))
-	);
+	return isPlainObject(parsed.attributes) || isPlainObject(parsed.resource);
 }
 
 export function parseSpanInput(input: string): SpantypesSpanMapperTestSpanDTO {

@@ -204,10 +204,12 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
-				screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+				screen.findByPlaceholderText(/e\.g\., I asked ChatGPT/i, {}),
 			).resolves.toBeInTheDocument();
 
-			const discoverInput = screen.getByPlaceholderText(/e\.g\., googling/i);
+			const discoverInput = screen.getByPlaceholderText(
+				/e\.g\., I asked ChatGPT/i,
+			);
 			await user.type(discoverInput, 'Found via Google search');
 
 			const interestCheckbox = screen.getByLabelText(
@@ -256,11 +258,11 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
-				screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+				screen.findByPlaceholderText(/e\.g\., I asked ChatGPT/i, {}),
 			).resolves.toBeInTheDocument();
 
 			await user.type(
-				screen.getByPlaceholderText(/e\.g\., googling/i),
+				screen.getByPlaceholderText(/e\.g\., I asked ChatGPT/i),
 				'Found via Google',
 			);
 			await user.click(screen.getByLabelText(/lowering observability costs/i));
@@ -297,7 +299,7 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await user.type(
-				await screen.findByPlaceholderText(/e\.g\., googling/i),
+				await screen.findByPlaceholderText(/e\.g\., I asked ChatGPT/i),
 				'Found via Google',
 			);
 			await user.click(screen.getByLabelText(/lowering observability costs/i));
@@ -329,11 +331,11 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByRole('button', { name: /next/i }));
 
 			await expect(
-				screen.findByPlaceholderText(/e\.g\., googling/i, {}),
+				screen.findByPlaceholderText(/e\.g\., I asked ChatGPT/i, {}),
 			).resolves.toBeInTheDocument();
 
 			await user.type(
-				screen.getByPlaceholderText(/e\.g\., googling/i),
+				screen.getByPlaceholderText(/e\.g\., I asked ChatGPT/i),
 				'Found via Google',
 			);
 			await user.click(screen.getByLabelText(/lowering observability costs/i));

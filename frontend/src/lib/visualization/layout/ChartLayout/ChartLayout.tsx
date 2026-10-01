@@ -1,15 +1,20 @@
 import { useMemo } from 'react';
 import cx from 'classnames';
 import { calculateChartDimensions } from 'lib/visualization/charts/utils';
-import { MAX_LEGEND_WIDTH } from 'lib/uPlotV2/components/Legend/Legend';
+import { MAX_LEGEND_WIDTH } from 'lib/uPlotV2/components/Legend/constants';
 import { LegendConfig, LegendPosition } from 'lib/uPlotV2/components/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 
 import 'lib/visualization/layout/ChartLayout/ChartLayout.styles.scss';
 
+export interface LegendLayout {
+	averageLegendWidth: number;
+	showSearch: boolean;
+}
+
 export interface ChartLayoutProps {
 	showLegend?: boolean;
-	legendComponent: (legendPerSet: number) => React.ReactNode;
+	legendComponent: (layout: LegendLayout) => React.ReactNode;
 	children: (props: {
 		chartWidth: number;
 		chartHeight: number;
@@ -40,6 +45,7 @@ export default function ChartLayout({
 					legendWidth: 0,
 					legendHeight: 0,
 					averageLegendWidth: MAX_LEGEND_WIDTH,
+					showLegendSearch: false,
 				};
 			}
 			const legendItemsMap = config.getLegendItems();
@@ -81,7 +87,10 @@ export default function ChartLayout({
 							width: chartDimensions.legendWidth,
 						}}
 					>
-						{legendComponent(chartDimensions.averageLegendWidth)}
+						{legendComponent({
+							averageLegendWidth: chartDimensions.averageLegendWidth,
+							showSearch: chartDimensions.showLegendSearch,
+						})}
 					</div>
 				)}
 			</div>

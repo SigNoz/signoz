@@ -52,14 +52,24 @@ jest.mock('hooks/useSafeNavigate', () =>
 		.createBrowserHistorySafeNavigateMock(),
 );
 
-jest.mock('api/querySuggestions/getKeySuggestions', () => ({
-	getKeySuggestions: jest
-		.fn()
-		.mockResolvedValue({ data: { data: { keys: {} } } }),
+jest.mock('api/querySuggestions/getFieldKeySuggestions', () => ({
+	getFieldKeySuggestions: jest.fn().mockResolvedValue({
+		status: 'success',
+		data: { complete: true, keys: {} },
+	}),
 }));
-jest.mock('api/querySuggestions/getValueSuggestion', () => ({
-	getValueSuggestions: jest.fn().mockResolvedValue({
-		data: { data: { values: { stringValues: [], numberValues: [] } } },
+jest.mock('api/querySuggestions/getFieldValueSuggestions', () => ({
+	getFieldValueSuggestions: jest.fn().mockResolvedValue({
+		status: 'success',
+		data: {
+			complete: true,
+			values: {
+				stringValues: [],
+				numberValues: [],
+				boolValues: [],
+				relatedValues: [],
+			},
+		},
 	}),
 }));
 

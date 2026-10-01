@@ -174,6 +174,7 @@ export default function ServiceTraces({
 						columns={columns}
 						dataSource={top5Services}
 						pagination={false}
+						rowKey="serviceName"
 						className="services-table"
 						onRow={(record: ServicesList): Record<string, unknown> => ({
 							onClick: (event: React.MouseEvent): void => {

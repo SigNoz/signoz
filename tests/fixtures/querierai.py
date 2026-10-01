@@ -62,7 +62,7 @@ def ai_trace(
         "gen_ai.user.id": user,
         # numeric values land in attributes_number
         "gen_ai.usage.output_tokens": out_tokens,
-        "_signoz.gen_ai.total_cost": cost,
+        "signoz.gen_ai.usage.tokens.cost": cost,
     }
     if in_tokens is not None:
         attributes["gen_ai.usage.input_tokens"] = in_tokens

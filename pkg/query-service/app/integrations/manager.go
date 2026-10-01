@@ -470,7 +470,7 @@ func (m *Manager) deprovisionDashboards(
 		if err != nil {
 			return err
 		}
-		if err := m.dashboardModule.DeleteUnsafe(ctx, orgID, dashID); err != nil {
+		if err := m.dashboardModule.DeleteUnsafeV2(ctx, orgID, dashID); err != nil {
 			return err
 		}
 	}

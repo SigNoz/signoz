@@ -171,11 +171,20 @@ components:
       - kind
       - spec
       type: object
+    AlertmanagertypesChannelDefect:
+      enum:
+      - none
+      - missing_type
+      - multiple_notifiers
+      - unsupported_notifier
+      - unrepresentable
+      type: string
     AlertmanagertypesChannelEmailConfig:
       properties:
         headers:
           additionalProperties:
             type: string
+          nullable: true
           type: object
         html:
           type: string
@@ -197,6 +206,7 @@ components:
         title:
           type: string
         webhookUrl:
+          format: password
           type: string
       required:
       - webhookUrl
@@ -208,6 +218,7 @@ components:
         metadata:
           additionalProperties:
             type: string
+          nullable: true
           type: object
         sendResolved:
           nullable: true
@@ -215,6 +226,7 @@ components:
         title:
           type: string
         token:
+          format: password
           type: string
         url:
           type: string
@@ -225,6 +237,7 @@ components:
     AlertmanagertypesChannelJSMOpsConfig:
       properties:
         apiKey:
+          format: password
           type: string
         description:
           type: string
@@ -243,9 +256,11 @@ components:
     AlertmanagertypesChannelJiraConfig:
       properties:
         apiToken:
+          format: password
           type: string
         customFields:
           additionalProperties: {}
+          nullable: true
           type: object
         description:
           type: string
@@ -256,6 +271,7 @@ components:
         labels:
           items:
             type: string
+          nullable: true
           type: array
         priority:
           type: string
@@ -296,6 +312,17 @@ components:
       - jsmops
       - incidentio
       type: string
+    AlertmanagertypesChannelListOrder:
+      enum:
+      - asc
+      - desc
+      type: string
+    AlertmanagertypesChannelListSort:
+      enum:
+      - updated_at
+      - created_at
+      - name
+      type: string
     AlertmanagertypesChannelMSTeamsConfig:
       properties:
         sendResolved:
@@ -306,6 +333,7 @@ components:
         title:
           type: string
         webhookUrl:
+          format: password
           type: string
       required:
       - webhookUrl
@@ -313,6 +341,7 @@ components:
     AlertmanagertypesChannelOpsgenieConfig:
       properties:
         apiKey:
+          format: password
           type: string
         apiUrl:
           type: string
@@ -321,6 +350,7 @@ components:
         details:
           additionalProperties:
             type: string
+          nullable: true
           type: object
         message:
           type: string
@@ -349,10 +379,12 @@ components:
         details:
           additionalProperties:
             type: string
+          nullable: true
           type: object
         group:
           type: string
         routingKey:
+          format: password
           type: string
         sendResolved:
           nullable: true
@@ -366,11 +398,84 @@ components:
       required:
       - routingKey
       type: object
+    AlertmanagertypesChannelRepair:
+      properties:
+        action:
+          $ref: '#/components/schemas/AlertmanagertypesChannelRepairAction'
+        applied:
+          type: boolean
+        blockers:
+          items:
+            type: string
+          type: array
+        channels:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesListedNotificationChannel'
+          nullable: true
+          type: array
+        defect:
+          $ref: '#/components/schemas/AlertmanagertypesChannelDefect'
+        detail:
+          type: string
+        id:
+          type: string
+      required:
+      - id
+      - defect
+      - action
+      - applied
+      type: object
+    AlertmanagertypesChannelRepairAction:
+      enum:
+      - none
+      - retype
+      - split
+      - delete
+      type: string
+    AlertmanagertypesChannelSlackAction:
+      properties:
+        confirm:
+          $ref: '#/components/schemas/AlertmanagertypesChannelSlackConfirmation'
+        name:
+          type: string
+        style:
+          type: string
+        text:
+          type: string
+        type:
+          type: string
+        url:
+          type: string
+        value:
+          type: string
+      required:
+      - type
+      - text
+      type: object
     AlertmanagertypesChannelSlackConfig:
       properties:
+        actions:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesChannelSlackAction'
+          nullable: true
+          type: array
         apiUrl:
+          format: password
           type: string
         channel:
+          type: string
+        color:
+          type: string
+        fallback:
+          type: string
+        fields:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesChannelSlackField'
+          nullable: true
+          type: array
+        footer:
+          type: string
+        pretext:
           type: string
         sendResolved:
           nullable: true
@@ -379,19 +484,50 @@ components:
           type: string
         title:
           type: string
+        titleLink:
+          type: string
       required:
       - apiUrl
+      type: object
+    AlertmanagertypesChannelSlackConfirmation:
+      properties:
+        dismissText:
+          type: string
+        okText:
+          type: string
+        text:
+          type: string
+        title:
+          type: string
+      required:
+      - text
+      type: object
+    AlertmanagertypesChannelSlackField:
+      properties:
+        short:
+          nullable: true
+          type: boolean
+        title:
+          type: string
+        value:
+          type: string
+      required:
+      - title
+      - value
       type: object
     AlertmanagertypesChannelWebhookConfig:
       properties:
         bearerToken:
+          format: password
           type: string
         password:
+          format: password
           type: string
         sendResolved:
           nullable: true
           type: boolean
         url:
+          format: password
           type: string
         username:
           type: string
@@ -575,6 +711,43 @@ components:
           type: string
         wont_fix_resolution:
           type: string
+      type: object
+    AlertmanagertypesListableNotificationChannel:
+      properties:
+        channels:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesListedNotificationChannel'
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - channels
+      - total
+      type: object
+    AlertmanagertypesListedNotificationChannel:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        id:
+          type: string
+        kind:
+          $ref: '#/components/schemas/AlertmanagertypesChannelKind'
+        name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - displayName
+      - kind
+      - createdAt
+      - updatedAt
       type: object
     AlertmanagertypesMaintenanceKind:
       enum:
@@ -910,6 +1083,11 @@ components:
       - duration
       - repeatType
       type: object
+    AlertmanagertypesRepairChannelParams:
+      properties:
+        apply:
+          type: boolean
+      type: object
     AlertmanagertypesRepeatOn:
       enum:
       - sunday
@@ -941,6 +1119,20 @@ components:
       required:
       - timezone
       - startTime
+      type: object
+    AlertmanagertypesTestableNotificationChannel:
+      properties:
+        config:
+          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+      required:
+      - config
+      type: object
+    AlertmanagertypesUpdatableNotificationChannel:
+      properties:
+        config:
+          $ref: '#/components/schemas/AlertmanagertypesChannelConfig'
+      required:
+      - config
       type: object
     AuthtypesAttributeMapping:
       properties:
@@ -1579,12 +1771,15 @@ components:
           additionalProperties: {}
           nullable: true
           type: object
+        syncState:
+          $ref: '#/components/schemas/CloudintegrationtypesSyncState'
         timestampMillis:
           format: int64
           type: integer
       required:
       - timestampMillis
       - data
+      - syncState
       type: object
     CloudintegrationtypesAzureAccountConfig:
       properties:
@@ -1829,6 +2024,8 @@ components:
           format: date-time
           nullable: true
           type: string
+        syncState:
+          $ref: '#/components/schemas/CloudintegrationtypesSyncState'
       required:
       - account_id
       - cloud_account_id
@@ -1838,6 +2035,7 @@ components:
       - providerAccountId
       - integrationConfig
       - removedAt
+      - syncState
       type: object
     CloudintegrationtypesGettableServicesMetadata:
       properties:
@@ -1937,6 +2135,9 @@ components:
           type: object
         providerAccountId:
           type: string
+        syncedVersion:
+          nullable: true
+          type: integer
       required:
       - data
       type: object
@@ -1948,6 +2149,18 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAzureIntegrationConfig'
         gcp:
           $ref: '#/components/schemas/CloudintegrationtypesGCPIntegrationConfig'
+      type: object
+    CloudintegrationtypesRegionState:
+      enum:
+      - enabled
+      - disabled
+      type: string
+    CloudintegrationtypesRegionSyncState:
+      properties:
+        state:
+          $ref: '#/components/schemas/CloudintegrationtypesRegionState'
+      required:
+      - state
       type: object
     CloudintegrationtypesService:
       properties:
@@ -2089,6 +2302,23 @@ components:
           type: boolean
         metrics:
           type: boolean
+      type: object
+    CloudintegrationtypesSyncState:
+      nullable: true
+      properties:
+        inSync:
+          type: boolean
+        regions:
+          additionalProperties:
+            $ref: '#/components/schemas/CloudintegrationtypesRegionSyncState'
+          type: object
+        version:
+          format: int64
+          type: integer
+      required:
+      - version
+      - inSync
+      - regions
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
@@ -3137,6 +3367,53 @@ components:
         repeatVariable:
           type: string
       type: object
+    DashboardtypesAreaChartAppearance:
+      properties:
+        fillMode:
+          $ref: '#/components/schemas/DashboardtypesAreaFillMode'
+        fillOpacity:
+          $ref: '#/components/schemas/DashboardtypesFillOpacity'
+        lineInterpolation:
+          $ref: '#/components/schemas/DashboardtypesLineInterpolation'
+        lineStyle:
+          $ref: '#/components/schemas/DashboardtypesLineStyle'
+        showPoints:
+          type: boolean
+        spanGaps:
+          $ref: '#/components/schemas/DashboardtypesSpanGaps'
+      type: object
+    DashboardtypesAreaChartPanelSpec:
+      properties:
+        axes:
+          $ref: '#/components/schemas/DashboardtypesAxes'
+        chartAppearance:
+          $ref: '#/components/schemas/DashboardtypesAreaChartAppearance'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesAreaChartVisualization'
+      type: object
+    DashboardtypesAreaChartVisualization:
+      properties:
+        fillSpans:
+          type: boolean
+        stack:
+          $ref: '#/components/schemas/DashboardtypesStackMode'
+        timePreference:
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
+      type: object
+    DashboardtypesAreaFillMode:
+      enum:
+      - solid
+      - gradient
+      type: string
     DashboardtypesAxes:
       properties:
         isLogScale:
@@ -3222,29 +3499,6 @@ components:
           type: string
       required:
       - customValue
-      type: object
-    DashboardtypesDashboard:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        data:
-          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
-        id:
-          type: string
-        locked:
-          type: boolean
-        org_id:
-          type: string
-        source:
-          $ref: '#/components/schemas/DashboardtypesSource'
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
       type: object
     DashboardtypesDashboardPanelRef:
       properties:
@@ -3368,6 +3622,11 @@ components:
       - gradient
       - none
       type: string
+    DashboardtypesFillOpacity:
+      maximum: 1
+      minimum: 0
+      nullable: true
+      type: number
     DashboardtypesGettableDashboardV2:
       properties:
         createdAt:
@@ -3420,13 +3679,6 @@ components:
         timeRangeEnabled:
           type: boolean
       type: object
-    DashboardtypesGettablePublicDashboardData:
-      properties:
-        dashboard:
-          $ref: '#/components/schemas/DashboardtypesDashboard'
-        publicDashboard:
-          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
-      type: object
     DashboardtypesGettablePublicDashboardDataV2:
       properties:
         dashboard:
@@ -3473,6 +3725,11 @@ components:
       - name
       - tags
       - spec
+      type: object
+    DashboardtypesHeaderOptions:
+      properties:
+        hide:
+          type: boolean
       type: object
     DashboardtypesHistogramBuckets:
       properties:
@@ -3825,33 +4082,51 @@ components:
     DashboardtypesPanelPlugin:
       discriminator:
         mapping:
+          signoz/AreaChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec'
           signoz/BarChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
           signoz/HistogramPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
           signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
           signoz/NumberPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
           signoz/PieChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
           signoz/TablePanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
+          signoz/TextPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
           signoz/TimeSeriesPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
         propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
       - signoz/TimeSeriesPanel
       - signoz/BarChartPanel
+      - signoz/AreaChartPanel
       - signoz/NumberPanel
       - signoz/PieChartPanel
       - signoz/TablePanel
       - signoz/HistogramPanel
       - signoz/ListPanel
+      - signoz/TextPanel
       type: string
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/AreaChartPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesAreaChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec:
       properties:
         kind:
@@ -3920,6 +4195,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesTablePanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/TextPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesTextPanelSpec'
       required:
       - kind
       - spec
@@ -4170,9 +4457,12 @@ components:
             are connected.
           type: boolean
       type: object
-    DashboardtypesStorableDashboardData:
-      additionalProperties: {}
-      type: object
+    DashboardtypesStackMode:
+      enum:
+      - none
+      - normal
+      - percent
+      type: string
     DashboardtypesTableFormatting:
       properties:
         columnUnits:
@@ -4214,6 +4504,37 @@ components:
       - value
       - color
       - columnName
+      type: object
+    DashboardtypesTextAlign:
+      enum:
+      - left
+      - center
+      - right
+      type: string
+    DashboardtypesTextMode:
+      enum:
+      - markdown
+      type: string
+    DashboardtypesTextPanelSpec:
+      properties:
+        headerOptions:
+          $ref: '#/components/schemas/DashboardtypesHeaderOptions'
+        mode:
+          $ref: '#/components/schemas/DashboardtypesTextMode'
+        presentation:
+          $ref: '#/components/schemas/DashboardtypesTextPresentation'
+        text:
+          type: string
+      type: object
+    DashboardtypesTextPresentation:
+      properties:
+        background:
+          nullable: true
+          type: string
+        textAlign:
+          $ref: '#/components/schemas/DashboardtypesTextAlign'
+        verticalAlign:
+          $ref: '#/components/schemas/DashboardtypesVerticalAlign'
       type: object
     DashboardtypesTextVariableSpec:
       properties:
@@ -4424,6 +4745,12 @@ components:
       - kind
       - spec
       type: object
+    DashboardtypesVerticalAlign:
+      enum:
+      - top
+      - center
+      - bottom
+      type: string
     ErrorsJSON:
       properties:
         code:
@@ -6911,37 +7238,11 @@ components:
       - attributes
       - totalKeys
       type: object
-    MetricsexplorertypesMetricDashboard:
-      properties:
-        dashboardId:
-          type: string
-        dashboardName:
-          type: string
-        widgetId:
-          type: string
-        widgetName:
-          type: string
-      required:
-      - dashboardName
-      - dashboardId
-      - widgetId
-      - widgetName
-      type: object
     MetricsexplorertypesMetricDashboardPanelsResponse:
       properties:
         dashboards:
           items:
             $ref: '#/components/schemas/DashboardtypesDashboardPanelRef'
-          nullable: true
-          type: array
-      required:
-      - dashboards
-      type: object
-    MetricsexplorertypesMetricDashboardsResponse:
-      properties:
-        dashboards:
-          items:
-            $ref: '#/components/schemas/MetricsexplorertypesMetricDashboard'
           nullable: true
           type: array
       required:
@@ -7395,10 +7696,7 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
           type: array
         meta:
-          properties:
-            unit:
-              type: string
-          type: object
+          $ref: '#/components/schemas/Querybuildertypesv5AggregationMeta'
         predictedSeries:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
@@ -7413,12 +7711,51 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
           type: array
       type: object
-    Querybuildertypesv5Bucket:
+    Querybuildertypesv5AggregationMeta:
       properties:
-        step:
-          format: double
-          type: number
+        buckets:
+          items:
+            format: double
+            type: number
+          type: array
+        unit:
+          type: string
       type: object
+    Querybuildertypesv5BucketOptions:
+      discriminator:
+        mapping:
+          linear: '#/components/schemas/Querybuildertypesv5BucketOptionsLinear'
+          log: '#/components/schemas/Querybuildertypesv5BucketOptionsLog'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5BucketOptionsLinear'
+      - $ref: '#/components/schemas/Querybuildertypesv5BucketOptionsLog'
+      type: object
+    Querybuildertypesv5BucketOptionsLinear:
+      properties:
+        kind:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5LinearBucketsSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    Querybuildertypesv5BucketOptionsLog:
+      properties:
+        kind:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5LogBucketsSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    Querybuildertypesv5BucketsKind:
+      enum:
+      - linear
+      - log
+      type: string
     Querybuildertypesv5BuilderQuerySpec:
       discriminator:
         mapping:
@@ -7599,12 +7936,28 @@ components:
         value:
           type: string
       type: object
+    Querybuildertypesv5LinearBucketsSpec:
+      properties:
+        maxValue:
+          format: double
+          type: number
+        numBuckets:
+          type: integer
+      required:
+      - maxValue
+      type: object
     Querybuildertypesv5LogAggregation:
       properties:
         alias:
           type: string
         expression:
           type: string
+      type: object
+    Querybuildertypesv5LogBucketsSpec:
+      properties:
+        scale:
+          nullable: true
+          type: integer
       type: object
     Querybuildertypesv5MetricAggregation:
       properties:
@@ -7686,6 +8039,8 @@ components:
       type: object
     Querybuildertypesv5QueryBuilderFormula:
       properties:
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         disabled:
           type: boolean
         expression:
@@ -7716,6 +8071,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5LogAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -7777,6 +8134,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5MetricAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -7838,6 +8197,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TraceAggregation'
           nullable: true
           type: array
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         cursor:
           type: string
         disabled:
@@ -8163,6 +8524,7 @@ components:
       - raw
       - raw_stream
       - trace
+      - heatmap
       type: string
     Querybuildertypesv5ScalarData:
       properties:
@@ -8237,8 +8599,6 @@ components:
       type: object
     Querybuildertypesv5TimeSeriesValue:
       properties:
-        bucket:
-          $ref: '#/components/schemas/Querybuildertypesv5Bucket'
         partial:
           type: boolean
         timestamp:
@@ -8349,6 +8709,8 @@ components:
           $ref: '#/components/schemas/RuletypesAlertState'
         overallStateChanged:
           type: boolean
+        relatedAITracesLink:
+          type: string
         relatedLogsLink:
           type: string
         relatedTracesLink:
@@ -8392,6 +8754,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5Label'
           nullable: true
           type: array
+        relatedAITracesLink:
+          type: string
         relatedLogsLink:
           type: string
         relatedTracesLink:
@@ -8497,6 +8861,7 @@ components:
       - TRACES_BASED_ALERT
       - LOGS_BASED_ALERT
       - EXCEPTIONS_BASED_ALERT
+      - AI_TRACES_BASED_ALERT
       type: string
     RuletypesBasicRuleThreshold:
       properties:
@@ -8615,6 +8980,89 @@ components:
           type: integer
         message:
           type: string
+      type: object
+    RuletypesLabelPair:
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+      - key
+      - value
+      type: object
+    RuletypesListOrder:
+      enum:
+      - asc
+      - desc
+      type: string
+    RuletypesListSort:
+      enum:
+      - updated_at
+      - created_at
+      - name
+      - state
+      - severity
+      type: string
+    RuletypesListableRule:
+      properties:
+        alert:
+          type: string
+        alertType:
+          $ref: '#/components/schemas/RuletypesAlertType'
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        description:
+          type: string
+        disabled:
+          type: boolean
+        id:
+          type: string
+        labels:
+          additionalProperties:
+            type: string
+          type: object
+        ruleType:
+          $ref: '#/components/schemas/RuletypesRuleType'
+        state:
+          $ref: '#/components/schemas/RuletypesAlertState'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - state
+      - alert
+      - alertType
+      - ruleType
+      type: object
+    RuletypesListableRules:
+      properties:
+        labels:
+          items:
+            $ref: '#/components/schemas/RuletypesLabelPair'
+          type: array
+        reservedKeywords:
+          items:
+            type: string
+          type: array
+        rules:
+          items:
+            $ref: '#/components/schemas/RuletypesListableRule'
+          type: array
+        total:
+          format: int64
+          type: integer
+      required:
+      - rules
+      - total
+      - labels
+      - reservedKeywords
       type: object
     RuletypesMatchType:
       enum:
@@ -9427,6 +9875,8 @@ components:
           type: string
         name:
           type: string
+        origin:
+          $ref: '#/components/schemas/SpantypesSpanMapperOrigin'
         updatedAt:
           format: date-time
           type: string
@@ -9439,6 +9889,7 @@ components:
       - fieldContext
       - config
       - enabled
+      - origin
       type: object
     SpantypesSpanMapperConfig:
       properties:
@@ -9467,48 +9918,75 @@ components:
           type: string
         orgId:
           type: string
+        origin:
+          $ref: '#/components/schemas/SpantypesSpanMapperOrigin'
         updatedAt:
           format: date-time
           type: string
         updatedBy:
           type: string
+        version:
+          type: integer
       required:
       - id
       - orgId
       - name
       - condition
       - enabled
+      - origin
+      - version
       type: object
     SpantypesSpanMapperGroupCondition:
       nullable: true
       properties:
         attributes:
           items:
-            type: string
+            $ref: '#/components/schemas/SpantypesSpanMapperGroupConditionKey'
           nullable: true
           type: array
         resource:
           items:
-            type: string
+            $ref: '#/components/schemas/SpantypesSpanMapperGroupConditionKey'
           nullable: true
           type: array
       required:
       - attributes
       - resource
       type: object
+    SpantypesSpanMapperGroupConditionKey:
+      properties:
+        enabled:
+          type: boolean
+        origin:
+          $ref: '#/components/schemas/SpantypesSpanMapperOrigin'
+        value:
+          type: string
+      required:
+      - value
+      - enabled
+      type: object
     SpantypesSpanMapperOperation:
       enum:
       - move
       - copy
       type: string
+    SpantypesSpanMapperOrigin:
+      enum:
+      - user
+      - system
+      type: string
     SpantypesSpanMapperSource:
       properties:
         context:
           $ref: '#/components/schemas/SpantypesFieldContext'
+        enabled:
+          type: boolean
         key:
           type: string
         operation:
           $ref: '#/components/schemas/SpantypesSpanMapperOperation'
+        origin:
+          $ref: '#/components/schemas/SpantypesSpanMapperOrigin'
         priority:
           type: integer
       required:
@@ -9516,6 +9994,7 @@ components:
       - context
       - operation
       - priority
+      - enabled
       type: object
     SpantypesSpanMapperTestSpan:
       properties:
@@ -10238,6 +10717,7 @@ paths:
       summary: Get AI observability field keys
       tags:
       - ai_observability
+      x-signoz-stability: alpha
   /api/v1/ai_observability/fields/values:
     get:
       deprecated: false
@@ -10320,6 +10800,7 @@ paths:
       summary: Get AI observability field values
       tags:
       - ai_observability
+      x-signoz-stability: alpha
   /api/v1/alerts:
     get:
       deprecated: false
@@ -10368,6 +10849,7 @@ paths:
       summary: Get alerts
       tags:
       - alerts
+      x-signoz-stability: alpha
   /api/v1/authz/check:
     post:
       deprecated: false
@@ -10406,6 +10888,7 @@ paths:
       summary: Check permissions
       tags:
       - authz
+      x-signoz-stability: alpha
   /api/v1/channels:
     get:
       deprecated: false
@@ -10454,6 +10937,7 @@ paths:
       summary: List notification channels
       tags:
       - channels
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a notification channel
@@ -10510,6 +10994,7 @@ paths:
       summary: Create notification channel
       tags:
       - channels
+      x-signoz-stability: alpha
   /api/v1/channels/{id}:
     delete:
       deprecated: false
@@ -10556,6 +11041,7 @@ paths:
       summary: Delete notification channel
       tags:
       - channels
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint returns a notification channel by ID
@@ -10613,6 +11099,7 @@ paths:
       summary: Get notification channel by ID
       tags:
       - channels
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates a notification channel by ID
@@ -10669,6 +11156,7 @@ paths:
       summary: Update notification channel
       tags:
       - channels
+      x-signoz-stability: alpha
   /api/v1/channels/test:
     post:
       deprecated: false
@@ -10714,6 +11202,7 @@ paths:
       summary: Test notification channel
       tags:
       - channels
+      x-signoz-stability: alpha
   /api/v1/cloud-integrations/{cloud_provider}/agent-check-in:
     post:
       deprecated: true
@@ -10766,12 +11255,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - cloud-integration:read
       - tokenizer:
-        - VIEWER
+        - cloud-integration:read
       summary: Agent check-in
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
   /api/v1/cloud_integrations/{cloud_provider}/accounts:
     get:
       deprecated: false
@@ -10818,12 +11308,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:list
       - tokenizer:
-        - ADMIN
+        - cloud-integration:list
       summary: List accounts
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a new cloud integration account for the specified
@@ -10875,12 +11366,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:create
       - tokenizer:
-        - ADMIN
+        - cloud-integration:create
       summary: Create account
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
   /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}:
     delete:
       deprecated: false
@@ -10920,12 +11412,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:delete
       - tokenizer:
-        - ADMIN
+        - cloud-integration:delete
       summary: Disconnect account
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint gets an account for the specified cloud provider
@@ -10988,12 +11481,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:read
       - tokenizer:
-        - ADMIN
+        - cloud-integration:read
       summary: Get account
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates an account for the specified cloud provider
@@ -11037,12 +11531,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:update
       - tokenizer:
-        - ADMIN
+        - cloud-integration:update
       summary: Update account
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
   /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services:
     get:
       deprecated: false
@@ -11095,12 +11590,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:list
       - tokenizer:
-        - ADMIN
+        - cloud-integration:list
       summary: List account services metadata
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
   /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}:
     get:
       deprecated: false
@@ -11170,12 +11666,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:read
       - tokenizer:
-        - ADMIN
+        - cloud-integration:read
       summary: Get service for account
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates a service for the specified cloud provider
@@ -11224,12 +11721,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - cloud-integration:update
       - tokenizer:
-        - ADMIN
+        - cloud-integration:update
       summary: Update service
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
   /api/v1/cloud_integrations/{cloud_provider}/accounts/check_in:
     post:
       deprecated: false
@@ -11281,12 +11779,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - cloud-integration:read
       - tokenizer:
-        - VIEWER
+        - cloud-integration:read
       summary: Agent check-in
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
   /api/v1/cloud_integrations/{cloud_provider}/credentials:
     get:
       deprecated: false
@@ -11334,12 +11833,21 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - ingestion-key:create
+        - serviceaccount:create
+        - factor-api-key:create
+        - serviceaccount:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - ingestion-key:create
+        - serviceaccount:create
+        - factor-api-key:create
+        - serviceaccount:attach
+        - role:attach
       summary: Get connection credentials
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
   /api/v1/cloud_integrations/{cloud_provider}/services:
     get:
       deprecated: false
@@ -11386,13 +11894,12 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
+      - api_key: []
+      - tokenizer: []
       summary: List services metadata
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
   /api/v1/cloud_integrations/{cloud_provider}/services/{service_id}:
     get:
       deprecated: false
@@ -11444,13 +11951,12 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
+      - api_key: []
+      - tokenizer: []
       summary: Get service
       tags:
       - cloudintegration
+      x-signoz-stability: alpha
   /api/v1/complete/google:
     get:
       deprecated: false
@@ -11492,6 +11998,7 @@ paths:
       summary: Create session by google callback
       tags:
       - sessions
+      x-signoz-stability: alpha
   /api/v1/complete/oidc:
     get:
       deprecated: false
@@ -11539,6 +12046,7 @@ paths:
       summary: Create session by oidc callback
       tags:
       - sessions
+      x-signoz-stability: alpha
   /api/v1/complete/saml:
     post:
       deprecated: false
@@ -11605,6 +12113,7 @@ paths:
       summary: Create session by saml callback
       tags:
       - sessions
+      x-signoz-stability: alpha
   /api/v1/dashboards/{id}/public:
     delete:
       deprecated: false
@@ -11646,6 +12155,7 @@ paths:
       summary: Delete public dashboard
       tags:
       - dashboard
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint returns public sharing config for a dashboard
@@ -11697,6 +12207,7 @@ paths:
       summary: Get public dashboard
       tags:
       - dashboard
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates public sharing config and enables public
@@ -11754,6 +12265,7 @@ paths:
       summary: Create public dashboard
       tags:
       - dashboard
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates the public sharing config for a dashboard
@@ -11798,6 +12310,7 @@ paths:
       summary: Update public dashboard
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v1/downtime_schedules:
     get:
       deprecated: false
@@ -11857,6 +12370,7 @@ paths:
       summary: List downtime schedules
       tags:
       - downtimeschedules
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a new planned maintenance / downtime schedule
@@ -11913,6 +12427,7 @@ paths:
       summary: Create downtime schedule
       tags:
       - downtimeschedules
+      x-signoz-stability: alpha
   /api/v1/downtime_schedules/{id}:
     delete:
       deprecated: false
@@ -11959,6 +12474,7 @@ paths:
       summary: Delete downtime schedule
       tags:
       - downtimeschedules
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint returns a downtime schedule by ID
@@ -12016,6 +12532,7 @@ paths:
       summary: Get downtime schedule by ID
       tags:
       - downtimeschedules
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates a downtime schedule by ID
@@ -12072,6 +12589,7 @@ paths:
       summary: Update downtime schedule
       tags:
       - downtimeschedules
+      x-signoz-stability: alpha
   /api/v1/export_raw_data:
     post:
       deprecated: false
@@ -12130,6 +12648,7 @@ paths:
       tags:
       - logs
       - traces
+      x-signoz-stability: alpha
   /api/v1/fields/keys:
     get:
       deprecated: false
@@ -12219,6 +12738,7 @@ paths:
       summary: Get field keys
       tags:
       - fields
+      x-signoz-stability: alpha
   /api/v1/fields/values:
     get:
       deprecated: false
@@ -12316,6 +12836,7 @@ paths:
       summary: Get field values
       tags:
       - fields
+      x-signoz-stability: alpha
   /api/v1/global/config:
     get:
       deprecated: false
@@ -12345,6 +12866,7 @@ paths:
       summary: Get global config
       tags:
       - global
+      x-signoz-stability: alpha
   /api/v1/llm_pricing_rules:
     get:
       deprecated: false
@@ -12415,12 +12937,12 @@ paths:
       summary: List pricing rules
       tags:
       - llmpricingrules
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: Single write endpoint used by both the user and the Zeus sync job.
-        Per-rule match is by id, then sourceId, then insert. Override rows (is_override=true)
-        are fully preserved when the request does not provide isOverride; only synced_at
-        is stamped.
+        Rules without isOverride are matched by sourceId and override rows (is_override=true)
+        are skipped. Rules with isOverride are matched by id and inserted when new.
       operationId: CreateOrUpdateLLMPricingRules
       requestBody:
         content:
@@ -12462,6 +12984,7 @@ paths:
       summary: Create or update pricing rules
       tags:
       - llmpricingrules
+      x-signoz-stability: alpha
   /api/v1/llm_pricing_rules/{id}:
     delete:
       deprecated: false
@@ -12509,6 +13032,7 @@ paths:
       summary: Delete a pricing rule
       tags:
       - llmpricingrules
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: Returns a single LLM pricing rule by ID.
@@ -12566,6 +13090,7 @@ paths:
       summary: Get a pricing rule
       tags:
       - llmpricingrules
+      x-signoz-stability: alpha
   /api/v1/llm_pricing_rules/unmapped_models:
     get:
       deprecated: false
@@ -12620,6 +13145,7 @@ paths:
       summary: List unmapped models
       tags:
       - llmpricingrules
+      x-signoz-stability: alpha
   /api/v1/logs/promote_paths:
     get:
       deprecated: false
@@ -12675,6 +13201,7 @@ paths:
       summary: Promote and index paths
       tags:
       - logs
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoints promotes and indexes paths
@@ -12722,6 +13249,7 @@ paths:
       summary: Promote and index paths
       tags:
       - logs
+      x-signoz-stability: alpha
   /api/v1/org/preferences:
     get:
       deprecated: false
@@ -12770,6 +13298,7 @@ paths:
       summary: List org preferences
       tags:
       - preferences
+      x-signoz-stability: alpha
   /api/v1/org/preferences/{name}:
     get:
       deprecated: false
@@ -12834,6 +13363,7 @@ paths:
       summary: Get org preference
       tags:
       - preferences
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates the org preference by name
@@ -12890,112 +13420,7 @@ paths:
       summary: Update org preference
       tags:
       - preferences
-  /api/v1/public/dashboards/{id}:
-    get:
-      deprecated: false
-      description: This endpoint returns the sanitized dashboard data for public access
-      operationId: GetPublicDashboardData
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/DashboardtypesGettablePublicDashboardData'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - anonymous:
-        - public-dashboard:read
-      summary: Get public dashboard data
-      tags:
-      - dashboard
-  /api/v1/public/dashboards/{id}/widgets/{idx}/query_range:
-    get:
-      deprecated: false
-      description: This endpoint return query range results for a widget of public
-        dashboard
-      operationId: GetPublicDashboardWidgetQueryRange
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: idx
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Querybuildertypesv5QueryRangeResponse'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - anonymous:
-        - public-dashboard:read
-      summary: Get query range result
-      tags:
-      - dashboard
+      x-signoz-stability: alpha
   /api/v1/roles:
     get:
       deprecated: false
@@ -13044,6 +13469,7 @@ paths:
       summary: List roles
       tags:
       - role
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a role
@@ -13118,6 +13544,7 @@ paths:
       summary: Create role
       tags:
       - role
+      x-signoz-stability: alpha
   /api/v1/roles/{id}:
     delete:
       deprecated: false
@@ -13176,6 +13603,7 @@ paths:
       summary: Delete role
       tags:
       - role
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint gets a role
@@ -13227,6 +13655,7 @@ paths:
       summary: Get role
       tags:
       - role
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates a role
@@ -13289,6 +13718,7 @@ paths:
       summary: Update role
       tags:
       - role
+      x-signoz-stability: alpha
   /api/v1/route_policies:
     get:
       deprecated: false
@@ -13337,6 +13767,7 @@ paths:
       summary: List route policies
       tags:
       - routepolicies
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a route policy
@@ -13393,6 +13824,7 @@ paths:
       summary: Create route policy
       tags:
       - routepolicies
+      x-signoz-stability: alpha
   /api/v1/route_policies/{id}:
     delete:
       deprecated: false
@@ -13439,6 +13871,7 @@ paths:
       summary: Delete route policy
       tags:
       - routepolicies
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint returns a route policy by ID
@@ -13496,6 +13929,7 @@ paths:
       summary: Get route policy by ID
       tags:
       - routepolicies
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates a route policy by ID
@@ -13564,6 +13998,7 @@ paths:
       summary: Update route policy
       tags:
       - routepolicies
+      x-signoz-stability: alpha
   /api/v1/service_account_roles:
     post:
       deprecated: false
@@ -13629,6 +14064,7 @@ paths:
       summary: Create service account role
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
   /api/v1/service_account_roles/{id}:
     delete:
       deprecated: false
@@ -13683,6 +14119,7 @@ paths:
       summary: Delete service account role
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint gets an existing service account role
@@ -13746,6 +14183,7 @@ paths:
       summary: Get service account role
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
   /api/v1/service_accounts:
     get:
       deprecated: false
@@ -13794,6 +14232,7 @@ paths:
       summary: List service accounts
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a service account
@@ -13856,6 +14295,7 @@ paths:
       summary: Create service account
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
   /api/v1/service_accounts/{id}:
     delete:
       deprecated: false
@@ -13902,6 +14342,7 @@ paths:
       summary: Deletes a service account
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint gets an existing service account
@@ -13959,6 +14400,7 @@ paths:
       summary: Gets a service account
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates an existing service account
@@ -14015,6 +14457,7 @@ paths:
       summary: Updates a service account
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
   /api/v1/service_accounts/{id}/keys:
     get:
       deprecated: false
@@ -14069,6 +14512,7 @@ paths:
       summary: List service account keys
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a service account key
@@ -14139,6 +14583,7 @@ paths:
       summary: Create a service account key
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
   /api/v1/service_accounts/{id}/keys/{fid}:
     delete:
       deprecated: false
@@ -14192,6 +14637,7 @@ paths:
       summary: Revoke a service account key
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates an existing service account key
@@ -14253,6 +14699,7 @@ paths:
       summary: Updates a service account key
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
   /api/v1/service_accounts/{id}/roles:
     get:
       deprecated: false
@@ -14314,6 +14761,7 @@ paths:
       summary: Gets service account roles
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
   /api/v1/service_accounts/me:
     get:
       deprecated: false
@@ -14349,6 +14797,7 @@ paths:
       summary: Gets my service account
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint gets my service account
@@ -14376,6 +14825,7 @@ paths:
       summary: Updates my service account
       tags:
       - serviceaccount
+      x-signoz-stability: alpha
   /api/v1/span_mapper_groups:
     get:
       deprecated: false
@@ -14435,6 +14885,7 @@ paths:
       summary: List span attribute mapping groups
       tags:
       - spanmapper
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: Creates a new span attribute mapping group for the org.
@@ -14497,6 +14948,7 @@ paths:
       summary: Create a span attribute mapping group
       tags:
       - spanmapper
+      x-signoz-stability: alpha
   /api/v1/span_mapper_groups/{groupId}:
     delete:
       deprecated: false
@@ -14543,6 +14995,7 @@ paths:
       summary: Delete a span attribute mapping group
       tags:
       - spanmapper
+      x-signoz-stability: alpha
     patch:
       deprecated: false
       description: Partially updates an existing mapping group's name, condition,
@@ -14600,6 +15053,7 @@ paths:
       summary: Update a span attribute mapping group
       tags:
       - spanmapper
+      x-signoz-stability: alpha
   /api/v1/span_mapper_groups/{groupId}/span_mappers:
     get:
       deprecated: false
@@ -14664,6 +15118,7 @@ paths:
       summary: List span mappers for a group
       tags:
       - spanmapper
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: Adds a new mapper to the specified mapping group.
@@ -14738,6 +15193,7 @@ paths:
       summary: Create a span mapper
       tags:
       - spanmapper
+      x-signoz-stability: alpha
   /api/v1/span_mapper_groups/{groupId}/span_mappers/{mapperId}:
     delete:
       deprecated: false
@@ -14789,6 +15245,7 @@ paths:
       summary: Delete a span mapper
       tags:
       - spanmapper
+      x-signoz-stability: alpha
     patch:
       deprecated: false
       description: Partially updates an existing mapper's field context, config, or
@@ -14851,6 +15308,7 @@ paths:
       summary: Update a span mapper
       tags:
       - spanmapper
+      x-signoz-stability: alpha
   /api/v1/span_mapper_groups/test:
     post:
       deprecated: false
@@ -14914,6 +15372,7 @@ paths:
       summary: Test span mappers against sample spans
       tags:
       - spanmapper
+      x-signoz-stability: alpha
   /api/v1/stats:
     get:
       deprecated: false
@@ -14961,6 +15420,7 @@ paths:
       summary: Get stats
       tags:
       - stats
+      x-signoz-stability: alpha
   /api/v1/subscriptions:
     get:
       deprecated: false
@@ -15020,6 +15480,7 @@ paths:
       summary: Get the subscription.
       tags:
       - subscriptions
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a subscription for the organization.
@@ -15088,6 +15549,7 @@ paths:
       summary: Create a subscription.
       tags:
       - subscriptions
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates the organization's subscription.
@@ -15152,6 +15614,7 @@ paths:
       summary: Update the subscription.
       tags:
       - subscriptions
+      x-signoz-stability: alpha
   /api/v1/testChannel:
     post:
       deprecated: true
@@ -15197,6 +15660,7 @@ paths:
       summary: Test notification channel (deprecated)
       tags:
       - channels
+      x-signoz-stability: alpha
   /api/v1/traces/{traceID}/aggregations:
     post:
       deprecated: false
@@ -15266,6 +15730,7 @@ paths:
       summary: Get aggregations for a trace
       tags:
       - tracedetail
+      x-signoz-stability: alpha
   /api/v1/user/me:
     get:
       deprecated: true
@@ -15304,6 +15769,7 @@ paths:
       summary: Get my user
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v1/user/preferences:
     get:
       deprecated: false
@@ -15352,6 +15818,7 @@ paths:
       summary: List user preferences
       tags:
       - preferences
+      x-signoz-stability: alpha
   /api/v1/user/preferences/{name}:
     get:
       deprecated: false
@@ -15410,6 +15877,7 @@ paths:
       summary: Get user preference
       tags:
       - preferences
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates the user preference by name
@@ -15466,6 +15934,7 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+      x-signoz-stability: alpha
   /api/v2/auth_domains:
     get:
       deprecated: false
@@ -15514,6 +15983,7 @@ paths:
       summary: List all auth domains
       tags:
       - authdomains
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates an auth domain
@@ -15580,6 +16050,7 @@ paths:
       summary: Create auth domain
       tags:
       - authdomains
+      x-signoz-stability: alpha
   /api/v2/auth_domains/{id}:
     delete:
       deprecated: false
@@ -15626,6 +16097,7 @@ paths:
       summary: Delete auth domain
       tags:
       - authdomains
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint returns an auth domain by ID
@@ -15683,6 +16155,7 @@ paths:
       summary: Get auth domain by ID
       tags:
       - authdomains
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates an auth domain
@@ -15747,6 +16220,7 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+      x-signoz-stability: alpha
   /api/v2/dashboard_views:
     get:
       deprecated: false
@@ -15794,6 +16268,7 @@ paths:
       summary: List dashboard saved views
       tags:
       - dashboard
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: Persists the calling user's dashboard listing state (query, sort,
@@ -15851,6 +16326,7 @@ paths:
       summary: Create dashboard saved view
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/dashboard_views/{id}:
     delete:
       deprecated: false
@@ -15904,6 +16380,7 @@ paths:
       summary: Delete dashboard saved view
       tags:
       - dashboard
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: Replaces a saved view's name and data. Saved views are shared org-wide.
@@ -15972,6 +16449,7 @@ paths:
       summary: Update dashboard saved view
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/dashboards:
     get:
       deprecated: false
@@ -16049,6 +16527,7 @@ paths:
       summary: List dashboards (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a dashboard in the v2 format that follows
@@ -16106,6 +16585,7 @@ paths:
       summary: Create dashboard (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/dashboards/{id}:
     delete:
       deprecated: false
@@ -16159,6 +16639,7 @@ paths:
       summary: Delete dashboard (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint returns a v2-shape dashboard.
@@ -16222,6 +16703,7 @@ paths:
       summary: Get dashboard (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
     patch:
       deprecated: false
       description: 'This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard.
@@ -16296,6 +16778,7 @@ paths:
       summary: Patch dashboard (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates a v2-shape dashboard's metadata, data, and
@@ -16365,6 +16848,7 @@ paths:
       summary: Update dashboard (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/dashboards/{id}/clone:
     post:
       deprecated: false
@@ -16435,6 +16919,7 @@ paths:
       summary: Clone dashboard (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/dashboards/{id}/lock:
     delete:
       deprecated: false
@@ -16488,6 +16973,7 @@ paths:
       summary: Unlock dashboard (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint locks a v2-shape dashboard. Only the dashboard's
@@ -16540,6 +17026,7 @@ paths:
       summary: Lock dashboard (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/dashboards/{id}/migrate:
     post:
       deprecated: false
@@ -16606,6 +17093,7 @@ paths:
       summary: Migrate dashboard to v2
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/dashboards/system/{name}:
     get:
       deprecated: false
@@ -16673,6 +17161,7 @@ paths:
       summary: Get system dashboard
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/factor_password/forgot:
     post:
       deprecated: false
@@ -16708,6 +17197,7 @@ paths:
       summary: Forgot password
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/factor_password/reset:
     post:
       deprecated: false
@@ -16743,6 +17233,7 @@ paths:
       summary: Reset password
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/features:
     get:
       deprecated: false
@@ -16789,6 +17280,7 @@ paths:
       summary: Get features
       tags:
       - features
+      x-signoz-stability: alpha
   /api/v2/gateway/ingestion_keys:
     get:
       deprecated: false
@@ -16844,6 +17336,7 @@ paths:
       summary: Get ingestion keys for workspace
       tags:
       - gateway
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates an ingestion key for the workspace
@@ -16894,6 +17387,7 @@ paths:
       summary: Create ingestion key for workspace
       tags:
       - gateway
+      x-signoz-stability: alpha
   /api/v2/gateway/ingestion_keys/{keyId}:
     delete:
       deprecated: false
@@ -16934,6 +17428,7 @@ paths:
       summary: Delete ingestion key for workspace
       tags:
       - gateway
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint returns an ingestion key for the workspace
@@ -16991,6 +17486,7 @@ paths:
       summary: Get ingestion key for workspace
       tags:
       - gateway
+      x-signoz-stability: alpha
     patch:
       deprecated: false
       description: This endpoint updates an ingestion key for the workspace
@@ -17035,6 +17531,7 @@ paths:
       summary: Update ingestion key for workspace
       tags:
       - gateway
+      x-signoz-stability: alpha
   /api/v2/gateway/ingestion_keys/{keyId}/limits:
     get:
       deprecated: false
@@ -17096,6 +17593,7 @@ paths:
       summary: Get limits for the ingestion key
       tags:
       - gateway
+      x-signoz-stability: alpha
     post:
       deprecated: true
       description: This endpoint creates an ingestion key limit.
@@ -17154,6 +17652,7 @@ paths:
       summary: Create limit for the ingestion key
       tags:
       - gateway
+      x-signoz-stability: alpha
   /api/v2/gateway/ingestion_keys/limits/{limitId}:
     delete:
       deprecated: true
@@ -17196,6 +17695,7 @@ paths:
       summary: Delete limit for the ingestion key
       tags:
       - gateway
+      x-signoz-stability: alpha
     patch:
       deprecated: true
       description: This endpoint updates an ingestion key limit.
@@ -17240,6 +17740,7 @@ paths:
       summary: Update limit for the ingestion key
       tags:
       - gateway
+      x-signoz-stability: alpha
   /api/v2/gateway/ingestion_keys/search:
     get:
       deprecated: false
@@ -17300,6 +17801,7 @@ paths:
       summary: Search ingestion keys for workspace
       tags:
       - gateway
+      x-signoz-stability: alpha
   /api/v2/gateway/ingestion_limits:
     post:
       deprecated: false
@@ -17360,6 +17862,7 @@ paths:
       summary: Create ingestion limit
       tags:
       - gateway
+      x-signoz-stability: alpha
   /api/v2/gateway/ingestion_limits/{limitId}:
     delete:
       deprecated: false
@@ -17402,6 +17905,7 @@ paths:
       summary: Delete ingestion limit
       tags:
       - gateway
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint returns an ingestion limit
@@ -17459,6 +17963,7 @@ paths:
       summary: Get ingestion limit
       tags:
       - gateway
+      x-signoz-stability: alpha
     patch:
       deprecated: false
       description: This endpoint updates an ingestion limit
@@ -17503,6 +18008,7 @@ paths:
       summary: Update ingestion limit
       tags:
       - gateway
+      x-signoz-stability: alpha
   /api/v2/healthz:
     get:
       operationId: Healthz
@@ -17538,6 +18044,7 @@ paths:
       summary: Health check
       tags:
       - health
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/checks:
     get:
       deprecated: false
@@ -17604,6 +18111,7 @@ paths:
       summary: Run Infra Monitoring Setup Checks
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/clusters:
     post:
       deprecated: false
@@ -17677,6 +18185,7 @@ paths:
       summary: List Clusters for Infra Monitoring
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/daemonsets:
     post:
       deprecated: false
@@ -17760,6 +18269,7 @@ paths:
       summary: List DaemonSets for Infra Monitoring
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/deployments:
     post:
       deprecated: false
@@ -17837,6 +18347,7 @@ paths:
       summary: List Deployments for Infra Monitoring
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/hosts:
     post:
       deprecated: false
@@ -17904,6 +18415,7 @@ paths:
       summary: List Hosts for Infra Monitoring
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/jobs:
     post:
       deprecated: false
@@ -17985,6 +18497,7 @@ paths:
       summary: List Jobs for Infra Monitoring
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/kube_containers:
     post:
       deprecated: false
@@ -18065,6 +18578,7 @@ paths:
       summary: List Kubernetes Containers for Infra Monitoring
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/namespaces:
     post:
       deprecated: false
@@ -18135,6 +18649,7 @@ paths:
       summary: List Namespaces for Infra Monitoring
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/nodes:
     post:
       deprecated: false
@@ -18209,6 +18724,7 @@ paths:
       summary: List Nodes for Infra Monitoring
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/pods:
     post:
       deprecated: false
@@ -18284,6 +18800,7 @@ paths:
       summary: List Pods for Infra Monitoring
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/pvcs:
     post:
       deprecated: false
@@ -18354,6 +18871,7 @@ paths:
       summary: List Volumes for Infra Monitoring
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/infra_monitoring/statefulsets:
     post:
       deprecated: false
@@ -18431,6 +18949,7 @@ paths:
       summary: List StatefulSets for Infra Monitoring
       tags:
       - inframonitoring
+      x-signoz-stability: alpha
   /api/v2/livez:
     get:
       deprecated: false
@@ -18460,6 +18979,7 @@ paths:
       summary: Liveness check
       tags:
       - health
+      x-signoz-stability: alpha
   /api/v2/metric_reduction_rules:
     get:
       deprecated: false
@@ -18543,6 +19063,7 @@ paths:
       summary: List metric reduction rules
       tags:
       - metrics
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: Creates a volume-control rule for a metric and returns it with
@@ -18618,6 +19139,7 @@ paths:
       summary: Create a metric reduction rule
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metric_reduction_rules/{id}:
     delete:
       deprecated: false
@@ -18676,6 +19198,7 @@ paths:
       summary: Delete a metric reduction rule by id
       tags:
       - metrics
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: Returns a single volume-control rule by its id.
@@ -18745,6 +19268,7 @@ paths:
       summary: Get a metric reduction rule by id
       tags:
       - metrics
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: Updates the match type and labels of a volume-control rule by its
@@ -18826,6 +19350,7 @@ paths:
       summary: Update a metric reduction rule by id
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metric_reduction_rules/preview:
     post:
       deprecated: false
@@ -18902,6 +19427,7 @@ paths:
       summary: Preview a metric reduction rule
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metric_reduction_rules/stats:
     get:
       deprecated: false
@@ -18961,6 +19487,7 @@ paths:
       summary: Metric reduction stats
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metric_reduction_rules/timeseries:
     get:
       deprecated: false
@@ -19020,6 +19547,7 @@ paths:
       summary: Metric reduction volume over time
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metrics:
     get:
       deprecated: false
@@ -19096,6 +19624,7 @@ paths:
       summary: List metric names
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metrics/alerts:
     get:
       deprecated: false
@@ -19164,6 +19693,7 @@ paths:
       summary: Get metric alerts
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metrics/attributes:
     get:
       deprecated: false
@@ -19247,74 +19777,7 @@ paths:
       summary: Get metric attributes
       tags:
       - metrics
-  /api/v2/metrics/dashboards:
-    get:
-      deprecated: false
-      description: This endpoint returns associated dashboards for a specified metric
-      operationId: GetMetricDashboards
-      parameters:
-      - description: The name of the metric. May contain slashes (e.g. cloud-provider
-          metrics like run.googleapis.com/request_latencies).
-        in: query
-        name: metricName
-        required: true
-        schema:
-          description: The name of the metric. May contain slashes (e.g. cloud-provider
-            metrics like run.googleapis.com/request_latencies).
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/MetricsexplorertypesMetricDashboardsResponse'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get metric dashboards
-      tags:
-      - metrics
+      x-signoz-stability: alpha
   /api/v2/metrics/highlights:
     get:
       deprecated: false
@@ -19384,6 +19847,7 @@ paths:
       summary: Get metric highlights
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metrics/inspect:
     post:
       deprecated: false
@@ -19442,6 +19906,7 @@ paths:
       summary: Inspect raw metric data points
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metrics/metadata:
     get:
       deprecated: false
@@ -19511,6 +19976,7 @@ paths:
       summary: Get metric metadata
       tags:
       - metrics
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint helps to update metadata information like metric
@@ -19556,6 +20022,7 @@ paths:
       summary: Update metric metadata
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metrics/onboarding:
     get:
       deprecated: false
@@ -19603,6 +20070,7 @@ paths:
       summary: Check if non-SigNoz metrics have been received
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metrics/stats:
     post:
       deprecated: false
@@ -19661,6 +20129,7 @@ paths:
       summary: Get metrics statistics
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/metrics/treemap:
     post:
       deprecated: false
@@ -19719,7 +20188,89 @@ paths:
       summary: Get metrics treemap
       tags:
       - metrics
+      x-signoz-stability: alpha
   /api/v2/notification_channels:
+    get:
+      deprecated: false
+      description: Returns a page of notification channels for the org. Each entry
+        carries the channel's identity and kind but not its configuration; fetch a
+        channel by ID for that. Supports a case-insensitive display name search (`query`),
+        a kind filter (`kind`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`),
+        and offset-based pagination (`limit`/`offset`).
+      operationId: ListNotificationChannels
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: kind
+        schema:
+          $ref: '#/components/schemas/AlertmanagertypesChannelKind'
+      - in: query
+        name: sort
+        schema:
+          $ref: '#/components/schemas/AlertmanagertypesChannelListSort'
+      - in: query
+        name: order
+        schema:
+          $ref: '#/components/schemas/AlertmanagertypesChannelListOrder'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesListableNotificationChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:list
+      - tokenizer:
+        - notification-channel:list
+      summary: List notification channels
+      tags:
+      - channels
+      x-signoz-stability: development
     post:
       deprecated: false
       description: This endpoint creates a notification channel
@@ -19782,6 +20333,324 @@ paths:
       summary: Create notification channel
       tags:
       - channels
+      x-signoz-stability: development
+  /api/v2/notification_channels/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes a notification channel by ID
+      operationId: DeleteNotificationChannel
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:delete
+      - tokenizer:
+        - notification-channel:delete
+      summary: Delete notification channel
+      tags:
+      - channels
+      x-signoz-stability: development
+    get:
+      deprecated: false
+      description: This endpoint returns a notification channel by ID. A channel written
+        by the v1 API can carry a configuration this API does not model.
+      operationId: GetNotificationChannel
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesGettableNotificationChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:read
+      - tokenizer:
+        - notification-channel:read
+      summary: Get notification channel by ID
+      tags:
+      - channels
+      x-signoz-stability: development
+    put:
+      deprecated: false
+      description: 'This endpoint replaces a notification channel''s configuration
+        in full. Neither name is part of the request body: both are immutable. The
+        kind may change, which replaces the channel''s notifier configuration.'
+      operationId: UpdateNotificationChannel
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertmanagertypesUpdatableNotificationChannel'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesGettableNotificationChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:update
+      - tokenizer:
+        - notification-channel:update
+      summary: Update notification channel
+      tags:
+      - channels
+      x-signoz-stability: development
+  /api/v2/notification_channels/{id}/repair:
+    post:
+      deprecated: false
+      description: 'This endpoint diagnoses a stored channel that the v2 API cannot
+        read and applies the fitting action: a channel carrying several notifier configurations
+        is split into one channel per configuration, keeping this ID for the first;
+        a channel whose notifier kind v2 does not model is deleted; a channel with
+        an empty stored type has it rewritten from its data. A delete is refused while
+        a routing policy still names the channel. Nothing is written unless apply=true;
+        by default the response only shows what would happen.'
+      operationId: RepairNotificationChannel
+      parameters:
+      - in: query
+        name: apply
+        schema:
+          type: boolean
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertmanagertypesRepairChannelParams'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesChannelRepair'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:update
+      - tokenizer:
+        - notification-channel:update
+      summary: Repair notification channel
+      tags:
+      - channels
+      x-signoz-stability: development
+  /api/v2/notification_channels/test:
+    post:
+      deprecated: false
+      description: This endpoint sends a test notification for the configuration in
+        the request body. The channel need not exist and nothing is persisted, so
+        the body carries a configuration only.
+      operationId: TestNotificationChannel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertmanagertypesTestableNotificationChannel'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - notification-channel:create
+      - tokenizer:
+        - notification-channel:create
+      summary: Test notification channel
+      tags:
+      - channels
+      x-signoz-stability: development
   /api/v2/orgs/me:
     get:
       deprecated: false
@@ -19828,6 +20697,7 @@ paths:
       summary: Get my organization
       tags:
       - orgs
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates the organization I belong to
@@ -19878,6 +20748,7 @@ paths:
       summary: Update my organization
       tags:
       - orgs
+      x-signoz-stability: alpha
   /api/v2/public/dashboards/{id}:
     get:
       deprecated: false
@@ -19942,6 +20813,7 @@ paths:
       summary: Get public dashboard data (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/public/dashboards/{id}/panels/{key}/query_range:
     get:
       deprecated: false
@@ -20020,6 +20892,7 @@ paths:
       summary: Get query range result (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/quick_filters:
     get:
       deprecated: false
@@ -20075,6 +20948,7 @@ paths:
       summary: List quick filters
       tags:
       - quick_filter
+      x-signoz-stability: alpha
   /api/v2/quick_filters/{source}:
     get:
       deprecated: false
@@ -20134,6 +21008,7 @@ paths:
       summary: Get a source's quick filters
       tags:
       - quick_filter
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: Replaces the org's quick filters for the source named in the path.
@@ -20184,6 +21059,7 @@ paths:
       summary: Update quick filters
       tags:
       - quick_filter
+      x-signoz-stability: alpha
   /api/v2/readyz:
     get:
       operationId: Readyz
@@ -20219,6 +21095,7 @@ paths:
       summary: Readiness check
       tags:
       - health
+      x-signoz-stability: alpha
   /api/v2/reset_password_tokens/verify:
     post:
       deprecated: false
@@ -20254,6 +21131,7 @@ paths:
       summary: Verify a reset password token
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/roles/{id}/users:
     get:
       deprecated: false
@@ -20308,17 +21186,19 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - role:read
       - tokenizer:
-        - ADMIN
+        - role:read
       summary: Get users by role id
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/rules:
     get:
-      deprecated: false
-      description: This endpoint lists all alert rules with their current evaluation
-        state
+      deprecated: true
+      description: 'This endpoint lists all alert rules with their current evaluation
+        state. Deprecated: use ListRulesV3, which supports filtering, sorting and
+        pagination.'
       operationId: ListRules
       responses:
         "200":
@@ -20363,6 +21243,7 @@ paths:
       summary: List alert rules
       tags:
       - rules
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a new alert rule
@@ -21203,6 +22084,7 @@ paths:
       summary: Create alert rule
       tags:
       - rules
+      x-signoz-stability: alpha
   /api/v2/rules/{id}:
     delete:
       deprecated: false
@@ -21249,6 +22131,7 @@ paths:
       summary: Delete alert rule
       tags:
       - rules
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint returns an alert rule by ID
@@ -21306,6 +22189,7 @@ paths:
       summary: Get alert rule by ID
       tags:
       - rules
+      x-signoz-stability: alpha
     patch:
       deprecated: false
       description: This endpoint applies a partial update to an alert rule by ID
@@ -22158,6 +23042,7 @@ paths:
       summary: Patch alert rule
       tags:
       - rules
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates an alert rule by ID
@@ -22998,6 +23883,7 @@ paths:
       summary: Update alert rule
       tags:
       - rules
+      x-signoz-stability: alpha
   /api/v2/rules/{id}/history/filter_keys:
     get:
       deprecated: false
@@ -23099,6 +23985,7 @@ paths:
       summary: Get rule history filter keys
       tags:
       - rules
+      x-signoz-stability: alpha
   /api/v2/rules/{id}/history/filter_values:
     get:
       deprecated: false
@@ -23208,6 +24095,7 @@ paths:
       summary: Get rule history filter values
       tags:
       - rules
+      x-signoz-stability: alpha
   /api/v2/rules/{id}/history/overall_status:
     get:
       deprecated: false
@@ -23282,6 +24170,7 @@ paths:
       summary: Get rule overall status timeline
       tags:
       - rules
+      x-signoz-stability: alpha
   /api/v2/rules/{id}/history/stats:
     get:
       deprecated: false
@@ -23353,6 +24242,7 @@ paths:
       summary: Get rule history stats
       tags:
       - rules
+      x-signoz-stability: alpha
   /api/v2/rules/{id}/history/timeline:
     get:
       deprecated: false
@@ -23444,6 +24334,7 @@ paths:
       summary: Get rule history timeline
       tags:
       - rules
+      x-signoz-stability: alpha
   /api/v2/rules/{id}/history/top_contributors:
     get:
       deprecated: false
@@ -23518,6 +24409,7 @@ paths:
       summary: Get top contributors to rule firing
       tags:
       - rules
+      x-signoz-stability: alpha
   /api/v2/rules/test:
     post:
       deprecated: false
@@ -24359,6 +25251,7 @@ paths:
       summary: Test alert rule
       tags:
       - rules
+      x-signoz-stability: alpha
   /api/v2/saved_views:
     get:
       deprecated: false
@@ -24423,6 +25316,7 @@ paths:
       summary: List saved views
       tags:
       - saved_view
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: Persists a saved view for the explore page. Returns the id of the
@@ -24486,6 +25380,7 @@ paths:
       summary: Create saved view
       tags:
       - saved_view
+      x-signoz-stability: alpha
   /api/v2/saved_views/{id}:
     delete:
       deprecated: false
@@ -24538,6 +25433,7 @@ paths:
       summary: Delete saved view
       tags:
       - saved_view
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: Returns a saved view by id.
@@ -24601,6 +25497,7 @@ paths:
       summary: Get saved view
       tags:
       - saved_view
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: Replaces a saved view's name and query.
@@ -24657,6 +25554,7 @@ paths:
       summary: Update saved view
       tags:
       - saved_view
+      x-signoz-stability: alpha
   /api/v2/sessions:
     delete:
       deprecated: false
@@ -24694,6 +25592,7 @@ paths:
       summary: Delete session
       tags:
       - sessions
+      x-signoz-stability: alpha
   /api/v2/sessions/context:
     get:
       deprecated: false
@@ -24729,6 +25628,7 @@ paths:
       summary: Get session context
       tags:
       - sessions
+      x-signoz-stability: alpha
   /api/v2/sessions/email_password:
     post:
       deprecated: false
@@ -24775,6 +25675,7 @@ paths:
       summary: Create session by email and password
       tags:
       - sessions
+      x-signoz-stability: alpha
   /api/v2/sessions/rotate:
     post:
       deprecated: false
@@ -24815,6 +25716,7 @@ paths:
       summary: Rotate session
       tags:
       - sessions
+      x-signoz-stability: alpha
   /api/v2/user_roles:
     post:
       deprecated: false
@@ -24872,12 +25774,15 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - user:attach
+        - role:attach
       summary: Create user role
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/user_roles/{id}:
     delete:
       deprecated: false
@@ -24924,12 +25829,15 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:detach
+        - role:detach
       - tokenizer:
-        - ADMIN
+        - user:detach
+        - role:detach
       summary: Delete user role
       tags:
       - users
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint gets an existing user role
@@ -24987,12 +25895,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:read
       - tokenizer:
-        - ADMIN
+        - user:read
       summary: Get user role
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/users:
     get:
       deprecated: false
@@ -25035,12 +25944,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:list
       - tokenizer:
-        - ADMIN
+        - user:list
       summary: List users v2
       tags:
       - users
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a user for the organization
@@ -25097,12 +26007,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:create
+        - user:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - user:create
+        - user:attach
+        - role:attach
       summary: Create user
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/users/{id}:
     delete:
       deprecated: false
@@ -25143,12 +26058,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:delete
       - tokenizer:
-        - ADMIN
+        - user:delete
       summary: Delete user
       tags:
       - users
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint returns the user by id
@@ -25200,12 +26116,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:read
       - tokenizer:
-        - ADMIN
+        - user:read
       summary: Get user by user id
       tags:
       - users
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates the user by id
@@ -25256,12 +26173,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:update
       - tokenizer:
-        - ADMIN
+        - user:update
       summary: Update user v2
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/users/{id}/reset_password_tokens:
     get:
       deprecated: false
@@ -25314,12 +26232,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-password:list
       - tokenizer:
-        - ADMIN
+        - factor-password:list
       summary: Get reset password token for a user
       tags:
       - users
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint creates or regenerates a reset password token for
@@ -25379,12 +26298,15 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-password:create
+        - user:attach
       - tokenizer:
-        - ADMIN
+        - factor-password:create
+        - user:attach
       summary: Create or regenerate reset password token for a user
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/users/{id}/roles:
     get:
       deprecated: false
@@ -25439,12 +26361,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - user:read
       - tokenizer:
-        - ADMIN
+        - user:read
       summary: Get user roles
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/users/me:
     get:
       deprecated: false
@@ -25488,6 +26411,7 @@ paths:
       summary: Get my user v2
       tags:
       - users
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint updates the user I belong to
@@ -25523,6 +26447,7 @@ paths:
       summary: Update my user v2
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/users/me/dashboards:
     get:
       deprecated: false
@@ -25599,6 +26524,7 @@ paths:
       summary: List dashboards for the current user (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/users/me/dashboards/{id}/pins:
     delete:
       deprecated: false
@@ -25646,6 +26572,7 @@ paths:
       summary: Unpin a dashboard for the current user (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: Pins the dashboard for the calling user. A user can pin at most
@@ -25705,6 +26632,7 @@ paths:
       summary: Pin a dashboard for the current user (v2)
       tags:
       - dashboard
+      x-signoz-stability: alpha
   /api/v2/users/me/factor_password:
     put:
       deprecated: false
@@ -25749,13 +26677,11 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
+      - tokenizer: []
       summary: Updates my password
       tags:
       - users
+      x-signoz-stability: alpha
   /api/v2/zeus/hosts:
     get:
       deprecated: false
@@ -25814,6 +26740,7 @@ paths:
       summary: Get host info from Zeus.
       tags:
       - zeus
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint saves the host of a deployment to zeus.
@@ -25870,6 +26797,7 @@ paths:
       summary: Put host in Zeus for a deployment.
       tags:
       - zeus
+      x-signoz-stability: alpha
   /api/v2/zeus/profiles:
     put:
       deprecated: false
@@ -25927,6 +26855,7 @@ paths:
       summary: Put profile in Zeus for a deployment.
       tags:
       - zeus
+      x-signoz-stability: alpha
   /api/v3/licenses:
     post:
       deprecated: true
@@ -25985,6 +26914,7 @@ paths:
       summary: Activate a license.
       tags:
       - licenses
+      x-signoz-stability: alpha
     put:
       deprecated: true
       description: This endpoint refreshes the active license of the organization
@@ -26031,6 +26961,7 @@ paths:
       summary: Refresh a license.
       tags:
       - licenses
+      x-signoz-stability: alpha
   /api/v3/metrics/dashboards:
     get:
       deprecated: false
@@ -26100,6 +27031,95 @@ paths:
       summary: Get metric dashboards (v2)
       tags:
       - metrics
+      x-signoz-stability: alpha
+  /api/v3/rules:
+    get:
+      deprecated: false
+      description: Returns a page of alert rules with their current evaluation state,
+        trimmed to the fields the list page renders. Supports a filter DSL (`query`),
+        a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`),
+        order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). In the
+        filter DSL, a non-reserved key is matched as a rule label directly (`team
+        = infra`); a key that collides with a reserved keyword matches either interpretation
+        (negative operators exclude both), and `labels.<key>` targets only the label.
+        The response also carries the org's label pairs and the reserved filter keys
+        for building filter suggestions.
+      operationId: ListRulesV3
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: states
+        schema:
+          items:
+            type: string
+          type: array
+      - in: query
+        name: sort
+        schema:
+          $ref: '#/components/schemas/RuletypesListSort'
+      - in: query
+        name: order
+        schema:
+          $ref: '#/components/schemas/RuletypesListOrder'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesListableRules'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List alert rules (v3)
+      tags:
+      - rules
+      x-signoz-stability: alpha
   /api/v3/traces/{traceID}/flamegraph:
     post:
       deprecated: false
@@ -26169,6 +27189,7 @@ paths:
       summary: Get flamegraph view for a trace
       tags:
       - tracedetail
+      x-signoz-stability: alpha
   /api/v4/licenses:
     get:
       deprecated: false
@@ -26223,6 +27244,7 @@ paths:
       summary: List licenses.
       tags:
       - licenses
+      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint validates the license key with the upstream server
@@ -26292,6 +27314,7 @@ paths:
       summary: Activate a license.
       tags:
       - licenses
+      x-signoz-stability: alpha
   /api/v4/licenses/{id}:
     delete:
       deprecated: false
@@ -26345,6 +27368,7 @@ paths:
       summary: Delete a license.
       tags:
       - licenses
+      x-signoz-stability: alpha
     get:
       deprecated: false
       description: This endpoint gets the license by id.
@@ -26408,6 +27432,7 @@ paths:
       summary: Get a license.
       tags:
       - licenses
+      x-signoz-stability: alpha
     put:
       deprecated: false
       description: This endpoint refreshes the active license of the organization
@@ -26460,6 +27485,7 @@ paths:
       summary: Refresh a license.
       tags:
       - licenses
+      x-signoz-stability: alpha
   /api/v4/licenses/active:
     get:
       deprecated: false
@@ -26522,6 +27548,7 @@ paths:
       summary: Get the active license.
       tags:
       - licenses
+      x-signoz-stability: alpha
   /api/v4/traces/{traceID}/waterfall:
     post:
       deprecated: false
@@ -26593,6 +27620,7 @@ paths:
       summary: Get waterfall view for a trace
       tags:
       - tracedetail
+      x-signoz-stability: alpha
   /api/v5/query_range:
     post:
       deprecated: false
@@ -26999,6 +28027,7 @@ paths:
       summary: Query range
       tags:
       - querier
+      x-signoz-stability: alpha
   /api/v5/query_range/preview:
     post:
       deprecated: false
@@ -27076,6 +28105,7 @@ paths:
       summary: Query range preview
       tags:
       - querier
+      x-signoz-stability: alpha
   /api/v5/substitute_vars:
     post:
       deprecated: false
@@ -27133,6 +28163,7 @@ paths:
       summary: Replace variables
       tags:
       - querier
+      x-signoz-stability: alpha
   /prometheus/api/v1/query:
     get:
       description: 'Prometheus-compatible endpoint: the request and response contract
@@ -27219,6 +28250,7 @@ paths:
       summary: Prometheus instant query
       tags:
       - prometheus
+      x-signoz-stability: alpha
     post:
       description: 'Prometheus-compatible endpoint: the request and response contract
         is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
@@ -27304,6 +28336,7 @@ paths:
       summary: Prometheus instant query
       tags:
       - prometheus
+      x-signoz-stability: alpha
   /prometheus/api/v1/query_range:
     get:
       description: 'Prometheus-compatible endpoint: the request and response contract
@@ -27403,6 +28436,7 @@ paths:
       summary: Prometheus range query
       tags:
       - prometheus
+      x-signoz-stability: alpha
     post:
       description: 'Prometheus-compatible endpoint: the request and response contract
         is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
@@ -27501,6 +28535,7 @@ paths:
       summary: Prometheus range query
       tags:
       - prometheus
+      x-signoz-stability: alpha
 servers:
 - description: The fully qualified URL to the SigNoz APIServer.
   url: https://{host}:{port}{base_path}

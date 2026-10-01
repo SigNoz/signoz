@@ -26,14 +26,13 @@ func TestSearchCostGuard(t *testing.T) {
 	end := uint64(releaseTime.UnixMilli())
 
 	fl := flaggertest.WithBooleanFlags(t, map[string]bool{})
-	fm := logstelemetryschema.NewFieldMapper(fl)
-	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
+	storage := logstelemetryschema.NewStorage()
 	store := telemetrytypestest.NewMockMetadataStore()
 	store.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	rewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	rewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 	sb := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
-		store, fm, cb, rewriter, logstelemetryschema.DefaultFullTextColumn, fl, nil,
+		store, storage, rewriter, logstelemetryschema.DefaultFullTextColumn, fl, nil,
 		statementbuilder.Config{SearchMaxScanRows: 100000, SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 	)
 	query := qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
@@ -57,14 +56,13 @@ func TestSearchCostGuardJSONBody(t *testing.T) {
 	end := uint64(releaseTime.UnixMilli())
 
 	fl := flaggertest.WithUseJSONBody(t, true)
-	fm := logstelemetryschema.NewFieldMapper(fl)
-	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
+	storage := logstelemetryschema.NewStorage()
 	store := telemetrytypestest.NewMockMetadataStore()
 	store.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	rewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	rewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 	sb := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
-		store, fm, cb, rewriter, logstelemetryschema.DefaultFullTextColumn, fl, nil,
+		store, storage, rewriter, logstelemetryschema.DefaultFullTextColumn, fl, nil,
 		statementbuilder.Config{
 			SearchMaxScanRows:         100000,
 			SearchMaxScanRowsJSONBody: 10000,

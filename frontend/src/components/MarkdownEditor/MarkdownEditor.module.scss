@@ -1,0 +1,253 @@
+@use '../../styles/scrollbar' as *;
+
+.container {
+	// Read by the decoration theme in `markdownHighlight`, which can't see SCSS.
+	--md-syntax-heading: var(--text-vanilla-100);
+	--md-syntax-strong: var(--text-vanilla-100);
+	--md-syntax-emphasis: var(--text-vanilla-300);
+	--md-syntax-quote: var(--text-vanilla-400);
+	--md-syntax-marker: var(--text-robin-300);
+	--md-syntax-code: var(--text-forest-400);
+	--md-syntax-link: var(--text-robin-400);
+	--md-syntax-variable: var(--text-amber-400);
+
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	background: var(--l1-background);
+}
+
+:global(body.lightMode) .container {
+	--md-syntax-heading: var(--text-ink-400);
+	--md-syntax-strong: var(--text-ink-400);
+	--md-syntax-emphasis: var(--text-ink-200);
+	--md-syntax-quote: var(--text-neutral-light-100);
+	--md-syntax-marker: var(--text-robin-500);
+	--md-syntax-code: var(--text-forest-700);
+	--md-syntax-link: var(--text-robin-500);
+	--md-syntax-variable: var(--text-sienna-500);
+}
+
+.toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.formatChip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 8px;
+	border: 1px solid var(--l1-border);
+	border-radius: 2px;
+	color: var(--text-sienna-400);
+}
+
+.formatLabel {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--l1-foreground);
+}
+
+.toolbarDivider {
+	width: 1px;
+	height: 16px;
+	flex-shrink: 0;
+	background: var(--l1-border);
+}
+
+.commands {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.toolbarEnd {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-left: auto;
+}
+
+.insertVariable {
+	white-space: nowrap;
+}
+
+.insertVariableIcon {
+	color: var(--text-amber-400);
+}
+
+// The ui library's dropdown assumes a global border-box reset this app doesn't
+// have (`box-sizing` is set on `body` only and doesn't inherit): its items are
+// `width: 100%` + padding, so in the portal they lay out content-box and
+// overflow the popup by the padding — clipping the flush-right badge.
+.variableMenu,
+.variableMenu * {
+	box-sizing: border-box;
+}
+
+.variableMenu {
+	width: 320px;
+}
+
+// Shrinkable, so a clamped popup truncates the name instead of clipping the
+// badge at the content's `overflow: hidden` edge.
+.variableRow {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex: 1;
+	min-width: 0;
+}
+
+.variableName {
+	font-family: var(--font-family-sf-mono);
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.variableBadge {
+	flex-shrink: 0;
+	margin-left: auto;
+	padding: 2px 6px;
+	border: 1px solid color-mix(in srgb, var(--text-amber-400) 40%, transparent);
+	border-radius: 4px;
+	font-family: var(--font-family-sf-mono);
+	font-size: 10px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-amber-400);
+}
+
+.editorArea {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.codeMirror {
+	height: 100%;
+	font-family: var(--font-family-sf-mono);
+	font-size: 13px;
+
+	:global(.cm-editor) {
+		height: 100%;
+		background: transparent;
+	}
+
+	:global(.cm-editor.cm-focused) {
+		outline: none;
+	}
+
+	:global(.cm-gutters) {
+		background: transparent;
+		border-right: none;
+		color: var(--text-neutral-dark-200);
+	}
+
+	:global(.cm-scroller) {
+		line-height: 20px;
+		padding: 0 12px;
+		@include custom-scrollbar;
+	}
+
+	:global(.cm-content) {
+		padding: 8px 0;
+	}
+}
+
+.statusBar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-shrink: 0;
+	padding: 6px 12px;
+	border-top: 1px solid var(--l1-border);
+}
+
+.statusPosition {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-family: var(--font-family-sf-mono);
+	font-size: 11px;
+	color: var(--text-neutral-dark-200);
+}
+
+.statusSeparator {
+	color: var(--l1-border);
+}
+
+.statusCount {
+	color: inherit;
+}
+
+.statusCountOverLimit {
+	color: var(--text-cherry-400);
+	font-weight: 600;
+}
+
+.statusHint {
+	font-size: 11px;
+	color: var(--text-neutral-dark-200);
+}
+
+.helpContent {
+	width: 280px;
+	max-height: 320px;
+	overflow-y: auto;
+	@include custom-scrollbar;
+}
+
+.helpTitle {
+	display: block;
+	margin-bottom: 8px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-neutral-dark-200);
+}
+
+.helpList {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin: 0;
+}
+
+.helpRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+
+	dt {
+		margin: 0;
+
+		code {
+			font-family: var(--font-family-sf-mono);
+			font-size: 11px;
+			color: var(--text-forest-400);
+		}
+	}
+
+	dd {
+		margin: 0;
+		font-size: 11px;
+		color: var(--text-neutral-dark-200);
+	}
+}
+
+// The help popover portals out of `.container`, so it can't inherit its tokens.
+:global(body.lightMode) .helpRow dt code {
+	color: var(--text-forest-700);
+}

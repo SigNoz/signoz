@@ -3,16 +3,15 @@ package flagger
 import "github.com/SigNoz/signoz/pkg/types/featuretypes"
 
 var (
-	FeatureUseSpanMetrics            = featuretypes.MustNewName("use_span_metrics")
-	FeatureKafkaSpanEval             = featuretypes.MustNewName("kafka_span_eval")
-	FeatureHideRootUser              = featuretypes.MustNewName("hide_root_user")
-	FeaturePutMetersInZeus           = featuretypes.MustNewName("put_meters_in_zeus")
-	FeatureUseMeterReporter          = featuretypes.MustNewName("use_meter_reporter")
-	FeatureUseJSONBody               = featuretypes.MustNewName("use_json_body")
-	FeatureEnableAIObservability     = featuretypes.MustNewName("enable_ai_observability")
-	FeatureEnableMetricsReduction    = featuretypes.MustNewName("enable_metrics_reduction")
-	FeatureUsePrometheusClickhouseV2 = featuretypes.MustNewName("use_prometheus_clickhouse_v2")
-	FeatureResolveSemconvFamilies    = featuretypes.MustNewName("resolve_semconv_families")
+	FeatureUseSpanMetrics         = featuretypes.MustNewName("use_span_metrics")
+	FeatureKafkaSpanEval          = featuretypes.MustNewName("kafka_span_eval")
+	FeatureHideRootUser           = featuretypes.MustNewName("hide_root_user")
+	FeaturePutMetersInZeus        = featuretypes.MustNewName("put_meters_in_zeus")
+	FeatureUseMeterReporter       = featuretypes.MustNewName("use_meter_reporter")
+	FeatureUseJSONBody            = featuretypes.MustNewName("use_json_body")
+	FeatureEnableMetricsReduction = featuretypes.MustNewName("enable_metrics_reduction")
+	FeatureResolveSemconvFamilies = featuretypes.MustNewName("resolve_semconv_families")
+	FeatureUseTraceAttributesJSON = featuretypes.MustNewName("use_trace_attributes_json")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -66,14 +65,6 @@ func MustNewRegistry() featuretypes.Registry {
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
 		&featuretypes.Feature{
-			Name:           FeatureEnableAIObservability,
-			Kind:           featuretypes.KindBoolean,
-			Stage:          featuretypes.StageExperimental,
-			Description:    "Controls whether ai observability is enabled",
-			DefaultVariant: featuretypes.MustNewName("disabled"),
-			Variants:       featuretypes.NewBooleanVariants(),
-		},
-		&featuretypes.Feature{
 			Name:           FeatureEnableMetricsReduction,
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
@@ -82,18 +73,18 @@ func MustNewRegistry() featuretypes.Registry {
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
 		&featuretypes.Feature{
-			Name:           FeatureUsePrometheusClickhouseV2,
+			Name:           FeatureResolveSemconvFamilies,
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
-			Description:    "Runs PromQL queries on the clickhousev2 provider alongside the served engine result and logs any difference; serving is unaffected.",
+			Description:    "Controls whether trace, log, and metric queries resolve a semantic-convention name to all the spellings of its family",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
 		&featuretypes.Feature{
-			Name:           FeatureResolveSemconvFamilies,
+			Name:           FeatureUseTraceAttributesJSON,
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
-			Description:    "Controls whether trace queries resolve a semantic-convention name to all the spellings of its family",
+			Description:    "Controls whether trace queries read span attributes from the JSON columns",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},

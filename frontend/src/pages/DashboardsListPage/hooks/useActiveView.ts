@@ -26,6 +26,8 @@ interface UseActiveViewArgs {
 	sortOrder: DashboardtypesListOrderDTO;
 	setSortColumn: (column: DashboardtypesListSortDTO) => void;
 	setSortOrder: (order: DashboardtypesListOrderDTO) => void;
+	/** The caller's `list` grant, which saved views are gated on server-side. */
+	canListDashboards: boolean;
 }
 
 export interface UseActiveViewResult {
@@ -58,6 +60,7 @@ export function useActiveView({
 	sortOrder,
 	setSortColumn,
 	setSortOrder,
+	canListDashboards,
 }: UseActiveViewArgs): UseActiveViewResult {
 	const [activeViewId, setActiveViewId] = useQueryState(
 		'view',
@@ -70,7 +73,7 @@ export function useActiveView({
 		createView,
 		updateView,
 		deleteView,
-	} = useSavedViews();
+	} = useSavedViews({ enabled: canListDashboards });
 
 	const activeCustom = useMemo(
 		() => customViews.find((v) => v.id === activeViewId),

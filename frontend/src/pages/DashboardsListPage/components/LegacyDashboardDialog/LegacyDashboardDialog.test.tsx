@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import LegacyDashboardDialog from './LegacyDashboardDialog';
 
@@ -35,13 +35,12 @@ describe('LegacyDashboardDialog', () => {
 		isMigrating = false;
 	});
 
-	const setup = ({ open = true, canEdit = true } = {}): void => {
+	const setup = ({ open = true } = {}): void => {
 		render(
 			<LegacyDashboardDialog
 				open={open}
 				dashboardId={DASHBOARD_ID}
 				dashboardName="My Legacy Dashboard"
-				canEdit={canEdit}
 				onClose={jest.fn()}
 			/>,
 		);
@@ -70,6 +69,11 @@ describe('LegacyDashboardDialog', () => {
 
 	it('retries the migration for the dashboard', async () => {
 		setup();
+		// Retry is gated on dashboard:update, so it starts disabled until the check
+		// resolves.
+		await waitFor(() =>
+			expect(screen.getByTestId('legacy-dashboard-retry-migration')).toBeEnabled(),
+		);
 		await userEvent.click(screen.getByTestId('legacy-dashboard-retry-migration'));
 		expect(mockRetryMigration).toHaveBeenCalledWith(DASHBOARD_ID);
 	});
@@ -81,11 +85,8 @@ describe('LegacyDashboardDialog', () => {
 		expect(screen.getByTestId('legacy-dashboard-close')).toBeDisabled();
 	});
 
-	it('offers only the support path without edit access', () => {
-		setup({ canEdit: false });
-		expect(
-			screen.queryByTestId('legacy-dashboard-retry-migration'),
-		).not.toBeInTheDocument();
+	it('keeps the support path available', () => {
+		setup();
 		expect(
 			screen.getByTestId('legacy-dashboard-contact-support'),
 		).toBeInTheDocument();

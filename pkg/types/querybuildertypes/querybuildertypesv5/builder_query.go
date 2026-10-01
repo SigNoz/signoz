@@ -28,6 +28,10 @@ type QueryBuilderQuery[T any] struct {
 	// currently supported: []Aggregation, []MetricAggregation
 	Aggregations []T `json:"aggregations,omitzero"`
 
+	// BucketOptions is the bucket axis to count this query's values into. Only a
+	// heatmap request reads it, and only from the query it draws.
+	BucketOptions *BucketOptions `json:"bucketOptions,omitempty"`
+
 	// disabled if true, the query will not be executed
 	Disabled bool `json:"disabled"`
 
@@ -152,6 +156,11 @@ func (q QueryBuilderQuery[T]) Copy() QueryBuilderQuery[T] {
 
 	if q.Having != nil {
 		c.Having = q.Having.Copy()
+	}
+
+	if q.BucketOptions != nil {
+		bucketOptionsCopy := *q.BucketOptions
+		c.BucketOptions = &bucketOptionsCopy
 	}
 
 	return c

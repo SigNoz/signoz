@@ -1,32 +1,13 @@
-import { ReactNode, useState } from 'react';
-import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
-import { Color } from '@signozhq/design-tokens';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
-import { Switch } from '@signozhq/ui/switch';
-import { Collapse } from 'antd';
-import { Divider } from '@signozhq/ui/divider';
-import { Badge } from '@signozhq/ui/badge';
-import { Typography } from '@signozhq/ui/typography';
-import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
+import { ReactNode } from 'react';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
-import { OptionsQuery } from 'container/OptionsMenu/types';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChevronDown, ChevronRight, Search } from '@signozhq/icons';
-import { useIsLogDetailsV2 } from 'components/LogDetail/useIsLogDetailsV2';
 import { DataViewer } from 'periscope/components/DataViewer';
-import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
-import { ActionItemProps } from './ActionItem';
 import { useLogAttributeActions } from './hooks/useLogAttributeActions';
-import TableView from './TableView';
 import {
 	aggregateAttributesResourcesToObject,
 	buildPrettyViewData,
-	getBodyDisplayString,
 	getSanitizedLogBody,
-	removeEscapeCharacters,
 } from './utils';
 
 import './Overview.styles.scss';
@@ -38,247 +19,58 @@ const MAX_BODY_SANITIZE_CHARS = 64 * 1024;
 interface OverviewProps {
 	logData: ILog;
 	isListViewPanel?: boolean;
-	selectedOptions: OptionsQuery;
-	listViewPanelSelectedFields?: IField[] | null;
 	handleChangeSelectedView?: ChangeViewFunctionType;
 	onApplyLogFilter?: (expression: string) => void;
 }
 
-type Props = OverviewProps &
-	Partial<Pick<ActionItemProps, 'onClickActionItem'>> &
-	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
-
 function Overview({
 	logData,
-	onAddToQuery,
-	onClickActionItem,
 	isListViewPanel = false,
-	selectedOptions,
-	listViewPanelSelectedFields,
 	handleChangeSelectedView,
 	onApplyLogFilter,
-}: Props): JSX.Element {
-	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
-	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
-	const [isAttributesExpanded, setIsAttributesExpanded] =
-		useState<boolean>(true);
-	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
-
-	const isDarkMode = useIsDarkMode();
-
+}: OverviewProps): JSX.Element {
 	const { actions, visibleActions } = useLogAttributeActions({
 		handleChangeSelectedView,
 		isListViewPanel,
 		onApplyLogFilter,
 	});
 
-	const isLogDetailsV2 = useIsLogDetailsV2();
-
-	if (isLogDetailsV2) {
-		const raw = aggregateAttributesResourcesToObject(logData);
-		const prettyData = buildPrettyViewData(raw);
-		return (
-			<div className="overview-container">
-				<DataViewer
-					data={prettyData}
-					drawerKey="logs-details"
-					fontSize={13}
-					prettyViewProps={{
-						actions,
-						visibleActions,
-						renderLeafValue: (value, keyPath): ReactNode | undefined => {
-							// Sanitize (unescape + ANSI→color) string values under `body`.
-							// Skip huge ones (render raw, still safe) to avoid the sanitize
-							// choke;
-							if (
-								typeof value !== 'string' ||
-								keyPath[keyPath.length - 1] !== 'body' ||
-								value.length > MAX_BODY_SANITIZE_CHARS
-							) {
-								return undefined;
-							}
-							return (
-								<span
-									className="log-body-value"
-									// Safe: getSanitizedLogBody runs the value through dompurify.
-									// eslint-disable-next-line react/no-danger
-									dangerouslySetInnerHTML={{
-										__html: getSanitizedLogBody(value, { shouldEscapeHtml: true }),
-									}}
-								/>
-							);
-						},
-					}}
-					jsonString={JSON.stringify(raw, null, 2)}
-				/>
-			</div>
-		);
-	}
-
-	const options: EditorProps['options'] = {
-		automaticLayout: true,
-		readOnly: true,
-		wordWrap: isWrapWord ? 'on' : 'off',
-		minimap: {
-			enabled: false,
-		},
-		fontWeight: '400',
-		fontFamily: 'Geist Mono',
-		fontSize: 13,
-		lineHeight: 18,
-		colorDecorators: true,
-		scrollBeyondLastLine: false,
-		scrollbar: {
-			vertical: 'hidden',
-			horizontal: 'hidden',
-		},
-	};
-
-	const handleWrapWord = (checked: boolean): void => {
-		setIsWrapWord(checked);
-	};
-
-	function setEditorTheme(monaco: Monaco): void {
-		monaco.editor.defineTheme('my-theme', {
-			base: 'vs-dark',
-			inherit: true,
-			rules: [
-				{ token: 'string.key.json', foreground: Color.BG_VANILLA_400 },
-				{ token: 'string.value.json', foreground: Color.BG_ROBIN_400 },
-			],
-			colors: {
-				'editor.background': Color.BG_INK_400,
-			},
-		});
-	}
-
-	const handleSearchVisible = (): void => {
-		setIsSearchVisible(!isSearchVisible);
-	};
-
-	const toogleAttributePanelOpenState = (): void => {
-		setIsAttributesExpanded(!isAttributesExpanded);
-	};
+	const raw = aggregateAttributesResourcesToObject(logData);
+	const prettyData = buildPrettyViewData(raw);
 
 	return (
 		<div className="overview-container">
-			<Collapse
-				defaultActiveKey={['1']}
-				expandIcon={(props): ReactNode =>
-					props.isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-				}
-				items={[
-					{
-						key: '1',
-						label: (
-							<Badge color="vanilla">
-								<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
-									body
-								</Typography.Text>
-							</Badge>
-						),
-						children: (
-							<div className="logs-body-content">
-								<MEditor
-									value={removeEscapeCharacters(getBodyDisplayString(logData.body))}
-									language="json"
-									options={options}
-									onChange={(): void => {}}
-									height="20vh"
-									theme={isDarkMode ? 'my-theme' : 'light'}
-									onMount={(_, monaco): void => {
-										document.fonts.ready.then(() => {
-											monaco.editor.remeasureFonts();
-										});
-									}}
-									beforeMount={setEditorTheme}
-								/>
-								<Divider
-									style={{
-										margin: 0,
-										border: isDarkMode
-											? `1px solid ${Color.BG_SLATE_500}`
-											: `1px solid ${Color.BG_VANILLA_200}`,
-									}}
-								/>
-								<div className="log-switch">
-									<div className="wrap-word-switch">
-										<Typography.Text>Wrap text</Typography.Text>
-										<Switch value={isWrapWord} onChange={handleWrapWord} />
-									</div>
-								</div>
-							</div>
-						),
-						// extra: <Badge className="tag" color="vanilla">JSON</Badge>,
-						className: 'collapse-content',
+			<DataViewer
+				data={prettyData}
+				drawerKey="logs-details"
+				fontSize={13}
+				prettyViewProps={{
+					actions,
+					visibleActions,
+					renderLeafValue: (value, keyPath): ReactNode | undefined => {
+						// Sanitize (unescape + ANSI→color) string values under `body`.
+						// Skip huge ones (render raw, still safe) to avoid the sanitize
+						// choke;
+						if (
+							typeof value !== 'string' ||
+							keyPath[keyPath.length - 1] !== 'body' ||
+							value.length > MAX_BODY_SANITIZE_CHARS
+						) {
+							return undefined;
+						}
+						return (
+							<span
+								className="log-body-value"
+								// Safe: getSanitizedLogBody runs the value through dompurify.
+								// eslint-disable-next-line react/no-danger
+								dangerouslySetInnerHTML={{
+									__html: getSanitizedLogBody(value, { shouldEscapeHtml: true }),
+								}}
+							/>
+						);
 					},
-				]}
-			/>
-
-			<Collapse
-				className="attribute-table"
-				defaultActiveKey={['1']}
-				bordered={false}
-				expandIcon={(props): ReactNode =>
-					props.isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-				}
-				items={[
-					{
-						key: '1',
-						label: (
-							<div
-								className="attribute-tab-header"
-								onClick={toogleAttributePanelOpenState}
-							>
-								<Badge color="vanilla">
-									<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
-										Attributes
-									</Typography.Text>
-								</Badge>
-
-								{isAttributesExpanded && (
-									<Button
-										variant="link"
-										color="none"
-										className="action-btn"
-										prefix={<Search size={12} />}
-										onClick={(e): void => {
-											e.stopPropagation();
-											handleSearchVisible();
-										}}
-									>
-										Search
-									</Button>
-								)}
-							</div>
-						),
-						children: (
-							<>
-								{isSearchVisible && (
-									<Input
-										autoFocus
-										placeholder="Search for a field..."
-										className="search-input"
-										value={fieldSearchInput}
-										onChange={(e): void => setFieldSearchInput(e.target.value)}
-									/>
-								)}
-
-								<TableView
-									logData={logData}
-									onAddToQuery={onAddToQuery}
-									fieldSearchInput={fieldSearchInput}
-									onClickActionItem={onClickActionItem}
-									isListViewPanel={isListViewPanel}
-									selectedOptions={selectedOptions}
-									listViewPanelSelectedFields={listViewPanelSelectedFields}
-									handleChangeSelectedView={handleChangeSelectedView}
-								/>
-							</>
-						),
-						className: 'collapse-content attribute-collapse',
-					},
-				]}
+				}}
+				jsonString={JSON.stringify(raw, null, 2)}
 			/>
 		</div>
 	);
@@ -286,7 +78,6 @@ function Overview({
 
 Overview.defaultProps = {
 	isListViewPanel: false,
-	listViewPanelSelectedFields: null,
 	handleChangeSelectedView: undefined,
 };
 

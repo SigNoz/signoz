@@ -3,17 +3,21 @@ import { Button } from '@signozhq/ui/button';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
+import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import {
+	BuilderQueryType,
 	FieldContext,
 	SignalType,
 	TelemetryFieldKey,
 } from 'types/api/v5/queryRange';
-import { DataSource } from 'types/common/queryBuilder';
+import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
+import { mergeExtraFields } from 'utils/extraFields';
 
 import styles from './FieldsSelector.module.scss';
+
+const EMPTY_EXTRA_FIELDS: TelemetryFieldKey[] = [];
 
 interface OtherFieldsProps {
 	signal: DataSource;
@@ -22,6 +26,9 @@ interface OtherFieldsProps {
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 	allowCustomFields?: boolean;
+	fieldKeysConfig?: FieldKeysConfigProp;
+	builderQueryType?: BuilderQueryType;
+	extraFields?: TelemetryFieldKey[];
 }
 
 function OtherFields({
@@ -31,26 +38,26 @@ function OtherFields({
 	onAdd,
 	isAtLimit,
 	allowCustomFields,
+	fieldKeysConfig,
+	builderQueryType,
+	extraFields = EMPTY_EXTRA_FIELDS,
 }: OtherFieldsProps): JSX.Element {
-	const { data, isFetching } = useGetQueryKeySuggestions(
+	const { data: fetchedFields, isFetching } = useFieldKeysSuggestion(
 		{
-			signal,
+			...fieldKeysConfig,
+			signal: DATA_SOURCE_TO_SIGNAL[signal],
 			searchText: debouncedInputValue,
 		},
-		{
-			queryKey: [
-				REACT_QUERY_KEY.GET_FIELDS_SELECTOR_SUGGESTIONS,
-				signal,
-				debouncedInputValue,
-			],
-			enabled: true,
-		},
+		builderQueryType,
 	);
 
 	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
-		const rawSuggestions = Object.values(data?.data.data.keys || {}).flat();
+		const search = debouncedInputValue.trim().toLowerCase();
 		// Normalize: synthesize `key` once so downstream reads can trust it.
-		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
+		const suggestions: TelemetryFieldKey[] = mergeExtraFields(
+			extraFields.filter((field) => field.name.toLowerCase().includes(search)),
+			fetchedFields ?? [],
+		).map((attr) => ({
 			...attr,
 			key: buildCompositeKey(attr.name, attr.fieldContext, attr.fieldDataType),
 			signal: attr.signal as SignalType,
@@ -87,7 +94,13 @@ function OtherFields({
 			key: buildCompositeKey(typed, ''),
 		};
 		return [customField, ...available];
-	}, [data, addedFields, allowCustomFields, debouncedInputValue]);
+	}, [
+		extraFields,
+		fetchedFields,
+		addedFields,
+		allowCustomFields,
+		debouncedInputValue,
+	]);
 
 	if (isFetching) {
 		return (

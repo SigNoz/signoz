@@ -33,6 +33,7 @@ interface Props {
 	onApply: () => void;
 	// Clear all Created-by selections and run immediately.
 	onClearCreatedBy: () => void;
+	disabled?: boolean;
 }
 
 function FilterChips({
@@ -43,6 +44,7 @@ function FilterChips({
 	onUpdatedChange,
 	onApply,
 	onClearCreatedBy,
+	disabled = false,
 }: Props): JSX.Element {
 	const creatorOptionsData = creatorOptions.map((o) => ({
 		value: o.email,
@@ -69,6 +71,7 @@ function FilterChips({
 				maxTagCount={1}
 				menuItemSelectedIcon={null}
 				data-testid="dashboards-filter-created-by"
+				disabled={disabled}
 				onClear={onClearCreatedBy}
 				optionRender={(option): JSX.Element => (
 					<div className={styles.creatorOption}>
@@ -90,6 +93,7 @@ function FilterChips({
 				options={UPDATED_OPTIONS}
 				optionFilterProp="label"
 				data-testid="dashboards-filter-updated"
+				disabled={disabled}
 				onChange={(value): void => onUpdatedChange(value as UpdatedWindow)}
 			/>
 		</div>

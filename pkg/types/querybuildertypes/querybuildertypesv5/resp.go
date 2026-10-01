@@ -138,17 +138,63 @@ type TimeSeriesData struct {
 }
 
 type AggregationBucket struct {
-	Index int    `json:"index"` // or string Alias
-	Alias string `json:"alias"`
-	Meta  struct {
-		Unit string `json:"unit,omitempty"`
-	} `json:"meta,omitempty"`
-	Series []*TimeSeries `json:"series"` // no extra nesting
+	Index  int             `json:"index"` // or string Alias
+	Alias  string          `json:"alias"`
+	Meta   AggregationMeta `json:"meta,omitempty"`
+	Series []*TimeSeries   `json:"series"` // no extra nesting
 
 	PredictedSeries  []*TimeSeries `json:"predictedSeries,omitempty"`
 	UpperBoundSeries []*TimeSeries `json:"upperBoundSeries,omitempty"`
 	LowerBoundSeries []*TimeSeries `json:"lowerBoundSeries,omitempty"`
 	AnomalyScores    []*TimeSeries `json:"anomalyScores,omitempty"`
+}
+
+// ReindexValuesToNewUpperBounds moves each count to the index its upper bound
+// holds in onto, a superset of Meta.Buckets. No count changes, only its position
+// in Values.
+func (a *AggregationBucket) ReindexValuesToNewUpperBounds(onto []float64) {
+	if a == nil {
+		return
+	}
+
+	from := a.Meta.Buckets
+	if len(onto) == 0 || slices.Equal(from, onto) {
+		return
+	}
+
+	upperBoundToIndex := make(map[float64]int, len(onto))
+	for index, upperBound := range onto {
+		upperBoundToIndex[upperBound] = index
+	}
+
+	for _, series := range a.Series {
+		for _, point := range series.Values {
+			if len(point.Values) == 0 {
+				continue
+			}
+			reindexed := make([]float64, len(onto)+1)
+			for index, count := range point.Values {
+				if index >= len(from) {
+					reindexed[len(onto)] = count
+					break
+				}
+				if newIndex, ok := upperBoundToIndex[from[index]]; ok {
+					reindexed[newIndex] = count
+				}
+			}
+			point.Values = reindexed
+		}
+	}
+
+	a.Meta.Buckets = onto
+}
+
+type AggregationMeta struct {
+	Unit string `json:"unit,omitempty"`
+	// Buckets holds ascending upper bounds shared by every series in the
+	// AggregationBucket, set only for heatmap results. Each point's Values holds
+	// len(Buckets)+1 counts: one per bound, then the open-above overflow.
+	Buckets []float64 `json:"buckets,omitempty"`
 }
 
 type TimeSeries struct {
@@ -254,13 +300,9 @@ type TimeSeriesValue struct {
 	// on the client side, these partial values are rendered differently.
 	Partial bool `json:"partial,omitempty"`
 
-	// for the heatmap type chart
+	// Values holds one count per histogram bucket for heatmap results, in the
+	// order of the aggregation's Meta.Buckets. Value is omitted in that case.
 	Values []float64 `json:"values,omitempty"`
-	Bucket *Bucket   `json:"bucket,omitempty"`
-}
-
-type Bucket struct {
-	Step float64 `json:"step"`
 }
 
 type ColumnType struct {
@@ -481,13 +523,20 @@ func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	// a heatmap point's counts are spread across Values, so there is no one
+	// number Value could carry
+	var sanitizedValue any
+	if t.Values == nil {
+		sanitizedValue = sanitizeValue(t.Value)
+	}
+
 	return json.Marshal(&struct {
 		*Alias
-		Value  any `json:"value"`
+		Value  any `json:"value,omitempty"`
 		Values any `json:"values,omitempty"`
 	}{
 		Alias:  (*Alias)(&t),
-		Value:  sanitizeValue(t.Value),
+		Value:  sanitizedValue,
 		Values: sanitizedValues,
 	})
 }

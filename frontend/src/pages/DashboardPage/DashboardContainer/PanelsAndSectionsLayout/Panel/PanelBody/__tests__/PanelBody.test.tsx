@@ -1,16 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import type { RenderablePanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import PanelBody from '../PanelBody';
 
 // Stub the renderer so these tests focus on PanelBody's state machine.
 const MockRenderer = (): JSX.Element => <div data-testid="mock-renderer" />;
-
-const panelDefinition = {
-	Renderer: MockRenderer,
-} as unknown as RenderablePanelDefinition;
 
 function panelWith(queries: unknown[]): DashboardtypesPanelDTO {
 	return {
@@ -24,7 +19,7 @@ function panelWith(queries: unknown[]): DashboardtypesPanelDTO {
 }
 
 const baseProps = {
-	panelDefinition,
+	Renderer: MockRenderer,
 	panelId: 'p1',
 	data: {} as PanelQueryData,
 	isFetching: false,

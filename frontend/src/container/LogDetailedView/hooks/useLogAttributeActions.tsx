@@ -1,9 +1,7 @@
 import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import { CircleMinus, CirclePlus, Layers, RefreshCw } from '@signozhq/icons';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { FeatureKeys } from 'constants/features';
-import ROUTES from 'constants/routes';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
@@ -53,16 +51,12 @@ export function useLogAttributeActions({
 	isListViewPanel = false,
 	onApplyLogFilter,
 }: UseLogAttributeActionsParams): UseLogAttributeActionsResult {
-	const { pathname } = useLocation();
 	const { stagedQuery, updateQueriesData } = useQueryBuilder();
 	const { featureFlags } = useAppContext();
 
 	const isBodyJsonQueryEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
 			?.active || false;
-
-	const isOldExplorerOrLive =
-		pathname === ROUTES.OLD_LOGS_EXPLORER || pathname === ROUTES.LIVE_LOGS;
 
 	const filterFor = useCallback(
 		(context: FieldContext, isFilterIn: boolean): void => {
@@ -220,8 +214,7 @@ export function useLogAttributeActions({
 				shouldHide: (_key, fieldKeyPath): boolean =>
 					!handleChangeSelectedView ||
 					!buildLogFilterTarget(fieldKeyPath, undefined, isBodyJsonQueryEnabled)
-						.groupBySupported ||
-					isOldExplorerOrLive,
+						.groupBySupported,
 			},
 			{
 				key: LogDetailsAction.REPLACE_FILTER,
@@ -229,9 +222,7 @@ export function useLogAttributeActions({
 				icon: <RefreshCw size={12} />,
 				onClick: replaceFilter,
 				shouldHide: (_key, fieldKeyPath): boolean =>
-					!handleChangeSelectedView ||
-					isRestricted(fieldKeyPath) ||
-					isOldExplorerOrLive,
+					!handleChangeSelectedView || isRestricted(fieldKeyPath),
 			},
 		];
 	}, [
@@ -239,7 +230,6 @@ export function useLogAttributeActions({
 		groupBy,
 		replaceFilter,
 		isBodyJsonQueryEnabled,
-		isOldExplorerOrLive,
 		handleChangeSelectedView,
 		onApplyLogFilter,
 	]);

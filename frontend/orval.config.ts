@@ -28,8 +28,10 @@ export default defineConfig({
 			clean: true,
 			override: {
 				query: {
-					useQuery: true,
-					useMutation: true,
+					// Leave useQuery/useMutation unset. Orval's verb tiebreak
+					// (`if (verb === GET && isMutation) isQuery = false`) inverts every
+					// operation when both are forced to true: GET becomes a mutation and
+					// the write verbs become queries.
 					useInvalidate: true,
 					signal: true,
 					useOperationIdAsQueryKey: false,

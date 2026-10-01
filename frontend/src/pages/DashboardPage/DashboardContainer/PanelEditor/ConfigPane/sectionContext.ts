@@ -1,7 +1,7 @@
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelKind } from '../../Panels/types/panelKind';
-import type { LegendSeries } from '../utils/legendSeries';
+import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
 import { EQueryType } from 'types/common/dashboard';
 

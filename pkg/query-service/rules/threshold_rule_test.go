@@ -916,6 +916,104 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 	}
 }
 
+func TestThresholdRuleAITracesLink(t *testing.T) {
+	postableRule := ruletypes.PostableRule{
+		AlertName: "AI traces link test",
+		AlertType: ruletypes.AlertTypeAITraces,
+		RuleType:  ruletypes.RuleTypeThreshold,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilderAI,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Name:         "A",
+						StepInterval: qbtypes.Step{Duration: time.Minute},
+						Aggregations: []qbtypes.TraceAggregation{{
+							Expression: "count()",
+						}},
+						Signal: telemetrytypes.SignalTraces,
+						Filter: &qbtypes.Filter{
+							Expression: "service.name = 'llm-gateway'",
+						},
+					},
+				}},
+			},
+		},
+	}
+
+	cols := make([]cmock.ColumnType, 0)
+	cols = append(cols, cmock.ColumnType{Name: "value", Type: "Float64"})
+	cols = append(cols, cmock.ColumnType{Name: "attr", Type: "String"})
+	cols = append(cols, cmock.ColumnType{Name: "timestamp", Type: "DateTime"})
+
+	keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"service.name": {
+			{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+	}
+
+	logger := instrumentationtest.New().Logger()
+
+	for idx, c := range testCases {
+
+		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+
+		rows := cmock.NewRows(cols, c.values)
+		telemetryStore.Mock().
+			ExpectQuery("SELECT any").
+			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil).
+			WillReturnRows(rows)
+
+		querier := prepareQuerierForAITraces(t, telemetryStore, keysMap)
+
+		postableRule.RuleCondition.CompareOperator = c.compareOperator
+		postableRule.RuleCondition.MatchType = c.matchType
+		postableRule.RuleCondition.Target = &c.target
+		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
+		postableRule.RuleCondition.TargetUnit = c.targetUnit
+		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+			Kind: ruletypes.BasicThresholdKind,
+			Spec: ruletypes.BasicRuleThresholds{
+				{
+					Name:            postableRule.AlertName,
+					TargetValue:     &c.target,
+					TargetUnit:      c.targetUnit,
+					MatchType:       c.matchType,
+					CompareOperator: c.compareOperator,
+				},
+			},
+		}
+		postableRule.Annotations = map[string]string{
+			"description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
+		}
+
+		externalURL := mustParseURL(t, "http://localhost:8080")
+		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, querier, logger, externalURL)
+		require.NoError(t, err, "case %d", idx)
+
+		alertsFound, err := rule.Eval(context.Background(), time.Now())
+		require.NoError(t, err, "case %d", idx)
+
+		assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
+		for _, item := range rule.Active {
+			link := item.Annotations.Map()[ruletypes.AnnotationRelatedTraces]
+			assert.True(t, strings.HasPrefix(link, "http://localhost:8080/ai-observability/explorer?"), "case %d: %s", idx, link)
+			assert.Contains(t, link, "builder_ai_query", "case %d", idx)
+			assert.Contains(t, link, "llm-gateway", "case %d", idx)
+		}
+	}
+}
+
 func TestThresholdRuleLogsLink(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Logs link test",

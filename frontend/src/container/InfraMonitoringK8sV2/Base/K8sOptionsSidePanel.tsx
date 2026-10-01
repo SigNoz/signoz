@@ -216,7 +216,7 @@ function K8sOptionsSidePanel<TData>({
 					);
 					return (
 						<div className={styles.columnItem} key={column.id}>
-							<Typography.Text size="sm" className={styles.columnLabel}>
+							<Typography.Text as="span" size="sm" className={styles.columnLabel}>
 								{column.label}
 							</Typography.Text>
 							{column.canBeHidden ? (

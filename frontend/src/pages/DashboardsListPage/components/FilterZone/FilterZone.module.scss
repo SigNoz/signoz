@@ -33,6 +33,13 @@
 	margin-right: 2px;
 }
 
+.filterControls {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
 .chips {
 	display: flex;
 	align-items: center;

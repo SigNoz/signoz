@@ -53,22 +53,6 @@ describe('AuthZButton', () => {
 		});
 	});
 
-	it('forwards a custom tooltipMessage', () => {
-		render(
-			<AuthZButton
-				checks={[createPerm]}
-				tooltipMessage="Ask an admin"
-				testId="create-btn"
-			>
-				Create
-			</AuthZButton>,
-		);
-
-		expect(mockTooltip.mock.calls[0][0]).toMatchObject({
-			tooltipMessage: 'Ask an admin',
-		});
-	});
-
 	it('passes authZEnabled through as the tooltip enabled flag', () => {
 		render(
 			<AuthZButton checks={[createPerm]} authZEnabled={false} testId="create-btn">

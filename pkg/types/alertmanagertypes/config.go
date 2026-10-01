@@ -604,8 +604,9 @@ type ConfigStore interface {
 	// DeleteChannelByID deletes a channel.
 	DeleteChannelByID(context.Context, string, valuer.UUID, ...StoreOption) error
 
-	// ListChannels returns the list of channels.
-	ListChannels(context.Context, string) ([]*Channel, error)
+	// Nil params lists every one of them in no particular order, with the
+	//  total equal to the number returned.
+	ListChannels(context.Context, string, *ListChannelsParams) ([]*Channel, int64, error)
 
 	// ListAllChannels returns the list of channels for all organizations.
 	ListAllChannels(context.Context) ([]*Channel, error)
