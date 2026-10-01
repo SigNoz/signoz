@@ -115,6 +115,13 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	// UnmarshalJSON, so normalise here too.
 	req.Start = qbtypes.ToMilliSecs(req.Start)
 	req.End = qbtypes.ToMilliSecs(req.End)
+	// Key resolution rewrites parts of the builder queries, so the caller's
+	// spelling is read before that. With the flag off no key resolves, so
+	// the response reports nothing.
+	var semconvResolutions []qbtypes.SemconvResolution
+	if querybuilder.SemconvFamiliesEnabled(ctx, orgID, q.fl) {
+		semconvResolutions = semconvResolutionsForRequest(req)
+	}
 
 	event := &qbtypes.QBEvent{
 		Version:         "v5",
@@ -163,6 +170,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event, preseededResults)
 	if qbResp != nil {
 		qbResp.QBEvent = event
+		qbResp.Meta.SemconvResolutions = semconvResolutions
 		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
 			if qbResp.Warning == nil {
 				qbResp.Warning = &qbtypes.QueryWarnData{

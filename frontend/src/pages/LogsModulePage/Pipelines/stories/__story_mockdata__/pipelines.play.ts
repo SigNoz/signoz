@@ -10,6 +10,7 @@ import { hoverTruncatableText } from '@/storybook/play/truncatedText';
 import { LONG_HTTP_ROUTE } from '../../../stories/__story_mockdata__/logs';
 
 import type { PipelinesArgs } from '../Pipelines.stories.mocks';
+import { OLD_NAME_PIPELINE } from './pipelines';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
@@ -195,6 +196,24 @@ export const openEditPipeline = async ({
 	await enterEditMode(canvasElement);
 	await clickFirst(canvasElement, 'pipeline-edit-action');
 	await screen.findByText(/edit pipeline/i);
+};
+
+export const openEditPipelineWithOldName = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!listsPipelines(args) || args.pipelines <= OLD_NAME_PIPELINE) {
+		return;
+	}
+
+	await enterEditMode(canvasElement);
+	const editActions = await within(canvasElement).findAllByTestId(
+		'pipeline-edit-action',
+		undefined,
+		untilLoaded,
+	);
+	await userEvent.click(editActions[OLD_NAME_PIPELINE]);
+	await screen.findByTestId('semconv-editor-warning');
 };
 
 export const openAddProcessor = async ({

@@ -7,6 +7,7 @@ import cx from 'classnames';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
+import { renderOldNameBadge } from 'components/Semconv/renderOldNameBadge';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -335,6 +336,7 @@ function SpanDetailsContent({
 							visibleActions: VISIBLE_ACTIONS,
 							pinnedFieldsValue,
 							onPinnedFieldsChange,
+							labelSuffixRenderer: renderOldNameBadge,
 						}}
 					/>
 				</>

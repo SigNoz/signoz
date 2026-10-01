@@ -288,6 +288,28 @@ type GettableFieldValues struct {
 	Complete bool                  `json:"complete" required:"true" description:"True when every matching value was returned; false when the result was cut off by limit."`
 }
 
+// PostableSemconvMigrationReportParams selects the metadata window used to
+// find services that still emit only historical semantic-convention names.
+type PostableSemconvMigrationReportParams struct {
+	StartUnixMilli int64 `query:"startUnixMilli" description:"Start of the lookup window in Unix milliseconds. Omit for 24 hours before the current time."`
+	EndUnixMilli   int64 `query:"endUnixMilli" description:"End of the lookup window in Unix milliseconds. Omit for the current time."`
+}
+
+type SemconvMigrationReportEntry struct {
+	Current           string   `json:"current" required:"true" description:"The current name of the family."`
+	Old               string   `json:"old" required:"true" description:"The old name that the listed services still send."`
+	Signal            Signal   `json:"signal" required:"true" description:"The signal the old name was seen in: traces or logs."`
+	Services          []string `json:"services" required:"true" nullable:"false" description:"Services that sent the old name and no current name in the window, sorted by name. A resource without service.name is listed as <unknown>."`
+	ResourceSets      uint64   `json:"resourceSets" required:"true" description:"Number of distinct resource and attribute sets that carry the old name and no current name."`
+	LastSeenUnixMilli int64    `json:"lastSeenUnixMilli" required:"true" description:"Latest time the metadata recorded such a set, in Unix milliseconds."`
+}
+
+type GettableSemconvMigrationReport struct {
+	StartUnixMilli int64                          `json:"startUnixMilli" required:"true" description:"Start of the window the report covers, in Unix milliseconds."`
+	EndUnixMilli   int64                          `json:"endUnixMilli" required:"true" description:"End of the window the report covers, in Unix milliseconds."`
+	Entries        []*SemconvMigrationReportEntry `json:"entries" required:"true" nullable:"false" description:"One entry for each family, old name and signal with at least one service that sends only the old name. Empty when there is none."`
+}
+
 type PostableFieldValueParams struct {
 	PostableFieldKeysParams
 	Name          string `query:"name" description:"The key whose values to return, such as service.name. With fieldContext set, it is the stored name as is. Otherwise a context prefix such as resource.service.name sets the context and a type suffix such as service.name:string sets fieldDataType when that is empty; as in filter expressions, a prefixed name also matches a key stored under the full name, whose values come first: log.level returns values of a key named log.level, then of the log field level."`

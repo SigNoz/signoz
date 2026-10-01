@@ -11,6 +11,7 @@ import {
 	openChangeHistory,
 	openEditMode,
 	openEditPipeline,
+	openEditPipelineWithOldName,
 	openPreviewLogDetails,
 	openProcessingPreview,
 	openSeverityParserProcessor,
@@ -84,6 +85,15 @@ export const AddPipelineFilterHover: Story = {
 /** The same form over an existing pipeline, filter included. */
 export const EditPipeline: Story = {
 	play: openEditPipeline,
+};
+
+/**
+ * A pipeline whose filter reads an attribute by its old name: the form names
+ * the attribute that replaced it.
+ */
+export const EditPipelineOldName: Story = {
+	args: { pipelines: 5 },
+	play: openEditPipelineWithOldName,
 };
 
 /** Adding an operator to a pipeline: the type decides the rest of the form. */

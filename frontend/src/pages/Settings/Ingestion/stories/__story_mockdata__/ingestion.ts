@@ -3,12 +3,16 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	GatewaytypesIngestionKeyDTO,
-	GatewaytypesLimitDTO,
-	GetIngestionKeys200,
-	RenderErrorResponseDTO,
+import {
+	type GatewaytypesIngestionKeyDTO,
+	type GatewaytypesLimitDTO,
+	type GetIngestionKeys200,
+	type GetSemconvMigrationReport200,
+	type RenderErrorResponseDTO,
+	type TelemetrytypesSemconvMigrationReportEntryDTO,
+	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { SEMCONV_FAMILIES } from 'constants/generated/semconvFamilies.gen';
 import type { IngestionInfo } from 'types/api/settings/ingestion';
 
 /** `per_page` the page asks for, so a longer page is a body the gateway never sends. */
@@ -152,3 +156,43 @@ export const legacyIngestionResponse = (): IngestionInfo[] => [
 		dataRegion: 'us-east-1',
 	},
 ];
+
+const OLD_NAME_SERVICES = ['checkout', 'cart', 'payments'];
+
+/**
+ * The report reads metadata that holds traces and logs rows, so an old
+ * attribute name is listed for those two signals at most.
+ */
+const MIGRATION_ENTRIES: TelemetrytypesSemconvMigrationReportEntryDTO[] =
+	SEMCONV_FAMILIES.filter((family) => family.kind === 'attribute').flatMap(
+		(family) =>
+			family.members.flatMap((member) =>
+				[TelemetrytypesSignalDTO.traces, TelemetrytypesSignalDTO.logs]
+					.filter((signal) =>
+						[family.signals, member.signals].every(
+							(scope) => scope.length === 0 || scope.includes(signal),
+						),
+					)
+					.map((signal, index) => ({
+						current: family.current,
+						old: member.name,
+						signal,
+						services: OLD_NAME_SERVICES.slice(index),
+						resourceSets: 12 - index * 5,
+						lastSeenUnixMilli: CREATED_AT - index * 6 * 3600_000,
+					})),
+			),
+	);
+
+export const MIGRATION_ENTRY_MAX = MIGRATION_ENTRIES.length;
+
+export const semconvMigrationReportResponse = (
+	entries: number,
+): GetSemconvMigrationReport200 => ({
+	status: 'success',
+	data: {
+		startUnixMilli: CREATED_AT - DAY,
+		endUnixMilli: CREATED_AT,
+		entries: MIGRATION_ENTRIES.slice(0, entries),
+	},
+});

@@ -146,6 +146,13 @@ const PIPELINES: PipelineSeed[] = [
 
 export const PIPELINE_MAX = PIPELINES.length;
 
+/** The pipeline whose filter reads an attribute by a name OpenTelemetry has renamed. */
+export const OLD_NAME_PIPELINE = PIPELINES.findIndex((pipeline) =>
+	pipeline.filter.items.some(
+		(item) => item.key?.key === 'deployment.environment',
+	),
+);
+
 export const VERSION_MAX = 6;
 
 export interface PipelinesOptions {

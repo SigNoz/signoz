@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { renderOldNameBadge } from 'components/Semconv/renderOldNameBadge';
 import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import { DataViewer } from 'periscope/components/DataViewer';
 import { ILog } from 'types/api/logs/log';
@@ -47,6 +48,7 @@ function Overview({
 				prettyViewProps={{
 					actions,
 					visibleActions,
+					labelSuffixRenderer: renderOldNameBadge,
 					renderLeafValue: (value, keyPath): ReactNode | undefined => {
 						// Sanitize (unescape + ANSI→color) string values under `body`.
 						// Skip huge ones (render raw, still safe) to avoid the sanitize

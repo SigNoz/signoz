@@ -10178,6 +10178,13 @@ components:
             nothing about whether data exists.'
           minimum: 0
           type: integer
+        semconvResolutions:
+          description: The semantic-convention families that the builder queries in
+            the request resolved. Absent when no query named a family member or when
+            family resolution is off.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SemconvResolution'
+          type: array
         stepIntervals:
           additionalProperties:
             minimum: 0
@@ -11357,6 +11364,28 @@ components:
           - $ref: '#/components/schemas/Querybuildertypesv5Step'
           description: 'The time bucket for this aggregation: seconds as a number
             or a Go duration string. Uses the primary aggregation step when omitted.'
+      type: object
+    Querybuildertypesv5SemconvResolution:
+      properties:
+        current:
+          description: The current name of the family.
+          type: string
+        kind:
+          description: 'The family kind: attribute or metric.'
+          type: string
+        members:
+          description: Every name the query read, the current name first.
+          items:
+            type: string
+          type: array
+        requested:
+          description: The name as the request spelled it.
+          type: string
+      required:
+      - requested
+      - current
+      - members
+      - kind
       type: object
     Querybuildertypesv5Step:
       description: Step interval. Accepts a Go duration string (e.g., "60s", "1m",
@@ -13704,6 +13733,62 @@ components:
       required:
       - values
       - complete
+      type: object
+    TelemetrytypesGettableSemconvMigrationReport:
+      properties:
+        endUnixMilli:
+          description: End of the window the report covers, in Unix milliseconds.
+          format: int64
+          type: integer
+        entries:
+          description: One entry for each family, old name and signal with at least
+            one service that sends only the old name. Empty when there is none.
+          items:
+            $ref: '#/components/schemas/TelemetrytypesSemconvMigrationReportEntry'
+          type: array
+        startUnixMilli:
+          description: Start of the window the report covers, in Unix milliseconds.
+          format: int64
+          type: integer
+      required:
+      - startUnixMilli
+      - endUnixMilli
+      - entries
+      type: object
+    TelemetrytypesSemconvMigrationReportEntry:
+      properties:
+        current:
+          description: The current name of the family.
+          type: string
+        lastSeenUnixMilli:
+          description: Latest time the metadata recorded such a set, in Unix milliseconds.
+          format: int64
+          type: integer
+        old:
+          description: The old name that the listed services still send.
+          type: string
+        resourceSets:
+          description: Number of distinct resource and attribute sets that carry the
+            old name and no current name.
+          minimum: 0
+          type: integer
+        services:
+          description: Services that sent the old name and no current name in the
+            window, sorted by name. A resource without service.name is listed as <unknown>.
+          items:
+            type: string
+          type: array
+        signal:
+          allOf:
+          - $ref: '#/components/schemas/TelemetrytypesSignal'
+          description: 'The signal the old name was seen in: traces or logs.'
+      required:
+      - current
+      - old
+      - signal
+      - services
+      - resourceSets
+      - lastSeenUnixMilli
       type: object
     TelemetrytypesSignal:
       enum:
@@ -16163,6 +16248,73 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get field keys
+      tags:
+      - fields
+      x-signoz-stability: alpha
+  /api/v1/fields/semconv-migration:
+    get:
+      deprecated: false
+      description: Returns services that still emit old semantic-convention names
+        without the current family name
+      operationId: GetSemconvMigrationReport
+      parameters:
+      - description: Start of the lookup window in Unix milliseconds. Omit for 24
+          hours before the current time.
+        in: query
+        name: startUnixMilli
+        schema:
+          description: Start of the lookup window in Unix milliseconds. Omit for 24
+            hours before the current time.
+          format: int64
+          type: integer
+      - description: End of the lookup window in Unix milliseconds. Omit for the current
+          time.
+        in: query
+        name: endUnixMilli
+        schema:
+          description: End of the lookup window in Unix milliseconds. Omit for the
+            current time.
+          format: int64
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableSemconvMigrationReport'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get semantic-convention migration report
       tags:
       - fields
       x-signoz-stability: alpha

@@ -24,7 +24,8 @@ const pageStory = storyMocks(ingestionMocks, { layout: 'app' });
 
 /**
  * Ingestion keys, their expiry and their per signal limits, against the gateway
- * that owns them. Every action on it is gated on an `ingestion-key` or
+ * that owns them, and under them the services that still send an old semantic
+ * convention name. Every action on a key is gated on an `ingestion-key` or
  * `ingestion-limit` permission, one story per permission under `Ingestion/Authz`.
  *
  * Route: `/settings/ingestion-settings`.

@@ -30,10 +30,13 @@ import {
 	legacyIngestionResponse,
 	LIMIT_SIGNALS,
 	type LimitSignal,
+	MIGRATION_ENTRY_MAX,
+	semconvMigrationReportResponse,
 } from './__story_mockdata__/ingestion';
 
 const KEYS = 'Ingestion · keys';
 const LIMITS = 'Ingestion · limits';
+const MIGRATION = 'Ingestion · migration';
 
 const rejectCreate: MockResolver = (_req, res, ctx) =>
 	res(ctx.status(409), ctx.json(ingestionKeyCreateError()));
@@ -74,6 +77,13 @@ export const ingestionMocks = defineStoryMocks({
 				'A signal without a limit shows the button that adds one instead of its usage against a cap.',
 			options: LIMIT_SIGNALS,
 			value: ['logs', 'traces'],
+		}),
+		oldNameEntries: countControl('Old-name report entries', {
+			group: MIGRATION,
+			description:
+				'Rows of the semantic convention migration report: one for each old attribute name and signal that some service still sends on its own. At 0 the report says there is nothing to migrate.',
+			value: MIGRATION_ENTRY_MAX,
+			max: MIGRATION_ENTRY_MAX,
 		}),
 	},
 	handlers: (values, response) => [
@@ -141,6 +151,11 @@ export const ingestionMocks = defineStoryMocks({
 		rest.get(
 			'http://localhost/api/v1/settings/ingestion_key',
 			response.json(() => legacyIngestionResponse()),
+		),
+
+		rest.get(
+			'http://localhost/api/v1/fields/semconv-migration',
+			response.json(() => semconvMigrationReportResponse(values.oldNameEntries)),
 		),
 	],
 	config: ({ gateway }) => ({

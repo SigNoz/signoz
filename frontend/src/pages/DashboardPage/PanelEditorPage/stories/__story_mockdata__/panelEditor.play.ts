@@ -183,6 +183,34 @@ export const writeClickHouseQuery = async (
 	blurActiveElement();
 };
 
+const CLICKHOUSE_SQL_OLD_NAME = `SELECT
+    toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS ts,
+    resources_string['deployment.environment'] AS environment,
+    count() AS value
+FROM signoz_traces.distributed_signoz_index_v3
+WHERE timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}}
+GROUP BY ts, environment
+ORDER BY ts`;
+
+export const writeClickHouseQueryWithOldName = async (
+	context: PlayContext,
+): Promise<void> => {
+	if (!hasClickHouseTab(context.args)) {
+		return;
+	}
+
+	await openClickHouseQuery(context);
+	// The editor paints before it listens for changes, and an edit made in
+	// between never reaches the query. Write again until the page has it.
+	await waitFor(async () => {
+		await setMonacoText('sql', '');
+		await setMonacoText('sql', CLICKHOUSE_SQL_OLD_NAME);
+		await expect(screen.getByTestId('semconv-editor-warning')).toBeVisible();
+	}, EDITOR_LOAD);
+	await findMonacoEditor(document, 'deployment.environment');
+	blurActiveElement();
+};
+
 export const openPromQLQuery = async ({
 	canvasElement,
 	args,
@@ -199,6 +227,23 @@ export const openPromQLQuery = async ({
 	await screen.findByTestId('promql-query-input', undefined, {
 		timeout: 15000,
 	});
+};
+
+const PROMQL_OLD_NAME =
+	'sum(rate(http_server_request_duration_seconds_count{"deployment.environment"="production"}[5m]))';
+
+export const writePromQLQueryWithOldName = async (
+	context: PlayContext,
+): Promise<void> => {
+	if (!hasPromQLTab(context.args)) {
+		return;
+	}
+
+	await openPromQLQuery(context);
+	await userEvent.click(screen.getByTestId('promql-query-input'));
+	await userEvent.paste(PROMQL_OLD_NAME);
+	await screen.findByTestId('semconv-editor-warning', undefined, EDITOR_LOAD);
+	blurActiveElement();
 };
 
 export const enterInvalidDisconnectThreshold = async ({
