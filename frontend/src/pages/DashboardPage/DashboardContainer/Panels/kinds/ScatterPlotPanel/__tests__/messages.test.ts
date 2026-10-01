@@ -15,6 +15,7 @@ function ready(counts: {
 		series: [],
 		pointLabels: [],
 		channels: { x: { label: 'x' }, y: { label: 'y' } },
+		axisQueries: { x: 'A', y: 'A' },
 		missingValueGroups: 0,
 		nonPositiveOnLogGroups: 0,
 		...counts,

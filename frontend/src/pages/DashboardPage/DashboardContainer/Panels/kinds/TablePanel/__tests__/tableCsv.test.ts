@@ -79,6 +79,29 @@ describe('buildTableCsvRows', () => {
 	});
 });
 
+describe('buildTableCsvRows headers', () => {
+	it('keeps both of two columns that share a name, under their query labels', () => {
+		const rows = buildTableCsvRows({
+			table: {
+				queryName: 'A',
+				legend: '',
+				columns: [
+					{ name: 'service', queryName: '', isValueColumn: false, id: 'service' },
+					{ name: 'count()', queryName: 'A', isValueColumn: true, id: 'A.count()' },
+					{ name: 'p99', queryName: 'A', isValueColumn: true, id: 'A.p99' },
+					{ name: 'count()', queryName: 'B', isValueColumn: true, id: 'B' },
+				],
+				rows: [{ data: { service: 'cart', 'A.count()': 120, 'A.p99': 4, B: 3 } }],
+			},
+			columnUnits: {},
+		});
+
+		expect(rows).toStrictEqual([
+			{ service: 'cart', 'A.count()': '120', p99: '4', 'B.count()': '3' },
+		]);
+	});
+});
+
 describe('getTableCsvRows', () => {
 	const panel = {
 		spec: { plugin: { spec: { formatting: { columnUnits: { A: 'ms' } } } } },
@@ -93,6 +116,23 @@ describe('getTableCsvRows', () => {
 		expect(getTableCsvRows(panel, data)).toStrictEqual([
 			{ service: 'frontend', p99: '1234ms' },
 			{ service: 'cart', p99: '56ms' },
+		]);
+	});
+
+	it('exports a scatter plot from the same joined table', () => {
+		mockPrepareScalarTables.mockReturnValue([table]);
+		const scatter = {
+			spec: {
+				plugin: {
+					kind: 'signoz/ScatterPlotPanel',
+					spec: { formatting: { columnUnits: { A: 'ns' } } },
+				},
+			},
+		} as unknown as PanelOfKind<'signoz/ScatterPlotPanel'>;
+
+		expect(getTableCsvRows(scatter, data)).toStrictEqual([
+			{ service: 'frontend', p99: '1234ns' },
+			{ service: 'cart', p99: '56ns' },
 		]);
 	});
 
