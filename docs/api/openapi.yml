@@ -4739,6 +4739,16 @@ components:
         visualization:
           $ref: '#/components/schemas/DashboardtypesBasicVisualization'
       type: object
+    DashboardtypesPointDiameter:
+      maximum: 40
+      minimum: 2
+      nullable: true
+      type: integer
+    DashboardtypesPointOpacity:
+      maximum: 1
+      minimum: 0.1
+      nullable: true
+      type: number
     DashboardtypesPostableDashboardV2:
       properties:
         generateName:
@@ -4948,6 +4958,11 @@ components:
           nullable: true
           type: number
       type: object
+    DashboardtypesScatterPlotChartAppearance:
+      properties:
+        points:
+          $ref: '#/components/schemas/DashboardtypesScatterPlotPoints'
+      type: object
     DashboardtypesScatterPlotDimensions:
       properties:
         color:
@@ -4976,6 +4991,8 @@ components:
       properties:
         axes:
           $ref: '#/components/schemas/DashboardtypesScatterPlotAxes'
+        chartAppearance:
+          $ref: '#/components/schemas/DashboardtypesScatterPlotChartAppearance'
         dimensions:
           $ref: '#/components/schemas/DashboardtypesScatterPlotDimensions'
         formatting:
@@ -4989,6 +5006,17 @@ components:
           type: array
         visualization:
           $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
+    DashboardtypesScatterPlotPoints:
+      properties:
+        maxSize:
+          $ref: '#/components/schemas/DashboardtypesPointDiameter'
+        minSize:
+          $ref: '#/components/schemas/DashboardtypesPointDiameter'
+        opacity:
+          $ref: '#/components/schemas/DashboardtypesPointOpacity'
+        size:
+          $ref: '#/components/schemas/DashboardtypesPointDiameter'
       type: object
     DashboardtypesSource:
       enum:
