@@ -27,6 +27,7 @@ import BucketsSection from './sections/BucketsSection/BucketsSection';
 import { summarizeBuckets } from './sections/BucketsSection/summary';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
 import { summarizeChartAppearance } from './sections/ChartAppearanceSection/summary';
+import { DEFAULT_POINTS } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/ScatterPlotPanel/points';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
 import DimensionsSection from './sections/DimensionsSection/DimensionsSection';
 import { summarizeDimensions } from './sections/DimensionsSection/summary';
@@ -143,6 +144,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<PanelChartAppearanceSlice>(spec, 'chartAppearance'),
 		update: (spec, chartAppearance): PanelSpec =>
 			updatePluginSlice(spec, 'chartAppearance', chartAppearance),
+		renderedDefaults: { points: DEFAULT_POINTS },
 		summarize: summarizeChartAppearance,
 	},
 	[SectionKind.Visualization]: {

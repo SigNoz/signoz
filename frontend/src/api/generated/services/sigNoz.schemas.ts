@@ -5255,6 +5255,31 @@ export interface DashboardtypesScatterPlotAxesDTO {
 	y?: DashboardtypesScatterPlotAxisDTO;
 }
 
+/**
+ * @minimum 2
+ * @maximum 40
+ * @nullable
+ */
+export type DashboardtypesPointDiameterDTO = number | null;
+
+/**
+ * @minimum 0.1
+ * @maximum 1
+ * @nullable
+ */
+export type DashboardtypesPointOpacityDTO = number | null;
+
+export interface DashboardtypesScatterPlotPointsDTO {
+	maxSize?: DashboardtypesPointDiameterDTO | null;
+	minSize?: DashboardtypesPointDiameterDTO | null;
+	opacity?: DashboardtypesPointOpacityDTO | null;
+	size?: DashboardtypesPointDiameterDTO | null;
+}
+
+export interface DashboardtypesScatterPlotChartAppearanceDTO {
+	points?: DashboardtypesScatterPlotPointsDTO;
+}
+
 export interface DashboardtypesScatterPlotDimensionsDTO {
 	/**
 	 * @type array,null
@@ -5280,6 +5305,7 @@ export interface DashboardtypesScatterPlotDimensionsDTO {
 
 export interface DashboardtypesScatterPlotPanelSpecDTO {
 	axes?: DashboardtypesScatterPlotAxesDTO;
+	chartAppearance?: DashboardtypesScatterPlotChartAppearanceDTO;
 	dimensions?: DashboardtypesScatterPlotDimensionsDTO;
 	formatting?: DashboardtypesTableFormattingDTO;
 	legend?: DashboardtypesLegendDTO;

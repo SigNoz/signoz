@@ -13,6 +13,7 @@ import type {
 	DashboardtypesPanelSpecDTO,
 	DashboardtypesScatterPlotAxesDTO,
 	DashboardtypesScatterPlotDimensionsDTO,
+	DashboardtypesScatterPlotPointsDTO,
 	DashboardtypesSpanGapsDTO,
 	DashboardtypesStackModeDTO,
 	DashboardtypesTableFormattingDTO,
@@ -107,6 +108,8 @@ export interface PanelChartAppearanceSlice {
 	fillOpacity?: DashboardtypesFillOpacityDTO;
 	showPoints?: boolean;
 	spanGaps?: DashboardtypesSpanGapsDTO;
+	/** Scatter Plot's dot size and opacity. */
+	points?: DashboardtypesScatterPlotPointsDTO;
 }
 
 /** Superset spanning every kind's visualization DTO. */
@@ -165,6 +168,8 @@ export interface SectionControls {
 		fillOpacity?: boolean;
 		showPoints?: boolean;
 		spanGaps?: boolean;
+		/** Scatter Plot's dots: one size, or a min/max range when a size column is bound. */
+		points?: boolean;
 	};
 	[SectionKind.Buckets]: {
 		count?: boolean;

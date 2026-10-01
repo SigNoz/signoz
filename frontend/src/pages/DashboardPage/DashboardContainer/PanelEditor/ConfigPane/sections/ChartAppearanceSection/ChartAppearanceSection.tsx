@@ -13,6 +13,7 @@ import { SWITCH_SKETCHES } from '../../controls/drawings/switchSketches';
 import type { SectionEditorContext } from '../../sectionContext';
 import { createFieldResetter } from '../../utils/changes';
 import DisconnectValuesField from './DisconnectValuesField';
+import PointsFields from './PointsFields';
 import {
 	FILL_MODE_OPTIONS,
 	FILLED_FILL_MODE_OPTIONS,
@@ -37,8 +38,9 @@ function ChartAppearanceSection({
 	controls,
 	onChange,
 	stepInterval,
+	sizeColumnLabel,
 }: SectionEditorProps<SectionKind.ChartAppearance> &
-	Pick<SectionEditorContext, 'stepInterval'>): JSX.Element {
+	Pick<SectionEditorContext, 'stepInterval' | 'sizeColumnLabel'>): JSX.Element {
 	const reset = createFieldResetter(value, defaultValue, onChange);
 	const interpolation = value?.lineInterpolation;
 
@@ -117,6 +119,15 @@ function ChartAppearanceSection({
 					changed={reset('showPoints').changed}
 					value={value?.showPoints ?? false}
 					onChange={(showPoints): void => onChange({ ...value, showPoints })}
+				/>
+			)}
+
+			{controls.points && (
+				<PointsFields
+					value={value?.points}
+					defaultValue={defaultValue?.points}
+					sizeColumnLabel={sizeColumnLabel}
+					onChange={(points): void => onChange({ ...value, points })}
 				/>
 			)}
 
