@@ -42,9 +42,10 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 		view: true,
 		edit: true,
 		clone: true,
-		download: { csv: false, png: true, svg: true },
+		// Every group of the joined table, plotted or not.
+		download: { csv: true, png: true, svg: true },
 		createAlert: false,
 		search: false,
-		drilldown: false,
+		drilldown: true,
 	},
 };

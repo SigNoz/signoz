@@ -172,6 +172,7 @@ export function prepareScatterPlotData({
 			y: toChannel(yColumn, axes?.y?.label),
 			...(sizeColumn && { size: toChannel(sizeColumn) }),
 		},
+		axisQueries: { x: xColumn.queryName, y: yColumn.queryName },
 		totalGroups: rows.length,
 		drawnGroups,
 		missingValueGroups,
