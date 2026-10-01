@@ -6,13 +6,14 @@ import {
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
+import { getSemconvRename } from 'utils/semconv';
 
 const FALLBACK_STARTS_WITH_REGEX = /^(k8s|cloud|host|deployment)/; // regex to filter out resources that start with the specified keywords
 const FALLBACK_CONTAINS_REGEX = /(env|service|file|container|tenant)/; // regex to filter out resources that contains the specified keywords
 
 // Priority categories for filter selection
 // Strategy:
-// - Always include: service.name, deployment.environment, env, environment
+// - Always include: service.name, deployment.environment.name, env, environment
 // - Select ONE category only: stops at the first category with a matching attribute
 // - Within category: picks the first available attribute by order
 // - Order (highest to lowest priority): Kubernetes > Cloud > Host > Container
@@ -26,27 +27,36 @@ const PRIORITY_CATEGORIES = [
 
 const SERVICE_AND_ENVIRONMENT_KEYS = [
 	'service.name',
-	'deployment.environment',
+	'deployment.environment.name',
 	'env',
 	'environment',
 ];
 
 export const getFiltersFromResources = (
 	resources: ILog['resources_string'],
-): TagFilterItem[] =>
-	Object.keys(resources).map((key: string) => {
+): TagFilterItem[] => {
+	const items = new Map<string, TagFilterItem>();
+	Object.keys(resources).forEach((key: string) => {
+		const currentKey = getSemconvRename(key)?.current ?? key;
 		const resourceValue = resources[key] as string;
-		return {
+		const item = {
 			id: uuid(),
 			key: {
-				key,
+				key: currentKey,
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
 			op: OPERATORS['='],
 			value: resourceValue,
 		};
+		// If raw data contains both names, retain the current value just like the
+		// backend's current-first resolver.
+		if (!items.has(currentKey) || key === currentKey) {
+			items.set(currentKey, item);
+		}
 	});
+	return Array.from(items.values());
+};
 
 export const isServiceOrEnvironmentAttribute = (key: string): boolean =>
 	SERVICE_AND_ENVIRONMENT_KEYS.includes(key);
