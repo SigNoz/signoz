@@ -7,18 +7,25 @@ import (
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-var CodeFailedToQueryPromotedPaths = errors.MustNewCode("failed_to_query_promoted_paths")
+var (
+	CodeFailedToCreateIndex        = errors.MustNewCode("failed_to_create_index_promoted_paths")
+	CodeFailedToQueryPromotedPaths = errors.MustNewCode("failed_to_query_promoted_paths")
+)
 
 type module struct {
-	metadataStore telemetrytypes.MetadataStore
+	metadataStore  telemetrytypes.MetadataStore
+	telemetryStore telemetrystore.TelemetryStore
 }
 
-func NewModule(metadataStore telemetrytypes.MetadataStore) promote.Module {
-	return &module{metadataStore: metadataStore}
+func NewModule(metadataStore telemetrytypes.MetadataStore, telemetrystore telemetrystore.TelemetryStore) promote.Module {
+	return &module{metadataStore: metadataStore, telemetryStore: telemetrystore}
 }
 
 func (m *module) ListPromotedPaths(ctx context.Context, filters promotetypes.ListPromotedPathsFilters) ([]promotetypes.PromotePath, error) {
@@ -202,7 +209,7 @@ func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, p
 	}
 
 	if len(indexes) > 0 {
-		if err := m.metadataStore.CreateIndexes(ctx, target.IndexSource(), indexes); err != nil {
+		if err := m.createIndexes(ctx, target, indexes); err != nil {
 			return err
 		}
 	}
