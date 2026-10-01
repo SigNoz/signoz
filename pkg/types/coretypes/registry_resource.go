@@ -47,7 +47,7 @@ var (
 	ResourceRole                                         = NewResourceRole()
 	ResourceServiceAccount                               = NewResourceServiceAccount()
 	ResourceUser                                         = NewResourceUser()
-	ResourceMetaResourceNotificationChannel              = NewResourceMetaResource(KindNotificationChannel)
+	ResourceMetaResourceNotificationChannel              = NewResourceMetaResource(KindNotificationChannel, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceRoutePolicy                      = NewResourceMetaResource(KindRoutePolicy)
 	ResourceMetaResourceApdexSetting                     = NewResourceMetaResource(KindApdexSetting)
 	ResourceMetaResourceAuthDomain                       = NewResourceMetaResource(KindAuthDomain)

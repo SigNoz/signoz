@@ -1,22 +1,14 @@
 import { useMemo, useState } from 'react';
-import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { Button, Modal, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Button, Tooltip } from 'antd';
+import AddCreditCardModal from 'components/AddCreditCardModal/AddCreditCardModal';
 import logEvent from 'api/common/logEvent';
-import { createSubscription } from 'api/generated/services/subscriptions';
-import type { CreateSubscription201 } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { useNotifications } from 'hooks/useNotifications';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
-import { SubscriptionCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import { defaultTo } from 'lodash-es';
-import { CircleHelp, CreditCard, X } from '@signozhq/icons';
+import { CircleHelp } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
-import APIError from 'types/api/error';
-import { getBaseUrl } from 'utils/basePath';
 
 import './LaunchChatSupport.styles.scss';
 
@@ -41,7 +33,6 @@ function LaunchChatSupport({
 	chatMessageDisabled = false,
 }: LaunchChatSupportProps): JSX.Element | null {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
-	const { notifications } = useNotifications();
 	const {
 		trialInfo,
 		featureFlags,
@@ -119,42 +110,11 @@ function LaunchChatSupport({
 		}
 	};
 
-	const handleBillingOnSuccess = (data: CreateSubscription201): void => {
-		if (data?.data?.redirectURL) {
-			const newTab = document.createElement('a');
-			newTab.href = data.data.redirectURL;
-			newTab.target = '_blank';
-			newTab.rel = 'noopener noreferrer';
-			newTab.click();
-		}
-	};
-
-	const handleBillingOnError = (error: APIError): void => {
-		notifications.error({
-			message: error.getErrorCode(),
-			description: error.getErrorMessage(),
-		});
-	};
-
-	const { mutate: updateCreditCard, isLoading: isLoadingBilling } = useMutation(
-		createSubscription,
-		{
-			onSuccess: (data) => {
-				handleBillingOnSuccess(data);
-			},
-			onError: handleBillingOnError,
-		},
-	);
-
 	const handleAddCreditCard = (): void => {
 		logEvent('Add Credit card modal: Clicked', {
 			source: `facing issues button`,
 			page: pathname,
 			...attributes,
-		});
-
-		updateCreditCard({
-			url: getBaseUrl(),
 		});
 	};
 
@@ -175,47 +135,11 @@ function LaunchChatSupport({
 				</Button>
 			</Tooltip>
 
-			{/* Add Credit Card Modal */}
-			<Modal
-				className="add-credit-card-modal"
-				title={<span className="title">Add Credit Card for Chat Support</span>}
+			<AddCreditCardModal
 				open={isAddCreditCardModalOpen}
-				closable
-				onCancel={(): void => setIsAddCreditCardModalOpen(false)}
-				destroyOnClose
-				footer={[
-					<Button
-						key="cancel"
-						onClick={(): void => setIsAddCreditCardModalOpen(false)}
-						className="cancel-btn"
-						icon={<X size={16} />}
-					>
-						Cancel
-					</Button>,
-					<AuthZTooltip
-						key="submit"
-						checks={[SubscriptionCreatePermission]}
-						withPortal={false}
-					>
-						<Button
-							type="primary"
-							icon={<CreditCard size={16} />}
-							size="middle"
-							loading={isLoadingBilling}
-							disabled={isLoadingBilling}
-							onClick={handleAddCreditCard}
-							className="add-credit-card-btn"
-						>
-							Add Credit Card
-						</Button>
-					</AuthZTooltip>,
-				]}
-			>
-				<Typography.Text className="add-credit-card-text">
-					You&apos;re currently on <span className="highlight-text">Trial plan</span>
-					. Add a credit card to access SigNoz chat support to your workspace.
-				</Typography.Text>
-			</Modal>
+				onClose={(): void => setIsAddCreditCardModalOpen(false)}
+				onAddCreditCard={handleAddCreditCard}
+			/>
 		</div>
 	) : null;
 }

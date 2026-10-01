@@ -182,7 +182,7 @@ func (m *storage) read(_ context.Context, q qbtypes.QueryInfo, key *telemetrytyp
 				// a key could have been materialized, if so return the materialized column name
 				if key.Materialized {
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
-					existExpr = append(existExpr, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
+					existExpr = append(existExpr, telemetrytypes.FieldKeyToMaterializedExistsCondition(key, true))
 				} else {
 					exprs = append(exprs, fmt.Sprintf("%s[%s]", columnName, clickhousesql.StringLiteral(key.Name)))
 					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, %s)", columnName, clickhousesql.StringLiteral(key.Name)))

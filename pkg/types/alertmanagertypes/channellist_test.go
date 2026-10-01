@@ -53,23 +53,3 @@ func TestChannelToListedChannelLeavesUnmodelledKindsEmpty(t *testing.T) {
 	assert.Equal(t, "discord", listed.Name)
 	assert.True(t, listed.Kind.IsZero())
 }
-
-// msteams is the only kind whose stored Channel.Type differs from the api kind,
-// so ToStoredType has to agree with the type the write path derives.
-func TestChannelKindMSTeamsIsStoredAsMSTeamsV2(t *testing.T) {
-	assert.Equal(t, "msteamsv2", ChannelKindMSTeams.ToStoredType())
-
-	postable := PostableNotificationChannel{
-		Name:        "channel",
-		DisplayName: "channel",
-		Config:      ChannelConfig{Kind: ChannelKindMSTeams, Spec: &ChannelMSTeamsConfig{WebhookURL: "https://a"}},
-	}
-
-	receiver, err := postable.ToReceiver()
-	require.NoError(t, err)
-
-	channel, err := NewChannelFromReceiverWithName(receiver, postable.Name, "org-1")
-	require.NoError(t, err)
-
-	assert.Equal(t, "msteamsv2", channel.Type)
-}

@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,6 +28,17 @@ import (
 
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 )
+
+func TestManager_ListRules_ValidatesParams(t *testing.T) {
+	m, err := NewManager(&ManagerOptions{})
+	require.NoError(t, err)
+
+	_, err = m.ListRules(context.Background(), &ruletypes.ListRulesParams{Limit: -1})
+	require.ErrorContains(t, err, "invalid limit")
+
+	_, err = m.ListRules(context.Background(), &ruletypes.ListRulesParams{States: []string{"bogus"}})
+	require.ErrorContains(t, err, `invalid state "bogus"`)
+}
 
 func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 	target := 10.0

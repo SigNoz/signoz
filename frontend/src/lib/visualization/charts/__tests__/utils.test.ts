@@ -25,6 +25,7 @@ describe('calculateChartDimensions', () => {
 			legendWidth: 0,
 			legendHeight: 0,
 			averageLegendWidth: 0,
+			showLegendSearch: false,
 		});
 	});
 
@@ -106,10 +107,10 @@ describe('calculateChartDimensions', () => {
 			legendConfig: { position: LegendPosition.BOTTOM },
 			seriesLabels: labels(40),
 		});
-		// Two 28px rows + the 2px row gap + 12px bottom padding — no room for a
-		// clipped third row, and none left over.
-		expect(dims.legendHeight).toBe(70);
-		expect(dims.height).toBe(430);
+		// Two 28px rows + 2px gap + 12px padding, plus the 24px search row + 4px.
+		expect(dims.showLegendSearch).toBe(true);
+		expect(dims.legendHeight).toBe(98);
+		expect(dims.height).toBe(402);
 	});
 
 	it('BOTTOM: items one past a row still reserve two rows', () => {
@@ -121,6 +122,50 @@ describe('calculateChartDimensions', () => {
 			seriesLabels: labels(6),
 		});
 		expect(dims.legendHeight).toBe(70);
+	});
+
+	it('BOTTOM: no search row while every item is already on screen', () => {
+		// 1000px fits 4 per row, so 8 items fill both reserved rows exactly.
+		const dims = calculateChartDimensions({
+			containerWidth: 1000,
+			containerHeight: 500,
+			legendConfig: { position: LegendPosition.BOTTOM },
+			seriesLabels: labels(8),
+		});
+		expect(dims.showLegendSearch).toBe(false);
+		expect(dims.legendHeight).toBe(70);
+	});
+
+	it('BOTTOM: a search row once the grid overflows the reserved rows', () => {
+		const dims = calculateChartDimensions({
+			containerWidth: 1000,
+			containerHeight: 500,
+			legendConfig: { position: LegendPosition.BOTTOM },
+			seriesLabels: labels(9),
+		});
+		expect(dims.showLegendSearch).toBe(true);
+		expect(dims.legendHeight).toBe(98);
+	});
+
+	it('BOTTOM: no search row when it would push the legend past a short panel', () => {
+		const dims = calculateChartDimensions({
+			containerWidth: 1000,
+			containerHeight: 120,
+			legendConfig: { position: LegendPosition.BOTTOM },
+			seriesLabels: labels(40),
+		});
+		expect(dims.showLegendSearch).toBe(false);
+		expect(dims.legendHeight).toBe(40);
+	});
+
+	it('RIGHT: always carries its chrome; the column has the height for it', () => {
+		const dims = calculateChartDimensions({
+			containerWidth: 1000,
+			containerHeight: 500,
+			legendConfig: { position: LegendPosition.RIGHT },
+			seriesLabels: labels(40),
+		});
+		expect(dims.showLegendSearch).toBe(true);
 	});
 
 	it('BOTTOM: reserves the rows the grid actually lays out, not the rows a bare width estimate allows', () => {

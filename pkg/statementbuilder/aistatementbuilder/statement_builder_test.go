@@ -237,13 +237,13 @@ func TestBuild_FullSQL_TraceList_MaterializedColumns(t *testing.T) {
 	assertSQLEqual(t, `
 WITH matched AS (
     SELECT trace_id,
-        maxIf(timestamp, (attribute_string_gen_ai$$request$$model_exists OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time
+        maxIf(timestamp, (attribute_string_gen_ai$$request$$model_exists = true OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE timestamp >= '1747947419000000000'
       AND timestamp < '1747983448000000000'
       AND ts_bucket_start >= 1747945619
       AND ts_bucket_start <= 1747983448
-      AND ((attribute_string_gen_ai$$request$$model_exists OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name')))
+      AND ((attribute_string_gen_ai$$request$$model_exists = true OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name')))
     GROUP BY trace_id
     ORDER BY last_activity_time DESC, trace_id DESC
     LIMIT 20
@@ -268,16 +268,16 @@ SELECT trace_id,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
     any(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS service.name,
-    countIf(attribute_string_gen_ai$$request$$model_exists) AS llm_call_count,
+    countIf(attribute_string_gen_ai$$request$$model_exists = true) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
-    sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)) AS input_tokens,
+    sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists = true, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
-    coalesce(sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
+    coalesce(sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists = true, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
     sum(multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL)) AS estimated_total_cost,
-    maxIf(duration_nano, attribute_string_gen_ai$$request$$model_exists) AS max_llm_duration_nano,
+    maxIf(duration_nano, attribute_string_gen_ai$$request$$model_exists = true) AS max_llm_duration_nano,
     countIf(has_error = true) AS error_count,
-    maxIf(timestamp, (attribute_string_gen_ai$$request$$model_exists OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
+    maxIf(timestamp, (attribute_string_gen_ai$$request$$model_exists = true OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
     argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages')) AS input,
     argMaxIf(multiIf(mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.output.messages')) AS output
 FROM signoz_traces.distributed_signoz_index_v3
