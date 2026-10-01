@@ -214,7 +214,7 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 		CompositeQuery: composite,
 		FormatOptions: &qb.FormatOptions{
 			FillGaps:               fillGaps,
-			FormatTableResultForUI: panel.Spec.Plugin.Kind == PanelKindTable,
+			FormatTableResultForUI: panel.Spec.Plugin.Kind == PanelKindTable || panel.Spec.Plugin.Kind == PanelKindScatterPlot,
 		},
 	}, nil
 }

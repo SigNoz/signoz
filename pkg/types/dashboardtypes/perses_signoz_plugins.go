@@ -166,19 +166,20 @@ func (BuilderQuerySpec) JSONSchemaOneOf() []any {
 type PanelPluginKind string
 
 const (
-	PanelKindTimeSeries PanelPluginKind = "signoz/TimeSeriesPanel"
-	PanelKindBarChart   PanelPluginKind = "signoz/BarChartPanel"
-	PanelKindAreaChart  PanelPluginKind = "signoz/AreaChartPanel"
-	PanelKindNumber     PanelPluginKind = "signoz/NumberPanel"
-	PanelKindPieChart   PanelPluginKind = "signoz/PieChartPanel"
-	PanelKindTable      PanelPluginKind = "signoz/TablePanel"
-	PanelKindHistogram  PanelPluginKind = "signoz/HistogramPanel"
-	PanelKindList       PanelPluginKind = "signoz/ListPanel"
-	PanelKindText       PanelPluginKind = "signoz/TextPanel"
+	PanelKindTimeSeries  PanelPluginKind = "signoz/TimeSeriesPanel"
+	PanelKindBarChart    PanelPluginKind = "signoz/BarChartPanel"
+	PanelKindAreaChart   PanelPluginKind = "signoz/AreaChartPanel"
+	PanelKindNumber      PanelPluginKind = "signoz/NumberPanel"
+	PanelKindPieChart    PanelPluginKind = "signoz/PieChartPanel"
+	PanelKindTable       PanelPluginKind = "signoz/TablePanel"
+	PanelKindHistogram   PanelPluginKind = "signoz/HistogramPanel"
+	PanelKindList        PanelPluginKind = "signoz/ListPanel"
+	PanelKindText        PanelPluginKind = "signoz/TextPanel"
+	PanelKindScatterPlot PanelPluginKind = "signoz/ScatterPlotPanel"
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindScatterPlot}
 }
 
 func (k PanelPluginKind) rendersWithoutQuery() bool {
@@ -272,6 +273,36 @@ type TextPanelSpec struct {
 	Text          string           `json:"text"`
 	Presentation  TextPresentation `json:"presentation"`
 	HeaderOptions HeaderOptions    `json:"headerOptions"`
+}
+
+type ScatterPlotPanelSpec struct {
+	Visualization BasicVisualization    `json:"visualization"`
+	Dimensions    ScatterPlotDimensions `json:"dimensions"`
+	Formatting    TableFormatting       `json:"formatting"`
+	Axes          ScatterPlotAxes       `json:"axes"`
+	Legend        Legend                `json:"legend"`
+	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive"`
+}
+
+// ScatterPlotDimensions binds result columns to what a dot encodes. Value columns
+// use the Table column key, so formatting.columnUnits carries over between the
+// two kinds.
+type ScatterPlotDimensions struct {
+	X     string `json:"x" description:"Value column key (queryName, or queryName.expression for a multi-aggregation query) plotted on the x axis. Empty uses the first value column."`
+	Y     string `json:"y" description:"Value column key plotted on the y axis. Empty uses the second value column."`
+	Size  string `json:"size" description:"Value column key that scales dot size. Empty draws every dot at the default size."`
+	Color string `json:"color" description:"Group-by label name (e.g. k8s.namespace.name) that colours dots and drives the legend. Empty uses the renderer default."`
+}
+
+type ScatterPlotAxes struct {
+	X ScatterPlotAxis `json:"x"`
+	Y ScatterPlotAxis `json:"y"`
+}
+
+type ScatterPlotAxis struct {
+	SoftMin *float64  `json:"softMin"`
+	SoftMax *float64  `json:"softMax"`
+	Scale   AxisScale `json:"scale"`
 }
 
 type TextPresentation struct {
@@ -637,6 +668,47 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line style %q: must be `solid` or `dashed`", v)
+	}
+}
+
+// AxisScale `auto` leaves the choice to the renderer; `symlog` is log-like but
+// defined at and below zero.
+type AxisScale struct{ valuer.String }
+
+var (
+	AxisScaleAuto   = AxisScale{valuer.NewString("auto")} // default
+	AxisScaleLinear = AxisScale{valuer.NewString("linear")}
+	AxisScaleLog    = AxisScale{valuer.NewString("log")}
+	AxisScaleSymlog = AxisScale{valuer.NewString("symlog")}
+)
+
+func (AxisScale) Enum() []any {
+	return []any{AxisScaleAuto, AxisScaleLinear, AxisScaleLog, AxisScaleSymlog}
+}
+
+func (as AxisScale) ValueOrDefault() string {
+	if as.IsZero() {
+		return AxisScaleAuto.StringValue()
+	}
+	return as.StringValue()
+}
+
+func (as AxisScale) MarshalJSON() ([]byte, error) {
+	return json.Marshal(as.ValueOrDefault())
+}
+
+func (as *AxisScale) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid axis scale: must be a string, one of `auto`, `linear`, `log`, or `symlog`")
+	}
+	val := AxisScale{valuer.NewString(v)}
+	switch val {
+	case AxisScaleAuto, AxisScaleLinear, AxisScaleLog, AxisScaleSymlog:
+		*as = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid axis scale %q: must be `auto`, `linear`, `log`, or `symlog`", v)
 	}
 }
 

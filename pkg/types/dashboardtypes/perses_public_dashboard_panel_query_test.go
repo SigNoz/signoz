@@ -209,34 +209,38 @@ func TestDashboardV2GetPanelQuery(t *testing.T) {
 		}
 	})
 
-	t.Run("sets FormatTableResultForUI only for table panels", func(t *testing.T) {
-		dashboard := &DashboardV2{
-			Spec: DashboardSpec{
-				Panels: map[string]*Panel{
-					"panel-1": {
-						Spec: PanelSpec{
-							Plugin: PanelPlugin{Kind: PanelKindTable},
-							Queries: []Query{
-								{
-									Kind: qb.RequestTypeScalar,
-									Spec: QuerySpec{
-										Plugin: QueryPlugin{
-											Kind: QueryKindBuilder,
-											Spec: &BuilderQuerySpec{Spec: qb.QueryBuilderQuery[qb.MetricAggregation]{Name: "A"}},
+	t.Run("sets FormatTableResultForUI for panels that join scalar rows", func(t *testing.T) {
+		for _, kind := range []PanelPluginKind{PanelKindTable, PanelKindScatterPlot} {
+			t.Run(string(kind), func(t *testing.T) {
+				dashboard := &DashboardV2{
+					Spec: DashboardSpec{
+						Panels: map[string]*Panel{
+							"panel-1": {
+								Spec: PanelSpec{
+									Plugin: PanelPlugin{Kind: kind},
+									Queries: []Query{
+										{
+											Kind: qb.RequestTypeScalar,
+											Spec: QuerySpec{
+												Plugin: QueryPlugin{
+													Kind: QueryKindBuilder,
+													Spec: &BuilderQuerySpec{Spec: qb.QueryBuilderQuery[qb.MetricAggregation]{Name: "A"}},
+												},
+											},
 										},
 									},
 								},
 							},
 						},
 					},
-				},
-			},
-		}
+				}
 
-		req, err := dashboard.GetPanelQuery(1, 2, "panel-1")
-		require.NoError(t, err)
-		require.NotNil(t, req.FormatOptions)
-		assert.True(t, req.FormatOptions.FormatTableResultForUI)
+				req, err := dashboard.GetPanelQuery(1, 2, "panel-1")
+				require.NoError(t, err)
+				require.NotNil(t, req.FormatOptions)
+				assert.True(t, req.FormatOptions.FormatTableResultForUI)
+			})
+		}
 	})
 
 	t.Run("sets FillGaps from the panel visualization", func(t *testing.T) {
