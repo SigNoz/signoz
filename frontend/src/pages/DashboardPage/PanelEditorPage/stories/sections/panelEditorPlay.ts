@@ -8,7 +8,12 @@ const PAGE_LOAD = { timeout: 10000 };
  * a screenshot of the viewport can see it. Returns the section to query in.
  */
 export const expandSection = async (title: string): Promise<HTMLElement> => {
-	const toggle = await screen.findByRole('button', { name: title }, PAGE_LOAD);
+	// The toggle's test id is the title, lowercased, with whitespace as dashes.
+	const toggle = await screen.findByTestId(
+		`config-section-${title.toLowerCase().replace(/\s+/g, '-')}`,
+		{},
+		PAGE_LOAD,
+	);
 
 	if (toggle.getAttribute('aria-expanded') !== 'true') {
 		await userEvent.click(toggle);
@@ -36,13 +41,16 @@ export const openConfigSelect = async (testId: string): Promise<void> => {
 	await userEvent.click(within(select).getByRole('combobox'));
 };
 
-/** Opens Thresholds and adds one row through the section's own button. */
-export const addThreshold = async (): Promise<void> => {
+/**
+ * Opens Thresholds and adds one row through the section's own button, whose
+ * test id depends on the panel kind.
+ */
+export const addThreshold = async (
+	testId = 'panel-editor-v2-add-threshold',
+): Promise<void> => {
 	const section = await expandSection('Thresholds');
 
-	await userEvent.click(
-		within(section).getByRole('button', { name: 'Add threshold' }),
-	);
+	await userEvent.click(within(section).getByTestId(testId));
 };
 
 export const openLinkDialog = async (): Promise<void> => {

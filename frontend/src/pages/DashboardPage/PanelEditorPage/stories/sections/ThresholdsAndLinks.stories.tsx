@@ -60,7 +60,7 @@ export const ThresholdColorOpen: Story = {
 export const NumberThreshold: Story = {
 	args: { panel: 'p99-latency' },
 	play: async () => {
-		await addThreshold();
+		await addThreshold('panel-editor-v2-add-comparison-threshold');
 		await screen.findByTestId('comparison-threshold-operator-0');
 	},
 };
@@ -69,7 +69,7 @@ export const NumberThreshold: Story = {
 export const TableThreshold: Story = {
 	args: { panel: 'top-endpoints' },
 	play: async () => {
-		await addThreshold();
+		await addThreshold('panel-editor-v2-add-table-threshold');
 		await screen.findByTestId('table-threshold-column-0');
 	},
 };

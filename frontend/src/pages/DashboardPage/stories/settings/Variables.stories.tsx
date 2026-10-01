@@ -92,7 +92,7 @@ export const TooltipsInVariables: Story = {
 export const DeleteConfirm: Story = {
 	play: async ({ canvasElement }) => {
 		await openSettings(canvasElement, 'Variables');
-		await clickRowAction('owner', 'Delete variable');
+		await clickRowAction('owner', 'delete');
 		await screen.findByText('Delete?');
 	},
 };
@@ -104,7 +104,7 @@ export const DeleteConfirm: Story = {
 export const DeleteReferenced: Story = {
 	play: async ({ canvasElement }) => {
 		await openSettings(canvasElement, 'Variables');
-		await clickRowAction('environment', 'Delete variable');
+		await clickRowAction('environment', 'delete');
 		await screen.findByText('Delete $environment');
 	},
 };
@@ -113,7 +113,7 @@ export const DeleteReferenced: Story = {
 export const ApplyToAll: Story = {
 	play: async ({ canvasElement }) => {
 		await openSettings(canvasElement, 'Variables');
-		await clickRowAction('namespace', 'Apply to all');
+		await clickRowAction('namespace', 'apply-all');
 		await screen.findByText('Apply $namespace to panels');
 	},
 };
@@ -126,7 +126,7 @@ export const RenameReferenced: Story = {
 	play: async ({ canvasElement }) => {
 		await openVariableEditor(canvasElement, 'environment');
 		await typeVariableName('env');
-		await userEvent.click(screen.getByRole('button', { name: 'Save Variable' }));
+		await userEvent.click(screen.getByTestId('variable-save'));
 		await screen.findByText('Rename $environment');
 	},
 };

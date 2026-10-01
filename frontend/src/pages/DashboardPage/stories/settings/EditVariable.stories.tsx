@@ -125,7 +125,7 @@ export const CircularDependency: Story = {
 	parameters: { msw: { handlers: [cyclicVariablesDashboardHandler] } },
 	play: async ({ canvasElement }) => {
 		await openVariableEditor(canvasElement, 'service');
-		await userEvent.click(screen.getByRole('button', { name: 'Save Variable' }));
+		await userEvent.click(screen.getByTestId('variable-save'));
 		await screen.findByText(/circular dependency detected/);
 	},
 };
