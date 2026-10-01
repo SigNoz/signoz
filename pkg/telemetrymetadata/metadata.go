@@ -2626,13 +2626,11 @@ func (t *telemetryMetaStore) fetchLastSeenInfoForTable(ctx context.Context, tabl
 	return lastSeenInfo, nil
 }
 
-// containsConditions compiles a contains search on one key of the related
-// values table. The key and its family spellings are their own metadata,
-// so the search narrows the suggestions across the whole family.
+// containsConditions compiles a contains search over the key and its family
+// spellings, which stand as their own metadata.
 func (t *telemetryMetaStore) containsConditions(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, names []string, value string, sb *sqlbuilder.SelectBuilder) ([]string, error) {
-	// Spellings group into one family only when their metadata carries the
-	// signal and the string data type. The table stores only string maps, so
-	// an unspecified data type is a string here.
+	// A family forms only over string keys with a signal. The table stores
+	// only string maps, so an unspecified data type is a string here.
 	dataType := key.FieldDataType
 	if dataType == telemetrytypes.FieldDataTypeUnspecified {
 		dataType = telemetrytypes.FieldDataTypeString
@@ -2650,9 +2648,8 @@ func (t *telemetryMetaStore) containsConditions(ctx context.Context, q qbtypes.Q
 	return conds, err
 }
 
-// familyValueNames returns the spellings whose stored values merge into the
-// suggestions for the requested name. With the flag off, the requested name
-// alone.
+// familyValueNames returns the spellings whose values merge into the
+// suggestions. With the flag off, the requested name alone.
 func (t *telemetryMetaStore) familyValueNames(ctx context.Context, orgID valuer.UUID, signal telemetrytypes.Signal, fieldValueSelector *telemetrytypes.FieldValueSelector) []string {
 	if !querybuilder.SemconvFamiliesEnabled(ctx, orgID, t.fl) {
 		return []string{fieldValueSelector.Name}

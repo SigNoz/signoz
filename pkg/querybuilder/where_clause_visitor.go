@@ -1012,8 +1012,8 @@ func assignIfEmpty(s *string, value string) {
 	}
 }
 
-// familySpellings returns the storage spellings for the selector. The
-// metrics signal expands each member into its stored label layouts.
+// familySpellings returns the storage spellings for the selector. Metrics
+// add the span-metrics label layout.
 func familySpellings(selector telemetrytypes.FieldKeySelector) []string {
 	if selector.Signal == telemetrytypes.SignalMetrics {
 		return MetricLabelSpellings(selector)
@@ -1021,23 +1021,13 @@ func familySpellings(selector telemetrytypes.FieldKeySelector) []string {
 	return semconv.Members(semconv.KindAttribute, selector)
 }
 
-// matchingLogicalFields resolves the referenced key against the metadata map
-// into logical fields, honoring any context/data type the user specified.
-//
-// Physical keys that are members of one semantic-convention family group
-// into one logical field per (signal, context, data type) identity, members
-// ordered current-first. Every other matching key becomes
-// its own single-member logical field. Ambiguity is the length of the
-// returned slice: one family is one element and is never ambiguous with
-// itself, but the slice can hold several logical fields, including several
-// family fields, one per identity, when the family exists under more than
-// one context or data type. Members alias the metadata map entries; nothing
-// is copied or mutated.
-//
-// Family grouping only happens when families are on for the query. Off,
-// every match stays a single-member logical field and only the requested
-// name is looked up. On, the lookup covers the family spellings, current
-// first, and the key's own signal wins over the query's signal.
+// matchingLogicalFields resolves the key against the metadata map. Members
+// of one family group into one logical field per (signal, context, data
+// type) identity, current first. Every other match is its own single-member
+// field. The length of the result is the ambiguity: a family is never
+// ambiguous with itself. Members alias the map entries. With families off,
+// only the requested name is looked up. The key's own signal wins over the
+// query's signal.
 func matchingLogicalFields(familiesOn bool, signal telemetrytypes.Signal, metric *telemetrytypes.MetricContext, field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
 	members := []string{field.Name}
 	if familiesOn {
@@ -1063,17 +1053,15 @@ type memberMatch struct {
 	rank int
 }
 
-// collectMemberMatches finds the metadata entries for every member spelling:
-// first under the member names, then under their context-prefixed spellings
-// (a context can be a legitimate part of a stored name, e.g. `attribute.key`).
-// An entry must fit the context and data type that the request specified.
-// An unspecified context or data type matches any.
+// collectMemberMatches finds the metadata entries for every member spelling,
+// under the member name and under its context-prefixed spelling, because a
+// context can be part of a stored name. An unspecified context or data type
+// matches any.
 func collectMemberMatches(field *telemetrytypes.TelemetryFieldKey, members []string, metric *telemetrytypes.MetricContext, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []memberMatch {
 	matches := make([]memberMatch, 0)
 	collect := func(lookupName string, rank int, memberName string, contextMatched bool) {
 		for _, item := range fieldKeys[lookupName] {
-			// A context-prefixed lookup already matched the context through the
-			// lookup key itself.
+			// A context-prefixed lookup matched the context through the key.
 			if !contextMatched && field.FieldContext != telemetrytypes.FieldContextUnspecified && field.FieldContext != item.FieldContext {
 				continue
 			}
@@ -1081,9 +1069,9 @@ func collectMemberMatches(field *telemetrytypes.TelemetryFieldKey, members []str
 				continue
 			}
 			if memberName != field.Name {
-				// A sibling member's lookup can find a same-named field in a scope
-				// where the family does not apply, so the member must be a family
-				// spelling of the requested name for the entry's own signal and context.
+				// A sibling can match a same-named field where the family does
+				// not apply, so the member must be a spelling of the requested
+				// name for the entry's own signal and context.
 				spellings := familySpellings(telemetrytypes.FieldKeySelector{
 					Name:          field.Name,
 					Signal:        item.Signal,
@@ -1109,12 +1097,10 @@ func collectMemberMatches(field *telemetrytypes.TelemetryFieldKey, members []str
 	return matches
 }
 
-// groupIntoLogicalFields turns matches into logical fields. In family mode,
-// a string entry of a family signal under the resource or attribute context
-// groups by its (signal, context, data type) identity. Every other entry
-// becomes its own single-member field. Members sort by family rank at the
-// end: precedence is a property of the family, not of the order in which the
-// lookups found the members.
+// groupIntoLogicalFields groups a string entry of a family signal under the
+// resource or attribute context by its (signal, context, data type)
+// identity. Every other entry is its own single-member field. Members sort
+// by family rank, not by lookup order.
 func groupIntoLogicalFields(requestedName string, familyMode bool, matches []memberMatch) []*telemetrytypes.LogicalField {
 	fields := make([]*telemetrytypes.LogicalField, 0, len(matches))
 	groups := make(map[string]*telemetrytypes.LogicalField)

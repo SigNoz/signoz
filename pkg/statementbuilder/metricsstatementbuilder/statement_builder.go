@@ -130,10 +130,8 @@ func (b *StatementBuilder) Build(
 	return b.buildPipelineStatement(ctx, orgID, start, end, requestType, query, keys, metricNames, variables)
 }
 
-// expandSelectorsForMetricNames duplicates the selectors for each storage
-// name of a metric-name family. Label-key metadata is filtered by the exact
-// metric_name, so the series under the old name must contribute their keys
-// too.
+// expandSelectorsForMetricNames duplicates the selectors per family metric
+// name. Label-key metadata is filtered by the exact metric_name.
 func expandSelectorsForMetricNames(selectors []*telemetrytypes.FieldKeySelector, metricNames []string) []*telemetrytypes.FieldKeySelector {
 	if len(metricNames) <= 1 {
 		return selectors

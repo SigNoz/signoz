@@ -15,8 +15,8 @@ type Kind struct {
 	valuer.String
 }
 
-// Member is one historical spelling of a family, with the scope its rename
-// edges declared. A nil axis places no constraint on that axis.
+// Member is one historical spelling with the scope of its rename edges. A
+// nil axis is unconstrained.
 type Member struct {
 	name           string
 	contexts       []telemetrytypes.FieldContext
@@ -28,11 +28,11 @@ func (m Member) Name() string {
 	return m.name
 }
 
-// Family is one logical telemetry field. Members are ordered from the most
-// recent predecessor to the oldest one and therefore also define fallback
-// order. The family-level contexts and signals come from the overlay. They
-// gate where the family can resolve at all. The member scopes come from the
-// schema edges. They gate which members apply for a given selector.
+// Family is one logical telemetry field. Members run from the most recent
+// predecessor to the oldest, which is the fallback order. The family-level
+// contexts and signals come from the overlay and gate where the family
+// resolves. The member scopes come from the schema edges and gate which
+// members apply.
 type Family struct {
 	current  string
 	kind     Kind
@@ -142,13 +142,9 @@ func buildIndexes() (map[string][]int, [][]string) {
 	return index, members
 }
 
-// lookupIndex returns the family that resolves selector.Name for kind.
-//
-// The missing-information policy is the same on every axis (signal, field
-// context, metric name): an axis the selector does not populate is a wildcard
-// and constrains nothing. When the wildcards leave more than one family
-// admitted, the name does not resolve. Resolution never picks an arbitrary
-// winner. It asks for more information by staying literal.
+// lookupIndex returns the one family that admits selector.Name for kind.
+// An axis the selector leaves empty constrains nothing. When more than one
+// family is admitted, the name stays literal.
 func lookupIndex(kind Kind, selector telemetrytypes.FieldKeySelector) (int, bool) {
 	found, foundIdx := 0, 0
 	for _, idx := range memberToFamilies[selector.Name] {
@@ -163,9 +159,8 @@ func lookupIndex(kind Kind, selector telemetrytypes.FieldKeySelector) (int, bool
 	return foundIdx, true
 }
 
-// familyAdmits reports whether the family resolves selector.Name: the
-// family-level gate must admit the selector, and the name must be the current
-// name or an admitted member.
+// familyAdmits reports whether the family gate admits the selector and the
+// name is the current name or an admitted member.
 func familyAdmits(family Family, kind Kind, selector telemetrytypes.FieldKeySelector) bool {
 	if family.kind != kind {
 		return false
@@ -192,9 +187,8 @@ func familyAdmits(family Family, kind Kind, selector telemetrytypes.FieldKeySele
 	return false
 }
 
-// memberAdmits reports whether the member applies for the selector under the
-// wildcard policy: a selector axis without a value never constrains, and a
-// member axis without a value admits every selector value.
+// memberAdmits reports whether the member applies for the selector. An empty
+// axis on either side admits.
 func memberAdmits(member Member, selector telemetrytypes.FieldKeySelector) bool {
 	if !axisAdmits(member.signals, selector.Signal, telemetrytypes.SignalUnspecified) {
 		return false

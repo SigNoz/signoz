@@ -65,9 +65,8 @@ type overlayFile struct {
 	Families map[string]overlayFamily `yaml:"families"`
 }
 
-// Contexts and Signals set the family-level gate: the axes a family may
-// resolve on at all. The Add* fields widen the schema-derived member scopes,
-// for renames SigNoz applies beyond where the schema published them.
+// Contexts and Signals set the family-level gate. The Add* fields widen the
+// member scopes the schema derived.
 type overlayFamily struct {
 	Enabled           *bool             `yaml:"enabled"`
 	Kind              string            `yaml:"kind"`
@@ -83,8 +82,7 @@ type overlayFamily struct {
 	ValueMap          map[string]string `yaml:"value_map"`
 }
 
-// scope is the constraint a rename edge carries. A nil axis places no
-// constraint on that axis.
+// scope is the constraint a rename edge carries. A nil axis is unconstrained.
 type scope struct {
 	contexts       []string
 	signals        []string
@@ -348,10 +346,9 @@ func scopeForSection(section string) (scope, error) {
 	}
 }
 
-// unionScope widens per axis: no constraint on either side widens to no
-// constraint. The metric-name axis only takes evidence from edges that can
-// apply to metrics. A rename filed under a non-metrics section says nothing
-// about metric scoping, and must not erase a scoped list into a wildcard.
+// unionScope widens per axis. A nil side widens to nil. The metric-name axis
+// takes only edges that can apply to metrics, so a non-metrics rename does
+// not erase a scoped list.
 func unionScope(left, right scope) scope {
 	return scope{
 		contexts:       unionAxis(left.contexts, right.contexts),
@@ -384,11 +381,9 @@ func unionAxis(left, right []string) []string {
 	return merged
 }
 
-// pathResult is one resolution path from a name to a family root: the root
-// name and the hop count. Hops carry only reachability. A member's scope
-// comes from its own rename edges, because the section a later rename is
-// filed under says nothing about where the older spelling existed. The
-// vendored schema files chained renames under different sections.
+// pathResult is one path from a name to a family root. Hops carry only
+// reachability. A member's scope comes from its own rename edges, because a
+// later rename can be filed under another section.
 type pathResult struct {
 	root     string
 	distance int
@@ -421,18 +416,16 @@ func buildFamilies(schemas []schemaFile, overlay overlayFile) ([]generatedFamily
 	if err != nil {
 		return nil, err
 	}
-	// One old name can fan out into several families when its rename edges are
-	// scoped differently, so the graph keeps every successor.
+	// An old name can fan out into several families, so the graph keeps every
+	// successor.
 	next := make(map[graphKey][]edge)
 	for _, item := range edges {
 		key := graphKey{kind: item.kind, name: item.old}
 		merged := false
 		for i, existing := range next[key] {
 			if existing.current == item.current {
-				// Repeated entries are common in chained schema histories. Merge
-				// the scopes instead of appending so a repeat cannot sever a
-				// later edge in the same chain (A -> B, B -> C, then a repeated
-				// A -> B).
+				// A repeated edge merges its scope, so it cannot sever a later edge
+				// in the chain.
 				next[key][i].scope = unionScope(existing.scope, item.scope)
 				merged = true
 				break
@@ -441,13 +434,9 @@ func buildFamilies(schemas []schemaFile, overlay overlayFile) ([]generatedFamily
 		if merged {
 			continue
 		}
-		// Schema history occasionally repeats an old name with a newer direct
-		// destination or rolls a rename back. Edges are collected
-		// oldest-to-newest, so the latest published current name must be a
-		// root. The delete removes every outgoing edge of the re-published
-		// name: a family only reachable through it becomes orphaned. The
-		// vendored history contains only true rollbacks, where the orphan is
-		// the correct result.
+		// Edges run oldest to newest, so the latest published current name
+		// must be a root. A family only reachable through it is orphaned,
+		// which is correct for the rollbacks the vendored history holds.
 		delete(next, graphKey{kind: item.kind, name: item.current})
 		next[key] = append(next[key], item)
 	}
@@ -632,8 +621,7 @@ func applyOverlay(family *generatedFamily, policy overlayFamily) {
 	if policy.Signals != nil {
 		family.Signals = append([]string(nil), policy.Signals...)
 	}
-	// Add* fields only widen: a nil gate already admits everything, so they
-	// extend a gate only when the overlay set one.
+	// Add* fields widen a gate the overlay set. A nil gate already admits all.
 	if family.Contexts != nil {
 		family.Contexts = appendUnique(family.Contexts, policy.AddContexts...)
 	}

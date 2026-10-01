@@ -370,8 +370,7 @@ func (q *querier) populateQBEvent(event *qbtypes.QBEvent, queries []qbtypes.Quer
 //     the query window).
 //   - err: Internal when a metadata fetch fails.
 //
-// Metric metadata resolves through every storage name of a metric-name
-// family, the same names the statement builder unions.
+// Metric metadata resolves through every name of a metric-name family.
 func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, queries []qbtypes.QueryEnvelope, start, end uint64, requestType qbtypes.RequestType) (missingMetricQueries []string, metricWarnings []string, err error) {
 	metricNames := make([]string, 0)
 	for idx := range queries {
@@ -513,9 +512,8 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 	return missingMetricQueries, warnings, nil
 }
 
-// familyTemporality is the one temporality the names of a metric-name family
-// share. When the names hold data of different temporalities, the query
-// must read each series with its own, so the result is Multiple.
+// familyTemporality is the temporality the family names share, or Multiple
+// when they differ.
 func familyTemporality(temporalities map[string]metrictypes.Temporality, names []string) metrictypes.Temporality {
 	found := metrictypes.Unknown
 	for _, name := range names {

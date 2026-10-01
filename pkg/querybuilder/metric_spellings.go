@@ -9,11 +9,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// The span-metrics processor in signoz-otel-collector flattens resource
-// attributes into labels with a resource_ prefix. Only the metrics it emits
-// carry that layout. The histogram signoz_latency is stored as the
-// sub-metrics the metrics exporter derives from it, with a dot before the
-// suffix. The other names are emitted as they are.
+// The span-metrics processor in signoz-otel-collector writes resource
+// attributes as labels with a resource_ prefix on these metrics only. The
+// signoz_latency histogram is stored as its dotted sub-metrics.
 const spanMetricsResourcePrefix = "resource_"
 
 var spanMetrics = map[string]struct{}{
@@ -30,11 +28,10 @@ var spanMetrics = map[string]struct{}{
 	"signoz_external_call_latency_count": {},
 }
 
-// MetricLabelSpellings returns the storage spellings that can hold
-// selector.Name in metric labels: the family members, current first, and
-// for a span-metrics metric each member with the resource_ prefix too. The
-// requested name is never rewritten. A name outside an enabled family is
-// returned unchanged, and so is a name the selector leaves ambiguous.
+// MetricLabelSpellings returns the family members of selector.Name, current
+// first, and on a span-metrics metric each member with the resource_ prefix
+// too. A name outside a family, or one the selector leaves ambiguous, is
+// returned as it is.
 func MetricLabelSpellings(selector telemetrytypes.FieldKeySelector) []string {
 	members := semconv.Members(semconv.KindAttribute, selector)
 	if len(members) <= 1 {
@@ -53,9 +50,8 @@ func MetricLabelSpellings(selector telemetrytypes.FieldKeySelector) []string {
 	return spellings
 }
 
-// FamilyMetricNames returns the storage names a metric query must read: the
-// requested name plus the other names of its metric-name family when the
-// resolve_semconv_families flag is on for the org.
+// FamilyMetricNames returns the metric-name family of metricName when the
+// flag is on for the org, else the name alone.
 func FamilyMetricNames(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, metricName string) []string {
 	if !SemconvFamiliesEnabled(ctx, orgID, fl) {
 		return []string{metricName}
