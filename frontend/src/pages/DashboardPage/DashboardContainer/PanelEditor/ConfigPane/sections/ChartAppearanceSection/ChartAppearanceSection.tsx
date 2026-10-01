@@ -14,6 +14,7 @@ import type { SectionEditorContext } from '../../sectionContext';
 import { createFieldResetter } from '../../utils/changes';
 import DisconnectValuesField from './DisconnectValuesField';
 import HeatmapColorsField from './HeatmapColorsField';
+import PointsFields from './PointsFields';
 import {
 	FILL_MODE_OPTIONS,
 	FILLED_FILL_MODE_OPTIONS,
@@ -39,8 +40,9 @@ function ChartAppearanceSection({
 	controls,
 	onChange,
 	stepInterval,
+	sizeColumnLabel,
 }: SectionEditorProps<SectionKind.ChartAppearance> &
-	Pick<SectionEditorContext, 'stepInterval'>): JSX.Element {
+	Pick<SectionEditorContext, 'stepInterval' | 'sizeColumnLabel'>): JSX.Element {
 	const reset = createFieldResetter(value, savedValue, onChange);
 	const interpolation = value?.lineInterpolation;
 
@@ -119,6 +121,15 @@ function ChartAppearanceSection({
 					changed={reset('showPoints').changed}
 					value={value?.showPoints ?? false}
 					onChange={(showPoints): void => onChange({ ...value, showPoints })}
+				/>
+			)}
+
+			{controls.points && (
+				<PointsFields
+					value={value?.points}
+					savedValue={savedValue?.points}
+					sizeColumnLabel={sizeColumnLabel}
+					onChange={(points): void => onChange({ ...value, points })}
 				/>
 			)}
 

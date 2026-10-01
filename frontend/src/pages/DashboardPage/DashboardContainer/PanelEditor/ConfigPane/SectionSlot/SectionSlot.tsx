@@ -12,6 +12,7 @@ import type { SectionEditorContext } from '../sectionContext';
 import { getSectionDefault, resolveSectionEditor } from '../sectionRegistry';
 import SettingsSection from '../SettingsSection/SettingsSection';
 import { isDifferent } from '../utils/changes';
+import { getSizeColumnLabel } from '../utils/sizeColumnLabel';
 import SectionHeaderQuickAdd from './SectionHeaderQuickAdd';
 
 type SectionSlotProps = {
@@ -134,6 +135,7 @@ function SectionSlot({
 		yAxisUnit,
 		tableColumns,
 		groupColumns,
+		sizeColumnLabel: getSizeColumnLabel(spec, tableColumns),
 		signal,
 		panelKind,
 		onChangePanelKind,
