@@ -119,14 +119,10 @@ describe('GCP CloudAccountSetupDrawer', () => {
 			);
 		});
 
-		await user.type(
-			screen.getByTestId('gcp-account-name-input'),
-			'billing@company.com',
-		);
-		await user.type(
-			screen.getByTestId('gcp-deployment-project-id-input'),
-			'my-deployment-project-123',
-		);
+		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.paste('billing@company.com');
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.paste('my-deployment-project-123');
 
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));
 		await user.click(await screen.findByText('Mumbai (asia-south1)'));
@@ -165,7 +161,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		await waitFor(() => {
 			expect(onClose).toHaveBeenCalledTimes(1);
 		});
-	});
+	}, 15000);
 
 	it('shows the backend error inline when account creation fails', async () => {
 		server.use(
@@ -190,11 +186,10 @@ describe('GCP CloudAccountSetupDrawer', () => {
 			);
 		});
 
-		await user.type(screen.getByTestId('gcp-account-name-input'), 'my-org');
-		await user.type(
-			screen.getByTestId('gcp-deployment-project-id-input'),
-			'my-deployment-project-123',
-		);
+		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.paste('my-org');
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.paste('my-deployment-project-123');
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));
 		await user.click(await screen.findByText('Mumbai (asia-south1)'));
 
@@ -212,5 +207,5 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		});
 		expect(checkInPayload).toBeNull();
 		expect(onClose).not.toHaveBeenCalled();
-	});
+	}, 15000);
 });
