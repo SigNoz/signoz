@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"encoding/json"
+	"math"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -331,12 +332,13 @@ type TextPanelSpec struct {
 }
 
 type ScatterPlotPanelSpec struct {
-	Visualization BasicVisualization    `json:"visualization"`
-	Dimensions    ScatterPlotDimensions `json:"dimensions"`
-	Formatting    TableFormatting       `json:"formatting"`
-	Axes          ScatterPlotAxes       `json:"axes"`
-	Legend        Legend                `json:"legend"`
-	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive"`
+	Visualization   BasicVisualization         `json:"visualization"`
+	Dimensions      ScatterPlotDimensions      `json:"dimensions"`
+	Formatting      TableFormatting            `json:"formatting"`
+	Axes            ScatterPlotAxes            `json:"axes"`
+	ChartAppearance ScatterPlotChartAppearance `json:"chartAppearance"`
+	Legend          Legend                     `json:"legend"`
+	Thresholds      []ThresholdWithLabel       `json:"thresholds" validate:"dive"`
 }
 
 // ScatterPlotDimensions binds result columns to what a dot encodes. Value columns
@@ -359,6 +361,37 @@ type ScatterPlotAxis struct {
 	SoftMax *float64  `json:"softMax"`
 	Scale   AxisScale `json:"scale"`
 	Label   string    `json:"label" description:"Axis title. Empty draws none."`
+}
+
+type ScatterPlotChartAppearance struct {
+	Points ScatterPlotPoints `json:"points"`
+}
+
+// ScatterPlotPoints keeps the fixed size and the size range side by side so
+// binding or unbinding dimensions.size restores the other's last setting. Nil
+// fields resolve to the renderer default.
+type ScatterPlotPoints struct {
+	Size    *PointDiameter `json:"size" description:"Diameter of every dot when dimensions.size is unset."`
+	MinSize *PointDiameter `json:"minSize" description:"Diameter of the smallest dot when dimensions.size is set."`
+	MaxSize *PointDiameter `json:"maxSize" description:"Diameter of the largest dot when dimensions.size is set."`
+	Opacity *PointOpacity  `json:"opacity"`
+}
+
+func (p *ScatterPlotPoints) UnmarshalJSON(data []byte) error {
+	type alias ScatterPlotPoints
+	var tmp alias
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid points")
+	}
+	*p = ScatterPlotPoints(tmp)
+	return p.validate()
+}
+
+func (p ScatterPlotPoints) validate() error {
+	if p.MinSize != nil && p.MaxSize != nil && *p.MinSize > *p.MaxSize {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid points: minSize %d must not exceed maxSize %d", *p.MinSize, *p.MaxSize)
+	}
+	return nil
 }
 
 type TextPresentation struct {
@@ -903,6 +936,53 @@ func (o *FillOpacity) UnmarshalJSON(data []byte) error {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fillOpacity %v: must be between 0 and 1", v)
 	}
 	*o = FillOpacity(v)
+	return nil
+}
+
+const (
+	minPointDiameter = 2
+	maxPointDiameter = 40
+)
+
+// PointDiameter is a scatter dot's diameter in whole CSS pixels.
+type PointDiameter int
+
+func (PointDiameter) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMinimum(minPointDiameter).WithMaximum(maxPointDiameter)
+	return nil
+}
+
+func (d *PointDiameter) UnmarshalJSON(data []byte) error {
+	var v float64
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid point size: must be a whole number between %d and %d", minPointDiameter, maxPointDiameter)
+	}
+	if v != math.Trunc(v) || v < minPointDiameter || v > maxPointDiameter {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid point size %v: must be a whole number between %d and %d", v, minPointDiameter, maxPointDiameter)
+	}
+	*d = PointDiameter(v)
+	return nil
+}
+
+const minPointOpacity = 0.1
+
+// PointOpacity is a scatter dot's fill alpha. The floor keeps a dot visible.
+type PointOpacity float64
+
+func (PointOpacity) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMinimum(minPointOpacity).WithMaximum(1)
+	return nil
+}
+
+func (o *PointOpacity) UnmarshalJSON(data []byte) error {
+	var v float64
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid point opacity: must be a number between %v and 1", minPointOpacity)
+	}
+	if v < minPointOpacity || v > 1 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid point opacity %v: must be between %v and 1", v, minPointOpacity)
+	}
+	*o = PointOpacity(v)
 	return nil
 }
 

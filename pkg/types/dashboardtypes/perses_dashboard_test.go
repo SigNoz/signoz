@@ -1908,6 +1908,7 @@ func TestScatterPlotPanelDefaults(t *testing.T) {
 	require.NoError(t, err, "marshal dashboard failed")
 	assert.Contains(t, string(output), `"axes":{"x":{"softMin":null,"softMax":null,"scale":"auto","label":""},"y":{"softMin":null,"softMax":null,"scale":"auto","label":""}}`, "expected default axes in stored/response JSON")
 	assert.Contains(t, string(output), `"dimensions":{"x":"","y":"","size":"","color":null}`, "expected empty dimensions in stored/response JSON")
+	assert.Contains(t, string(output), `"chartAppearance":{"points":{"size":null,"minSize":null,"maxSize":null,"opacity":null}}`, "omitted point settings stay null so the renderer applies its defaults")
 }
 
 func TestScatterPlotPanelRoundTrip(t *testing.T) {
@@ -1925,6 +1926,7 @@ func TestScatterPlotPanelRoundTrip(t *testing.T) {
 							"dimensions": {"x": "A.count()", "y": "A.p99(duration_nano)", "size": "A.countIf(has_error = true)", "color": ["k8s.namespace.name", "k8s.pod.name"]},
 							"formatting": {"columnUnits": {"A.p99(duration_nano)": "ns"}, "decimalPrecision": "2"},
 							"axes": {"x": {"softMin": 0, "softMax": null, "scale": "log", "label": "Throughput"}, "y": {"softMin": null, "softMax": 1000, "scale": "symlog", "label": "p99 latency"}},
+							"chartAppearance": {"points": {"size": 8, "minSize": 4, "maxSize": 4, "opacity": 0.1}},
 							"legend": {"position": "bottom", "mode": "list", "customColors": {}},
 							"thresholds": [{"value": 300, "unit": "ms", "color": "#f00", "label": "p99 SLO"}]
 						}
@@ -1948,6 +1950,14 @@ func TestScatterPlotPanelRoundTrip(t *testing.T) {
 
 	assert.Equal(t, ScatterPlotDimensions{X: "A.count()", Y: "A.p99(duration_nano)", Size: "A.countIf(has_error = true)", Color: []string{"k8s.namespace.name", "k8s.pod.name"}}, spec.Dimensions)
 	assert.Equal(t, "Throughput", spec.Axes.X.Label)
+	points := spec.ChartAppearance.Points
+	require.NotNil(t, points.Size)
+	require.NotNil(t, points.MinSize)
+	require.NotNil(t, points.MaxSize)
+	require.NotNil(t, points.Opacity)
+	assert.Equal(t, PointDiameter(8), *points.Size)
+	assert.Equal(t, PointDiameter(4), *points.MinSize, "minSize may equal maxSize")
+	assert.Equal(t, PointOpacity(0.1), *points.Opacity, "the opacity floor is inclusive")
 	assert.Equal(t, "p99 latency", spec.Axes.Y.Label)
 	assert.Equal(t, "log", spec.Axes.X.Scale.ValueOrDefault(), "expected x scale log")
 	assert.Equal(t, "symlog", spec.Axes.Y.Scale.ValueOrDefault(), "expected y scale symlog")
@@ -1964,6 +1974,7 @@ func TestScatterPlotPanelRoundTrip(t *testing.T) {
 	for _, want := range []string{
 		`"dimensions":{"x":"A.count()","y":"A.p99(duration_nano)","size":"A.countIf(has_error = true)","color":["k8s.namespace.name","k8s.pod.name"]}`,
 		`"x":{"softMin":0,"softMax":null,"scale":"log","label":"Throughput"}`,
+		`"chartAppearance":{"points":{"size":8,"minSize":4,"maxSize":4,"opacity":0.1}}`,
 		`"y":{"softMin":null,"softMax":1000,"scale":"symlog","label":"p99 latency"}`,
 	} {
 		assert.Contains(t, string(output), want, "expected stored/response JSON to contain %s", want)
@@ -2005,6 +2016,48 @@ func TestInvalidateScatterPlotPanelSpecValues(t *testing.T) {
 			scenario:               "unknown dimension",
 			panelKind:              "signoz/ScatterPlotPanel",
 			panelSpec:              `{"dimensions": {"z": "A"}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
+			scenario:               "point size below the minimum",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"size": 1}}}`,
+			expectedErrorSubstring: "invalid point size 1: must be a whole number between 2 and 40",
+		},
+		{
+			scenario:               "max point size above the maximum",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"maxSize": 41}}}`,
+			expectedErrorSubstring: "invalid point size 41",
+		},
+		{
+			scenario:               "fractional point size",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"minSize": 4.5}}}`,
+			expectedErrorSubstring: "invalid point size 4.5",
+		},
+		{
+			scenario:               "min point size above max",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"minSize": 20, "maxSize": 10}}}`,
+			expectedErrorSubstring: "minSize 20 must not exceed maxSize 10",
+		},
+		{
+			scenario:               "point opacity below the floor",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"opacity": 0.05}}}`,
+			expectedErrorSubstring: "invalid point opacity 0.05: must be between 0.1 and 1",
+		},
+		{
+			scenario:               "point opacity as a percentage",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"opacity": 70}}}`,
+			expectedErrorSubstring: "invalid point opacity 70",
+		},
+		{
+			scenario:               "area fill fields on a scatter plot",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"fillOpacity": 0.5}}`,
 			expectedErrorSubstring: "unknown field",
 		},
 		{
