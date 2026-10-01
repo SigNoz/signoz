@@ -174,6 +174,25 @@ export function createLayoutObserver(
 export function buildClickData(event: MouseEvent, plot: uPlot): ChartClickData {
 	const xValue = plot.posToVal(event.offsetX, 'x');
 	const yValue = plot.posToVal(event.offsetY, 'y');
+	const pointer = {
+		mouseX: event.offsetX,
+		mouseY: event.offsetY,
+		absoluteMouseX: event.clientX,
+		absoluteMouseY: event.clientY,
+	};
+
+	// A faceted plot (scatter) has no shared x series, so `data[0]` is null and
+	// `posToIdx` would throw; the hit is the plot's own to resolve.
+	if (plot.data[0] == null) {
+		return {
+			xValue,
+			yValue,
+			focusedSeries: null,
+			clickedDataTimestamp: xValue,
+			...pointer,
+		};
+	}
+
 	const focusedSeries = getFocusedSeriesAtPosition(event, plot);
 
 	const dataIndex = plot.posToIdx(event.offsetX);
@@ -193,9 +212,6 @@ export function buildClickData(event: MouseEvent, plot: uPlot): ChartClickData {
 		yValue,
 		focusedSeries,
 		clickedDataTimestamp,
-		mouseX: event.offsetX,
-		mouseY: event.offsetY,
-		absoluteMouseX: event.clientX,
-		absoluteMouseY: event.clientY,
+		...pointer,
 	};
 }
