@@ -122,6 +122,17 @@ describe('UPlotAxisBuilder', () => {
 		});
 	});
 
+	it('passes explicit splits and a label filter through to uPlot', () => {
+		const splits = jest.fn();
+		const filter = jest.fn();
+		const config = new UPlotAxisBuilder(
+			createAxisProps({ splits, filter }),
+		).getConfig();
+
+		expect(config.splits).toBe(splits);
+		expect(config.filter).toBe(filter);
+	});
+
 	it('draws log grid lines at powers of ten only, and leaves a linear grid unfiltered', () => {
 		const log = new UPlotAxisBuilder(createAxisProps({ isLogScale: true }));
 		const linear = new UPlotAxisBuilder(createAxisProps({ isLogScale: false }));
