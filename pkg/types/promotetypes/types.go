@@ -16,9 +16,9 @@ type WrappedIndex struct {
 }
 
 type PromotePath struct {
-	Signal  string `json:"signal"`
-	Context string `json:"context"`
-	Path    string `json:"path"`
+	Signal  string `json:"signal" required:"true"`
+	Context string `json:"context" required:"true"`
+	Path    string `json:"path" required:"true"`
 	Promote bool   `json:"promote,omitempty"`
 
 	Indexes []WrappedIndex `json:"indexes,omitempty"`
@@ -27,6 +27,55 @@ type PromotePath struct {
 // Target resolves the promotion domain the signal and context name.
 func (i *PromotePath) Target() (Target, error) {
 	return NewTargetFromText(i.Signal, i.Context)
+}
+
+// ListPromotedPathsFilters carries the query parameter filters of the
+// promoted paths listing. Empty values list everything.
+type ListPromotedPathsFilters struct {
+	Signal   string `query:"signal" json:"signal"`
+	Context  string `query:"context" json:"context"`
+	Promoted *bool  `query:"promoted" json:"promoted"`
+	Indexes  *bool  `query:"indexes" json:"indexes"`
+}
+
+// Validate ensures the signal and context words are known values; the pair
+// need not name a supported domain.
+func (f *ListPromotedPathsFilters) Validate() error {
+	if f.Signal != "" {
+		if _, ok := telemetrytypes.SignalFromText(f.Signal); !ok {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", f.Signal)
+		}
+	}
+	if f.Context != "" {
+		if _, ok := telemetrytypes.FieldContextFromText(f.Context); !ok {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid context: %s", f.Context)
+		}
+	}
+	return nil
+}
+
+// MatchesTarget reports whether the domain passes the signal and context
+// filters.
+func (f *ListPromotedPathsFilters) MatchesTarget(target Target) bool {
+	if f.Signal != "" && f.Signal != target.Entry.Signal.StringValue() {
+		return false
+	}
+	if f.Context != "" && f.Context != target.Entry.FieldContext.StringValue() {
+		return false
+	}
+	return true
+}
+
+// MatchesPath reports whether an aggregated promoted path passes the
+// promoted and indexes filters.
+func (f *ListPromotedPathsFilters) MatchesPath(path PromotePath) bool {
+	if f.Promoted != nil && *f.Promoted != path.Promote {
+		return false
+	}
+	if f.Indexes != nil && *f.Indexes != (len(path.Indexes) > 0) {
+		return false
+	}
+	return true
 }
 
 func (i *PromotePath) ValidateAndSetDefaults(target Target) error {

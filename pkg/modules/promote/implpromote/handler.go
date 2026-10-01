@@ -50,7 +50,13 @@ func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	paths, err := h.module.ListPromotedPaths(r.Context())
+	var filters promotetypes.ListPromotedPathsFilters
+	if err := binding.Query.BindQuery(r.URL.Query(), &filters); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	paths, err := h.module.ListPromotedPaths(r.Context(), filters)
 	if err != nil {
 		render.Error(w, err)
 		return
