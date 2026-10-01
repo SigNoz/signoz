@@ -69,7 +69,7 @@ describe('useTableColumns', () => {
 		const { result } = renderHook(() => useTableColumns(panel, DATA));
 
 		expect(result.current).toStrictEqual([
-			{ key: 'A', label: 'p99', unit: undefined },
+			{ key: 'A', label: 'p99', name: 'p99', unit: undefined },
 		]);
 	});
 
@@ -90,7 +90,7 @@ describe('useTableColumns', () => {
 		const { result } = renderHook(() => useTableColumns(tablePanel(), DATA));
 
 		expect(result.current).toStrictEqual([
-			{ key: 'A', label: 'p99', unit: undefined },
+			{ key: 'A', label: 'p99', name: 'p99', unit: undefined },
 		]);
 	});
 

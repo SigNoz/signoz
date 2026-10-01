@@ -8,7 +8,7 @@ const scatterSpec = (size?: string): DashboardtypesPanelSpecDTO =>
 		queries: [],
 	}) as unknown as DashboardtypesPanelSpecDTO;
 
-const COLUMNS = [{ key: 'B', label: 'B.count()' }];
+const COLUMNS = [{ key: 'B', label: 'B.count()', name: 'count()' }];
 
 describe('getSizeColumnLabel', () => {
 	it('names the bound column by its label', () => {

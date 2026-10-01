@@ -152,7 +152,7 @@ describe('FormattingSection', () => {
 			<FormattingSection
 				value={{ columnUnits: { A: 'By' } }}
 				controls={{ columnUnits: true }}
-				tableColumns={[{ key: 'A', label: 'A' }]}
+				tableColumns={[{ key: 'A', label: 'A', name: 'A' }]}
 				metricUnit="s"
 				onChange={jest.fn()}
 			/>,
@@ -166,7 +166,7 @@ describe('FormattingSection', () => {
 			<FormattingSection
 				value={{ columnUnits: { A: 's' } }}
 				controls={{ columnUnits: true }}
-				tableColumns={[{ key: 'A', label: 'A' }]}
+				tableColumns={[{ key: 'A', label: 'A', name: 'A' }]}
 				metricUnit="s"
 				onChange={jest.fn()}
 			/>,

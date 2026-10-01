@@ -1,0 +1,12 @@
+.select {
+	width: 100%;
+
+	:global(.ant-select-selector) {
+		border-color: var(--l2-border) !important;
+	}
+
+	:global(.ant-select-selection-item) {
+		font-family: 'Geist Mono', monospace;
+		font-size: 12px;
+	}
+}
