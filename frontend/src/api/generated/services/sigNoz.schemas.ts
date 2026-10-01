@@ -11343,6 +11343,10 @@ export interface SpantypesGettableTraceThreadDTO {
 	 */
 	nextCursor?: string;
 	/**
+	 * @type string
+	 */
+	prevCursor?: string;
+	/**
 	 * @type array
 	 */
 	spans: SpantypesThreadSpanDTO[];
@@ -13034,7 +13038,17 @@ export type GetTraceThreadParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	cursor?: string;
+	after?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	before?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	spanId?: string;
 };
 
 export type GetTraceThread200 = {
