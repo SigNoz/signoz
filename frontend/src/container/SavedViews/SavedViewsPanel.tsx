@@ -25,20 +25,20 @@ function SavedViewsPanel({
 			data-testid="saved-views-panel"
 			data-source={source}
 		>
-			<div className={styles.header}>
-				<div className={styles.title}>
-					<TowerControl size={16} />
-					<Typography.Text className={styles.titleText}>All views</Typography.Text>
-				</div>
-				{onClose && (
+			{onClose && (
+				<div className={styles.header} data-testid="saved-views-panel-header">
+					<div className={styles.title}>
+						<TowerControl size={16} />
+						<Typography.Text className={styles.titleText}>All views</Typography.Text>
+					</div>
 					<SavedViewsIconButton
 						title="Close"
 						icon={<X size={14} />}
 						onClick={onClose}
 						testId="saved-views-close"
 					/>
-				)}
-			</div>
+				</div>
+			)}
 			<div className={styles.search}>
 				<Input
 					value={search}
