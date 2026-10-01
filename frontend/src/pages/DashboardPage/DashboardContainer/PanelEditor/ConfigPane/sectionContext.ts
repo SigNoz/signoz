@@ -17,6 +17,8 @@ export interface SectionEditorContext {
 	groupColumns?: string[];
 	/** Label of the value column a Scatter Plot sizes its dots by; unset when none is. */
 	sizeColumnLabel?: string;
+	/** Name of the column each Scatter Plot axis plots, for its label's placeholder. */
+	axisColumnNames?: { x?: string; y?: string };
 	signal?: TelemetrytypesSignalDTO;
 	panelKind?: PanelKind;
 	onChangePanelKind?: (kind: PanelKind) => void;
