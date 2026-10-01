@@ -37,6 +37,7 @@ export default function ChartWrapper({
 	syncKey,
 	syncFilterMode,
 	onDestroy = noop,
+	plotRef,
 	children,
 	layoutChildren,
 	yAxisUnit,
@@ -114,6 +115,7 @@ export default function ChartWrapper({
 						height={chartHeight}
 						plotRef={(plot): void => {
 							plotInstanceRef.current = plot;
+							plotRef?.(plot);
 						}}
 						onDestroy={(plot: uPlot): void => {
 							plotInstanceRef.current = null;
