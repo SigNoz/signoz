@@ -15,6 +15,7 @@ import type {
 	DashboardtypesPanelSpecDTO,
 	DashboardtypesScatterPlotAxesDTO,
 	DashboardtypesScatterPlotDimensionsDTO,
+	DashboardtypesScatterPlotPointsDTO,
 	DashboardtypesSpanGapsDTO,
 	DashboardtypesStackModeDTO,
 	DashboardtypesTableFormattingDTO,
@@ -111,6 +112,8 @@ export interface PanelChartAppearanceSlice {
 	spanGaps?: DashboardtypesSpanGapsDTO;
 	/** The heatmap's cell colour ramp. */
 	colors?: DashboardtypesHeatmapColorsDTO;
+	/** Scatter Plot's dot size and opacity. */
+	points?: DashboardtypesScatterPlotPointsDTO;
 }
 
 /** Superset spanning every kind's visualization DTO. */
@@ -181,6 +184,8 @@ export interface SectionControls {
 		spanGaps?: boolean;
 		// colors → the heatmap's cell colour ramp; nothing else here applies to a grid.
 		colors?: boolean;
+		/** Scatter Plot's dots: one size, or a min/max range when a size column is bound. */
+		points?: boolean;
 	};
 	[SectionKind.Buckets]: {
 		count?: boolean;
