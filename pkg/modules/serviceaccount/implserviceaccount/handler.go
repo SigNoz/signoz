@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -223,8 +222,8 @@ func (handler *handler) CreateServiceAccountRole(rw http.ResponseWriter, r *http
 		return
 	}
 
-	req, err := coretypes.BodyFromContext[serviceaccounttypes.PostableServiceAccountRole](r.Context())
-	if err != nil {
+	req := new(serviceaccounttypes.PostableServiceAccountRole)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}

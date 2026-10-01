@@ -68,7 +68,7 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		Resource: coretypes.ResourceMetaResourceDeploymentHost,
 		Verb:     coretypes.VerbUpdate,
 		Category: coretypes.ActionCategoryConfigurationChange,
-		ID:       coretypes.BodyField(func(req *zeustypes.PostableHost) string { return req.Name }),
+		ID:       coretypes.BodyJSONPath("name"),
 		Selector: coretypes.WildcardSelector,
 	}))).Methods(http.MethodPut).GetError(); err != nil {
 		return err

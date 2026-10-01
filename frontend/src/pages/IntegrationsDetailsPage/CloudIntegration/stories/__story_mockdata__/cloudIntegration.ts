@@ -295,7 +295,11 @@ const account = (
 	provider,
 	providerAccountId: ACCOUNTS[provider][index],
 	config: accountConfig(provider),
-	agentReport: { timestampMillis: Date.now() - 45 * 1000, data: null },
+	agentReport: {
+		timestampMillis: Date.now() - 45 * 1000,
+		data: null,
+		syncState: null,
+	},
 	createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
 	updatedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
 	removedAt: null,

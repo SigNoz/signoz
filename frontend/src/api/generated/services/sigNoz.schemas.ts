@@ -3396,6 +3396,37 @@ export interface CloudintegrationtypesAWSServiceConfigDTO {
 	metrics?: CloudintegrationtypesAWSServiceMetricsConfigDTO;
 }
 
+export enum CloudintegrationtypesRegionStateDTO {
+	enabled = 'enabled',
+	disabled = 'disabled',
+}
+export interface CloudintegrationtypesRegionSyncStateDTO {
+	state: CloudintegrationtypesRegionStateDTO;
+}
+
+export type CloudintegrationtypesSyncStateDTORegions = {
+	[key: string]: CloudintegrationtypesRegionSyncStateDTO;
+};
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesSyncStateDTO = {
+	/**
+	 * @type boolean
+	 */
+	inSync: boolean;
+	/**
+	 * @type object
+	 */
+	regions: CloudintegrationtypesSyncStateDTORegions;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	version: number;
+} | null;
+
 export type CloudintegrationtypesAgentReportDTODataAnyOf = {
 	[key: string]: unknown;
 };
@@ -3414,6 +3445,7 @@ export type CloudintegrationtypesAgentReportDTO = {
 	 * @type object,null
 	 */
 	data: CloudintegrationtypesAgentReportDTOData;
+	syncState: CloudintegrationtypesSyncStateDTO | null;
 	/**
 	 * @type integer
 	 * @format int64
@@ -3842,6 +3874,7 @@ export interface CloudintegrationtypesGettableAgentCheckInDTO {
 	 * @format date-time
 	 */
 	removedAt: string | null;
+	syncState: CloudintegrationtypesSyncStateDTO | null;
 }
 
 export interface CloudintegrationtypesServiceMetadataDTO {
@@ -3912,6 +3945,10 @@ export interface CloudintegrationtypesPostableAgentCheckInDTO {
 	 * @type string
 	 */
 	providerAccountId?: string;
+	/**
+	 * @type integer,null
+	 */
+	syncedVersion?: number | null;
 }
 
 export interface CloudintegrationtypesStorableIntegrationDashboardDTO {
