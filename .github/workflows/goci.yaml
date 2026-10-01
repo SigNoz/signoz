@@ -67,7 +67,7 @@ jobs:
         with:
           go-version: "1.24"
       - name: check-semconv-generated-files
-        run: go run ./scripts/semconv -check
+        run: make semconv-check
   build:
     if: |
       github.event_name == 'merge_group' ||
