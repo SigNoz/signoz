@@ -22,8 +22,14 @@ func TestNewThreadQuery(t *testing.T) {
 		{name: "MaxLimit_Kept", queryable: QueryableThread{Limit: threadMaxLimit}, want: &ThreadQuery{Limit: threadMaxLimit}},
 		{name: "AboveMaxLimit_Rejected", queryable: QueryableThread{Limit: threadMaxLimit + 1}, wantErr: true},
 		{name: "NegativeLimit_Rejected", queryable: QueryableThread{Limit: -1}, wantErr: true},
-		{name: "Cursor_Decoded", queryable: QueryableThread{Limit: 10, Cursor: cursor.Encode()}, want: &ThreadQuery{Limit: 10, Cursor: &cursor}},
-		{name: "InvalidCursor_Rejected", queryable: QueryableThread{Cursor: "not base64!"}, wantErr: true},
+		{name: "After_Decoded", queryable: QueryableThread{Limit: 10, After: cursor.Encode()}, want: &ThreadQuery{Limit: 10, After: &cursor}},
+		{name: "Before_Decoded", queryable: QueryableThread{Limit: 10, Before: cursor.Encode()}, want: &ThreadQuery{Limit: 10, Before: &cursor}},
+		{name: "SpanID_Kept", queryable: QueryableThread{SpanID: "f1fa1bc863e94dd0"}, want: &ThreadQuery{Limit: threadDefaultLimit, SpanID: "f1fa1bc863e94dd0"}},
+		{name: "InvalidAfter_Rejected", queryable: QueryableThread{After: "not base64!"}, wantErr: true},
+		{name: "InvalidBefore_Rejected", queryable: QueryableThread{Before: "not base64!"}, wantErr: true},
+		{name: "AfterAndBefore_Rejected", queryable: QueryableThread{After: cursor.Encode(), Before: cursor.Encode()}, wantErr: true},
+		{name: "AfterAndSpanID_Rejected", queryable: QueryableThread{After: cursor.Encode(), SpanID: "a"}, wantErr: true},
+		{name: "BeforeAndSpanID_Rejected", queryable: QueryableThread{Before: cursor.Encode(), SpanID: "a"}, wantErr: true},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -64,39 +70,51 @@ func TestDecodeThreadCursor(t *testing.T) {
 }
 
 func TestNewGettableTraceThread(t *testing.T) {
-	spans := []StorableSpan{
-		{SpanID: "a", StartTime: time.Unix(1, 500_000_000)},
-		{SpanID: "b", StartTime: time.Unix(2, 0)},
-		{SpanID: "c", StartTime: time.Unix(3, 0)},
+	span := func(id string, sec int64) StorableSpan { return StorableSpan{SpanID: id, StartTime: time.Unix(sec, 0)} }
+	key := func(id string, sec int64) string {
+		return ThreadCursor{TimeUnixNano: uint64(sec * int64(time.Second)), SpanID: id}.Encode()
 	}
+	cursor := &ThreadCursor{TimeUnixNano: 1, SpanID: "x"}
 
 	testCases := []struct {
 		name           string
-		spans          []StorableSpan
-		limit          int
+		query          ThreadQuery
+		before         []StorableSpan
+		after          []StorableSpan
 		wantSpanIDs    []string
-		wantTimeUnix   []uint64
+		wantPrevCursor string
 		wantNextCursor string
 	}{
-		{name: "MoreThanLimit_TrimsAndSetsCursor", spans: spans, limit: 2, wantSpanIDs: []string{"a", "b"}, wantTimeUnix: []uint64{1500, 2000}, wantNextCursor: ThreadCursor{TimeUnixNano: 2_000_000_000, SpanID: "b"}.Encode()},
-		{name: "WithinLimit_NoCursor", spans: spans, limit: 3, wantSpanIDs: []string{"a", "b", "c"}, wantTimeUnix: []uint64{1500, 2000, 3000}},
-		{name: "NoSpans_EmptyList", limit: 3, wantSpanIDs: []string{}, wantTimeUnix: []uint64{}},
+		{name: "FirstPage_MoreThanLimit_SetsNext", query: ThreadQuery{Limit: 2}, after: []StorableSpan{span("a", 1), span("b", 2), span("c", 3)}, wantSpanIDs: []string{"a", "b"}, wantNextCursor: key("b", 2)},
+		{name: "FirstPage_WithinLimit_NoCursors", query: ThreadQuery{Limit: 3}, after: []StorableSpan{span("a", 1), span("b", 2)}, wantSpanIDs: []string{"a", "b"}},
+		{name: "FirstPage_Empty", query: ThreadQuery{Limit: 3}, wantSpanIDs: []string{}},
+		{name: "After_SetsPrev", query: ThreadQuery{Limit: 2, After: cursor}, after: []StorableSpan{span("c", 3)}, wantSpanIDs: []string{"c"}, wantPrevCursor: key("c", 3)},
+		{name: "After_MoreThanLimit_SetsBoth", query: ThreadQuery{Limit: 1, After: cursor}, after: []StorableSpan{span("c", 3), span("d", 4)}, wantSpanIDs: []string{"c"}, wantPrevCursor: key("c", 3), wantNextCursor: key("c", 3)},
+		{name: "Before_ReversedAndSetsNext", query: ThreadQuery{Limit: 2, Before: cursor}, before: []StorableSpan{span("b", 2), span("a", 1)}, wantSpanIDs: []string{"a", "b"}, wantNextCursor: key("b", 2)},
+		{name: "Before_MoreThanLimit_SetsBoth", query: ThreadQuery{Limit: 2, Before: cursor}, before: []StorableSpan{span("c", 3), span("b", 2), span("a", 1)}, wantSpanIDs: []string{"b", "c"}, wantPrevCursor: key("b", 2), wantNextCursor: key("c", 3)},
+		{name: "SpanID_SplitsPage", query: ThreadQuery{Limit: 4, SpanID: "c"}, before: []StorableSpan{span("b", 2), span("a", 1), span("z", 0)}, after: []StorableSpan{span("c", 3), span("d", 4), span("e", 5)}, wantSpanIDs: []string{"a", "b", "c", "d"}, wantPrevCursor: key("a", 1), wantNextCursor: key("d", 4)},
+		{name: "SpanID_ShortBefore_FillsAfter", query: ThreadQuery{Limit: 4, SpanID: "a"}, after: []StorableSpan{span("a", 1), span("b", 2), span("c", 3), span("d", 4)}, wantSpanIDs: []string{"a", "b", "c", "d"}},
+		{name: "SpanID_ShortAfter_FillsBefore", query: ThreadQuery{Limit: 4, SpanID: "d"}, before: []StorableSpan{span("c", 3), span("b", 2), span("a", 1)}, after: []StorableSpan{span("d", 4)}, wantSpanIDs: []string{"a", "b", "c", "d"}},
+		{name: "SpanID_LimitOne_KeepsAnchor", query: ThreadQuery{Limit: 1, SpanID: "b"}, before: []StorableSpan{span("a", 1)}, after: []StorableSpan{span("b", 2), span("c", 3)}, wantSpanIDs: []string{"b"}, wantPrevCursor: key("b", 2), wantNextCursor: key("b", 2)},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			thread := NewGettableTraceThread("trace-1", testCase.spans, testCase.limit)
+			thread := NewGettableTraceThread("trace-1", &testCase.query, testCase.before, testCase.after)
 			require.NotNil(t, thread.Spans)
 			spanIDs := make([]string, len(thread.Spans))
-			timeUnix := make([]uint64, len(thread.Spans))
 			for i, span := range thread.Spans {
 				spanIDs[i] = span.SpanID
-				timeUnix[i] = span.TimeUnix
 				assert.Equal(t, "trace-1", span.TraceID)
 			}
 			assert.Equal(t, testCase.wantSpanIDs, spanIDs)
-			assert.Equal(t, testCase.wantTimeUnix, timeUnix)
+			assert.Equal(t, testCase.wantPrevCursor, thread.PrevCursor)
 			assert.Equal(t, testCase.wantNextCursor, thread.NextCursor)
 		})
 	}
+}
 
+func TestNewThreadSpan_TimeUnixInMillis(t *testing.T) {
+	span := newThreadSpan("trace-1", &StorableSpan{SpanID: "a", StartTime: time.Unix(1, 500_000_000)})
+	assert.Equal(t, uint64(1500), span.TimeUnix)
+	assert.Equal(t, ThreadCursor{TimeUnixNano: 1_500_000_000, SpanID: "a"}, span.cursor())
 }
