@@ -113,6 +113,7 @@ function AddNewPipeline({
 						<Button
 							size="md"
 							key="submit"
+							type="submit"
 							variant="solid"
 							color="primary"
 							onClick={onOkModalHandler}
