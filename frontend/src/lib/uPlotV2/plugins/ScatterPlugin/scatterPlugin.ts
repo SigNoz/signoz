@@ -28,6 +28,26 @@ const HIDDEN_BBOX: uPlot.BBox = { left: -10, top: -10, width: 0, height: 0 };
 
 const TWO_PI = 2 * Math.PI;
 
+/** CSS pixels between a hovered disc and the outline ring drawn around it. */
+const HOVER_RING_GAP_PX = 3;
+const HOVER_RING_WIDTH_PX = 2;
+
+/**
+ * uPlot `ceil`s a cursor point's left/top but not its size, which pulls a ring
+ * up to 1px right and down of the disc. Snapping the edge to a whole pixel and
+ * growing the span by twice the snap keeps the centre exact.
+ */
+function snapToPixel(start: number, length: number): [number, number] {
+	const snapped = Math.floor(start);
+	return [snapped, length + (start - snapped) * 2];
+}
+
+function getSeriesStroke(u: uPlot, seriesIdx: number): string {
+	const { stroke } = u.series[seriesIdx];
+	const color = typeof stroke === 'function' ? stroke(u, seriesIdx) : stroke;
+	return typeof color === 'string' ? color : '';
+}
+
 /** uPlot caches built paths on the series; the field is internal to it. */
 type SeriesWithPaths = Series & { _paths?: Series.Paths | null };
 
@@ -158,13 +178,21 @@ export function createScatterPlugin({
 					return HIDDEN_BBOX;
 				}
 				const { pxRatio } = uPlot;
-				return {
-					left: hit.x / pxRatio,
-					top: hit.y / pxRatio,
-					width: hit.w / pxRatio,
-					height: hit.h / pxRatio,
-				};
+				const inset = HOVER_RING_GAP_PX + HOVER_RING_WIDTH_PX;
+				const [left, width] = snapToPixel(
+					hit.x / pxRatio - inset,
+					hit.w / pxRatio + inset * 2,
+				);
+				const [top, height] = snapToPixel(
+					hit.y / pxRatio - inset,
+					hit.h / pxRatio + inset * 2,
+				);
+				return { left, top, width, height };
 			},
+			// An outline around the disc, so the point itself stays readable.
+			fill: (): string => 'transparent',
+			stroke: getSeriesStroke,
+			width: (): number => HOVER_RING_WIDTH_PX,
 		},
 		// uPlot only measures series that returned a data index, i.e. the hit one.
 		focus: { prox: DEFAULT_FOCUS_PROXIMITY_VALUE, dist: (): number => 0 },
