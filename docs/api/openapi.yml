@@ -7768,6 +7768,10 @@ components:
           type: boolean
         signal:
           type: string
+      required:
+      - signal
+      - context
+      - path
       type: object
     PromotetypesWrappedIndex:
       properties:
@@ -13611,8 +13615,28 @@ paths:
     get:
       deprecated: false
       description: This endpoint lists the promoted paths of every JSON column, each
-        annotated with its signal and context.
+        annotated with its signal and context. The signal, context, promoted and indexes
+        query parameters filter the listing.
       operationId: ListPromotedPaths
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          type: string
+      - in: query
+        name: context
+        schema:
+          type: string
+      - in: query
+        name: promoted
+        schema:
+          nullable: true
+          type: boolean
+      - in: query
+        name: indexes
+        schema:
+          nullable: true
+          type: boolean
       responses:
         "200":
           content:

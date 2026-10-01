@@ -19,6 +19,7 @@ import type {
 
 import type {
 	ListPromotedPaths200,
+	ListPromotedPathsParams,
 	PromotetypesPromotePathDTO,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
@@ -47,38 +48,48 @@ const withQueryKey = <T extends object, K>(
 };
 
 /**
- * This endpoint lists the promoted paths of every JSON column, each annotated with its signal and context.
+ * This endpoint lists the promoted paths of every JSON column, each annotated with its signal and context. The signal, context, promoted and indexes query parameters filter the listing.
  * @summary List promoted paths
  */
-export const listPromotedPaths = (signal?: AbortSignal) => {
+export const listPromotedPaths = (
+	params?: ListPromotedPathsParams,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<ListPromotedPaths200>({
 		url: `/api/v1/promoted_path`,
 		method: 'GET',
+		params,
 		signal,
 	});
 };
 
-export const getListPromotedPathsQueryKey = () => {
-	return [`/api/v1/promoted_path`] as const;
+export const getListPromotedPathsQueryKey = (
+	params?: ListPromotedPathsParams,
+) => {
+	return [`/api/v1/promoted_path`, ...(params ? [params] : [])] as const;
 };
 
 export const getListPromotedPathsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listPromotedPaths>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listPromotedPaths>>,
-		TError,
-		TData
-	>;
-}) => {
+>(
+	params?: ListPromotedPathsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listPromotedPaths>>,
+			TError,
+			TData
+		>;
+	},
+) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getListPromotedPathsQueryKey();
+	const queryKey =
+		queryOptions?.queryKey ?? getListPromotedPathsQueryKey(params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof listPromotedPaths>>
-	> = ({ signal }) => listPromotedPaths(signal);
+	> = ({ signal }) => listPromotedPaths(params, signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof listPromotedPaths>>,
@@ -99,14 +110,17 @@ export type ListPromotedPathsQueryError = ErrorType<RenderErrorResponseDTO>;
 export function useListPromotedPaths<
 	TData = Awaited<ReturnType<typeof listPromotedPaths>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listPromotedPaths>>,
-		TError,
-		TData
-	>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListPromotedPathsQueryOptions(options);
+>(
+	params?: ListPromotedPathsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listPromotedPaths>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListPromotedPathsQueryOptions(params, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -120,10 +134,11 @@ export function useListPromotedPaths<
  */
 export const invalidateListPromotedPaths = async (
 	queryClient: QueryClient,
+	params?: ListPromotedPathsParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getListPromotedPathsQueryKey() },
+		{ queryKey: getListPromotedPathsQueryKey(params) },
 		options,
 	);
 
