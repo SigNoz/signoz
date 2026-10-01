@@ -4,6 +4,7 @@ import {
 	buildScatterConfig,
 	prepareScatterChartData,
 	resolveAxisDistribution,
+	ScatterAxisScale,
 	ScatterSeries,
 } from '../utils';
 
@@ -31,29 +32,65 @@ describe('prepareScatterChartData', () => {
 });
 
 describe('resolveAxisDistribution', () => {
-	it('is linear unless log is asked for', () => {
-		expect(resolveAxisDistribution([0, 1], false)).toStrictEqual({
-			distribution: DistributionType.Linear,
-		});
+	it('is linear when asked, whatever the values', () => {
+		expect(
+			resolveAxisDistribution([1, 1e6], ScatterAxisScale.Linear),
+		).toStrictEqual({ distribution: DistributionType.Linear });
 	});
 
 	it('is a plain log when every value is positive', () => {
-		expect(resolveAxisDistribution([1, 100], true)).toStrictEqual({
-			distribution: DistributionType.Logarithmic,
-		});
+		expect(resolveAxisDistribution([1, 100], ScatterAxisScale.Log)).toStrictEqual(
+			{ distribution: DistributionType.Logarithmic },
+		);
 	});
 
-	it('falls back to a symmetric log around the smallest magnitude when zero is present', () => {
-		expect(resolveAxisDistribution([0, 0.05, 300], true)).toStrictEqual({
+	it('falls back from log to a symmetric log around the smallest magnitude when zero is present', () => {
+		expect(
+			resolveAxisDistribution([0, 0.05, 300], ScatterAxisScale.Log),
+		).toStrictEqual({
 			distribution: DistributionType.SymmetricLog,
 			asinhThreshold: 0.01,
 		});
 	});
 
-	it('uses a unit threshold when nothing is positive', () => {
-		expect(resolveAxisDistribution([0, -5], true)).toStrictEqual({
+	it('is a symmetric log when asked, even with only positive values', () => {
+		expect(
+			resolveAxisDistribution([2, 300], ScatterAxisScale.SymLog),
+		).toStrictEqual({
 			distribution: DistributionType.SymmetricLog,
 			asinhThreshold: 1,
+		});
+	});
+
+	it('uses a unit threshold when nothing is positive', () => {
+		expect(
+			resolveAxisDistribution([0, -5], ScatterAxisScale.SymLog),
+		).toStrictEqual({
+			distribution: DistributionType.SymmetricLog,
+			asinhThreshold: 1,
+		});
+	});
+
+	describe('auto', () => {
+		it.each([
+			[
+				'positive values spanning three decades',
+				[1, 1000],
+				DistributionType.Logarithmic,
+			],
+			['positive values spanning less', [1, 999], DistributionType.Linear],
+			['a wide span that includes zero', [0, 1, 1e6], DistributionType.Linear],
+			['no finite values', [Number.NaN], DistributionType.Linear],
+		])('picks a scale for %s', (_, values, distribution) => {
+			expect(resolveAxisDistribution(values, ScatterAxisScale.Auto)).toStrictEqual(
+				{ distribution },
+			);
+		});
+
+		it('is the default', () => {
+			expect(resolveAxisDistribution([1, 1e4])).toStrictEqual({
+				distribution: DistributionType.Logarithmic,
+			});
 		});
 	});
 });
@@ -67,9 +104,20 @@ describe('buildScatterConfig', () => {
 			series: SERIES,
 			isDarkMode: true,
 			x: { unit: 'reqps' },
-			y: { unit: 'ms', isLogScale: true },
+			y: { unit: 'ms', scale: ScatterAxisScale.Log },
 			...overrides,
 		});
+
+	it('titles each axis with its label, and leaves an unlabelled one bare', () => {
+		const config = build({
+			x: { unit: 'reqps', label: 'Throughput' },
+			y: { unit: 'ms', label: '' },
+		}).getConfig();
+		const [xAxis, yAxis] = config.axes ?? [];
+
+		expect(xAxis?.label).toBe('Throughput');
+		expect(yAxis?.label).toBeUndefined();
+	});
 
 	it('emits a faceted plot with two value scales', () => {
 		const config = build().getConfig();

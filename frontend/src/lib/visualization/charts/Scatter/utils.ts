@@ -35,11 +35,25 @@ export interface ScatterSeries {
 	sizes?: Array<number | null>;
 }
 
+export enum ScatterAxisScale {
+	/** Log when the values are positive and span several decades, else linear. */
+	Auto = 'auto',
+	Linear = 'linear',
+	Log = 'log',
+	/** Log-like, but places zero and negatives. */
+	SymLog = 'symlog',
+}
+
+/** Decades of positive values `auto` needs before it picks a log axis. */
+export const AUTO_LOG_MIN_DECADES = 3;
+
 export interface ScatterAxisOptions {
+	/** Axis title. */
+	label?: string;
 	unit?: string;
 	softMin?: number | null;
 	softMax?: number | null;
-	isLogScale?: boolean;
+	scale?: ScatterAxisScale;
 }
 
 export interface BuildScatterConfigArgs {
@@ -78,38 +92,68 @@ export interface AxisDistribution {
 	asinhThreshold?: number;
 }
 
-/**
- * A log axis needs every value above zero; a rate that is sometimes 0 would drop
- * those points. Zero or negatives switch to a symmetric log whose linear band
- * ends at the smallest non-zero magnitude, so nothing is lost and the small
- * values still spread out.
- */
-export function resolveAxisDistribution(
-	values: number[],
-	isLogScale?: boolean,
-): AxisDistribution {
-	if (!isLogScale) {
-		return { distribution: DistributionType.Linear };
-	}
+function getPositiveRange(values: number[]): {
+	minPositive: number;
+	maxPositive: number;
+	hasNonPositive: boolean;
+} {
 	let minPositive = Infinity;
-	let needsSymmetric = false;
+	let maxPositive = -Infinity;
+	let hasNonPositive = false;
 	for (const value of values) {
 		if (!Number.isFinite(value)) {
 			continue;
 		}
 		if (value <= 0) {
-			needsSymmetric = true;
+			hasNonPositive = true;
 		} else {
 			minPositive = Math.min(minPositive, value);
+			maxPositive = Math.max(maxPositive, value);
 		}
 	}
-	if (!needsSymmetric) {
-		return { distribution: DistributionType.Logarithmic };
-	}
+	return { minPositive, maxPositive, hasNonPositive };
+}
+
+/**
+ * The symmetric log's linear band ends at the smallest non-zero magnitude, so
+ * the small values still spread out.
+ */
+function symmetricLogDistribution(minPositive: number): AxisDistribution {
 	const asinhThreshold = Number.isFinite(minPositive)
 		? 10 ** Math.floor(Math.log10(minPositive))
 		: 1;
 	return { distribution: DistributionType.SymmetricLog, asinhThreshold };
+}
+
+/**
+ * A plain log axis cannot place zero or negatives, so `log` falls back to the
+ * symmetric log rather than lose those points; callers that would rather drop
+ * them filter first.
+ */
+export function resolveAxisDistribution(
+	values: number[],
+	scale: ScatterAxisScale = ScatterAxisScale.Auto,
+): AxisDistribution {
+	const { minPositive, maxPositive, hasNonPositive } = getPositiveRange(values);
+	switch (scale) {
+		case ScatterAxisScale.Linear:
+			return { distribution: DistributionType.Linear };
+		case ScatterAxisScale.SymLog:
+			return symmetricLogDistribution(minPositive);
+		case ScatterAxisScale.Log:
+			return hasNonPositive
+				? symmetricLogDistribution(minPositive)
+				: { distribution: DistributionType.Logarithmic };
+		case ScatterAxisScale.Auto:
+		default: {
+			const spansDecades =
+				Number.isFinite(minPositive) &&
+				Math.log10(maxPositive / minPositive) >= AUTO_LOG_MIN_DECADES;
+			return !hasNonPositive && spansDecades
+				? { distribution: DistributionType.Logarithmic }
+				: { distribution: DistributionType.Linear };
+		}
+	}
 }
 
 export function buildScatterConfig({
@@ -139,11 +183,11 @@ export function buildScatterConfig({
 
 	const xDistribution = resolveAxisDistribution(
 		series.flatMap((entry) => entry.xs),
-		x.isLogScale,
+		x.scale,
 	);
 	const yDistribution = resolveAxisDistribution(
 		series.flatMap((entry) => entry.ys),
-		y.isLogScale,
+		y.scale,
 	);
 
 	const yThresholds =
@@ -170,6 +214,7 @@ export function buildScatterConfig({
 	builder.addAxis({
 		scaleKey: 'x',
 		side: 2,
+		label: x.label || undefined,
 		isDarkMode,
 		isTimeAxis: false,
 		yAxisUnit: x.unit ?? '',
@@ -180,6 +225,7 @@ export function buildScatterConfig({
 	builder.addAxis({
 		scaleKey: 'y',
 		side: 3,
+		label: y.label || undefined,
 		isDarkMode,
 		yAxisUnit: y.unit ?? '',
 		decimalPrecision,
