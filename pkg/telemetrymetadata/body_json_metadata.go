@@ -34,8 +34,6 @@ var (
 	CodeFailedToAppendPath   = errors.MustNewCode("failed_to_append_path_promoted_paths")
 )
 
-// logsBodyPromotedEntry templates the column evolution rows recorded for
-// logs body promotions.
 var logsBodyPromotedEntry = promotetypes.NewLogsBodyTarget().Entry
 
 // enrichJSONKeys enriches body-context keys with promoted path info, indexes,
@@ -381,7 +379,6 @@ func derefValue(v any) any {
 	return val.Interface()
 }
 
-// isPathPromoted checks if a specific path is promoted (Column Evolution table: field_name for the entry's column).
 func (t *telemetryMetaStore) isPathPromoted(ctx context.Context, entry telemetrytypes.EvolutionEntry, path string) (bool, error) {
 	ctx = withTelemetryContext(ctx, entry.Signal, "isPathPromoted")
 	split := strings.Split(path, telemetrytypes.ArraySep)
@@ -396,7 +393,6 @@ func (t *telemetryMetaStore) isPathPromoted(ctx context.Context, entry telemetry
 	return rows.Next(), nil
 }
 
-// GetPromotedPaths returns promoted paths from the Column Evolution table (field_name for the entry's column).
 func (t *telemetryMetaStore) GetPromotedPaths(ctx context.Context, entry telemetrytypes.EvolutionEntry, paths ...string) (map[string]bool, error) {
 	ctx = withTelemetryContext(ctx, entry.Signal, "GetPromotedPaths")
 	sb := sqlbuilder.Select("field_name").From(fmt.Sprintf("%s.%s", DBName, PromotedPathsTableName))
@@ -443,8 +439,6 @@ func CleanPathPrefixes(path string) string {
 	return path
 }
 
-// PromotePaths inserts promoted paths into the Column Evolution table as rows templated by entry
-// (same schema as signoz-otel-collector metadata_migrations); FieldName and ReleaseTime are set per path.
 func (t *telemetryMetaStore) PromotePaths(ctx context.Context, entry telemetrytypes.EvolutionEntry, paths ...string) error {
 	ctx = withTelemetryContext(ctx, entry.Signal, "PromotePaths")
 	batch, err := t.telemetrystore.ClickhouseDB().PrepareBatch(ctx,
