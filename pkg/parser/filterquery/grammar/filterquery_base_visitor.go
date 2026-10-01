@@ -1,7 +1,6 @@
 // Code generated from FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
 
 package parser // FilterQuery
-
 import "github.com/antlr4-go/antlr/v4"
 
 type BaseFilterQueryVisitor struct {
@@ -77,5 +76,13 @@ func (v *BaseFilterQueryVisitor) VisitValue(ctx *ValueContext) interface{} {
 }
 
 func (v *BaseFilterQueryVisitor) VisitKey(ctx *KeyContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseFilterQueryVisitor) VisitField(ctx *FieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseFilterQueryVisitor) VisitExactCall(ctx *ExactCallContext) interface{} {
 	return v.VisitChildren(ctx)
 }

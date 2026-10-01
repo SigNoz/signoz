@@ -1,7 +1,6 @@
 // Code generated from FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
 
 package parser // FilterQuery
-
 import "github.com/antlr4-go/antlr/v4"
 
 // BaseFilterQueryListener is a complete listener for a parse tree produced by FilterQueryParser.
@@ -128,3 +127,15 @@ func (s *BaseFilterQueryListener) EnterKey(ctx *KeyContext) {}
 
 // ExitKey is called when production key is exited.
 func (s *BaseFilterQueryListener) ExitKey(ctx *KeyContext) {}
+
+// EnterField is called when production field is entered.
+func (s *BaseFilterQueryListener) EnterField(ctx *FieldContext) {}
+
+// ExitField is called when production field is exited.
+func (s *BaseFilterQueryListener) ExitField(ctx *FieldContext) {}
+
+// EnterExactCall is called when production exactCall is entered.
+func (s *BaseFilterQueryListener) EnterExactCall(ctx *ExactCallContext) {}
+
+// ExitExactCall is called when production exactCall is exited.
+func (s *BaseFilterQueryListener) ExitExactCall(ctx *ExactCallContext) {}

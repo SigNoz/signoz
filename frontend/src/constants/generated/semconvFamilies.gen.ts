@@ -20,6 +20,51 @@ export type SemconvFamily = {
 
 export const SEMCONV_FAMILIES: readonly SemconvFamily[] = [
 	{
+		current: 'code.file.path',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'code.filepath',
+				contexts: [],
+				signals: [],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'code.function.name',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'code.function',
+				contexts: [],
+				signals: [],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'code.line.number',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'code.lineno',
+				contexts: [],
+				signals: [],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
 		current: 'container.cpu.usage',
 		kind: 'metric',
 		members: [
@@ -27,6 +72,84 @@ export const SEMCONV_FAMILIES: readonly SemconvFamily[] = [
 				name: 'container.cpu.utilization',
 				contexts: [],
 				signals: [],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'container.runtime.name',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'container.runtime',
+				contexts: [],
+				signals: [],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'db.namespace',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'db.elasticsearch.cluster.name',
+				contexts: ['attribute'],
+				signals: ['traces'],
+				applyToMetrics: [],
+			},
+			{
+				name: 'db.name',
+				contexts: ['attribute'],
+				signals: ['traces'],
+				applyToMetrics: [],
+			},
+			{
+				name: 'db.cassandra.keyspace',
+				contexts: ['attribute'],
+				signals: ['traces'],
+				applyToMetrics: [],
+			},
+			{
+				name: 'db.hbase.namespace',
+				contexts: ['attribute'],
+				signals: ['traces'],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'db.operation.name',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'db.operation',
+				contexts: ['attribute'],
+				signals: ['traces'],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'db.query.text',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'db.statement',
+				contexts: ['attribute'],
+				signals: ['traces'],
 				applyToMetrics: [],
 			},
 		],
@@ -47,6 +170,36 @@ export const SEMCONV_FAMILIES: readonly SemconvFamily[] = [
 		],
 		contexts: ['attribute', 'resource'],
 		signals: ['logs', 'metrics', 'traces'],
+		valueMap: {},
+	},
+	{
+		current: 'http.request.method',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'http.method',
+				contexts: ['attribute'],
+				signals: ['logs', 'traces'],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'http.response.status_code',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'http.status_code',
+				contexts: ['attribute'],
+				signals: ['logs', 'traces'],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
 		valueMap: {},
 	},
 	{
@@ -77,6 +230,177 @@ export const SEMCONV_FAMILIES: readonly SemconvFamily[] = [
 		],
 		contexts: [],
 		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'messaging.client.id',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'messaging.client_id',
+				contexts: ['attribute'],
+				signals: ['metrics', 'traces'],
+				applyToMetrics: [],
+			},
+			{
+				name: 'messaging.kafka.client_id',
+				contexts: ['attribute'],
+				signals: ['traces'],
+				applyToMetrics: [],
+			},
+			{
+				name: 'messaging.rocketmq.client_id',
+				contexts: ['attribute'],
+				signals: ['traces'],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'messaging.consumer.group.name',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'messaging.eventhubs.consumer.group',
+				contexts: [],
+				signals: [],
+				applyToMetrics: [],
+			},
+			{
+				name: 'messaging.kafka.consumer.group',
+				contexts: [],
+				signals: [],
+				applyToMetrics: [],
+			},
+			{
+				name: 'messaging.rocketmq.client_group',
+				contexts: [],
+				signals: [],
+				applyToMetrics: [],
+			},
+			{
+				name: 'messaging.kafka.consumer_group',
+				contexts: ['attribute'],
+				signals: ['traces'],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'messaging.destination.name',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'messaging.destination',
+				contexts: ['attribute'],
+				signals: ['traces'],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'messaging.operation.type',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'messaging.operation',
+				contexts: ['attribute'],
+				signals: ['traces'],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'rpc.system.name',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'rpc.system',
+				contexts: [],
+				signals: [],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'service.peer.name',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'peer.service',
+				contexts: [],
+				signals: [],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'url.full',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'http.url',
+				contexts: ['attribute'],
+				signals: ['logs', 'traces'],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'url.scheme',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'http.scheme',
+				contexts: ['attribute'],
+				signals: ['logs', 'traces'],
+				applyToMetrics: [],
+			},
+		],
+		contexts: [],
+		signals: [],
+		valueMap: {},
+	},
+	{
+		current: 'user_agent.original',
+		kind: 'attribute',
+		members: [
+			{
+				name: 'browser.user_agent',
+				contexts: ['resource'],
+				signals: [],
+				applyToMetrics: [],
+			},
+			{
+				name: 'http.user_agent',
+				contexts: ['attribute'],
+				signals: ['traces'],
+				applyToMetrics: [],
+			},
+		],
+		contexts: ['attribute'],
+		signals: ['logs', 'traces'],
 		valueMap: {},
 	},
 ] as const;

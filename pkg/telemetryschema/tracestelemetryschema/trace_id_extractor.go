@@ -103,12 +103,15 @@ func (e *traceIDExtractor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 }
 
 func (e *traceIDExtractor) VisitComparison(ctx *grammar.ComparisonContext) any {
-	keyCtx := ctx.Key()
-	if keyCtx == nil {
+	fieldCtx := ctx.Field()
+	if fieldCtx == nil {
 		return nil
 	}
 
-	keyText := keyCtx.GetText()
+	keyText := fieldCtx.GetText()
+	if exactCall := fieldCtx.ExactCall(); exactCall != nil {
+		keyText = exactCall.Key().GetText()
+	}
 
 	if strings.ToLower(keyText) == "trace_id" || strings.ToLower(keyText) == "traceid" {
 		if ctx.EQUALS() != nil {

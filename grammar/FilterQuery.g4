@@ -50,30 +50,30 @@ primary
  * [NOT] BETWEEN, [NOT] IN, [NOT] EXISTS, [NOT] REGEXP, [NOT] CONTAINS, etc.
  */
 comparison
-    : key EQUALS value
-    | key (NOT_EQUALS | NEQ) value
-    | key LT value
-    | key LE value
-    | key GT value
-    | key GE value
+    : field EQUALS value
+    | field (NOT_EQUALS | NEQ) value
+    | field LT value
+    | field LE value
+    | field GT value
+    | field GE value
 
-    | key (LIKE | ILIKE) value
-    | key NOT (LIKE | ILIKE) value
+    | field (LIKE | ILIKE) value
+    | field NOT (LIKE | ILIKE) value
 
-    | key BETWEEN value AND value
-    | key NOT BETWEEN value AND value
+    | field BETWEEN value AND value
+    | field NOT BETWEEN value AND value
 
-    | key inClause
-    | key notInClause
+    | field inClause
+    | field notInClause
 
-    | key EXISTS
-    | key NOT EXISTS
+    | field EXISTS
+    | field NOT EXISTS
 
-    | key REGEXP value
-    | key NOT REGEXP value
+    | field REGEXP value
+    | field NOT REGEXP value
 
-    | key CONTAINS value
-    | key NOT CONTAINS value
+    | field CONTAINS value
+    | field NOT CONTAINS value
     ;
 
 // in(...) or in[...] 
@@ -126,7 +126,7 @@ functionParamList
     ;
 
 functionParam
-    : key
+    : field
     | value
     | array
     ;
@@ -153,6 +153,17 @@ value
  */
 key
     : KEY
+    ;
+
+// exact(key) disables semantic-convention family resolution for this field.
+// It is deliberately a field wrapper rather than a general function.
+field
+    : key
+    | exactCall
+    ;
+
+exactCall
+    : EXACT LPAREN key RPAREN
     ;
 
 
@@ -195,6 +206,7 @@ HAS         : [Hh][Aa][Ss] ;
 HASANY      : [Hh][Aa][Ss][Aa][Nn][Yy] ;
 HASALL      : [Hh][Aa][Ss][Aa][Ll][Ll] ;
 SEARCH      : [Ss][Ee][Aa][Rr][Cc][Hh] ;
+EXACT       : [Ee][Xx][Aa][Cc][Tt] ;
 
 // Potential boolean constants
 BOOL

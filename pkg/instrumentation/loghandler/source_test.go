@@ -23,13 +23,13 @@ func TestSource(t *testing.T) {
 	err := json.Unmarshal(buf.Bytes(), &m)
 	require.NoError(t, err)
 
-	assert.Contains(t, m, "code.filepath")
-	assert.Contains(t, m, "code.function")
-	assert.Contains(t, m, "code.lineno")
+	assert.Contains(t, m, "code.file.path")
+	assert.Contains(t, m, "code.function.name")
+	assert.Contains(t, m, "code.line.number")
 
-	assert.Contains(t, m["code.filepath"], "source_test.go")
-	assert.Contains(t, m["code.function"], "TestSource")
-	assert.NotZero(t, m["code.lineno"])
+	assert.Contains(t, m["code.file.path"], "source_test.go")
+	assert.Contains(t, m["code.function.name"], "TestSource")
+	assert.NotZero(t, m["code.line.number"])
 
 	// Ensure the nested "source" key is not present.
 	assert.NotContains(t, m, "source")

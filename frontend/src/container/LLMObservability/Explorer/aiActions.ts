@@ -74,7 +74,8 @@ export function tracesRunQueryAction(
 						properties: {
 							key: {
 								type: 'string',
-								description: 'Attribute key, e.g. service.name, http.status_code',
+								description:
+									'Attribute key, e.g. service.name, http.response.status_code',
 							},
 							op: {
 								type: 'string',
@@ -143,7 +144,7 @@ export function tracesAddFilterAction(
 			properties: {
 				key: {
 					type: 'string',
-					description: 'Attribute key, e.g. service.name, http.status_code',
+					description: 'Attribute key, e.g. service.name, http.response.status_code',
 				},
 				op: {
 					type: 'string',

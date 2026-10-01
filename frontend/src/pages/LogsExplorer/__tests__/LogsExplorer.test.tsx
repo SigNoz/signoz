@@ -233,7 +233,7 @@ describe('Logs Explorer Tests', () => {
 		);
 
 		const queries = queryAllByText(
-			"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
+			"Enter your filter query (e.g., http.response.status_code >= 500 AND service.name = 'frontend')",
 		);
 		expect(queries).toHaveLength(1);
 	});

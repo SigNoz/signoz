@@ -104,7 +104,7 @@ func parseKeyContext(keyText string) *grammar.KeyContext {
 				if unaryExprs := andExprs[0].AllUnaryExpression(); len(unaryExprs) > 0 {
 					if primary := unaryExprs[0].Primary(); primary != nil {
 						if comparison := primary.Comparison(); comparison != nil {
-							if keyCtx, ok := comparison.Key().(*grammar.KeyContext); ok {
+							if keyCtx, ok := comparison.Field().Key().(*grammar.KeyContext); ok {
 								return keyCtx
 							}
 						}

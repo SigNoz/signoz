@@ -592,25 +592,29 @@ func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySe
 	}
 
 	for _, gb := range b.operator.GroupBy {
-		selectors := querybuilder.QueryStringToKeysSelectors(gb.Name)
-		keySelectors = append(keySelectors, selectors...)
+		for _, selector := range querybuilder.QueryStringToKeysSelectors(gb.Name) {
+			selector.FieldResolution = gb.FieldResolution
+			keySelectors = append(keySelectors, selector)
+		}
 	}
 
 	for _, order := range b.operator.Order {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          order.Key.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  order.Key.FieldContext,
-			FieldDataType: order.Key.FieldDataType,
+			Name:            order.Key.Name,
+			Signal:          telemetrytypes.SignalTraces,
+			FieldContext:    order.Key.FieldContext,
+			FieldDataType:   order.Key.FieldDataType,
+			FieldResolution: order.Key.FieldResolution,
 		})
 	}
 
 	for _, sf := range b.operator.SelectFields {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          sf.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  sf.FieldContext,
-			FieldDataType: sf.FieldDataType,
+			Name:            sf.Name,
+			Signal:          telemetrytypes.SignalTraces,
+			FieldContext:    sf.FieldContext,
+			FieldDataType:   sf.FieldDataType,
+			FieldResolution: sf.FieldResolution,
 		})
 	}
 

@@ -1,7 +1,6 @@
 // Code generated from FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
 
 package parser // FilterQuery
-
 import "github.com/antlr4-go/antlr/v4"
 
 // A complete Visitor for a parse tree produced by FilterQueryParser.
@@ -61,4 +60,10 @@ type FilterQueryVisitor interface {
 
 	// Visit a parse tree produced by FilterQueryParser#key.
 	VisitKey(ctx *KeyContext) interface{}
+
+	// Visit a parse tree produced by FilterQueryParser#field.
+	VisitField(ctx *FieldContext) interface{}
+
+	// Visit a parse tree produced by FilterQueryParser#exactCall.
+	VisitExactCall(ctx *ExactCallContext) interface{}
 }

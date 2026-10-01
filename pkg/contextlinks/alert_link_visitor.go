@@ -188,11 +188,15 @@ func (r *WhereClauseRewriter) VisitPrimary(ctx *parser.PrimaryContext) any {
 
 // VisitComparison visits comparison expressions.
 func (r *WhereClauseRewriter) VisitComparison(ctx *parser.ComparisonContext) any {
-	if ctx.Key() == nil {
+	if ctx.Field() == nil {
 		return nil
 	}
 
-	key := ctx.Key().GetText()
+	field := ctx.Field().GetText()
+	key := field
+	if exactCall := ctx.Field().ExactCall(); exactCall != nil {
+		key = exactCall.Key().GetText()
+	}
 	r.keysSeen[key] = struct{}{}
 
 	// Check if this key is in the labels and was part of group by
@@ -200,13 +204,13 @@ func (r *WhereClauseRewriter) VisitComparison(ctx *parser.ComparisonContext) any
 		if _, partOfGroup := r.groupBySet[key]; partOfGroup {
 			// Case 1: Replace with actual value
 			escapedValue := escapeValueIfNeeded(value)
-			fmt.Fprintf(&r.rewritten, "%s=%s", key, escapedValue)
+			fmt.Fprintf(&r.rewritten, "%s=%s", field, escapedValue)
 			return nil
 		}
 	}
 
 	// Otherwise, keep the original comparison
-	r.rewritten.WriteString(key)
+	r.rewritten.WriteString(field)
 
 	if ctx.EQUALS() != nil {
 		r.rewritten.WriteString("=")
@@ -409,8 +413,8 @@ func (r *WhereClauseRewriter) VisitFunctionParamList(ctx *parser.FunctionParamLi
 
 // VisitFunctionParam visits function parameters.
 func (r *WhereClauseRewriter) VisitFunctionParam(ctx *parser.FunctionParamContext) any {
-	if ctx.Key() != nil {
-		ctx.Key().Accept(r)
+	if ctx.Field() != nil {
+		r.rewritten.WriteString(ctx.Field().GetText())
 	} else if ctx.Value() != nil {
 		ctx.Value().Accept(r)
 	} else if ctx.Array() != nil {

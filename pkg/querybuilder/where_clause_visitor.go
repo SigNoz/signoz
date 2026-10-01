@@ -216,6 +216,10 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitValue(t)
 	case *grammar.KeyContext:
 		return v.VisitKey(t)
+	case *grammar.FieldContext:
+		return v.VisitField(t)
+	case *grammar.ExactCallContext:
+		return v.VisitExactCall(t)
 	default:
 		return ErrorConditionLiteral
 	}
@@ -371,7 +375,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 
 // VisitComparison handles all comparison operators.
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
-	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
+	key := v.Visit(ctx.Field()).(*telemetrytypes.TelemetryFieldKey)
 
 	// Handle EXISTS specially
 	if ctx.EXISTS() != nil {
@@ -867,8 +871,8 @@ func (v *filterExpressionVisitor) VisitFunctionParamList(ctx *grammar.FunctionPa
 
 // VisitFunctionParam handles individual parameters in function calls.
 func (v *filterExpressionVisitor) VisitFunctionParam(ctx *grammar.FunctionParamContext) any {
-	if ctx.Key() != nil {
-		return v.Visit(ctx.Key())
+	if ctx.Field() != nil {
+		return v.Visit(ctx.Field())
 	} else if ctx.Value() != nil {
 		return v.Visit(ctx.Value())
 	} else if ctx.Array() != nil {
@@ -916,6 +920,20 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(ctx.GetText())
 	return &fieldKey
+}
+
+func (v *filterExpressionVisitor) VisitField(ctx *grammar.FieldContext) any {
+	if ctx.ExactCall() != nil {
+		return v.Visit(ctx.ExactCall())
+	}
+	return v.Visit(ctx.Key())
+}
+
+// VisitExactCall marks the key so resolution reads its spelling alone.
+func (v *filterExpressionVisitor) VisitExactCall(ctx *grammar.ExactCallContext) any {
+	fieldKey := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
+	fieldKey.FieldResolution = telemetrytypes.FieldResolutionExact
+	return fieldKey
 }
 
 // buildConditions resolves and compiles one filter term. It folds the

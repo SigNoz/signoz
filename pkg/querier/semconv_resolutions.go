@@ -5,10 +5,12 @@ import (
 	"strings"
 	"unicode"
 
+	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/semconv"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/antlr4-go/antlr/v4"
 )
 
 // semconvResolutionsForRequest reports the family spellings a query builder
@@ -27,11 +29,10 @@ func semconvResolutionsForRequest(req *qbtypes.QueryRangeRequest) []qbtypes.Semc
 			continue
 		}
 
-		payload, err := json.Marshal(envelope.Spec)
+		text, err := semconvResolutionText(envelope.Spec)
 		if err != nil {
 			continue
 		}
-		text := string(payload)
 
 		for family := range semconv.All() {
 			if family.Kind() == semconv.KindMetric && signal != telemetrytypes.SignalMetrics {
@@ -69,6 +70,71 @@ func semconvResolutionsForRequest(req *qbtypes.QueryRangeRequest) []qbtypes.Semc
 		return nil
 	}
 	return resolutions
+}
+
+// semconvResolutionText renders the spec without the fields that opt out of
+// family resolution: exact(key) in expressions and keys with an exact
+// fieldResolution.
+func semconvResolutionText(spec any) (string, error) {
+	payload, err := json.Marshal(spec)
+	if err != nil {
+		return "", err
+	}
+	var document any
+	if err := json.Unmarshal(payload, &document); err != nil {
+		return "", err
+	}
+	scrubExactFields(document)
+	payload, err = json.Marshal(document)
+	if err != nil {
+		return "", err
+	}
+	return string(payload), nil
+}
+
+func scrubExactFields(value any) {
+	switch typed := value.(type) {
+	case map[string]any:
+		if resolution, ok := typed["fieldResolution"].(string); ok && resolution == telemetrytypes.FieldResolutionExact.StringValue() {
+			delete(typed, "name")
+		}
+		for key, child := range typed {
+			if text, ok := child.(string); ok {
+				typed[key] = scrubExactCalls(text)
+				continue
+			}
+			scrubExactFields(child)
+		}
+	case []any:
+		for _, child := range typed {
+			scrubExactFields(child)
+		}
+	}
+}
+
+// scrubExactCalls blanks every exact(key) in an expression.
+func scrubExactCalls(input string) string {
+	lexer := grammar.NewFilterQueryLexer(antlr.NewInputStream(input))
+	tokens := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
+	tokens.Fill()
+	all := tokens.GetAllTokens()
+	result := []rune(input)
+	for index := 0; index+3 < len(all); index++ {
+		if all[index].GetTokenType() != grammar.FilterQueryLexerEXACT ||
+			all[index+1].GetTokenType() != grammar.FilterQueryLexerLPAREN ||
+			all[index+2].GetTokenType() != grammar.FilterQueryLexerKEY ||
+			all[index+3].GetTokenType() != grammar.FilterQueryLexerRPAREN {
+			continue
+		}
+		start, stop := all[index].GetStart(), all[index+3].GetStop()
+		if start < 0 || stop >= len(result) {
+			continue
+		}
+		for position := start; position <= stop; position++ {
+			result[position] = ' '
+		}
+	}
+	return string(result)
 }
 
 func semconvResolutionSignal(spec any) (telemetrytypes.Signal, *telemetrytypes.MetricContext, bool) {

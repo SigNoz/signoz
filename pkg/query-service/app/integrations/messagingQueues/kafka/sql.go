@@ -2,7 +2,19 @@ package kafka
 
 import (
 	"fmt"
+
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/semconvsql"
 )
+
+var kafkaSemconvAttributes = []string{
+	"messaging.destination.name",
+	"messaging.consumer.group.name",
+	"messaging.client.id",
+}
+
+func resolveKafkaSemconvSQL(query string) string {
+	return semconvsql.ResolveTraceStringAttributes(query, kafkaSemconvAttributes...)
+}
 
 func generateConsumerSQL(start, end int64, topic, partition, consumerGroup, queueType string) string {
 	timeRange := (end - start) / 1000000000
@@ -26,7 +38,7 @@ WITH consumer_query AS (
         AND attribute_string_messaging$$system = '%s'
         AND attributes_string['messaging.destination.name'] = '%s'
         AND attributes_string['messaging.destination.partition.id'] = '%s'
-        AND attributes_string['messaging.kafka.consumer.group'] = '%s'
+        AND attributes_string['messaging.consumer.group.name'] = '%s'
     GROUP BY resource_string_service$$name
 )
 
@@ -41,7 +53,7 @@ FROM
 ORDER BY
     resource_string_service$$name;
 `, start, end, tsBucketStart, tsBucketEnd, queueType, topic, partition, consumerGroup, timeRange)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }
 
 // S1 landing
@@ -77,7 +89,7 @@ FROM
 ORDER BY
     topic;
 `, start, end, tsBucketStart, tsBucketEnd, queueType, timeRange)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }
 
 // S1 consumer
@@ -88,7 +100,7 @@ func generateConsumerPartitionLatencySQL(start, end int64, topic, partition, que
 	query := fmt.Sprintf(`
 WITH consumer_pl AS (
     SELECT
-        attributes_string['messaging.kafka.consumer.group'] AS consumer_group,
+        attributes_string['messaging.consumer.group.name'] AS consumer_group,
         resource_string_service$$name,
         quantile(0.99)(durationNano) / 1000000 AS p99,
         COUNT(*) AS total_requests,
@@ -117,7 +129,7 @@ FROM
 ORDER BY
     consumer_group;
 `, start, end, tsBucketStart, tsBucketEnd, queueType, topic, partition, timeRange)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }
 
 // S3, producer overview
@@ -153,7 +165,7 @@ SELECT
 FROM
     producer_latency
 `, start, end, tsBucketStart, tsBucketEnd, queueType, timeRange)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }
 
 // S3, producer topic/service overview
@@ -189,7 +201,7 @@ SELECT
 FROM
     consumer_latency
 `, start, end, tsBucketStart, tsBucketEnd, service, queueType, topic, timeRange)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }
 
 // S3 consumer overview
@@ -229,7 +241,7 @@ FROM
 ORDER BY
     topic;
 `, start, end, tsBucketStart, tsBucketEnd, queueType, timeRange, timeRange)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }
 
 // S3 consumer topic/service
@@ -265,7 +277,7 @@ SELECT
 FROM
     consumer_latency
 `, start, end, tsBucketStart, tsBucketEnd, service, queueType, topic, timeRange)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }
 
 // s4
@@ -315,7 +327,7 @@ GROUP BY
     producer_service,
     consumer_service
 `, start, end, start, end, queueType, queueType, evalTime, evalTime)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }
 
 func generateProducerSQL(start, end int64, topic, partition, queueType string) string {
@@ -352,7 +364,7 @@ FROM
 ORDER BY
     resource_string_service$$name;
 `, start, end, tsBucketStart, tsBucketEnd, queueType, topic, partition, timeRange)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }
 
 func generateNetworkLatencyThroughputSQL(start, end int64, consumerGroup, partitionID, queueType string) string {
@@ -361,7 +373,7 @@ func generateNetworkLatencyThroughputSQL(start, end int64, consumerGroup, partit
 	tsBucketEnd := end / 1000000000
 	query := fmt.Sprintf(`
 SELECT
-    attributes_string['messaging.client_id'] AS client_id,
+    attributes_string['messaging.client.id'] AS client_id,
 	resources_string['service.instance.id'] AS service_instance_id,
     resource_string_service$$name AS service_name,
     count(*) / %d AS throughput
@@ -373,12 +385,12 @@ WHERE
     AND ts_bucket_start <= '%d'
     AND kind = 5
     AND attribute_string_messaging$$system = '%s' 
-    AND attributes_string['messaging.kafka.consumer.group'] = '%s'
+    AND attributes_string['messaging.consumer.group.name'] = '%s'
     AND attributes_string['messaging.destination.partition.id'] = '%s'
 GROUP BY service_name, client_id, service_instance_id
 ORDER BY throughput DESC
 `, timeRange, start, end, tsBucketStart, tsBucketEnd, queueType, consumerGroup, partitionID)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }
 
 func onboardProducersSQL(start, end int64, queueType string) string {
@@ -398,7 +410,7 @@ WHERE
     AND timestamp <= '%d'
     AND ts_bucket_start >=  '%d'
     AND ts_bucket_start <= '%d';`, queueType, start, end, tsBucketStart, tsBucketEnd)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }
 
 func onboardConsumerSQL(start, end int64, queueType string) string {
@@ -412,9 +424,9 @@ SELECT
     COUNT(resource_string_service$$name) = 0 AS svc,
     COUNT(IF(has(attributes_string, 'messaging.destination.name'), 1, NULL)) = 0 AS destination,
     COUNT(IF(has(attributes_string, 'messaging.destination.partition.id'), 1, NULL)) = 0 AS partition,
-    COUNT(IF(has(attributes_string, 'messaging.kafka.consumer.group'), 1, NULL)) = 0 AS cgroup,
+    COUNT(IF(has(attributes_string, 'messaging.consumer.group.name'), 1, NULL)) = 0 AS cgroup,
     COUNT(IF(has(attributes_number, 'messaging.message.body.size'), 1, NULL)) = 0 AS bodysize,
-    COUNT(IF(has(attributes_string, 'messaging.client_id'), 1, NULL)) = 0 AS clientid,
+    COUNT(IF(has(attributes_string, 'messaging.client.id'), 1, NULL)) = 0 AS clientid,
     COUNT(IF(has(resources_string, 'service.instance.id'), 1, NULL)) = 0 AS instanceid
 FROM signoz_traces.distributed_signoz_index_v3
 WHERE 
@@ -422,5 +434,5 @@ WHERE
     AND timestamp <= '%d'
     AND ts_bucket_start >=  '%d'
     AND ts_bucket_start <= '%d'	;`, queueType, start, end, tsBucketStart, tsBucketEnd)
-	return query
+	return resolveKafkaSemconvSQL(query)
 }

@@ -102,6 +102,12 @@ func TestExtractTraceIDsFromFilter(t *testing.T) {
 			expectFound: true,
 		},
 		{
+			name:        "exact trace_id filter",
+			filterExpr:  "exact(trace_id) = '123abc'",
+			expectIDs:   []string{"123abc"},
+			expectFound: true,
+		},
+		{
 			name:        "trace_id IN with square brackets",
 			filterExpr:  "trace_id IN ['123abc', '456def', '789ghi']",
 			expectIDs:   []string{"123abc", "456def", "789ghi"},

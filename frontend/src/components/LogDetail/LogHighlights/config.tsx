@@ -3,6 +3,7 @@ import { Badge, BadgeColor } from '@signozhq/ui/badge';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
 import { ILog } from 'types/api/logs/log';
+import { getSemconvMembers } from 'utils/semconv';
 
 import styles from './LogHighlights.module.scss';
 import TraceIdField from './TraceIdField';
@@ -79,7 +80,9 @@ export const LOG_HIGHLIGHTS: LogHighlightConfig[] = [
 		key: 'environment',
 		label: 'ENVIRONMENT',
 		render: (log): ReactNode | null => {
-			const value = getAttr(log, 'deployment.environment');
+			const value = getSemconvMembers('deployment.environment.name')
+				.map((key) => getAttr(log, key))
+				.find(Boolean);
 			return value ? valueBadge(value) : null;
 		},
 	},

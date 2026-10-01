@@ -315,6 +315,7 @@ func (b *scopedTraceStatementBuilder) fetchKeys(ctx context.Context, orgID value
 			Name:              k.Name,
 			Signal:            k.Signal,
 			FieldContext:      k.FieldContext,
+			FieldResolution:   k.FieldResolution,
 			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
 		})
 	}
