@@ -242,7 +242,9 @@ describe('QuickFiltersLayout', () => {
 			expect(screen.getByTestId('saved-views-header')).toBeInTheDocument();
 			expect(screen.getByTestId('saved-views-panel')).toBeInTheDocument();
 			expect(screen.queryByTestId('saved-views-open')).not.toBeInTheDocument();
-			expect(screen.queryByTestId('saved-views-close')).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('saved-views-panel-header'),
+			).not.toBeInTheDocument();
 			expect(drawer()).not.toHaveClass('isOpen');
 		});
 
