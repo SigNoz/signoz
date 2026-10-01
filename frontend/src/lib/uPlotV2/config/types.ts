@@ -82,6 +82,8 @@ export interface AxisProps {
 	splits?: uPlot.Axis.Splits;
 	/** Which splits get a label, replacing uPlot's per-distribution default. */
 	filter?: uPlot.Axis.Filter;
+	/** Draw the axis line along the plot edge, styled like the grid. Default true. */
+	showBorder?: boolean;
 	/** Pixels between the ticks and their labels; also feeds the y axis width calculation. */
 	gap?: number;
 	/** Explicit axis thickness. Left unset, the y axis sizes itself to its widest label. */

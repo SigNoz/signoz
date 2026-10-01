@@ -134,6 +134,13 @@ describe('buildScatterConfig', () => {
 			...overrides,
 		});
 
+	it('draws a line along both plot edges', () => {
+		const [xAxis, yAxis] = build().getConfig().axes ?? [];
+
+		expect(xAxis?.border?.show).toBe(true);
+		expect(yAxis?.border?.show).toBe(true);
+	});
+
 	it('titles each axis with its label, and leaves an unlabelled one bare', () => {
 		const config = build({
 			x: { unit: 'reqps', label: 'Throughput' },
