@@ -36,6 +36,9 @@ export type PanelInteractionMap = Record<PanelKind, object> & {
 	'signoz/TablePanel': { onClick?: (event: DrilldownClickPayload) => void };
 	'signoz/PieChartPanel': { onClick?: (event: DrilldownClickPayload) => void };
 	'signoz/NumberPanel': { onClick?: (event: DrilldownClickPayload) => void };
+	'signoz/ScatterPlotPanel': {
+		onClick?: (event: DrilldownClickPayload) => void;
+	};
 };
 
 /**
