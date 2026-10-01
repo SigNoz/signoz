@@ -171,12 +171,16 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 
 func TestListPromotedPaths(t *testing.T) {
 	ctx := context.Background()
+	trueValue := true
+	falseValue := false
 
 	testCases := []struct {
 		name      string
+		filters   promotetypes.ListPromotedPathsFilters
 		promoted  map[string]bool
 		indexes   []telemetrytypes.TelemetryFieldKeySkipIndex
 		wantPaths []promotetypes.PromotePath
+		wantErr   bool
 	}{
 		{
 			name:     "PromotedPaths_EveryDomainAnnotated",
@@ -185,6 +189,32 @@ func TestListPromotedPaths(t *testing.T) {
 				{Signal: "logs", Context: "body", Path: "body.http.method", Promote: true},
 				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
 			},
+		},
+		{
+			name:      "SignalFilter_SkipsOtherDomains",
+			filters:   promotetypes.ListPromotedPathsFilters{Signal: "traces"},
+			promoted:  map[string]bool{"http.method": true},
+			wantPaths: []promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true}},
+		},
+		{
+			name:      "ContextFilter_SkipsOtherDomains",
+			filters:   promotetypes.ListPromotedPathsFilters{Context: "body"},
+			promoted:  map[string]bool{"http.method": true},
+			wantPaths: []promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "body.http.method", Promote: true}},
+		},
+		{
+			name:      "InvalidSignal_Rejected",
+			filters:   promotetypes.ListPromotedPathsFilters{Signal: "events"},
+			promoted:  map[string]bool{"http.method": true},
+			wantPaths: []promotetypes.PromotePath{},
+			wantErr:   true,
+		},
+		{
+			name:      "InvalidContext_Rejected",
+			filters:   promotetypes.ListPromotedPathsFilters{Context: "json"},
+			promoted:  map[string]bool{"http.method": true},
+			wantPaths: []promotetypes.PromotePath{},
+			wantErr:   true,
 		},
 		{
 			name:     "IndexedPaths_MergedForSupportingDomains",
@@ -233,6 +263,57 @@ func TestListPromotedPaths(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:     "PromotedFalseFilter_IndexOnlyPaths",
+			filters:  promotetypes.ListPromotedPathsFilters{Promoted: &falseValue},
+			promoted: map[string]bool{"user.name": true},
+			indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{
+				{
+					Name:          "request.duration",
+					FieldContext:  telemetrytypes.FieldContextBody,
+					FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+					BaseColumn:    "body_v2.",
+					IndexType:     "minmax",
+					Granularity:   1,
+				},
+			},
+			wantPaths: []promotetypes.PromotePath{
+				{
+					Signal:  "logs",
+					Context: "body",
+					Path:    "body.request.duration",
+					Indexes: []promotetypes.WrappedIndex{
+						{FieldDataType: telemetrytypes.FieldDataTypeFloat64, Type: "minmax", Granularity: 1},
+					},
+				},
+			},
+		},
+		{
+			name:     "IndexesTrueFilter_PathsWithIndexes",
+			filters:  promotetypes.ListPromotedPathsFilters{Indexes: &trueValue},
+			promoted: map[string]bool{"user.name": true},
+			indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{
+				{
+					Name:          "user.name",
+					FieldContext:  telemetrytypes.FieldContextBody,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+					BaseColumn:    "body_promoted.",
+					IndexType:     "ngrambf_v1(4, 1024, 2, 0)",
+					Granularity:   1,
+				},
+			},
+			wantPaths: []promotetypes.PromotePath{
+				{
+					Signal:  "logs",
+					Context: "body",
+					Path:    "body.user.name",
+					Promote: true,
+					Indexes: []promotetypes.WrappedIndex{
+						{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+					},
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -242,7 +323,11 @@ func TestListPromotedPaths(t *testing.T) {
 			store.LogsJSONIndexes = testCase.indexes
 			m := NewModule(store, nil)
 
-			paths, err := m.ListPromotedPaths(ctx)
+			paths, err := m.ListPromotedPaths(ctx, testCase.filters)
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
 			require.NoError(t, err)
 			require.Len(t, paths, len(testCase.wantPaths))
 

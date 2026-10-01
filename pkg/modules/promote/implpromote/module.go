@@ -28,17 +28,28 @@ func NewModule(metadataStore telemetrytypes.MetadataStore, telemetrystore teleme
 	return &module{metadataStore: metadataStore, telemetryStore: telemetrystore}
 }
 
-// ListPromotedPaths lists the promoted paths of every promotion domain, each
-// annotated with its signal and context, merged with per-path index metadata
-// where the domain supports indexes.
-func (m *module) ListPromotedPaths(ctx context.Context) ([]promotetypes.PromotePath, error) {
+// ListPromotedPaths lists the promoted paths of every promotion domain
+// passing the filters, each annotated with its signal and context, merged
+// with per-path index metadata where the domain supports indexes.
+func (m *module) ListPromotedPaths(ctx context.Context, filters promotetypes.ListPromotedPathsFilters) ([]promotetypes.PromotePath, error) {
+	if err := filters.Validate(); err != nil {
+		return nil, err
+	}
+
 	response := make([]promotetypes.PromotePath, 0)
 	for _, target := range promotetypes.Targets() {
+		if !filters.MatchesTarget(target) {
+			continue
+		}
 		paths, err := m.listPromotedPaths(ctx, target)
 		if err != nil {
 			return nil, err
 		}
-		response = append(response, paths...)
+		for _, path := range paths {
+			if filters.MatchesPath(path) {
+				response = append(response, path)
+			}
+		}
 	}
 	return response, nil
 }

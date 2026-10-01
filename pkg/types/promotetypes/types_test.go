@@ -217,3 +217,117 @@ func TestValidateAndSetDefaultsTracesAttributes(t *testing.T) {
 		})
 	}
 }
+
+func TestListPromotedPathsFiltersValidate(t *testing.T) {
+	testCases := []struct {
+		name    string
+		filters ListPromotedPathsFilters
+		wantErr bool
+	}{
+		{
+			name:    "EmptyFilters_Valid",
+			filters: ListPromotedPathsFilters{},
+		},
+		{
+			name:    "KnownSignalAndContext_Valid",
+			filters: ListPromotedPathsFilters{Signal: "traces", Context: "attribute"},
+		},
+		{
+			name:    "InvalidSignal_Rejected",
+			filters: ListPromotedPathsFilters{Signal: "events"},
+			wantErr: true,
+		},
+		{
+			name:    "InvalidContext_Rejected",
+			filters: ListPromotedPathsFilters{Context: "json"},
+			wantErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := testCase.filters.Validate()
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestListPromotedPathsFiltersMatch(t *testing.T) {
+	trueValue := true
+	falseValue := false
+
+	testCases := []struct {
+		name       string
+		filters    ListPromotedPathsFilters
+		target     Target
+		path       PromotePath
+		wantTarget bool
+		wantPath   bool
+	}{
+		{
+			name:       "EmptyFilters_MatchEverything",
+			filters:    ListPromotedPathsFilters{},
+			target:     NewTracesAttributesTarget(),
+			path:       PromotePath{Path: "http.method", Promote: true},
+			wantTarget: true,
+			wantPath:   true,
+		},
+		{
+			name:       "SignalFilter_MatchesSameSignal",
+			filters:    ListPromotedPathsFilters{Signal: "traces"},
+			target:     NewTracesAttributesTarget(),
+			wantTarget: true,
+		},
+		{
+			name:       "SignalFilter_SkipsOtherSignals",
+			filters:    ListPromotedPathsFilters{Signal: "traces"},
+			target:     NewLogsBodyTarget(),
+			wantTarget: false,
+		},
+		{
+			name:       "ContextFilter_SkipsOtherContexts",
+			filters:    ListPromotedPathsFilters{Context: "body"},
+			target:     NewTracesAttributesTarget(),
+			wantTarget: false,
+		},
+		{
+			name:     "PromotedFalseFilter_MatchesUnpromotedPath",
+			filters:  ListPromotedPathsFilters{Promoted: &falseValue},
+			path:     PromotePath{Path: "request.duration"},
+			wantPath: true,
+		},
+		{
+			name:     "PromotedFalseFilter_SkipsPromotedPath",
+			filters:  ListPromotedPathsFilters{Promoted: &falseValue},
+			path:     PromotePath{Path: "http.method", Promote: true},
+			wantPath: false,
+		},
+		{
+			name:     "IndexesTrueFilter_MatchesIndexedPath",
+			filters:  ListPromotedPathsFilters{Indexes: &trueValue},
+			path:     PromotePath{Path: "user.name", Indexes: []WrappedIndex{{Type: "minmax"}}},
+			wantPath: true,
+		},
+		{
+			name:     "IndexesTrueFilter_SkipsUnindexedPath",
+			filters:  ListPromotedPathsFilters{Indexes: &trueValue},
+			path:     PromotePath{Path: "http.method", Promote: true},
+			wantPath: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			if testCase.target.Entry.Signal.StringValue() != "" {
+				assert.Equal(t, testCase.wantTarget, testCase.filters.MatchesTarget(testCase.target))
+			}
+			if testCase.path.Path != "" {
+				assert.Equal(t, testCase.wantPath, testCase.filters.MatchesPath(testCase.path))
+			}
+		})
+	}
+}

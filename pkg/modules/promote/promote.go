@@ -8,7 +8,7 @@ import (
 )
 
 type Module interface {
-	ListPromotedPaths(ctx context.Context) ([]promotetypes.PromotePath, error)
+	ListPromotedPaths(ctx context.Context, filters promotetypes.ListPromotedPathsFilters) ([]promotetypes.PromotePath, error)
 	PromotePaths(ctx context.Context, paths ...*promotetypes.PromotePath) error
 }
 
