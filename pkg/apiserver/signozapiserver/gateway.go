@@ -332,7 +332,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 				Verb:           coretypes.VerbAttach,
 				Category:       coretypes.ActionCategoryConfigurationChange,
 				ParentResource: coretypes.ResourceMetaResourceIngestionKey,
-				ParentID:       coretypes.BodyField(func(req *gatewaytypes.PostableIngestionKeyLimit) string { return req.KeyID }),
+				ParentID:       coretypes.BodyJSONPath("keyId"),
 				ParentSelector: coretypes.IDSelector,
 				ChildResource:  coretypes.ResourceMetaResourceIngestionLimit,
 				ChildIDs:       coretypes.OneID(coretypes.ResponseJSONPath("data.id")),

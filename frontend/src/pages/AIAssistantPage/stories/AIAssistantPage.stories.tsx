@@ -243,3 +243,11 @@ export const TooltipsInApprovalDiff: Story = {
 	args: { tooltipsOpen: true, agent: 'awaiting-approval', contents: BRIEF },
 	play: openApprovalDiff,
 };
+
+/**
+ * The conversation count in the bottom strip, in place of the build version.
+ * Archived threads are left out of it.
+ */
+export const BottomStrip: Story = {
+	args: { bottomStrip: true },
+};

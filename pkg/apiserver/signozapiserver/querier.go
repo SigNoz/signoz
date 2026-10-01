@@ -461,11 +461,10 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		SecuritySchemes:     newScopedSecuritySchemes(telemetryReadScopes()),
 	}, handler.WithResourceDefs(handler.TelemetryResourceDef{
-		Verb:         coretypes.VerbRead,
-		Category:     coretypes.ActionCategoryDataAccess,
-		Selector:     querybuilder.TelemetrySelector,
-		Resources:    querybuilder.QueryRangeResources,
-		RequiresBody: true,
+		Verb:      coretypes.VerbRead,
+		Category:  coretypes.ActionCategoryDataAccess,
+		Selector:  querybuilder.TelemetrySelector,
+		Resources: querybuilder.QueryRangeResources,
 	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -484,11 +483,10 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		SecuritySchemes:     newScopedSecuritySchemes(telemetryReadScopes()),
 	}, handler.WithResourceDefs(handler.TelemetryResourceDef{
-		Verb:         coretypes.VerbRead,
-		Category:     coretypes.ActionCategoryDataAccess,
-		Selector:     querybuilder.TelemetrySelector,
-		Resources:    querybuilder.QueryRangeResources,
-		RequiresBody: true,
+		Verb:      coretypes.VerbRead,
+		Category:  coretypes.ActionCategoryDataAccess,
+		Selector:  querybuilder.TelemetrySelector,
+		Resources: querybuilder.QueryRangeResources,
 	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}

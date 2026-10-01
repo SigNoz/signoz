@@ -10,15 +10,39 @@ type ChannelPagerdutyConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	RoutingKey   string                       `json:"routingKey" required:"true" format:"password"`
 	URL          string                       `json:"url"`
-	Source       valuer.UnsetOrNonEmptyString `json:"source"`
-	Client       valuer.UnsetOrNonEmptyString `json:"client"`
-	ClientURL    valuer.UnsetOrNonEmptyString `json:"clientUrl"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description"`
+	Source       valuer.UnsetOrNonEmptyString `json:"source,omitzero"`
+	Client       valuer.UnsetOrNonEmptyString `json:"client,omitzero"`
+	ClientURL    valuer.UnsetOrNonEmptyString `json:"clientUrl,omitzero"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
 	Severity     string                       `json:"severity"`
 	Component    string                       `json:"component"`
 	Group        string                       `json:"group"`
 	Class        string                       `json:"class"`
-	Details      map[string]string            `json:"details,omitempty"`
+	Details      map[string]string            `json:"details,omitzero"`
+}
+
+func (c *ChannelPagerdutyConfig) UnmarshalJSON(data []byte) error {
+	type alias ChannelPagerdutyConfig
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
+		return err
+	}
+
+	fillSendResolved(&c.SendResolved, config.DefaultPagerdutyConfig.VSendResolved)
+	c.Description.SetIfUnset(config.DefaultPagerdutyConfig.Description)
+	c.Client.SetIfUnset(config.DefaultPagerdutyConfig.Client)
+	c.ClientURL.SetIfUnset(config.DefaultPagerdutyConfig.ClientURL)
+	c.Source.SetIfUnset(c.Client.StringValue())
+
+	if c.Details == nil {
+		c.Details = make(map[string]string, len(config.DefaultPagerdutyDetails))
+		for key, value := range config.DefaultPagerdutyDetails {
+			if template, ok := value.(string); ok {
+				c.Details[key] = template
+			}
+		}
+	}
+
+	return c.Validate()
 }
 
 func (c ChannelPagerdutyConfig) Validate() error {
@@ -89,4 +113,33 @@ func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (Cha
 		Class:        pagerduty.Class,
 		Details:      details,
 	}, nil
+}
+
+func newUpstreamDetails(details map[string]string) map[string]any {
+	if details == nil {
+		return nil
+	}
+
+	upstream := make(map[string]any, len(details))
+	for key, value := range details {
+		upstream[key] = value
+	}
+
+	return upstream
+}
+
+func extractStringDetails(name string, details map[string]any) (map[string]string, error) {
+	extracted := make(map[string]string, len(details))
+	for key, value := range details {
+		stringValue, ok := value.(string)
+		if !ok {
+			return nil, errors.NewInvalidInputf(
+				ErrCodeAlertmanagerChannelInvalid,
+				"channel %q sets a non-string value for details.%s, which is not supported", name, key,
+			)
+		}
+		extracted[key] = stringValue
+	}
+
+	return extracted, nil
 }

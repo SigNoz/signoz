@@ -1,15 +1,18 @@
 package signozapiserver
 
 import (
+	"encoding/json"
 	"net/http"
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
+	"github.com/tidwall/gjson"
 )
 
 func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
@@ -74,7 +77,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
 				SourceSelector: coretypes.WildcardSelector,
 				TargetResource: coretypes.ResourceRole,
-				TargetIDs:      authDomainPostableRoleNamesExtractor(),
+				TargetIDs:      authDomainRoleNamesExtractor(),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -146,7 +149,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceRole,
-				TargetIDs:      authDomainUpdatableRoleNamesExtractor(),
+				TargetIDs:      authDomainRoleNamesExtractor(),
 				TargetSelector: coretypes.IDSelector,
 			},
 			handler.AttachDetachSiblingResourceDef{
@@ -196,16 +199,20 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 
 // The extracted names are the roles the request body's mapping grants at SSO
 // login — see authDomainEffectiveRoleNames.
-func authDomainPostableRoleNamesExtractor() coretypes.ResourceIDsExtractor {
-	return coretypes.BodyFields(func(req *authtypes.PostableAuthDomain) []string {
-		return authDomainEffectiveRoleNames(req.RoleMapping)
-	})
-}
+func authDomainRoleNamesExtractor() coretypes.ResourceIDsExtractor {
+	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
+		roleMappingJSON := gjson.GetBytes(ec.RequestBody, "roleMapping")
+		if !roleMappingJSON.Exists() || roleMappingJSON.Type == gjson.Null {
+			return authDomainEffectiveRoleNames(nil), nil
+		}
 
-func authDomainUpdatableRoleNamesExtractor() coretypes.ResourceIDsExtractor {
-	return coretypes.BodyFields(func(req *authtypes.UpdatableAuthDomain) []string {
-		return authDomainEffectiveRoleNames(req.RoleMapping)
-	})
+		roleMapping := new(authtypes.RoleMapping)
+		if err := json.Unmarshal([]byte(roleMappingJSON.Raw), roleMapping); err != nil {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid role mapping: %v", err)
+		}
+
+		return authDomainEffectiveRoleNames(roleMapping), nil
+	}}
 }
 
 // The extracted names are the roles the stored domain's mapping grants at SSO

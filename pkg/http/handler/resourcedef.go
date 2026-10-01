@@ -9,7 +9,6 @@ type ResourceDef interface {
 	// resolveRequest is unexported to seal the interface. It returns a slice so a
 	// single def can fan out (e.g. a telemetry query touching multiple signals).
 	resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource
-	requiresBody() bool
 }
 
 func ResolveRequest(defs []ResourceDef, ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
@@ -19,17 +18,6 @@ func ResolveRequest(defs []ResourceDef, ec coretypes.ExtractorContext) []coretyp
 	}
 
 	return resolved
-}
-
-// RequiresBody reports whether any def needs the decoded request body.
-func RequiresBody(defs []ResourceDef) bool {
-	for _, def := range defs {
-		if def.requiresBody() {
-			return true
-		}
-	}
-
-	return false
 }
 
 // BasicResourceDef checks a single resource for one verb.
@@ -54,10 +42,6 @@ func (def BasicResourceDef) resolveRequest(ec coretypes.ExtractorContext) []core
 	}
 }
 
-func (def BasicResourceDef) requiresBody() bool {
-	return def.ID.RequiresBody
-}
-
 // AttachDetachSiblingResourceDef checks an attach/detach between peer resources;
 // both source and target are authz-checked.
 type AttachDetachSiblingResourceDef struct {
@@ -72,24 +56,23 @@ type AttachDetachSiblingResourceDef struct {
 }
 
 func (def AttachDetachSiblingResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
-	return []coretypes.ResolvedResource{
-		coretypes.NewResolvedResourceWithTarget(
-			def.Verb,
-			def.Category,
-			def.SourceResource,
-			def.SourceIDs,
-			def.SourceSelector,
-			def.TargetResource,
-			def.TargetIDs,
-			def.TargetSelector,
-			false,
-			ec,
-		),
+	resolved := coretypes.NewResolvedResourceWithTarget(
+		def.Verb,
+		def.Category,
+		def.SourceResource,
+		def.SourceIDs,
+		def.SourceSelector,
+		def.TargetResource,
+		def.TargetIDs,
+		def.TargetSelector,
+		false,
+		ec,
+	)
+	if resolved.HasNoLinks() {
+		return nil
 	}
-}
 
-func (def AttachDetachSiblingResourceDef) requiresBody() bool {
-	return def.SourceIDs.RequiresBody || def.TargetIDs.RequiresBody
+	return []coretypes.ResolvedResource{resolved}
 }
 
 // AttachDetachParentChildResourceDef authz-checks only the parent; the child
@@ -121,20 +104,11 @@ func (def AttachDetachParentChildResourceDef) resolveRequest(ec coretypes.Extrac
 	}
 }
 
-func (def AttachDetachParentChildResourceDef) requiresBody() bool {
-	return def.ParentID.RequiresBody || def.ChildIDs.RequiresBody
-}
-
 type TelemetryResourceDef struct {
-	Verb         coretypes.Verb
-	Category     coretypes.ActionCategory
-	Selector     coretypes.SelectorFunc
-	Resources    coretypes.ResourceExtractor
-	RequiresBody bool
-}
-
-func (def TelemetryResourceDef) requiresBody() bool {
-	return def.RequiresBody
+	Verb      coretypes.Verb
+	Category  coretypes.ActionCategory
+	Selector  coretypes.SelectorFunc
+	Resources coretypes.ResourceExtractor
 }
 
 func (def TelemetryResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
