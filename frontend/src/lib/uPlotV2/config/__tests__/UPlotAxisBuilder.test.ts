@@ -122,6 +122,24 @@ describe('UPlotAxisBuilder', () => {
 		});
 	});
 
+	it('draws the axis line by default, styled like the grid', () => {
+		const config = new UPlotAxisBuilder(
+			createAxisProps({ isDarkMode: true, grid: { width: 0.5 } }),
+		).getConfig();
+
+		expect(config.border).toStrictEqual({
+			show: true,
+			stroke: config.grid?.stroke,
+			width: 0.5,
+		});
+	});
+
+	it('leaves the axis line off when showBorder is false', () => {
+		expect(
+			new UPlotAxisBuilder(createAxisProps({ showBorder: false })).getConfig(),
+		).not.toHaveProperty('border');
+	});
+
 	it('passes explicit splits and a label filter through to uPlot', () => {
 		const splits = jest.fn();
 		const filter = jest.fn();
