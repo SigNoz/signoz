@@ -240,7 +240,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					prefix={<RefreshCw size={14} />}
 				/>
 			</TooltipSimple>
-			{showFilterCollapse && (
+			{showFilterCollapse && handleFilterVisibilityChange && (
 				<TooltipSimple title="Collapse Filters">
 					<Button
 						variant="ghost"
