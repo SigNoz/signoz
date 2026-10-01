@@ -4,6 +4,7 @@ import uPlot, { Axis } from 'uplot';
 import { uPlotXAxisValuesFormat } from '../../uPlotLib/utils/constants';
 import getGridColor from '../../uPlotLib/utils/getGridColor';
 import { buildYAxisSizeCalculator } from '../utils/axis';
+import { keepDecadeSplits } from '../utils/logGridSplits';
 import { AxisProps, ConfigBuilder } from './types';
 
 /**
@@ -20,8 +21,9 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		const { grid, isDarkMode, isLogScale } = this.props;
 
 		const defaultStroke = getGridColor(isDarkMode ?? false);
-		const defaultWidth = isLogScale ? 0.1 : 0.2;
+		const defaultWidth = 0.2;
 		const defaultShow = true;
+		const filter = isLogScale ? { filter: keepDecadeSplits } : {};
 
 		// Merge partial or full grid config with defaults
 		if (grid) {
@@ -29,6 +31,7 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 				stroke: grid.stroke ?? defaultStroke,
 				width: grid.width ?? defaultWidth,
 				show: grid.show ?? defaultShow,
+				...filter,
 			};
 		}
 
@@ -36,6 +39,7 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 			stroke: defaultStroke,
 			width: defaultWidth,
 			show: defaultShow,
+			...filter,
 		};
 	}
 
