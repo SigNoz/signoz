@@ -185,7 +185,7 @@ describe('createScatterPlugin', () => {
 		expect(scan(u, plugin)).toStrictEqual([null, 0]);
 	});
 
-	it('sizes the hover marker from the hit disc, in CSS pixels', () => {
+	it('rings the hit disc, in CSS pixels, with a gap around it', () => {
 		const plugin = createScatterPlugin({
 			pointSize: { fixed: 8, min: 4, max: 20 },
 		});
@@ -197,8 +197,48 @@ describe('createScatterPlugin', () => {
 		scan(u, plugin);
 
 		const bbox = plugin.cursor.points?.bbox;
-		expect(bbox?.(u, 1)).toStrictEqual({ left: 6, top: 86, width: 8, height: 8 });
+		// The 8px disc spans 6..14; the ring sits 3px out and is 2px wide.
+		expect(bbox?.(u, 1)).toStrictEqual({
+			left: 1,
+			top: 81,
+			width: 18,
+			height: 18,
+		});
 		expect(bbox?.(u, 2)).toMatchObject({ width: 0, height: 0 });
+	});
+
+	it('snaps the ring to whole pixels without moving its centre', () => {
+		const plugin = createScatterPlugin({
+			pointSize: { fixed: 7, min: 4, max: 20 },
+		});
+		const u = createFakePlot({
+			series: [{ xs: [10], ys: [10] }],
+			cursor: { left: 10, top: 90 },
+		});
+		drawAll(u, plugin);
+		scan(u, plugin);
+
+		// The 7px disc starts at 6.5, so the ring's edge would land on 1.5.
+		const ring = plugin.cursor.points?.bbox?.(u, 1);
+		expect(ring).toMatchObject({ left: 1, width: 18 });
+		expect((ring?.left ?? 0) + (ring?.width ?? 0) / 2).toBe(10);
+	});
+
+	it('draws the hover marker as an outline in the series colour', () => {
+		const plugin = createScatterPlugin();
+		const u = {
+			series: [{}, { stroke: (): string => '#E5484D' }, { stroke: '#30A46C' }],
+		} as unknown as uPlot;
+		const points = plugin.cursor.points as {
+			fill: (u: uPlot, seriesIdx: number) => string;
+			stroke: (u: uPlot, seriesIdx: number) => string;
+			width: (u: uPlot, seriesIdx: number, size: number) => number;
+		};
+
+		expect(points.fill(u, 1)).toBe('transparent');
+		expect(points.stroke(u, 1)).toBe('#E5484D');
+		expect(points.stroke(u, 2)).toBe('#30A46C');
+		expect(points.width(u, 1, 0)).toBe(2);
 	});
 
 	it('drawClear drops cached paths on data series only', () => {
