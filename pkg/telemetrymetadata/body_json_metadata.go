@@ -25,6 +25,7 @@ var (
 	CodeFailLoadPromotedPaths   = errors.MustNewCode("fail_load_promoted_paths")
 	CodeFailCheckPathPromoted   = errors.MustNewCode("fail_check_path_promoted")
 	CodeFailLoadLogsJSONIndexes = errors.MustNewCode("fail_load_logs_json_indexes")
+	CodeFailCreateJSONIndexes   = errors.MustNewCode("fail_create_json_indexes")
 	CodeFailListJSONValues      = errors.MustNewCode("fail_list_json_values")
 	CodeFailScanJSONValue       = errors.MustNewCode("fail_scan_json_value")
 	CodeFailScanVariant         = errors.MustNewCode("fail_scan_variant")
@@ -232,6 +233,21 @@ func (t *telemetryMetaStore) ListJSONIndexes(ctx context.Context, source telemet
 	}
 
 	return indexes, nil
+}
+
+func (t *telemetryMetaStore) CreateIndexes(ctx context.Context, source telemetrytypes.JSONIndexSource, indexes []schemamigrator.Index) error {
+	ctx = withTelemetryContext(ctx, source.Signal, "CreateIndexes")
+	for _, index := range indexes {
+		op := schemamigrator.AlterTableAddIndex{
+			Database: source.DBName,
+			Table:    source.LocalTableName,
+			Index:    index,
+		}.OnCluster(t.telemetrystore.Cluster())
+		if err := t.telemetrystore.ClickhouseDB().Exec(ctx, op.ToSQL()); err != nil {
+			return errors.WrapInternalf(err, CodeFailCreateJSONIndexes, "failed to create index")
+		}
+	}
+	return nil
 }
 
 // TODO(Piyush): Remove this if not used in future.

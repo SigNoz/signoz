@@ -3,6 +3,7 @@ package telemetrytypes
 import (
 	"context"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -36,6 +37,9 @@ type MetadataStore interface {
 
 	// ListJSONIndexes lists the per-path JSON skip indexes of the given source.
 	ListJSONIndexes(ctx context.Context, source JSONIndexSource, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
+
+	// CreateIndexes adds per-path JSON skip indexes to the source's table.
+	CreateIndexes(ctx context.Context, source JSONIndexSource, indexes []schemamigrator.Index) error
 
 	// GetPromotedPaths lists the promoted paths recorded in the column
 	// evolution table for the entry's signal, column and field context.
