@@ -38,6 +38,67 @@ describe('ScatterAxesSection', () => {
 		});
 	});
 
+	it('shows the plotted column as each label placeholder', () => {
+		render(
+			<ScatterAxesSection
+				value={undefined}
+				onChange={jest.fn()}
+				axisColumnNames={{ x: 'Request rate', y: 'p99 latency' }}
+			/>,
+		);
+
+		expect(screen.getByTestId('panel-editor-v2-x-label')).toHaveAttribute(
+			'placeholder',
+			'Request rate',
+		);
+		expect(screen.getByTestId('panel-editor-v2-y-label')).toHaveAttribute(
+			'placeholder',
+			'p99 latency',
+		);
+	});
+
+	it('resets one axis without touching the other', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(
+			<ScatterAxesSection
+				value={{
+					x: { scale: DashboardtypesAxisScaleDTO.log, label: 'Throughput' },
+					y: { scale: DashboardtypesAxisScaleDTO.symlog },
+				}}
+				savedValue={{}}
+				onChange={onChange}
+			/>,
+		);
+
+		const [resetX] = screen.getAllByTestId('config-field-reset');
+		await user.click(resetX);
+
+		expect(onChange).toHaveBeenCalledWith({
+			x: undefined,
+			y: { scale: DashboardtypesAxisScaleDTO.symlog },
+		});
+	});
+
+	it('says a log axis ignores a bound at or below zero', () => {
+		render(
+			<ScatterAxesSection
+				value={{
+					x: { scale: DashboardtypesAxisScaleDTO.log, softMin: -10 },
+					y: { scale: DashboardtypesAxisScaleDTO.symlog, softMin: -10 },
+				}}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByTestId('panel-editor-v2-x-range-help')).toHaveTextContent(
+			"A log axis can't reach 0 or below",
+		);
+		expect(screen.getByTestId('panel-editor-v2-y-range-help')).toHaveTextContent(
+			'The axis always shows at least this range.',
+		);
+	});
+
 	it('writes an axis label', async () => {
 		const user = userEvent.setup();
 		const onChange = jest.fn();
