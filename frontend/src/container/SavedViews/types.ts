@@ -1,5 +1,6 @@
 import { ReactElement } from 'react';
 import type { Link } from '@signozhq/icons';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
@@ -41,6 +42,7 @@ export interface UseActiveSavedViewResult {
 	view: SavedviewtypesSavedViewDTO | undefined;
 	isLoading: boolean;
 	isError: boolean;
+	isForbidden: boolean;
 	hasUnsavedChanges: boolean;
 }
 
@@ -70,6 +72,7 @@ export interface SaveViewModalProps {
 }
 
 export interface SaveChangesMenuProps {
+	viewId: string;
 	disabled: boolean;
 	onSaveAsNew: () => void;
 	onUpdate: () => void;
@@ -81,6 +84,7 @@ export interface SavedViewsIconButtonProps {
 	testId: string;
 	color?: 'secondary' | 'warning';
 	disabled?: boolean;
+	checks?: BrandedPermission[];
 	onClick?: () => void;
 }
 
@@ -100,6 +104,7 @@ export interface SavedViewsListSectionProps {
 	onClear: () => void;
 	onAction: SavedViewsListRowProps['onAction'];
 	hover: SavedViewsListRowHoverProps;
+	isReadDenied: boolean;
 	testId: string;
 }
 
@@ -113,6 +118,7 @@ export interface SavedViewsListRowProps {
 		key: SavedViewRowActionKey,
 	) => void;
 	hover: SavedViewsListRowHoverProps;
+	isReadDenied: boolean;
 }
 
 export type SavedViewRowActionKey = 'copyLink' | 'editDetails' | 'delete';
@@ -123,6 +129,7 @@ export interface SavedViewRowActionConfig {
 	icon: typeof Link;
 	danger?: boolean;
 	hasDividerBefore?: boolean;
+	buildPermission?: (id: string) => BrandedPermission;
 }
 
 export interface PendingSavedViewAction {
@@ -141,6 +148,7 @@ export interface SavedViewsRowButtonProps {
 }
 
 export interface SavedViewsRowMenuProps {
+	viewId: string;
 	onAction: (key: SavedViewRowActionKey) => void;
 	onOpen: () => void;
 }

@@ -14,6 +14,7 @@ function SavedViewsListSection({
 	onClear,
 	onAction,
 	hover,
+	isReadDenied,
 	testId,
 }: SavedViewsListSectionProps): JSX.Element {
 	return (
@@ -31,6 +32,7 @@ function SavedViewsListSection({
 								onClear={onClear}
 								onAction={onAction}
 								hover={hover}
+								isReadDenied={isReadDenied}
 							/>
 						))}
 					</div>

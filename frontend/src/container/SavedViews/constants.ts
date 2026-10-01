@@ -4,6 +4,10 @@ import {
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
+import {
+	buildSavedViewDeletePermission,
+	buildSavedViewUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { SavedViewRowActionConfig, SaveViewModalMode } from './types';
@@ -30,6 +34,8 @@ export const MY_VIEW_NAME = 'My view';
 
 export const SAVED_VIEW_LOAD_FAILED_NAME = 'Saved view failed to load';
 
+export const SAVED_VIEW_FORBIDDEN_NAME = 'No access to this view';
+
 export const SAVED_VIEWS_LIST_LOADING_ROWS = 4;
 
 export const SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS = 1000;
@@ -47,13 +53,19 @@ export const SAVE_VIEW_MODAL_TITLE: Record<SaveViewModalMode, string> = {
 
 export const SAVED_VIEW_ROW_ACTIONS: SavedViewRowActionConfig[] = [
 	{ key: 'copyLink', label: 'Copy link', icon: Link },
-	{ key: 'editDetails', label: 'Edit details', icon: PenLine },
+	{
+		key: 'editDetails',
+		label: 'Edit details',
+		icon: PenLine,
+		buildPermission: buildSavedViewUpdatePermission,
+	},
 	{
 		key: 'delete',
 		label: 'Delete',
 		icon: Trash2,
 		danger: true,
 		hasDividerBefore: true,
+		buildPermission: buildSavedViewDeletePermission,
 	},
 ];
 
