@@ -3,6 +3,7 @@ import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Collapse, Flex, Space, Table, TableProps, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
+import { Pill } from '@signozhq/ui/pill';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import type {
@@ -16,7 +17,7 @@ import cx from 'classnames';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
-import { CalendarClock, PenLine, Trash2, X } from '@signozhq/icons';
+import { CalendarClock, PenLine, Trash2 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -47,6 +48,18 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 			className={cx('alert-rule-tags', classname)}
 		>
 			{selectedTags?.map((tag: DefaultOptionType, index: number) => {
+				if (closable) {
+					return (
+						<Pill.Closeable
+							key={tag.value}
+							maxWidth={200}
+							onClose={(): void => handleClose?.(tag.value)}
+						>
+							{tag.label}
+						</Pill.Closeable>
+					);
+				}
+
 				const isLongTag = (tag?.label as string)?.length > 20;
 				const tagElem = (
 					<Badge
@@ -54,20 +67,6 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 						key={tag.value}
 						color={index % 2 ? 'highlight-danger' : 'primary'}
 						variant="outlined"
-						suffix={
-							closable ? (
-								<button
-									type="button"
-									aria-label="Remove"
-									onClick={(e): void => {
-										e.preventDefault();
-										handleClose?.(tag?.value);
-									}}
-								>
-									<X size={12} />
-								</button>
-							) : undefined
-						}
 					>
 						{isLongTag
 							? `${(tag?.label as string | null)?.slice(0, 20)}...`
