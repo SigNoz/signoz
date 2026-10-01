@@ -43,6 +43,16 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		};
 	}
 
+	/** The axis line reads as the outermost grid line, so it takes the grid's style. */
+	private buildBorderConfig(
+		grid: uPlot.Axis.Grid | undefined,
+	): uPlot.Axis.Border | undefined {
+		if (this.props.showBorder === false || !grid) {
+			return undefined;
+		}
+		return { show: true, stroke: grid.stroke, width: grid.width };
+	}
+
 	/**
 	 * Build ticks configuration
 	 */
@@ -175,6 +185,7 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		} = this.props;
 
 		const grid = this.buildGridConfig();
+		const border = this.buildBorderConfig(grid);
 		const ticks = this.buildTicksConfig();
 		const values = this.buildValuesFormatter();
 		const size = this.buildSizeCalculator();
@@ -198,6 +209,9 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		}
 		if (ticks) {
 			axisConfig.ticks = ticks;
+		}
+		if (border) {
+			axisConfig.border = border;
 		}
 		if (values) {
 			axisConfig.values = values;
