@@ -33,6 +33,7 @@ import {
 	getScatterPlotEmptyMessage,
 	getScatterPlotFooterText,
 } from './messages';
+import { resolvePointOpacity, resolvePointSize } from './points';
 import { prepareScatterPlotData } from './prepareData';
 import styles from './Renderer.module.scss';
 import { ScatterPlotDataStatus } from './types';
@@ -106,6 +107,8 @@ function ScatterPlotPanelRenderer({
 						isDarkMode,
 						x: toScatterAxisOptions(spec.axes?.x, readyData.channels.x.unit),
 						y: toScatterAxisOptions(spec.axes?.y, readyData.channels.y.unit),
+						pointSize: resolvePointSize(spec.chartAppearance?.points),
+						fillOpacity: resolvePointOpacity(spec.chartAppearance?.points),
 						colorMapping: spec.legend?.customColors ?? {},
 						thresholds: mapThresholds(spec.thresholds),
 						decimalPrecision,
@@ -119,6 +122,7 @@ function ScatterPlotPanelRenderer({
 			isDarkMode,
 			spec.axes?.x,
 			spec.axes?.y,
+			spec.chartAppearance?.points,
 			spec.legend?.customColors,
 			spec.thresholds,
 			decimalPrecision,

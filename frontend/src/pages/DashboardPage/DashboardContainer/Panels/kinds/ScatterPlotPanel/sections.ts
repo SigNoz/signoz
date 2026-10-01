@@ -12,6 +12,7 @@ export const sections: SectionConfig[] = [
 	},
 	{ kind: SectionKind.Dimensions },
 	{ kind: SectionKind.ScatterAxes },
+	{ kind: SectionKind.ChartAppearance, controls: { points: true } },
 	{
 		kind: SectionKind.Formatting,
 		controls: { decimals: true, columnUnits: true },
