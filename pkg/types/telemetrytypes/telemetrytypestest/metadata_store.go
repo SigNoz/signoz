@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -21,7 +20,6 @@ type MockMetadataStore struct {
 	ReducedMap                 map[string]bool
 	PromotedPathsMap           map[string]bool
 	LogsJSONIndexes            []telemetrytypes.TelemetryFieldKeySkipIndex
-	CreatedIndexes             []schemamigrator.Index
 	ColumnEvolutionMetadataMap map[string][]*telemetrytypes.EvolutionEntry
 	LookupKeysMap              map[telemetrytypes.MetricMetadataLookupKey]int64
 	// StaticFields holds signal-specific intrinsic field definitions (e.g. logstelemetryschema.IntrinsicFields).
@@ -38,7 +36,6 @@ func NewMockMetadataStore() *MockMetadataStore {
 		TypeMap:                    make(map[string]metrictypes.Type),
 		PromotedPathsMap:           make(map[string]bool),
 		LogsJSONIndexes:            []telemetrytypes.TelemetryFieldKeySkipIndex{},
-		CreatedIndexes:             []schemamigrator.Index{},
 		ColumnEvolutionMetadataMap: make(map[string][]*telemetrytypes.EvolutionEntry),
 		LookupKeysMap:              make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 		StaticFields:               make(map[string]telemetrytypes.TelemetryFieldKey),
@@ -385,11 +382,6 @@ func (m *MockMetadataStore) ListJSONIndexes(ctx context.Context, source telemetr
 		}
 	}
 	return indexes, nil
-}
-
-func (m *MockMetadataStore) CreateIndexes(_ context.Context, _ telemetrytypes.JSONIndexSource, indexes []schemamigrator.Index) error {
-	m.CreatedIndexes = append(m.CreatedIndexes, indexes...)
-	return nil
 }
 
 func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(_ context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) map[string][]*telemetrytypes.EvolutionEntry {
