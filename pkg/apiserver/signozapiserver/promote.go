@@ -51,7 +51,7 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newScopedSecuritySchemes(fieldScopes(coretypes.VerbUpdate)),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLogsField.Scope(coretypes.VerbUpdate), coretypes.ResourceMetaResourceTracesField.Scope(coretypes.VerbUpdate)}),
 	}, handler.WithResourceDefs(handler.TelemetryResourceDef{
 		Verb:      coretypes.VerbUpdate,
 		Category:  coretypes.ActionCategoryConfigurationChange,
@@ -73,7 +73,7 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newScopedSecuritySchemes(fieldScopes(coretypes.VerbList)),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLogsField.Scope(coretypes.VerbList), coretypes.ResourceMetaResourceTracesField.Scope(coretypes.VerbList)}),
 	}, handler.WithResourceDefs(handler.TelemetryResourceDef{
 		Verb:      coretypes.VerbList,
 		Category:  coretypes.ActionCategoryDataAccess,
@@ -84,11 +84,4 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 	}
 
 	return nil
-}
-
-func fieldScopes(verb coretypes.Verb) []string {
-	return []string{
-		coretypes.ResourceMetaResourceLogsField.Scope(verb),
-		coretypes.ResourceMetaResourceTracesField.Scope(verb),
-	}
 }
