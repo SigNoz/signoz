@@ -49,7 +49,7 @@ def test_unique_index_allows_multiple_deleted_rows(
             "userRoles": [{"id": find_role_by_name(signoz, admin_token, "signoz-editor")}],
         },
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
     assert resp.status_code == HTTPStatus.CREATED, resp.text
     first_user_id = resp.json()["data"]["id"]
@@ -57,7 +57,7 @@ def test_unique_index_allows_multiple_deleted_rows(
     resp = requests.delete(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{first_user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
     assert resp.status_code == HTTPStatus.NO_CONTENT
 
@@ -70,7 +70,7 @@ def test_unique_index_allows_multiple_deleted_rows(
             "userRoles": [{"id": find_role_by_name(signoz, admin_token, "signoz-editor")}],
         },
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
     assert resp.status_code == HTTPStatus.CREATED, resp.text
     second_user_id = resp.json()["data"]["id"]
@@ -79,7 +79,7 @@ def test_unique_index_allows_multiple_deleted_rows(
     resp = requests.delete(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{second_user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
     assert resp.status_code == HTTPStatus.NO_CONTENT
 

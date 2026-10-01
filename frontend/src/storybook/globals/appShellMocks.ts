@@ -1,5 +1,8 @@
 import { StatusCodes } from 'http-status-codes';
+import remove from 'api/browser/localstorage/remove';
+import set from 'api/browser/localstorage/set';
 import { FeatureKeys } from 'constants/features';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import type { IAppContext } from 'providers/App/types';
 import { createAppContextMock } from 'tests/fixtures/appContextMock';
@@ -15,7 +18,7 @@ import type { UserPreference } from 'types/api/preferences/preference';
 import { USER_ROLES } from 'types/roles';
 import { setNoAuthMode } from 'utils/noAuthMode';
 
-import { choiceControl } from '../controls/controls';
+import { choiceControl, toggleControl } from '../controls/controls';
 import { defineStoryMocks } from '../controls/defineStoryMocks';
 import type { StoryMockArgs } from '../controls/types';
 import { RESPONSE_STATES, type ResponseState } from '../runtime/responseState';
@@ -49,6 +52,10 @@ type Banner = (typeof BANNERS)[number];
 const SIDENAV_STATES = ['pinned', 'collapsed'] as const;
 
 type SidenavState = (typeof SIDENAV_STATES)[number];
+
+const SUPPORT_STATES = ['none', 'pylon', 'add-card'] as const;
+
+type SupportState = (typeof SUPPORT_STATES)[number];
 
 const {
 	activeLicense: baseLicense,
@@ -203,6 +210,25 @@ const bannerContext = (
 };
 
 /**
+ * The Add Credit Card offer is what a cloud user with chat support but without
+ * premium support gets, so `add-card` only turns premium off. A deployment with
+ * no chat support flag, such as `community`, stays without any entry.
+ */
+const supportFeatureFlags = (
+	support: SupportState,
+	featureFlags: FeatureFlagProps[] | null,
+): Partial<IAppContext> =>
+	support === 'add-card'
+		? {
+				featureFlags: (featureFlags ?? []).map((flag) =>
+					flag.name === FeatureKeys.PREMIUM_SUPPORT
+						? { ...flag, active: false }
+						: flag,
+				),
+			}
+		: {};
+
+/**
  * `AppLayout` lays the shell out from the context rather than the API, so the
  * side nav only matches the real app when this is seeded.
  */
@@ -240,6 +266,19 @@ export const appShellMocks = defineStoryMocks({
 			options: SIDENAV_STATES,
 			value: 'pinned',
 		}),
+		bottomStrip: toggleControl('Bottom strip', {
+			group: APP_SHELL,
+			description:
+				'The `SAVED_VIEW_ENABLED` localStorage flag the bottom strip ships behind.',
+			value: false,
+		}),
+		support: choiceControl<SupportState>('Support', {
+			group: APP_SHELL,
+			description:
+				'The chat support entry the shell offers. `none` is premium support with Pylon not configured; `pylon` configures it in the boot data; `add-card` turns premium support off, which offers a cloud trial the Add Credit Card modal instead. The Pylon widget itself never loads.',
+			options: SUPPORT_STATES,
+			value: 'none',
+		}),
 		dataState: choiceControl<ResponseState>('State', {
 			group: DATA,
 			description: 'How the endpoints the page owns answer.',
@@ -248,19 +287,32 @@ export const appShellMocks = defineStoryMocks({
 		}),
 	},
 	responseState: ({ dataState }) => dataState,
-	config: ({ license, banner, sidenav }) => {
+	config: ({ license, banner, sidenav, support }) => {
 		const tenant = licenseContext(license);
 
 		return {
 			appContext: {
 				...tenant,
 				...bannerContext(banner, tenant.activeLicense ?? null),
+				...supportFeatureFlags(support, tenant.featureFlags ?? baseFeatureFlags),
 				userPreferences: sidenavPreferences(sidenav === 'pinned'),
 			},
 		};
 	},
-	effect: ({ banner }) => {
+	effect: ({ banner, bottomStrip, support }) => {
 		setNoAuthMode(banner === 'no-auth');
+
+		if (bottomStrip) {
+			set(LOCALSTORAGE.SAVED_VIEW_ENABLED, 'true');
+		} else {
+			remove(LOCALSTORAGE.SAVED_VIEW_ENABLED);
+		}
+
+		const pylon = window.signozBootData?.settings?.pylon;
+
+		if (pylon) {
+			pylon.enabled = support === 'pylon';
+		}
 	},
 });
 

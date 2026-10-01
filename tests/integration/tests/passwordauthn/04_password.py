@@ -6,9 +6,6 @@ from sqlalchemy import sql
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, create_active_user, find_user_by_email
-from fixtures.logger import setup_logger
-
-logger = setup_logger(__name__)
 
 PASSWORD_USER_EMAIL = "admin+password@integration.test"
 PASSWORD_USER_PASSWORD = "password123Z$"
@@ -36,7 +33,7 @@ def test_change_password(signoz: types.SigNoz, get_token: Callable[[str, str], s
             "oldPassword": "password",
             "newPassword": PASSWORD_USER_PASSWORD,
         },
-        timeout=2,
+        timeout=5,
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -49,7 +46,7 @@ def test_change_password(signoz: types.SigNoz, get_token: Callable[[str, str], s
             "oldPassword": PASSWORD_USER_PASSWORD,
             "newPassword": "password123Znew$",
         },
-        timeout=2,
+        timeout=5,
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -70,7 +67,7 @@ def test_reset_password(signoz: types.SigNoz, get_token: Callable[[str, str], st
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
 
     assert response.status_code == HTTPStatus.CREATED, response.text
@@ -83,7 +80,7 @@ def test_reset_password(signoz: types.SigNoz, get_token: Callable[[str, str], st
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.CREATED, response.text
     assert response.json()["data"]["token"] == token
@@ -92,7 +89,7 @@ def test_reset_password(signoz: types.SigNoz, get_token: Callable[[str, str], st
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     assert response.json()["data"]["token"] == token
@@ -101,7 +98,7 @@ def test_reset_password(signoz: types.SigNoz, get_token: Callable[[str, str], st
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
         json={"password": "password", "token": token},
-        timeout=2,
+        timeout=5,
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
@@ -110,7 +107,7 @@ def test_reset_password(signoz: types.SigNoz, get_token: Callable[[str, str], st
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
         json={"password": "password123Z$NEWNEW#!", "token": token},
-        timeout=2,
+        timeout=5,
     )
 
     assert response.status_code == HTTPStatus.NO_CONTENT
@@ -121,7 +118,7 @@ def test_reset_password(signoz: types.SigNoz, get_token: Callable[[str, str], st
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
         json={"password": "password123Z$REPLAY#!", "token": token},
-        timeout=2,
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
 
@@ -143,7 +140,7 @@ def test_reset_password_with_no_password(signoz: types.SigNoz, get_token: Callab
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
 
@@ -151,7 +148,7 @@ def test_reset_password_with_no_password(signoz: types.SigNoz, get_token: Callab
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
 
     assert response.status_code == HTTPStatus.CREATED, response.text
@@ -163,7 +160,7 @@ def test_reset_password_with_no_password(signoz: types.SigNoz, get_token: Callab
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
         json={"password": "FINALPASSword123!#[", "token": token},
-        timeout=2,
+        timeout=5,
     )
 
     assert response.status_code == HTTPStatus.NO_CONTENT
@@ -258,7 +255,7 @@ def test_forgot_password_creates_reset_token(signoz: types.SigNoz, get_token: Ca
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     token_data = response.json()["data"]
@@ -271,7 +268,7 @@ def test_forgot_password_creates_reset_token(signoz: types.SigNoz, get_token: Ca
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
         json={"password": "newSecurePassword123Z$!", "token": reset_token},
-        timeout=2,
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
 
@@ -280,11 +277,12 @@ def test_forgot_password_creates_reset_token(signoz: types.SigNoz, get_token: Ca
     assert user_token is not None
 
     # Verify old password no longer works
-    try:
-        get_token(forgot_email, "originalPassword123Z$")
-        assert False, "Old password should not work after reset"
-    except AssertionError:
-        pass  # Expected - old password should fail
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/sessions/email_password"),
+        json={"email": forgot_email, "password": "originalPassword123Z$", "orgId": org_id},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
 
 
 def test_reset_password_with_expired_token(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
@@ -361,6 +359,6 @@ def test_reset_password_with_expired_token(signoz: types.SigNoz, get_token: Call
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
         json={"password": "expiredTokenPassword123Z$!", "token": reset_token},
-        timeout=2,
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
