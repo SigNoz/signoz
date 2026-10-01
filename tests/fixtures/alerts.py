@@ -520,6 +520,8 @@ def update_raw_channel_config(
         "webhook_configs": "url",
         "pagerduty_configs": "url",
         "opsgenie_configs": "api_url",
+        "googlechat_configs": "webhook_url",
+        "incidentio_configs": "url",
     }
 
     for config_key, url_field in url_field_map.items():
@@ -530,9 +532,7 @@ def update_raw_channel_config(
                     path = urlparse(original_url).path
                     entry[url_field] = notification_channel.container_configs["8080"].get(path)
 
-    # Google Chat validates the webhook host
-    for entry in config.get("googlechat_configs", []):
-        https = notification_channel.container_configs["443"]
-        entry["webhook_url"] = f"{https.scheme}://{https.address}{urlparse(entry['webhook_url']).path}"
+    for entry in config.get("jira_configs", []):
+        entry["site"] = notification_channel.container_configs["8080"].base()
 
     return config

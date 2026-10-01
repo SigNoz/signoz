@@ -28,7 +28,7 @@ from fixtures.notification_channel import (
     jira_transition_post_mapping,
     jira_transitions_mapping,
     jira_update_mapping,
-    wait_for_org_registration,
+    wait_for_alertmanager_sync,
 )
 
 logger = setup_logger(__name__)
@@ -52,7 +52,7 @@ def test_jira_create_issue(
 
     receiver = update_raw_channel_config(jira_config(), str(uuid.uuid4()), notification_channel)
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    wait_for_org_registration(signoz, admin_token, notification_channel)
+    wait_for_alertmanager_sync(signoz, admin_token, notification_channel)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/channels/test"),
@@ -98,7 +98,7 @@ def test_jira_wont_fix_resolution_in_search_jql(
 
     receiver = update_raw_channel_config(jira_config(wont_fix_resolution="Won't Do"), str(uuid.uuid4()), notification_channel)
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    wait_for_org_registration(signoz, admin_token, notification_channel)
+    wait_for_alertmanager_sync(signoz, admin_token, notification_channel)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/channels/test"),
@@ -134,7 +134,7 @@ def test_jira_updates_existing_open_issue(
 
     receiver = update_raw_channel_config(jira_config(), str(uuid.uuid4()), notification_channel)
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    wait_for_org_registration(signoz, admin_token, notification_channel)
+    wait_for_alertmanager_sync(signoz, admin_token, notification_channel)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/channels/test"),
@@ -187,7 +187,7 @@ def test_jira_reopens_done_issue(
 
     receiver = update_raw_channel_config(jira_config(), str(uuid.uuid4()), notification_channel)
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    wait_for_org_registration(signoz, admin_token, notification_channel)
+    wait_for_alertmanager_sync(signoz, admin_token, notification_channel)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/channels/test"),
@@ -262,7 +262,7 @@ def test_jira_permanent_error(  # pylint: disable=too-many-arguments,too-many-po
 
     receiver = update_raw_channel_config(jira_config(), str(uuid.uuid4()), notification_channel)
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    wait_for_org_registration(signoz, admin_token, notification_channel)
+    wait_for_alertmanager_sync(signoz, admin_token, notification_channel)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/channels/test"),
@@ -306,7 +306,7 @@ def test_jira_service_account_uses_gateway(
         notification_channel,
     )
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    wait_for_org_registration(signoz, admin_token, notification_channel)
+    wait_for_alertmanager_sync(signoz, admin_token, notification_channel)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/channels/test"),

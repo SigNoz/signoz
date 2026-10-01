@@ -20,7 +20,7 @@ from fixtures.notification_channel import (
     googlechat_config,
     googlechat_ok_mappings,
     googlechat_retry_mappings,
-    wait_for_org_registration,
+    wait_for_alertmanager_sync,
 )
 
 logger = setup_logger(__name__)
@@ -121,13 +121,13 @@ def test_googlechat_notifier(  # pylint: disable=too-many-arguments,too-many-pos
 ) -> None:
     channel_name = str(uuid.uuid4())
     path = gc_test_case.notification_expectation.notification_validations[0].validation_data["path"]
-
+    
     channel_config = update_raw_channel_config(gc_test_case.channel_config, channel_name, notification_channel)
 
     make_http_mocks(notification_channel, googlechat_ok_mappings(path))
 
     create_notification_channel(channel_config)
-    wait_for_org_registration(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
+    wait_for_alertmanager_sync(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
 
     insert_alert_data(gc_test_case.alert_data, base_time=datetime.now(tz=UTC) - timedelta(minutes=5))
 
@@ -157,7 +157,7 @@ def test_googlechat_retry_429_then_200(  # pylint: disable=too-many-arguments,to
     make_http_mocks(notification_channel, googlechat_retry_mappings(path))
 
     create_notification_channel(channel_config)
-    wait_for_org_registration(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
+    wait_for_alertmanager_sync(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
 
     insert_alert_data([types.AlertData(type="metrics", data_path=METRICS_DATA)], base_time=datetime.now(tz=UTC) - timedelta(minutes=5))
 

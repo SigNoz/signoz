@@ -222,12 +222,7 @@ def create_clickhouse(  # pylint: disable=too-many-arguments,too-many-positional
             remote_servers=render_remote_servers([("127.0.0.1", 9000)]),
         )
 
-        # The mounted configs cannot live in tmpfs: pytest wipes basetemp at
-        # every session start, and clickhouse hot-reloads config.d, so a reused
-        # container would silently lose its cluster definition. Like the CA,
-        # each container gets a fresh directory in the cross-session cache.
-        tmp_dir = pytestconfig.cache.mkdir(f"{cache_key}-config") / uuid4().hex
-        tmp_dir.mkdir()
+        tmp_dir = tmpfs(cache_key)
         cluster_config_file_path = os.path.join(tmp_dir, "cluster.xml")
         with open(cluster_config_file_path, "w", encoding="utf-8") as f:
             f.write(cluster_config)
@@ -411,10 +406,8 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
                     distributed_ddl_path=distributed_ddl_path,
                 )
 
-                # Not tmpfs: see create_clickhouse — basetemp wipes would make
-                # reused nodes lose their hot-reloaded cluster definition.
-                tmp_dir = pytestconfig.cache.mkdir(f"{cache_key}-config") / f"{suffix}-{i:02d}"
-                tmp_dir.mkdir()
+                
+                tmp_dir = tmpfs(f"clickhouse-{suffix}-{i:02d}")
                 cluster_config_file_path = os.path.join(tmp_dir, "cluster.xml")
                 with open(cluster_config_file_path, "w", encoding="utf-8") as f:
                     f.write(node_config)

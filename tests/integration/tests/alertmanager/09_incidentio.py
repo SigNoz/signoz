@@ -21,7 +21,7 @@ from fixtures.notification_channel import (
     incidentio_ok_mappings,
     incidentio_path,
     incidentio_retry_mappings,
-    wait_for_org_registration,
+    wait_for_alertmanager_sync,
 )
 
 logger = setup_logger(__name__)
@@ -103,7 +103,7 @@ def test_incidentio_notifier(  # pylint: disable=too-many-arguments,too-many-pos
     make_http_mocks(notification_channel, incidentio_ok_mappings(path))
 
     create_notification_channel(channel_config)
-    wait_for_org_registration(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
+    wait_for_alertmanager_sync(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
 
     insert_alert_data(incidentio_test_case.alert_data, base_time=datetime.now(tz=UTC) - timedelta(minutes=5))
 
@@ -133,7 +133,7 @@ def test_incidentio_retry_429_then_202(  # pylint: disable=too-many-arguments,to
     make_http_mocks(notification_channel, incidentio_retry_mappings(path))
 
     create_notification_channel(channel_config)
-    wait_for_org_registration(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
+    wait_for_alertmanager_sync(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
 
     insert_alert_data([types.AlertData(type="metrics", data_path=METRICS_DATA)], base_time=datetime.now(tz=UTC) - timedelta(minutes=5))
 

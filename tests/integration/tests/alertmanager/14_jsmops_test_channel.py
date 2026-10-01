@@ -22,7 +22,7 @@ from fixtures.notification_channel import (
     jsmops_config,
     jsmops_create_mapping,
     jsmops_notes_mapping,
-    wait_for_org_registration,
+    wait_for_alertmanager_sync,
 )
 
 logger = setup_logger(__name__)
@@ -44,7 +44,7 @@ def test_jsmops_create_alert_with_note(
 
     receiver = update_raw_channel_config(jsmops_config(), str(uuid.uuid4()), notification_channel)
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    wait_for_org_registration(signoz, admin_token, notification_channel)
+    wait_for_alertmanager_sync(signoz, admin_token, notification_channel)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/channels/test"),
@@ -94,7 +94,7 @@ def test_jsmops_failed_note_does_not_fail_delivery(
 
     receiver = update_raw_channel_config(jsmops_config(), str(uuid.uuid4()), notification_channel)
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    wait_for_org_registration(signoz, admin_token, notification_channel)
+    wait_for_alertmanager_sync(signoz, admin_token, notification_channel)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/channels/test"),
@@ -147,7 +147,7 @@ def test_jsmops_permanent_error(  # pylint: disable=too-many-arguments,too-many-
 
     receiver = update_raw_channel_config(jsmops_config(), str(uuid.uuid4()), notification_channel)
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    wait_for_org_registration(signoz, admin_token, notification_channel)
+    wait_for_alertmanager_sync(signoz, admin_token, notification_channel)
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/channels/test"),

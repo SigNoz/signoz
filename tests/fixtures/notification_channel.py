@@ -25,18 +25,11 @@ from fixtures.tls import CA_ID_LABEL, KEYSTORE_PASSWORD, ca_id, issue_server_key
 
 logger = setup_logger(__name__)
 
-# Google Chat validates the webhook host, so the WireMock container joins the
-# network under this alias and serves HTTPS on 443 with a certificate issued by
-# the integration CA that signoz trusts; channels point at https://<host>/...
-GOOGLE_CHAT_HOST = "chat.googleapis.com"
-# incident.io doesn't pin the host, but the same alias trick keeps channel URLs
-# identical to production ones.
-INCIDENTIO_HOST = "api.incident.io"
-# Jira validates the site host (*.atlassian.net); service accounts additionally
-# go through the api.atlassian.com gateway.
-JIRA_HOST = "signoz-test.atlassian.net"
+# The JSM Ops and Jira service-account gateways are hardcoded in signoz, so the
+# WireMock container joins the network under this alias and serves HTTPS on 443
+# with a certificate issued by the integration CA that signoz trusts.
 ATLASSIAN_API_HOST = "api.atlassian.com"
-TLS_HOSTS = [GOOGLE_CHAT_HOST, INCIDENTIO_HOST, JIRA_HOST, ATLASSIAN_API_HOST]
+TLS_HOSTS = [ATLASSIAN_API_HOST]
 
 # A reused container serving a cert without a newly added host (or missing its
 # network alias) fails TLS opaquely; this label records the hosts it was built
@@ -252,12 +245,12 @@ def incidentio_path(source_id: str) -> str:
 
 def incidentio_config(source_id: str) -> dict:
     """incident.io channel config for a per-test alert source id. Title/description
-    are omitted so the backend applies its default templates. The URL host is the
-    wiremock network alias, so no runtime injection is needed."""
+    are omitted so the backend applies its default templates. The host is injected
+    at runtime by update_raw_channel_config."""
     return {
         "incidentio_configs": [
             {
-                "url": f"https://{INCIDENTIO_HOST}{incidentio_path(source_id)}",
+                "url": incidentio_path(source_id),  # host set on runtime
                 "token": INCIDENTIO_TEST_TOKEN,
             }
         ],
@@ -320,13 +313,14 @@ JIRA_API_BASE = "/rest/api/3"
 
 
 def jira_config(**overrides) -> dict:
-    """Jira channel config against the wiremock atlassian.net alias, personal
-    API token auth. Summary/description are omitted so the backend applies its
-    default templates; overrides lay extra receiver fields on top."""
+    """Jira channel config with personal API token auth. Summary/description are
+    omitted so the backend applies its default templates; overrides lay extra
+    receiver fields on top. The site is injected at runtime by
+    update_raw_channel_config."""
     return {
         "jira_configs": [
             {
-                "site": f"https://{JIRA_HOST}",
+                "site": "",  # set on runtime
                 "project": "OPS",
                 "issue_type": "Task",
                 "http_config": {"basic_auth": {"username": JIRA_TEST_EMAIL, "password": JIRA_TEST_TOKEN}},
@@ -543,8 +537,8 @@ def notification_channel(  # pylint: disable=too-many-arguments,too-many-positio
 
     def create() -> types.TestContainerDocker:
         # http:8080 for admin API + plain webhook delivery; https:443 aliased as
-        # chat.googleapis.com with a CA-issued cert so Google Chat's validated
-        # webhook host routes here over real TLS (signoz trusts the integration CA).
+        # api.atlassian.com with a CA-issued cert so the hardcoded Atlassian
+        # gateways route here over real TLS (signoz trusts the integration CA).
         keystore_path = issue_server_keystore(tls, tmpfs("notification-channel-certs"), *TLS_HOSTS)
 
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
@@ -557,7 +551,7 @@ def notification_channel(  # pylint: disable=too-many-arguments,too-many-positio
             container.start(f"--port 8080 --https-port 443 --https-keystore /certs/keystore.p12 --keystore-type PKCS12 --keystore-password {KEYSTORE_PASSWORD}")
         except Exception:
             # Ryuk is disabled: a started-but-unready container would survive and
-            # keep squatting on the chat.googleapis.com alias, poisoning DNS for
+            # keep squatting on the api.atlassian.com alias, poisoning DNS for
             # any replacement on the shared network.
             container.stop()
             raise
@@ -573,8 +567,6 @@ def notification_channel(  # pylint: disable=too-many-arguments,too-many-positio
             },
             container_configs={
                 "8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080),
-                # Google Chat delivery: https to the validated host via the network alias.
-                "443": types.TestContainerUrlConfig("https", GOOGLE_CHAT_HOST, 443),
             },
         )
 
@@ -712,7 +704,7 @@ def create_webhook_notification_channel(
     return _create_webhook_notification_channel
 
 
-def wait_for_org_registration(signoz: types.SigNoz, token: str, notification_channel: types.TestContainerDocker, wait_seconds: int = 60) -> None:
+def wait_for_alertmanager_sync(signoz: types.SigNoz, token: str, notification_channel: types.TestContainerDocker, wait_seconds: int = 60) -> None:
     """Polls until the org's alertmanager server is registered (one poll tick).
 
     channels/test 404s until then, before reaching any notifier. The sentinel

@@ -22,7 +22,7 @@ from fixtures.notification_channel import (
     jira_issue_subset,
     jira_retry_search_mappings,
     jira_search_mapping,
-    wait_for_org_registration,
+    wait_for_alertmanager_sync,
 )
 
 logger = setup_logger(__name__)
@@ -107,7 +107,7 @@ def test_jira_notifier(  # pylint: disable=too-many-arguments,too-many-positiona
     make_http_mocks(notification_channel, [jira_search_mapping([]), jira_create_mapping()])
 
     create_notification_channel(channel_config)
-    wait_for_org_registration(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
+    wait_for_alertmanager_sync(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
 
     insert_alert_data(jira_test_case.alert_data, base_time=datetime.now(tz=UTC) - timedelta(minutes=5))
 
@@ -136,7 +136,7 @@ def test_jira_retry_429_then_200(  # pylint: disable=too-many-arguments,too-many
     make_http_mocks(notification_channel, [*jira_retry_search_mappings(), jira_create_mapping()])
 
     create_notification_channel(channel_config)
-    wait_for_org_registration(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
+    wait_for_alertmanager_sync(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
 
     insert_alert_data([types.AlertData(type="metrics", data_path=METRICS_DATA)], base_time=datetime.now(tz=UTC) - timedelta(minutes=5))
 
