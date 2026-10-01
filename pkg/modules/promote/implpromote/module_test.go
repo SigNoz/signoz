@@ -96,7 +96,6 @@ func TestPromotePaths(t *testing.T) {
 			}
 
 			if testCase.promoteTwice {
-				// promoting again must not fail
 				require.NoError(t, m.PromotePaths(ctx, testCase.paths...))
 				assert.Len(t, store.PromotedPathsMap, len(testCase.wantPromoted))
 			}
@@ -180,7 +179,6 @@ func TestListPromotedPaths(t *testing.T) {
 		promoted  map[string]bool
 		indexes   []telemetrytypes.TelemetryFieldKeySkipIndex
 		wantPaths []promotetypes.PromotePath
-		wantErr   bool
 	}{
 		{
 			name:     "PromotedPaths_EveryDomainAnnotated",
@@ -201,20 +199,6 @@ func TestListPromotedPaths(t *testing.T) {
 			filters:   promotetypes.ListPromotedPathsFilters{Context: "body"},
 			promoted:  map[string]bool{"http.method": true},
 			wantPaths: []promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "body.http.method", Promote: true}},
-		},
-		{
-			name:      "InvalidSignal_Rejected",
-			filters:   promotetypes.ListPromotedPathsFilters{Signal: "events"},
-			promoted:  map[string]bool{"http.method": true},
-			wantPaths: []promotetypes.PromotePath{},
-			wantErr:   true,
-		},
-		{
-			name:      "InvalidContext_Rejected",
-			filters:   promotetypes.ListPromotedPathsFilters{Context: "json"},
-			promoted:  map[string]bool{"http.method": true},
-			wantPaths: []promotetypes.PromotePath{},
-			wantErr:   true,
 		},
 		{
 			name:     "IndexedPaths_MergedForSupportingDomains",
@@ -324,10 +308,6 @@ func TestListPromotedPaths(t *testing.T) {
 			m := NewModule(store, nil)
 
 			paths, err := m.ListPromotedPaths(ctx, testCase.filters)
-			if testCase.wantErr {
-				assert.Error(t, err)
-				return
-			}
 			require.NoError(t, err)
 			require.Len(t, paths, len(testCase.wantPaths))
 

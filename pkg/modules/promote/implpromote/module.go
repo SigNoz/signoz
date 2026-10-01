@@ -28,14 +28,7 @@ func NewModule(metadataStore telemetrytypes.MetadataStore, telemetrystore teleme
 	return &module{metadataStore: metadataStore, telemetryStore: telemetrystore}
 }
 
-// ListPromotedPaths lists the promoted paths of every promotion domain
-// passing the filters, each annotated with its signal and context, merged
-// with per-path index metadata where the domain supports indexes.
 func (m *module) ListPromotedPaths(ctx context.Context, filters promotetypes.ListPromotedPathsFilters) ([]promotetypes.PromotePath, error) {
-	if err := filters.Validate(); err != nil {
-		return nil, err
-	}
-
 	response := make([]promotetypes.PromotePath, 0)
 	for _, target := range promotetypes.Targets() {
 		if !filters.MatchesTarget(target) {
@@ -54,8 +47,6 @@ func (m *module) ListPromotedPaths(ctx context.Context, filters promotetypes.Lis
 	return response, nil
 }
 
-// listPromotedPaths lists the promoted paths of the target JSON column,
-// merged with per-path index metadata where the target supports indexes.
 func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Target) ([]promotetypes.PromotePath, error) {
 	promotedPaths, err := m.metadataStore.GetPromotedPaths(ctx, target.Entry)
 	if err != nil {
@@ -72,7 +63,6 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 		})
 	}
 
-	// Index metadata is optional per target; merge it in only where supported.
 	if !target.IndexesSupported {
 		return response, nil
 	}
@@ -82,8 +72,8 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 		return nil, err
 	}
 
-	// index.Name is the bare path and index.BaseColumn carries the column
-	// prefix, so the aggregate key is the full sub-column path.
+	// aggr keys are full sub-column paths: index.BaseColumn carries the
+	// column prefix and index.Name the bare path.
 	aggr := map[string][]promotetypes.WrappedIndex{}
 	for _, index := range indexes {
 		fullPath := index.BaseColumn + index.Name
@@ -102,7 +92,6 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 		}
 	}
 
-	// add the paths that are not promoted but have indexes
 	for fullPath, indexes := range aggr {
 		path := strings.TrimPrefix(fullPath, target.BaseColumnPrefix())
 		path = strings.TrimPrefix(path, target.PromotedColumnPrefix())
@@ -117,10 +106,6 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 	return response, nil
 }
 
-// PromotePaths validates the paths, groups them by their promotion domain,
-// and records the new promotions of each domain in the column evolution
-// table; for domains with index support it also creates the requested
-// per-path skip indexes.
 func (m *module) PromotePaths(ctx context.Context, paths ...*promotetypes.PromotePath) error {
 	if len(paths) == 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty")
@@ -150,9 +135,6 @@ func (m *module) PromotePaths(ctx context.Context, paths ...*promotetypes.Promot
 	return nil
 }
 
-// promotePaths records new promotions of the target JSON column in the column
-// evolution table and, for targets with index support, creates the requested
-// per-path skip indexes.
 func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, paths ...*promotetypes.PromotePath) error {
 	pathsStr := []string{}
 	for _, path := range paths {
@@ -217,7 +199,6 @@ func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, p
 	return nil
 }
 
-// createIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
 func (m *module) createIndexes(ctx context.Context, target promotetypes.Target, indexes []schemamigrator.Index) error {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  target.Entry.Signal.StringValue(),
