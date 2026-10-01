@@ -18,6 +18,7 @@ import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashb
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -39,6 +40,7 @@ function Explorer(): JSX.Element {
 		currentQuery,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const isSavedViewEnabled = useSavedViewEnabled();
 	const getExportToDashboardLink = useGetExportToDashboardLink();
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
@@ -177,15 +179,17 @@ function Explorer(): JSX.Element {
 							/>
 						</div>
 					</div>
-					<ExplorerOptionWrapper
-						disabled={!stagedQuery}
-						query={exportDefaultQuery}
-						sourcepage={DataSource.METRICS}
-						signalSource="meter"
-						onExport={handleExport}
-						isOneChartPerQuery={false}
-						splitedQueries={splitedQueries}
-					/>
+					{!isSavedViewEnabled && (
+						<ExplorerOptionWrapper
+							disabled={!stagedQuery}
+							query={exportDefaultQuery}
+							sourcepage={DataSource.METRICS}
+							signalSource="meter"
+							onExport={handleExport}
+							isOneChartPerQuery={false}
+							splitedQueries={splitedQueries}
+						/>
+					)}
 				</div>
 			</QuickFiltersLayout>
 		</Sentry.ErrorBoundary>
