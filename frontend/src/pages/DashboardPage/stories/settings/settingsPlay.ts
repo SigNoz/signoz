@@ -7,7 +7,7 @@ export type SettingsTab = 'Overview' | 'Variables' | 'Publish';
 
 export type VariableType = 'dynamic' | 'textbox' | 'custom' | 'query';
 
-type RowAction = 'Edit variable' | 'Delete variable' | 'Apply to all';
+type RowAction = 'edit' | 'delete' | 'apply-all';
 
 /** Opens the settings drawer from the toolbar and returns the tab's panel. */
 export const openSettings = async (
@@ -15,11 +15,7 @@ export const openSettings = async (
 	tab: SettingsTab = 'Overview',
 ): Promise<HTMLElement> => {
 	await userEvent.click(
-		await within(canvasElement).findByRole(
-			'button',
-			{ name: 'Configure' },
-			PAGE_LOAD,
-		),
+		await within(canvasElement).findByTestId('show-drawer', {}, PAGE_LOAD),
 	);
 
 	if (tab !== 'Overview') {
@@ -40,7 +36,14 @@ export const clickRowAction = async (
 	const row = await variableRow(name);
 
 	await userEvent.click(
-		await within(row).findByRole('button', { name: action }, PAGE_LOAD),
+		action === 'apply-all'
+			? // The tooltip trigger's Slot merge drops this button's test id.
+				await within(row).findByRole('button', { name: 'Apply to all' }, PAGE_LOAD)
+			: await within(row).findByTestId(
+					`variable-${action}-${name}`,
+					{},
+					PAGE_LOAD,
+				),
 	);
 };
 
@@ -49,11 +52,7 @@ export const openNewVariable = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
 	const panel = await openSettings(canvasElement, 'Variables');
-	const add = await within(panel).findByRole(
-		'button',
-		{ name: 'Add variable' },
-		PAGE_LOAD,
-	);
+	const add = await within(panel).findByTestId('add-variable', {}, PAGE_LOAD);
 
 	// Disabled until its permission check resolves: through `disabled` or
 	// `aria-disabled`, depending on the Button.
@@ -71,7 +70,7 @@ export const openVariableEditor = async (
 	name: string,
 ): Promise<void> => {
 	await openSettings(canvasElement, 'Variables');
-	await clickRowAction(name, 'Edit variable');
+	await clickRowAction(name, 'edit');
 	await screen.findByText('Variable Type');
 };
 
