@@ -1,6 +1,6 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CircleAlert, CircleX, X } from '@signozhq/icons';
+import { CircleAlert, CircleX } from '@signozhq/icons';
 import { Button, Input, message, Modal } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
@@ -8,6 +8,7 @@ import { Labels } from 'types/api/alerts/def';
 import { v4 as uuid } from 'uuid';
 
 import { Badge } from '@signozhq/ui/badge';
+import { Pill } from '@signozhq/ui/pill';
 import { QueryChipContainer, QueryChipItem, SearchContainer } from './styles';
 import { ILabelRecord } from './types';
 import { createQuery, flattenLabels, prepareLabels } from './utils';
@@ -152,27 +153,18 @@ function LabelSelect({
 							query.key !== 'severity' && query.key !== 'description';
 						return (
 							<QueryChipContainer key={query.key}>
-								<Badge
-									textTransform="none"
-									variant="solid"
-									color="secondary"
-									suffix={
-										isClosable ? (
-											<button
-												type="button"
-												aria-label={`Remove ${query.key}`}
-												onClick={(e): void => {
-													e.preventDefault();
-													handleClose(query.key);
-												}}
-											>
-												<X size={12} />
-											</button>
-										) : undefined
-									}
-								>
-									{query.key}: {query.value}
-								</Badge>
+								{isClosable ? (
+									<Pill.Closeable
+										closeAriaLabel={`Remove ${query.key}`}
+										onClose={(): void => handleClose(query.key)}
+									>
+										{query.key}: {query.value}
+									</Pill.Closeable>
+								) : (
+									<Badge textTransform="none" variant="solid" color="secondary">
+										{query.key}: {query.value}
+									</Badge>
+								)}
 							</QueryChipContainer>
 						);
 					})}
