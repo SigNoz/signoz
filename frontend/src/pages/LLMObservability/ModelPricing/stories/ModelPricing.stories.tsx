@@ -54,3 +54,24 @@ export const ModelCostActionsMenu: Story = {
 		await screen.findByRole('menu');
 	},
 };
+
+/** The first pricing rule's drawer, opened from its row menu. */
+export const ModelCostDrawer: Story = {
+	play: async (context): Promise<void> => {
+		await ModelCostActionsMenu.play?.(context);
+		await userEvent.click(await screen.findByText('Edit'));
+		await screen.findByText('Edit model cost');
+	},
+};
+
+/** The drawer with its cache mode select open. */
+export const ModelCostDrawerCacheModeOpen: Story = {
+	play: async (context): Promise<void> => {
+		await ModelCostDrawer.play?.(context);
+
+		await userEvent.click(
+			await screen.findByRole('combobox', { name: 'Cache mode' }),
+		);
+		await screen.findByRole('listbox');
+	},
+};

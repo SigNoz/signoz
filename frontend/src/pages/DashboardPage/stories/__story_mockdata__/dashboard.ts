@@ -336,6 +336,28 @@ const VARIABLES: Record<VariableKind, DashboardtypesVariableDTO> = {
 	},
 };
 
+/**
+ * `service` already filters on `$environment`, so an `environment` that reads
+ * `$service` back closes the loop. An imported dashboard can arrive like this;
+ * the editor only refuses it on save.
+ */
+const CYCLIC_ENVIRONMENT: DashboardtypesVariableDTO = {
+	kind: ListVariableKind.ListVariable,
+	spec: {
+		name: 'environment',
+		display: { name: 'environment' },
+		allowMultiple: false,
+		allowAllValue: false,
+		plugin: {
+			kind: QueryVariableKind['signoz/QueryVariable'],
+			spec: {
+				queryValue:
+					'SELECT DISTINCT env FROM signoz_metrics WHERE service_name IN $service',
+			},
+		},
+	},
+};
+
 export interface PanelQueryShape {
 	requestType: string;
 	metricName?: string;
@@ -450,4 +472,19 @@ export const patchDashboardDocument = (
 	document = applyJsonPatch(document ?? dashboardResponse(args).data, ops);
 
 	return envelope(document);
+};
+
+export const cyclicVariablesDashboardResponse = (): GetDashboardV2200 => {
+	const response = dashboardResponse({
+		panels: PANEL_IDS.length,
+		sectioned: true,
+		variables: VARIABLE_KINDS,
+		locked: false,
+	});
+
+	response.data.spec.variables = response.data.spec.variables.map((variable) =>
+		variable === VARIABLES.custom ? CYCLIC_ENVIRONMENT : variable,
+	);
+
+	return response;
 };

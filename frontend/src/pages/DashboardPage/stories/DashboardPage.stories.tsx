@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -30,8 +30,8 @@ const pageStory = storyMocks(dashboardMocks, { layout: 'app' });
  * Route: `/dashboard/:dashboardId`.
  */
 const meta = {
-	title: 'Pages/Dashboards/Detail',
-	tags: ['role-gated', 'play'],
+	title: 'Pages/Dashboards/Detail/Overview',
+	tags: ['authz', 'play'],
 	// The page is wrapped in `withAuthZPage`, which types its props as an index
 	// signature; the story's args are what the controls resolve to.
 	component: DashboardPage as ComponentType<DashboardArgs>,
@@ -160,53 +160,6 @@ export const TooltipsInJsonDrawer: Story = {
 };
 
 /**
- * The Overview tab of dashboard settings, where Cross-Panel Sync explains what
- * syncing the crosshair does and links out to the docs.
- */
-export const TooltipsInSettings: Story = {
-	args: { tooltipsOpen: true },
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(
-			await canvas.findByTestId('show-drawer', {}, { timeout: 10000 }),
-		);
-		await screen.findByText('Sync Mode');
-	},
-};
-
-/**
- * The Variables tab of dashboard settings, where a dynamic variable's Apply to
- * all says whether it is already a filter on every panel. The row keeps its
- * actions invisible until it is hovered, which the story does first.
- */
-export const TooltipsInVariableSettings: Story = {
-	args: { tooltipsOpen: true },
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(
-			await canvas.findByTestId('show-drawer', {}, { timeout: 10000 }),
-		);
-		await userEvent.click(await screen.findByRole('tab', { name: 'Variables' }));
-
-		// The tooltip trigger's Slot merge drops the button's own test id.
-		await userEvent.hover(
-			await screen.findByRole(
-				'button',
-				{ name: 'Apply to all' },
-				{ timeout: 10000 },
-			),
-		);
-		await screen.findByText(
-			'Add this variable as a filter to every panel',
-			undefined,
-			{ timeout: 10000 },
-		);
-	},
-};
-
-/**
  * A panel expanded into view mode, whose header carries the full panel name its
  * title truncates, over the dashboard's own tooltips behind the dialog.
  *
@@ -282,6 +235,18 @@ export const SectionActionsMenu: Story = {
 		);
 		await userEvent.click(firstSection);
 		await screen.findByRole('menu');
+	},
+};
+
+/** The panel menu's move-to-section submenu, open on the sections it can go to. */
+export const PanelMoveToSectionSubmenu: Story = {
+	play: async (context) => {
+		await PanelActionsMenu.play?.(context);
+		await userEvent.hover(await screen.findByText('Move to section'));
+		// The submenu lists the sections the panel is not already in.
+		await waitFor(() => expect(screen.getAllByRole('menu')).toHaveLength(2), {
+			timeout: 10000,
+		});
 	},
 };
 
