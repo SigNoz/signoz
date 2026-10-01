@@ -95,6 +95,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		() =>
 			dataSource === DataSource.METRICS &&
 			(panelType === PANEL_TYPES.TABLE ||
+				panelType === PANEL_TYPES.SCATTER ||
 				panelType === PANEL_TYPES.PIE ||
 				panelType === PANEL_TYPES.VALUE),
 		[dataSource, panelType],
