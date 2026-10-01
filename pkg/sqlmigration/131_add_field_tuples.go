@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/oklog/ulid/v2"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -53,22 +52,22 @@ func (migration *addFieldTuples) Up(ctx context.Context, db *bun.DB) error {
 	isPG := migration.sqlstore.BunDB().Dialect().Name() == dialect.PG
 
 	tuples := []migrationTuple{
-		{authtypes.SigNozAdminRoleName, "metaresource", "logs-field", "read"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "logs-field", "update"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "logs-field", "list"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "logs-field", "read"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "logs-field", "update"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "logs-field", "list"},
-		{authtypes.SigNozViewerRoleName, "metaresource", "logs-field", "read"},
-		{authtypes.SigNozViewerRoleName, "metaresource", "logs-field", "list"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "traces-field", "read"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "traces-field", "update"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "traces-field", "list"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "traces-field", "read"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "traces-field", "update"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "traces-field", "list"},
-		{authtypes.SigNozViewerRoleName, "metaresource", "traces-field", "read"},
-		{authtypes.SigNozViewerRoleName, "metaresource", "traces-field", "list"},
+		{"signoz-admin", "metaresource", "logs-field", "read"},
+		{"signoz-admin", "metaresource", "logs-field", "update"},
+		{"signoz-admin", "metaresource", "logs-field", "list"},
+		{"signoz-editor", "metaresource", "logs-field", "read"},
+		{"signoz-editor", "metaresource", "logs-field", "update"},
+		{"signoz-editor", "metaresource", "logs-field", "list"},
+		{"signoz-viewer", "metaresource", "logs-field", "read"},
+		{"signoz-viewer", "metaresource", "logs-field", "list"},
+		{"signoz-admin", "metaresource", "traces-field", "read"},
+		{"signoz-admin", "metaresource", "traces-field", "update"},
+		{"signoz-admin", "metaresource", "traces-field", "list"},
+		{"signoz-editor", "metaresource", "traces-field", "read"},
+		{"signoz-editor", "metaresource", "traces-field", "update"},
+		{"signoz-editor", "metaresource", "traces-field", "list"},
+		{"signoz-viewer", "metaresource", "traces-field", "read"},
+		{"signoz-viewer", "metaresource", "traces-field", "list"},
 	}
 
 	for _, orgID := range orgIDs {
