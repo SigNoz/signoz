@@ -15,6 +15,8 @@ export interface SectionEditorContext {
 	tableColumns?: TableColumnOption[];
 	/** Group-by labels of the joined scalar result; the colour-by options. */
 	groupColumns?: string[];
+	/** Label of the value column a Scatter Plot sizes its dots by; unset when none is. */
+	sizeColumnLabel?: string;
 	signal?: TelemetrytypesSignalDTO;
 	panelKind?: PanelKind;
 	onChangePanelKind?: (kind: PanelKind) => void;
