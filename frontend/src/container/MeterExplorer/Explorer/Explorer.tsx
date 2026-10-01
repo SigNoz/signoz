@@ -124,6 +124,7 @@ function Explorer(): JSX.Element {
 			<QuickFiltersLayout
 				className="meter-explorer-container"
 				showFilters={showQuickFilters}
+				onToggleFilters={(): void => setShowQuickFilters(!showQuickFilters)}
 				savedViewProps={{ source: SavedviewtypesSourceDTO.meter }}
 				quickFilterProps={{
 					className: 'qf-meter-explorer',
@@ -131,9 +132,6 @@ function Explorer(): JSX.Element {
 					signal: SignalType.METER_EXPLORER,
 					showFilterCollapse: true,
 					showQueryName: false,
-					handleFilterVisibilityChange: (): void => {
-						setShowQuickFilters(!showQuickFilters);
-					},
 					useFieldApis: quickFilterFieldApis,
 				}}
 			>

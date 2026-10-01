@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import cx from 'classnames';
-import { Menu, Plus, Undo2, X } from '@signozhq/icons';
+import { ArrowUpToLine, Menu, Plus, Undo2, X } from '@signozhq/icons';
 import { Skeleton } from '@signozhq/ui/skeleton';
 import { toast } from '@signozhq/ui/sonner';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
@@ -24,10 +24,12 @@ import styles from './SavedViewsHeader.module.scss';
 function SavedViewsHeader({
 	source,
 	onOpenViews,
+	onCollapse,
 }: {
 	source: SavedviewtypesSourceDTO;
 	// Absent while the list is on screen.
 	onOpenViews?: () => void;
+	onCollapse?: () => void;
 }): JSX.Element {
 	const { view, isLoading, isError, hasUnsavedChanges } =
 		useActiveSavedView(source);
@@ -126,6 +128,14 @@ function SavedViewsHeader({
 						icon={<Menu size={14} />}
 						onClick={onOpenViews}
 						testId="saved-views-open"
+					/>
+				)}
+				{onCollapse && (
+					<SavedViewsIconButton
+						title="Collapse Filters"
+						icon={<ArrowUpToLine size={14} className={styles.collapseIcon} />}
+						onClick={onCollapse}
+						testId="saved-views-collapse"
 					/>
 				)}
 			</div>
