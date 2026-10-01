@@ -24,13 +24,10 @@ type PromotePath struct {
 	Indexes []WrappedIndex `json:"indexes,omitempty"`
 }
 
-// Target resolves the promotion domain the signal and context name.
 func (i *PromotePath) Target() (Target, error) {
 	return NewTargetFromText(i.Signal, i.Context)
 }
 
-// ListPromotedPathsFilters carries the query parameter filters of the
-// promoted paths listing. Empty values list everything.
 type ListPromotedPathsFilters struct {
 	Signal   string `query:"signal" json:"signal"`
 	Context  string `query:"context" json:"context"`
@@ -38,8 +35,8 @@ type ListPromotedPathsFilters struct {
 	Indexes  *bool  `query:"indexes" json:"indexes"`
 }
 
-// Validate ensures the signal and context words are known values; the pair
-// need not name a supported domain.
+// Validate checks the signal and context words are known; the pair need not
+// name a supported domain.
 func (f *ListPromotedPathsFilters) Validate() error {
 	if f.Signal != "" {
 		if _, ok := telemetrytypes.SignalFromText(f.Signal); !ok {
@@ -54,8 +51,6 @@ func (f *ListPromotedPathsFilters) Validate() error {
 	return nil
 }
 
-// MatchesTarget reports whether the domain passes the signal and context
-// filters.
 func (f *ListPromotedPathsFilters) MatchesTarget(target Target) bool {
 	if f.Signal != "" && f.Signal != target.Entry.Signal.StringValue() {
 		return false
@@ -66,8 +61,6 @@ func (f *ListPromotedPathsFilters) MatchesTarget(target Target) bool {
 	return true
 }
 
-// MatchesPath reports whether an aggregated promoted path passes the
-// promoted and indexes filters.
 func (f *ListPromotedPathsFilters) MatchesPath(path PromotePath) bool {
 	if f.Promoted != nil && *f.Promoted != path.Promote {
 		return false
@@ -99,7 +92,6 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 		if !strings.HasPrefix(i.Path, target.RequiredPathPrefix) {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must start with `%s`", target.RequiredPathPrefix)
 		}
-		// remove the required prefix from the path
 		i.Path = strings.TrimPrefix(i.Path, target.RequiredPathPrefix)
 	}
 

@@ -7,16 +7,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// Target identifies a promotion domain: the column evolution record written
-// per promoted path, the table per-path indexes are created on, and the API
-// path rules.
+// Target identifies a promotion domain.
 type Target struct {
 	Entry              telemetrytypes.EvolutionEntry // evolution row template; FieldName and ReleaseTime are set per write
 	DBName             string                        // index DDL database, used only when IndexesSupported
 	LocalTableName     string                        // index DDL local table, used only when IndexesSupported
 	BaseColumn         string                        // column holding every path; indexes for unpromoted paths are created on it
 	RequiredPathPrefix string                        // prefix API paths must carry, stripped before storing; empty for bare names
-	IndexesSupported   bool                          // whether per-path skip indexes can be created for this domain
+	IndexesSupported   bool
 }
 
 func (t Target) PromotedColumn() string { return t.Entry.ColumnName }
@@ -25,7 +23,6 @@ func (t Target) BaseColumnPrefix() string { return t.BaseColumn + "." }
 
 func (t Target) PromotedColumnPrefix() string { return t.PromotedColumn() + "." }
 
-// NewTarget creates the Target for a promotion domain.
 func NewTarget(entry telemetrytypes.EvolutionEntry, dbName, localTableName, baseColumn, requiredPathPrefix string, indexesSupported bool) Target {
 	return Target{
 		Entry:              entry,
@@ -37,8 +34,7 @@ func NewTarget(entry telemetrytypes.EvolutionEntry, dbName, localTableName, base
 	}
 }
 
-// NewLogsBodyTarget returns the domain for the logs body JSON column
-// (body_v2 -> body_promoted), with per-path skip index support.
+// NewLogsBodyTarget returns the logs body domain (body_v2 -> body_promoted).
 func NewLogsBodyTarget() Target {
 	return NewTarget(
 		telemetrytypes.EvolutionEntry{
@@ -55,8 +51,8 @@ func NewLogsBodyTarget() Target {
 	)
 }
 
-// NewTracesAttributesTarget returns the domain for the spans attributes JSON
-// column (attributes -> attributes_promoted); promotion only for now.
+// NewTracesAttributesTarget returns the spans attributes domain (attributes
+// -> attributes_promoted).
 func NewTracesAttributesTarget() Target {
 	return NewTarget(
 		telemetrytypes.EvolutionEntry{
@@ -73,8 +69,6 @@ func NewTracesAttributesTarget() Target {
 	)
 }
 
-// NewTargetFromText validates the signal and context words of a promotion
-// request and returns their promotion domain.
 func NewTargetFromText(signal, context string) (Target, error) {
 	parsedSignal, ok := telemetrytypes.SignalFromText(signal)
 	if !ok {
@@ -91,7 +85,6 @@ func NewTargetFromText(signal, context string) (Target, error) {
 	return target, nil
 }
 
-// Targets returns every supported promotion domain.
 func Targets() []Target {
 	return []Target{
 		NewLogsBodyTarget(),
@@ -99,8 +92,6 @@ func Targets() []Target {
 	}
 }
 
-// TargetFor resolves the domain for a (signal, context) pair; ok is false
-// when no domain exists for the pair.
 func TargetFor(signal telemetrytypes.Signal, context telemetrytypes.FieldContext) (Target, bool) {
 	for _, target := range Targets() {
 		if target.Entry.Signal.StringValue() == signal.StringValue() &&
