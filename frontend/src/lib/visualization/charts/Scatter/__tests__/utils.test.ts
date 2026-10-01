@@ -1,7 +1,9 @@
+import type uPlot from 'uplot';
 import { DistributionType } from 'lib/uPlotV2/config/types';
 
 import {
 	buildScatterConfig,
+	getCursorHit,
 	prepareScatterChartData,
 	resolveAxisDistribution,
 	ScatterAxisScale,
@@ -28,6 +30,30 @@ describe('prepareScatterChartData', () => {
 			],
 			[[30], [0]],
 		]);
+	});
+});
+
+describe('getCursorHit', () => {
+	const plotWith = (idxs: Array<number | null>): uPlot =>
+		({ cursor: { idxs } }) as unknown as uPlot;
+
+	it('reads the series the scatter plugin answered for', () => {
+		expect(getCursorHit(plotWith([null, null, 4, null]))).toStrictEqual({
+			seriesIndex: 2,
+			dataIndex: 4,
+		});
+	});
+
+	it('takes a data index of 0 as a hit', () => {
+		expect(getCursorHit(plotWith([0, 0]))).toStrictEqual({
+			seriesIndex: 1,
+			dataIndex: 0,
+		});
+	});
+
+	it('is null off every dot', () => {
+		expect(getCursorHit(plotWith([null, null]))).toBeNull();
+		expect(getCursorHit({ cursor: {} } as unknown as uPlot)).toBeNull();
 	});
 });
 
