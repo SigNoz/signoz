@@ -307,6 +307,13 @@ const SECTION_SEEDS: SectionSeeds = {
 						decimalPrecision: old.decimalPrecision,
 					}),
 			};
+			// Kinds that both key units per column (Table ↔ Scatter Plot) share the keys.
+			if (controls.columnUnits && old?.columnUnits) {
+				if (Object.keys(old.columnUnits).length > 0) {
+					carried.columnUnits = { ...old.columnUnits };
+				}
+				return carried;
+			}
 			// A panel-wide unit fans out to every value column when the target keys units
 			// per column (→ Table). One-way: `columnUnits` never seed a panel-wide `unit`.
 			const unit = old?.unit;
