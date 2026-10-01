@@ -21,7 +21,12 @@ export function useLegendSeries(
 	return useMemo(() => {
 		const resolve = getSectionControls(kind, SectionKind.Legend)?.colors;
 		return resolve
-			? resolve({ queries: panel.spec.queries, data, isDarkMode })
+			? resolve({
+					spec: panel.spec,
+					queries: panel.spec.queries,
+					data,
+					isDarkMode,
+				})
 			: [];
-	}, [kind, panel.spec.queries, data, isDarkMode]);
+	}, [kind, panel.spec, data, isDarkMode]);
 }

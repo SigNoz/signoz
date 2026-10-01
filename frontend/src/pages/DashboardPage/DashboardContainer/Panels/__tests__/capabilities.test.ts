@@ -34,6 +34,7 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
+	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	// Static kind: no query surface at all.
 	'signoz/TextPanel': [],
 };
@@ -51,6 +52,7 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	// List renders raw rows; metrics produce no row data.
 	'signoz/ListPanel': [logs, traces],
 	'signoz/TextPanel': [],
+	'signoz/ScatterPlotPanel': [metrics, logs, traces],
 };
 
 // Exhaustive over PanelKind, so a new kind can't ship without stating how its request is
@@ -112,8 +114,15 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
-	// Only Table asks the server to transpose its scalar result into UI rows.
+	// Only Table and Scatter Plot ask the server to join their scalar results into UI rows.
 	'signoz/TablePanel': {
+		requestType: scalar,
+		formatTableResultForUI: true,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
+	'signoz/ScatterPlotPanel': {
 		requestType: scalar,
 		formatTableResultForUI: true,
 		bucketedStepInterval: false,

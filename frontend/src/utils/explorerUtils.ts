@@ -18,6 +18,7 @@ export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {
 	[PANEL_TYPES.HEATMAP]: ExplorerViews.TIMESERIES,
 	// Dashboard-only visualisation; explorers never offer it.
 	[PANEL_TYPES.TEXT]: ExplorerViews.LIST,
+	[PANEL_TYPES.SCATTER]: ExplorerViews.TABLE,
 	[PANEL_TYPES.EMPTY_WIDGET]: ExplorerViews.LIST,
 };
 

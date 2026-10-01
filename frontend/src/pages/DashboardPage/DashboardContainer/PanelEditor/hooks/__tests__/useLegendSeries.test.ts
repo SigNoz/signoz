@@ -3,6 +3,7 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { preparePieData } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/PieChartPanel/prepareData';
+import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { flattenTimeSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
@@ -47,6 +48,7 @@ const mockFlatten = flattenTimeSeries as unknown as jest.Mock;
 const mockResolveLabel = resolveSeriesLabelV5 as unknown as jest.Mock;
 const mockGenerateColor = generateColor as unknown as jest.Mock;
 const mockPreparePie = preparePieData as unknown as jest.Mock;
+const mockPrepareScalarTables = prepareScalarTables as unknown as jest.Mock;
 
 const PANEL = {
 	kind: 'Panel',
@@ -60,6 +62,14 @@ const HISTOGRAM_PANEL = {
 	kind: 'Panel',
 	spec: { plugin: { kind: 'signoz/HistogramPanel', spec: {} }, queries: [] },
 } as unknown as DashboardtypesPanelDTO;
+const scatterPanel = (color?: string[]): DashboardtypesPanelDTO =>
+	({
+		kind: 'Panel',
+		spec: {
+			plugin: { kind: 'signoz/ScatterPlotPanel', spec: { dimensions: { color } } },
+			queries: [],
+		},
+	}) as unknown as DashboardtypesPanelDTO;
 const DATA = { response: {}, legendMap: {} } as unknown as PanelQueryData;
 
 // Each flattened series carries the label resolveSeriesLabelV5 should report.
@@ -130,6 +140,36 @@ describe('useLegendSeries', () => {
 			{ label: 'y', defaultColor: 'c2' },
 		]);
 		// The time-series path must not run for a pie panel.
+		expect(mockFlatten).not.toHaveBeenCalled();
+	});
+
+	it('resolves scatter plot panels by the colour-by label', () => {
+		mockPrepareScalarTables.mockReturnValue([
+			{
+				queryName: 'A',
+				legend: '',
+				columns: [
+					{ id: 'ns', name: 'ns', queryName: '', isValueColumn: false },
+					{ id: 'pod', name: 'pod', queryName: '', isValueColumn: false },
+					{ id: 'A', name: 'A', queryName: 'A', isValueColumn: true },
+					{ id: 'B', name: 'B', queryName: 'B', isValueColumn: true },
+				],
+				rows: [
+					{ data: { ns: 'prod', pod: 'p1', A: 1, B: 2 } },
+					{ data: { ns: 'dev', pod: 'p2', A: 3, B: 4 } },
+					{ data: { ns: 'prod', pod: 'p3', A: 5, B: 6 } },
+				],
+			},
+		]);
+
+		const { result } = renderHook(() =>
+			useLegendSeries(scatterPanel(['ns']), DATA),
+		);
+
+		expect(result.current).toStrictEqual([
+			{ label: 'prod', defaultColor: 'color:prod' },
+			{ label: 'dev', defaultColor: 'color:dev' },
+		]);
 		expect(mockFlatten).not.toHaveBeenCalled();
 	});
 
