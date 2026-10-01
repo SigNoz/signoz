@@ -5,70 +5,62 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
-import ConfigFieldRow from '../../controls/ConfigFieldRow/ConfigFieldRow';
-import ConfigNumberInput from '../../controls/ConfigNumberInput/ConfigNumberInput';
+import ConfigInlineField from '../../controls/ConfigInlineField/ConfigInlineField';
+import ConfigRangeInput from '../../controls/ConfigRangeInput/ConfigRangeInput';
 import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';
-import { createFieldResetter } from '../../utils/changes';
-import { SCALE_HELP, SCALE_OPTIONS } from './options';
+import { RANGE_HELP } from '../AxesSection/options';
+import { LOG_RANGE_IGNORED_HELP, SCALE_HELP, SCALE_OPTIONS } from './options';
+import { hasBoundALogAxisDrops } from './utils';
+
+import styles from './ScatterAxesSection.module.scss';
 
 interface ScatterAxisFieldsProps {
 	axis: 'x' | 'y';
 	value: DashboardtypesScatterPlotAxisDTO | undefined;
-	savedValue: DashboardtypesScatterPlotAxisDTO | undefined;
 	onChange: (next: DashboardtypesScatterPlotAxisDTO) => void;
+	/** The name of the column the axis plots, shown until a label is typed. */
+	columnName?: string;
 }
 
 function ScatterAxisFields({
 	axis,
 	value,
-	savedValue,
 	onChange,
+	columnName,
 }: ScatterAxisFieldsProps): JSX.Element {
-	const reset = createFieldResetter(value, savedValue, onChange);
-	const name = axis.toUpperCase();
 	const scale = value?.scale ?? DashboardtypesAxisScaleDTO.auto;
+	const name = axis.toUpperCase();
 
 	return (
-		<>
-			<ConfigField
-				label={`${name}-axis label`}
-				help="Drawn along the axis, and names its value in the tooltip."
-				{...reset('label')}
-			>
+		<div className={styles.fields}>
+			<ConfigInlineField label="Label">
 				<Input
 					data-testid={`panel-editor-v2-${axis}-label`}
-					placeholder="None"
+					aria-label={`${name}-axis label`}
+					placeholder={columnName ?? 'None'}
 					value={value?.label ?? ''}
 					onChange={(event): void =>
 						onChange({ ...value, label: event.target.value })
 					}
 				/>
-			</ConfigField>
-			<ConfigField
-				label={`${name}-axis range`}
-				help="The axis always shows at least this range. Data outside it still stretches the axis."
-				{...reset('softMin', 'softMax')}
+			</ConfigInlineField>
+			<ConfigInlineField
+				label="Range"
+				help={
+					hasBoundALogAxisDrops(scale, value) ? LOG_RANGE_IGNORED_HELP : RANGE_HELP
+				}
+				helpTestId={`panel-editor-v2-${axis}-range-help`}
 			>
-				<ConfigFieldRow>
-					<ConfigNumberInput
-						testId={`panel-editor-v2-${axis}-soft-min`}
-						label="Min"
-						value={value?.softMin}
-						onChange={(softMin): void => onChange({ ...value, softMin })}
-					/>
-					<ConfigNumberInput
-						testId={`panel-editor-v2-${axis}-soft-max`}
-						label="Max"
-						value={value?.softMax}
-						onChange={(softMax): void => onChange({ ...value, softMax })}
-					/>
-				</ConfigFieldRow>
-			</ConfigField>
-			<ConfigField
-				label={`${name}-axis scale`}
-				help={SCALE_HELP[scale]}
-				{...reset('scale')}
-			>
+				<ConfigRangeInput
+					minTestId={`panel-editor-v2-${axis}-soft-min`}
+					maxTestId={`panel-editor-v2-${axis}-soft-max`}
+					min={value?.softMin}
+					max={value?.softMax}
+					onChangeMin={(softMin): void => onChange({ ...value, softMin })}
+					onChangeMax={(softMax): void => onChange({ ...value, softMax })}
+				/>
+			</ConfigInlineField>
+			<ConfigField label="Scale" help={SCALE_HELP[scale]}>
 				<ConfigTiles
 					testId={`panel-editor-v2-${axis}-scale`}
 					aria-label={`${name}-axis scale`}
@@ -77,7 +69,7 @@ function ScatterAxisFields({
 					onChange={(next): void => onChange({ ...value, scale: next })}
 				/>
 			</ConfigField>
-		</>
+		</div>
 	);
 }
 

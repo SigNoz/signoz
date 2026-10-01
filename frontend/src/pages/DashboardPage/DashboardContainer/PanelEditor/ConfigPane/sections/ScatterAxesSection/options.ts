@@ -26,6 +26,9 @@ export const SCALE_OPTIONS: ConfigTileItem<DashboardtypesAxisScaleDTO>[] = [
 	},
 ];
 
+export const LOG_RANGE_IGNORED_HELP =
+	"A log axis can't reach 0 or below, so that bound is ignored. Use Symlog to include it.";
+
 export const SCALE_HELP: Record<DashboardtypesAxisScaleDTO, string> = {
 	[DashboardtypesAxisScaleDTO.auto]:
 		'Logarithmic when every value is positive and they span three or more orders of magnitude, otherwise linear.',
