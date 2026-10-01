@@ -97,36 +97,55 @@ func TestFieldForAttributeNoEvolutionParity(t *testing.T) {
 }
 
 // TestAttributeJSONFlagOffParity proves the evolution entry alone does not switch reads to the
-// JSON column: with use_trace_attributes_json off, reads and conditions stay on the Map for every window.
+// JSON column: with use_trace_attributes_json off, the read and every condition are the Map's for
+// every window.
 func TestAttributeJSONFlagOffParity(t *testing.T) {
 	ctx := context.Background()
 	storage := NewStorage()
 	evo := MockAttributeEvolutionData(attrJSONRelease)
-
-	testCases := []struct {
-		name   string
-		window [2]uint64
-	}{
-		{"BeforeRelease", attrWindowBefore},
-		{"AfterRelease", attrWindowAfter},
-		{"StraddlingRelease", attrWindowStraddle},
+	windows := map[string][2]uint64{
+		"BeforeRelease":     attrWindowBefore,
+		"AfterRelease":      attrWindowAfter,
+		"StraddlingRelease": attrWindowStraddle,
 	}
 
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			key := attrKey("user.id", telemetrytypes.FieldDataTypeNumber, evo)
-			q := qbtypes.QueryInfo{StartNs: testCase.window[0], EndNs: testCase.window[1]}
+	testCases := []struct {
+		name     string
+		operator qbtypes.FilterOperator
+		value    any
+		expected string
+	}{
+		{"Equal", qbtypes.FilterOperatorEqual, float64(1), "WHERE (toFloat64(attributes_number['user.id']) = ? AND mapContains(attributes_number, 'user.id'))"},
+		{"NotEqual", qbtypes.FilterOperatorNotEqual, float64(1), "WHERE toFloat64(ifNull(attributes_number['user.id'], 0)) <> ?"},
+		{"Exists", qbtypes.FilterOperatorExists, nil, "WHERE mapContains(attributes_number, 'user.id')"},
+		{"NotExists", qbtypes.FilterOperatorNotExists, nil, "WHERE NOT mapContains(attributes_number, 'user.id')"},
+	}
 
+	for windowName, window := range windows {
+		q := qbtypes.QueryInfo{StartNs: window[0], EndNs: window[1]}
+		key := attrKey("user.id", telemetrytypes.FieldDataTypeNumber, evo)
+
+		t.Run(windowName+"_Read", func(t *testing.T) {
 			read, err := storage.Read(ctx, q, &key)
 			require.NoError(t, err)
-			assert.Equal(t, "attributes_number['user.id']", read.SQL)
-
-			sb := sqlbuilder.NewSelectBuilder()
-			conds, _, err := querybuilder.Conditions(ctx, q, storage, &key, qbtypes.FilterOperatorNotEqual, float64(1), map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
-			require.NoError(t, err)
-			require.Len(t, conds, 1)
-			assert.NotContains(t, conds[0], "attributes.`user.id`")
+			assert.Equal(t, qbtypes.Read{
+				SQL:        "attributes_number['user.id']",
+				Presence:   "mapContains(attributes_number, 'user.id')",
+				Absence:    "NOT mapContains(attributes_number, 'user.id')",
+				WhenAbsent: qbtypes.AbsentIsSentinel,
+			}, read)
 		})
+
+		for _, testCase := range testCases {
+			t.Run(windowName+"_"+testCase.name, func(t *testing.T) {
+				sb := sqlbuilder.NewSelectBuilder()
+				conds, _, err := querybuilder.Conditions(ctx, q, storage, &key, testCase.operator, testCase.value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
+				require.NoError(t, err)
+				sb.Where(conds...)
+				sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+				assert.Equal(t, testCase.expected, sql)
+			})
+		}
 	}
 }
 
