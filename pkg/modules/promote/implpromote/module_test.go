@@ -2,15 +2,11 @@ package implpromote
 
 import (
 	"context"
-	"regexp"
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
@@ -98,7 +94,7 @@ func TestPromotePaths(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			store := telemetrytypestest.NewMockMetadataStore()
-			m := NewModule(store, nil)
+			m := NewModule(store)
 
 			err := m.PromotePaths(ctx, testCase.paths...)
 			if testCase.wantErr {
@@ -122,10 +118,11 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 	ctx := context.Background()
 
 	testCases := []struct {
-		name          string
-		promoted      map[string]bool
-		path          *promotetypes.PromotePath
-		wantDDLColumn string
+		name         string
+		promoted     map[string]bool
+		path         *promotetypes.PromotePath
+		wantName     string
+		wantExprPart string
 	}{
 		{
 			name: "LogsNewPromotion_IndexesPromotedColumn",
@@ -138,7 +135,8 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
 				},
 			},
-			wantDDLColumn: "dynamicElement(body_promoted.user.name",
+			wantName:     "`body_promoted.user.name_String_ngrambf_v1`",
+			wantExprPart: "dynamicElement(body_promoted.user.name",
 		},
 		{
 			name:     "LogsAlreadyPromoted_IndexesPromotedColumn",
@@ -151,7 +149,8 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
 				},
 			},
-			wantDDLColumn: "dynamicElement(body_promoted.user.name",
+			wantName:     "`body_promoted.user.name_String_ngrambf_v1`",
+			wantExprPart: "dynamicElement(body_promoted.user.name",
 		},
 		{
 			name: "LogsUnpromotedPath_IndexesBaseColumn",
@@ -163,7 +162,8 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
 				},
 			},
-			wantDDLColumn: "dynamicElement(body_v2.user.name",
+			wantName:     "`body_v2.user.name_String_ngrambf_v1`",
+			wantExprPart: "dynamicElement(body_v2.user.name",
 		},
 		{
 			name: "TracesNewPromotion_IndexesPromotedColumn",
@@ -176,7 +176,8 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
 				},
 			},
-			wantDDLColumn: "`attributes_promoted.http.method_String_ngrambf_v1` attributes_promoted.http.method::String",
+			wantName:     "`attributes_promoted.http.method_String_ngrambf_v1`",
+			wantExprPart: "attributes_promoted.http.method::String",
 		},
 		{
 			name: "TracesUnpromotedPath_IndexesBaseColumn",
@@ -188,20 +189,22 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
 				},
 			},
-			wantDDLColumn: "`attributes.http.method_String_ngrambf_v1` attributes.http.method::String",
+			wantName:     "`attributes.http.method_String_ngrambf_v1`",
+			wantExprPart: "attributes.http.method::String",
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
 			store := telemetrytypestest.NewMockMetadataStore()
 			store.PromotedPathsMap[telemetrytypes.SignalLogs] = testCase.promoted
-			m := NewModule(store, ts)
+			m := NewModule(store)
 
-			ts.Mock().ExpectExec("ADD INDEX (.+)" + regexp.QuoteMeta(testCase.wantDDLColumn)).WillReturnError(nil)
 			require.NoError(t, m.PromotePaths(ctx, testCase.path))
-			assert.NoError(t, ts.Mock().ExpectationsWereMet())
+			require.Len(t, store.CreatedIndexes, 1)
+			assert.Equal(t, testCase.wantName, store.CreatedIndexes[0].Name)
+			assert.Contains(t, store.CreatedIndexes[0].Expression, testCase.wantExprPart)
+			assert.Equal(t, "ngrambf_v1(4, 1024, 2, 0)", store.CreatedIndexes[0].Type)
 		})
 	}
 }
@@ -393,7 +396,7 @@ func TestListPromotedPaths(t *testing.T) {
 			store := telemetrytypestest.NewMockMetadataStore()
 			store.PromotedPathsMap = testCase.promoted
 			store.LogsJSONIndexes = testCase.indexes
-			m := NewModule(store, nil)
+			m := NewModule(store)
 
 			paths, err := m.ListPromotedPaths(ctx, testCase.filters)
 			require.NoError(t, err)
