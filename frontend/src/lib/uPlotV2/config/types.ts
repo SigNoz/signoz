@@ -88,7 +88,7 @@ export interface AxisProps {
 	space?: number;
 	/** Picks the dark or light default for stroke and grid color. */
 	isDarkMode?: boolean;
-	/** Axis is on a log scale — thins the grid lines to keep dense decades readable. */
+	/** Axis is on a log scale — grid lines fall on powers of ten only. */
 	isLogScale?: boolean;
 	/** Unit the value ticks are formatted in (`spec.formatting.unit`). Named for the
 	 *  y axis, the only value axis until scatter; a non-time x axis reads it too. */
