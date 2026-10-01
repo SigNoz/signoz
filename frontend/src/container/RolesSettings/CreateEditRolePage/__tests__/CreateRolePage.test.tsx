@@ -82,7 +82,7 @@ describe('CreateRolePage', () => {
 			await renderCreatePage();
 
 			const saveBtn = screen.getByTestId('save-button');
-			expect(saveBtn).toBeDisabled();
+			expect(saveBtn).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('does not show unsaved indicator initially', async () => {
@@ -101,7 +101,7 @@ describe('CreateRolePage', () => {
 			await user.type(nameInput, 'test-role');
 
 			const saveBtn = screen.getByTestId('save-button');
-			expect(saveBtn).not.toBeDisabled();
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('shows unsaved indicator when form modified', async () => {
@@ -124,7 +124,7 @@ describe('CreateRolePage', () => {
 			await user.type(descInput, 'Some description');
 
 			const saveBtn = screen.getByTestId('save-button');
-			expect(saveBtn).not.toBeDisabled();
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 

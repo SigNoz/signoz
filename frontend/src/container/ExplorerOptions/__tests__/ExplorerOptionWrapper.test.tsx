@@ -258,7 +258,10 @@ describe('ExplorerOptionWrapper', () => {
 
 			// Wait for the selection to be made and the export button to be enabled
 			await waitFor(() => {
-				expect(screen.getByTestId('export-panel-export')).not.toBeDisabled();
+				expect(screen.getByTestId('export-panel-export')).not.toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 
 			// Click the export button
@@ -345,7 +348,10 @@ describe('ExplorerOptionWrapper', () => {
 
 			// Wait for the selection to be made and the export button to be enabled
 			await waitFor(() => {
-				expect(screen.getByTestId('export-panel-export')).not.toBeDisabled();
+				expect(screen.getByTestId('export-panel-export')).not.toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 
 			// Click the export button

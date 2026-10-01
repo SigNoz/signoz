@@ -14,7 +14,10 @@
 	flex-direction: column;
 	gap: 8px;
 	max-width: 480px;
-	padding: 8px;
+
+	> [data-slot='button'] {
+		align-self: flex-end;
+	}
 }
 
 .preview {
@@ -26,10 +29,6 @@
 	font-family: var(--font-family-mono, monospace);
 	font-size: 12px;
 	line-height: 1.4;
-}
-
-.expandButton {
-	align-self: flex-end;
 }
 
 .dialog {

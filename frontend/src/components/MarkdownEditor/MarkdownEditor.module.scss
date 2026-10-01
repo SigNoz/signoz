@@ -74,25 +74,8 @@
 	margin-left: auto;
 }
 
-.insertVariable {
-	white-space: nowrap;
-}
-
 .insertVariableIcon {
 	color: var(--text-amber-400);
-}
-
-// The ui library's dropdown assumes a global border-box reset this app doesn't
-// have (`box-sizing` is set on `body` only and doesn't inherit): its items are
-// `width: 100%` + padding, so in the portal they lay out content-box and
-// overflow the popup by the padding — clipping the flush-right badge.
-.variableMenu,
-.variableMenu * {
-	box-sizing: border-box;
-}
-
-.variableMenu {
-	width: 320px;
 }
 
 // Shrinkable, so a clamped popup truncates the name instead of clipping the

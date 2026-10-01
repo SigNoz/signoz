@@ -124,15 +124,15 @@ function StatsCard({
 					<div className="icon">
 						<Calendar size={14} color={Color.BG_SLATE_200} />
 					</div>
-					{relativeTime ? (
+					<Tooltip
+						title={
+							relativeTime
+								? undefined
+								: `From ${formattedStartTimeForTooltip} to ${formattedEndTimeForTooltip}`
+						}
+					>
 						<div className="text">{displayTime}</div>
-					) : (
-						<Tooltip
-							title={`From ${formattedStartTimeForTooltip} to ${formattedEndTimeForTooltip}`}
-						>
-							<div className="text">{displayTime}</div>
-						</Tooltip>
-					)}
+					</Tooltip>
 				</div>
 			</div>
 

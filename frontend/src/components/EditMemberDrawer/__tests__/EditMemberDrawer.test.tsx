@@ -251,7 +251,7 @@ describe('EditMemberDrawer', () => {
 		expect(screen.getByText('ACTIVE')).toBeInTheDocument();
 		expect(
 			screen.getByRole('button', { name: /save member details/i }),
-		).toBeDisabled();
+		).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('enables Save after editing name and calls updateUser on confirm', async () => {
@@ -271,7 +271,9 @@ describe('EditMemberDrawer', () => {
 		await user.type(nameInput, 'Alice Updated');
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 
 		await user.click(saveBtn);
 
@@ -295,7 +297,9 @@ describe('EditMemberDrawer', () => {
 		await user.type(nameInput, 'Alice Updated');
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await waitFor(() => {
@@ -323,7 +327,9 @@ describe('EditMemberDrawer', () => {
 		await user.click(await screen.findByTitle('signoz-editor'));
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await waitFor(() => {
@@ -349,7 +355,9 @@ describe('EditMemberDrawer', () => {
 		await user.click(removeBtn);
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await waitFor(() => {
@@ -505,7 +513,9 @@ describe('EditMemberDrawer', () => {
 		await user.type(nameInput, 'Bob Updated');
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(saveBtn);
 
 		await waitFor(() => {
@@ -541,7 +551,9 @@ describe('EditMemberDrawer', () => {
 			await user.type(nameInput, 'Alice Updated');
 
 			const saveBtn = screen.getByRole('button', { name: /save member details/i });
-			await waitFor(() => expect(saveBtn).not.toBeDisabled());
+			await waitFor(() =>
+				expect(saveBtn).not.toHaveAttribute('aria-disabled', 'true'),
+			);
 			await user.click(saveBtn);
 
 			await waitFor(() => {
@@ -619,7 +631,7 @@ describe('EditMemberDrawer', () => {
 			renderDrawer({ member: selfMember });
 			expect(
 				screen.getByRole('button', { name: /delete member/i }),
-			).toBeDisabled();
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('does not open delete confirm dialog when Delete is clicked while disabled (isSelf)', async () => {
@@ -642,7 +654,7 @@ describe('EditMemberDrawer', () => {
 			renderDrawer({ member: selfMember });
 			expect(
 				screen.getByRole('button', { name: /generate password reset link/i }),
-			).not.toBeDisabled();
+			).not.toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 
@@ -664,21 +676,21 @@ describe('EditMemberDrawer', () => {
 			renderDrawer();
 			expect(
 				screen.getByRole('button', { name: /delete member/i }),
-			).toBeDisabled();
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('disables Reset Link button for root user', () => {
 			renderDrawer();
 			expect(
 				screen.getByRole('button', { name: /generate password reset link/i }),
-			).toBeDisabled();
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('disables Save button for root user', () => {
 			renderDrawer();
 			expect(
 				screen.getByRole('button', { name: /save member details/i }),
-			).toBeDisabled();
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('does not open delete confirm dialog when Delete is clicked while disabled (root)', async () => {

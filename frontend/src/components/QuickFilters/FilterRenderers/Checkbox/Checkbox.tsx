@@ -18,7 +18,9 @@ import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
 import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryIndex';
 import useCheckboxDisclosure from './useCheckboxDisclosure';
 import useCheckboxFilterActions from './useCheckboxFilterActions';
-import useCheckboxFilterState from './useCheckboxFilterState';
+import useCheckboxFilterState, {
+	FILTER_DISABLED_REASON,
+} from './useCheckboxFilterState';
 import useCheckboxFilterValues from './useCheckboxFilterValues';
 
 import './Checkbox.styles.scss';
@@ -132,6 +134,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 										value={value}
 										checked={currentFilterState[value]}
 										disabled={isFilterDisabled}
+										disabledTooltip={FILTER_DISABLED_REASON}
 										title={filter.title}
 										onlyButtonLabel={
 											isSomeFilterPresentForCurrentAttribute

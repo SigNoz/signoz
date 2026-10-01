@@ -20,9 +20,17 @@
 		flex-shrink: 0;
 	}
 
+	[role='tabpanel'] {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		scrollbar-width: none;
+	}
+
 	// Tabs library wrapper — scoped by `.body` so the global match is contained.
 	:global([class*='tabs__list-wrapper']) {
 		padding-left: 0 !important;
+		flex-shrink: 0;
 	}
 }
 

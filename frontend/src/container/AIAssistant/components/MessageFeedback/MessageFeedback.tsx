@@ -3,7 +3,7 @@ import cx from 'classnames';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
@@ -174,10 +174,10 @@ export default function MessageFeedback({
 		<>
 			<div className={cx(styles.feedback, { [styles.visible]: isLastAssistant })}>
 				<div className={styles.actions}>
-					<TooltipSimple title={copied ? 'Copied!' : 'Copy'}>
+					<Tooltip title={copied ? 'Copied!' : 'Copy'}>
 						<Button
-							className={styles.btn}
-							size="icon"
+							size="sm"
+							icon
 							variant="ghost"
 							onClick={handleCopy}
 							color="secondary"
@@ -185,14 +185,13 @@ export default function MessageFeedback({
 						>
 							{copied ? <Check size={12} /> : <Copy size={12} />}
 						</Button>
-					</TooltipSimple>
+					</Tooltip>
 
-					<TooltipSimple title={VOTE_LABEL[FeedbackRatingDTO.positive].tooltip}>
+					<Tooltip title={VOTE_LABEL[FeedbackRatingDTO.positive].tooltip}>
 						<Button
-							className={cx(styles.btn, {
-								[styles.votedUp]: vote === FeedbackRatingDTO.positive,
-							})}
-							size="icon"
+							data-vote="positive"
+							size="sm"
+							icon
 							variant="ghost"
 							color="secondary"
 							onClick={(): void => handleVote(FeedbackRatingDTO.positive)}
@@ -201,14 +200,13 @@ export default function MessageFeedback({
 						>
 							<ThumbsUp size={12} />
 						</Button>
-					</TooltipSimple>
+					</Tooltip>
 
-					<TooltipSimple title={VOTE_LABEL[FeedbackRatingDTO.negative].tooltip}>
+					<Tooltip title={VOTE_LABEL[FeedbackRatingDTO.negative].tooltip}>
 						<Button
-							className={cx(styles.btn, {
-								[styles.votedDown]: vote === FeedbackRatingDTO.negative,
-							})}
-							size="icon"
+							data-vote="negative"
+							size="sm"
+							icon
 							variant="ghost"
 							color="secondary"
 							onClick={(): void => handleVote(FeedbackRatingDTO.negative)}
@@ -217,13 +215,13 @@ export default function MessageFeedback({
 						>
 							<ThumbsDown size={12} />
 						</Button>
-					</TooltipSimple>
+					</Tooltip>
 
 					{onRegenerate && (
-						<TooltipSimple title="Regenerate">
+						<Tooltip title="Regenerate">
 							<Button
-								className={styles.btn}
-								size="icon"
+								size="sm"
+								icon
 								variant="ghost"
 								color="secondary"
 								onClick={onRegenerate}
@@ -231,7 +229,7 @@ export default function MessageFeedback({
 							>
 								<RefreshCw size={12} />
 							</Button>
-						</TooltipSimple>
+						</Tooltip>
 					)}
 				</div>
 
@@ -249,13 +247,19 @@ export default function MessageFeedback({
 				footer={
 					<div className={styles.feedbackDialogFooter}>
 						<Button
+							size="md"
 							variant="solid"
 							color="secondary"
 							onClick={(): void => setIsNegativeDialogOpen(false)}
 						>
 							Cancel
 						</Button>
-						<Button variant="solid" color="primary" onClick={handleSubmitNegative}>
+						<Button
+							size="md"
+							variant="solid"
+							color="primary"
+							onClick={handleSubmitNegative}
+						>
 							Send feedback
 						</Button>
 					</div>

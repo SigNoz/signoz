@@ -1,5 +1,12 @@
+import type { MouseEvent } from 'react';
+import type {
+	DropdownActionItemType,
+	DropdownItemType,
+	DropdownSubmenuChildType,
+} from '@signozhq/ui/dropdown';
 import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import type { DashboardSection } from '../../../../utils';
@@ -10,7 +17,7 @@ import { usePanelActionItems } from '../usePanelActionItems';
 // about what the UI does with a given edit context, so control it directly.
 const mockEditContext = {
 	isEditable: true,
-	editChecks: [],
+	editChecks: [] as BrandedPermission[],
 	areOtherPermissionsLoading: false,
 	deleteChecks: [],
 	isLocked: false,
@@ -22,6 +29,7 @@ const mockEditContext = {
 function setEditContextMock(next: Partial<typeof mockEditContext>): void {
 	Object.assign(mockEditContext, {
 		isEditable: true,
+		editChecks: [],
 		isLocked: false,
 		canEditDashboard: true,
 		canDeleteDashboard: true,
@@ -42,7 +50,42 @@ function disabledKeys(
 ): unknown[] {
 	return result.items
 		.filter((item) => 'disabled' in item && item.disabled)
-		.map((item) => ('key' in item ? item.key : undefined));
+		.map((item) => ('value' in item ? item.value : undefined));
+}
+
+function disabledReasons(
+	result: ReturnType<typeof usePanelActionItems>,
+): unknown[] {
+	return result.items
+		.filter((item) => 'disabled' in item && item.disabled)
+		.map((item) =>
+			'disabledTooltip' in item ? item.disabledTooltip : undefined,
+		);
+}
+
+type Row = DropdownItemType | DropdownSubmenuChildType;
+
+function actionRow(rows: Row[], value: string): DropdownActionItemType {
+	const row = rows.find((r) => r.type === 'item' && r.value === value);
+	if (row?.type !== 'item') {
+		throw new Error(`No "${value}" action row`);
+	}
+	return row;
+}
+
+function submenuRows(rows: Row[], value: string): DropdownActionItemType[] {
+	const row = rows.find((r) => r.type === 'submenu' && r.value === value);
+	if (row?.type !== 'submenu') {
+		throw new Error(`No "${value}" submenu`);
+	}
+	return row.items.filter(
+		(child): child is DropdownActionItemType => child.type === 'item',
+	);
+}
+
+// The rows ignore the event, so an empty one stands in for the click.
+function click(row: DropdownActionItemType): void {
+	row.onClick?.({} as MouseEvent);
 }
 
 const mockOpenEditor = jest.fn();
@@ -146,7 +189,7 @@ const baseArgs = {
 
 function itemKeys(result: ReturnType<typeof usePanelActionItems>): unknown[] {
 	return result.items.map((item) =>
-		'key' in item && item.key !== undefined ? item.key : item.type,
+		item.type === 'separator' || !('value' in item) ? item.type : item.value,
 	);
 }
 
@@ -162,12 +205,12 @@ describe('usePanelActionItems', () => {
 			'view-panel',
 			'edit-panel',
 			'clone-panel',
-			'divider',
+			'separator',
 			'download',
 			'create-alert',
-			'divider',
+			'separator',
 			'move',
-			'divider',
+			'separator',
 			'delete-panel',
 		]);
 		// The single "Download" entry is a submenu (PNG/SVG, plus CSV on tables);
@@ -188,12 +231,12 @@ describe('usePanelActionItems', () => {
 			'view-panel',
 			'edit-panel',
 			'clone-panel',
-			'divider',
+			'separator',
 			'download',
 			'create-alert',
-			'divider',
+			'separator',
 			'move',
-			'divider',
+			'separator',
 			'delete-panel',
 		]);
 		expect(disabledKeys(result.current)).toStrictEqual([
@@ -202,6 +245,31 @@ describe('usePanelActionItems', () => {
 			'move',
 			'delete-panel',
 		]);
+		expect(disabledReasons(result.current)).toStrictEqual(
+			Array(4).fill('no permission'),
+		);
+	});
+
+	it('leaves a missing permission to the checks, which name it', () => {
+		const editChecks = ['dashboard:update' as BrandedPermission];
+		setEditContextMock({
+			isEditable: false,
+			canEditDashboard: false,
+			editChecks,
+		});
+		const { result } = renderHook(() =>
+			usePanelActionItems({ ...baseArgs, panelActions: undefined }),
+		);
+		expect(disabledKeys(result.current)).toStrictEqual([]);
+		for (const value of ['edit-panel', 'clone-panel', 'move', 'delete-panel']) {
+			expect(actionRow(result.current.items, value)).toHaveProperty(
+				'checks',
+				editChecks,
+			);
+		}
+		expect(actionRow(result.current.items, 'view-panel')).not.toHaveProperty(
+			'checks',
+		);
 	});
 
 	it('locked (edit mode) keeps the edit actions visible but disabled', () => {
@@ -218,12 +286,12 @@ describe('usePanelActionItems', () => {
 			'view-panel',
 			'edit-panel',
 			'clone-panel',
-			'divider',
+			'separator',
 			'download',
 			'create-alert',
-			'divider',
+			'separator',
 			'move',
-			'divider',
+			'separator',
 			'delete-panel',
 		]);
 		expect(disabledKeys(result.current)).toStrictEqual([
@@ -232,6 +300,9 @@ describe('usePanelActionItems', () => {
 			'move',
 			'delete-panel',
 		]);
+		expect(disabledReasons(result.current)).toStrictEqual(
+			Array(4).fill('locked'),
+		);
 	});
 
 	it('hides "Move to section" when the only untitled section is not the root (index 0)', () => {
@@ -250,10 +321,7 @@ describe('usePanelActionItems', () => {
 
 	it('edit opens the panel editor for this panel', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const edit = result.current.items.find(
-			(i) => 'key' in i && i.key === 'edit-panel',
-		);
-		(edit as { onClick: () => void }).onClick();
+		click(actionRow(result.current.items, 'edit-panel'));
 		// The panel rides along so its saved query lands in the editor URL.
 		expect(mockOpenEditor).toHaveBeenCalledWith('panel-1', {
 			panel: mockPanel,
@@ -262,22 +330,13 @@ describe('usePanelActionItems', () => {
 
 	it('"Move to section" offers a single "Dashboard (root)" target', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const move = result.current.items.find(
-			(i) => 'key' in i && i.key === 'move',
-		) as {
-			children: { key: string; onClick: () => void }[];
-		};
-		expect(move.children.map((c) => c.key)).toStrictEqual(['move-to-root']);
+		const move = submenuRows(result.current.items, 'move');
+		expect(move.map((c) => c.value)).toStrictEqual(['move-to-root']);
 	});
 
 	it('the "Dashboard (root)" target moves the panel to the untitled root section', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const move = result.current.items.find(
-			(i) => 'key' in i && i.key === 'move',
-		) as {
-			children: { onClick: () => void }[];
-		};
-		move.children[0].onClick();
+		click(submenuRows(result.current.items, 'move')[0]);
 		expect(mockMovePanel).toHaveBeenCalledWith({
 			panelId: 'panel-1',
 			fromLayoutIndex: 1,
@@ -292,11 +351,9 @@ describe('usePanelActionItems', () => {
 				panelActions: { currentLayoutIndex: 0, sections: ROOT_AND_TWO_TITLED },
 			}),
 		);
-		const move = result.current.items.find(
-			(i) => 'key' in i && i.key === 'move',
-		) as { children: { key: string; label: string }[] };
-		expect(move.children.map((c) => c.key)).toStrictEqual(['move-1', 'move-2']);
-		expect(move.children.map((c) => c.label)).toStrictEqual(['A', 'B']);
+		const move = submenuRows(result.current.items, 'move');
+		expect(move.map((c) => c.value)).toStrictEqual(['move-1', 'move-2']);
+		expect(move.map((c) => c.label)).toStrictEqual(['A', 'B']);
 	});
 
 	it('a panel in a titled section can move to the root and the other titled sections', () => {
@@ -306,18 +363,10 @@ describe('usePanelActionItems', () => {
 				panelActions: { currentLayoutIndex: 1, sections: ROOT_AND_TWO_TITLED },
 			}),
 		);
-		const move = result.current.items.find(
-			(i) => 'key' in i && i.key === 'move',
-		) as { children: { key: string; label: string }[] };
+		const move = submenuRows(result.current.items, 'move');
 		// Root leads, then the other titled section — never the current one (A).
-		expect(move.children.map((c) => c.key)).toStrictEqual([
-			'move-to-root',
-			'move-2',
-		]);
-		expect(move.children.map((c) => c.label)).toStrictEqual([
-			'Dashboard (root)',
-			'B',
-		]);
+		expect(move.map((c) => c.value)).toStrictEqual(['move-to-root', 'move-2']);
+		expect(move.map((c) => c.label)).toStrictEqual(['Dashboard (root)', 'B']);
 	});
 
 	it('moves between titled sections even when the board has no untitled root', () => {
@@ -327,11 +376,9 @@ describe('usePanelActionItems', () => {
 				panelActions: { currentLayoutIndex: 0, sections: TWO_TITLED_SECTIONS },
 			}),
 		);
-		const move = result.current.items.find(
-			(i) => 'key' in i && i.key === 'move',
-		) as { children: { key: string; onClick: () => void }[] };
-		expect(move.children.map((c) => c.key)).toStrictEqual(['move-1']);
-		move.children[0].onClick();
+		const move = submenuRows(result.current.items, 'move');
+		expect(move.map((c) => c.value)).toStrictEqual(['move-1']);
+		click(move[0]);
 		expect(mockMovePanel).toHaveBeenCalledWith({
 			panelId: 'panel-1',
 			fromLayoutIndex: 0,
@@ -351,14 +398,12 @@ describe('usePanelActionItems', () => {
 
 	it('delete defers to a confirmation: the item opens the dialog, confirm runs the mutation', async () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const del = result.current.items.find(
-			(i) => 'key' in i && i.key === 'delete-panel',
-		);
+		const del = actionRow(result.current.items, 'delete-panel');
 
 		// Clicking the menu item only opens the dialog — no mutation yet.
 		expect(result.current.deleteConfirm.open).toBe(false);
 		act(() => {
-			(del as { onClick: () => void }).onClick();
+			click(del);
 		});
 		expect(result.current.deleteConfirm.open).toBe(true);
 		expect(mockDeletePanel).not.toHaveBeenCalled();
@@ -376,10 +421,7 @@ describe('usePanelActionItems', () => {
 
 	it('clone calls the clone mutation with the panel and its layout index', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const clone = result.current.items.find(
-			(i) => 'key' in i && i.key === 'clone-panel',
-		);
-		(clone as { onClick: () => void }).onClick();
+		click(actionRow(result.current.items, 'clone-panel'));
 		expect(mockClonePanel).toHaveBeenCalledWith({
 			panelId: 'panel-1',
 			layoutIndex: 1,
@@ -388,29 +430,24 @@ describe('usePanelActionItems', () => {
 
 	it('the Download submenu captures the panel by id, name and chosen format', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const download = result.current.items.find(
-			(i) => 'key' in i && i.key === 'download',
-		) as { children: { key: string; onClick: () => void }[] };
+		const download = submenuRows(result.current.items, 'download');
 
 		// TimeSeries declares no CSV capability, so the submenu is just PNG + SVG.
-		expect(download.children.map((c) => c.key)).toStrictEqual([
+		expect(download.map((c) => c.value)).toStrictEqual([
 			'download-png',
 			'download-svg',
 		]);
 
-		download.children.find((c) => c.key === 'download-png')?.onClick();
+		click(actionRow(download, 'download-png'));
 		expect(mockDownloadImage).toHaveBeenCalledWith('panel-1', 'CPU', 'png');
 
-		download.children.find((c) => c.key === 'download-svg')?.onClick();
+		click(actionRow(download, 'download-svg'));
 		expect(mockDownloadImage).toHaveBeenCalledWith('panel-1', 'CPU', 'svg');
 	});
 
 	it('view opens the View modal for the panel', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const view = result.current.items.find(
-			(i) => 'key' in i && i.key === 'view-panel',
-		);
-		(view as { onClick: () => void }).onClick();
+		click(actionRow(result.current.items, 'view-panel'));
 		// The panel goes along so the opener can seed the shared query builder before
 		// the modal mounts (otherwise it renders the previously-viewed panel's query).
 		expect(mockOpenView).toHaveBeenCalledWith('panel-1', baseArgs.panel);
@@ -418,10 +455,7 @@ describe('usePanelActionItems', () => {
 
 	it('create-alert seeds an alert from this panel', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		const createAlert = result.current.items.find(
-			(i) => 'key' in i && i.key === 'create-alert',
-		);
-		(createAlert as { onClick: () => void }).onClick();
+		click(actionRow(result.current.items, 'create-alert'));
 		expect(mockCreateAlert).toHaveBeenCalledWith(mockPanel, 'panel-1');
 	});
 });

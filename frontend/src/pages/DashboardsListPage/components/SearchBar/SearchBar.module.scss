@@ -179,16 +179,6 @@
 	top: 5px;
 	right: 6px;
 	z-index: 1;
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	// Bordered light pill so "Run query ⌘↵" reads as an actionable button, not stray
-	// text.
-	padding: 3px 8px;
-	border-radius: 6px;
-	border: 1px solid var(--l2-border);
-	background: var(--l2-background);
-	color: var(--bg-vanilla-400);
 }
 
 // Unrun-changes indicator next to "Run query".

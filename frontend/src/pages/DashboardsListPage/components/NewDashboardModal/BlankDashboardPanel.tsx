@@ -150,10 +150,12 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 					Cancel
 				</Button>
 				<Button
+					disabledTooltip="Enter a dashboard name first"
 					variant="solid"
 					color="primary"
 					size="md"
-					disabled={!canSubmit}
+					disabled={name.trim().length === 0}
+					loading={submitting}
 					testId="create-dashboard-submit"
 					onClick={(): void => {
 						void handleCreate();

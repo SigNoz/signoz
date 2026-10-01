@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider as ReduxProvider } from 'react-redux';
 import { MemoryRouter, Route, useHistory, useParams } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import {
 	type DashboardtypesPanelDTO,
 	TelemetrytypesSignalDTO,
@@ -134,11 +133,9 @@ const renderHarness = (): void => {
 			<CompatRouter>
 				<QueryClientProvider client={new QueryClient()}>
 					<ReduxProvider store={configureStore([])(appStore.getState())}>
-						<TooltipProvider>
-							<QueryBuilderProvider>
-								<Harness />
-							</QueryBuilderProvider>
-						</TooltipProvider>
+						<QueryBuilderProvider>
+							<Harness />
+						</QueryBuilderProvider>
 					</ReduxProvider>
 				</QueryClientProvider>
 			</CompatRouter>

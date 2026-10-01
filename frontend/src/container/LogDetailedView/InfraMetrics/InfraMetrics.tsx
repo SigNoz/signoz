@@ -34,24 +34,16 @@ function InfraMetrics({
 	const viewOptions = useMemo(() => {
 		const options = [
 			{
-				label: (
-					<div className="view-title">
-						<Table size={14} />
-						Node
-					</div>
-				),
+				icon: <Table size={14} />,
+				label: 'Node',
 				value: VIEW_TYPES.NODE,
 			},
 		];
 
 		if (podName) {
 			options.push({
-				label: (
-					<div className="view-title">
-						<History size={14} />
-						Pod
-					</div>
-				),
+				icon: <History size={14} />,
+				label: 'Pod',
 				value: VIEW_TYPES.POD,
 			});
 		}
@@ -88,7 +80,6 @@ function InfraMetrics({
 			<SignozRadioGroup
 				value={selectedView}
 				onChange={handleModeChange}
-				className="views-tabs"
 				options={viewOptions}
 			/>
 			{/* TODO(Rahul): Make a common config driven component for this and other infra metrics components */}

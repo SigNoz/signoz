@@ -25,20 +25,6 @@
 	flex-shrink: 0;
 }
 
-// Event-dot tooltip. Visually matches SpanHoverCard's popover; styles are
-// inlined rather than `compose`d from another module because postcss-modules
-// loads cross-module composes through the plain CSS parser, which chokes on
-// SCSS `//` comments in the target file.
-.popover {
-	--tooltip-z-index: 1000;
-	background-color: var(--l1-background);
-	padding: 8px 12px;
-	border-radius: 4px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-	border: 1px solid var(--l2-border);
-	color: var(--l1-foreground);
-}
-
 .root {
 	overflow-y: hidden;
 	overflow-x: hidden;
@@ -445,24 +431,6 @@
 	pointer-events: none;
 }
 
-.actionBtn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 22px;
-	height: 22px;
-	border-radius: 2px;
-	cursor: pointer;
-	color: var(--l1-foreground);
-	background: transparent;
-	border: none;
-	padding: 0;
-
-	&:hover {
-		background: var(--l3-background);
-	}
-}
-
 // Also reveal the actions when the parent tree row is hovered.
 .treeRow:hover .rowActions,
 .treeRow.hoveredSpan .rowActions {
@@ -587,11 +555,4 @@
 	.treeLabel {
 		opacity: 0.5;
 	}
-}
-
-// Tooltips for the row's hover-revealed action buttons (Copy / Add to Funnel).
-// Bumped above FloatingPanel (z-index 999) so they stay visible when the
-// SpanDetailsPanel is docked as a floating panel.
-.actionTooltip {
-	--tooltip-z-index: 1000;
 }

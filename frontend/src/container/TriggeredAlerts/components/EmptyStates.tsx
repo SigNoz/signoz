@@ -30,6 +30,7 @@ export function EmptyState({ onRefresh }: EmptyStateProps): JSX.Element {
 			</div>
 			<div className={styles.emptyStateActions}>
 				<Button
+					size="md"
 					variant="solid"
 					color="primary"
 					prefix={<Plus size={14} />}
@@ -40,6 +41,7 @@ export function EmptyState({ onRefresh }: EmptyStateProps): JSX.Element {
 				</Button>
 				{onRefresh && (
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						prefix={<RefreshCw size={14} />}

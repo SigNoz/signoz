@@ -59,7 +59,7 @@ const settingsControl = (canvasElement: HTMLElement): Promise<HTMLElement> =>
 	waitFor(() => {
 		const control = within(canvasElement).getByTestId('settings-icon-container');
 
-		expect(control).toBeEnabled();
+		expect(control).not.toHaveAttribute('aria-disabled', 'true');
 
 		return control;
 	});

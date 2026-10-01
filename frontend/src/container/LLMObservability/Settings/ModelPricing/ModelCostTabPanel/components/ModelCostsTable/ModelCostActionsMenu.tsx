@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
 import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
-
-import styles from './ModelCostActionsMenu.module.scss';
 
 interface ModelCostActionsMenuProps {
 	rule: LlmpricingruletypesLLMPricingRuleDTO;
@@ -22,15 +20,17 @@ function ModelCostActionsMenu({
 	onEdit,
 	onDelete,
 }: ModelCostActionsMenuProps): JSX.Element | null {
-	const menuItems = useMemo<MenuItem[]>(
+	const menuItems = useMemo<DropdownItemType[]>(
 		() => [
 			{
-				key: 'edit',
+				type: 'item',
+				value: 'edit',
 				label: 'Edit',
 				onClick: (): void => onEdit(rule),
 			},
 			{
-				key: 'delete',
+				type: 'item',
+				value: 'delete',
 				label: 'Delete',
 				danger: true,
 				onClick: (): void => onDelete(rule),
@@ -44,18 +44,18 @@ function ModelCostActionsMenu({
 	}
 
 	return (
-		<DropdownMenuSimple menu={{ items: menuItems }} align="end">
+		<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 			<Button
 				variant="ghost"
 				color="secondary"
-				size="icon"
-				className={styles.actionButton}
+				size="sm"
+				icon
 				aria-label="Model cost actions"
 				testId={`model-cost-actions-${rule.id}`}
 			>
 				<Ellipsis size={16} />
 			</Button>
-		</DropdownMenuSimple>
+		</Dropdown>
 	);
 }
 

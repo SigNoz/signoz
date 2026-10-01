@@ -1,35 +1,19 @@
 import { Copy } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
+import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 import { toast } from '@signozhq/ui/sonner';
-import {
-	TooltipContent,
-	TooltipRoot,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Tooltip } from '@signozhq/ui/tooltip';
+import cx from 'classnames';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
 import LabelTag from './LabelTag';
 
 import styles from './LabelColumn.module.scss';
-import { BADGE_GAP, estimateBadgeWidth, OVERFLOW_BADGE_WIDTH } from './utils';
+import { getVisibleCount } from './utils';
 
 export interface LabelColumnProps {
 	labels: string[];
-	color?:
-		| 'primary'
-		| 'secondary'
-		| 'success'
-		| 'error'
-		| 'warning'
-		| 'robin'
-		| 'forest'
-		| 'amber'
-		| 'sienna'
-		| 'cherry'
-		| 'sakura'
-		| 'aqua'
-		| 'vanilla';
+	color?: BadgeColorType;
 	value?: { [key: string]: string };
 }
 
@@ -39,60 +23,37 @@ function LabelColumn({
 	color = 'primary',
 }: LabelColumnProps): JSX.Element {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const [maxVisibleCount, setMaxVisibleCount] = useState(labels.length);
+	const [visibleCount, setVisibleCount] = useState(labels.length);
 	const [, copyToClipboard] = useCopyToClipboard();
 
-	const calculateMaxVisible = useCallback(
-		(width: number): number => {
-			if (width <= 0) {
-				return 1;
-			}
-
-			const availableWidth = width - OVERFLOW_BADGE_WIDTH - BADGE_GAP;
-			let usedWidth = 0;
-			let count = 0;
-
-			for (const label of labels) {
-				const badgeWidth = estimateBadgeWidth(label, value?.[label]) + BADGE_GAP;
-				if (usedWidth + badgeWidth > availableWidth && count > 0) {
-					break;
-				}
-				usedWidth += badgeWidth;
-				count++;
-			}
-
-			return Math.max(1, count);
-		},
-		[labels, value],
-	);
-
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const container = containerRef.current;
 		if (!container) {
 			return;
 		}
 
-		const observer = new ResizeObserver((entries) => {
-			const entry = entries[0];
-			if (entry && entry.contentRect.width > 0) {
-				setMaxVisibleCount(calculateMaxVisible(entry.contentRect.width));
+		const measure = (): void => {
+			const available = container.clientWidth;
+			if (available <= 0) {
+				return;
 			}
-		});
 
+			const widths = Array.from(container.children)
+				.slice(0, labels.length)
+				.map((item) => item.getBoundingClientRect().width);
+			const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
+
+			setVisibleCount(getVisibleCount(widths, available, gap));
+		};
+
+		const observer = new ResizeObserver(measure);
 		observer.observe(container);
-
-		if (container.clientWidth > 0) {
-			setMaxVisibleCount(calculateMaxVisible(container.clientWidth));
-		}
+		measure();
 
 		return (): void => observer.disconnect();
-	}, [calculateMaxVisible]);
+	}, [labels, value]);
 
-	const needsOverflow = labels.length > maxVisibleCount;
-	const visibleLabels = needsOverflow
-		? labels.slice(0, maxVisibleCount)
-		: labels;
-	const remainingLabels = needsOverflow ? labels.slice(maxVisibleCount) : [];
+	const remainingLabels = labels.slice(visibleCount);
 
 	return (
 		<div
@@ -100,24 +61,23 @@ function LabelColumn({
 			className={styles.labelColumn}
 			data-testid="label-column"
 		>
-			{visibleLabels.map((label) => (
-				<LabelTag key={label} label={label} color={color} value={value?.[label]} />
+			{labels.map((label, index) => (
+				<LabelTag
+					key={label}
+					label={label}
+					color={color}
+					value={value?.[label]}
+					className={cx({
+						[styles.overflowed]: index >= visibleCount,
+						[styles.shrinkable]: index === 0 && visibleCount === 1,
+					})}
+				/>
 			))}
 			{remainingLabels.length > 0 && (
-				<TooltipRoot>
-					<TooltipTrigger asChild>
-						<span>
-							<Badge
-								color={color}
-								className={styles.overflowBadge}
-								variant="outline"
-								data-testid="label-overflow-badge"
-							>
-								+{remainingLabels.length}
-							</Badge>
-						</span>
-					</TooltipTrigger>
-					<TooltipContent side="bottom" align="end">
+				<Tooltip
+					side="bottom"
+					align="end"
+					title={
 						<div className={styles.tooltipContent}>
 							<span>
 								{remainingLabels
@@ -140,8 +100,14 @@ function LabelColumn({
 								<Copy size={12} />
 							</button>
 						</div>
-					</TooltipContent>
-				</TooltipRoot>
+					}
+				>
+					<span>
+						<Badge color={color} variant="outlined" testId="label-overflow-badge">
+							+{remainingLabels.length}
+						</Badge>
+					</span>
+				</Tooltip>
 			)}
 		</div>
 	);

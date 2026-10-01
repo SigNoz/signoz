@@ -1,11 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-	TabsContent,
-	TabsList,
-	TabsRoot,
-	TabsTrigger,
-} from '@signozhq/ui/tabs';
+import { Tabs } from '@signozhq/ui/tabs';
 import { DetailsHeader } from 'components/DetailsPanel';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useGetTraceAggregations from 'hooks/trace/useGetTraceAggregations';
@@ -149,38 +144,47 @@ function AnalyticsPanel({
 			/>
 
 			<div className={styles.body} data-testid="trace-analytics-panel">
-				<TabsRoot defaultValue="exec-time" onValueChange={onTabChange}>
-					<TabsList variant="secondary">
-						<TabsTrigger value="exec-time" variant="secondary">
-							% exec time
-						</TabsTrigger>
-						<TabsTrigger value="spans" variant="secondary">
-							Spans
-						</TabsTrigger>
-					</TabsList>
-
-					<div className={styles.tabsScroll}>
-						<TabsContent value="exec-time">
-							<AnalyticsTabContent
-								isLoading={isLoading}
-								isError={isError}
-								fieldName={colorByFieldName}
-								rows={execTimeRows}
-								valueVariant="wide"
-							/>
-						</TabsContent>
-
-						<TabsContent value="spans">
-							<AnalyticsTabContent
-								isLoading={isLoading}
-								isError={isError}
-								fieldName={colorByFieldName}
-								rows={spanCountRows}
-								valueVariant="narrow"
-							/>
-						</TabsContent>
-					</div>
-				</TabsRoot>
+				<Tabs
+					variant="secondary"
+					orientation="horizontal"
+					alignment="start"
+					className={styles.tabsScroll}
+					defaultValue="exec-time"
+					onChange={onTabChange}
+					noTabContentPadding
+					items={[
+						{
+							key: 'exec-time',
+							label: '% exec time',
+							children: (
+								<div className={styles.tabsScroll}>
+									<AnalyticsTabContent
+										isLoading={isLoading}
+										isError={isError}
+										fieldName={colorByFieldName}
+										rows={execTimeRows}
+										valueVariant="wide"
+									/>
+								</div>
+							),
+						},
+						{
+							key: 'spans',
+							label: 'Spans',
+							children: (
+								<div className={styles.tabsScroll}>
+									<AnalyticsTabContent
+										isLoading={isLoading}
+										isError={isError}
+										fieldName={colorByFieldName}
+										rows={spanCountRows}
+										valueVariant="narrow"
+									/>
+								</div>
+							),
+						},
+					]}
+				/>
 			</div>
 		</FloatingPanel>
 	);

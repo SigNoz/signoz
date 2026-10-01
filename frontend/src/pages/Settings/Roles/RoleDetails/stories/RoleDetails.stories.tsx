@@ -93,7 +93,7 @@ export const DeleteRoleConfirm: Story = {
 		const deleteRole = await waitFor(() => {
 			const button = within(canvasElement).getByTestId('delete-button');
 
-			expect(button).toBeEnabled();
+			expect(button).not.toHaveAttribute('aria-disabled', 'true');
 
 			return button;
 		}, untilLoaded);
@@ -117,7 +117,7 @@ export const DeleteRoleFailed: Story = {
 		const deleteRole = await waitFor(() => {
 			const button = within(canvasElement).getByTestId('delete-button');
 
-			expect(button).toBeEnabled();
+			expect(button).not.toHaveAttribute('aria-disabled', 'true');
 
 			return button;
 		}, untilLoaded);

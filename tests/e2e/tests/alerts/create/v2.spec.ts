@@ -554,8 +554,7 @@ test.describe('Alert create — v2 builder', () => {
 
 		// `disableButtons` is one flag shared by all three, so Discard going disabled is
 		// what proves a user cannot abandon a half-created rule mid-request.
-		await expect(page.getByTestId('save-alert-rule-loader-icon')).toBeVisible();
-		await expect(page.getByTestId('save-alert-rule-check-icon')).toHaveCount(0);
+		await expect(v2SaveButton(page)).toHaveAttribute('aria-busy', 'true');
 		await expect(v2SaveButton(page)).toBeDisabled();
 		await expect(v2TestButton(page)).toBeDisabled();
 		await expect(v2DiscardButton(page)).toBeDisabled();

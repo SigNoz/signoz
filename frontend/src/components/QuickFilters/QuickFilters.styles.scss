@@ -108,24 +108,6 @@
 			.sync-icon {
 				cursor: pointer;
 			}
-
-			.right-action-icon-container {
-				position: relative;
-				display: flex;
-				padding: 2px;
-				background-color: var(--l1-background);
-
-				.settings-icon {
-					height: 14px;
-					width: 14px;
-					cursor: pointer;
-				}
-
-				&.active,
-				&:hover {
-					background: var(--l2-background);
-				}
-			}
 		}
 	}
 

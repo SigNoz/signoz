@@ -84,6 +84,8 @@ function JsonView({
 				<div className="json-view__wrap-toggle">
 					<Typography.Text>Wrap text</Typography.Text>
 					<Switch
+						color="primary"
+						textPlacement="right"
 						value={isWrapWord}
 						onChange={(checked): void => setIsWrapWord(checked)}
 					/>

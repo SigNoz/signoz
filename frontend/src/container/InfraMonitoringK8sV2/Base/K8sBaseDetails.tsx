@@ -195,11 +195,13 @@ export default function K8sBaseDetails<T>({
 				variant="ghost"
 				size="sm"
 				color="secondary"
+				icon
+				aria-label="Close"
 				onClick={handleClose}
-				data-testid="close-drawer-button"
-				className={styles.closeButton}
-				prefix={<X />}
-			/>
+				testId="close-drawer-button"
+			>
+				<X />
+			</Button>
 			<Divider type="vertical" />
 			<Typography.Text className={styles.title}>
 				{entityName ||
@@ -210,7 +212,6 @@ export default function K8sBaseDetails<T>({
 			<CopyButton
 				value={selectedItem ?? ''}
 				ariaLabel="Copy ID"
-				className={styles.copyIdButton}
 				testId="copy-id-button"
 				onCopy={handleCopyId}
 			/>

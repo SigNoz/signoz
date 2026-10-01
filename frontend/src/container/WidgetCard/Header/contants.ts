@@ -15,3 +15,11 @@ export const MENUITEM_KEYS_VS_LABELS = {
 	[MenuItemKeys.CreateAlerts]: 'Create Alerts',
 	[MenuItemKeys.Download]: 'Download as CSV',
 };
+
+export const VIEW_LOADING_TOOLTIP = 'Loading panel data';
+export const EDIT_DENIED_TOOLTIP =
+	'You do not have permission to edit this panel';
+export const CLONE_DENIED_TOOLTIP =
+	'You do not have permission to clone this panel';
+export const DELETE_DENIED_TOOLTIP =
+	'You do not have permission to delete this panel';

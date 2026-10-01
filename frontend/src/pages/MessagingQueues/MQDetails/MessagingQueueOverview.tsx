@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
 import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import { getPartitionLatencyOverview } from 'api/messagingQueues/getPartitionLatencyOverview';
@@ -35,14 +35,16 @@ function ProducerLatencyTabs({
 	const history = useHistory();
 
 	return (
-		<ToggleGroupSimple
+		<ToggleGroup
+			variant="outlined"
+			color="secondary"
+			size="sm"
 			type="single"
 			onChange={(value: string): void => {
 				setConfigDetail(urlQuery, location, history, {});
 				setOption(value as ProducerLatencyOptions);
 			}}
 			value={option}
-			className="mq-details-options"
 			items={[
 				{
 					value: ProducerLatencyOptions.Producers,

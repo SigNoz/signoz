@@ -191,11 +191,12 @@ function ThresholdsSection({
 			{thresholds.map(renderRow)}
 
 			<Button
+				size="md"
 				type="button"
 				variant="dashed"
 				color="secondary"
 				prefix={<Plus size={14} />}
-				data-testid={ADD_TESTID[variant]}
+				testId={ADD_TESTID[variant]}
 				onClick={addThreshold}
 			>
 				Add threshold

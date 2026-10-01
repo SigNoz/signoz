@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Color } from '@signozhq/design-tokens';
 import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Dropdown } from '@signozhq/ui/dropdown';
 import { GroupedStatusCounts } from 'container/InfraMonitoringK8sV2/components/GroupedStatusCounts';
 import type { StatusCountItem } from 'container/InfraMonitoringK8sV2/components/GroupedStatusCounts';
 import { ValidateColumnValueWrapper } from 'container/InfraMonitoringK8sV2/components/ValidateColumnValueWrapper';
@@ -92,24 +92,25 @@ const columns: TableColumnDef<ServiceRow>[] = [
 ];
 
 const rowActions = (): JSX.Element => (
-	<DropdownMenuSimple
+	<Dropdown
+		nativeButton
 		align="end"
-		menu={{
-			items: [
-				{ key: 'open', label: 'Open service details' },
-				{ key: 'copy', label: 'Copy service link' },
-			],
-		}}
+		side="bottom"
+		items={[
+			{ type: 'item', value: 'open', label: 'Open service details' },
+			{ type: 'item', value: 'copy', label: 'Copy service link' },
+		]}
 	>
 		<Button
 			aria-label="Service actions"
 			color="secondary"
-			size="icon"
+			size="sm"
+			icon
 			variant="outlined"
 		>
 			<Ellipsis size={16} />
 		</Button>
-	</DropdownMenuSimple>
+	</Dropdown>
 );
 
 const meta = {

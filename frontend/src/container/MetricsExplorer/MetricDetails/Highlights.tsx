@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button, Spin } from 'antd';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -13,10 +13,6 @@ import {
 	formatNumberToCompactFormat,
 	formatTimestampToReadableDate,
 } from './utils';
-
-const TOOLTIP_CONTENT_PROPS = {
-	className: 'metric-highlights-tooltip-content',
-};
 
 function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	const {
@@ -104,42 +100,32 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 							className="metric-details-grid-value"
 							data-testid="metric-highlights-data-points"
 						>
-							<TooltipSimple
-								title={metricHighlights?.dataPoints?.toLocaleString()}
-								tooltipContentProps={TOOLTIP_CONTENT_PROPS}
-								arrow
-							>
+							<Tooltip title={metricHighlights?.dataPoints?.toLocaleString()}>
 								<span>
 									{formatNumberIntoHumanReadableFormat(
 										metricHighlights?.dataPoints ?? 0,
 									)}
 								</span>
-							</TooltipSimple>
+							</Tooltip>
 						</Typography.Text>
 						<Typography.Text
 							className="metric-details-grid-value"
 							data-testid="metric-highlights-time-series-total"
 						>
-							<TooltipSimple
+							<Tooltip
 								title="Active time series are those that have received data points in the last 1 hour."
 								side="top"
-								tooltipContentProps={TOOLTIP_CONTENT_PROPS}
-								arrow
 							>
 								<span>{`${timeSeriesTotal} total ⎯ ${timeSeriesActive} active`}</span>
-							</TooltipSimple>
+							</Tooltip>
 						</Typography.Text>
 						<Typography.Text
 							className="metric-details-grid-value"
 							data-testid="metric-highlights-last-received"
 						>
-							<TooltipSimple
-								title={lastReceivedTooltipText}
-								tooltipContentProps={TOOLTIP_CONTENT_PROPS}
-								arrow
-							>
+							<Tooltip title={lastReceivedTooltipText}>
 								<span>{lastReceivedText}</span>
-							</TooltipSimple>
+							</Tooltip>
 						</Typography.Text>
 					</>
 				)}

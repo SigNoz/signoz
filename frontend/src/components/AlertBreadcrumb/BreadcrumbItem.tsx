@@ -26,9 +26,9 @@ function BreadcrumbItem({
 
 	return (
 		<Button
-			variant="ghost"
+			size="md"
+			variant="link"
 			color="secondary"
-			className={styles.item}
 			onClick={(e: React.MouseEvent): void => {
 				if (!('route' in props) || !props.route) {
 					return;

@@ -17,7 +17,10 @@ function ModalFixture(): JSX.Element {
 	return (
 		<>
 			<Button
-				data-testid="open-add-credit-card"
+				variant="solid"
+				color="primary"
+				size="md"
+				testId="open-add-credit-card"
 				onClick={(): void => setOpen(true)}
 			>
 				Contact support

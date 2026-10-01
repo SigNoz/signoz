@@ -230,63 +230,6 @@
 			}
 		}
 
-		.onboarding-next-button {
-			width: 100%;
-			height: 32px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 8px;
-			border-radius: 2px;
-			background: var(--primary-background);
-			border: none;
-			color: var(--bg-neutral-dark-50);
-			font-family: Inter, sans-serif;
-			font-size: 11px;
-			font-weight: 500;
-			line-height: 1;
-			cursor: pointer;
-			opacity: 1;
-			transition: opacity 0.2s;
-
-			&:hover {
-				opacity: 0.9;
-			}
-
-			&.disabled {
-				opacity: 0.6;
-				cursor: not-allowed;
-				pointer-events: none;
-			}
-		}
-
-		.onboarding-do-later-button {
-			width: 100%;
-			height: 32px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			border-radius: 2px;
-			background: transparent;
-			border: none;
-			color: var(--l2-foreground);
-			font-family: Inter, sans-serif;
-			font-size: 11px;
-			font-weight: 500;
-			line-height: 1;
-			cursor: pointer;
-			transition: opacity 0.2s;
-
-			&:hover {
-				opacity: 0.8;
-			}
-
-			&:disabled {
-				opacity: 0.5;
-				cursor: not-allowed;
-			}
-		}
-
 		.form-group {
 			display: flex;
 			flex-direction: column;
@@ -450,58 +393,6 @@
 			.observability-tool-other-input {
 				width: 100%;
 				margin-top: 12px;
-			}
-		}
-
-		.observability-tools-radio-container {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 0 12px;
-			width: 528px;
-
-			.observability-tool-radio-item {
-				display: flex;
-				align-items: center;
-				gap: 8px;
-				height: 32px;
-				width: calc((528px - 12px) / 2);
-				flex: 0 0 calc((528px - 12px) / 2);
-
-				label {
-					color: var(--l1-foreground);
-					font-size: 13px;
-					cursor: pointer;
-				}
-
-				&.observability-tool-others-item {
-					.onboarding-questionaire-other-input {
-						flex: 1;
-					}
-				}
-			}
-		}
-
-		.migration-timeline-radio-container,
-		.opentelemetry-radio-container {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 0 12px;
-			width: 528px;
-
-			.migration-timeline-radio-item,
-			.opentelemetry-radio-item {
-				display: flex;
-				align-items: center;
-				gap: 8px;
-				height: 32px;
-				width: calc((528px - 12px) / 2);
-				flex: 0 0 calc((528px - 12px) / 2);
-
-				label {
-					color: var(--l1-foreground);
-					font-size: 13px;
-					cursor: pointer;
-				}
 			}
 		}
 

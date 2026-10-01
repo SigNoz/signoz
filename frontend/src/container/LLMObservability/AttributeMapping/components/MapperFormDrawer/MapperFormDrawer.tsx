@@ -128,11 +128,12 @@ function MapperFormDrawer({
 				<div className={styles.footer}>
 					{isEdit && (
 						<Button
-							variant="ghost"
-							color="destructive"
+							size="md"
+							variant="solid"
+							color="danger"
 							prefix={<Trash2 size={14} />}
 							onClick={onDelete}
-							disabled={isDeleting}
+							loading={isDeleting}
 							testId="mapper-form-delete"
 						>
 							{isDeleting ? 'Deleting…' : 'Delete'}
@@ -140,6 +141,7 @@ function MapperFormDrawer({
 					)}
 					<div className={styles.footerActions}>
 						<Button
+							size="md"
 							variant="ghost"
 							color="secondary"
 							onClick={onClose}
@@ -148,10 +150,17 @@ function MapperFormDrawer({
 							Cancel
 						</Button>
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
 							onClick={onSave}
-							disabled={!isValid || isSaving}
+							loading={isSaving}
+							disabled={!isValid}
+							disabledTooltip={
+								draft.name.trim()
+									? 'Add at least one source attribute'
+									: 'Enter a target attribute first'
+							}
 							testId="mapper-form-save"
 						>
 							{/* eslint-disable-next-line no-nested-ternary */}
@@ -229,6 +238,7 @@ function MapperFormDrawer({
 					</DndContext>
 
 					<Button
+						size="md"
 						variant="dashed"
 						color="secondary"
 						prefix={<Plus size={14} />}

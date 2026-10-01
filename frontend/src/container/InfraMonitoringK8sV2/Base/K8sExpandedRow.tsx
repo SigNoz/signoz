@@ -288,11 +288,11 @@ export function K8sExpandedRow<
 
 	const footerContent = hasMoreItems ? (
 		<Button
+			size="md"
 			type="button"
 			color="secondary"
 			variant="outlined"
-			className={styles.viewAllButton}
-			data-testid="expanded-row-view-all"
+			testId="expanded-row-view-all"
 			onClick={handleViewAllClick}
 			prefix={<CornerDownRight size={14} />}
 		>

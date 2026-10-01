@@ -55,7 +55,12 @@ function FieldCell({ name, value }: FieldCellProps): JSX.Element {
 
 	if (STATUS_FIELD_NAMES.has(name)) {
 		return (
-			<Badge data-testid={name} color="sakura" variant="outline">
+			<Badge
+				textTransform="none"
+				testId={name}
+				color="highlight-danger"
+				variant="outlined"
+			>
 				{text}
 			</Badge>
 		);

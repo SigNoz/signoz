@@ -4,7 +4,6 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { render, screen } from '@testing-library/react';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
@@ -147,11 +146,9 @@ function renderExplorer(): void {
 		<QueryClientProvider client={queryClient}>
 			<MemoryRouter>
 				<Provider store={store}>
-					<TooltipProvider>
-						<ErrorModalProvider>
-							<Explorer />
-						</ErrorModalProvider>
-					</TooltipProvider>
+					<ErrorModalProvider>
+						<Explorer />
+					</ErrorModalProvider>
 				</Provider>
 			</MemoryRouter>
 		</QueryClientProvider>,
@@ -267,7 +264,7 @@ describe('Explorer', () => {
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		expect(oneChartPerQueryToggle).toBeChecked();
-		expect(oneChartPerQueryToggle).toBeDisabled();
+		expect(oneChartPerQueryToggle).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('should render empty y axis unit selector for a single metric with no unit', () => {
@@ -303,7 +300,7 @@ describe('Explorer', () => {
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		expect(oneChartPerQueryToggle).not.toBeChecked();
-		expect(oneChartPerQueryToggle).toBeDisabled();
+		expect(oneChartPerQueryToggle).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('one chart per query should enabled by default when there are multiple metrics with the same unit', () => {

@@ -12,13 +12,6 @@
 	}
 }
 
-.valueBadge {
-	--badge-font-size: 13px;
-	box-sizing: border-box;
-	max-width: 100%;
-	min-width: 0;
-}
-
 // Truncating text inside a badge
 .badgeText {
 	min-width: 0;
@@ -29,11 +22,14 @@
 
 .serviceDot {
 	width: 6px;
+	min-width: 6px;
 	height: 6px;
+	min-height: 6px;
 	border-radius: 50%;
 	background: var(--accent-forest);
 	flex-shrink: 0;
 	margin-right: 4px;
+	display: inline-block;
 }
 
 .traceLink {

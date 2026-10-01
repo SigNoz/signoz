@@ -66,17 +66,17 @@ function SettingsSection({
 					type="button"
 					variant="ghost"
 					color="secondary"
-					size="icon"
-					prefix={
-						<ChevronDown
-							size={15}
-							className={cx(styles.chevron, { [styles.open]: isOpen })}
-						/>
-					}
+					size="sm"
+					icon
 					aria-label={isOpen ? `Collapse ${title}` : `Expand ${title}`}
 					tabIndex={-1}
 					onClick={toggle}
-				/>
+				>
+					<ChevronDown
+						size={15}
+						className={cx(styles.chevron, { [styles.open]: isOpen })}
+					/>
+				</Button>
 			</div>
 			{isOpen && <div className={styles.body}>{children}</div>}
 		</section>

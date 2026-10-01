@@ -31,18 +31,19 @@ function UnsavedChangesFooter({
 			</div>
 			<div className={styles.footerActionButtons}>
 				<Button
+					size="md"
 					variant="ghost"
 					color="secondary"
-					disabled={isSaving}
+					loading={isSaving}
 					prefix={<X size={14} />}
 					onClick={onDiscard}
 				>
 					Discard
 				</Button>
 				<Button
+					size="md"
 					variant="solid"
 					color="primary"
-					disabled={isSaving}
 					loading={isSaving}
 					prefix={<Check size={14} />}
 					testId="save-dashboard-config"

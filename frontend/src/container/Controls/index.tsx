@@ -34,9 +34,21 @@ function Controls({
 		[countPerPage, isLogPanel, isNextAndPreviousDisabled, totalCount],
 	);
 
+	const getDisabledReason = (edgeReason: string): string => {
+		if (isLoading) {
+			return 'Wait for the results to load';
+		}
+		if (totalCount === 0) {
+			return 'There are no results';
+		}
+		return edgeReason;
+	};
+
 	return (
 		<div className={styles.container}>
 			<Button
+				disabledTooltip={getDisabledReason('You are on the first page')}
+				color="primary"
 				variant="link"
 				size="md"
 				disabled={isPreviousDisabled}
@@ -46,6 +58,8 @@ function Controls({
 				Previous
 			</Button>
 			<Button
+				disabledTooltip={getDisabledReason('You are on the last page')}
+				color="primary"
 				variant="link"
 				size="md"
 				disabled={isNextDisabled}
