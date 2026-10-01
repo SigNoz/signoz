@@ -3,6 +3,7 @@ import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
 import type uPlot from 'uplot';
 
 import type { AxisProps } from '../types';
+import { keepDecadeSplits } from '../../utils/logGridSplits';
 import { UPlotAxisBuilder } from '../UPlotAxisBuilder';
 
 jest.mock('components/Graph/yAxisConfig', () => ({
@@ -117,7 +118,16 @@ describe('UPlotAxisBuilder', () => {
 			width: 1,
 			// show falls back to default when not provided
 			show: true,
+			filter: keepDecadeSplits,
 		});
+	});
+
+	it('draws log grid lines at powers of ten only, and leaves a linear grid unfiltered', () => {
+		const log = new UPlotAxisBuilder(createAxisProps({ isLogScale: true }));
+		const linear = new UPlotAxisBuilder(createAxisProps({ isLogScale: false }));
+
+		expect(log.getConfig().grid?.filter).toBe(keepDecadeSplits);
+		expect(linear.getConfig().grid).not.toHaveProperty('filter');
 	});
 
 	it('uses provided ticks config when present and falls back to defaults otherwise', () => {
