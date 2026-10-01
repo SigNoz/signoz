@@ -5,6 +5,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import type { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
 import type { ScatterPointLabel } from 'lib/uPlotV2/plugins/ScatterPlugin/types';
+import type { ScatterPointClick } from 'lib/visualization/charts/types';
 import Scatter from 'lib/visualization/charts/Scatter/Scatter';
 import {
 	buildScatterConfig,
@@ -19,6 +20,9 @@ import PanelMessage from '../../components/PanelMessage/PanelMessage';
 import PanelStyles from '../../panel.module.scss';
 import type { PanelRendererProps } from '../../types/rendererProps';
 import { mapThresholds } from '../../utils/baseConfigBuilder';
+import { enrichScatterClick } from '../../utils/drilldown/enrichScatterClick';
+import { getBuilderQueries } from '../../utils/getBuilderQueries';
+import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,
@@ -46,6 +50,8 @@ function ScatterPlotPanelRenderer({
 	isFetching,
 	refetch,
 	panelMode,
+	onClick,
+	enableDrillDown,
 }: PanelRendererProps<'signoz/ScatterPlotPanel'>): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const containerDimensions = useResizeObserver(graphRef);
@@ -141,16 +147,42 @@ function ScatterPlotPanelRenderer({
 		[readyData],
 	);
 
+	const builderQueries = useMemo(
+		() => getBuilderQueries(panel.spec.queries || []),
+		[panel.spec.queries],
+	);
+
+	const handlePointClick = useCallback(
+		({ seriesIndex, dataIndex, color, coordinates }: ScatterPointClick): void => {
+			if (!onClick || !readyData) {
+				return;
+			}
+			const payload = enrichScatterClick({
+				labels: readyData.pointLabels[seriesIndex - 1]?.[dataIndex] ?? [],
+				label: readyData.series[seriesIndex - 1]?.label ?? '',
+				color,
+				axisQueries: readyData.axisQueries,
+				builderQueries,
+				coordinates,
+				timeRange: getPanelTimeRange(data.requestPayload),
+			});
+			if (payload) {
+				onClick(payload);
+			}
+		},
+		[onClick, readyData, builderQueries, data.requestPayload],
+	);
+
 	const renderTooltipFooter = useCallback(
 		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => (
 			<TooltipFooter
 				id={panelId}
 				isPinned={isPinned}
 				dismiss={dismiss}
-				canDrilldown={false}
+				canDrilldown={!!enableDrillDown}
 			/>
 		),
-		[panelId],
+		[panelId, enableDrillDown],
 	);
 
 	return (
@@ -185,6 +217,7 @@ function ScatterPlotPanelRenderer({
 								width={containerDimensions.width}
 								height={containerDimensions.height}
 								renderTooltipFooter={renderTooltipFooter}
+								onPointClick={enableDrillDown ? handlePointClick : undefined}
 								data-testid="scatter-plot-chart"
 							/>
 						)}
