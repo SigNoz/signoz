@@ -78,6 +78,10 @@ export interface AxisProps {
 	};
 	/** Explicit tick formatter, replacing the scale's default (time / unit-formatted). */
 	values?: uPlot.Axis.Values;
+	/** Explicit tick positions, replacing uPlot's per-distribution default. */
+	splits?: uPlot.Axis.Splits;
+	/** Which splits get a label, replacing uPlot's per-distribution default. */
+	filter?: uPlot.Axis.Filter;
 	/** Pixels between the ticks and their labels; also feeds the y axis width calculation. */
 	gap?: number;
 	/** Explicit axis thickness. Left unset, the y axis sizes itself to its widest label. */

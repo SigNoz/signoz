@@ -1,5 +1,6 @@
 import { PrecisionOption } from 'components/Graph/types';
 import {
+	type AxisProps,
 	DistributionType,
 	DrawStyle,
 	SelectionPreferencesSource,
@@ -17,7 +18,14 @@ import {
 	ScatterPointSize,
 	ScatterSeriesData,
 } from 'lib/uPlotV2/plugins/ScatterPlugin/types';
+import {
+	logScaleSplits,
+	spacedLogLabels,
+} from 'lib/uPlotV2/utils/logGridSplits';
+import { adjustSoftLimitsWithThresholds } from 'lib/uPlotV2/utils/scale';
 import uPlot from 'uplot';
+
+import { createScatterRange } from './scatterRange';
 
 /** Circle outline; the fill carries the colour. */
 const POINT_STROKE_WIDTH = 1;
@@ -173,6 +181,15 @@ export function resolveAxisDistribution(
 	}
 }
 
+/** The scatter range is unsnapped, so a log axis places and labels its own ticks. */
+function getLogAxisTicks({
+	distribution,
+}: AxisDistribution): Pick<AxisProps, 'splits' | 'filter'> {
+	return distribution === DistributionType.Logarithmic
+		? { splits: logScaleSplits, filter: spacedLogLabels }
+		: {};
+}
+
 export function buildScatterConfig({
 	id,
 	series,
@@ -212,11 +229,30 @@ export function buildScatterConfig({
 			? { scaleKey: 'y', thresholds, yAxisUnit: y.unit }
 			: undefined;
 
+	// The largest disc drawn, plus its outline, kept clear of each plot edge.
+	const largestDiameter = series.some((entry) => entry.sizes)
+		? pointSize.max
+		: pointSize.fixed;
+	const marginPx = largestDiameter / 2 + POINT_STROKE_WIDTH;
+	const ySoftLimits = adjustSoftLimitsWithThresholds(
+		y.softMin ?? null,
+		y.softMax ?? null,
+		thresholds,
+		y.unit,
+	);
+
 	builder.addScale({
 		scaleKey: 'x',
 		time: false,
 		softMin: x.softMin ?? undefined,
 		softMax: x.softMax ?? undefined,
+		range: createScatterRange({
+			dimension: 'x',
+			marginPx,
+			softMin: x.softMin,
+			softMax: x.softMax,
+			...xDistribution,
+		}),
 		...xDistribution,
 	});
 	builder.addScale({
@@ -225,6 +261,12 @@ export function buildScatterConfig({
 		softMin: y.softMin ?? undefined,
 		softMax: y.softMax ?? undefined,
 		thresholds: yThresholds,
+		range: createScatterRange({
+			dimension: 'y',
+			marginPx,
+			...ySoftLimits,
+			...yDistribution,
+		}),
 		...yDistribution,
 	});
 
@@ -237,6 +279,7 @@ export function buildScatterConfig({
 		yAxisUnit: x.unit ?? '',
 		decimalPrecision,
 		isLogScale: xDistribution.distribution !== DistributionType.Linear,
+		...getLogAxisTicks(xDistribution),
 		space: X_AXIS_TICK_SPACE_PX,
 	});
 	builder.addAxis({
@@ -247,6 +290,7 @@ export function buildScatterConfig({
 		yAxisUnit: y.unit ?? '',
 		decimalPrecision,
 		isLogScale: yDistribution.distribution !== DistributionType.Linear,
+		...getLogAxisTicks(yDistribution),
 	});
 
 	series.forEach((entry) => {
