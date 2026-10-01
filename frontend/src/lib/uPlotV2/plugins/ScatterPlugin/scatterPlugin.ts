@@ -42,7 +42,7 @@ function snapToPixel(start: number, length: number): [number, number] {
 	return [snapped, length + (start - snapped) * 2];
 }
 
-function getSeriesStroke(u: uPlot, seriesIdx: number): string {
+export function getSeriesStroke(u: uPlot, seriesIdx: number): string {
 	const { stroke } = u.series[seriesIdx];
 	const color = typeof stroke === 'function' ? stroke(u, seriesIdx) : stroke;
 	return typeof color === 'string' ? color : '';

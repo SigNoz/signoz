@@ -92,6 +92,16 @@ export interface HistogramChartProps extends ChartWrapperProps {
 	isQueriesMerged?: boolean;
 }
 
+/** The dot a click landed on; `seriesIndex` is uPlot's, so the first series is 1. */
+export interface ScatterPointClick {
+	seriesIndex: number;
+	dataIndex: number;
+	/** The series' drawn colour. */
+	color: string;
+	/** Viewport coordinates of the click. */
+	coordinates: { x: number; y: number };
+}
+
 /** `data` is mode-2 (`prepareScatterChartData`); `config` comes from `buildScatterConfig`. */
 export interface ScatterChartProps extends ChartWrapperProps {
 	channels: ScatterChannels;
@@ -99,6 +109,8 @@ export interface ScatterChartProps extends ChartWrapperProps {
 		seriesIndex: number,
 		dataIndex: number,
 	) => ScatterPointLabel[];
+	/** Fires for a click on a dot; a click on empty plot space fires nothing. */
+	onPointClick?: (click: ScatterPointClick) => void;
 }
 
 /**

@@ -73,6 +73,23 @@ export interface BuildScatterConfigArgs {
 	shouldSaveSelectionPreference?: boolean;
 }
 
+/**
+ * The dot under the cursor, read off uPlot's cursor: the scatter plugin's
+ * `dataIdx` answers only for the hit series, so its index is the one set.
+ */
+export function getCursorHit(
+	plot: uPlot,
+): { seriesIndex: number; dataIndex: number } | null {
+	const idxs = plot.cursor.idxs ?? [];
+	for (let seriesIndex = 1; seriesIndex < idxs.length; seriesIndex++) {
+		const dataIndex = idxs[seriesIndex];
+		if (dataIndex != null) {
+			return { seriesIndex, dataIndex };
+		}
+	}
+	return null;
+}
+
 /** `[null, [xs, ys, sizes?], …]`: uPlot's faceted layout, series 0 empty. */
 export function prepareScatterChartData(
 	series: ScatterSeries[],
