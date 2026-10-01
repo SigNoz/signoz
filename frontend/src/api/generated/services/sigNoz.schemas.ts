@@ -9372,7 +9372,7 @@ export interface PromotetypesPromotePathDTO {
 	/**
 	 * @type string
 	 */
-	context?: string;
+	context: string;
 	/**
 	 * @type array
 	 */
@@ -9380,7 +9380,7 @@ export interface PromotetypesPromotePathDTO {
 	/**
 	 * @type string
 	 */
-	path?: string;
+	path: string;
 	/**
 	 * @type boolean
 	 */
@@ -9388,7 +9388,7 @@ export interface PromotetypesPromotePathDTO {
 	/**
 	 * @type string
 	 */
-	signal?: string;
+	signal: string;
 }
 
 export interface Querybuildertypesv5AggregationMetaDTO {
@@ -12503,6 +12503,29 @@ export type GetOrgPreference200 = {
 export type UpdateOrgPreferencePathParameters = {
 	name: string;
 };
+export type ListPromotedPathsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	signal?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	context?: string;
+	/**
+	 * @type boolean,null
+	 * @description undefined
+	 */
+	promoted?: boolean | null;
+	/**
+	 * @type boolean,null
+	 * @description undefined
+	 */
+	indexes?: boolean | null;
+};
+
 export type ListPromotedPaths200 = {
 	/**
 	 * @type array,null
