@@ -9,6 +9,7 @@ import Scatter from './Scatter';
 import {
 	buildScatterConfig,
 	prepareScatterChartData,
+	ScatterAxisScale,
 	ScatterSeries,
 } from './utils';
 
@@ -32,8 +33,8 @@ interface ScatterStoryProps {
 	pointsPerGroup: number;
 	/** Adds an error-count size column. */
 	sized: boolean;
-	xLog: boolean;
-	yLog: boolean;
+	xScale: ScatterAxisScale;
+	yScale: ScatterAxisScale;
 	/** Zeroes a share of y values, which forces the symmetric log. */
 	withZeros: boolean;
 	shape: Shape;
@@ -106,8 +107,8 @@ const THRESHOLDS: Threshold[] = [
 
 function ScatterStory(props: ScatterStoryProps): JSX.Element {
 	const {
-		xLog,
-		yLog,
+		xScale,
+		yScale,
 		sized,
 		thresholds,
 		pointSize,
@@ -127,8 +128,8 @@ function ScatterStory(props: ScatterStoryProps): JSX.Element {
 			id: 'scatter-story',
 			series,
 			isDarkMode,
-			x: { unit: 'reqps', isLogScale: xLog },
-			y: { unit: 'ms', isLogScale: yLog },
+			x: { unit: 'reqps', scale: xScale },
+			y: { unit: 'ms', scale: yScale },
 			pointSize: { fixed: pointSize, min: 4, max: pointSize * 4 },
 			fillOpacity,
 			thresholds: thresholds ? THRESHOLDS : undefined,
@@ -141,7 +142,7 @@ function ScatterStory(props: ScatterStoryProps): JSX.Element {
 			setDrawMs(performance.now() - started);
 		});
 		return builder;
-	}, [series, isDarkMode, xLog, yLog, pointSize, fillOpacity, thresholds]);
+	}, [series, isDarkMode, xScale, yScale, pointSize, fillOpacity, thresholds]);
 
 	const data = useMemo(() => prepareScatterChartData(series), [series]);
 
@@ -187,8 +188,8 @@ const meta = {
 		groups: 1,
 		pointsPerGroup: 10,
 		sized: false,
-		xLog: false,
-		yLog: false,
+		xScale: ScatterAxisScale.Linear,
+		yScale: ScatterAxisScale.Linear,
 		withZeros: false,
 		shape: 'spread',
 		thresholds: false,
@@ -199,6 +200,8 @@ const meta = {
 	},
 	argTypes: {
 		shape: { control: 'radio', options: ['spread', 'single', 'sameX'] },
+		xScale: { control: 'radio', options: Object.values(ScatterAxisScale) },
+		yScale: { control: 'radio', options: Object.values(ScatterAxisScale) },
 		fillOpacity: { control: { type: 'range', min: 0, max: 1, step: 0.05 } },
 		pointSize: { control: { type: 'range', min: 2, max: 16, step: 1 } },
 	},
@@ -226,8 +229,8 @@ export const LogAxes: Story = {
 	args: {
 		groups: 5,
 		pointsPerGroup: 60,
-		xLog: true,
-		yLog: true,
+		xScale: ScatterAxisScale.Log,
+		yScale: ScatterAxisScale.Log,
 		withZeros: true,
 	},
 };
