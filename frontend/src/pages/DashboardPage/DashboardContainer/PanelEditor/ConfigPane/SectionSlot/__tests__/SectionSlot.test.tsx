@@ -28,7 +28,12 @@ function Harness({ initial = [] }: { initial?: unknown[] } = {}): JSX.Element {
 		makeSpec(initial),
 	);
 	return (
-		<SectionSlot config={THRESHOLDS_CONFIG} spec={spec} onChangeSpec={setSpec} />
+		<SectionSlot
+			config={THRESHOLDS_CONFIG}
+			spec={spec}
+			defaults={{}}
+			onChangeSpec={setSpec}
+		/>
 	);
 }
 
@@ -68,5 +73,50 @@ describe('SectionSlot header action', () => {
 			screen.getByTestId('panel-editor-v2-add-threshold'),
 		).toBeInTheDocument();
 		expect(screen.getByTestId('threshold-value-0')).toBeInTheDocument();
+	});
+});
+
+describe('SectionSlot header summary', () => {
+	it('summarises a collapsed section and marks it changed', async () => {
+		const user = userEvent.setup();
+		render(
+			<Harness initial={[{ value: 80, color: '#F5B225', label: 'High' }]} />,
+		);
+
+		await user.click(screen.getByTestId('config-section-thresholds'));
+
+		expect(screen.getByText('1 threshold')).toBeInTheDocument();
+		expect(screen.getByTestId('config-changed-dot')).toBeInTheDocument();
+	});
+
+	it('shows no summary or changed marker for an untouched section', () => {
+		render(<Harness />);
+
+		expect(screen.queryByTestId('config-changed-dot')).not.toBeInTheDocument();
+		expect(screen.queryByText(/threshold$/)).not.toBeInTheDocument();
+	});
+});
+
+describe('SectionSlot rendered defaults', () => {
+	it('does not mark an explicit value that matches what unset renders as', () => {
+		const spec = {
+			display: { name: 'CPU' },
+			plugin: {
+				kind: 'signoz/TimeSeriesPanel',
+				spec: { formatting: { decimalPrecision: '2' } },
+			},
+			queries: [],
+		} as unknown as DashboardtypesPanelSpecDTO;
+
+		render(
+			<SectionSlot
+				config={{ kind: SectionKind.Formatting, controls: { decimals: true } }}
+				spec={spec}
+				defaults={{}}
+				onChangeSpec={jest.fn()}
+			/>,
+		);
+
+		expect(screen.queryByTestId('config-changed-dot')).not.toBeInTheDocument();
 	});
 });

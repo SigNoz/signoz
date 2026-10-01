@@ -15,7 +15,7 @@ describe('LegendColors', () => {
 		expect(
 			screen.queryByTestId('panel-editor-v2-legend-colors'),
 		).not.toBeInTheDocument();
-		expect(screen.getByText(/run the panel/i)).toBeInTheDocument();
+		expect(screen.getByText(/run the query/i)).toBeInTheDocument();
 	});
 
 	it('renders the search box once series are present', () => {

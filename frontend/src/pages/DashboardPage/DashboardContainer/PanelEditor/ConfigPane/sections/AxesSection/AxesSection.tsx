@@ -1,21 +1,16 @@
-import type { ChangeEvent } from 'react';
-import { Typography } from '@signozhq/ui/typography';
-import { Input } from 'antd';
 import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
-import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
+import ConfigField from '../../controls/ConfigField/ConfigField';
+import ConfigInlineField from '../../controls/ConfigInlineField/ConfigInlineField';
+import ConfigRangeInput from '../../controls/ConfigRangeInput/ConfigRangeInput';
+import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';
+import { createFieldResetter } from '../../utils/changes';
+import { AxisScale, RANGE_HELP, SCALE_HELP, SCALE_OPTIONS } from './options';
 
 import styles from './AxesSection.module.scss';
-
-type SoftBound = 'softMin' | 'softMax';
-
-const SCALE_OPTIONS = [
-	{ value: 'linear', label: 'Linear', icon: 'scale-linear' as const },
-	{ value: 'log', label: 'Log', icon: 'scale-log' as const },
-];
 
 /**
  * Edits the `axes` slice of a panel spec: soft Y-axis min/max bounds and the
@@ -23,60 +18,43 @@ const SCALE_OPTIONS = [
  */
 function AxesSection({
 	value,
+	defaultValue,
 	controls,
 	onChange,
 }: SectionEditorProps<SectionKind.Axes>): JSX.Element {
-	// An empty field clears the bound (null); otherwise parse to a number, ignoring
-	// transient non-numeric input (e.g. a lone "-") by leaving the bound unset.
-	const handleBound =
-		(bound: SoftBound) =>
-		(e: ChangeEvent<HTMLInputElement>): void => {
-			const raw = e.target.value;
-			const next = raw === '' || Number.isNaN(Number(raw)) ? null : Number(raw);
-			onChange({ ...value, [bound]: next });
-		};
+	const reset = createFieldResetter(value, defaultValue, onChange);
+	const scale = value?.isLogScale ? AxisScale.LOG : AxisScale.LINEAR;
 
 	return (
-		<>
-			{controls.minMax && (
-				<div className={styles.bounds}>
-					<div className={styles.field}>
-						<Typography.Text>Soft min</Typography.Text>
-						<Input
-							data-testid="panel-editor-v2-soft-min"
-							type="number"
-							placeholder="Auto"
-							value={value?.softMin ?? ''}
-							onChange={handleBound('softMin')}
+		<ConfigField label="Y axis" {...reset('softMin', 'softMax', 'isLogScale')}>
+			<div className={styles.fields}>
+				{controls.minMax && (
+					<ConfigInlineField label="Range" help={RANGE_HELP}>
+						<ConfigRangeInput
+							testIdPrefix="panel-editor-v2"
+							min={value?.softMin}
+							max={value?.softMax}
+							onChangeMin={(softMin): void => onChange({ ...value, softMin })}
+							onChangeMax={(softMax): void => onChange({ ...value, softMax })}
 						/>
-					</div>
-					<div className={styles.field}>
-						<Typography.Text>Soft max</Typography.Text>
-						<Input
-							data-testid="panel-editor-v2-soft-max"
-							type="number"
-							placeholder="Auto"
-							value={value?.softMax ?? ''}
-							onChange={handleBound('softMax')}
-						/>
-					</div>
-				</div>
-			)}
+					</ConfigInlineField>
+				)}
 
-			{controls.logScale && (
-				<div className={styles.field}>
-					<Typography.Text>Y-axis scale</Typography.Text>
-					<ConfigSegmented
-						testId="panel-editor-v2-log-scale"
-						value={value?.isLogScale ? 'log' : 'linear'}
-						items={SCALE_OPTIONS}
-						onChange={(next): void =>
-							onChange({ ...value, isLogScale: next === 'log' })
-						}
-					/>
-				</div>
-			)}
-		</>
+				{controls.logScale && (
+					<ConfigField label="Scale" help={SCALE_HELP[scale]}>
+						<ConfigTiles
+							testId="panel-editor-v2-log-scale"
+							aria-label="Y-axis scale"
+							value={scale}
+							items={SCALE_OPTIONS}
+							onChange={(next): void =>
+								onChange({ ...value, isLogScale: next === AxisScale.LOG })
+							}
+						/>
+					</ConfigField>
+				)}
+			</div>
+		</ConfigField>
 	);
 }
 

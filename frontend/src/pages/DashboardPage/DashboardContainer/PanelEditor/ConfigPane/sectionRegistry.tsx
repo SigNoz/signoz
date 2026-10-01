@@ -12,21 +12,32 @@ import {
 	type PanelChartAppearanceSlice,
 	type PanelFormattingSlice,
 	type PanelVisualizationSlice,
+	type SectionControlsOf,
 	type SectionEditorProps,
 	type SectionSpecMap,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
+import type { SeededPluginSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/buildPluginSpec';
 
 import type { SectionEditorContext } from './sectionContext';
 import AxesSection from './sections/AxesSection/AxesSection';
+import { summarizeAxes } from './sections/AxesSection/summary';
 import BucketsSection from './sections/BucketsSection/BucketsSection';
+import { summarizeBuckets } from './sections/BucketsSection/summary';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
+import { summarizeChartAppearance } from './sections/ChartAppearanceSection/summary';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
 import FormattingSection from './sections/FormattingSection/FormattingSection';
+import { DEFAULT_DECIMAL_PRECISION } from './sections/FormattingSection/options';
+import { summarizeFormatting } from './sections/FormattingSection/summary';
 import LegendSection from './sections/LegendSection/LegendSection';
+import { summarizeLegend } from './sections/LegendSection/summary';
 import PanelHeaderSection from './sections/PanelHeaderSection/PanelHeaderSection';
+import { summarizeTextLayout } from './sections/TextLayoutSection/summary';
 import TextLayoutSection from './sections/TextLayoutSection/TextLayoutSection';
 import ThresholdsSection from './sections/ThresholdsSection/ThresholdsSection';
+import { summarizeVisualization } from './sections/VisualizationSection/summary';
 import VisualizationSection from './sections/VisualizationSection/VisualizationSection';
+import { countSummary } from './utils/summary';
 
 type PanelSpec = DashboardtypesPanelSpecDTO;
 
@@ -39,6 +50,14 @@ export interface SectionDescriptor<K extends SectionKind> {
 	Component: ComponentType<SectionEditorProps<K>>;
 	get: (spec: PanelSpec) => SectionSpecMap[K] | undefined;
 	update: (spec: PanelSpec, value: SectionSpecMap[K]) => PanelSpec;
+	/** Values an unset field renders with, when the kind's seed leaves it unset. */
+	renderedDefaults?: Partial<SectionSpecMap[K]>;
+	/** Collapsed-header digest of the slice. */
+	summarize?: (
+		value: SectionSpecMap[K] | undefined,
+		controls: SectionControlsOf<K>,
+		ctx: SectionEditorContext,
+	) => string;
 }
 
 // The plugin spec is a discriminated union over panel kinds; reading/writing a shared
@@ -78,12 +97,15 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<PanelFormattingSlice>(spec, 'formatting'),
 		update: (spec, formatting): PanelSpec =>
 			updatePluginSlice(spec, 'formatting', formatting),
+		renderedDefaults: { decimalPrecision: DEFAULT_DECIMAL_PRECISION },
+		summarize: summarizeFormatting,
 	},
 	[SectionKind.Axes]: {
 		Component: AxesSection,
 		get: (spec): DashboardtypesAxesDTO | undefined =>
 			getPluginSlice<DashboardtypesAxesDTO>(spec, 'axes'),
 		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
+		summarize: summarizeAxes,
 	},
 	[SectionKind.Legend]: {
 		Component: LegendSection,
@@ -91,6 +113,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<DashboardtypesLegendDTO>(spec, 'legend'),
 		update: (spec, legend): PanelSpec =>
 			updatePluginSlice(spec, 'legend', legend),
+		summarize: summarizeLegend,
 	},
 	[SectionKind.ChartAppearance]: {
 		Component: ChartAppearanceSection,
@@ -98,6 +121,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<PanelChartAppearanceSlice>(spec, 'chartAppearance'),
 		update: (spec, chartAppearance): PanelSpec =>
 			updatePluginSlice(spec, 'chartAppearance', chartAppearance),
+		summarize: summarizeChartAppearance,
 	},
 	[SectionKind.Visualization]: {
 		Component: VisualizationSection,
@@ -105,6 +129,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<PanelVisualizationSlice>(spec, 'visualization'),
 		update: (spec, visualization): PanelSpec =>
 			updatePluginSlice(spec, 'visualization', visualization),
+		summarize: summarizeVisualization,
 	},
 	[SectionKind.Buckets]: {
 		Component: BucketsSection,
@@ -112,6 +137,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<DashboardtypesHistogramBucketsDTO>(spec, 'histogramBuckets'),
 		update: (spec, buckets): PanelSpec =>
 			updatePluginSlice(spec, 'histogramBuckets', buckets),
+		summarize: summarizeBuckets,
 	},
 	[SectionKind.TextLayout]: {
 		Component: TextLayoutSection,
@@ -119,6 +145,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<SectionSpecMap[SectionKind.TextLayout]>(spec, 'presentation'),
 		update: (spec, presentation): PanelSpec =>
 			updatePluginSlice(spec, 'presentation', presentation),
+		summarize: summarizeTextLayout,
 	},
 	[SectionKind.PanelHeader]: {
 		Component: PanelHeaderSection,
@@ -135,6 +162,7 @@ export const SECTION_REGISTRY: {
 		// Panel-level slice (spec.links), not under the plugin spec — no cast needed.
 		get: (spec): DashboardtypesLinkDTO[] => spec.links || [],
 		update: (spec, links): PanelSpec => ({ ...spec, links }),
+		summarize: (links): string => countSummary(links, 'link'),
 	},
 	// One editor for every threshold variant (label / comparison / table); the kind's
 	// `controls.variant` picks the row editor + element shape. All persist to the same
@@ -145,6 +173,7 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<AnyThreshold[]>(spec, 'thresholds'),
 		update: (spec, thresholds): PanelSpec =>
 			updatePluginSlice(spec, 'thresholds', thresholds),
+		summarize: (thresholds): string => countSummary(thresholds, 'threshold'),
 	},
 };
 
@@ -159,12 +188,19 @@ export interface ErasedSectionDescriptor {
 	Component: ComponentType<
 		{
 			value: unknown;
+			defaultValue?: unknown;
 			controls?: unknown;
 			onChange: (next: unknown) => void;
 		} & SectionEditorContext
 	>;
 	get: (spec: PanelSpec) => unknown;
 	update: (spec: PanelSpec, value: unknown) => PanelSpec;
+	renderedDefaults?: object;
+	summarize?: (
+		value: unknown,
+		controls: unknown,
+		ctx: SectionEditorContext,
+	) => string;
 }
 
 export function resolveSectionEditor(
@@ -173,4 +209,21 @@ export function resolveSectionEditor(
 	return SECTION_REGISTRY[kind] as unknown as
 		| ErasedSectionDescriptor
 		| undefined;
+}
+
+/** A slice's default, read through the same lens from the kind's seeded plugin spec. */
+export function getSectionDefault(
+	editor: ErasedSectionDescriptor,
+	spec: PanelSpec,
+	defaults: SeededPluginSpec,
+): unknown {
+	const seeded = editor.get({
+		...spec,
+		links: [],
+		plugin: { ...spec.plugin, spec: defaults },
+	} as PanelSpec);
+	if (!editor.renderedDefaults) {
+		return seeded;
+	}
+	return { ...editor.renderedDefaults, ...(seeded as object | undefined) };
 }

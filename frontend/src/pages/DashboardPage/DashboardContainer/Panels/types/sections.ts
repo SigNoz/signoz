@@ -213,7 +213,7 @@ export const SECTION_METADATA = {
 	[SectionKind.Legend]: { title: 'Legend', icon: Signpost },
 	[SectionKind.ChartAppearance]: { title: 'Chart appearance', icon: Palette },
 	[SectionKind.Visualization]: { title: 'Visualization', icon: Wallpaper },
-	[SectionKind.Buckets]: { title: 'Histogram / Buckets', icon: BarChart },
+	[SectionKind.Buckets]: { title: 'Buckets', icon: BarChart },
 	[SectionKind.Thresholds]: { title: 'Thresholds', icon: Antenna },
 	[SectionKind.ContextLinks]: { title: 'Context Links', icon: Link2 },
 	[SectionKind.Columns]: { title: 'Columns', icon: Columns3 },
@@ -227,7 +227,12 @@ export const SECTION_METADATA = {
  */
 export type SectionEditorProps<K extends SectionKind> = {
 	value: SectionSpecMap[K] | undefined;
+	/** The kind's seeded value for this slice; drives Reset and changed markers. */
+	defaultValue?: SectionSpecMap[K];
 	onChange: (next: SectionSpecMap[K]) => void;
 } & (K extends ControlledSectionKind
 	? { controls: SectionControls[K] }
 	: unknown);
+
+export type SectionControlsOf<K extends SectionKind> =
+	K extends ControlledSectionKind ? SectionControls[K] : undefined;

@@ -6,16 +6,20 @@ import {
 	type SectionConfig,
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
+import type { SeededPluginSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/buildPluginSpec';
 
 import type { SectionEditorContext } from '../sectionContext';
-import { resolveSectionEditor } from '../sectionRegistry';
+import { getSectionDefault, resolveSectionEditor } from '../sectionRegistry';
 import SettingsSection from '../SettingsSection/SettingsSection';
+import { isChanged } from '../utils/changes';
 import SectionHeaderQuickAdd from './SectionHeaderQuickAdd';
 
 type SectionSlotProps = {
 	config: SectionConfig;
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
+	/** The kind's seeded plugin spec (`buildPluginSpec`). */
+	defaults: SeededPluginSpec;
 	/** Renders the editor alone, for a section promoted into the Panel Details fields. */
 	bare?: boolean;
 } & Omit<SectionEditorContext, 'yAxisUnit' | 'registerHeaderAction'>;
@@ -52,6 +56,7 @@ function SectionSlot({
 	config,
 	spec,
 	onChangeSpec,
+	defaults,
 	bare,
 	legendSeries,
 	tableColumns,
@@ -104,8 +109,10 @@ function SectionSlot({
 		return null;
 	}
 
-	const { title, icon: Icon } = SECTION_METADATA[config.kind];
-	const { Component, get, update } = editor;
+	const { title } = SECTION_METADATA[config.kind];
+	const { Component, get, update, summarize } = editor;
+	const value = get(spec);
+	const defaultValue = getSectionDefault(editor, spec, defaults);
 	// Atomic sections carry no `controls`; controlled ones do.
 	const controls = 'controls' in config ? config.controls : undefined;
 	// Forwarded to editors that scope to the panel's unit (e.g. the thresholds unit picker).
@@ -114,21 +121,26 @@ function SectionSlot({
 
 	const headerSlot = SECTION_HEADER_SLOT[config.kind]?.(triggerHeaderAction);
 
+	const context: SectionEditorContext = {
+		legendSeries,
+		yAxisUnit,
+		tableColumns,
+		signal,
+		panelKind,
+		onChangePanelKind,
+		originalPanelKind,
+		queryType,
+		stepInterval,
+		metricUnit,
+	};
+
 	const editorElement = (
 		<Component
-			value={get(spec)}
+			value={value}
+			defaultValue={defaultValue}
 			controls={controls}
 			onChange={(next): void => onChangeSpec(update(spec, next))}
-			legendSeries={legendSeries}
-			yAxisUnit={yAxisUnit}
-			tableColumns={tableColumns}
-			signal={signal}
-			panelKind={panelKind}
-			onChangePanelKind={onChangePanelKind}
-			originalPanelKind={originalPanelKind}
-			queryType={queryType}
-			stepInterval={stepInterval}
-			metricUnit={metricUnit}
+			{...context}
 			registerHeaderAction={registerHeaderAction}
 		/>
 	);
@@ -140,7 +152,8 @@ function SectionSlot({
 	return (
 		<SettingsSection
 			title={title}
-			icon={<Icon size={15} />}
+			summary={summarize?.(value, controls, context)}
+			changed={isChanged(value, defaultValue)}
 			open={open}
 			onOpenChange={setOpen}
 			headerSlot={headerSlot}
