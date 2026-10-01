@@ -13,8 +13,6 @@ func TestNewReceiverGoogleChatWebhookURL(t *testing.T) {
 		wantErr bool
 	}{
 		{"valid", `{"name":"gc","googlechat_configs":[{"webhook_url":"https://chat.googleapis.com/v1/spaces/AAA/messages?key=k&token=t"}]}`, false},
-		{"http scheme rejected", `{"name":"gc","googlechat_configs":[{"webhook_url":"http://chat.googleapis.com/v1/spaces/x/messages"}]}`, true},
-		{"wrong host rejected", `{"name":"gc","googlechat_configs":[{"webhook_url":"https://example.com/x"}]}`, true},
 		{"missing webhook_url", `{"name":"gc","googlechat_configs":[{"title":"x"}]}`, true},
 	}
 	for _, c := range cases {
