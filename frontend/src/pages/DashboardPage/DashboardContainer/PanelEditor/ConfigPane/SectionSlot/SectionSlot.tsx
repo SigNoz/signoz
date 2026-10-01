@@ -60,6 +60,7 @@ function SectionSlot({
 	bare,
 	legendSeries,
 	tableColumns,
+	groupColumns,
 	signal,
 	panelKind,
 	onChangePanelKind,
@@ -71,7 +72,10 @@ function SectionSlot({
 	const editor = resolveSectionEditor(config.kind);
 	// Controlled so the header slot can expand on click; list sections open when populated.
 	const [open, setOpen] = useState(() => {
-		if (config.kind === SectionKind.Visualization) {
+		if (
+			config.kind === SectionKind.Visualization ||
+			config.kind === SectionKind.Dimensions
+		) {
 			return true;
 		}
 		const value = editor?.get(spec);
@@ -125,6 +129,7 @@ function SectionSlot({
 		legendSeries,
 		yAxisUnit,
 		tableColumns,
+		groupColumns,
 		signal,
 		panelKind,
 		onChangePanelKind,

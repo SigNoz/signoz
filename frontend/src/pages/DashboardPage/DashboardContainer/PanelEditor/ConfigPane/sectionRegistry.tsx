@@ -5,6 +5,8 @@ import type {
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
 	DashboardtypesPanelSpecDTO,
+	DashboardtypesScatterPlotAxesDTO,
+	DashboardtypesScatterPlotDimensionsDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	SectionKind,
@@ -26,12 +28,16 @@ import { summarizeBuckets } from './sections/BucketsSection/summary';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
 import { summarizeChartAppearance } from './sections/ChartAppearanceSection/summary';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
+import DimensionsSection from './sections/DimensionsSection/DimensionsSection';
+import { summarizeDimensions } from './sections/DimensionsSection/summary';
 import FormattingSection from './sections/FormattingSection/FormattingSection';
 import { DEFAULT_DECIMAL_PRECISION } from './sections/FormattingSection/options';
 import { summarizeFormatting } from './sections/FormattingSection/summary';
 import LegendSection from './sections/LegendSection/LegendSection';
 import { summarizeLegend } from './sections/LegendSection/summary';
 import PanelHeaderSection from './sections/PanelHeaderSection/PanelHeaderSection';
+import ScatterAxesSection from './sections/ScatterAxesSection/ScatterAxesSection';
+import { summarizeScatterAxes } from './sections/ScatterAxesSection/summary';
 import { summarizeTextLayout } from './sections/TextLayoutSection/summary';
 import TextLayoutSection from './sections/TextLayoutSection/TextLayoutSection';
 import ThresholdsSection from './sections/ThresholdsSection/ThresholdsSection';
@@ -106,6 +112,22 @@ export const SECTION_REGISTRY: {
 			getPluginSlice<DashboardtypesAxesDTO>(spec, 'axes'),
 		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
 		summarize: summarizeAxes,
+	},
+	// Same `axes` key as above, in Scatter Plot's per-axis shape.
+	[SectionKind.ScatterAxes]: {
+		Component: ScatterAxesSection,
+		get: (spec): DashboardtypesScatterPlotAxesDTO | undefined =>
+			getPluginSlice<DashboardtypesScatterPlotAxesDTO>(spec, 'axes'),
+		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
+		summarize: summarizeScatterAxes,
+	},
+	[SectionKind.Dimensions]: {
+		Component: DimensionsSection,
+		get: (spec): DashboardtypesScatterPlotDimensionsDTO | undefined =>
+			getPluginSlice<DashboardtypesScatterPlotDimensionsDTO>(spec, 'dimensions'),
+		update: (spec, dimensions): PanelSpec =>
+			updatePluginSlice(spec, 'dimensions', dimensions),
+		summarize: summarizeDimensions,
 	},
 	[SectionKind.Legend]: {
 		Component: LegendSection,

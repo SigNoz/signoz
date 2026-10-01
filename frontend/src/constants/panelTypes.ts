@@ -34,6 +34,7 @@ export const getComponentForPanelType = (
 		[PANEL_TYPES.HISTOGRAM]: Uplot,
 		// Dashboards v2 renders this kind; nothing reaches the V1 chart map for it.
 		[PANEL_TYPES.TEXT]: null,
+		[PANEL_TYPES.SCATTER]: null,
 		[PANEL_TYPES.EMPTY_WIDGET]: null,
 	};
 

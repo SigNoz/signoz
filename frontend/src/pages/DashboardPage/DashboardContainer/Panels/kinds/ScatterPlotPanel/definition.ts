@@ -1,4 +1,4 @@
-import { Table } from '@signozhq/icons';
+import { ChartScatter } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
@@ -10,11 +10,11 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
-export const definition: PanelDefinition<'signoz/TablePanel'> = {
-	kind: 'signoz/TablePanel',
-	displayName: 'Table',
+export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
+	kind: 'signoz/ScatterPlotPanel',
+	displayName: 'Scatter Plot',
 	mode: 'query',
-	icon: Table,
+	icon: ChartScatter,
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
@@ -23,9 +23,14 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 		TelemetrytypesSignalDTO.logs,
 		TelemetrytypesSignalDTO.traces,
 	],
-	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	supportedQueryTypes: [
+		EQueryType.QUERY_BUILDER,
+		EQueryType.CLICKHOUSE,
+		EQueryType.PROM,
+	],
 	queryBuilderFields: {},
-	// Asks the server to transpose its scalar result into UI rows (as does Scatter Plot).
+	// Same request as Table: one joined row per group, so x and y can come from
+	// different queries.
 	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.scalar,
 		formatTableResultForUI: true,
@@ -33,15 +38,13 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
-	// Tables carry tabular data worth exporting (V1 parity: download is table-only).
 	actions: {
 		view: true,
 		edit: true,
 		clone: true,
-		download: { csv: true, png: true, svg: true },
+		download: { csv: false, png: true, svg: true },
 		createAlert: false,
-		// V1 parity: only tables (and lists) expose the header search box.
-		search: true,
-		drilldown: true,
+		search: false,
+		drilldown: false,
 	},
 };

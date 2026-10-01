@@ -10,6 +10,19 @@ const AREA_FILL = { fill: 'var(--bg-robin-500)', fillOpacity: 0.22 };
 const RING_TRACK = { stroke: 'var(--l3-background)' };
 const RING_PRIMARY = { stroke: 'var(--bg-robin-500)' };
 const RING_SECONDARY = { stroke: 'var(--bg-robin-400)', strokeOpacity: 0.55 };
+const DOT_FILL = { fill: 'var(--bg-robin-500)', fillOpacity: 0.55 };
+
+/** `[cx, cy, r]`: a loose up-and-right cloud with one large outlier. */
+const SCATTER_DOTS = [
+	[14, 34, 2.5],
+	[26, 28, 3.5],
+	[38, 31, 2],
+	[50, 20, 4],
+	[62, 24, 2.5],
+	[76, 14, 3],
+	[88, 18, 2],
+	[102, 8, 6],
+];
 
 const LINE_PATH =
 	'M0 34 12 26 24 30 36 16 48 22 60 10 72 18 84 8 96 14 108 5 120 11';
@@ -72,6 +85,13 @@ export const PANEL_TYPE_PREVIEWS: Record<PanelKind, JSX.Element> = {
 			fade={false}
 			className={styles.histogram}
 		/>
+	),
+	'signoz/ScatterPlotPanel': (
+		<svg viewBox="0 0 120 44" className={styles.svg}>
+			{SCATTER_DOTS.map(([cx, cy, r]) => (
+				<circle key={cx} cx={cx} cy={cy} r={r} style={DOT_FILL} />
+			))}
+		</svg>
 	),
 	'signoz/PieChartPanel': (
 		<svg viewBox="0 0 44 44" className={styles.svg}>

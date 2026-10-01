@@ -35,6 +35,7 @@ import { useSeedMetricUnit } from './hooks/useSeedMetricUnit';
 import { useSeedNewListColumns } from './hooks/useSeedNewListColumns';
 import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignalChange';
 import { useSwitchToViewMode } from './hooks/useSwitchToViewMode';
+import { useGroupColumns } from './hooks/useGroupColumns';
 import { useTableColumns } from './hooks/useTableColumns';
 
 import logEvent from '@/api/common/logEvent';
@@ -196,6 +197,7 @@ function QueryEditorBody({
 	const { onDragSelect } = usePanelInteractions();
 	const legendSeries = useLegendSeries(draft, data);
 	const tableColumns = useTableColumns(draft, data);
+	const groupColumns = useGroupColumns(draft, data);
 
 	// Resolves the selected metric's unit and, on a new panel, seeds it into the right
 	// formatting field for the kind (panel-wide `unit`, or per-column `columnUnits` for
@@ -325,6 +327,7 @@ function QueryEditorBody({
 					queryType={currentQuery.queryType}
 					legendSeries={legendSeries}
 					tableColumns={tableColumns}
+					groupColumns={groupColumns}
 					stepInterval={stepInterval}
 					metricUnit={metricUnit}
 				/>

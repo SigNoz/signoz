@@ -4305,6 +4305,12 @@ export interface DashboardtypesAreaChartPanelSpecDTO {
 	visualization?: DashboardtypesAreaChartVisualizationDTO;
 }
 
+export enum DashboardtypesAxisScaleDTO {
+	auto = 'auto',
+	linear = 'linear',
+	log = 'log',
+	symlog = 'symlog',
+}
 export interface DashboardtypesBarChartVisualizationDTO {
 	/**
 	 * @type boolean
@@ -5224,6 +5230,75 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesTextPanelSpecDTO;
 }
 
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTOKind {
+	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
+}
+export interface DashboardtypesScatterPlotAxisDTO {
+	/**
+	 * @type string
+	 * @description Axis title. Empty draws none.
+	 */
+	label?: string;
+	scale?: DashboardtypesAxisScaleDTO;
+	/**
+	 * @type number,null
+	 */
+	softMax?: number | null;
+	/**
+	 * @type number,null
+	 */
+	softMin?: number | null;
+}
+
+export interface DashboardtypesScatterPlotAxesDTO {
+	x?: DashboardtypesScatterPlotAxisDTO;
+	y?: DashboardtypesScatterPlotAxisDTO;
+}
+
+export interface DashboardtypesScatterPlotDimensionsDTO {
+	/**
+	 * @type array,null
+	 * @description Group-by label names (e.g. k8s.namespace.name) whose combined values colour dots and drive the legend. Empty colours by every group-by label.
+	 */
+	color?: string[] | null;
+	/**
+	 * @type string
+	 * @description Value column key that scales dot size. Empty draws every dot at the default size.
+	 */
+	size?: string;
+	/**
+	 * @type string
+	 * @description Value column key (queryName, or queryName.expression for a multi-aggregation query) plotted on the x axis. Empty uses the first value column.
+	 */
+	x?: string;
+	/**
+	 * @type string
+	 * @description Value column key plotted on the y axis. Empty uses the second value column.
+	 */
+	y?: string;
+}
+
+export interface DashboardtypesScatterPlotPanelSpecDTO {
+	axes?: DashboardtypesScatterPlotAxesDTO;
+	dimensions?: DashboardtypesScatterPlotDimensionsDTO;
+	formatting?: DashboardtypesTableFormattingDTO;
+	legend?: DashboardtypesLegendDTO;
+	/**
+	 * @type array,null
+	 */
+	thresholds?: DashboardtypesThresholdWithLabelDTO[] | null;
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO {
+	/**
+	 * @enum signoz/ScatterPlotPanel
+	 * @type string
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTOKind;
+	spec: DashboardtypesScatterPlotPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -5233,7 +5308,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -6159,6 +6235,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
 	'signoz/TextPanel' = 'signoz/TextPanel',
+	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
 }
 /**
  * @nullable

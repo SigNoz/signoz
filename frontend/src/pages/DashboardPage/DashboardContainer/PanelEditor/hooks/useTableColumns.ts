@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import { getQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import type { PanelFormattingSlice } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { getColumnUnit } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getColumnUnit';
+import { getValueColumnLabels } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getValueColumnLabels';
 import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { getScalarResults } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
@@ -28,14 +30,18 @@ export interface TableColumnOption {
  * Resolves a Table panel's value (aggregation) columns into `{ key, label }`
  * options, so the table-only config editors (column units, per-column thresholds)
  * store the query-keyed value the renderer looks up by while showing the readable
- * column name. Empty for non-table kinds or before data arrives.
+ * column name. Empty for kinds that don't join their scalar rows (Table and
+ * Scatter Plot do) or before data arrives.
  */
 export function useTableColumns(
 	panel: DashboardtypesPanelDTO,
 	data: PanelQueryData,
 ): TableColumnOption[] {
 	return useMemo(() => {
-		if (panel.spec.plugin.kind !== 'signoz/TablePanel') {
+		if (
+			!getQueryPanelDefinition(panel.spec.plugin.kind)?.queryCapabilities
+				.formatTableResultForUI
+		) {
 			return [];
 		}
 		const table = prepareScalarTables({
@@ -49,13 +55,14 @@ export function useTableColumns(
 		const columnUnits =
 			(panel.spec.plugin.spec as { formatting?: PanelFormattingSlice }).formatting
 				?.columnUnits ?? {};
+		const labels = getValueColumnLabels(table.columns);
 		return table.columns
 			.filter((column) => column.isValueColumn)
 			.map((column) => {
 				const key = column.id || column.name;
 				return {
 					key,
-					label: column.name,
+					label: labels[key] ?? column.name,
 					unit: getColumnUnit(key, columnUnits),
 				};
 			});
