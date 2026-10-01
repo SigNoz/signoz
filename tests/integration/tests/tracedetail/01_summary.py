@@ -155,6 +155,7 @@ def test_summary_ai_trace_across_json_rollout(
                 kind=TracesKind.SPAN_KIND_SERVER,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 resources=resources,
+                attributes={"http.response.status_code": 200},
                 attribute_write_mode="legacy_only",
             ),
             Traces(
@@ -197,6 +198,7 @@ def test_summary_ai_trace_across_json_rollout(
 
     assert summary["totalSpansCount"] == 3
     assert summary["rootServiceEntryPoint"] == "long agent run"
+    assert summary["rootSpanStatusCode"] == "200"
     assert summary["ai"]["tokens"] == {"input": 150, "output": 25, "cacheRead": 0, "cacheWrite": 0, "reasoning": 0}
     assert summary["ai"]["totalCost"] == pytest.approx(0.03)
 
@@ -262,6 +264,7 @@ def test_summary_non_ai_trace_with_missing_root(
     assert summary["hasMissingSpans"] is True
     assert summary["rootServiceName"] == ""
     assert summary["rootServiceEntryPoint"] == "Missing Span"
+    assert summary["rootSpanStatusCode"] == ""
     assert summary["totalSpansCount"] == 2
     assert "ai" not in summary
 

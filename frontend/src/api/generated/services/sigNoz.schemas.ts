@@ -11250,6 +11250,10 @@ export interface SpantypesGettableTraceSummaryDTO {
 	 */
 	rootServiceName?: string;
 	/**
+	 * @type string
+	 */
+	rootSpanStatusCode?: string;
+	/**
 	 * @type integer
 	 * @minimum 0
 	 */

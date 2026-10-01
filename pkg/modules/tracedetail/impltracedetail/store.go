@@ -109,6 +109,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 		"(parent_span_id = '' OR has_missing_parent) AS is_root",
 		"if(parent_span_id = '', name, 'Missing Span') AS root_name",
 		"if(parent_span_id = '', "+colServiceName+", '') AS root_service",
+		"if(parent_span_id = '', response_status_code, '') AS root_status_code",
 	)
 	spans.SelectMore(genAIColumns...)
 	spans.From(table)
@@ -128,6 +129,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 		"countIf(has_missing_parent) > 0 AS has_missing_spans",
 		"argMinIf(root_service, (span_start_ns, root_name), is_root) AS root_service_name",
 		"argMinIf(root_name, (span_start_ns, root_name), is_root) AS root_entry_point",
+		"argMinIf(root_status_code, (span_start_ns, root_name), is_root) AS root_span_status_code",
 		"countIf(is_gen_ai) AS gen_ai_span_count",
 		"toUInt64(coalesce(sum(input_tokens_value), 0)) AS input_tokens",
 		"toUInt64(coalesce(sum(output_tokens_value), 0)) AS output_tokens",
@@ -142,7 +144,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 	var stats spantypes.TraceStats
 	err = s.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(
 		&stats.StartNs, &stats.EndNs, &stats.TotalSpans, &stats.TotalErrorSpans, &stats.HasMissingSpans,
-		&stats.RootServiceName, &stats.RootEntryPoint, &stats.GenAISpanCount,
+		&stats.RootServiceName, &stats.RootEntryPoint, &stats.RootSpanStatusCode, &stats.GenAISpanCount,
 		&stats.Tokens.Input, &stats.Tokens.Output, &stats.Tokens.CacheRead, &stats.Tokens.CacheWrite, &stats.Tokens.Reasoning,
 		&stats.TotalCost,
 	)

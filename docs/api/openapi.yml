@@ -9706,6 +9706,8 @@ components:
           type: string
         rootServiceName:
           type: string
+        rootSpanStatusCode:
+          type: string
         startTimestampMillis:
           minimum: 0
           type: integer
