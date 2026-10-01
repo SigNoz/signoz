@@ -18,6 +18,8 @@ export interface TableColumnOption {
 	key: string;
 	/** Display label shown in the editor — the resolved column name. */
 	label: string;
+	/** The column's own name (alias/legend/expression), without the query prefix. */
+	name: string;
 	/**
 	 * The column's configured unit (`formatting.columnUnits[key]`), if any. The
 	 * per-column threshold editor scopes its unit picker to this unit's category
@@ -63,6 +65,7 @@ export function useTableColumns(
 				return {
 					key,
 					label: labels[key] ?? column.name,
+					name: column.name,
 					unit: getColumnUnit(key, columnUnits),
 				};
 			});
