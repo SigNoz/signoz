@@ -814,8 +814,14 @@ body.ai-assistant-panel-open {
 }
 
 body.bottom-strip-on {
+	// Pylon re-shows its own launcher when the chat window opens, so
+	// `hideChatBubble` cannot hold it down.
+	.PylonChat-bubbleFrameContainer {
+		display: none !important;
+	}
+
 	.PylonChat-chatWindowFrameContainer {
-		bottom: var(--bottom-strip-height, 0px) !important;
+		bottom: calc(var(--bottom-strip-height, 0px) + 12px) !important;
 	}
 }
 
