@@ -4,11 +4,13 @@ import type {
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
-import ConfigFieldRow from '../../controls/ConfigFieldRow/ConfigFieldRow';
-import ConfigNumberInput from '../../controls/ConfigNumberInput/ConfigNumberInput';
+import ConfigInlineField from '../../controls/ConfigInlineField/ConfigInlineField';
+import ConfigRangeInput from '../../controls/ConfigRangeInput/ConfigRangeInput';
 import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';
 import { createFieldResetter } from '../../utils/changes';
-import { AxisScale, SCALE_OPTIONS } from './options';
+import { AxisScale, RANGE_HELP, SCALE_HELP, SCALE_OPTIONS } from './options';
+
+import styles from './AxesSection.module.scss';
 
 /**
  * Edits the `axes` slice of a panel spec: soft Y-axis min/max bounds and the
@@ -21,50 +23,38 @@ function AxesSection({
 	onChange,
 }: SectionEditorProps<SectionKind.Axes>): JSX.Element {
 	const reset = createFieldResetter(value, defaultValue, onChange);
+	const scale = value?.isLogScale ? AxisScale.LOG : AxisScale.LINEAR;
 
 	return (
-		<>
-			{controls.minMax && (
-				<ConfigField
-					label="Y-axis range"
-					help="The axis always shows at least this range. Data outside it still stretches the axis."
-					{...reset('softMin', 'softMax')}
-				>
-					<ConfigFieldRow>
-						<ConfigNumberInput
-							testId="panel-editor-v2-soft-min"
-							label="Min"
-							value={value?.softMin}
-							onChange={(softMin): void => onChange({ ...value, softMin })}
+		<ConfigField label="Y axis" {...reset('softMin', 'softMax', 'isLogScale')}>
+			<div className={styles.fields}>
+				{controls.minMax && (
+					<ConfigInlineField label="Range" help={RANGE_HELP}>
+						<ConfigRangeInput
+							testIdPrefix="panel-editor-v2"
+							min={value?.softMin}
+							max={value?.softMax}
+							onChangeMin={(softMin): void => onChange({ ...value, softMin })}
+							onChangeMax={(softMax): void => onChange({ ...value, softMax })}
 						/>
-						<ConfigNumberInput
-							testId="panel-editor-v2-soft-max"
-							label="Max"
-							value={value?.softMax}
-							onChange={(softMax): void => onChange({ ...value, softMax })}
-						/>
-					</ConfigFieldRow>
-				</ConfigField>
-			)}
+					</ConfigInlineField>
+				)}
 
-			{controls.logScale && (
-				<ConfigField
-					label="Y-axis scale"
-					help="Logarithmic spreads out values that span several orders of magnitude."
-					{...reset('isLogScale')}
-				>
-					<ConfigTiles
-						testId="panel-editor-v2-log-scale"
-						aria-label="Y-axis scale"
-						value={value?.isLogScale ? AxisScale.LOG : AxisScale.LINEAR}
-						items={SCALE_OPTIONS}
-						onChange={(next): void =>
-							onChange({ ...value, isLogScale: next === AxisScale.LOG })
-						}
-					/>
-				</ConfigField>
-			)}
-		</>
+				{controls.logScale && (
+					<ConfigField label="Scale" help={SCALE_HELP[scale]}>
+						<ConfigTiles
+							testId="panel-editor-v2-log-scale"
+							aria-label="Y-axis scale"
+							value={scale}
+							items={SCALE_OPTIONS}
+							onChange={(next): void =>
+								onChange({ ...value, isLogScale: next === AxisScale.LOG })
+							}
+						/>
+					</ConfigField>
+				)}
+			</div>
+		</ConfigField>
 	);
 }
 

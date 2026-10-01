@@ -18,3 +18,11 @@ export const SCALE_OPTIONS: ConfigTileItem<AxisScale>[] = [
 		drawing: TILE_DRAWINGS.scaleLog,
 	},
 ];
+
+export const RANGE_HELP =
+	'The axis always shows at least this range. Data outside it still stretches the axis.';
+
+export const SCALE_HELP: Record<AxisScale, string> = {
+	[AxisScale.LINEAR]: 'Evenly spaced values.',
+	[AxisScale.LOG]: 'Spreads out values that span several orders of magnitude.',
+};
