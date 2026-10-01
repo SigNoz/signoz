@@ -64,7 +64,7 @@ function PanelTypeSwitcher({
 	};
 
 	return (
-		<ConfigField label="Panel type" plain>
+		<ConfigField label="Panel type">
 			<button
 				type="button"
 				className={styles.trigger}
