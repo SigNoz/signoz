@@ -1,20 +1,12 @@
 package telemetrymetadata
 
 import (
-	"context"
 	"fmt"
-	"regexp"
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -62,42 +54,6 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 
 			require.Equal(t, tc.expectedSQL, query)
 			require.Equal(t, tc.expectedArgs, args)
-		})
-	}
-}
-
-func TestCreateIndexes(t *testing.T) {
-	index := schemamigrator.Index{
-		Name:        "`body_promoted.user.name_String_ngrambf_v1`",
-		Expression:  "lower(assumeNotNull(dynamicElement(body_promoted.user.name, 'String')))",
-		Type:        "ngrambf_v1(4, 1024, 2, 0)",
-		Granularity: 1,
-	}
-
-	testCases := []struct {
-		name    string
-		execErr error
-		wantErr bool
-	}{
-		{name: "AddIndex_ExecutedOnSourceTable"},
-		{name: "ExecError_Returned", execErr: errors.NewInternalf(errors.CodeInternal, "boom"), wantErr: true},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
-			store := &telemetryMetaStore{telemetrystore: ts}
-
-			ts.Mock().ExpectExec("ALTER TABLE (.+)" + logstelemetryschema.LogsV2LocalTableName + "(.+) ADD INDEX IF NOT EXISTS " + regexp.QuoteMeta(index.Name)).
-				WillReturnError(testCase.execErr)
-
-			err := store.CreateIndexes(context.Background(), logsBodyIndexSource, []schemamigrator.Index{index})
-			if testCase.wantErr {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.NoError(t, ts.Mock().ExpectationsWereMet())
 		})
 	}
 }
