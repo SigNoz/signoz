@@ -13,6 +13,8 @@ import type {
 	DashboardtypesLineStyleDTO,
 	DashboardtypesPanelFormattingDTO,
 	DashboardtypesPanelSpecDTO,
+	DashboardtypesScatterPlotAxesDTO,
+	DashboardtypesScatterPlotDimensionsDTO,
 	DashboardtypesSpanGapsDTO,
 	DashboardtypesStackModeDTO,
 	DashboardtypesTableFormattingDTO,
@@ -27,6 +29,7 @@ import {
 	Antenna,
 	BarChart,
 	Columns3,
+	Crosshair,
 	Hash,
 	Link2,
 	Palette,
@@ -64,6 +67,9 @@ export enum SectionKind {
 	Columns = 'columns',
 	TextLayout = 'presentation',
 	PanelHeader = 'headerOptions',
+	Dimensions = 'dimensions',
+	/** Scatter Plot's per-axis `axes` shape; `Axes` is the single y-axis shape. */
+	ScatterAxes = 'scatterAxes',
 }
 
 /**
@@ -135,6 +141,8 @@ export interface SectionSpecMap {
 	[SectionKind.Columns]: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
 	[SectionKind.TextLayout]: DashboardtypesTextPresentationDTO; // spec.plugin.spec.presentation (Text)
 	[SectionKind.PanelHeader]: DashboardtypesHeaderOptionsDTO; // spec.plugin.spec.headerOptions (Text)
+	[SectionKind.Dimensions]: DashboardtypesScatterPlotDimensionsDTO; // spec.plugin.spec.dimensions (Scatter Plot)
+	[SectionKind.ScatterAxes]: DashboardtypesScatterPlotAxesDTO; // spec.plugin.spec.axes (Scatter Plot)
 }
 
 /**
@@ -200,7 +208,9 @@ export type AtomicSectionKind =
 	| SectionKind.ContextLinks
 	| SectionKind.Columns
 	| SectionKind.TextLayout
-	| SectionKind.PanelHeader;
+	| SectionKind.PanelHeader
+	| SectionKind.Dimensions
+	| SectionKind.ScatterAxes;
 
 /** Predicate to hide a section from the current spec; returning true removes it. */
 export type SectionVisibilityPredicate = (
@@ -235,6 +245,8 @@ export const SECTION_METADATA = {
 	[SectionKind.Columns]: { title: 'Columns', icon: Columns3 },
 	[SectionKind.TextLayout]: { title: 'Panel appearance', icon: AlignLeft },
 	[SectionKind.PanelHeader]: { title: 'Panel header', icon: PanelTop },
+	[SectionKind.Dimensions]: { title: 'Dimensions', icon: Crosshair },
+	[SectionKind.ScatterAxes]: { title: 'Axes', icon: Scale3D },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**

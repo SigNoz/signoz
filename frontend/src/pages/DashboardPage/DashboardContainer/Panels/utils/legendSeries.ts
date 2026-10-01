@@ -1,8 +1,13 @@
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelDTO,
+	DashboardtypesPanelSpecDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { preparePieData } from '../kinds/PieChartPanel/prepareData';
+import { prepareScatterPlotData } from '../kinds/ScatterPlotPanel/prepareData';
+import { ScatterPlotDataStatus } from '../kinds/ScatterPlotPanel/types';
 import { getBuilderQueries } from './getBuilderQueries';
 import { resolveSeriesLabelV5 } from './resolveSeriesLabel';
 import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
@@ -23,6 +28,8 @@ export interface LegendSeries {
 type PanelQueries = DashboardtypesPanelDTO['spec']['queries'];
 
 interface LegendSeriesArgs {
+	/** The kind's own spec, for kinds whose labels depend on it. */
+	spec: DashboardtypesPanelSpecDTO;
 	queries: PanelQueries;
 	data: PanelQueryData;
 	isDarkMode: boolean;
@@ -100,6 +107,40 @@ export function resolveTimeSeriesLegendSeries({
 				getLabelName(s.labels, s.queryName, s.legend),
 			),
 		),
+		(label) => generateColor(label, palette),
+	);
+}
+
+/**
+ * Scatter Plot: one entry per colour group, which `dimensions.color` picks, so the
+ * labels come from the same data prep the renderer runs.
+ */
+export function resolveScatterLegendSeries({
+	spec,
+	data,
+	isDarkMode,
+}: LegendSeriesArgs): LegendSeries[] {
+	if (spec.plugin.kind !== 'signoz/ScatterPlotPanel') {
+		return [];
+	}
+	const palette = isDarkMode
+		? themeColors.chartcolors
+		: themeColors.lightModeColor;
+	const scatterData = prepareScatterPlotData({
+		table: prepareScalarTables({
+			results: getScalarResults(data.response),
+			legendMap: data.legendMap,
+			requestPayload: data.requestPayload,
+		}).find((candidate) => candidate.columns.length > 0),
+		dimensions: spec.plugin.spec.dimensions,
+		axes: spec.plugin.spec.axes,
+		columnUnits: {},
+	});
+	if (scatterData.status !== ScatterPlotDataStatus.Ready) {
+		return [];
+	}
+	return buildLegendSeries(
+		scatterData.series.map((series) => series.label),
 		(label) => generateColor(label, palette),
 	);
 }

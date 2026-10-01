@@ -4,6 +4,7 @@ import { definition as Heatmap } from './kinds/HeatmapPanel/definition';
 import { definition as Histogram } from './kinds/HistogramPanel/definition';
 import { definition as NumberValue } from './kinds/NumberPanel/definition';
 import { definition as PieChart } from './kinds/PieChartPanel/definition';
+import { definition as ScatterPlot } from './kinds/ScatterPlotPanel/definition';
 import { definition as TimeSeries } from './kinds/TimeSeriesPanel/definition';
 import { definition as Table } from './kinds/TablePanel/definition';
 import { definition as List } from './kinds/ListPanel/definition';
@@ -25,6 +26,7 @@ export const PANELS: PanelRegistry = {
 	[BarChart.kind]: BarChart,
 	[AreaChart.kind]: AreaChart,
 	[PieChart.kind]: PieChart,
+	[ScatterPlot.kind]: ScatterPlot,
 	[Histogram.kind]: Histogram,
 	[Heatmap.kind]: Heatmap,
 	[List.kind]: List,
