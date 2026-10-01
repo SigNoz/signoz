@@ -5,7 +5,7 @@ import type {
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import {
 	envelopesToQuery,
@@ -122,6 +122,35 @@ describe('persesQueryAdapters', () => {
 			);
 			expect(result[0].kind).toBe('scalar');
 		});
+
+		it.each([PANEL_TYPES.TABLE, PANEL_TYPES.SCATTER])(
+			'sends a %s panel metric query as scalar with its reduceTo, which the API requires',
+			(panelType) => {
+				const metrics = initialQueriesMap[DataSource.METRICS];
+				const query: Query = {
+					...metrics,
+					builder: {
+						...metrics.builder,
+						queryData: metrics.builder.queryData.map((queryData) => ({
+							...queryData,
+							// `aggregations` is a union of arrays, which `map` widens.
+							aggregations: queryData.aggregations?.map((aggregation) => ({
+								...aggregation,
+								reduceTo: ReduceOperators.SUM,
+							})) as typeof queryData.aggregations,
+						})),
+					},
+				};
+
+				const [envelope] = toPerses(query, panelType);
+				const composite = envelope.spec.plugin.spec as {
+					queries: { spec: { aggregations?: { reduceTo?: string }[] } }[];
+				};
+
+				expect(envelope.kind).toBe('scalar');
+				expect(composite.queries[0].spec.aggregations?.[0]?.reduceTo).toBe('sum');
+			},
+		);
 
 		it('emits a bare signoz/BuilderQuery for a List panel (not a CompositeQuery)', () => {
 			const result = toPerses(
