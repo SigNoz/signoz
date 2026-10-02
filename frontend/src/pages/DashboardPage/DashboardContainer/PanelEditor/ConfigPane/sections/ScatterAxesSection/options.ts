@@ -1,40 +1,23 @@
 import { DashboardtypesAxisScaleDTO } from 'api/generated/services/sigNoz.schemas';
 
-import type { ConfigTileItem } from '../../controls/ConfigTiles/ConfigTiles';
-import { TILE_DRAWINGS } from '../../controls/drawings/tileDrawings';
+import {
+	pickScaleOptions,
+	SCALE_HELP as AXIS_SCALE_HELP,
+} from '../AxesSection/options';
 
-export const SCALE_OPTIONS: ConfigTileItem<DashboardtypesAxisScaleDTO>[] = [
-	{
-		value: DashboardtypesAxisScaleDTO.auto,
-		label: 'Auto',
-		drawing: TILE_DRAWINGS.scaleAuto,
-	},
-	{
-		value: DashboardtypesAxisScaleDTO.linear,
-		label: 'Linear',
-		drawing: TILE_DRAWINGS.scaleLinear,
-	},
-	{
-		value: DashboardtypesAxisScaleDTO.log,
-		label: 'Logarithmic',
-		drawing: TILE_DRAWINGS.scaleLog,
-	},
-	{
-		value: DashboardtypesAxisScaleDTO.symlog,
-		label: 'Symlog',
-		drawing: TILE_DRAWINGS.scaleSymlog,
-	},
-];
+export const SCALE_OPTIONS = pickScaleOptions([
+	DashboardtypesAxisScaleDTO.auto,
+	DashboardtypesAxisScaleDTO.linear,
+	DashboardtypesAxisScaleDTO.log,
+	DashboardtypesAxisScaleDTO.symlog,
+]);
 
 export const LOG_RANGE_IGNORED_HELP =
 	"A log axis can't reach 0 or below, so that bound is ignored. Use Symlog to include it.";
 
+/** A log axis leaves out groups it can't place, rather than drawing them elsewhere. */
 export const SCALE_HELP: Record<DashboardtypesAxisScaleDTO, string> = {
-	[DashboardtypesAxisScaleDTO.auto]:
-		'Logarithmic when every value is positive and they span three or more orders of magnitude, otherwise linear.',
-	[DashboardtypesAxisScaleDTO.linear]: 'Evenly spaced values.',
+	...AXIS_SCALE_HELP,
 	[DashboardtypesAxisScaleDTO.log]:
 		"Spreads out values that span orders of magnitude. Groups with a value of 0 or less can't be placed and are left out.",
-	[DashboardtypesAxisScaleDTO.symlog]:
-		'Logarithmic, but places zero and negative values too.',
 };
