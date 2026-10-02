@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-use';
+import cx from 'classnames';
 import RouteTab from 'components/RouteTab';
+import ROUTES from 'constants/routes';
 import { TabRoutes } from 'components/RouteTab/types';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeControlFeatureGate';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import history from 'lib/history';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -16,15 +19,16 @@ import './MetricsExplorerPage.styles.scss';
 function MetricsExplorerPage(): JSX.Element {
 	const { pathname } = useLocation();
 	const { isVolumeControlEnabled } = useVolumeControlFeatureGate();
+	const isSavedViewEnabled = useSavedViewEnabled();
 
 	const routes: TabRoutes[] = useMemo(
 		() => [
 			Summary,
 			...(isVolumeControlEnabled ? [VolumeControl] : []),
 			Explorer,
-			Views,
+			...(isSavedViewEnabled ? [] : [Views]),
 		],
-		[isVolumeControlEnabled],
+		[isVolumeControlEnabled, isSavedViewEnabled],
 	);
 
 	const { updateAllQueriesOperators } = useQueryBuilder();
@@ -43,7 +47,9 @@ function MetricsExplorerPage(): JSX.Element {
 
 	return (
 		<RouteTab
-			className="metrics-explorer-page"
+			className={cx('metrics-explorer-page', {
+				'is-explorer-tab': pathname === ROUTES.METRICS_EXPLORER_EXPLORER,
+			})}
 			routes={routes}
 			activeKey={pathname}
 			history={history}

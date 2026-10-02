@@ -1,0 +1,5 @@
+// A denied item stays disabled but keeps pointer events, so its reason shows on hover.
+.menu .deniedItem[data-disabled] {
+	pointer-events: auto;
+	cursor: not-allowed;
+}

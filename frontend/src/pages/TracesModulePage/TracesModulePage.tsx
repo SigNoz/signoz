@@ -3,6 +3,7 @@ import logEvent from 'api/common/logEvent';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import history from 'lib/history';
 
 import { tracesExplorer, tracesFunnel, tracesSaveView } from './constants';
@@ -11,11 +12,12 @@ import './TracesModulePage.styles.scss';
 
 function TracesModulePage(): JSX.Element {
 	const { pathname } = useLocation();
+	const isSavedViewEnabled = useSavedViewEnabled();
 
 	const routes: TabRoutes[] = [
 		tracesExplorer,
 		tracesFunnel(pathname),
-		tracesSaveView,
+		...(isSavedViewEnabled ? [] : [tracesSaveView]),
 	].filter(Boolean) as TabRoutes[];
 
 	const handleTabChange = (activeRoute: string): void => {

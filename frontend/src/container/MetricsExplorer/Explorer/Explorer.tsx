@@ -3,13 +3,18 @@ import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import { Tooltip } from 'antd';
+import { Filter } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Switch } from '@signozhq/ui/switch';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
@@ -23,6 +28,7 @@ import {
 } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import {
@@ -62,10 +68,12 @@ function Explorer(): JSX.Element {
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const isSavedViewEnabled = useSavedViewEnabled();
 	const getExportToDashboardLink = useGetExportToDashboardLink();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
+	const [showSidebar, setShowSidebar] = useState(true);
 
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
@@ -347,66 +355,87 @@ function Explorer(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div className="metrics-explorer-explore-container">
-				<div className="explore-header">
-					<div className="explore-header-left-actions">
-						<span>1 chart/query</span>
-						<Tooltip
-							open={disableOneChartPerQuery ? undefined : false}
-							title={oneChartPerQueryDisabledTooltip}
-						>
-							<Switch
-								value={showOneChartPerQuery}
-								onChange={handleToggleShowOneChartPerQuery}
-								disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
+			<QuickFiltersLayout
+				showFilters={showSidebar}
+				onToggleFilters={(): void => setShowSidebar(!showSidebar)}
+				savedViewProps={{ source: SavedviewtypesSourceDTO.metrics }}
+			>
+				<div className="metrics-explorer-explore-container">
+					<div className="explore-header">
+						<div className="explore-header-left-actions">
+							{!showSidebar && (
+								<TooltipSimple title="Show Views">
+									<Button
+										variant="outlined"
+										color="secondary"
+										size="icon"
+										aria-label="Show Views"
+										prefix={<Filter size={16} />}
+										onClick={(): void => setShowSidebar(true)}
+										data-testid="metrics-explorer-show-sidebar"
+									/>
+								</TooltipSimple>
+							)}
+							<span>1 chart/query</span>
+							<Tooltip
+								open={disableOneChartPerQuery ? undefined : false}
+								title={oneChartPerQueryDisabledTooltip}
+							>
+								<Switch
+									value={showOneChartPerQuery}
+									onChange={handleToggleShowOneChartPerQuery}
+									disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
+								/>
+							</Tooltip>
+						</div>
+						<div className="explore-header-right-actions">
+							{!isEmpty(warning) && <WarningPopover warningData={warning} />}
+							<DateTimeSelector showAutoRefresh />
+							<RightToolbarActions
+								onStageRunQuery={(): void => handleRunQuery()}
+								isLoadingQueries={isLoadingQueries}
+								handleCancelQuery={handleCancelQuery}
 							/>
-						</Tooltip>
+						</div>
 					</div>
-					<div className="explore-header-right-actions">
-						{!isEmpty(warning) && <WarningPopover warningData={warning} />}
-						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions
-							onStageRunQuery={(): void => handleRunQuery()}
-							isLoadingQueries={isLoadingQueries}
-							handleCancelQuery={handleCancelQuery}
+					<QueryBuilderV2
+						config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
+						panelType={PANEL_TYPES.TIME_SERIES}
+						showFunctions={false}
+						version="v3"
+					/>
+					<div className="explore-content">
+						<TimeSeries
+							onFetchingStateChange={setIsLoadingQueries}
+							showOneChartPerQuery={showOneChartPerQuery}
+							setWarning={setWarning}
+							areAllMetricUnitsSame={areAllMetricUnitsSame}
+							isMetricUnitsLoading={isMetricUnitsLoading}
+							isMetricUnitsError={isMetricUnitsError}
+							metricUnits={units}
+							metricNames={metricNames}
+							metrics={metrics}
+							handleOpenMetricDetails={handleOpenMetricDetails}
+							yAxisUnit={yAxisUnit}
+							setYAxisUnit={setYAxisUnit}
+							showYAxisUnitSelector={showYAxisUnitSelector}
+							isCancelled={isCancelled}
+							exportDefaultQuery={exportDefaultQuery}
 						/>
 					</div>
 				</div>
-				<QueryBuilderV2
-					config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
-					panelType={PANEL_TYPES.TIME_SERIES}
-					showFunctions={false}
-					version="v3"
+			</QuickFiltersLayout>
+			{!isSavedViewEnabled && (
+				<ExplorerOptionWrapper
+					disabled={!stagedQuery}
+					query={exportDefaultQuery}
+					sourcepage={DataSource.METRICS}
+					onExport={handleExport}
+					isOneChartPerQuery={showOneChartPerQuery}
+					splitedQueries={splitedQueries}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
-				<div className="explore-content">
-					<TimeSeries
-						onFetchingStateChange={setIsLoadingQueries}
-						showOneChartPerQuery={showOneChartPerQuery}
-						setWarning={setWarning}
-						areAllMetricUnitsSame={areAllMetricUnitsSame}
-						isMetricUnitsLoading={isMetricUnitsLoading}
-						isMetricUnitsError={isMetricUnitsError}
-						metricUnits={units}
-						metricNames={metricNames}
-						metrics={metrics}
-						handleOpenMetricDetails={handleOpenMetricDetails}
-						yAxisUnit={yAxisUnit}
-						setYAxisUnit={setYAxisUnit}
-						showYAxisUnitSelector={showYAxisUnitSelector}
-						isCancelled={isCancelled}
-						exportDefaultQuery={exportDefaultQuery}
-					/>
-				</div>
-			</div>
-			<ExplorerOptionWrapper
-				disabled={!stagedQuery}
-				query={exportDefaultQuery}
-				sourcepage={DataSource.METRICS}
-				onExport={handleExport}
-				isOneChartPerQuery={showOneChartPerQuery}
-				splitedQueries={splitedQueries}
-				handleChangeSelectedView={handleChangeSelectedView}
-			/>
+			)}
 			{isMetricDetailsOpen && selectedMetricName && (
 				<MetricDetails
 					metricName={selectedMetricName}
