@@ -201,30 +201,36 @@ function ScatterPlotPanelRenderer({
 			{!readyData && !emptyMessage && (
 				<NoData isFetching={isFetching} onRetry={refetch} panel={panel} />
 			)}
-			{readyData && config && chartData && (
-				<>
-					<div ref={graphRef} className={styles.chart}>
-						{containerDimensions.width > 0 && containerDimensions.height > 0 && (
-							<Scatter
-								key={panelId}
-								config={config}
-								data={chartData}
-								channels={readyData.channels}
-								resolvePointLabels={resolvePointLabels}
-								legendConfig={{ position: legendPosition }}
-								decimalPrecision={decimalPrecision}
-								canPinTooltip
-								width={containerDimensions.width}
-								height={containerDimensions.height}
-								renderTooltipFooter={renderTooltipFooter}
-								onPointClick={enableDrillDown ? handlePointClick : undefined}
-								data-testid="scatter-plot-chart"
-							/>
-						)}
-					</div>
-					{footerText && <ScatterPlotFooter text={footerText} />}
-				</>
-			)}
+			{/* Stays mounted through the empty states: the size observer is bound to this node. */}
+			<div
+				ref={graphRef}
+				className={styles.chart}
+				hidden={!readyData}
+				data-testid="scatter-plot-chart-area"
+			>
+				{readyData &&
+					config &&
+					chartData &&
+					containerDimensions.width > 0 &&
+					containerDimensions.height > 0 && (
+						<Scatter
+							key={panelId}
+							config={config}
+							data={chartData}
+							channels={readyData.channels}
+							resolvePointLabels={resolvePointLabels}
+							legendConfig={{ position: legendPosition }}
+							decimalPrecision={decimalPrecision}
+							canPinTooltip
+							width={containerDimensions.width}
+							height={containerDimensions.height}
+							renderTooltipFooter={renderTooltipFooter}
+							onPointClick={enableDrillDown ? handlePointClick : undefined}
+							data-testid="scatter-plot-chart"
+						/>
+					)}
+			</div>
+			{readyData && footerText && <ScatterPlotFooter text={footerText} />}
 		</div>
 	);
 }

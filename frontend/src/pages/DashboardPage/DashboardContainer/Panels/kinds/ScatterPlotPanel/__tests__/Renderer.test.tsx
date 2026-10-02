@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesScatterPlotPanelSpecDTO,
@@ -5,7 +6,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
-import { render } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import type { BaseRendererProps } from '../../../types/rendererProps';
 import BaseScatterPlotPanelRenderer from '../Renderer';
@@ -122,5 +123,42 @@ describe('ScatterPlotPanelRenderer', () => {
 		);
 
 		expect(queryByTestId('scatter-plot-footer')).not.toBeInTheDocument();
+	});
+
+	it('keeps the chart area mounted through an empty state, so it plots again on return', async () => {
+		const user = userEvent.setup();
+		const ready = dataWith(['A', 'B'], [['cart', 120, 340]]);
+		const mismatch = dataWith(['A', 'B'], [['checkout', 45, 'n/a']]);
+		function Harness(): JSX.Element {
+			const [data, setData] = useState(ready);
+			return (
+				<>
+					<button type="button" onClick={(): void => setData(mismatch)}>
+						mismatch
+					</button>
+					<button type="button" onClick={(): void => setData(ready)}>
+						ready
+					</button>
+					<ScatterPlotPanelRenderer
+						panelId="panel-1"
+						panel={panelWith({})}
+						data={data}
+						isFetching={false}
+						error={null}
+						panelMode={PanelMode.DASHBOARD_VIEW}
+					/>
+				</>
+			);
+		}
+		render(<Harness />);
+		const chartArea = screen.getByTestId('scatter-plot-chart-area');
+
+		await user.click(screen.getByRole('button', { name: 'mismatch' }));
+		expect(screen.getByTestId('scatter-plot-empty-message')).toBeInTheDocument();
+		expect(chartArea).not.toBeVisible();
+
+		await user.click(screen.getByRole('button', { name: 'ready' }));
+		expect(screen.getByTestId('scatter-plot-chart-area')).toBe(chartArea);
+		expect(chartArea).toBeVisible();
 	});
 });
