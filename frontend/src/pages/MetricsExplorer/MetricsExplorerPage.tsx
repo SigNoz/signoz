@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-use';
+import cx from 'classnames';
 import RouteTab from 'components/RouteTab';
+import ROUTES from 'constants/routes';
 import { TabRoutes } from 'components/RouteTab/types';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeControlFeatureGate';
@@ -43,7 +45,9 @@ function MetricsExplorerPage(): JSX.Element {
 
 	return (
 		<RouteTab
-			className="metrics-explorer-page"
+			className={cx('metrics-explorer-page', {
+				'is-explorer-tab': pathname === ROUTES.METRICS_EXPLORER_EXPLORER,
+			})}
 			routes={routes}
 			activeKey={pathname}
 			history={history}

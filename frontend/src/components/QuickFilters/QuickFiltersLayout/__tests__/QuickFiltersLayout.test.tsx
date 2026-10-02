@@ -28,20 +28,29 @@ jest.mock('../../QuickFilters', () => ({
 	default: ({
 		source,
 		savedViewsHeader,
+		handleFilterVisibilityChange,
 	}: {
 		source: string;
 		savedViewsHeader?: React.ReactNode;
+		handleFilterVisibilityChange?: () => void;
 	}): JSX.Element => (
 		<div data-testid="quick-filters">
 			{savedViewsHeader}
 			{source}
+			{handleFilterVisibilityChange && (
+				<button
+					type="button"
+					aria-label="Collapse Filters"
+					data-testid="quick-filters-collapse"
+					onClick={handleFilterVisibilityChange}
+				/>
+			)}
 		</div>
 	),
 }));
 
 const quickFilterProps = {
 	source: QuickFiltersSource.TRACES_EXPLORER,
-	handleFilterVisibilityChange: jest.fn(),
 };
 const savedViewProps = { source: SavedviewtypesSourceDTO.traces };
 
@@ -221,8 +230,54 @@ describe('QuickFiltersLayout', () => {
 			expect(screen.getByTestId('saved-views-header')).toBeInTheDocument();
 			expect(screen.getByTestId('saved-views-panel')).toBeInTheDocument();
 			expect(screen.queryByTestId('saved-views-open')).not.toBeInTheDocument();
-			expect(screen.queryByTestId('saved-views-close')).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('saved-views-panel-header'),
+			).not.toBeInTheDocument();
 			expect(drawer()).not.toHaveClass('isOpen');
+		});
+
+		it('collapses from the quick filters header when they are shown', async () => {
+			const onToggleFilters = jest.fn();
+			render(
+				<QuickFiltersLayout
+					showFilters
+					onToggleFilters={onToggleFilters}
+					quickFilterProps={quickFilterProps}
+					savedViewProps={savedViewProps}
+				>
+					<div>content</div>
+				</QuickFiltersLayout>,
+			);
+
+			expect(screen.queryByTestId('saved-views-collapse')).not.toBeInTheDocument();
+			await userEvent.click(screen.getByTestId('quick-filters-collapse'));
+			expect(onToggleFilters).toHaveBeenCalledTimes(1);
+		});
+
+		it('collapses from the saved views header without quick filters', async () => {
+			const onToggleFilters = jest.fn();
+			render(
+				<QuickFiltersLayout
+					showFilters
+					onToggleFilters={onToggleFilters}
+					savedViewProps={savedViewProps}
+				>
+					<div>content</div>
+				</QuickFiltersLayout>,
+			);
+
+			await userEvent.click(screen.getByTestId('saved-views-collapse'));
+			expect(onToggleFilters).toHaveBeenCalledTimes(1);
+		});
+
+		it('has no collapse without a toggle', () => {
+			render(
+				<QuickFiltersLayout showFilters savedViewProps={savedViewProps}>
+					<div>content</div>
+				</QuickFiltersLayout>,
+			);
+
+			expect(screen.queryByTestId('saved-views-collapse')).not.toBeInTheDocument();
 		});
 	});
 });

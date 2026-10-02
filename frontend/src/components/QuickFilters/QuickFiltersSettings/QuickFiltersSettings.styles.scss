@@ -27,18 +27,15 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 10.5px;
+		padding: var(--spacing-2) var(--spacing-5);
+		border-bottom: 1px solid var(--l1-border);
 
 		.qf-title {
 			display: flex;
 			align-items: center;
-			gap: 12px;
-		}
-
-		.qf-header-icon {
-			width: 16px;
-			height: 16px;
-			cursor: pointer;
+			gap: var(--spacing-6);
+			color: var(--l2-foreground);
+			font-size: var(--font-size-sm);
 		}
 	}
 
@@ -55,11 +52,17 @@
 	}
 
 	.search {
-		.ant-input {
-			background-color: var(--l1-background);
-			height: 46px;
-			border-radius: 0;
-		}
+		--input-height: var(--spacing-20);
+		--input-border-radius: 0;
+		--input-border-color: transparent;
+		--input-hover-border-color: transparent;
+		--input-focus-border-color: transparent;
+		--input-focus-outline-width: 0;
+		--input-background: var(--l1-background);
+		--input-hover-background: var(--l1-background);
+		--input-focus-background: var(--l1-background);
+
+		border-bottom: 1px solid var(--l1-border);
 	}
 
 	.qf-other-filters-list {
@@ -125,6 +128,7 @@
 	justify-content: space-between;
 	padding: 8px;
 	border-radius: 4px;
+	color: var(--l2-foreground);
 	user-select: none;
 	transition: background-color 0.2s ease-in-out;
 
