@@ -54,6 +54,10 @@ func (provider *provider) GetConfig(context.Context) *globaltypes.Config {
 			globaltypes.TokenizerConfig{Enabled: provider.identNConfig.Tokenizer.Enabled},
 			globaltypes.APIKeyConfig{Enabled: provider.identNConfig.APIKeyConfig.Enabled},
 			globaltypes.ImpersonationConfig{Enabled: provider.identNConfig.Impersonation.Enabled},
+			globaltypes.TrustedHeaderConfig{
+				Enabled:           provider.identNConfig.TrustedHeader.Enabled,
+				LogoutRedirectURL: provider.identNConfig.TrustedHeader.LogoutRedirectURL,
+			},
 		),
 	)
 }

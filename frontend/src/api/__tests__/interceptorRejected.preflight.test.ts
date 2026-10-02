@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getIsNoAuthMode } from 'utils/noAuthMode';
+import { markPreflightComplete } from 'utils/preflight';
 import { getIsProxyAuthMode } from 'utils/proxyAuthMode';
 
 import { interceptorRejected } from '../index';
@@ -10,15 +11,6 @@ jest.mock('utils/noAuthMode', () => ({
 
 jest.mock('utils/proxyAuthMode', () => ({
 	getIsProxyAuthMode: jest.fn(),
-}));
-
-// These cases are about which mode the interceptor reads, not about when it is
-// allowed to read it. The wait itself is covered in
-// interceptorRejected.preflight.test.ts, which needs the real module: the
-// promise behind it resolves once and never resets, so a test that must observe
-// it still pending cannot share a module registry with tests that resolve it.
-jest.mock('utils/preflight', () => ({
-	waitForPreflight: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('api/v2/sessions/rotate/post', () => ({
@@ -49,41 +41,42 @@ const unauthorized = (): unknown => ({
 	config: { url: '/dashboards', headers: {} },
 });
 
-describe('interceptorRejected: sessionless auth modes', () => {
+// utils/preflight is deliberately NOT mocked here: the point is the real
+// promise, which starts out pending and resolves exactly once. Because it never
+// resets, this file holds a single test.
+describe('interceptorRejected: preflight gate', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		jest.spyOn(axios, 'isAxiosError').mockReturnValue(true);
 		(getIsNoAuthMode as jest.Mock).mockReturnValue(false);
+		// What a full page load looks like before the global config lands: the
+		// singleton still reads its false default even though this deployment is
+		// header-authenticated.
 		(getIsProxyAuthMode as jest.Mock).mockReturnValue(false);
 	});
 
-	it('does NOT call rotate or Logout when no-auth mode is enabled on 401', async () => {
-		(getIsNoAuthMode as jest.Mock).mockReturnValue(true);
-
-		await interceptorRejected(unauthorized() as any).catch(() => {});
-
-		expect(post).not.toHaveBeenCalled();
-		expect(Logout).not.toHaveBeenCalled();
-	});
-
-	// There is no session to rotate under proxy auth, and Logout would send the
-	// user to the proxy's sign-out page and straight back in.
-	it('does NOT call rotate or Logout when proxy auth mode is enabled on 401', async () => {
-		(getIsProxyAuthMode as jest.Mock).mockReturnValue(true);
-
-		await interceptorRejected(unauthorized() as any).catch(() => {});
-
-		expect(post).not.toHaveBeenCalled();
-		expect(Logout).not.toHaveBeenCalled();
-	});
-
-	it('DOES attempt rotate when neither mode is enabled on 401', async () => {
+	// Deciding without waiting reads proxy auth mode as false and rotates. That
+	// rotate fails, the failure path logs out, and with logout_redirect_url set
+	// the user is sent to the proxy's sign-out page and straight back in, which
+	// loops wherever the proxy can re-authenticate silently.
+	it('does not rotate when a 401 arrives before preflight has finished', async () => {
 		(post as jest.Mock).mockResolvedValue({
 			data: { accessToken: 'a', refreshToken: 'b' },
 		});
 
-		await interceptorRejected(unauthorized() as any).catch(() => {});
+		const settled = interceptorRejected(unauthorized() as any).catch(() => {});
 
-		expect(post).toHaveBeenCalled();
+		// Nothing may have happened yet: the interceptor is still waiting.
+		expect(post).not.toHaveBeenCalled();
+
+		// Stand in for the preflight effect in providers/App/App.tsx, which sets
+		// the flags and then releases the gate.
+		(getIsProxyAuthMode as jest.Mock).mockReturnValue(true);
+		markPreflightComplete();
+
+		await settled;
+
+		expect(post).not.toHaveBeenCalled();
+		expect(Logout).not.toHaveBeenCalled();
 	});
 });
