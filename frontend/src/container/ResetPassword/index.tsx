@@ -15,6 +15,11 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
 import { Label } from 'pages/SignUp/styles';
+import { hashPassword } from 'utils/hashPassword';
+import {
+	isPasswordComplex,
+	PASSWORD_POLICY_MESSAGE,
+} from 'utils/passwordPolicy';
 
 import { FormContainer } from './styles';
 
@@ -45,11 +50,19 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	);
 
 	const [form] = Form.useForm<FormValues>();
-	const handleFormSubmit = (): void => {
+	const handleFormSubmit = async (): Promise<void> => {
 		const { password } = form.getFieldsValue();
 
+		if (!isPasswordComplex(password)) {
+			notifications.error({
+				message: 'Weak password',
+				description: PASSWORD_POLICY_MESSAGE,
+			});
+			return;
+		}
+
 		resetPassword(
-			{ data: { password, token: token || '' } },
+			{ data: { password: await hashPassword(password), token: token || '' } },
 			{
 				onSuccess: (): void => {
 					notifications.success({
@@ -133,7 +146,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 		setIsValidPassword(isValid);
 
 		if (token) {
-			handleFormSubmit();
+			void handleFormSubmit();
 		}
 	};
 
