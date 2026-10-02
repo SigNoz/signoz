@@ -66,8 +66,10 @@ export const getSpanLogsQueryPayload = (
 		id: uuidv4(),
 		queryType: EQueryType.QUERY_BUILDER,
 	},
-	start,
-	end,
+	// getQueryResults/prepareQueryRangePayloadV5 expects seconds and converts
+	// them to milliseconds before sending the request.
+	start: Math.floor(start / 1000),
+	end: Math.ceil(end / 1000),
 });
 
 /**
