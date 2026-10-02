@@ -73,32 +73,20 @@ export const useHandleExplorerTabChange = (): {
 			}
 
 			const query = currentQueryData?.query || getUpdateQuery(newPanelType);
+			const nextViewKey = currentQueryData?.viewKey || viewKey;
+			const nextViewName = currentQueryData?.viewName || viewName;
 
-			if (redirectToUrl) {
-				redirectWithQueryBuilderData(
-					query,
-					{
-						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.viewName || viewName,
-						[QueryParams.viewKey]: currentQueryData?.viewKey || viewKey,
-					},
-					redirectToUrl,
-					undefined,
-					newTab,
-				);
-			} else {
-				redirectWithQueryBuilderData(
-					query,
-					{
-						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.viewName || viewName,
-						[QueryParams.viewKey]: currentQueryData?.viewKey || viewKey,
-					},
-					undefined,
-					undefined,
-					newTab,
-				);
-			}
+			redirectWithQueryBuilderData(
+				query,
+				{
+					[QueryParams.panelTypes]: newPanelType,
+					...(nextViewKey ? { [QueryParams.viewKey]: nextViewKey } : {}),
+					...(nextViewName ? { [QueryParams.viewName]: nextViewName } : {}),
+				},
+				redirectToUrl,
+				undefined,
+				newTab,
+			);
 		},
 		[panelType, getUpdateQuery, redirectWithQueryBuilderData, viewName, viewKey],
 	);

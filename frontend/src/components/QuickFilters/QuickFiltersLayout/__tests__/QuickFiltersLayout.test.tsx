@@ -176,12 +176,14 @@ describe('QuickFiltersLayout', () => {
 			expect(screen.getByTestId('saved-views-panel')).toBeInTheDocument();
 			expect(drawer()).toHaveClass('isOpen');
 			expect(screen.getByTestId('quick-filters')).toBe(quickFilters);
+			expect(screen.queryByTestId('saved-views-open')).not.toBeInTheDocument();
 
 			await user.click(screen.getByTestId('saved-views-close'));
 
 			expect(screen.queryByTestId('saved-views-panel')).not.toBeInTheDocument();
 			expect(drawer()).not.toHaveClass('isOpen');
 			expect(screen.getByTestId('quick-filters')).toBe(quickFilters);
+			expect(screen.getByTestId('saved-views-open')).toBeInTheDocument();
 		});
 
 		it('hands the source to the header and the panel', async () => {

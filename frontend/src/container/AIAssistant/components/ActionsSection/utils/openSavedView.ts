@@ -5,12 +5,10 @@ import {
 import { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import {
-	findSavedView,
-	getSavedViewQuery,
-	SavedViewSourcePage,
-	toSavedViewSource,
-} from 'container/SavedViews/utils';
+import { SavedViewSourcePage } from 'container/SavedViews/types';
+import { findSavedView } from 'container/SavedViews/utils/findSavedView';
+import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
+import { toSavedViewSource } from 'container/SavedViews/utils/toSavedViewSource';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import { DataSource } from 'types/common/queryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
