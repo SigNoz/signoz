@@ -1,0 +1,21 @@
+.panel {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	color: var(--l1-foreground);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-2) var(--spacing-3);
+	border-bottom: 1px solid var(--l1-border);
+	flex-shrink: 0;
+}
+
+.title {
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
+}

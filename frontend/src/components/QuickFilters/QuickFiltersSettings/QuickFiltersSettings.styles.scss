@@ -8,12 +8,20 @@
 	width: 342px;
 	height: 100%;
 	background: var(--l1-background);
-	transition: width 0.05s ease-in-out;
+	border-right: 1px solid var(--l1-border);
 	overflow: hidden;
 	color: var(--l1-foreground);
+	transition:
+		transform 0.2s ease-in-out,
+		visibility 0s;
 
 	&.hidden {
-		width: 0;
+		transform: translateX(-100%);
+		visibility: hidden;
+		pointer-events: none;
+		transition:
+			transform 0.2s ease-in-out,
+			visibility 0s 0.2s;
 	}
 	.qf-header {
 		display: flex;
