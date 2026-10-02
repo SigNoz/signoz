@@ -4,15 +4,12 @@ import {
 	type DashboardtypesScatterPlotAxisDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import ConfigField from '../../controls/ConfigField/ConfigField';
 import ConfigInlineField from '../../controls/ConfigInlineField/ConfigInlineField';
-import ConfigRangeInput from '../../controls/ConfigRangeInput/ConfigRangeInput';
-import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';
-import { RANGE_HELP } from '../AxesSection/options';
+import AxisFields from '../AxesSection/AxisFields';
+import AxisRangeField from '../AxesSection/AxisRangeField';
+import AxisScaleField from '../AxesSection/AxisScaleField';
 import { LOG_RANGE_IGNORED_HELP, SCALE_HELP, SCALE_OPTIONS } from './options';
 import { hasBoundALogAxisDrops } from './utils';
-
-import styles from './ScatterAxesSection.module.scss';
 
 interface ScatterAxisFieldsProps {
 	axis: 'x' | 'y';
@@ -32,7 +29,7 @@ function ScatterAxisFields({
 	const name = axis.toUpperCase();
 
 	return (
-		<div className={styles.fields}>
+		<AxisFields>
 			<ConfigInlineField label="Label">
 				<Input
 					data-testid={`panel-editor-v2-${axis}-label`}
@@ -44,32 +41,24 @@ function ScatterAxisFields({
 					}
 				/>
 			</ConfigInlineField>
-			<ConfigInlineField
-				label="Range"
+			<AxisRangeField
+				testIdPrefix={`panel-editor-v2-${axis}`}
+				value={value}
+				onChange={(bounds): void => onChange({ ...value, ...bounds })}
 				help={
-					hasBoundALogAxisDrops(scale, value) ? LOG_RANGE_IGNORED_HELP : RANGE_HELP
+					hasBoundALogAxisDrops(scale, value) ? LOG_RANGE_IGNORED_HELP : undefined
 				}
 				helpTestId={`panel-editor-v2-${axis}-range-help`}
-			>
-				<ConfigRangeInput
-					minTestId={`panel-editor-v2-${axis}-soft-min`}
-					maxTestId={`panel-editor-v2-${axis}-soft-max`}
-					min={value?.softMin}
-					max={value?.softMax}
-					onChangeMin={(softMin): void => onChange({ ...value, softMin })}
-					onChangeMax={(softMax): void => onChange({ ...value, softMax })}
-				/>
-			</ConfigInlineField>
-			<ConfigField label="Scale" help={SCALE_HELP[scale]}>
-				<ConfigTiles
-					testId={`panel-editor-v2-${axis}-scale`}
-					aria-label={`${name}-axis scale`}
-					value={scale}
-					items={SCALE_OPTIONS}
-					onChange={(next): void => onChange({ ...value, scale: next })}
-				/>
-			</ConfigField>
-		</div>
+			/>
+			<AxisScaleField
+				testId={`panel-editor-v2-${axis}-scale`}
+				aria-label={`${name}-axis scale`}
+				value={scale}
+				items={SCALE_OPTIONS}
+				help={SCALE_HELP}
+				onChange={(next): void => onChange({ ...value, scale: next })}
+			/>
+		</AxisFields>
 	);
 }
 
