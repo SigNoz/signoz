@@ -1,6 +1,7 @@
 package telemetrytypes
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -17,7 +18,10 @@ var telemetryGrantQueryTypes = map[string]bool{
 }
 
 var telemetryGrantKeys = map[string]struct{}{
-	"signoz.workspace.key.id": {},
+	"signoz.workspace.key.id":     {},
+	"service.name":                {},
+	"deployment.environment":      {},
+	"deployment.environment.name": {},
 }
 
 func NewTelemetryGrantKey(keyText string) (string, bool) {
@@ -107,5 +111,6 @@ func telemetryGrantKeyNames() []string {
 	for name := range telemetryGrantKeys {
 		names = append(names, name)
 	}
+	slices.Sort(names)
 	return names
 }
