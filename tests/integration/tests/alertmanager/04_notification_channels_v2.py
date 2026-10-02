@@ -231,6 +231,16 @@ DNS1123_LABEL = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
             },
             id="incidentio_with_empty_metadata",
         ),
+        pytest.param(
+            "telegram",
+            {
+                "botToken": "123456:ABC-DEF",
+                "chatId": -1001234567890,
+                "messageThreadId": 42,
+                "message": "{{ .CommonLabels.alertname }}",
+            },
+            id="telegram",
+        ),
     ],
 )
 def test_create_channel(  # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -460,6 +470,20 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
             [],
             ["metadata"],
             id="incidentio",
+        ),
+        pytest.param(
+            "telegram",
+            {
+                "botToken": "123456:ABC-DEF",
+                "chatId": -1001234567890,
+            },
+            {
+                "sendResolved": True,
+                "message": '{{ template "telegram.default.message" . }}',
+            },
+            [],
+            ["messageThreadId"],
+            id="telegram",
         ),
     ],
 )
