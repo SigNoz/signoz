@@ -99,6 +99,22 @@ describe('ScatterAxesSection', () => {
 		);
 	});
 
+	it('flags a soft min above the soft max on that axis only', () => {
+		render(
+			<ScatterAxesSection
+				value={{ x: { softMin: 23, softMax: 12 }, y: { softMin: 1, softMax: 2 } }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByTestId('panel-editor-v2-x-range-help')).toHaveTextContent(
+			"Min can't be greater than Max.",
+		);
+		expect(screen.getByTestId('panel-editor-v2-y-range-help')).toHaveTextContent(
+			'The axis always shows at least this range.',
+		);
+	});
+
 	it('writes an axis label', async () => {
 		const user = userEvent.setup();
 		const onChange = jest.fn();
