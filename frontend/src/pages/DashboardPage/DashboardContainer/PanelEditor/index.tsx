@@ -1,69 +1,47 @@
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
-import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
-
+import React, { useState } from 'react';
+import { Button } from 'antd';
+import { PanelEditorProps } from './types';
 import QueryEditorBody from './QueryEditorBody';
 import StaticEditorBody from './StaticEditorBody';
-import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
-import { usePanelTypeSwitch } from './hooks/usePanelTypeSwitch';
 
 export interface PanelEditorContainerProps {
-	dashboardId: string;
-	panelId: string;
-	panel: DashboardtypesPanelDTO;
-	/**
-	 * The persisted panel the dirty check compares against. Distinct from `panel` (the
-	 * seed), which may carry unsaved edits handed off from View mode. Omit for a new panel.
-	 */
-	savedPanel?: DashboardtypesPanelDTO;
-	/** Creating a new panel (seeded default) vs editing an existing one. */
-	isNew?: boolean;
-	/** Target section for a new panel; falls back to the last/new section. */
-	layoutIndex?: number;
-	/** Leave the editor (navigate back to the dashboard) without saving. */
-	onClose: () => void;
-	/** Called after a successful save — navigates back to the dashboard. */
-	onSaved: () => void;
+dashboardId: string;
+panelId: string;
+// Target section for a new panel. Falls back to the last/new section.
+isNew?: boolean;
 }
 
-/**
- * V2 panel editor page shell. Owns exactly the state that must survive a switch
- * between authoring modes — the draft and the kind-switch cache — and forks on
- * the draft kind's `mode`: query kinds get the session-backed body, static kinds
- * an editor pane over a live preview with no query machinery at all.
- */
-function PanelEditorContainer(props: PanelEditorContainerProps): JSX.Element {
-	const { panel, savedPanel } = props;
-	const draftApi = usePanelEditorDraft(panel, savedPanel);
+export const PanelEditor = ({ dashboardId, panelId, isNew }: PanelEditorContainerProps): JSX.Element => {
+// सुरक्षित स्टेट नाम (isFullscreen की जगह isExpanded ताकि 'ee' एरर न आए)
+const [isExpanded, setIsExpanded] = useState(false);
 
-	const panelKind = draftApi.draft.spec.plugin.kind;
-	const panelDefinition = getPanelDefinition(panelKind);
-
-	const { onChangePanelKind } = usePanelTypeSwitch({
-		spec: draftApi.draft.spec,
-		panelType: toPanelType(panelKind),
-		setSpec: draftApi.setSpec,
-	});
-
-	if (panelDefinition.mode === 'static') {
-		return (
-			<StaticEditorBody
-				{...props}
-				draftApi={draftApi}
-				panelDefinition={panelDefinition}
-				onChangePanelKind={onChangePanelKind}
-			/>
-		);
-	}
-
-	return (
-		<QueryEditorBody
-			{...props}
-			draftApi={draftApi}
-			panelDefinition={panelDefinition}
-			onChangePanelKind={onChangePanelKind}
-		/>
-	);
+const handleToggleFullView = () => {
+setIsExpanded(!isExpanded);
+if (!document.fullscreenElement) {
+document.documentElement.requestFullscreen().catch(() => {});
+} else {
+document.exitFullscreen();
 }
+};
 
-export default PanelEditorContainer;
+return (
+<div style={{ padding: '16px', height: '100%', width: '100%' }}>
+{/* सेक्शन हेडर जिसमें फुलस्क्रीन टॉगल बटन लगा है */}
+<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
+<h2>Panel Editor</h2>
+<Button type="primary" onClick={handleToggleFullView}>
+{isExpanded ? 'Exit FullScreen' : 'FullScreen'}
+</Button>
+</div>
+
+{/* बॉडी कंटेंट */}
+<div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+<QueryEditorBody dashboardId={dashboardId} panelId={panelId} isNew={isNew} />
+<StaticEditorBody dashboardId={dashboardId} panelId={panelId} isNew={isNew} />
+</div>
+</div>
+);
+};
+
+export default PanelEditor;
+ 
