@@ -51,6 +51,29 @@ func TestQueryRangeResources(t *testing.T) {
 			},
 		},
 		{
+			name: "atoms on different keys each require a grant",
+			body: builderQueryBody("logs", "service.name = 'checkout' AND deployment.environment = 'prod'"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/deployment.environment/prod"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/checkout"},
+			},
+		},
+		{
+			name: "environment keys are independent",
+			body: builderQueryBody("traces", "deployment.environment.name = 'prod'"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/deployment.environment.name/prod"},
+			},
+		},
+		{
+			name: "resource prefixed service in list",
+			body: builderQueryBody("logs", "resource.service.name IN ('frontend', 'checkout')"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/frontend"},
+			},
+		},
+		{
 			name: "no filter expression",
 			body: `{"compositeQuery":{"queries":[{"type":"builder_query","spec":{"signal":"logs"}}]}}`,
 			expected: []coretypes.ResourceWithID{

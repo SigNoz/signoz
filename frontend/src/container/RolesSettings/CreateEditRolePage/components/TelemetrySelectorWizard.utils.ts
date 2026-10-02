@@ -2,13 +2,14 @@ import { AuthZResource } from 'lib/authz/hooks/useAuthZ/types';
 
 import {
 	ANY_RESOURCE_VALUE,
+	DEFAULT_GRANT_KEY,
 	ParsedSelector,
 	QUERY_TYPES,
 	QueryTypeId,
 	QueryTypeOption,
 	SelectorDraft,
 	SelectorValidation,
-	SUPPORTED_GRANT_KEY,
+	SUPPORTED_GRANT_KEYS,
 } from './TelemetrySelectorWizard.constants';
 
 const METRIC_RESOURCES: ReadonlySet<AuthZResource> = new Set<AuthZResource>([
@@ -37,6 +38,10 @@ export function isAnyResourceValue(value: string): boolean {
 	return value.trim() === ANY_RESOURCE_VALUE;
 }
 
+export function isSupportedGrantKey(key: string): boolean {
+	return SUPPORTED_GRANT_KEYS.includes(key);
+}
+
 function splitSelector(selector: string): string[] {
 	const parts = selector.split('/');
 
@@ -47,14 +52,18 @@ function splitSelector(selector: string): string[] {
 	return [parts[0], parts[1], parts.slice(2).join('/')];
 }
 
-export function buildSelector({ queryType, value }: SelectorDraft): string {
+export function buildSelector({
+	queryType,
+	key,
+	value,
+}: SelectorDraft): string {
 	const trimmedValue = value.trim();
 
 	if (!supportsKeyScoping(queryType) || !trimmedValue) {
 		return `${queryType}/${ANY_RESOURCE_VALUE}`;
 	}
 
-	return `${queryType}/${SUPPORTED_GRANT_KEY}/${trimmedValue}`;
+	return `${queryType}/${key}/${trimmedValue}`;
 }
 
 export function parseSelector(selector: string): ParsedSelector {
@@ -62,6 +71,7 @@ export function parseSelector(selector: string): ParsedSelector {
 
 	return {
 		queryType: getQueryTypeOption(parts[0])?.id,
+		key: parts.length >= 3 ? parts[1] : undefined,
 		value: parts.length >= 3 ? parts[2] : '',
 	};
 }
@@ -101,7 +111,9 @@ export function validateSelector(selector: string): SelectorValidation {
 			}
 
 			return {
-				message: `Use <query-type>/${ANY_RESOURCE_VALUE} or <query-type>/${SUPPORTED_GRANT_KEY}/<value>.`,
+				message: `Use <query-type>/${ANY_RESOURCE_VALUE} or <query-type>/<key>/<value> with one of: ${SUPPORTED_GRANT_KEYS.join(
+					', ',
+				)}.`,
 				isError: false, // intentionally not an error
 			};
 		}
@@ -128,6 +140,15 @@ export function validateSelector(selector: string): SelectorValidation {
 		};
 	}
 
+	if (!isSupportedGrantKey(key)) {
+		return {
+			message: `"${key}" is not a supported key. Use one of: ${SUPPORTED_GRANT_KEYS.join(
+				', ',
+			)}.`,
+			isError: false, // intentionally not an error
+		};
+	}
+
 	return {
 		message: `Allow ${key}=${value} for ${option.label} queries.`,
 		isError: false,
@@ -135,5 +156,5 @@ export function validateSelector(selector: string): SelectorValidation {
 }
 
 export function getDefaultSelector(queryType: QueryTypeId): string {
-	return buildSelector({ queryType, value: '' });
+	return buildSelector({ queryType, key: DEFAULT_GRANT_KEY, value: '' });
 }
