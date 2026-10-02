@@ -94,6 +94,23 @@ describe('toQueryEnvelopes', () => {
 		]);
 	});
 
+	it('wraps a bare AI builder plugin as a builder_ai_query envelope', () => {
+		const ai = [
+			{
+				kind: 'TimeSeriesQuery',
+				spec: {
+					plugin: {
+						kind: 'signoz/AIBuilderQuery',
+						spec: { name: 'A', signal: 'traces' },
+					},
+				},
+			},
+		] as unknown as DashboardtypesQueryDTO[];
+		expect(toQueryEnvelopes(ai)).toStrictEqual([
+			{ type: 'builder_ai_query', spec: { name: 'A', signal: 'traces' } },
+		]);
+	});
+
 	it('passes a CompositeQuery envelope list through verbatim', () => {
 		const subqueries = [
 			{ type: 'builder_query', spec: { name: 'A' } },
@@ -200,6 +217,30 @@ describe('buildQueryRangeRequest', () => {
 			fillGaps: true,
 		});
 		expect(request.formatOptions?.fillGaps).toBe(true);
+	});
+
+	it('stamps offset/limit onto an AI builder query when pagination is given', () => {
+		const request = buildQueryRangeRequest({
+			queries: [
+				{
+					kind: 'raw',
+					spec: {
+						plugin: {
+							kind: 'signoz/AIBuilderQuery',
+							spec: { name: 'A', signal: 'traces' },
+						},
+					},
+				},
+			] as unknown as DashboardtypesQueryDTO[],
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+			pagination: { offset: 25, limit: 10 },
+		});
+		expect(request.compositeQuery?.queries?.[0]).toMatchObject({
+			type: 'builder_ai_query',
+			spec: { name: 'A', signal: 'traces', offset: 25, limit: 10 },
+		});
 	});
 
 	it('stamps offset/limit onto builder queries when pagination is given', () => {
