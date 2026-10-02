@@ -416,7 +416,7 @@ describe('usePanelActionItems', () => {
 		expect(mockOpenView).toHaveBeenCalledWith('panel-1', baseArgs.panel);
 	});
 
-	it('disables View, Edit, and Create Alerts on an AI query panel', () => {
+	it('disables only Create Alerts on an AI query panel', () => {
 		const aiPanel = {
 			...mockPanel,
 			spec: {
@@ -446,9 +446,10 @@ describe('usePanelActionItems', () => {
 			usePanelActionItems({ ...baseArgs, panel: aiPanel }),
 		);
 
-		expect(disabledKeys(result.current)).toStrictEqual(
-			expect.arrayContaining(['view-panel', 'edit-panel', 'create-alert']),
-		);
+		const disabled = disabledKeys(result.current);
+		expect(disabled).toContain('create-alert');
+		expect(disabled).not.toContain('view-panel');
+		expect(disabled).not.toContain('edit-panel');
 	});
 
 	it('create-alert seeds an alert from this panel', () => {
