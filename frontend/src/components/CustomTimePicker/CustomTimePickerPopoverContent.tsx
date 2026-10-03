@@ -27,6 +27,7 @@ import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
 import CalendarContainer from './CalendarContainer';
+import AroundTimeContainer from './AroundTimeContainer';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
 import { Timezone } from './timezoneUtils';
@@ -48,6 +49,9 @@ interface CustomTimePickerPopoverContentProps {
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
 	customDateTimeVisible: boolean;
 	setCustomDTPickerVisible: Dispatch<SetStateAction<boolean>>;
+	/** When true, shows the "Around a time" panel */
+	aroundTimeVisible: boolean;
+	setAroundTimeVisible: Dispatch<SetStateAction<boolean>>;
 	onCustomDateHandler: (
 		dateTimeRange: DateTimeRangeType,
 		lexicalContext?: LexicalContext,
@@ -100,6 +104,8 @@ function CustomTimePickerPopoverContent({
 	setIsOpen,
 	customDateTimeVisible,
 	setCustomDTPickerVisible,
+	aroundTimeVisible,
+	setAroundTimeVisible,
 	onCustomDateHandler,
 	onSelectHandler,
 	onTimezoneChange,
@@ -225,16 +231,8 @@ function CustomTimePickerPopoverContent({
 		setDateRange(dateRange);
 	};
 
-	const handleCalendarRangeApply = (): void => {
-		if (dateRange) {
-			const from = dayjs(dateRange.from)
-				.tz(timezone.value)
-				.startOf('day')
-				.toDate();
-			const to = dayjs(dateRange.to).tz(timezone.value).endOf('day').toDate();
-
-			onCustomDateHandler([dayjs(from), dayjs(to)]);
-		}
+	const handleCalendarRangeApply = (range: DateTimeRangeType): void => {
+		onCustomDateHandler(range);
 		setIsOpen(false);
 	};
 
@@ -269,14 +267,18 @@ function CustomTimePickerPopoverContent({
 								'date-time-options-btn',
 								customDateTimeVisible
 									? option.value === 'custom' && !isLiveLogsEnabled && 'active'
-									: selectedTime === option.value && !isLiveLogsEnabled && 'active',
+									: aroundTimeVisible
+										? option.value === 'around' && !isLiveLogsEnabled && 'active'
+										: selectedTime === option.value && !isLiveLogsEnabled && 'active',
 							)}
 						>
 							<span className="time-label">{option.label}</span>
 
-							{option.value !== 'custom' && option.value !== '1month' && (
-								<span className="time-value">{option.value}</span>
-							)}
+							{option.value !== 'custom' &&
+								option.value !== '1month' &&
+								option.value !== 'around' && (
+									<span className="time-value">{option.value}</span>
+								)}
 						</Button>
 					))}
 				</div>
@@ -284,7 +286,9 @@ function CustomTimePickerPopoverContent({
 				<div
 					className={cx(
 						'relative-date-time',
-						customDateTimeVisible ? 'date-picker' : 'relative-times',
+						customDateTimeVisible || aroundTimeVisible
+							? 'date-picker'
+							: 'relative-times',
 					)}
 				>
 					{customDateTimeVisible ? (
@@ -293,6 +297,27 @@ function CustomTimePickerPopoverContent({
 							onSelectDateRange={handleSelectDateRange}
 							onCancel={handleCalendarRangeCancel}
 							onApply={handleCalendarRangeApply}
+							initialFrom={dayjs(minTime / TO_MILLISECONDS_FACTOR)
+								.tz(timezone.value)
+								.toDate()}
+							initialTo={dayjs(maxTime / TO_MILLISECONDS_FACTOR)
+								.tz(timezone.value)
+								.toDate()}
+						/>
+					) : aroundTimeVisible ? (
+						<AroundTimeContainer
+							onApply={(range): void => {
+								onCustomDateHandler(range);
+								setAroundTimeVisible(false);
+								setIsOpen(false);
+							}}
+							onCancel={(): void => setAroundTimeVisible(false)}
+							initialFrom={dayjs(minTime / TO_MILLISECONDS_FACTOR)
+								.tz(timezone.value)
+								.toDate()}
+							initialTo={dayjs(maxTime / TO_MILLISECONDS_FACTOR)
+								.tz(timezone.value)
+								.toDate()}
 						/>
 					) : (
 						<div className="time-selector-container">
