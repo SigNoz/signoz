@@ -12,7 +12,7 @@ import (
 type Schedule struct {
 	Timezone   string      `json:"timezone" required:"true"`
 	StartTime  time.Time   `json:"startTime" required:"true"`
-	EndTime    time.Time   `json:"endTime,omitzero"`
+	EndTime    time.Time   `json:"endTime,omitzero" description:"If empty, the alert will be active forever."`
 	Recurrence *Recurrence `json:"recurrence"`
 }
 
