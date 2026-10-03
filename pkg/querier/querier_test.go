@@ -58,6 +58,7 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		nil,                // bucketCache
 		flaggertest.New(t), // flagger
 		0,                  // logTraceIDWindowPadding
+		0,                  // traceIDWindowPadding
 		0,                  // maxConcurrentQueries
 	)
 
@@ -131,6 +132,7 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		nil,                // bucketCache
 		flaggertest.New(t), // flagger
 		0,                  // logTraceIDWindowPadding
+		0,                  // traceIDWindowPadding
 		0,                  // maxConcurrentQueries
 	)
 
