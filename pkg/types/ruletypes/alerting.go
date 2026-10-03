@@ -100,7 +100,7 @@ func (QueryType) Enum() []any {
 }
 
 type AlertCompositeQuery struct {
-	Queries []qbtypes.QueryEnvelope `json:"queries" required:"true"`
+	Queries []qbtypes.QueryEnvelope `json:"queries" required:"true" minItems:"1"`
 
 	PanelType PanelType `json:"panelType" required:"true"`
 	QueryType QueryType `json:"queryType" required:"true"`
