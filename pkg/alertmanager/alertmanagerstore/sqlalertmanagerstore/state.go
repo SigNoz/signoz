@@ -3,6 +3,7 @@ package sqlalertmanagerstore
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -65,4 +66,69 @@ func (store *state) Set(ctx context.Context, storeableState *alertmanagertypes.S
 	}
 
 	return nil
+}
+
+func NewAlertThreadStore(sqlstore sqlstore.SQLStore) alertmanagertypes.AlertThreadStore {
+	return &state{sqlstore: sqlstore}
+}
+
+// GetThreadTs implements alertmanagertypes.AlertThreadStore.
+func (store *state) GetThreadTs(ctx context.Context, orgID string, groupKey string) (string, error) {
+	thread := new(alertmanagertypes.SlackAlertThread)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(thread).
+		Where("org_id = ? AND group_key = ?", orgID, groupKey).
+		Scan(ctx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+	return thread.ThreadTs, nil
+}
+
+// SetThreadTs implements alertmanagertypes.AlertThreadStore.
+func (store *state) SetThreadTs(ctx context.Context, orgID string, groupKey string, threadTs string) error {
+	thread := &alertmanagertypes.SlackAlertThread{
+		OrgID:     orgID,
+		GroupKey:  groupKey,
+		ThreadTs:  threadTs,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback() //nolint:errcheck
+
+	_, err = tx.
+		NewInsert().
+		Model(thread).
+		On("CONFLICT (group_key) DO UPDATE").
+		Set("thread_ts = EXCLUDED.thread_ts").
+		Set("updated_at = EXCLUDED.updated_at").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+// DeleteThread implements alertmanagertypes.AlertThreadStore.
+func (store *state) DeleteThread(ctx context.Context, orgID string, groupKey string) error {
+	_, err := store.
+		sqlstore.
+		BunDB().
+		NewDelete().
+		Model((*alertmanagertypes.SlackAlertThread)(nil)).
+		Where("org_id = ? AND group_key = ?", orgID, groupKey).
+		Exec(ctx)
+	return err
 }

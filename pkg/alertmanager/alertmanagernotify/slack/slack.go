@@ -38,18 +38,20 @@ const maxTitleLenRunes = 1024
 
 // Notifier implements a Notifier for Slack notifications.
 type Notifier struct {
-	conf      *config.SlackConfig
-	tmpl      *template.Template
-	logger    *slog.Logger
-	client    *http.Client
-	retrier   *notify.Retrier
-	templater alertmanagertypes.Templater
+	conf        *config.SlackConfig
+	tmpl        *template.Template
+	logger      *slog.Logger
+	client      *http.Client
+	retrier     *notify.Retrier
+	templater   alertmanagertypes.Templater
+	orgID       string
+	threadStore alertmanagertypes.AlertThreadStore
 
 	postJSONFunc func(ctx context.Context, client *http.Client, url string, body io.Reader) (*http.Response, error)
 }
 
 // New returns a new Slack notification handler.
-func New(c *config.SlackConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *config.SlackConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, orgID string, threadStore alertmanagertypes.AlertThreadStore, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
@@ -62,6 +64,8 @@ func New(c *config.SlackConfig, t *template.Template, l *slog.Logger, templater 
 		client:       client,
 		retrier:      &notify.Retrier{},
 		templater:    templater,
+		orgID:        orgID,
+		threadStore:  threadStore,
 		postJSONFunc: notify.PostJSON,
 	}, nil
 }
@@ -75,6 +79,7 @@ type request struct {
 	LinkNames   bool         `json:"link_names,omitempty"`
 	Text        string       `json:"text,omitempty"`
 	Attachments []attachment `json:"attachments"`
+	ThreadTs    string       `json:"thread_ts,omitempty"`
 }
 
 // attachment is used to display a richly-formatted message block.
@@ -110,6 +115,73 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		tmplText = notify.TmplText(n.tmpl, data, &err)
 	)
 
+	// Check if all alerts in this group are resolved
+	allResolved := true
+	for _, a := range as {
+		if !a.Resolved() {
+			allResolved = false
+			break
+		}
+	}
+
+	// Retrieve thread ts from store if available
+	var threadTs string
+	if n.threadStore != nil {
+		threadTs, err = n.threadStore.GetThreadTs(ctx, n.orgID, string(key))
+		if err != nil {
+			logger.WarnContext(ctx, "failed to get thread ts from store", errors.Attr(err))
+		}
+	}
+
+	// Define function to post a JSON request payload to Slack and return the parsed response
+	postToSlack := func(req *request) (slackResponse, bool, error) {
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(req); err != nil {
+			return slackResponse{}, false, err
+		}
+
+		var u string
+		if n.conf.APIURL != nil {
+			u = n.conf.APIURL.String()
+		} else {
+			content, err := os.ReadFile(n.conf.APIURLFile)
+			if err != nil {
+				return slackResponse{}, false, err
+			}
+			u = strings.TrimSpace(string(content))
+		}
+
+		ctxPost := ctx
+		if n.conf.Timeout > 0 {
+			postCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, errors.NewInternalf(errors.CodeTimeout, "configured slack timeout reached (%s)", n.conf.Timeout))
+			defer cancel()
+			ctxPost = postCtx
+		}
+
+		resp, err := n.postJSONFunc(ctxPost, n.client, u, &buf)
+		if err != nil {
+			if ctxPost.Err() != nil {
+				err = errors.NewInternalf(errors.CodeInternal, "failed to post JSON to slack: %v", context.Cause(ctxPost))
+			}
+			return slackResponse{}, true, notify.RedactURL(err)
+		}
+		defer notify.Drain(resp)
+
+		retry, err := n.retrier.Check(resp.StatusCode, resp.Body)
+		if err != nil {
+			err = errors.NewInternalf(errors.CodeInternal, "channel %q: %v", req.Channel, err)
+			return slackResponse{}, retry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
+		}
+
+		slackResp, retry, err := parseSlackResponse(resp)
+		if err != nil {
+			err = errors.NewInternalf(errors.CodeInternal, "channel %q: %v", req.Channel, err)
+			return slackResponse{}, retry, notify.NewErrorWithReason(notify.ClientErrorReason, err)
+		}
+
+		return slackResp, false, nil
+	}
+
 	attachments, err := n.prepareContent(ctx, as, tmplText)
 	if err != nil {
 		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
@@ -120,67 +192,134 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		n.addFieldsAndActions(&attachments[0], tmplText)
 	}
 
+	title := ""
+	if len(attachments) > 0 {
+		title = attachments[0].Title
+	}
+
+	// 1. Threading case: We already have a thread TS
+	if threadTs != "" {
+		var threadAttachments []attachment
+		if allResolved {
+			// For resolved, post a simple resolve message into the thread
+			threadAttachments = []attachment{
+				{
+					Title:     "Resolved: " + strings.TrimPrefix(strings.TrimPrefix(title, "[firing] "), "[resolved] "),
+					TitleLink: tmplText(n.conf.TitleLink),
+					Color:     colorGreen,
+					MrkdwnIn:  []string{"title"},
+				},
+			}
+		} else {
+			// If it's an update to a firing alert, post the full updated attachments to the thread
+			threadAttachments = attachments
+		}
+
+		req := &request{
+			Channel:     tmplText(n.conf.Channel),
+			Username:    tmplText(n.conf.Username),
+			IconEmoji:   tmplText(n.conf.IconEmoji),
+			IconURL:     tmplText(n.conf.IconURL),
+			LinkNames:   n.conf.LinkNames,
+			Attachments: threadAttachments,
+			ThreadTs:    threadTs,
+		}
+
+		_, retry, err := postToSlack(req)
+		if err != nil {
+			return retry, err
+		}
+
+		// Delete the thread once fully resolved
+		if allResolved && n.threadStore != nil {
+			if err := n.threadStore.DeleteThread(ctx, n.orgID, string(key)); err != nil {
+				logger.WarnContext(ctx, "failed to delete thread from store", errors.Attr(err))
+			}
+		}
+
+		return false, nil
+	}
+
+	// 2. Firing alert starting a new thread (or fallback if allResolved but no thread existed)
+	if allResolved {
+		// Fallback: resolved alert but no thread exists (e.g. lost state or firing alert was skipped).
+		// We just send the full detailed card to the main channel.
+		req := &request{
+			Channel:     tmplText(n.conf.Channel),
+			Username:    tmplText(n.conf.Username),
+			IconEmoji:   tmplText(n.conf.IconEmoji),
+			IconURL:     tmplText(n.conf.IconURL),
+			LinkNames:   n.conf.LinkNames,
+			Text:        tmplText(n.conf.MessageText),
+			Attachments: attachments,
+		}
+		_, retry, err := postToSlack(req)
+		return retry, err
+	}
+
+	// Starting a thread: First post the compact title card to the main channel
+	compactAttachment := attachment{
+		Title:     title,
+		TitleLink: tmplText(n.conf.TitleLink),
+		Color:     colorRed,
+	}
+
 	req := &request{
 		Channel:     tmplText(n.conf.Channel),
 		Username:    tmplText(n.conf.Username),
 		IconEmoji:   tmplText(n.conf.IconEmoji),
 		IconURL:     tmplText(n.conf.IconURL),
 		LinkNames:   n.conf.LinkNames,
-		Text:        tmplText(n.conf.MessageText),
-		Attachments: attachments,
+		Attachments: []attachment{compactAttachment},
 	}
+
+	slackResp, retry, err := postToSlack(req)
 	if err != nil {
-		return false, err
+		return retry, err
 	}
 
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(req); err != nil {
-		return false, err
-	}
+	// If we got a TS back (indicating it was successfully sent using Web API)
+	if slackResp.TS != "" {
+		if n.threadStore != nil {
+			if err := n.threadStore.SetThreadTs(ctx, n.orgID, string(key), slackResp.TS); err != nil {
+				logger.WarnContext(ctx, "failed to save thread ts to store", errors.Attr(err))
+			}
+		}
 
-	var u string
-	if n.conf.APIURL != nil {
-		u = n.conf.APIURL.String()
+		// Post the detailed attachments as a reply inside the newly created thread
+		detailReq := &request{
+			Channel:     tmplText(n.conf.Channel),
+			Username:    tmplText(n.conf.Username),
+			IconEmoji:   tmplText(n.conf.IconEmoji),
+			IconURL:     tmplText(n.conf.IconURL),
+			LinkNames:   n.conf.LinkNames,
+			Attachments: attachments,
+			ThreadTs:    slackResp.TS,
+		}
+		_, detailRetry, detailErr := postToSlack(detailReq)
+		if detailErr != nil {
+			logger.WarnContext(ctx, "failed to post detailed attachments in thread", errors.Attr(detailErr))
+			return detailRetry, detailErr
+		}
 	} else {
-		content, err := os.ReadFile(n.conf.APIURLFile)
-		if err != nil {
-			return false, err
+		// Fallback: If we got no TS back (e.g. user is using standard incoming webhook),
+		// we cannot do threading. We must post the full detailed card to the channel so the user sees the details.
+		// Since we already posted the compact title, posting the details now completes the alert info.
+		detailReq := &request{
+			Channel:     tmplText(n.conf.Channel),
+			Username:    tmplText(n.conf.Username),
+			IconEmoji:   tmplText(n.conf.IconEmoji),
+			IconURL:     tmplText(n.conf.IconURL),
+			LinkNames:   n.conf.LinkNames,
+			Attachments: attachments,
 		}
-		u = strings.TrimSpace(string(content))
-	}
-
-	if n.conf.Timeout > 0 {
-		postCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, errors.NewInternalf(errors.CodeTimeout, "configured slack timeout reached (%s)", n.conf.Timeout))
-		defer cancel()
-		ctx = postCtx
-	}
-
-	resp, err := n.postJSONFunc(ctx, n.client, u, &buf) //nolint:bodyclose
-	if err != nil {
-		if ctx.Err() != nil {
-			err = errors.NewInternalf(errors.CodeInternal, "failed to post JSON to slack: %v", context.Cause(ctx))
+		_, detailRetry, detailErr := postToSlack(detailReq)
+		if detailErr != nil {
+			return detailRetry, detailErr
 		}
-		return true, notify.RedactURL(err)
-	}
-	defer notify.Drain(resp)
-
-	// Use a retrier to generate an error message for non-200 responses and
-	// classify them as retriable or not.
-	retry, err := n.retrier.Check(resp.StatusCode, resp.Body)
-	if err != nil {
-		err = errors.NewInternalf(errors.CodeInternal, "channel %q: %v", req.Channel, err)
-		return retry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
 	}
 
-	// Slack web API might return errors with a 200 response code.
-	// https://docs.slack.dev/tools/node-slack-sdk/web-api/#handle-errors
-	retry, err = checkResponseError(resp)
-	if err != nil {
-		err = errors.NewInternalf(errors.CodeInternal, "channel %q: %v", req.Channel, err)
-		return retry, notify.NewErrorWithReason(notify.ClientErrorReason, err)
-	}
-
-	return retry, nil
+	return false, nil
 }
 
 // prepareContent expands alert templates and returns the Slack attachment(s)
@@ -327,44 +466,35 @@ func (n *Notifier) addFieldsAndActions(att *attachment, tmplText func(string) st
 	}
 }
 
-// checkResponseError parses out the error message from Slack API response.
-func checkResponseError(resp *http.Response) (bool, error) {
+type slackResponse struct {
+	OK    bool   `json:"ok"`
+	Error string `json:"error"`
+	TS    string `json:"ts"`
+}
+
+func parseSlackResponse(resp *http.Response) (slackResponse, bool, error) {
+	var data slackResponse
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return true, errors.WrapInternalf(err, errors.CodeInternal, "could not read response body")
+		return data, true, errors.WrapInternalf(err, errors.CodeInternal, "could not read response body")
 	}
+
+	// Restore body in case it needs to be read again
+	resp.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	if strings.HasPrefix(resp.Header.Get("Content-Type"), "application/json") {
-		return checkJSONResponseError(body)
+		if err := json.Unmarshal(body, &data); err != nil {
+			return data, true, errors.NewInternalf(errors.CodeInternal, "could not unmarshal JSON response %q: %v", string(body), err)
+		}
+		if !data.OK {
+			return data, false, errors.NewInternalf(errors.CodeInternal, "error response from Slack: %s", data.Error)
+		}
+		return data, false, nil
 	}
-	return checkTextResponseError(body)
-}
 
-// checkTextResponseError classifies plaintext responses from Slack.
-// A plaintext (non-JSON) response is successful if it's a string "ok".
-// This is typically a response for an Incoming Webhook
-// (https://api.slack.com/messaging/webhooks#handling_errors)
-func checkTextResponseError(body []byte) (bool, error) {
 	if !bytes.Equal(body, []byte("ok")) {
-		return false, errors.NewInternalf(errors.CodeInternal, "received an error response from Slack: %s", string(body))
+		return data, false, errors.NewInternalf(errors.CodeInternal, "received an error response from Slack: %s", string(body))
 	}
-	return false, nil
-}
-
-// checkJSONResponseError classifies JSON responses from Slack.
-func checkJSONResponseError(body []byte) (bool, error) {
-	// response is for parsing out errors from the JSON response.
-	type response struct {
-		OK    bool   `json:"ok"`
-		Error string `json:"error"`
-	}
-
-	var data response
-	if err := json.Unmarshal(body, &data); err != nil {
-		return true, errors.NewInternalf(errors.CodeInternal, "could not unmarshal JSON response %q: %v", string(body), err)
-	}
-	if !data.OK {
-		return false, errors.NewInternalf(errors.CodeInternal, "error response from Slack: %s", data.Error)
-	}
-	return false, nil
+	data.OK = true
+	return data, false, nil
 }
