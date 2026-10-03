@@ -4,7 +4,7 @@ import { Minus, Plus } from '@signozhq/icons';
 import { Button, Form, Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
-import { IncidentIOChannel } from '../../CreateAlertChannels/config';
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 
 interface MetadataRow {
 	key: string;
@@ -23,7 +23,7 @@ function IncidentIOSettings({
 		})),
 	);
 
-	const update = (patch: Partial<IncidentIOChannel>): void =>
+	const update = (patch: Partial<ChannelSpecFormValues>): void =>
 		setSelectedConfig((value) => ({ ...value, ...patch }));
 
 	const syncMetadata = (rows: MetadataRow[]): void => {
@@ -161,7 +161,7 @@ function IncidentIOSettings({
 }
 
 interface IncidentIOProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<IncidentIOChannel>>>;
+	setSelectedConfig: Dispatch<SetStateAction<Partial<ChannelSpecFormValues>>>;
 	initialMetadata?: Record<string, string>;
 }
 

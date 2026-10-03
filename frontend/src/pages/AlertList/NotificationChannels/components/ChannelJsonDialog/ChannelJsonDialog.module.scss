@@ -1,0 +1,26 @@
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+	height: 100%;
+	min-height: 420px;
+}
+
+.toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	flex-wrap: wrap;
+}
+
+.spacer {
+	flex: 1 1 auto;
+}
+
+.editor {
+	flex: 1 1 auto;
+	min-height: 360px;
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	overflow: hidden;
+}

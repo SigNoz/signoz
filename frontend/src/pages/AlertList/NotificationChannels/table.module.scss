@@ -1,0 +1,10 @@
+/* Sized to the text it holds, so a tooltip anchors to the words, not the cell.
+   A relative timestamp never needs clamping, so it skips the table's clamped
+   text element, which is a block-level `-webkit-box`. */
+.timeText {
+	display: inline-block;
+	white-space: nowrap;
+	font-size: var(--tanstack-plain-cell-font-size, 14px);
+	line-height: var(--tanstack-plain-cell-line-height, 18px);
+	color: inherit;
+}

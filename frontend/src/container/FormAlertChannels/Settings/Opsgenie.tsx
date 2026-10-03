@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Form, Input } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
-import { OpsgenieChannel } from '../../CreateAlertChannels/config';
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 
 const { TextArea } = Input;
 
@@ -21,7 +21,7 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 	return (
 		<>
 			<Form.Item
-				name="api_key"
+				name="apiKey"
 				label={t('field_opsgenie_api_key')}
 				tooltip={{
 					title: (
@@ -36,7 +36,7 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 				required
 			>
 				<Input
-					onChange={handleInputChange('api_key')}
+					onChange={handleInputChange('apiKey')}
 					data-testid="opsgenie-api-key-textbox"
 				/>
 			</Form.Item>
@@ -88,7 +88,7 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 
 interface OpsgenieFormProps {
 	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<OpsgenieChannel>>
+		React.SetStateAction<Partial<ChannelSpecFormValues>>
 	>;
 }
 
