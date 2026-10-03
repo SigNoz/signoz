@@ -58,16 +58,12 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 		response = append(response, promotetypes.PromotePath{
 			Signal:  target.Entry.Signal.StringValue(),
 			Context: target.Entry.FieldContext.StringValue(),
-			Path:    target.RequiredPathPrefix + path,
+			Path:    path,
 			Promote: true,
 		})
 	}
 
-	if !target.IndexesSupported {
-		return response, nil
-	}
-
-	indexes, err := m.metadataStore.ListLogsJSONIndexes(ctx)
+	indexes, err := m.metadataStore.ListJSONIndexes(ctx, target.IndexSource())
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +81,7 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 	}
 
 	for i := range response {
-		fullPath := target.PromotedColumnPrefix() + strings.TrimPrefix(response[i].Path, target.RequiredPathPrefix)
+		fullPath := target.PromotedColumnPrefix() + response[i].Path
 		if indexes, ok := aggr[fullPath]; ok {
 			response[i].Indexes = indexes
 			delete(aggr, fullPath)
@@ -95,7 +91,6 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 	for fullPath, indexes := range aggr {
 		path := strings.TrimPrefix(fullPath, target.BaseColumnPrefix())
 		path = strings.TrimPrefix(path, target.PromotedColumnPrefix())
-		path = target.RequiredPathPrefix + path
 		response = append(response, promotetypes.PromotePath{
 			Signal:  target.Entry.Signal.StringValue(),
 			Context: target.Entry.FieldContext.StringValue(),
@@ -175,7 +170,7 @@ func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, p
 				}
 				indexes = append(indexes, schemamigrator.Index{
 					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, it.Path, index.JSONDataType.StringValue(), typeIndex),
-					Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, it.Path, index.JSONDataType.StringValue()),
+					Expression:  target.IndexExpression(parentColumn, it.Path, index.JSONDataType.StringValue()),
 					Type:        index.Type,
 					Granularity: index.Granularity,
 				})

@@ -1,6 +1,11 @@
 package promotetypes
 
 import (
+	"fmt"
+	"strings"
+
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
@@ -9,12 +14,10 @@ import (
 
 // Target identifies a promotion domain.
 type Target struct {
-	Entry              telemetrytypes.EvolutionEntry // evolution row template; FieldName and ReleaseTime are set per write
-	DBName             string                        // index DDL database, used only when IndexesSupported
-	LocalTableName     string                        // index DDL local table, used only when IndexesSupported
-	BaseColumn         string                        // column holding every path; indexes for unpromoted paths are created on it
-	RequiredPathPrefix string                        // prefix API paths must carry, stripped before storing; empty for bare names
-	IndexesSupported   bool
+	Entry          telemetrytypes.EvolutionEntry // evolution row template; FieldName and ReleaseTime are set per write
+	DBName         string                        // index DDL database
+	LocalTableName string                        // index DDL local table
+	BaseColumn     string                        // column holding every path; indexes for unpromoted paths are created on it
 }
 
 func (t Target) PromotedColumn() string { return t.Entry.ColumnName }
@@ -23,14 +26,57 @@ func (t Target) BaseColumnPrefix() string { return t.BaseColumn + "." }
 
 func (t Target) PromotedColumnPrefix() string { return t.PromotedColumn() + "." }
 
-func NewTarget(entry telemetrytypes.EvolutionEntry, dbName, localTableName, baseColumn, requiredPathPrefix string, indexesSupported bool) Target {
+func (t Target) RejectedPathPrefixes() []string {
+	switch t.Entry.Signal {
+	case telemetrytypes.SignalLogs:
+		return []string{telemetrytypes.BodyJSONStringSearchPrefix, t.BaseColumnPrefix(), t.PromotedColumnPrefix()}
+	default:
+		return []string{t.BaseColumnPrefix(), t.PromotedColumnPrefix()}
+	}
+}
+
+// IndexExpression folds logs strings to lower case over assumeNotNull for
+// case-insensitive LIKE searches; traces indexes are a bare type cast.
+func (t Target) IndexExpression(column, path, jsonDataType string) string {
+	switch t.Entry.Signal {
+	case telemetrytypes.SignalLogs:
+		return schemamigrator.JSONSubColumnIndexExpr(column, path, jsonDataType)
+	default:
+		return simpleJSONSubColumnIndexExpr(column, path, jsonDataType)
+	}
+}
+
+// simpleJSONSubColumnIndexExpr renders `column.path::Type`; the cast unwraps
+// the Nullable the sub-column access returns, which bloom filter indexes
+// reject.
+func simpleJSONSubColumnIndexExpr(column, path, jsonDataType string) string {
+	parts := strings.Split(column+"."+path, ".")
+	for idx, part := range parts {
+		if keycheck.IsBacktickRequired(part) {
+			part := strings.Trim(part, "`")
+			parts[idx] = "`" + part + "`"
+		}
+	}
+	return fmt.Sprintf("%s::%s", strings.Join(parts, "."), jsonDataType)
+}
+
+func (t Target) IndexSource() telemetrytypes.JSONIndexSource {
+	return telemetrytypes.JSONIndexSource{
+		Signal:               t.Entry.Signal,
+		FieldContext:         t.Entry.FieldContext,
+		DBName:               t.DBName,
+		LocalTableName:       t.LocalTableName,
+		BaseColumnPrefix:     t.BaseColumnPrefix(),
+		PromotedColumnPrefix: t.PromotedColumnPrefix(),
+	}
+}
+
+func NewTarget(entry telemetrytypes.EvolutionEntry, dbName, localTableName, baseColumn string) Target {
 	return Target{
-		Entry:              entry,
-		DBName:             dbName,
-		LocalTableName:     localTableName,
-		BaseColumn:         baseColumn,
-		RequiredPathPrefix: requiredPathPrefix,
-		IndexesSupported:   indexesSupported,
+		Entry:          entry,
+		DBName:         dbName,
+		LocalTableName: localTableName,
+		BaseColumn:     baseColumn,
 	}
 }
 
@@ -46,8 +92,6 @@ func NewLogsBodyTarget() Target {
 		logstelemetryschema.DBName,
 		logstelemetryschema.LogsV2LocalTableName,
 		logstelemetryschema.LogsV2BodyV2Column,
-		telemetrytypes.BodyJSONStringSearchPrefix,
-		true,
 	)
 }
 
@@ -64,8 +108,6 @@ func NewTracesAttributesTarget() Target {
 		tracestelemetryschema.DBName,
 		tracestelemetryschema.SpanIndexV3LocalTableName,
 		tracestelemetryschema.SpanAttributesColumn,
-		"",
-		false,
 	)
 }
 

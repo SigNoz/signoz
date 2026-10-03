@@ -84,24 +84,15 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "array paths can not be promoted or indexed")
 	}
 
-	if strings.HasPrefix(i.Path, target.BaseColumnPrefix()) || strings.HasPrefix(i.Path, target.PromotedColumnPrefix()) {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "`%s`, `%s` don't add these prefixes to the path", target.BaseColumnPrefix(), target.PromotedColumnPrefix())
-	}
-
-	if target.RequiredPathPrefix != "" {
-		if !strings.HasPrefix(i.Path, target.RequiredPathPrefix) {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must start with `%s`", target.RequiredPathPrefix)
+	for _, prefix := range target.RejectedPathPrefixes() {
+		if strings.HasPrefix(i.Path, prefix) {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must be a bare attribute name, without the `%s` prefix", prefix)
 		}
-		i.Path = strings.TrimPrefix(i.Path, target.RequiredPathPrefix)
 	}
 
 	isCardinal := keycheck.IsCardinal(i.Path)
 	if isCardinal {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cardinal paths can not be promoted or indexed")
-	}
-
-	if len(i.Indexes) > 0 && !target.IndexesSupported {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "indexes are not supported for %s %s", target.Entry.Signal.StringValue(), target.Entry.FieldContext.StringValue())
 	}
 
 	for idx, index := range i.Indexes {
