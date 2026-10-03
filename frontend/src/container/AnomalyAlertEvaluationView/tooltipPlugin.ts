@@ -2,15 +2,18 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { themeColors } from 'constants/theme';
 import dayjs from 'dayjs';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import uPlot from 'uplot';
 
 const tooltipPlugin = (
 	isDarkMode: boolean,
 	timezone: string,
-): { hooks: { init: (u: any) => void } } => {
+): { hooks: { init: (uPlotInstance: uPlot) => void; destroy: () => void } } => {
 	let tooltip: HTMLDivElement;
 	const tooltipLeftOffset = 10;
 	const tooltipTopOffset = 10;
 	let isMouseOverPlot = false;
+	let overElement: HTMLElement;
+	let plotInstance: uPlot | null = null;
 
 	function formatValue(value: string | number | Date): string | number | Date {
 		if (typeof value === 'string' && !Number.isNaN(parseFloat(value))) {
@@ -31,9 +34,9 @@ const tooltipPlugin = (
 		return String(value);
 	}
 
-	function updateTooltip(u: any, left: number, top: number): void {
-		const idx = u.posToIdx(left);
-		const xVal = u.data[0][idx];
+	function updateTooltip(uPlotInstance: uPlot, left: number, top: number): void {
+		const idx = uPlotInstance.posToIdx(left);
+		const xVal = uPlotInstance.data[0][idx];
 
 		if (xVal == null) {
 			tooltip.style.display = 'none';
@@ -52,31 +55,33 @@ const tooltipPlugin = (
 		let color = null;
 
 		// Loop through all series (excluding the x-axis series)
-		for (let i = 1; i < u.series.length; i++) {
-			const series = u.series[i];
+		for (let i = 1; i < uPlotInstance.series.length; i++) {
+			const series = uPlotInstance.series[i];
 
-			const yVal = u.data[i][idx];
-			const formattedYVal = formatValue(yVal);
+			const yVal = uPlotInstance.data[i][idx];
+			const formattedYVal = formatValue(yVal ?? 'N/A');
+
+			const seriesLabel = series.label ?? '';
 
 			color = generateColor(
-				series.label,
+				seriesLabel,
 				isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
 			);
 
 			// Create the round marker for the series
 			const marker = `<span class="uplot-tooltip-marker" style="background-color: ${color};"></span>`;
 
-			if (series.label.toLowerCase().includes('upper band')) {
+			if (seriesLabel.toLowerCase().includes('upper band')) {
 				upperBand = formattedYVal;
-			} else if (series.label.toLowerCase().includes('lower band')) {
+			} else if (seriesLabel.toLowerCase().includes('lower band')) {
 				lowerBand = formattedYVal;
-			} else if (series.label.toLowerCase().includes('main series')) {
+			} else if (seriesLabel.toLowerCase().includes('main series')) {
 				mainValue = formattedYVal;
 			} else {
 				tooltipContent += `
               <div class="uplot-tooltip-series">
                 ${marker}
-                <span class="uplot-tooltip-series-name">${series.label}:</span>
+                <span class="uplot-tooltip-series-name">${seriesLabel}:</span>
                 <span class="uplot-tooltip-series-value">${formattedYVal}</span>
               </div>`;
 			}
@@ -117,35 +122,55 @@ const tooltipPlugin = (
 		tooltip.style.top = `${top + tooltipTopOffset}px`;
 	}
 
-	function init(u: any): void {
+	// Named event handlers for proper cleanup
+	const handleMouseEnter = (): void => {
+		isMouseOverPlot = true;
+	};
+
+	const handleMouseLeave = (): void => {
+		isMouseOverPlot = false;
+		tooltip.style.display = 'none';
+	};
+
+	const handleMouseMove = (e: MouseEvent): void => {
+		if (isMouseOverPlot && overElement && plotInstance) {
+			const rect = overElement.getBoundingClientRect();
+			const left = e.clientX - rect.left;
+			const top = e.clientY - rect.top;
+			updateTooltip(plotInstance, left, top);
+		}
+	};
+
+	function init(uPlotInstance: uPlot): void {
 		tooltip = document.createElement('div');
 		tooltip.className = 'uplot-tooltip';
 		tooltip.style.display = 'none';
-		u.over.appendChild(tooltip);
+		uPlotInstance.over.appendChild(tooltip);
 
-		// Add event listeners
-		u.over.addEventListener('mouseenter', () => {
-			isMouseOverPlot = true;
-		});
+		overElement = uPlotInstance.over;
+		plotInstance = uPlotInstance;
 
-		u.over.addEventListener('mouseleave', () => {
-			isMouseOverPlot = false;
-			tooltip.style.display = 'none';
-		});
+		overElement.addEventListener('mouseenter', handleMouseEnter);
+		overElement.addEventListener('mouseleave', handleMouseLeave);
+		overElement.addEventListener('mousemove', handleMouseMove);
+	}
 
-		u.over.addEventListener('mousemove', (e: MouseEvent) => {
-			if (isMouseOverPlot) {
-				const rect = u.over.getBoundingClientRect();
-				const left = e.clientX - rect.left;
-				const top = e.clientY - rect.top;
-				updateTooltip(u, left, top);
-			}
-		});
+	function destroy(): void {
+		if (overElement) {
+			overElement.removeEventListener('mouseenter', handleMouseEnter);
+			overElement.removeEventListener('mouseleave', handleMouseLeave);
+			overElement.removeEventListener('mousemove', handleMouseMove);
+		}
+		if (tooltip && tooltip.parentNode) {
+			tooltip.parentNode.removeChild(tooltip);
+		}
+		plotInstance = null;
 	}
 
 	return {
 		hooks: {
 			init,
+			destroy,
 		},
 	};
 };
