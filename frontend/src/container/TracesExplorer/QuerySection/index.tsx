@@ -5,7 +5,7 @@ import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQ
 import { DataSource } from 'types/common/queryBuilder';
 
 function QuerySection(): JSX.Element {
-	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.TRACE);
 
 	const isRawQuery = useMemo(
 		() => panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE,
