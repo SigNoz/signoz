@@ -1,0 +1,12 @@
+# AUTO-GENERATED LOCK FILE - DO NOT EDIT MANUALLY
+dependencies:
+  langchain: 0.2.14
+  langchain-core: 0.2.33
+  langchain-openai: 0.1.22
+  openinference-instrumentation-langchain: 0.1.18
+  opentelemetry-api: 1.25.0
+  opentelemetry-sdk: 1.25.0
+  opentelemetry-exporter-otlp: 1.25.0
+  clickhouse-connect: 0.7.19
+  pydantic: 2.8.2
+  python-dotenv: 1.0.1
