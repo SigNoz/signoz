@@ -11209,6 +11209,161 @@ export interface SpantypesOtelSpanRefDTO {
 	traceId?: string;
 }
 
+export type SpantypesThreadSpanDTOAttributesAnyOf = { [key: string]: unknown };
+
+/**
+ * @nullable
+ */
+export type SpantypesThreadSpanDTOAttributes =
+	SpantypesThreadSpanDTOAttributesAnyOf | null;
+
+export type SpantypesThreadSpanDTOResourceAnyOf = { [key: string]: string };
+
+/**
+ * @nullable
+ */
+export type SpantypesThreadSpanDTOResource =
+	SpantypesThreadSpanDTOResourceAnyOf | null;
+
+export interface SpantypesThreadSpanDTO {
+	/**
+	 * @type object,null
+	 */
+	attributes?: SpantypesThreadSpanDTOAttributes;
+	/**
+	 * @type string
+	 */
+	db_name?: string;
+	/**
+	 * @type string
+	 */
+	db_operation?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	duration_nano?: number;
+	/**
+	 * @type array,null
+	 */
+	events?: SpantypesEventDTO[] | null;
+	/**
+	 * @type string
+	 */
+	external_http_method?: string;
+	/**
+	 * @type string
+	 */
+	external_http_url?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	flags?: number;
+	/**
+	 * @type boolean
+	 */
+	has_children?: boolean;
+	/**
+	 * @type boolean
+	 */
+	has_error?: boolean;
+	/**
+	 * @type string
+	 */
+	http_host?: string;
+	/**
+	 * @type string
+	 */
+	http_method?: string;
+	/**
+	 * @type string
+	 */
+	http_url?: string;
+	/**
+	 * @type string
+	 */
+	is_remote?: string;
+	/**
+	 * @type string
+	 */
+	kind_string?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	level?: number;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	parent_span_id?: string;
+	/**
+	 * @type array
+	 */
+	references: SpantypesOtelSpanRefDTO[];
+	/**
+	 * @type object,null
+	 */
+	resource?: SpantypesThreadSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	response_status_code?: string;
+	/**
+	 * @type string
+	 */
+	span_id?: string;
+	/**
+	 * @type integer
+	 */
+	status_code?: number;
+	/**
+	 * @type string
+	 */
+	status_code_string?: string;
+	/**
+	 * @type string
+	 */
+	status_message?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	sub_tree_node_count?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	time_unix?: number;
+	/**
+	 * @type string
+	 */
+	trace_id?: string;
+	/**
+	 * @type string
+	 */
+	trace_state?: string;
+}
+
+export interface SpantypesGettableTraceThreadDTO {
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type string
+	 */
+	prevCursor?: string;
+	/**
+	 * @type array
+	 */
+	spans: SpantypesThreadSpanDTO[];
+}
+
 export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
 	[key: string]: unknown;
 };
@@ -12876,6 +13031,40 @@ export type GetTraceAggregationsPathParameters = {
 };
 export type GetTraceAggregations200 = {
 	data: SpantypesGettableTraceAggregationsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetTraceThreadPathParameters = {
+	traceID: string;
+};
+export type GetTraceThreadParams = {
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	after?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	before?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	spanId?: string;
+};
+
+export type GetTraceThread200 = {
+	data: SpantypesGettableTraceThreadDTO;
 	/**
 	 * @type string
 	 */

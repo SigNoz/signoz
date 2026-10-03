@@ -11,11 +11,22 @@ import (
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
+
+var fullSpanColumns = []string{
+	"duration_nano", "span_id", "has_error", "kind",
+	colServiceName, "name",
+	"attributes_string", "attributes_number", "attributes_bool", "resources_string",
+	"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
+	"flags", "is_remote", "trace_state", "status_code",
+	"db_name", "db_operation", "http_method", "http_url", "http_host",
+	"external_http_method", "external_http_url", "response_status_code", "links as references",
+}
 
 func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
 	switch fieldKey.FieldContext {
@@ -123,16 +134,8 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 		return []spantypes.StorableSpan{}, nil
 	}
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"DISTINCT ON (span_id) timestamp",
-		"duration_nano", "span_id", "has_error", "kind",
-		colServiceName, "name",
-		"attributes_string", "attributes_number", "attributes_bool", "resources_string",
-		"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
-		"flags", "is_remote", "trace_state", "status_code",
-		"db_name", "db_operation", "http_method", "http_url", "http_host",
-		"external_http_method", "external_http_url", "response_status_code", "links as references",
-	)
+	sb.Select("DISTINCT ON (span_id) timestamp")
+	sb.SelectMore(fullSpanColumns...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	ids := make([]any, len(spanIDs))
 	for i, id := range spanIDs {
@@ -153,6 +156,81 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace spans by IDs")
 	}
 	return spans, nil
+}
+
+func (s *traceStore) GetThreadSpans(ctx context.Context, traceID string, summary *spantypes.TraceSummary, page spantypes.ThreadPage) ([]spantypes.StorableSpan, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("DISTINCT ON (span_id) timestamp")
+	sb.SelectMore(fullSpanColumns...)
+	sb.SelectMore("attributes")
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", summary.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", summary.End.Unix()),
+		// Reads only the JSON column; spans with messages only in the legacy maps are skipped.
+		// todo(nitya): pick the column from the attribute evolution metadata.
+		sb.Or(
+			sqlbuilder.Escape(fmt.Sprintf("attributes.%s IS NOT NULL", clickhousesql.Identifier(aiobservabilitytypes.GenAIInputMessages))),
+			sqlbuilder.Escape(fmt.Sprintf("attributes.%s IS NOT NULL", clickhousesql.Identifier(aiobservabilitytypes.GenAIOutputMessages))),
+		),
+	)
+	if cursor := page.Cursor; cursor != nil {
+		// ClickHouse can't use an index for a tuple comparison, so the separate timestamp and
+		// ts_bucket_start bounds are what skip the data on the far side of the cursor.
+		key := "(toUnixTimestamp64Nano(timestamp), span_id)"
+		bucket := int64(cursor.TimeUnixNano / uint64(time.Second))
+		timestamp := fmt.Sprintf("fromUnixTimestamp64Nano(toInt64(%s))", sb.Var(cursor.TimeUnixNano))
+		tuple := sqlbuilder.Tuple(cursor.TimeUnixNano, cursor.SpanID)
+		switch page.From {
+		case spantypes.ThreadBefore:
+			sb.Where(sb.LE("ts_bucket_start", bucket), "timestamp <= "+timestamp, sb.LT(key, tuple))
+		case spantypes.ThreadAt:
+			sb.Where(sb.GE("ts_bucket_start", bucket-1800), "timestamp >= "+timestamp, sb.GE(key, tuple))
+		default:
+			sb.Where(sb.GE("ts_bucket_start", bucket-1800), "timestamp >= "+timestamp, sb.GT(key, tuple))
+		}
+	}
+	// span_id breaks timestamp ties so the order matches the cursor key; otherwise tied spans
+	// can be skipped or repeated across pages.
+	if page.From == spantypes.ThreadBefore {
+		sb.OrderByDesc("timestamp")
+		sb.OrderByDesc("span_id")
+	} else {
+		sb.OrderByAsc("timestamp")
+		sb.OrderByAsc("span_id")
+	}
+	sb.Limit(page.Limit)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var spans []spantypes.StorableSpan
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &spans, query, args...); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying thread spans")
+	}
+	return spans, nil
+}
+
+func (s *traceStore) GetThreadCursor(ctx context.Context, traceID string, summary *spantypes.TraceSummary, spanID string) (*spantypes.ThreadCursor, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("toUnixTimestamp64Nano(timestamp)")
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", summary.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", summary.End.Unix()),
+		sb.E("span_id", spanID),
+	)
+	sb.Limit(1)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var timeUnixNano int64
+	if err := s.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&timeUnixNano); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.NewNotFoundf(spantypes.ErrCodeThreadSpanNotFound, "span %s not found in trace %s", spanID, traceID)
+		}
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying thread span")
+	}
+	return &spantypes.ThreadCursor{TimeUnixNano: uint64(timeUnixNano), SpanID: spanID}, nil
 }
 
 func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {

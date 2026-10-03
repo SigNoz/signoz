@@ -173,6 +173,47 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpan
 	), nil
 }
 
+func (m *module) GetThread(ctx context.Context, traceID string, query *spantypes.ThreadQuery) (*spantypes.GettableTraceThread, error) {
+	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+
+	page := spantypes.ThreadPage{Limit: query.Limit + 1}
+	switch {
+	case query.SpanID != "":
+		anchor, err := m.store.GetThreadCursor(ctx, traceID, summary, query.SpanID)
+		if err != nil {
+			return nil, err
+		}
+		before, err := m.store.GetThreadSpans(ctx, traceID, summary, spantypes.ThreadPage{Cursor: anchor, From: spantypes.ThreadBefore, Limit: page.Limit})
+		if err != nil {
+			return nil, err
+		}
+		// ThreadAt keeps the anchor when it carries messages; otherwise the filter drops it.
+		after, err := m.store.GetThreadSpans(ctx, traceID, summary, spantypes.ThreadPage{Cursor: anchor, From: spantypes.ThreadAt, Limit: page.Limit})
+		if err != nil {
+			return nil, err
+		}
+		return spantypes.NewGettableTraceThread(traceID, query, before, after), nil
+	case query.Before != nil:
+		page.Cursor, page.From = query.Before, spantypes.ThreadBefore
+		before, err := m.store.GetThreadSpans(ctx, traceID, summary, page)
+		if err != nil {
+			return nil, err
+		}
+		return spantypes.NewGettableTraceThread(traceID, query, before, nil), nil
+	default:
+		// nil for the first page.
+		page.Cursor = query.After
+		after, err := m.store.GetThreadSpans(ctx, traceID, summary, page)
+		if err != nil {
+			return nil, err
+		}
+		return spantypes.NewGettableTraceThread(traceID, query, nil, after), nil
+	}
+}
+
 func (m *module) getFullFlamegraph(ctx context.Context, traceID string, summary *spantypes.TraceSummary, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
 	fullSpans, err := m.store.GetFlamegraphSpans(ctx, traceID, summary.Start, summary.End, nil)
 	if err != nil {

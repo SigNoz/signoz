@@ -4,11 +4,17 @@
  * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
-import { useMutation } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 import type {
+	InvalidateOptions,
 	MutationFunction,
+	QueryClient,
+	QueryFunction,
+	QueryKey,
 	UseMutationOptions,
 	UseMutationResult,
+	UseQueryOptions,
+	UseQueryResult,
 } from 'react-query';
 
 import type {
@@ -16,6 +22,9 @@ import type {
 	GetFlamegraphPathParameters,
 	GetTraceAggregations200,
 	GetTraceAggregationsPathParameters,
+	GetTraceThread200,
+	GetTraceThreadParams,
+	GetTraceThreadPathParameters,
 	GetWaterfallV4200,
 	GetWaterfallV4PathParameters,
 	RenderErrorResponseDTO,
@@ -26,6 +35,26 @@ import type {
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
 
 /**
  * Computes span aggregations grouped by requested field.
@@ -127,6 +156,121 @@ export const useGetTraceAggregations = <
 > => {
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
 };
+/**
+ * Returns the spans carrying gen_ai input or output messages in timestamp order. Pass nextCursor as after or prevCursor as before to page, or spanId to open the page around a span.
+ * @summary Get thread view for a trace
+ */
+export const getTraceThread = (
+	{ traceID }: GetTraceThreadPathParameters,
+	params?: GetTraceThreadParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetTraceThread200>({
+		url: `/api/v1/traces/${traceID}/thread`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getGetTraceThreadQueryKey = (
+	{ traceID }: GetTraceThreadPathParameters,
+	params?: GetTraceThreadParams,
+) => {
+	return [
+		`/api/v1/traces/${traceID}/thread`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetTraceThreadQueryOptions = <
+	TData = Awaited<ReturnType<typeof getTraceThread>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID }: GetTraceThreadPathParameters,
+	params?: GetTraceThreadParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getTraceThread>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetTraceThreadQueryKey({ traceID }, params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getTraceThread>>> = ({
+		signal,
+	}) => getTraceThread({ traceID }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: traceID !== null && traceID !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getTraceThread>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetTraceThreadQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getTraceThread>>
+>;
+export type GetTraceThreadQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get thread view for a trace
+ */
+
+export function useGetTraceThread<
+	TData = Awaited<ReturnType<typeof getTraceThread>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID }: GetTraceThreadPathParameters,
+	params?: GetTraceThreadParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getTraceThread>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetTraceThreadQueryOptions(
+		{ traceID },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get thread view for a trace
+ */
+export const invalidateGetTraceThread = async (
+	queryClient: QueryClient,
+	{ traceID }: GetTraceThreadPathParameters,
+	params?: GetTraceThreadParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetTraceThreadQueryKey({ traceID }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * Returns the flamegraph view of spans for a given trace ID.
  * @summary Get flamegraph view for a trace
