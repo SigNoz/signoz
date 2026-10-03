@@ -238,15 +238,6 @@ func (m *Manager) MaintenanceStore() alertmanagertypes.MaintenanceStore {
 	return m.maintenanceStore
 }
 
-// TODO(jatinderjit): remove (unused)?
-func (m *Manager) Pause(b bool) {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-	for _, t := range m.tasks {
-		t.Pause(b)
-	}
-}
-
 func (m *Manager) initiate(ctx context.Context) error {
 	orgs, err := m.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
