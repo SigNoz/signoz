@@ -151,12 +151,14 @@ In this guide you will install the OTel demo application using Helm and send tel
 
 
 ## Install Helm Repo and Charts
-You’ll need to **install the Helm repository** to start sending data to SigNoz cloud.
+You'll need to **install the Helm repository** to start sending data to SigNoz [Kubernetes].
 
 ```sh
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
 ```
-The OpenTelemetry Collector’s configuration is exposed in the Helm chart. All additions made will be merged into the default configuration. We use this capability to add SigNoz as an exporter, and make pipelines as desired.
+The OpenTelemetry Collector's configuration is exposed in the Helm chart. All additions made will be merged into the default configuration. We use this capability to add SigNoz as an exporter, and make pipelines as desired.
+
+When using SigNoz as the observability backend, several components deployed by the Astronomy Shop Helm chart become unnecessary, such as Jaeger, Prometheus, Grafana, and the bundled OpenTelemetry Collector. Disabling these components reduces resource usage and avoids confusion when you already have a fully working SigNoz setup.
 
 For this we have to create a `values.yaml` which will override the existing configurations that comes with the Helm chart.
 
@@ -174,8 +176,21 @@ default:
       value: 'service.name=$(OTEL_SERVICE_NAME),service.namespace=opentelemetry-demo'
     - name: OTEL_COLLECTOR_NAME
       value: signoz-otel-collector.<namespace>.svc.cluster.local
+
+# Disable components that are not needed when using SigNoz
+jaeger:
+  enabled: false
+
+prometheus:
+  enabled: false
+
+grafana:
+  enabled: false
+
+opentelemetry-collector:
+  enabled: false
 ```
-Replace namespace with your appropriate namespace. This file will replace the chart’s existing settings with our new ones, ensuring telemetry data is sent to SigNoz [Kubernetes].
+Replace namespace with your appropriate namespace. This file will replace the chart's existing settings with our new ones, ensuring telemetry data is sent to SigNoz [Kubernetes] and unnecessary components are disabled.
 
 > Note: When merging YAML values with Helm, objects are merged and arrays are replaced. The spanmetrics exporter must be included in the array of exporters for the traces pipeline if overridden. Not including this exporter will result in an error.
 
@@ -184,28 +199,37 @@ Replace namespace with your appropriate namespace. This file will replace the ch
 
 If you wish to send data to cloud instance of SigNoz, we have to create a `values.yaml` which will override the existing configurations that comes with the Helm chart.
 
-```sh
+```yaml
+default:
+  env:
+    - name: OTEL_SERVICE_NAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: "metadata.labels['app.kubernetes.io/component']"
+    - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+      value: cumulative
+    - name: OTEL_RESOURCE_ATTRIBUTES
+      value: 'service.name=$(OTEL_SERVICE_NAME),service.namespace=opentelemetry-demo'
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: "https://ingest.{your-region}.signoz.cloud:443"
+    - name: OTEL_EXPORTER_OTLP_HEADERS
+      value: "signoz-access-token=<SIGNOZ-KEY>"
+
+# Disable components that are not needed when using SigNoz
+jaeger:
+  enabled: false
+
+prometheus:
+  enabled: false
+
+grafana:
+  enabled: false
+
 opentelemetry-collector:
-  config:
-    exporters:
-      otlp:
-        endpoint: "https://ingest.{your-region}.signoz.cloud:443"
-        tls:
-          insecure: false
-        headers:
-          signoz-access-token: <SIGNOZ-KEY>
-      debug:
-        verbosity: detailed
-    service:
-      pipelines:
-        traces:
-          exporters: [spanmetrics, otlp] 
-        metrics:
-          exporters: [otlp]
-        logs:
-          exporters: [otlp]
+  enabled: false
 ```
-Make sure to replace the region and key with values obtained from the account
+Make sure to replace the region and key with values obtained from the account.
 
 Now **install the helm chart** with a release name and namespace of your choice. Let's take *my-otel-demo* as the release name and *otel-demo* as the namespace for the context of the code snippet below,
 
