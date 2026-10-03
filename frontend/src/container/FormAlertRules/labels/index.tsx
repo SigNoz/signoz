@@ -1,7 +1,8 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircleAlert, CircleX } from '@signozhq/icons';
 import { Button, Input, message, Modal } from 'antd';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
 import { Labels } from 'types/api/alerts/def';
@@ -26,6 +27,17 @@ function LabelSelect({
 }: LabelSelectProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const isDarkMode = useIsDarkMode();
+	const { currentQuery } = useQueryBuilder();
+
+	// Static labels overwrite the group by labels on the alert, collapsing
+	// distinct series into duplicate label sets, so such keys are rejected.
+	const groupByKeys = useMemo(
+		() =>
+			currentQuery.builder.queryData.flatMap((query) =>
+				query.groupBy.map((groupBy) => groupBy.key),
+			),
+		[currentQuery],
+	);
 
 	const [currentVal, setCurrentVal] = useState('');
 	const [staging, setStaging] = useState<string[]>([]);
@@ -39,13 +51,17 @@ function LabelSelect({
 		setQueries(updatedRecs);
 	};
 
-	const onSelectLabelValue = (): void => {
-		if (currentVal !== '') {
-			setStaging((prevState) => [...prevState, currentVal]);
-		} else {
-			return;
+	const onSelectLabelValue = (): boolean => {
+		if (currentVal === '') {
+			return false;
 		}
+		if (groupByKeys.includes(currentVal)) {
+			message.error(t('label_group_by_conflict', { label: currentVal }));
+			return false;
+		}
+		setStaging((prevState) => [...prevState, currentVal]);
 		setCurrentVal('');
+		return true;
 	};
 
 	const onValidateQuery = (): void => {
@@ -63,6 +79,12 @@ function LabelSelect({
 		}
 	};
 
+	const stageLabelKey = (): void => {
+		if (onSelectLabelValue()) {
+			setStep('LabelValue');
+		}
+	};
+
 	const send = (event: LabelEvent): void => {
 		if (event === 'RESET') {
 			setStep('Idle');
@@ -72,8 +94,7 @@ function LabelSelect({
 			if (step === 'Idle') {
 				setStep('LabelKey');
 			} else if (step === 'LabelKey') {
-				onSelectLabelValue();
-				setStep('LabelValue');
+				stageLabelKey();
 			} else if (step === 'LabelValue') {
 				onValidateQuery();
 			}
@@ -81,8 +102,7 @@ function LabelSelect({
 		}
 		if (event === 'onBlur') {
 			if (step === 'LabelKey') {
-				onSelectLabelValue();
-				setStep('LabelValue');
+				stageLabelKey();
 			} else if (step === 'LabelValue') {
 				onValidateQuery();
 			}
