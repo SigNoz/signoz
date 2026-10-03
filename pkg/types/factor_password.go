@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -17,7 +18,7 @@ import (
 var (
 	symbols                                []rune = []rune("~!@#$%^&*()_+`-={}|[]\\:\"<>?,./")
 	minPasswordLength                      int    = 12
-	ErrInvalidPassword                            = errors.Newf(errors.TypeInvalidInput, errors.MustNewCode("invalid_password"), "password must be at least %d characters long, should contain at least one uppercase letter [A-Z], one lowercase letter [a-z], one number [0-9], and one symbol [%c].", minPasswordLength, symbols)
+	ErrInvalidPassword                            = errors.Newf(errors.TypeInvalidInput, errors.MustNewCode("invalid_password"), "password must be at least %d characters long, should contain at least one uppercase letter [A-Z], one lowercase letter [a-z], one number [0-9], and one symbol [%s].", minPasswordLength, string(symbols))
 	ErrCodeResetPasswordTokenAlreadyExists        = errors.MustNewCode("reset_password_token_already_exists")
 	ErrCodePasswordNotFound                       = errors.MustNewCode("password_not_found")
 	ErrCodeResetPasswordTokenNotFound             = errors.MustNewCode("reset_password_token_not_found")
@@ -160,7 +161,7 @@ func NewResetPasswordToken(passwordID valuer.UUID, expiresAt time.Time) (*ResetP
 }
 
 func IsPasswordValid(password string) bool {
-	if len(password) < minPasswordLength {
+	if utf8.RuneCountInString(password) < minPasswordLength {
 		return false
 	}
 
