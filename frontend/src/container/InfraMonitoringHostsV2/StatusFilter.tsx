@@ -54,6 +54,7 @@ function StatusFilter(): JSX.Element {
 						key={option.value}
 						value={option.value}
 						aria-label={option.label}
+						testId={`status-filter-${option.value}`}
 						className={styles.statusToggleItem}
 					>
 						<span

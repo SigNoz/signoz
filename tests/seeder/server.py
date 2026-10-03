@@ -1,6 +1,6 @@
 import os
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager, contextmanager
 from typing import Any
 
 import clickhouse_connect
@@ -34,16 +34,40 @@ SEEDER_MARKER = {"seeder": "true"}
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    conn = clickhouse_connect.get_client(host=CH_HOST, port=CH_PORT, username=CH_USER, password=CH_PASSWORD)
-    app.state.ch = conn
+    # Connect once at startup purely to fail fast on bad coordinates; request
+    # handlers each open their own client (see `conn`).
+    probe = _new_client()
     try:
-        yield
+        probe.command("SELECT 1")
     finally:
-        conn.close()
+        probe.close()
+    yield
 
 
-def get_conn():
-    return app.state.ch
+def _new_client():
+    return clickhouse_connect.get_client(
+        host=CH_HOST, port=CH_PORT, username=CH_USER, password=CH_PASSWORD
+    )
+
+
+@contextmanager
+def conn() -> Iterator[Any]:
+    """
+    A ClickHouse client scoped to one request.
+
+    A `clickhouse_connect` client owns a session, and ClickHouse rejects
+    concurrent queries within one session with "Attempt to execute concurrent
+    queries within the same session." FastAPI runs these sync handlers in a
+    threadpool, so a module-level client shared across requests fails as soon as
+    two Playwright workers seed at the same time — which is the normal case, the
+    suite runs 6 workers against one seeder. One client per request is what makes
+    the "Parallel-safe" promise in the module docstring true.
+    """
+    client = _new_client()
+    try:
+        yield client
+    finally:
+        client.close()
 
 
 app = FastAPI(title="seeder", version="dev", lifespan=lifespan)
@@ -78,7 +102,8 @@ def _tag_metrics(item: dict[str, Any]) -> dict[str, Any]:
 def post_traces(payload: list[dict[str, Any]]) -> dict[str, Any]:
     try:
         traces = [Traces.from_dict(_tag(item)) for item in payload]
-        insert_traces_to_clickhouse(get_conn(), traces)
+        with conn() as ch:
+            insert_traces_to_clickhouse(ch, traces)
         logger.info("inserted %d traces", len(traces))
         return {"inserted": len(traces)}
     except KeyError as e:
@@ -93,7 +118,8 @@ def post_traces(payload: list[dict[str, Any]]) -> dict[str, Any]:
 @app.delete("/telemetry/traces", status_code=status.HTTP_204_NO_CONTENT)
 def delete_traces() -> Response:
     try:
-        truncate_traces_tables(get_conn(), CH_CLUSTER)
+        with conn() as ch:
+            truncate_traces_tables(ch, CH_CLUSTER)
         logger.info("truncated traces tables")
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as e:
@@ -105,7 +131,8 @@ def delete_traces() -> Response:
 def post_logs(payload: list[dict[str, Any]]) -> dict[str, Any]:
     try:
         logs = [Logs.from_dict(_tag(item)) for item in payload]
-        insert_logs_to_clickhouse(get_conn(), logs)
+        with conn() as ch:
+            insert_logs_to_clickhouse(ch, logs)
         logger.info("inserted %d logs", len(logs))
         return {"inserted": len(logs)}
     except KeyError as e:
@@ -118,7 +145,8 @@ def post_logs(payload: list[dict[str, Any]]) -> dict[str, Any]:
 @app.delete("/telemetry/logs", status_code=status.HTTP_204_NO_CONTENT)
 def delete_logs() -> Response:
     try:
-        truncate_logs_tables(get_conn(), CH_CLUSTER)
+        with conn() as ch:
+            truncate_logs_tables(ch, CH_CLUSTER)
         logger.info("truncated logs tables")
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as e:
@@ -130,7 +158,8 @@ def delete_logs() -> Response:
 def post_metrics(payload: list[dict[str, Any]]) -> dict[str, Any]:
     try:
         metrics = [Metrics.from_dict(_tag_metrics(item)) for item in payload]
-        insert_metrics_to_clickhouse(get_conn(), metrics)
+        with conn() as ch:
+            insert_metrics_to_clickhouse(ch, metrics)
         logger.info("inserted %d metrics", len(metrics))
         return {"inserted": len(metrics)}
     except KeyError as e:
@@ -143,7 +172,8 @@ def post_metrics(payload: list[dict[str, Any]]) -> dict[str, Any]:
 @app.delete("/telemetry/metrics", status_code=status.HTTP_204_NO_CONTENT)
 def delete_metrics() -> Response:
     try:
-        truncate_metrics_tables(get_conn(), CH_CLUSTER)
+        with conn() as ch:
+            truncate_metrics_tables(ch, CH_CLUSTER)
         logger.info("truncated metrics tables")
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as e:

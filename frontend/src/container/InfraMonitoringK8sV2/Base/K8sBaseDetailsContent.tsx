@@ -276,6 +276,7 @@ export default function K8sBaseDetailsContent<T>({
 						className={styles.viewsTabs}
 						onChange={handleTabChange}
 						value={selectedView}
+						testId="drawer-tab-bar"
 						items={[
 							...(tabVisibility.showMetrics
 								? [
@@ -348,6 +349,7 @@ export default function K8sBaseDetailsContent<T>({
 								size="icon"
 								color="secondary"
 								className={styles.compassButton}
+								data-testid="open-logs-explorer"
 								onClick={handleExplorePagesRedirect}
 							>
 								<Compass size={18} />
@@ -361,6 +363,7 @@ export default function K8sBaseDetailsContent<T>({
 								size="icon"
 								color="secondary"
 								className={styles.compassButton}
+								data-testid="open-traces-explorer"
 								onClick={handleExplorePagesRedirect}
 							>
 								<Compass size={18} />

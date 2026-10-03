@@ -312,6 +312,7 @@ function EntityLogsContent({
 						isLoadingQueries={isFetching}
 						onStageRunQuery={(): void => handleRunQuery()}
 						handleCancelQuery={cancel}
+						testId="entity-logs-run-query-btn"
 					/>
 				</div>
 
