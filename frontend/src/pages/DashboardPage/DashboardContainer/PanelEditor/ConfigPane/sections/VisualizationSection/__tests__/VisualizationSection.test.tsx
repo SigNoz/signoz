@@ -11,6 +11,8 @@ import VisualizationSection from '../VisualizationSection';
 // the test doesn't pull the whole panel registry (renderers, chart libs).
 jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: jest.fn(() => ({
+		displayName: 'Time Series',
+		icon: (): null => null,
 		mode: 'query',
 		supportedSignals: ['metrics', 'logs', 'traces'],
 		supportedQueryTypes: ['builder', 'clickhouse_sql', 'promql'],
@@ -174,6 +176,7 @@ describe('VisualizationSection', () => {
 	});
 
 	it('renders the type switcher and switches kind when switchPanelKind is set', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onChangePanelKind = jest.fn();
 		render(
 			<VisualizationSection
@@ -189,7 +192,8 @@ describe('VisualizationSection', () => {
 			screen.getByTestId('panel-editor-v2-type-switcher'),
 		).toBeInTheDocument();
 
-		await pickOption('panel-editor-v2-type-switcher', 'Table');
+		await user.click(screen.getByTestId('panel-editor-v2-type-switcher'));
+		await user.click(screen.getByTestId('panel-type-signoz/TablePanel'));
 		expect(onChangePanelKind).toHaveBeenCalledWith('signoz/TablePanel');
 	});
 

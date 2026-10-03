@@ -58,6 +58,7 @@ function SectionSlot({
 	signal,
 	panelKind,
 	onChangePanelKind,
+	originalPanelKind,
 	queryType,
 	stepInterval,
 	metricUnit,
@@ -124,6 +125,7 @@ function SectionSlot({
 			signal={signal}
 			panelKind={panelKind}
 			onChangePanelKind={onChangePanelKind}
+			originalPanelKind={originalPanelKind}
 			queryType={queryType}
 			stepInterval={stepInterval}
 			metricUnit={metricUnit}
