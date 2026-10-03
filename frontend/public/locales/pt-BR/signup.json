@@ -1,0 +1,18 @@
+{
+  "label_email": "E-mail",
+  "placeholder_email": "nome@suaempresa.com.br",
+  "label_password": "Senha",
+  "label_confirm_password": "Confirmar Senha",
+  "label_firstname": "Nome",
+  "placeholder_firstname": "Seu Nome",
+  "label_orgname": "Nome da Organização",
+  "placeholder_orgname": "Sua Empresa",
+  "prompt_keepme_posted": "Mantenha-me atualizado sobre as novas funcionalidades do SigNoz",
+  "prompt_anonymise": "Anonimizar meus dados de uso. Coletamos dados apenas para medir o uso do produto",
+  "failed_confirm_password": "As senhas não coincidem. Por favor, tente novamente",
+  "unexpected_error": "Algo deu errado",
+  "failed_to_initiate_login": "Cadastro concluído, mas falhou ao iniciar o login automático",
+  "token_required": "Um token de convite é obrigatório para o cadastro. Solicite um ao seu administrador",
+  "button_get_started": "Começar",
+  "prompt_admin_warning": "Isso criará uma conta de administrador. Se você não for o administrador, peça a ele um link de convite"
+}
