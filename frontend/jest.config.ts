@@ -13,6 +13,9 @@ const config: Config.InitialOptions = {
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
+		'^antd/es/(.*)$': 'antd/lib/$1',
+		'^lodash-es$': 'lodash',
+		'^lodash-es/(.*)$': 'lodash/$1',
 		'\\.(png|jpg|jpeg|gif|svg|webp|avif|ico|bmp|tiff)$':
 			'<rootDir>/__mocks__/fileMock.ts',
 		// The icon glob module uses `import.meta.glob` (Vite-only); jest can't parse

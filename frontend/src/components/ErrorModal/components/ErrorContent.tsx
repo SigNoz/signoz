@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
+import Button from 'antd/es/button';
 import ErrorIcon from 'assets/Error';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { BookOpenText, ChevronsDown } from '@signozhq/icons';

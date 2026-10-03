@@ -1,4 +1,5 @@
-import { Action, ActionTypes, ServiceMapStore } from 'store/actions';
+import { Action, ActionTypes } from 'store/actions/types';
+import type { ServiceMapStore } from 'store/actions/serviceMap';
 
 const initialState: ServiceMapStore = {
 	items: [],

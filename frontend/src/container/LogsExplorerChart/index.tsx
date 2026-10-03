@@ -12,7 +12,7 @@ import GetMinMax from 'lib/getMinMax';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import { useTimezone } from 'providers/Timezone';
-import { UpdateTimeInterval } from 'store/actions';
+import { UpdateTimeInterval } from 'store/actions/global';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 

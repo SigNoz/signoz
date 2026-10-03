@@ -12,7 +12,7 @@ import heatmapPlugin from 'lib/uPlotLib/plugins/heatmapPlugin';
 import timelinePlugin from 'lib/uPlotLib/plugins/timelinePlugin';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
 import { useTimezone } from 'providers/Timezone';
-import { UpdateTimeInterval } from 'store/actions';
+import { UpdateTimeInterval } from 'store/actions/global';
 import { AlertRuleTimelineGraphResponse } from 'types/api/alerts/def';
 import uPlot, { AlignedData } from 'uplot';
 

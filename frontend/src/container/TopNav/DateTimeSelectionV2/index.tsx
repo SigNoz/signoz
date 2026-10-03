@@ -27,7 +27,7 @@ import { useTimezone } from 'providers/Timezone';
 // eslint-disable-next-line no-restricted-imports
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
+import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions/global';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';

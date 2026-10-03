@@ -6,7 +6,7 @@ import { QueryParams } from 'constants/query';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getNextZoomOutRange } from 'lib/zoomOutUtils';
-import { UpdateTimeInterval } from 'store/actions';
+import { UpdateTimeInterval } from 'store/actions/global';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { persistTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';

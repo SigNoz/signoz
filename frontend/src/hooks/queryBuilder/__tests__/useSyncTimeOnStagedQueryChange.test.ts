@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { UpdateTimeInterval } from 'store/actions';
+import { UpdateTimeInterval } from 'store/actions/global';
 
 import { useSyncTimeOnStagedQueryChange } from '../useSyncTimeOnStagedQueryChange';
 
@@ -12,7 +12,7 @@ jest.mock('react-redux', () => ({
 	useSelector: jest.fn(),
 }));
 
-jest.mock('store/actions', () => ({
+jest.mock('store/actions/global', () => ({
 	UpdateTimeInterval: jest.fn((time: string) => ({
 		type: 'UPDATE_TIME_INTERVAL_THUNK',
 		payload: time,
