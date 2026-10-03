@@ -1,8 +1,15 @@
 package implservices
 
 import (
+	"context"
+	stderrors "errors"
 	"testing"
+	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
+	chdriver "github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -767,6 +774,105 @@ func TestMapEntryPointOpsQueryRangeResp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := m.mapEntryPointOpsQueryRangeResp(tt.resp)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+type fakeTelemetryStore struct {
+	telemetrystore.TelemetryStore
+	conn clickhouse.Conn
+}
+
+func (f *fakeTelemetryStore) ClickhouseDB() clickhouse.Conn { return f.conn }
+
+type fakeConn struct {
+	clickhouse.Conn
+	rows chdriver.Rows
+}
+
+func (f *fakeConn) Query(context.Context, string, ...any) (chdriver.Rows, error) {
+	return f.rows, nil
+}
+
+type topLevelOpRow struct {
+	name        string
+	serviceName string
+}
+
+// fakeTopLevelOpsRows mimics the driver's behaviour when a stream is cut off
+// mid-iteration: Next returns false once the delivered rows are exhausted, and
+// only then does Err report the stream error.
+type fakeTopLevelOpsRows struct {
+	chdriver.Rows
+	rows    []topLevelOpRow
+	pos     int
+	iterErr error
+}
+
+func (r *fakeTopLevelOpsRows) Next() bool { return r.pos < len(r.rows) }
+
+func (r *fakeTopLevelOpsRows) Scan(dest ...any) error {
+	*(dest[0].(*string)) = r.rows[r.pos].name
+	*(dest[1].(*string)) = r.rows[r.pos].serviceName
+	*(dest[2].(*time.Time)) = time.Time{}
+	r.pos++
+	return nil
+}
+
+func (r *fakeTopLevelOpsRows) Err() error {
+	if r.pos >= len(r.rows) {
+		return r.iterErr
+	}
+	return nil
+}
+
+func (r *fakeTopLevelOpsRows) Close() error { return nil }
+
+func TestFetchTopLevelOperations(t *testing.T) {
+	tests := []struct {
+		name    string
+		rows    []topLevelOpRow
+		iterErr error
+		want    map[string][]string
+		wantErr string
+	}{
+		{
+			name: "groups operations by service",
+			rows: []topLevelOpRow{
+				{name: "GET /orders", serviceName: "frontend"},
+				{name: "POST /orders", serviceName: "frontend"},
+				{name: "GET /health", serviceName: "backend"},
+			},
+			want: map[string][]string{
+				"frontend": {"overflow_operation", "GET /orders", "POST /orders"},
+				"backend":  {"overflow_operation", "GET /health"},
+			},
+		},
+		{
+			name: "surfaces error when stream is cut off mid-iteration",
+			rows: []topLevelOpRow{
+				{name: "GET /orders", serviceName: "frontend"},
+			},
+			iterErr: stderrors.New("code: 159, message: Cannot read all data"),
+			wantErr: "Cannot read all data",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &module{TelemetryStore: &fakeTelemetryStore{conn: &fakeConn{
+				rows: &fakeTopLevelOpsRows{rows: tt.rows, iterErr: tt.iterErr},
+			}}}
+
+			got, err := m.FetchTopLevelOperations(context.Background(), time.Unix(0, 0), nil)
+			if tt.wantErr != "" {
+				assert.Nil(t, got)
+				assert.ErrorContains(t, err, tt.wantErr)
+				assert.True(t, errors.Ast(err, errors.TypeInternal))
+				return
+			}
+			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
 	}
