@@ -6,6 +6,12 @@ import logEvent from 'api/common/logEvent';
 import { ArrowRight, LoaderCircle, Minus } from '@signozhq/icons';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
+import {
+	exponentialToLinear,
+	linearToExponential,
+	SLIDER_MAX_POSITION,
+	SLIDER_MIN_POSITION,
+} from './OptimiseSignozNeeds.utils';
 
 export interface OptimiseSignozDetails {
 	logsPerDay: number;
@@ -23,38 +29,17 @@ const hostsMax = 10000;
 const servicesMin = 1;
 const servicesMax = 5000;
 
-// Function to convert linear slider value to exponential scale
-const linearToExponential = (
-	value: number,
-	min: number,
-	max: number,
-): number => {
-	const expMin = Math.log10(min);
-	const expMax = Math.log10(max);
-	const expValue = 10 ** (expMin + ((expMax - expMin) * value) / 100);
-	return Math.round(expValue);
-};
-
-const exponentialToLinear = (
-	expValue: number,
-	min: number,
-	max: number,
-): number => {
-	const expMin = Math.log10(min);
-	const expMax = Math.log10(max);
-	const linearValue =
-		((Math.log10(expValue) - expMin) / (expMax - expMin)) * 100;
-	return Math.round(linearValue); // Round to get a whole number within the 0-100 range
-};
-
 interface OptimiseSignozNeedsProps {
 	optimiseSignozDetails: OptimiseSignozDetails;
 	setOptimiseSignozDetails: (details: OptimiseSignozDetails) => void;
-	onNext: () => void;
+	onNext: (details: OptimiseSignozDetails) => void;
+	onScaleInteraction: () => void;
 	onWillDoLater: () => void;
 	isUpdatingProfile: boolean;
 	isNextDisabled: boolean;
 }
+
+const SCALE_ANSWER_HINT_ID = 'onboarding-scale-answer-hint';
 
 const marks = {
 	0: `${linearToExponential(0, logsMin, logsMax).toLocaleString()} GB`,
@@ -85,6 +70,7 @@ function OptimiseSignozNeeds({
 	optimiseSignozDetails,
 	setOptimiseSignozDetails,
 	onNext,
+	onScaleInteraction,
 	onWillDoLater,
 	isNextDisabled,
 }: OptimiseSignozNeedsProps): JSX.Element {
@@ -124,13 +110,15 @@ function OptimiseSignozNeeds({
 	}, [services, hostsPerDay, logsPerDay]);
 
 	const handleOnNext = (): void => {
-		logEvent('Org Onboarding: Answered', {
+		const scaleDetails = {
 			logsPerDay,
 			hostsPerDay,
 			services,
-		});
+		};
 
-		onNext();
+		void logEvent('Org Onboarding: Answered', scaleDetails);
+
+		onNext(scaleDetails);
 	};
 
 	const handleWillDoLater = (): void => {
@@ -142,16 +130,17 @@ function OptimiseSignozNeeds({
 
 		onWillDoLater();
 
-		logEvent('Org Onboarding: Clicked Do Later', {
+		void logEvent('Org Onboarding: Clicked Do Later', {
 			currentPageID: 3,
 		});
 	};
 
 	const handleSliderChange = (key: string, value: number): void => {
-		setSliderValues({
-			...sliderValues,
+		onScaleInteraction();
+		setSliderValues((currentSliderValues) => ({
+			...currentSliderValues,
 			[key]: value,
-		});
+		}));
 
 		switch (key) {
 			case 'logsPerDay':
@@ -207,13 +196,15 @@ function OptimiseSignozNeeds({
 						<div className="slider-container">
 							<div>
 								<Slider
-									min={0}
-									max={100}
+									min={SLIDER_MIN_POSITION}
+									max={SLIDER_MAX_POSITION}
 									value={sliderValues.logsPerDay}
 									marks={marks}
 									onChange={(value): void =>
 										handleSliderChange('logsPerDay', value as number)
 									}
+									onKeyDown={onScaleInteraction}
+									onPointerDown={onScaleInteraction}
 									styles={{
 										range: {
 											backgroundColor: '#4E74F8',
@@ -222,6 +213,7 @@ function OptimiseSignozNeeds({
 									tooltip={{
 										formatter: (): string => `${logsPerDayValue.toLocaleString()} GB`,
 									}}
+									testId="onboarding-logs-slider"
 								/>
 							</div>
 						</div>
@@ -234,13 +226,15 @@ function OptimiseSignozNeeds({
 						<div className="slider-container">
 							<div>
 								<Slider
-									min={0}
-									max={100}
+									min={SLIDER_MIN_POSITION}
+									max={SLIDER_MAX_POSITION}
 									value={sliderValues.hostsPerDay}
 									marks={hostMarks}
 									onChange={(value): void =>
 										handleSliderChange('hostsPerDay', value as number)
 									}
+									onKeyDown={onScaleInteraction}
+									onPointerDown={onScaleInteraction}
 									styles={{
 										range: {
 											backgroundColor: '#4E74F8',
@@ -249,6 +243,7 @@ function OptimiseSignozNeeds({
 									tooltip={{
 										formatter: (): string => `${hostsPerDayValue.toLocaleString()}`,
 									}}
+									testId="onboarding-hosts-slider"
 								/>
 							</div>
 						</div>
@@ -261,13 +256,15 @@ function OptimiseSignozNeeds({
 						<div className="slider-container">
 							<div>
 								<Slider
-									min={0}
-									max={100}
+									min={SLIDER_MIN_POSITION}
+									max={SLIDER_MAX_POSITION}
 									value={sliderValues.services}
 									marks={serviceMarks}
 									onChange={(value): void =>
 										handleSliderChange('services', value as number)
 									}
+									onKeyDown={onScaleInteraction}
+									onPointerDown={onScaleInteraction}
 									styles={{
 										range: {
 											backgroundColor: '#4E74F8',
@@ -276,6 +273,7 @@ function OptimiseSignozNeeds({
 									tooltip={{
 										formatter: (): string => `${servicesValue.toLocaleString()}`,
 									}}
+									testId="onboarding-services-slider"
 								/>
 							</div>
 						</div>
@@ -283,14 +281,27 @@ function OptimiseSignozNeeds({
 				</div>
 
 				<div className="onboarding-buttons-container">
+					{isNextDisabled && (
+						<Typography.Text
+							align="center"
+							color="muted"
+							display="block"
+							id={SCALE_ANSWER_HINT_ID}
+							size="sm"
+						>
+							Interact with at least one slider to continue.
+						</Typography.Text>
+					)}
 					<Button
 						variant="solid"
 						color="primary"
+						aria-describedby={isNextDisabled ? SCALE_ANSWER_HINT_ID : undefined}
 						className={`onboarding-next-button ${
 							isUpdatingProfile || isNextDisabled ? 'disabled' : ''
 						}`}
 						onClick={handleOnNext}
 						disabled={isUpdatingProfile || isNextDisabled}
+						testId="onboarding-scale-next-button"
 						suffix={
 							isUpdatingProfile ? (
 								<LoaderCircle className="animate-spin" size={12} />
@@ -307,6 +318,7 @@ function OptimiseSignozNeeds({
 						className="onboarding-do-later-button"
 						onClick={handleWillDoLater}
 						disabled={isUpdatingProfile}
+						testId="onboarding-scale-do-later-button"
 					>
 						I&apos;ll do this later
 					</Button>
