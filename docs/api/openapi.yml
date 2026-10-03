@@ -7663,6 +7663,8 @@ components:
       type: object
     PromotetypesPromotePath:
       properties:
+        context:
+          type: string
         indexes:
           items:
             $ref: '#/components/schemas/PromotetypesWrappedIndex'
@@ -7671,6 +7673,12 @@ components:
           type: string
         promote:
           type: boolean
+        signal:
+          type: string
+      required:
+      - signal
+      - context
+      - path
       type: object
     PromotetypesWrappedIndex:
       properties:
@@ -13146,110 +13154,6 @@ paths:
       tags:
       - llmpricingrules
       x-signoz-stability: alpha
-  /api/v1/logs/promote_paths:
-    get:
-      deprecated: false
-      description: This endpoints promotes and indexes paths
-      operationId: ListPromotedAndIndexedPaths
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/PromotetypesPromotePath'
-                    nullable: true
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Promote and index paths
-      tags:
-      - logs
-      x-signoz-stability: alpha
-    post:
-      deprecated: false
-      description: This endpoints promotes and indexes paths
-      operationId: HandlePromoteAndIndexPaths
-      requestBody:
-        content:
-          application/json:
-            schema:
-              items:
-                $ref: '#/components/schemas/PromotetypesPromotePath'
-              nullable: true
-              type: array
-      responses:
-        "201":
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - EDITOR
-      - tokenizer:
-        - EDITOR
-      summary: Promote and index paths
-      tags:
-      - logs
-      x-signoz-stability: alpha
   /api/v1/org/preferences:
     get:
       deprecated: false
@@ -13420,6 +13324,133 @@ paths:
       summary: Update org preference
       tags:
       - preferences
+      x-signoz-stability: alpha
+  /api/v1/promoted_path:
+    get:
+      deprecated: false
+      description: This endpoint lists the promoted paths of every JSON column, each
+        annotated with its signal and context. The signal, context, promoted and indexes
+        query parameters filter the listing.
+      operationId: ListPromotedPaths
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          type: string
+      - in: query
+        name: context
+        schema:
+          type: string
+      - in: query
+        name: promoted
+        schema:
+          nullable: true
+          type: boolean
+      - in: query
+        name: indexes
+        schema:
+          nullable: true
+          type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/PromotetypesPromotePath'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List promoted paths
+      tags:
+      - promote
+      x-signoz-stability: alpha
+    post:
+      deprecated: false
+      description: This endpoint promotes paths of JSON columns to their promoted
+        columns. Each path names its promotion domain with its signal and context,
+        e.g. traces/attribute.
+      operationId: PromotePaths
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/PromotetypesPromotePath'
+              nullable: true
+              type: array
+      responses:
+        "201":
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Promote paths
+      tags:
+      - promote
       x-signoz-stability: alpha
   /api/v1/roles:
     get:

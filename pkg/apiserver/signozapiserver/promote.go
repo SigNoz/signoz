@@ -10,11 +10,11 @@ import (
 )
 
 func (provider *provider) addPromoteRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/logs/promote_paths", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.HandlePromoteAndIndexPaths), handler.OpenAPIDef{
-		ID:                  "HandlePromoteAndIndexPaths",
-		Tags:                []string{"logs"},
-		Summary:             "Promote and index paths",
-		Description:         "This endpoints promotes and indexes paths",
+	if err := router.Handle("/api/v1/promoted_path", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.PromotePaths), handler.OpenAPIDef{
+		ID:                  "PromotePaths",
+		Tags:                []string{"promote"},
+		Summary:             "Promote paths",
+		Description:         "This endpoint promotes paths of JSON columns to their promoted columns. Each path names its promotion domain with its signal and context, e.g. traces/attribute.",
 		Request:             new([]*promotetypes.PromotePath),
 		RequestContentType:  "application/json",
 		Response:            nil,
@@ -26,12 +26,13 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/logs/promote_paths", handler.New(provider.authzMiddleware.ViewAccess(provider.promoteHandler.ListPromotedAndIndexedPaths), handler.OpenAPIDef{
-		ID:                  "ListPromotedAndIndexedPaths",
-		Tags:                []string{"logs"},
-		Summary:             "Promote and index paths",
-		Description:         "This endpoints promotes and indexes paths",
+	if err := router.Handle("/api/v1/promoted_path", handler.New(provider.authzMiddleware.ViewAccess(provider.promoteHandler.ListPromotedPaths), handler.OpenAPIDef{
+		ID:                  "ListPromotedPaths",
+		Tags:                []string{"promote"},
+		Summary:             "List promoted paths",
+		Description:         "This endpoint lists the promoted paths of every JSON column, each annotated with its signal and context. The signal, context, promoted and indexes query parameters filter the listing.",
 		Request:             nil,
+		RequestQuery:        new(promotetypes.ListPromotedPathsFilters),
 		RequestContentType:  "",
 		Response:            new([]*promotetypes.PromotePath),
 		ResponseContentType: "",
