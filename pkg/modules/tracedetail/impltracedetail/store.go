@@ -4,15 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"time"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
@@ -38,10 +45,18 @@ type spanDurationRow struct {
 
 type traceStore struct {
 	telemetryStore telemetrystore.TelemetryStore
+	metadataStore  telemetrytypes.MetadataStore
+	storage        qbtypes.Storage
+	flagger        flagger.Flagger
 }
 
-func NewTraceStore(ts telemetrystore.TelemetryStore) *traceStore {
-	return &traceStore{telemetryStore: ts}
+func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *traceStore {
+	return &traceStore{
+		telemetryStore: ts,
+		metadataStore:  metadataStore,
+		storage:        tracestelemetryschema.NewStorage(),
+		flagger:        fl,
+	}
 }
 
 func (s *traceStore) GetTraceSummary(ctx context.Context, traceID string) (*spantypes.TraceSummary, error) {
@@ -63,6 +78,134 @@ func (s *traceStore) GetTraceSummary(ctx context.Context, traceID string) (*span
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace summary")
 	}
 	return &summary, nil
+}
+
+func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, traceID string, summary *spantypes.TraceSummary) (*spantypes.TraceStats, error) {
+	table := fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable)
+	spans := sqlbuilder.NewSelectBuilder()
+
+	genAIColumns, err := s.genAISpanColumns(ctx, orgID, summary, spans)
+	if err != nil {
+		return nil, err
+	}
+
+	// A span whose parent was never recorded hangs off a synthetic "Missing Span" root in the waterfall.
+	ids := sqlbuilder.NewSelectBuilder()
+	ids.Select("span_id")
+	ids.From(table)
+	ids.Where(
+		ids.E("trace_id", traceID),
+		ids.GE("ts_bucket_start", summary.Start.Unix()-1800),
+		ids.LE("ts_bucket_start", summary.End.Unix()),
+	)
+	missingParent := fmt.Sprintf("parent_span_id <> '' AND parent_span_id GLOBAL NOT IN (%s)", spans.Var(ids))
+
+	spans.Select(
+		"toUnixTimestamp64Nano(timestamp) AS span_start_ns",
+		"span_start_ns + duration_nano AS span_end_ns",
+		"span_id",
+		"has_error",
+		"("+missingParent+") AS has_missing_parent",
+		"(parent_span_id = '' OR has_missing_parent) AS is_root",
+		"if(parent_span_id = '', name, 'Missing Span') AS root_name",
+		"if(parent_span_id = '', "+colServiceName+", '') AS root_service",
+		"if(parent_span_id = '', response_status_code, '') AS root_status_code",
+	)
+	spans.SelectMore(genAIColumns...)
+	spans.From(table)
+	spans.Where(
+		spans.E("trace_id", traceID),
+		spans.GE("ts_bucket_start", summary.Start.Unix()-1800),
+		spans.LE("ts_bucket_start", summary.End.Unix()),
+	)
+	spans.SQL("LIMIT 1 BY span_id")
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"toUInt64(min(span_start_ns)) AS start_ns",
+		"toUInt64(max(span_end_ns)) AS end_ns",
+		"count() AS total_spans",
+		"countIf(has_error) AS total_error_spans",
+		"countIf(has_missing_parent) > 0 AS has_missing_spans",
+		"argMinIf(root_service, (span_start_ns, root_name), is_root) AS root_service_name",
+		"argMinIf(root_name, (span_start_ns, root_name), is_root) AS root_entry_point",
+		"argMinIf(root_status_code, (span_start_ns, root_name), is_root) AS root_span_status_code",
+		"countIf(is_gen_ai) AS gen_ai_span_count",
+		"toUInt64(coalesce(sum(input_tokens_value), 0)) AS input_tokens",
+		"toUInt64(coalesce(sum(output_tokens_value), 0)) AS output_tokens",
+		"toUInt64(coalesce(sum(cache_read_tokens_value), 0)) AS cache_read_tokens",
+		"toUInt64(coalesce(sum(cache_write_tokens_value), 0)) AS cache_write_tokens",
+		"toUInt64(coalesce(sum(reasoning_tokens_value), 0)) AS reasoning_tokens",
+		"sum(total_cost_value) AS total_cost",
+	)
+	sb.From(sb.BuilderAs(spans, "spans"))
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var stats spantypes.TraceStats
+	err = s.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(
+		&stats.StartNs, &stats.EndNs, &stats.TotalSpans, &stats.TotalErrorSpans, &stats.HasMissingSpans,
+		&stats.RootServiceName, &stats.RootEntryPoint, &stats.RootSpanStatusCode, &stats.GenAISpanCount,
+		&stats.Tokens.Input, &stats.Tokens.Output, &stats.Tokens.CacheRead, &stats.Tokens.CacheWrite, &stats.Tokens.Reasoning,
+		&stats.TotalCost,
+	)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace stats")
+	}
+	return &stats, nil
+}
+
+// genAISpanColumns renders the per-span gen_ai gate and value reads through the shared
+// traces storage, so each attribute is read from the column its evolutions place it in
+// over the trace's own time window. Exists predicates bind their args into sb.
+func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, summary *spantypes.TraceSummary, sb *sqlbuilder.SelectBuilder) ([]string, error) {
+	attributeKey := func(name string, dataType telemetrytypes.FieldDataType) *telemetrytypes.TelemetryFieldKey {
+		return &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: dataType}
+	}
+
+	values := []struct{ key, alias string }{
+		{aiobservabilitytypes.GenAIUsageInputTokens, "input_tokens_value"},
+		{aiobservabilitytypes.GenAIUsageOutputTokens, "output_tokens_value"},
+		{aiobservabilitytypes.GenAIUsageCacheReadInputTokens, "cache_read_tokens_value"},
+		{aiobservabilitytypes.GenAIUsageCacheCreationInputTokens, "cache_write_tokens_value"},
+		{aiobservabilitytypes.GenAIUsageReasoningOutputTokens, "reasoning_tokens_value"},
+		{aiobservabilitytypes.SignozGenAITotalCost, "total_cost_value"},
+	}
+
+	names := slices.Clone(aiobservabilitytypes.GenAISpanGateKeys)
+	for _, value := range values {
+		names = append(names, value.key)
+	}
+	selectors := make([]*telemetrytypes.FieldKeySelector, 0, len(names))
+	for _, name := range names {
+		selectors = append(selectors, &telemetrytypes.FieldKeySelector{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact})
+	}
+	keys, _, err := s.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, s.flagger, selectors))
+	if err != nil {
+		return nil, err
+	}
+
+	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(summary.Start.UnixNano()), uint64(summary.End.UnixNano()))
+
+	gate := make([]string, 0, len(aiobservabilitytypes.GenAISpanGateKeys))
+	for _, name := range aiobservabilitytypes.GenAISpanGateKeys {
+		conds, _, err := querybuilder.Conditions(ctx, q, s.storage, attributeKey(name, telemetrytypes.FieldDataTypeString), qbtypes.FilterOperatorExists, nil, keys, false, sb)
+		if err != nil {
+			return nil, err
+		}
+		gate = append(gate, conds...)
+	}
+	columns := []string{sb.Or(gate...) + " AS is_gen_ai"}
+
+	for _, value := range values {
+		// lookup by number, the type metadata stores numeric attributes under; float64 is only the output cast
+		expr, err := querybuilder.ResolveColumn(ctx, q, s.storage, attributeKey(value.key, telemetrytypes.FieldDataTypeNumber), telemetrytypes.FieldDataTypeFloat64, keys)
+		if err != nil {
+			return nil, err
+		}
+		// a materialized column name carries `$$`, which Build would otherwise unescape
+		columns = append(columns, sqlbuilder.Escape(expr)+" AS "+value.alias)
+	}
+	return columns, nil
 }
 
 func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary *spantypes.TraceSummary) ([]spantypes.StorableSpan, error) {
