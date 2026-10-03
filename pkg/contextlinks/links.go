@@ -11,34 +11,47 @@ import (
 )
 
 // PrepareParamsForTracesV5 returns the traces explorer query params for the
-// given range and filter; the traces explorer writes its time params in
-// nanoseconds. queryType is builder_ai_query for the AI observability explorer.
-func PrepareParamsForTracesV5(start, end time.Time, whereClause string, queryType qbtypes.QueryType) url.Values {
-	return prepareExplorerParams("traces", queryType, start.UnixNano(), end.UnixNano(), whereClause)
+// given range and filters, one explorer query per filter; the traces explorer
+// writes its time params in nanoseconds. queryType is builder_ai_query for the
+// AI observability explorer.
+func PrepareParamsForTracesV5(start, end time.Time, whereClauses []string, queryType qbtypes.QueryType) url.Values {
+	return prepareExplorerParams("traces", queryType, start.UnixNano(), end.UnixNano(), whereClauses)
 }
 
 // PrepareParamsForLogsV5 returns the logs explorer query params for the given
-// range and filter; the logs explorer writes its time params in milliseconds.
-func PrepareParamsForLogsV5(start, end time.Time, whereClause string) url.Values {
-	return prepareExplorerParams("logs", qbtypes.QueryTypeBuilder, start.UnixMilli(), end.UnixMilli(), whereClause)
+// range and filters, one explorer query per filter; the logs explorer writes
+// its time params in milliseconds.
+func PrepareParamsForLogsV5(start, end time.Time, whereClauses []string) url.Values {
+	return prepareExplorerParams("logs", qbtypes.QueryTypeBuilder, start.UnixMilli(), end.UnixMilli(), whereClauses)
 }
 
 // The end link is double encoded because otherwise a filter expression with `%` somewhere in it breaks.
-func prepareExplorerParams(dataSource string, queryType qbtypes.QueryType, start, end int64, whereClause string) url.Values {
+func prepareExplorerParams(dataSource string, queryType qbtypes.QueryType, start, end int64, whereClauses []string) url.Values {
 	// builder_query is the explorer default, so it is left out to keep existing links unchanged
 	builderQueryType := ""
 	if queryType != qbtypes.QueryTypeBuilder {
 		builderQueryType = queryType.StringValue()
 	}
 
+	// the explorer needs a query to render; an unfiltered one is the meaningful
+	// fallback when the caller has no filter to carry over
+	if len(whereClauses) == 0 {
+		whereClauses = []string{""}
+	}
+
+	queryData := make([]LinkQuery, 0, len(whereClauses))
+	for _, whereClause := range whereClauses {
+		queryData = append(queryData, LinkQuery{
+			DataSource:       dataSource,
+			BuilderQueryType: builderQueryType,
+			Filter:           &FilterExpression{Expression: whereClause},
+		})
+	}
+
 	urlData := URLShareableCompositeQuery{
 		QueryType: "builder",
 		Builder: URLShareableBuilderQuery{
-			QueryData: []LinkQuery{{
-				DataSource:       dataSource,
-				BuilderQueryType: builderQueryType,
-				Filter:           &FilterExpression{Expression: whereClause},
-			}},
+			QueryData:     queryData,
 			QueryFormulas: make([]string, 0),
 		},
 	}
@@ -52,40 +65,40 @@ func prepareExplorerParams(dataSource string, queryType qbtypes.QueryType, start
 	return params
 }
 
-// BuilderQueryForSignal returns the filter expression and group-by keys of the
-// builder query for the given signal, or found=false when the composite query
-// has no builder query for it (e.g. PromQL or ClickHouse SQL alerts). AI trace
-// queries (builder_ai_query) count as trace builder queries.
-// TODO(srikanthccv): re-visit this and support multiple queries.
-func BuilderQueryForSignal(queries []qbtypes.QueryEnvelope, signal telemetrytypes.Signal) (string, []qbtypes.GroupByKey, bool) {
+// BuilderQueriesForSignal returns the filter expression and group-by keys of
+// every builder query for the given signal, in the order they appear in the
+// composite query, or found=false when it has none (e.g. PromQL or ClickHouse
+// SQL alerts). AI trace queries (builder_ai_query) count as trace builder
+// queries.
+func BuilderQueriesForSignal(queries []qbtypes.QueryEnvelope, signal telemetrytypes.Signal) ([]BuilderQuery, bool) {
 	switch signal {
 	case telemetrytypes.SignalLogs:
-		return builderQueryForSignal[qbtypes.LogAggregation](queries, signal)
+		return builderQueriesForSignal[qbtypes.LogAggregation](queries, signal)
 	case telemetrytypes.SignalTraces:
-		return builderQueryForSignal[qbtypes.TraceAggregation](queries, signal)
+		return builderQueriesForSignal[qbtypes.TraceAggregation](queries, signal)
 	}
-	return "", nil, false
+	return nil, false
 }
 
-func builderQueryForSignal[T any](queries []qbtypes.QueryEnvelope, signal telemetrytypes.Signal) (string, []qbtypes.GroupByKey, bool) {
-	var q qbtypes.QueryBuilderQuery[T]
-	found := false
+func builderQueriesForSignal[T any](queries []qbtypes.QueryEnvelope, signal telemetrytypes.Signal) ([]BuilderQuery, bool) {
+	matches := make([]BuilderQuery, 0, len(queries))
 	for _, query := range queries {
 		if query.Type != qbtypes.QueryTypeBuilder && query.Type != qbtypes.QueryTypeBuilderAI {
 			continue
 		}
-		if spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[T]); ok {
-			q = spec
-			found = true
+		spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[T])
+		if !ok || spec.Signal != signal {
+			continue
 		}
-	}
-	if !found || q.Signal != signal {
-		return "", nil, false
-	}
 
-	filterExpr := ""
-	if q.Filter != nil {
-		filterExpr = q.Filter.Expression
+		filterExpr := ""
+		if spec.Filter != nil {
+			filterExpr = spec.Filter.Expression
+		}
+		matches = append(matches, BuilderQuery{Filter: filterExpr, GroupBy: spec.GroupBy})
 	}
-	return filterExpr, q.GroupBy, true
+	if len(matches) == 0 {
+		return nil, false
+	}
+	return matches, true
 }
