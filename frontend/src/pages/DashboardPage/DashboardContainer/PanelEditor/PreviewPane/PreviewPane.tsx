@@ -3,6 +3,7 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import cx from 'classnames';
 import { PanelMode } from 'lib/visualization/panels/types';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import PanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody';
 import PanelHeader from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
 import StaticPanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/StaticPanelBody/StaticPanelBody';
@@ -56,6 +57,7 @@ interface QueryPreviewPaneProps extends PreviewPaneBaseProps {
 	onClick?: AnyPanelInteractionProps['onClick'];
 	/** Arms the drill-down click on interactive renderers — the View modal enables it, the editor doesn't. */
 	enableDrillDown?: boolean;
+	fallbackRelativeTime?: Time;
 }
 
 interface StaticPreviewPaneProps extends PreviewPaneBaseProps {
@@ -96,7 +98,11 @@ function PreviewPane(props: PreviewPaneProps): JSX.Element {
 						className={styles.queryType}
 					/>
 					<div className={styles.dateTimeSelector}>
-						<DateTimeSelectionV2 showAutoRefresh hideShareModal />
+						<DateTimeSelectionV2
+							showAutoRefresh
+							hideShareModal
+							fallbackRelativeTime={query.fallbackRelativeTime}
+						/>
 					</div>
 				</div>
 			)}
