@@ -223,7 +223,7 @@ func (q *querier) runPromQueries(ctx context.Context, orgID valuer.UUID, params 
 				channelResults <- channelResult{Err: err, Name: queryName, Query: query.Query, Series: series}
 				return
 			}
-			misses := q.queryCache.FindMissingTimeRanges(orgID, params.Start, params.End, params.Step, cacheKey)
+			misses := q.queryCache.FindMissingTimeRanges(ctx, orgID, params.Start, params.End, params.Step, cacheKey)
 			q.logger.InfoContext(ctx, "cache misses for metrics prom query", "misses", misses)
 			missedSeries := make([]querycache.CachedSeriesData, 0)
 			for _, miss := range misses {
@@ -239,7 +239,7 @@ func (q *querier) runPromQueries(ctx context.Context, orgID valuer.UUID, params 
 					End:   miss.End,
 				})
 			}
-			mergedSeries := q.queryCache.MergeWithCachedSeriesData(orgID, cacheKey, missedSeries)
+			mergedSeries := q.queryCache.MergeWithCachedSeriesData(ctx, orgID, cacheKey, missedSeries)
 			resultSeries := common.GetSeriesFromCachedData(mergedSeries, params.Start, params.End)
 			channelResults <- channelResult{Err: nil, Name: queryName, Query: promQuery.Query, Series: resultSeries}
 		}(queryName, promQuery)

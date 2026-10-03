@@ -2,12 +2,15 @@ package querycache_test
 
 import (
 	"context"
+	stderrors "errors"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -231,7 +234,7 @@ func TestFindMissingTimeRanges(t *testing.T) {
 			}
 
 			// Call FindMissingTimeRanges
-			missingRanges := q.FindMissingTimeRanges(orgID, tc.requestedStart, tc.requestedEnd, tc.step, tc.cacheKey)
+			missingRanges := q.FindMissingTimeRanges(context.Background(), orgID, tc.requestedStart, tc.requestedEnd, tc.step, tc.cacheKey)
 
 			// Verify the missing ranges
 			assert.Equal(t, tc.expectedMiss, missingRanges)
@@ -578,7 +581,7 @@ func TestFindMissingTimeRangesV2(t *testing.T) {
 			}
 
 			// Call FindMissingTimeRanges
-			missingRanges := q.FindMissingTimeRangesV2(orgID, tc.requestedStart, tc.requestedEnd, tc.step, tc.cacheKey)
+			missingRanges := q.FindMissingTimeRangesV2(context.Background(), orgID, tc.requestedStart, tc.requestedEnd, tc.step, tc.cacheKey)
 
 			// Verify the missing ranges
 			assert.Equal(t, tc.expectedMiss, missingRanges)
@@ -673,7 +676,7 @@ func TestMergeWithCachedSeriesData(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Call MergeWithCachedSeriesData
-	mergedData := q.MergeWithCachedSeriesData(orgID, cacheKey, newData)
+	mergedData := q.MergeWithCachedSeriesData(context.Background(), orgID, cacheKey, newData)
 
 	// Verify the merged data
 	assert.Equal(t, len(expectedMergedData), len(mergedData))
@@ -693,4 +696,55 @@ func TestMergeWithCachedSeriesData(t *testing.T) {
 			}
 		}
 	}
+}
+
+type recordingErrorCache struct {
+	cache.Cache
+	getCtx context.Context
+	setCtx context.Context
+}
+
+func (c *recordingErrorCache) Get(ctx context.Context, _ valuer.UUID, _ string, _ cachetypes.Cacheable) error {
+	c.getCtx = ctx
+	return stderrors.New("cache unavailable")
+}
+
+func (c *recordingErrorCache) Set(ctx context.Context, _ valuer.UUID, _ string, _ cachetypes.Cacheable, _ time.Duration) error {
+	c.setCtx = ctx
+	return nil
+}
+
+type cacheContextKey struct{}
+
+func TestMergeWithCachedSeriesDataV2ReturnsFreshDataOnCacheFailure(t *testing.T) {
+	c := &recordingErrorCache{}
+	q := querycache.NewQueryCache(querycache.WithCache(c))
+	ctx := context.WithValue(context.Background(), cacheContextKey{}, "request-context")
+	newData := []querycache.CachedSeriesData{
+		{
+			Start: 1000,
+			End:   2000,
+			Data: []*v3.Series{
+				{
+					Labels: map[string]string{"metric": "cpu"},
+					Points: []v3.Point{{Timestamp: 1500, Value: 0.5}},
+				},
+			},
+		},
+	}
+
+	mergedData := q.MergeWithCachedSeriesDataV2(ctx, valuer.GenerateUUID(), "cache-key", newData)
+
+	require.Equal(t, newData, mergedData)
+	require.Equal(t, "request-context", c.getCtx.Value(cacheContextKey{}))
+}
+
+func TestStoreSeriesInCachePropagatesContext(t *testing.T) {
+	c := &recordingErrorCache{}
+	q := querycache.NewQueryCache(querycache.WithCache(c))
+	ctx := context.WithValue(context.Background(), cacheContextKey{}, "request-context")
+
+	q.StoreSeriesInCache(ctx, valuer.GenerateUUID(), "cache-key", nil)
+
+	require.Equal(t, "request-context", c.setCtx.Value(cacheContextKey{}))
 }
