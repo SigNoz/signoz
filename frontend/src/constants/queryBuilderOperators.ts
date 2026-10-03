@@ -537,6 +537,10 @@ export const metricsUnknownTimeAggregateOperatorOptions: SelectOption<
 	string
 >[] = [
 	{
+		value: MetricAggregateOperator.LATEST,
+		label: 'Latest',
+	},
+	{
 		value: MetricAggregateOperator.MAX,
 		label: 'Max',
 	},
@@ -555,6 +559,10 @@ export const metricsUnknownTimeAggregateOperatorOptions: SelectOption<
 	{
 		value: MetricAggregateOperator.COUNT,
 		label: 'Count',
+	},
+	{
+		value: MetricAggregateOperator.COUNT_DISTINCT,
+		label: 'Count Distinct',
 	},
 	{
 		value: MetricAggregateOperator.RATE,
