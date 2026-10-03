@@ -30,6 +30,7 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { DataSource } from 'types/common/queryBuilder';
 
 import { K8sDynamicList } from './Base/K8sDynamicList';
+import EntityStatusFilter from './Base/components/EntityStatusFilter/EntityStatusFilter';
 import {
 	GetClustersQuickFiltersConfig,
 	GetContainersQuickFiltersConfig,
@@ -337,7 +338,10 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							showFilters ? styles.listContainerFiltersVisible : ''
 						}`}
 					>
-						<K8sDynamicList controlListPrefix={showFiltersComp} />
+						<K8sDynamicList
+							controlListPrefix={showFiltersComp}
+							leftFilters={<EntityStatusFilter />}
+						/>
 					</div>
 				</div>
 			</div>

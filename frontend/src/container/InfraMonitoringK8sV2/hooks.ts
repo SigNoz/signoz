@@ -1,13 +1,20 @@
 import {
 	createParser,
 	Options,
+	parseAsArrayOf,
 	parseAsInteger,
 	parseAsJson,
 	parseAsString,
+	parseAsStringEnum,
 	useQueryState,
 	useQueryStates,
 	UseQueryStateReturn,
 } from 'nuqs';
+import {
+	InframonitoringtypesContainerStatusDTO,
+	InframonitoringtypesNodeConditionDTO,
+	InframonitoringtypesPodStatusDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { useCallback, useMemo } from 'react';
 import {
 	IBuilderQuery,
@@ -214,4 +221,59 @@ export const useInfraMonitoringStatusFilter = (): UseQueryStateReturn<
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.STATUS_FILTER,
 		parseAsString.withDefault('').withOptions(defaultNuqsOptions),
+	);
+
+/**
+ * The list APIs reject the `no_data` sentinel (see IsFilterable in
+ * pkg/types/inframonitoringtypes), so it is never offered as a filter value.
+ */
+function withoutNoData<T extends string>(values: T[]): T[] {
+	return values.filter((value) => value !== 'no_data');
+}
+
+export const FILTERABLE_POD_STATUSES = withoutNoData(
+	Object.values(InframonitoringtypesPodStatusDTO),
+);
+
+export const FILTERABLE_NODE_CONDITIONS = withoutNoData(
+	Object.values(InframonitoringtypesNodeConditionDTO),
+);
+
+export const FILTERABLE_CONTAINER_STATUSES = withoutNoData(
+	Object.values(InframonitoringtypesContainerStatusDTO),
+);
+
+const EMPTY_FILTER: [] = [];
+
+export const useInfraMonitoringPodStatusFilter = (): UseQueryStateReturn<
+	InframonitoringtypesPodStatusDTO[],
+	[]
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.POD_STATUS_FILTER,
+		parseAsArrayOf(parseAsStringEnum(FILTERABLE_POD_STATUSES))
+			.withDefault(EMPTY_FILTER)
+			.withOptions(defaultNuqsOptions),
+	);
+
+export const useInfraMonitoringNodeReadinessFilter = (): UseQueryStateReturn<
+	InframonitoringtypesNodeConditionDTO[],
+	[]
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_READINESS_FILTER,
+		parseAsArrayOf(parseAsStringEnum(FILTERABLE_NODE_CONDITIONS))
+			.withDefault(EMPTY_FILTER)
+			.withOptions(defaultNuqsOptions),
+	);
+
+export const useInfraMonitoringContainerStatusFilter = (): UseQueryStateReturn<
+	InframonitoringtypesContainerStatusDTO[],
+	[]
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.CONTAINER_STATUS_FILTER,
+		parseAsArrayOf(parseAsStringEnum(FILTERABLE_CONTAINER_STATUSES))
+			.withDefault(EMPTY_FILTER)
+			.withOptions(defaultNuqsOptions),
 	);
