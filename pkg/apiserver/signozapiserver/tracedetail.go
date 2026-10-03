@@ -73,7 +73,7 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 			ID:                  "GetTraceThread",
 			Tags:                []string{"tracedetail"},
 			Summary:             "Get thread view for a trace",
-			Description:         "Returns the spans carrying gen_ai input or output messages in timestamp order. Pass nextCursor as after or prevCursor as before to page, or spanId to open the page around a span.",
+			Description:         "Returns the spans carrying gen_ai input or output messages in timestamp order, each with the messages normalised into formatted_input and formatted_output. Pass nextCursor as after or prevCursor as before to page, or spanId to open the page around a span.",
 			RequestQuery:        new(spantypes.QueryableThread),
 			Response:            new(spantypes.GettableTraceThread),
 			ResponseContentType: "application/json",

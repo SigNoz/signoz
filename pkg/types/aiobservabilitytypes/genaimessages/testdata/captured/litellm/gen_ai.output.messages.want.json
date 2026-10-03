@@ -1,0 +1,12 @@
+[
+	{
+		"role": "assistant",
+		"content": [
+			{
+				"type": "text",
+				"content": "The animal in the image is a cartoon duck."
+			}
+		],
+		"finishReason": "stop"
+	}
+]

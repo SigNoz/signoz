@@ -1,0 +1,16 @@
+[
+	{
+		"role": "assistant",
+		"content": [
+			{
+				"type": "tool_call",
+				"id": "call_nbrbkc5fom95q8uMA2bCvH6s",
+				"name": "get_weather",
+				"arguments": {
+					"city": "Bengaluru"
+				}
+			}
+		],
+		"finishReason": "tool_call"
+	}
+]

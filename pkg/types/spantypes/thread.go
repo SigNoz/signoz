@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes/genaimessages"
 )
 
 const (
@@ -119,9 +121,12 @@ type GettableTraceThread struct {
 	NextCursor string        `json:"nextCursor,omitempty"`
 }
 
+// ThreadSpan sets the formatted fields only when the span has the matching gen_ai messages attribute.
 type ThreadSpan struct {
 	WaterfallSpan
-	timeUnixNano uint64
+	FormattedInput  []aiobservabilitytypes.Message `json:"formatted_input,omitempty"`
+	FormattedOutput []aiobservabilitytypes.Message `json:"formatted_output,omitempty"`
+	timeUnixNano    uint64
 }
 
 func (s *ThreadSpan) cursor() ThreadCursor {
@@ -162,5 +167,11 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	span := &ThreadSpan{WaterfallSpan: *storable.ToWaterfallSpan(traceID), timeUnixNano: uint64(storable.StartTime.UnixNano())}
 	// client expects millis, as in the waterfall
 	span.TimeUnix = span.TimeUnix / 1_000_000
+	if v, ok := span.Attributes[aiobservabilitytypes.GenAIInputMessages]; ok {
+		span.FormattedInput = genaimessages.Normalize(v)
+	}
+	if v, ok := span.Attributes[aiobservabilitytypes.GenAIOutputMessages]; ok {
+		span.FormattedOutput = genaimessages.Normalize(v)
+	}
 	return span
 }

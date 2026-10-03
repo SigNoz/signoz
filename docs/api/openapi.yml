@@ -1,5 +1,44 @@
 components:
   schemas:
+    AiobservabilitytypesMessage:
+      properties:
+        content:
+          items:
+            $ref: '#/components/schemas/AiobservabilitytypesPart'
+          type: array
+        finishReason:
+          type: string
+        role:
+          type: string
+      required:
+      - content
+      type: object
+    AiobservabilitytypesPart:
+      properties:
+        arguments: {}
+        content:
+          type: string
+        id:
+          type: string
+        isError:
+          type: boolean
+        name:
+          type: string
+        toolCallId:
+          type: string
+        type:
+          $ref: '#/components/schemas/AiobservabilitytypesPartType'
+      required:
+      - type
+      type: object
+    AiobservabilitytypesPartType:
+      enum:
+      - text
+      - thinking
+      - tool_call
+      - tool_result
+      - generic
+      type: string
     AlertmanagertypesChannel:
       properties:
         createdAt:
@@ -10045,6 +10084,14 @@ components:
         flags:
           minimum: 0
           type: integer
+        formatted_input:
+          items:
+            $ref: '#/components/schemas/AiobservabilitytypesMessage'
+          type: array
+        formatted_output:
+          items:
+            $ref: '#/components/schemas/AiobservabilitytypesMessage'
+          type: array
         has_children:
           type: boolean
         has_error:
@@ -15826,8 +15873,9 @@ paths:
     get:
       deprecated: false
       description: Returns the spans carrying gen_ai input or output messages in timestamp
-        order. Pass nextCursor as after or prevCursor as before to page, or spanId
-        to open the page around a span.
+        order, each with the messages normalised into formatted_input and formatted_output.
+        Pass nextCursor as after or prevCursor as before to page, or spanId to open
+        the page around a span.
       operationId: GetTraceThread
       parameters:
       - in: query

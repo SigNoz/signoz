@@ -1,0 +1,1 @@
+[{"toolCallType":"function","toolCallId":"call_526phoykytobsvLouzES805J","toolName":"getWeather","args":"{\"city\":\"Bengaluru\"}"}]

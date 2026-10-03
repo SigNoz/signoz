@@ -157,7 +157,7 @@ export const useGetTraceAggregations = <
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
 };
 /**
- * Returns the spans carrying gen_ai input or output messages in timestamp order. Pass nextCursor as after or prevCursor as before to page, or spanId to open the page around a span.
+ * Returns the spans carrying gen_ai input or output messages in timestamp order, each with the messages normalised into formatted_input and formatted_output. Pass nextCursor as after or prevCursor as before to page, or spanId to open the page around a span.
  * @summary Get thread view for a trace
  */
 export const getTraceThread = (
