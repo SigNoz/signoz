@@ -7,7 +7,16 @@ import {
 	formatValueForExpression,
 } from 'components/QueryBuilderV2/utils';
 import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
-import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
+	InfraMonitoringEntity,
+} from 'container/InfraMonitoringK8sV2/constants';
+import { QueryParams } from 'constants/query';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
+import { DataSource } from 'types/common/queryBuilder';
+import { v4 as uuid } from 'uuid';
 
 export function sortByColumnOrder<T>(
 	items: T[],
@@ -177,4 +186,75 @@ export function buildExpressionFromSelectedItemParams(
 	}
 
 	return clauses.join(' AND ');
+}
+
+/**
+ * Link to the k8s list page for `targetCategory`, pre-filtered by `filterExpression`
+ * and carrying whichever time range (list or drawer) the current URL holds.
+ */
+export function buildK8sListNavigationUrl(
+	targetCategory: InfraMonitoringEntity,
+	filterExpression: string,
+): string {
+	const defaultQuery = initialQueriesMap[DataSource.METRICS];
+
+	const compositeQuery = {
+		...defaultQuery,
+		id: uuid(),
+		builder: {
+			...defaultQuery.builder,
+			queryData: defaultQuery.builder.queryData.map((query) => ({
+				...query,
+				filter: { expression: filterExpression },
+				filters: { items: [], op: 'AND' as const },
+			})),
+		},
+	};
+
+	const urlParams = new URLSearchParams();
+	urlParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY, targetCategory);
+	urlParams.set(
+		QueryParams.compositeQuery,
+		encodeURIComponent(JSON.stringify(compositeQuery)),
+	);
+
+	const currentSearchParams = new URLSearchParams(window.location.search);
+	const detailRelativeTime = currentSearchParams.get(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_RELATIVE_TIME,
+	);
+	const detailStartTime = currentSearchParams.get(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_START_TIME,
+	);
+	const detailEndTime = currentSearchParams.get(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_END_TIME,
+	);
+
+	const listRelativeTime = currentSearchParams.get(QueryParams.relativeTime);
+	const listStartTime = currentSearchParams.get(QueryParams.startTime);
+	const listEndTime = currentSearchParams.get(QueryParams.endTime);
+
+	if (listRelativeTime) {
+		urlParams.set(QueryParams.relativeTime, listRelativeTime);
+	} else if (listStartTime && listEndTime) {
+		urlParams.set(QueryParams.startTime, listStartTime);
+		urlParams.set(QueryParams.endTime, listEndTime);
+	}
+
+	if (detailRelativeTime) {
+		urlParams.set(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_RELATIVE_TIME,
+			detailRelativeTime,
+		);
+	} else if (detailStartTime && detailEndTime) {
+		urlParams.set(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_START_TIME,
+			detailStartTime,
+		);
+		urlParams.set(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_END_TIME,
+			detailEndTime,
+		);
+	}
+
+	return `${ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES}?${urlParams.toString()}`;
 }

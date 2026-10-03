@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 
-import { useInfraMonitoringCategory } from '../hooks';
+import {
+	useInfraMonitoringCategory,
+	useInfraMonitoringSelectedItemParams,
+} from '../hooks';
 import { getEntityConfig } from './entity.registry';
 import { K8sBaseList } from './K8sBaseList';
 import K8sBaseDetails from './K8sBaseDetails';
@@ -15,27 +18,35 @@ export function K8sDynamicList({
 	leftFilters,
 }: K8sDynamicListProps): JSX.Element | null {
 	const [selectedCategory] = useInfraMonitoringCategory();
+	const [selectedItemParams] = useInfraMonitoringSelectedItemParams();
 
 	const config = useMemo(
 		() => getEntityConfig(selectedCategory),
 		[selectedCategory],
 	);
 
+	// A row opened from the drawer's overview tab belongs to another category
+	const drawerCategory = selectedItemParams.category ?? selectedCategory;
+	const drawerConfig = useMemo(
+		() => getEntityConfig(drawerCategory),
+		[drawerCategory],
+	);
+
 	if (!config) {
 		return null;
 	}
 
-	const { list, details } = config;
-
 	return (
 		<>
 			<K8sBaseList
-				{...list}
+				{...config.list}
 				controlListPrefix={controlListPrefix}
 				leftFilters={leftFilters}
 			/>
 
-			<K8sBaseDetails {...details} />
+			{drawerConfig && (
+				<K8sBaseDetails key={drawerCategory} {...drawerConfig.details} />
+			)}
 		</>
 	);
 }

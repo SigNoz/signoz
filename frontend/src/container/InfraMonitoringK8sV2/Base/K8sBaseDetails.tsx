@@ -86,6 +86,11 @@ export default function K8sBaseDetails<T>({
 		useInfraMonitoringSelectedItemParams();
 	const selectedItem = selectedItemParams.selectedItem;
 
+	const selectedItemExpression = useMemo(
+		() => getSelectedItemExpression(selectedItemParams),
+		[getSelectedItemExpression, selectedItemParams],
+	);
+
 	const entityQueryKey = useMemo(
 		() =>
 			getAutoRefreshQueryKey(
@@ -121,9 +126,10 @@ export default function K8sBaseDetails<T>({
 			const { minTime, maxTime } = getMinMaxTime();
 			const start = Math.floor(minTime / NANO_SECOND_MULTIPLIER);
 			const end = Math.floor(maxTime / NANO_SECOND_MULTIPLIER);
-			const expression = getSelectedItemExpression(selectedItemParams);
-
-			return fetchEntityData({ filter: { expression }, start, end }, signal);
+			return fetchEntityData(
+				{ filter: { expression: selectedItemExpression }, start, end },
+				signal,
+			);
 		},
 		cacheTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
 		staleTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
@@ -271,6 +277,7 @@ export default function K8sBaseDetails<T>({
 						customTabs={customTabs}
 						logsAndTracesInitialExpression={logsAndTracesInitialExpression}
 						eventsInitialExpression={eventsInitialExpression}
+						selectedItemExpression={selectedItemExpression}
 					/>
 				</GlobalTimeProvider>
 			)}
