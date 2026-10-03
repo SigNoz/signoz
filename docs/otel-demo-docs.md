@@ -61,7 +61,7 @@ service:
     metrics:
       exporters: [otlp]
     traces:
-      exporters: [spanmetrics, otlp]
+      exporters: [span_metrics, otlp]
     logs: 
       exporters: [otlp]
 ```
@@ -70,7 +70,7 @@ The SigNoz OTel collector [sigNoz's otel-collector service] listens at 4317 port
 
 >
 > Note: When merging extra configuration values with the existing collector config (`src/otel-collector/otelcol-config.yml`), objects are merged and arrays are replaced resulting in previous pipeline configurations getting overridden.
- The spanmetrics exporter must be included in the array of exporters for the traces pipeline if overridden. Not including this exporter will result in an error.
+ The span_metrics exporter must be included in the array of exporters for the traces pipeline if overridden. Not including this exporter will result in an error.
 >
 <br>
 <u>To send data to SigNoz Cloud</u>
@@ -92,7 +92,7 @@ service:
     metrics:
       exporters: [otlp]
     traces:
-      exporters: [spanmetrics, otlp]
+      exporters: [span_metrics, otlp]
     logs: 
       exporters: [otlp]
 ```
