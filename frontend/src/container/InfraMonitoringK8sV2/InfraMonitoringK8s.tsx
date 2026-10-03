@@ -24,6 +24,7 @@ import {
 	Filter,
 	Group,
 	HardDrive,
+	CalendarClock,
 	Workflow,
 } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -35,6 +36,7 @@ import {
 	GetContainersQuickFiltersConfig,
 	GetDaemonsetsQuickFiltersConfig,
 	GetDeploymentsQuickFiltersConfig,
+	GetEventsQuickFiltersConfig,
 	GetJobsQuickFiltersConfig,
 	GetNamespaceQuickFiltersConfig,
 	GetNodesQuickFiltersConfig,
@@ -218,9 +220,24 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		[],
 	);
 
+	const activityCategories = useMemo(
+		() => [
+			{
+				key: K8sCategories.EVENTS,
+				label: 'Events',
+				icon: <CalendarClock size={14} />,
+				config: GetEventsQuickFiltersConfig(),
+			},
+		],
+		[],
+	);
+
 	const selectedCategoryConfig = useMemo(
-		() => categories.find((cat) => cat.key === selectedCategory)?.config,
-		[categories, selectedCategory],
+		() =>
+			[...categories, ...activityCategories].find(
+				(cat) => cat.key === selectedCategory,
+			)?.config,
+		[categories, activityCategories, selectedCategory],
 	);
 
 	const handleCategorySelect = (key: string): void => {
@@ -291,6 +308,35 @@ export default function InfraMonitoringK8s(): JSX.Element {
 										<div className={styles.categoryCard}>
 											<div className={styles.categoryList}>
 												{categories.map((category) => (
+													<button
+														key={category.key}
+														type="button"
+														className={`${styles.categoryItem} ${
+															selectedCategory === category.key
+																? styles.categoryItemSelected
+																: ''
+														}`}
+														onClick={(): void => handleCategorySelect(category.key)}
+														data-testid={`category-${category.key}`}
+													>
+														{category.icon}
+														<Typography.Text>{category.label}</Typography.Text>
+													</button>
+												))}
+											</div>
+										</div>
+									</div>
+
+									<div className={styles.categorySelectorSection}>
+										<div className={styles.sectionHeader} data-type="activity">
+											<Typography.Text className={styles.sectionLabel}>
+												Viewing · Activity
+											</Typography.Text>
+											<div className={styles.sectionLine} />
+										</div>
+										<div className={styles.categoryCard}>
+											<div className={styles.categoryList}>
+												{activityCategories.map((category) => (
 													<button
 														key={category.key}
 														type="button"

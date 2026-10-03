@@ -126,6 +126,9 @@ export const INFRA_MONITORING_ATTR_KEYS = {
 	// K8s events
 	K8S_OBJECT_KIND: 'k8s.object.kind',
 	K8S_OBJECT_NAME: 'k8s.object.name',
+	K8S_OBJECT_UID: 'k8s.object.uid',
+	K8S_EVENT_REASON: 'k8s.event.reason',
+	SEVERITY_TEXT: 'severity_text',
 
 	// Environment
 	DEPLOYMENT_ENVIRONMENT: 'deployment.environment',
@@ -179,6 +182,7 @@ export const K8sCategories = {
 	CONTAINERS: 'containers',
 	JOBS: 'jobs',
 	VOLUMES: 'volumes',
+	EVENTS: 'events',
 };
 
 /** The section the Kubernetes view opens on when a link names none. */
@@ -606,6 +610,66 @@ export function GetClustersQuickFiltersConfig(): IQuickFiltersConfig[] {
 				type: 'resource',
 			},
 			defaultOpen: true,
+		},
+	];
+}
+
+export function GetEventsQuickFiltersConfig(): IQuickFiltersConfig[] {
+	return [
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Severity',
+			attributeKey: {
+				key: INFRA_MONITORING_ATTR_KEYS.SEVERITY_TEXT,
+				dataType: DataTypes.String,
+				type: '',
+			},
+			dataSource: DataSource.LOGS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Reason',
+			attributeKey: {
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_EVENT_REASON,
+				dataType: DataTypes.String,
+				type: 'tag',
+			},
+			dataSource: DataSource.LOGS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Object kind',
+			attributeKey: {
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND,
+				dataType: DataTypes.String,
+				type: 'tag',
+			},
+			dataSource: DataSource.LOGS,
+			defaultOpen: true,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Namespace',
+			attributeKey: {
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+				dataType: DataTypes.String,
+				type: 'tag',
+			},
+			dataSource: DataSource.LOGS,
+			defaultOpen: false,
+		},
+		{
+			type: FiltersType.CHECKBOX,
+			title: 'Cluster',
+			attributeKey: {
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
+				dataType: DataTypes.String,
+				type: 'resource',
+			},
+			dataSource: DataSource.LOGS,
+			defaultOpen: false,
 		},
 	];
 }
