@@ -17,7 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -40,11 +39,18 @@ func stripKeyAlias(name string) string {
 	return keyAliasRe.ReplaceAllString(name, "")
 }
 
-// unwrapVariant returns the concrete value inside the chcol.Variant envelope the driver scans a
-// Dynamic column — a JSON path such as body_v2.level — into.
-func unwrapVariant(val any) any {
-	if v, ok := val.(chcol.Variant); ok {
+// unwrapVariant decodes a scan envelope: a chcol.Variant to its value, a chcol.JSON column to a map.
+// The attributes bag decodes flat so its dotted keys merge with the legacy attribute maps and a
+// scalar-and-object key stays two keys; every other JSON column decodes nested.
+func unwrapVariant(name string, val any) any {
+	switch v := val.(type) {
+	case chcol.Variant:
 		return v.Any()
+	case chcol.JSON:
+		if name == "attributes" {
+			return v.ValuesByPath()
+		}
+		return v.NestedMap()
 	}
 	return val
 }
@@ -54,11 +60,11 @@ func unwrapVariant(val any) any {
 // series. JSON goes through encoding/json for its sorted map keys: ClickHouse groups documents by
 // structure, so two rows it considers equal have to produce the same label.
 func labelValue(val any) string {
-	val = unwrapVariant(val)
+	val = unwrapVariant("", val)
 	if val == nil {
 		return ""
 	}
-	if v, ok := val.(telemetrystoretypes.JSONValue); ok {
+	if v, ok := val.(map[string]any); ok {
 		if raw, err := json.Marshal(v); err == nil {
 			return string(raw)
 		}
@@ -204,7 +210,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 					Value: *val,
 				})
 
-			case *telemetrystoretypes.JSONValue, *chcol.Variant:
+			case *chcol.JSON, *chcol.Variant:
 				val := labelValue(derefValue(ptr))
 				lblVals = append(lblVals, val)
 				lblObjs = append(lblObjs, &qbtypes.Label{
@@ -478,7 +484,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		// 2. deref each slot into the output row
 		row := make([]any, len(scan))
 		for i, cell := range scan {
-			row[i] = unwrapVariant(derefValue(cell))
+			row[i] = unwrapVariant(cd[i].Name, derefValue(cell))
 		}
 		data = append(data, row)
 	}
@@ -536,7 +542,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 			name := stripKeyAlias(colNames[i])
 
 			// de-reference the typed pointer to any
-			val := unwrapVariant(reflect.ValueOf(cellPtr).Elem().Interface())
+			val := unwrapVariant(name, reflect.ValueOf(cellPtr).Elem().Interface())
 
 			// special-case: timestamp column
 			if name == "timestamp" || name == "timestamp_datetime" {
@@ -576,8 +582,6 @@ func flattenJSONPaths(prefix string, m map[string]any, out map[string]any) {
 		switch child := v.(type) {
 		case map[string]any:
 			flattenJSONPaths(key, child, out)
-		case telemetrystoretypes.JSONValue:
-			flattenJSONPaths(key, child, out)
 		default:
 			out[key] = v
 		}
@@ -593,7 +597,7 @@ func mergeSpanAttributeColumns(data map[string]any) {
 	attrStr, hasStr := data["attributes_string"]
 	attrNum, hasNum := data["attributes_number"]
 	attrBool, hasBool := data["attributes_bool"]
-	attrJSON, _ := data["attributes"].(telemetrystoretypes.JSONValue)
+	attrJSON, _ := data["attributes"].(map[string]any)
 	// todo(nitya): move to resource json
 	resStr, hasRes := data["resources_string"]
 	if hasStr || hasNum || hasBool || attrJSON != nil || hasRes {
