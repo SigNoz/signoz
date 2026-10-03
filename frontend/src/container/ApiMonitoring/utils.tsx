@@ -87,7 +87,7 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 		title: 'Environment',
 
 		attributeKey: {
-			key: 'deployment.environment',
+			key: 'deployment.environment.name',
 			dataType: DataTypes.String,
 			type: 'resource',
 		},

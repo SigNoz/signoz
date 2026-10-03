@@ -11,6 +11,7 @@ import { Skeleton } from 'antd';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
+import { SemconvOldNameBadge } from 'components/Semconv';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -107,6 +108,12 @@ function SpanDetailsContent({
 	const spanDisplayData = useMemo(
 		() => getSpanDisplayData(selectedSpan),
 		[selectedSpan],
+	);
+	const semconvLabelSuffix = useCallback(
+		(fieldKey: string): React.ReactNode => (
+			<SemconvOldNameBadge name={fieldKey} />
+		),
+		[],
 	);
 
 	// Map span attribute actions to PrettyView actions format.
@@ -329,6 +336,7 @@ function SpanDetailsContent({
 										visibleActions: VISIBLE_ACTIONS,
 										pinnedFieldsValue,
 										onPinnedFieldsChange,
+										labelSuffixRenderer: semconvLabelSuffix,
 									}}
 								/>
 							</TabsContent>

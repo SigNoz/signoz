@@ -22,7 +22,7 @@ export const SPAN_CATEGORIES: readonly SpanCategory[] = [
 
 // Map each category to the attribute key it filters on
 const CATEGORY_KEYS: Record<Exclude<SpanCategory, 'All'>, string> = {
-	Database: 'db.system',
+	Database: 'db.system.name',
 	HTTP: 'http.method',
 	Functions: 'kind_string',
 	Jobs: 'messaging.system',
@@ -34,7 +34,7 @@ const ALL_CATEGORY_KEYS = Object.values(CATEGORY_KEYS);
 
 // The expression clause to add for each category
 const CATEGORY_EXPRESSIONS: Record<Exclude<SpanCategory, 'All'>, string> = {
-	Database: 'db.system exists',
+	Database: 'db.system.name exists',
 	HTTP: 'http.method exists',
 	Functions: "kind_string = 'Internal'",
 	Jobs: 'messaging.system exists',
