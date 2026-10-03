@@ -4088,6 +4088,7 @@ components:
           signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
           signoz/NumberPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
           signoz/PieChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
+          signoz/StateTimelinePanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesStateTimelinePanelSpec'
           signoz/TablePanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
           signoz/TextPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
           signoz/TimeSeriesPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
@@ -4102,6 +4103,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesStateTimelinePanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -4114,6 +4116,7 @@ components:
       - signoz/HistogramPanel
       - signoz/ListPanel
       - signoz/TextPanel
+      - signoz/StateTimelinePanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
       properties:
@@ -4183,6 +4186,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesPieChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesStateTimelinePanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/StateTimelinePanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesStateTimelinePanelSpec'
       required:
       - kind
       - spec
@@ -4463,6 +4478,20 @@ components:
       - normal
       - percent
       type: string
+    DashboardtypesStateTimelinePanelSpec:
+      properties:
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
     DashboardtypesTableFormatting:
       properties:
         columnUnits:

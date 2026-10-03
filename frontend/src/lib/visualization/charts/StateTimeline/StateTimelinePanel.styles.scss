@@ -1,0 +1,88 @@
+.state-timeline-panel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	font-family: var(--font-family);
+
+	&--dark {
+		background-color: var(--bg-ink-400, #121317);
+		color: var(--text-vanilla-400, #e0e0e0);
+
+		.state-timeline-panel__no-data {
+			color: var(--text-vanilla-300, #a0a0a0);
+		}
+
+		.state-timeline-panel__warning {
+			background-color: #78350f;
+			color: #fbbf24;
+		}
+	}
+
+	&--light {
+		background-color: var(--bg-vanilla-100, #ffffff);
+		color: var(--text-ink-400, #1a1a1a);
+
+		.state-timeline-panel__no-data {
+			color: var(--text-ink-200, #6b7280);
+		}
+
+		.state-timeline-panel__warning {
+			background-color: #fef3c7;
+			color: #92400e;
+		}
+	}
+
+	&__no-data {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		height: 100%;
+		font-size: 14px;
+	}
+
+	&__warning {
+		flex-shrink: 0;
+		padding: 4px 8px;
+		font-size: 12px;
+		text-align: center;
+	}
+
+	&__body {
+		position: relative;
+		width: 100%;
+		overflow: hidden;
+	}
+
+	// One virtualized item: the service-name header stacked on its coloured lane.
+	&__lane {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+	}
+
+	&__lane-label {
+		display: flex;
+		align-items: center;
+		padding: 0 8px;
+		overflow: hidden;
+		font-size: 12px;
+		font-weight: 500;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		color: var(--text-vanilla-400, #c8ccd4);
+	}
+
+	&__drag-overlay {
+		position: absolute;
+		top: 0;
+		z-index: 10;
+		height: 100%;
+		background-color: rgba(255, 255, 255, 0.1);
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		pointer-events: none;
+	}
+}

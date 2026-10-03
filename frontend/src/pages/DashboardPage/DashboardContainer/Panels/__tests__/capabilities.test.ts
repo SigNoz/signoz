@@ -33,6 +33,7 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
+	'signoz/StateTimelinePanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	// Static kind: no query surface at all.
 	'signoz/TextPanel': [],
 };
@@ -47,6 +48,7 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/TablePanel': [metrics, logs, traces],
 	// List renders raw rows; metrics produce no row data.
 	'signoz/ListPanel': [logs, traces],
+	'signoz/StateTimelinePanel': [metrics, logs, traces],
 	'signoz/TextPanel': [],
 };
 
@@ -115,6 +117,14 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		bucketedStepInterval: false,
 		orderTiebreaker: true,
 		serverPaginated: true,
+	},
+	// State timeline plots a plain time-series request, like Time Series / Area.
+	'signoz/StateTimelinePanel': {
+		requestType: time_series,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
 	},
 };
 

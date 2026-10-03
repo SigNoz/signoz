@@ -36,3 +36,8 @@ debug-storybook.log
 
 # Storybook screenshot sweeps (scripts/story-shots.mjs)
 /.story-shots/
+
+# Local-only dev scaffolding for State Timeline panel testing (never commit).
+# Contains a mock plugin, a prod fetch helper, and fetched prod data with
+# internal hostnames — all local, none of it part of the feature.
+dev/

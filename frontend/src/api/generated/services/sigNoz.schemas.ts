@@ -5291,6 +5291,28 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesTextPanelSpecDTO;
 }
 
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesStateTimelinePanelSpecDTOKind {
+	'signoz/StateTimelinePanel' = 'signoz/StateTimelinePanel',
+}
+export interface DashboardtypesStateTimelinePanelSpecDTO {
+	formatting?: DashboardtypesPanelFormattingDTO;
+	legend?: DashboardtypesLegendDTO;
+	/**
+	 * @type array,null
+	 */
+	thresholds?: DashboardtypesThresholdWithLabelDTO[] | null;
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesStateTimelinePanelSpecDTO {
+	/**
+	 * @enum signoz/StateTimelinePanel
+	 * @type string
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesStateTimelinePanelSpecDTOKind;
+	spec: DashboardtypesStateTimelinePanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -5300,7 +5322,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesStateTimelinePanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -6226,6 +6249,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
 	'signoz/TextPanel' = 'signoz/TextPanel',
+	'signoz/StateTimelinePanel' = 'signoz/StateTimelinePanel',
 }
 /**
  * @nullable
