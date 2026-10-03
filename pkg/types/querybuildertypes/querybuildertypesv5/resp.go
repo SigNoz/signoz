@@ -189,6 +189,50 @@ func (a *AggregationBucket) ReindexValuesToNewUpperBounds(onto []float64) {
 	a.Meta.Buckets = onto
 }
 
+// TrimAxisToCountedBuckets drops the buckets at either end of Meta.Buckets that hold
+// no counts, since an axis runs from the lowest value in the window to the highest.
+// Not for a query that chose its own buckets: an empty `le` is still one it reported.
+func (a *AggregationBucket) TrimAxisToCountedBuckets() {
+	if a == nil || len(a.Meta.Buckets) == 0 {
+		return
+	}
+
+	lowestCounted, highestCounted := len(a.Meta.Buckets), -1
+	for _, series := range a.Series {
+		for _, point := range series.Values {
+			for slot := 0; slot < len(a.Meta.Buckets) && slot < len(point.Values); slot++ {
+				if point.Values[slot] != 0 {
+					lowestCounted = min(lowestCounted, slot)
+					highestCounted = max(highestCounted, slot)
+				}
+			}
+		}
+	}
+	if highestCounted < 0 {
+		return
+	}
+
+	if lowestCounted == 0 && highestCounted == len(a.Meta.Buckets)-1 {
+		return
+	}
+
+	trimmed := a.Meta.Buckets[lowestCounted : highestCounted+1]
+	for _, series := range a.Series {
+		for _, point := range series.Values {
+			if len(point.Values) == 0 {
+				continue
+			}
+			counts := make([]float64, len(trimmed)+1)
+			for slot, count := range point.Values {
+				counts[min(max(slot-lowestCounted, 0), len(trimmed))] += count
+			}
+			point.Values = counts
+		}
+	}
+
+	a.Meta.Buckets = trimmed
+}
+
 type AggregationMeta struct {
 	Unit string `json:"unit,omitempty"`
 	// Buckets holds ascending upper bounds shared by every series in the

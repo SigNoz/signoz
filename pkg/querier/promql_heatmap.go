@@ -22,7 +22,7 @@ import (
 const promHistogramBucketLabel = "le"
 
 // cumulativeColumn maps a bucket's upper bound to the cumulative count at it.
-// Differencing turns it into the per-band counts a heatmapColumn holds.
+// Differencing turns it into the per-bucket counts a heatmapColumn holds.
 type cumulativeColumn map[float64]float64
 
 // promHeatmapGroup assembles one group across the several matrix series its `le`
@@ -34,8 +34,8 @@ type promHeatmapGroup struct {
 }
 
 // foldMatrixAsHeatmap folds a matrix of one cumulative series per (group, `le`)
-// into one series per group whose points hold a count per band.
-func foldMatrixAsHeatmap(matrix promql.Matrix, queryWindow *qbv5.TimeRange, stepMs uint64, queryName string) (*qbv5.TimeSeriesData, error) {
+// into one series per group whose points hold a count per bucket.
+func foldMatrixAsHeatmap(matrix promql.Matrix, queryName string) (*qbv5.TimeSeriesData, error) {
 	groups, groupOrder := collectCumulativeGroups(matrix)
 
 	// An empty matrix is only ever the window having no data, but series that
@@ -53,11 +53,12 @@ func foldMatrixAsHeatmap(matrix promql.Matrix, queryWindow *qbv5.TimeRange, step
 		}
 	}
 
-	return accumulator.foldSeries(queryWindow, stepMs, queryName)
+	// a promql data point can never be partial, hence nil and 0 are sent here
+	return accumulator.foldSeries(nil, 0, queryName)
 }
 
 // collectCumulativeGroups reads the matrix into one group per label set. A series
-// without `le` has no band to sit in, so an expression that dropped the label
+// without `le` has no bucket to sit in, so an expression that dropped the label
 // draws nothing.
 func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatmapGroup, groupOrder []string) {
 	groups = map[string]*promHeatmapGroup{}
