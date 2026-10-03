@@ -17,6 +17,7 @@ import (
 
 	"github.com/uptrace/bun"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -278,7 +279,12 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	})
 
 	services := []string{}
-	rows, err := r.db.Query(ctx, fmt.Sprintf(`SELECT DISTINCT resource_string_service$$name FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName))
+	// Use clickhousesql.Identifier to safely quote database and table identifiers
+	// to prevent SQL injection risk
+	dbIdent := clickhousesql.Identifier(r.TraceDB)
+	tableIdent := clickhousesql.Identifier(r.traceTableName)
+	query := "SELECT DISTINCT resource_string_service$$name FROM " + dbIdent + "." + tableIdent + " WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY"
+	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("error in processing sql query")
 	}
