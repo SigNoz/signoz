@@ -72,7 +72,11 @@ export function PlannedDowntime(): JSX.Element {
 	const [searchValue, setSearchValue] = React.useState<string | number>(
 		urlQuery.get('search') || '',
 	);
-	const [deleteData, setDeleteData] = useState<{ id: string; name: string }>();
+	const [deleteData, setDeleteData] = useState<{
+		id: string;
+		name: string;
+		hasAssociatedRules: boolean;
+	}>();
 	const [isEditMode, setEditMode] = useState<boolean>(false);
 
 	const updateUrlWithSearch = useDebouncedFn((value) => {
@@ -105,7 +109,7 @@ export function PlannedDowntime(): JSX.Element {
 	};
 
 	const refetchAllSchedules = (): void => {
-		downtimeSchedules.refetch();
+		void downtimeSchedules.refetch();
 	};
 
 	const {
@@ -170,7 +174,9 @@ export function PlannedDowntime(): JSX.Element {
 					setInitialValues={setInitialValues}
 					setModalOpen={setIsOpen}
 					handleDeleteDowntime={(id, name): void => {
-						setDeleteData({ id, name });
+						const downtime = downtimeSchedules.data?.data?.find((d) => d.id === id);
+						const hasAssociatedRules = (downtime?.alertIds?.length ?? 0) > 0;
+						setDeleteData({ id, name, hasAssociatedRules });
 						setIsDeleteModalOpen(true);
 					}}
 					setEditMode={setEditMode}
@@ -195,6 +201,7 @@ export function PlannedDowntime(): JSX.Element {
 					onDeleteHandler={onDeleteHandler}
 					setIsDeleteModalOpen={setIsDeleteModalOpen}
 					downtimeSchedule={deleteData?.name || ''}
+					hasAssociatedRules={deleteData?.hasAssociatedRules || false}
 				/>
 			</div>
 		</div>
