@@ -251,3 +251,25 @@ func TestServeStaticFilesUnchanged(t *testing.T) {
 
 	assert.Equal(t, string(expected), httpGet(t, base+"/assets/style.css"))
 }
+
+func TestServeUnknownAPIRoute(t *testing.T) {
+	t.Parallel()
+
+	testCases := []string{
+		"/api",
+		"/api/",
+		"/api/v1/stas",
+		"/api/v2/non-existent",
+	}
+
+	for _, path := range testCases {
+		t.Run(path, func(t *testing.T) {
+			base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, global.Config{})
+			res, err := http.DefaultClient.Get(base + path)
+			require.NoError(t, err)
+			defer func() { _ = res.Body.Close() }()
+
+			assert.Equal(t, http.StatusNotFound, res.StatusCode)
+		})
+	}
+}
