@@ -36,7 +36,7 @@ var (
 
 var logsBodyPromotedEntry = promotetypes.NewLogsBodyTarget().Entry
 
-var logsBodyIndexSource = promotetypes.NewLogsBodyTarget().IndexSource()
+var logsBodyIndexLookup = promotetypes.NewLogsBodyTarget().JSONIndexLookup()
 
 // ClickHouse stores a `col.path::Type` skip index expression as CAST(col.path, 'Type').
 var simpleJSONSubColumnIndexExprRe = regexp.MustCompile(`^CAST\((?P<expr>[^()]+), '(?P<type>.+)'\)$`)
@@ -141,7 +141,7 @@ func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...st
 	}
 
 	// list indexes for the paths
-	indexes, err := t.ListJSONIndexes(ctx, logsBodyIndexSource, filteredPaths...)
+	indexes, err := t.ListJSONIndexes(ctx, logsBodyIndexLookup, filteredPaths...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to list JSON path indexes")
 	}
@@ -155,16 +155,16 @@ func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...st
 	return fieldPathToIndexes, nil
 }
 
-func buildListJSONIndexesQuery(cluster string, source telemetrytypes.JSONIndexSource, filters ...string) (string, []any) {
+func buildListJSONIndexesQuery(cluster string, lookup telemetrytypes.JSONIndexLookup, filters ...string) (string, []any) {
 	sb := sqlbuilder.Select(
 		"name", "type_full", "expr", "granularity",
 	).From(fmt.Sprintf("clusterAllReplicas('%s', %s)", cluster, SkipIndexTableName))
 
-	sb.Where(sb.Equal("database", source.DBName))
-	sb.Where(sb.Equal("table", source.LocalTableName))
+	sb.Where(sb.Equal("database", lookup.DBName))
+	sb.Where(sb.Equal("table", lookup.LocalTableName))
 	sb.Where(sb.Or(
-		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(source.BaseColumnPrefix))),
-		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(source.PromotedColumnPrefix))),
+		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(lookup.BaseColumnPrefix))),
+		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(lookup.PromotedColumnPrefix))),
 	))
 
 	filterExprs := []string{}
@@ -177,9 +177,9 @@ func buildListJSONIndexesQuery(cluster string, source telemetrytypes.JSONIndexSo
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
-func (t *telemetryMetaStore) ListJSONIndexes(ctx context.Context, source telemetrytypes.JSONIndexSource, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
-	ctx = withTelemetryContext(ctx, source.Signal, "ListJSONIndexes")
-	query, args := buildListJSONIndexesQuery(t.telemetrystore.Cluster(), source, filters...)
+func (t *telemetryMetaStore) ListJSONIndexes(ctx context.Context, lookup telemetrytypes.JSONIndexLookup, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
+	ctx = withTelemetryContext(ctx, lookup.Signal, "ListJSONIndexes")
+	query, args := buildListJSONIndexesQuery(t.telemetrystore.Cluster(), lookup, filters...)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to load string indexed columns")
@@ -210,18 +210,18 @@ func (t *telemetryMetaStore) ListJSONIndexes(ctx context.Context, source telemet
 		baseColumn := ""
 		fieldName := ""
 		switch {
-		case strings.HasPrefix(columnExpr, source.BaseColumnPrefix):
-			baseColumn = source.BaseColumnPrefix
-			fieldName = strings.TrimPrefix(columnExpr, source.BaseColumnPrefix)
-		case strings.HasPrefix(columnExpr, source.PromotedColumnPrefix):
-			baseColumn = source.PromotedColumnPrefix
-			fieldName = strings.TrimPrefix(columnExpr, source.PromotedColumnPrefix)
+		case strings.HasPrefix(columnExpr, lookup.BaseColumnPrefix):
+			baseColumn = lookup.BaseColumnPrefix
+			fieldName = strings.TrimPrefix(columnExpr, lookup.BaseColumnPrefix)
+		case strings.HasPrefix(columnExpr, lookup.PromotedColumnPrefix):
+			baseColumn = lookup.PromotedColumnPrefix
+			fieldName = strings.TrimPrefix(columnExpr, lookup.PromotedColumnPrefix)
 		}
 		fieldName = strings.ReplaceAll(fieldName, "`", "")
 
 		indexes = append(indexes, telemetrytypes.TelemetryFieldKeySkipIndex{
 			Name:            fieldName,
-			FieldContext:    source.FieldContext,
+			FieldContext:    lookup.FieldContext,
 			FieldDataType:   fdt,
 			BaseColumn:      baseColumn,
 			IndexName:       name,

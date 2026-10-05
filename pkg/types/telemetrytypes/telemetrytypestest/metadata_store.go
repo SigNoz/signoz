@@ -376,11 +376,11 @@ func (m *MockMetadataStore) GetPromotedPaths(_ context.Context, entry telemetryt
 	return m.PromotedPathsMap[entry.Signal], nil
 }
 
-// ListJSONIndexes narrows the stored indexes to the source's field context like the real query.
-func (m *MockMetadataStore) ListJSONIndexes(ctx context.Context, source telemetrytypes.JSONIndexSource, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
+// ListJSONIndexes narrows the stored indexes to the lookup's field context like the real query.
+func (m *MockMetadataStore) ListJSONIndexes(ctx context.Context, lookup telemetrytypes.JSONIndexLookup, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
 	indexes := []telemetrytypes.TelemetryFieldKeySkipIndex{}
 	for _, index := range m.LogsJSONIndexes {
-		if index.FieldContext.StringValue() == source.FieldContext.StringValue() {
+		if index.FieldContext.StringValue() == lookup.FieldContext.StringValue() {
 			indexes = append(indexes, index)
 		}
 	}

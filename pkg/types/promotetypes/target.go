@@ -27,12 +27,13 @@ func (t Target) BaseColumnPrefix() string { return t.BaseColumn + "." }
 func (t Target) PromotedColumnPrefix() string { return t.PromotedColumn() + "." }
 
 func (t Target) RejectedPathPrefixes() []string {
-	switch t.Entry.Signal {
-	case telemetrytypes.SignalLogs:
-		return []string{telemetrytypes.BodyJSONStringSearchPrefix, t.BaseColumnPrefix(), t.PromotedColumnPrefix()}
-	default:
-		return []string{t.BaseColumnPrefix(), t.PromotedColumnPrefix()}
+	prefixes := []string{t.BaseColumnPrefix(), t.PromotedColumnPrefix()}
+	if t.Entry.Signal == telemetrytypes.SignalLogs {
+		// BodyJSONStringSearchPrefix is stripped from logs body queries
+		// before metadata lookup, so a path carrying it can never match.
+		prefixes = append(prefixes, telemetrytypes.BodyJSONStringSearchPrefix)
 	}
+	return prefixes
 }
 
 // IndexExpression folds logs strings to lower case over assumeNotNull for
@@ -46,22 +47,8 @@ func (t Target) IndexExpression(column, path, jsonDataType string) string {
 	}
 }
 
-// simpleJSONSubColumnIndexExpr renders `column.path::Type`; the cast unwraps
-// the Nullable the sub-column access returns, which bloom filter indexes
-// reject.
-func simpleJSONSubColumnIndexExpr(column, path, jsonDataType string) string {
-	parts := strings.Split(column+"."+path, ".")
-	for idx, part := range parts {
-		if keycheck.IsBacktickRequired(part) {
-			part := strings.Trim(part, "`")
-			parts[idx] = "`" + part + "`"
-		}
-	}
-	return fmt.Sprintf("%s::%s", strings.Join(parts, "."), jsonDataType)
-}
-
-func (t Target) IndexSource() telemetrytypes.JSONIndexSource {
-	return telemetrytypes.JSONIndexSource{
+func (t Target) JSONIndexLookup() telemetrytypes.JSONIndexLookup {
+	return telemetrytypes.JSONIndexLookup{
 		Signal:               t.Entry.Signal,
 		FieldContext:         t.Entry.FieldContext,
 		DBName:               t.DBName,
@@ -142,4 +129,18 @@ func TargetFor(signal telemetrytypes.Signal, context telemetrytypes.FieldContext
 		}
 	}
 	return Target{}, false
+}
+
+// simpleJSONSubColumnIndexExpr renders `column.path::Type`; the cast unwraps
+// the Nullable the sub-column access returns, which bloom filter indexes
+// reject.
+func simpleJSONSubColumnIndexExpr(column, path, jsonDataType string) string {
+	parts := strings.Split(column+"."+path, ".")
+	for idx, part := range parts {
+		if keycheck.IsBacktickRequired(part) {
+			part := strings.Trim(part, "`")
+			parts[idx] = "`" + part + "`"
+		}
+	}
+	return fmt.Sprintf("%s::%s", strings.Join(parts, "."), jsonDataType)
 }

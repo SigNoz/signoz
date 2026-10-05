@@ -63,7 +63,7 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 		})
 	}
 
-	indexes, err := m.metadataStore.ListJSONIndexes(ctx, target.IndexSource())
+	indexes, err := m.metadataStore.ListJSONIndexes(ctx, target.JSONIndexLookup())
 	if err != nil {
 		return nil, err
 	}
