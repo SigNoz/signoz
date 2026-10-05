@@ -29,16 +29,16 @@ type StorableRuleView struct {
 	types.Identifiable
 	types.TimeAuditable
 
-	Name  string               `bun:"name,type:text,notnull"`
-	Data  storableRuleViewData `bun:"data,type:text,notnull"`
-	OrgID valuer.UUID          `bun:"org_id,type:text,notnull"`
+	Name  string       `bun:"name,type:text,notnull"`
+	Data  RuleViewData `bun:"data,type:text,notnull"`
+	OrgID valuer.UUID  `bun:"org_id,type:text,notnull"`
 }
 
 func (s *StorableRuleView) ToGettableRuleView() *GettableRuleView {
 	return &GettableRuleView{
 		ID:        s.ID,
 		Name:      s.Name,
-		Data:      s.Data.toRuleViewData(),
+		Data:      s.Data,
 		OrgID:     s.OrgID,
 		CreatedAt: s.CreatedAt,
 		UpdatedAt: s.UpdatedAt,
@@ -47,7 +47,7 @@ func (s *StorableRuleView) ToGettableRuleView() *GettableRuleView {
 
 func (s *StorableRuleView) Update(updatable UpdatableRuleView) {
 	s.Name = updatable.Name
-	s.Data = newStorableRuleViewData(updatable.Data)
+	s.Data = updatable.Data
 	s.UpdatedAt = time.Now()
 }
 
@@ -104,7 +104,7 @@ func (p PostableRuleView) ToStorableRuleView(orgID valuer.UUID) *StorableRuleVie
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
 		Name:          p.Name,
-		Data:          newStorableRuleViewData(p.Data),
+		Data:          p.Data,
 		OrgID:         orgID,
 	}
 }
@@ -121,37 +121,6 @@ func NewGettableRuleViewsFromStorableRuleViews(storables []*StorableRuleView) []
 
 type ListableRuleViews struct {
 	Views []*GettableRuleView `json:"views" required:"true" nullable:"false"`
-}
-
-// storableRuleViewData owns the persisted blob format; wire tag changes must not affect stored rows.
-type storableRuleViewData struct {
-	Version string   `json:"version"`
-	Query   string   `json:"query"`
-	States  []string `json:"states"`
-	Sort    string   `json:"sort"`
-	Order   string   `json:"order"`
-}
-
-func newStorableRuleViewData(data RuleViewData) storableRuleViewData {
-	return storableRuleViewData{
-		Version: data.Version,
-		Query:   data.Query,
-		States:  data.States,
-		Sort:    data.Sort.StringValue(),
-		Order:   data.Order.StringValue(),
-	}
-}
-
-func (d storableRuleViewData) toRuleViewData() RuleViewData {
-	return RuleViewData{
-		Version: d.Version,
-		ListFilter: ListFilter{
-			Query:  d.Query,
-			States: d.States,
-			Sort:   ListSort{valuer.NewString(d.Sort)},
-			Order:  ListOrder{valuer.NewString(d.Order)},
-		},
-	}
 }
 
 func validateRuleViewName(name string) error {
