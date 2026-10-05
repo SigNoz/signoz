@@ -22,7 +22,6 @@ func TestPromotePaths(t *testing.T) {
 		name         string
 		paths        []*promotetypes.PromotePath
 		promoteTwice bool
-		wantErr      bool
 		wantPromoted []string
 	}{
 		{
@@ -47,16 +46,6 @@ func TestPromotePaths(t *testing.T) {
 			paths: []*promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "http.method"}},
 		},
 		{
-			name:    "InvalidSignal_Rejected",
-			paths:   []*promotetypes.PromotePath{{Signal: "events", Context: "attribute", Path: "http.method", Promote: true}},
-			wantErr: true,
-		},
-		{
-			name:    "UnsupportedDomain_Rejected",
-			paths:   []*promotetypes.PromotePath{{Signal: "metrics", Context: "attribute", Path: "http.method", Promote: true}},
-			wantErr: true,
-		},
-		{
 			name:         "PromotesBareBodyPath_AsIs",
 			paths:        []*promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "user.name", Promote: true}},
 			wantPromoted: []string{"user.name"},
@@ -68,13 +57,14 @@ func TestPromotePaths(t *testing.T) {
 			store := telemetrytypestest.NewMockMetadataStore()
 			m := NewModule(store, nil)
 
-			err := m.PromotePaths(ctx, testCase.paths...)
-			if testCase.wantErr {
-				assert.Error(t, err)
-				assert.Empty(t, store.PromotedPathsMap)
-				return
+			targeted := make([]promotetypes.TargetedPath, 0, len(testCase.paths))
+			for _, path := range testCase.paths {
+				target, err := path.Target()
+				require.NoError(t, err)
+				targeted = append(targeted, promotetypes.TargetedPath{Path: path, Target: target})
 			}
-			require.NoError(t, err)
+
+			require.NoError(t, m.PromotePaths(ctx, targeted...))
 
 			require.Len(t, store.PromotedPathsMap, len(testCase.wantPromoted))
 			for _, path := range testCase.wantPromoted {
@@ -82,7 +72,7 @@ func TestPromotePaths(t *testing.T) {
 			}
 
 			if testCase.promoteTwice {
-				require.NoError(t, m.PromotePaths(ctx, testCase.paths...))
+				require.NoError(t, m.PromotePaths(ctx, targeted...))
 				assert.Len(t, store.PromotedPathsMap, len(testCase.wantPromoted))
 			}
 		})
@@ -173,7 +163,9 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 			m := NewModule(store, ts)
 
 			ts.Mock().ExpectExec("ADD INDEX (.+)" + regexp.QuoteMeta(testCase.wantDDLColumn)).WillReturnError(nil)
-			require.NoError(t, m.PromotePaths(ctx, testCase.path))
+			target, err := testCase.path.Target()
+			require.NoError(t, err)
+			require.NoError(t, m.PromotePaths(ctx, promotetypes.TargetedPath{Path: testCase.path, Target: target}))
 			assert.NoError(t, ts.Mock().ExpectationsWereMet())
 		})
 	}

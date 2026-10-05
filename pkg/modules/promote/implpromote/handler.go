@@ -36,6 +36,7 @@ func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty"))
 		return
 	}
+	targeted := make([]promotetypes.TargetedPath, 0, len(req))
 	for _, path := range req {
 		target, err := path.Target()
 		if err != nil {
@@ -46,9 +47,10 @@ func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 			render.Error(w, err)
 			return
 		}
+		targeted = append(targeted, promotetypes.TargetedPath{Path: path, Target: target})
 	}
 
-	err = h.module.PromotePaths(r.Context(), req...)
+	err = h.module.PromotePaths(r.Context(), targeted...)
 	if err != nil {
 		render.Error(w, err)
 		return
