@@ -28,16 +28,12 @@ import { useViewPanel } from '../hooks/useViewPanel';
 import { buildMoveItems } from '../utils/buildMoveItems';
 import MenuActionItem from '../../../components/MenuActionItem/MenuActionItem';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
-import { isAIBuilderEnvelope } from '../../../queryV5/builderEnvelope';
-import { toQueryEnvelopes } from '../../../queryV5/buildQueryRangeRequest';
+import { getBlockedPanelActions } from '../utils/getBlockedPanelActions';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 // Stable fallback so renders without layout context don't churn the mutation
 // hooks' deps (a fresh [] each render would re-create their callbacks).
 const EMPTY_SECTIONS: DashboardSection[] = [];
-
-//TODO: @tewarig will enable these actions for AI Observability Panels
-const AI_PANEL_REASON = 'Coming Soon For AI Observability Panels';
 
 interface UsePanelActionItemsArgs {
 	panelId: string;
@@ -68,10 +64,7 @@ export function usePanelActionItems({
 	panelActions,
 }: UsePanelActionItemsArgs): PanelActionItems {
 	const panelKind = panel.spec.plugin.kind;
-	// The editor and alert builder have no AI query mode. View in Logs/Traces stays on.
-	const isAIPanel = toQueryEnvelopes(panel.spec.queries).some(
-		isAIBuilderEnvelope,
-	);
+	const blocked = useMemo(() => getBlockedPanelActions(panel), [panel]);
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
 	const openPanelEditor = useOpenPanelEditor();
@@ -133,9 +126,9 @@ export function usePanelActionItems({
 				key: 'view-panel',
 				label: row('View', <Fullscreen size={14} />, {
 					checks: [],
-					disabledTooltip: isAIPanel ? AI_PANEL_REASON : undefined,
+					disabledTooltip: blocked.view,
 				}),
-				disabled: isAIPanel,
+				disabled: !!blocked.view,
 				onClick: (): void => openView(panelId, panel),
 			});
 		}
@@ -143,9 +136,9 @@ export function usePanelActionItems({
 			panelGroup.push({
 				key: 'edit-panel',
 				label: row('Edit panel', <PenLine size={14} />, {
-					disabledTooltip: isAIPanel ? AI_PANEL_REASON : undefined,
+					disabledTooltip: blocked.edit,
 				}),
-				disabled: !isEditable || isAIPanel,
+				disabled: !isEditable || !!blocked.edit,
 				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}
@@ -178,9 +171,9 @@ export function usePanelActionItems({
 				key: 'create-alert',
 				label: row('Create Alerts', <Bell size={14} />, {
 					checks: [],
-					disabledTooltip: isAIPanel ? AI_PANEL_REASON : undefined,
+					disabledTooltip: blocked.createAlert,
 				}),
-				disabled: isAIPanel,
+				disabled: !!blocked.createAlert,
 				onClick: (): void => createAlert(panel, panelId),
 			});
 		}
@@ -220,7 +213,7 @@ export function usePanelActionItems({
 		editChecks,
 		editDisabledTooltip,
 		panelCapabilities,
-		isAIPanel,
+		blocked,
 		panel,
 		panelActions,
 		sections,
