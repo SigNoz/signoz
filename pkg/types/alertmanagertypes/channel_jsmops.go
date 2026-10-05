@@ -12,11 +12,25 @@ import (
 type ChannelJSMOpsConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	APIKey       string                       `json:"apiKey" required:"true" format:"password"`
-	Message      valuer.UnsetOrNonEmptyString `json:"message"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description"`
+	Message      valuer.UnsetOrNonEmptyString `json:"message,omitzero"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
 	Priority     string                       `json:"priority"`
 	// Tags is the comma-separated list JSM Ops attaches to the alert.
-	Tags valuer.UnsetOrNonEmptyString `json:"tags"`
+	Tags valuer.UnsetOrNonEmptyString `json:"tags,omitzero"`
+}
+
+func (c *ChannelJSMOpsConfig) UnmarshalJSON(data []byte) error {
+	type alias ChannelJSMOpsConfig
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
+		return err
+	}
+
+	fillSendResolved(&c.SendResolved, DefaultJSMOpsReceiverConfig.VSendResolved)
+	c.Message.SetIfUnset(DefaultJSMOpsReceiverConfig.Message)
+	c.Description.SetIfUnset(DefaultJSMOpsReceiverConfig.Description)
+	c.Tags.SetIfUnset(DefaultJSMOpsReceiverConfig.Tags)
+
+	return c.Validate()
 }
 
 func (c ChannelJSMOpsConfig) Validate() error {

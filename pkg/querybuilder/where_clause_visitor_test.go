@@ -589,7 +589,7 @@ func TestVisitKey(t *testing.T) {
 			// and decides not-found handling. Replay that here against the generic
 			// builder behavior (error unless the key is ignored). The test maps carry
 			// no signal, so every logical field is single-member and flattens losslessly.
-			matching := matchingLogicalFields(false, telemetrytypes.SignalUnspecified, key, tt.fieldKeys)
+			matching := matchingLogicalFields(false, telemetrytypes.SignalUnspecified, nil, key, tt.fieldKeys)
 			resolved, warning := ResolveLogicalFields(key, matching)
 			keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(resolved))
 			for _, logical := range resolved {

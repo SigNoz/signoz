@@ -279,7 +279,8 @@ func (item *StorableSpan) AttributeValue(name string) any {
 	return nil
 }
 
-// Attributes flattens the JSON column first, so the legacy maps win on collision.
+// Attributes merges the JSON column (selected only by the thread query) with the legacy maps;
+// JSON is flattened first, so the legacy maps win on collision.
 func (item *StorableSpan) Attributes() map[string]any {
 	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool)+len(item.AttributesJSON))
 	item.AttributesJSON.FlattenInto("", attributes)

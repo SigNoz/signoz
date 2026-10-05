@@ -14,6 +14,12 @@ const (
 	threadMaxLimit     = 1000
 )
 
+const (
+	ThreadAfter  ThreadFrom = iota // > cursor, ascending
+	ThreadAt                       // >= cursor, ascending
+	ThreadBefore                   // < cursor, descending
+)
+
 var (
 	ErrCodeThreadInvalidLimit  = errors.MustNewCode("trace_thread_invalid_limit")
 	ErrCodeThreadInvalidCursor = errors.MustNewCode("trace_thread_invalid_cursor")
@@ -37,6 +43,34 @@ type ThreadQuery struct {
 	After  *ThreadCursor
 	Before *ThreadCursor
 	SpanID string
+}
+
+// ThreadCursor is the (TimeUnixNano, SpanID) key of a span.
+type ThreadCursor struct {
+	TimeUnixNano uint64 `json:"t"`
+	SpanID       string `json:"s"`
+}
+
+type ThreadFrom int
+
+type ThreadPage struct {
+	Cursor *ThreadCursor
+	From   ThreadFrom
+	Limit  int
+}
+
+type GettableTraceThread struct {
+	Spans      []*ThreadSpan `json:"spans" required:"true" nullable:"false"`
+	PrevCursor string        `json:"prevCursor,omitempty"`
+	NextCursor string        `json:"nextCursor,omitempty"`
+}
+
+// ThreadSpan sets the formatted fields only when the span has the matching gen_ai messages attribute.
+type ThreadSpan struct {
+	WaterfallSpan
+	FormattedInput  []aiobservabilitytypes.Message `json:"formatted_input,omitempty"`
+	FormattedOutput []aiobservabilitytypes.Message `json:"formatted_output,omitempty"`
+	timeUnixNano    uint64
 }
 
 func NewThreadQuery(queryable *QueryableThread) (*ThreadQuery, error) {
@@ -75,17 +109,6 @@ func NewThreadQuery(queryable *QueryableThread) (*ThreadQuery, error) {
 	return query, nil
 }
 
-// ThreadCursor is the (TimeUnixNano, SpanID) key of a span.
-type ThreadCursor struct {
-	TimeUnixNano uint64 `json:"t"`
-	SpanID       string `json:"s"`
-}
-
-func (c ThreadCursor) Encode() string {
-	data, _ := json.Marshal(c)
-	return base64.RawURLEncoding.EncodeToString(data)
-}
-
 func DecodeThreadCursor(cursor string) (*ThreadCursor, error) {
 	data, err := base64.RawURLEncoding.DecodeString(cursor)
 	if err != nil {
@@ -101,36 +124,9 @@ func DecodeThreadCursor(cursor string) (*ThreadCursor, error) {
 	return c, nil
 }
 
-type ThreadFrom int
-
-const (
-	ThreadAfter  ThreadFrom = iota // > cursor, ascending
-	ThreadAt                       // >= cursor, ascending
-	ThreadBefore                   // < cursor, descending
-)
-
-type ThreadPage struct {
-	Cursor *ThreadCursor
-	From   ThreadFrom
-	Limit  int
-}
-
-type GettableTraceThread struct {
-	Spans      []*ThreadSpan `json:"spans" required:"true" nullable:"false"`
-	PrevCursor string        `json:"prevCursor,omitempty"`
-	NextCursor string        `json:"nextCursor,omitempty"`
-}
-
-// ThreadSpan sets the formatted fields only when the span has the matching gen_ai messages attribute.
-type ThreadSpan struct {
-	WaterfallSpan
-	FormattedInput  []aiobservabilitytypes.Message `json:"formatted_input,omitempty"`
-	FormattedOutput []aiobservabilitytypes.Message `json:"formatted_output,omitempty"`
-	timeUnixNano    uint64
-}
-
-func (s *ThreadSpan) cursor() ThreadCursor {
-	return ThreadCursor{TimeUnixNano: s.timeUnixNano, SpanID: s.SpanID}
+func (c ThreadCursor) Encode() string {
+	data, _ := json.Marshal(c)
+	return base64.RawURLEncoding.EncodeToString(data)
 }
 
 // NewGettableTraceThread takes up to limit+1 spans on each side of the anchor: before in
@@ -161,6 +157,10 @@ func NewGettableTraceThread(traceID string, query *ThreadQuery, before, after []
 		thread.NextCursor = spans[len(spans)-1].cursor().Encode()
 	}
 	return thread
+}
+
+func (s *ThreadSpan) cursor() ThreadCursor {
+	return ThreadCursor{TimeUnixNano: s.timeUnixNano, SpanID: s.SpanID}
 }
 
 func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {

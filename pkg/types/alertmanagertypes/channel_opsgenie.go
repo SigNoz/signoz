@@ -10,11 +10,25 @@ type ChannelOpsgenieConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	APIKey       string                       `json:"apiKey" required:"true" format:"password"`
 	APIURL       string                       `json:"apiUrl"`
-	Message      valuer.UnsetOrNonEmptyString `json:"message"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description"`
-	Source       valuer.UnsetOrNonEmptyString `json:"source"`
-	Details      map[string]string            `json:"details,omitempty"`
+	Message      valuer.UnsetOrNonEmptyString `json:"message,omitzero"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
+	Source       valuer.UnsetOrNonEmptyString `json:"source,omitzero"`
+	Details      map[string]string            `json:"details,omitzero"`
 	Priority     string                       `json:"priority"`
+}
+
+func (c *ChannelOpsgenieConfig) UnmarshalJSON(data []byte) error {
+	type alias ChannelOpsgenieConfig
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
+		return err
+	}
+
+	fillSendResolved(&c.SendResolved, config.DefaultOpsGenieConfig.VSendResolved)
+	c.Message.SetIfUnset(config.DefaultOpsGenieConfig.Message)
+	c.Description.SetIfUnset(config.DefaultOpsGenieConfig.Description)
+	c.Source.SetIfUnset(config.DefaultOpsGenieConfig.Source)
+
+	return c.Validate()
 }
 
 func (c ChannelOpsgenieConfig) Validate() error {

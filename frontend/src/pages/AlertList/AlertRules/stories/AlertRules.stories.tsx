@@ -133,3 +133,19 @@ export const ColumnPicker: Story = {
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
 };
+
+/**
+ * The rule count in the bottom strip, in place of the build version: the rows on
+ * the page against the total, the same pair the table's own footer prints.
+ */
+export const BottomStrip: Story = {
+	args: { bottomStrip: true },
+};
+
+/** The same count on a second page, where the two numbers come apart. */
+export const BottomStripPaginated: Story = {
+	args: { bottomStrip: true, rules: RULE_MAX },
+	parameters: {
+		signoz: { route: '/alerts?tab=AlertRules&page=2&limit=10' },
+	},
+};

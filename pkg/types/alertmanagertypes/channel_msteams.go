@@ -9,8 +9,21 @@ import (
 type ChannelMSTeamsConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title"`
-	Text         valuer.UnsetOrNonEmptyString `json:"text"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero"`
+}
+
+func (c *ChannelMSTeamsConfig) UnmarshalJSON(data []byte) error {
+	type alias ChannelMSTeamsConfig
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
+		return err
+	}
+
+	fillSendResolved(&c.SendResolved, config.DefaultMSTeamsV2Config.VSendResolved)
+	c.Title.SetIfUnset(config.DefaultMSTeamsV2Config.Title)
+	c.Text.SetIfUnset(config.DefaultMSTeamsV2Config.Text)
+
+	return c.Validate()
 }
 
 func (c ChannelMSTeamsConfig) Validate() error {
