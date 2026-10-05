@@ -10244,60 +10244,6 @@ export enum RuletypesEvaluationKindDTO {
 	rolling = 'rolling',
 	cumulative = 'cumulative',
 }
-export enum RuletypesListOrderDTO {
-	asc = 'asc',
-	desc = 'desc',
-}
-export enum RuletypesListSortDTO {
-	updated_at = 'updated_at',
-	created_at = 'created_at',
-	name = 'name',
-	state = 'state',
-	severity = 'severity',
-}
-export interface RuletypesRuleViewDataDTO {
-	order?: RuletypesListOrderDTO;
-	/**
-	 * @type string
-	 */
-	query?: string;
-	sort?: RuletypesListSortDTO;
-	/**
-	 * @type array
-	 */
-	states?: string[];
-	/**
-	 * @type string
-	 */
-	version: string;
-}
-
-export interface RuletypesGettableRuleViewDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt: string;
-	data: RuletypesRuleViewDataDTO;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt: string;
-}
-
 export interface RuletypesGettableTestRuleDTO {
 	/**
 	 * @type integer
@@ -10320,6 +10266,17 @@ export interface RuletypesLabelPairDTO {
 	value: string;
 }
 
+export enum RuletypesListOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export enum RuletypesListSortDTO {
+	updated_at = 'updated_at',
+	created_at = 'created_at',
+	name = 'name',
+	state = 'state',
+	severity = 'severity',
+}
 export type RuletypesListableRuleDTOLabels = { [key: string]: string };
 
 export enum RuletypesRuleTypeDTO {
@@ -10371,11 +10328,54 @@ export interface RuletypesListableRuleDTO {
 	updatedBy?: string;
 }
 
+export interface RuletypesRuleViewDataDTO {
+	order?: RuletypesListOrderDTO;
+	/**
+	 * @type string
+	 */
+	query?: string;
+	sort?: RuletypesListSortDTO;
+	/**
+	 * @type array
+	 */
+	states?: string[];
+	/**
+	 * @type string
+	 */
+	version: string;
+}
+
+export interface RuletypesRuleViewDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	data: RuletypesRuleViewDataDTO;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
 export interface RuletypesListableRuleViewsDTO {
 	/**
 	 * @type array
 	 */
-	views: RuletypesGettableRuleViewDTO[];
+	views: RuletypesRuleViewDTO[];
 }
 
 export interface RuletypesListableRulesDTO {
@@ -13850,7 +13850,7 @@ export type ListRuleViews200 = {
 };
 
 export type CreateRuleView201 = {
-	data: RuletypesGettableRuleViewDTO;
+	data: RuletypesRuleViewDTO;
 	/**
 	 * @type string
 	 */
@@ -13864,7 +13864,7 @@ export type UpdateRuleViewPathParameters = {
 	id: string;
 };
 export type UpdateRuleView200 = {
-	data: RuletypesGettableRuleViewDTO;
+	data: RuletypesRuleViewDTO;
 	/**
 	 * @type string
 	 */

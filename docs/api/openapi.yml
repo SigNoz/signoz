@@ -8974,30 +8974,6 @@ components:
       - kind
       - spec
       type: object
-    RuletypesGettableRuleView:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        data:
-          $ref: '#/components/schemas/RuletypesRuleViewData'
-        id:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
-      - name
-      - data
-      - orgId
-      - createdAt
-      - updatedAt
-      type: object
     RuletypesGettableTestRule:
       properties:
         alertCount:
@@ -9069,7 +9045,7 @@ components:
       properties:
         views:
           items:
-            $ref: '#/components/schemas/RuletypesGettableRuleView'
+            $ref: '#/components/schemas/RuletypesRuleView'
           type: array
       required:
       - views
@@ -9319,6 +9295,28 @@ components:
       - promql_rule
       - anomaly_rule
       type: string
+    RuletypesRuleView:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        data:
+          $ref: '#/components/schemas/RuletypesRuleViewData'
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - data
+      - orgId
+      type: object
     RuletypesRuleViewData:
       properties:
         order:
@@ -21318,7 +21316,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RuletypesGettableRuleView'
+                    $ref: '#/components/schemas/RuletypesRuleView'
                   status:
                     type: string
                 required:
@@ -21435,7 +21433,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RuletypesGettableRuleView'
+                    $ref: '#/components/schemas/RuletypesRuleView'
                   status:
                     type: string
                 required:
