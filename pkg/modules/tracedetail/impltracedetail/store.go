@@ -89,7 +89,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 		return nil, err
 	}
 
-	// A span whose parent was never recorded hangs off a synthetic "Missing Span" root in the waterfall.
+	// Spans whose parent is absent from the trace; these also count as roots and surface as "Missing Span".
 	ids := sqlbuilder.NewSelectBuilder()
 	ids.Select("span_id")
 	ids.From(table)
@@ -111,6 +111,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 		"if(parent_span_id = '', "+colServiceName+", '') AS root_service",
 		"if(parent_span_id = '', response_status_code, '') AS root_status_code",
 	)
+
 	spans.SelectMore(genAIColumns...)
 	spans.From(table)
 	spans.Where(
@@ -118,6 +119,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 		spans.GE("ts_bucket_start", summary.Start.Unix()-1800),
 		spans.LE("ts_bucket_start", summary.End.Unix()),
 	)
+	// A span can be ingested more than once; keep one row per span_id.
 	spans.SQL("LIMIT 1 BY span_id")
 
 	sb := sqlbuilder.NewSelectBuilder()
@@ -154,9 +156,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 	return &stats, nil
 }
 
-// genAISpanColumns renders the per-span gen_ai gate and value reads through the shared
-// traces storage, so each attribute is read from the column its evolutions place it in
-// over the trace's own time window. Exists predicates bind their args into sb.
+// genAISpanColumns returns the gen_ai columns aggregated per span, resolved across attribute evolutions.
 func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, summary *spantypes.TraceSummary, sb *sqlbuilder.SelectBuilder) ([]string, error) {
 	attributeKey := func(name string, dataType telemetrytypes.FieldDataType) *telemetrytypes.TelemetryFieldKey {
 		return &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: dataType}
