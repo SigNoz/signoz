@@ -28,12 +28,6 @@ func (i *PromotePath) Target() (Target, error) {
 	return NewTargetFromText(i.Signal, i.Context)
 }
 
-// TargetedPath pairs a validated promote path with its resolved target.
-type TargetedPath struct {
-	Path   *PromotePath
-	Target Target
-}
-
 type ListPromotedPathsFilters struct {
 	Signal   string `query:"signal" json:"signal"`
 	Context  string `query:"context" json:"context"`

@@ -101,14 +101,18 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 	return response, nil
 }
 
-func (m *module) PromotePaths(ctx context.Context, paths ...promotetypes.TargetedPath) error {
+func (m *module) PromotePaths(ctx context.Context, paths ...*promotetypes.PromotePath) error {
 	byTarget := map[promotetypes.Target][]*promotetypes.PromotePath{}
 	targets := []promotetypes.Target{}
 	for _, path := range paths {
-		if _, ok := byTarget[path.Target]; !ok {
-			targets = append(targets, path.Target)
+		target, err := path.Target()
+		if err != nil {
+			return err
 		}
-		byTarget[path.Target] = append(byTarget[path.Target], path.Path)
+		if _, ok := byTarget[target]; !ok {
+			targets = append(targets, target)
+		}
+		byTarget[target] = append(byTarget[target], path)
 	}
 
 	for _, target := range targets {
