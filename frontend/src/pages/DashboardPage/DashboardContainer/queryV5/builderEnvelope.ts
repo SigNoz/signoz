@@ -31,7 +31,11 @@ const BUILDER_PLUGIN_KINDS: string[] = [
 	DashboardtypesQueryPluginKindDTO['signoz/AIBuilderQuery'],
 ];
 
-/** True for a bare `signoz/BuilderQuery` or `signoz/AIBuilderQuery`. CompositeQuery is not included. */
+/**
+ * True for a bare `signoz/BuilderQuery` or `signoz/AIBuilderQuery` plugin (the form List
+ * panels use). Inside a CompositeQuery an AI query is a `builder_ai_query` envelope, matched
+ * by `isBuilderOrAIEnvelope`.
+ */
 export function isBuilderOrAIPluginKind(kind: string): boolean {
 	return BUILDER_PLUGIN_KINDS.includes(kind);
 }
