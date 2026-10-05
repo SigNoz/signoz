@@ -1,9 +1,6 @@
 package alertmanagertypes
 
 import (
-	"net/url"
-	"strings"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
@@ -13,8 +10,21 @@ import (
 type ChannelGoogleChatConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title"`
-	Text         valuer.UnsetOrNonEmptyString `json:"text"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero"`
+}
+
+func (c *ChannelGoogleChatConfig) UnmarshalJSON(data []byte) error {
+	type alias ChannelGoogleChatConfig
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
+		return err
+	}
+
+	fillSendResolved(&c.SendResolved, DefaultGoogleChatReceiverConfig.VSendResolved)
+	c.Title.SetIfUnset(DefaultGoogleChatReceiverConfig.Title)
+	c.Text.SetIfUnset(DefaultGoogleChatReceiverConfig.Text)
+
+	return c.Validate()
 }
 
 func (c ChannelGoogleChatConfig) Validate() error {
@@ -88,16 +98,6 @@ func (c *GoogleChatReceiverConfig) UnmarshalYAML(unmarshal func(any) error) erro
 	}
 	if c.WebhookURL == nil {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url is required")
-	}
-	u, err := url.Parse(c.WebhookURL.String())
-	if err != nil {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid google chat webhook_url: %v", err)
-	}
-	if u.Scheme != "https" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url must use https")
-	}
-	if strings.ToLower(u.Hostname()) != "chat.googleapis.com" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url must use chat.googleapis.com")
 	}
 	return nil
 }

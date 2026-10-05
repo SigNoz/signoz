@@ -15,6 +15,7 @@ import { useDetailsPanel } from 'components/DetailsPanel';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import useGetTraceV4 from 'hooks/trace/useGetTraceV4';
+import { useTraceDetailsStripInfo } from './useTraceDetailsStripInfo';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ResizableBox } from 'periscope/components/ResizableBox';
@@ -144,6 +145,10 @@ function TraceDetailsV3(): JSX.Element {
 
 	const allSpans = traceData?.payload?.spans || [];
 	const totalSpansCount = traceData?.payload?.totalSpansCount || 0;
+	const totalErrorSpansCount = traceData?.payload?.totalErrorSpansCount || 0;
+
+	useTraceDetailsStripInfo({ totalSpansCount, totalErrorSpansCount });
+
 	const isFullDataLoaded =
 		totalSpansCount > 0 && totalSpansCount <= allSpans.length;
 
@@ -441,7 +446,10 @@ function TraceDetailsV3(): JSX.Element {
 																})}
 															>
 																<TriangleAlert size={13} />
-																Errors: {traceData.payload.totalErrorSpansCount ?? 0}
+																Errors:{' '}
+																{traceData.payload.totalErrorSpansCount ?? (
+																	<span className="translate-safe">{0}</span>
+																)}
 															</span>
 														</span>
 													) : null}

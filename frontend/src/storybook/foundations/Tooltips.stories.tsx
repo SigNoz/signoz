@@ -1,8 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ComponentProps } from 'react';
 
-import { nozGlobalConfigHandler } from '@/storybook/msw/appShellHandlers';
-
 import type { GlobalMockArgs } from '../globals';
 import TooltipsFixture from './TooltipsFixture';
 
@@ -50,14 +48,8 @@ export const ExportDownload: Story = {
 
 /**
  * The label on the Noz entry point in the top nav. The AI assistant is off until
- * the backend ships a URL for it, so the story answers the global config with
- * one.
+ * the backend ships a URL for it, so the story turns the Noz control on.
  */
 export const NozEntryPoint: Story = {
-	args: { site: 'noz' },
-	parameters: {
-		msw: {
-			handlers: [nozGlobalConfigHandler],
-		},
-	},
+	args: { site: 'noz', noz: true },
 };

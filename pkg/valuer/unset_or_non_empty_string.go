@@ -44,6 +44,12 @@ func (enum UnsetOrNonEmptyString) IsZero() bool {
 	return enum.val == ""
 }
 
+func (enum *UnsetOrNonEmptyString) SetIfUnset(val string) {
+	if enum.IsZero() {
+		enum.val = val
+	}
+}
+
 func (enum UnsetOrNonEmptyString) StringValue() string {
 	return enum.val
 }
