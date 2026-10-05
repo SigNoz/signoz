@@ -1,3 +1,4 @@
+import { MAX_PLOTTED_GROUPS } from './prepareData';
 import { type ScatterPlotData, ScatterPlotDataStatus } from './types';
 
 export interface ScatterPlotMessage {
@@ -47,7 +48,14 @@ export function getScatterPlotEmptyMessage(
 	};
 }
 
-/** "Showing N of M groups", with the log-axis share called out. Undefined when every group plots. */
+function formatCount(count: number): string {
+	return count.toLocaleString('en-US');
+}
+
+/**
+ * "Showing N of M groups", with the cap and the log-axis share called out.
+ * Undefined when every group plots.
+ */
 export function getScatterPlotFooterText(
 	data: ScatterPlotData,
 ): string | undefined {
@@ -57,8 +65,12 @@ export function getScatterPlotFooterText(
 	) {
 		return undefined;
 	}
-	const showing = `Showing ${data.drawnGroups} of ${data.totalGroups} groups`;
-	return data.nonPositiveOnLogGroups > 0
-		? `${showing} · ${logAxisNote(data.nonPositiveOnLogGroups)}`
-		: showing;
+	return [
+		`Showing ${formatCount(data.drawnGroups)} of ${formatCount(data.totalGroups)} groups`,
+		data.cappedGroups > 0 &&
+			`Plots the first ${formatCount(MAX_PLOTTED_GROUPS)}; filter or narrow the group by to see the rest`,
+		data.nonPositiveOnLogGroups > 0 && logAxisNote(data.nonPositiveOnLogGroups),
+	]
+		.filter(Boolean)
+		.join(' · ');
 }

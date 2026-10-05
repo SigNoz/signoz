@@ -4,7 +4,11 @@ import type {
 	PanelTableColumn,
 } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
-import { prepareScatterPlotData, UNGROUPED_SERIES_LABEL } from '../prepareData';
+import {
+	MAX_PLOTTED_GROUPS,
+	prepareScatterPlotData,
+	UNGROUPED_SERIES_LABEL,
+} from '../prepareData';
 import { ScatterPlotDataStatus } from '../types';
 
 const group = (id: string): PanelTableColumn => ({
@@ -401,5 +405,32 @@ describe('prepareScatterPlotData', () => {
 				columnUnits: {},
 			}).status,
 		).toBe(ScatterPlotDataStatus.NeedsSecondValue);
+	});
+
+	it('plots the first MAX_PLOTTED_GROUPS rows and counts the rest', () => {
+		const rows = Array.from({ length: MAX_PLOTTED_GROUPS + 5 }, (_, index) => ({
+			'service.name': `svc-${index}`,
+			'A.count()': index + 1,
+			'A.p99(duration_nano)': 100,
+		}));
+		const result = prepareScatterPlotData({
+			table: makeTable(
+				[
+					group('service.name'),
+					value('A.count()', 'count()'),
+					value('A.p99(duration_nano)', 'p99(duration_nano)'),
+				],
+				rows,
+			),
+			dimensions: undefined,
+			columnUnits: {},
+		});
+
+		if (result.status !== ScatterPlotDataStatus.Ready) {
+			throw new Error('expected a ready plot');
+		}
+		expect(result.drawnGroups).toBe(MAX_PLOTTED_GROUPS);
+		expect(result.cappedGroups).toBe(5);
+		expect(result.series.at(-1)?.label).toBe(`svc-${MAX_PLOTTED_GROUPS - 1}`);
 	});
 });

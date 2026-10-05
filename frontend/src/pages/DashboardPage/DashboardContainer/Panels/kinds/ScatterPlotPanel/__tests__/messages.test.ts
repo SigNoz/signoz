@@ -9,6 +9,7 @@ function ready(counts: {
 	drawnGroups: number;
 	missingValueGroups?: number;
 	nonPositiveOnLogGroups?: number;
+	cappedGroups?: number;
 }): ScatterPlotData {
 	return {
 		status: ScatterPlotDataStatus.Ready,
@@ -18,6 +19,7 @@ function ready(counts: {
 		axisQueries: { x: 'A', y: 'A' },
 		missingValueGroups: 0,
 		nonPositiveOnLogGroups: 0,
+		cappedGroups: 0,
 		...counts,
 	};
 }
@@ -104,6 +106,20 @@ describe('getScatterPlotFooterText', () => {
 			),
 		).toBe(
 			"Showing 37 of 52 groups · 3 groups with a value ≤ 0 can't go on a log axis",
+		);
+	});
+
+	it('says when the cap left plottable groups out', () => {
+		expect(
+			getScatterPlotFooterText(
+				ready({
+					totalGroups: 584393,
+					drawnGroups: 10000,
+					cappedGroups: 574393,
+				}),
+			),
+		).toBe(
+			'Showing 10,000 of 584,393 groups · Plots the first 10,000; filter or narrow the group by to see the rest',
 		);
 	});
 });
