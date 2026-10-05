@@ -179,9 +179,11 @@ func (m *module) GetThread(ctx context.Context, traceID string, query *spantypes
 		return nil, err
 	}
 
+	// One extra row per side signals a next/prev page; NewGettableTraceThread trims the response back to query.Limit.
 	page := spantypes.ThreadPage{Limit: query.Limit + 1}
 	switch {
 	case query.SpanID != "":
+		// Window centred on the span: fetch both directions, NewGettableTraceThread splits the limit.
 		anchor, err := m.store.GetThreadCursor(ctx, traceID, summary, query.SpanID)
 		if err != nil {
 			return nil, err

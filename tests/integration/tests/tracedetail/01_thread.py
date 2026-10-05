@@ -109,6 +109,58 @@ def test_thread_paginates_with_cursors(
     assert "prevCursor" not in start
 
 
+def test_thread_paginates_across_buckets(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    bucket = now.replace(minute=0 if now.minute < 30 else 30, second=0)
+    trace_id = TraceIdGenerator.trace_id()
+    # neighbours within one 30-minute ts_bucket_start and across bucket boundaries
+    timestamps = [
+        bucket - timedelta(minutes=59, seconds=59),
+        bucket - timedelta(minutes=30, seconds=1),
+        bucket - timedelta(minutes=30),
+        bucket - timedelta(seconds=1),
+        bucket,
+    ]
+    span_ids = [TraceIdGenerator.span_id() for _ in timestamps]
+    insert_traces(
+        [
+            Traces(timestamp=timestamp, trace_id=trace_id, span_id=span_id, name="chat gpt-4o", resources={"service.name": "tracedetail-thread-buckets"}, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": span_id}])}, attribute_write_mode="json_only")
+            for span_id, timestamp in zip(span_ids, timestamps, strict=True)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    url = signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/thread")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    def get_page(params: dict) -> dict:
+        response = requests.get(url, params=params, headers=headers, timeout=10)
+        assert response.status_code == HTTPStatus.OK, f"{params}: {response.text}"
+        return response.json()["data"]
+
+    page = get_page({"limit": 1})
+    forward = [span["span_id"] for span in page["spans"]]
+    while "nextCursor" in page:
+        page = get_page({"limit": 1, "after": page["nextCursor"]})
+        forward += [span["span_id"] for span in page["spans"]]
+    assert forward == span_ids
+
+    backward = [span["span_id"] for span in page["spans"]]
+    while "prevCursor" in page:
+        page = get_page({"limit": 1, "before": page["prevCursor"]})
+        backward = [span["span_id"] for span in page["spans"]] + backward
+    assert backward == span_ids
+
+    for index in range(1, len(span_ids)):
+        around = get_page({"limit": 2, "spanId": span_ids[index]})
+        assert [span["span_id"] for span in around["spans"]] == span_ids[index - 1 : index + 1], index
+
+
 def test_thread_opens_around_span(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
