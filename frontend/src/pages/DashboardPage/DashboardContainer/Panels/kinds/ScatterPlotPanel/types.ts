@@ -46,4 +46,6 @@ export type ScatterPlotData =
 			missingValueGroups: number;
 			/** Rows with a value ≤ 0 on a `log` axis. */
 			nonPositiveOnLogGroups: number;
+			/** Plottable rows left out past `MAX_PLOTTED_GROUPS`. */
+			cappedGroups: number;
 	  };
