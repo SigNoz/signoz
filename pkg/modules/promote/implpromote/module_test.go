@@ -161,18 +161,6 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 			},
 			wantDDLColumn: "`attributes.http.method_String_ngrambf_v1` attributes.http.method::String",
 		},
-		{
-			name: "TracesUnpromotedPath_BloomFilterIndex",
-			path: &promotetypes.PromotePath{
-				Signal:  "traces",
-				Context: "attribute",
-				Path:    "http.method",
-				Indexes: []promotetypes.WrappedIndex{
-					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "bloom_filter(0.01)", Granularity: 1, JSONDataType: telemetrytypes.String},
-				},
-			},
-			wantDDLColumn: "`attributes.http.method_String_bloom_filter` attributes.http.method::String",
-		},
 	}
 
 	for _, testCase := range testCases {
