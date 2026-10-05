@@ -170,15 +170,15 @@ def test_rule_view_lifecycle(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_rule_view: Callable[[dict], dict],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # List assertions filter on this test's names so foreign views never interfere.
     owned_names = {"Critical Prod", "Critical Staging", "Disabled"}
 
-    created = create_rule_view(
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
             "name": "Critical Prod",
             "data": {
                 "version": "v1",
@@ -187,8 +187,12 @@ def test_rule_view_lifecycle(
                 "sort": "name",
                 "order": "asc",
             },
-        }
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
     )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    created = response.json()["data"]
     view_id = created["id"]
     assert created["name"] == "Critical Prod"
     assert created["data"]["version"] == "v1"
@@ -196,7 +200,14 @@ def test_rule_view_lifecycle(
     assert created["data"]["states"] == ["firing", "pending"]
 
     # Omitted states, sort and order are normalized on save: [] and the list defaults, never null.
-    disabled = create_rule_view({"name": "Disabled", "data": {"version": "v1"}})
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={"name": "Disabled", "data": {"version": "v1"}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    disabled = response.json()["data"]
     assert disabled["name"] == "Disabled"
     assert disabled["data"]["states"] == []
     assert disabled["data"]["sort"] == "updated_at"
@@ -266,4 +277,13 @@ def test_rule_view_lifecycle(
             timeout=5,
         ).status_code
         == HTTPStatus.NOT_FOUND
+    )
+
+    assert (
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{disabled['id']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        ).status_code
+        == HTTPStatus.NO_CONTENT
     )
