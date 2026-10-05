@@ -13,6 +13,7 @@
 	margin-bottom: var(--spacing-6);
 
 	&:first-child:not(:last-child) {
+		flex-shrink: 0;
 		max-height: 40%;
 	}
 
