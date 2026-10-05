@@ -69,6 +69,13 @@ function getPointLabels(
 	}));
 }
 
+/**
+ * Dots drawn at most, in the order the query returns its rows. Far more than a
+ * plot can tell apart, and a canvas path of a few hundred thousand discs fails
+ * to paint at all, taking every series drawn after it with it.
+ */
+export const MAX_PLOTTED_GROUPS = 10_000;
+
 /** Joins the values of a dot's colour keys into its series label. */
 export const COLOR_LABEL_SEPARATOR = ', ';
 
@@ -119,6 +126,7 @@ export function prepareScatterPlotData({
 	let drawnGroups = 0;
 	let missingValueGroups = 0;
 	let nonPositiveOnLogGroups = 0;
+	let cappedGroups = 0;
 
 	rows.forEach((row) => {
 		const x = toFiniteNumber(row.data[xColumn.id]);
@@ -129,6 +137,10 @@ export function prepareScatterPlotData({
 		}
 		if (!isPlaceable(x, axes?.x) || !isPlaceable(y, axes?.y)) {
 			nonPositiveOnLogGroups += 1;
+			return;
+		}
+		if (drawnGroups >= MAX_PLOTTED_GROUPS) {
+			cappedGroups += 1;
 			return;
 		}
 		const label =
@@ -177,5 +189,6 @@ export function prepareScatterPlotData({
 		drawnGroups,
 		missingValueGroups,
 		nonPositiveOnLogGroups,
+		cappedGroups,
 	};
 }
