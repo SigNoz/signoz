@@ -84,10 +84,8 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "array paths can not be promoted or indexed")
 	}
 
-	for _, prefix := range target.RejectedPathPrefixes() {
-		if strings.HasPrefix(i.Path, prefix) {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must be a bare attribute name, without the `%s` prefix", prefix)
-		}
+	if prefix, ok := target.reservedPathPrefix(i.Path); ok {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path must be a bare attribute name, without the `%s` prefix", prefix)
 	}
 
 	isCardinal := keycheck.IsCardinal(i.Path)

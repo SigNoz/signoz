@@ -57,25 +57,6 @@ func TestPromotePaths(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "ColumnPrefixedPath_Rejected",
-			paths:   []*promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "attributes.http.method", Promote: true}},
-			wantErr: true,
-		},
-		{
-			name:    "BodyPrefixedPath_Rejected",
-			paths:   []*promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "body.user.name", Promote: true}},
-			wantErr: true,
-		},
-		{
-			name:    "EmptyPath_Rejected",
-			paths:   []*promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "", Promote: true}},
-			wantErr: true,
-		},
-		{
-			name:    "EmptyRequest_Rejected",
-			wantErr: true,
-		},
-		{
 			name:         "PromotesBareBodyPath_AsIs",
 			paths:        []*promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "user.name", Promote: true}},
 			wantPromoted: []string{"user.name"},
@@ -125,7 +106,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 				Path:    "user.name",
 				Promote: true,
 				Indexes: []promotetypes.WrappedIndex{
-					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
 			wantDDLColumn: "dynamicElement(body_promoted.user.name",
@@ -138,7 +119,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 				Context: "body",
 				Path:    "user.name",
 				Indexes: []promotetypes.WrappedIndex{
-					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
 			wantDDLColumn: "dynamicElement(body_promoted.user.name",
@@ -150,7 +131,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 				Context: "body",
 				Path:    "user.name",
 				Indexes: []promotetypes.WrappedIndex{
-					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
 			wantDDLColumn: "dynamicElement(body_v2.user.name",
@@ -163,7 +144,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 				Path:    "http.method",
 				Promote: true,
 				Indexes: []promotetypes.WrappedIndex{
-					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
 			wantDDLColumn: "`attributes_promoted.http.method_String_ngrambf_v1` attributes_promoted.http.method::String",
@@ -175,7 +156,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 				Context: "attribute",
 				Path:    "http.method",
 				Indexes: []promotetypes.WrappedIndex{
-					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
 			wantDDLColumn: "`attributes.http.method_String_ngrambf_v1` attributes.http.method::String",

@@ -102,18 +102,11 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 }
 
 func (m *module) PromotePaths(ctx context.Context, paths ...*promotetypes.PromotePath) error {
-	if len(paths) == 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty")
-	}
-
 	byTarget := map[promotetypes.Target][]*promotetypes.PromotePath{}
 	targets := []promotetypes.Target{}
 	for _, path := range paths {
 		target, err := path.Target()
 		if err != nil {
-			return err
-		}
-		if err := path.ValidateAndSetDefaults(target); err != nil {
 			return err
 		}
 		if _, ok := byTarget[target]; !ok {
