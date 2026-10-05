@@ -26,16 +26,6 @@ func (t Target) BaseColumnPrefix() string { return t.BaseColumn + "." }
 
 func (t Target) PromotedColumnPrefix() string { return t.PromotedColumn() + "." }
 
-func (t Target) RejectedPathPrefixes() []string {
-	prefixes := []string{t.BaseColumnPrefix(), t.PromotedColumnPrefix()}
-	if t.Entry.Signal == telemetrytypes.SignalLogs {
-		// BodyJSONStringSearchPrefix is stripped from logs body queries
-		// before metadata lookup, so a path carrying it can never match.
-		prefixes = append(prefixes, telemetrytypes.BodyJSONStringSearchPrefix)
-	}
-	return prefixes
-}
-
 // IndexExpression folds logs strings to lower case over assumeNotNull for
 // case-insensitive LIKE searches; traces indexes are a bare type cast.
 func (t Target) IndexExpression(column, path, jsonDataType string) string {
@@ -143,4 +133,20 @@ func simpleJSONSubColumnIndexExpr(column, path, jsonDataType string) string {
 		}
 	}
 	return fmt.Sprintf("%s::%s", strings.Join(parts, "."), jsonDataType)
+}
+
+// reservedPathPrefix returns the domain prefix path carries, if any: the base
+// or promoted column prefix, or the logs body search alias, which is stripped
+// from queries before metadata lookup and can never match.
+func (t Target) reservedPathPrefix(path string) (string, bool) {
+	prefixes := []string{t.BaseColumnPrefix(), t.PromotedColumnPrefix()}
+	if t.Entry.Signal == telemetrytypes.SignalLogs {
+		prefixes = append(prefixes, telemetrytypes.BodyJSONStringSearchPrefix)
+	}
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(path, prefix) {
+			return prefix, true
+		}
+	}
+	return "", false
 }
