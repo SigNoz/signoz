@@ -35,7 +35,7 @@ type MetadataStore interface {
 	FetchTemporalityAndTypeMulti(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, map[string]bool, error)
 
 	// ListJSONIndexes lists the per-path JSON skip indexes of the given source.
-	ListJSONIndexes(ctx context.Context, source JSONIndexSource, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
+	ListJSONIndexes(ctx context.Context, lookup JSONIndexLookup, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
 
 	// GetPromotedPaths lists the promoted paths recorded in the column
 	// evolution table for the entry's signal, column and field context.
