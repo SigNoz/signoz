@@ -65,6 +65,24 @@ export const Loading: Story = {
 	args: { dataState: 'loading' },
 };
 
+/**
+ * The trace's span and error counts in the bottom strip, in place of the build
+ * version, the error icon red while any span failed.
+ */
+export const BottomStrip: Story = {
+	args: { bottomStrip: true },
+};
+
+/** The strip over a trace with no failing span: the error icon stays neutral. */
+export const BottomStripNoErrors: Story = {
+	args: { bottomStrip: true, errors: false },
+};
+
+/** The strip mid-fetch, whose counts read zero until the trace resolves. */
+export const BottomStripLoading: Story = {
+	args: { bottomStrip: true, dataState: 'loading' },
+};
+
 /** The waterfall renders once the trace resolves, which outlasts the 1s default. */
 const untilLoaded = { timeout: 15_000 };
 

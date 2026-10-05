@@ -122,6 +122,9 @@ type PipelineOperator struct {
 	EnablePaths        bool   `json:"enable_paths,omitempty" yaml:"enable_paths,omitempty"`
 	PathPrefix         string `json:"path_prefix,omitempty" yaml:"path_prefix,omitempty"`
 
+	// normalize fields, set by the server only
+	JSONBodyDualIngestion bool `json:"-" yaml:"json_body_dual_ingestion,omitempty"`
+
 	// Used in Severity Parsing and JSON Flattening mapping
 	Mapping map[string][]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 	// severity parser fields

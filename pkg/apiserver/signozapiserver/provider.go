@@ -85,6 +85,7 @@ type provider struct {
 	querierHandler             querier.Handler
 	serviceAccountHandler      serviceaccount.Handler
 	serviceAccountGetter       serviceaccount.Getter
+	userGetter                 user.Getter
 	factoryHandler             factory.Handler
 	cloudIntegrationHandler    cloudintegration.Handler
 	ruleStateHistoryHandler    rulestatehistory.Handler
@@ -129,6 +130,7 @@ func NewFactory(
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,
+	userGetter user.Getter,
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
@@ -181,6 +183,7 @@ func NewFactory(
 			querierHandler,
 			serviceAccountHandler,
 			serviceAccountGetter,
+			userGetter,
 			factoryHandler,
 			cloudIntegrationHandler,
 			ruleStateHistoryHandler,
@@ -235,6 +238,7 @@ func newProvider(
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,
+	userGetter user.Getter,
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
@@ -289,6 +293,7 @@ func newProvider(
 		querierHandler:             querierHandler,
 		serviceAccountHandler:      serviceAccountHandler,
 		serviceAccountGetter:       serviceAccountGetter,
+		userGetter:                 userGetter,
 		factoryHandler:             factoryHandler,
 		cloudIntegrationHandler:    cloudIntegrationHandler,
 		ruleStateHistoryHandler:    ruleStateHistoryHandler,

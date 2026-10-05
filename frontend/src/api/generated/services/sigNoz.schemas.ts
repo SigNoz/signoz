@@ -104,9 +104,9 @@ export interface AlertmanagertypesChannelSlackFieldDTO {
 
 export interface AlertmanagertypesChannelSlackConfigDTO {
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	actions?: AlertmanagertypesChannelSlackActionDTO[];
+	actions?: AlertmanagertypesChannelSlackActionDTO[] | null;
 	/**
 	 * @type string
 	 * @format password
@@ -125,9 +125,9 @@ export interface AlertmanagertypesChannelSlackConfigDTO {
 	 */
 	fallback?: string;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	fields?: AlertmanagertypesChannelSlackFieldDTO[];
+	fields?: AlertmanagertypesChannelSlackFieldDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -166,13 +166,19 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTOKind {
 	email = 'email',
 }
-export type AlertmanagertypesChannelEmailConfigDTOHeaders = {
+export type AlertmanagertypesChannelEmailConfigDTOHeadersAnyOf = {
 	[key: string]: string;
 };
 
+/**
+ * @nullable
+ */
+export type AlertmanagertypesChannelEmailConfigDTOHeaders =
+	AlertmanagertypesChannelEmailConfigDTOHeadersAnyOf | null;
+
 export interface AlertmanagertypesChannelEmailConfigDTO {
 	/**
-	 * @type object
+	 * @type object,null
 	 */
 	headers?: AlertmanagertypesChannelEmailConfigDTOHeaders;
 	/**
@@ -239,9 +245,15 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTOKind {
 	pagerduty = 'pagerduty',
 }
-export type AlertmanagertypesChannelPagerdutyConfigDTODetails = {
+export type AlertmanagertypesChannelPagerdutyConfigDTODetailsAnyOf = {
 	[key: string]: string;
 };
+
+/**
+ * @nullable
+ */
+export type AlertmanagertypesChannelPagerdutyConfigDTODetails =
+	AlertmanagertypesChannelPagerdutyConfigDTODetailsAnyOf | null;
 
 export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	/**
@@ -265,7 +277,7 @@ export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	 */
 	description?: string;
 	/**
-	 * @type object
+	 * @type object,null
 	 */
 	details?: AlertmanagertypesChannelPagerdutyConfigDTODetails;
 	/**
@@ -307,9 +319,15 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTOKind {
 	opsgenie = 'opsgenie',
 }
-export type AlertmanagertypesChannelOpsgenieConfigDTODetails = {
+export type AlertmanagertypesChannelOpsgenieConfigDTODetailsAnyOf = {
 	[key: string]: string;
 };
+
+/**
+ * @nullable
+ */
+export type AlertmanagertypesChannelOpsgenieConfigDTODetails =
+	AlertmanagertypesChannelOpsgenieConfigDTODetailsAnyOf | null;
 
 export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
@@ -326,7 +344,7 @@ export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	 */
 	description?: string;
 	/**
-	 * @type object
+	 * @type object,null
 	 */
 	details?: AlertmanagertypesChannelOpsgenieConfigDTODetails;
 	/**
@@ -423,9 +441,15 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
 	jira = 'jira',
 }
-export type AlertmanagertypesChannelJiraConfigDTOCustomFields = {
+export type AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf = {
 	[key: string]: unknown;
 };
+
+/**
+ * @nullable
+ */
+export type AlertmanagertypesChannelJiraConfigDTOCustomFields =
+	AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf | null;
 
 export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
@@ -434,7 +458,7 @@ export interface AlertmanagertypesChannelJiraConfigDTO {
 	 */
 	apiToken: string;
 	/**
-	 * @type object
+	 * @type object,null
 	 */
 	customFields?: AlertmanagertypesChannelJiraConfigDTOCustomFields;
 	/**
@@ -450,9 +474,9 @@ export interface AlertmanagertypesChannelJiraConfigDTO {
 	 */
 	issueType: string;
 	/**
-	 * @type array
+	 * @type array,null
 	 */
-	labels?: string[];
+	labels?: string[] | null;
 	/**
 	 * @type string
 	 */
@@ -543,9 +567,15 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTOKind {
 	incidentio = 'incidentio',
 }
-export type AlertmanagertypesChannelIncidentIOConfigDTOMetadata = {
+export type AlertmanagertypesChannelIncidentIOConfigDTOMetadataAnyOf = {
 	[key: string]: string;
 };
+
+/**
+ * @nullable
+ */
+export type AlertmanagertypesChannelIncidentIOConfigDTOMetadata =
+	AlertmanagertypesChannelIncidentIOConfigDTOMetadataAnyOf | null;
 
 export interface AlertmanagertypesChannelIncidentIOConfigDTO {
 	/**
@@ -553,7 +583,7 @@ export interface AlertmanagertypesChannelIncidentIOConfigDTO {
 	 */
 	description?: string;
 	/**
-	 * @type object
+	 * @type object,null
 	 */
 	metadata?: AlertmanagertypesChannelIncidentIOConfigDTOMetadata;
 	/**
@@ -3366,6 +3396,37 @@ export interface CloudintegrationtypesAWSServiceConfigDTO {
 	metrics?: CloudintegrationtypesAWSServiceMetricsConfigDTO;
 }
 
+export enum CloudintegrationtypesRegionStateDTO {
+	enabled = 'enabled',
+	disabled = 'disabled',
+}
+export interface CloudintegrationtypesRegionSyncStateDTO {
+	state: CloudintegrationtypesRegionStateDTO;
+}
+
+export type CloudintegrationtypesSyncStateDTORegions = {
+	[key: string]: CloudintegrationtypesRegionSyncStateDTO;
+};
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesSyncStateDTO = {
+	/**
+	 * @type boolean
+	 */
+	inSync: boolean;
+	/**
+	 * @type object
+	 */
+	regions: CloudintegrationtypesSyncStateDTORegions;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	version: number;
+} | null;
+
 export type CloudintegrationtypesAgentReportDTODataAnyOf = {
 	[key: string]: unknown;
 };
@@ -3384,6 +3445,7 @@ export type CloudintegrationtypesAgentReportDTO = {
 	 * @type object,null
 	 */
 	data: CloudintegrationtypesAgentReportDTOData;
+	syncState: CloudintegrationtypesSyncStateDTO | null;
 	/**
 	 * @type integer
 	 * @format int64
@@ -3812,6 +3874,7 @@ export interface CloudintegrationtypesGettableAgentCheckInDTO {
 	 * @format date-time
 	 */
 	removedAt: string | null;
+	syncState: CloudintegrationtypesSyncStateDTO | null;
 }
 
 export interface CloudintegrationtypesServiceMetadataDTO {
@@ -3882,6 +3945,10 @@ export interface CloudintegrationtypesPostableAgentCheckInDTO {
 	 * @type string
 	 */
 	providerAccountId?: string;
+	/**
+	 * @type integer,null
+	 */
+	syncedVersion?: number | null;
 }
 
 export interface CloudintegrationtypesStorableIntegrationDashboardDTO {

@@ -61,3 +61,13 @@ export const Pagination: Story = {
 export const OverTrialLimit: Story = {
 	args: { traffic: 'over-trial-limit', banner: 'trial-expiry' },
 };
+
+/** The service count in the bottom strip, in place of the build version. */
+export const BottomStrip: Story = {
+	args: { bottomStrip: true },
+};
+
+/** The same count on the span metrics table, which is the page's other path. */
+export const BottomStripSpanMetrics: Story = {
+	args: { bottomStrip: true, mode: 'span-metrics' },
+};
