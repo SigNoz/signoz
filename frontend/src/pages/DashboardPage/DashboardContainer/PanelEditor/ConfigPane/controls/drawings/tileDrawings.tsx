@@ -12,7 +12,7 @@ const POINTS = [
 
 function interpDrawing(path: string): JSX.Element {
 	return (
-		<TileSvg tone="robin">
+		<TileSvg>
 			<path d={path} />
 			{POINTS.map(([cx, cy]) => (
 				<circle key={cx} cx={cx} cy={cy} r={2.2} {...FILLED} />
@@ -23,12 +23,12 @@ function interpDrawing(path: string): JSX.Element {
 
 export const TILE_DRAWINGS = {
 	lineSolid: (
-		<TileSvg tone="sakura">
+		<TileSvg>
 			<path d={LINE} />
 		</TileSvg>
 	),
 	lineDashed: (
-		<TileSvg tone="sakura">
+		<TileSvg>
 			<path d={LINE} strokeDasharray="5 5" />
 		</TileSvg>
 	),
@@ -39,18 +39,18 @@ export const TILE_DRAWINGS = {
 	interpStepBefore: interpDrawing('M4 18 V8 H22 V14 H40 V6 H58'),
 	interpStepAfter: interpDrawing('M4 18 H22 V8 H40 V14 H58 V6'),
 	fillNone: (
-		<TileSvg tone="forest">
+		<TileSvg>
 			<path d={LINE} />
 		</TileSvg>
 	),
 	fillSolid: (
-		<TileSvg tone="forest">
+		<TileSvg>
 			<path d={`${LINE} L60 22 L4 22Z`} {...FILLED} opacity={0.4} />
 			<path d={LINE} />
 		</TileSvg>
 	),
 	fillGradient: (
-		<TileSvg tone="forest">
+		<TileSvg>
 			<defs>
 				<linearGradient id="config-tile-fill-gradient" x1="0" y1="0" x2="0" y2="1">
 					<stop offset="0" stopColor="currentColor" stopOpacity={0.55} />
@@ -66,40 +66,40 @@ export const TILE_DRAWINGS = {
 		</TileSvg>
 	),
 	gapsConnect: (
-		<TileSvg tone="amber">
+		<TileSvg>
 			<path d="M4 16 L14 11 L22 14" />
 			<path d="M22 14 L42 8" strokeDasharray="3 4" />
 			<path d="M42 8 L50 11 L60 6" />
 		</TileSvg>
 	),
 	gapsBreak: (
-		<TileSvg tone="amber">
+		<TileSvg>
 			<path d="M4 16 L14 11 L22 14" />
 			<path d="M42 8 L50 11 L60 6" />
 		</TileSvg>
 	),
 	scaleLinear: (
-		<TileSvg tone="robin">
+		<TileSvg>
 			<path d="M4 20 L60 4" />
 		</TileSvg>
 	),
 	scaleLog: (
-		<TileSvg tone="robin">
+		<TileSvg>
 			<path d="M4 20 C 8 8, 20 5, 60 4" />
 		</TileSvg>
 	),
 	scaleAuto: (
-		<TileSvg tone="robin">
+		<TileSvg>
 			<path d="M4 20 L60 4" strokeDasharray="3 3" />
 		</TileSvg>
 	),
 	scaleSymlog: (
-		<TileSvg tone="robin">
+		<TileSvg>
 			<path d="M4 20 C 20 20, 22 12, 32 12 S 44 4, 60 4" />
 		</TileSvg>
 	),
 	barsSideBySide: (
-		<TileSvg tone="robin">
+		<TileSvg>
 			<rect x={10} y={10} width={7} height={12} {...FILLED} opacity={0.5} />
 			<rect x={18} y={4} width={7} height={18} {...FILLED} />
 			<rect x={36} y={12} width={7} height={10} {...FILLED} opacity={0.5} />
@@ -107,7 +107,7 @@ export const TILE_DRAWINGS = {
 		</TileSvg>
 	),
 	barsStacked: (
-		<TileSvg tone="robin">
+		<TileSvg>
 			<rect x={14} y={13} width={11} height={9} {...FILLED} opacity={0.5} />
 			<rect x={14} y={4} width={11} height={8} {...FILLED} />
 			<rect x={38} y={15} width={11} height={7} {...FILLED} opacity={0.5} />
@@ -115,13 +115,13 @@ export const TILE_DRAWINGS = {
 		</TileSvg>
 	),
 	areaOverlap: (
-		<TileSvg tone="robin">
+		<TileSvg>
 			<path d="M4 15 L18 9 L32 13 L46 6 L60 9" />
 			<path d="M4 20 L18 15 L32 18 L46 13 L60 15" opacity={0.5} />
 		</TileSvg>
 	),
 	areaStacked: (
-		<TileSvg tone="robin">
+		<TileSvg>
 			<path
 				d="M4 22 L4 17 L18 15 L32 16 L46 14 L60 15 L60 22Z"
 				{...FILLED}
@@ -134,7 +134,7 @@ export const TILE_DRAWINGS = {
 		</TileSvg>
 	),
 	areaPercent: (
-		<TileSvg tone="robin">
+		<TileSvg>
 			<path
 				d="M4 22 L4 12 L18 10 L32 13 L46 9 L60 11 L60 22Z"
 				{...FILLED}
