@@ -145,66 +145,40 @@ func TestPostableRuleViewUnmarshalJSON(t *testing.T) {
 	}
 }
 
-func TestToStorableRuleView(t *testing.T) {
+func TestPostableRuleViewNewRuleView(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 	postable := PostableRuleView{
 		Name: "my view",
 		Data: RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{States: []string{"firing"}, Sort: ListSortName, Order: ListOrderAsc}},
 	}
 
-	storable := postable.ToStorableRuleView(orgID)
+	view := postable.NewRuleView(orgID)
 
-	assert.Equal(t, orgID, storable.OrgID)
-	assert.Equal(t, "my view", storable.Name)
-	assert.False(t, storable.ID.IsZero())
-	assert.False(t, storable.CreatedAt.IsZero())
-	assert.Equal(t, storable.CreatedAt, storable.UpdatedAt)
-
-	gettable := storable.ToGettableRuleView()
-	assert.Equal(t, storable.ID, gettable.ID)
-	assert.Equal(t, "my view", gettable.Name)
-	assert.Equal(t, postable.Data, gettable.Data)
-	assert.Equal(t, orgID, gettable.OrgID)
-	assert.Equal(t, storable.CreatedAt, gettable.CreatedAt)
+	assert.Equal(t, orgID, view.OrgID)
+	assert.Equal(t, "my view", view.Name)
+	assert.Equal(t, postable.Data, view.Data)
+	assert.False(t, view.ID.IsZero())
+	assert.False(t, view.CreatedAt.IsZero())
+	assert.Equal(t, view.CreatedAt, view.UpdatedAt)
 }
 
-func TestNewGettableRuleViewsFromStorableRuleViews(t *testing.T) {
+func TestRuleViewUpdate(t *testing.T) {
 	orgID := valuer.GenerateUUID()
-	first := PostableRuleView{
-		Name: "first view",
-		Data: RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{Sort: ListSortName, Order: ListOrderAsc}},
-	}.ToStorableRuleView(orgID)
-	second := PostableRuleView{
-		Name: "second view",
-		Data: RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{States: []string{"firing"}, Sort: ListSortState, Order: ListOrderDesc}},
-	}.ToStorableRuleView(orgID)
-
-	views := NewGettableRuleViewsFromStorableRuleViews([]*StorableRuleView{first, second})
-
-	require.Len(t, views, 2)
-	assert.Equal(t, "first view", views[0].Name)
-	assert.Equal(t, second.Data.States, views[1].Data.States)
-	assert.Equal(t, ListSortState, views[1].Data.Sort)
-}
-
-func TestStorableRuleViewUpdate(t *testing.T) {
-	orgID := valuer.GenerateUUID()
-	storable := PostableRuleView{
+	view := PostableRuleView{
 		Name: "original",
 		Data: RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{Sort: ListSortName, Order: ListOrderAsc}},
-	}.ToStorableRuleView(orgID)
-	createdAt := storable.CreatedAt
+	}.NewRuleView(orgID)
+	createdAt := view.CreatedAt
 
-	storable.Update(UpdatableRuleView{
+	view.Update(UpdatableRuleView{
 		Name: "renamed",
 		Data: RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{States: []string{"disabled"}, Sort: ListSortCreatedAt, Order: ListOrderDesc}},
 	})
 
-	gettable := storable.ToGettableRuleView()
-	assert.Equal(t, "renamed", gettable.Name)
-	assert.Equal(t, []string{"disabled"}, gettable.Data.States)
-	assert.Equal(t, ListSortCreatedAt, gettable.Data.Sort)
-	assert.Equal(t, ListOrderDesc, gettable.Data.Order)
-	assert.Equal(t, createdAt, storable.CreatedAt)
-	assert.True(t, storable.UpdatedAt.After(createdAt))
+	assert.Equal(t, "renamed", view.Name)
+	assert.Equal(t, []string{"disabled"}, view.Data.States)
+	assert.Equal(t, ListSortCreatedAt, view.Data.Sort)
+	assert.Equal(t, ListOrderDesc, view.Data.Order)
+	assert.Equal(t, createdAt, view.CreatedAt)
+	assert.True(t, view.UpdatedAt.After(createdAt))
 }

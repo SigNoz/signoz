@@ -50,8 +50,8 @@ type Ruler interface {
 	// store interface. The handler should not call store methods directly.
 	MaintenanceStore() alertmanagertypes.MaintenanceStore
 
-	CreateRuleView(ctx context.Context, orgID valuer.UUID, postable ruletypes.PostableRuleView) (*ruletypes.GettableRuleView, error)
+	CreateRuleView(ctx context.Context, orgID valuer.UUID, postable ruletypes.PostableRuleView) (*ruletypes.RuleView, error)
 	ListRuleViews(ctx context.Context, orgID valuer.UUID) (*ruletypes.ListableRuleViews, error)
-	UpdateRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable ruletypes.UpdatableRuleView) (*ruletypes.GettableRuleView, error)
+	UpdateRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable ruletypes.UpdatableRuleView) (*ruletypes.RuleView, error)
 	DeleteRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }

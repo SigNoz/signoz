@@ -23,41 +23,21 @@ var (
 	ErrCodeRuleViewNotFound     = errors.MustNewCode("rule_view_not_found")
 )
 
-type StorableRuleView struct {
+type RuleView struct {
 	bun.BaseModel `bun:"table:rule_view,alias:rule_view"`
 
 	types.Identifiable
 	types.TimeAuditable
 
-	Name  string       `bun:"name,type:text,notnull"`
-	Data  RuleViewData `bun:"data,type:text,notnull"`
-	OrgID valuer.UUID  `bun:"org_id,type:text,notnull"`
+	Name  string       `bun:"name,type:text,notnull" json:"name" required:"true"`
+	Data  RuleViewData `bun:"data,type:text,notnull" json:"data" required:"true"`
+	OrgID valuer.UUID  `bun:"org_id,type:text,notnull" json:"orgId" required:"true"`
 }
 
-func (s *StorableRuleView) ToGettableRuleView() *GettableRuleView {
-	return &GettableRuleView{
-		ID:        s.ID,
-		Name:      s.Name,
-		Data:      s.Data,
-		OrgID:     s.OrgID,
-		CreatedAt: s.CreatedAt,
-		UpdatedAt: s.UpdatedAt,
-	}
-}
-
-func (s *StorableRuleView) Update(updatable UpdatableRuleView) {
-	s.Name = updatable.Name
-	s.Data = updatable.Data
-	s.UpdatedAt = time.Now()
-}
-
-type GettableRuleView struct {
-	ID        valuer.UUID  `json:"id" required:"true"`
-	Name      string       `json:"name" required:"true"`
-	Data      RuleViewData `json:"data" required:"true"`
-	OrgID     valuer.UUID  `json:"orgId" required:"true"`
-	CreatedAt time.Time    `json:"createdAt" required:"true"`
-	UpdatedAt time.Time    `json:"updatedAt" required:"true"`
+func (v *RuleView) Update(updatable UpdatableRuleView) {
+	v.Name = updatable.Name
+	v.Data = updatable.Data
+	v.UpdatedAt = time.Now()
 }
 
 // RuleViewData holds the rule listing state (ListRulesParams minus pagination) a view replays.
@@ -98,9 +78,9 @@ func (p *PostableRuleView) Validate() error {
 	return p.Data.Validate()
 }
 
-func (p PostableRuleView) ToStorableRuleView(orgID valuer.UUID) *StorableRuleView {
+func (p PostableRuleView) NewRuleView(orgID valuer.UUID) *RuleView {
 	now := time.Now()
-	return &StorableRuleView{
+	return &RuleView{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
 		Name:          p.Name,
@@ -111,16 +91,8 @@ func (p PostableRuleView) ToStorableRuleView(orgID valuer.UUID) *StorableRuleVie
 
 type UpdatableRuleView = PostableRuleView
 
-func NewGettableRuleViewsFromStorableRuleViews(storables []*StorableRuleView) []*GettableRuleView {
-	views := make([]*GettableRuleView, 0, len(storables))
-	for _, storable := range storables {
-		views = append(views, storable.ToGettableRuleView())
-	}
-	return views
-}
-
 type ListableRuleViews struct {
-	Views []*GettableRuleView `json:"views" required:"true" nullable:"false"`
+	Views []*RuleView `json:"views" required:"true" nullable:"false"`
 }
 
 func validateRuleViewName(name string) error {

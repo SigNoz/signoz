@@ -148,38 +148,38 @@ func (provider *provider) MaintenanceStore() alertmanagertypes.MaintenanceStore 
 	return provider.manager.MaintenanceStore()
 }
 
-func (provider *provider) CreateRuleView(ctx context.Context, orgID valuer.UUID, postable ruletypes.PostableRuleView) (*ruletypes.GettableRuleView, error) {
+func (provider *provider) CreateRuleView(ctx context.Context, orgID valuer.UUID, postable ruletypes.PostableRuleView) (*ruletypes.RuleView, error) {
 	if err := postable.Validate(); err != nil {
 		return nil, err
 	}
-	storable := postable.ToStorableRuleView(orgID)
-	if err := provider.ruleStore.CreateRuleView(ctx, storable); err != nil {
+	view := postable.NewRuleView(orgID)
+	if err := provider.ruleStore.CreateRuleView(ctx, view); err != nil {
 		return nil, err
 	}
-	return storable.ToGettableRuleView(), nil
+	return view, nil
 }
 
 func (provider *provider) ListRuleViews(ctx context.Context, orgID valuer.UUID) (*ruletypes.ListableRuleViews, error) {
-	storables, err := provider.ruleStore.ListRuleViews(ctx, orgID)
+	views, err := provider.ruleStore.ListRuleViews(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
-	return &ruletypes.ListableRuleViews{Views: ruletypes.NewGettableRuleViewsFromStorableRuleViews(storables)}, nil
+	return &ruletypes.ListableRuleViews{Views: views}, nil
 }
 
-func (provider *provider) UpdateRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable ruletypes.UpdatableRuleView) (*ruletypes.GettableRuleView, error) {
+func (provider *provider) UpdateRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable ruletypes.UpdatableRuleView) (*ruletypes.RuleView, error) {
 	if err := updatable.Validate(); err != nil {
 		return nil, err
 	}
-	storable, err := provider.ruleStore.GetRuleView(ctx, orgID, id)
+	view, err := provider.ruleStore.GetRuleView(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
-	storable.Update(updatable)
-	if err := provider.ruleStore.UpdateRuleView(ctx, storable); err != nil {
+	view.Update(updatable)
+	if err := provider.ruleStore.UpdateRuleView(ctx, view); err != nil {
 		return nil, err
 	}
-	return storable.ToGettableRuleView(), nil
+	return view, nil
 }
 
 func (provider *provider) DeleteRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {

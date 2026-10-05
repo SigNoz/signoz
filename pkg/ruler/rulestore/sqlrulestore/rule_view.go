@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func (r *rule) CreateRuleView(ctx context.Context, view *ruletypes.StorableRuleView) error {
+func (r *rule) CreateRuleView(ctx context.Context, view *ruletypes.RuleView) error {
 	_, err := r.sqlstore.
 		BunDBCtx(ctx).
 		NewInsert().
@@ -20,8 +20,8 @@ func (r *rule) CreateRuleView(ctx context.Context, view *ruletypes.StorableRuleV
 	return nil
 }
 
-func (r *rule) GetRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*ruletypes.StorableRuleView, error) {
-	view := new(ruletypes.StorableRuleView)
+func (r *rule) GetRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*ruletypes.RuleView, error) {
+	view := new(ruletypes.RuleView)
 	err := r.sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
@@ -35,8 +35,8 @@ func (r *rule) GetRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 	return view, nil
 }
 
-func (r *rule) ListRuleViews(ctx context.Context, orgID valuer.UUID) ([]*ruletypes.StorableRuleView, error) {
-	views := make([]*ruletypes.StorableRuleView, 0)
+func (r *rule) ListRuleViews(ctx context.Context, orgID valuer.UUID) ([]*ruletypes.RuleView, error) {
+	views := make([]*ruletypes.RuleView, 0)
 	err := r.sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
@@ -50,7 +50,7 @@ func (r *rule) ListRuleViews(ctx context.Context, orgID valuer.UUID) ([]*ruletyp
 	return views, nil
 }
 
-func (r *rule) UpdateRuleView(ctx context.Context, view *ruletypes.StorableRuleView) error {
+func (r *rule) UpdateRuleView(ctx context.Context, view *ruletypes.RuleView) error {
 	res, err := r.sqlstore.
 		BunDBCtx(ctx).
 		NewUpdate().
@@ -75,7 +75,7 @@ func (r *rule) DeleteRuleView(ctx context.Context, orgID valuer.UUID, id valuer.
 	res, err := r.sqlstore.
 		BunDBCtx(ctx).
 		NewDelete().
-		Model(new(ruletypes.StorableRuleView)).
+		Model(new(ruletypes.RuleView)).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
