@@ -175,19 +175,12 @@ func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, p
 			}
 
 			for _, index := range it.Indexes {
-				var typeIndex schemamigrator.IndexType
-				switch {
-				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeNGramBF)):
-					typeIndex = schemamigrator.IndexTypeNGramBF
-				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeTokenBF)):
-					typeIndex = schemamigrator.IndexTypeTokenBF
-				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeMinMax)):
-					typeIndex = schemamigrator.IndexTypeMinMax
-				default:
+				nameType, ok := promotetypes.IndexNameType(index.Type)
+				if !ok {
 					return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid index type: %s", index.Type)
 				}
 				indexes = append(indexes, schemamigrator.Index{
-					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, it.Path, index.JSONDataType.StringValue(), typeIndex),
+					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, it.Path, index.JSONDataType.StringValue(), nameType),
 					Expression:  target.IndexExpression(parentColumn, it.Path, index.JSONDataType.StringValue()),
 					Type:        index.Type,
 					Granularity: index.Granularity,

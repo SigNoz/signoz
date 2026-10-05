@@ -122,6 +122,25 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 			wantJSONDataType: telemetrytypes.String,
 		},
 		{
+			name: "BloomFilterIndex_JSONDataTypeDefaulted",
+			path: &PromotePath{
+				Path: "user.name",
+				Indexes: []WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "bloom_filter(0.01)", Granularity: 1},
+				},
+			},
+			wantPath:         "user.name",
+			wantJSONDataType: telemetrytypes.String,
+		},
+		{
+			name: "InvalidIndexType_Rejected",
+			path: &PromotePath{
+				Path:    "user.name",
+				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "set(100)", Granularity: 1}},
+			},
+			wantErr: true,
+		},
+		{
 			name: "UnsupportedColumnTypeIndex_Rejected",
 			path: &PromotePath{
 				Path:    "user.active",
@@ -185,6 +204,17 @@ func TestValidateAndSetDefaultsTracesAttributes(t *testing.T) {
 				Path: "http.method",
 				Indexes: []WrappedIndex{
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+				},
+			},
+			wantPath:         "http.method",
+			wantJSONDataType: telemetrytypes.String,
+		},
+		{
+			name: "BloomFilterIndex_JSONDataTypeDefaulted",
+			path: &PromotePath{
+				Path: "http.method",
+				Indexes: []WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "bloom_filter(0.01)", Granularity: 1},
 				},
 			},
 			wantPath:         "http.method",

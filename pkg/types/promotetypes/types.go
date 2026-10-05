@@ -3,6 +3,7 @@ package promotetypes
 import (
 	"strings"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -13,6 +14,26 @@ type WrappedIndex struct {
 	FieldDataType telemetrytypes.FieldDataType `json:"fieldDataType"`
 	Type          string                       `json:"type"`
 	Granularity   int                          `json:"granularity"`
+}
+
+// IndexTypeBloomFilter is the basic bloom filter index type; schemamigrator
+// defines constants for the other supported types.
+const IndexTypeBloomFilter schemamigrator.IndexType = "bloom_filter"
+
+// IndexNameType maps a requested index type to the bare type name used in
+// index names, rejecting types index creation does not support.
+func IndexNameType(indexType string) (schemamigrator.IndexType, bool) {
+	switch {
+	case strings.HasPrefix(indexType, string(schemamigrator.IndexTypeNGramBF)):
+		return schemamigrator.IndexTypeNGramBF, true
+	case strings.HasPrefix(indexType, string(schemamigrator.IndexTypeTokenBF)):
+		return schemamigrator.IndexTypeTokenBF, true
+	case strings.HasPrefix(indexType, string(schemamigrator.IndexTypeMinMax)):
+		return schemamigrator.IndexTypeMinMax, true
+	case strings.HasPrefix(indexType, string(IndexTypeBloomFilter)):
+		return IndexTypeBloomFilter, true
+	}
+	return "", false
 }
 
 type PromotePath struct {
@@ -96,6 +117,9 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 	for idx, index := range i.Indexes {
 		if index.Type == "" {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index type is required")
+		}
+		if _, ok := IndexNameType(index.Type); !ok {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid index type: %s", index.Type)
 		}
 		if index.Granularity <= 0 {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index granularity must be greater than 0")
