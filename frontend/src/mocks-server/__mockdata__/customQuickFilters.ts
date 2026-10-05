@@ -4,114 +4,85 @@ export const quickFiltersListResponse = {
 		signal: 'logs',
 		filters: [
 			{
-				key: 'os.description',
-				dataType: 'string',
-				type: 'resource',
+				name: 'os.description',
+				fieldDataType: 'string',
+				fieldContext: 'resource',
 			},
 			{
-				key: 'service.name',
-				dataType: 'string',
-				type: 'resource',
+				name: 'service.name',
+				fieldDataType: 'string',
+				fieldContext: 'resource',
 			},
 			{
-				key: 'duration_nano',
-				dataType: 'float64',
-				type: 'tag',
+				name: 'duration_nano',
+				fieldDataType: 'float64',
+				fieldContext: 'attribute',
 			},
 			{
-				key: 'quantity',
-				dataType: 'float64',
-				type: 'tag',
+				name: 'quantity',
+				fieldDataType: 'float64',
+				fieldContext: 'attribute',
 			},
 			{
-				key: 'body',
-				dataType: 'string',
-				type: '',
+				name: 'body',
+				fieldDataType: 'string',
+				fieldContext: '',
 			},
 			{
-				key: 'deployment.environment',
-				dataType: 'string',
-				type: 'resource',
+				name: 'deployment.environment',
+				fieldDataType: 'string',
+				fieldContext: 'resource',
 			},
 			{
-				key: 'service.namespace',
-				dataType: 'string',
-				type: 'resource',
+				name: 'service.namespace',
+				fieldDataType: 'string',
+				fieldContext: 'resource',
 			},
 			{
-				key: 'k8s.namespace.name',
-				dataType: 'string',
-				type: 'resource',
+				name: 'k8s.namespace.name',
+				fieldDataType: 'string',
+				fieldContext: 'resource',
 			},
 			{
-				key: 'service.instance.id',
-				dataType: 'string',
-				type: 'resource',
+				name: 'service.instance.id',
+				fieldDataType: 'string',
+				fieldContext: 'resource',
 			},
 			{
-				key: 'k8s.pod.name',
-				dataType: 'string',
-				type: 'resource',
+				name: 'k8s.pod.name',
+				fieldDataType: 'string',
+				fieldContext: 'resource',
 			},
 			{
-				key: 'process.owner',
-				dataType: 'string',
-				type: 'resource',
+				name: 'process.owner',
+				fieldDataType: 'string',
+				fieldContext: 'resource',
 			},
 		],
 	},
 };
 
+const otherFilterName = (name: string): { [k: string]: unknown[] } => ({
+	[name]: [
+		{ name, fieldContext: 'resource', fieldDataType: 'string', signal: 'logs' },
+	],
+});
+
 export const otherFiltersResponse = {
 	status: 'success',
 	data: {
-		attributes: [
-			{
-				key: 'service.name',
-				dataType: 'string',
-				type: 'resource',
-			},
-			{
-				key: 'k8s.deployment.name',
-				dataType: 'string',
-				type: 'resource',
-			},
-			{
-				key: 'deployment.environment',
-				dataType: 'string',
-				type: 'resource',
-			},
-			{
-				key: 'service.namespace',
-				dataType: 'string',
-				type: 'resource',
-			},
-			{
-				key: 'k8s.namespace.name',
-				dataType: 'string',
-				type: 'resource',
-			},
-			{
-				key: 'service.instance.id',
-				dataType: 'string',
-				type: 'resource',
-			},
-			{
-				key: 'k8s.pod.name',
-				dataType: 'string',
-				type: 'resource',
-			},
-			{
-				key: 'k8s.pod.uid',
-				dataType: 'string',
-				type: 'resource',
-			},
-			{
-				key: 'os.description',
-				dataType: 'string',
-				type: 'resource',
-			},
-		],
+		complete: true,
+		keys: {
+			...otherFilterName('service.name'),
+			...otherFilterName('k8s.deployment.name'),
+			...otherFilterName('deployment.environment'),
+			...otherFilterName('service.namespace'),
+			...otherFilterName('k8s.namespace.name'),
+			...otherFilterName('service.instance.id'),
+			...otherFilterName('k8s.pod.name'),
+			...otherFilterName('k8s.pod.uid'),
+			...otherFilterName('os.description'),
+		},
 	},
 };
 

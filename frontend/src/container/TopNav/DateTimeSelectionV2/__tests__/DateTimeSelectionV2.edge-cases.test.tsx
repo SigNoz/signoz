@@ -20,11 +20,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-jest.mock('container/NewExplorerCTA', () => ({
-	__esModule: true,
-	default: (): null => null,
-}));
-
 jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 	__esModule: true,
 	default: ({

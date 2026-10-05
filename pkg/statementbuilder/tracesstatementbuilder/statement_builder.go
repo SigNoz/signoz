@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -27,8 +28,7 @@ var (
 type traceQueryStatementBuilder struct {
 	logger                         *slog.Logger
 	metadataStore                  telemetrytypes.MetadataStore
-	fm                             qbtypes.FieldMapper
-	cb                             qbtypes.ConditionBuilder
+	storage                        qbtypes.Storage
 	resourceFilterResolver         *resourcefilter.ResourceFingerprintResolver[qbtypes.TraceAggregation]
 	aggExprRewriter                qbtypes.AggExprRewriter
 	fl                             flagger.Flagger
@@ -44,7 +44,7 @@ type traceQueryStatementBuilder struct {
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
 
 // NewFactory returns a provider factory for the trace query statement builder. Its
-// New internalizes the FieldMapper, ConditionBuilder, and AggExprRewriter, and reads
+// New internalizes the storage and the AggExprRewriter, and reads
 // SkipResourceFingerprint from the config.
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
@@ -54,11 +54,10 @@ func NewFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("traces"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.TraceAggregation], error) {
-			fm := tracestelemetryschema.NewFieldMapper(fl)
-			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, fm, cb, fl)
+			storage := tracestelemetryschema.NewStorage()
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, storage, fl, telemetrytypes.SignalTraces)
 			return NewTraceQueryStatementBuilder(
-				settings, metadataStore, fm, cb, aggExprRewriter, telemetryStore, fl,
+				settings, metadataStore, storage, aggExprRewriter, telemetryStore, fl,
 				cfg.SkipResourceFingerprint.Enabled, cfg.SkipResourceFingerprint.Threshold,
 			), nil
 		},
@@ -68,8 +67,7 @@ func NewFactory(
 func NewTraceQueryStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
+	storage qbtypes.Storage,
 	aggExprRewriter qbtypes.AggExprRewriter,
 	telemetryStore telemetrystore.TelemetryStore,
 	flagger flagger.Flagger,
@@ -94,8 +92,7 @@ func NewTraceQueryStatementBuilder(
 	return &traceQueryStatementBuilder{
 		logger:                         tracesSettings.Logger(),
 		metadataStore:                  metadataStore,
-		fm:                             fieldMapper,
-		cb:                             conditionBuilder,
+		storage:                        storage,
 		resourceFilterResolver:         resourceFilterResolver,
 		aggExprRewriter:                aggExprRewriter,
 		fl:                             flagger,
@@ -382,12 +379,13 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, scopeArgs...)
 	}
 
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, field := range query.SelectFields {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(expr), selectColumnAlias(i, field.Name)))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", expr, selectColumnAlias(i, field.Name))))
 	}
 
 	if isSelectFieldsEmpty {
@@ -407,7 +405,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -595,14 +593,15 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, gb := range query.GroupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
 		fieldAlias := groupByColumnAlias(i, gb.Name)
-		sb.SelectMore(fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), fieldAlias))
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", fieldAlias))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
+		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
 	}
 
 	// Aggregations
@@ -660,11 +659,11 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					orderCol := orderBy.Key.Name
+					orderCol := clickhousesql.Identifier(orderBy.Key.Name)
 					if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
 						orderCol = alias
 					}
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderCol), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -693,11 +692,11 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					orderCol := orderBy.Key.Name
+					orderCol := clickhousesql.Identifier(orderBy.Key.Name)
 					if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
 						orderCol = alias
 					}
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderCol), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -758,14 +757,15 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	allAggChArgs := []any{}
 
 	fieldNames := make([]string, 0, len(query.GroupBy))
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, gb := range query.GroupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
 		fieldAlias := groupByColumnAlias(i, gb.Name)
-		sb.SelectMore(fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), fieldAlias))
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", fieldAlias))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
+		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
 	}
 
 	// for scalar queries, the rate would be end-start
@@ -816,11 +816,11 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		if ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			orderCol := orderBy.Key.Name
+			orderCol := clickhousesql.Identifier(orderBy.Key.Name)
 			if alias, ok := groupByOrderAlias(orderBy.Key.Name, query.GroupBy); ok {
 				orderCol = alias
 			}
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderCol, orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(orderCol), orderBy.Direction.StringValue()))
 		}
 	}
 
@@ -870,16 +870,12 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 		// add filter expression
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
-			OrgID:              orgID,
-			Flagger:            b.fl,
+			Query:              querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end),
+			Storage:            b.storage,
 			Logger:             b.logger,
-			FieldMapper:        b.fm,
-			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			SkipResourceFilter: skipResourceFilter,
 			Variables:          variables,
-			StartNs:            start,
-			EndNs:              end,
 		})
 
 		if err != nil {
@@ -914,13 +910,13 @@ func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.TraceAggr
 // groupByColumnAlias returns the positional SQL alias for the i-th group-by dimension;
 // the querier (consume.go stripKeyAlias) strips the prefix to recover the field name.
 func groupByColumnAlias(i int, name string) string {
-	return fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name)
+	return clickhousesql.Identifier(fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name))
 }
 
 // selectColumnAlias returns the positional SQL alias for the i-th raw select field. Like
 // groupByColumnAlias, the prefix is stripped by the querier.
 func selectColumnAlias(i int, name string) string {
-	return fmt.Sprintf("__SELECT_KEY_%d_%s", i, name)
+	return clickhousesql.Identifier(fmt.Sprintf("__SELECT_KEY_%d_%s", i, name))
 }
 
 // groupByOrderAlias returns the group-by column alias to order by when orderKey names a

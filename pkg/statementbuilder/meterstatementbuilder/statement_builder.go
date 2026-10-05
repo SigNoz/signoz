@@ -23,15 +23,14 @@ import (
 type meterQueryStatementBuilder struct {
 	logger                  *slog.Logger
 	metadataStore           telemetrytypes.MetadataStore
-	fm                      qbtypes.FieldMapper
-	cb                      qbtypes.ConditionBuilder
+	storage                 qbtypes.Storage
 	metricsStatementBuilder *metricsstatementbuilder.StatementBuilder
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*meterQueryStatementBuilder)(nil)
 
 // NewFactory returns a provider factory for the meter statement builder. Its New
-// reuses the metrics FieldMapper/ConditionBuilder and delegates the final SELECT
+// reuses the metrics storage and delegates the final SELECT
 // to a metrics statement builder built via the metrics factory.
 func NewFactory(
 	metadataStore telemetrytypes.MetadataStore,
@@ -44,9 +43,7 @@ func NewFactory(
 			if err != nil {
 				return nil, err
 			}
-			fm := metricstelemetryschema.NewFieldMapper()
-			cb := metricstelemetryschema.NewConditionBuilder(fm)
-			return NewMeterQueryStatementBuilder(settings, metadataStore, fm, cb, metricsStatementBuilder), nil
+			return NewMeterQueryStatementBuilder(settings, metadataStore, metricstelemetryschema.NewStorage(), metricsStatementBuilder), nil
 		},
 	)
 }
@@ -54,8 +51,7 @@ func NewFactory(
 func NewMeterQueryStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
+	storage qbtypes.Storage,
 	metricsStatementBuilder *metricsstatementbuilder.StatementBuilder,
 ) *meterQueryStatementBuilder {
 	metricsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryschema/metertelemetryschema")
@@ -63,8 +59,7 @@ func NewMeterQueryStatementBuilder(
 	return &meterQueryStatementBuilder{
 		logger:                  metricsSettings.Logger(),
 		metadataStore:           metadataStore,
-		fm:                      fieldMapper,
-		cb:                      conditionBuilder,
+		storage:                 storage,
 		metricsStatementBuilder: metricsStatementBuilder,
 	}
 }
@@ -129,7 +124,7 @@ func (b *meterQueryStatementBuilder) buildPipelineStatement(
 	}
 
 	// final SELECT
-	return b.metricsStatementBuilder.BuildFinalSelect(cteFragments, cteArgs, query)
+	return b.metricsStatementBuilder.BuildFinalSelect(cteFragments, cteArgs, qbtypes.RequestTypeTimeSeries, query)
 }
 
 func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
@@ -150,12 +145,13 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		"toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts",
 		stepSec,
 	))
+	info := querybuilder.NewQueryInfo(ctx, orgID, nil, telemetrytypes.SignalMetrics, &telemetrytypes.MetricContext{MetricName: query.Aggregations[0].MetricName}, start, end)
 	for i, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}
-		sb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(col), metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", col, metricsstatementbuilder.GroupByColumnAlias(i, g.Name))))
 	}
 
 	tbl := metertelemetryschema.WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
@@ -176,16 +172,13 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	)
 	if query.Filter != nil && query.Filter.Expression != "" {
 		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
-			Context:          ctx,
-			OrgID:            orgID,
-			Logger:           b.logger,
-			FieldMapper:      b.fm,
-			ConditionBuilder: b.cb,
-			FieldKeys:        keys,
-			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
-			Variables:        variables,
-			StartNs:          start,
-			EndNs:            end,
+			Context:        ctx,
+			Query:          info,
+			Storage:        b.storage,
+			Logger:         b.logger,
+			FieldKeys:      keys,
+			FullTextColumn: &telemetrytypes.TelemetryFieldKey{Name: "labels"},
+			Variables:      variables,
 		})
 		if err != nil {
 			return "", nil, err
@@ -239,12 +232,13 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 		stepSec,
 	))
 
+	info := querybuilder.NewQueryInfo(ctx, orgID, nil, telemetrytypes.SignalMetrics, &telemetrytypes.MetricContext{MetricName: query.Aggregations[0].MetricName}, start, end)
 	for i, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}
-		sb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(col), metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", col, metricsstatementbuilder.GroupByColumnAlias(i, g.Name))))
 	}
 
 	tbl := metertelemetryschema.WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
@@ -268,16 +262,13 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
-			Context:          ctx,
-			OrgID:            orgID,
-			Logger:           b.logger,
-			FieldMapper:      b.fm,
-			ConditionBuilder: b.cb,
-			FieldKeys:        keys,
-			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
-			Variables:        variables,
-			StartNs:          start,
-			EndNs:            end,
+			Context:        ctx,
+			Query:          info,
+			Storage:        b.storage,
+			Logger:         b.logger,
+			FieldKeys:      keys,
+			FullTextColumn: &telemetrytypes.TelemetryFieldKey{Name: "labels"},
+			Variables:      variables,
 		})
 		if err != nil {
 			return "", nil, err
@@ -317,12 +308,13 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		"toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(%d)) AS ts",
 		stepSec,
 	))
+	info := querybuilder.NewQueryInfo(ctx, orgID, nil, telemetrytypes.SignalMetrics, &telemetrytypes.MetricContext{MetricName: query.Aggregations[0].MetricName}, start, end)
 	for i, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}
-		baseSb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(col), metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+		baseSb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", col, metricsstatementbuilder.GroupByColumnAlias(i, g.Name))))
 	}
 
 	tbl := metertelemetryschema.WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
@@ -340,16 +332,13 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	)
 	if query.Filter != nil && query.Filter.Expression != "" {
 		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
-			Context:          ctx,
-			OrgID:            orgID,
-			Logger:           b.logger,
-			FieldMapper:      b.fm,
-			ConditionBuilder: b.cb,
-			FieldKeys:        keys,
-			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
-			Variables:        variables,
-			StartNs:          start,
-			EndNs:            end,
+			Context:        ctx,
+			Query:          info,
+			Storage:        b.storage,
+			Logger:         b.logger,
+			FieldKeys:      keys,
+			FullTextColumn: &telemetrytypes.TelemetryFieldKey{Name: "labels"},
+			Variables:      variables,
 		})
 		if err != nil {
 			return "", nil, err
@@ -373,7 +362,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		wrapped := sqlbuilder.NewSelectBuilder()
 		wrapped.Select("ts")
 		for i, g := range query.GroupBy {
-			wrapped.SelectMore(fmt.Sprintf("`%s`", metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+			wrapped.SelectMore(sqlbuilder.Escape(metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
 		}
 		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", metricsstatementbuilder.RateTmpl))
 		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
@@ -384,7 +373,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		wrapped := sqlbuilder.NewSelectBuilder()
 		wrapped.Select("ts")
 		for i, g := range query.GroupBy {
-			wrapped.SelectMore(fmt.Sprintf("`%s`", metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+			wrapped.SelectMore(sqlbuilder.Escape(metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
 		}
 		wrapped.SelectMore(fmt.Sprintf("%s AS per_series_value", metricsstatementbuilder.IncreaseTmpl))
 		wrapped.From(fmt.Sprintf("(%s) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)", innerQuery))
@@ -414,7 +403,7 @@ func (b *meterQueryStatementBuilder) buildSpatialAggregationCTE(
 
 	sb.Select("ts")
 	for i, g := range query.GroupBy {
-		sb.SelectMore(fmt.Sprintf("`%s`", metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
+		sb.SelectMore(sqlbuilder.Escape(metricsstatementbuilder.GroupByColumnAlias(i, g.Name)))
 	}
 	sb.SelectMore(fmt.Sprintf("%s(per_series_value) AS value", query.Aggregations[0].SpaceAggregation.StringValue()))
 	sb.From("__temporal_aggregation_cte")

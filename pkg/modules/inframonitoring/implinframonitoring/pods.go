@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
@@ -398,7 +399,7 @@ func (m *module) getPerGroupPodStatusCounts(
 	}
 	for _, key := range groupBy {
 		phaseFpsCols = append(phaseFpsCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", phaseFps.Var(key.Name), quoteIdentifier(key.Name)),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", phaseFps.Var(key.Name), sqlbuilder.Escape(clickhousesql.Identifier(key.Name))),
 		)
 	}
 	phaseFps.Select(phaseFpsCols...)
@@ -413,7 +414,7 @@ func (m *module) getPerGroupPodStatusCounts(
 	}
 	phaseFpsGroupBy := []string{"fingerprint", "pod_uid"}
 	for _, key := range groupBy {
-		phaseFpsGroupBy = append(phaseFpsGroupBy, quoteIdentifier(key.Name))
+		phaseFpsGroupBy = append(phaseFpsGroupBy, sqlbuilder.Escape(clickhousesql.Identifier(key.Name)))
 	}
 	phaseFps.GroupBy(phaseFpsGroupBy...)
 	phaseFpsSQL, phaseFpsArgs := phaseFps.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -422,7 +423,7 @@ func (m *module) getPerGroupPodStatusCounts(
 	phasePerPod := sqlbuilder.NewSelectBuilder()
 	phasePerPodCols := []string{"fps.pod_uid AS pod_uid"}
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := sqlbuilder.Escape(clickhousesql.Identifier(key.Name))
 		phasePerPodCols = append(phasePerPodCols, fmt.Sprintf("argMax(fps.%s, samples.unix_milli) AS %s", col, col))
 	}
 	phasePerPodCols = append(phasePerPodCols, fmt.Sprintf("argMax(samples.%s, samples.unix_milli) AS phase_value", valueCol))
@@ -555,7 +556,7 @@ func (m *module) getPerGroupPodStatusCounts(
 		"'Unknown')"
 	podStatusSelectCols := []string{"pp.pod_uid AS pod_uid"}
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := clickhousesql.Identifier(key.Name)
 		podStatusSelectCols = append(podStatusSelectCols, fmt.Sprintf("pp.%s AS %s", col, col))
 	}
 	podStatusSelectCols = append(podStatusSelectCols, displayStatusExpr+" AS display_status")
@@ -592,7 +593,7 @@ func (m *module) getPerGroupPodStatusCounts(
 	countSelectCols := make([]string, 0, len(groupBy)+len(statusCountCols))
 	countGroupBy := make([]string, 0, len(groupBy))
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := sqlbuilder.Escape(clickhousesql.Identifier(key.Name))
 		countSelectCols = append(countSelectCols, col)
 		countGroupBy = append(countGroupBy, col)
 	}
@@ -726,7 +727,7 @@ func (m *module) getPerGroupPodRestartCounts(
 	}
 	for _, key := range groupBy {
 		restartFpsCols = append(restartFpsCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", restartFps.Var(key.Name), quoteIdentifier(key.Name)),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", restartFps.Var(key.Name), sqlbuilder.Escape(clickhousesql.Identifier(key.Name))),
 		)
 	}
 	restartFps.Select(restartFpsCols...)
@@ -741,7 +742,7 @@ func (m *module) getPerGroupPodRestartCounts(
 	}
 	restartFpsGroupBy := []string{"fingerprint", "pod_uid", "container_name"}
 	for _, key := range groupBy {
-		restartFpsGroupBy = append(restartFpsGroupBy, quoteIdentifier(key.Name))
+		restartFpsGroupBy = append(restartFpsGroupBy, sqlbuilder.Escape(clickhousesql.Identifier(key.Name)))
 	}
 	restartFps.GroupBy(restartFpsGroupBy...)
 	restartFpsSQL, restartFpsArgs := restartFps.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -753,7 +754,7 @@ func (m *module) getPerGroupPodRestartCounts(
 		"fps.container_name AS container_name",
 	}
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := sqlbuilder.Escape(clickhousesql.Identifier(key.Name))
 		containerRestartsCols = append(containerRestartsCols, fmt.Sprintf("argMax(fps.%s, samples.unix_milli) AS %s", col, col))
 	}
 	containerRestartsCols = append(containerRestartsCols, fmt.Sprintf("argMax(samples.%s, samples.unix_milli) AS restart_count", valueCol))
@@ -775,7 +776,7 @@ func (m *module) getPerGroupPodRestartCounts(
 	sumSelectCols := make([]string, 0, len(groupBy)+1)
 	sumGroupBy := make([]string, 0, len(groupBy))
 	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
+		col := clickhousesql.Identifier(key.Name)
 		sumSelectCols = append(sumSelectCols, col)
 		sumGroupBy = append(sumGroupBy, col)
 	}

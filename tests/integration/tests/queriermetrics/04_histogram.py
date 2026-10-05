@@ -455,6 +455,58 @@ def test_histogram_percentile_for_cumulative_service(
     assert result_values[-1]["value"] == last_value
 
 
+def test_histogram_percentile_with_a_gap_in_one_bucket(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    metric_name = "test_gapped_bucket_percentile_bucket"
+
+    # the cumulative count of each `le`, one entry per minute. the minutes bring
+    # 20, 10, 10 and 20 observations into (1, 2] and 10, 20, 10 and 10 into
+    # (2, 4]. None is a minute the bucket was not reported at all
+    le_to_counts = {
+        "1": [0, 0, 0, 0, 0],
+        "2": [0, 20, 30, None, 60],
+        "4": [0, 30, 60, 80, 110],
+        "+Inf": [0, 30, 60, 80, 110],
+    }
+    minutes = len(le_to_counts["1"])
+    start_ms = int((now - timedelta(minutes=minutes)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"le": le},
+                timestamp=now - timedelta(minutes=minutes - minute),
+                value=count,
+                temporality="Cumulative",
+                type_="Histogram",
+            )
+            for le, counts in le_to_counts.items()
+            for minute, count in enumerate(counts)
+            if count is not None
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [build_builder_query("A", metric_name, "doesnotreallymatter", "p50")],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    p50_by_minute = [1.75, 2.5, 2.5, 2]
+    assert [point["value"] for point in sorted(get_series_values(response.json(), "A"), key=lambda point: point["timestamp"])] == pytest.approx(p50_by_minute)
+
+
 @pytest.mark.parametrize(
     "space_agg, zeroth_value, first_value, last_value",
     [

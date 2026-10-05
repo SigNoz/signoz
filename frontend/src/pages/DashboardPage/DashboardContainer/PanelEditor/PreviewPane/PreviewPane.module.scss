@@ -9,6 +9,13 @@
 	border-bottom: 1px solid var(--l1-border);
 }
 
+// A static pane never scrolls — the panel card clips, and the renderer scrolls its
+// own body when the content outgrows it, as on the grid.
+.previewStatic {
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
 .header {
 	width: 100%;
 	box-sizing: border-box;
@@ -54,6 +61,14 @@
 // modal body scrolls as a whole, instead of clipping it or scrolling the panel.
 .surfaceStacked {
 	overflow: visible;
+}
+
+// A static kind's card takes its colours from the background the panel declares,
+// falling back to the same tokens the query surface uses.
+.surfaceStatic {
+	border-color: var(--text-panel-border, var(--l2-border));
+	background: var(--text-panel-surface, var(--l2-background));
+	color: var(--text-panel-ink, inherit);
 }
 
 .state {

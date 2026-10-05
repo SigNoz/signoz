@@ -131,7 +131,7 @@ export function AboutSigNozQuestions({
 
 						<AntdInput.TextArea
 							className="discover-signoz-input"
-							placeholder={`e.g., googling "datadog alternative", a post on r/devops, from a friend/colleague, a LinkedIn post, ChatGPT, etc.`}
+							placeholder="e.g., I asked ChatGPT for Datadog alternatives, searched Google for “OpenTelemetry tools,” saw a Reddit or LinkedIn post, or heard about it from a colleague."
 							value={discoverSignoz}
 							autoFocus
 							rows={4}

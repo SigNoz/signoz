@@ -451,7 +451,7 @@ func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.Cach
 	// Merge values based on type
 	var mergedValue any
 	switch resultType {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		mergedValue = bc.mergeTimeSeriesValues(ctx, buckets)
 		// Raw and Scalar types are not cached, so no merge needed
 	}
@@ -476,14 +476,36 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbt
 	}
 	seriesMap := make(map[seriesKey]*qbtypes.TimeSeries, estimatedSeries)
 
+	decodedTimeSeriesData := make([]*qbtypes.TimeSeriesData, 0, len(buckets))
+
+	// Alias and Meta are taken from whichever cached bucket covers the latest
+	// range, and the buckets do not arrive in StartMs order, so keep the winner
+	// per AggregationBucket.Index alongside the StartMs that won it.
+	aggregationIndexToLatest := map[int]*qbtypes.AggregationBucket{}
+	aggregationIndexToLatestStartMs := map[int]uint64{}
+
 	for _, bucket := range buckets {
 		var tsData *qbtypes.TimeSeriesData
 		if err := json.Unmarshal(bucket.Value, &tsData); err != nil {
 			bc.logger.ErrorContext(ctx, "failed to unmarshal time series data", errors.Attr(err))
 			continue
 		}
+		decodedTimeSeriesData = append(decodedTimeSeriesData, tsData)
 
 		for _, aggBucket := range tsData.Aggregations {
+			if _, seen := aggregationIndexToLatest[aggBucket.Index]; !seen || bucket.StartMs >= aggregationIndexToLatestStartMs[aggBucket.Index] {
+				aggregationIndexToLatest[aggBucket.Index] = aggBucket
+				aggregationIndexToLatestStartMs[aggBucket.Index] = bucket.StartMs
+			}
+		}
+	}
+
+	mergedUpperBounds := qbtypes.MergeBucketUpperBounds(decodedTimeSeriesData...)
+
+	for _, tsData := range decodedTimeSeriesData {
+		for _, aggBucket := range tsData.Aggregations {
+			aggBucket.ReindexValuesToNewUpperBounds(mergedUpperBounds[aggBucket.Index])
+
 			for _, series := range aggBucket.Series {
 				// Create series key from labels
 				key := seriesKey{
@@ -556,10 +578,15 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbt
 			}
 		}
 
-		result.Aggregations = append(result.Aggregations, &qbtypes.AggregationBucket{
+		aggBucket := &qbtypes.AggregationBucket{
 			Index:  index,
 			Series: seriesList,
-		})
+		}
+		if latest, ok := aggregationIndexToLatest[index]; ok {
+			aggBucket.Alias = latest.Alias
+			aggBucket.Meta = latest.Meta
+		}
+		result.Aggregations = append(result.Aggregations, aggBucket)
 	}
 
 	return result
@@ -572,7 +599,7 @@ func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFi
 	}
 
 	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			// No aggregations at all means truly empty
 			if len(tsData.Aggregations) == 0 {
@@ -699,14 +726,19 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 	}
 
 	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		// Trim time series data
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && tsData != nil {
 			trimmedData := &qbtypes.TimeSeriesData{}
 
 			for _, aggBucket := range tsData.Aggregations {
+				// Meta has to survive the trim: a heatmap's counts are
+				// positional against Meta.Buckets, so a cached bucket that
+				// lost its axis cannot be read back against anything.
 				trimmedBucket := &qbtypes.AggregationBucket{
 					Index: aggBucket.Index,
+					Alias: aggBucket.Alias,
+					Meta:  aggBucket.Meta,
 				}
 
 				for _, series := range aggBucket.Series {
@@ -766,7 +798,7 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 	}
 
 	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			filteredData := &qbtypes.TimeSeriesData{
 				Aggregations: make([]*qbtypes.AggregationBucket, 0, len(tsData.Aggregations)),

@@ -50,6 +50,26 @@ import type {
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
+
 /**
  * This endpoint is deprecated and always fails. Use GET /api/v2/users/me instead.
  * @deprecated
@@ -118,7 +138,7 @@ export function useGetMyUserDeprecated<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -432,7 +452,7 @@ export const getGetUsersByRoleIDQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getUsersByRoleID>>,
@@ -469,7 +489,7 @@ export function useGetUsersByRoleID<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -693,7 +713,7 @@ export const getGetUserRoleQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getUserRole>>,
@@ -730,7 +750,7 @@ export function useGetUserRole<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -807,7 +827,7 @@ export function useListUsers<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1026,7 +1046,7 @@ export const getGetUserQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData> & {
 		queryKey: QueryKey;
@@ -1057,7 +1077,7 @@ export function useGetUser<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1221,7 +1241,7 @@ export const getGetResetPasswordTokenQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getResetPasswordToken>>,
@@ -1258,7 +1278,7 @@ export function useGetResetPasswordToken<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1402,7 +1422,7 @@ export const getGetRolesByUserIDQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getRolesByUserID>>,
@@ -1439,7 +1459,7 @@ export function useGetRolesByUserID<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1516,7 +1536,7 @@ export function useGetMyUser<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**

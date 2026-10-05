@@ -40,10 +40,12 @@ const (
 	SpanIsRemoteColumn           = "is_remote"
 
 	// Contextual Columns.
-	SpanAttributesStringColumn = "attributes_string"
-	SpanAttributesNumberColumn = "attributes_number"
-	SpanAttributesBoolColumn   = "attributes_bool"
-	SpanResourcesStringColumn  = "resources_string"
+	SpanAttributesStringColumn   = "attributes_string"
+	SpanAttributesNumberColumn   = "attributes_number"
+	SpanAttributesBoolColumn     = "attributes_bool"
+	SpanAttributesColumn         = "attributes"
+	SpanAttributesPromotedColumn = "attributes_promoted"
+	SpanResourcesStringColumn    = "resources_string"
 )
 
 var (
@@ -392,6 +394,24 @@ var (
 	SpanSearchScopeRoot       = "isroot"
 	SpanSearchScopeEntryPoint = "isentrypoint"
 
+	// SpanSearchScopeFields are the search-scope selectors (isRoot, isEntryPoint),
+	// not columns and unrelated to the instrumentation scope: they only filter
+	// with the value true.
+	SpanSearchScopeFields = map[string]telemetrytypes.TelemetryFieldKey{
+		"isRoot": {
+			Name:          "isRoot",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeBool,
+		},
+		"isEntryPoint": {
+			Name:          "isEntryPoint",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextSpan,
+			FieldDataType: telemetrytypes.FieldDataTypeBool,
+		},
+	}
+
 	// IntrinsicSpanFields lists the intrinsic span columns, in the order they
 	// should appear when a raw query expands its SelectFields.
 	IntrinsicSpanFields = []telemetrytypes.TelemetryFieldKey{
@@ -427,14 +447,14 @@ var (
 		{Name: SpanIsRemoteColumn, FieldContext: telemetrytypes.FieldContextSpan},
 	}
 
-	// ContextualSpanColumns lists the typed attribute and resource columns
-	// selected raw (rather than via ColumnExpressionFor) so that consume.go
-	// can merge them into unified "attributes" and "resource" maps.
+	// ContextualSpanColumns lists the bag columns selected raw so consume.go can merge
+	// them into unified "attributes" and "resource" maps, legacy maps winning on collision.
 	ContextualSpanColumns = []string{
 		SpanAttributesStringColumn,
 		SpanAttributesNumberColumn,
 		SpanAttributesBoolColumn,
 		SpanResourcesStringColumn,
+		SpanAttributesColumn,
 	}
 
 	DefaultFields = map[string]telemetrytypes.TelemetryFieldKey{

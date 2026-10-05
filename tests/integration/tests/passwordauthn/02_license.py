@@ -11,6 +11,7 @@ from wiremock.client import (
 )
 
 from fixtures import types
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 
 
 def test_apply_license(
@@ -52,7 +53,7 @@ def test_apply_license(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v4/licenses"),
@@ -121,7 +122,7 @@ def test_refresh_license(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.put(
         url=signoz.self.host_configs["8080"].get("/api/v4/licenses/0196360e-90cd-7a74-8313-1aa815ce2a67"),
@@ -182,10 +183,10 @@ def test_license_checkout(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
-        url=signoz.self.host_configs["8080"].get("/api/v1/checkout"),
+        url=signoz.self.host_configs["8080"].get("/api/v1/subscriptions"),
         json={"url": "https://integration-signoz.com"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
@@ -229,16 +230,16 @@ def test_license_portal(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = requests.post(
-        url=signoz.self.host_configs["8080"].get("/api/v1/portal"),
+    response = requests.put(
+        url=signoz.self.host_configs["8080"].get("/api/v1/subscriptions"),
         json={"url": "https://integration-signoz.com"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
     )
 
-    assert response.status_code == http.HTTPStatus.CREATED
+    assert response.status_code == http.HTTPStatus.OK
     assert response.json()["data"]["redirectURL"] == "https://signoz.portal.com"
 
     response = requests.post(

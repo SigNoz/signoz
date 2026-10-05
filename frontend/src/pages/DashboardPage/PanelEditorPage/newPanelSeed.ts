@@ -2,9 +2,12 @@ import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schem
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
-import { isQueryTypeSupportedByPanelKind } from '../DashboardContainer/Panels/capabilities';
+import {
+	isStaticPanelKind,
+	isQueryTypeSupportedByPanelKind,
+} from '../DashboardContainer/Panels/capabilities';
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
-import { PANEL_KIND_TO_PANEL_TYPE } from '../DashboardContainer/Panels/types/panelKind';
+import { toPanelType } from '../DashboardContainer/Panels/types/panelKind';
 import type { PanelKind } from '../DashboardContainer/Panels/types/panelKind';
 import { SectionKind } from '../DashboardContainer/Panels/types/sections';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
@@ -12,6 +15,7 @@ import {
 	buildPluginSpec,
 	type SeededPluginSpec,
 } from '../DashboardContainer/Panels/utils/buildPluginSpec';
+import { getSectionControls } from '../DashboardContainer/Panels/utils/getSectionControls';
 import { toPerses } from '../DashboardContainer/queryV5/persesQueryAdapters';
 
 interface NewPanelSeed {
@@ -19,15 +23,6 @@ interface NewPanelSeed {
 	kind: PanelKind;
 	queries: DashboardtypesQueryDTO[];
 	pluginSpec: SeededPluginSpec;
-}
-
-function kindSupportsUnit(kind: PanelKind): boolean {
-	return getPanelDefinition(kind).sections.some(
-		(section) =>
-			section.kind === SectionKind.Formatting &&
-			'controls' in section &&
-			section.controls.unit === true,
-	);
 }
 
 /** Kind to fall back to for a query language a builder-only kind (List) can't hold. */
@@ -59,7 +54,8 @@ export function buildNewPanelSeed(
 	compositeQuery: Query | null,
 	isExplorerExport = false,
 ): NewPanelSeed {
-	if (!isExplorerExport || !compositeQuery) {
+	// A static kind has no query to seed; an exported query can't target it.
+	if (!isExplorerExport || !compositeQuery || isStaticPanelKind(requestedKind)) {
 		return {
 			kind: requestedKind,
 			queries: buildDefaultQueries(requestedKind),
@@ -70,11 +66,14 @@ export function buildNewPanelSeed(
 	const kind = resolveSeededPanelKind(requestedKind, compositeQuery);
 	const pluginSpec = buildPluginSpec(getPanelDefinition(kind).sections);
 
-	const converted = toPerses(compositeQuery, PANEL_KIND_TO_PANEL_TYPE[kind]);
+	const converted = toPerses(compositeQuery, toPanelType(kind));
 	const queries = converted.length > 0 ? converted : buildDefaultQueries(kind);
 
 	// Explorers put the single `unit` on the query itself, not the panel spec.
-	if (compositeQuery.unit && kindSupportsUnit(kind)) {
+	if (
+		compositeQuery.unit &&
+		getSectionControls(kind, SectionKind.Formatting)?.unit
+	) {
 		return {
 			kind,
 			queries,

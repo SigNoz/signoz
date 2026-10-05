@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -7,11 +8,14 @@ import Section from './Section/Section';
 interface SortableSectionProps {
 	section: DashboardSection;
 	sections: DashboardSection[];
+	/** Reordering needs edit rights; the section still renders without them. */
+	disabled?: boolean;
 }
 
 function SortableSection({
 	section,
 	sections,
+	disabled = false,
 }: SortableSectionProps): JSX.Element {
 	const {
 		attributes,
@@ -21,7 +25,14 @@ function SortableSection({
 		transform,
 		transition,
 		isDragging,
-	} = useSortable({ id: section.id });
+	} = useSortable({ id: section.id, disabled });
+
+	// dnd-kit re-renders this on every drag frame, so keep the handle identity
+	// stable rather than handing Section a fresh object each time.
+	const handle = useMemo(
+		() => (disabled ? undefined : { attributes, listeners, setActivatorNodeRef }),
+		[disabled, attributes, listeners, setActivatorNodeRef],
+	);
 
 	// dnd-kit drives the drag transform per-frame, so this must be an inline
 	// style — there is no static-stylesheet equivalent for a live transform.
@@ -35,11 +46,7 @@ function SortableSection({
 
 	return (
 		<div ref={setNodeRef} style={style}>
-			<Section
-				section={section}
-				sections={sections}
-				dragHandle={{ attributes, listeners, setActivatorNodeRef }}
-			/>
+			<Section section={section} sections={sections} dragHandle={handle} />
 		</div>
 	);
 }

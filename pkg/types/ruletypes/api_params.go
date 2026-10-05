@@ -24,6 +24,7 @@ const (
 	AlertTypeTraces     AlertType = "TRACES_BASED_ALERT"
 	AlertTypeLogs       AlertType = "LOGS_BASED_ALERT"
 	AlertTypeExceptions AlertType = "EXCEPTIONS_BASED_ALERT"
+	AlertTypeAITraces   AlertType = "AI_TRACES_BASED_ALERT"
 )
 
 // Enum implements jsonschema.Enum; returns the acceptable values for AlertType.
@@ -33,7 +34,17 @@ func (AlertType) Enum() []any {
 		AlertTypeTraces,
 		AlertTypeLogs,
 		AlertTypeExceptions,
+		AlertTypeAITraces,
 	}
+}
+
+// BuilderQueryType returns the query type the alert type's builder queries
+// carry; only AI trace alerts use builder_ai_query.
+func (t AlertType) BuilderQueryType() qbtypes.QueryType {
+	if t == AlertTypeAITraces {
+		return qbtypes.QueryTypeBuilderAI
+	}
+	return qbtypes.QueryTypeBuilder
 }
 
 const (
@@ -406,11 +417,11 @@ func (r *PostableRule) Validate() error {
 
 	if r.AlertType != "" {
 		switch r.AlertType {
-		case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions:
+		case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces:
 		default:
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"alertType: unsupported value %q; must be one of %q, %q, %q, %q",
-				r.AlertType, AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions))
+				"alertType: unsupported value %q; must be one of %q, %q, %q, %q, %q",
+				r.AlertType, AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces))
 		}
 	}
 

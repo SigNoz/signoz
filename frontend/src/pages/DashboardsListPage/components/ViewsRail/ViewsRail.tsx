@@ -1,4 +1,9 @@
-import { type ChangeEvent, useCallback, useState } from 'react';
+import {
+	type ChangeEvent,
+	type ReactElement,
+	useCallback,
+	useState,
+} from 'react';
 import logEvent from 'api/common/logEvent';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
@@ -14,6 +19,9 @@ import { type BuiltinView } from '../../utils/views';
 import ViewNamePopover from './ViewNamePopover';
 
 import styles from './ViewsRail.module.scss';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
+import { LIST_CHECKS } from 'pages/DashboardsListPage/constants/permissions';
 
 interface Props {
 	activeViewId: string;
@@ -23,8 +31,6 @@ interface Props {
 	isCustomActive: boolean;
 	isModified: boolean;
 	collapsed?: boolean;
-	// Edit permission. Viewers can select views but not add / rename / delete / save.
-	canEdit: boolean;
 	onSelect: (id: string) => void;
 	onSave: (name: string) => void;
 	onSaveChanges: () => void;
@@ -50,7 +56,6 @@ function ViewsRail({
 	isCustomActive,
 	isModified,
 	collapsed = false,
-	canEdit,
 	onSelect,
 	onSave,
 	onSaveChanges,
@@ -127,7 +132,7 @@ function ViewsRail({
 						<div className={styles.dirtyDot} title="Unsaved changes" />
 					)}
 				</Button>
-				{canEdit && row.deletable && (
+				{row.deletable && (
 					<div className={styles.itemActions}>
 						<ViewNamePopover
 							open={renamingId === row.id}
@@ -176,100 +181,106 @@ function ViewsRail({
 
 	return (
 		<aside className={cx(styles.rail, { [styles.collapsed]: collapsed })}>
-			<div className={styles.header}>
-				<h4 className={styles.headerTitle}>Views</h4>
-				{canEdit && (
-					<ViewNamePopover
-						open={saveOpen}
-						onOpenChange={setSaveOpen}
-						onSubmit={handleSaveAsView}
-						title="Save as view"
-						confirmLabel="Save view"
-						testIdPrefix="save-view"
-						trigger={
-							<Button
-								variant="ghost"
-								color="secondary"
-								size="icon"
-								title="Save current filters as a view"
-								testId="dashboards-view-save-trigger"
-							>
-								<Plus size={14} />
-							</Button>
-						}
-					/>
-				)}
-			</div>
-
-			<div className={styles.search}>
-				<Input
-					value={query}
-					placeholder="Filter views by name"
-					prefix={<Search size={12} />}
-					testId="dashboards-view-search"
-					onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-						setQuery(e.target.value)
-					}
-				/>
-			</div>
-
-			<div className={styles.scroll}>
-				{personal.length > 0 && (
-					<>
-						<div className={styles.groupLabel}>Personal</div>
-						{personal.map((v) => renderItem(v))}
-					</>
-				)}
-
-				{system.length > 0 && (
-					<>
-						<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
-							System
-						</div>
-						{system.map((v) => renderItem(v))}
-					</>
-				)}
-
-				{(!q || custom.length > 0) && (
-					<>
-						<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
-							My views
-							<Typography.Text className={styles.groupCount}>
-								{customViews.length}
-							</Typography.Text>
-						</div>
-						{customViewsLoading ? (
-							<div className={styles.empty}>Loading views…</div>
-						) : customViews.length === 0 ? (
-							<div className={styles.empty}>
-								No saved views yet. Filter the list, then save it as a view.
-							</div>
-						) : (
-							custom.map((v) =>
-								renderItem({
-									id: v.id,
-									label: v.name,
-									icon: Bookmark,
-									deletable: true,
-								}),
-							)
-						)}
-					</>
-				)}
-
-				{noMatches && (
-					<div className={styles.searchEmpty}>
-						No views match &ldquo;{query}&rdquo;
+			<AuthZGuardContent
+				checks={LIST_CHECKS}
+				onFailRenderContent={false}
+				fallback={({ deniedPermissions }): ReactElement => (
+					<div className={styles.denied} data-testid="views-rail-denied">
+						<PermissionDeniedCallout deniedPermissions={deniedPermissions} />
 					</div>
 				)}
-			</div>
+			>
+				<>
+					<div className={styles.header}>
+						<h4 className={styles.headerTitle}>Views</h4>
+						<ViewNamePopover
+							open={saveOpen}
+							onOpenChange={setSaveOpen}
+							onSubmit={handleSaveAsView}
+							title="Save as view"
+							confirmLabel="Save view"
+							testIdPrefix="save-view"
+							trigger={
+								<Button
+									variant="ghost"
+									color="secondary"
+									size="icon"
+									title="Save current filters as a view"
+									testId="dashboards-view-save-trigger"
+								>
+									<Plus size={14} />
+								</Button>
+							}
+						/>
+					</div>
 
-			{isCustomActive && isModified && (
-				<div className={styles.dirtyPanel}>
-					<div className={styles.dirtyTitle}>Unsaved changes</div>
-					<div className={styles.dirtyActions}>
-						{canEdit && (
+					<div className={styles.search}>
+						<Input
+							value={query}
+							placeholder="Filter views by name"
+							prefix={<Search size={12} />}
+							testId="dashboards-view-search"
+							onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+								setQuery(e.target.value)
+							}
+						/>
+					</div>
+
+					<div className={styles.scroll}>
+						{personal.length > 0 && (
 							<>
+								<div className={styles.groupLabel}>Personal</div>
+								{personal.map((v) => renderItem(v))}
+							</>
+						)}
+
+						{system.length > 0 && (
+							<>
+								<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
+									System
+								</div>
+								{system.map((v) => renderItem(v))}
+							</>
+						)}
+
+						{(!q || custom.length > 0) && (
+							<>
+								<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
+									My views
+									<Typography.Text className={styles.groupCount}>
+										{customViews.length}
+									</Typography.Text>
+								</div>
+								{customViewsLoading ? (
+									<div className={styles.empty}>Loading views…</div>
+								) : customViews.length === 0 ? (
+									<div className={styles.empty}>
+										No saved views yet. Filter the list, then save it as a view.
+									</div>
+								) : (
+									custom.map((v) =>
+										renderItem({
+											id: v.id,
+											label: v.name,
+											icon: Bookmark,
+											deletable: true,
+										}),
+									)
+								)}
+							</>
+						)}
+
+						{noMatches && (
+							<div className={styles.searchEmpty}>
+								No views match &ldquo;{query}&rdquo;
+							</div>
+						)}
+					</div>
+
+					{isCustomActive && isModified && (
+						<div className={styles.dirtyPanel}>
+							<div className={styles.dirtyTitle}>Unsaved changes</div>
+							<div className={styles.dirtyActions}>
 								<Button
 									variant="solid"
 									color="primary"
@@ -287,38 +298,36 @@ function ViewsRail({
 								>
 									Save as…
 								</Button>
-							</>
-						)}
-						<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
-							Reset
-						</Button>
-					</div>
-				</div>
-			)}
+								<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
+									Reset
+								</Button>
+							</div>
+						</div>
+					)}
 
-			{!isCustomActive && isModified && (
-				<div className={cx(styles.dirtyPanel, styles.dirtyPanelDefault)}>
-					<div className={styles.dirtyTitle}>Filters active</div>
-					<div className={styles.dirtyActions}>
-						{canEdit && (
-							<Button
-								variant="solid"
-								color="primary"
-								size="sm"
-								prefix={<Plus size={12} />}
-								onClick={(): void => setSaveOpen(true)}
-								testId="dashboards-view-save-as-new"
-							>
-								Save as new view
-							</Button>
-						)}
-						<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
-							Reset
-						</Button>
-					</div>
-				</div>
-			)}
-			{contextHolder}
+					{!isCustomActive && isModified && (
+						<div className={cx(styles.dirtyPanel, styles.dirtyPanelDefault)}>
+							<div className={styles.dirtyTitle}>Filters active</div>
+							<div className={styles.dirtyActions}>
+								<Button
+									variant="solid"
+									color="primary"
+									size="sm"
+									prefix={<Plus size={12} />}
+									onClick={(): void => setSaveOpen(true)}
+									testId="dashboards-view-save-as-new"
+								>
+									Save as new view
+								</Button>
+								<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
+									Reset
+								</Button>
+							</div>
+						</div>
+					)}
+					{contextHolder}
+				</>
+			</AuthZGuardContent>
 		</aside>
 	);
 }

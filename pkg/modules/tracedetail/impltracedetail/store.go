@@ -8,6 +8,7 @@ import (
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
@@ -20,7 +21,7 @@ func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
 	switch fieldKey.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		// String cast required — Variant/Dynamic is rejected by GROUP BY.
-		return fmt.Sprintf("resource.`%s`::String", fieldKey.Name), nil
+		return sqlbuilder.Escape(fmt.Sprintf("resource.%s::String", clickhousesql.Identifier(fieldKey.Name))), nil
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported field context: %v", fieldKey.FieldContext)
 }

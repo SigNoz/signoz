@@ -168,15 +168,21 @@ type PanelPluginKind string
 const (
 	PanelKindTimeSeries PanelPluginKind = "signoz/TimeSeriesPanel"
 	PanelKindBarChart   PanelPluginKind = "signoz/BarChartPanel"
+	PanelKindAreaChart  PanelPluginKind = "signoz/AreaChartPanel"
 	PanelKindNumber     PanelPluginKind = "signoz/NumberPanel"
 	PanelKindPieChart   PanelPluginKind = "signoz/PieChartPanel"
 	PanelKindTable      PanelPluginKind = "signoz/TablePanel"
 	PanelKindHistogram  PanelPluginKind = "signoz/HistogramPanel"
 	PanelKindList       PanelPluginKind = "signoz/ListPanel"
+	PanelKindText       PanelPluginKind = "signoz/TextPanel"
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText}
+}
+
+func (k PanelPluginKind) rendersWithoutQuery() bool {
+	return k == PanelKindText
 }
 
 type TimeSeriesPanelSpec struct {
@@ -202,6 +208,30 @@ type BarChartPanelSpec struct {
 	Axes          Axes                  `json:"axes"`
 	Legend        Legend                `json:"legend"`
 	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive"`
+}
+
+type AreaChartPanelSpec struct {
+	Visualization   AreaChartVisualization `json:"visualization"`
+	Formatting      PanelFormatting        `json:"formatting"`
+	ChartAppearance AreaChartAppearance    `json:"chartAppearance"`
+	Axes            Axes                   `json:"axes"`
+	Legend          Legend                 `json:"legend"`
+	Thresholds      []ThresholdWithLabel   `json:"thresholds" validate:"dive"`
+}
+
+// AreaChartAppearance repeats the line-drawing fields rather than embedding
+// TimeSeriesChartAppearance: both carry a `fillMode` under different enums, and
+// a duplicated json tag across an embed boundary is resolved by depth, which the
+// schema reflector does not model.
+type AreaChartAppearance struct {
+	LineInterpolation LineInterpolation `json:"lineInterpolation"`
+	ShowPoints        bool              `json:"showPoints"`
+	LineStyle         LineStyle         `json:"lineStyle"`
+	FillMode          AreaFillMode      `json:"fillMode"`
+	// FillOpacity is a pointer so an omitted field resolves to the kind default at
+	// render time; a plain value would make the Go zero value a transparent fill.
+	FillOpacity *FillOpacity `json:"fillOpacity"`
+	SpanGaps    SpanGaps     `json:"spanGaps"`
 }
 
 type NumberPanelSpec struct {
@@ -237,6 +267,19 @@ type ListPanelSpec struct {
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive"`
 }
 
+type TextPanelSpec struct {
+	Mode          TextMode         `json:"mode"`
+	Text          string           `json:"text"`
+	Presentation  TextPresentation `json:"presentation"`
+	HeaderOptions HeaderOptions    `json:"headerOptions"`
+}
+
+type TextPresentation struct {
+	TextAlign     TextAlign     `json:"textAlign"`
+	VerticalAlign VerticalAlign `json:"verticalAlign"`
+	Background    *string       `json:"background,omitempty" validate:"omitempty,hexcolor"`
+}
+
 // ══════════════════════════════════════════════
 // Panel common types
 // ══════════════════════════════════════════════
@@ -245,6 +288,13 @@ type Axes struct {
 	SoftMin    *float64 `json:"softMin"`
 	SoftMax    *float64 `json:"softMax"`
 	IsLogScale bool     `json:"isLogScale"`
+}
+
+// HeaderOptions controls the panel card's header strip — the title/description
+// row above the panel content. Phrased as hide so the zero value shows the
+// header, matching every other panel kind.
+type HeaderOptions struct {
+	Hide bool `json:"hide"`
 }
 
 type BasicVisualization struct {
@@ -260,6 +310,12 @@ type BarChartVisualization struct {
 	BasicVisualization
 	FillSpans       bool `json:"fillSpans"`
 	StackedBarChart bool `json:"stackedBarChart"`
+}
+
+type AreaChartVisualization struct {
+	BasicVisualization
+	FillSpans bool      `json:"fillSpans"`
+	Stack     StackMode `json:"stack"`
 }
 
 type PanelFormatting struct {
@@ -622,6 +678,106 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	}
 }
 
+type AreaFillMode struct{ valuer.String }
+
+var (
+	AreaFillModeSolid    = AreaFillMode{valuer.NewString("solid")} // default
+	AreaFillModeGradient = AreaFillMode{valuer.NewString("gradient")}
+)
+
+func (AreaFillMode) Enum() []any {
+	return []any{AreaFillModeSolid, AreaFillModeGradient}
+}
+
+func (fm AreaFillMode) ValueOrDefault() string {
+	if fm.IsZero() {
+		return AreaFillModeSolid.StringValue()
+	}
+	return fm.StringValue()
+}
+
+func (fm AreaFillMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(fm.ValueOrDefault())
+}
+
+func (fm *AreaFillMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
+	}
+	val := AreaFillMode{valuer.NewString(v)}
+	switch val {
+	case AreaFillModeSolid, AreaFillModeGradient:
+		*fm = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be `solid`, `gradient`, or `none`", v)
+	}
+}
+
+// StackMode is area-only. Bar stacking stays on BarChartVisualization.StackedBarChart,
+// so `percent` is not reachable from a bar panel.
+type StackMode struct{ valuer.String }
+
+var (
+	StackModeNone    = StackMode{valuer.NewString("none")} // default
+	StackModeNormal  = StackMode{valuer.NewString("normal")}
+	StackModePercent = StackMode{valuer.NewString("percent")}
+)
+
+func (StackMode) Enum() []any {
+	return []any{StackModeNone, StackModeNormal, StackModePercent}
+}
+
+func (sm StackMode) ValueOrDefault() string {
+	if sm.IsZero() {
+		return StackModeNone.StringValue()
+	}
+	return sm.StringValue()
+}
+
+func (sm StackMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sm.ValueOrDefault())
+}
+
+func (sm *StackMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid stack mode: must be a string, one of `none`, `normal`, or `percent`")
+	}
+	val := StackMode{valuer.NewString(v)}
+	switch val {
+	case StackModeNone, StackModeNormal, StackModePercent:
+		*sm = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid stack mode %q: must be `none`, `normal`, or `percent`", v)
+	}
+}
+
+// FillOpacity is the alpha of an area fill, in 0–1 because that is what the
+// chart layer consumes directly. Unlike the enums in this section it has no
+// ValueOrDefault: 0 is a legitimate value, so the kind default lives at render
+// time behind a nil pointer.
+type FillOpacity float64
+
+func (FillOpacity) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMinimum(0).WithMaximum(1)
+	return nil
+}
+
+func (o *FillOpacity) UnmarshalJSON(data []byte) error {
+	var v float64
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fillOpacity: must be a number between 0 and 1")
+	}
+	if v < 0 || v > 1 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fillOpacity %v: must be between 0 and 1", v)
+	}
+	*o = FillOpacity(v)
+	return nil
+}
+
 type SpanGaps struct {
 	FillOnlyBelow bool   `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
 	FillLessThan  string `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
@@ -656,6 +812,118 @@ func (sg SpanGaps) validate() error {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan duration must be positive, got %q", sg.FillLessThan)
 	}
 	return nil
+}
+
+// TextMode is how a text panel interprets its `text`. Only markdown is
+// rendered today; further modes (e.g. plain text, HTML) are expected.
+type TextMode struct{ valuer.String }
+
+var TextModeMarkdown = TextMode{valuer.NewString("markdown")} // default
+
+func (TextMode) Enum() []any {
+	return []any{TextModeMarkdown}
+}
+
+func (m TextMode) ValueOrDefault() string {
+	if m.IsZero() {
+		return TextModeMarkdown.StringValue()
+	}
+	return m.StringValue()
+}
+
+func (m TextMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.ValueOrDefault())
+}
+
+func (m *TextMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid text mode: must be the string `markdown`")
+	}
+	tm := TextMode{valuer.NewString(v)}
+	switch tm {
+	case TextModeMarkdown:
+		*m = tm
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid text mode %q: must be `markdown`", v)
+	}
+}
+
+type TextAlign struct{ valuer.String }
+
+var (
+	TextAlignLeft   = TextAlign{valuer.NewString("left")} // default
+	TextAlignCenter = TextAlign{valuer.NewString("center")}
+	TextAlignRight  = TextAlign{valuer.NewString("right")}
+)
+
+func (TextAlign) Enum() []any {
+	return []any{TextAlignLeft, TextAlignCenter, TextAlignRight}
+}
+
+func (a TextAlign) ValueOrDefault() string {
+	if a.IsZero() {
+		return TextAlignLeft.StringValue()
+	}
+	return a.StringValue()
+}
+
+func (a TextAlign) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.ValueOrDefault())
+}
+
+func (a *TextAlign) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid text align: must be a string, one of `left`, `center`, or `right`")
+	}
+	val := TextAlign{valuer.NewString(v)}
+	switch val {
+	case TextAlignLeft, TextAlignCenter, TextAlignRight:
+		*a = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid text align %q: must be `left`, `center`, or `right`", v)
+	}
+}
+
+type VerticalAlign struct{ valuer.String }
+
+var (
+	VerticalAlignTop    = VerticalAlign{valuer.NewString("top")} // default
+	VerticalAlignCenter = VerticalAlign{valuer.NewString("center")}
+	VerticalAlignBottom = VerticalAlign{valuer.NewString("bottom")}
+)
+
+func (VerticalAlign) Enum() []any {
+	return []any{VerticalAlignTop, VerticalAlignCenter, VerticalAlignBottom}
+}
+
+func (a VerticalAlign) ValueOrDefault() string {
+	if a.IsZero() {
+		return VerticalAlignTop.StringValue()
+	}
+	return a.StringValue()
+}
+
+func (a VerticalAlign) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.ValueOrDefault())
+}
+
+func (a *VerticalAlign) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid vertical align: must be a string, one of `top`, `center`, or `bottom`")
+	}
+	val := VerticalAlign{valuer.NewString(v)}
+	switch val {
+	case VerticalAlignTop, VerticalAlignCenter, VerticalAlignBottom:
+		*a = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid vertical align %q: must be `top`, `center`, or `bottom`", v)
+	}
 }
 
 type PrecisionOption struct{ valuer.String }

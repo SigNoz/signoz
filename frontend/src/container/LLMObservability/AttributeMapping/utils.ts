@@ -1,12 +1,14 @@
 import {
 	SpantypesPostableSpanMapperDTO,
 	SpantypesPostableSpanMapperGroupDTO,
+	SpantypesSpanMapperGroupConditionKeyDTO,
 	SpantypesUpdatableSpanMapperDTO,
 	SpantypesUpdatableSpanMapperGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { v4 as uuid } from 'uuid';
 
 import {
+	ConditionKey,
 	DraftGroup,
 	DraftMapper,
 	FieldContext,
@@ -15,6 +17,7 @@ import {
 	MapperDraft,
 	MapperGroup,
 	MapperOperation,
+	MapperOrigin,
 	SourceConfig,
 } from './types';
 
@@ -24,18 +27,34 @@ function genLocalId(prefix: 'group' | 'mapper'): string {
 	return `local-${prefix}-${uuid()}`;
 }
 
-// Trimmed, de-duplicated, non-empty keys preserving input order.
-function cleanKeys(keys: string[]): string[] {
+export function createConditionKey(value = ''): ConditionKey {
+	return { value, enabled: true, origin: MapperOrigin.user };
+}
+
+// Trimmed, de-duplicated, non-empty keys preserving input order. A shipped and
+// a user key may share a value, so the origin is part of the identity.
+function cleanKeys(keys: ConditionKey[]): ConditionKey[] {
 	const seen = new Set<string>();
-	const result: string[] = [];
+	const result: ConditionKey[] = [];
 	keys.forEach((raw) => {
-		const key = raw.trim();
-		if (key && !seen.has(key)) {
-			seen.add(key);
-			result.push(key);
+		const value = raw.value.trim();
+		const dedupeKey = `${raw.origin}:${value}`;
+		if (value && !seen.has(dedupeKey)) {
+			seen.add(dedupeKey);
+			result.push({ ...raw, value });
 		}
 	});
 	return result;
+}
+
+function fromConditionKeys(
+	keys: SpantypesSpanMapperGroupConditionKeyDTO[] | null | undefined,
+): ConditionKey[] {
+	return (keys ?? []).map((key) => ({
+		value: key.value,
+		enabled: key.enabled,
+		origin: key.origin ?? MapperOrigin.user,
+	}));
 }
 
 // Source configs for a mapper, highest priority first (first match wins at
@@ -48,6 +67,8 @@ function getMapperSources(mapper: Mapper): SourceConfig[] {
 			key: source.key,
 			context: source.context,
 			operation: source.operation,
+			enabled: source.enabled,
+			origin: source.origin ?? MapperOrigin.user,
 		}));
 }
 
@@ -56,6 +77,8 @@ export function createEmptySource(): SourceConfig {
 		key: '',
 		context: FieldContext.attribute,
 		operation: MapperOperation.copy,
+		enabled: true,
+		origin: MapperOrigin.user,
 	};
 }
 
@@ -72,7 +95,7 @@ function getCleanSources(draft: MapperDraft): SourceConfig[] {
 	const result: SourceConfig[] = [];
 	draft.sources.forEach((source) => {
 		const key = source.key.trim();
-		const dedupeKey = `${source.context}:${key}`;
+		const dedupeKey = `${source.origin}:${source.context}:${key}`;
 		if (key && !seen.has(dedupeKey)) {
 			seen.add(dedupeKey);
 			result.push({ ...source, key });
@@ -95,6 +118,8 @@ function buildSources(
 		context: source.context,
 		operation: source.operation,
 		priority: sources.length - index,
+		enabled: source.enabled,
+		origin: source.origin,
 	}));
 }
 
@@ -123,7 +148,7 @@ export function buildUpdatableMapper(
 export const EMPTY_GROUP_DRAFT: GroupDraft = {
 	id: null,
 	name: '',
-	attributes: [''],
+	attributes: [createConditionKey()],
 	resource: [],
 	enabled: true,
 };
@@ -170,8 +195,8 @@ export function buildDraftGroup(
 		localId: group.id,
 		serverId: group.id,
 		name: group.name,
-		attributes: group.condition?.attributes ?? [],
-		resource: group.condition?.resource ?? [],
+		attributes: fromConditionKeys(group.condition?.attributes),
+		resource: fromConditionKeys(group.condition?.resource),
 		enabled: group.enabled,
 		mappers: mappers.map(buildDraftMapper),
 	};
@@ -182,7 +207,8 @@ export function groupDraftFromNode(group: DraftGroup): GroupDraft {
 	return {
 		id: group.localId,
 		name: group.name,
-		attributes: group.attributes.length > 0 ? group.attributes : [''],
+		attributes:
+			group.attributes.length > 0 ? group.attributes : [createConditionKey()],
 		resource: group.resource,
 		enabled: group.enabled,
 	};

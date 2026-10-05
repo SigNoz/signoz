@@ -9,34 +9,25 @@ import { Atom, Terminal } from '@signozhq/icons';
 import { Tabs } from 'antd';
 import cx from 'classnames';
 import { Typography } from '@signozhq/ui/typography';
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import TextToolTip from 'components/TextToolTip';
 import ClickHouseQueryContainer from 'container/QueryBuilder/rawQueryEditors/ClickHouse';
 import PromQLQueryContainer from 'container/QueryBuilder/rawQueryEditors/PromQL';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
-import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { EQueryType } from 'types/common/dashboard';
 
-import {
-	getHiddenQueryBuilderFields,
-	getSupportedQueryTypes,
-} from '../../Panels/capabilities';
-import {
-	PANEL_KIND_TO_PANEL_TYPE,
-	type PanelKind,
-} from '../../Panels/types/panelKind';
+import { isRawRequest } from '../../Panels/types/panelCapabilities';
+import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDefinition';
+import { toPanelType } from '../../Panels/types/panelKind';
 
 import styles from './PanelEditorQueryBuilder.module.scss';
 
 interface PanelEditorQueryBuilderProps {
-	/** The edited panel's visualization kind — drives supported query types + field visibility via the capabilities guard. */
-	panelKind: PanelKind;
-	/** The panel's current signal; selects per-signal query-builder field rules. */
-	signal: TelemetrytypesSignalDTO;
+	/** The edited kind's definition — drives supported query types + field visibility. */
+	panelDefinition: RenderableQueryPanelDefinition;
 	/** Preview fetch in flight — drives the Stage & Run button's loading/cancel state. */
 	isLoadingQueries: boolean;
 	/** Run the current query (Stage & Run button / ⌘↵). Always re-runs. */
@@ -55,8 +46,7 @@ interface PanelEditorQueryBuilderProps {
  * `QueryBuilderProvider`. `usePanelEditorQuerySync` owns the panel↔provider sync.
  */
 function PanelEditorQueryBuilder({
-	panelKind,
-	signal,
+	panelDefinition,
 	isLoadingQueries,
 	onStageRunQuery,
 	onCancelQuery,
@@ -65,10 +55,10 @@ function PanelEditorQueryBuilder({
 }: PanelEditorQueryBuilderProps): JSX.Element {
 	// The shared QueryBuilderV2 provider still speaks the legacy PANEL_TYPES; what the
 	// builder offers for this kind comes from the kind's own declaration.
-	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
+	const panelType = toPanelType(panelDefinition.kind);
 	// Raw rows: the builder drops its aggregation controls, and with them the trace
 	// operator that combines aggregated trace queries (V1 parity).
-	const isListViewPanel = panelKind === 'signoz/ListPanel';
+	const isRawQuery = isRawRequest(panelDefinition.queryCapabilities);
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
 
@@ -96,15 +86,8 @@ function PanelEditorQueryBuilder({
 		[onStageRunQuery],
 	);
 
-	// Per-kind query-builder field rules from the guard (e.g. List hides step interval
-	// and having), passed to QueryBuilderV2 as its `filterConfigs`.
-	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(
-		() => getHiddenQueryBuilderFields(panelKind, signal),
-		[panelKind, signal],
-	);
-
 	const items = useMemo(() => {
-		const supportedQueryTypes = getSupportedQueryTypes(panelKind);
+		const { supportedQueryTypes } = panelDefinition;
 
 		const queryTypeComponents = {
 			[EQueryType.QUERY_BUILDER]: {
@@ -114,11 +97,10 @@ function PanelEditorQueryBuilder({
 					<div className="query-builder-v2-container">
 						<QueryBuilderV2
 							panelType={panelType}
-							filterConfigs={filterConfigs}
-							showTraceOperator={!isListViewPanel}
+							fieldsConfig={panelDefinition.queryBuilderFields}
+							showTraceOperator={!isRawQuery}
 							version="v3"
-							isListViewPanel={isListViewPanel}
-							queryComponents={{}}
+							isRawQuery={isRawQuery}
 							signalSourceChangeEnabled
 							savePreviousQuery
 						/>
@@ -151,7 +133,7 @@ function PanelEditorQueryBuilder({
 			),
 			children: queryTypeComponents[queryType].component,
 		}));
-	}, [panelKind, panelType, filterConfigs, isDarkMode, isListViewPanel]);
+	}, [panelDefinition, panelType, isDarkMode, isRawQuery]);
 
 	return (
 		<div

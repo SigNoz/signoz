@@ -23,15 +23,17 @@ type GettableRuleStateHistory struct {
 	Fingerprint         uint64               `json:"fingerprint" required:"true"`
 	Value               float64              `json:"value" required:"true"`
 	RelatedTracesLink   string               `json:"relatedTracesLink,omitempty"`
+	RelatedAITracesLink string               `json:"relatedAITracesLink,omitempty"`
 	RelatedLogsLink     string               `json:"relatedLogsLink,omitempty"`
 }
 
 type GettableRuleStateHistoryContributor struct {
-	Fingerprint       uint64           `json:"fingerprint" required:"true"`
-	Labels            []*qbtypes.Label `json:"labels" required:"true"`
-	Count             uint64           `json:"count" required:"true"`
-	RelatedTracesLink string           `json:"relatedTracesLink,omitempty"`
-	RelatedLogsLink   string           `json:"relatedLogsLink,omitempty"`
+	Fingerprint         uint64           `json:"fingerprint" required:"true"`
+	Labels              []*qbtypes.Label `json:"labels" required:"true"`
+	Count               uint64           `json:"count" required:"true"`
+	RelatedTracesLink   string           `json:"relatedTracesLink,omitempty"`
+	RelatedAITracesLink string           `json:"relatedAITracesLink,omitempty"`
+	RelatedLogsLink     string           `json:"relatedLogsLink,omitempty"`
 }
 
 type GettableRuleStateWindow struct {

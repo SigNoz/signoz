@@ -4,8 +4,8 @@ import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { PANELS } from '../Panels/registry';
 import {
-	PANEL_KIND_TO_PANEL_TYPE,
 	PANEL_TYPE_TO_PANEL_KIND,
 	type PanelKind,
 } from '../Panels/types/panelKind';
@@ -40,7 +40,9 @@ export function parseNewPanelKind(
 		return null;
 	}
 	const kind = new URLSearchParams(search).get(PANEL_KIND_PARAM);
-	return kind && kind in PANEL_KIND_TO_PANEL_TYPE ? (kind as PanelKind) : null;
+	// Gated on the registry, not the legacy map — a static kind has no legacy
+	// panel type, and the map would reject its route as a stale link.
+	return kind && kind in PANELS ? (kind as PanelKind) : null;
 }
 
 /**

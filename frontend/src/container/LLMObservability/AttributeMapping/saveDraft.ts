@@ -42,7 +42,9 @@ function sourcesEqual(a: SourceConfig[], b: SourceConfig[]): boolean {
 			(source, index) =>
 				source.key === b[index].key &&
 				source.context === b[index].context &&
-				source.operation === b[index].operation,
+				source.operation === b[index].operation &&
+				source.enabled === b[index].enabled &&
+				source.origin === b[index].origin,
 		)
 	);
 }

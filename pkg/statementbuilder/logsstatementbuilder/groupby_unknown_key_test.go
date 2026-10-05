@@ -46,12 +46,11 @@ func TestStatementBuilderGroupByUnknownKey(t *testing.T) {
 			fl := flaggertest.WithUseJSONBody(t, c.useJSONBody)
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-			fm := logstelemetryschema.NewFieldMapper(fl)
-			cb := logstelemetryschema.NewConditionBuilder(fm, fl)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+			storage := logstelemetryschema.NewStorage()
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
-				mockMetadataStore, fm, cb, aggExprRewriter,
+				mockMetadataStore, storage, aggExprRewriter,
 				logstelemetryschema.DefaultFullTextColumn, fl, nil,
 				statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
 			)

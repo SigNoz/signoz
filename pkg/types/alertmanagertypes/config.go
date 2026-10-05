@@ -334,12 +334,32 @@ func cloneReceiver(receiver *Receiver) (*Receiver, error) {
 
 func (c *Config) CreateReceiver(receiver *Receiver) error {
 	// check that receiver name is not already used
-	for _, existingReceiver := range c.alertmanagerConfig.Receivers {
-		if existingReceiver.Name == receiver.Name {
-			return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigConflict, "the receiver name has to be unique, please choose a different name")
-		}
+	if c.hasReceiver(receiver.Name) {
+		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigConflict, "the receiver name has to be unique, please choose a different name")
 	}
 
+	return c.createReceiver(receiver)
+}
+
+// CreateReceiverV2 differs from CreateReceiver only in reporting a name already in
+// use as a conflict rather than as invalid input. The v2 create path is the sole
+// caller: v1 create, NewConfigFromChannels and TestReceiver stay on CreateReceiver
+// so their responses keep the status code clients already see.
+func (c *Config) CreateReceiverV2(receiver *Receiver) error {
+	if c.hasReceiver(receiver.Name) {
+		return errors.Newf(errors.TypeAlreadyExists, ErrCodeAlertmanagerChannelAlreadyExists, "channel with display name %q already exists", receiver.Name)
+	}
+
+	return c.createReceiver(receiver)
+}
+
+func (c *Config) hasReceiver(name string) bool {
+	return slices.ContainsFunc(c.alertmanagerConfig.Receivers, func(existing config.Receiver) bool {
+		return existing.Name == name
+	})
+}
+
+func (c *Config) createReceiver(receiver *Receiver) error {
 	owned, err := cloneReceiver(receiver)
 	if err != nil {
 		return err
@@ -584,8 +604,9 @@ type ConfigStore interface {
 	// DeleteChannelByID deletes a channel.
 	DeleteChannelByID(context.Context, string, valuer.UUID, ...StoreOption) error
 
-	// ListChannels returns the list of channels.
-	ListChannels(context.Context, string) ([]*Channel, error)
+	// Nil params lists every one of them in no particular order, with the
+	//  total equal to the number returned.
+	ListChannels(context.Context, string, *ListChannelsParams) ([]*Channel, int64, error)
 
 	// ListAllChannels returns the list of channels for all organizations.
 	ListAllChannels(context.Context) ([]*Channel, error)

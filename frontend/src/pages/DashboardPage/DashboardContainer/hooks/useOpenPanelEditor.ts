@@ -46,8 +46,9 @@ export function useOpenPanelEditor(): (
 			new URLSearchParams(timeSearch).forEach((value, key) => {
 				params.set(key, value);
 			});
-			if (options?.panel) {
-				const query = getPanelBuilderQuery(options.panel);
+			// `null` for a static kind — no query state to stage or persist.
+			const query = options?.panel && getPanelBuilderQuery(options.panel);
+			if (query) {
 				// Single-encoded: `useGetCompositeQueryParam` decodes once on top of the decode
 				// `URLSearchParams` already does.
 				params.set(

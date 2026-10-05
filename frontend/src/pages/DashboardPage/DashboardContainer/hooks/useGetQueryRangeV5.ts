@@ -1,4 +1,4 @@
-import { useQuery, UseQueryResult } from 'react-query';
+import { useQuery, useQueryClient, UseQueryResult } from 'react-query';
 import { isAxiosError } from 'axios';
 import { queryRangeV5 } from 'api/generated/services/querier';
 import type {
@@ -50,10 +50,15 @@ export function useGetQueryRangeV5({
 	keepPreviousData,
 	cacheTime,
 }: UseGetQueryRangeV5Args): UseQueryResult<QueryRangeV5200, Error> {
+	const queryClient = useQueryClient();
+	// An errored key has no data, so it is always stale; keep it enabled so
+	// re-enabling doesn't re-run it.
+	const hasErrored = queryClient.getQueryState(queryKey)?.status === 'error';
+
 	return useQuery<QueryRangeV5200, Error>({
 		queryKey,
 		queryFn: ({ signal }) => queryRangeV5(requestPayload, signal),
-		enabled,
+		enabled: enabled || hasErrored,
 		retry: retryUnlessClientError,
 		keepPreviousData,
 		cacheTime,

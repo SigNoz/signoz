@@ -47,7 +47,6 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isArray } from 'lodash-es';
@@ -255,7 +254,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isEditor = user.role === USER_ROLES.EDITOR;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
-	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
 	const aiAssistantActiveConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
 	);
@@ -295,9 +293,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			if (item.key === ROUTES.INTEGRATIONS) {
 				return shouldShowIntegrationsValue;
 			}
-			if (item.key === ROUTES.AI_OBSERVABILITY_OVERVIEW) {
-				return isAIObservabilityEnabled;
-			}
 			return item.isEnabled;
 		};
 
@@ -314,7 +309,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isEnterpriseSelfHostedUser,
 		isAdmin,
 		isEditor,
-		isAIObservabilityEnabled,
 	]);
 
 	// Track if we've done the initial sync (to avoid overwriting user actions during session)

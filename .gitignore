@@ -232,3 +232,4 @@ pyrightconfig.json
 # dev
 .dev/
 .claude/worktrees/
+.claude/settings.local.json

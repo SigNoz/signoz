@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import { useQueryClient } from 'react-query';
+import logEvent from 'api/common/logEvent';
 import {
 	getListLLMPricingRulesQueryKey,
 	useDeleteLLMPricingRule,
@@ -46,6 +47,9 @@ export function useModelCostDelete(): UseModelCostDeleteResult {
 		}
 		try {
 			await deleteRuleApi({ pathParams: { id: pendingDelete.id } });
+			void logEvent('AI Observability Model Pricing: Model cost deleted', {
+				modelName: pendingDelete.modelName,
+			});
 			await queryClient.invalidateQueries({
 				queryKey: getListLLMPricingRulesQueryKey(),
 			});

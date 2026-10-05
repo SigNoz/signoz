@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
+import cx from 'classnames';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -14,6 +15,16 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
+import {
+	QueryBuilderField,
+	QueryBuilderFieldsConfig,
+} from '../../queryBuilderFields.types';
+import {
+	mergeQueryBuilderFieldsConfig,
+	RAW_QUERY_FIELDS,
+	resolveQueryBuilderFields,
+} from '../../queryBuilderFields.utils';
+
 import HavingFilter from './HavingFilter/HavingFilter';
 import { buildDefaultLegendFromGroupBy } from './utils';
 
@@ -22,34 +33,37 @@ import './QueryAddOns.styles.scss';
 interface AddOn {
 	icon: React.ReactNode;
 	label: string;
-	key: string;
+	key: QueryBuilderField;
 	description?: string;
 	docLink?: string;
 }
 
-const ADD_ONS_KEYS = {
-	GROUP_BY: 'group_by',
-	HAVING: 'having',
-	ORDER_BY: 'order_by',
-	LIMIT: 'limit',
-	LEGEND_FORMAT: 'legend_format',
-	REDUCE_TO: 'reduce_to',
+/** Fields the add-on bar does not own: each has its own control elsewhere in the query. */
+type NonAddOnField =
+	| QueryBuilderField.Aggregation
+	| QueryBuilderField.StepInterval
+	| QueryBuilderField.Functions
+	| QueryBuilderField.Formula
+	| QueryBuilderField.AdditionalQueries;
+
+// Omit rather than Partial, so a field added to the enum has to be placed on one side.
+const ADD_ONS_KEYS_TO_QUERY_PATH: Omit<
+	Record<QueryBuilderField, string>,
+	NonAddOnField
+> = {
+	[QueryBuilderField.GroupBy]: 'groupBy',
+	[QueryBuilderField.Having]: 'having.expression',
+	[QueryBuilderField.OrderBy]: 'orderBy',
+	[QueryBuilderField.Limit]: 'limit',
+	[QueryBuilderField.Legend]: 'legend',
+	[QueryBuilderField.ReduceTo]: 'reduceTo',
 };
 
-const ADD_ONS_KEYS_TO_QUERY_PATH = {
-	[ADD_ONS_KEYS.GROUP_BY]: 'groupBy',
-	[ADD_ONS_KEYS.HAVING]: 'having.expression',
-	[ADD_ONS_KEYS.ORDER_BY]: 'orderBy',
-	[ADD_ONS_KEYS.LIMIT]: 'limit',
-	[ADD_ONS_KEYS.LEGEND_FORMAT]: 'legend',
-	[ADD_ONS_KEYS.REDUCE_TO]: 'reduceTo',
-};
-
-const ADD_ONS = [
+const ADD_ONS: AddOn[] = [
 	{
 		icon: <BarChart size={14} />,
 		label: 'Group By',
-		key: ADD_ONS_KEYS.GROUP_BY,
+		key: QueryBuilderField.GroupBy,
 		description:
 			'Break down data by attributes like service name, endpoint, status code, or region. Essential for spotting patterns and comparing performance across different segments.',
 		docLink: 'https://signoz.io/docs/querying/aggregation-grouping/#grouping',
@@ -57,7 +71,7 @@ const ADD_ONS = [
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Having',
-		key: ADD_ONS_KEYS.HAVING,
+		key: QueryBuilderField.Having,
 		description:
 			'Filter grouped results based on aggregate conditions. Show only groups meeting specific criteria, like error rates > 5% or p99 latency > 500',
 		docLink:
@@ -66,7 +80,7 @@ const ADD_ONS = [
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Order By',
-		key: ADD_ONS_KEYS.ORDER_BY,
+		key: QueryBuilderField.OrderBy,
 		description:
 			'Sort results to surface what matters most. Quickly identify slowest operations, most frequent errors, or highest resource consumers.',
 		docLink:
@@ -75,7 +89,7 @@ const ADD_ONS = [
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Limit',
-		key: ADD_ONS_KEYS.LIMIT,
+		key: QueryBuilderField.Limit,
 		description:
 			'Show only the top/bottom N results. Perfect for focusing on outliers, reducing noise, and improving dashboard performance.',
 		docLink:
@@ -84,7 +98,7 @@ const ADD_ONS = [
 	{
 		icon: <ScrollText size={14} />,
 		label: 'Legend format',
-		key: ADD_ONS_KEYS.LEGEND_FORMAT,
+		key: QueryBuilderField.Legend,
 		description:
 			'Customize series labels using variables like {{service.name}}-{{endpoint}}. Makes charts readable at a glance during incident investigation.',
 		docLink:
@@ -92,10 +106,10 @@ const ADD_ONS = [
 	},
 ];
 
-const REDUCE_TO = {
+const REDUCE_TO: AddOn = {
 	icon: <ScrollText size={14} />,
 	label: 'Reduce to',
-	key: ADD_ONS_KEYS.REDUCE_TO,
+	key: QueryBuilderField.ReduceTo,
 	description:
 		'Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value.',
 	docLink:
@@ -154,26 +168,26 @@ function TooltipContent({
 function QueryAddOns({
 	query,
 	version,
-	isListViewPanel,
+	isRawQuery,
 	showReduceTo,
 	panelType,
 	index,
+	fieldsConfig,
 	isForTraceOperator = false,
 }: {
 	query: IBuilderQuery;
 	version: string;
-	isListViewPanel: boolean;
+	isRawQuery: boolean;
 	showReduceTo: boolean;
 	panelType: PANEL_TYPES | null;
 	index: number;
+	fieldsConfig?: QueryBuilderFieldsConfig;
 	isForTraceOperator?: boolean;
 }): JSX.Element {
-	const [addOns, setAddOns] = useState<AddOn[]>(ADD_ONS);
-
 	const [selectedViews, setSelectedViews] = useState<AddOn[]>([]);
 
 	const initializedRef = useRef(false);
-	const prevAvailableKeysRef = useRef<Set<string> | null>(null);
+	const prevAvailableKeysRef = useRef<Set<QueryBuilderField> | null>(null);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index,
@@ -184,40 +198,62 @@ function QueryAddOns({
 
 	const { handleSetQueryData } = useQueryBuilder();
 
-	useEffect(() => {
-		if (isListViewPanel) {
-			setAddOns([]);
+	const supportedAddOns = useMemo((): AddOn[] => {
+		let addOns: AddOn[];
 
-			setSelectedViews([
-				ADD_ONS.find((addOn) => addOn.key === ADD_ONS_KEYS.ORDER_BY) as AddOn,
-			]);
-
-			return;
-		}
-
-		let filteredAddOns: AddOn[];
 		if (panelType === PANEL_TYPES.VALUE) {
-			// Filter out all add-ons except legend format
-			filteredAddOns = ADD_ONS.filter(
-				(addOn) => addOn.key === ADD_ONS_KEYS.LEGEND_FORMAT,
-			);
+			addOns = ADD_ONS.filter((addOn) => addOn.key === QueryBuilderField.Legend);
+		} else if (query.dataSource === DataSource.METRICS) {
+			// Group by for metrics is offered by MetricsAggregateSection instead.
+			addOns = ADD_ONS.filter((addOn) => addOn.key !== QueryBuilderField.GroupBy);
 		} else {
-			filteredAddOns = Object.values(ADD_ONS);
-
-			if (query.dataSource === DataSource.METRICS) {
-				// Filter out group_by for metrics data source (handled in MetricsAggregateSection)
-				filteredAddOns = filteredAddOns.filter(
-					(addOn) => addOn.key !== ADD_ONS_KEYS.GROUP_BY,
-				);
-			}
+			addOns = [...ADD_ONS];
 		}
 
-		if (showReduceTo) {
-			filteredAddOns = [...filteredAddOns, REDUCE_TO];
-		}
-		setAddOns(filteredAddOns);
+		return showReduceTo ? [...addOns, REDUCE_TO] : addOns;
+	}, [panelType, query.dataSource, showReduceTo]);
 
-		const availableAddOnKeys = new Set(filteredAddOns.map((a) => a.key));
+	const resolvedFields = useMemo(
+		() =>
+			resolveQueryBuilderFields(
+				supportedAddOns.map((addOn) => addOn.key),
+				mergeQueryBuilderFieldsConfig(
+					isRawQuery ? RAW_QUERY_FIELDS : undefined,
+					fieldsConfig,
+				),
+			),
+		[supportedAddOns, fieldsConfig, isRawQuery],
+	);
+
+	const offeredAddOns = useMemo(
+		() =>
+			supportedAddOns.filter((addOn) => !resolvedFields.get(addOn.key)?.hidden),
+		[supportedAddOns, resolvedFields],
+	);
+
+	const pinnedAddOns = useMemo(
+		() => offeredAddOns.filter((addOn) => resolvedFields.get(addOn.key)?.pinned),
+		[offeredAddOns, resolvedFields],
+	);
+
+	const togglableAddOns = useMemo(
+		() => offeredAddOns.filter((addOn) => !resolvedFields.get(addOn.key)?.pinned),
+		[offeredAddOns, resolvedFields],
+	);
+
+	const isPinned = useCallback(
+		(key: QueryBuilderField): boolean => Boolean(resolvedFields.get(key)?.pinned),
+		[resolvedFields],
+	);
+
+	const isDisabled = useCallback(
+		(key: QueryBuilderField): boolean =>
+			Boolean(resolvedFields.get(key)?.disabled),
+		[resolvedFields],
+	);
+
+	useEffect(() => {
+		const availableAddOnKeys = new Set(offeredAddOns.map((a) => a.key));
 		const previousKeys = prevAvailableKeysRef.current;
 		const hasAvailabilityItemsChanged =
 			previousKeys !== null &&
@@ -231,27 +267,39 @@ function QueryAddOns({
 			const activeAddOnKeys = new Set(
 				Object.entries(ADD_ONS_KEYS_TO_QUERY_PATH)
 					.filter(([, path]) => hasValue(get(query, path)))
-					.map(([key]) => key),
+					.map(([key]) => key as QueryBuilderField),
 			);
 
-			// Initial seeding from query values on mount
+			// Initial seeding from query values on mount. A disabled field never opens.
 			setSelectedViews(
-				filteredAddOns.filter(
-					(addOn) =>
-						activeAddOnKeys.has(addOn.key) && availableAddOnKeys.has(addOn.key),
-				),
+				offeredAddOns.filter((addOn) => {
+					const resolved = resolvedFields.get(addOn.key);
+
+					return (
+						resolved?.pinned ||
+						(activeAddOnKeys.has(addOn.key) && !resolved?.disabled)
+					);
+				}),
 			);
 			return;
 		}
 
-		setSelectedViews((prev) =>
-			prev.filter((view) =>
-				filteredAddOns.some((addOn) => addOn.key === view.key),
-			),
-		);
-	}, [panelType, isListViewPanel, query, showReduceTo]);
+		setSelectedViews((prev) => {
+			const kept = prev.filter((view) => availableAddOnKeys.has(view.key));
+
+			const reopenedPinned = pinnedAddOns.filter(
+				(addOn) => !kept.some((view) => view.key === addOn.key),
+			);
+
+			return [...kept, ...reopenedPinned];
+		});
+	}, [offeredAddOns, pinnedAddOns, query]);
 
 	const handleOptionClick = (clickedAddOn: AddOn): void => {
+		if (isDisabled(clickedAddOn.key)) {
+			return;
+		}
+
 		const isAlreadySelected = selectedViews.some(
 			(view) => view.key === clickedAddOn.key,
 		);
@@ -265,7 +313,7 @@ function QueryAddOns({
 			// and existing group-by keys, prefill the legend using all group-by keys.
 			// This keeps existing custom legends intact and only helps seed a sensible default.
 			if (
-				clickedAddOn.key === ADD_ONS_KEYS.LEGEND_FORMAT &&
+				clickedAddOn.key === QueryBuilderField.Legend &&
 				isEmpty(query?.legend) &&
 				Array.isArray(query.groupBy) &&
 				query.groupBy.length > 0
@@ -310,9 +358,16 @@ function QueryAddOns({
 		[handleSetQueryData, index, query],
 	);
 
-	const handleRemoveView = useCallback((key: string): void => {
-		setSelectedViews((prev) => prev.filter((view) => view.key !== key));
-	}, []);
+	const handleRemoveView = useCallback(
+		(key: QueryBuilderField): void => {
+			if (isPinned(key)) {
+				return;
+			}
+
+			setSelectedViews((prev) => prev.filter((view) => view.key !== key));
+		},
+		[isPinned],
+	);
 
 	const handleChangeQueryLegend = useCallback(
 		(value: string) => {
@@ -341,7 +396,7 @@ function QueryAddOns({
 		<div className="query-add-ons" data-testid="query-add-ons">
 			{selectedViews.length > 0 && (
 				<div className="selected-add-ons-content">
-					{selectedViews.find((view) => view.key === 'group_by') && (
+					{selectedViews.find((view) => view.key === QueryBuilderField.GroupBy) && (
 						<div className="add-on-content" data-testid="group-by-content">
 							<div className="periscope-input-with-label">
 								<Tooltip
@@ -369,15 +424,17 @@ function QueryAddOns({
 										onChange={handleChangeGroupByKeys}
 									/>
 								</div>
-								<Button
-									className="close-btn periscope-btn ghost"
-									icon={<ChevronUp size={16} />}
-									onClick={(): void => handleRemoveView('group_by')}
-								/>
+								{!isPinned(QueryBuilderField.GroupBy) && (
+									<Button
+										className="close-btn periscope-btn ghost"
+										icon={<ChevronUp size={16} />}
+										onClick={(): void => handleRemoveView(QueryBuilderField.GroupBy)}
+									/>
+								)}
 							</div>
 						</div>
 					)}
-					{selectedViews.find((view) => view.key === 'having') && (
+					{selectedViews.find((view) => view.key === QueryBuilderField.Having) && (
 						<div className="add-on-content" data-testid="having-content">
 							<div className="periscope-input-with-label">
 								<Tooltip
@@ -397,11 +454,7 @@ function QueryAddOns({
 								</Tooltip>
 								<div className="input">
 									<HavingFilter
-										onClose={(): void => {
-											setSelectedViews((prev) =>
-												prev.filter((view) => view.key !== 'having'),
-											);
-										}}
+										onClose={(): void => handleRemoveView(QueryBuilderField.Having)}
 										onChange={handleChangeHaving}
 										queryData={query}
 									/>
@@ -409,7 +462,7 @@ function QueryAddOns({
 							</div>
 						</div>
 					)}
-					{selectedViews.find((view) => view.key === 'limit') && (
+					{selectedViews.find((view) => view.key === QueryBuilderField.Limit) && (
 						<div className="add-on-content" data-testid="limit-content">
 							<InputWithLabel
 								label="Limit"
@@ -417,16 +470,12 @@ function QueryAddOns({
 								onChange={handleChangeLimit}
 								initialValue={query?.limit ?? undefined}
 								placeholder="Enter limit"
-								onClose={(): void => {
-									setSelectedViews((prev) =>
-										prev.filter((view) => view.key !== 'limit'),
-									);
-								}}
+								onClose={(): void => handleRemoveView(QueryBuilderField.Limit)}
 								closeIcon={<ChevronUp size={16} />}
 							/>
 						</div>
 					)}
-					{selectedViews.find((view) => view.key === 'order_by') && (
+					{selectedViews.find((view) => view.key === QueryBuilderField.OrderBy) && (
 						<div className="add-on-content" data-testid="order-by-content">
 							<div className="periscope-input-with-label">
 								<Tooltip
@@ -449,22 +498,22 @@ function QueryAddOns({
 										entityVersion={version}
 										query={query}
 										onChange={handleChangeOrderByKeys}
-										isListViewPanel={isListViewPanel}
+										isRawQuery={isRawQuery}
 										isNewQueryV2
 									/>
 								</div>
-								{!isListViewPanel && (
+								{!isPinned(QueryBuilderField.OrderBy) && (
 									<Button
 										className="close-btn periscope-btn ghost"
 										icon={<ChevronUp size={16} />}
-										onClick={(): void => handleRemoveView('order_by')}
+										onClick={(): void => handleRemoveView(QueryBuilderField.OrderBy)}
 									/>
 								)}
 							</div>
 						</div>
 					)}
 
-					{selectedViews.find((view) => view.key === 'reduce_to') &&
+					{selectedViews.find((view) => view.key === QueryBuilderField.ReduceTo) &&
 						showReduceTo && (
 							<div className="add-on-content" data-testid="reduce-to-content">
 								<div className="periscope-input-with-label">
@@ -487,27 +536,25 @@ function QueryAddOns({
 										<ReduceToFilter query={query} onChange={handleChangeReduceToV5} />
 									</div>
 
-									<Button
-										className="close-btn periscope-btn ghost"
-										icon={<ChevronUp size={16} />}
-										onClick={(): void => handleRemoveView('reduce_to')}
-									/>
+									{!isPinned(QueryBuilderField.ReduceTo) && (
+										<Button
+											className="close-btn periscope-btn ghost"
+											icon={<ChevronUp size={16} />}
+											onClick={(): void => handleRemoveView(QueryBuilderField.ReduceTo)}
+										/>
+									)}
 								</div>
 							</div>
 						)}
 
-					{selectedViews.find((view) => view.key === 'legend_format') && (
+					{selectedViews.find((view) => view.key === QueryBuilderField.Legend) && (
 						<div className="add-on-content" data-testid="legend-format-content">
 							<InputWithLabel
 								label="Legend format"
 								placeholder="Write legend format"
 								onChange={handleChangeQueryLegend}
 								initialValue={isEmpty(query?.legend) ? undefined : query?.legend}
-								onClose={(): void => {
-									setSelectedViews((prev) =>
-										prev.filter((view) => view.key !== 'legend_format'),
-									);
-								}}
+								onClose={(): void => handleRemoveView(QueryBuilderField.Legend)}
 								closeIcon={<ChevronUp size={16} />}
 							/>
 						</div>
@@ -520,42 +567,49 @@ function QueryAddOns({
 				className="add-ons-tabs"
 				value={selectedViews.map((view) => view.key)}
 				onChange={(newKeys: string[]): void => {
-					const oldKeys = selectedViews.map((view) => view.key);
+					const oldKeys: string[] = selectedViews.map((view) => view.key);
 					const toggledKey =
-						newKeys.find((k) => !oldKeys.includes(k)) ??
-						oldKeys.find((k) => !newKeys.includes(k));
+						newKeys.find((key) => !oldKeys.includes(key)) ??
+						oldKeys.find((key) => !newKeys.includes(key));
 					if (!toggledKey) {
 						return;
 					}
-					const clickedAddOn = addOns.find((a) => a.key === toggledKey);
+					const clickedAddOn = togglableAddOns.find((a) => a.key === toggledKey);
 					if (clickedAddOn) {
 						handleOptionClick(clickedAddOn);
 					}
 				}}
-				items={addOns.map((addOn) => ({
-					value: addOn.key,
-					label: (
-						<Tooltip
-							title={
-								<TooltipContent
-									label={addOn.label}
-									description={addOn.description}
-									docLink={addOn.docLink}
-								/>
-							}
-							placement="top"
-							mouseEnterDelay={0.5}
-						>
-							<span
-								className="add-on-tab-title"
-								data-testid={`query-add-on-${addOn.key}`}
+				items={togglableAddOns.map((addOn) => {
+					const resolved = resolvedFields.get(addOn.key);
+
+					return {
+						value: addOn.key,
+						label: (
+							<Tooltip
+								title={
+									<TooltipContent
+										label={addOn.label}
+										description={resolved?.reason ?? addOn.description}
+										docLink={resolved?.disabled ? undefined : addOn.docLink}
+									/>
+								}
+								placement="top"
+								mouseEnterDelay={0.5}
 							>
-								{addOn.icon}
-								{addOn.label}
-							</span>
-						</Tooltip>
-					),
-				}))}
+								<span
+									className={cx('add-on-tab-title', {
+										'add-on-tab-title--disabled': resolved?.disabled,
+									})}
+									aria-disabled={resolved?.disabled}
+									data-testid={`query-add-on-${addOn.key}`}
+								>
+									{addOn.icon}
+									{addOn.label}
+								</span>
+							</Tooltip>
+						),
+					};
+				})}
 			/>
 		</div>
 	);

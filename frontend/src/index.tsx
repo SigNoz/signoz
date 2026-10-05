@@ -1,16 +1,12 @@
+import { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { HelmetProvider } from 'react-helmet-async';
-import { QueryClient, QueryClientProvider } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { Provider } from 'react-redux';
+import { QueryClient } from 'react-query';
+import AppProviders from 'app/AppProviders';
 import AppRoutes from 'AppRoutes';
 import { AxiosError } from 'axios';
-import { GlobalTimeStoreAdapter } from 'components/GlobalTimeStoreAdapter/GlobalTimeStoreAdapter';
-import { ThemeProvider } from 'hooks/useDarkMode';
 import { configureOverlayScrollbars } from 'lib/configureOverlayScrollbars';
 import { NuqsAdapter } from 'nuqs/adapters/react';
 import { AppProvider } from 'providers/App/App';
-import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import APIError from 'types/api/error';
 import { installTranslationResilience } from 'translation-resilience';
@@ -47,27 +43,27 @@ const queryClient = new QueryClient({
 	},
 });
 
+const searchParams = (children: ReactNode): ReactNode => (
+	<NuqsAdapter>{children}</NuqsAdapter>
+);
+
+const appContext = (children: ReactNode): ReactNode => (
+	<AppProvider>{children}</AppProvider>
+);
+
 const container = document.getElementById('root');
 
 if (container) {
 	const root = createRoot(container);
 
 	root.render(
-		<HelmetProvider>
-			<NuqsAdapter>
-				<ThemeProvider>
-					<TimezoneProvider>
-						<QueryClientProvider client={queryClient}>
-							<Provider store={store}>
-								<GlobalTimeStoreAdapter />
-								<AppProvider>
-									<AppRoutes />
-								</AppProvider>
-							</Provider>
-						</QueryClientProvider>
-					</TimezoneProvider>
-				</ThemeProvider>
-			</NuqsAdapter>
-		</HelmetProvider>,
+		<AppProviders
+			store={store}
+			queryClient={queryClient}
+			appContext={appContext}
+			searchParams={searchParams}
+		>
+			<AppRoutes />
+		</AppProviders>,
 	);
 }

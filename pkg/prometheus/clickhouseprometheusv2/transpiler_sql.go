@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/huandu/go-sqlbuilder"
 )
@@ -409,7 +410,7 @@ func groupKeyExpr(unit *coreUnit) string {
 func quotedList(items []string) string {
 	quoted := make([]string, len(items))
 	for i, s := range items {
-		quoted[i] = "'" + strings.ReplaceAll(s, "'", "\\'") + "'"
+		quoted[i] = clickhousesql.StringLiteral(s)
 	}
 	return strings.Join(quoted, ", ")
 }

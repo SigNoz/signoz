@@ -179,7 +179,10 @@ const setupServer = (capturedPayloads: QueryRangePayloadV5[]): void => {
 		),
 		// Add handler for the fields endpoint that's causing warnings
 		rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/keys`, async (req, res, ctx) =>
-			res(ctx.status(200), ctx.json([])),
+			res(
+				ctx.status(200),
+				ctx.json({ status: 'success', data: { complete: true, keys: {} } }),
+			),
 		),
 	);
 };

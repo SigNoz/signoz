@@ -115,3 +115,15 @@ describe('newPanelRoute', () => {
 		});
 	});
 });
+
+describe('parseNewPanelKind — kinds without a legacy panel type', () => {
+	it('accepts a registered static kind', () => {
+		expect(parseNewPanelKind('new', '?panelKind=signoz%2FTextPanel')).toBe(
+			'signoz/TextPanel',
+		);
+	});
+
+	it('still rejects a kind that is not registered', () => {
+		expect(parseNewPanelKind('new', '?panelKind=signoz%2FNopePanel')).toBeNull();
+	});
+});

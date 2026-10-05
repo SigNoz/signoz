@@ -1,0 +1,8 @@
+.scrollable {
+	&,
+	body {
+		height: auto;
+		min-height: 100%;
+		overflow: visible;
+	}
+}

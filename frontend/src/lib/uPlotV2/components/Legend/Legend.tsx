@@ -1,140 +1,109 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { VirtuosoGrid } from 'react-virtuoso';
-import { Input } from 'antd';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
-import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendItem } from 'lib/uPlotV2/config/types';
-import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
-import { LegendPosition, LegendProps } from '../types';
+import { LegendAction, LegendPosition, LegendProps } from '../types';
 
-import './Legend.styles.scss';
+import { LEGEND_ITEM_EXTRA_WIDTH, MAX_LEGEND_WIDTH } from './constants';
+import LegendRow from './LegendRow';
+import LegendToolbar from './LegendToolbar';
+import { getVisibleSeriesState } from './utils';
 
-export const MAX_LEGEND_WIDTH = 240;
+import styles from './Legend.module.scss';
 
 /**
- * Presentational legend. Renders the supplied `items` (markers + labels, an
- * optional copy button, and a search box for the RIGHT position) and delegates
- * all interaction to the container handlers. Source-agnostic — the uPlot
- * charts feed it via UPlotLegend; Pie feeds it directly.
+ * Presentational legend, source-agnostic: the uPlot charts feed it via
+ * UPlotLegend, Pie feeds it directly. Every state change is delegated.
  */
 export default function Legend({
 	items,
 	position,
 	averageLegendWidth = MAX_LEGEND_WIDTH,
+	showSearch = false,
 	focusedSeriesIndex,
-	onClick,
-	onMouseMove,
-	onMouseLeave,
+	onAction,
 	showCopy = true,
 }: LegendProps): JSX.Element {
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
-	const [legendSearchQuery, setLegendSearchQuery] = useState('');
+	const [filterQuery, setFilterQuery] = useState('');
 
-	// Search is intrinsic to the right-positioned legend.
-	const searchEnabled = position === LegendPosition.RIGHT;
-	const { width: containerWidth } = useResizeObserver(legendContainerRef);
+	const itemWidth = averageLegendWidth + LEGEND_ITEM_EXTRA_WIDTH;
+	const isRightPosition = position === LegendPosition.RIGHT;
 
-	const isSingleRow = useMemo(() => {
-		if (position !== LegendPosition.BOTTOM || containerWidth <= 0) {
-			return false;
-		}
-		const totalLegendWidth = items.length * (averageLegendWidth + 16);
-		const totalRows = Math.ceil(totalLegendWidth / containerWidth);
-		return totalRows <= 1;
-	}, [averageLegendWidth, items.length, position, containerWidth]);
+	// The layout decides: it reserves the height.
+	const showToolbar = showSearch && items.length > 0;
 
-	const visibleLegendItems = useMemo(() => {
-		if (!searchEnabled || !legendSearchQuery.trim()) {
-			return items;
-		}
+	const effectiveQuery = showToolbar ? filterQuery : '';
 
-		const query = legendSearchQuery.trim().toLowerCase();
-		return items.filter((item) => item.label?.toLowerCase().includes(query));
-	}, [searchEnabled, legendSearchQuery, items]);
-
-	const renderLegendItem = useCallback(
-		(item: LegendItem): JSX.Element => {
-			// `color` is uPlot's stroke union (string | fn | gradient); only a string
-			// is a usable CSS colour for the marker.
-			const markerColor = typeof item.color === 'string' ? item.color : undefined;
-			return (
-				<div
-					key={item.seriesIndex}
-					data-legend-item-id={item.seriesIndex}
-					className={cx('legend-item', `legend-item-${position.toLowerCase()}`, {
-						'legend-item-off': !item.show,
-						'legend-item-focused': focusedSeriesIndex === item.seriesIndex,
-					})}
-				>
-					<TooltipSimple title={item.label} arrow side="top" disableHoverableContent>
-						<div className="legend-item-label-trigger">
-							<div
-								className="legend-marker"
-								style={{ borderColor: markerColor }}
-								data-is-legend-marker={true}
-							/>
-							<span className="legend-label">{item.label}</span>
-						</div>
-					</TooltipSimple>
-					{showCopy && (
-						<CopyButton
-							value={item.label ?? ''}
-							size={12}
-							className="legend-copy-button"
-							ariaLabel={`Copy ${item.label}`}
-							testId="legend-copy"
-						/>
-					)}
-				</div>
-			);
-		},
-		[focusedSeriesIndex, position, showCopy],
+	const {
+		listedItems,
+		visibleCount,
+		onlyVisibleSeriesIndex,
+		areAllSeriesVisible,
+	} = useMemo(
+		() => getVisibleSeriesState(items, effectiveQuery),
+		[items, effectiveQuery],
 	);
 
-	const isEmptyState = useMemo(() => {
-		if (!searchEnabled || !legendSearchQuery.trim()) {
-			return false;
-		}
-		return visibleLegendItems.length === 0;
-	}, [searchEnabled, legendSearchQuery, visibleLegendItems]);
+	const isEmptyState = !!effectiveQuery.trim() && listedItems.length === 0;
+
+	// A row that unmounts under the pointer never fires its own mouseleave.
+	const handleMouseLeave = useCallback(
+		(): void => onAction({ type: LegendAction.HOVER, seriesIndex: null }),
+		[onAction],
+	);
+
+	const renderLegendItem = useCallback(
+		(item: LegendItem): JSX.Element => (
+			<LegendRow
+				key={item.seriesIndex}
+				item={item}
+				isOneSeriesVisible={onlyVisibleSeriesIndex === item.seriesIndex}
+				areAllSeriesVisible={areAllSeriesVisible}
+				isFocused={focusedSeriesIndex === item.seriesIndex}
+				showCopy={showCopy}
+				onAction={onAction}
+			/>
+		),
+		[
+			onlyVisibleSeriesIndex,
+			areAllSeriesVisible,
+			focusedSeriesIndex,
+			showCopy,
+			onAction,
+		],
+	);
 
 	return (
 		<div
 			ref={legendContainerRef}
-			className="legend-container"
-			onClick={onClick}
-			onMouseMove={onMouseMove}
-			onMouseLeave={onMouseLeave}
-			style={{
-				['--legend-average-width' as string]: `${averageLegendWidth + 16}px`, // 16px is the marker width
-			}}
+			className={cx(styles.container, {
+				[styles.isRight]: isRightPosition,
+			})}
+			style={{ ['--legend-item-width' as string]: `${itemWidth}px` }}
+			onMouseLeave={handleMouseLeave}
+			data-testid="legend-container"
 		>
-			{searchEnabled && (
-				<div className="legend-search-container">
-					<Input
-						allowClear
-						placeholder="Search..."
-						value={legendSearchQuery}
-						onChange={(e): void => setLegendSearchQuery(e.target.value)}
-						data-testid="legend-search-input"
-						className="legend-search-input"
-					/>
-				</div>
+			{showToolbar && (
+				<LegendToolbar
+					visibleCount={visibleCount}
+					totalCount={items.length}
+					position={position}
+					filterQuery={filterQuery}
+					onFilterQueryChange={setFilterQuery}
+				/>
 			)}
 			{isEmptyState ? (
-				<div className="legend-empty-state">
-					No series found matching &quot;{legendSearchQuery}&quot;
+				<div className={styles.emptyState}>
+					No series found matching &quot;{effectiveQuery}&quot;
 				</div>
 			) : (
 				<VirtuosoGrid
-					className={cx(
-						'legend-virtuoso-container',
-						`legend-virtuoso-container-${position.toLowerCase()}`,
-						{ 'legend-virtuoso-container-single-row': isSingleRow },
-					)}
-					data={visibleLegendItems}
+					className={styles.scroller}
+					listClassName={styles.gridList}
+					itemClassName={styles.gridItem}
+					data={listedItems}
 					itemContent={(_, item): JSX.Element => renderLegendItem(item)}
 				/>
 			)}

@@ -45,9 +45,7 @@ export default function Pie({
 		visibleData,
 		legendItems,
 		focusedSeriesIndex,
-		onLegendClick,
-		onLegendMouseMove,
-		onLegendMouseLeave,
+		onLegendAction,
 	} = usePieInteractions(data, id);
 
 	const {
@@ -70,17 +68,23 @@ export default function Pie({
 
 	// Reuse the uPlot chart/legend split so the donut + legend get the same area
 	// allocation (right column, or up-to-two bottom rows) as every other panel.
-	const { width, height, legendWidth, legendHeight, averageLegendWidth } =
-		useMemo(
-			() =>
-				calculateChartDimensions({
-					containerWidth,
-					containerHeight,
-					legendConfig: { position },
-					seriesLabels: data.map((slice) => slice.label),
-				}),
-			[containerWidth, containerHeight, position, data],
-		);
+	const {
+		width,
+		height,
+		legendWidth,
+		legendHeight,
+		averageLegendWidth,
+		showLegendSearch,
+	} = useMemo(
+		() =>
+			calculateChartDimensions({
+				containerWidth,
+				containerHeight,
+				legendConfig: { position },
+				seriesLabels: data.map((slice) => slice.label),
+			}),
+		[containerWidth, containerHeight, position, data],
+	);
 
 	// Donut geometry derived from the allocated chart box, sized to leave room
 	// for the external leader labels (see getDonutGeometry).
@@ -226,10 +230,9 @@ export default function Pie({
 					items={legendItems}
 					position={position}
 					averageLegendWidth={averageLegendWidth}
+					showSearch={showLegendSearch}
 					focusedSeriesIndex={focusedSeriesIndex}
-					onClick={onLegendClick}
-					onMouseMove={onLegendMouseMove}
-					onMouseLeave={onLegendMouseLeave}
+					onAction={onLegendAction}
 				/>
 			</div>
 		</div>

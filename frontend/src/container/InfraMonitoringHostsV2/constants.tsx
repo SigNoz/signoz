@@ -82,7 +82,7 @@ export function getHostMetricsQueryPayload(
 	start: number,
 	end: number,
 ): ReturnType<typeof getHostQueryPayload> {
-	return getHostQueryPayload(host.hostName, start, end, true);
+	return getHostQueryPayload(host.hostName, start, end);
 }
 
 export { hostWidgetInfo };

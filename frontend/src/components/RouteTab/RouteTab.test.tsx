@@ -5,6 +5,11 @@ import { fireEvent, render, screen } from 'tests/test-utils';
 import RouteTab from './index';
 import { RouteTabProps } from './types';
 
+jest.mock('./RouteTab.module.scss', () => ({
+	__esModule: true,
+	default: { routeTab: 'routeTab' },
+}));
+
 function DummyComponent1(): JSX.Element {
 	return <div>Dummy Component 1</div>;
 }
@@ -72,6 +77,36 @@ describe('RouteTab component', () => {
 		expect(history.location.pathname).toBe('/');
 		fireEvent.click(screen.getByRole('tab', { name: 'Tab2' }));
 		expect(history.location.pathname).toBe('/tab2');
+	});
+
+	it('applies the layout class alongside a custom className', () => {
+		const history = createMemoryHistory();
+		const { container } = render(
+			<Router history={history}>
+				<RouteTab
+					history={history}
+					routes={testRoutes}
+					activeKey="Tab1"
+					className="custom-tabs"
+				/>
+			</Router>,
+		);
+		expect(container.querySelector('.ant-tabs')).toHaveClass(
+			'routeTab',
+			'custom-tabs',
+		);
+	});
+
+	it('renders the active tab content inside an overlay scrollbar', () => {
+		const history = createMemoryHistory();
+		const { container } = render(
+			<Router history={history}>
+				<RouteTab history={history} routes={testRoutes} activeKey="Tab1" />
+			</Router>,
+		);
+		expect(
+			container.querySelector('.ant-tabs-tabpane-active > .overlay-scrollbar'),
+		).toHaveTextContent('Dummy Component 1');
 	});
 
 	it('calls onChangeHandler on tab change', () => {

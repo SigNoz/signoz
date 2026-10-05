@@ -8,6 +8,7 @@ import (
 
 	"github.com/huandu/go-sqlbuilder"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
@@ -264,15 +265,11 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 			query.Filter.Expression,
 			querybuilder.FilterExprVisitorOpts{
 				Context:            ctx,
-				OrgID:              b.orgID,
-				Flagger:            b.stmtBuilder.fl,
+				Query:              querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end),
+				Storage:            b.stmtBuilder.storage,
 				Logger:             b.stmtBuilder.logger,
-				FieldMapper:        b.stmtBuilder.fm,
-				ConditionBuilder:   b.stmtBuilder.cb,
 				FieldKeys:          keys,
 				SkipResourceFilter: true,
-				StartNs:            b.start,
-				EndNs:              b.end,
 			},
 		)
 		if err != nil {
@@ -488,17 +485,18 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	}
 
 	// Add selectFields since we now have all base table columns
+	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for i, field := range b.operator.SelectFields {
 		if selectedFields[field.Name] {
 			continue
 		}
-		expr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.orgID, b.start, b.end, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			b.stmtBuilder.logger.WarnContext(ctx, "failed to map select field",
 				slog.String("field", field.Name), errors.Attr(err))
 			continue
 		}
-		sb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(expr), selectColumnAlias(i, field.Name)))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", expr, selectColumnAlias(i, field.Name))))
 		selectedFields[field.Name] = true
 	}
 
@@ -513,7 +511,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	// Add order by support
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
-		expr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.orgID, b.start, b.end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -631,8 +629,9 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 		int64(b.operator.StepInterval.Seconds()),
 	))
 
+	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.orgID, b.start, b.end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -641,7 +640,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 				err,
 			)
 		}
-		sb.SelectMore(fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), gb.Name))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, clickhousesql.Identifier(gb.Name))))
 	}
 
 	var allAggChArgs []any
@@ -676,7 +675,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	if len(b.operator.GroupBy) > 0 {
 		groupByKeys := make([]string, len(b.operator.GroupBy))
 		for i, gb := range b.operator.GroupBy {
-			groupByKeys[i] = fmt.Sprintf("`%s`", gb.Name)
+			groupByKeys[i] = sqlbuilder.Escape(clickhousesql.Identifier(gb.Name))
 		}
 		sb.GroupBy(groupByKeys...)
 	}
@@ -687,7 +686,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 		if ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(clickhousesql.Identifier(orderBy.Key.Name)), orderBy.Direction.StringValue()))
 		}
 	}
 	sb.OrderBy("ts desc")
@@ -727,8 +726,9 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 
 	sb := sqlbuilder.NewSelectBuilder()
 
+	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.orgID, b.start, b.end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -737,7 +737,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 				err,
 			)
 		}
-		sb.SelectMore(fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), gb.Name))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, clickhousesql.Identifier(gb.Name))))
 	}
 
 	rateInterval := (b.end - b.start) / querybuilder.NsToSeconds
@@ -789,7 +789,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 	if len(b.operator.GroupBy) > 0 {
 		groupByKeys := make([]string, len(b.operator.GroupBy))
 		for i, gb := range b.operator.GroupBy {
-			groupByKeys[i] = fmt.Sprintf("`%s`", gb.Name)
+			groupByKeys[i] = sqlbuilder.Escape(clickhousesql.Identifier(gb.Name))
 		}
 		sb.GroupBy(groupByKeys...)
 	}
@@ -853,8 +853,9 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey) (*qbtypes.Statement, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
+	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.orgID, b.start, b.end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -863,7 +864,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 				err,
 			)
 		}
-		sb.SelectMore(fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), gb.Name))
+		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, clickhousesql.Identifier(gb.Name))))
 	}
 
 	var allAggChArgs []any
@@ -897,7 +898,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	if len(b.operator.GroupBy) > 0 {
 		groupByKeys := make([]string, len(b.operator.GroupBy))
 		for i, gb := range b.operator.GroupBy {
-			groupByKeys[i] = fmt.Sprintf("`%s`", gb.Name)
+			groupByKeys[i] = sqlbuilder.Escape(clickhousesql.Identifier(gb.Name))
 		}
 		sb.GroupBy(groupByKeys...)
 	}
@@ -908,7 +909,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 		if ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(clickhousesql.Identifier(orderBy.Key.Name)), orderBy.Direction.StringValue()))
 		}
 	}
 

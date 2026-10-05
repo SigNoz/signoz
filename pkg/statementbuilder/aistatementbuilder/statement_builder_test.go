@@ -49,7 +49,7 @@ func otelKeysMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 
 	// keys referenced by tests that aren't gen_ai semconv definitions
 	m["gen_ai.user.id"] = []*telemetrytypes.TelemetryFieldKey{strKey("gen_ai.user.id")}
-	m["_signoz.gen_ai.total_cost"] = []*telemetrytypes.TelemetryFieldKey{numKey("_signoz.gen_ai.total_cost")}
+	m["signoz.gen_ai.usage.tokens.cost"] = []*telemetrytypes.TelemetryFieldKey{numKey("signoz.gen_ai.usage.tokens.cost")}
 	m["gen_ai.usage.cached_input_tokens"] = []*telemetrytypes.TelemetryFieldKey{numKey("gen_ai.usage.cached_input_tokens")}
 	m["has_error"] = []*telemetrytypes.TelemetryFieldKey{{
 		Name:          "has_error",
@@ -196,14 +196,14 @@ SELECT trace_id,
     (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
+    any(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model')) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
-    sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost'), toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_total_cost,
+    sum(multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL)) AS estimated_total_cost,
     maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model')) AS max_llm_duration_nano,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
@@ -237,13 +237,13 @@ func TestBuild_FullSQL_TraceList_MaterializedColumns(t *testing.T) {
 	assertSQLEqual(t, `
 WITH matched AS (
     SELECT trace_id,
-        maxIf(timestamp, (attribute_string_gen_ai$$request$$model_exists OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time
+        maxIf(timestamp, (attribute_string_gen_ai$$request$$model_exists = true OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE timestamp >= '1747947419000000000'
       AND timestamp < '1747983448000000000'
       AND ts_bucket_start >= 1747945619
       AND ts_bucket_start <= 1747983448
-      AND ((attribute_string_gen_ai$$request$$model_exists OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name')))
+      AND ((attribute_string_gen_ai$$request$$model_exists = true OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name')))
     GROUP BY trace_id
     ORDER BY last_activity_time DESC, trace_id DESC
     LIMIT 20
@@ -267,17 +267,17 @@ SELECT trace_id,
     (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
-    countIf(attribute_string_gen_ai$$request$$model_exists) AS llm_call_count,
+    any(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS service.name,
+    countIf(attribute_string_gen_ai$$request$$model_exists = true) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
-    sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)) AS input_tokens,
+    sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists = true, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
-    coalesce(sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
-    sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost'), toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_total_cost,
-    maxIf(duration_nano, attribute_string_gen_ai$$request$$model_exists) AS max_llm_duration_nano,
+    coalesce(sum(multiIf(attribute_number_gen_ai$$usage$$input_tokens_exists = true, toFloat64(attribute_number_gen_ai$$usage$$input_tokens), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
+    sum(multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL)) AS estimated_total_cost,
+    maxIf(duration_nano, attribute_string_gen_ai$$request$$model_exists = true) AS max_llm_duration_nano,
     countIf(has_error = true) AS error_count,
-    maxIf(timestamp, (attribute_string_gen_ai$$request$$model_exists OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
+    maxIf(timestamp, (attribute_string_gen_ai$$request$$model_exists = true OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
     argMinIf(multiIf(mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.input.messages')) AS input,
     argMaxIf(multiIf(mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL), timestamp, mapContains(attributes_string, 'gen_ai.output.messages')) AS output
 FROM signoz_traces.distributed_signoz_index_v3
@@ -340,14 +340,14 @@ SELECT trace_id,
     (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
+    any(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model')) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
-    sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost'), toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_total_cost,
+    sum(multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL)) AS estimated_total_cost,
     maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model')) AS max_llm_duration_nano,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
@@ -409,14 +409,14 @@ SELECT trace_id,
     (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
+    any(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model')) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
-    sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost'), toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_total_cost,
+    sum(multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL)) AS estimated_total_cost,
     maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model')) AS max_llm_duration_nano,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
@@ -479,14 +479,14 @@ SELECT trace_id,
     (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
+    any(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model')) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
-    sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost'), toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_total_cost,
+    sum(multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL)) AS estimated_total_cost,
     maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model')) AS max_llm_duration_nano,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
@@ -555,14 +555,14 @@ SELECT trace_id,
     (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
+    any(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model')) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
-    sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost'), toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_total_cost,
+    sum(multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL)) AS estimated_total_cost,
     maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model')) AS max_llm_duration_nano,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
@@ -632,14 +632,14 @@ SELECT trace_id,
     (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(multiIf(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS service.name,
+    any(multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS service.name,
     countIf(mapContains(attributes_string, 'gen_ai.request.model')) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
-    sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost'), toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_total_cost,
+    sum(multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL)) AS estimated_total_cost,
     maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model')) AS max_llm_duration_nano,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
@@ -676,7 +676,7 @@ SELECT timestamp AS __SELECT_KEY_0_timestamp, trace_id AS __SELECT_KEY_1_trace_i
     http_url AS __SELECT_KEY_17_http_url, external_http_method AS __SELECT_KEY_18_external_http_method,
     http_method AS __SELECT_KEY_19_http_method, http_host AS __SELECT_KEY_20_http_host, db_name AS __SELECT_KEY_21_db_name,
     db_operation AS __SELECT_KEY_22_db_operation, has_error AS __SELECT_KEY_23_has_error, is_remote AS __SELECT_KEY_24_is_remote,
-    attributes_string, attributes_number, attributes_bool, resources_string
+    attributes_string, attributes_number, attributes_bool, resources_string, attributes
 FROM signoz_traces.distributed_signoz_index_v3
 WHERE (((mapContains(attributes_string, 'gen_ai.request.model')
         OR mapContains(attributes_string, 'gen_ai.tool.name')
@@ -832,14 +832,14 @@ SELECT trace_id,
     (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(multiIf(multiIf(resource.`+"`service.name`"+` IS NOT NULL, resource.`+"`service.name`"+`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`+"`service.name`"+` IS NOT NULL, resource.`+"`service.name`"+`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `+"`service.name`"+`,
+    any(multiIf(resource.`+"`service.name`"+` IS NOT NULL, resource.`+"`service.name`"+`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `+"`service.name`"+`,
     countIf(mapContains(attributes_string, 'gen_ai.request.model')) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
-    sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost'), toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_total_cost,
+    sum(multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL)) AS estimated_total_cost,
     maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model')) AS max_llm_duration_nano,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,
@@ -855,12 +855,11 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 
 	assert.Empty(t, attrStmt.Warnings)
 
-	// span. corrects to the same attribute (identical SQL) but the span-context
-	// metadata lookup misses, surfacing a key-not-found warning.
+	// span. is the signal's own context, so it resolves to the same attribute
+	// (identical SQL) without a warning.
 	spanStmt := build("span.output_tokens > 100")
 	assert.Equal(t, renderSQL(t, attrStmt), renderSQL(t, spanStmt))
-	require.Len(t, spanStmt.Warnings, 1)
-	assert.Contains(t, spanStmt.Warnings[0], "key `output_tokens` not found in metadata")
+	assert.Empty(t, spanStmt.Warnings)
 
 	// bare spelling is claimed by the aggregate alias
 	bareStmt := build("output_tokens > 100")
@@ -900,14 +899,14 @@ SELECT trace_id,
     (max(toUnixTimestamp64Nano(timestamp) + duration_nano) - min(toUnixTimestamp64Nano(timestamp))) AS trace_duration_nano,
     count() AS span_count,
     anyIf(name, parent_span_id = '') AS root_span_name,
-    any(multiIf(multiIf(resource.`+"`service.name`"+` IS NOT NULL, resource.`+"`service.name`"+`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`+"`service.name`"+` IS NOT NULL, resource.`+"`service.name`"+`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `+"`service.name`"+`,
+    any(multiIf(resource.`+"`service.name`"+` IS NOT NULL, resource.`+"`service.name`"+`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `+"`service.name`"+`,
     countIf(mapContains(attributes_string, 'gen_ai.request.model')) AS llm_call_count,
     countIf(mapContains(attributes_string, 'gen_ai.tool.name')) AS tool_call_count,
     uniqIf(multiIf(mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL), mapContains(attributes_string, 'gen_ai.tool.name')) AS distinct_tool_count,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)) AS input_tokens,
     sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens,
     coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL)), 0) + coalesce(sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)), 0) AS total_tokens,
-    sum(multiIf(mapContains(attributes_number, '_signoz.gen_ai.total_cost'), toFloat64(attributes_number['_signoz.gen_ai.total_cost']), NULL)) AS estimated_total_cost,
+    sum(multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL)) AS estimated_total_cost,
     maxIf(duration_nano, mapContains(attributes_string, 'gen_ai.request.model')) AS max_llm_duration_nano,
     countIf(has_error = true) AS error_count,
     maxIf(timestamp, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AS last_activity_time,

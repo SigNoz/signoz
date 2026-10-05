@@ -83,7 +83,13 @@ This command:
 
    You should see: `{"status":"ok"}`
 
-> 💡 **Tip**: The API server runs at `http://localhost:8080/` by default
+3. Stop it when you're done:
+   ```bash
+   make go-stop
+   ```
+
+> 💡 **Tip**: The API server runs at `http://localhost:8080/` by default. You can configure this using `apiserver.address` configuration option. See
+> [running more than one instance](#how-do-i-run-more-than-one-instance) if you need that for agentic testing.
 
 ### 4. Setting up the Frontend
 
@@ -118,6 +124,36 @@ To verify everything is working correctly:
 2. **Check OTel Collector**: `curl http://localhost:13133` (should return health status)
 3. **Check Backend**: `curl http://localhost:8080/api/v1/health` (should return `{"status":"ok"}`)
 4. **Check Frontend**: Open `http://localhost:3301` in your browser
+
+## How do I run more than one instance?
+
+Handy when you keep several branches checked out as separate git worktrees. Every port
+and path below is read from the environment, so set them on the `make` call:
+
+```bash
+SIGNOZ_APISERVER_ADDRESS=0.0.0.0:8081 \
+SIGNOZ_SQLSTORE_SQLITE_PATH=/path/to/main/sqlite.db \
+SIGNOZ_INSTRUMENTATION_METRICS_READERS_PULL_EXPORTER_PROMETHEUS_PORT=9091 \
+make go-run-community
+```
+
+| Variable | Default | Why you'd change it |
+| --- | --- | --- |
+| `SIGNOZ_APISERVER_ADDRESS` | `0.0.0.0:8080` | Address the API server listens on |
+| `SIGNOZ_SQLSTORE_SQLITE_PATH` | `signoz.db` in worktree | To reuse same database |
+| `SIGNOZ_INSTRUMENTATION_METRICS_READERS_PULL_EXPORTER_PROMETHEUS_PORT` | `9090` | Bound by the Prometheus metrics exporter on startup |
+
+Point the frontend at whichever backend you want, in `frontend/.env`:
+
+```env
+VITE_FRONTEND_API_ENDPOINT=http://localhost:8081
+```
+
+Stop an instance using the address it was started on:
+
+```bash
+make go-stop SIGNOZ_APISERVER_ADDRESS=0.0.0.0:8081
+```
 
 ## How to send test data?
 

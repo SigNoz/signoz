@@ -1,18 +1,13 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import type { Having } from 'types/api/queryBuilder/queryBuilderData';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import type { Having as HavingV5 } from 'types/api/v5/queryRange';
+import type { Having } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
-const buildSumGreaterThanZeroHaving = (
-	metricKey: string,
-	useV5HavingFormat: boolean,
-): Having[] | HavingV5 =>
-	useV5HavingFormat
-		? { expression: `sum(${metricKey}) > 0` }
-		: [{ columnName: `SUM(${metricKey})`, op: '>', value: 0 }];
+const buildSumGreaterThanZeroHaving = (metricKey: string): Having => ({
+	expression: `sum(${metricKey}) > 0`,
+});
 
 export const getPodQueryPayload = (
 	clusterName: string,
@@ -1550,7 +1545,6 @@ export const getHostQueryPayload = (
 	hostName: string,
 	start: number,
 	end: number,
-	useV5HavingFormat = false,
 ): GetQueryResultsProps[] => {
 	const hostNameKey = 'host.name';
 	const cpuTimeKey = 'system.cpu.time';
@@ -1813,7 +1807,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: buildSumGreaterThanZeroHaving(fsUsageKey, useV5HavingFormat),
+							having: buildSumGreaterThanZeroHaving(fsUsageKey),
 							legend: '{{mountpoint}}',
 							limit: null,
 							orderBy: [],
@@ -1862,7 +1856,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: buildSumGreaterThanZeroHaving(fsUsageKey, useV5HavingFormat),
+							having: buildSumGreaterThanZeroHaving(fsUsageKey),
 							legend: '{{mountpoint}}',
 							limit: null,
 							orderBy: [],
@@ -2088,7 +2082,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: buildSumGreaterThanZeroHaving(netIoKey, useV5HavingFormat),
+							having: buildSumGreaterThanZeroHaving(netIoKey),
 							legend: '{{device}}::{{direction}}',
 							limit: 30,
 							orderBy: [],
@@ -2544,7 +2538,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: buildSumGreaterThanZeroHaving(diskOpsKey, useV5HavingFormat),
+							having: buildSumGreaterThanZeroHaving(diskOpsKey),
 							legend: '{{device}}::{{direction}}',
 							limit: null,
 							orderBy: [],
@@ -2613,7 +2607,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: buildSumGreaterThanZeroHaving(diskPendingKey, useV5HavingFormat),
+							having: buildSumGreaterThanZeroHaving(diskPendingKey),
 							legend: '{{device}}',
 							limit: null,
 							orderBy: [],
@@ -2689,7 +2683,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: buildSumGreaterThanZeroHaving(diskOpTimeKey, useV5HavingFormat),
+							having: buildSumGreaterThanZeroHaving(diskOpTimeKey),
 							legend: '{{device}}::{{direction}}',
 							limit: null,
 							orderBy: [],

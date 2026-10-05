@@ -9,6 +9,10 @@
 	transition: width 0.18s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
+.denied {
+	padding: 16px 12px;
+}
+
 .collapsed {
 	width: 0;
 	border-right-color: transparent;

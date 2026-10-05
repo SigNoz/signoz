@@ -10,12 +10,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
+	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
@@ -42,9 +44,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go"
@@ -90,6 +94,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ querier.Handler }{},
 		struct{ serviceaccount.Handler }{},
 		struct{ serviceaccount.Getter }{},
+		struct{ user.Getter }{},
 		struct{ factory.Handler }{},
 		struct{ cloudintegration.Handler }{},
 		struct{ rulestatehistory.Handler }{},
@@ -101,6 +106,11 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ ruler.Handler }{},
 		struct{ statsreporter.Handler }{},
 		struct{ savedview.Handler }{},
+		global.Config{},
+		struct{ identn.IdentNResolver }{},
+		struct{ sharder.Sharder }{},
+		struct{ auditor.Auditor }{},
+		struct{ web.Web }{},
 		struct{ quickfilter.Module }{},
 		struct{ quickfilter.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
@@ -165,6 +175,7 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 	}
 
 	attachDiscriminators(openapi.reflector.Spec)
+	openapi.collector.AttachStabilities(openapi.reflector.Spec)
 
 	// The library's MarshalYAML does a JSON round-trip that converts all numbers
 	// to float64, causing large integers (e.g. epoch millisecond timestamps) to

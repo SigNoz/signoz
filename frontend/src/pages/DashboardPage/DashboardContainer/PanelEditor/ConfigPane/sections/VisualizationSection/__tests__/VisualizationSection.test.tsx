@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesStackModeDTO,
+	DashboardtypesTimePreferenceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import VisualizationSection from '../VisualizationSection';
 
@@ -8,9 +11,14 @@ import VisualizationSection from '../VisualizationSection';
 // the test doesn't pull the whole panel registry (renderers, chart libs).
 jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: jest.fn(() => ({
+		mode: 'query',
 		supportedSignals: ['metrics', 'logs', 'traces'],
 		supportedQueryTypes: ['builder', 'clickhouse_sql', 'promql'],
 	})),
+	PANEL_OPTIONS: [
+		{ kind: 'signoz/TimeSeriesPanel', displayName: 'Time Series' },
+		{ kind: 'signoz/TablePanel', displayName: 'Table' },
+	].map((option) => ({ ...option, icon: (): null => null })),
 }));
 
 // Open the antd Select by clicking its selector, then pick the option by label.
@@ -108,6 +116,43 @@ describe('VisualizationSection', () => {
 			timePreference: 'global_time',
 			stackedBarChart: true,
 		});
+	});
+
+	it('writes the chosen stack mode through the segmented control', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(
+			<VisualizationSection
+				value={{ fillSpans: true }}
+				controls={{ switchPanelKind: true, stackMode: true }}
+				onChange={onChange}
+			/>,
+		);
+
+		expect(screen.getByTestId('panel-editor-v2-stack-mode')).toBeInTheDocument();
+		await user.click(screen.getByText('Percent'));
+
+		expect(onChange).toHaveBeenCalledWith({
+			fillSpans: true,
+			stack: DashboardtypesStackModeDTO.percent,
+		});
+	});
+
+	it('renders no stack-mode control for a kind that declares bar stacking', () => {
+		render(
+			<VisualizationSection
+				value={undefined}
+				controls={{ switchPanelKind: true, stacking: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByTestId('panel-editor-v2-stacked-bar-chart'),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('panel-editor-v2-stack-mode'),
+		).not.toBeInTheDocument();
 	});
 
 	it('toggles fill spans through onChange', () => {

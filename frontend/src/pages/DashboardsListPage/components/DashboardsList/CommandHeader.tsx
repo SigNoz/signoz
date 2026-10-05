@@ -8,7 +8,6 @@ interface Props {
 	label: string;
 	count: number;
 	isModified: boolean;
-	canCreate: boolean;
 	onCreate: () => void;
 }
 
@@ -16,7 +15,6 @@ function CommandHeader({
 	label,
 	count,
 	isModified,
-	canCreate,
 	onCreate,
 }: Props): JSX.Element {
 	return (
@@ -27,7 +25,7 @@ function CommandHeader({
 				<span className={styles.countPill}>{count}</span>
 			</div>
 			<div className={styles.grow} />
-			{canCreate && <NewDashboardButton onClick={onCreate} />}
+			<NewDashboardButton onClick={onCreate} />
 		</div>
 	);
 }

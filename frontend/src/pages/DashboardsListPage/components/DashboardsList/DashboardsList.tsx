@@ -5,8 +5,10 @@ import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import useComponentPermission from 'hooks/useComponentPermission';
+import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import { LIST_CHECKS } from 'pages/DashboardsListPage/constants/permissions';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { toAPIError } from 'utils/errorUtils';
@@ -48,11 +50,8 @@ function DashboardsList(): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();
 
 	const { user } = useAppContext();
-	const [editDashboard, canCreateNewDashboard] = useComponentPermission(
-		['edit_dashboard', 'create_new_dashboards'],
-		user.role,
-	);
-	const canEdit = !!editDashboard;
+	// `list` also authorizes pinning and saved views, so it gates the table only.
+	const { canList } = useDashboardCollectionPermissions();
 
 	const { query, isEmpty: filtersEmpty, setQuery } = useDashboardFilters();
 	const [sortColumn, setSortColumn] = useSortColumn();
@@ -81,6 +80,7 @@ function DashboardsList(): JSX.Element {
 		sortOrder,
 		setSortColumn,
 		setSortOrder,
+		canListDashboards: canList,
 	});
 
 	const railCollapsed = useDashboardViewsStore((s) => s.railCollapsed);
@@ -144,7 +144,7 @@ function DashboardsList(): JSX.Element {
 		error,
 		refetch,
 	} = useListDashboardsForUserV2(listParams, {
-		query: { keepPreviousData: true },
+		query: { keepPreviousData: true, enabled: canList },
 	});
 
 	const apiError = useMemo(
@@ -271,6 +271,7 @@ function DashboardsList(): JSX.Element {
 	// The workspace-empty CTA ("create your first dashboard") belongs only to the
 	// unfiltered All view; every other view's zero result is a no-results state.
 	const showWorkspaceEmpty =
+		canList &&
 		!error &&
 		dashboards.length === 0 &&
 		activeViewId === BuiltinViewId.All &&
@@ -295,15 +296,11 @@ function DashboardsList(): JSX.Element {
 				onReset={handleResetView}
 				onDelete={handleRemoveView}
 				onRename={renameView}
-				canEdit={canEdit}
 			/>
 			<div className={styles.main}>
 				<div className={styles.mainScroll}>
 					{isWorkspaceEmpty ? (
-						<WorkspaceEmptyState
-							canCreate={canCreateNewDashboard}
-							onCreate={openCreate}
-						/>
+						<WorkspaceEmptyState onCreate={openCreate} />
 					) : (
 						<>
 							<div className={styles.headerZone}>
@@ -311,43 +308,48 @@ function DashboardsList(): JSX.Element {
 									label={activeLabel}
 									count={total}
 									isModified={isModified}
-									canCreate={canCreateNewDashboard}
 									onCreate={openCreate}
 								/>
 								<FilterZone
 									query={query}
 									creatorOptions={creatorOptions}
 									source={source}
+									disabled={!canList}
 									onQueryChange={handleQueryChange}
 								/>
 							</div>
 							<div className={styles.viewContent}>
-								<DashboardsResults
-									isLoading={isLoading}
-									hasError={!!error}
-									isCloudUser={!!isCloudUser}
-									onRetry={(): void => {
-										refetch();
-									}}
-									errorHttpStatus={errorHttpStatus}
-									errorMessage={errorMessage}
-									dashboards={dashboards}
-									activeViewId={activeViewId}
-									searchValue={query}
-									hasFilters={!filtersEmpty}
-									sortColumn={sortColumn}
-									onSortChange={onSortChange}
-									sortOrder={sortOrder}
-									onOrderChange={onOrderChange}
-									page={page}
-									pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
-									total={total}
-									onPageChange={setPage}
-									canEdit={canEdit}
-									showUpdatedAt={visibleColumns.updatedAt}
-									showUpdatedBy={visibleColumns.updatedBy}
-									loading={isFetching}
-								/>
+								{/* Fails closed, unlike the guard's default: the fetch is
+								    already gated on the same check, so falling open would
+								    render the table shell with nothing in it and no reason
+								    given. */}
+								<AuthZGuardContent checks={LIST_CHECKS} onFailRenderContent={false}>
+									<DashboardsResults
+										isLoading={isLoading}
+										hasError={!!error}
+										isCloudUser={!!isCloudUser}
+										onRetry={(): void => {
+											refetch();
+										}}
+										errorHttpStatus={errorHttpStatus}
+										errorMessage={errorMessage}
+										dashboards={dashboards}
+										activeViewId={activeViewId}
+										searchValue={query}
+										hasFilters={!filtersEmpty}
+										sortColumn={sortColumn}
+										onSortChange={onSortChange}
+										sortOrder={sortOrder}
+										onOrderChange={onOrderChange}
+										page={page}
+										pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
+										total={total}
+										onPageChange={setPage}
+										showUpdatedAt={visibleColumns.updatedAt}
+										showUpdatedBy={visibleColumns.updatedBy}
+										loading={isFetching}
+									/>
+								</AuthZGuardContent>
 							</div>
 						</>
 					)}

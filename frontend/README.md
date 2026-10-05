@@ -88,6 +88,17 @@ pnpm test
 pnpm tsgo --noEmit
 ```
 
+## Storybook
+
+```bash
+pnpm storybook
+```
+
+Opens [http://localhost:6006](http://localhost:6006). Pages run against msw
+mocks with no backend; query-param navigation works inside a story, leaving the
+page is blocked. See [`src/storybook/README.md`](src/storybook/README.md) for the
+override surface.
+
 ## Linting
 
 ```bash
