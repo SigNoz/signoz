@@ -125,6 +125,7 @@ func (b *logQueryStatementBuilder) Build(
 	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	keySelectors, warnings := getKeySelectors(query, bodyJSONEnabled)
+	keySelectors = querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, keySelectors)
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err

@@ -225,17 +225,21 @@ export const dashboardMocks = defineStoryMocks({
 				}),
 			),
 
-			rest.post(
-				'http://localhost/api/v2/variables/query',
-				response.json(() => ({
-					status: 'success',
-					data: { variableValues: serviceVariableValues(values.variableValues) },
-				})),
+			// The variable bar resolves before the panels and stays laid out while
+			// they load or fail, so its two endpoints answer on their own rather
+			// than through the Data control.
+			rest.post('http://localhost/api/v2/variables/query', (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: { variableValues: serviceVariableValues(values.variableValues) },
+					}),
+				),
 			),
 
-			rest.get(
-				'http://localhost/api/v1/fields/values',
-				response.json(() => fieldValuesResponse(NAMESPACE_VALUES)),
+			rest.get('http://localhost/api/v1/fields/values', (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(fieldValuesResponse(NAMESPACE_VALUES))),
 			),
 
 			// The header reads the public link on every load, so it answers even while
