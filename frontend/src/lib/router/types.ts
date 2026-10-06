@@ -1,7 +1,7 @@
 /**
- * Facade contracts for the react-router v5 -> v6 migration. Every shape here is
- * defined the way v6 / history@5 behaves; the v5-backed implementations adapt
- * up to it. See frontend/docs/react-router-v6-migration.md.
+ * Facade contracts for the router. Every shape here is defined the way
+ * react-router v6+ / history@5 behaves; the v5-backed implementations adapt up
+ * to it.
  */
 
 export type NavigationAction = 'PUSH' | 'REPLACE' | 'POP';
