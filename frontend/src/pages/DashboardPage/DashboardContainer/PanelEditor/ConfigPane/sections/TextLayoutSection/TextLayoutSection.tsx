@@ -34,12 +34,12 @@ const INITIAL_CUSTOM_COLOR = '#3A2A63';
  */
 function TextLayoutSection({
 	value,
-	defaultValue,
+	savedValue,
 	onChange,
 }: SectionEditorProps<SectionKind.TextLayout>): JSX.Element {
 	const theme = useIsDarkMode() ? PanelTheme.Dark : PanelTheme.Light;
 	const background = resolveTextBackground(value?.background, theme);
-	const reset = createFieldResetter(value, defaultValue, onChange);
+	const reset = createFieldResetter(value, savedValue, onChange);
 
 	return (
 		<>

@@ -35,13 +35,13 @@ const FILL_OPACITY_STEP = 0.01;
  */
 function ChartAppearanceSection({
 	value,
-	defaultValue,
+	savedValue,
 	controls,
 	onChange,
 	stepInterval,
 }: SectionEditorProps<SectionKind.ChartAppearance> &
 	Pick<SectionEditorContext, 'stepInterval'>): JSX.Element {
-	const reset = createFieldResetter(value, defaultValue, onChange);
+	const reset = createFieldResetter(value, savedValue, onChange);
 	const interpolation = value?.lineInterpolation;
 
 	return (

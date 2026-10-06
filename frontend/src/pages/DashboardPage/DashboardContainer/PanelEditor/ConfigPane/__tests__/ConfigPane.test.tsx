@@ -47,6 +47,7 @@ function renderConfigPane(
 ): React.ComponentProps<typeof ConfigPane> {
 	const props: React.ComponentProps<typeof ConfigPane> = {
 		spec: spec(),
+		savedSpec: spec(),
 		onChangeSpec: jest.fn(),
 		onChangePanelKind: jest.fn(),
 		queryType: EQueryType.QUERY_BUILDER,

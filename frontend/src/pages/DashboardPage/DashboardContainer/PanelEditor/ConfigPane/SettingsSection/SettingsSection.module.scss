@@ -33,17 +33,6 @@
 	color: var(--l1-foreground);
 }
 
-.summary {
-	flex: 1;
-	min-width: 0;
-	overflow: hidden;
-	font-size: 12px;
-	text-align: right;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	color: var(--l2-foreground);
-}
-
 .chevron {
 	flex: none;
 	color: var(--l3-foreground);

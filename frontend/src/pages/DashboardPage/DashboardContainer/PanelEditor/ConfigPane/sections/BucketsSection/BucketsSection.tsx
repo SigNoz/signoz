@@ -17,11 +17,11 @@ import { createFieldResetter } from '../../utils/changes';
  */
 function BucketsSection({
 	value,
-	defaultValue,
+	savedValue,
 	controls,
 	onChange,
 }: SectionEditorProps<SectionKind.Buckets>): JSX.Element {
-	const reset = createFieldResetter(value, defaultValue, onChange);
+	const reset = createFieldResetter(value, savedValue, onChange);
 
 	return (
 		<>

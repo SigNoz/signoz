@@ -1,7 +1,7 @@
 import styles from './ChangedDot.module.scss';
 
 function ChangedDot({
-	title = 'Changed from default',
+	title = 'Unsaved changes',
 }: {
 	title?: string;
 }): JSX.Element {

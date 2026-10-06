@@ -23,13 +23,13 @@ type FormattingSectionProps = SectionEditorProps<SectionKind.Formatting> &
  */
 function FormattingSection({
 	value,
-	defaultValue,
+	savedValue,
 	controls,
 	onChange,
 	tableColumns = [],
 	metricUnit,
 }: FormattingSectionProps): JSX.Element {
-	const reset = createFieldResetter(value, defaultValue, onChange);
+	const reset = createFieldResetter(value, savedValue, onChange);
 
 	return (
 		<>

@@ -243,8 +243,10 @@ export const SECTION_METADATA = {
  */
 export type SectionEditorProps<K extends SectionKind> = {
 	value: SectionSpecMap[K] | undefined;
-	/** The kind's seeded value for this slice; drives Reset and changed markers. */
+	/** The kind's seeded value for this slice; what an unset field renders as. */
 	defaultValue?: SectionSpecMap[K];
+	/** The slice as last saved; Reset and changed markers compare against it. */
+	savedValue?: SectionSpecMap[K];
 	onChange: (next: SectionSpecMap[K]) => void;
 } & (K extends ControlledSectionKind
 	? { controls: SectionControls[K] }

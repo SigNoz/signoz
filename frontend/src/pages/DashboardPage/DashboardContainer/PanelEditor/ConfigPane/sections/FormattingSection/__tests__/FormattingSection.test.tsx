@@ -84,7 +84,7 @@ describe('FormattingSection', () => {
 		expect(screen.getByTestId('decimals-preview')).toHaveTextContent('1,234.5');
 	});
 
-	it('resets a changed precision back to the default', async () => {
+	it('reverts a changed precision to its saved value', async () => {
 		const onChange = jest.fn();
 		render(
 			<FormattingSection
@@ -92,7 +92,7 @@ describe('FormattingSection', () => {
 					unit: 'bytes',
 					decimalPrecision: DashboardtypesPrecisionOptionDTO.NUMBER_4,
 				}}
-				defaultValue={{}}
+				savedValue={{ unit: 'bytes' }}
 				controls={{ decimals: true }}
 				onChange={onChange}
 			/>,
@@ -104,6 +104,19 @@ describe('FormattingSection', () => {
 			unit: 'bytes',
 			decimalPrecision: undefined,
 		});
+	});
+
+	it('offers no reset for a unit that matches the saved one', () => {
+		render(
+			<FormattingSection
+				value={{ unit: 'ms' }}
+				savedValue={{ unit: 'ms' }}
+				controls={{ unit: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.queryByTestId('config-field-reset')).not.toBeInTheDocument();
 	});
 
 	it('warns when the selected unit mismatches the metric unit', () => {

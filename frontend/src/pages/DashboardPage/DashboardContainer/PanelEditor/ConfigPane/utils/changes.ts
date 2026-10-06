@@ -11,21 +11,18 @@ function isUnset(value: unknown): boolean {
 	);
 }
 
-/**
- * Whether `value` differs from the default it renders over. Objects compare field-wise,
- * so an unset or explicit-but-default field doesn't count.
- */
-export function isChanged(value: unknown, defaultValue: unknown): boolean {
-	if (isPlainObject(value)) {
-		const defaults = (isPlainObject(defaultValue) ? defaultValue : {}) as Record<
-			string,
-			unknown
-		>;
-		return Object.entries(value as Record<string, unknown>).some(([key, field]) =>
-			isChanged(field, defaults[key]),
-		);
+/** Whether two slices differ, treating every unset form as equal (fields compare both ways). */
+export function isDifferent(a: unknown, b: unknown): boolean {
+	if (isPlainObject(a) || isPlainObject(b)) {
+		const left = (isPlainObject(a) ? a : {}) as Record<string, unknown>;
+		const right = (isPlainObject(b) ? b : {}) as Record<string, unknown>;
+		const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+		return [...keys].some((key) => isDifferent(left[key], right[key]));
 	}
-	return !isUnset(value) && !isEqual(value, defaultValue);
+	if (isUnset(a) && isUnset(b)) {
+		return false;
+	}
+	return !isEqual(a, b);
 }
 
 export interface FieldResetProps {
@@ -33,18 +30,18 @@ export interface FieldResetProps {
 	onReset: () => void;
 }
 
-/** Binds a slice to its defaults; call with the field(s) one control owns. */
+/** Binds a slice to its saved state; call with the field(s) one control owns. */
 export function createFieldResetter<T extends object>(
 	value: T | undefined,
-	defaultValue: T | undefined,
+	savedValue: T | undefined,
 	onChange: (next: T) => void,
 ): (...keys: (keyof T)[]) => FieldResetProps {
 	return (...keys) => ({
-		changed: keys.some((key) => isChanged(value?.[key], defaultValue?.[key])),
+		changed: keys.some((key) => isDifferent(value?.[key], savedValue?.[key])),
 		onReset: (): void => {
 			const next = { ...value } as T;
 			keys.forEach((key) => {
-				next[key] = defaultValue?.[key] as T[keyof T];
+				next[key] = savedValue?.[key] as T[keyof T];
 			});
 			onChange(next);
 		},

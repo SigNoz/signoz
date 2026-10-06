@@ -21,11 +21,12 @@ type LegendSectionProps = SectionEditorProps<SectionKind.Legend> &
 function LegendSection({
 	value,
 	defaultValue,
+	savedValue,
 	controls,
 	onChange,
 	legendSeries,
 }: LegendSectionProps): JSX.Element {
-	const reset = createFieldResetter(value, defaultValue, onChange);
+	const reset = createFieldResetter(value, savedValue, onChange);
 
 	return (
 		<>

@@ -11,12 +11,14 @@ import type { SeededPluginSpec } from 'pages/DashboardPage/DashboardContainer/Pa
 import type { SectionEditorContext } from '../sectionContext';
 import { getSectionDefault, resolveSectionEditor } from '../sectionRegistry';
 import SettingsSection from '../SettingsSection/SettingsSection';
-import { isChanged } from '../utils/changes';
+import { isDifferent } from '../utils/changes';
 import SectionHeaderQuickAdd from './SectionHeaderQuickAdd';
 
 type SectionSlotProps = {
 	config: SectionConfig;
 	spec: DashboardtypesPanelSpecDTO;
+	/** Last saved spec; a section whose slice differs from it is marked changed. */
+	savedSpec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** The kind's seeded plugin spec (`buildPluginSpec`). */
 	defaults: SeededPluginSpec;
@@ -55,6 +57,7 @@ const SECTION_HEADER_SLOT: Partial<
 function SectionSlot({
 	config,
 	spec,
+	savedSpec,
 	onChangeSpec,
 	defaults,
 	bare,
@@ -110,9 +113,10 @@ function SectionSlot({
 	}
 
 	const { title } = SECTION_METADATA[config.kind];
-	const { Component, get, update, summarize } = editor;
+	const { Component, get, update } = editor;
 	const value = get(spec);
 	const defaultValue = getSectionDefault(editor, spec, defaults);
+	const savedValue = get(savedSpec);
 	// Atomic sections carry no `controls`; controlled ones do.
 	const controls = 'controls' in config ? config.controls : undefined;
 	// Forwarded to editors that scope to the panel's unit (e.g. the thresholds unit picker).
@@ -138,6 +142,7 @@ function SectionSlot({
 		<Component
 			value={value}
 			defaultValue={defaultValue}
+			savedValue={savedValue}
 			controls={controls}
 			onChange={(next): void => onChangeSpec(update(spec, next))}
 			{...context}
@@ -152,8 +157,7 @@ function SectionSlot({
 	return (
 		<SettingsSection
 			title={title}
-			summary={summarize?.(value, controls, context)}
-			changed={isChanged(value, defaultValue)}
+			changed={isDifferent(value, savedValue)}
 			open={open}
 			onOpenChange={setOpen}
 			headerSlot={headerSlot}

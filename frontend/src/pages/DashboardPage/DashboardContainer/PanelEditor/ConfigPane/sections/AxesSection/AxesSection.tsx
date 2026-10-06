@@ -23,11 +23,11 @@ import {
  */
 function AxesSection({
 	value,
-	defaultValue,
+	savedValue,
 	controls,
 	onChange,
 }: SectionEditorProps<SectionKind.Axes>): JSX.Element {
-	const reset = createFieldResetter(value, defaultValue, onChange);
+	const reset = createFieldResetter(value, savedValue, onChange);
 
 	return (
 		<ConfigField

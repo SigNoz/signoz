@@ -42,6 +42,7 @@ type VisualizationSectionProps = SectionEditorProps<SectionKind.Visualization> &
 function VisualizationSection({
 	value,
 	defaultValue,
+	savedValue,
 	controls,
 	onChange,
 	panelKind,
@@ -50,7 +51,7 @@ function VisualizationSection({
 	queryType,
 	signal,
 }: VisualizationSectionProps): JSX.Element {
-	const reset = createFieldResetter(value, defaultValue, onChange);
+	const reset = createFieldResetter(value, savedValue, onChange);
 	const timePreference =
 		value?.timePreference ?? DashboardtypesTimePreferenceDTO.global_time;
 	const barLayout = value?.stackedBarChart

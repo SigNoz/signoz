@@ -1,36 +1,36 @@
-import { createFieldResetter, isChanged } from '../changes';
+import { createFieldResetter, isDifferent } from '../changes';
 
-describe('isChanged', () => {
+describe('isDifferent', () => {
 	it.each([
 		[undefined, undefined],
 		[false, undefined],
-		[null, undefined],
-		['', undefined],
+		[null, ''],
 		[[], undefined],
 		['solid', 'solid'],
 		[{ fillOnlyBelow: false }, undefined],
-		[{ lineStyle: 'solid' }, { lineStyle: 'solid', fillMode: 'none' }],
-	])('treats %p over default %p as unchanged', (value, defaultValue) => {
-		expect(isChanged(value, defaultValue)).toBe(false);
+		[{ unit: 'ms' }, { unit: 'ms', decimalPrecision: '' }],
+	])('treats %p and saved %p as equal', (value, saved) => {
+		expect(isDifferent(value, saved)).toBe(false);
 	});
 
 	it.each([
 		['dashed', 'solid'],
 		[true, undefined],
+		[undefined, 'ms'],
 		[[{ value: 1 }], undefined],
 		[{ customColors: { a: '#fff' } }, {}],
-		[{ lineStyle: 'dashed' }, { lineStyle: 'solid' }],
-	])('treats %p over default %p as changed', (value, defaultValue) => {
-		expect(isChanged(value, defaultValue)).toBe(true);
+		[{ lineStyle: 'solid' }, { lineStyle: 'solid', fillMode: 'none' }],
+	])('treats %p and saved %p as different', (value, saved) => {
+		expect(isDifferent(value, saved)).toBe(true);
 	});
 });
 
 describe('createFieldResetter', () => {
-	it('restores only the named fields to their defaults', () => {
+	it('restores only the named fields to their saved values', () => {
 		const onChange = jest.fn();
 		const reset = createFieldResetter(
 			{ softMin: 1, softMax: 9, isLogScale: true },
-			{ isLogScale: false },
+			{ softMin: 2, isLogScale: false },
 			onChange,
 		);
 
@@ -39,7 +39,7 @@ describe('createFieldResetter', () => {
 		range.onReset();
 
 		expect(onChange).toHaveBeenCalledWith({
-			softMin: undefined,
+			softMin: 2,
 			softMax: undefined,
 			isLogScale: true,
 		});

@@ -12,8 +12,6 @@ interface SettingsSectionProps {
 	/** Controlled open state; when set, the section defers to `onOpenChange`. */
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
-	/** One-line digest of the section's values, shown while collapsed. */
-	summary?: string;
 	changed?: boolean;
 	/** Rendered between the title and the chevron. */
 	headerSlot?: ReactNode;
@@ -28,7 +26,6 @@ function SettingsSection({
 	defaultOpen = false,
 	open,
 	onOpenChange,
-	summary,
 	changed,
 	headerSlot,
 	children,
@@ -59,8 +56,7 @@ function SettingsSection({
 					onClick={toggle}
 				>
 					<span className={styles.title}>{title}</span>
-					{changed && <ChangedDot title="Has changed settings" />}
-					<span className={styles.summary}>{isOpen ? '' : summary}</span>
+					{changed && <ChangedDot title="Unsaved changes" />}
 				</button>
 				{headerSlot}
 				<ChevronDown

@@ -24,6 +24,8 @@ import { PanelKind } from '../../Panels/types/panelKind';
 interface ConfigPaneProps {
 	/** The panel spec — the single editing surface (title/description + section slices). */
 	spec: DashboardtypesPanelSpecDTO;
+	/** Last saved spec, the baseline for each section's changed marker. */
+	savedSpec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Switch the panel to another visualization kind. */
 	onChangePanelKind: (kind: PanelKind) => void;
@@ -58,6 +60,7 @@ interface ConfigPaneProps {
  */
 function ConfigPane({
 	spec,
+	savedSpec,
 	onChangeSpec,
 	onChangePanelKind,
 	originalPanelKind,
@@ -128,6 +131,7 @@ function ConfigPane({
 						bare
 						config={headerSection}
 						spec={spec}
+						savedSpec={savedSpec}
 						onChangeSpec={onChangeSpec}
 						defaults={defaults}
 						legendSeries={legendSeries}
@@ -154,6 +158,7 @@ function ConfigPane({
 									key={config.kind}
 									config={config}
 									spec={spec}
+									savedSpec={savedSpec}
 									onChangeSpec={onChangeSpec}
 									defaults={defaults}
 									legendSeries={legendSeries}
