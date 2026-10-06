@@ -211,28 +211,3 @@ func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, p
 
 	return nil
 }
-
-func (m *module) createIndexes(ctx context.Context, target promotetypes.Target, indexes []schemamigrator.Index) error {
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.TelemetrySignal:  target.Entry.Signal.StringValue(),
-		instrumentationtypes.CodeNamespace:    "promote",
-		instrumentationtypes.CodeFunctionName: "createIndexes",
-	})
-	if len(indexes) == 0 {
-		return nil
-	}
-
-	for _, index := range indexes {
-		alterStmt := schemamigrator.AlterTableAddIndex{
-			Database: target.DBName,
-			Table:    target.LocalTableName,
-			Index:    index,
-		}
-		op := alterStmt.OnCluster(m.telemetryStore.Cluster())
-		if err := m.telemetryStore.ClickhouseDB().Exec(ctx, op.ToSQL()); err != nil {
-			return errors.WrapInternalf(err, CodeFailedToCreateIndex, "failed to create index")
-		}
-	}
-
-	return nil
-}
