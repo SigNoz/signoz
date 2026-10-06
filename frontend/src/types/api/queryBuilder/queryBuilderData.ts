@@ -1,3 +1,4 @@
+import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { Format } from 'constants/formats/types';
 import { EQueryType } from 'types/common/dashboard';
@@ -28,6 +29,8 @@ export interface IBuilderFormula {
 	having?: Having[];
 	stepInterval?: number;
 	orderBy?: OrderByPayload[];
+	/** Heatmap only. */
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 }
 
 export type IBuilderTraceOperator = IBuilderQuery;
@@ -92,6 +95,8 @@ export type IBuilderQuery = {
 	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
 	source?: 'meter' | '';
 	builderQueryType?: BuilderQueryType;
+	/** Heatmap only. */
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 };
 
 export interface IClickHouseQuery {

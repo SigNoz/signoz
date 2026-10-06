@@ -3731,6 +3731,84 @@ components:
         hide:
           type: boolean
       type: object
+    DashboardtypesHeatmapAxes:
+      properties:
+        "y":
+          $ref: '#/components/schemas/DashboardtypesHeatmapAxis'
+      type: object
+    DashboardtypesHeatmapAxis:
+      properties:
+        scale:
+          $ref: '#/components/schemas/DashboardtypesHeatmapYScale'
+      type: object
+    DashboardtypesHeatmapChartAppearance:
+      properties:
+        colors:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColors'
+      type: object
+    DashboardtypesHeatmapColorMode:
+      enum:
+      - palette
+      - opacity
+      type: string
+    DashboardtypesHeatmapColorScale:
+      enum:
+      - log
+      - sqrt
+      - linear
+      type: string
+    DashboardtypesHeatmapColors:
+      properties:
+        fill:
+          type: string
+        maxCount:
+          nullable: true
+          type: number
+        minCount:
+          nullable: true
+          type: number
+        mode:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColorMode'
+        palette:
+          $ref: '#/components/schemas/DashboardtypesHeatmapPalette'
+        scale:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColorScale'
+        steps:
+          type: integer
+      type: object
+    DashboardtypesHeatmapPalette:
+      enum:
+      - ice
+      - moss
+      - rust
+      - graphite
+      - ember
+      - lagoon
+      - orchid
+      - verdant
+      - lava
+      - beacon
+      type: string
+    DashboardtypesHeatmapPanelSpec:
+      properties:
+        axes:
+          $ref: '#/components/schemas/DashboardtypesHeatmapAxes'
+        chartAppearance:
+          $ref: '#/components/schemas/DashboardtypesHeatmapChartAppearance'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
+    DashboardtypesHeatmapYScale:
+      enum:
+      - auto
+      - linear
+      - log
+      - symlog
+      type: string
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
@@ -4084,6 +4162,7 @@ components:
         mapping:
           signoz/AreaChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec'
           signoz/BarChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+          signoz/HeatmapPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
           signoz/HistogramPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
           signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
           signoz/NumberPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
@@ -4102,6 +4181,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -4114,6 +4194,7 @@ components:
       - signoz/HistogramPanel
       - signoz/ListPanel
       - signoz/TextPanel
+      - signoz/HeatmapPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
       properties:
@@ -4135,6 +4216,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/HeatmapPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesHeatmapPanelSpec'
       required:
       - kind
       - spec
