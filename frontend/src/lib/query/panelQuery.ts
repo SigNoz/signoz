@@ -104,7 +104,7 @@ export const getIsQueryModified = (
  * `panelTypeDataSourceFormValuesMap` the way `queryData` is, so a bucket axis has to be
  * dropped by hand. The request rejects one on any type but heatmap.
  */
-const withoutNonHeatmapBucketOptions = (
+const withHeatmapBucketOptions = (
 	formulas: IBuilderFormula[],
 	newPanelType: keyof PartialPanelTypes,
 ): IBuilderFormula[] => {
@@ -160,7 +160,7 @@ export function handleQueryChange(
 
 				return tempQuery;
 			}),
-			queryFormulas: withoutNonHeatmapBucketOptions(
+			queryFormulas: withHeatmapBucketOptions(
 				supersetQuery.builder.queryFormulas,
 				newPanelType,
 			),

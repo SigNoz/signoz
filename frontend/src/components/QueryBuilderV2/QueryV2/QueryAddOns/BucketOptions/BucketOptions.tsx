@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Button } from 'antd';
 import cx from 'classnames';
+import { Button } from '@signozhq/ui/button';
 import { InputNumber } from '@signozhq/ui/input-number';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { ChevronUp } from '@signozhq/icons';
@@ -48,14 +48,16 @@ function BucketOptions({
 	// A linear axis has no bounds to describe until it has a max value, so the picked
 	// kind is held here rather than read back off the emitted options: it has to survive
 	// the gap between choosing Linear and filling the field in.
-	const [kind, setKind] = useState<BucketKindOption>(
+	const [kind, setKind] = useState<BucketKindOption>(() =>
 		kindOptionOf(bucketOptions),
 	);
 	const linearSpec =
 		bucketOptions && isLinearBuckets(bucketOptions)
 			? bucketOptions.spec
 			: undefined;
-	const [logScale, setLogScale] = useState<number>(logScaleOf(bucketOptions));
+	const [logScale, setLogScale] = useState<number>(() =>
+		logScaleOf(bucketOptions),
+	);
 	const [maxValue, setMaxValue] = useState<number | null>(
 		linearSpec?.maxValue ?? null,
 	);
@@ -233,8 +235,12 @@ function BucketOptions({
 
 				{onClose && (
 					<Button
-						className={cx('periscope-btn', 'ghost', styles.closeButton)}
-						icon={<ChevronUp size={16} />}
+						color="secondary"
+						variant="ghost"
+						size="icon"
+						aria-label="Close bucket options"
+						className={styles.closeButton}
+						prefix={<ChevronUp size={16} />}
 						onClick={onClose}
 						data-testid="bucket-options-close"
 					/>

@@ -94,9 +94,6 @@ function useGetYAxisUnit(
 		[units],
 	);
 
-	// Derived, not stored: `useGetMetrics` rebuilds its array on every render, so a
-	// state-and-effect version schedules an update after every render — the shape
-	// React reports as "Maximum update depth exceeded".
 	const yAxisUnit = useMemo(() => {
 		// A single shared unit is the only thing a single axis can carry; metrics that
 		// disagree, or that carry no unit at all, leave the axis unitless.
