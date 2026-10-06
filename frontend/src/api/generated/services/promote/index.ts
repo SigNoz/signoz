@@ -48,7 +48,7 @@ const withQueryKey = <T extends object, K>(
 };
 
 /**
- * This endpoint lists the promoted paths of every JSON column, each annotated with its signal and context. The signal, context, promoted and indexes query parameters filter the listing.
+ * This endpoint lists the promoted paths of every JSON column, each annotated with its signal and context. The signal, context, promoted and indexes query parameters filter the listing. Requires the list scope of each signal the filters select, or of every signal when none match.
  * @summary List promoted paths
  */
 export const listPromotedPaths = (
@@ -146,7 +146,7 @@ export const invalidateListPromotedPaths = async (
 };
 
 /**
- * This endpoint promotes paths of JSON columns to their promoted columns. Each path names its promotion target with its signal and context, e.g. traces/attribute.
+ * This endpoint promotes paths of JSON columns to their promoted columns. Each path names its promotion target with its signal and context, e.g. traces/attribute. Requires the update scope of each signal in the request.
  * @summary Promote paths
  */
 export const promotePaths = (
