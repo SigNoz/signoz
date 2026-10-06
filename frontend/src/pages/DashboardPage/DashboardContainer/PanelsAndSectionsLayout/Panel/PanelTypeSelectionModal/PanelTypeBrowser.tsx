@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Search } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import cx from 'classnames';
 
@@ -101,13 +102,14 @@ function PanelTypeBrowser({
 				{visibleGroups.length === 0 && (
 					<div className={styles.empty}>
 						<span>No panel types match “{query}”</span>
-						<button
-							type="button"
-							className={styles.clearSearch}
+						<Button
+							variant="link"
+							color="primary"
+							size="sm"
 							onClick={(): void => setQuery('')}
 						>
 							Clear search
-						</button>
+						</Button>
 					</div>
 				)}
 			</div>

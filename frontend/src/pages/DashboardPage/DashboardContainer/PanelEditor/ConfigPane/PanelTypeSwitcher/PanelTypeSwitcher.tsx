@@ -66,19 +66,22 @@ function PanelTypeSwitcher({
 	return (
 		<div className={styles.field}>
 			<Typography.Text>Panel Type</Typography.Text>
-			<button
-				type="button"
+			<Button
+				variant="outlined"
+				color="secondary"
 				className={styles.trigger}
+				prefix={<Icon size={14} className={styles.triggerIcon} />}
+				suffix={
+					<span className={styles.triggerAction}>
+						<ArrowRightLeft size={14} />
+						Change
+					</span>
+				}
 				onClick={(): void => setIsOpen(true)}
-				data-testid="panel-editor-v2-type-switcher"
+				testId="panel-editor-v2-type-switcher"
 			>
-				<Icon size={14} className={styles.triggerIcon} />
 				<span className={styles.triggerName}>{displayName}</span>
-				<span className={styles.triggerAction}>
-					<ArrowRightLeft size={14} />
-					Change
-				</span>
-			</button>
+			</Button>
 			{canRevert && (
 				<Button
 					variant="link"

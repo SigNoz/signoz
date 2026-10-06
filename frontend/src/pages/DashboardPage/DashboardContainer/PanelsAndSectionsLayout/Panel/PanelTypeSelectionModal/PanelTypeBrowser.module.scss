@@ -168,17 +168,3 @@
 	font-size: 13px;
 	text-align: center;
 }
-
-.clearSearch {
-	padding: 0;
-	border: none;
-	background: none;
-	color: var(--bg-robin-500);
-	font: inherit;
-	font-size: 12.5px;
-	cursor: pointer;
-
-	&:hover {
-		color: var(--bg-robin-400);
-	}
-}

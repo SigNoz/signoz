@@ -8,21 +8,9 @@
 }
 
 .trigger {
-	display: flex;
-	align-items: center;
-	gap: 8px;
 	width: 100%;
 	padding: 5px 5px 5px 12px;
-	border: 1px solid var(--l2-border);
-	border-radius: 4px;
-	background: var(--l2-background);
-	font: inherit;
 	text-align: left;
-	cursor: pointer;
-
-	&:hover {
-		border-color: var(--l3-border);
-	}
 }
 
 .triggerIcon {
