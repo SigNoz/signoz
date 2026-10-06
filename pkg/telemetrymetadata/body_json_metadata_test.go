@@ -114,14 +114,44 @@ func TestUnfoldJSONSubColumnIndexExpr(t *testing.T) {
 }
 
 // ClickHouse stores a generated col.`path`::Type trace index expression as
-// CAST(col.`path`, 'Type'); the listing must parse that stored form back.
+// CAST(col.`path`, 'Type'), dropping quoting an identifier does not need; the
+// listing must parse that stored form back into the original path.
 func TestUnfoldJSONSubColumnIndexExprTracesRoundTrip(t *testing.T) {
-	target := promotetypes.NewTracesAttributesTarget()
-	expr := target.IndexExpression("attributes", "http.method", "String")
-	stored := fmt.Sprintf("CAST(%s, 'String')", strings.TrimSuffix(expr, "::String"))
+	testCases := []struct {
+		name         string
+		column       string
+		path         string
+		jsonDataType string
+		wantExpr     string
+		storedExpr   string
+	}{
+		{
+			name:         "DottedKey_BackticksPreservedInStorage",
+			column:       "attributes",
+			path:         "http.method",
+			jsonDataType: "String",
+			wantExpr:     "attributes.`http.method`::String",
+			storedExpr:   "CAST(attributes.`http.method`, 'String')",
+		},
+		{
+			name:         "PlainKey_UnquotedInStorage",
+			column:       "attributes_promoted",
+			path:         "status",
+			jsonDataType: "Int64",
+			wantExpr:     "attributes_promoted.`status`::Int64",
+			storedExpr:   "CAST(attributes_promoted.status, 'Int64')",
+		},
+	}
 
-	columnExpr, columnType, err := unfoldJSONSubColumnIndexExpr(stored)
-	require.NoError(t, err)
-	require.Equal(t, "attributes.`http.method`", columnExpr)
-	require.Equal(t, "String", columnType)
+	target := promotetypes.NewTracesAttributesTarget()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.wantExpr, target.IndexExpression(tc.column, tc.path, tc.jsonDataType))
+
+			columnExpr, columnType, err := unfoldJSONSubColumnIndexExpr(tc.storedExpr)
+			require.NoError(t, err)
+			require.Equal(t, tc.column+"."+tc.path, strings.ReplaceAll(columnExpr, "`", ""))
+			require.Equal(t, tc.jsonDataType, columnType)
+		})
+	}
 }
