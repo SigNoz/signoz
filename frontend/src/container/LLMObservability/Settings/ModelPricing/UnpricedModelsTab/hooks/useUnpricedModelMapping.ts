@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import { useQueryClient } from 'react-query';
+import logEvent from 'api/common/logEvent';
 import {
 	getListLLMPricingRulesQueryKey,
 	getListUnmappedLLMModelsQueryKey,
@@ -45,6 +46,10 @@ export function useUnpricedModelMapping(): UseUnpricedModelMappingResult {
 			setIsSaving(true);
 			try {
 				await createOrUpdate({ data: { rules: [payload] } });
+				void logEvent('AI Observability Model Pricing: Unpriced model mapped', {
+					modelName: model.modelName,
+					billingModelName: rule.modelName,
+				});
 				await Promise.all([
 					queryClient.invalidateQueries({
 						queryKey: getListUnmappedLLMModelsQueryKey(),

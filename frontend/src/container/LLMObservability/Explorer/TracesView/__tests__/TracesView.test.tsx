@@ -128,14 +128,7 @@ describe('TracesView column persistence', () => {
 		await findTable();
 
 		await waitFor(() => {
-			expect(persistedState()?.hiddenColumnIds).toStrictEqual([
-				'start_time',
-				'end_time',
-				'error_count',
-				'input',
-				'output',
-				'trace:tool_call_count:float64',
-			]);
+			expect(persistedState()?.hiddenColumnIds).toStrictEqual([]);
 		});
 		expect(screen.getByText(OPTIONS_TRIGGER)).toBeInTheDocument();
 		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
@@ -160,7 +153,7 @@ describe('TracesView column persistence', () => {
 		expect(screen.queryByText(OPTIONS_TRIGGER)).not.toBeInTheDocument();
 	});
 
-	it('renders only the default-visible columns when the field keys fail', async () => {
+	it('renders the display-only columns when the field keys fail', async () => {
 		mockFieldKeysFailure();
 		renderTracesView();
 
@@ -168,8 +161,8 @@ describe('TracesView column persistence', () => {
 
 		expect(screen.getByText('root_span_name')).toBeInTheDocument();
 		expect(screen.getByText('trace_id')).toBeInTheDocument();
-		expect(screen.queryByText('input')).not.toBeInTheDocument();
-		expect(screen.queryByText('output')).not.toBeInTheDocument();
+		expect(screen.getByText('input')).toBeInTheDocument();
+		expect(screen.queryByText('llm_call_count')).not.toBeInTheDocument();
 	});
 
 	it('leaves an existing selection untouched while the field keys fail', async () => {

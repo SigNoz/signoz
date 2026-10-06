@@ -159,7 +159,7 @@ function TracesView({
 
 	useEffect(() => {
 		if (!isLoading && !isFetching && !isError && rows.length !== 0) {
-			void logEvent('Traces Explorer: Data present', {
+			void logEvent('AI Observability Explorer: Data present', {
 				panelType: 'TRACE',
 			});
 		}

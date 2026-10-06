@@ -285,7 +285,6 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		key: ROUTES.API_MONITORING,
 		label: 'External APIs',
 		icon: <Binoculars size={16} />,
-		isNew: true,
 		isEnabled: true,
 		itemKey: 'external-apis',
 	},
@@ -293,10 +292,8 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		key: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		label: 'AI Observability',
 		icon: <Brain size={16} />,
-		isNew: true,
-		// Gated behind the `enable_ai_observability` feature flag in
-		// SideNav's `computedSecondaryMenuItems`; disabled by default.
-		isEnabled: false,
+		isBeta: true,
+		isEnabled: true,
 		itemKey: 'ai-observability',
 	},
 	{
@@ -568,7 +565,7 @@ export const getUserSettingsDropdownMenuItems = ({
     This is used to highlight the correct menu item when the user navigates to a new route
 **/
 export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
-	[ROUTES.TRACE]: ROUTES.TRACES_EXPLORER,
+	[ROUTES.TRACE_BASE]: ROUTES.TRACES_EXPLORER,
 	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACES_EXPLORER,
 	[ROUTES.LOGS_BASE]: ROUTES.LOGS_EXPLORER,
 	[ROUTES.METRICS_EXPLORER_BASE]: ROUTES.METRICS_EXPLORER,
@@ -580,7 +577,7 @@ export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 	// `getActiveMenuKeyFromPath` strips the URL down to its first segment;
 	// `/ai-assistant/<id>` reduces to `/ai-assistant`, which we point back
 	// to the AI Assistant menu item's concrete key.
-	'/ai-assistant': AI_ASSISTANT_NAV_KEY,
+	[ROUTES.AI_ASSISTANT_BASE]: AI_ASSISTANT_NAV_KEY,
 };
 
 export default menuItems;

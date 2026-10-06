@@ -300,14 +300,6 @@ describe('PrivateRoute', () => {
 			);
 		});
 
-		it('should redirect /logs-explorer/live to /logs/logs-explorer/live', () => {
-			renderPrivateRoute({ initialRoute: '/logs-explorer/live' });
-
-			expect(screen.getByTestId('location-display')).toHaveTextContent(
-				'/logs/logs-explorer/live',
-			);
-		});
-
 		it('should redirect /logs-save-views to /logs/saved-views', () => {
 			renderPrivateRoute({ initialRoute: '/logs-save-views' });
 
@@ -1588,24 +1580,14 @@ describe('PrivateRoute', () => {
 				deniedRoles: DENIED_ROLES,
 			},
 			TRACES_EXPLORER: { path: ROUTES.TRACES_EXPLORER, deniedRoles: DENIED_ROLES },
-			TRACE: { path: ROUTES.TRACE, deniedRoles: DENIED_ROLES },
 			TRACE_DETAIL: {
 				path: ROUTES.TRACE_DETAIL.replace(':id', 'trace-id-1'),
-				deniedRoles: DENIED_ROLES,
-			},
-			TRACE_DETAIL_OLD: {
-				path: ROUTES.TRACE_DETAIL_OLD.replace(':id', 'trace-id-1'),
 				deniedRoles: DENIED_ROLES,
 			},
 			// LOGS and LOGS_EXPLORER share a path - matchPath resolves it to whichever
 			// route definition comes last, and both keys are authz-aware either way.
 			LOGS: { path: ROUTES.LOGS, deniedRoles: DENIED_ROLES },
 			LOGS_EXPLORER: { path: ROUTES.LOGS_EXPLORER, deniedRoles: DENIED_ROLES },
-			LIVE_LOGS: { path: ROUTES.LIVE_LOGS, deniedRoles: DENIED_ROLES },
-			OLD_LOGS_EXPLORER: {
-				path: ROUTES.OLD_LOGS_EXPLORER,
-				deniedRoles: DENIED_ROLES,
-			},
 			METRICS_EXPLORER: {
 				path: ROUTES.METRICS_EXPLORER,
 				deniedRoles: DENIED_ROLES,

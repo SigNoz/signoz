@@ -1,6 +1,7 @@
 import { InputNumberProps, RadioProps, SelectProps } from 'antd';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { LogViewMode } from 'container/LogsTable';
+
+export type LogViewMode = 'raw' | 'table' | 'list';
 
 export enum FontSize {
 	SMALL = 'small',

@@ -1,0 +1,38 @@
+// Hands the parent's height down to the active pane and lets the pane scroll
+// its own content, so TopNav and the tab bar stay put. Child combinators only
+// (nested Tabs must not be caught).
+.routeTab {
+	flex: 1;
+	min-height: 0;
+}
+
+.routeTab > :global(.ant-tabs-content-holder) {
+	display: flex;
+	flex-direction: column;
+}
+
+.routeTab > :global(.ant-tabs-content-holder) > :global(.ant-tabs-content) {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.routeTab
+	> :global(.ant-tabs-content-holder)
+	> :global(.ant-tabs-content)
+	> :global(.ant-tabs-tabpane-active) {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.routeTab
+	> :global(.ant-tabs-content-holder)
+	> :global(.ant-tabs-content)
+	> :global(.ant-tabs-tabpane-active)
+	> :global(.overlay-scrollbar) {
+	flex: 1;
+	min-height: 0;
+}

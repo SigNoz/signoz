@@ -60,38 +60,29 @@ func (module *module) ListUnmappedModels(ctx context.Context, orgID valuer.UUID)
 	return unmapped, nil
 }
 
-// CreateOrUpdate applies a batch of pricing rule changes:
-//   - ID set       → match by id, overwrite fields.
-//   - SourceID set → match by source_id; if found overwrite, else insert.
-//   - neither set  → insert a new user-created row (is_override = true).
-//
-// When UpdatableLLMPricingRule.IsOverride is nil AND the matched row has
-// is_override = true, the row is fully preserved — only synced_at is stamped.
+// CreateOrUpdate saves a batch of pricing rules. isOverride decides how a rule
+// is matched, see UpdatableLLMPricingRule. New rules are inserted on either path.
 func (module *module) CreateOrUpdate(ctx context.Context, orgID valuer.UUID, userEmail string, rules []*llmpricingruletypes.UpdatableLLMPricingRule) error {
 	now := time.Now()
 
-	upsert := func(ctx context.Context, u *llmpricingruletypes.UpdatableLLMPricingRule) error {
+	var byID, bySourceID []*llmpricingruletypes.LLMPricingRule
+	for _, u := range rules {
 		if u == nil {
 			return errors.Newf(errors.TypeInvalidInput, llmpricingruletypes.ErrCodePricingRuleInvalidInput, "rule entry is null")
 		}
-		existing, err := module.findExisting(ctx, orgID, u)
-		if err != nil && errors.Ast(err, errors.TypeNotFound) {
-			return module.store.Create(ctx, llmpricingruletypes.NewLLMPricingRuleFromUpdatable(u, orgID, userEmail, now))
+		rule := llmpricingruletypes.NewLLMPricingRuleFromUpdatable(u, orgID, userEmail, now)
+		if u.IsOverride == nil {
+			bySourceID = append(bySourceID, rule)
+		} else {
+			byID = append(byID, rule)
 		}
-		if err != nil {
-			return err
-		}
-		existing.Update(u, userEmail, now)
-		return module.store.Update(ctx, existing)
 	}
 
 	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
-		for _, u := range rules {
-			if err := upsert(ctx, u); err != nil {
-				return err
-			}
+		if err := module.store.UpsertByID(ctx, byID); err != nil {
+			return err
 		}
-		return nil
+		return module.store.UpsertBySourceID(ctx, bySourceID)
 	})
 	if err != nil {
 		return err
@@ -170,20 +161,6 @@ func (module *module) listAllRules(ctx context.Context, orgID valuer.UUID) ([]*l
 		}
 	}
 	return all, nil
-}
-
-// findExisting returns the row matching the updatable's ID or SourceID.
-// Returns a TypeNotFound error when neither matches; the caller treats that
-// as "insert new".
-func (module *module) findExisting(ctx context.Context, orgID valuer.UUID, u *llmpricingruletypes.UpdatableLLMPricingRule) (*llmpricingruletypes.LLMPricingRule, error) {
-	switch {
-	case u.ID != nil:
-		return module.store.Get(ctx, orgID, *u.ID)
-	case u.SourceID != nil:
-		return module.store.GetBySourceID(ctx, orgID, *u.SourceID)
-	default:
-		return nil, errors.Newf(errors.TypeNotFound, llmpricingruletypes.ErrCodePricingRuleNotFound, "rule has neither id nor sourceId")
-	}
 }
 
 // discoverModels runs a QBv5 traces aggregation grouped by gen_ai.request.model

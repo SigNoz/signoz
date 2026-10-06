@@ -6,31 +6,27 @@ import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
+import { getMs } from 'utils/timeUtils';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
-import { DurationSection } from 'pages/TracesExplorer/Filter/DurationSection';
 import {
 	AllTraceFilterKeys,
 	AllTraceFilterKeyValue,
-	HandleRunProps,
 	traceFilterKeys,
-	unionTagFilterItems,
-} from 'pages/TracesExplorer/Filter/filterUtils';
+} from 'constants/traceFilterKeys';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import { clearFilterFromQuery } from '../shared/filterQuery';
 import { SectionActionButton } from '../shared/SectionActionButton/SectionActionButton';
+import { DurationSection } from './DurationSection';
+import { FilterType, HandleRunProps, unionTagFilterItems } from './utils';
 
 import './Duration.styles.scss';
 
-export type FilterType = Record<
-	AllTraceFilterKeys,
-	{ values: string[] | string; keys: BaseAutocompleteData }
->;
+export type { FilterType };
 
 function Duration({
 	filter,

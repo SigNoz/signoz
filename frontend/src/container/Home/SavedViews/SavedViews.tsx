@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Skeleton } from 'antd';
-import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
-import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
+import { useListSavedViews } from 'api/generated/services/saved-view';
+import {
+	SavedviewtypesSavedViewDTO,
+	SavedviewtypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
-import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
+import { getSavedViewQuery } from 'container/SavedViews/utils';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { ViewProps } from 'types/api/saveViews/types';
-import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 
 import floppyDiscUrl from '@/assets/Icons/floppy-disc.svg';
@@ -35,38 +36,40 @@ export default function SavedViews({
 }): JSX.Element {
 	const { user } = useAppContext();
 	const [selectedEntity, setSelectedEntity] = useState<string>('logs');
-	const [selectedEntityViews, setSelectedEntityViews] = useState<any[]>([]);
+	const [selectedEntityViews, setSelectedEntityViews] = useState<
+		SavedviewtypesSavedViewDTO[]
+	>([]);
 
 	const {
 		data: logsViewsData,
 		isLoading: logsViewsLoading,
 		isError: logsViewsError,
-	} = useGetAllViews(DataSource.LOGS);
+	} = useListSavedViews({ source: SavedviewtypesSourceDTO.logs });
 
 	const {
 		data: tracesViewsData,
 		isLoading: tracesViewsLoading,
 		isError: tracesViewsError,
-	} = useGetAllViews(DataSource.TRACES);
+	} = useListSavedViews({ source: SavedviewtypesSourceDTO.traces });
 
 	const {
 		data: metricsViewsData,
 		isLoading: metricsViewsLoading,
 		isError: metricsViewsError,
-	} = useGetAllViews(DataSource.METRICS);
+	} = useListSavedViews({ source: SavedviewtypesSourceDTO.metrics });
 
 	const logsViews = useMemo(
-		() => [...(logsViewsData?.data.data || [])],
+		() => [...(logsViewsData?.data || [])],
 		[logsViewsData],
 	);
 
 	const tracesViews = useMemo(
-		() => [...(tracesViewsData?.data.data || [])],
+		() => [...(tracesViewsData?.data || [])],
 		[tracesViewsData],
 	);
 
 	const metricsViews = useMemo(
-		() => [...(metricsViewsData?.data.data || [])],
+		() => [...(metricsViewsData?.data || [])],
 		[metricsViewsData],
 	);
 
@@ -88,39 +91,22 @@ export default function SavedViews({
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
-	const handleRedirectQuery = (view: ViewProps): void => {
+	const handleRedirectQuery = (view: SavedviewtypesSavedViewDTO): void => {
 		logEvent('Homepage: Saved view clicked', {
 			viewId: view.id,
-			viewName: view.name,
+			viewName: view.spec.displayName,
 			entity: selectedEntity,
 		});
 
-		let currentViews: ViewProps[] = [];
-		if (selectedEntity === 'logs') {
-			currentViews = logsViews;
-		} else if (selectedEntity === 'traces') {
-			currentViews = tracesViews;
-		} else if (selectedEntity === 'metrics') {
-			currentViews = metricsViews;
-		}
-
-		const currentViewDetails = getViewDetailsUsingViewKey(view.id, currentViews);
-		if (!currentViewDetails) {
-			return;
-		}
-		const { query, name, id, panelType: currentPanelType } = currentViewDetails;
-
-		if (selectedEntity) {
-			handleExplorerTabChange(
-				currentPanelType,
-				{
-					query,
-					viewName: name,
-					viewKey: id,
-				},
-				SOURCEPAGE_VS_ROUTES[selectedEntity],
-			);
-		}
+		handleExplorerTabChange(
+			view.spec.panelType,
+			{
+				query: getSavedViewQuery(view),
+				viewName: view.spec.displayName,
+				viewKey: view.id,
+			},
+			SOURCEPAGE_VS_ROUTES[selectedEntity],
+		);
 	};
 
 	useEffect(() => {
@@ -239,22 +225,8 @@ export default function SavedViews({
 							/>
 
 							<div className="saved-view-item-name home-data-item-name">
-								{view.name}
+								{view.spec.displayName}
 							</div>
-						</div>
-
-						<div className="saved-view-item-description home-data-item-tag">
-							{view.tags?.map((tag: string) => {
-								if (tag === '') {
-									return null;
-								}
-
-								return (
-									<Badge color="sienna" key={tag}>
-										{tag}
-									</Badge>
-								);
-							})}
 						</div>
 
 						<Button
@@ -307,7 +279,7 @@ export default function SavedViews({
 		logEvent('Homepage: Saved views switched', {
 			tab,
 		});
-		let currentViews: ViewProps[] = [];
+		let currentViews: SavedviewtypesSavedViewDTO[] = [];
 		if (tab === 'logs') {
 			currentViews = logsViews;
 		} else if (tab === 'traces') {

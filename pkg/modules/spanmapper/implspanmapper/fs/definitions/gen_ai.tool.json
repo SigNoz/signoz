@@ -1,11 +1,20 @@
 {
-  "version": 1,
+  "version": 2,
   "definition": {
     "name": "gen_ai.tool",
     "condition": {
       "attributes": [
         {
-          "value": "tool"
+          "value": "tool.name"
+        },
+        {
+          "value": "ai.toolCall."
+        },
+        {
+          "value": "tool_call_args"
+        },
+        {
+          "value": "tool_response"
         }
       ],
       "resource": []

@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
-import ChartLayout from 'lib/visualization/layout/ChartLayout/ChartLayout';
+import ChartLayout, {
+	LegendLayout,
+} from 'lib/visualization/layout/ChartLayout/ChartLayout';
 import UPlotLegend from 'lib/uPlotV2/components/Legend/UPlotLegend';
 import {
 	LegendPosition,
@@ -17,7 +19,8 @@ import { ChartWrapperProps } from 'lib/visualization/charts/types';
 import { useChartStacking } from 'lib/visualization/charts/ChartWrapper/useChartStacking';
 
 const TOOLTIP_WIDTH_PADDING = 120;
-const TOOLTIP_MIN_WIDTH = 300;
+// Holds a tooltip row's value column next to a legend-length label.
+const TOOLTIP_MIN_WIDTH = 360;
 
 export default function ChartWrapper({
 	legendConfig = { position: LegendPosition.BOTTOM },
@@ -57,7 +60,7 @@ export default function ChartWrapper({
 	);
 
 	const legendComponent = useCallback(
-		(averageLegendWidth: number): React.ReactNode => {
+		({ averageLegendWidth, showSearch }: LegendLayout): React.ReactNode => {
 			if (!showLegend) {
 				return null;
 			}
@@ -66,6 +69,7 @@ export default function ChartWrapper({
 					config={config}
 					position={legendConfig.position}
 					averageLegendWidth={averageLegendWidth}
+					showSearch={showSearch}
 				/>
 			);
 		},

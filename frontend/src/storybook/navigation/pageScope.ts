@@ -6,6 +6,19 @@ import {
 } from 'history';
 
 /**
+ * Query keys the Storybook preview owns. They live in the iframe's URL, which
+ * the app has no business reading or rewriting.
+ */
+const PREVIEW_PARAMS = [
+	'id',
+	'viewMode',
+	'args',
+	'globals',
+	'path',
+	'singleStory',
+];
+
+/**
  * The story's own history. A story renders one page, so this never leaves it:
  * `pageScope` decides what counts as staying, and `containment.ts` is what the
  * app sees in place of `lib/history`.
@@ -16,6 +29,45 @@ export const storyHistory: MemoryHistory = createMemoryHistory({
 
 export const toHref = (to: LocationDescriptor): string =>
 	typeof to === 'string' ? to : storyHistory.createHref(to);
+
+const withoutPreviewParams = (search: string): URLSearchParams => {
+	const params = new URLSearchParams(search);
+	PREVIEW_PARAMS.forEach((param) => params.delete(param));
+	return params;
+};
+
+/**
+ * Copies the story's search onto the iframe's URL, keeping the preview's own
+ * params. A lot of the app reads `window.location.search` directly rather than
+ * through the router, which is how every writer that rebuilds a target on top
+ * of the current params reads them. In a story that read would otherwise answer
+ * with the preview's query and nothing the page put there, so two writers
+ * publish over each other forever: the query builder drops the time range, the
+ * time range drops the query builder, and the page never settles.
+ */
+const mirrorSearchToBrowser = (): void => {
+	const mirrored = new URLSearchParams();
+
+	const previewParams = new URLSearchParams(window.location.search);
+	PREVIEW_PARAMS.forEach((param) => {
+		const value = previewParams.get(param);
+		if (value !== null) {
+			mirrored.set(param, value);
+		}
+	});
+
+	withoutPreviewParams(storyHistory.location.search).forEach((value, key) => {
+		mirrored.set(key, value);
+	});
+
+	window.history.replaceState(
+		window.history.state,
+		'',
+		`${window.location.pathname}?${mirrored}${window.location.hash}`,
+	);
+};
+
+storyHistory.listen(mirrorSearchToBrowser);
 
 /** `/home/` and `/home` are the same page as far as a story is concerned. */
 const normalizePathname = (pathname: string): string =>
@@ -43,8 +95,12 @@ export const navigateWithinPage = (
 		return false;
 	}
 
+	// The preview's params ride along in whatever the app read out of
+	// `window.location.search`, so they are dropped on the way back in and the
+	// story's history stays the page's own URL.
 	storyHistory[replace ? 'replace' : 'push']({
 		...target,
+		search: `?${withoutPreviewParams(target.search ?? '')}`,
 		pathname: storyHistory.location.pathname,
 	});
 
@@ -54,6 +110,7 @@ export const navigateWithinPage = (
 /** Places the story at a route without going through the block. */
 export const setStoryLocation = (to: LocationDescriptor): void => {
 	storyHistory.replace(to);
+	mirrorSearchToBrowser();
 };
 
 /**

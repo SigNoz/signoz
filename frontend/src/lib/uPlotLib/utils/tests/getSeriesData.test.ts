@@ -13,7 +13,7 @@ describe('Get Series Data', () => {
 		expect(seriesData).toHaveLength(5);
 		expect(seriesData[1].label).toBe('firstLegend');
 		expect(seriesData[1].show).toBe(true);
-		expect(seriesData[1].fill).toBe('#FF6F91');
+		expect(seriesData[1].fill).toBe('#83C2EB');
 		expect(seriesData[1].width).toBe(2);
 	});
 

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import CustomSelect from '../CustomSelect';
 
@@ -202,5 +203,22 @@ describe('CustomSelect Component', () => {
 
 		// Check onChange was called
 		expect(handleChange).toHaveBeenCalled();
+	});
+	it('tells the consumer its search was cleared when the dropdown closes', async () => {
+		// The component clears its own search text on close. A consumer running a
+		// server-side search needs to hear that, or its results outlive the dropdown.
+		const onSearch = jest.fn();
+		const user = userEvent.setup();
+		render(<CustomSelect options={mockOptions} onSearch={onSearch} />);
+
+		const selectElement = screen.getByRole('combobox');
+		await user.click(selectElement);
+		await user.type(selectElement, 'opt');
+
+		expect(onSearch).toHaveBeenLastCalledWith('opt');
+
+		await user.keyboard('{Escape}');
+
+		expect(onSearch).toHaveBeenLastCalledWith('');
 	});
 });

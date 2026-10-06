@@ -9,6 +9,7 @@ import { authToken } from '../../helpers/common';
 test.describe.configure({ mode: 'serial' });
 
 const GROUP_NAME = 'e2e-attr-mapping-happy';
+const GROUP_CONDITION = 'my_company.llm.';
 
 const TARGET_ATTR = 'gen_ai.content.prompt';
 const SOURCE_ATTR = 'my_company.llm.input';
@@ -34,6 +35,8 @@ test.describe('LLM Observability — Attribute Mapping', () => {
 		const groupDrawer = page.getByTestId('group-form-drawer');
 		await expect(groupDrawer).toBeVisible();
 		await page.getByTestId('group-form-name').fill(GROUP_NAME);
+		await page.getByTestId('group-form-attribute-add').click();
+		await page.getByTestId('group-form-attribute-0').fill(GROUP_CONDITION);
 		await page.getByTestId('group-form-save').click();
 		await expect(groupDrawer).toBeHidden();
 

@@ -5,6 +5,7 @@ import {
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesTimeSeriesChartAppearanceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { DEFAULT_FILL_OPACITY } from 'lib/uPlotV2/utils/fillOpacity';
 
 import ChartAppearanceSection from '../ChartAppearanceSection';
 
@@ -102,6 +103,66 @@ describe('ChartAppearanceSection', () => {
 			lineStyle: 'solid',
 			fillMode: 'gradient',
 		});
+	});
+
+	it('shows the fill opacity at the chart default when the spec omits it', () => {
+		render(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={{ fillOpacity: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByTestId('panel-editor-v2-fill-opacity'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(`${Math.round(DEFAULT_FILL_OPACITY * 100)}%`),
+		).toBeInTheDocument();
+	});
+
+	it('renders the stored fill opacity as a percentage', () => {
+		render(
+			<ChartAppearanceSection
+				value={{ fillOpacity: 0.25 }}
+				controls={{ fillOpacity: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByText('25%')).toBeInTheDocument();
+	});
+
+	it('offers no None fill mode to a kind that declares fill opacity', () => {
+		render(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={{ fillMode: true, fillOpacity: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByText('Solid')).toBeInTheDocument();
+		expect(screen.getByText('Gradient')).toBeInTheDocument();
+		expect(screen.queryByText('None')).not.toBeInTheDocument();
+		expect(
+			screen.getByTestId('panel-editor-v2-fill-opacity'),
+		).toBeInTheDocument();
+	});
+
+	it('offers all three fill modes to a kind that can be unfilled', () => {
+		render(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={{ fillMode: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByText('None')).toBeInTheDocument();
+		expect(screen.getByText('Solid')).toBeInTheDocument();
+		expect(screen.getByText('Gradient')).toBeInTheDocument();
 	});
 
 	it('writes the chosen line interpolation through the dropdown', async () => {

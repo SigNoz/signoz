@@ -27,6 +27,7 @@ const { time_series, scalar, raw } = Querybuildertypesv5RequestTypeDTO;
 const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/TimeSeriesPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/BarChartPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/AreaChartPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/NumberPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/HistogramPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
@@ -39,6 +40,7 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/TimeSeriesPanel': [metrics, logs, traces],
 	'signoz/BarChartPanel': [metrics, logs, traces],
+	'signoz/AreaChartPanel': [metrics, logs, traces],
 	'signoz/NumberPanel': [metrics, logs, traces],
 	'signoz/HistogramPanel': [metrics, logs, traces],
 	'signoz/PieChartPanel': [metrics, logs, traces],
@@ -67,6 +69,13 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		requestType: time_series,
 		formatTableResultForUI: false,
 		bucketedStepInterval: true,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
+	'signoz/AreaChartPanel': {
+		requestType: time_series,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},

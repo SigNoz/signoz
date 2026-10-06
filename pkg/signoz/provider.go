@@ -254,6 +254,11 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddSubscriptionTuplesFactory(sqlstore),
 		sqlmigration.NewNormalizeQuickFilterFieldsFactory(sqlstore),
 		sqlmigration.NewAddSpanMapperOriginFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddCloudIntegrationTuplesFactory(sqlstore),
+		sqlmigration.NewAddNotificationChannelTuplesFactory(sqlstore),
+		sqlmigration.NewAddAIObservabilityQuickFiltersFactory(sqlstore),
+		sqlmigration.NewAddChannelSpecFactory(sqlschema),
+		sqlmigration.NewAddUserTuplesFactory(sqlstore),
 	)
 }
 
@@ -349,6 +354,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.QuerierHandler,
 			handlers.ServiceAccountHandler,
 			modules.ServiceAccountGetter,
+			modules.UserGetter,
 			handlers.RegistryHandler,
 			handlers.CloudIntegrationHandler,
 			handlers.RuleStateHistory,
