@@ -38,6 +38,10 @@
 		flex: 1 auto auto;
 		min-width: 0;
 	}
+
+	> [data-slot='button'] {
+		margin-left: var(--spacing-4);
+	}
 }
 
 .bucketRowName {

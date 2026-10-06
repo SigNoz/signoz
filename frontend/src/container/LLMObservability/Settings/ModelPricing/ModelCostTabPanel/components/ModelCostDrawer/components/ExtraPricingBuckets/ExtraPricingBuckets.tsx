@@ -100,9 +100,9 @@ function ExtraPricingBuckets({
 
 					{!isReadOnly && (
 						<Button
-							size="sm"
+							size="md"
 							icon
-							variant="solid"
+							variant="link"
 							color="danger"
 							onClick={(): void => removeBucket(bucket.key)}
 							aria-label={`Remove ${bucket.label}`}
