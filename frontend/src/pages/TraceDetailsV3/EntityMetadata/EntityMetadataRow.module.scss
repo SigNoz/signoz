@@ -8,3 +8,7 @@
 	// Keep Typography.Text at the row's size (it reads this var, not inherited font-size).
 	--typography-font-size: var(--periscope-font-size-base);
 }
+
+.tokenTooltip {
+	min-width: 160px;
+}

@@ -15,7 +15,6 @@ import { useDetailsPanel } from 'components/DetailsPanel';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import useGetTraceV4 from 'hooks/trace/useGetTraceV4';
-import { useTraceDetailsStripInfo } from '../useTraceDetailsStripInfo';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ResizableBox } from 'periscope/components/ResizableBox';
@@ -28,7 +27,6 @@ import TraceStoreSync from '../stores/TraceStoreSync';
 import { useTraceStore } from '../stores/traceStore';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
 import SpanDetailsPanel from '../SpanDetailsPanel/SpanDetailsPanel';
-import type { TraceMetadataForHeader } from '../TraceDetailsHeader/TraceDetailsHeader';
 import TraceDetailsHeader from '../TraceDetailsHeader/TraceDetailsHeader';
 import { FLAMEGRAPH_SPAN_LIMIT } from '../TraceFlamegraph/constants';
 import TraceFlamegraph from '../TraceFlamegraph/TraceFlamegraph';
@@ -145,9 +143,6 @@ function TraceDetailsOverview(): JSX.Element {
 
 	const allSpans = traceData?.payload?.spans || [];
 	const totalSpansCount = traceData?.payload?.totalSpansCount || 0;
-	const totalErrorSpansCount = traceData?.payload?.totalErrorSpansCount || 0;
-
-	useTraceDetailsStripInfo({ totalSpansCount, totalErrorSpansCount });
 
 	const isFullDataLoaded =
 		totalSpansCount > 0 && totalSpansCount <= allSpans.length;
@@ -323,38 +318,6 @@ function TraceDetailsOverview(): JSX.Element {
 		[],
 	);
 
-	const filterMetadata = useMemo(
-		() => ({
-			startTime: (traceData?.payload?.startTimestampMillis || 0) / 1e3,
-			endTime: (traceData?.payload?.endTimestampMillis || 0) / 1e3,
-			traceId: traceId || '',
-		}),
-		[
-			traceData?.payload?.startTimestampMillis,
-			traceData?.payload?.endTimestampMillis,
-			traceId,
-		],
-	);
-
-	const traceMetadataForHeader = useMemo(():
-		| TraceMetadataForHeader
-		| undefined => {
-		const payload = traceData?.payload;
-		if (!payload) {
-			return undefined;
-		}
-		const rootSpan = payload.spans?.find((s) => s.level === 0);
-		return {
-			startTimestampMillis: payload.startTimestampMillis,
-			endTimestampMillis: payload.endTimestampMillis,
-			rootServiceName: payload.rootServiceName,
-			rootServiceEntryPoint: payload.rootServiceEntryPoint,
-			rootSpanStatusCode: rootSpan?.response_status_code || '',
-			hasMissingSpans: payload.hasMissingSpans || false,
-			totalSpansCount: payload.totalSpansCount || 0,
-		};
-	}, [traceData?.payload]);
-
 	const showNoData =
 		!isFetchingTraceData &&
 		(!!errorFetchingTraceData || !traceData?.payload?.spans?.length);
@@ -392,12 +355,7 @@ function TraceDetailsOverview(): JSX.Element {
 	return (
 		<TraceStoreSync availableColorByFields={availableColorByFields}>
 			<div className={styles.root}>
-				<TraceDetailsHeader
-					filterMetadata={filterMetadata}
-					onFilteredSpansChange={handleFilteredSpansChange}
-					isDataLoaded={!!traceData?.payload?.spans?.length && !showNoData}
-					traceMetadata={traceMetadataForHeader}
-				/>
+				<TraceDetailsHeader onFilteredSpansChange={handleFilteredSpansChange} />
 
 				{showNoData ? (
 					<NoData />

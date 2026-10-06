@@ -5,6 +5,8 @@ import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
 import { render } from 'tests/test-utils';
 
+import { MOCK_TRACE_SUMMARY } from '../mockTraceSummary';
+import * as traceSummaryModule from '../useTraceSummary';
 import TraceDetailsHeader from '../TraceDetailsHeader';
 
 const mockGoBack = jest.fn();
@@ -51,15 +53,9 @@ jest.mock('components/FieldsSelector', () => ({
 	),
 }));
 
-const baseProps = {
-	filterMetadata: {
-		startTime: 0,
-		endTime: 1,
-		traceId: 'trace-123',
-	},
-	onFilteredSpansChange: jest.fn(),
-	isDataLoaded: false,
-};
+const baseProps = { onFilteredSpansChange: jest.fn() };
+
+const metadataText = /Missing Span/;
 
 describe('TraceDetailsHeader – back button', () => {
 	beforeEach(() => {
@@ -95,8 +91,8 @@ describe('TraceDetailsHeader – action cluster', () => {
 		mockReplace.mockClear();
 	});
 
-	it('does not render the action buttons while data is still loading', () => {
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded={false} />);
+	it('does not render the action buttons without a filter handler', () => {
+		render(<TraceDetailsHeader />);
 
 		expect(
 			screen.queryByRole('button', { name: /^analytics$/i }),
@@ -106,8 +102,8 @@ describe('TraceDetailsHeader – action cluster', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('renders Analytics and Settings action buttons once data is loaded', () => {
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+	it('renders Analytics and Settings action buttons', () => {
+		render(<TraceDetailsHeader {...baseProps} />);
 
 		expect(
 			screen.getByRole('button', { name: /^analytics$/i }),
@@ -118,7 +114,7 @@ describe('TraceDetailsHeader – action cluster', () => {
 	});
 
 	it('toggles the AnalyticsPanel open state when the Analytics button is clicked', () => {
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+		render(<TraceDetailsHeader {...baseProps} />);
 
 		const panel = screen.getByTestId('analytics-panel');
 		expect(panel).toHaveAttribute('data-open', 'false');
@@ -134,92 +130,61 @@ describe('TraceDetailsHeader – action cluster', () => {
 });
 
 describe('TraceDetailsHeader – trace metadata row', () => {
-	// Plain prop, no API mock needed: traceMetadata is passed straight in.
-	const traceMetadata = {
-		startTimestampMillis: 1_700_000_000_000,
-		endTimestampMillis: 1_700_000_120_000, // +120000ms = 2 min
-		rootServiceName: 'inventory-frontend',
-		rootServiceEntryPoint: 'large-trace-root',
-		rootSpanStatusCode: '404',
-		hasMissingSpans: false,
-		totalSpansCount: 42,
-	};
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
 
-	it('renders the metadata (service, entry point, duration, status) when provided', () => {
-		render(
-			<TraceDetailsHeader
-				{...baseProps}
-				isDataLoaded
-				traceMetadata={traceMetadata}
-			/>,
-		);
+	it('shows skeletons instead of the metadata while the summary loads', () => {
+		jest
+			.spyOn(traceSummaryModule, 'useTraceSummary')
+			.mockReturnValue({ data: undefined, isLoading: true });
+		const { container } = render(<TraceDetailsHeader {...baseProps} />);
 
-		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
-		expect(screen.getByText('large-trace-root')).toBeInTheDocument();
-		expect(screen.getByText('404')).toBeInTheDocument();
-		// Duration goes through the shared formatter (e.g. "2 min").
+		expect(screen.queryByText(metadataText)).not.toBeInTheDocument();
+		expect(container.querySelectorAll('.ant-skeleton-input')).toHaveLength(3);
+	});
+
+	it('renders the summary metadata with tokens and cost', () => {
+		render(<TraceDetailsHeader {...baseProps} />);
+
+		const { startTimestampMillis, endTimestampMillis } = MOCK_TRACE_SUMMARY;
 		const duration = getYAxisFormattedValue(
-			`${traceMetadata.endTimestampMillis - traceMetadata.startTimestampMillis}`,
+			`${endTimestampMillis - startTimestampMillis}`,
 			'ms',
 		);
+
+		expect(screen.getByText(metadataText)).toBeInTheDocument();
 		expect(screen.getByText(duration)).toBeInTheDocument();
+		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
+		expect(screen.getByText('$ 0.0421')).toBeInTheDocument();
 	});
 
 	it('is shown by default and can be hidden / shown again via the Trace options menu', async () => {
 		const user = userEvent.setup({ delay: null });
-		render(
-			<TraceDetailsHeader
-				{...baseProps}
-				isDataLoaded
-				traceMetadata={traceMetadata}
-			/>,
-		);
+		render(<TraceDetailsHeader {...baseProps} />);
 
-		// Visible by default (showTraceDetails defaults to true).
-		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
+		expect(screen.getByText(metadataText)).toBeInTheDocument();
 
-		// Hide it.
 		await user.click(screen.getByRole('button', { name: /trace options/i }));
 		await user.click(
 			await screen.findByRole('menuitem', { name: /hide trace details/i }),
 		);
-		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
+		expect(screen.queryByText(metadataText)).not.toBeInTheDocument();
 
-		// Show it again.
 		await user.click(screen.getByRole('button', { name: /trace options/i }));
 		await user.click(
 			await screen.findByRole('menuitem', { name: /show trace details/i }),
 		);
-		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
-	});
-
-	it('does not render the metadata row when traceMetadata is absent', () => {
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
-
-		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
+		expect(screen.getByText(metadataText)).toBeInTheDocument();
 	});
 });
 
 describe('TraceDetailsHeader – tabs', () => {
-	const traceMetadata = {
-		startTimestampMillis: 1_700_000_000_000,
-		endTimestampMillis: 1_700_000_120_000,
-		rootServiceName: 'inventory-frontend',
-		rootServiceEntryPoint: 'large-trace-root',
-		rootSpanStatusCode: '200',
-		hasMissingSpans: true,
-		totalSpansCount: 42,
-	};
-
 	// In-memory URL state, so a tab switch can't leak into the next test.
 	const renderHeader = (): void => {
 		render(
 			<NuqsTestingAdapter hasMemory>
-				<TraceDetailsHeader
-					{...baseProps}
-					isDataLoaded
-					traceMetadata={traceMetadata}
-				/>
+				<TraceDetailsHeader {...baseProps} />
 			</NuqsTestingAdapter>,
 		);
 	};
@@ -251,6 +216,6 @@ describe('TraceDetailsHeader – tabs', () => {
 			screen.queryByRole('button', { name: /trace options/i }),
 		).not.toBeInTheDocument();
 		expect(screen.queryByTestId('missing-spans-banner')).not.toBeInTheDocument();
-		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
+		expect(screen.getByText(metadataText)).toBeInTheDocument();
 	});
 });

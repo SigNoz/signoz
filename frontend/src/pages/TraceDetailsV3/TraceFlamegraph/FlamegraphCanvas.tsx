@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import cx from 'classnames';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
@@ -17,6 +18,7 @@ import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
 import { useScrollToSpan } from './hooks/useScrollToSpan';
 import { EventRect, FlamegraphCanvasProps, SpanRect } from './types';
 
+import tooltipStyles from '../TraceTooltip/TraceTooltip.module.scss';
 import styles from './FlamegraphCanvas.module.scss';
 
 function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
@@ -203,7 +205,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 	const tooltipElement = tooltipContent
 		? createPortal(
 				<div
-					className={styles.tooltip}
+					className={cx(tooltipStyles.surface, styles.tooltip)}
 					style={{
 						left: Math.min(tooltipContent.clientX + 15, window.innerWidth - 220),
 						top: Math.min(tooltipContent.clientY + 15, window.innerHeight - 100),

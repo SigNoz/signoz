@@ -1,0 +1,82 @@
+// Figma `dark/shadow-dropdown` popover surface, shared by every trace-details
+// tooltip so they look the same.
+$surface-background: color-mix(in srgb, var(--l3-background) 60%, transparent);
+$surface-border-color: var(--l2-border);
+$surface-radius: var(--radius-2);
+$surface-padding: var(--spacing-4);
+$surface-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+
+// For plain elements, e.g. the flamegraph's cursor-following portal.
+.surface {
+	background-color: $surface-background;
+	border: 1px solid $surface-border-color;
+	border-radius: $surface-radius;
+	padding: $surface-padding;
+	box-shadow: $surface-shadow;
+	backdrop-filter: blur(20px);
+}
+
+// For @signozhq/ui Tooltip content: it paints both the bubble and the arrow
+// from these variables.
+.tooltipContent {
+	--tooltip-background: #{$surface-background};
+	--tooltip-border-color: #{$surface-border-color};
+	--tooltip-border-radius: #{$surface-radius};
+	--tooltip-padding: #{$surface-padding};
+	--tooltip-box-shadow: #{$surface-shadow};
+	backdrop-filter: blur(20px);
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	letter-spacing: var(--paragraph-small-400-letter-spacing);
+	color: var(--l1-foreground-hover);
+}
+
+.title {
+	--typography-font-family: var(--code-small-500-font-family);
+	--typography-font-size: var(--code-small-500-font-size);
+	--typography-font-weight: var(--code-small-500-font-weight);
+	--typography-line-height: var(--code-small-500-line-height);
+	letter-spacing: var(--code-small-500-letter-spacing);
+	word-break: break-all;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 8px 0;
+	border-top: 1px solid;
+	border-image: linear-gradient(
+			90deg,
+			var(--l3-background-transparent),
+			var(--l3-border),
+			var(--l3-background-transparent)
+		)
+		1;
+
+	&:first-child {
+		padding-top: 0;
+		border-top: none;
+	}
+
+	&:last-child {
+		padding-bottom: 0;
+	}
+}
+
+.row {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	min-width: 0;
+}
+
+.rowValue {
+	flex-shrink: 0;
+	max-width: 60%;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}

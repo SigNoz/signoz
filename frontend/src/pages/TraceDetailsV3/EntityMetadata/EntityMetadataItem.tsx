@@ -5,18 +5,23 @@ import { Typography } from '@signozhq/ui/typography';
 import styles from './EntityMetadataItem.module.scss';
 
 interface EntityMetadataItemProps {
-	tooltip: string;
+	tooltip: ReactNode;
+	tooltipClassName?: string;
 	icon?: ReactNode;
 	children: ReactNode;
 }
 
 function EntityMetadataItem({
 	tooltip,
+	tooltipClassName,
 	icon,
 	children,
 }: EntityMetadataItemProps): JSX.Element {
 	return (
-		<TooltipSimple title={tooltip}>
+		<TooltipSimple
+			title={tooltip}
+			tooltipContentProps={{ className: tooltipClassName }}
+		>
 			<span className={styles.item}>
 				{icon}
 				<Typography.Text as="span">{children}</Typography.Text>
@@ -27,6 +32,7 @@ function EntityMetadataItem({
 
 EntityMetadataItem.defaultProps = {
 	icon: null,
+	tooltipClassName: undefined,
 };
 
 export default EntityMetadataItem;
