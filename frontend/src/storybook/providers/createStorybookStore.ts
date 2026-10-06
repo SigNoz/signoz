@@ -10,6 +10,8 @@ import reducers, { AppState } from 'store/reducers';
 /**
  * A fresh store per story, seeded with the real reducers so dispatches keep
  * working, unlike the mock store used in jest. Nothing leaks between stories.
+ * The modules that read the redux singleton directly are pointed at it too,
+ * through `mocks/store.mock.ts`.
  */
 export const createStorybookStore = (reduxState?: Partial<AppState>): Store =>
 	createStore(

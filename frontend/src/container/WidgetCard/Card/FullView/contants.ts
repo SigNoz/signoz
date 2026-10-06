@@ -27,6 +27,7 @@ export const PANEL_TYPES_VS_FULL_VIEW_TABLE: PanelTypeAndGraphManagerVisibilityP
 		LIST: false,
 		TRACE: false,
 		BAR: true,
+		AREA: true,
 		PIE: false,
 		HISTOGRAM: false,
 		TEXT: false,

@@ -9,8 +9,11 @@ import type {
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
+import { resolveFillOpacity } from 'lib/uPlotV2/utils/fillOpacity';
+
 import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
+import ConfigSlider from '../../controls/ConfigSlider/ConfigSlider';
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
 import { SegmentIcon } from '../../controls/segmentIcons';
 import type { SectionEditorContext } from '../../sectionContext';
@@ -72,10 +75,21 @@ const FILL_MODE_OPTIONS = [
 	},
 ];
 
+// An always-filled kind's wire enum (`AreaFillMode`) has no `none`.
+const FILLED_FILL_MODE_OPTIONS = FILL_MODE_OPTIONS.filter(
+	(option) => option.value !== DashboardtypesFillModeDTO.none,
+);
+
+const FILL_OPACITY_STEP = 0.01;
+
+function formatOpacity(opacity: number): string {
+	return `${Math.round(opacity * 100)}%`;
+}
+
 /**
  * Edits the `chartAppearance` slice of a TimeSeries panel spec: line style /
- * interpolation, fill mode, point markers, and the connect-null-gaps threshold. Each
- * control is gated by its `controls` flag.
+ * interpolation, fill mode, fill opacity, point markers, and the connect-null-gaps
+ * threshold. Each control is gated by its `controls` flag.
  */
 function ChartAppearanceSection({
 	value,
@@ -124,10 +138,28 @@ function ChartAppearanceSection({
 					<ConfigSegmented
 						testId="panel-editor-v2-fill-mode"
 						value={value?.fillMode}
-						items={FILL_MODE_OPTIONS}
+						items={
+							controls.fillOpacity ? FILLED_FILL_MODE_OPTIONS : FILL_MODE_OPTIONS
+						}
 						onChange={(next): void =>
 							onChange({ ...value, fillMode: next as DashboardtypesFillModeDTO })
 						}
+					/>
+				</div>
+			)}
+
+			{controls.fillOpacity && (
+				<div className={styles.field}>
+					<Typography.Text>Fill opacity</Typography.Text>
+					<ConfigSlider
+						testId="panel-editor-v2-fill-opacity"
+						// The chart's own default, so the thumb starts where an unset fill renders.
+						value={resolveFillOpacity(value?.fillOpacity)}
+						min={0}
+						max={1}
+						step={FILL_OPACITY_STEP}
+						formatValue={formatOpacity}
+						onChange={(fillOpacity): void => onChange({ ...value, fillOpacity })}
 					/>
 				</div>
 			)}

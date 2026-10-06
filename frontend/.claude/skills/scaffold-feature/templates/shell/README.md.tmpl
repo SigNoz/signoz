@@ -1,0 +1,20 @@
+# __Title__
+
+<!-- One paragraph: what this section of the product is, and what each tab is for. -->
+
+## Structure
+
+| Path | Purpose |
+| --- | --- |
+| `index.tsx` | Shell. Tab switching only — no feature logic. |
+| `constants.tsx` | One `TabRoutes` export per tab: icon, label, route and the view it renders. |
+| `<View>/` | One folder per tab, each a self-contained feature. |
+
+## Routing
+
+Every path is registered in `src/constants/routes.ts`, `src/utils/permission/index.ts`,
+`src/AppRoutes/routes.ts` and the `routesToSkip` list in
+`src/container/TopNav/DateTimeSelectionV2/constants.ts`, all rendering this shell through the
+lazy import in `src/AppRoutes/pageComponents.ts`. The base path redirects to the first tab;
+`RouteTab` picks the tab from the current path. Adding a tab means a new `ROUTES` key, a
+route entry, a permission entry, a `routesToSkip` entry and a `TabRoutes` export here.

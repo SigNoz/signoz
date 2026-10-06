@@ -109,17 +109,24 @@ describe('useTraceViewColumns', () => {
 		const { result } = await renderColumns();
 
 		expect(columnNames(result.current.columns)).toStrictEqual([
+			'trace_id',
 			'service.name',
 			'root_span_name',
+			'estimated_total_cost',
 			'trace_duration_nano',
 			'span_count',
-			'trace_id',
+			'total_tokens',
+			'input_tokens',
+			'output_tokens',
+			'distinct_tool_count',
+			'llm_call_count',
+			'tool_call_count',
 			'start_time',
 			'end_time',
 			'error_count',
 			'input',
 			'output',
-			...AGGREGATE_KEYS,
+			'max_llm_duration_nano',
 		]);
 	});
 
@@ -127,14 +134,24 @@ describe('useTraceViewColumns', () => {
 		const { result } = await renderColumns();
 
 		expect(fieldNames(result.current.selectedFields)).toStrictEqual([
+			'trace_id',
 			'service.name',
 			'root_span_name',
+			'estimated_total_cost',
 			'trace_duration_nano',
 			'span_count',
-			'trace_id',
-			'llm_call_count',
 			'total_tokens',
-			'estimated_total_cost',
+			'input_tokens',
+			'output_tokens',
+			'distinct_tool_count',
+			'llm_call_count',
+			'tool_call_count',
+			'start_time',
+			'end_time',
+			'error_count',
+			'input',
+			'output',
+			'max_llm_duration_nano',
 		]);
 	});
 
@@ -147,6 +164,72 @@ describe('useTraceViewColumns', () => {
 		expect(fieldNames(result.current.selectedFields)).not.toContain(
 			'brand_new_aggregate',
 		);
+	});
+
+	describe('when the keys fetch fails', () => {
+		beforeEach(() => {
+			server.use(
+				rest.get(
+					`${ENVIRONMENT.baseURL}/api/v1/ai_observability/fields/keys`,
+					(_req, res, ctx) => res(ctx.status(500), ctx.json({ status: 'error' })),
+				),
+			);
+		});
+
+		it('does not persist defaults', async () => {
+			await renderColumns();
+
+			expect(useColumnStore.getState().tables[STORAGE_KEY]).toBeUndefined();
+			expect(
+				localStorage.getItem(`@signoz/table-columns/${STORAGE_KEY}`),
+			).toBeNull();
+		});
+
+		it('reports the column state as not persistable', async () => {
+			const { result } = await renderColumns();
+
+			expect(result.current.canPersistColumns).toBe(false);
+		});
+
+		it('ignores a selection change instead of persisting a partial set', async () => {
+			const { result } = await renderColumns();
+
+			act(() => {
+				result.current.onFieldsChange([{ name: 'trace_id' }]);
+			});
+
+			expect(useColumnStore.getState().tables[STORAGE_KEY]).toBeUndefined();
+		});
+
+		it('seeds the defaults once a later fetch succeeds', async () => {
+			const { unmount } = await renderColumns();
+			unmount();
+
+			mockAggregateKeys(AGGREGATE_KEYS);
+			const { result } = await renderColumns();
+
+			expect(result.current.canPersistColumns).toBe(true);
+			expect(fieldNames(result.current.selectedFields)).toStrictEqual([
+				'trace_id',
+				'service.name',
+				'root_span_name',
+				'estimated_total_cost',
+				'trace_duration_nano',
+				'span_count',
+				'total_tokens',
+				'input_tokens',
+				'output_tokens',
+				'distinct_tool_count',
+				'llm_call_count',
+				'tool_call_count',
+				'start_time',
+				'end_time',
+				'error_count',
+				'input',
+				'output',
+				'max_llm_duration_nano',
+			]);
+		});
 	});
 
 	it('hides the columns dropped from the selection', async () => {

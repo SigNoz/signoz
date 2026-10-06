@@ -10,7 +10,7 @@ import (
 
 const (
 	DefaultListLimit = 20
-	MaxListLimit     = 5000
+	MaxListLimit     = 200
 	MaxListQueryLen  = 1024
 )
 
@@ -52,7 +52,7 @@ func (o ListOrder) IsValid() bool {
 // ListFilter is the rule listing state shared by the v3 list params and saved views.
 type ListFilter struct {
 	Query string `query:"query" json:"query"`
-	// gin cannot bind a slice of valuer enums; AlertStates converts these.
+	// gin cannot bind a slice of valuer enums; GetAlertStates converts these.
 	States []string  `query:"states" json:"states" nullable:"false"`
 	Sort   ListSort  `query:"sort" json:"sort"`
 	Order  ListOrder `query:"order" json:"order"`
@@ -69,7 +69,7 @@ func (f *ListFilter) Validate() error {
 			"query cannot be longer than %d characters, got %d", MaxListQueryLen, n)
 	}
 
-	if _, err := f.AlertStates(); err != nil {
+	if _, err := f.GetAlertStates(); err != nil {
 		return err
 	}
 
@@ -90,8 +90,8 @@ func (f *ListFilter) Validate() error {
 	return nil
 }
 
-// AlertStates parses States; empty means no state filtering.
-func (f *ListFilter) AlertStates() ([]AlertState, error) {
+// GetAlertStates parses States; empty means no state filtering.
+func (f *ListFilter) GetAlertStates() ([]AlertState, error) {
 	if len(f.States) == 0 {
 		return nil, nil
 	}

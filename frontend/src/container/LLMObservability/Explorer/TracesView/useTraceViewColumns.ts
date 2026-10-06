@@ -21,7 +21,11 @@ import {
 	TRACE_VIEW_COLUMN_EXTRA_FIELDS,
 	TRACE_VIEW_FIELD_KEYS,
 } from '../constants';
-import { buildTraceViewColumns, TRACE_ID_COLUMN_ID } from './configs';
+import {
+	buildTraceViewColumns,
+	sortByDefaultOrder,
+	TRACE_ID_COLUMN_ID,
+} from './configs';
 
 const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
 
@@ -35,11 +39,17 @@ interface UseTraceViewColumns {
 	onFieldsChange: (next: TelemetryFieldKey[]) => void;
 	requiredFields: readonly string[];
 	isLoading: boolean;
+	/** False until the keys fetch lands; a partial set must not reach the persisted store. */
+	canPersistColumns: boolean;
 }
 
 // TODO(ai-explorer): browser-local only, unlike the list views' `?options=` columns.
 export function useTraceViewColumns(): UseTraceViewColumns {
-	const { data: fetchedFields = [], isFetched } = useFieldKeysSuggestion(
+	const {
+		data: fetchedFields = [],
+		isFetched,
+		isSuccess,
+	} = useFieldKeysSuggestion(
 		{
 			...TRACE_VIEW_FIELD_KEYS,
 			signal: DATA_SOURCE_TO_SIGNAL[DataSource.TRACES],
@@ -49,7 +59,10 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 	);
 
 	const availableFields = useMemo(
-		() => mergeExtraFields(TRACE_VIEW_COLUMN_EXTRA_FIELDS, fetchedFields),
+		() =>
+			sortByDefaultOrder(
+				mergeExtraFields(TRACE_VIEW_COLUMN_EXTRA_FIELDS, fetchedFields),
+			),
 		[fetchedFields],
 	);
 
@@ -60,10 +73,10 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 
 	// Defaults from a partial column set would persist as the user's own choice.
 	useEffect(() => {
-		if (isFetched) {
+		if (isSuccess) {
 			initializeFromDefaults(STORAGE_KEY, columns);
 		}
-	}, [isFetched, columns]);
+	}, [isSuccess, columns]);
 
 	const hiddenColumnIds = useHiddenColumnIds(STORAGE_KEY);
 	const columnOrder = useColumnOrder(STORAGE_KEY);
@@ -83,6 +96,10 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 
 	const onFieldsChange = useCallback(
 		(next: TelemetryFieldKey[]): void => {
+			if (!isSuccess) {
+				return;
+			}
+
 			const keptIds = new Set(next.map(columnIdOf));
 
 			columns.forEach((column) => {
@@ -96,7 +113,7 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 			// Columns missing from the order sort last, so the visible ones suffice.
 			setColumnOrder(STORAGE_KEY, next.map(columnIdOf));
 		},
-		[columns],
+		[columns, isSuccess],
 	);
 
 	return {
@@ -105,5 +122,6 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 		onFieldsChange,
 		requiredFields: [TRACE_ID_COLUMN_ID],
 		isLoading: !isFetched,
+		canPersistColumns: isSuccess,
 	};
 }

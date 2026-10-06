@@ -1,7 +1,17 @@
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
+export const DEFAULT_PANEL_TYPE = PANEL_TYPES.TRACE;
+
 export const TOOLBAR_VIEWS = {
+	trace: {
+		name: 'trace',
+		label: 'Trace',
+		disabled: false,
+		show: true,
+		key: 'trace',
+	},
 	list: {
 		name: 'list',
 		label: 'List',
@@ -14,13 +24,6 @@ export const TOOLBAR_VIEWS = {
 		disabled: false,
 		show: true,
 		key: 'timeseries',
-	},
-	trace: {
-		name: 'trace',
-		label: 'Trace',
-		disabled: false,
-		show: true,
-		key: 'trace',
 	},
 	table: {
 		name: 'table',

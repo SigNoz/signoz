@@ -25,28 +25,66 @@ type ListableRule struct {
 	types.UserAuditable
 }
 
-func NewListableRule(rule *GettableRule) *ListableRule {
-	listable := &ListableRule{
-		Id:          rule.Id,
-		State:       rule.State,
-		AlertName:   rule.AlertName,
-		Description: rule.Description,
-		AlertType:   rule.AlertType,
-		RuleType:    rule.RuleType,
-		Disabled:    rule.Disabled,
-		Labels:      rule.Labels,
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: rule.CreatedAt,
-			UpdatedAt: rule.UpdatedAt,
-		},
+// storedRuleData is the subset of the persisted rule data blob the list page needs.
+type storedRuleData struct {
+	AlertName   string            `json:"alert"`
+	Description string            `json:"description"`
+	AlertType   AlertType         `json:"alertType"`
+	RuleType    RuleType          `json:"ruleType"`
+	Disabled    bool              `json:"disabled"`
+	Labels      map[string]string `json:"labels"`
+}
+
+// ToListableRule leaves State zero; the caller overlays evaluation state.
+func (rule *StorableRule) ToListableRule() (*ListableRule, error) {
+	data := storedRuleData{}
+	if err := json.Unmarshal([]byte(rule.Data), &data); err != nil {
+		return nil, err
 	}
-	if rule.CreatedBy != nil {
-		listable.CreatedBy = *rule.CreatedBy
+
+	return &ListableRule{
+		Id:            rule.ID.StringValue(),
+		AlertName:     data.AlertName,
+		Description:   data.Description,
+		AlertType:     data.AlertType,
+		RuleType:      data.RuleType,
+		Disabled:      data.Disabled,
+		Labels:        data.Labels,
+		TimeAuditable: rule.TimeAuditable,
+		UserAuditable: rule.UserAuditable,
+	}, nil
+}
+
+// NewListableRulesFromStorableRules converts rows, overlays evaluation state (absent means
+// disabled) and applies the state filter; corrupt rows come back keyed by rule id for the
+// caller to log.
+func NewListableRulesFromStorableRules(storedRules []*StorableRule, stateByRuleID map[string]AlertState, stateFilter map[AlertState]struct{}) ([]*ListableRule, map[string]error) {
+	listableRules := make([]*ListableRule, 0, len(storedRules))
+	errByRuleID := make(map[string]error)
+
+	for _, rule := range storedRules {
+		listable, err := rule.ToListableRule()
+		if err != nil {
+			errByRuleID[rule.ID.StringValue()] = err
+			continue
+		}
+
+		if state, ok := stateByRuleID[listable.Id]; ok {
+			listable.State = state
+		} else {
+			listable.State = StateDisabled
+			listable.Disabled = true
+		}
+		if len(stateFilter) > 0 {
+			if _, ok := stateFilter[listable.State]; !ok {
+				continue
+			}
+		}
+
+		listableRules = append(listableRules, listable)
 	}
-	if rule.UpdatedBy != nil {
-		listable.UpdatedBy = *rule.UpdatedBy
-	}
-	return listable
+
+	return listableRules, errByRuleID
 }
 
 // LabelPair is one distinct label key/value observed on the org's rules.
@@ -69,16 +107,6 @@ func NewListableRules(rules []*ListableRule, total int64, labels []LabelPair) *L
 		Labels:           labels,
 		ReservedKeywords: ReservedFilterKeys(),
 	}
-}
-
-// Display priority, worst first; NOT AlertState.Severity(), which ranks disabled/nodata above firing.
-var stateDisplayRank = map[AlertState]int{
-	StateFiring:     5,
-	StatePending:    4,
-	StateRecovering: 3,
-	StateNoData:     2,
-	StateInactive:   1,
-	StateDisabled:   0,
 }
 
 var severityDisplayRank = map[string]int{
@@ -112,7 +140,7 @@ func compareListableRules(a, b *ListableRule, sortBy ListSort) int {
 	case ListSortCreatedAt:
 		return a.CreatedAt.Compare(b.CreatedAt)
 	case ListSortState:
-		return cmp.Compare(stateDisplayRank[a.State], stateDisplayRank[b.State])
+		return cmp.Compare(a.State.DisplayRank(), b.State.DisplayRank())
 	case ListSortSeverity:
 		severityA := a.Labels["severity"]
 		severityB := b.Labels["severity"]

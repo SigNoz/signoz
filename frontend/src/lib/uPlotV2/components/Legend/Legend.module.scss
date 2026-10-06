@@ -2,6 +2,8 @@
 
 .container {
 	position: relative;
+	// Contains the rows' z-indexes, which otherwise paint over side panels.
+	isolation: isolate;
 	display: flex;
 	flex-direction: column;
 	height: 100%;
@@ -54,4 +56,13 @@
 	font-size: var(--font-size-xs);
 	color: var(--l3-foreground);
 	text-align: center;
+}
+
+/* The bottom legend's box is only the rows reserved for it. */
+.container:not(.isRight) .emptyState {
+	flex: 1;
+	min-height: 0;
+	display: grid;
+	place-items: center;
+	padding: 0;
 }

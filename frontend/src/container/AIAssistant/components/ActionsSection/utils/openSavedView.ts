@@ -1,15 +1,22 @@
-import { getAllViews } from 'api/saveView/getAllViews';
-import { getViewById } from 'api/saveView/getViewById';
+import {
+	getSavedView,
+	listSavedViews,
+} from 'api/generated/services/saved-view';
+import { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import {
+	findSavedView,
+	getSavedViewQuery,
+	SavedViewSourcePage,
+	toSavedViewSource,
+} from 'container/SavedViews/utils';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
-import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { History } from 'history';
 
-type SavedViewSourceHint = DataSource | 'meter';
+type SavedViewSourceHint = SavedViewSourcePage;
 
 const DEFAULT_PROBE_SOURCES: SavedViewSourceHint[] = [
 	DataSource.LOGS,
@@ -20,13 +27,15 @@ const DEFAULT_PROBE_SOURCES: SavedViewSourceHint[] = [
 export async function findSavedViewInLists(
 	viewKey: string,
 	sourceHint?: SavedViewSourceHint | null,
-): Promise<ViewProps | null> {
+): Promise<SavedviewtypesSavedViewDTO | null> {
 	const sources = sourceHint ? [sourceHint] : DEFAULT_PROBE_SOURCES;
 
 	for (const source of sources) {
 		try {
-			const response = await getAllViews(source);
-			const match = response.data.data.find((view) => view.id === viewKey);
+			const response = await listSavedViews({
+				source: toSavedViewSource(source),
+			});
+			const match = findSavedView(response.data, viewKey);
 			if (match) {
 				return match;
 			}
@@ -41,11 +50,11 @@ export async function findSavedViewInLists(
 async function loadSavedView(
 	viewKey: string,
 	sourceHint?: SavedViewSourceHint | null,
-): Promise<ViewProps> {
+): Promise<SavedviewtypesSavedViewDTO> {
 	try {
-		const response = await getViewById(viewKey);
-		if (response.data?.data) {
-			return response.data.data;
+		const response = await getSavedView({ id: viewKey });
+		if (response.data) {
+			return response.data;
 		}
 	} catch {
 		// Fall back to list probing when the direct lookup fails.
@@ -85,20 +94,23 @@ export function buildExplorerNavigationUrl(
 	return `${route}?${params.toString()}`;
 }
 
-export function openSavedView(view: ViewProps, history: History): void {
-	const route = explorerRouteForSourcePage(view.sourcePage);
+export function openSavedView(
+	view: SavedviewtypesSavedViewDTO,
+	history: History,
+): void {
+	const route = view.source ? explorerRouteForSourcePage(view.source) : null;
 	if (!route) {
 		throw new Error('Unsupported saved view source');
 	}
 
-	if (!view.compositeQuery) {
+	if (!view.spec.queries?.length) {
 		throw new Error('Saved view is missing query data');
 	}
 
-	const query = mapQueryDataFromApi(view.compositeQuery);
+	const query = getSavedViewQuery(view);
 	const url = buildExplorerNavigationUrl(route, query, {
-		[QueryParams.panelTypes]: view.compositeQuery.panelType as PANEL_TYPES,
-		[QueryParams.viewName]: view.name,
+		[QueryParams.panelTypes]: view.spec.panelType as unknown as PANEL_TYPES,
+		[QueryParams.viewName]: view.spec.displayName,
 		[QueryParams.viewKey]: view.id,
 	});
 	history.push(url);
@@ -112,6 +124,3 @@ export async function openSavedViewByKey(
 	const view = await loadSavedView(viewKey, sourceHint);
 	openSavedView(view, history);
 }
-
-/** @deprecated Use findSavedViewInLists — kept for tests. */
-export const findSavedView = findSavedViewInLists;

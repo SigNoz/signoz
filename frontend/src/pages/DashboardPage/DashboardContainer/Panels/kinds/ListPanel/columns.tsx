@@ -4,7 +4,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
+import { getMs } from 'utils/timeUtils';
 import type {
 	FormatTimezoneAdjustedTimestamp,
 	TimestampInput,

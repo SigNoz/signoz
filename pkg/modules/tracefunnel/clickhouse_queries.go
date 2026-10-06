@@ -495,8 +495,8 @@ WITH
     toDateTime64(%[3]d/1e9, 9) AS start_ts,
     toDateTime64(%[4]d/1e9, 9) AS end_ts,
 
-    ('%[5]s','%[6]s') AS step1,
-    ('%[7]s','%[8]s') AS step2
+    (%[5]s,%[6]s) AS step1,
+    (%[7]s,%[8]s) AS step2
 
 SELECT
     trace_id,
@@ -527,10 +527,10 @@ LIMIT 5;
 		containsErrorT2,
 		startTs,
 		endTs,
-		serviceNameT1,
-		spanNameT1,
-		serviceNameT2,
-		spanNameT2,
+		clickhousesql.StringLiteral(serviceNameT1),
+		clickhousesql.StringLiteral(spanNameT1),
+		clickhousesql.StringLiteral(serviceNameT2),
+		clickhousesql.StringLiteral(spanNameT2),
 		clauseStep1,
 		clauseStep2,
 		t1TimeExpr,
@@ -571,8 +571,8 @@ WITH
     toDateTime64(%[3]d/1e9, 9) AS start_ts,
     toDateTime64(%[4]d/1e9, 9) AS end_ts,
 
-    ('%[5]s','%[6]s') AS step1,
-    ('%[7]s','%[8]s') AS step2
+    (%[5]s,%[6]s) AS step1,
+    (%[7]s,%[8]s) AS step2
 
 SELECT
     trace_id,
@@ -607,10 +607,10 @@ LIMIT 5;
 		containsErrorT2,
 		startTs,
 		endTs,
-		serviceNameT1,
-		spanNameT1,
-		serviceNameT2,
-		spanNameT2,
+		clickhousesql.StringLiteral(serviceNameT1),
+		clickhousesql.StringLiteral(spanNameT1),
+		clickhousesql.StringLiteral(serviceNameT2),
+		clickhousesql.StringLiteral(spanNameT2),
 		clauseStep1,
 		clauseStep2,
 		t1TimeExpr,

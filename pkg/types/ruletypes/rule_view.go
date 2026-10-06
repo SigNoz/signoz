@@ -34,6 +34,12 @@ type RuleView struct {
 	OrgID valuer.UUID  `bun:"org_id,type:text,notnull" json:"orgId" required:"true"`
 }
 
+func (v *RuleView) Update(updatable UpdatableRuleView) {
+	v.Name = updatable.Name
+	v.Data = updatable.Data
+	v.UpdatedAt = time.Now()
+}
+
 // RuleViewData holds the rule listing state (ListRulesParams minus pagination) a view replays.
 type RuleViewData struct {
 	Version string `json:"version" required:"true"`
@@ -77,19 +83,13 @@ func (p PostableRuleView) NewRuleView(orgID valuer.UUID) *RuleView {
 	return &RuleView{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
-		OrgID:         orgID,
 		Name:          p.Name,
 		Data:          p.Data,
+		OrgID:         orgID,
 	}
 }
 
 type UpdatableRuleView = PostableRuleView
-
-func (v *RuleView) Update(updateable UpdatableRuleView) {
-	v.Name = updateable.Name
-	v.Data = updateable.Data
-	v.UpdatedAt = time.Now()
-}
 
 type ListableRuleViews struct {
 	Views []*RuleView `json:"views" required:"true" nullable:"false"`

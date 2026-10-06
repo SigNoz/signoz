@@ -146,7 +146,7 @@ export function useListRuleViews<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1745,7 +1745,7 @@ export const useTestRule = <
 	return useMutation(getTestRuleMutationOptions(options));
 };
 /**
- * Returns a page of alert rules with their current evaluation state, trimmed to the fields the list page renders. Supports a filter DSL (`query`), a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). The response also carries the org's label pairs and the reserved filter keys for building filter suggestions.
+ * Returns a page of alert rules with their current evaluation state, trimmed to the fields the list page renders. Supports a filter DSL (`query`), a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). In the filter DSL, a non-reserved key is matched as a rule label directly (`team = infra`); a key that collides with a reserved keyword matches either interpretation (negative operators exclude both), and `labels.<key>` targets only the label. The response also carries the org's label pairs and the reserved filter keys for building filter suggestions.
  * @summary List alert rules (v3)
  */
 export const listRulesV3 = (
@@ -1820,7 +1820,7 @@ export function useListRulesV3<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**

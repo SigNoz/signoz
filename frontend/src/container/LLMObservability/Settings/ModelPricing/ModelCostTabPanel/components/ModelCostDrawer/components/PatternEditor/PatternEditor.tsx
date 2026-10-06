@@ -37,12 +37,12 @@ function PatternEditor({
 
 	return (
 		<div className={styles.drawerSection}>
-			<Typography.Text as="span">
+			<span className={styles.fieldLabel}>
 				Model name patterns{' '}
 				<Typography.Text as="span" color="muted">
 					(prefix match)
 				</Typography.Text>
-			</Typography.Text>
+			</span>
 			<div className={styles.patternBox}>
 				<div className={styles.patternChips}>
 					{patterns.map((pattern) => (

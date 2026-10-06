@@ -65,8 +65,8 @@ func (m *MockSQLRuleStore) GetStoredRules(ctx context.Context, orgID string) ([]
 }
 
 // GetStoredRulesMatching implements ruletypes.RuleStore - delegates to underlying ruleStore to trigger SQL.
-func (m *MockSQLRuleStore) GetStoredRulesMatching(ctx context.Context, orgID string, query string) ([]*ruletypes.StorableRule, error) {
-	return m.ruleStore.GetStoredRulesMatching(ctx, orgID, query)
+func (m *MockSQLRuleStore) GetStoredRulesMatching(ctx context.Context, orgID string, filterSQL string, filterArgs []any) ([]*ruletypes.StorableRule, error) {
+	return m.ruleStore.GetStoredRulesMatching(ctx, orgID, filterSQL, filterArgs)
 }
 
 // GetStoredRuleLabels implements ruletypes.RuleStore - delegates to underlying ruleStore to trigger SQL.

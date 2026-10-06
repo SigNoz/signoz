@@ -20,6 +20,7 @@ import { ALERT_RULES_PARAMS, useAlertRulesFilters } from './hooks';
 import styles from './ListAlertRules.module.scss';
 import { getAlertRuleColumns } from './table.config';
 import type { AlertRule } from './types';
+import { useAlertRulesStripInfo } from './useAlertRulesStripInfo';
 import { useAlertRulesData } from './useAlertRulesData';
 import { useAlertRulesHandlers } from './useAlertRulesHandlers';
 
@@ -86,6 +87,11 @@ function ListAlertRules(): JSX.Element {
 		const start = (page - 1) * limit;
 		return filteredRules.slice(start, start + limit);
 	}, [filteredRules, page, limit]);
+
+	useAlertRulesStripInfo({
+		shownCount: paginatedRules.length,
+		totalCount: filteredRules.length,
+	});
 
 	const columnsWithActions = useMemo(() => {
 		if (!action) {

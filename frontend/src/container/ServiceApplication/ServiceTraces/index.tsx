@@ -15,9 +15,10 @@ import {
 import { isUndefined } from 'lodash-es';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'types/reducer/trace';
+import { Tags } from 'hooks/useResourceAttribute/types';
 
 import SkipOnBoardingModal from '../SkipOnBoardModal';
+import { useServicesStripInfo } from '../useServicesStripInfo';
 import ServiceTraceTable from './ServiceTracesTable';
 
 function ServiceTraces(): JSX.Element {
@@ -41,6 +42,8 @@ function ServiceTraces(): JSX.Element {
 	useErrorNotification(error);
 
 	const services = data || [];
+
+	useServicesStripInfo(services.length);
 
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',

@@ -23,7 +23,7 @@ func (r *rule) CreateRuleView(ctx context.Context, view *ruletypes.RuleView) err
 func (r *rule) GetRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*ruletypes.RuleView, error) {
 	view := new(ruletypes.RuleView)
 	err := r.sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(view).
 		Where("id = ?", id).
@@ -38,7 +38,7 @@ func (r *rule) GetRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 func (r *rule) ListRuleViews(ctx context.Context, orgID valuer.UUID) ([]*ruletypes.RuleView, error) {
 	views := make([]*ruletypes.RuleView, 0)
 	err := r.sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(&views).
 		Where("org_id = ?", orgID).

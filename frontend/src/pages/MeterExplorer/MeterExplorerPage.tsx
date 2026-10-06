@@ -14,14 +14,13 @@ function MeterExplorerPage(): JSX.Element {
 	const routes: TabRoutes[] = [Meter, Explorer, Views];
 
 	return (
-		<div className="meter-explorer-page">
-			<RouteTab
-				routes={routes}
-				activeKey={pathname}
-				history={history}
-				defaultActiveKey={ROUTES.METER}
-			/>
-		</div>
+		<RouteTab
+			className="meter-explorer-page"
+			routes={routes}
+			activeKey={pathname}
+			history={history}
+			defaultActiveKey={ROUTES.METER}
+		/>
 	);
 }
 

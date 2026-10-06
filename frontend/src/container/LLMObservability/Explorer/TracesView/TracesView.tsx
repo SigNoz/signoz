@@ -67,6 +67,7 @@ function TracesView({
 		onFieldsChange,
 		requiredFields,
 		isLoading: isColumnsLoading,
+		canPersistColumns,
 	} = useTraceViewColumns();
 
 	const {
@@ -158,7 +159,7 @@ function TracesView({
 
 	useEffect(() => {
 		if (!isLoading && !isFetching && !isError && rows.length !== 0) {
-			void logEvent('Traces Explorer: Data present', {
+			void logEvent('AI Observability Explorer: Data present', {
 				panelType: 'TRACE',
 			});
 		}
@@ -168,9 +169,22 @@ function TracesView({
 		setOrderBy(value);
 	}, []);
 
+	// Without the full column set there is no pool to pick from, so the control is dropped.
 	const fieldsSelectorConfig = useMemo(
-		() => ({ fieldsSelector: { value: selectedFields, onFieldsChange } }),
-		[selectedFields, onFieldsChange],
+		() =>
+			canPersistColumns
+				? { fieldsSelector: { value: selectedFields, onFieldsChange } }
+				: null,
+		[canPersistColumns, selectedFields, onFieldsChange],
+	);
+
+	// Rendering the pool unfiltered would surface columns the defaults keep hidden.
+	const tableColumns = useMemo(
+		() =>
+			canPersistColumns
+				? columns
+				: columns.filter((column) => column.defaultVisibility !== false),
+		[canPersistColumns, columns],
 	);
 
 	return (
@@ -207,8 +221,12 @@ function TracesView({
 
 			<TracesTable
 				data={rows}
-				columns={columns}
-				columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS}
+				columns={tableColumns}
+				columnStorageKey={
+					canPersistColumns
+						? LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS
+						: undefined
+				}
 				respectColumnOrder
 				panelType="TRACE"
 				getRowHref={getTraceLink}

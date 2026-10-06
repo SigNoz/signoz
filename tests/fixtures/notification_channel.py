@@ -1,4 +1,5 @@
 # pylint: disable=line-too-long
+import hashlib
 import json
 import time
 from collections.abc import Callable
@@ -8,6 +9,7 @@ import docker
 import docker.errors
 import pytest
 import requests
+from sqlalchemy import sql
 from testcontainers.core.container import Network
 from wiremock.testing.testcontainer import WireMockContainer
 
@@ -35,26 +37,6 @@ EMAIL_TRANSPORT_KEYS = [
 ]
 
 
-def ensure_notification_channel(signoz: types.SigNoz, token: str, channel_config: dict) -> None:
-    # Deliberately no teardown: the stock channel fixture's teardown is broken, so channels are reused idempotently.
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/channels"),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK
-    if channel_config["name"] in [channel["name"] for channel in response.json()["data"] or []]:
-        return
-
-    create_response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/channels"),
-        json=channel_config,
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert create_response.status_code == HTTPStatus.CREATED, f"failed to create channel: {create_response.text}"
-
-
 def assert_email_channel_payload_clean(payload: str) -> None:
     receiver = json.loads(payload)
     for email_config in receiver["email_configs"]:
@@ -64,6 +46,34 @@ def assert_email_channel_payload_clean(payload: str) -> None:
 
     assert MAILDEV_INCOMING_PASS not in payload
     assert SMTP_TEST_FROM not in payload
+
+
+def rewrite_channel_as_legacy_receiver(signoz: types.SigNoz, channel_id: str, receiver: dict) -> None:
+    """Overwrite a channel row, and its receiver in the org's alertmanager config,
+    the way the spec migration leaves a row it cannot fill. Neither API writes
+    such rows any more, so tests that need one seed it here. The receiver's name
+    must be the channel's display name. The alertmanager picks the swapped
+    receiver up on its next poll of the stored config."""
+    configs_key = next(key for key in receiver if key.endswith("_configs"))
+    # Storage names the kind; only msteams differs from its upstream configs list.
+    notifier_type = "msteams" if configs_key == "msteamsv2_configs" else configs_key.removesuffix("_configs")
+    with signoz.sqlstore.conn.connect() as conn:
+        conn.execute(
+            sql.text("UPDATE notification_channel SET type = :type, data = :data, spec = NULL WHERE id = :id"),
+            {"id": channel_id, "type": notifier_type, "data": json.dumps(receiver)},
+        )
+        org_id, stored = conn.execute(
+            sql.text("SELECT c.org_id, c.config FROM alertmanager_config c JOIN notification_channel n ON n.org_id = c.org_id WHERE n.id = :id"),
+            {"id": channel_id},
+        ).one()
+        config = json.loads(stored)
+        config["receivers"] = [receiver if existing["name"] == receiver["name"] else existing for existing in config["receivers"]]
+        raw = json.dumps(config)
+        conn.execute(
+            sql.text("UPDATE alertmanager_config SET config = :config, hash = :hash WHERE org_id = :org_id"),
+            {"config": raw, "hash": hashlib.md5(raw.encode()).hexdigest(), "org_id": org_id},
+        )
+        conn.commit()
 
 
 """

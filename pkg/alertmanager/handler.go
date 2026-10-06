@@ -29,6 +29,8 @@ type Handler interface {
 
 	DeleteNotificationChannel(http.ResponseWriter, *http.Request)
 
+	RepairNotificationChannel(http.ResponseWriter, *http.Request)
+
 	TestNotificationChannel(http.ResponseWriter, *http.Request)
 
 	GetAllRoutePolicies(http.ResponseWriter, *http.Request)

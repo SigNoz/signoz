@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -24,7 +25,7 @@ var jsonAttrColRe = regexp.MustCompile(`,\s*attributes\s*(,| FROM )`)
 
 func newBulkTestBuilder(t *testing.T, releaseTime time.Time) *traceQueryStatementBuilder {
 	t.Helper()
-	fl := flaggertest.New(t)
+	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): true})
 	storage := tracestelemetryschema.NewStorage()
 	store := telemetrytypestest.NewMockMetadataStore()
 	store.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)

@@ -11,57 +11,57 @@ import (
 )
 
 func TestRuleViewDataValidate(t *testing.T) {
-	cases := []struct {
-		description string
+	testCases := []struct {
+		name        string
 		data        RuleViewData
 		expectError bool
 	}{
 		{
-			description: "valid with all fields set",
+			name:        "AllFieldsSet_Valid",
 			data:        RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{Query: "name CONTAINS 'prod'", States: []string{"firing", "pending"}, Sort: ListSortName, Order: ListOrderAsc}},
 			expectError: false,
 		},
 		{
-			description: "valid with zero states, sort and order",
+			name:        "ZeroStatesSortOrder_Valid",
 			data:        RuleViewData{Version: RuleViewSchemaVersion},
 			expectError: false,
 		},
 		{
-			description: "query over the cap is rejected",
+			name:        "QueryOverCap_Rejected",
 			data:        RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{Query: strings.Repeat("x", MaxListQueryLen+1)}},
 			expectError: true,
 		},
 		{
-			description: "wrong version is rejected",
+			name:        "WrongVersion_Rejected",
 			data:        RuleViewData{Version: "v2"},
 			expectError: true,
 		},
 		{
-			description: "empty version is rejected",
+			name:        "EmptyVersion_Rejected",
 			data:        RuleViewData{},
 			expectError: true,
 		},
 		{
-			description: "unknown state is rejected",
+			name:        "UnknownState_Rejected",
 			data:        RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{States: []string{"exploding"}}},
 			expectError: true,
 		},
 		{
-			description: "unknown sort is rejected",
+			name:        "UnknownSort_Rejected",
 			data:        RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{Sort: ListSort{valuer.NewString("bogus")}}},
 			expectError: true,
 		},
 		{
-			description: "unknown order is rejected",
+			name:        "UnknownOrder_Rejected",
 			data:        RuleViewData{Version: RuleViewSchemaVersion, ListFilter: ListFilter{Order: ListOrder{valuer.NewString("sideways")}}},
 			expectError: true,
 		},
 	}
 
-	for _, c := range cases {
-		t.Run(c.description, func(t *testing.T) {
-			err := c.data.Validate()
-			if c.expectError {
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := testCase.data.Validate()
+			if testCase.expectError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
@@ -79,68 +79,68 @@ func TestRuleViewDataValidateDefaults(t *testing.T) {
 }
 
 func TestPostableRuleViewUnmarshalJSON(t *testing.T) {
-	cases := []struct {
-		description    string
+	testCases := []struct {
+		name           string
 		body           string
 		expectError    bool
 		expectedErrMsg string
 		expectedName   string
 	}{
 		{
-			description:  "valid body keeps name as-is",
+			name:         "ValidBody_NameKeptAsIs",
 			body:         `{"name":"my view","data":{"version":"v1","query":"severity = 'critical'","states":["firing"],"sort":"name","order":"asc"}}`,
 			expectError:  false,
 			expectedName: "my view",
 		},
 		{
-			description:    "name with surrounding whitespace is rejected",
+			name:           "NameSurroundingWhitespace_Rejected",
 			body:           `{"name":"  my view  ","data":{"version":"v1"}}`,
 			expectError:    true,
 			expectedErrMsg: "name must not have leading or trailing whitespace",
 		},
 		{
-			description: "unknown field is rejected",
+			name:        "UnknownField_Rejected",
 			body:        `{"name":"my view","data":{"version":"v1"},"extra":true}`,
 			expectError: true,
 		},
 		{
-			description:    "blank name is rejected",
+			name:           "BlankName_Rejected",
 			body:           `{"name":"   ","data":{"version":"v1"}}`,
 			expectError:    true,
 			expectedErrMsg: "name is required",
 		},
 		{
-			description:    "name over max length is rejected",
+			name:           "NameOverMaxLength_Rejected",
 			body:           `{"name":"` + strings.Repeat("x", MaxRuleViewNameLen+1) + `","data":{"version":"v1"}}`,
 			expectError:    true,
 			expectedErrMsg: "name must be at most",
 		},
 		{
-			description: "invalid data version is rejected",
+			name:        "InvalidDataVersion_Rejected",
 			body:        `{"name":"my view","data":{"version":"v9"}}`,
 			expectError: true,
 		},
 		{
-			description:    "invalid state is rejected",
+			name:           "InvalidState_Rejected",
 			body:           `{"name":"my view","data":{"version":"v1","states":["exploding"]}}`,
 			expectError:    true,
 			expectedErrMsg: "invalid state",
 		},
 	}
 
-	for _, c := range cases {
-		t.Run(c.description, func(t *testing.T) {
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
 			var p PostableRuleView
-			err := json.Unmarshal([]byte(c.body), &p)
-			if c.expectError {
+			err := json.Unmarshal([]byte(testCase.body), &p)
+			if testCase.expectError {
 				assert.Error(t, err)
-				if c.expectedErrMsg != "" {
-					assert.ErrorContains(t, err, c.expectedErrMsg)
+				if testCase.expectedErrMsg != "" {
+					assert.ErrorContains(t, err, testCase.expectedErrMsg)
 				}
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, c.expectedName, p.Name)
+			assert.Equal(t, testCase.expectedName, p.Name)
 		})
 	}
 }
