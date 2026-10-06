@@ -9,9 +9,9 @@
  * `history` (the package) is deliberately not flagged: it is a transitive concern of
  * the version bump, not something the facade replaces.
  *
- * The allowlist — the facade itself, the route table, the two navigation hooks, the
- * history singleton and the test harness — is applied via overrides in .oxlintrc.json,
- * not here, so the file list stays visible next to the severity.
+ * The allowlist — the facade itself, the route table, `useSafeNavigate`, the history
+ * singleton and the test and story router mounts — is applied via overrides in
+ * .oxlintrc.json, not here, so the file list stays visible next to the severity.
  */
 
 import path from 'node:path';
