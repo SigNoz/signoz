@@ -39,9 +39,14 @@ export function isRawRequest(capabilities: PanelQueryCapabilities): boolean {
 	return capabilities.requestType === Querybuildertypesv5RequestTypeDTO.raw;
 }
 
+export enum QueryModeKind {
+	SIGNAL = 'signal',
+	SIGNAL_LESS = 'signal-less',
+}
+
 export type QueryModeCapability =
-	| { kind: 'signal'; signals: TelemetrytypesSignalDTO[] }
-	| { kind: 'signal-less' };
+	| { kind: QueryModeKind.SIGNAL; signals: TelemetrytypesSignalDTO[] }
+	| { kind: QueryModeKind.SIGNAL_LESS };
 
 export type SupportedQueryModes = Partial<
 	Record<QueryMode, QueryModeCapability>
@@ -53,5 +58,5 @@ export function getQueryModeSignals(
 	mode: QueryMode,
 ): TelemetrytypesSignalDTO[] {
 	const capability = modes?.[mode];
-	return capability?.kind === 'signal' ? capability.signals : [];
+	return capability?.kind === QueryModeKind.SIGNAL ? capability.signals : [];
 }
