@@ -1,3 +1,4 @@
+import { CSSProperties } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
@@ -16,8 +17,9 @@ function SpanHintBadge({ span }: SpanHintBadgeProps): JSX.Element | null {
 		const { label, color } = AI_SPAN_BADGES[aiSpanKind];
 		return (
 			<Badge
-				color={color}
 				variant="outline"
+				// The outline variant derives text, fill and border from this color.
+				style={{ '--badge-background': color } as CSSProperties}
 				data-testid={`span-hint-badge-${aiSpanKind}`}
 			>
 				{label}
