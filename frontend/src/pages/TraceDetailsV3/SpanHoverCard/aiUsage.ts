@@ -1,19 +1,7 @@
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-const GEN_AI_KEYS = {
-	providerName: 'gen_ai.provider.name',
-	system: 'gen_ai.system',
-	requestModel: 'gen_ai.request.model',
-	responseModel: 'gen_ai.response.model',
-	toolName: 'gen_ai.tool.name',
-	agentName: 'gen_ai.agent.name',
-	inputTokens: 'gen_ai.usage.input_tokens',
-	outputTokens: 'gen_ai.usage.output_tokens',
-	cacheReadTokens: 'gen_ai.usage.cache_read.input_tokens',
-	cacheCreationTokens: 'gen_ai.usage.cache_creation.input_tokens',
-	cost: 'signoz.gen_ai.usage.tokens.cost',
-} as const;
+import { GEN_AI_KEYS } from '../utils/genAi';
 
 export interface SpanAiUsage {
 	inputTokens?: number;
