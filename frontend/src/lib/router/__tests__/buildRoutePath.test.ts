@@ -3,9 +3,8 @@ import ROUTES from 'constants/routes';
 import { buildRoutePath } from '../buildRoutePath';
 
 /**
- * These assertions are the contract Phase D has to reproduce: v6.30's
- * `generatePath` does no encoding at all, so the encoding below has to move
- * into `buildRoutePath` when the version flips.
+ * These assertions pin every URL `buildRoutePath` produces, so a router
+ * upgrade cannot change one unnoticed.
  */
 describe('buildRoutePath', () => {
 	it('fills a single param', () => {
