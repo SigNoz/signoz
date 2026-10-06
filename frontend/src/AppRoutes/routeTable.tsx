@@ -30,16 +30,26 @@ function RouteGate({
 	return enabledRouteKeys.has(routeKey) ? <Component /> : <NotFound />;
 }
 
-const gatedRoutes: RouteObject[] = [
+/**
+ * The gate is keyed by its route entry. The outlet renders the match unkeyed,
+ * so every route would otherwise reuse the previous route's gate, and a lazy
+ * page that resolves to the same component would keep its instance. The
+ * patterns of one entry share the key.
+ */
+export function createGatedRoutes(appRoutes: AppRoutes[]): RouteObject[] {
+	return appRoutes.flatMap(({ path, component, nested, key }) =>
+		(Array.isArray(path) ? path : [path]).map((pattern) => ({
+			path: nested ? `${pattern}/*` : pattern,
+			element: <RouteGate key={key} routeKey={key} component={component} />,
+		})),
+	);
+}
+
+const gatedRoutes = createGatedRoutes([
 	...routes,
 	LIST_LICENSES,
 	SUPPORT_ROUTE,
-].flatMap(({ path, component, nested, key }) =>
-	(Array.isArray(path) ? path : [path]).map((pattern) => ({
-		path: nested ? `${pattern}/*` : pattern,
-		element: <RouteGate routeKey={key} component={component} />,
-	})),
-);
+]);
 
 /** `root` is the layout every route renders in; it has to render an `<Outlet>`. */
 export function createRouteTable(root: ReactNode): RouteObject[] {
