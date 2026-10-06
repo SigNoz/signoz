@@ -2,6 +2,7 @@ import { ruleTester } from './rule-tester.mjs';
 
 const FACADE = 'src/lib/router facade';
 const HISTORY = 'lib/history singleton';
+const MOCK = 'tests/router-mocks helpers';
 
 await ruleTester({
 	rule: 'no-direct-react-router-import',
@@ -20,8 +21,12 @@ await ruleTester({
 			code: "import { useHistoryPanel } from 'container/HistoryPanel';",
 		},
 		{
-			name: 'jest.mock is not an import',
-			code: "jest.mock('lib/history');",
+			name: 'mocking a facade module',
+			code: "jest.mock('lib/router/navigation');",
+		},
+		{
+			name: 'jest call that does not name a module',
+			code: 'jest.fn();',
 		},
 		{
 			name: 'require of an unrelated module',
@@ -33,6 +38,26 @@ await ruleTester({
 		},
 	],
 	invalid: [
+		{
+			name: 'jest.mock of react-router-dom',
+			code: "jest.mock('react-router-dom', () => ({}));",
+			errors: [{ message: MOCK, line: 1, column: 11 }],
+		},
+		{
+			name: 'jest.requireActual of react-router-dom',
+			code: "const actual = jest.requireActual('react-router-dom');",
+			errors: [{ message: MOCK }],
+		},
+		{
+			name: 'jest.mock of lib/history',
+			code: "jest.mock('lib/history');",
+			errors: [{ message: MOCK }],
+		},
+		{
+			name: 'jest.doMock of react-router-dom-v5-compat',
+			code: "jest.doMock('react-router-dom-v5-compat');",
+			errors: [{ message: MOCK }],
+		},
 		{
 			name: 'react-router-dom named import',
 			code: "import { useHistory } from 'react-router-dom';",
@@ -57,6 +82,16 @@ await ruleTester({
 			name: 'lib/history default import',
 			code: "import history from 'lib/history';",
 			errors: [{ message: HISTORY }],
+		},
+		{
+			name: 'lib/history through the @/ alias',
+			code: "import history from '@/lib/history';",
+			errors: [{ message: HISTORY }],
+		},
+		{
+			name: 'jest.mock of lib/history through the @/ alias',
+			code: "jest.mock('@/lib/history');",
+			errors: [{ message: MOCK }],
 		},
 		{
 			name: 'lib/history require',
