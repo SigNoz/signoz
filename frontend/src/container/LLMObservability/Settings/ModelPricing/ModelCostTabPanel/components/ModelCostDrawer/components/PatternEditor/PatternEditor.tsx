@@ -44,28 +44,30 @@ function PatternEditor({
 				</Typography.Text>
 			</span>
 			<div className={styles.patternBox}>
-				<div className={styles.patternChips}>
-					{patterns.map((pattern) => (
-						<Badge
-							textTransform="none"
-							key={pattern}
-							color="secondary"
-							variant="outlined"
-						>
-							{pattern}*
-							{!isReadOnly && (
-								<button
-									type="button"
-									aria-label={`Remove pattern ${pattern}`}
-									className={styles.patternChipRemove}
-									onClick={(): void => removePattern(pattern)}
-								>
-									<X size={10} />
-								</button>
-							)}
-						</Badge>
-					))}
-				</div>
+				{patterns.length > 0 && (
+					<div className={styles.patternChips}>
+						{patterns.map((pattern) => (
+							<Badge
+								textTransform="none"
+								key={pattern}
+								color="secondary"
+								variant="outlined"
+							>
+								{pattern}*
+								{!isReadOnly && (
+									<button
+										type="button"
+										aria-label={`Remove pattern ${pattern}`}
+										className={styles.patternChipRemove}
+										onClick={(): void => removePattern(pattern)}
+									>
+										<X size={10} />
+									</button>
+								)}
+							</Badge>
+						))}
+					</div>
+				)}
 				{!isReadOnly && (
 					<div className={styles.patternAdd}>
 						<Input

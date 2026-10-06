@@ -104,7 +104,12 @@ export function getModelCostsColumns({
 				return (
 					<div className={styles.extraBuckets}>
 						{buckets.map((bucket) => (
-							<Badge key={bucket.key} color="secondary" variant="outlined">
+							<Badge
+								textTransform="none"
+								key={bucket.key}
+								color="secondary"
+								variant="outlined"
+							>
 								<Typography.Text
 									as="span"
 									size="small"
