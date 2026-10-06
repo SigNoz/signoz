@@ -294,9 +294,8 @@
     // Forces useDashboardFetchRequired() outside the root V2 pages (allowlisted in overrides below)
     "signoz/no-msw-in-story-file": "error",
     // Bans msw imports in *.stories.tsx; handlers/mock data belong in the sibling .stories.mocks.tsx
-    "signoz/no-direct-react-router-import": "warn",
-    // Steers new call sites to the src/lib/router facade. Warn, not error: ~310 pre-existing
-    // violations are what the v6 migration is working through (allowlisted in overrides below)
+    "signoz/no-direct-react-router-import": "error",
+    // Steers call sites to the src/lib/router facade (allowlisted in overrides below)
     "no-restricted-globals": [
       "error",
       {
