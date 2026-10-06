@@ -251,6 +251,16 @@ func (handler *handler) ListDowntimeSchedules(rw http.ResponseWriter, req *http.
 		schedules = recurringSchedules
 	}
 
+	if !params.Origin.IsZero() {
+		originSchedules := make([]*alertmanagertypes.PlannedMaintenance, 0)
+		for _, schedule := range schedules {
+			if schedule.Origin == params.Origin {
+				originSchedules = append(originSchedules, schedule)
+			}
+		}
+		schedules = originSchedules
+	}
+
 	render.Success(rw, http.StatusOK, schedules)
 }
 

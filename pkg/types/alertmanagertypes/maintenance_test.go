@@ -1068,3 +1068,53 @@ func TestToPlannedMaintenanceCarriesOrigin(t *testing.T) {
 		t.Errorf("origin = %v, want adhoc", m.Origin)
 	}
 }
+
+func TestNewAdhocStorablePlannedMaintenance(t *testing.T) {
+	start := time.Date(2026, 10, 6, 10, 0, 0, 0, time.UTC)
+	ruleID := valuer.GenerateUUID()
+
+	testCases := []struct {
+		name        string
+		endTime     time.Time
+		wantEndJSON bool
+	}{
+		{name: "FiniteEnd_SerializedInSchedule", endTime: start.Add(time.Hour), wantEndJSON: true},
+		{name: "ZeroEnd_OmittedFromSchedule_Indefinite", endTime: time.Time{}, wantEndJSON: false},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			storableMaintenance, storableMaintenanceRule, err := NewAdhocStorablePlannedMaintenance("org-1", "nikhil@signoz.io", ruleID, "payment latency high", start, testCase.endTime)
+			if err != nil {
+				t.Fatalf("build: %v", err)
+			}
+
+			if storableMaintenance.Origin != MaintenanceOriginAdhoc {
+				t.Errorf("origin = %v, want adhoc", storableMaintenance.Origin)
+			}
+			if storableMaintenance.Name != "Mute: payment latency high" {
+				t.Errorf("name = %q", storableMaintenance.Name)
+			}
+			if storableMaintenance.CreatedBy != "nikhil@signoz.io" || storableMaintenance.UpdatedBy != "nikhil@signoz.io" {
+				t.Errorf("audit fields not stamped: %+v", storableMaintenance.UserAuditable)
+			}
+			if storableMaintenanceRule.PlannedMaintenanceID != storableMaintenance.ID || storableMaintenanceRule.RuleID != ruleID {
+				t.Errorf("join row mismatched: %+v", storableMaintenanceRule)
+			}
+			if got := strings.Contains(storableMaintenance.Schedule, "endTime"); got != testCase.wantEndJSON {
+				t.Errorf("schedule %s endTime presence = %v, want %v", storableMaintenance.Schedule, got, testCase.wantEndJSON)
+			}
+
+			schedule := &Schedule{}
+			if err := json.Unmarshal([]byte(storableMaintenance.Schedule), schedule); err != nil {
+				t.Fatalf("schedule round-trip: %v", err)
+			}
+			if !schedule.StartTime.Equal(start) {
+				t.Errorf("start = %v, want %v", schedule.StartTime, start)
+			}
+			if schedule.EndTime.IsZero() == testCase.wantEndJSON {
+				t.Errorf("end zero = %v, want %v", schedule.EndTime.IsZero(), !testCase.wantEndJSON)
+			}
+		})
+	}
+}

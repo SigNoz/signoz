@@ -3,6 +3,7 @@ package alertmanagertypes
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"slices"
 	"time"
 
@@ -156,6 +157,33 @@ type StorablePlannedMaintenanceRule struct {
 type PlannedMaintenanceWithRules struct {
 	*StorablePlannedMaintenance `bun:",extend"`
 	Rules                       []*StorablePlannedMaintenanceRule `bun:"rel:has-many,join:id=planned_maintenance_id"`
+}
+
+// NewAdhocStorablePlannedMaintenance builds the mute-created downtime for one rule;
+// a zero endTime means the mute never expires.
+func NewAdhocStorablePlannedMaintenance(orgID string, createdBy string, ruleID valuer.UUID, ruleName string, startTime time.Time, endTime time.Time) (*StorablePlannedMaintenance, *StorablePlannedMaintenanceRule, error) {
+	schedule, err := json.Marshal(&Schedule{Timezone: "UTC", StartTime: startTime, EndTime: endTime})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	storableMaintenance := &StorablePlannedMaintenance{
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: startTime, UpdatedAt: startTime},
+		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
+		Name:          fmt.Sprintf("Mute: %s", ruleName),
+		Schedule:      string(schedule),
+		OrgID:         orgID,
+		Origin:        MaintenanceOriginAdhoc,
+	}
+
+	storableMaintenanceRule := &StorablePlannedMaintenanceRule{
+		Identifiable:         types.Identifiable{ID: valuer.GenerateUUID()},
+		PlannedMaintenanceID: storableMaintenance.ID,
+		RuleID:               ruleID,
+	}
+
+	return storableMaintenance, storableMaintenanceRule, nil
 }
 
 // AppliesTo reports whether this maintenance applies to the given rule.
@@ -420,8 +448,9 @@ func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() (*PlannedMaintenanc
 }
 
 type ListPlannedMaintenanceParams struct {
-	Active    *bool `query:"active"`
-	Recurring *bool `query:"recurring"`
+	Active    *bool             `query:"active"`
+	Recurring *bool             `query:"recurring"`
+	Origin    MaintenanceOrigin `query:"origin"`
 }
 
 type MaintenanceStore interface {
@@ -430,4 +459,14 @@ type MaintenanceStore interface {
 	GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*PlannedMaintenance, error)
 	UpdatePlannedMaintenance(context.Context, *PostablePlannedMaintenance, valuer.UUID) error
 	ListPlannedMaintenance(context.Context, string) ([]*PlannedMaintenance, error)
+
+	// ListAdhocPlannedMaintenanceByRule returns every adhoc-origin maintenance attached
+	// to the rule, including expired ones; callers filter with IsActive.
+	ListAdhocPlannedMaintenanceByRule(context.Context, string, valuer.UUID) ([]*PlannedMaintenance, error)
+	// UpsertAdhocPlannedMaintenance creates the rule's adhoc maintenance or, when one
+	// exists, replaces its end time; a rule never accumulates more than one adhoc row.
+	UpsertAdhocPlannedMaintenance(context.Context, valuer.UUID, string, time.Time) (*PlannedMaintenance, error)
+	// DeleteAdhocPlannedMaintenanceByRule removes all adhoc-origin maintenances of the
+	// rule and reports how many were removed.
+	DeleteAdhocPlannedMaintenanceByRule(context.Context, string, valuer.UUID) (int64, error)
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 )
 
 type maintenance struct {
@@ -267,5 +268,164 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 		return err
 	}
 
+	return nil
+}
+
+func (r *maintenance) ListAdhocPlannedMaintenanceByRule(ctx context.Context, orgID string, ruleID valuer.UUID) ([]*alertmanagertypes.PlannedMaintenance, error) {
+	rows, err := r.listAdhocWithRules(ctx, r.sqlstore.BunDBCtx(ctx), orgID, ruleID)
+	if err != nil {
+		return nil, err
+	}
+
+	plannedMaintenances := make([]*alertmanagertypes.PlannedMaintenance, 0, len(rows))
+	for _, row := range rows {
+		plannedMaintenance, err := row.ToPlannedMaintenance()
+		if err != nil {
+			r.logger.WarnContext(ctx, "skipping adhoc planned maintenance", slog.String("maintenance_id", row.ID.StringValue()), errors.Attr(err))
+			continue
+		}
+		plannedMaintenances = append(plannedMaintenances, plannedMaintenance)
+	}
+
+	return plannedMaintenances, nil
+}
+
+func (r *maintenance) UpsertAdhocPlannedMaintenance(ctx context.Context, ruleID valuer.UUID, ruleName string, endTime time.Time) (*alertmanagertypes.PlannedMaintenance, error) {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var maintenanceID valuer.UUID
+	now := time.Now().UTC()
+
+	err = r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		db := r.sqlstore.BunDBCtx(ctx)
+
+		rows, err := r.listAdhocWithRules(ctx, db, claims.OrgID, ruleID)
+		if err != nil {
+			return err
+		}
+
+		if len(rows) == 0 {
+			storableMaintenance, storableMaintenanceRule, err := alertmanagertypes.NewAdhocStorablePlannedMaintenance(claims.OrgID, claims.Email, ruleID, ruleName, now, endTime)
+			if err != nil {
+				return err
+			}
+			if _, err := db.NewInsert().Model(storableMaintenance).Exec(ctx); err != nil {
+				return err
+			}
+			if _, err := db.NewInsert().Model(storableMaintenanceRule).Exec(ctx); err != nil {
+				return err
+			}
+			maintenanceID = storableMaintenance.ID
+			return nil
+		}
+
+		existing := rows[0]
+		maintenanceID = existing.ID
+
+		// An active mute keeps its original start; an expired leftover restarts at now.
+		startTime := now
+		if plannedMaintenance, err := existing.ToPlannedMaintenance(); err == nil && plannedMaintenance.IsActive(now) {
+			startTime = plannedMaintenance.Schedule.StartTime
+		}
+
+		schedule, err := json.Marshal(&alertmanagertypes.Schedule{Timezone: "UTC", StartTime: startTime, EndTime: endTime})
+		if err != nil {
+			return err
+		}
+
+		if _, err := db.NewUpdate().
+			Model((*alertmanagertypes.StorablePlannedMaintenance)(nil)).
+			Set("schedule = ?", string(schedule)).
+			Set("updated_at = ?", now).
+			Set("updated_by = ?", claims.Email).
+			Where("id = ?", existing.ID.StringValue()).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		// Self-heal duplicates that predate the single-adhoc-row invariant.
+		if len(rows) > 1 {
+			extraIDs := make([]string, 0, len(rows)-1)
+			for _, row := range rows[1:] {
+				extraIDs = append(extraIDs, row.ID.StringValue())
+			}
+			if err := r.deleteMaintenancesByIDs(ctx, db, extraIDs); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return r.GetPlannedMaintenanceByID(ctx, maintenanceID)
+}
+
+func (r *maintenance) DeleteAdhocPlannedMaintenanceByRule(ctx context.Context, orgID string, ruleID valuer.UUID) (int64, error) {
+	var deleted int64
+
+	err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		db := r.sqlstore.BunDBCtx(ctx)
+
+		rows, err := r.listAdhocWithRules(ctx, db, orgID, ruleID)
+		if err != nil {
+			return err
+		}
+		if len(rows) == 0 {
+			return nil
+		}
+
+		ids := make([]string, 0, len(rows))
+		for _, row := range rows {
+			ids = append(ids, row.ID.StringValue())
+		}
+
+		if err := r.deleteMaintenancesByIDs(ctx, db, ids); err != nil {
+			return err
+		}
+		deleted = int64(len(ids))
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return deleted, nil
+}
+
+func (r *maintenance) listAdhocWithRules(ctx context.Context, db bun.IDB, orgID string, ruleID valuer.UUID) ([]*alertmanagertypes.PlannedMaintenanceWithRules, error) {
+	rows := make([]*alertmanagertypes.PlannedMaintenanceWithRules, 0)
+	err := db.NewSelect().
+		Model(&rows).
+		Relation("Rules").
+		Join("JOIN planned_maintenance_rule AS pmr ON pmr.planned_maintenance_id = ?TableAlias.id").
+		Where("?TableAlias.org_id = ?", orgID).
+		Where("?TableAlias.origin = ?", alertmanagertypes.MaintenanceOriginAdhoc).
+		Where("pmr.rule_id = ?", ruleID.StringValue()).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (r *maintenance) deleteMaintenancesByIDs(ctx context.Context, db bun.IDB, ids []string) error {
+	if _, err := db.NewDelete().
+		Model((*alertmanagertypes.StorablePlannedMaintenanceRule)(nil)).
+		Where("planned_maintenance_id IN (?)", bun.In(ids)).
+		Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := db.NewDelete().
+		Model((*alertmanagertypes.StorablePlannedMaintenance)(nil)).
+		Where("id IN (?)", bun.In(ids)).
+		Exec(ctx); err != nil {
+		return err
+	}
 	return nil
 }
