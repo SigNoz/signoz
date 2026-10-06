@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import {
@@ -69,6 +69,12 @@ function TraceDetailsHeader({
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 	const [tab] = useTraceDetailsTab();
 	const isOverview = tab === TraceDetailsTab.Overview;
+
+	// Overview-only panels must not linger over another tab.
+	useEffect(() => {
+		setIsPreviewFieldsOpen(false);
+		setIsAnalyticsOpen(false);
+	}, [tab]);
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
@@ -187,7 +193,7 @@ function TraceDetailsHeader({
 				)}
 			</div>
 
-			{showTraceDetails && (
+			{(showTraceDetails || !isOverview) && (
 				<div className={styles.subHeader}>
 					{isLoading || !summary ? (
 						<DetailsLoader />

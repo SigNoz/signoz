@@ -218,4 +218,37 @@ describe('TraceDetailsHeader – tabs', () => {
 		expect(screen.queryByTestId('missing-spans-banner')).not.toBeInTheDocument();
 		expect(screen.getByText(metadataText)).toBeInTheDocument();
 	});
+
+	it('shows the metadata row on the Thread tab even when hidden on Overview', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+
+		await user.click(screen.getByRole('button', { name: /trace options/i }));
+		await user.click(
+			await screen.findByRole('menuitem', { name: /hide trace details/i }),
+		);
+		expect(screen.queryByText(metadataText)).not.toBeInTheDocument();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(screen.getByText(metadataText)).toBeInTheDocument();
+	});
+
+	it('closes the Analytics panel when switching to the Thread tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+
+		await user.click(screen.getByRole('button', { name: /^analytics$/i }));
+		expect(screen.getByTestId('analytics-panel')).toHaveAttribute(
+			'data-open',
+			'true',
+		);
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(screen.getByTestId('analytics-panel')).toHaveAttribute(
+			'data-open',
+			'false',
+		);
+	});
 });
