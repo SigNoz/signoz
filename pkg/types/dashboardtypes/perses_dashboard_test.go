@@ -624,7 +624,7 @@ func TestValidateHeatmapDashboard(t *testing.T) {
 
 	require.IsType(t, &HeatmapPanelSpec{}, spec.Panels["p1"].Spec.Plugin.Spec)
 	panelSpec := spec.Panels["p1"].Spec.Plugin.Spec.(*HeatmapPanelSpec)
-	assert.Equal(t, "log", panelSpec.Axes.YScale.ValueOrDefault())
+	assert.Equal(t, "log", panelSpec.Axes.Y.Scale.ValueOrDefault())
 	assert.Equal(t, "ember", panelSpec.ChartAppearance.Colors.Palette.ValueOrDefault())
 	assert.Equal(t, "sqrt", panelSpec.ChartAppearance.Colors.Scale.ValueOrDefault())
 	assert.Equal(t, 8, panelSpec.ChartAppearance.Colors.Steps)

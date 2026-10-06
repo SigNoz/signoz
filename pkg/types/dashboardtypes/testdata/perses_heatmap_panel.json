@@ -23,7 +23,9 @@
               "decimalPrecision": "3"
             },
             "axes": {
-              "yScale": "log"
+              "y": {
+                "scale": "log"
+              }
             },
             "legend": {
               "position": "right",

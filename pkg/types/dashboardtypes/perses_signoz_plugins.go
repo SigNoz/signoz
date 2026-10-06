@@ -280,7 +280,11 @@ type HeatmapPanelSpec struct {
 // axis with soft bounds, where a heatmap's Y axis is the bucket boundaries the
 // response already fixed.
 type HeatmapAxes struct {
-	YScale HeatmapYScale `json:"yScale"`
+	Y HeatmapAxis `json:"y"`
+}
+
+type HeatmapAxis struct {
+	Scale HeatmapYScale `json:"scale"`
 }
 
 type HeatmapChartAppearance struct {

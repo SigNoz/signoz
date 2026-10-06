@@ -3733,7 +3733,12 @@ components:
       type: object
     DashboardtypesHeatmapAxes:
       properties:
-        yScale:
+        "y":
+          $ref: '#/components/schemas/DashboardtypesHeatmapAxis'
+      type: object
+    DashboardtypesHeatmapAxis:
+      properties:
+        scale:
           $ref: '#/components/schemas/DashboardtypesHeatmapYScale'
       type: object
     DashboardtypesHeatmapChartAppearance:
