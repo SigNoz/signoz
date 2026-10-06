@@ -231,10 +231,7 @@ export interface BaseBuilderQuery {
 	functions?: QueryFunction[];
 	legend?: string;
 	expression?: string; // for trace operator
-	/**
-	 * The bucket axis to count this query's values into. Only a heatmap request reads
-	 * it, and only from the one query it draws.
-	 */
+	/** Heatmap only. */
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 }
 
@@ -273,11 +270,7 @@ export interface QueryBuilderFormula {
 	limit?: number;
 	having?: Having;
 	legend?: string;
-	/**
-	 * The bucket axis to count the formula's results into. Only a heatmap request reads
-	 * it, and only from the one query it draws — which is the formula when its inputs are
-	 * disabled.
-	 */
+	/** Heatmap only. */
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 }
 

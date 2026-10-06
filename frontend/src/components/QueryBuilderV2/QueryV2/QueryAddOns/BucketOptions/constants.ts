@@ -1,3 +1,7 @@
+import { Querybuildertypesv5BucketsKindDTO } from 'api/generated/services/sigNoz.schemas';
+
+import { BucketKindOption } from './types';
+
 /**
  * Mirrors the limits `querybuildertypesv5` validates `bucketOptions` against. The
  * builder keeps its own copy so an out-of-range axis is refused before the request
@@ -25,22 +29,23 @@ export const LOG_BANDS_PER_DOUBLING = [1, 2, 4, 8, 16] as const;
 /** How many leading upper bounds the bounds strip previews before eliding. */
 export const PREVIEW_BOUND_COUNT = 8;
 
-/** The kind toggle's options. `auto` sends no options and lets the server choose. */
-export const BUCKET_KIND_OPTIONS = [
-	{ value: 'auto', label: 'Auto' },
-	{ value: 'log', label: 'Log' },
-	{ value: 'linear', label: 'Linear' },
-];
+export const BUCKET_KIND_OPTIONS: { value: BucketKindOption; label: string }[] =
+	[
+		{ value: 'auto', label: 'Auto' },
+		{ value: Querybuildertypesv5BucketsKindDTO.log, label: 'Log' },
+		{ value: Querybuildertypesv5BucketsKindDTO.linear, label: 'Linear' },
+	];
 
 export const LOG_BANDS_OPTIONS = LOG_BANDS_PER_DOUBLING.map((bands) => ({
 	value: String(bands),
 	label: String(bands),
 }));
 
-export const BUCKET_KIND_HINTS = {
+export const BUCKET_KIND_HINTS: Record<BucketKindOption, string> = {
 	auto:
 		'Bounds are picked for you: a log axis at 16 bands per doubling, the finest the query can return.',
-	log: 'Bounds are spaced evenly on a log axis, so every band is the same height on screen and the tail stays readable. Fewer bands per doubling means fewer, coarser bands.',
-	linear:
+	[Querybuildertypesv5BucketsKindDTO.log]:
+		'Bounds are spaced evenly on a log axis, so every band is the same height on screen and the tail stays readable. Fewer bands per doubling means fewer, coarser bands.',
+	[Querybuildertypesv5BucketsKindDTO.linear]:
 		'Bounds are spaced evenly from 0 up to the max value, so a band covers the same width wherever it sits. Everything above the max value lands in a single overflow band.',
 };

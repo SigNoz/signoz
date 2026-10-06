@@ -4,7 +4,10 @@ import cx from 'classnames';
 import { InputNumber } from '@signozhq/ui/input-number';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { ChevronUp } from '@signozhq/icons';
-import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5BucketOptionsDTO,
+	Querybuildertypesv5BucketsKindDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import {
 	BUCKET_KIND_HINTS,
@@ -15,7 +18,6 @@ import {
 } from './constants';
 import {
 	bandsPerDoublingFromScale,
-	BucketKindOption,
 	formatUpperBound,
 	hasBoundsBeyondPreview,
 	isLinearBuckets,
@@ -26,6 +28,7 @@ import {
 	previewUpperBounds,
 	scaleFromBandsPerDoubling,
 } from './utils';
+import { BucketKindOption } from './types';
 
 import styles from './BucketOptions.module.scss';
 
@@ -87,7 +90,7 @@ function BucketOptions({
 
 			if (nextKind === 'auto') {
 				onChange(undefined);
-			} else if (nextKind === 'log') {
+			} else if (nextKind === Querybuildertypesv5BucketsKindDTO.log) {
 				onChange(logBuckets(logScale));
 			} else {
 				emitLinear(maxValue, numBuckets);
@@ -154,19 +157,22 @@ function BucketOptions({
 	const previewedOptions = useMemo(():
 		| Querybuildertypesv5BucketOptionsDTO
 		| undefined => {
-		if (kind === 'log') {
+		if (kind === Querybuildertypesv5BucketsKindDTO.log) {
 			return logBuckets(logScale);
 		}
-		if (kind === 'linear' && maxValue !== null) {
+		if (kind === Querybuildertypesv5BucketsKindDTO.linear && maxValue !== null) {
 			return linearBuckets(maxValue, numBuckets);
 		}
 		return undefined;
 	}, [kind, logScale, maxValue, numBuckets]);
 
-	const bounds =
-		kind === 'linear' && !previewedOptions
-			? undefined
-			: previewUpperBounds(previewedOptions);
+	const bounds = useMemo(
+		() =>
+			kind === Querybuildertypesv5BucketsKindDTO.linear && !previewedOptions
+				? undefined
+				: previewUpperBounds(previewedOptions),
+		[kind, previewedOptions],
+	);
 
 	return (
 		<div className={styles.bucketOptions} data-testid="bucket-options">
@@ -182,7 +188,7 @@ function BucketOptions({
 					/>
 				</div>
 
-				{kind === 'log' && (
+				{kind === Querybuildertypesv5BucketsKindDTO.log && (
 					<div className={styles.field}>
 						<span className={styles.label}>Bands per doubling</span>
 						<ToggleGroupSimple
@@ -195,7 +201,7 @@ function BucketOptions({
 					</div>
 				)}
 
-				{kind === 'linear' && (
+				{kind === Querybuildertypesv5BucketsKindDTO.linear && (
 					<>
 						<div className={styles.field}>
 							<span className={styles.label}>Max value</span>
@@ -227,7 +233,7 @@ function BucketOptions({
 
 				{onClose && (
 					<Button
-						className={cx('periscope-btn', 'ghost', styles.closeBtn)}
+						className={cx('periscope-btn', 'ghost', styles.closeButton)}
 						icon={<ChevronUp size={16} />}
 						onClick={onClose}
 						data-testid="bucket-options-close"

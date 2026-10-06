@@ -4,6 +4,7 @@ import {
 	Querybuildertypesv5BucketOptionsLinearDTOKind,
 	Querybuildertypesv5BucketOptionsLogDTO,
 	Querybuildertypesv5BucketOptionsLogDTOKind,
+	Querybuildertypesv5BucketsKindDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 
@@ -12,12 +13,7 @@ import {
 	MAX_LOG_SCALE,
 	PREVIEW_BOUND_COUNT,
 } from './constants';
-
-/**
- * The toggle's own vocabulary: the two kinds the request takes, plus `auto` for
- * sending no options at all and letting the server pick the axis.
- */
-export type BucketKindOption = 'auto' | 'log' | 'linear';
+import { BucketKindOption } from './types';
 
 export const isLinearBuckets = (
 	bucketOptions: Querybuildertypesv5BucketOptionsDTO,
@@ -62,7 +58,9 @@ export const kindOptionOf = (
 		return 'auto';
 	}
 
-	return isLinearBuckets(bucketOptions) ? 'linear' : 'log';
+	return isLinearBuckets(bucketOptions)
+		? Querybuildertypesv5BucketsKindDTO.linear
+		: Querybuildertypesv5BucketsKindDTO.log;
 };
 
 /**

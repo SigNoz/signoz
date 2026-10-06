@@ -29,7 +29,7 @@ export interface IBuilderFormula {
 	having?: Having[];
 	stepInterval?: number;
 	orderBy?: OrderByPayload[];
-	/** Heatmap only, like `IBuilderQuery['bucketOptions']`. */
+	/** Heatmap only. */
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 }
 
@@ -95,11 +95,7 @@ export type IBuilderQuery = {
 	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
 	source?: 'meter' | '';
 	builderQueryType?: BuilderQueryType;
-	/**
-	 * Heatmap only, and request-level on the wire: the bucket axis is shared by every
-	 * query in the request, and a heatmap admits exactly one enabled query, so the
-	 * builder edits it alongside that query.
-	 */
+	/** Heatmap only. */
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 };
 
