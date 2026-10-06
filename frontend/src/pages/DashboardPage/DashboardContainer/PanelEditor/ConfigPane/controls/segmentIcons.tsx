@@ -13,6 +13,7 @@ export type SegmentIconName =
 	| 'pos-right'
 	| 'scale-linear'
 	| 'scale-log'
+	| 'scale-sqrt'
 	| 'interp-linear'
 	| 'interp-spline'
 	| 'interp-step-before'
@@ -113,6 +114,12 @@ export function SegmentIcon({
 			return (
 				<Svg>
 					<path d="M2.5 13 C5 13, 8 4.5, 13.5 3" />
+				</Svg>
+			);
+		case 'scale-sqrt':
+			return (
+				<Svg>
+					<path d="M2.5 13 C5.5 11, 8.5 6.5, 13.5 3" />
 				</Svg>
 			);
 		case 'interp-linear':

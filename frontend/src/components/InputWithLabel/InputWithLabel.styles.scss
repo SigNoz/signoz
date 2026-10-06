@@ -5,6 +5,10 @@
 	border-radius: 2px 0px 0px 2px;
 
 	.label {
+		// Typography.Text takes its display from this token; at its `inline` default
+		// the label blockifies as a flex item and the text rides the top of the row.
+		--typography-text-display: flex;
+
 		font-size: 12px;
 		font-style: normal;
 		font-weight: 500;
