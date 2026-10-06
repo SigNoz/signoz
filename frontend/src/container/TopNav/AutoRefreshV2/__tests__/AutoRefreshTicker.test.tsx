@@ -1,12 +1,12 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { act, render } from '@testing-library/react';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import configureStore, { MockStoreEnhanced } from 'redux-mock-store';
 import { AppState } from 'store/reducers';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
+import { TestRouter } from 'tests/router';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../index';
@@ -37,11 +37,11 @@ function renderTicker(
 	const store = mockStore({ globalTime });
 
 	render(
-		<MemoryRouter initialEntries={[PATHNAME]}>
+		<TestRouter initialRoute={PATHNAME}>
 			<Provider store={store}>
 				<AutoRefreshTicker />
 			</Provider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 
 	return store;
@@ -133,11 +133,11 @@ describe('AutoRefresh full screen handover', () => {
 		}
 
 		const renderHarness = (active: boolean): JSX.Element => (
-			<MemoryRouter initialEntries={[PATHNAME]}>
+			<TestRouter initialRoute={PATHNAME}>
 				<Provider store={store}>
 					<Harness active={active} />
 				</Provider>
-			</MemoryRouter>
+			</TestRouter>
 		);
 
 		const { rerender } = render(renderHarness(false));

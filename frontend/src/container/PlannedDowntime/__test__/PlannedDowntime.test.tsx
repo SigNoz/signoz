@@ -9,6 +9,7 @@ import {
 	mockLocation,
 	mockQueryParams,
 } from 'container/RoutingPolicies/__tests__/testUtils';
+import { mockAppLocation } from 'tests/router-mocks';
 import { render } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
@@ -78,15 +79,9 @@ const mockDowntimeQueryResult: Partial<DowntimeQueryResult> = {
 	refetch: jest.fn(),
 };
 
-const mockUseLocation = jest.fn().mockReturnValue({
-	pathname: '/alerts',
-});
 let mockUrlQuery: URLSearchParams;
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): void => mockUseLocation(),
-}));
+mockAppLocation({ pathname: '/alerts' });
 
 jest.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
