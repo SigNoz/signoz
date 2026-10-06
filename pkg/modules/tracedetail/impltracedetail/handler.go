@@ -26,13 +26,8 @@ func (h *handler) GetTraceSummary(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
 
-	stats, err := h.module.GetTraceSummary(r.Context(), orgID, mux.Vars(r)["traceID"])
+	stats, err := h.module.GetTraceSummary(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"])
 	if err != nil {
 		render.Error(rw, err)
 		return

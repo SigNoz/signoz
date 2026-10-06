@@ -16,7 +16,7 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 			ID:                  "GetTraceSummary",
 			Tags:                []string{"tracedetail"},
 			Summary:             "Get summary for a trace",
-			Description:         "Returns the trace-level fields of the waterfall (time range, root, span counts, missing spans) and, when the trace has gen_ai spans, its token and cost totals. Computed in one aggregate query.",
+			Description:         "Returns the trace's time range, root span, span and error counts, and whether any spans are missing. AI traces also include token and cost totals.",
 			Response:            new(spantypes.GettableTraceSummary),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,

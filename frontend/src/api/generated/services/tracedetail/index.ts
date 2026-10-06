@@ -156,7 +156,7 @@ export const useGetTraceAggregations = <
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
 };
 /**
- * Returns the trace-level fields of the waterfall (time range, root, span counts, missing spans) and, when the trace has gen_ai spans, its token and cost totals. Computed in one aggregate query.
+ * Returns the trace's time range, root span, span and error counts, and whether any spans are missing. AI traces also include token and cost totals.
  * @summary Get summary for a trace
  */
 export const getTraceSummary = (

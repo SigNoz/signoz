@@ -8,6 +8,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/aitelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
@@ -42,12 +44,12 @@ var (
 )
 
 func newTestStore(matcher sqlmock.QueryMatcher) *spantypestest.TraceStoreTest {
-	return newTestStoreWithMetadata(matcher, telemetrytypestest.NewMockMetadataStore())
+	return newTestStoreWithMetadata(matcher, telemetrytypestest.NewMockMetadataStore(), nil)
 }
 
-func newTestStoreWithMetadata(matcher sqlmock.QueryMatcher, metadataStore telemetrytypes.MetadataStore) *spantypestest.TraceStoreTest {
+func newTestStoreWithMetadata(matcher sqlmock.QueryMatcher, metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *spantypestest.TraceStoreTest {
 	ts := telemetrystoretest.New(telemetrystore.Config{}, matcher)
-	return spantypestest.New(impltracedetail.NewTraceStore(ts, metadataStore, nil), ts.Mock())
+	return spantypestest.New(impltracedetail.NewTraceStore(ts, metadataStore, fl), ts.Mock())
 }
 
 func TestGetTraceSummary(t *testing.T) {
@@ -80,6 +82,7 @@ func genAIMetadataStore(jsonRelease *time.Time) *telemetrytypestest.MockMetadata
 func TestGetTraceStats(t *testing.T) {
 	jsonInsideTrace := testStart.Add(500 * time.Second)
 	jsonBeforeTrace := testStart.Add(-500 * time.Second)
+	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): true})
 
 	testCases := []struct {
 		name        string
@@ -104,7 +107,7 @@ func TestGetTraceStats(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			s := newTestStoreWithMetadata(sqlmock.QueryMatcherEqual, genAIMetadataStore(testCase.jsonRelease))
+			s := newTestStoreWithMetadata(sqlmock.QueryMatcherEqual, genAIMetadataStore(testCase.jsonRelease), fl)
 			s.Mock().ExpectQueryRow(testCase.expectedSQL).
 				WillReturnRow(cmock.NewRow(nil, nil))
 			_, _ = s.Store().GetTraceStats(context.Background(), valuer.GenerateUUID(), testTraceID, testSummary)

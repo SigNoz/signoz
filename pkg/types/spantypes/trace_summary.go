@@ -18,30 +18,30 @@ type TraceStats struct {
 // GettableTraceSummary is the response for the trace summary API; the trace-level
 // fields match the waterfall response.
 type GettableTraceSummary struct {
-	StartTimestampMillis  uint64          `json:"startTimestampMillis"`
-	EndTimestampMillis    uint64          `json:"endTimestampMillis"`
-	RootServiceName       string          `json:"rootServiceName"`
-	RootServiceEntryPoint string          `json:"rootServiceEntryPoint"`
-	RootSpanStatusCode    string          `json:"rootSpanStatusCode"`
-	TotalSpansCount       uint64          `json:"totalSpansCount"`
-	TotalErrorSpansCount  uint64          `json:"totalErrorSpansCount"`
-	HasMissingSpans       bool            `json:"hasMissingSpans"`
+	StartTimestampMillis  uint64          `json:"startTimestampMillis" required:"true"`
+	EndTimestampMillis    uint64          `json:"endTimestampMillis" required:"true"`
+	RootServiceName       string          `json:"rootServiceName" required:"true"`
+	RootServiceEntryPoint string          `json:"rootServiceEntryPoint" required:"true"`
+	RootSpanStatusCode    string          `json:"rootSpanStatusCode" required:"true"`
+	TotalSpansCount       uint64          `json:"totalSpansCount" required:"true"`
+	TotalErrorSpansCount  uint64          `json:"totalErrorSpansCount" required:"true"`
+	HasMissingSpans       bool            `json:"hasMissingSpans" required:"true"`
 	AI                    *TraceAISummary `json:"ai,omitempty"`
 }
 
 // TraceAISummary is present when any span carries a gen_ai gate key.
 type TraceAISummary struct {
-	Tokens TraceAITokens `json:"tokens"`
-	// TotalCost is null when no span carries a cost attribute.
-	TotalCost *float64 `json:"totalCost" nullable:"true"`
+	Tokens TraceAITokens `json:"tokens" required:"true"`
+	// TotalCost is omitted when no span carries a cost attribute.
+	TotalCost *float64 `json:"totalCost,omitempty" nullable:"false"`
 }
 
 type TraceAITokens struct {
-	Input      uint64 `json:"input"`
-	Output     uint64 `json:"output"`
-	CacheRead  uint64 `json:"cacheRead"`
-	CacheWrite uint64 `json:"cacheWrite"`
-	Reasoning  uint64 `json:"reasoning"`
+	Input      uint64 `json:"input" required:"true"`
+	Output     uint64 `json:"output" required:"true"`
+	CacheRead  uint64 `json:"cacheRead" required:"true"`
+	CacheWrite uint64 `json:"cacheWrite" required:"true"`
+	Reasoning  uint64 `json:"reasoning" required:"true"`
 }
 
 func NewGettableTraceSummary(stats *TraceStats) *GettableTraceSummary {

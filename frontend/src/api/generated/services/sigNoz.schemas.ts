@@ -11199,35 +11199,35 @@ export interface SpantypesTraceAITokensDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	cacheRead?: number;
+	cacheRead: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	cacheWrite?: number;
+	cacheWrite: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	input?: number;
+	input: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	output?: number;
+	output: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	reasoning?: number;
+	reasoning: number;
 }
 
 export interface SpantypesTraceAISummaryDTO {
-	tokens?: SpantypesTraceAITokensDTO;
+	tokens: SpantypesTraceAITokensDTO;
 	/**
-	 * @type number,null
+	 * @type number
 	 */
-	totalCost?: number | null;
+	totalCost?: number;
 }
 
 export interface SpantypesGettableTraceSummaryDTO {
@@ -11236,38 +11236,38 @@ export interface SpantypesGettableTraceSummaryDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	endTimestampMillis?: number;
+	endTimestampMillis: number;
 	/**
 	 * @type boolean
 	 */
-	hasMissingSpans?: boolean;
+	hasMissingSpans: boolean;
 	/**
 	 * @type string
 	 */
-	rootServiceEntryPoint?: string;
+	rootServiceEntryPoint: string;
 	/**
 	 * @type string
 	 */
-	rootServiceName?: string;
+	rootServiceName: string;
 	/**
 	 * @type string
 	 */
-	rootSpanStatusCode?: string;
+	rootSpanStatusCode: string;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	startTimestampMillis?: number;
+	startTimestampMillis: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	totalErrorSpansCount?: number;
+	totalErrorSpansCount: number;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	totalSpansCount?: number;
+	totalSpansCount: number;
 }
 
 export interface SpantypesOtelSpanRefDTO {

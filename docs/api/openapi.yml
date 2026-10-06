@@ -9717,6 +9717,15 @@ components:
         totalSpansCount:
           minimum: 0
           type: integer
+      required:
+      - startTimestampMillis
+      - endTimestampMillis
+      - rootServiceName
+      - rootServiceEntryPoint
+      - rootSpanStatusCode
+      - totalSpansCount
+      - totalErrorSpansCount
+      - hasMissingSpans
       type: object
     SpantypesGettableWaterfallTrace:
       properties:
@@ -10037,8 +10046,9 @@ components:
         tokens:
           $ref: '#/components/schemas/SpantypesTraceAITokens'
         totalCost:
-          nullable: true
           type: number
+      required:
+      - tokens
       type: object
     SpantypesTraceAITokens:
       properties:
@@ -10057,6 +10067,12 @@ components:
         reasoning:
           minimum: 0
           type: integer
+      required:
+      - input
+      - output
+      - cacheRead
+      - cacheWrite
+      - reasoning
       type: object
     SpantypesUpdatableSpanMapper:
       properties:
@@ -15785,9 +15801,8 @@ paths:
   /api/v1/traces/{traceID}/summary:
     get:
       deprecated: false
-      description: Returns the trace-level fields of the waterfall (time range, root,
-        span counts, missing spans) and, when the trace has gen_ai spans, its token
-        and cost totals. Computed in one aggregate query.
+      description: Returns the trace's time range, root span, span and error counts,
+        and whether any spans are missing. AI traces also include token and cost totals.
       operationId: GetTraceSummary
       parameters:
       - in: path
