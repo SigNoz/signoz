@@ -5,6 +5,7 @@ import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { LegendItem } from '../config/types';
+import { HeatmapSeries, HeatmapYAxis } from '../plugins/HeatmapPlugin/types';
 import { SyncTooltipFilterMode } from '../plugins/TooltipPlugin/types';
 
 /**
@@ -102,6 +103,21 @@ export interface BarTooltipProps extends BaseTooltipProps, TooltipRenderArgs {
 
 export interface HistogramTooltipProps
 	extends BaseTooltipProps, TooltipRenderArgs {}
+
+/** Not part of `TooltipProps`: it renders its own container, since none of its
+ *  states is the flat series list the shared `Tooltip` draws. */
+export interface HeatmapTooltipProps
+	extends BaseTooltipProps, TooltipRenderArgs {
+	yAxis: HeatmapYAxis;
+	/** Column width in seconds. */
+	step: number;
+	/** Needed to break a summed cell down by contribution. */
+	series: HeatmapSeries[];
+	/** Groups the legend has enabled; the cell sums exactly these. */
+	visibleGroups: string[];
+	/** Same colour the legend and the densest cells use. */
+	groupColor: string;
+}
 
 export type TooltipProps =
 	| TimeSeriesTooltipProps

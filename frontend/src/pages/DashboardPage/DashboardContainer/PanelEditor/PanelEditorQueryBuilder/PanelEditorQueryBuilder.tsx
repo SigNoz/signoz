@@ -26,7 +26,8 @@ import { toPanelType } from '../../Panels/types/panelKind';
 import styles from './PanelEditorQueryBuilder.module.scss';
 
 interface PanelEditorQueryBuilderProps {
-	/** The edited kind's definition — drives supported query types + field visibility. */
+	/** The edited kind's definition — drives supported query types, the signals the
+	 *  builder may be pointed at, and how it narrows the builder's fields. */
 	panelDefinition: RenderableQueryPanelDefinition;
 	/** Preview fetch in flight — drives the Stage & Run button's loading/cancel state. */
 	isLoadingQueries: boolean;
@@ -98,6 +99,7 @@ function PanelEditorQueryBuilder({
 						<QueryBuilderV2
 							panelType={panelType}
 							fieldsConfig={panelDefinition.queryBuilderFields}
+							allowedDataSources={panelDefinition.supportedSignals}
 							showTraceOperator={!isRawQuery}
 							version="v3"
 							isRawQuery={isRawQuery}

@@ -1,3 +1,4 @@
+import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import AxesSection from '../AxesSection';
@@ -62,6 +63,61 @@ describe('AxesSection', () => {
 		await user.clear(screen.getByTestId('panel-editor-v2-soft-max'));
 
 		expect(onChange).toHaveBeenCalledWith({ softMax: null });
+	});
+
+	it('offers the bucket-axis scale instead of the soft bounds when y is on', () => {
+		render(
+			<AxesSection
+				value={undefined}
+				controls={{ y: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByTestId('panel-editor-v2-y-scale')).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('panel-editor-v2-soft-min'),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('panel-editor-v2-log-scale'),
+		).not.toBeInTheDocument();
+	});
+
+	it('offers every bucket-axis scale, symmetric log included', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(
+			<AxesSection value={undefined} controls={{ y: true }} onChange={onChange} />,
+		);
+
+		const trigger = screen.getByTestId('panel-editor-v2-y-scale');
+		await user.click(
+			trigger.querySelector('.ant-select-selector') as HTMLElement,
+		);
+
+		await expect(
+			screen.findByRole('option', { name: /Auto/ }),
+		).resolves.toBeInTheDocument();
+		expect(screen.getByRole('option', { name: /Log/ })).toBeInTheDocument();
+		expect(screen.getByRole('option', { name: /Linear/ })).toBeInTheDocument();
+
+		await user.click(screen.getByRole('option', { name: /Symmetric log/ }));
+
+		expect(onChange).toHaveBeenCalledWith({
+			y: { scale: DashboardtypesHeatmapYScaleDTO.symlog },
+		});
+	});
+
+	it('shows the scale the spec asks for', () => {
+		render(
+			<AxesSection
+				value={{ y: { scale: DashboardtypesHeatmapYScaleDTO.symlog } }}
+				controls={{ y: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByText('Symmetric log')).toBeInTheDocument();
 	});
 
 	it('toggles the logarithmic scale through onChange', async () => {
