@@ -2,23 +2,15 @@ import { render, screen } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { mockAppLocation } from 'tests/router-mocks';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { viewMockData } from '../__mock__/viewData';
 import ExplorerCard from '../ExplorerCard';
 
-const historyReplace = jest.fn();
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.TRACES_EXPLORER}/`,
-	}),
-	useHistory: (): any => ({
-		...jest.requireActual('react-router-dom').useHistory(),
-		replace: historyReplace,
-	}),
-}));
+mockAppLocation({
+	pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.TRACES_EXPLORER}/`,
+});
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({

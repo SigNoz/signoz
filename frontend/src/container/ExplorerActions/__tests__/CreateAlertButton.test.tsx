@@ -1,4 +1,3 @@
-import { useHistory } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -9,16 +8,13 @@ import {
 } from 'container/LogsExplorerViews/explorerUtils';
 import { getQueryByPanelType as getTracesQueryByPanelType } from 'container/TracesExplorer/explorerUtils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { mockAppNavigate } from 'tests/router-mocks';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import CreateAlertButton from '../CreateAlertButton';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useHistory: jest.fn(),
-}));
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
@@ -27,8 +23,7 @@ jest.mock('api/common/logEvent', () => ({
 	default: jest.fn(() => Promise.resolve()),
 }));
 
-const mockPush = jest.fn();
-const mockedUseHistory = jest.mocked(useHistory);
+const mockedNavigate = mockAppNavigate();
 const mockedUseQueryBuilder = jest.mocked(useQueryBuilder);
 const mockedLogEvent = jest.mocked(logEvent);
 
@@ -61,8 +56,8 @@ function stagedQuery(
 }
 
 function pushedQuery(): Query {
-	expect(mockPush).toHaveBeenCalledTimes(1);
-	const [path, search] = (mockPush.mock.calls[0][0] as string).split('?');
+	expect(mockedNavigate).toHaveBeenCalledTimes(1);
+	const [path, search] = (mockedNavigate.mock.calls[0][0] as string).split('?');
 	expect(path).toBe(ROUTES.ALERTS_NEW);
 	const raw = new URLSearchParams(search).get(QueryParams.compositeQuery);
 	return JSON.parse(raw as string);
@@ -86,11 +81,8 @@ async function clickCreateAlert(
 
 describe('CreateAlertButton', () => {
 	beforeEach(() => {
-		mockPush.mockReset();
+		mockedNavigate.mockReset();
 		mockedLogEvent.mockClear();
-		mockedUseHistory.mockReturnValue({ push: mockPush } as unknown as ReturnType<
-			typeof useHistory
-		>);
 	});
 
 	it('is disabled and does nothing without a query', async () => {
@@ -100,7 +92,7 @@ describe('CreateAlertButton', () => {
 			'aria-disabled',
 			'true',
 		);
-		expect(mockPush).not.toHaveBeenCalled();
+		expect(mockedNavigate).not.toHaveBeenCalled();
 	});
 
 	it("logs the explorer's own create alert event", async () => {
