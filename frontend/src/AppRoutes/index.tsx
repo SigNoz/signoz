@@ -32,6 +32,7 @@ import { extractDomain } from 'utils/app';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
+import { routeElements } from './routeElements';
 import defaultRoutes, {
 	AppRoutes,
 	LIST_LICENSES,
@@ -422,15 +423,7 @@ function App(): JSX.Element {
 					<AppPageProviders layout={appLayout}>
 						<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
 							<Routes>
-								{routes.flatMap(({ path, component: Component, nested }) =>
-									(Array.isArray(path) ? path : [path]).map((pattern) => (
-										<Route
-											key={pattern}
-											path={nested ? `${pattern}/*` : pattern}
-											element={<Component />}
-										/>
-									)),
-								)}
+								{routeElements(routes)}
 								<Route path="/" element={<Home />} />
 								<Route path="*" element={<NotFound />} />
 							</Routes>
