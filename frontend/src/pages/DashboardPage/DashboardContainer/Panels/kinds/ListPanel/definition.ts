@@ -1,6 +1,7 @@
 import { List } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
+import { QueryModeKind } from '../../types/panelCapabilities';
 import ListEditorPane from './ListEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
@@ -20,11 +21,11 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	// Raw records come from logs and traces; metrics don't produce row data.
 	supportedQueryModes: {
 		[QueryMode.QUERY_BUILDER]: {
-			kind: 'signal',
+			kind: QueryModeKind.SIGNAL,
 			signals: [TelemetrytypesSignalDTO.logs, TelemetrytypesSignalDTO.traces],
 		},
 		[QueryMode.AI_QUERY_BUILDER]: {
-			kind: 'signal',
+			kind: QueryModeKind.SIGNAL,
 			signals: [TelemetrytypesSignalDTO.traces],
 		},
 	},

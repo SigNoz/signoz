@@ -1,6 +1,7 @@
 import { ChartLine } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
+import { QueryModeKind } from '../../types/panelCapabilities';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
@@ -20,17 +21,17 @@ export const definition: PanelDefinition<'signoz/TimeSeriesPanel'> = {
 	sections,
 	supportedQueryModes: {
 		[QueryMode.QUERY_BUILDER]: {
-			kind: 'signal',
+			kind: QueryModeKind.SIGNAL,
 			signals: [
 				TelemetrytypesSignalDTO.metrics,
 				TelemetrytypesSignalDTO.logs,
 				TelemetrytypesSignalDTO.traces,
 			],
 		},
-		[QueryMode.CLICKHOUSE]: { kind: 'signal-less' },
-		[QueryMode.PROM]: { kind: 'signal-less' },
+		[QueryMode.CLICKHOUSE]: { kind: QueryModeKind.SIGNAL_LESS },
+		[QueryMode.PROM]: { kind: QueryModeKind.SIGNAL_LESS },
 		[QueryMode.AI_QUERY_BUILDER]: {
-			kind: 'signal',
+			kind: QueryModeKind.SIGNAL,
 			signals: [TelemetrytypesSignalDTO.traces],
 		},
 	},
