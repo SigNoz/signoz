@@ -62,7 +62,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 
 	useEffect(() => {
 		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
-			if (newPanelType === PANEL_TYPES.BAR) {
+			if (newPanelType === PANEL_TYPES.BAR && !currentDataSource) {
 				handleSetConfig(PANEL_TYPES.BAR, DataSource.METRICS);
 				return;
 			}
