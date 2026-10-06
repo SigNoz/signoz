@@ -2,6 +2,7 @@ import {
 	type KeyboardEvent,
 	type ReactNode,
 	useCallback,
+	useEffect,
 	useMemo,
 } from 'react';
 import { Color } from '@signozhq/design-tokens';
@@ -11,6 +12,7 @@ import cx from 'classnames';
 import { Typography } from '@signozhq/ui/typography';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
+import { clearPreviousQuery } from 'components/QueryBuilderV2/QueryV2/previousQuery.utils';
 import TextToolTip from 'components/TextToolTip';
 import ClickHouseQueryContainer from 'container/QueryBuilder/rawQueryEditors/ClickHouse';
 import PromQLQueryContainer from 'container/QueryBuilder/rawQueryEditors/PromQL';
@@ -67,6 +69,14 @@ function PanelEditorQueryBuilder({
 	const isRawQuery = isRawRequest(panelDefinition.queryCapabilities);
 	const { currentQuery } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
+
+	// Cleared here, not in QueryBuilderV2: builder panes unmount on every tab switch.
+	useEffect(() => {
+		clearPreviousQuery();
+		return (): void => {
+			clearPreviousQuery();
+		};
+	}, []);
 
 	// ⌘↵ / Ctrl+↵ stages and runs the query. Handled locally because the global
 	// hotkeys provider ignores keydowns from inputs / the query editor, and on the
@@ -134,6 +144,7 @@ function PanelEditorQueryBuilder({
 								initialDataSource: DataSource.TRACES,
 								queryVariant: 'static',
 							}}
+							savePreviousQuery
 						/>
 					</div>
 				),
