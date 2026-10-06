@@ -162,7 +162,7 @@ describe('resolveRequestedBucketKind', () => {
 	): Querybuildertypesv5QueryRangeRequestDTO =>
 		({
 			compositeQuery: { queries },
-		} as Querybuildertypesv5QueryRangeRequestDTO);
+		}) as Querybuildertypesv5QueryRangeRequestDTO;
 
 	it('reads the kind off the query that carries a bucket axis', () => {
 		expect(

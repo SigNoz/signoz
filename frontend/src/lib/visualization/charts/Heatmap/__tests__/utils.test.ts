@@ -286,16 +286,23 @@ describe('resolveGroupOrder', () => {
 	it('sums every column, not just the first', () => {
 		expect(
 			resolveGroupOrder([
-				{ label: 'steady', points: [{ timestamp: 1000, counts: [5] }, { timestamp: 1060, counts: [5] }] },
+				{
+					label: 'steady',
+					points: [
+						{ timestamp: 1000, counts: [5] },
+						{ timestamp: 1060, counts: [5] },
+					],
+				},
 				{ label: 'spike', points: [{ timestamp: 1000, counts: [9] }] },
 			]),
 		).toStrictEqual(['steady', 'spike']);
 	});
 
 	it('breaks a tie alphabetically, so the order is stable across refetches', () => {
-		expect(
-			resolveGroupOrder([group('b', [1]), group('a', [1])]),
-		).toStrictEqual(['a', 'b']);
+		expect(resolveGroupOrder([group('b', [1]), group('a', [1])])).toStrictEqual([
+			'a',
+			'b',
+		]);
 	});
 
 	it('counts a no-data cell as no contribution', () => {
@@ -307,10 +314,20 @@ describe('resolveGroupOrder', () => {
 
 describe('hasMissingCells', () => {
 	it('finds a gap anywhere in the grid', () => {
-		expect(hasMissingCells([[1, 2], [3, null]])).toBe(true);
+		expect(
+			hasMissingCells([
+				[1, 2],
+				[3, null],
+			]),
+		).toBe(true);
 	});
 
 	it('does not mistake a zero for a gap', () => {
-		expect(hasMissingCells([[0, 0], [0, 1]])).toBe(false);
+		expect(
+			hasMissingCells([
+				[0, 0],
+				[0, 1],
+			]),
+		).toBe(false);
 	});
 });
