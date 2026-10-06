@@ -4,8 +4,8 @@
  */
 
 import { rest } from 'msw';
-import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import type { GetPublicDashboard200 } from 'api/generated/services/sigNoz.schemas';
 import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPreference';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
@@ -60,7 +60,7 @@ const SHARING = 'Dashboard · sharing';
 const REQUESTS = 'Dashboard · requests';
 
 export const dashboardRoute = (): string =>
-	generatePath(ROUTES.DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
+	buildRoutePath(ROUTES.DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
 
 export const tooltipRoute = (): string =>
 	`${dashboardRoute()}?variables=${encodeURIComponent(

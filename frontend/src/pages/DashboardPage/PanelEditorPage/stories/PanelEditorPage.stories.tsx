@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -29,9 +29,7 @@ const meta = {
 	component: PanelEditorPage as ComponentType<PanelEditorArgs>,
 	// The dashboard and panel ids come out of the pathname, so the editor renders
 	// under its own route rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route path={ROUTES.DASHBOARD_PANEL_EDITOR} component={PanelEditorPage} />
-	),
+	render: renderAtRoute(ROUTES.DASHBOARD_PANEL_EDITOR, PanelEditorPage),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<PanelEditorArgs>;
