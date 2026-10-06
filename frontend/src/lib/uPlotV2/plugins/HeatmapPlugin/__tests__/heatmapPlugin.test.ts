@@ -86,6 +86,16 @@ function createFakePlot(cursor: { left: number; top: number }): FakePlot {
 	return { plot: plot as unknown as uPlot, context, setSeries, over };
 }
 
+/** Cursor `top` at the centre of `row`, so naming a cell does not also mean
+ *  knowing how tall the rows are. */
+function topOfRow(row: number): number {
+	const centre = (Y_AXIS.edges[row] + Y_AXIS.edges[row + 1]) / 2;
+	return (
+		PLOT_HEIGHT -
+		((centre - Y_AXIS.min) / (Y_AXIS.max - Y_AXIS.min)) * PLOT_HEIGHT
+	);
+}
+
 function createHooks(
 	onHoverChange?: (cell: HeatmapCell | null) => void,
 	dimOnHover = true,
@@ -190,7 +200,7 @@ describe('heatmap renderer — hover', () => {
 		const hooks = createHooks(onHoverChange);
 		const { plot } = createFakePlot({
 			left: PLOT_WIDTH / 2,
-			top: PLOT_HEIGHT / 2,
+			top: topOfRow(1),
 		});
 
 		hooks.init(plot);
@@ -231,6 +241,21 @@ describe('heatmap renderer — hover', () => {
 			left: '0px',
 			width: '100px',
 		});
+	});
+
+	it('clips the overlay to the plot area', () => {
+		const hooks = createHooks();
+		const { plot, over } = createFakePlot({ left: 10, top: 10 });
+
+		hooks.init(plot);
+		hooks.setCursor(plot);
+
+		// An end cell whose bucket or time slice is only partly in view is positioned
+		// past the axis; the plot area's edge is where the highlight has to stop.
+		const overlay = over.querySelector<HTMLDivElement>(
+			'[data-testid="heatmap-hover-overlay"]',
+		);
+		expect(overlay?.style.overflow).toBe('hidden');
 	});
 
 	it('collapses the dim rects when dimming is off', () => {

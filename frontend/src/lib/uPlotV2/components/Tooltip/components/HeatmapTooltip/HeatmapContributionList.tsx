@@ -1,4 +1,4 @@
-import { formatCount, formatPercent } from './heatmapTooltipContent';
+import { formatCount, formatShare } from './heatmapTooltipContent';
 import { HeatmapContributionRow } from './types';
 
 import Styles from './HeatmapTooltip.module.scss';
@@ -6,15 +6,15 @@ import Styles from './HeatmapTooltip.module.scss';
 /** Only shown when the cell sums more than one group. */
 export default function HeatmapContributionList({
 	rows,
-	groupByLabel,
 }: {
 	rows: HeatmapContributionRow[];
-	/** The `groupBy` keys these rows are by. */
-	groupByLabel: string;
 }): JSX.Element {
 	return (
 		<div className={Styles.rows} data-testid="heatmap-tooltip-contribution">
-			{groupByLabel && <span className={Styles.section}>{groupByLabel}</span>}
+			<div className={Styles.columnHeader}>
+				<span>Group</span>
+				<span>Contribution</span>
+			</div>
 			{rows.map((row) => (
 				<div
 					key={row.label}
@@ -23,12 +23,18 @@ export default function HeatmapContributionList({
 				>
 					<span
 						className={Styles.marker}
-						style={{ background: row.color }}
+						style={{ borderColor: row.color, backgroundColor: row.color }}
 						data-is-legend-marker={true}
 					/>
 					<span className={Styles.rowLabel}>{row.label}</span>
+					<span className={Styles.rowSeparator} style={{ borderColor: row.color }} />
 					<span className={Styles.rowValue}>{formatCount(row.count)}</span>
-					<span className={Styles.rowPercent}>{formatPercent(row.percent)}</span>
+					<span
+						className={Styles.rowShare}
+						data-testid="heatmap-tooltip-contribution-share"
+					>
+						{formatShare(row.share)}
+					</span>
 				</div>
 			))}
 		</div>

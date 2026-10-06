@@ -1,7 +1,9 @@
 import {
 	canUseLogAxis,
+	cropHeatmapYAxis,
 	decimateAxisSplits,
 	formatRowLabel,
+	resolveColumnAlignedSplits,
 	resolveColumnIndex,
 	resolveHeatmapYAxis,
 	resolveRowIndex,
@@ -57,9 +59,10 @@ describe('resolveHeatmapYAxis', () => {
 		);
 
 		expect(splits).toStrictEqual(BOUNDS.map((bound) => Math.log10(bound)));
-		// Outer edges extend by the geometric mean ratio, (4096/128)^(1/3) = 3.174…
+		// Geometric mean ratio (4096/128)^(1/3) = 3.174…, two of them for the
+		// overflow row.
 		expect(10 ** min).toBeCloseTo(128 / (4096 / 128) ** (1 / 3), 6);
-		expect(10 ** max).toBeCloseTo(4096 * (4096 / 128) ** (1 / 3), 6);
+		expect(10 ** max).toBeCloseTo(4096 * (4096 / 128) ** (2 / 3), 6);
 	});
 
 	it('keeps bounds in value space on a linear axis', () => {
@@ -264,10 +267,10 @@ describe('resolveHeatmapYAxis — the scale auto picks', () => {
 
 	const PLOT_HEIGHT = 250;
 
-	/** Row heights in axis units, which map linearly to pixels. */
+	/** Row heights in axis units, less the deliberately taller overflow row. */
 	function rowHeights(bounds: number[]): number[] {
 		const { edges } = resolveHeatmapYAxis(bounds, HeatmapAxisScale.Auto);
-		return edges.slice(1).map((edge, index) => edge - edges[index]);
+		return edges.slice(1, -1).map((edge, index) => edge - edges[index]);
 	}
 
 	/** Shortest row, in pixels, for a plot of `PLOT_HEIGHT`. */
@@ -299,19 +302,41 @@ describe('resolveHeatmapYAxis — the scale auto picks', () => {
 		expect(shortestRowPx(OTEL, HeatmapAxisScale.Auto)).toBeGreaterThan(4);
 	});
 
-	it('gives the zero-crossing row a full decade, since it cannot be compressed', () => {
+	it('gives the row above zero one bucket of height, not a whole decade', () => {
 		const heights = rowHeights(OTEL);
 		const { rows } = resolveHeatmapYAxis(OTEL, HeatmapAxisScale.Auto);
 		const nearZero = rows.findIndex((row) => row.lower === 0 && row.upper === 5);
+		const positive = OTEL.filter((bound) => bound > 0);
+		const bucket =
+			(Math.log10(positive[positive.length - 1]) - Math.log10(positive[0])) /
+			(positive.length - 1);
 
-		// One axis unit — the same space a decade gets above the threshold.
-		expect(heights[nearZero]).toBeCloseTo(1, 6);
+		expect(heights[nearZero]).toBeCloseTo(bucket, 6);
+	});
+
+	it('reads a lone zero boundary as a log layout, not a zero-crossing one', () => {
+		expect(resolveHeatmapYAxis(OTEL, HeatmapAxisScale.Auto).edges).toStrictEqual(
+			resolveHeatmapYAxis(OTEL, HeatmapAxisScale.Log).edges,
+		);
+	});
+
+	it('turns to symlog once a boundary reaches below zero', () => {
+		expect(resolveHeatmapYAxis(SKEW, HeatmapAxisScale.Auto).edges).toStrictEqual(
+			resolveHeatmapYAxis(SKEW, HeatmapAxisScale.Symlog).edges,
+		);
 	});
 
 	it('places boundaries either side of zero symmetrically', () => {
 		const heights = rowHeights(SKEW);
 
 		expect(Math.max(...heights) - Math.min(...heights)).toBeCloseTo(0, 6);
+	});
+
+	it('draws the overflow row taller than a bucket, so its edge reads as one', () => {
+		const { edges } = resolveHeatmapYAxis(SKEW, HeatmapAxisScale.Auto);
+		const overflowHeight = edges[edges.length - 1] - edges[edges.length - 2];
+
+		expect(overflowHeight).toBeGreaterThan(Math.max(...rowHeights(SKEW)));
 	});
 
 	it('keeps negative boundaries ascending', () => {
@@ -367,10 +392,10 @@ describe('resolveHeatmapYAxis — an explicitly chosen scale', () => {
 	// Clock skew in ms — a field that straddles zero.
 	const SKEW = [-100, -10, 0, 10, 100];
 
-	/** Row heights in axis units, which map linearly to pixels. */
+	/** Row heights in axis units, less the deliberately taller overflow row. */
 	function rowHeights(bounds: number[], scale: HeatmapAxisScale): number[] {
 		const { edges } = resolveHeatmapYAxis(bounds, scale);
-		return edges.slice(1).map((edge, index) => edge - edges[index]);
+		return edges.slice(1, -1).map((edge, index) => edge - edges[index]);
 	}
 
 	it('log stays a plain log10 for a positive layout', () => {
@@ -440,5 +465,242 @@ describe('resolveHeatmapYAxis — an explicitly chosen scale', () => {
 		const { splits } = resolveHeatmapYAxis([0], HeatmapAxisScale.Symlog);
 
 		expect(splits).toStrictEqual([0]);
+	});
+});
+
+describe('cropHeatmapYAxis', () => {
+	// Four bounds, so five rows: underflow, three buckets, overflow.
+	const AXIS = resolveHeatmapYAxis(BOUNDS, HeatmapAxisScale.Log);
+
+	const counts = (perRow: Array<number | null>): Array<Array<number | null>> =>
+		perRow.map((count) => [count]);
+
+	it('stops one row above the highest occupied one', () => {
+		const cropped = cropHeatmapYAxis(AXIS, counts([3, 7, 0, 0, 0]));
+
+		expect(cropped.max).toBe(AXIS.edges[3]);
+		expect(cropped.splits).toStrictEqual(AXIS.splits.slice(0, 3));
+	});
+
+	it('drops the infinity tick once its row is off the top', () => {
+		const cropped = cropHeatmapYAxis(AXIS, counts([3, 7, 0, 0, 0]));
+
+		expect(cropped.overflowSplit).toBeNull();
+	});
+
+	it('keeps the rows intact, so a bucket is never relabelled', () => {
+		const cropped = cropHeatmapYAxis(AXIS, counts([3, 7, 0, 0, 0]));
+
+		expect(cropped.rows).toStrictEqual(AXIS.rows);
+		expect(cropped.edges).toStrictEqual(AXIS.edges);
+	});
+
+	it('leaves the axis alone when the top row is occupied', () => {
+		expect(cropHeatmapYAxis(AXIS, counts([0, 0, 0, 0, 2]))).toStrictEqual(AXIS);
+	});
+
+	it('leaves the axis alone when the row below the top is occupied', () => {
+		expect(cropHeatmapYAxis(AXIS, counts([0, 0, 0, 9, 0]))).toStrictEqual(AXIS);
+	});
+
+	it('treats zero and no-data cells alike — neither occupies a row', () => {
+		const cropped = cropHeatmapYAxis(AXIS, counts([4, 0, null, null, null]));
+
+		expect(cropped.max).toBe(AXIS.edges[2]);
+	});
+
+	it('leaves an entirely empty grid alone, having nothing to crop against', () => {
+		expect(
+			cropHeatmapYAxis(AXIS, counts([null, null, null, null, null])),
+		).toStrictEqual(AXIS);
+	});
+});
+
+describe('resolveColumnAlignedSplits', () => {
+	const MINUTE = 60;
+	const HOUR = 3600;
+	const DAY = 86400;
+
+	/** uPlot's `tzDate` for a fixed-offset zone: the returned date's local fields
+	 *  read as that zone's wall clock, whatever the machine's own zone is. */
+	const zoneAt =
+		(offsetSeconds: number) =>
+		(timestamp: number): Date => {
+			const browserOffset =
+				-new Date(timestamp * 1e3).getTimezoneOffset() * MINUTE;
+			return new Date((timestamp + offsetSeconds - browserOffset) * 1e3);
+		};
+
+	const UTC = zoneAt(0);
+	/** IST, whose half-hour offset is what pulls ticks off round local times. */
+	const IST = zoneAt(5.5 * HOUR);
+	/** 2024-03-11T00:00:00Z, a Monday. */
+	const MIDNIGHT_UTC = 1_710_115_200;
+
+	it('lands every tick on a column edge', () => {
+		const step = 90;
+		const anchor = 1_700_000_010;
+
+		const splits = resolveColumnAlignedSplits({
+			anchor,
+			step,
+			incr: 5 * MINUTE,
+			min: anchor,
+			max: anchor + 40 * step,
+		});
+
+		expect(splits.length).toBeGreaterThan(1);
+		splits.forEach((split) => {
+			expect((split - anchor) % step).toBe(0);
+		});
+	});
+
+	it('rounds the increment up to a whole number of columns', () => {
+		const splits = resolveColumnAlignedSplits({
+			anchor: 0,
+			step: 90,
+			incr: 5 * MINUTE,
+			min: 0,
+			max: HOUR,
+			toDate: UTC,
+		});
+
+		// 300s asked for, 360s is the next multiple of the 90s column.
+		expect(splits[1] - splits[0]).toBe(360);
+	});
+
+	it('covers the visible range without overshooting it', () => {
+		const splits = resolveColumnAlignedSplits({
+			anchor: 1000,
+			step: 100,
+			incr: 200,
+			min: 1050,
+			max: 1650,
+			toDate: UTC,
+		});
+
+		expect(splits[0]).toBeGreaterThanOrEqual(1050);
+		expect(splits[splits.length - 1]).toBeLessThanOrEqual(1650);
+		expect(splits[0] - 200).toBeLessThan(1050);
+	});
+
+	it("starts hourly ticks on the timezone's own hour, not the epoch's", () => {
+		const args = {
+			anchor: MIDNIGHT_UTC,
+			step: 5 * MINUTE,
+			incr: HOUR,
+			min: MIDNIGHT_UTC,
+			max: MIDNIGHT_UTC + 3 * HOUR,
+		};
+
+		// 05:30 IST is midnight UTC, so the two disagree by the half hour.
+		expect(resolveColumnAlignedSplits({ ...args, toDate: UTC })).toStrictEqual([
+			MIDNIGHT_UTC,
+			MIDNIGHT_UTC + HOUR,
+			MIDNIGHT_UTC + 2 * HOUR,
+			MIDNIGHT_UTC + 3 * HOUR,
+		]);
+		expect(resolveColumnAlignedSplits({ ...args, toDate: IST })).toStrictEqual([
+			MIDNIGHT_UTC + 0.5 * HOUR,
+			MIDNIGHT_UTC + 1.5 * HOUR,
+			MIDNIGHT_UTC + 2.5 * HOUR,
+		]);
+	});
+
+	it('gives up the round local time when no column edge carries one', () => {
+		// Hour-wide columns start on the UTC hour, so 00:00 IST is mid-cell and
+		// the nearest edge — 00:30 IST — is as close as the grid gets.
+		const splits = resolveColumnAlignedSplits({
+			anchor: MIDNIGHT_UTC,
+			step: HOUR,
+			incr: HOUR,
+			min: MIDNIGHT_UTC,
+			max: MIDNIGHT_UTC + 2 * HOUR,
+			toDate: IST,
+		});
+
+		expect(splits).toStrictEqual([
+			MIDNIGHT_UTC,
+			MIDNIGHT_UTC + HOUR,
+			MIDNIGHT_UTC + 2 * HOUR,
+		]);
+	});
+
+	it('puts a daily tick on the local day boundary', () => {
+		const splits = resolveColumnAlignedSplits({
+			anchor: MIDNIGHT_UTC,
+			step: 15 * MINUTE,
+			incr: DAY,
+			min: MIDNIGHT_UTC,
+			max: MIDNIGHT_UTC + 3 * DAY,
+			toDate: IST,
+		});
+
+		// 18:30 UTC the previous day is IST midnight, and 15m columns carry it.
+		expect(splits).toHaveLength(3);
+		splits.forEach((split) => {
+			expect(IST(split).getHours()).toBe(0);
+			expect(IST(split).getMinutes()).toBe(0);
+		});
+	});
+
+	it('walks month ticks as calendar dates, snapped to column edges', () => {
+		const splits = resolveColumnAlignedSplits({
+			anchor: MIDNIGHT_UTC,
+			step: DAY,
+			incr: 28 * DAY,
+			min: MIDNIGHT_UTC,
+			max: MIDNIGHT_UTC + 120 * DAY,
+			toDate: UTC,
+		});
+
+		// Month starts, not a drifting 28-day cadence that repeats a month name.
+		expect(
+			splits.map((split) => new Date(split * 1e3).toISOString()),
+		).toStrictEqual([
+			'2024-04-01T00:00:00.000Z',
+			'2024-05-01T00:00:00.000Z',
+			'2024-06-01T00:00:00.000Z',
+			'2024-07-01T00:00:00.000Z',
+		]);
+	});
+
+	it("falls back to uPlot's own increment without a column width", () => {
+		expect(
+			resolveColumnAlignedSplits({
+				anchor: MIDNIGHT_UTC,
+				step: 0,
+				incr: 5 * MINUTE,
+				min: MIDNIGHT_UTC,
+				max: MIDNIGHT_UTC + 15 * MINUTE,
+				toDate: UTC,
+			}),
+		).toStrictEqual([
+			MIDNIGHT_UTC,
+			MIDNIGHT_UTC + 5 * MINUTE,
+			MIDNIGHT_UTC + 10 * MINUTE,
+			MIDNIGHT_UTC + 15 * MINUTE,
+		]);
+	});
+
+	it('has nothing to place on an empty or inverted range', () => {
+		expect(
+			resolveColumnAlignedSplits({
+				anchor: 0,
+				step: MINUTE,
+				incr: MINUTE,
+				min: 10,
+				max: 10,
+			}),
+		).toStrictEqual([]);
+		expect(
+			resolveColumnAlignedSplits({
+				anchor: 0,
+				step: MINUTE,
+				incr: 0,
+				min: 0,
+				max: 100,
+			}),
+		).toStrictEqual([]);
 	});
 });

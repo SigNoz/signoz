@@ -1,0 +1,11 @@
+.status {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--callout-primary-title);
+	flex-shrink: 0;
+}

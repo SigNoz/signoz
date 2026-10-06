@@ -12,9 +12,8 @@ export interface ColorBarProps {
 	markerPosition?: number | null;
 	/** What the colour encodes, e.g. "count". */
 	label?: string;
-	/** Keys for the two states a ramp cannot express: a hatched data gap, and a
-	 *  genuine zero at the bottom. Without them the difference is guesswork. */
-	showStateKeys?: boolean;
+	/** Keys the one state a ramp cannot express: a hatched data gap. */
+	showNoDataKey?: boolean;
 	'data-testid'?: string;
 }
 
@@ -25,7 +24,7 @@ export default function ColorBar({
 	maxLabel,
 	markerPosition = null,
 	label,
-	showStateKeys = true,
+	showNoDataKey = false,
 	'data-testid': testId = 'color-bar',
 }: ColorBarProps): JSX.Element | null {
 	const gradient = useMemo(() => {
@@ -64,15 +63,11 @@ export default function ColorBar({
 				)}
 			</div>
 			<span className={Styles.label}>{maxLabel}</span>
-			{showStateKeys && (
+			{showNoDataKey && (
 				<div className={Styles.keys} data-testid={`${testId}-state-keys`}>
 					<span className={Styles.key}>
 						<span className={Styles.hatchSwatch} />
 						no data
-					</span>
-					<span className={Styles.key}>
-						<span className={Styles.swatch} style={{ background: ramp[0] }} />
-						count 0
 					</span>
 				</div>
 			)}
