@@ -1,6 +1,5 @@
 import { ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
-import { Route, Router, Switch } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router';
 import * as Sentry from '@sentry/react';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -23,7 +22,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { StatusCodes } from 'http-status-codes';
 import { IS_PROD } from 'lib/env';
-import history from 'lib/history';
+import { getCurrentLocation, navigate, subscribe } from 'lib/router/navigation';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
@@ -43,12 +42,6 @@ import {
 	isExternalIntegrationError,
 	SENTRY_IGNORE_ERRORS,
 } from './sentryFilters';
-
-const appRouter = (children: ReactNode): ReactNode => (
-	<Router history={history}>
-		<CompatRouter>{children}</CompatRouter>
-	</Router>
-);
 
 const appLayout = (children: ReactNode): ReactNode => (
 	<AppLayout>{children}</AppLayout>
@@ -74,14 +67,16 @@ function App(): JSX.Element {
 	const chatSupport = useChatSupport();
 
 	const { hostname } = window.location;
-	const [pathname, setPathname] = useState(history.location.pathname);
+	// Through the facade, not the raw history: the router owns the base path
+	// now, so `history.location.pathname` would still carry it.
+	const [pathname, setPathname] = useState(getCurrentLocation().pathname);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
 
 	useEffect(() => {
-		return history.listen((location) => {
+		return subscribe(({ location }) => {
 			setPathname(location.pathname);
 		});
 	}, []);
@@ -398,7 +393,7 @@ function App(): JSX.Element {
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
 		if (userFetchError && pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-			history.replace(ROUTES.SOMETHING_WENT_WRONG);
+			navigate(ROUTES.SOMETHING_WENT_WRONG, { replace: true });
 		}
 
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
@@ -414,7 +409,6 @@ function App(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<AppShell
-				router={appRouter}
 				overlays={
 					isLoggedInState && (
 						<>
@@ -427,18 +421,19 @@ function App(): JSX.Element {
 				<PrivateRoute>
 					<AppPageProviders layout={appLayout}>
 						<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-							<Switch>
-								{routes.map(({ path, component, exact }) => (
-									<Route
-										key={`${path}`}
-										exact={exact}
-										path={path}
-										component={component}
-									/>
-								))}
-								<Route exact path="/" component={Home} />
-								<Route path="*" component={NotFound} />
-							</Switch>
+							<Routes>
+								{routes.flatMap(({ path, component: Component, nested }) =>
+									(Array.isArray(path) ? path : [path]).map((pattern) => (
+										<Route
+											key={pattern}
+											path={nested ? `${pattern}/*` : pattern}
+											element={<Component />}
+										/>
+									)),
+								)}
+								<Route path="/" element={<Home />} />
+								<Route path="*" element={<NotFound />} />
+							</Routes>
 						</Suspense>
 					</AppPageProviders>
 				</PrivateRoute>

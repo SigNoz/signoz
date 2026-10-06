@@ -1,7 +1,6 @@
 /**
  * Facade contracts for the router. Every shape here is defined the way
- * react-router v6+ / history@5 behaves; the v5-backed implementations adapt up
- * to it.
+ * react-router v7 / history@5 behaves.
  */
 
 export type NavigationAction = 'PUSH' | 'REPLACE' | 'POP';
@@ -11,7 +10,7 @@ export interface AppLocation<S = unknown> {
 	search: string;
 	hash: string;
 	state: S;
-	/** history@4 leaves this undefined on the initial entry; v6 always sets it. */
+	/** Always set by v7; optional for callers that build a location by hand. */
 	key?: string;
 }
 
@@ -24,7 +23,7 @@ export type AppParams<Key extends string = string> = {
 };
 
 /**
- * Mirrors v6's `useParams` return type so both call shapes keep working:
+ * Mirrors v7's `useParams` return type so both call shapes keep working:
  * a union of param names (`useAppParams<'dashboardId'>()`) or a record
  * (`useAppParams<{ dashboardId: string }>()`).
  */
@@ -57,6 +56,15 @@ export interface NavigateOptions {
 }
 
 export type NavigateFn = (to: To, options?: NavigateOptions) => void;
+
+/**
+ * The slice of a history object `applyNavigate` needs, so the adapter does not
+ * have to name a particular history package.
+ */
+export interface NavigableHistory {
+	push(to: To, state?: unknown): void;
+	replace(to: To, state?: unknown): void;
+}
 
 export interface BlockedTransition {
 	location: AppLocation;

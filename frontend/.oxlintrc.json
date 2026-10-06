@@ -593,12 +593,13 @@
       }
     },
     {
-      // The react-router allowlist: the facade itself, the route table, `useSafeNavigate`,
-      // the history singleton and the test and story router mounts. Test files are
+      // The react-router allowlist: the facade itself, the route table, the router mount,
+      // `useSafeNavigate`, the history singleton and the test and story router mounts. Test files are
       // deliberately absent: they render at a route or use tests/router-mocks.
       "files": [
         "src/lib/router/**",
         "src/AppRoutes/**",
+        "src/app/AppRouter.tsx",
         "src/hooks/useSafeNavigate.ts",
         "src/lib/history.ts",
         "src/tests/router.tsx",
