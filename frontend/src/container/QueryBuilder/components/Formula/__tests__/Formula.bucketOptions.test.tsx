@@ -74,18 +74,18 @@ describe('Formula bucket options', () => {
 		});
 
 		expect(screen.getByRole('radio', { name: 'Log' })).toBeChecked();
-		expect(screen.getByRole('radio', { name: '1' })).toBeChecked();
+		expect(screen.getByRole('radio', { name: '0' })).toBeChecked();
 	});
 
 	it('writes the picked axis onto the formula', async () => {
 		const user = userEvent.setup();
 		renderFormula();
 
-		await user.click(screen.getByRole('radio', { name: 'Log' }));
+		await user.click(screen.getByRole('radio', { name: '0' }));
 
 		expect(mockHandleChangeFormulaData).toHaveBeenCalledWith('bucketOptions', {
 			kind: 'log',
-			spec: { scale: 4 },
+			spec: { scale: 0 },
 		});
 	});
 });

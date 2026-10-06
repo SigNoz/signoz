@@ -1,4 +1,6 @@
 import type {
+	Querybuildertypesv5BucketOptionsDTO,
+	Querybuildertypesv5QueryRangeRequestDTO,
 	Querybuildertypesv5TimeSeriesDataDTO,
 	Querybuildertypesv5TimeSeriesDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -59,6 +61,25 @@ export function prepareHeatmapData({
 	}
 
 	return EMPTY_DATA;
+}
+
+/**
+ * Bucket axis the request asked for; `undefined` leaves the choice to the server. A
+ * heatmap draws one query, so the first envelope carrying `bucketOptions` is it —
+ * every variant declares it at the same place, which the union cannot express.
+ */
+export function resolveRequestedBucketKind(
+	request: Querybuildertypesv5QueryRangeRequestDTO | undefined,
+): Querybuildertypesv5BucketOptionsDTO['kind'] | undefined {
+	for (const envelope of request?.compositeQuery?.queries ?? []) {
+		const spec = envelope.spec as
+			| { bucketOptions?: Querybuildertypesv5BucketOptionsDTO }
+			| undefined;
+		if (spec?.bucketOptions) {
+			return spec.bucketOptions.kind;
+		}
+	}
+	return undefined;
 }
 
 /**

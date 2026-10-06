@@ -409,30 +409,47 @@ describe('QueryAddOns', () => {
 
 			expect(screen.getByTestId('bucket-options-content')).toBeInTheDocument();
 			expect(screen.getByRole('radio', { name: 'Log' })).toBeChecked();
-			expect(screen.getByRole('radio', { name: '1' })).toBeChecked();
+			expect(screen.getByRole('radio', { name: '0' })).toBeChecked();
 		});
 
-		it('sends no options for Auto', async () => {
+		it('shows the server default, log at scale 4, without sending it', async () => {
 			const user = userEvent.setup();
-			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+			renderHeatmap();
 
-			await user.click(screen.getByRole('radio', { name: 'Auto' }));
+			await user.click(screen.getByTestId('query-add-on-bucket_options'));
 
-			expect(mockHandleChangeQueryData).toHaveBeenCalledWith(
+			expect(screen.getByRole('radio', { name: 'Log' })).toBeChecked();
+			expect(screen.getByRole('radio', { name: '4' })).toBeChecked();
+			expect(
+				screen.queryByRole('radio', { name: 'Auto' }),
+			).not.toBeInTheDocument();
+			expect(mockHandleChangeQueryData).not.toHaveBeenCalledWith(
 				'bucketOptions',
-				undefined,
+				expect.anything(),
 			);
 		});
 
-		it('sends the scale the picked bands per doubling resolve to', async () => {
+		it('sends the picked scale', async () => {
 			const user = userEvent.setup();
 			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 4 } } });
 
-			await user.click(screen.getByRole('radio', { name: '1' }));
+			await user.click(screen.getByRole('radio', { name: '0' }));
 
 			expect(mockHandleChangeQueryData).toHaveBeenCalledWith('bucketOptions', {
 				kind: 'log',
 				spec: { scale: 0 },
+			});
+		});
+
+		it('offers the coarser scales the request accepts below one band per doubling', async () => {
+			const user = userEvent.setup();
+			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+
+			await user.click(screen.getByRole('radio', { name: '-4' }));
+
+			expect(mockHandleChangeQueryData).toHaveBeenCalledWith('bucketOptions', {
+				kind: 'log',
+				spec: { scale: -4 },
 			});
 		});
 

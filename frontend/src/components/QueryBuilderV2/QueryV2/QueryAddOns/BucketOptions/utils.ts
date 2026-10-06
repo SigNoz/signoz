@@ -13,7 +13,6 @@ import {
 	MAX_LOG_SCALE,
 	PREVIEW_BOUND_COUNT,
 } from './constants';
-import { BucketKindOption } from './types';
 
 export const isLinearBuckets = (
 	bucketOptions: Querybuildertypesv5BucketOptionsDTO,
@@ -46,22 +45,15 @@ export const logScaleOf = (
 		? (bucketOptions.spec.scale ?? MAX_LOG_SCALE)
 		: MAX_LOG_SCALE;
 
+/** A log axis places `2^scale` bounds per doubling. */
 export const bandsPerDoublingFromScale = (scale: number): number => 2 ** scale;
-
-export const scaleFromBandsPerDoubling = (bands: number): number =>
-	Math.round(Math.log2(bands));
 
 export const kindOptionOf = (
 	bucketOptions: Querybuildertypesv5BucketOptionsDTO | undefined,
-): BucketKindOption => {
-	if (!bucketOptions) {
-		return 'auto';
-	}
-
-	return isLinearBuckets(bucketOptions)
+): Querybuildertypesv5BucketsKindDTO =>
+	bucketOptions && isLinearBuckets(bucketOptions)
 		? Querybuildertypesv5BucketsKindDTO.linear
 		: Querybuildertypesv5BucketsKindDTO.log;
-};
 
 /**
  * The leading upper bounds the axis will carry. A log axis is anchored at 1 — band

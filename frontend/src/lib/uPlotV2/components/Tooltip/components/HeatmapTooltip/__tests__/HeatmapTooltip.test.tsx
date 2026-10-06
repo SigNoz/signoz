@@ -213,6 +213,27 @@ describe('HeatmapTooltip — grouped, nothing selected', () => {
 		expect(rows[3]).toHaveTextContent('0');
 	});
 
+	it('names what the two columns hold', () => {
+		renderTooltip();
+
+		expect(screen.getByText('Group')).toBeInTheDocument();
+		expect(screen.getByText('Contribution')).toBeInTheDocument();
+	});
+
+	it('gives each group its share of the cell alongside the count', () => {
+		renderTooltip();
+
+		const shares = screen
+			.getAllByTestId('heatmap-tooltip-contribution-share')
+			.map((share) => share.textContent);
+
+		expect(shares).toHaveLength(GROUPED.length);
+		expect(
+			shares.reduce((sum, share) => sum + parseInt(share ?? '0', 10), 0),
+		).toBe(100);
+		expect(shares[shares.length - 1]).toBe('0%');
+	});
+
 	it('does not name a filter when every group is enabled', () => {
 		renderTooltip();
 

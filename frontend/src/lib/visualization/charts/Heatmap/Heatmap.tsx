@@ -14,7 +14,10 @@ import {
 	resolveExtremeColor,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
-import { resolveHeatmapYAxis } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
+import {
+	cropHeatmapYAxis,
+	resolveHeatmapYAxis,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { resolveHeatmapGrid } from 'lib/uPlotV2/plugins/HeatmapPlugin/grid';
 import {
 	HeatmapAxisScale,
@@ -26,8 +29,10 @@ import { HeatmapChartProps } from 'lib/visualization/charts/types';
 import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
 import {
 	buildHeatmapConfig,
+	hasMissingCells,
 	prepareHeatmapChartData,
 	resolveBoundaryPrecision,
+	resolveGroupOrder,
 } from './utils';
 
 /** Vertical space the colour bar takes out of the container. */
@@ -85,7 +90,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 	const onCellClickRef = useRef(onCellClick);
 	onCellClickRef.current = onCellClick;
 
-	const groups = useMemo(() => series.map((entry) => entry.label), [series]);
+	const groups = useMemo(() => resolveGroupOrder(series), [series]);
 
 	const colors = useMemo(
 		() => ({ ...DEFAULT_HEATMAP_COLORS, ...props.colors }),
@@ -116,8 +121,9 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 	);
 
 	const yAxis = useMemo(
-		() => resolveHeatmapYAxis(grid.bounds, axisScale),
-		[grid.bounds, axisScale],
+		() =>
+			cropHeatmapYAxis(resolveHeatmapYAxis(grid.bounds, axisScale), grid.counts),
+		[grid.bounds, grid.counts, axisScale],
 	);
 
 	// The axis, the series labels and the tooltip all name rows by their boundaries,
@@ -294,9 +300,10 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				minLabel={colorResolver.domain.min.toLocaleString()}
 				maxLabel={colorResolver.domain.max.toLocaleString()}
 				markerPosition={colorResolver.positionOf(hoveredCell?.count ?? null)}
+				showNoDataKey={hasMissingCells(grid.counts)}
 			/>
 		);
-	}, [showVisualMap, hasGrid, colorResolver, hoveredCell]);
+	}, [showVisualMap, hasGrid, colorResolver, hoveredCell, grid.counts]);
 
 	return (
 		<ChartWrapper

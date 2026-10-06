@@ -22,7 +22,11 @@ import {
 } from '../../utils/chartAppearance/resolvers';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 
-import { prepareHeatmapData, resolveHeatmapStep } from './prepareData';
+import {
+	prepareHeatmapData,
+	resolveHeatmapStep,
+	resolveRequestedBucketKind,
+} from './prepareData';
 
 function HeatmapPanelRenderer({
 	panelId,
@@ -74,8 +78,12 @@ function HeatmapPanelRenderer({
 	);
 
 	const axisScale = useMemo(
-		() => resolveHeatmapAxisScale(spec.axes?.y?.scale),
-		[spec.axes?.y?.scale],
+		() =>
+			resolveHeatmapAxisScale(
+				spec.axes?.y?.scale,
+				resolveRequestedBucketKind(data.requestPayload),
+			),
+		[spec.axes?.y?.scale, data.requestPayload],
 	);
 
 	const decimalPrecision = useMemo(

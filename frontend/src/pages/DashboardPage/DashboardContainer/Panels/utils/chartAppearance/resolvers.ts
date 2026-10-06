@@ -4,9 +4,11 @@ import {
 	DashboardtypesHeatmapYScaleDTO,
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesPrecisionOptionDTO,
+	Querybuildertypesv5BucketOptionsLinearDTOKind,
 	type DashboardtypesHeatmapColorsDTO,
 	type DashboardtypesSpanGapsDTO,
 	type DashboardtypesStackModeDTO,
+	type Querybuildertypesv5BucketOptionsDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
@@ -107,14 +109,24 @@ export function resolveStackMode(
 /**
  * Row-height distribution of a heatmap's bucket axis. Missing/unknown resolves to
  * `auto`, the one option that reads the bucket bounds rather than overriding them.
+ * Under `auto`, linear bucketing gets a linear row layout: its bounds are evenly
+ * spaced, and a log one would squeeze the axis into the bottom of the panel.
  */
 export function resolveHeatmapAxisScale(
 	scale: DashboardtypesHeatmapYScaleDTO | undefined,
+	bucketKind?: Querybuildertypesv5BucketOptionsDTO['kind'],
 ): HeatmapAxisScale {
-	if (scale && scale in HEATMAP_Y_SCALE_MAP) {
-		return HEATMAP_Y_SCALE_MAP[scale];
+	const configured =
+		scale && scale in HEATMAP_Y_SCALE_MAP
+			? HEATMAP_Y_SCALE_MAP[scale]
+			: HeatmapAxisScale.Auto;
+
+	if (configured !== HeatmapAxisScale.Auto) {
+		return configured;
 	}
-	return HeatmapAxisScale.Auto;
+	return bucketKind === Querybuildertypesv5BucketOptionsLinearDTOKind.linear
+		? HeatmapAxisScale.Linear
+		: HeatmapAxisScale.Auto;
 }
 
 /**

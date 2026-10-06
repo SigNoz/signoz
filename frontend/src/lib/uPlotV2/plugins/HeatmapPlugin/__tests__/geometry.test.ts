@@ -1,5 +1,6 @@
 import {
 	canUseLogAxis,
+	cropHeatmapYAxis,
 	decimateAxisSplits,
 	formatRowLabel,
 	resolveColumnAlignedSplits,
@@ -58,9 +59,10 @@ describe('resolveHeatmapYAxis', () => {
 		);
 
 		expect(splits).toStrictEqual(BOUNDS.map((bound) => Math.log10(bound)));
-		// Outer edges extend by the geometric mean ratio, (4096/128)^(1/3) = 3.174…
+		// Geometric mean ratio (4096/128)^(1/3) = 3.174…, two of them for the
+		// overflow row.
 		expect(10 ** min).toBeCloseTo(128 / (4096 / 128) ** (1 / 3), 6);
-		expect(10 ** max).toBeCloseTo(4096 * (4096 / 128) ** (1 / 3), 6);
+		expect(10 ** max).toBeCloseTo(4096 * (4096 / 128) ** (2 / 3), 6);
 	});
 
 	it('keeps bounds in value space on a linear axis', () => {
@@ -265,10 +267,10 @@ describe('resolveHeatmapYAxis — the scale auto picks', () => {
 
 	const PLOT_HEIGHT = 250;
 
-	/** Row heights in axis units, which map linearly to pixels. */
+	/** Row heights in axis units, less the deliberately taller overflow row. */
 	function rowHeights(bounds: number[]): number[] {
 		const { edges } = resolveHeatmapYAxis(bounds, HeatmapAxisScale.Auto);
-		return edges.slice(1).map((edge, index) => edge - edges[index]);
+		return edges.slice(1, -1).map((edge, index) => edge - edges[index]);
 	}
 
 	/** Shortest row, in pixels, for a plot of `PLOT_HEIGHT`. */
@@ -330,6 +332,13 @@ describe('resolveHeatmapYAxis — the scale auto picks', () => {
 		expect(Math.max(...heights) - Math.min(...heights)).toBeCloseTo(0, 6);
 	});
 
+	it('draws the overflow row taller than a bucket, so its edge reads as one', () => {
+		const { edges } = resolveHeatmapYAxis(SKEW, HeatmapAxisScale.Auto);
+		const overflowHeight = edges[edges.length - 1] - edges[edges.length - 2];
+
+		expect(overflowHeight).toBeGreaterThan(Math.max(...rowHeights(SKEW)));
+	});
+
 	it('keeps negative boundaries ascending', () => {
 		const { edges } = resolveHeatmapYAxis(SKEW, HeatmapAxisScale.Auto);
 
@@ -383,10 +392,10 @@ describe('resolveHeatmapYAxis — an explicitly chosen scale', () => {
 	// Clock skew in ms — a field that straddles zero.
 	const SKEW = [-100, -10, 0, 10, 100];
 
-	/** Row heights in axis units, which map linearly to pixels. */
+	/** Row heights in axis units, less the deliberately taller overflow row. */
 	function rowHeights(bounds: number[], scale: HeatmapAxisScale): number[] {
 		const { edges } = resolveHeatmapYAxis(bounds, scale);
-		return edges.slice(1).map((edge, index) => edge - edges[index]);
+		return edges.slice(1, -1).map((edge, index) => edge - edges[index]);
 	}
 
 	it('log stays a plain log10 for a positive layout', () => {
@@ -456,6 +465,54 @@ describe('resolveHeatmapYAxis — an explicitly chosen scale', () => {
 		const { splits } = resolveHeatmapYAxis([0], HeatmapAxisScale.Symlog);
 
 		expect(splits).toStrictEqual([0]);
+	});
+});
+
+describe('cropHeatmapYAxis', () => {
+	// Four bounds, so five rows: underflow, three buckets, overflow.
+	const AXIS = resolveHeatmapYAxis(BOUNDS, HeatmapAxisScale.Log);
+
+	const counts = (perRow: Array<number | null>): Array<Array<number | null>> =>
+		perRow.map((count) => [count]);
+
+	it('stops one row above the highest occupied one', () => {
+		const cropped = cropHeatmapYAxis(AXIS, counts([3, 7, 0, 0, 0]));
+
+		expect(cropped.max).toBe(AXIS.edges[3]);
+		expect(cropped.splits).toStrictEqual(AXIS.splits.slice(0, 3));
+	});
+
+	it('drops the infinity tick once its row is off the top', () => {
+		const cropped = cropHeatmapYAxis(AXIS, counts([3, 7, 0, 0, 0]));
+
+		expect(cropped.overflowSplit).toBeNull();
+	});
+
+	it('keeps the rows intact, so a bucket is never relabelled', () => {
+		const cropped = cropHeatmapYAxis(AXIS, counts([3, 7, 0, 0, 0]));
+
+		expect(cropped.rows).toStrictEqual(AXIS.rows);
+		expect(cropped.edges).toStrictEqual(AXIS.edges);
+	});
+
+	it('leaves the axis alone when the top row is occupied', () => {
+		expect(cropHeatmapYAxis(AXIS, counts([0, 0, 0, 0, 2]))).toStrictEqual(AXIS);
+	});
+
+	it('leaves the axis alone when the row below the top is occupied', () => {
+		expect(cropHeatmapYAxis(AXIS, counts([0, 0, 0, 9, 0]))).toStrictEqual(AXIS);
+	});
+
+	it('treats zero and no-data cells alike — neither occupies a row', () => {
+		const cropped = cropHeatmapYAxis(AXIS, counts([4, 0, null, null, null]));
+
+		expect(cropped.max).toBe(AXIS.edges[2]);
+	});
+
+	it('leaves an entirely empty grid alone, having nothing to crop against', () => {
+		expect(
+			cropHeatmapYAxis(AXIS, counts([null, null, null, null, null])),
+		).toStrictEqual(AXIS);
 	});
 });
 
