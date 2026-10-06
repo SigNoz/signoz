@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
@@ -121,18 +121,12 @@ func TargetFor(signal telemetrytypes.Signal, context telemetrytypes.FieldContext
 	return Target{}, false
 }
 
-// simpleJSONSubColumnIndexExpr renders `column.path::Type`; the cast unwraps
-// the Nullable the sub-column access returns, which bloom filter indexes
-// reject.
+// simpleJSONSubColumnIndexExpr renders column.`path`::Type with the path
+// quoted as one identifier, the form trace queries read the sub-column with;
+// the cast unwraps the Nullable the sub-column access returns, which bloom
+// filter indexes reject.
 func simpleJSONSubColumnIndexExpr(column, path, jsonDataType string) string {
-	parts := strings.Split(column+"."+path, ".")
-	for idx, part := range parts {
-		if keycheck.IsBacktickRequired(part) {
-			part := strings.Trim(part, "`")
-			parts[idx] = "`" + part + "`"
-		}
-	}
-	return fmt.Sprintf("%s::%s", strings.Join(parts, "."), jsonDataType)
+	return fmt.Sprintf("%s.%s::%s", column, clickhousesql.Identifier(path), jsonDataType)
 }
 
 // reservedPathPrefix returns the domain prefix path carries, if any: the base
