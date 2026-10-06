@@ -1,4 +1,3 @@
-import { useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import Noz from 'components/Noz/Noz';
@@ -9,6 +8,7 @@ import {
 	useAIAssistantStore,
 } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import ROUTES from 'constants/routes';
 import { Dot } from '@signozhq/icons';
 
@@ -23,7 +23,7 @@ import styles from './AskNoz.module.scss';
  * hiding the header button would remove a notification rather than move it.
  */
 function AskNoz(): JSX.Element | null {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const isDrawerOpen = useAIAssistantStore((state) => state.isDrawerOpen);
 	const isModalOpen = useAIAssistantStore((state) => state.isModalOpen);

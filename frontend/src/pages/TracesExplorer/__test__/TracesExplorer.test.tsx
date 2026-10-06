@@ -1,5 +1,6 @@
 import { ENVIRONMENT } from 'constants/env';
 import ROUTES from 'constants/routes';
+import { getCurrentLocation } from 'lib/router/navigation';
 import { quickFiltersListResponse } from 'mocks-server/__mockdata__/customQuickFilters';
 import {
 	queryRangeForListView,
@@ -51,15 +52,8 @@ jest.mock('hooks/queryBuilder/useGetPanelTypesQueryParam', () => ({
 	}),
 }));
 
-const mockNavigate = jest.fn();
-
 const BASE_URL = ENVIRONMENT.baseURL;
 const FILTER_SERVICE_NAME = 'Service Name';
-
-jest.mock('lib/router/navigation', () => ({
-	...jest.requireActual('lib/router/navigation'),
-	navigate: (...args: unknown[]): void => mockNavigate(...args),
-}));
 
 jest.mock(
 	'components/Uplot/Uplot',
@@ -340,8 +334,6 @@ describe('TracesExplorer -', () => {
 		);
 		fireEvent.click(createAlertBtn);
 
-		expect(mockNavigate).toHaveBeenCalledWith(
-			expect.stringContaining(`${ROUTES.ALERTS_NEW}`),
-		);
+		expect(getCurrentLocation().pathname).toBe(ROUTES.ALERTS_NEW);
 	});
 });
