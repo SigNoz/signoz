@@ -69,7 +69,8 @@
 	&__action-buttons {
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: 20px;
+		padding-right: 8px;
 	}
 
 	&__action-button {
@@ -131,6 +132,7 @@
 		font-size: 12px;
 		font-weight: 400;
 		line-height: 16px;
+		padding-inline-end: 24px !important;
 	}
 	&:hover {
 		.ant-select-selector {
