@@ -162,22 +162,23 @@ def test_meter_heatmap(
     insert_meter_samples: Callable[[list[MeterSample]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    start_ms = int((now - timedelta(minutes=30)).timestamp() * 1000)
+    start_ms = int((now - timedelta(hours=4)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = "test_heatmap_meter"
 
+    # a meter's finest step is an hour, so one sample an hour is one column each
     values = [100, 250, 1500]
     insert_meter_samples(
         [
             MeterSample(
                 metric_name=metric_name,
                 labels={"service": "api"},
-                timestamp=now - timedelta(minutes=len(values) - minute),
+                timestamp=now - timedelta(hours=len(values) - hour),
                 value=value,
                 temporality="Delta",
                 type_="Sum",
             )
-            for minute, value in enumerate(values)
+            for hour, value in enumerate(values)
         ]
     )
 
@@ -187,7 +188,7 @@ def test_meter_heatmap(
         token,
         start_ms,
         end_ms,
-        [build_builder_query("A", metric_name, "sum", "sum", source="meter", temporality="delta", bucket_options=build_linear_bucket_options(1000, 10))],
+        [build_builder_query("A", metric_name, "sum", "sum", source="meter", temporality="delta", step_interval=3600, bucket_options=build_linear_bucket_options(1000, 10))],
         request_type=RequestType.HEATMAP,
     )
     assert response.status_code == HTTPStatus.OK, response.text
