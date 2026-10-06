@@ -37,7 +37,7 @@ func TestIndexExpression(t *testing.T) {
 			column:       "attributes_promoted",
 			path:         "http.method",
 			jsonDataType: "String",
-			want:         "attributes_promoted.http.method::String",
+			want:         "attributes_promoted.`http.method`::String",
 		},
 		{
 			name:         "TracesPathNeedingBackticks_Backticked",

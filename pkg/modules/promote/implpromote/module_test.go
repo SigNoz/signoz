@@ -157,7 +157,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
-			wantDDLColumn: "`attributes_promoted.http.method_String_ngrambf_v1` attributes_promoted.http.method::String",
+			wantDDLColumn: "`attributes_promoted.http.method_String_ngrambf_v1` attributes_promoted.`http.method`::String",
 		},
 		{
 			name: "TracesUnpromotedPath_IndexesBaseColumn",
@@ -169,7 +169,7 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
-			wantDDLColumn: "`attributes.http.method_String_ngrambf_v1` attributes.http.method::String",
+			wantDDLColumn: "`attributes.http.method_String_ngrambf_v1` attributes.`http.method`::String",
 		},
 	}
 
