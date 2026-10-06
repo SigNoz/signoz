@@ -12,37 +12,76 @@
 	// Hover card may be rendered while the SpanDetailsPanel is docked as
 	// a FloatingPanel (z-index 999); bump above the default tooltip z-index.
 	--tooltip-z-index: 1000;
-	background-color: var(--l1-background);
-	padding: 8px 12px;
-	border-radius: 4px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-	border: 1px solid var(--l2-border);
+	--tooltip-background: color-mix(
+		in srgb,
+		var(--l3-background) 60%,
+		transparent
+	);
+	--tooltip-border-color: var(--l2-border);
+	--tooltip-border-radius: var(--radius-2);
+	--tooltip-padding: var(--spacing-4);
+	--tooltip-box-shadow:
+		0 9px 19px 0 rgba(0, 0, 0, 0.1), 0 34px 34px 0 rgba(0, 0, 0, 0.2),
+		0 77px 46px 0 rgba(0, 0, 0, 0.1), 0 137px 55px 0 rgba(0, 0, 0, 0.1),
+		0 214px 60px 0 rgba(0, 0, 0, 0.05);
+	backdrop-filter: blur(20px);
 	color: var(--l1-foreground);
 }
 
 .content {
-	font-size: 12px;
-	color: var(--l1-foreground);
+	display: flex;
+	flex-direction: column;
+	min-width: 220px;
+	max-width: 320px;
+	letter-spacing: var(--paragraph-small-400-letter-spacing);
+	color: var(--l1-foreground-hover);
+}
+
+.header {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding-bottom: 8px;
 }
 
 .name {
-	font-weight: 600;
-	margin-bottom: 4px;
+	--typography-font-family: var(--code-small-500-font-family);
+	--typography-font-size: var(--code-small-500-font-size);
+	--typography-font-weight: var(--code-small-500-font-weight);
+	--typography-line-height: var(--code-small-500-line-height);
+	letter-spacing: var(--code-small-500-letter-spacing);
+	word-break: break-all;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 8px 0;
+	border-top: 1px solid;
+	border-image: linear-gradient(
+			90deg,
+			var(--l3-background-transparent),
+			var(--l3-border),
+			var(--l3-background-transparent)
+		)
+		1;
+
+	&:last-child {
+		padding-bottom: 0;
+	}
 }
 
 .row {
-	line-height: 1.5;
-	color: var(--l2-foreground);
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	min-width: 0;
 }
 
-.preview {
-	// container for additional preview rows
-}
-
-.previewKey {
-	color: var(--l2-foreground);
-}
-
-.previewValue {
-	color: var(--l1-foreground);
+.rowValue {
+	flex-shrink: 0;
+	max-width: 60%;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
 }
