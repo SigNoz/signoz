@@ -1,7 +1,5 @@
 import { Querybuildertypesv5BucketsKindDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { BucketKindOption } from './types';
-
 /**
  * Mirrors the limits `querybuildertypesv5` validates `bucketOptions` against. The
  * builder keeps its own copy so an out-of-range axis is refused before the request
@@ -32,23 +30,25 @@ export const LOG_SCALES = Array.from(
 /** How many leading upper bounds the bounds strip previews before eliding. */
 export const PREVIEW_BOUND_COUNT = 8;
 
-export const BUCKET_KIND_OPTIONS: { value: BucketKindOption; label: string }[] =
-	[
-		{ value: 'auto', label: 'Auto' },
-		{ value: Querybuildertypesv5BucketsKindDTO.log, label: 'Log' },
-		{ value: Querybuildertypesv5BucketsKindDTO.linear, label: 'Linear' },
-	];
+export const BUCKET_KIND_OPTIONS: {
+	value: Querybuildertypesv5BucketsKindDTO;
+	label: string;
+}[] = [
+	{ value: Querybuildertypesv5BucketsKindDTO.log, label: 'Log' },
+	{ value: Querybuildertypesv5BucketsKindDTO.linear, label: 'Linear' },
+];
 
 export const LOG_SCALE_OPTIONS = LOG_SCALES.map((scale) => ({
 	value: String(scale),
 	label: String(scale),
 }));
 
-export const BUCKET_KIND_HINTS: Record<BucketKindOption, string> = {
-	auto:
-		'Bounds are picked for you: a log axis at scale 4, the finest the query can return.',
+export const BUCKET_KIND_HINTS: Record<
+	Querybuildertypesv5BucketsKindDTO,
+	string
+> = {
 	[Querybuildertypesv5BucketsKindDTO.log]:
-		'Bounds are spaced evenly on a log axis, so every band is the same height on screen and the tail stays readable. A lower scale means fewer, coarser bands.',
+		'Bounds are spaced evenly on a log axis, so every band is the same height on screen and the tail stays readable. A lower scale means fewer, coarser bands; scale 4, the finest, is the default.',
 	[Querybuildertypesv5BucketsKindDTO.linear]:
 		'Bounds are spaced evenly from 0 up to the max value, so a band covers the same width wherever it sits. Everything above the max value lands in a single overflow band.',
 };

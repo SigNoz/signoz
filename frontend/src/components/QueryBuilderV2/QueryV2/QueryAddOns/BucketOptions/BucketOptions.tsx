@@ -27,7 +27,6 @@ import {
 	logScaleOf,
 	previewUpperBounds,
 } from './utils';
-import { BucketKindOption } from './types';
 
 import styles from './BucketOptions.module.scss';
 
@@ -47,7 +46,7 @@ function BucketOptions({
 	// A linear axis has no bounds to describe until it has a max value, so the picked
 	// kind is held here rather than read back off the emitted options: it has to survive
 	// the gap between choosing Linear and filling the field in.
-	const [kind, setKind] = useState<BucketKindOption>(() =>
+	const [kind, setKind] = useState<Querybuildertypesv5BucketsKindDTO>(() =>
 		kindOptionOf(bucketOptions),
 	);
 	const linearSpec =
@@ -81,17 +80,15 @@ function BucketOptions({
 	const handleKindChange = useCallback(
 		(value: string): void => {
 			// Radix clears the value when the active item is clicked again; a bucket axis is
-			// always one of the three, so keep the current pick instead.
+			// always one of the two, so keep the current pick instead.
 			if (!value) {
 				return;
 			}
 
-			const nextKind = value as BucketKindOption;
+			const nextKind = value as Querybuildertypesv5BucketsKindDTO;
 			setKind(nextKind);
 
-			if (nextKind === 'auto') {
-				onChange(undefined);
-			} else if (nextKind === Querybuildertypesv5BucketsKindDTO.log) {
+			if (nextKind === Querybuildertypesv5BucketsKindDTO.log) {
 				onChange(logBuckets(logScale));
 			} else {
 				emitLinear(maxValue, numBuckets);

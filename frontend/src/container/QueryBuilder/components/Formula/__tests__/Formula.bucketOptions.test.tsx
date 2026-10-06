@@ -81,11 +81,11 @@ describe('Formula bucket options', () => {
 		const user = userEvent.setup();
 		renderFormula();
 
-		await user.click(screen.getByRole('radio', { name: 'Log' }));
+		await user.click(screen.getByRole('radio', { name: '0' }));
 
 		expect(mockHandleChangeFormulaData).toHaveBeenCalledWith('bucketOptions', {
 			kind: 'log',
-			spec: { scale: 4 },
+			spec: { scale: 0 },
 		});
 	});
 });

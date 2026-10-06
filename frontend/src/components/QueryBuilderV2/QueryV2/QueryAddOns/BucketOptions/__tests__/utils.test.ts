@@ -23,8 +23,8 @@ describe('bucket option scales', () => {
 });
 
 describe('kindOptionOf', () => {
-	it('reads no options as auto', () => {
-		expect(kindOptionOf(undefined)).toBe('auto');
+	it('reads no options as log, the server default', () => {
+		expect(kindOptionOf(undefined)).toBe('log');
 	});
 
 	it('reads the kind off the options', () => {

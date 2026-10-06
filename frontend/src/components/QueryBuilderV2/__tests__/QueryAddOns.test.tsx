@@ -412,15 +412,20 @@ describe('QueryAddOns', () => {
 			expect(screen.getByRole('radio', { name: '0' })).toBeChecked();
 		});
 
-		it('sends no options for Auto', async () => {
+		it('shows the server default, log at scale 4, without sending it', async () => {
 			const user = userEvent.setup();
-			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
+			renderHeatmap();
 
-			await user.click(screen.getByRole('radio', { name: 'Auto' }));
+			await user.click(screen.getByTestId('query-add-on-bucket_options'));
 
-			expect(mockHandleChangeQueryData).toHaveBeenCalledWith(
+			expect(screen.getByRole('radio', { name: 'Log' })).toBeChecked();
+			expect(screen.getByRole('radio', { name: '4' })).toBeChecked();
+			expect(
+				screen.queryByRole('radio', { name: 'Auto' }),
+			).not.toBeInTheDocument();
+			expect(mockHandleChangeQueryData).not.toHaveBeenCalledWith(
 				'bucketOptions',
-				undefined,
+				expect.anything(),
 			);
 		});
 
