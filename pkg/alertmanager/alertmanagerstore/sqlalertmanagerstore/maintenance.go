@@ -100,6 +100,7 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		Schedule:    string(schedule),
 		OrgID:       claims.OrgID,
 		Scope:       maintenance.Scope,
+		Origin:      alertmanagertypes.MaintenanceOriginMaintenance,
 	}
 
 	maintenanceRules := make([]*alertmanagertypes.StorablePlannedMaintenanceRule, 0)
@@ -209,6 +210,7 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 		Schedule:    string(schedule),
 		OrgID:       claims.OrgID,
 		Scope:       maintenance.Scope,
+		Origin:      existing.Origin,
 	}
 
 	storablePlannedMaintenanceRules := make([]*alertmanagertypes.StorablePlannedMaintenanceRule, 0)

@@ -55,16 +55,36 @@ func (MaintenanceKind) Enum() []any {
 	}
 }
 
+// MaintenanceOrigin is stored, not derived: it tells mute-created ad-hoc rows
+// apart from windows created on the planned-downtime page.
+type MaintenanceOrigin struct {
+	valuer.String
+}
+
+var (
+	MaintenanceOriginMaintenance = MaintenanceOrigin{valuer.NewString("maintenance")}
+	MaintenanceOriginAdhoc       = MaintenanceOrigin{valuer.NewString("adhoc")}
+)
+
+// Enum implements jsonschema.Enum; returns the acceptable values for MaintenanceOrigin.
+func (MaintenanceOrigin) Enum() []any {
+	return []any{
+		MaintenanceOriginMaintenance,
+		MaintenanceOriginAdhoc,
+	}
+}
+
 type StorablePlannedMaintenance struct {
 	bun.BaseModel `bun:"table:planned_maintenance"`
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Name        string `bun:"name,type:text,notnull"`
-	Description string `bun:"description,type:text"`
-	Schedule    string `bun:"schedule,type:text,notnull"`
-	OrgID       string `bun:"org_id,type:text"`
-	Scope       string `bun:"scope,type:text"`
+	Name        string            `bun:"name,type:text,notnull"`
+	Description string            `bun:"description,type:text"`
+	Schedule    string            `bun:"schedule,type:text,notnull"`
+	OrgID       string            `bun:"org_id,type:text"`
+	Scope       string            `bun:"scope,type:text"`
+	Origin      MaintenanceOrigin `bun:"origin,type:text,notnull"`
 }
 
 type PlannedMaintenance struct {
@@ -74,6 +94,7 @@ type PlannedMaintenance struct {
 	Schedule    *Schedule         `json:"schedule" required:"true"`
 	RuleIDs     []string          `json:"alertIds"`
 	Scope       string            `json:"scope,omitempty"`
+	Origin      MaintenanceOrigin `json:"origin" required:"true"`
 	CreatedAt   time.Time         `json:"createdAt"`
 	CreatedBy   string            `json:"createdBy"`
 	UpdatedAt   time.Time         `json:"updatedAt"`
@@ -348,6 +369,7 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 		Schedule    *Schedule         `json:"schedule" db:"schedule"`
 		AlertIds    []string          `json:"alertIds" db:"alert_ids"`
 		Scope       string            `json:"scope,omitempty" db:"scope"`
+		Origin      MaintenanceOrigin `json:"origin" db:"origin"`
 		CreatedAt   time.Time         `json:"createdAt" db:"created_at"`
 		CreatedBy   string            `json:"createdBy" db:"created_by"`
 		UpdatedAt   time.Time         `json:"updatedAt" db:"updated_at"`
@@ -361,6 +383,7 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 		Schedule:    m.Schedule,
 		AlertIds:    m.RuleIDs,
 		Scope:       m.Scope,
+		Origin:      m.Origin,
 		CreatedAt:   m.CreatedAt,
 		CreatedBy:   m.CreatedBy,
 		UpdatedAt:   m.UpdatedAt,
@@ -388,6 +411,7 @@ func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() (*PlannedMaintenanc
 		Schedule:    schedule,
 		RuleIDs:     ruleIDs,
 		Scope:       m.Scope,
+		Origin:      m.Origin,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 		CreatedBy:   m.CreatedBy,

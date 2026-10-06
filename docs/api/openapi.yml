@@ -754,6 +754,11 @@ components:
       - fixed
       - recurring
       type: string
+    AlertmanagertypesMaintenanceOrigin:
+      enum:
+      - maintenance
+      - adhoc
+      type: string
     AlertmanagertypesMaintenanceStatus:
       enum:
       - active
@@ -780,6 +785,8 @@ components:
           $ref: '#/components/schemas/AlertmanagertypesMaintenanceKind'
         name:
           type: string
+        origin:
+          $ref: '#/components/schemas/AlertmanagertypesMaintenanceOrigin'
         schedule:
           $ref: '#/components/schemas/AlertmanagertypesSchedule'
         scope:
@@ -795,6 +802,7 @@ components:
       - id
       - name
       - schedule
+      - origin
       - status
       - kind
       type: object

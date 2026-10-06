@@ -1220,6 +1220,10 @@ export enum AlertmanagertypesMaintenanceKindDTO {
 	fixed = 'fixed',
 	recurring = 'recurring',
 }
+export enum AlertmanagertypesMaintenanceOriginDTO {
+	maintenance = 'maintenance',
+	adhoc = 'adhoc',
+}
 export enum AlertmanagertypesMaintenanceStatusDTO {
 	active = 'active',
 	upcoming = 'upcoming',
@@ -1296,6 +1300,7 @@ export interface AlertmanagertypesPlannedMaintenanceDTO {
 	 * @type string
 	 */
 	name: string;
+	origin: AlertmanagertypesMaintenanceOriginDTO;
 	schedule: AlertmanagertypesScheduleDTO;
 	/**
 	 * @type string

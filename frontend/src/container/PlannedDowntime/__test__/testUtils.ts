@@ -4,6 +4,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	AlertmanagertypesMaintenanceKindDTO,
+	AlertmanagertypesMaintenanceOriginDTO,
 	AlertmanagertypesMaintenanceStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
@@ -28,6 +29,7 @@ export const createMockDowntime = (
 		...overrides.schedule,
 	}),
 	alertIds: overrides.alertIds ?? [],
+	origin: overrides.origin ?? AlertmanagertypesMaintenanceOriginDTO.maintenance,
 	createdAt: overrides.createdAt,
 	createdBy: overrides.createdBy ?? '',
 	updatedAt: overrides.updatedAt,

@@ -1,6 +1,8 @@
 package alertmanagertypes
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -1011,5 +1013,58 @@ func TestPostablePlannedMaintenance_ValidateScope(t *testing.T) {
 				t.Errorf("Validate() error = %v, wantErr %v", err, c.wantErr)
 			}
 		})
+	}
+}
+
+func TestPlannedMaintenanceOrigin(t *testing.T) {
+	start := time.Date(2026, 10, 1, 10, 0, 0, 0, time.UTC)
+
+	testCases := []struct {
+		name       string
+		origin     MaintenanceOrigin
+		wantOrigin string
+		wantKind   string
+	}{
+		{name: "MaintenanceOrigin_FixedSchedule_KindStaysComputed", origin: MaintenanceOriginMaintenance, wantOrigin: `"origin":"maintenance"`, wantKind: `"kind":"fixed"`},
+		{name: "AdhocOrigin_FixedSchedule_KindStaysComputed", origin: MaintenanceOriginAdhoc, wantOrigin: `"origin":"adhoc"`, wantKind: `"kind":"fixed"`},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			m := &PlannedMaintenance{
+				ID:       valuer.GenerateUUID(),
+				Name:     "Mute: payment latency high",
+				Schedule: &Schedule{Timezone: "UTC", StartTime: start, EndTime: start.Add(time.Hour)},
+				Origin:   testCase.origin,
+			}
+
+			out, err := json.Marshal(m)
+			if err != nil {
+				t.Fatalf("marshal: %v", err)
+			}
+			if !strings.Contains(string(out), testCase.wantOrigin) {
+				t.Errorf("marshal output %s missing %s", out, testCase.wantOrigin)
+			}
+			if !strings.Contains(string(out), testCase.wantKind) {
+				t.Errorf("marshal output %s missing %s", out, testCase.wantKind)
+			}
+		})
+	}
+}
+
+func TestToPlannedMaintenanceCarriesOrigin(t *testing.T) {
+	withRules := &PlannedMaintenanceWithRules{
+		StorablePlannedMaintenance: &StorablePlannedMaintenance{
+			Schedule: `{"timezone":"UTC","startTime":"2026-10-01T10:00:00Z","endTime":"2026-10-01T11:00:00Z"}`,
+			Origin:   MaintenanceOriginAdhoc,
+		},
+	}
+
+	m, err := withRules.ToPlannedMaintenance()
+	if err != nil {
+		t.Fatalf("convert: %v", err)
+	}
+	if m.Origin != MaintenanceOriginAdhoc {
+		t.Errorf("origin = %v, want adhoc", m.Origin)
 	}
 }

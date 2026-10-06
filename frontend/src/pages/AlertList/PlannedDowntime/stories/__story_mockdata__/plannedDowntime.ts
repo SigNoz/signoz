@@ -5,6 +5,7 @@
 
 import {
 	AlertmanagertypesMaintenanceKindDTO,
+	AlertmanagertypesMaintenanceOriginDTO,
 	AlertmanagertypesMaintenanceStatusDTO,
 	AlertmanagertypesRepeatOnDTO,
 	AlertmanagertypesRepeatTypeDTO,
@@ -133,6 +134,7 @@ const buildSchedule = (
 		description: seed.description,
 		kind: resolvedKind,
 		status: seed.status,
+		origin: AlertmanagertypesMaintenanceOriginDTO.maintenance,
 		alertIds: seed.alertIds,
 		createdAt: at(-(index + 4) * DAY),
 		createdBy: 'ada@signoz.io',
