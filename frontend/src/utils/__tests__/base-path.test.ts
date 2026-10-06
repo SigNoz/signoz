@@ -109,6 +109,11 @@ describe('at basePath="/signoz/"', () => {
 		expect(m.stripBasePath('/signozzz/logs')).toBe('/signozzz/logs');
 	});
 
+	it('stripBasePath matches the prefix case-insensitively, as the router does', () => {
+		expect(m.stripBasePath('/SigNoz/logs')).toBe('/logs');
+		expect(m.stripBasePath('/SIGNOZ')).toBe('/');
+	});
+
 	it('stripBasePath passes through external URLs', () => {
 		expect(m.stripBasePath('https://example.com/signoz/foo')).toBe(
 			'https://example.com/signoz/foo',
