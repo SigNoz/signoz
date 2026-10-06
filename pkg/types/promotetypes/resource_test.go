@@ -4,9 +4,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
 func resourceKinds(resources []coretypes.ResourceWithID) []string {

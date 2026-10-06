@@ -3,11 +3,12 @@ package signozapiserver
 import (
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
-	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addPromoteRoutes(router *mux.Router) error {
@@ -15,7 +16,7 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		ID:                 "PromotePaths",
 		Tags:               []string{"promote"},
 		Summary:            "Promote paths",
-		Description:        "This endpoint promotes paths of JSON columns to their promoted columns. Each path names its promotion target with its signal and context, e.g. traces/attribute.",
+		Description:        "This endpoint promotes paths of JSON columns to their promoted columns. Each path names its promotion target with its signal and context, e.g. traces/attribute. Requires the update scope of each signal in the request.",
 		Request:            new([]*promotetypes.PromotePath),
 		RequestContentType: "application/json",
 		RequestExamples: []handler.OpenAPIExample{
@@ -65,7 +66,7 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		ID:                  "ListPromotedPaths",
 		Tags:                []string{"promote"},
 		Summary:             "List promoted paths",
-		Description:         "This endpoint lists the promoted paths of every JSON column, each annotated with its signal and context. The signal, context, promoted and indexes query parameters filter the listing.",
+		Description:         "This endpoint lists the promoted paths of every JSON column, each annotated with its signal and context. The signal, context, promoted and indexes query parameters filter the listing. Requires the list scope of each signal the filters select, or of every signal when none match.",
 		Request:             nil,
 		RequestQuery:        new(promotetypes.ListPromotedPathsFilters),
 		RequestContentType:  "",
