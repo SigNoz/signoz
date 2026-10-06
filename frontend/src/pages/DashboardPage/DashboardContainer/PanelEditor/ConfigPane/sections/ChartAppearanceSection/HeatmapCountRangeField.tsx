@@ -1,14 +1,15 @@
-import type { ChangeEvent } from 'react';
-import { Typography } from '@signozhq/ui/typography';
-import { Input } from 'antd';
+import { Callout } from '@signozhq/ui/callout';
 import type { DashboardtypesHeatmapColorsDTO } from 'api/generated/services/sigNoz.schemas';
 
-import styles from './HeatmapColorsField.module.scss';
+import ConfigField from '../../controls/ConfigField/ConfigField';
+import ConfigRangeInput from '../../controls/ConfigRangeInput/ConfigRangeInput';
+import { isRangeInverted } from '../../controls/ConfigRangeInput/utils';
+import type { FieldResetProps } from '../../utils/changes';
 
 /** `null` on either bound derives it from the data. */
 type CountBound = Pick<DashboardtypesHeatmapColorsDTO, 'minCount' | 'maxCount'>;
 
-interface HeatmapCountRangeFieldProps {
+interface HeatmapCountRangeFieldProps extends Partial<FieldResetProps> {
 	value: CountBound;
 	onChange: (next: CountBound) => void;
 }
@@ -20,45 +21,35 @@ interface HeatmapCountRangeFieldProps {
 function HeatmapCountRangeField({
 	value,
 	onChange,
+	changed,
+	onReset,
 }: HeatmapCountRangeFieldProps): JSX.Element {
-	// An empty field derives the bound (null), as does transient non-numeric input
-	// (a lone "-"), which pinning would read as a bound the user never typed.
-	const handleBound =
-		(bound: keyof CountBound) =>
-		(event: ChangeEvent<HTMLInputElement>): void => {
-			const raw = event.target.value;
-			const next = raw === '' || Number.isNaN(Number(raw)) ? null : Number(raw);
-			onChange({ ...value, [bound]: next });
-		};
+	const { minCount, maxCount } = value;
 
 	return (
-		<div className={styles.field}>
-			<div className={styles.bounds}>
-				<div className={styles.field}>
-					<Typography.Text>Min count</Typography.Text>
-					<Input
-						data-testid="panel-editor-v2-heatmap-min-count"
-						type="number"
-						placeholder="Auto"
-						value={value.minCount ?? ''}
-						onChange={handleBound('minCount')}
-					/>
-				</div>
-				<div className={styles.field}>
-					<Typography.Text>Max count</Typography.Text>
-					<Input
-						data-testid="panel-editor-v2-heatmap-max-count"
-						type="number"
-						placeholder="Auto"
-						value={value.maxCount ?? ''}
-						onChange={handleBound('maxCount')}
-					/>
-				</div>
-			</div>
-			<Typography.Text className={styles.help}>
-				The counts the ramp&apos;s ends mean; empty reads them off the data.
-			</Typography.Text>
-		</div>
+		<ConfigField
+			label="Count range"
+			changed={changed}
+			onReset={onReset}
+			help={
+				isRangeInverted(minCount, maxCount) ? (
+					<Callout type="error" size="small" showIcon>
+						Min count can&apos;t be greater than max count.
+					</Callout>
+				) : (
+					'Leave empty to read the range from the data.'
+				)
+			}
+		>
+			<ConfigRangeInput
+				minTestId="panel-editor-v2-heatmap-min-count"
+				maxTestId="panel-editor-v2-heatmap-max-count"
+				min={minCount}
+				max={maxCount}
+				onChangeMin={(next): void => onChange({ ...value, minCount: next })}
+				onChangeMax={(next): void => onChange({ ...value, maxCount: next })}
+			/>
+		</ConfigField>
 	);
 }
 

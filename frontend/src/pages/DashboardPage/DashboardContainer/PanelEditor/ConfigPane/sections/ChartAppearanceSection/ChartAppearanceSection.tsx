@@ -135,6 +135,7 @@ function ChartAppearanceSection({
 			{controls.colors && (
 				<HeatmapColorsField
 					value={value?.colors}
+					savedValue={savedValue?.colors}
 					onChange={(colors): void => onChange({ ...value, colors })}
 				/>
 			)}

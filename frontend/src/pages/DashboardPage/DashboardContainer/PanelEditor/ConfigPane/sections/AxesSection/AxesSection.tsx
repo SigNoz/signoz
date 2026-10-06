@@ -5,6 +5,7 @@ import type {
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
+import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';
 import { createFieldResetter } from '../../utils/changes';
 import AxisFields from './AxisFields';
 import AxisRangeField from './AxisRangeField';
@@ -18,8 +19,8 @@ import {
 
 /**
  * Edits the `axes` slice of a panel spec: soft Y-axis min/max bounds, the
- * linear/logarithmic scale toggle, and the heatmap's bucket-axis distribution.
- * Each control is gated by its `controls` flag.
+ * linear/logarithmic scale toggle, or — for the heatmap, which has no soft bounds —
+ * the bucket-axis distribution. Each control is gated by its `controls` flag.
  */
 function AxesSection({
 	value,
@@ -29,11 +30,29 @@ function AxesSection({
 }: SectionEditorProps<SectionKind.Axes>): JSX.Element {
 	const reset = createFieldResetter(value, savedValue, onChange);
 
+	if (controls.y) {
+		const scale = value?.y?.scale ?? DashboardtypesHeatmapYScaleDTO.auto;
+		return (
+			<ConfigField
+				label="Y-axis scale"
+				help={BUCKET_SCALE_HELP[scale]}
+				{...reset('y')}
+			>
+				<ConfigTiles
+					testId="panel-editor-v2-y-scale"
+					aria-label="Y-axis scale"
+					value={scale}
+					items={BUCKET_SCALE_OPTIONS}
+					onChange={(next): void =>
+						onChange({ ...value, y: { ...value?.y, scale: next } })
+					}
+				/>
+			</ConfigField>
+		);
+	}
+
 	return (
-		<ConfigField
-			label="Y axis"
-			{...reset('softMin', 'softMax', 'isLogScale', 'y')}
-		>
+		<ConfigField label="Y axis" {...reset('softMin', 'softMax', 'isLogScale')}>
 			<AxisFields>
 				{controls.minMax && (
 					<AxisRangeField
@@ -52,19 +71,6 @@ function AxesSection({
 						help={SCALE_HELP}
 						onChange={(next): void =>
 							onChange({ ...value, isLogScale: next === 'log' })
-						}
-					/>
-				)}
-
-				{controls.y && (
-					<AxisScaleField
-						testId="panel-editor-v2-y-scale"
-						aria-label="Y-axis scale"
-						value={value?.y?.scale ?? DashboardtypesHeatmapYScaleDTO.auto}
-						items={BUCKET_SCALE_OPTIONS}
-						help={BUCKET_SCALE_HELP}
-						onChange={(next): void =>
-							onChange({ ...value, y: { ...value?.y, scale: next } })
 						}
 					/>
 				)}

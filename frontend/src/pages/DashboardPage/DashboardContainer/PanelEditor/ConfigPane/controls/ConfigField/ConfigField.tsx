@@ -5,6 +5,8 @@ import styles from './ConfigField.module.scss';
 
 interface ConfigFieldProps {
 	label: ReactNode;
+	/** Shown at the end of the heading row, before Reset. */
+	aside?: ReactNode;
 	/** Shown under the control. */
 	help?: ReactNode;
 	changed?: boolean;
@@ -17,6 +19,7 @@ interface ConfigFieldProps {
 
 function ConfigField({
 	label,
+	aside,
 	help,
 	changed,
 	onReset,
@@ -28,6 +31,7 @@ function ConfigField({
 		<div className={cx(styles.field, className)}>
 			<div className={styles.header}>
 				<span className={plain ? styles.plainLabel : styles.label}>{label}</span>
+				{aside && <span className={styles.aside}>{aside}</span>}
 				{changed && onReset && (
 					<button
 						type="button"

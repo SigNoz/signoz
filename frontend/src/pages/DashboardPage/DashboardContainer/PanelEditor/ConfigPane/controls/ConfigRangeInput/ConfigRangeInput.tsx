@@ -5,8 +5,8 @@ import { isRangeInverted } from './utils';
 import styles from './ConfigRangeInput.module.scss';
 
 interface ConfigRangeInputProps {
-	/** Prefix for the `-soft-min` / `-soft-max` test ids. */
-	testIdPrefix: string;
+	minTestId: string;
+	maxTestId: string;
 	min: number | null | undefined;
 	max: number | null | undefined;
 	onChangeMin: (next: number | null) => void;
@@ -14,7 +14,8 @@ interface ConfigRangeInputProps {
 }
 
 function ConfigRangeInput({
-	testIdPrefix,
+	minTestId,
+	maxTestId,
 	min,
 	max,
 	onChangeMin,
@@ -25,7 +26,7 @@ function ConfigRangeInput({
 	return (
 		<div className={styles.range}>
 			<ConfigNumberInput
-				testId={`${testIdPrefix}-soft-min`}
+				testId={minTestId}
 				placeholder="Min"
 				invalid={inverted}
 				value={min}
@@ -33,7 +34,7 @@ function ConfigRangeInput({
 			/>
 			<span className={styles.dash}>–</span>
 			<ConfigNumberInput
-				testId={`${testIdPrefix}-soft-max`}
+				testId={maxTestId}
 				placeholder="Max"
 				invalid={inverted}
 				value={max}

@@ -39,7 +39,8 @@ function AxisRangeField({
 			}
 		>
 			<ConfigRangeInput
-				testIdPrefix={testIdPrefix}
+				minTestId={`${testIdPrefix}-soft-min`}
+				maxTestId={`${testIdPrefix}-soft-max`}
 				min={value?.softMin}
 				max={value?.softMax}
 				onChangeMin={(softMin): void => onChange({ softMin })}

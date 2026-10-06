@@ -112,9 +112,7 @@ describe('AxesSection', () => {
 			/>,
 		);
 
-		expect(
-			screen.getByText(/mirrored across zero/),
-		).toBeInTheDocument();
+		expect(screen.getByText(/Log on both sides of zero/)).toBeInTheDocument();
 	});
 
 	it('toggles the logarithmic scale through onChange', async () => {

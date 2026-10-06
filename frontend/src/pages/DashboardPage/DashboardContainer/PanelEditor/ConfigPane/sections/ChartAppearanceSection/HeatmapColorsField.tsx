@@ -1,22 +1,29 @@
-import { Typography } from '@signozhq/ui/typography';
 import {
 	DashboardtypesHeatmapColorModeDTO,
-	DashboardtypesHeatmapColorScaleDTO,
 	type DashboardtypesHeatmapColorsDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
+import ConfigField from '../../controls/ConfigField/ConfigField';
+import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';
+import { createFieldResetter } from '../../utils/changes';
 import HeatmapColorStepsField from './HeatmapColorStepsField';
 import HeatmapCountRangeField from './HeatmapCountRangeField';
 import HeatmapFillField from './HeatmapFillField';
 import HeatmapPaletteGrid from './HeatmapPaletteGrid';
 import HeatmapRampPreview from './HeatmapRampPreview';
-import { COLOR_MODE_OPTIONS, COLOR_SCALE_OPTIONS } from './heatmapColorOptions';
-
-import styles from './HeatmapColorsField.module.scss';
+import {
+	COLOR_MODE_HELP,
+	COLOR_MODE_OPTIONS,
+	COLOR_SCALE_HELP,
+	COLOR_SCALE_OPTIONS,
+	DEFAULT_COLOR_MODE,
+	DEFAULT_COLOR_SCALE,
+	DEFAULT_PALETTE,
+} from './heatmapColorOptions';
 
 interface HeatmapColorsFieldProps {
 	value: DashboardtypesHeatmapColorsDTO | undefined;
+	savedValue?: DashboardtypesHeatmapColorsDTO;
 	onChange: (next: DashboardtypesHeatmapColorsDTO) => void;
 }
 
@@ -27,73 +34,73 @@ interface HeatmapColorsFieldProps {
  */
 function HeatmapColorsField({
 	value,
+	savedValue,
 	onChange,
 }: HeatmapColorsFieldProps): JSX.Element {
-	const isOpacityMode =
-		value?.mode === DashboardtypesHeatmapColorModeDTO.opacity;
+	const reset = createFieldResetter(value, savedValue, onChange);
+	// Unset fields select what the chart draws for them.
+	const mode = value?.mode ?? DEFAULT_COLOR_MODE;
+	const scale = value?.scale ?? DEFAULT_COLOR_SCALE;
 
 	return (
-		<div className={styles.colors}>
+		<>
 			<HeatmapRampPreview colors={value} />
 
-			<div className={styles.field}>
-				<Typography.Text>Color mode</Typography.Text>
-				<ConfigSegmented
+			<ConfigField
+				label="Colour mode"
+				help={COLOR_MODE_HELP[mode]}
+				{...reset('mode')}
+			>
+				<ConfigTiles
 					testId="panel-editor-v2-heatmap-color-mode"
-					value={value?.mode}
+					aria-label="Colour mode"
+					value={mode}
 					items={COLOR_MODE_OPTIONS}
-					onChange={(next): void =>
-						onChange({
-							...value,
-							mode: next as DashboardtypesHeatmapColorModeDTO,
-						})
-					}
+					onChange={(next): void => onChange({ ...value, mode: next })}
 				/>
-			</div>
+			</ConfigField>
 
-			{isOpacityMode ? (
+			{mode === DashboardtypesHeatmapColorModeDTO.opacity ? (
 				<HeatmapFillField
 					value={value?.fill}
+					{...reset('fill')}
 					onChange={(fill): void => onChange({ ...value, fill })}
 				/>
 			) : (
-				<div className={styles.field}>
-					<Typography.Text>Palette</Typography.Text>
+				<ConfigField label="Palette" {...reset('palette')}>
 					<HeatmapPaletteGrid
-						value={value?.palette}
+						value={value?.palette ?? DEFAULT_PALETTE}
 						onChange={(palette): void => onChange({ ...value, palette })}
 					/>
-				</div>
+				</ConfigField>
 			)}
 
-			<div className={styles.field}>
-				<Typography.Text>Color scale</Typography.Text>
-				<ConfigSegmented
+			<ConfigField
+				label="Colour scale"
+				help={COLOR_SCALE_HELP[scale]}
+				{...reset('scale')}
+			>
+				<ConfigTiles
 					testId="panel-editor-v2-heatmap-color-scale"
-					value={value?.scale}
+					aria-label="Colour scale"
+					value={scale}
 					items={COLOR_SCALE_OPTIONS}
-					onChange={(next): void =>
-						onChange({
-							...value,
-							scale: next as DashboardtypesHeatmapColorScaleDTO,
-						})
-					}
+					onChange={(next): void => onChange({ ...value, scale: next })}
 				/>
-				<Typography.Text className={styles.help}>
-					How a count maps onto the ramp.
-				</Typography.Text>
-			</div>
+			</ConfigField>
 
 			<HeatmapColorStepsField
 				value={value?.steps || undefined}
+				{...reset('steps')}
 				onChange={(steps): void => onChange({ ...value, steps })}
 			/>
 
 			<HeatmapCountRangeField
 				value={{ minCount: value?.minCount, maxCount: value?.maxCount }}
+				{...reset('minCount', 'maxCount')}
 				onChange={(bounds): void => onChange({ ...value, ...bounds })}
 			/>
-		</div>
+		</>
 	);
 }
 

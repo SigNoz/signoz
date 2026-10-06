@@ -21,6 +21,23 @@ function interpDrawing(path: string): JSX.Element {
 	);
 }
 
+/** Heatmap bucket rows over a y axis; `ys` sets the row spacing a scale gives. */
+function bucketRowsDrawing(ys: number[], dashed = false): JSX.Element {
+	return (
+		<TileSvg>
+			<path d="M6 2 V22 H60" strokeWidth={1.4} opacity={0.35} />
+			{ys.map((y) => (
+				<path
+					key={y}
+					d={`M10 ${y} H58`}
+					strokeWidth={2}
+					strokeDasharray={dashed ? '3 3' : undefined}
+				/>
+			))}
+		</TileSvg>
+	);
+}
+
 export const TILE_DRAWINGS = {
 	lineSolid: (
 		<TileSvg>
@@ -93,6 +110,55 @@ export const TILE_DRAWINGS = {
 			<path d="M4 20 L60 4" strokeDasharray="3 3" />
 		</TileSvg>
 	),
+	scaleSqrt: (
+		<TileSvg>
+			<path d="M4 20 C 10 10, 26 6, 60 4" />
+		</TileSvg>
+	),
+	colorPalette: (
+		<TileSvg>
+			<defs>
+				<linearGradient id="config-tile-color-palette" x1="0" x2="1">
+					<stop offset="0" style={{ stopColor: 'var(--bg-robin-700)' }} />
+					<stop offset="0.35" style={{ stopColor: 'var(--bg-sakura-400)' }} />
+					<stop offset="0.7" style={{ stopColor: 'var(--bg-amber-400)' }} />
+					<stop offset="1" style={{ stopColor: 'var(--bg-amber-100)' }} />
+				</linearGradient>
+			</defs>
+			<rect
+				x={4}
+				y={9}
+				width={56}
+				height={8}
+				rx={1}
+				fill="url(#config-tile-color-palette)"
+				stroke="none"
+			/>
+		</TileSvg>
+	),
+	colorOpacity: (
+		<TileSvg>
+			<defs>
+				<linearGradient id="config-tile-color-opacity" x1="0" x2="1">
+					<stop offset="0" stopColor="currentColor" stopOpacity={0.08} />
+					<stop offset="1" stopColor="currentColor" stopOpacity={1} />
+				</linearGradient>
+			</defs>
+			<rect
+				x={4}
+				y={9}
+				width={56}
+				height={8}
+				rx={1}
+				fill="url(#config-tile-color-opacity)"
+				stroke="none"
+			/>
+		</TileSvg>
+	),
+	bucketsAuto: bucketRowsDrawing([5, 10, 14, 18], true),
+	bucketsLinear: bucketRowsDrawing([4, 9, 14, 19]),
+	bucketsLog: bucketRowsDrawing([3, 5, 9, 17]),
+	bucketsSymlog: bucketRowsDrawing([3, 9, 11, 13, 19]),
 	scaleSymlog: (
 		<TileSvg>
 			<path d="M4 20 C 20 20, 22 12, 32 12 S 44 4, 60 4" />

@@ -22,6 +22,18 @@
 	color: var(--l2-foreground);
 }
 
+.aside {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	font-family: 'Geist Mono', monospace;
+	font-size: 12px;
+	text-align: right;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--l2-foreground);
+}
+
 .plainLabel {
 	font-size: 13px;
 	color: var(--l1-foreground);

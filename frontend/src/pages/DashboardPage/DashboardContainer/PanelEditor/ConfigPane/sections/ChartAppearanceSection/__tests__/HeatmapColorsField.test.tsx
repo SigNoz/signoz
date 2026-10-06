@@ -66,7 +66,7 @@ describe('HeatmapColorsField', () => {
 		);
 
 		expect(screen.queryByTestId(PALETTE_CARD)).not.toBeInTheDocument();
-		expect(screen.getByText('Base color')).toBeInTheDocument();
+		expect(screen.getByText('Base colour')).toBeInTheDocument();
 		expect(
 			screen.getByTestId('panel-editor-v2-heatmap-fill-robin'),
 		).toBeInTheDocument();
@@ -124,10 +124,10 @@ describe('HeatmapColorsField', () => {
 		render(<HeatmapColorsField value={undefined} onChange={onChange} />);
 
 		expect(
-			screen.getByText(/How a count maps onto the ramp/),
+			screen.getByText('Keeps sparse buckets visible next to busy ones.'),
 		).toBeInTheDocument();
 
-		await user.click(screen.getByText('Sqrt'));
+		await user.click(screen.getByText('Square root'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			scale: DashboardtypesHeatmapColorScaleDTO.sqrt,
@@ -238,9 +238,7 @@ describe('HeatmapColorsField', () => {
 			/>,
 		);
 
-		expect(
-			screen.getByTestId('panel-editor-v2-heatmap-fill-forest'),
-		).toHaveAttribute('aria-pressed', 'true');
+		expect(screen.getByRole('radio', { name: 'Forest' })).toBeChecked();
 	});
 
 	it('shows a fill that is no preset as the custom one', () => {
@@ -254,10 +252,23 @@ describe('HeatmapColorsField', () => {
 			/>,
 		);
 
-		expect(screen.getByText('#0060E6')).toBeInTheDocument();
 		expect(
-			screen.getByTestId('panel-editor-v2-heatmap-fill-robin'),
-		).toHaveAttribute('aria-pressed', 'false');
+			screen.getByTestId('panel-editor-v2-heatmap-fill-custom'),
+		).toHaveAttribute('aria-pressed', 'true');
+		expect(screen.getByRole('radio', { name: 'Robin' })).not.toBeChecked();
+	});
+
+	it('flags a min count above the max count', () => {
+		render(
+			<HeatmapColorsField
+				value={{ minCount: 500, maxCount: 10 }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByText("Min count can't be greater than max count."),
+		).toBeInTheDocument();
 	});
 
 	it('names the group colour as the fill until one is picked', () => {
@@ -268,9 +279,9 @@ describe('HeatmapColorsField', () => {
 			/>,
 		);
 
-		expect(screen.getByText('group colour')).toBeInTheDocument();
+		expect(screen.getByRole('radio', { name: 'Group colour' })).toBeChecked();
 		expect(
-			screen.getByTestId('panel-editor-v2-heatmap-fill-robin'),
+			screen.getByTestId('panel-editor-v2-heatmap-fill-custom'),
 		).toHaveAttribute('aria-pressed', 'false');
 	});
 });

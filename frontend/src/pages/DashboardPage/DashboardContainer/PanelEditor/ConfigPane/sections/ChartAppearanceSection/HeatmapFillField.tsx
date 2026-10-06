@@ -1,13 +1,11 @@
-import cx from 'classnames';
-import { ColorPicker } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import { DEFAULT_OPACITY_FILL } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
 
-import { FILL_PRESETS, isSameColor } from './heatmapColorOptions';
+import ColorSwatches from '../../controls/ColorSwatches/ColorSwatches';
+import ConfigField from '../../controls/ConfigField/ConfigField';
+import type { FieldResetProps } from '../../utils/changes';
+import { FILL_OPTIONS, GROUP_FILL, isSameColor } from './heatmapColorOptions';
 
-import styles from './HeatmapColorsField.module.scss';
-
-interface HeatmapFillFieldProps {
+interface HeatmapFillFieldProps extends Partial<FieldResetProps> {
 	/** Empty follows the selected group's legend colour. */
 	value: string | undefined;
 	onChange: (fill: string) => void;
@@ -20,65 +18,34 @@ interface HeatmapFillFieldProps {
 function HeatmapFillField({
 	value,
 	onChange,
+	changed,
+	onReset,
 }: HeatmapFillFieldProps): JSX.Element {
-	const isAuto = !value;
-	const isCustom =
-		!isAuto && !FILL_PRESETS.some((preset) => isSameColor(preset.color, value));
+	const selected = value
+		? FILL_OPTIONS.find((option) => isSameColor(option.value, value))?.value
+		: GROUP_FILL;
 
 	return (
-		<div className={styles.field}>
-			<Typography.Text>Base color</Typography.Text>
-
-			<div className={styles.fillGrid}>
-				{FILL_PRESETS.map((preset) => (
-					<button
-						key={preset.label}
-						type="button"
-						aria-pressed={isSameColor(preset.color, value)}
-						className={cx(styles.paletteCard, {
-							[styles.isSelected]: isSameColor(preset.color, value),
-						})}
-						data-testid={`panel-editor-v2-heatmap-fill-${preset.label}`}
-						onClick={(): void => onChange(preset.color)}
-					>
-						<span
-							className={styles.paletteRamp}
-							style={{ background: preset.color }}
-						/>
-						<span className={styles.mono}>{preset.label}</span>
-					</button>
-				))}
-			</div>
-
-			<ColorPicker
-				value={value || DEFAULT_OPACITY_FILL}
-				trigger="click"
-				onChangeComplete={(next): void => onChange(next.toHexString())}
-			>
-				<button
-					type="button"
-					className={cx(styles.customFill, {
-						[styles.isSelected]: isCustom,
-					})}
-					data-testid="panel-editor-v2-heatmap-fill-custom"
-				>
-					<Typography.Text>Custom</Typography.Text>
-					<span className={styles.customFillValue}>
-						<span className={styles.mono}>
-							{isAuto ? 'group colour' : value.toUpperCase()}
-						</span>
-						<span
-							className={styles.customFillSwatch}
-							style={{ background: value || DEFAULT_OPACITY_FILL }}
-						/>
-					</span>
-				</button>
-			</ColorPicker>
-
-			<Typography.Text className={styles.help}>
-				The colour whose alpha ramps; unset uses the group&apos;s.
-			</Typography.Text>
-		</div>
+		<ConfigField
+			label="Base colour"
+			help="Group colour gives each group its own."
+			changed={changed}
+			onReset={onReset}
+		>
+			<ColorSwatches
+				testId="panel-editor-v2-heatmap-fill"
+				label="Base colour"
+				value={selected}
+				options={FILL_OPTIONS}
+				dividerAfter={0}
+				onChange={onChange}
+				custom={{
+					value: selected === undefined ? value : undefined,
+					initial: value || DEFAULT_OPACITY_FILL,
+					onChange,
+				}}
+			/>
+		</ConfigField>
 	);
 }
 
