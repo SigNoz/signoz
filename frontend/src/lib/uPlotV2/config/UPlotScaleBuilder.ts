@@ -46,6 +46,12 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 
 		// Special handling for time scales (X axis)
 		if (time) {
+			// A range supplied outright wins: marks spanning an interval have to reach
+			// the end of their last column, past the last timestamp min/max carry.
+			if (range) {
+				return { [scaleKey]: { time: true, auto: false, range } };
+			}
+
 			let minTime = this.min ?? 0;
 			let maxTime = this.max ?? 0;
 
