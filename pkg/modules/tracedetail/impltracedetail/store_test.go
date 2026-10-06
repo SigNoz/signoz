@@ -27,7 +27,7 @@ var (
 	testTraceID = "trace-abc123"
 	testStart   = time.Unix(1000, 0).UTC()
 	testEnd     = time.Unix(2000, 0).UTC()
-	testSummary = &spantypes.TraceSummary{
+	testBounds  = &spantypes.TraceBounds{
 		TraceID:  testTraceID,
 		Start:    testStart,
 		End:      testEnd,
@@ -52,14 +52,14 @@ func newTestStoreWithMetadata(matcher sqlmock.QueryMatcher, metadataStore teleme
 	return spantypestest.New(impltracedetail.NewTraceStore(ts, metadataStore, fl), ts.Mock())
 }
 
-func TestGetTraceSummary(t *testing.T) {
+func TestGetTraceBounds(t *testing.T) {
 	expectedSQL := "SELECT trace_id, min(start) AS start, max(end) AS end, sum(num_spans) AS num_spans FROM signoz_traces.distributed_trace_summary WHERE trace_id = ? GROUP BY trace_id"
 
 	t.Run("ValidTraceID_GeneratesExpectedSQL", func(t *testing.T) {
 		s := newTestStore(sqlmock.QueryMatcherRegexp)
 		s.Mock().ExpectQueryRow(regexp.QuoteMeta(expectedSQL)).
 			WillReturnRow(cmock.NewRow(nil, nil))
-		_, _ = s.Store().GetTraceSummary(context.Background(), testTraceID)
+		_, _ = s.Store().GetTraceBounds(context.Background(), testTraceID)
 		assert.NoError(t, s.Mock().ExpectationsWereMet())
 	})
 }
@@ -110,7 +110,7 @@ func TestGetTraceStats(t *testing.T) {
 			s := newTestStoreWithMetadata(sqlmock.QueryMatcherEqual, genAIMetadataStore(testCase.jsonRelease), fl)
 			s.Mock().ExpectQueryRow(testCase.expectedSQL).
 				WillReturnRow(cmock.NewRow(nil, nil))
-			_, _ = s.Store().GetTraceStats(context.Background(), valuer.GenerateUUID(), testTraceID, testSummary)
+			_, _ = s.Store().GetTraceStats(context.Background(), valuer.GenerateUUID(), testTraceID, testBounds)
 			assert.NoError(t, s.Mock().ExpectationsWereMet())
 		})
 	}
@@ -147,7 +147,7 @@ func TestGetSpanCountByField(t *testing.T) {
 				s.Mock().ExpectSelect(regexp.QuoteMeta(expectedSQL)).
 					WillReturnRows(cmock.NewRows(nil, nil))
 			}
-			_, _ = s.Store().GetSpanCountByField(context.Background(), testTraceID, testSummary, tc.field)
+			_, _ = s.Store().GetSpanCountByField(context.Background(), testTraceID, testBounds, tc.field)
 			assert.NoError(t, s.Mock().ExpectationsWereMet())
 		})
 	}
@@ -197,7 +197,7 @@ func TestGetSpanDurationByField(t *testing.T) {
 				s.Mock().ExpectSelect(regexp.QuoteMeta(expectedSQL)).
 					WillReturnRows(cmock.NewRows(nil, nil))
 			}
-			_, _ = s.Store().GetSpanDurationByField(context.Background(), testTraceID, testSummary, tc.field)
+			_, _ = s.Store().GetSpanDurationByField(context.Background(), testTraceID, testBounds, tc.field)
 			assert.NoError(t, s.Mock().ExpectationsWereMet())
 		})
 	}

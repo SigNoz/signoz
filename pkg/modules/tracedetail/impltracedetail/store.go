@@ -59,7 +59,7 @@ func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytype
 	}
 }
 
-func (s *traceStore) GetTraceSummary(ctx context.Context, traceID string) (*spantypes.TraceSummary, error) {
+func (s *traceStore) GetTraceBounds(ctx context.Context, traceID string) (*spantypes.TraceBounds, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("trace_id", "min(start) AS start", "max(end) AS end", "sum(num_spans) AS num_spans")
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceSummaryTable))
@@ -67,24 +67,24 @@ func (s *traceStore) GetTraceSummary(ctx context.Context, traceID string) (*span
 	sb.GroupBy("trace_id")
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	var summary spantypes.TraceSummary
+	var bounds spantypes.TraceBounds
 	err := s.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(
-		&summary.TraceID, &summary.Start, &summary.End, &summary.NumSpans,
+		&bounds.TraceID, &bounds.Start, &bounds.End, &bounds.NumSpans,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, spantypes.ErrTraceNotFound
 		}
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace summary")
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace bounds")
 	}
-	return &summary, nil
+	return &bounds, nil
 }
 
-func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, traceID string, summary *spantypes.TraceSummary) (*spantypes.TraceStats, error) {
+func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) (*spantypes.TraceStats, error) {
 	table := fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable)
 	spans := sqlbuilder.NewSelectBuilder()
 
-	genAIColumns, err := s.genAISpanColumns(ctx, orgID, summary, spans)
+	genAIColumns, err := s.genAISpanColumns(ctx, orgID, bounds, spans)
 	if err != nil {
 		return nil, err
 	}
@@ -95,8 +95,8 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 	ids.From(table)
 	ids.Where(
 		ids.E("trace_id", traceID),
-		ids.GE("ts_bucket_start", summary.Start.Unix()-1800),
-		ids.LE("ts_bucket_start", summary.End.Unix()),
+		ids.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		ids.LE("ts_bucket_start", bounds.End.Unix()),
 	)
 	missingParent := fmt.Sprintf("parent_span_id <> '' AND parent_span_id GLOBAL NOT IN (%s)", spans.Var(ids))
 
@@ -116,8 +116,8 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 	spans.From(table)
 	spans.Where(
 		spans.E("trace_id", traceID),
-		spans.GE("ts_bucket_start", summary.Start.Unix()-1800),
-		spans.LE("ts_bucket_start", summary.End.Unix()),
+		spans.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		spans.LE("ts_bucket_start", bounds.End.Unix()),
 	)
 	// A span can be ingested more than once; keep one row per span_id.
 	spans.SQL("LIMIT 1 BY span_id")
@@ -157,7 +157,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 }
 
 // genAISpanColumns returns the gen_ai columns aggregated per span, resolved across attribute evolutions.
-func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, summary *spantypes.TraceSummary, sb *sqlbuilder.SelectBuilder) ([]string, error) {
+func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bounds *spantypes.TraceBounds, sb *sqlbuilder.SelectBuilder) ([]string, error) {
 	attributeKey := func(name string, dataType telemetrytypes.FieldDataType) *telemetrytypes.TelemetryFieldKey {
 		return &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: dataType}
 	}
@@ -184,7 +184,7 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, su
 		return nil, err
 	}
 
-	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(summary.Start.UnixNano()), uint64(summary.End.UnixNano()))
+	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano()))
 
 	gate := make([]string, 0, len(aiobservabilitytypes.GenAISpanGateKeys))
 	for _, name := range aiobservabilitytypes.GenAISpanGateKeys {
@@ -208,7 +208,7 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, su
 	return columns, nil
 }
 
-func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary *spantypes.TraceSummary) ([]spantypes.StorableSpan, error) {
+func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.StorableSpan, error) {
 	// DISTINCT ON (span_id) is ClickHouse-specific syntax not supported by sqlbuilder
 	query := fmt.Sprintf(`
 		SELECT DISTINCT ON (span_id)
@@ -228,8 +228,8 @@ func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary 
 	err := s.telemetryStore.ClickhouseDB().Select(
 		ctx, &spanItems, query,
 		traceID,
-		summary.Start.Unix()-1800,
-		summary.End.Unix(),
+		bounds.Start.Unix()-1800,
+		bounds.End.Unix(),
 	)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace spans")
@@ -339,7 +339,7 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 	return spans, nil
 }
 
-func (s *traceStore) GetSpanCountByField(ctx context.Context, traceID string, summary *spantypes.TraceSummary, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error) {
+func (s *traceStore) GetSpanCountByField(ctx context.Context, traceID string, bounds *spantypes.TraceBounds, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error) {
 	fieldExpr, err := buildFieldExpr(fieldKey)
 	if err != nil {
 		return nil, err
@@ -349,8 +349,8 @@ func (s *traceStore) GetSpanCountByField(ctx context.Context, traceID string, su
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	sb.Where(
 		sb.E("trace_id", traceID),
-		sb.GE("ts_bucket_start", summary.Start.Unix()-1800),
-		sb.LE("ts_bucket_start", summary.End.Unix()),
+		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", bounds.End.Unix()),
 		"notEmpty("+fieldExpr+")",
 	)
 	sb.GroupBy("field_value")
@@ -367,7 +367,7 @@ func (s *traceStore) GetSpanCountByField(ctx context.Context, traceID string, su
 	return result, nil
 }
 
-func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string, summary *spantypes.TraceSummary, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error) {
+func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string, bounds *spantypes.TraceBounds, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error) {
 	fieldExpr, err := buildFieldExpr(fieldKey)
 	if err != nil {
 		return nil, err
@@ -383,8 +383,8 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 	allSpansSB.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	allSpansSB.Where(
 		allSpansSB.E("trace_id", traceID),
-		allSpansSB.GE("ts_bucket_start", summary.Start.Unix()-1800),
-		allSpansSB.LE("ts_bucket_start", summary.End.Unix()),
+		allSpansSB.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		allSpansSB.LE("ts_bucket_start", bounds.End.Unix()),
 		"notEmpty(field_value)",
 	)
 	allSpansSB.OrderByAsc("timestamp")

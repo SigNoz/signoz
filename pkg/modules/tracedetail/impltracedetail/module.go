@@ -41,11 +41,11 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 }
 
 func (m *module) GetTraceSummary(ctx context.Context, orgID valuer.UUID, traceID string) (*spantypes.TraceStats, error) {
-	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
-	stats, err := m.store.GetTraceStats(ctx, orgID, traceID, summary)
+	stats, err := m.store.GetTraceStats(ctx, orgID, traceID, bounds)
 	if err != nil {
 		return nil, err
 	}
@@ -60,21 +60,21 @@ func (m *module) GetTraceSummary(ctx context.Context, orgID valuer.UUID, traceID
 // minimal fields for all spans to build the tree, then full fields for the
 // visible window only. Aggregations are not returned.
 func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string) (*spantypes.GettableWaterfallTrace, error) {
-	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
-	if summary.NumSpans > uint64(m.config.Waterfall.MaxLimitToSelectAllSpans) {
+	if bounds.NumSpans > uint64(m.config.Waterfall.MaxLimitToSelectAllSpans) {
 		attrs := metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed))
 		m.metrics.waterfallRequestCount.Add(ctx, 1, attrs)
-		m.metrics.waterfallSpanCount.Add(ctx, int64(summary.NumSpans), attrs)
-		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, summary.Start, summary.End)
+		m.metrics.waterfallSpanCount.Add(ctx, int64(bounds.NumSpans), attrs)
+		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, bounds.Start, bounds.End)
 	}
-	return m.getFullWaterfall(ctx, traceID, summary)
+	return m.getFullWaterfall(ctx, traceID, bounds)
 }
 
-func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *spantypes.TraceSummary) (*spantypes.GettableWaterfallTrace, error) {
-	spanItems, err := m.store.GetTraceSpans(ctx, traceID, summary)
+func (m *module) getFullWaterfall(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) (*spantypes.GettableWaterfallTrace, error) {
+	spanItems, err := m.store.GetTraceSpans(ctx, traceID, bounds)
 	if err != nil {
 		return nil, err
 	}
@@ -94,24 +94,24 @@ func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *
 }
 
 func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *spantypes.PostableTraceAggregations) (*spantypes.GettableTraceAggregations, error) {
-	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
 
-	traceDurationNs := uint64(summary.End.UnixNano()) - uint64(summary.Start.UnixNano())
+	traceDurationNs := uint64(bounds.End.UnixNano()) - uint64(bounds.Start.UnixNano())
 
 	results := make([]spantypes.SpanAggregationResult, 0, len(req.Aggregations))
 	for _, agg := range req.Aggregations {
 		result := spantypes.SpanAggregationResult{Field: agg.Field, Aggregation: agg.Aggregation}
 		switch agg.Aggregation {
 		case spantypes.SpanAggregationSpanCount:
-			result.Value, err = m.store.GetSpanCountByField(ctx, traceID, summary, agg.Field)
+			result.Value, err = m.store.GetSpanCountByField(ctx, traceID, bounds, agg.Field)
 			if err != nil {
 				return nil, err
 			}
 		case spantypes.SpanAggregationDuration:
-			durationNs, err2 := m.store.GetSpanDurationByField(ctx, traceID, summary, agg.Field)
+			durationNs, err2 := m.store.GetSpanDurationByField(ctx, traceID, bounds, agg.Field)
 			if err2 != nil {
 				return nil, err2
 			}
@@ -120,7 +120,7 @@ func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *
 				result.Value[k] = ns / 1_000_000
 			}
 		case spantypes.SpanAggregationExecutionTimePercentage:
-			durationNs, err2 := m.store.GetSpanDurationByField(ctx, traceID, summary, agg.Field)
+			durationNs, err2 := m.store.GetSpanDurationByField(ctx, traceID, bounds, agg.Field)
 			if err2 != nil {
 				return nil, err2
 			}
@@ -137,15 +137,15 @@ func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *
 }
 
 func (m *module) GetFlamegraph(ctx context.Context, traceID string, selectedSpanID string, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
-	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
-	if summary.NumSpans <= uint64(m.config.Flamegraph.SelectAllSpansLimit) {
-		return m.getFullFlamegraph(ctx, traceID, summary, selectFields)
+	if bounds.NumSpans <= uint64(m.config.Flamegraph.SelectAllSpansLimit) {
+		return m.getFullFlamegraph(ctx, traceID, bounds, selectFields)
 	}
 	m.metrics.flamegraphRequestCount.Add(ctx, 1, metric.WithAttributes(attrResponseType.String(attrResponseTypeSampled)))
-	return m.getWindowedFlamegraph(ctx, traceID, selectedSpanID, summary, selectFields)
+	return m.getWindowedFlamegraph(ctx, traceID, selectedSpanID, bounds, selectFields)
 }
 
 // getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans.
@@ -189,8 +189,8 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpan
 	), nil
 }
 
-func (m *module) getFullFlamegraph(ctx context.Context, traceID string, summary *spantypes.TraceSummary, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
-	fullSpans, err := m.store.GetFlamegraphSpans(ctx, traceID, summary.Start, summary.End, nil)
+func (m *module) getFullFlamegraph(ctx context.Context, traceID string, bounds *spantypes.TraceBounds, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
+	fullSpans, err := m.store.GetFlamegraphSpans(ctx, traceID, bounds.Start, bounds.End, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -203,8 +203,8 @@ func (m *module) getFullFlamegraph(ctx context.Context, traceID string, summary 
 }
 
 // getWindowedFlamegraph returns a window of a max levels and max sampled spans per level around the selected span.
-func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpanID string, summary *spantypes.TraceSummary, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
-	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, summary.Start, summary.End)
+func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpanID string, bounds *spantypes.TraceBounds, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error) {
+	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, bounds.Start, bounds.End)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpa
 		return nil, spantypes.ErrTraceNotFound
 	}
 
-	fullSpans, err := m.store.GetFlamegraphSpans(ctx, traceID, summary.Start, summary.End, spantypes.FlamegraphWindowSpanIDs(selectedSpans))
+	fullSpans, err := m.store.GetFlamegraphSpans(ctx, traceID, bounds.Start, bounds.End, spantypes.FlamegraphWindowSpanIDs(selectedSpans))
 	if err != nil {
 		return nil, err
 	}
