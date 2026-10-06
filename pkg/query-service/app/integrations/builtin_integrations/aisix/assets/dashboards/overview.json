@@ -1,0 +1,1533 @@
+{
+  "schemaVersion": "v6",
+  "image": "",
+  "name": "",
+  "generateName": true,
+  "tags": [
+    {
+      "key": "tag",
+      "value": "aisix"
+    },
+    {
+      "key": "tag",
+      "value": "ai-gateway"
+    },
+    {
+      "key": "tag",
+      "value": "llm"
+    }
+  ],
+  "spec": {
+    "display": {
+      "name": "AISIX AI Gateway Monitoring Dashboard",
+      "description": "Comprehensive monitoring dashboard for AISIX AI Gateway request rates, LLM model latency, token consumption, cache outcomes, policy guardrails, and upstream health."
+    },
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "name": "job",
+        "spec": {
+          "display": {
+            "name": "job",
+            "description": "Gateway scrape job"
+          },
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT JSONExtractString(labels, 'job') AS `job` FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'aisix_llm_requests_total' GROUP BY `job`"
+            }
+          }
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "name": "instance",
+        "spec": {
+          "display": {
+            "name": "instance",
+            "description": "Gateway instance"
+          },
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT JSONExtractString(labels, 'instance') AS `instance` FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'aisix_llm_requests_total' GROUP BY `instance`"
+            }
+          }
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "name": "environment_id",
+        "spec": {
+          "display": {
+            "name": "environment_id",
+            "description": "AISIX environment ID"
+          },
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT JSONExtractString(labels, 'environment_id') AS `environment_id` FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'aisix_llm_requests_total' GROUP BY `environment_id`"
+            }
+          }
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "name": "provider",
+        "spec": {
+          "display": {
+            "name": "provider",
+            "description": "LLM Provider"
+          },
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT JSONExtractString(labels, 'provider') AS `provider` FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'aisix_llm_requests_total' GROUP BY `provider`"
+            }
+          }
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "name": "model",
+        "spec": {
+          "display": {
+            "name": "model",
+            "description": "LLM Model"
+          },
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "signoz/QueryVariable",
+            "spec": {
+              "queryValue": "SELECT JSONExtractString(labels, 'model') AS `model` FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'aisix_llm_requests_total' GROUP BY `model`"
+            }
+          }
+        }
+      }
+    ],
+    "panels": {
+      "f1a2b3c4-1111-4000-8000-000000000001": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Request Rate (req/s)",
+            "description": "LLM requests per second from aisix_llm_requests_total"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "reqps",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_llm_requests_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [],
+                          "legend": "Request Rate"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-1111-4000-8000-000000000002": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Success Rate (%)",
+            "description": "Percentage of LLM requests with outcome='success'"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_llm_requests_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "outcome = 'success' AND job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [],
+                          "legend": "Success Requests"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_llm_requests_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [],
+                          "legend": "Total Requests"
+                        }
+                      },
+                      {
+                        "type": "formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "(A / B) * 100",
+                          "legend": "Success Rate (%)"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-1111-4000-8000-000000000003": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "In-flight Requests",
+            "description": "Current requests grouped by endpoint or inbound protocol"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "0"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_requests_in_flight",
+                              "timeAggregation": "current",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "endpoint"
+                            }
+                          ],
+                          "legend": "{{endpoint}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-1111-4000-8000-000000000004": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Config Last Reload Status",
+            "description": "Latest configuration reload timestamp"
+          },
+          "plugin": {
+            "kind": "signoz/ValuePanel",
+            "spec": {
+              "formatting": {
+                "unit": "s",
+                "decimalPrecision": "0"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_config_reload_last_success_timestamp_seconds",
+                              "timeAggregation": "current",
+                              "spaceAggregation": "max"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [],
+                          "legend": "Last Reload Timestamp"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-1111-4000-8000-000000000005": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Rejected Configuration Resources",
+            "description": "Rejected or partially compatible configuration resources count"
+          },
+          "plugin": {
+            "kind": "signoz/ValuePanel",
+            "spec": {
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "0"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_config_resources_rejected_total",
+                              "timeAggregation": "increase",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [],
+                          "legend": "Rejected Resources"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-2222-4000-8000-000000000006": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "End-to-End Latency (P50, P95, P99)",
+            "description": "P50, P95, and P99 latency from aisix_request_e2e_latency_seconds"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "s",
+                "decimalPrecision": "3"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_request_e2e_latency_seconds",
+                              "timeAggregation": "p50",
+                              "spaceAggregation": "avg"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance AND provider IN $provider AND model IN $model"
+                          },
+                          "groupBy": [],
+                          "legend": "P50 Latency"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_request_e2e_latency_seconds",
+                              "timeAggregation": "p95",
+                              "spaceAggregation": "avg"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance AND provider IN $provider AND model IN $model"
+                          },
+                          "groupBy": [],
+                          "legend": "P95 Latency"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "C",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_request_e2e_latency_seconds",
+                              "timeAggregation": "p99",
+                              "spaceAggregation": "avg"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance AND provider IN $provider AND model IN $model"
+                          },
+                          "groupBy": [],
+                          "legend": "P99 Latency"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-2222-4000-8000-000000000007": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Time to First Token (TTFT)",
+            "description": "P50, P95, and P99 TTFT for streaming requests"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "s",
+                "decimalPrecision": "3"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_request_ttft_seconds",
+                              "timeAggregation": "p50",
+                              "spaceAggregation": "avg"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance AND provider IN $provider AND model IN $model"
+                          },
+                          "groupBy": [],
+                          "legend": "P50 TTFT"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_request_ttft_seconds",
+                              "timeAggregation": "p95",
+                              "spaceAggregation": "avg"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance AND provider IN $provider AND model IN $model"
+                          },
+                          "groupBy": [],
+                          "legend": "P95 TTFT"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "C",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_request_ttft_seconds",
+                              "timeAggregation": "p99",
+                              "spaceAggregation": "avg"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance AND provider IN $provider AND model IN $model"
+                          },
+                          "groupBy": [],
+                          "legend": "P99 TTFT"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-2222-4000-8000-000000000008": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Requests by Provider & Model",
+            "description": "Traffic distribution across providers and models"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "reqps",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_llm_requests_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance AND provider IN $provider AND model IN $model"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "provider"
+                            },
+                            {
+                              "name": "model"
+                            }
+                          ],
+                          "legend": "{{provider}} / {{model}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-2222-4000-8000-000000000009": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Requests by Outcome",
+            "description": "Traffic distribution grouped by request outcome"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "reqps",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_llm_requests_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "outcome"
+                            }
+                          ],
+                          "legend": "{{outcome}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-3333-4000-8000-000000000010": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Input and Output Token Rate",
+            "description": "Token consumption over time by type (input/output) and model"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_token_usage_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance AND model IN $model"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "type"
+                            },
+                            {
+                              "name": "model"
+                            }
+                          ],
+                          "legend": "{{type}} ({{model}})"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-3333-4000-8000-000000000011": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Cache Outcomes & Hit Ratio",
+            "description": "Exact hits, semantic hits, misses, and bypasses when cache policy is enabled"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_cache_outcomes_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "outcome"
+                            }
+                          ],
+                          "legend": "Cache {{outcome}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-3333-4000-8000-000000000012": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Rate-Limit Rejections",
+            "description": "Rejections grouped by configured scope"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_rate_limit_rejections_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "scope"
+                            }
+                          ],
+                          "legend": "Scope: {{scope}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-3333-4000-8000-000000000013": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Guardrail Outcomes",
+            "description": "Allowed, blocked, and bypassed guardrail activity"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_guardrail_outcomes_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "outcome"
+                            }
+                          ],
+                          "legend": "Guardrail {{outcome}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-4444-4000-8000-000000000014": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Deployment Failure Rate",
+            "description": "Upstream attempt failures by target model"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_upstream_attempts_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "outcome != 'success' AND job IN $job AND instance IN $instance AND model IN $model"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "target_model"
+                            },
+                            {
+                              "name": "outcome"
+                            }
+                          ],
+                          "legend": "{{target_model}} ({{outcome}})"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-4444-4000-8000-000000000015": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Fallback Outcomes",
+            "description": "Successful and failed fallback attempts"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_fallback_attempts_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "outcome"
+                            }
+                          ],
+                          "legend": "Fallback {{outcome}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-4444-4000-8000-000000000016": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Deployment Target State",
+            "description": "Targets that are healthy (1) or out of rotation (0)"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "0"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "step",
+                "showPoints": true,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_target_health_status",
+                              "timeAggregation": "current",
+                              "spaceAggregation": "min"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "target"
+                            }
+                          ],
+                          "legend": "{{target}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "f1a2b3c4-4444-4000-8000-000000000017": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Usage-Event Delivery Problems",
+            "description": "Dropped usage events grouped by bounded reason"
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "short",
+                "decimalPrecision": "0"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none"
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "signal": "metrics",
+                          "aggregations": [
+                            {
+                              "metricName": "aisix_usage_event_dropped_total",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum"
+                            }
+                          ],
+                          "filter": {
+                            "expression": "job IN $job AND instance IN $instance"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "reason"
+                            }
+                          ],
+                          "legend": "Reason: {{reason}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-1111-4000-8000-000000000001"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-1111-4000-8000-000000000002"
+              }
+            },
+            {
+              "x": 0,
+              "y": 3,
+              "width": 4,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-1111-4000-8000-000000000003"
+              }
+            },
+            {
+              "x": 4,
+              "y": 3,
+              "width": 4,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-1111-4000-8000-000000000004"
+              }
+            },
+            {
+              "x": 8,
+              "y": 3,
+              "width": 4,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-1111-4000-8000-000000000005"
+              }
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-2222-4000-8000-000000000006"
+              }
+            },
+            {
+              "x": 6,
+              "y": 6,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-2222-4000-8000-000000000007"
+              }
+            },
+            {
+              "x": 0,
+              "y": 9,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-2222-4000-8000-000000000008"
+              }
+            },
+            {
+              "x": 6,
+              "y": 9,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-2222-4000-8000-000000000009"
+              }
+            },
+            {
+              "x": 0,
+              "y": 12,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-3333-4000-8000-000000000010"
+              }
+            },
+            {
+              "x": 6,
+              "y": 12,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-3333-4000-8000-000000000011"
+              }
+            },
+            {
+              "x": 0,
+              "y": 15,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-3333-4000-8000-000000000012"
+              }
+            },
+            {
+              "x": 6,
+              "y": 15,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-3333-4000-8000-000000000013"
+              }
+            },
+            {
+              "x": 0,
+              "y": 18,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-4444-4000-8000-000000000014"
+              }
+            },
+            {
+              "x": 6,
+              "y": 18,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-4444-4000-8000-000000000015"
+              }
+            },
+            {
+              "x": 0,
+              "y": 21,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-4444-4000-8000-000000000016"
+              }
+            },
+            {
+              "x": 6,
+              "y": 21,
+              "width": 6,
+              "height": 3,
+              "content": {
+                "$ref": "#/spec/panels/f1a2b3c4-4444-4000-8000-000000000017"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
+  }
+}

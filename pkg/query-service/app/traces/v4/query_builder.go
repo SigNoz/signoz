@@ -32,6 +32,8 @@ var tracesOperatorMappingV3 = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotExists:       "NOT mapContains(%s, '%s')",
 	v3.FilterOperatorILike:           "ILIKE",
 	v3.FilterOperatorNotILike:        "NOT ILIKE",
+	v3.FilterOperatorLikeAny:         "LIKE ANY",
+	v3.FilterOperatorILikeAny:        "ILIKE ANY",
 }
 
 func getClickHouseTracesColumnType(columnType v3.AttributeKeyType) string {
@@ -135,6 +137,30 @@ func BuildTracesFilterQuery(fs *v3.FilterSet, skipAllowed bool) (string, error) 
 					// we also want to treat %, _ as literals for contains
 					val := utils.QuoteEscapedStringForContains(fmt.Sprintf("%s", item.Value), false)
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, val))
+				case v3.FilterOperatorLike, v3.FilterOperatorNotLike, v3.FilterOperatorILike, v3.FilterOperatorNotILike, v3.FilterOperatorLikeAny, v3.FilterOperatorILikeAny:
+					if sliceVal, ok := item.Value.([]interface{}); ok && len(sliceVal) > 0 {
+						var quoted []string
+						for _, v := range sliceVal {
+							quoted = append(quoted, fmt.Sprintf("'%s'", utils.QuoteEscapedString(fmt.Sprintf("%v", v))))
+						}
+						opStr := operator
+						if !strings.Contains(opStr, "ANY") {
+							opStr = opStr + " ANY"
+						}
+						conditions = append(conditions, fmt.Sprintf("%s %s (%s)", columnName, opStr, strings.Join(quoted, ", ")))
+					} else if strSliceVal, ok := item.Value.([]string); ok && len(strSliceVal) > 0 {
+						var quoted []string
+						for _, v := range strSliceVal {
+							quoted = append(quoted, fmt.Sprintf("'%s'", utils.QuoteEscapedString(v)))
+						}
+						opStr := operator
+						if !strings.Contains(opStr, "ANY") {
+							opStr = opStr + " ANY"
+						}
+						conditions = append(conditions, fmt.Sprintf("%s %s (%s)", columnName, opStr, strings.Join(quoted, ", ")))
+					} else {
+						conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, operator, fmtVal))
+					}
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
