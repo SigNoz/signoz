@@ -6,18 +6,17 @@ import {
 } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryMode } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	type QueryBuilderContextType,
+} from 'types/common/queryBuilder';
 
 interface SeedBuilderForModeArgs {
 	mode: QueryMode;
 	/** The kind's first Query Builder signal; what a fresh panel of this kind starts on. */
 	defaultSignal?: TelemetrytypesSignalDTO;
 	panelType: PANEL_TYPES;
-	updateAllQueriesOperators: (
-		query: Query,
-		panelType: PANEL_TYPES,
-		dataSource: DataSource,
-	) => Query;
+	updateAllQueriesOperators: QueryBuilderContextType['updateAllQueriesOperators'];
 }
 
 /** A fresh builder query for `mode`: AI is traces-only, everything else follows the kind. */
