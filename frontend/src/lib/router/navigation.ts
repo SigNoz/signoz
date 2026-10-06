@@ -1,5 +1,5 @@
 import history from 'lib/history';
-import { stripBasePath, withBasePath } from 'utils/basePath';
+import { getBasePath, stripBasePath } from 'utils/basePath';
 
 import type {
 	AppLocation,
@@ -23,11 +23,21 @@ import { applyNavigate, toAppLocation } from './utils';
  */
 function toBrowserTarget(to: To): To {
 	if (typeof to === 'string') {
-		return withBasePath(to);
+		return toBrowserPath(to);
 	}
 	return to.pathname === undefined
 		? to
-		: { ...to, pathname: withBasePath(to.pathname) };
+		: { ...to, pathname: toBrowserPath(to.pathname) };
+}
+
+// Unconditional, like the router's basename. `withBasePath` skips a path that
+// already starts with the base path, which misses an app path whose first
+// segment is the base path's name.
+function toBrowserPath(path: string): string {
+	const basePath = getBasePath();
+	return basePath === '/' || !path.startsWith('/')
+		? path
+		: `${basePath}${path.slice(1)}`;
 }
 
 function toAppPath<S>(location: AppLocation<S>): AppLocation<S> {
@@ -65,19 +75,19 @@ export function blockNavigation(blocker: NavigationBlocker): () => void {
 	let unblock = register();
 
 	function register(): () => void {
-		return history.block(({ location, action, retry }) => {
+		return history.block((transition) => {
 			let deciding = true;
 			let allowed = false;
 
 			blocker({
-				location: toAppPath(toAppLocation(location)),
-				action: action as NavigationAction,
+				location: toAppPath(toAppLocation(transition.location)),
+				action: transition.action as NavigationAction,
 				retry: () => {
 					if (deciding) {
 						allowed = true;
 						return;
 					}
-					retry();
+					transition.retry();
 				},
 			});
 			deciding = false;
@@ -95,7 +105,7 @@ export function blockNavigation(blocker: NavigationBlocker): () => void {
 				stopWaiting = null;
 				unblock = register();
 			});
-			retry();
+			transition.retry();
 		});
 	}
 

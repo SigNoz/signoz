@@ -45,10 +45,12 @@ export function stripBasePath(path: string): string {
 	if (_basePath === '/') {
 		return path;
 	}
-	if (path === _basePath || path === _basePath.slice(0, -1)) {
+	const lowerPath = path.toLowerCase();
+	const lowerBase = _basePath.toLowerCase();
+	if (lowerPath === lowerBase || lowerPath === lowerBase.slice(0, -1)) {
 		return '/';
 	}
-	if (path.startsWith(_basePath)) {
+	if (lowerPath.startsWith(lowerBase)) {
 		return path.slice(_basePath.length - 1);
 	}
 	return path;

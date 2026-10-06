@@ -123,11 +123,25 @@ describe('basename ownership', () => {
 		expect(nav.getCurrentLocation().pathname).toBe('/logs');
 	});
 
-	it('does not double-prefix a path that already carries the base path', () => {
+	it('round-trips getCurrentLocation through navigate', () => {
 		const nav = loadNavigation('/signoz/');
 		nav.navigate('/logs');
 		nav.navigate(nav.getCurrentLocation().pathname);
 		expect(window.location.pathname).toBe('/signoz/logs');
+	});
+
+	it('prefixes a path whose first segment equals the base path', () => {
+		const nav = loadNavigation('/logs/');
+		nav.navigate('/logs/logs-explorer');
+		expect(window.location.pathname).toBe('/logs/logs/logs-explorer');
+		expect(nav.getCurrentLocation().pathname).toBe('/logs/logs-explorer');
+	});
+
+	it('prefixes the pathname of an object target', () => {
+		const nav = loadNavigation('/signoz/');
+		nav.navigate({ pathname: '/logs', search: '?a=1' });
+		expect(window.location.pathname).toBe('/signoz/logs');
+		expect(window.location.search).toBe('?a=1');
 	});
 });
 
