@@ -58,7 +58,10 @@ export default function ScatterTooltip({
 			<div className={Styles.header}>
 				<span
 					className={Styles.marker}
-					style={{ backgroundColor: hoveredPoint.color }}
+					style={{
+						backgroundColor: hoveredPoint.color,
+						borderColor: hoveredPoint.color,
+					}}
 				/>
 				<Typography.Text
 					as="span"
