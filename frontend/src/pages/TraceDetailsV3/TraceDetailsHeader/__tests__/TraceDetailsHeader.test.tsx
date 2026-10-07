@@ -214,7 +214,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 
 	it('renders AI tokens and cost when the summary has them', () => {
 		mockSummary(traceMetadata);
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
 		expect(screen.getByText('$ 0.0421')).toBeInTheDocument();
@@ -222,7 +222,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 
 	it('omits AI tokens and cost when the summary has no ai field', () => {
 		mockSummary({ ...traceMetadata, ai: undefined });
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(screen.queryByText(/^Tokens:/)).not.toBeInTheDocument();
 		expect(screen.queryByText(/^\$ /)).not.toBeInTheDocument();
