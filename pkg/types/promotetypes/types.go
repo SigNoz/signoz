@@ -142,6 +142,25 @@ func (index WrappedIndex) SkipIndexType() (schemamigrator.IndexType, error) {
 	}
 }
 
+// maxPromotePathsPerRequest caps a promote batch so one request cannot flood
+// the cluster with index DDL.
+const maxPromotePathsPerRequest = 100
+
+func ValidatePromotePaths(paths []*PromotePath) error {
+	if len(paths) == 0 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "paths cannot be empty")
+	}
+	if len(paths) > maxPromotePathsPerRequest {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot promote more than %d paths in one request", maxPromotePathsPerRequest)
+	}
+	for _, path := range paths {
+		if path == nil {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path cannot be null")
+		}
+	}
+	return nil
+}
+
 // indexTypeRe anchors the whole index type string, so only a whitelisted type
 // with bounded numeric parameters can reach the index DDL.
 var indexTypeRe = regexp.MustCompile(`^(?:minmax|set\(\s*(\d{1,7})\s*\)|bloom_filter(?:\(\s*(\d+(?:\.\d+)?|\.\d+)\s*\))?|tokenbf_v1\(\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\)|ngrambf_v1\(\s*(\d{1,2})\s*,\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\))$`)
