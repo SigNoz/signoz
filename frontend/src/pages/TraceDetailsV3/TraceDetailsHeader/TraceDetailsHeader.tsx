@@ -34,7 +34,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
 interface TraceDetailsHeaderProps {
 	onFilteredSpansChange: (spanIds: string[], isFilterActive: boolean) => void;
-	isDataLoaded?: boolean;
+	showTraceDetailsHeaderOptions?: boolean;
 }
 
 const SKELETON_COUNT = 3;
@@ -57,7 +57,7 @@ function DetailsLoader(): JSX.Element {
 
 function TraceDetailsHeader({
 	onFilteredSpansChange,
-	isDataLoaded,
+	showTraceDetailsHeaderOptions,
 }: TraceDetailsHeaderProps): JSX.Element {
 	const { id: traceID } = useParams<TraceDetailV3URLProps>();
 	const [showTraceDetails, setShowTraceDetails] = useState(true);
@@ -129,7 +129,7 @@ function TraceDetailsHeader({
 						/>
 					</div>
 				)}
-				{isDataLoaded && traceSummary && (
+				{showTraceDetailsHeaderOptions && traceSummary && (
 					<div
 						className={cx(
 							styles.filterSection,

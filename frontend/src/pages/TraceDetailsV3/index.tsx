@@ -361,7 +361,9 @@ function TraceDetailsV3(): JSX.Element {
 			<div className={styles.root}>
 				<TraceDetailsHeader
 					onFilteredSpansChange={handleFilteredSpansChange}
-					isDataLoaded={!!traceData?.payload?.spans?.length && !showNoData}
+					showTraceDetailsHeaderOptions={
+						!!traceData?.payload?.spans?.length && !showNoData
+					}
 				/>
 
 				{showNoData ? (

@@ -57,7 +57,7 @@ jest.mock('components/FieldsSelector', () => ({
 
 const baseProps = {
 	onFilteredSpansChange: jest.fn(),
-	isDataLoaded: false,
+	showTraceDetailsHeaderOptions: false,
 };
 
 const SUMMARY = {
@@ -118,7 +118,7 @@ describe('TraceDetailsHeader – action cluster', () => {
 		jest
 			.mocked(useTraceSummary)
 			.mockReturnValue({ data: undefined, isLoading: true });
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(
 			screen.queryByRole('button', { name: /^analytics$/i }),
@@ -126,7 +126,9 @@ describe('TraceDetailsHeader – action cluster', () => {
 	});
 
 	it('does not render the action buttons while data is still loading', () => {
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded={false} />);
+		render(
+			<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions={false} />,
+		);
 
 		expect(
 			screen.queryByRole('button', { name: /^analytics$/i }),
@@ -137,7 +139,7 @@ describe('TraceDetailsHeader – action cluster', () => {
 	});
 
 	it('renders Analytics and Settings action buttons once data is loaded', () => {
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(
 			screen.getByRole('button', { name: /^analytics$/i }),
@@ -148,7 +150,7 @@ describe('TraceDetailsHeader – action cluster', () => {
 	});
 
 	it('toggles the AnalyticsPanel open state when the Analytics button is clicked', () => {
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		const panel = screen.getByTestId('analytics-panel');
 		expect(panel).toHaveAttribute('data-open', 'false');
@@ -186,7 +188,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 
 	it('renders the metadata (service, entry point, duration, status) when provided', () => {
 		mockSummary(traceMetadata);
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
 		expect(screen.getByText('large-trace-root')).toBeInTheDocument();
@@ -202,7 +204,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 	it('is shown by default and can be hidden / shown again via the Trace options menu', async () => {
 		const user = userEvent.setup({ delay: null });
 		mockSummary(traceMetadata);
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		// Visible by default (showTraceDetails defaults to true).
 		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
@@ -223,7 +225,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 	});
 
 	it('does not render the metadata row when the summary is absent', () => {
-		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
 	});
