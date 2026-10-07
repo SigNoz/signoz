@@ -70,6 +70,9 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 	if len(selectFields) == 0 {
 		return span
 	}
+	// The attributes bag (legacy maps + flattened JSON document) is built at most once per
+	// span, on the first attribute-context field — not per field.
+	var attributes map[string]any
 	for _, field := range selectFields {
 		switch field.FieldContext {
 		case telemetrytypes.FieldContextResource:
@@ -77,7 +80,10 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 				span.Resource[field.Name] = v
 			}
 		case telemetrytypes.FieldContextAttribute:
-			if v := s.AttributeValue(field.Name); v != nil {
+			if attributes == nil {
+				attributes = s.Attributes()
+			}
+			if v, ok := attributes[field.Name]; ok && v != nil {
 				span.Attributes[field.Name] = v
 			}
 		}
