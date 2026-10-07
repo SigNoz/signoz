@@ -57,6 +57,7 @@ export interface MetricsTreemapInternalProps {
 	error?: APIError;
 	data: MetricsexplorertypesTreemapResponseDTO | undefined;
 	viewType: MetricsexplorertypesTreemapModeDTO;
+	containerWidth: number;
 	openMetricDetails: (
 		metricName: string,
 		view: 'list' | 'treemap',
