@@ -1,0 +1,126 @@
+import { InfraMonitoringEntity } from '../../constants';
+import {
+	buildRelatedFilterExpression,
+	carryOverListFilters,
+	getRelatedCategories,
+} from '../relations';
+
+/** What /api/v2/infra_monitoring/pods returns as a pod's meta. */
+const POD_ATTRIBUTES = {
+	'k8s.pod.uid': '63edbad0-398e-48e5-baba-f7ded7c73f1b',
+	'k8s.pod.name': 'checkout-7d9f',
+	'k8s.namespace.name': 'shop',
+	'k8s.cluster.name': 'prod',
+	'k8s.node.name': 'node-1',
+	'k8s.deployment.name': 'checkout',
+};
+
+const NODE_ATTRIBUTES = {
+	'k8s.node.name': 'node-1',
+	'k8s.cluster.name': 'prod',
+};
+
+describe('getRelatedCategories', () => {
+	it('offers what the pod holds and what holds it, never itself', () => {
+		expect(
+			getRelatedCategories(InfraMonitoringEntity.PODS, POD_ATTRIBUTES),
+		).toStrictEqual([
+			InfraMonitoringEntity.CONTAINERS,
+			InfraMonitoringEntity.DEPLOYMENTS,
+			InfraMonitoringEntity.VOLUMES,
+			InfraMonitoringEntity.NODES,
+			InfraMonitoringEntity.NAMESPACES,
+			InfraMonitoringEntity.CLUSTERS,
+		]);
+	});
+
+	it('leaves out workloads the pod has no owner attribute for', () => {
+		// A pod owned by a deployment is not related to every statefulset beside it
+		expect(
+			getRelatedCategories(InfraMonitoringEntity.PODS, POD_ATTRIBUTES),
+		).not.toContain(InfraMonitoringEntity.STATEFULSETS);
+	});
+
+	it('lists pods first, which makes them the default for a node', () => {
+		expect(
+			getRelatedCategories(InfraMonitoringEntity.NODES, NODE_ATTRIBUTES)[0],
+		).toBe(InfraMonitoringEntity.PODS);
+	});
+});
+
+describe('buildRelatedFilterExpression', () => {
+	it('scopes the pods of a node by the node, inside its cluster', () => {
+		expect(
+			buildRelatedFilterExpression(
+				InfraMonitoringEntity.NODES,
+				InfraMonitoringEntity.PODS,
+				NODE_ATTRIBUTES,
+			),
+		).toBe("k8s.cluster.name = 'prod' AND k8s.node.name = 'node-1'");
+	});
+
+	it("scopes a pod's containers by the pod uid, which those rows carry", () => {
+		expect(
+			buildRelatedFilterExpression(
+				InfraMonitoringEntity.PODS,
+				InfraMonitoringEntity.CONTAINERS,
+				POD_ATTRIBUTES,
+			),
+		).toBe(
+			"k8s.cluster.name = 'prod' AND k8s.namespace.name = 'shop' AND k8s.pod.uid = '63edbad0-398e-48e5-baba-f7ded7c73f1b'",
+		);
+	});
+
+	it("reaches a pod's deployment by name, the only key that endpoint has", () => {
+		expect(
+			buildRelatedFilterExpression(
+				InfraMonitoringEntity.PODS,
+				InfraMonitoringEntity.DEPLOYMENTS,
+				POD_ATTRIBUTES,
+			),
+		).toBe(
+			"k8s.cluster.name = 'prod' AND k8s.namespace.name = 'shop' AND k8s.deployment.name = 'checkout'",
+		);
+	});
+
+	it('names the parent when the drawer resource belongs to it', () => {
+		expect(
+			buildRelatedFilterExpression(
+				InfraMonitoringEntity.PODS,
+				InfraMonitoringEntity.NODES,
+				POD_ATTRIBUTES,
+			),
+		).toBe("k8s.cluster.name = 'prod' AND k8s.node.name = 'node-1'");
+	});
+
+	it('asks a cluster list for the cluster alone', () => {
+		expect(
+			buildRelatedFilterExpression(
+				InfraMonitoringEntity.PODS,
+				InfraMonitoringEntity.CLUSTERS,
+				POD_ATTRIBUTES,
+			),
+		).toBe("k8s.cluster.name = 'prod'");
+	});
+});
+
+describe('carryOverListFilters', () => {
+	it('keeps the clauses the target endpoint understands', () => {
+		expect(
+			carryOverListFilters(
+				"k8s.namespace.name = 'shop' AND k8s.node.condition_ready = true",
+				InfraMonitoringEntity.PODS,
+			),
+		).toBe("k8s.namespace.name = 'shop'");
+	});
+
+	it('drops a filter written against the source entity only', () => {
+		expect(
+			carryOverListFilters('k8s.node.cpu.usage > 0.5', InfraMonitoringEntity.PODS),
+		).toBe('');
+	});
+
+	it('returns nothing for an empty list filter', () => {
+		expect(carryOverListFilters('   ', InfraMonitoringEntity.PODS)).toBe('');
+	});
+});
