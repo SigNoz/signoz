@@ -6,7 +6,7 @@ import {
 	type ScatterPlotData,
 	ScatterPlotDataStatus,
 	type StaleDimension,
-} from './types';
+} from '../types';
 
 export interface ScatterPlotMessage {
 	title: string;

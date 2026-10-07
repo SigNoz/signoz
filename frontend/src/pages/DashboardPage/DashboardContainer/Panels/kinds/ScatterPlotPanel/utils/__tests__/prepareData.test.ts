@@ -9,7 +9,7 @@ import {
 	prepareScatterPlotData,
 	UNGROUPED_SERIES_LABEL,
 } from '../prepareData';
-import { ScatterDimension, ScatterPlotDataStatus } from '../types';
+import { ScatterDimension, ScatterPlotDataStatus } from '../../types';
 
 const group = (id: string): PanelTableColumn => ({
 	id,
