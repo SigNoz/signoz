@@ -239,6 +239,23 @@ $custom-border-color: #2c3044;
 	text-overflow: ellipsis;
 }
 
+// overscroll-behavior only holds on a box that overflows; a 1px sentinel past
+// the bottom makes even a short list overflow, so the wheel never scrolls the page.
+.custom-select-dropdown,
+.custom-multiselect-dropdown {
+	position: relative;
+	overscroll-behavior: contain;
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: 100%;
+		left: 0;
+		width: 1px;
+		height: 1px;
+	}
+}
+
 // Custom dropdown styles for single select
 .custom-select-dropdown {
 	padding: 8px 0 0 0;
