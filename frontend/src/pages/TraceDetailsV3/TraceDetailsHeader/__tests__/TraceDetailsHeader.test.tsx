@@ -84,7 +84,10 @@ jest.mock('components/FieldsSelector', () => ({
 	),
 }));
 
-const baseProps = { onFilteredSpansChange: jest.fn() };
+const baseProps = {
+	onFilteredSpansChange: jest.fn(),
+	showTraceDetailsHeaderOptions: true,
+};
 
 const metadataText = /Missing Span/;
 
@@ -122,8 +125,10 @@ describe('TraceDetailsHeader – action cluster', () => {
 		mockReplace.mockClear();
 	});
 
-	it('does not render the action buttons without a filter handler', () => {
-		render(<TraceDetailsHeader />);
+	it('does not render the action buttons until the trace data has loaded', () => {
+		render(
+			<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions={false} />,
+		);
 
 		expect(
 			screen.queryByRole('button', { name: /^analytics$/i }),

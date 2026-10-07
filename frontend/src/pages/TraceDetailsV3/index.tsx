@@ -12,6 +12,7 @@ function TraceDetailsV3(): JSX.Element {
 	const isOverview = tab === TraceDetailsTab.Overview;
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const [isFilterActive, setIsFilterActive] = useState(false);
+	const [hasTraceData, setHasTraceData] = useState(false);
 
 	const handleFilteredSpansChange = useCallback(
 		(spanIds: string[], isActive: boolean): void => {
@@ -31,11 +32,15 @@ function TraceDetailsV3(): JSX.Element {
 
 	return (
 		<TraceDetailsWrapper>
-			<TraceDetailsHeader onFilteredSpansChange={handleFilteredSpansChange} />
+			<TraceDetailsHeader
+				onFilteredSpansChange={handleFilteredSpansChange}
+				showTraceDetailsHeaderOptions={hasTraceData}
+			/>
 			{isOverview ? (
 				<TraceDetailsOverview
 					filteredSpanIds={filteredSpanIds}
 					isFilterActive={isFilterActive}
+					onHasTraceDataChange={setHasTraceData}
 				/>
 			) : (
 				<TraceDetailsThread />
