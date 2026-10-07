@@ -11,6 +11,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 )
 
+// maxPathsPerRequest caps a promote batch so one request cannot flood the
+// cluster with index DDL.
+const maxPathsPerRequest = 100
+
 type handler struct {
 	module promote.Module
 }
@@ -36,7 +40,15 @@ func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty"))
 		return
 	}
+	if len(req) > maxPathsPerRequest {
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "cannot promote more than %d paths in one request", maxPathsPerRequest))
+		return
+	}
 	for _, path := range req {
+		if path == nil {
+			render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "path cannot be null"))
+			return
+		}
 		target, err := path.Target()
 		if err != nil {
 			render.Error(w, err)
