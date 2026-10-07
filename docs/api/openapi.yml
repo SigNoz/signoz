@@ -546,8 +546,6 @@ components:
           type: string
         messageThreadId:
           type: integer
-        parseMode:
-          type: string
         sendResolved:
           nullable: true
           type: boolean
