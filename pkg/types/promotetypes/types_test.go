@@ -420,3 +420,36 @@ func TestListPromotedPathsFiltersMatch(t *testing.T) {
 		})
 	}
 }
+
+func TestValidatePromotePaths(t *testing.T) {
+	validPaths := func(n int) []*PromotePath {
+		paths := make([]*PromotePath, n)
+		for idx := range paths {
+			paths[idx] = &PromotePath{Signal: "logs", Context: "body", Path: "user.name"}
+		}
+		return paths
+	}
+
+	testCases := []struct {
+		name    string
+		paths   []*PromotePath
+		wantErr bool
+	}{
+		{name: "Empty_Rejected", paths: nil, wantErr: true},
+		{name: "NullPath_Rejected", paths: []*PromotePath{nil}, wantErr: true},
+		{name: "OverCap_Rejected", paths: validPaths(maxPromotePathsPerRequest + 1), wantErr: true},
+		{name: "AtCap_Valid", paths: validPaths(maxPromotePathsPerRequest)},
+		{name: "SinglePath_Valid", paths: validPaths(1)},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := ValidatePromotePaths(testCase.paths)
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
