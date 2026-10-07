@@ -1,6 +1,8 @@
 package promotetypes
 
 import (
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
@@ -97,6 +99,9 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 		if index.Type == "" {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index type is required")
 		}
+		if err := validateIndexType(index.Type); err != nil {
+			return err
+		}
 		if index.Granularity <= 0 {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index granularity must be greater than 0")
 		}
@@ -112,5 +117,49 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 		i.Indexes[idx].JSONDataType = jsonDataType
 	}
 
+	return nil
+}
+
+// indexTypeRe anchors the whole index type string, so only minmax or
+// tokenbf/ngrambf with bounded integer parameters can reach the index DDL.
+var indexTypeRe = regexp.MustCompile(`^(?:minmax|tokenbf_v1\(\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\)|ngrambf_v1\(\s*(\d{1,2})\s*,\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\))$`)
+
+const (
+	maxIndexNGramLength      = 64
+	maxIndexBloomFilterBytes = 1 << 20
+	maxIndexHashFunctions    = 64
+)
+
+func validateIndexType(indexType string) error {
+	matches := indexTypeRe.FindStringSubmatch(indexType)
+	if matches == nil {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid index type: %s", indexType)
+	}
+	if indexType == "minmax" {
+		return nil
+	}
+
+	params := matches[1:4]
+	if strings.HasPrefix(indexType, "ngrambf_v1") {
+		params = matches[4:8]
+	}
+	values := make([]uint64, len(params))
+	for idx, param := range params {
+		values[idx], _ = strconv.ParseUint(param, 10, 64)
+	}
+
+	bloomBytes, hashes := 0, 1
+	if len(values) == 4 {
+		if values[0] < 1 || values[0] > maxIndexNGramLength {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid n-gram length in index type: %s", indexType)
+		}
+		bloomBytes, hashes = 1, 2
+	}
+	if values[bloomBytes] < 1 || values[bloomBytes] > maxIndexBloomFilterBytes {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid bloom filter size in index type: %s", indexType)
+	}
+	if values[hashes] < 1 || values[hashes] > maxIndexHashFunctions {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid hash function count in index type: %s", indexType)
+	}
 	return nil
 }
