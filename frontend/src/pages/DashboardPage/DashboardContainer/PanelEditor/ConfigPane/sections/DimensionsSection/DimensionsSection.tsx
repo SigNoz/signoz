@@ -26,10 +26,10 @@ type DimensionsSectionProps = SectionEditorProps<SectionKind.Dimensions> &
 const FIELD_INFO = {
 	x: 'The value column that places each dot left to right. Auto takes the first value column.',
 	y: "The value column that places each dot bottom to top. Auto takes the first value column X doesn't use.",
-	size:
+	sizeBy:
 		"Optional. Scales each dot's area by this value column; a group without a value draws at the default size.",
-	color:
-		'One colour and legend entry per combination of the selected keys. Leave it empty to colour by every group key.',
+	colorBy:
+		'One color and legend entry per combination of the selected keys. Leave it empty to color by every group key.',
 };
 
 /**
@@ -55,13 +55,13 @@ function DimensionsSection({
 		x: value?.x,
 		y: value?.y,
 	});
-	const color = value?.color ?? [];
-	const colorItems = buildColorKeyItems(groupColumns, color);
+	const colorBy = value?.colorBy ?? [];
+	const colorItems = buildColorKeyItems(groupColumns, colorBy);
 
 	const fields = [
 		{ dimension: 'x', label: 'X axis', unsetLabel: formatAutoOption(autoAxes.x) },
 		{ dimension: 'y', label: 'Y axis', unsetLabel: formatAutoOption(autoAxes.y) },
-		{ dimension: 'size', label: 'Size', unsetLabel: 'None' },
+		{ dimension: 'sizeBy', label: 'Size by', unsetLabel: 'None' },
 	] as const;
 
 	return (
@@ -88,27 +88,27 @@ function DimensionsSection({
 			<ConfigField
 				label={
 					<LabelWithInfo
-						label="Colour"
-						info={FIELD_INFO.color}
-						testId="panel-editor-v2-dimension-color-info"
+						label="Color by"
+						info={FIELD_INFO.colorBy}
+						testId="panel-editor-v2-dimension-colorBy-info"
 					/>
 				}
 			>
 				<ConfigMultiSelect
-					testId="panel-editor-v2-dimension-color"
-					aria-label="Colour by"
-					value={color}
+					testId="panel-editor-v2-dimension-colorBy"
+					aria-label="Color by"
+					value={colorBy}
 					items={colorItems}
 					placeholder={
 						colorItems.length > 0 ? 'Every group key' : 'No group-by labels'
 					}
 					disabled={colorItems.length === 0}
-					onChange={(next): void => onChange({ ...value, color: next })}
+					onChange={(next): void => onChange({ ...value, colorBy: next })}
 				/>
 			</ConfigField>
 			<p className={styles.description}>
-				Each dot is one group from the query. X and Y place it, Size scales it, and
-				Colour groups it in the legend.
+				Each dot is one group from the query. X and Y place it, Size by scales it,
+				and Color by groups it in the legend.
 			</p>
 		</div>
 	);

@@ -154,7 +154,7 @@ describe('getScatterPlotWarning', () => {
 					drawnGroups: 4,
 					staleDimensions: [
 						{ dimension: ScatterDimension.X, key: 'A.count()' },
-						{ dimension: ScatterDimension.Colour, key: 'host.name' },
+						{ dimension: ScatterDimension.Color, key: 'host.name' },
 					],
 				}),
 			),
@@ -162,7 +162,7 @@ describe('getScatterPlotWarning', () => {
 			message: "Some dimensions aren't in the results.",
 			messages: [
 				"X uses A.count(), which isn't in the results, so X falls back to Auto.",
-				"Colour uses host.name, which isn't in the results, so it's left out of the colour.",
+				"Color uses host.name, which isn't in the results, so it's left out of the color.",
 			],
 		});
 	});

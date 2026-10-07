@@ -112,7 +112,7 @@ export function resolveTimeSeriesLegendSeries({
 }
 
 /**
- * Scatter Plot: one entry per colour group, which `dimensions.color` picks, so the
+ * Scatter Plot: one entry per colour group, which `dimensions.colorBy` picks, so the
  * labels come from the same data prep the renderer runs.
  */
 export function resolveScatterLegendSeries({
