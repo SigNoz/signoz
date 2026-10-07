@@ -1,11 +1,15 @@
 package alertmanagertypes
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShouldSkipMaintenance(t *testing.T) {
@@ -1010,6 +1014,83 @@ func TestPostablePlannedMaintenance_ValidateScope(t *testing.T) {
 			if (err != nil) != c.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, c.wantErr)
 			}
+		})
+	}
+}
+
+func TestPlannedMaintenanceOrigin(t *testing.T) {
+	start := time.Date(2026, 10, 1, 10, 0, 0, 0, time.UTC)
+
+	testCases := []struct {
+		name       string
+		origin     MaintenanceOrigin
+		wantOrigin string
+		wantKind   string
+	}{
+		{name: "MaintenanceOrigin_FixedSchedule_KindStaysComputed", origin: MaintenanceOriginMaintenance, wantOrigin: `"origin":"maintenance"`, wantKind: `"kind":"fixed"`},
+		{name: "AdhocOrigin_FixedSchedule_KindStaysComputed", origin: MaintenanceOriginAdhoc, wantOrigin: `"origin":"adhoc"`, wantKind: `"kind":"fixed"`},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			m := &PlannedMaintenance{
+				ID:       valuer.GenerateUUID(),
+				Name:     "Mute: payment latency high",
+				Schedule: &Schedule{Timezone: "UTC", StartTime: start, EndTime: start.Add(time.Hour)},
+				Origin:   testCase.origin,
+			}
+
+			out, err := json.Marshal(m)
+			require.NoError(t, err)
+			assert.Contains(t, string(out), testCase.wantOrigin)
+			assert.Contains(t, string(out), testCase.wantKind)
+		})
+	}
+}
+
+func TestToPlannedMaintenanceCarriesOrigin(t *testing.T) {
+	withRules := &PlannedMaintenanceWithRules{
+		StorablePlannedMaintenance: &StorablePlannedMaintenance{
+			Schedule: `{"timezone":"UTC","startTime":"2026-10-01T10:00:00Z","endTime":"2026-10-01T11:00:00Z"}`,
+			Origin:   MaintenanceOriginAdhoc,
+		},
+	}
+
+	m, err := withRules.ToPlannedMaintenance()
+	require.NoError(t, err)
+	assert.Equal(t, MaintenanceOriginAdhoc, m.Origin)
+}
+
+func TestNewAdhocStorablePlannedMaintenance(t *testing.T) {
+	start := time.Date(2026, 10, 6, 10, 0, 0, 0, time.UTC)
+	ruleID := valuer.GenerateUUID()
+
+	testCases := []struct {
+		name        string
+		endTime     time.Time
+		wantEndJSON bool
+	}{
+		{name: "FiniteEnd_SerializedInSchedule", endTime: start.Add(time.Hour), wantEndJSON: true},
+		{name: "ZeroEnd_OmittedFromSchedule_Indefinite", endTime: time.Time{}, wantEndJSON: false},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			storableMaintenance, storableMaintenanceRule, err := NewAdhocStorablePlannedMaintenance("org-1", "nikhil@signoz.io", ruleID, "payment latency high", start, testCase.endTime)
+			require.NoError(t, err)
+
+			assert.Equal(t, MaintenanceOriginAdhoc, storableMaintenance.Origin)
+			assert.Equal(t, "Mute: payment latency high", storableMaintenance.Name)
+			assert.Equal(t, "nikhil@signoz.io", storableMaintenance.CreatedBy)
+			assert.Equal(t, "nikhil@signoz.io", storableMaintenance.UpdatedBy)
+			assert.Equal(t, storableMaintenance.ID, storableMaintenanceRule.PlannedMaintenanceID)
+			assert.Equal(t, ruleID, storableMaintenanceRule.RuleID)
+			assert.Equal(t, testCase.wantEndJSON, strings.Contains(storableMaintenance.Schedule, "endTime"))
+
+			schedule := &Schedule{}
+			require.NoError(t, json.Unmarshal([]byte(storableMaintenance.Schedule), schedule))
+			assert.True(t, schedule.StartTime.Equal(start))
+			assert.Equal(t, !testCase.wantEndJSON, schedule.EndTime.IsZero())
 		})
 	}
 }

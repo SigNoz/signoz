@@ -754,6 +754,11 @@ components:
       - fixed
       - recurring
       type: string
+    AlertmanagertypesMaintenanceOrigin:
+      enum:
+      - maintenance
+      - adhoc
+      type: string
     AlertmanagertypesMaintenanceStatus:
       enum:
       - active
@@ -780,6 +785,8 @@ components:
           $ref: '#/components/schemas/AlertmanagertypesMaintenanceKind'
         name:
           type: string
+        origin:
+          $ref: '#/components/schemas/AlertmanagertypesMaintenanceOrigin'
         schedule:
           $ref: '#/components/schemas/AlertmanagertypesSchedule'
         scope:
@@ -795,6 +802,7 @@ components:
       - id
       - name
       - schedule
+      - origin
       - status
       - kind
       type: object
@@ -9025,6 +9033,8 @@ components:
           additionalProperties:
             type: string
           type: object
+        muted:
+          type: boolean
         ruleType:
           $ref: '#/components/schemas/RuletypesRuleType'
         state:
@@ -9147,6 +9157,14 @@ components:
       - ruleType
       - condition
       type: object
+    RuletypesPostableRuleMute:
+      properties:
+        duration:
+          type: string
+        endTime:
+          format: date-time
+          type: string
+      type: object
     RuletypesPostableRuleView:
       properties:
         data:
@@ -9218,6 +9236,8 @@ components:
           additionalProperties:
             type: string
           type: object
+        muted:
+          type: boolean
         notificationSettings:
           $ref: '#/components/schemas/RuletypesNotificationSettings'
         preferredChannels:
@@ -24694,6 +24714,133 @@ paths:
       - tokenizer:
         - rule:read
       summary: Get top contributors to rule firing
+      tags:
+      - rules
+      x-signoz-stability: alpha
+  /api/v2/rules/{id}/mute:
+    post:
+      deprecated: false
+      description: Stops notification delivery for the rule by creating (or extending)
+        its ad-hoc downtime. The body carries `duration` or `endTime`; an empty body
+        mutes indefinitely. Evaluation, state and history continue unaffected.
+      operationId: MuteRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRuleMute'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesPlannedMaintenance'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - rule:update
+      - tokenizer:
+        - rule:update
+      summary: Mute alert rule
+      tags:
+      - rules
+      x-signoz-stability: alpha
+  /api/v2/rules/{id}/unmute:
+    post:
+      deprecated: false
+      description: Deletes the rule's mute-created ad-hoc downtimes. Maintenance windows
+        created on the planned-downtime page are never touched. Unmuting a rule that
+        is not muted succeeds.
+      operationId: UnmuteRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - rule:update
+      - tokenizer:
+        - rule:update
+      summary: Unmute alert rule
       tags:
       - rules
       x-signoz-stability: alpha

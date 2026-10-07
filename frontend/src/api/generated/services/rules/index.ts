@@ -46,12 +46,16 @@ import type {
 	ListRules200,
 	ListRulesV3200,
 	ListRulesV3Params,
+	MuteRuleByID200,
+	MuteRuleByIDPathParameters,
 	PatchRuleByID200,
 	PatchRuleByIDPathParameters,
 	RenderErrorResponseDTO,
 	RuletypesPostableRuleDTO,
+	RuletypesPostableRuleMuteDTO,
 	RuletypesPostableRuleViewDTO,
 	TestRule200,
+	UnmuteRuleByIDPathParameters,
 	UpdateRuleByIDPathParameters,
 	UpdateRuleView200,
 	UpdateRuleViewPathParameters,
@@ -1661,6 +1665,184 @@ export const invalidateGetRuleHistoryTopContributors = async (
 	return queryClient;
 };
 
+/**
+ * Stops notification delivery for the rule by creating (or extending) its ad-hoc downtime. The body carries `duration` or `endTime`; an empty body mutes indefinitely. Evaluation, state and history continue unaffected.
+ * @summary Mute alert rule
+ */
+export const muteRuleByID = (
+	{ id }: MuteRuleByIDPathParameters,
+	ruletypesPostableRuleMuteDTO?: BodyType<RuletypesPostableRuleMuteDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<MuteRuleByID200>({
+		url: `/api/v2/rules/${id}/mute`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: ruletypesPostableRuleMuteDTO,
+		signal,
+	});
+};
+
+export const getMuteRuleByIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof muteRuleByID>>,
+		TError,
+		{
+			pathParams: MuteRuleByIDPathParameters;
+			data?: BodyType<RuletypesPostableRuleMuteDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof muteRuleByID>>,
+	TError,
+	{
+		pathParams: MuteRuleByIDPathParameters;
+		data?: BodyType<RuletypesPostableRuleMuteDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['muteRuleByID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof muteRuleByID>>,
+		{
+			pathParams: MuteRuleByIDPathParameters;
+			data?: BodyType<RuletypesPostableRuleMuteDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return muteRuleByID(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type MuteRuleByIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof muteRuleByID>>
+>;
+export type MuteRuleByIDMutationBody =
+	| BodyType<RuletypesPostableRuleMuteDTO>
+	| undefined;
+export type MuteRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Mute alert rule
+ */
+export const useMuteRuleByID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof muteRuleByID>>,
+		TError,
+		{
+			pathParams: MuteRuleByIDPathParameters;
+			data?: BodyType<RuletypesPostableRuleMuteDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof muteRuleByID>>,
+	TError,
+	{
+		pathParams: MuteRuleByIDPathParameters;
+		data?: BodyType<RuletypesPostableRuleMuteDTO>;
+	},
+	TContext
+> => {
+	return useMutation(getMuteRuleByIDMutationOptions(options));
+};
+/**
+ * Deletes the rule's mute-created ad-hoc downtimes. Maintenance windows created on the planned-downtime page are never touched. Unmuting a rule that is not muted succeeds.
+ * @summary Unmute alert rule
+ */
+export const unmuteRuleByID = (
+	{ id }: UnmuteRuleByIDPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/rules/${id}/unmute`,
+		method: 'POST',
+		signal,
+	});
+};
+
+export const getUnmuteRuleByIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof unmuteRuleByID>>,
+		TError,
+		{ pathParams: UnmuteRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof unmuteRuleByID>>,
+	TError,
+	{ pathParams: UnmuteRuleByIDPathParameters },
+	TContext
+> => {
+	const mutationKey = ['unmuteRuleByID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof unmuteRuleByID>>,
+		{ pathParams: UnmuteRuleByIDPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return unmuteRuleByID(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UnmuteRuleByIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof unmuteRuleByID>>
+>;
+
+export type UnmuteRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Unmute alert rule
+ */
+export const useUnmuteRuleByID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof unmuteRuleByID>>,
+		TError,
+		{ pathParams: UnmuteRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof unmuteRuleByID>>,
+	TError,
+	{ pathParams: UnmuteRuleByIDPathParameters },
+	TContext
+> => {
+	return useMutation(getUnmuteRuleByIDMutationOptions(options));
+};
 /**
  * This endpoint fires a test notification for the given rule definition
  * @summary Test alert rule

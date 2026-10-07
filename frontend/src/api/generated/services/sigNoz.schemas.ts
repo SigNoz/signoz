@@ -1220,6 +1220,10 @@ export enum AlertmanagertypesMaintenanceKindDTO {
 	fixed = 'fixed',
 	recurring = 'recurring',
 }
+export enum AlertmanagertypesMaintenanceOriginDTO {
+	maintenance = 'maintenance',
+	adhoc = 'adhoc',
+}
 export enum AlertmanagertypesMaintenanceStatusDTO {
 	active = 'active',
 	upcoming = 'upcoming',
@@ -1296,6 +1300,7 @@ export interface AlertmanagertypesPlannedMaintenanceDTO {
 	 * @type string
 	 */
 	name: string;
+	origin: AlertmanagertypesMaintenanceOriginDTO;
 	schedule: AlertmanagertypesScheduleDTO;
 	/**
 	 * @type string
@@ -10315,6 +10320,10 @@ export interface RuletypesListableRuleDTO {
 	 * @type object
 	 */
 	labels?: RuletypesListableRuleDTOLabels;
+	/**
+	 * @type boolean
+	 */
+	muted?: boolean;
 	ruleType: RuletypesRuleTypeDTO;
 	state: RuletypesAlertStateDTO;
 	/**
@@ -10546,6 +10555,18 @@ export interface RuletypesPostableRuleDTO {
 	version?: string;
 }
 
+export interface RuletypesPostableRuleMuteDTO {
+	/**
+	 * @type string
+	 */
+	duration?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	endTime?: string;
+}
+
 export interface RuletypesPostableRuleViewDTO {
 	data: RuletypesRuleViewDataDTO;
 	/**
@@ -10603,6 +10624,10 @@ export interface RuletypesRuleDTO {
 	 * @type object
 	 */
 	labels?: RuletypesRuleDTOLabels;
+	/**
+	 * @type boolean
+	 */
+	muted?: boolean;
 	notificationSettings?: RuletypesNotificationSettingsDTO;
 	/**
 	 * @type array
@@ -14186,6 +14211,20 @@ export type GetRuleHistoryTopContributors200 = {
 	status: string;
 };
 
+export type MuteRuleByIDPathParameters = {
+	id: string;
+};
+export type MuteRuleByID200 = {
+	data: AlertmanagertypesPlannedMaintenanceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UnmuteRuleByIDPathParameters = {
+	id: string;
+};
 export type TestRule200 = {
 	data: RuletypesGettableTestRuleDTO;
 	/**

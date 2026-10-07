@@ -3,6 +3,7 @@ package alertmanagertypes
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"slices"
 	"time"
 
@@ -55,16 +56,36 @@ func (MaintenanceKind) Enum() []any {
 	}
 }
 
+// MaintenanceOrigin is stored, not derived: it tells mute-created ad-hoc rows
+// apart from windows created on the planned-downtime page.
+type MaintenanceOrigin struct {
+	valuer.String
+}
+
+var (
+	MaintenanceOriginMaintenance = MaintenanceOrigin{valuer.NewString("maintenance")}
+	MaintenanceOriginAdhoc       = MaintenanceOrigin{valuer.NewString("adhoc")}
+)
+
+// Enum implements jsonschema.Enum; returns the acceptable values for MaintenanceOrigin.
+func (MaintenanceOrigin) Enum() []any {
+	return []any{
+		MaintenanceOriginMaintenance,
+		MaintenanceOriginAdhoc,
+	}
+}
+
 type StorablePlannedMaintenance struct {
 	bun.BaseModel `bun:"table:planned_maintenance"`
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Name        string `bun:"name,type:text,notnull"`
-	Description string `bun:"description,type:text"`
-	Schedule    string `bun:"schedule,type:text,notnull"`
-	OrgID       string `bun:"org_id,type:text"`
-	Scope       string `bun:"scope,type:text"`
+	Name        string            `bun:"name,type:text,notnull"`
+	Description string            `bun:"description,type:text"`
+	Schedule    string            `bun:"schedule,type:text,notnull"`
+	OrgID       string            `bun:"org_id,type:text"`
+	Scope       string            `bun:"scope,type:text"`
+	Origin      MaintenanceOrigin `bun:"origin,type:text,notnull"`
 }
 
 type PlannedMaintenance struct {
@@ -74,6 +95,7 @@ type PlannedMaintenance struct {
 	Schedule    *Schedule         `json:"schedule" required:"true"`
 	RuleIDs     []string          `json:"alertIds"`
 	Scope       string            `json:"scope,omitempty"`
+	Origin      MaintenanceOrigin `json:"origin" required:"true"`
 	CreatedAt   time.Time         `json:"createdAt"`
 	CreatedBy   string            `json:"createdBy"`
 	UpdatedAt   time.Time         `json:"updatedAt"`
@@ -135,6 +157,39 @@ type StorablePlannedMaintenanceRule struct {
 type PlannedMaintenanceWithRules struct {
 	*StorablePlannedMaintenance `bun:",extend"`
 	Rules                       []*StorablePlannedMaintenanceRule `bun:"rel:has-many,join:id=planned_maintenance_id"`
+}
+
+// NewAdhocStorablePlannedMaintenance builds the mute-created downtime for one rule;
+// a zero endTime means the mute never expires.
+func NewAdhocStorablePlannedMaintenance(orgID string, createdBy string, ruleID valuer.UUID, ruleName string, startTime time.Time, endTime time.Time) (*StorablePlannedMaintenance, *StorablePlannedMaintenanceRule, error) {
+	schedule, err := json.Marshal(&Schedule{Timezone: "UTC", StartTime: startTime, EndTime: endTime})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	storableMaintenance := &StorablePlannedMaintenance{
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: startTime, UpdatedAt: startTime},
+		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
+		Name:          AdhocPlannedMaintenanceName(ruleName),
+		Schedule:      string(schedule),
+		OrgID:         orgID,
+		Origin:        MaintenanceOriginAdhoc,
+	}
+
+	storableMaintenanceRule := &StorablePlannedMaintenanceRule{
+		Identifiable:         types.Identifiable{ID: valuer.GenerateUUID()},
+		PlannedMaintenanceID: storableMaintenance.ID,
+		RuleID:               ruleID,
+	}
+
+	return storableMaintenance, storableMaintenanceRule, nil
+}
+
+// AdhocPlannedMaintenanceName builds the display name of a mute-created downtime; re-mutes
+// restamp it so a renamed rule's mute catches up.
+func AdhocPlannedMaintenanceName(ruleName string) string {
+	return fmt.Sprintf("Mute: %s", ruleName)
 }
 
 // AppliesTo reports whether this maintenance applies to the given rule.
@@ -348,6 +403,7 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 		Schedule    *Schedule         `json:"schedule" db:"schedule"`
 		AlertIds    []string          `json:"alertIds" db:"alert_ids"`
 		Scope       string            `json:"scope,omitempty" db:"scope"`
+		Origin      MaintenanceOrigin `json:"origin" db:"origin"`
 		CreatedAt   time.Time         `json:"createdAt" db:"created_at"`
 		CreatedBy   string            `json:"createdBy" db:"created_by"`
 		UpdatedAt   time.Time         `json:"updatedAt" db:"updated_at"`
@@ -361,6 +417,7 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 		Schedule:    m.Schedule,
 		AlertIds:    m.RuleIDs,
 		Scope:       m.Scope,
+		Origin:      m.Origin,
 		CreatedAt:   m.CreatedAt,
 		CreatedBy:   m.CreatedBy,
 		UpdatedAt:   m.UpdatedAt,
@@ -388,6 +445,7 @@ func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() (*PlannedMaintenanc
 		Schedule:    schedule,
 		RuleIDs:     ruleIDs,
 		Scope:       m.Scope,
+		Origin:      m.Origin,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 		CreatedBy:   m.CreatedBy,
@@ -406,4 +464,14 @@ type MaintenanceStore interface {
 	GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*PlannedMaintenance, error)
 	UpdatePlannedMaintenance(context.Context, *PostablePlannedMaintenance, valuer.UUID) error
 	ListPlannedMaintenance(context.Context, string) ([]*PlannedMaintenance, error)
+
+	// ListAdhocPlannedMaintenanceByRule returns every adhoc-origin maintenance attached
+	// to the rule, including expired ones; callers filter with IsActive.
+	ListAdhocPlannedMaintenanceByRule(context.Context, string, valuer.UUID) ([]*PlannedMaintenance, error)
+	// UpsertAdhocPlannedMaintenance creates the rule's adhoc maintenance or, when one
+	// exists, replaces its end time; a rule never accumulates more than one adhoc row.
+	UpsertAdhocPlannedMaintenance(context.Context, valuer.UUID, string, time.Time) (*PlannedMaintenance, error)
+	// DeleteAdhocPlannedMaintenanceByRule removes all adhoc-origin maintenances of the
+	// rule and reports how many were removed.
+	DeleteAdhocPlannedMaintenanceByRule(context.Context, string, valuer.UUID) (int64, error)
 }
