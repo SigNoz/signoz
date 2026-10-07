@@ -1,9 +1,8 @@
-import { formatTokens } from '../SpanHoverCard/aiUsage';
-import TooltipRow from '../TraceTooltip/TooltipRow';
-import TooltipSection from '../TraceTooltip/TooltipSection';
+import { Typography } from '@signozhq/ui/typography';
+
+import TokenBreakdown from '../TraceTooltip/TokenBreakdown';
 import type { SpantypesTraceAITokensDTO } from 'api/generated/services/sigNoz.schemas';
 
-import tooltipStyles from '../TraceTooltip/TraceTooltip.module.scss';
 import styles from './EntityMetadataRow.module.scss';
 
 interface TokenUsageTooltipProps {
@@ -11,26 +10,23 @@ interface TokenUsageTooltipProps {
 }
 
 function TokenUsageTooltip({ tokens }: TokenUsageTooltipProps): JSX.Element {
-	const { input, output, cacheRead, cacheWrite, reasoning } = tokens;
+	const { input, output, cacheRead, cacheWrite } = tokens;
 
 	return (
-		<div className={`${tooltipStyles.body} ${styles.tokenTooltip}`}>
-			<TooltipSection>
-				<TooltipRow label="Tokens" value={formatTokens(input + output)} isTotal />
-			</TooltipSection>
-			<TooltipSection>
-				<TooltipRow label="Input" value={formatTokens(input)} />
-				<TooltipRow label="Output" value={formatTokens(output)} />
-				{cacheRead !== undefined && (
-					<TooltipRow label="Cache read" value={formatTokens(cacheRead)} />
-				)}
-				{cacheWrite !== undefined && (
-					<TooltipRow label="Cache write" value={formatTokens(cacheWrite)} />
-				)}
-				{reasoning !== undefined && (
-					<TooltipRow label="Reasoning" value={formatTokens(reasoning)} />
-				)}
-			</TooltipSection>
+		<div className={styles.tokenTooltip}>
+			<Typography.Text
+				size="small"
+				weight="medium"
+				className={styles.tokenTooltipTitle}
+			>
+				Usage Breakdown
+			</Typography.Text>
+			<TokenBreakdown
+				input={input}
+				output={output}
+				cacheRead={cacheRead}
+				cacheWrite={cacheWrite}
+			/>
 		</div>
 	);
 }

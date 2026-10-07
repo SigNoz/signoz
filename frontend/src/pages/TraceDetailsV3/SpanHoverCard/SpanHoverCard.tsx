@@ -5,7 +5,6 @@ import {
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import cx from 'classnames';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
@@ -19,7 +18,6 @@ import SpanUsageBreakdown from './SpanUsageBreakdown';
 import TooltipRow from '../TraceTooltip/TooltipRow';
 import TooltipSection from '../TraceTooltip/TooltipSection';
 
-import tooltipStyles from '../TraceTooltip/TraceTooltip.module.scss';
 import styles from './SpanHoverCard.module.scss';
 
 /**
@@ -62,9 +60,9 @@ export function SpanTooltipContent({
 		convertTimeToRelevantUnit(durationMs);
 
 	return (
-		<div className={cx(tooltipStyles.body, styles.content)}>
+		<div className={styles.content}>
 			<div className={styles.header}>
-				<Typography.Text className={tooltipStyles.title} style={{ color }}>
+				<Typography.Text className={styles.title} style={{ color }}>
 					{spanName}
 				</Typography.Text>
 				{ai?.usage && (
@@ -189,7 +187,7 @@ export function SpanHoverCard({
 					side="right"
 					align="start"
 					sideOffset={8}
-					className={cx(tooltipStyles.tooltipContent, styles.popover)}
+					className={styles.popover}
 				>
 					{hoverCardData && <SpanTooltipContent {...hoverCardData.tooltip} />}
 				</TooltipContent>
