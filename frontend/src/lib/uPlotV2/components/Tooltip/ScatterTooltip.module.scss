@@ -1,6 +1,9 @@
 // Surface matches the shared Tooltip: same tokens, same radius, no shadow.
 // Padding lives on the sections so a footer can reach the container edges.
 .container {
+	// Same inset as the heatmap tooltip.
+	--gutter: 14px;
+
 	font-family: 'Inter';
 	font-size: 12px;
 	background: var(--l2-background);
@@ -10,7 +13,7 @@
 	border: 1px solid var(--l2-border);
 	display: flex;
 	flex-direction: column;
-	min-width: 200px;
+	min-width: 220px;
 
 	&.pinned {
 		border-color: var(--ring);
@@ -27,14 +30,16 @@
 .header {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-2);
-	padding: var(--spacing-3) var(--spacing-4);
+	gap: var(--spacing-3);
+	padding: var(--spacing-6) var(--gutter);
 }
 
 // Matches the legend row's marker.
 .marker {
-	width: 10px;
-	height: 10px;
+	box-sizing: border-box;
+	width: 12px;
+	height: 12px;
+	border: 1.5px solid;
 	border-radius: var(--radius);
 	flex-shrink: 0;
 }
@@ -63,8 +68,8 @@
 .rows {
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-1);
-	padding: var(--spacing-3) var(--spacing-4);
+	gap: var(--spacing-2);
+	padding: var(--spacing-5) var(--gutter);
 }
 
 .row {
