@@ -80,4 +80,31 @@ describe('getPanelIdsReferencingVariable', () => {
 		);
 		expect(ids.sort()).toStrictEqual(['p1', 'p3']);
 	});
+
+	it('includes an AI list panel and an AI composite panel', () => {
+		const aiList = listPanel('service.name IN $svc');
+		(
+			aiList as {
+				spec: { queries: { spec: { plugin: { kind: string } } }[] };
+			}
+		).spec.queries[0].spec.plugin.kind = 'signoz/AIBuilderQuery';
+
+		const aiComposite = compositePanel('service.name IN $svc');
+		(
+			aiComposite as {
+				spec: {
+					queries: {
+						spec: { plugin: { spec: { queries: { type: string }[] } } };
+					}[];
+				};
+			}
+		).spec.queries[0].spec.plugin.spec.queries[0].type = 'builder_ai_query';
+
+		const ids = getPanelIdsReferencingVariable(
+			panels({ aiList, aiComposite }),
+			'service.name',
+			'svc',
+		);
+		expect(ids.sort()).toStrictEqual(['aiComposite', 'aiList']);
+	});
 });

@@ -28,6 +28,7 @@ import { useViewPanel } from '../hooks/useViewPanel';
 import { buildMoveItems } from '../utils/buildMoveItems';
 import MenuActionItem from '../../../components/MenuActionItem/MenuActionItem';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { getBlockedPanelActions } from '../utils/getBlockedPanelActions';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 // Stable fallback so renders without layout context don't churn the mutation
@@ -63,6 +64,7 @@ export function usePanelActionItems({
 	panelActions,
 }: UsePanelActionItemsArgs): PanelActionItems {
 	const panelKind = panel.spec.plugin.kind;
+	const blocked = useMemo(() => getBlockedPanelActions(panel), [panel]);
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
 	const openPanelEditor = useOpenPanelEditor();
@@ -103,13 +105,17 @@ export function usePanelActionItems({
 		const row = (
 			text: string,
 			icon: ReactElement,
-			opts: { checks?: BrandedPermission[]; destructive?: boolean } = {},
+			opts: {
+				checks?: BrandedPermission[];
+				destructive?: boolean;
+				disabledTooltip?: string;
+			} = {},
 		): ReactNode => (
 			<MenuActionItem
 				label={text}
 				icon={icon}
 				checks={opts.checks ?? editChecks}
-				disabledTooltip={editDisabledTooltip}
+				disabledTooltip={opts.disabledTooltip ?? editDisabledTooltip}
 				destructive={opts.destructive}
 			/>
 		);
@@ -118,15 +124,21 @@ export function usePanelActionItems({
 		if (panelCapabilities.view) {
 			panelGroup.push({
 				key: 'view-panel',
-				label: row('View', <Fullscreen size={14} />, { checks: [] }),
+				label: row('View', <Fullscreen size={14} />, {
+					checks: [],
+					disabledTooltip: blocked.view,
+				}),
+				disabled: !!blocked.view,
 				onClick: (): void => openView(panelId, panel),
 			});
 		}
 		if (panelCapabilities.edit) {
 			panelGroup.push({
 				key: 'edit-panel',
-				label: row('Edit panel', <PenLine size={14} />),
-				disabled: !isEditable,
+				label: row('Edit panel', <PenLine size={14} />, {
+					disabledTooltip: blocked.edit,
+				}),
+				disabled: !isEditable || !!blocked.edit,
 				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}
@@ -157,7 +169,11 @@ export function usePanelActionItems({
 		if (panelCapabilities.createAlert) {
 			dataGroup.push({
 				key: 'create-alert',
-				label: row('Create Alerts', <Bell size={14} />, { checks: [] }),
+				label: row('Create Alerts', <Bell size={14} />, {
+					checks: [],
+					disabledTooltip: blocked.createAlert,
+				}),
+				disabled: !!blocked.createAlert,
 				onClick: (): void => createAlert(panel, panelId),
 			});
 		}
@@ -197,6 +213,7 @@ export function usePanelActionItems({
 		editChecks,
 		editDisabledTooltip,
 		panelCapabilities,
+		blocked,
 		panel,
 		panelActions,
 		sections,
