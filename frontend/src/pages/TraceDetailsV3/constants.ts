@@ -53,8 +53,3 @@ export const COLOR_BY_FIELDS: TelemetryFieldKey[] = COLOR_BY_OPTIONS.map(
 );
 
 export const DEFAULT_COLOR_BY_FIELD = COLOR_BY_FIELDS[0];
-
-export enum TraceDetailsTab {
-	Overview = 'overview',
-	Thread = 'thread',
-}
