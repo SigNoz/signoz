@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { userEvent, within } from 'storybook/test';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -106,6 +106,22 @@ export const ReadOnly: Story = {
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
+};
+
+/** The panel type browser, opened from the config pane to switch kinds. */
+export const ChangePanelType: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(
+			await canvas.findByTestId(
+				'panel-editor-v2-type-switcher',
+				{},
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByTestId('panel-type-switcher-drawer');
+	},
 };
 
 /** A new time series panel's config pane, every section expanded. */
