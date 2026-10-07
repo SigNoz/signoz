@@ -23,6 +23,7 @@ def signoz_base_path(  # pylint: disable=too-many-arguments,too-many-positional-
     gateway: types.TestContainerDocker,
     sqlstore: types.TestContainerSQL,
     clickhouse: types.TestContainerClickhouse,
+    e2e_env: dict,
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
@@ -35,7 +36,7 @@ def signoz_base_path(  # pylint: disable=too-many-arguments,too-many-positional-
         request=request,
         pytestconfig=pytestconfig,
         cache_key="signoz_base_path",
-        env_overrides={"SIGNOZ_GLOBAL_EXTERNAL__URL": f"http://localhost:8080{BASE_PATH}"},
+        env_overrides=e2e_env | {"SIGNOZ_GLOBAL_EXTERNAL__URL": f"http://localhost:8080{BASE_PATH}"},
     )
 
 
