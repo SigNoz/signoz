@@ -27,6 +27,7 @@ export const NEW_PANEL_KINDS = [
 	'area-chart',
 	'pie-chart',
 	'histogram',
+	'heatmap',
 	'list',
 	'text',
 ] as const;
@@ -41,6 +42,7 @@ const KIND_BY_OPTION: Record<NewPanelKind, PanelKind> = {
 	'pie-chart': 'signoz/PieChartPanel',
 	table: 'signoz/TablePanel',
 	histogram: 'signoz/HistogramPanel',
+	heatmap: 'signoz/HeatmapPanel',
 	list: 'signoz/ListPanel',
 	text: 'signoz/TextPanel',
 };

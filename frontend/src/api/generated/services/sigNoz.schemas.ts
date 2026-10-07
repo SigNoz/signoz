@@ -11426,6 +11426,86 @@ export interface SpantypesOtelSpanRefDTO {
 	traceId?: string;
 }
 
+export type SpantypesThreadSpanDTOAttributes = { [key: string]: unknown };
+
+export type SpantypesThreadSpanDTOResource = { [key: string]: string };
+
+export interface SpantypesThreadSpanDTO {
+	/**
+	 * @type object
+	 */
+	attributes: SpantypesThreadSpanDTOAttributes;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	duration_nano: number;
+	/**
+	 * @type array
+	 */
+	events: SpantypesEventDTO[];
+	/**
+	 * @type boolean
+	 */
+	has_error: boolean;
+	/**
+	 * @type string
+	 */
+	kind_string: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	parent_span_id: string;
+	/**
+	 * @type array
+	 */
+	references: SpantypesOtelSpanRefDTO[];
+	/**
+	 * @type object
+	 */
+	resource: SpantypesThreadSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	span_id: string;
+	/**
+	 * @type string
+	 */
+	status_code_string: string;
+	/**
+	 * @type string
+	 */
+	status_message: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	time_unix: number;
+	/**
+	 * @type string
+	 */
+	trace_id: string;
+}
+
+export interface SpantypesGettableTraceThreadDTO {
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type string
+	 */
+	prevCursor?: string;
+	/**
+	 * @type array
+	 */
+	spans: SpantypesThreadSpanDTO[];
+}
+
 export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
 	[key: string]: unknown;
 };
@@ -13104,6 +13184,40 @@ export type GetTraceSummaryPathParameters = {
 };
 export type GetTraceSummary200 = {
 	data: SpantypesGettableTraceSummaryDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetTraceThreadPathParameters = {
+	traceID: string;
+};
+export type GetTraceThreadParams = {
+	/**
+	 * @type integer
+	 * @description Page size, at most 100. 0 means 20.
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 * @description The nextCursor of a page; returns the spans after it. Set only one of after, before and spanId.
+	 */
+	after?: string;
+	/**
+	 * @type string
+	 * @description The prevCursor of a page; returns the spans before it. Set only one of after, before and spanId.
+	 */
+	before?: string;
+	/**
+	 * @type string
+	 * @description Returns the page around this span. Set only one of after, before and spanId.
+	 */
+	spanId?: string;
+};
+
+export type GetTraceThread200 = {
+	data: SpantypesGettableTraceThreadDTO;
 	/**
 	 * @type string
 	 */

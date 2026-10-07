@@ -1,4 +1,9 @@
 .grid {
+	// RGL animates height, which would cut the placeholder's reveal short.
+	&.instantHeight {
+		transition: none;
+	}
+
 	// Override react-grid-layout's default red drag/resize placeholder with the
 	// SigNoz brand blue.
 	:global(.react-grid-item.react-grid-placeholder) {
