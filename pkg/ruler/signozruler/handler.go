@@ -85,6 +85,57 @@ func (handler *handler) GetRuleByID(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, ruletypes.NewRule(rule))
 }
 
+func (handler *handler) MuteRuleByID(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
+
+	id, err := valuer.NewUUID(mux.Vars(req)["id"])
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
+
+	postableMute := new(ruletypes.PostableRuleMute)
+	if req.ContentLength > 0 {
+		if err := binding.JSON.BindBody(req.Body, postableMute); err != nil {
+			render.Error(rw, err)
+			return
+		}
+	}
+
+	endTime, err := postableMute.ResolveEndTime(time.Now().UTC())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	schedule, err := handler.ruler.MuteRule(ctx, id, endTime)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, schedule)
+}
+
+func (handler *handler) UnmuteRuleByID(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
+
+	id, err := valuer.NewUUID(mux.Vars(req)["id"])
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		return
+	}
+
+	if err := handler.ruler.UnmuteRule(ctx, id); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
 func (handler *handler) CreateRule(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()

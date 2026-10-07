@@ -184,3 +184,18 @@ func TestAdhocPlannedMaintenanceLifecycle(t *testing.T) {
 		assert.Empty(t, otherOrg)
 	})
 }
+
+// Pins the create-response carrying the stored origin; the integration suite
+// caught it missing while list/get had it.
+func TestCreatePlannedMaintenanceStampsOrigin(t *testing.T) {
+	store := newTestStore(t)
+	maintenanceStore := NewMaintenanceStore(store, factorytest.NewSettings())
+	ctx := authtypes.NewContextWithClaims(t.Context(), authtypes.Claims{OrgID: valuer.GenerateUUID().StringValue(), Email: "nikhil@signoz.io"})
+
+	created, err := maintenanceStore.CreatePlannedMaintenance(ctx, &alertmanagertypes.PostablePlannedMaintenance{
+		Name:     "window",
+		Schedule: &alertmanagertypes.Schedule{Timezone: "UTC", StartTime: time.Now().UTC(), EndTime: time.Now().UTC().Add(time.Hour)},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, alertmanagertypes.MaintenanceOriginMaintenance, created.Origin)
+}

@@ -153,6 +153,7 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		Description: storablePlannedMaintenance.Description,
 		RuleIDs:     maintenance.AlertIds,
 		Scope:       maintenance.Scope,
+		Origin:      storablePlannedMaintenance.Origin,
 		CreatedAt:   storablePlannedMaintenance.CreatedAt,
 		CreatedBy:   storablePlannedMaintenance.CreatedBy,
 		UpdatedAt:   storablePlannedMaintenance.UpdatedAt,

@@ -2,6 +2,7 @@ package signozruler
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
@@ -18,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -142,6 +144,29 @@ func (provider *provider) PatchRule(ctx context.Context, ruleStr string, id valu
 
 func (provider *provider) TestNotification(ctx context.Context, orgID valuer.UUID, ruleStr string) (int, error) {
 	return provider.manager.TestNotification(ctx, orgID, ruleStr)
+}
+
+func (provider *provider) MuteRule(ctx context.Context, id valuer.UUID, endTime time.Time) (*alertmanagertypes.PlannedMaintenance, error) {
+	rule, err := provider.manager.GetRule(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.manager.MaintenanceStore().UpsertAdhocPlannedMaintenance(ctx, id, rule.AlertName, endTime)
+}
+
+func (provider *provider) UnmuteRule(ctx context.Context, id valuer.UUID) error {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if _, err := provider.manager.GetRule(ctx, id); err != nil {
+		return err
+	}
+
+	_, err = provider.manager.MaintenanceStore().DeleteAdhocPlannedMaintenanceByRule(ctx, claims.OrgID, id)
+	return err
 }
 
 func (provider *provider) MaintenanceStore() alertmanagertypes.MaintenanceStore {
