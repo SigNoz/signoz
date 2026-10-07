@@ -59,6 +59,22 @@ const overviewMocks = defineStoryMocks({
 		}),
 	},
 	handlers: (values) => [
+		// The filter's suggestions ask for these; without them the search box
+		// logs a failed request and the story's smoke test fails on it
+		rest.get('http://localhost/api/v1/fields/keys', (_req, res, ctx) =>
+			res(
+				ctx.status(200),
+				ctx.json({ status: 'success', data: { keys: {}, complete: true } }),
+			),
+		),
+
+		rest.get('http://localhost/api/v1/fields/values', (_req, res, ctx) =>
+			res(
+				ctx.status(200),
+				ctx.json({ status: 'success', data: { values: {}, complete: true } }),
+			),
+		),
+
 		rest.post(
 			'http://localhost/api/v2/infra_monitoring/kube_containers',
 			async (req, res, ctx) => {
