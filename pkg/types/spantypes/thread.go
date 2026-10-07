@@ -3,6 +3,7 @@ package spantypes
 import (
 	"encoding/base64"
 	"encoding/json"
+	"maps"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
@@ -10,8 +11,8 @@ import (
 )
 
 const (
-	threadDefaultLimit = 100
-	threadMaxLimit     = 1000
+	threadDefaultLimit = 20
+	threadMaxLimit     = 100
 )
 
 const (
@@ -27,15 +28,11 @@ var (
 	ErrCodeThreadSpanNotFound  = errors.MustNewCode("trace_thread_span_not_found")
 )
 
-type QueryableThread struct {
-	// Limit is the page size; 0 means 100.
-	Limit int `query:"limit"`
-	// After is the nextCursor of a page; returns the spans after it.
-	After string `query:"after"`
-	// Before is the prevCursor of a page; returns the spans before it.
-	Before string `query:"before"`
-	// SpanID returns the page around this span. After, Before and SpanID are exclusive.
-	SpanID string `query:"spanId"`
+type GetTraceThreadParams struct {
+	Limit  int    `query:"limit" description:"Page size, at most 100. 0 means 20."`
+	After  string `query:"after" description:"The nextCursor of a page; returns the spans after it. Set only one of after, before and spanId."`
+	Before string `query:"before" description:"The prevCursor of a page; returns the spans before it. Set only one of after, before and spanId."`
+	SpanID string `query:"spanId" description:"Returns the page around this span. Set only one of after, before and spanId."`
 }
 
 type ThreadQuery struct {
@@ -47,8 +44,8 @@ type ThreadQuery struct {
 
 // ThreadCursor is the (TimeUnixNano, SpanID) key of a span.
 type ThreadCursor struct {
-	TimeUnixNano uint64 `json:"t"`
-	SpanID       string `json:"s"`
+	TimeUnixNano uint64 `json:"timeUnixNano"`
+	SpanID       string `json:"spanId"`
 }
 
 type ThreadFrom int
@@ -65,16 +62,31 @@ type GettableTraceThread struct {
 	NextCursor string        `json:"nextCursor,omitempty"`
 }
 
-// ThreadSpan sets the formatted fields only when the span has the matching gen_ai messages attribute.
+// ThreadSpan carries the fields the span details pane reads; snake_case keys match WaterfallSpan.
+// The formatted fields are set only when the span has the matching gen_ai messages attribute.
 type ThreadSpan struct {
-	WaterfallSpan
-	FormattedInput  []aiobservabilitytypes.Message `json:"formatted_input,omitempty"`
-	FormattedOutput []aiobservabilitytypes.Message `json:"formatted_output,omitempty"`
-	timeUnixNano    uint64
+	SpanID           string                         `json:"span_id" required:"true"`
+	TraceID          string                         `json:"trace_id" required:"true"`
+	ParentSpanID     string                         `json:"parent_span_id" required:"true"`
+	Name             string                         `json:"name" required:"true"`
+	KindString       string                         `json:"kind_string" required:"true"`
+	TimeUnix         uint64                         `json:"time_unix" required:"true"`
+	DurationNano     uint64                         `json:"duration_nano" required:"true"`
+	HasError         bool                           `json:"has_error" required:"true"`
+	StatusCodeString string                         `json:"status_code_string" required:"true"`
+	StatusMessage    string                         `json:"status_message" required:"true"`
+	Resource         map[string]string              `json:"resource" required:"true" nullable:"false"`
+	Attributes       map[string]any                 `json:"attributes" required:"true" nullable:"false"`
+	Events           []Event                        `json:"events" required:"true" nullable:"false"`
+	References       []OtelSpanRef                  `json:"references" required:"true" nullable:"false"`
+	FormattedInput   []aiobservabilitytypes.Message `json:"formatted_input,omitempty" nullable:"false"`
+	FormattedOutput  []aiobservabilitytypes.Message `json:"formatted_output,omitempty" nullable:"false"`
+
+	timeUnixNano uint64
 }
 
-func NewThreadQuery(queryable *QueryableThread) (*ThreadQuery, error) {
-	query := &ThreadQuery{Limit: queryable.Limit, SpanID: queryable.SpanID}
+func NewThreadQuery(params *GetTraceThreadParams) (*ThreadQuery, error) {
+	query := &ThreadQuery{Limit: params.Limit, SpanID: params.SpanID}
 	if query.Limit < 0 {
 		return nil, errors.NewInvalidInputf(ErrCodeThreadInvalidLimit, "limit cannot be negative, got %d", query.Limit)
 	}
@@ -86,7 +98,7 @@ func NewThreadQuery(queryable *QueryableThread) (*ThreadQuery, error) {
 	}
 
 	anchors := 0
-	for _, value := range []string{queryable.After, queryable.Before, queryable.SpanID} {
+	for _, value := range []string{params.After, params.Before, params.SpanID} {
 		if value != "" {
 			anchors++
 		}
@@ -95,33 +107,30 @@ func NewThreadQuery(queryable *QueryableThread) (*ThreadQuery, error) {
 		return nil, errors.NewInvalidInputf(ErrCodeThreadInvalidAnchor, "only one of after, before and spanId can be set")
 	}
 
-	var err error
-	if queryable.After != "" {
-		if query.After, err = DecodeThreadCursor(queryable.After); err != nil {
-			return nil, err
-		}
+	encoded := params.After
+	if encoded == "" {
+		encoded = params.Before
 	}
-	if queryable.Before != "" {
-		if query.Before, err = DecodeThreadCursor(queryable.Before); err != nil {
-			return nil, err
-		}
+	if encoded == "" {
+		return query, nil
 	}
-	return query, nil
-}
-
-func DecodeThreadCursor(cursor string) (*ThreadCursor, error) {
-	data, err := base64.RawURLEncoding.DecodeString(cursor)
+	data, err := base64.RawURLEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, errors.WrapInvalidInputf(err, ErrCodeThreadInvalidCursor, "invalid cursor")
 	}
-	c := new(ThreadCursor)
-	if err := json.Unmarshal(data, c); err != nil {
+	cursor := new(ThreadCursor)
+	if err := json.Unmarshal(data, cursor); err != nil {
 		return nil, errors.WrapInvalidInputf(err, ErrCodeThreadInvalidCursor, "invalid cursor")
 	}
-	if c.SpanID == "" {
+	if cursor.SpanID == "" {
 		return nil, errors.NewInvalidInputf(ErrCodeThreadInvalidCursor, "invalid cursor: missing span id")
 	}
-	return c, nil
+	if params.After != "" {
+		query.After = cursor
+	} else {
+		query.Before = cursor
+	}
+	return query, nil
 }
 
 func (c ThreadCursor) Encode() string {
@@ -164,14 +173,43 @@ func (s *ThreadSpan) cursor() ThreadCursor {
 }
 
 func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
-	span := &ThreadSpan{WaterfallSpan: *storable.ToWaterfallSpan(traceID), timeUnixNano: uint64(storable.StartTime.UnixNano())}
-	// client expects millis, as in the waterfall
-	span.TimeUnix = span.TimeUnix / 1_000_000
-	if v, ok := span.Attributes[aiobservabilitytypes.GenAIInputMessages]; ok {
+	resources := make(map[string]string, len(storable.ResourcesString))
+	maps.Copy(resources, storable.ResourcesString)
+	timeUnixNano := uint64(storable.StartTime.UnixNano())
+	attributes := threadAttributes(storable)
+	span := &ThreadSpan{
+		SpanID:           storable.SpanID,
+		TraceID:          traceID,
+		ParentSpanID:     storable.ParentSpanID,
+		Name:             storable.Name,
+		KindString:       storable.SpanKind,
+		TimeUnix:         timeUnixNano / 1_000_000, // client expects millis, as in the waterfall
+		DurationNano:     storable.DurationNano,
+		HasError:         storable.HasError,
+		StatusCodeString: storable.StatusCodeString,
+		StatusMessage:    storable.StatusMessage,
+		Resource:         resources,
+		Attributes:       attributes,
+		Events:           storable.UnmarshalledEvents(),
+		References:       storable.UnmarshalledRefs(),
+		timeUnixNano:     timeUnixNano,
+	}
+	if v, ok := attributes[aiobservabilitytypes.GenAIInputMessages]; ok {
 		span.FormattedInput = genaimessages.Normalize(v)
 	}
-	if v, ok := span.Attributes[aiobservabilitytypes.GenAIOutputMessages]; ok {
+	if v, ok := attributes[aiobservabilitytypes.GenAIOutputMessages]; ok {
 		span.FormattedOutput = genaimessages.Normalize(v)
 	}
 	return span
+}
+
+// threadAttributes reads the JSON column and falls back to the legacy maps for spans written
+// before the JSON rollout.
+func threadAttributes(storable *StorableSpan) map[string]any {
+	if len(storable.AttributesJSON) > 0 {
+		attributes := make(map[string]any, len(storable.AttributesJSON))
+		storable.AttributesJSON.FlattenInto("", attributes)
+		return attributes
+	}
+	return storable.Attributes()
 }

@@ -161,7 +161,7 @@ func NewModules(
 		LogsPipeline:         impllogspipeline.NewModule(sqlstore),
 		RuleStateHistory:     implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger), ruleStore),
 		CloudIntegration:     cloudIntegrationModule,
-		TraceDetail:          impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
+		TraceDetail:          impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore, telemetryMetadataStore, fl), providerSettings, config.TraceDetail),
 		SpanMapper:           spanMapper,
 		LLMPricingRule:       impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), querier),
 		Tag:                  tagModule,

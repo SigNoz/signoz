@@ -8,7 +8,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.traces import TraceIdGenerator, Traces, TracesKind
+from fixtures.traces import ATTRIBUTE_JSON_ROLLOUT_TIME, TraceIdGenerator, Traces, TracesKind
 
 
 def test_thread_returns_message_spans_in_order(
@@ -16,7 +16,9 @@ def test_thread_returns_message_spans_in_order(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
+    seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     root_id, first_llm_id, tool_id, second_llm_id, third_llm_id = (TraceIdGenerator.span_id() for _ in range(5))
@@ -73,7 +75,9 @@ def test_thread_paginates_with_cursors(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
+    seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     span_ids = [TraceIdGenerator.span_id() for _ in range(3)]
@@ -126,7 +130,9 @@ def test_thread_paginates_across_buckets(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
+    seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     bucket = now.replace(minute=0 if now.minute < 30 else 30, second=0)
     trace_id = TraceIdGenerator.trace_id()
@@ -178,7 +184,9 @@ def test_thread_opens_around_span(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
+    seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     resources = {"service.name": "tracedetail-thread-anchor"}
@@ -242,12 +250,60 @@ def test_thread_opens_around_span(
     assert missing.status_code == HTTPStatus.NOT_FOUND, missing.text
 
 
+def test_thread_reads_spans_across_json_rollout(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    seed_attribute_evolution: Callable[[str, datetime], None],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    rollout = now - timedelta(minutes=30)
+    seed_attribute_evolution("traces", rollout)
+    resources = {"service.name": "tracedetail-thread-rollout"}
+
+    # trace entirely before the rollout: messages live only in the legacy maps
+    before_trace_id = TraceIdGenerator.trace_id()
+    before_ids = [TraceIdGenerator.span_id() for _ in range(2)]
+    # trace straddling the rollout: one span in the maps, one in the JSON column
+    straddle_trace_id = TraceIdGenerator.trace_id()
+    legacy_id, json_id = TraceIdGenerator.span_id(), TraceIdGenerator.span_id()
+    insert_traces(
+        [
+            Traces(timestamp=rollout - timedelta(minutes=10), trace_id=before_trace_id, span_id=before_ids[0], name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "first"}])}, attribute_write_mode="legacy_only"),
+            Traces(timestamp=rollout - timedelta(minutes=8), trace_id=before_trace_id, span_id=TraceIdGenerator.span_id(), name="execute_tool get_weather", resources=resources, attributes={"gen_ai.tool.name": "get_weather"}, attribute_write_mode="legacy_only"),
+            Traces(timestamp=rollout - timedelta(minutes=5), trace_id=before_trace_id, span_id=before_ids[1], name="chat gpt-4o", resources=resources, attributes={"gen_ai.output.messages": json.dumps([{"role": "assistant", "content": "second"}])}, attribute_write_mode="legacy_only"),
+            Traces(timestamp=rollout - timedelta(minutes=5), trace_id=straddle_trace_id, span_id=legacy_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "legacy"}])}, attribute_write_mode="legacy_only"),
+            Traces(timestamp=rollout + timedelta(minutes=5), trace_id=straddle_trace_id, span_id=json_id, name="chat gpt-4o", resources=resources, attributes={"gen_ai.input.messages": json.dumps([{"role": "user", "content": "json"}])}, attribute_write_mode="json_only"),
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    before = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/traces/{before_trace_id}/thread"), headers=headers, timeout=10)
+    assert before.status_code == HTTPStatus.OK, before.text
+    before_spans = before.json()["data"]["spans"]
+    assert [span["span_id"] for span in before_spans] == before_ids
+    assert before_spans[0]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "first"}])
+    assert before_spans[1]["attributes"]["gen_ai.output.messages"] == json.dumps([{"role": "assistant", "content": "second"}])
+
+    straddle = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/traces/{straddle_trace_id}/thread"), headers=headers, timeout=10)
+    assert straddle.status_code == HTTPStatus.OK, straddle.text
+    straddle_spans = straddle.json()["data"]["spans"]
+    assert [span["span_id"] for span in straddle_spans] == [legacy_id, json_id]
+    assert straddle_spans[0]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "legacy"}])
+    assert straddle_spans[1]["attributes"]["gen_ai.input.messages"] == json.dumps([{"role": "user", "content": "json"}])
+
+
 def test_thread_without_messages_is_empty(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
+    seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     trace_id = TraceIdGenerator.trace_id()
     insert_traces([Traces(timestamp=datetime.now(tz=UTC) - timedelta(seconds=5), trace_id=trace_id, span_id=TraceIdGenerator.span_id(), name="GET /health", resources={"service.name": "tracedetail-thread-empty"}, attribute_write_mode="json_only")])
 
@@ -261,19 +317,15 @@ def test_thread_rejects_invalid_requests(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    trace_id = TraceIdGenerator.trace_id()
-    insert_traces([Traces(timestamp=datetime.now(tz=UTC) - timedelta(seconds=5), trace_id=trace_id, span_id=TraceIdGenerator.span_id(), name="chat gpt-4o", resources={"service.name": "tracedetail-thread-invalid"}, attributes={"gen_ai.input.messages": "hi"}, attribute_write_mode="json_only")])
-
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     headers = {"Authorization": f"Bearer {token}"}
-    url = signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/thread")
+    url = signoz.self.host_configs["8080"].get(f"/api/v1/traces/{TraceIdGenerator.trace_id()}/thread")
 
-    cursor = base64.urlsafe_b64encode(json.dumps({"t": 1, "s": "f1fa1bc863e94dd0"}).encode()).decode().rstrip("=")
+    cursor = base64.urlsafe_b64encode(json.dumps({"timeUnixNano": 1, "spanId": "f1fa1bc863e94dd0"}).encode()).decode().rstrip("=")
     for params in (
         {"limit": -1},
-        {"limit": 1001},
+        {"limit": 101},
         {"after": "not-a-cursor"},
         {"before": "not-a-cursor"},
         {"after": cursor, "before": cursor},
@@ -283,5 +335,5 @@ def test_thread_rejects_invalid_requests(
         response = requests.get(url, params=params, headers=headers, timeout=10)
         assert response.status_code == HTTPStatus.BAD_REQUEST, f"{params}: {response.text}"
 
-    missing = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/traces/{TraceIdGenerator.trace_id()}/thread"), headers=headers, timeout=10)
+    missing = requests.get(url, headers=headers, timeout=10)
     assert missing.status_code == HTTPStatus.NOT_FOUND, missing.text
