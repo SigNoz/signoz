@@ -183,6 +183,10 @@ func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, p
 					typeIndex = schemamigrator.IndexTypeTokenBF
 				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeMinMax)):
 					typeIndex = schemamigrator.IndexTypeMinMax
+				case strings.HasPrefix(index.Type, "bloom_filter"):
+					typeIndex = "bloom_filter"
+				case strings.HasPrefix(index.Type, "set"):
+					typeIndex = "set"
 				default:
 					return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid index type: %s", index.Type)
 				}

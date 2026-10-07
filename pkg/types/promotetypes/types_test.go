@@ -141,10 +141,40 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "ValidBloomFilterIndex_JSONDataTypeDefaulted",
+			path: &PromotePath{
+				Path: "user.name",
+				Indexes: []WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "bloom_filter(0.01)", Granularity: 1},
+				},
+			},
+			wantPath:         "user.name",
+			wantJSONDataType: telemetrytypes.String,
+		},
+		{
+			name: "ValidSetIndex_JSONDataTypeDefaulted",
+			path: &PromotePath{
+				Path: "user.name",
+				Indexes: []WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "set(100)", Granularity: 1},
+				},
+			},
+			wantPath:         "user.name",
+			wantJSONDataType: telemetrytypes.String,
+		},
+		{
+			name: "IndexTypeFalsePositiveOutOfRange_Rejected",
+			path: &PromotePath{
+				Path:    "user.name",
+				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "bloom_filter(1)", Granularity: 1}},
+			},
+			wantErr: true,
+		},
+		{
 			name: "UnsupportedIndexType_Rejected",
 			path: &PromotePath{
 				Path:    "user.name",
-				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "bloom_filter(0.01)", Granularity: 1}},
+				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "inverted(2)", Granularity: 1}},
 			},
 			wantErr: true,
 		},

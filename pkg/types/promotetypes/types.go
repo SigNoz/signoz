@@ -120,9 +120,9 @@ func (i *PromotePath) ValidateAndSetDefaults(target Target) error {
 	return nil
 }
 
-// indexTypeRe anchors the whole index type string, so only minmax or
-// tokenbf/ngrambf with bounded integer parameters can reach the index DDL.
-var indexTypeRe = regexp.MustCompile(`^(?:minmax|tokenbf_v1\(\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\)|ngrambf_v1\(\s*(\d{1,2})\s*,\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\))$`)
+// indexTypeRe anchors the whole index type string, so only a whitelisted type
+// with bounded numeric parameters can reach the index DDL.
+var indexTypeRe = regexp.MustCompile(`^(?:minmax|set\(\s*(\d{1,7})\s*\)|bloom_filter(?:\(\s*(\d+(?:\.\d+)?|\.\d+)\s*\))?|tokenbf_v1\(\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\)|ngrambf_v1\(\s*(\d{1,2})\s*,\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\))$`)
 
 const (
 	maxIndexNGramLength      = 64
@@ -135,13 +135,24 @@ func validateIndexType(indexType string) error {
 	if matches == nil {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid index type: %s", indexType)
 	}
-	if indexType == "minmax" {
+
+	switch {
+	case indexType == "minmax" || strings.HasPrefix(indexType, "set"):
+		return nil
+	case strings.HasPrefix(indexType, "bloom_filter"):
+		if matches[2] == "" {
+			return nil
+		}
+		falsePositive, _ := strconv.ParseFloat(matches[2], 64)
+		if falsePositive <= 0 || falsePositive >= 1 {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid false positive rate in index type: %s", indexType)
+		}
 		return nil
 	}
 
-	params := matches[1:4]
+	params := matches[3:6]
 	if strings.HasPrefix(indexType, "ngrambf_v1") {
-		params = matches[4:8]
+		params = matches[6:10]
 	}
 	values := make([]uint64, len(params))
 	for idx, param := range params {

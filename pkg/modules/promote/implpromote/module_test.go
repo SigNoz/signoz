@@ -161,6 +161,30 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 			},
 			wantDDLColumn: "`attributes.http.method_String_ngrambf_v1` attributes.`http.method`::String",
 		},
+		{
+			name: "BloomFilterIndex_FullTypeInDDL",
+			path: &promotetypes.PromotePath{
+				Signal:  "logs",
+				Context: "body",
+				Path:    "user.name",
+				Indexes: []promotetypes.WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "bloom_filter(0.01)", Granularity: 1, JSONDataType: telemetrytypes.String},
+				},
+			},
+			wantDDLColumn: "`body_v2.user.name_String_bloom_filter` lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) TYPE bloom_filter(0.01)",
+		},
+		{
+			name: "SetIndex_FullTypeInDDL",
+			path: &promotetypes.PromotePath{
+				Signal:  "logs",
+				Context: "body",
+				Path:    "user.name",
+				Indexes: []promotetypes.WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "set(100)", Granularity: 1, JSONDataType: telemetrytypes.String},
+				},
+			},
+			wantDDLColumn: "`body_v2.user.name_String_set` lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) TYPE set(100)",
+		},
 	}
 
 	for _, testCase := range testCases {
