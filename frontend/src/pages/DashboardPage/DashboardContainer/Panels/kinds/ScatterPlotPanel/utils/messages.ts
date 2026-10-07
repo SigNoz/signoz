@@ -67,7 +67,7 @@ const STALE_FALLBACK: Record<ScatterDimension, string> = {
 	[ScatterDimension.X]: 'X falls back to Auto',
 	[ScatterDimension.Y]: 'Y falls back to Auto',
 	[ScatterDimension.Size]: 'every dot is one size',
-	[ScatterDimension.Colour]: "it's left out of the colour",
+	[ScatterDimension.Color]: "it's left out of the color",
 };
 
 function staleNote({ dimension, key }: StaleDimension): string {

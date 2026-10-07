@@ -5433,12 +5433,12 @@ export interface DashboardtypesScatterPlotDimensionsDTO {
 	 * @type array,null
 	 * @description Group-by label names (e.g. k8s.namespace.name) whose combined values colour dots and drive the legend. Empty colours by every group-by label.
 	 */
-	color?: string[] | null;
+	colorBy?: string[] | null;
 	/**
 	 * @type string
 	 * @description Value column key that scales dot size. Empty draws every dot at the default size.
 	 */
-	size?: string;
+	sizeBy?: string;
 	/**
 	 * @type string
 	 * @description Value column key (queryName, or queryName.expression for a multi-aggregation query) plotted on the x axis. Empty uses the first value column.

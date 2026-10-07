@@ -4,7 +4,10 @@ import { getSizeColumnLabel } from '../sizeColumnLabel';
 
 const scatterSpec = (size?: string): DashboardtypesPanelSpecDTO =>
 	({
-		plugin: { kind: 'signoz/ScatterPlotPanel', spec: { dimensions: { size } } },
+		plugin: {
+			kind: 'signoz/ScatterPlotPanel',
+			spec: { dimensions: { sizeBy: size } },
+		},
 		queries: [],
 	}) as unknown as DashboardtypesPanelSpecDTO;
 

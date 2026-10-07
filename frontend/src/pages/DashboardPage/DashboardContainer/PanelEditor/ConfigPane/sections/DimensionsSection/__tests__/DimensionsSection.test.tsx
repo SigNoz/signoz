@@ -33,7 +33,7 @@ describe('DimensionsSection', () => {
 			'Auto (B.p99(duration_nano) · p99 latency)',
 		);
 		expect(
-			screen.getByTestId('panel-editor-v2-dimension-size'),
+			screen.getByTestId('panel-editor-v2-dimension-sizeBy'),
 		).toHaveTextContent('None');
 	});
 
@@ -61,9 +61,9 @@ describe('DimensionsSection', () => {
 			/>,
 		);
 
-		await pick('size', 'C.count()');
+		await pick('sizeBy', 'C.count()');
 
-		expect(onChange).toHaveBeenCalledWith({ size: 'C.count()' });
+		expect(onChange).toHaveBeenCalledWith({ sizeBy: 'C.count()' });
 	});
 
 	it('binds an axis to a value column by its key', async () => {
@@ -88,15 +88,15 @@ describe('DimensionsSection', () => {
 		const onChange = jest.fn();
 		render(
 			<DimensionsSection
-				value={{ size: 'A' }}
+				value={{ sizeBy: 'A' }}
 				onChange={onChange}
 				tableColumns={TABLE_COLUMNS}
 			/>,
 		);
 
-		await pick('size', 'None');
+		await pick('sizeBy', 'None');
 
-		expect(onChange).toHaveBeenCalledWith({ size: '' });
+		expect(onChange).toHaveBeenCalledWith({ sizeBy: '' });
 	});
 
 	it('keeps a binding the results no longer have visible', () => {
@@ -118,13 +118,13 @@ describe('DimensionsSection', () => {
 		const onChange = jest.fn();
 		render(
 			<DimensionsSection
-				value={{ color: ['service.name'] }}
+				value={{ colorBy: ['service.name'] }}
 				onChange={onChange}
 				groupColumns={['k8s.namespace.name', 'service.name']}
 			/>,
 		);
 
-		const trigger = screen.getByTestId('panel-editor-v2-dimension-color');
+		const trigger = screen.getByTestId('panel-editor-v2-dimension-colorBy');
 		await user.click(
 			trigger.querySelector('.ant-select-selector') as HTMLElement,
 		);
@@ -133,14 +133,14 @@ describe('DimensionsSection', () => {
 		);
 
 		expect(onChange).toHaveBeenLastCalledWith({
-			color: ['k8s.namespace.name', 'service.name'],
+			colorBy: ['k8s.namespace.name', 'service.name'],
 		});
 	});
 
 	it('explains every field from an info icon', () => {
 		render(<DimensionsSection value={undefined} onChange={jest.fn()} />);
 
-		['x', 'y', 'size', 'color'].forEach((dimension) => {
+		['x', 'y', 'sizeBy', 'colorBy'].forEach((dimension) => {
 			expect(
 				screen.getByTestId(`panel-editor-v2-dimension-${dimension}-info`),
 			).toBeInTheDocument();
@@ -158,21 +158,21 @@ describe('DimensionsSection', () => {
 
 		expect(screen.getByText('Every group key')).toBeInTheDocument();
 		expect(
-			screen.getByTestId('panel-editor-v2-dimension-color-info'),
+			screen.getByTestId('panel-editor-v2-dimension-colorBy-info'),
 		).toBeInTheDocument();
 	});
 
 	it('keeps a selected colour key the results no longer have', () => {
 		render(
 			<DimensionsSection
-				value={{ color: ['host.name'] }}
+				value={{ colorBy: ['host.name'] }}
 				onChange={jest.fn()}
 				groupColumns={['service.name']}
 			/>,
 		);
 
 		expect(
-			screen.getByTestId('panel-editor-v2-dimension-color'),
+			screen.getByTestId('panel-editor-v2-dimension-colorBy'),
 		).toHaveTextContent('host.name (not in results)');
 	});
 
@@ -182,7 +182,7 @@ describe('DimensionsSection', () => {
 		expect(screen.getByText('No group-by labels')).toBeInTheDocument();
 		expect(
 			screen
-				.getByTestId('panel-editor-v2-dimension-color')
+				.getByTestId('panel-editor-v2-dimension-colorBy')
 				.classList.contains('ant-select-disabled'),
 		).toBe(true);
 	});

@@ -62,11 +62,14 @@ const HISTOGRAM_PANEL = {
 	kind: 'Panel',
 	spec: { plugin: { kind: 'signoz/HistogramPanel', spec: {} }, queries: [] },
 } as unknown as DashboardtypesPanelDTO;
-const scatterPanel = (color?: string[]): DashboardtypesPanelDTO =>
+const scatterPanel = (colorBy?: string[]): DashboardtypesPanelDTO =>
 	({
 		kind: 'Panel',
 		spec: {
-			plugin: { kind: 'signoz/ScatterPlotPanel', spec: { dimensions: { color } } },
+			plugin: {
+				kind: 'signoz/ScatterPlotPanel',
+				spec: { dimensions: { colorBy } },
+			},
 			queries: [],
 		},
 	}) as unknown as DashboardtypesPanelDTO;
