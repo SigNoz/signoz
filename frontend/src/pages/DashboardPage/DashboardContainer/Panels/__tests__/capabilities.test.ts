@@ -70,6 +70,7 @@ const EXPECTED_QUERY_MODES: Record<PanelKind, QueryMode[]> = {
 		PROM,
 		QueryMode.AI_QUERY_BUILDER,
 	],
+	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/PieChartPanel': [
 		QUERY_BUILDER,
 		CLICKHOUSE,
