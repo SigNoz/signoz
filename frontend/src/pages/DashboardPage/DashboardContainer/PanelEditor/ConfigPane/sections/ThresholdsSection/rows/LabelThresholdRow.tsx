@@ -4,11 +4,11 @@ import { Input } from 'antd';
 import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
 import { formatPanelValue } from 'pages/DashboardPage/DashboardContainer/Panels/utils/formatPanelValue';
 
+import ThresholdAmountField from './shared/ThresholdAmountField';
 import ThresholdColorField from './shared/ThresholdColorField';
+import ThresholdMarker from './shared/ThresholdMarker';
 import ThresholdRowShell from './shared/ThresholdRowShell';
-import ThresholdUnitField from './shared/ThresholdUnitField';
 import { useThresholdDraft } from './shared/useThresholdDraft';
-import ThresholdValueField from './shared/ThresholdValueField';
 
 import styles from '../ThresholdsSection.module.scss';
 
@@ -18,6 +18,7 @@ interface LabelThresholdRowProps {
 	/** Panel formatting unit — scopes the unit picker to its category (V1 parity). */
 	yAxisUnit?: string;
 	isEditing: boolean;
+	isNew: boolean;
 	onEdit: () => void;
 	onSave: (next: DashboardtypesThresholdWithLabelDTO) => void;
 	onLiveChange: (next: DashboardtypesThresholdWithLabelDTO) => void;
@@ -31,6 +32,7 @@ function LabelThresholdRow({
 	threshold,
 	yAxisUnit,
 	isEditing,
+	isNew,
 	onEdit,
 	onSave,
 	onLiveChange,
@@ -48,52 +50,44 @@ function LabelThresholdRow({
 		onSave({ ...draft, label: draft.label ?? '' });
 	}, [onSave, draft]);
 
-	const summary = (
-		<>
-			<span className={styles.viewValue}>
-				{formatPanelValue(threshold.value, threshold.unit)}
-			</span>
-			{threshold.label && (
-				<span className={styles.viewLabel}>{threshold.label}</span>
-			)}
-		</>
-	);
-
 	return (
 		<ThresholdRowShell
 			index={index}
 			testIdPrefix="threshold"
-			color={threshold.color}
+			marker={<ThresholdMarker kind="line" color={threshold.color} />}
 			isEditing={isEditing}
-			summary={summary}
+			isNew={isNew}
+			title={`Line at ${formatPanelValue(threshold.value, threshold.unit)}`}
+			subtitle={threshold.label}
 			onEdit={onEdit}
 			onSave={handleSave}
 			onDiscard={onDiscard}
 			onRemove={onRemove}
 		>
+			<ThresholdAmountField
+				label="Draw a line at"
+				testIdPrefix="threshold"
+				index={index}
+				value={draft.value}
+				onValueChange={setValue}
+				unit={draft.unit}
+				scopeUnit={yAxisUnit}
+				scopeLabel="y-axis unit"
+				onUnitChange={(unit): void => setDraft((d) => ({ ...d, unit }))}
+			/>
 			<ThresholdColorField
 				testId={`threshold-color-${index}`}
 				value={draft.color}
 				onChange={(color): void => setDraft((d) => ({ ...d, color }))}
 			/>
-			<ThresholdValueField
-				testId={`threshold-value-${index}`}
-				value={draft.value}
-				onChange={setValue}
-			/>
-			<ThresholdUnitField
-				testId={`threshold-unit-${index}`}
-				invalidTestId={`threshold-unit-invalid-${index}`}
-				value={draft.unit}
-				scopeUnit={yAxisUnit}
-				scopeLabel="y-axis unit"
-				onChange={(unit): void => setDraft((d) => ({ ...d, unit }))}
-			/>
 			<div className={styles.field}>
-				<Typography.Text className={styles.fieldLabel}>Label</Typography.Text>
+				<Typography.Text className={styles.fieldLabel}>
+					Label <span className={styles.optional}>· optional</span>
+				</Typography.Text>
 				<Input
 					data-testid={`threshold-label-${index}`}
-					placeholder="Optional"
+					aria-label="Label"
+					placeholder="e.g. SLO breach"
 					value={draft.label ?? ''}
 					onChange={(e): void => setDraft((d) => ({ ...d, label: e.target.value }))}
 				/>

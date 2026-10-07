@@ -12,6 +12,7 @@ import { useConfirmableAction } from 'hooks/useConfirmableAction';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { useUnloadPrompt } from '../hooks/useUnloadPrompt';
 import styles from './Header.module.scss';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
@@ -41,6 +42,8 @@ function Header({
 	onSwitchToView,
 	onClose,
 }: HeaderProps): JSX.Element {
+	useUnloadPrompt(isDirty);
+
 	const discard = useConfirmableAction(
 		useCallback(async (): Promise<void> => {
 			// Only reachable after confirming a discard, which is gated on unsaved edits.
