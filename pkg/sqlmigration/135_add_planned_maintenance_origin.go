@@ -35,6 +35,17 @@ func (migration *addPlannedMaintenanceOrigin) Register(migrations *migrate.Migra
 }
 
 func (migration *addPlannedMaintenanceOrigin) Up(ctx context.Context, db *bun.DB) error {
+	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("planned_maintenance"))
+	if err != nil {
+		return err
+	}
+
+	// The NOT NULL column makes sqlite recreate the table; planned_maintenance_rule
+	// holds FKs into it, so enforcement is off for the duration, like migration 070.
+	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -43,11 +54,6 @@ func (migration *addPlannedMaintenanceOrigin) Up(ctx context.Context, db *bun.DB
 	defer func() {
 		_ = tx.Rollback()
 	}()
-
-	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("planned_maintenance"))
-	if err != nil {
-		return err
-	}
 
 	column := &sqlschema.Column{
 		Name:     sqlschema.ColumnName("origin"),
@@ -62,7 +68,15 @@ func (migration *addPlannedMaintenanceOrigin) Up(ctx context.Context, db *bun.DB
 		}
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, true); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (migration *addPlannedMaintenanceOrigin) Down(ctx context.Context, db *bun.DB) error {
