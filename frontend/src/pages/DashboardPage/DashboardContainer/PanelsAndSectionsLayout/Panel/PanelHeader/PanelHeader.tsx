@@ -10,6 +10,8 @@ import type { PanelTimePreferenceLabel } from 'pages/DashboardPage/DashboardCont
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import type { PanelActionsConfig } from '../Panel';
+import { getQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+
 import PanelActionsMenu from '../PanelActionsMenu/PanelActionsMenu';
 import { EMPTY_PANEL_QUERY_DATA } from '../utils/emptyPanelQueryData';
 import PanelHeaderSearch from './PanelHeaderSearch';
@@ -85,6 +87,18 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 		[panel],
 	);
 
+	const queryData = query?.data;
+	const dataWarningDetail = useMemo(
+		() =>
+			queryData
+				? (getQueryPanelDefinition(panel.spec.plugin.kind)?.getDataWarning?.(
+						panel,
+						queryData,
+					) ?? null)
+				: null,
+		[queryData, panel],
+	);
+
 	/**
 	 * Hide the entire header when there's no title, description, or status to show,
 	 * and the actions menu is suppressed (editor preview).
@@ -95,6 +109,7 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 		!errorDetail &&
 		!warningDetail &&
 		!multiQueryWarningDetail &&
+		!dataWarningDetail &&
 		hideActions
 	) {
 		return <Fragment />;
@@ -150,6 +165,13 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 						variant="warning"
 						detail={multiQueryWarningDetail}
 						testId="panel-status-config-warning"
+					/>
+				)}
+				{dataWarningDetail && (
+					<PanelStatusPopover
+						variant="warning"
+						detail={dataWarningDetail}
+						testId="panel-status-data-warning"
 					/>
 				)}
 				{/* Renders nothing when no action survives its gates (kind/role/context). */}

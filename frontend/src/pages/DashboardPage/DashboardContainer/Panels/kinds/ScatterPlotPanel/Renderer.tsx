@@ -12,8 +12,6 @@ import {
 	prepareScatterChartData,
 } from 'lib/visualization/charts/Scatter/utils';
 import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
-import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
-import { getScalarResults } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
 
 import NoData from '../../components/NoData/NoData';
 import PanelMessage from '../../components/PanelMessage/PanelMessage';
@@ -32,13 +30,10 @@ import {
 	shouldSaveSelectionPreference,
 } from '../../utils/selectionPreferences';
 
-import ScatterPlotFooter from './components/ScatterPlotFooter/ScatterPlotFooter';
-import {
-	getScatterPlotEmptyMessage,
-	getScatterPlotFooterText,
-} from './messages';
+import { getScatterPlotEmptyMessage } from './messages';
 import { resolvePointOpacity, resolvePointSize } from './points';
 import { prepareScatterPlotData } from './prepareData';
+import { getScatterTable } from './scatterTable';
 import styles from './Renderer.module.scss';
 import { ScatterPlotDataStatus } from './types';
 import { toScatterAxisOptions } from './utils';
@@ -62,17 +57,7 @@ function ScatterPlotPanelRenderer({
 		[panel.spec.plugin.spec],
 	);
 
-	// V5 joins every query into one scalar result, so the first non-empty table
-	// holds every group.
-	const table = useMemo(
-		() =>
-			prepareScalarTables({
-				results: getScalarResults(data.response),
-				legendMap: data.legendMap ?? {},
-				requestPayload: data.requestPayload,
-			}).find((candidate) => candidate.columns.length > 0),
-		[data.response, data.legendMap, data.requestPayload],
-	);
+	const table = useMemo(() => getScatterTable(data), [data]);
 
 	const scatterData = useMemo(
 		() =>
@@ -96,7 +81,6 @@ function ScatterPlotPanelRenderer({
 	);
 
 	const emptyMessage = getScatterPlotEmptyMessage(scatterData);
-	const footerText = getScatterPlotFooterText(scatterData);
 
 	const readyData =
 		scatterData.status === ScatterPlotDataStatus.Ready &&
@@ -230,7 +214,6 @@ function ScatterPlotPanelRenderer({
 						/>
 					)}
 			</div>
-			{readyData && footerText && <ScatterPlotFooter text={footerText} />}
 		</div>
 	);
 }

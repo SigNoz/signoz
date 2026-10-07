@@ -99,7 +99,7 @@ describe('ScatterPlotPanelRenderer', () => {
 		expect(getByText('0 of 1 group plotted')).toBeInTheDocument();
 	});
 
-	it('plots once two value columns line up for a group, and says how many did', () => {
+	it('plots once two value columns line up for a group', () => {
 		const { getByTestId, queryByTestId } = renderPanel(
 			dataWith(
 				['A', 'B'],
@@ -112,17 +112,6 @@ describe('ScatterPlotPanelRenderer', () => {
 
 		expect(getByTestId('scatter-plot-panel-renderer')).toBeInTheDocument();
 		expect(queryByTestId('panel-no-data')).not.toBeInTheDocument();
-		expect(getByTestId('scatter-plot-footer')).toHaveTextContent(
-			'Showing 1 of 2 groups',
-		);
-	});
-
-	it('has no footer when every group plots', () => {
-		const { queryByTestId } = renderPanel(
-			dataWith(['A', 'B'], [['cart', 120, 340]]),
-		);
-
-		expect(queryByTestId('scatter-plot-footer')).not.toBeInTheDocument();
 	});
 
 	it('keeps the chart area mounted through an empty state, so it plots again on return', async () => {
