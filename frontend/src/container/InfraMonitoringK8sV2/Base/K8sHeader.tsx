@@ -142,6 +142,7 @@ function K8sHeader({
 					onStageRunQuery={handleStageRunQuery}
 					handleCancelQuery={handleCancelQuery}
 					className={styles.k8SRunButton}
+					testId="list-run-query-btn"
 				/>
 			</div>
 

@@ -25,6 +25,8 @@ export function ExpandButtonWrapper({
 			<Button
 				variant="ghost"
 				color="secondary"
+				data-testid="expand-row-button"
+				aria-expanded={localIsExpanded}
 				onClick={(e): void => {
 					e.stopPropagation();
 					setLocalIsExpanded((v) => !v);
