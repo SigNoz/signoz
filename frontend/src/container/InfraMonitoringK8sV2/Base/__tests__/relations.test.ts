@@ -21,12 +21,15 @@ const NODE_ATTRIBUTES = {
 };
 
 describe('getRelatedCategories', () => {
-	it('offers what the pod holds and what holds it, never itself', () => {
+	it('offers every other kubernetes category, never itself', () => {
 		expect(
 			getRelatedCategories(InfraMonitoringEntity.PODS, POD_ATTRIBUTES),
 		).toStrictEqual([
 			InfraMonitoringEntity.CONTAINERS,
 			InfraMonitoringEntity.DEPLOYMENTS,
+			InfraMonitoringEntity.STATEFULSETS,
+			InfraMonitoringEntity.DAEMONSETS,
+			InfraMonitoringEntity.JOBS,
 			InfraMonitoringEntity.VOLUMES,
 			InfraMonitoringEntity.NODES,
 			InfraMonitoringEntity.NAMESPACES,
@@ -34,11 +37,26 @@ describe('getRelatedCategories', () => {
 		]);
 	});
 
-	it('leaves out workloads the pod has no owner attribute for', () => {
-		// A pod owned by a deployment is not related to every statefulset beside it
+	it('scopes a category it has no relation to by what they share', () => {
+		// Not this pod's statefulsets, which it has none of: the ones beside it
 		expect(
-			getRelatedCategories(InfraMonitoringEntity.PODS, POD_ATTRIBUTES),
-		).not.toContain(InfraMonitoringEntity.STATEFULSETS);
+			buildRelatedFilterExpression(
+				InfraMonitoringEntity.PODS,
+				InfraMonitoringEntity.STATEFULSETS,
+				POD_ATTRIBUTES,
+			),
+		).toBe("k8s.cluster.name = 'prod' AND k8s.namespace.name = 'shop'");
+	});
+
+	it('falls back to the cluster where that is all two categories share', () => {
+		// Deployment metrics carry no node, so this relation is unexpressible
+		expect(
+			buildRelatedFilterExpression(
+				InfraMonitoringEntity.NODES,
+				InfraMonitoringEntity.DEPLOYMENTS,
+				NODE_ATTRIBUTES,
+			),
+		).toBe("k8s.cluster.name = 'prod'");
 	});
 
 	it('finds nothing for a host, which is not a kubernetes resource', () => {

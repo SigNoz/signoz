@@ -134,10 +134,11 @@ function matchingKeys(
 }
 
 /**
- * The single attribute that ties a target to the drawer's resource: the
- * resource itself when the target's records belong to it (the containers of
- * this pod), otherwise the target's own name as the resource knows it (the
- * node this pod runs on).
+ * The attribute that ties a target to the drawer's resource: the resource
+ * itself when the target's records belong to it (the containers of this pod),
+ * otherwise the target's own name as the resource knows it (the node this pod
+ * runs on). Null when neither holds, which leaves the target scoped only by
+ * the ancestors the two share.
  */
 function relationKey(
 	source: InfraMonitoringEntity,
@@ -158,21 +159,19 @@ function relationKey(
 }
 
 /**
- * A category is related when the drawer's resource either names one of its
- * records (its node, its namespace) or is something its records belong to
- * (the pods on this node). Sharing only a cluster or a namespace is not a
- * relation: it would list everything alongside, not what this resource holds.
- *
- * Every kubernetes category relates to something, which is why each declares
- * the overview tab. A host does not: its metadata carries no kubernetes
- * attribute, so nothing here would match it.
+ * Every category the drawer's resource can scope a list of, which for a
+ * kubernetes resource is all of them: where no closer relation exists the two
+ * still share a cluster. A target is left out only when nothing is shared at
+ * all, so a list is never asked for unscoped.
  */
 export function getRelatedCategories(
 	source: InfraMonitoringEntity,
 	attributes: EntityAttributes,
 ): InfraMonitoringEntity[] {
 	return DISPLAY_ORDER.filter(
-		(target) => !!relationKey(source, target, attributes),
+		(target) =>
+			target !== source &&
+			buildRelatedFilterClauses(source, target, attributes).length > 0,
 	);
 }
 
@@ -191,17 +190,17 @@ export interface RelatedFilterClause {
 	value: string;
 }
 
-/** Scope clauses, broadest first, so the last one carries the relation. */
+/**
+ * Scope clauses, broadest first. The last carries the relation where one
+ * exists; without one the list is scoped to the shared ancestors, which reads
+ * as "beside this resource" rather than "belonging to it".
+ */
 export function buildRelatedFilterClauses(
 	source: InfraMonitoringEntity,
 	target: InfraMonitoringEntity,
 	attributes: EntityAttributes,
 ): RelatedFilterClause[] {
 	const key = relationKey(source, target, attributes);
-
-	if (!key) {
-		return [];
-	}
 
 	const scope = SCOPE_KEYS.filter(
 		(scopeKey) =>
@@ -210,7 +209,7 @@ export function buildRelatedFilterClauses(
 			!!attributes[scopeKey],
 	);
 
-	return [...scope, key].map((clauseKey) => ({
+	return (key ? [...scope, key] : scope).map((clauseKey) => ({
 		key: clauseKey,
 		value: attributes[clauseKey] as string,
 	}));
