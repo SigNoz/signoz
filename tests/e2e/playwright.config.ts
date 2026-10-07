@@ -108,7 +108,15 @@ export default defineConfig({
 		},
 		{
 			name: 'chromium',
-			use: devices['Desktop Chrome'],
+			use: {
+				...devices['Desktop Chrome'],
+				launchOptions: {
+					// Google Fonts CSS blocks the app script and `load` until it settles,
+					// so a stalled request blanks the page. Failing DNS settles it at once;
+					// a `route` would too, but routing turns off the HTTP cache.
+					args: ['--host-resolver-rules=MAP fonts.googleapis.com ~NOTFOUND'],
+				},
+			},
 			dependencies: ['setup'],
 		},
 		{
