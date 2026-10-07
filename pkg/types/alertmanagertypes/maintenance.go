@@ -454,9 +454,8 @@ func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() (*PlannedMaintenanc
 }
 
 type ListPlannedMaintenanceParams struct {
-	Active    *bool             `query:"active"`
-	Recurring *bool             `query:"recurring"`
-	Origin    MaintenanceOrigin `query:"origin"`
+	Active    *bool `query:"active"`
+	Recurring *bool `query:"recurring"`
 }
 
 type MaintenanceStore interface {

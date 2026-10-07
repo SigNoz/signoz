@@ -12405,10 +12405,6 @@ paths:
         schema:
           nullable: true
           type: boolean
-      - in: query
-        name: origin
-        schema:
-          $ref: '#/components/schemas/AlertmanagertypesMaintenanceOrigin'
       responses:
         "200":
           content:

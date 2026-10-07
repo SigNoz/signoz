@@ -103,25 +103,14 @@ def test_mute_lifecycle(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["data"]["muted"] is True
 
-    # the adhoc mute is visible on the downtime list and filterable by origin
+    # the adhoc mute is visible on the downtime list and carries its origin
     response = requests.get(
         signoz.self.host_configs["8080"].get(DOWNTIME_URL),
-        params={"origin": "adhoc"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
-    adhoc_rows = response.json()["data"]
-    assert [row["id"] for row in adhoc_rows] == [mute["id"]]
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(DOWNTIME_URL),
-        params={"origin": "maintenance"},
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["data"] == []
+    assert [(row["id"], row["origin"]) for row in response.json()["data"]] == [(mute["id"], "adhoc")]
 
     # re-mute replaces the end time on the same row, no second row appears
     response = requests.post(
@@ -158,12 +147,11 @@ def test_mute_lifecycle(
 
         response = requests.get(
             signoz.self.host_configs["8080"].get(DOWNTIME_URL),
-            params={"origin": "adhoc"},
             headers={"Authorization": f"Bearer {token}"},
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK
-        assert len(response.json()["data"]) == expected_rows
+        assert len([row for row in response.json()["data"] if row["origin"] == "adhoc"]) == expected_rows
 
     # the overlay drops after unmute
     response = requests.get(
@@ -353,12 +341,11 @@ def test_delete_rule_cleans_up_mute(
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(DOWNTIME_URL),
-        params={"origin": "adhoc"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["data"] == []
+    assert [row for row in response.json()["data"] if row["origin"] == "adhoc"] == []
 
 
 def test_delete_rule_blocked_by_window_keeps_mute(

@@ -12380,10 +12380,6 @@ export type ListDowntimeSchedulesParams = {
 	 * @description undefined
 	 */
 	recurring?: boolean | null;
-	/**
-	 * @description undefined
-	 */
-	origin?: AlertmanagertypesMaintenanceOriginDTO;
 };
 
 export type ListDowntimeSchedules200 = {
