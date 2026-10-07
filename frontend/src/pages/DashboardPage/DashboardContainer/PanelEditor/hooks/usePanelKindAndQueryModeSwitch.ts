@@ -38,6 +38,10 @@ import {
 	getSwitchedPluginSpec,
 	type SwitchedPluginSpec,
 } from '../getSwitchedPluginSpec';
+import {
+	withPercentileHistogramAggregation,
+	withSingleHeatmapQuery,
+} from '../utils/heatmapQuery';
 import { useQueryModeChange } from './useQueryModeChange';
 
 // V1's handleQueryChange clears orderBy for lists; re-seed the fresh-list default (timestamp desc).
@@ -173,9 +177,13 @@ export function usePanelKindAndQueryModeSwitch({
 					panelTypeRef.current,
 				);
 				// Match a fresh list panel's default order so the builder's Order By isn't empty.
-				return newKind === 'signoz/ListPanel'
-					? withDefaultListOrder(transformed)
-					: transformed;
+				const ordered =
+					newKind === 'signoz/ListPanel'
+						? withDefaultListOrder(transformed)
+						: transformed;
+				return newKind === 'signoz/HeatmapPanel'
+					? withSingleHeatmapQuery(ordered)
+					: withPercentileHistogramAggregation(ordered);
 			};
 			// Tab unused on this kind: AI gets a fresh seed, Query Builder reuses `source` untagged.
 			const seedTargetTab = (source: Query): Query =>

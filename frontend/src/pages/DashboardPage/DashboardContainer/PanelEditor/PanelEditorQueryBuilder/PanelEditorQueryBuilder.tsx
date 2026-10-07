@@ -21,7 +21,10 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { isRawRequest } from '../../Panels/types/panelCapabilities';
+import {
+	getQueryModeSignals,
+	isRawRequest,
+} from '../../Panels/types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDefinition';
 import { toPanelType } from '../../Panels/types/panelKind';
 import { QueryMode } from 'types/common/dashboard';
@@ -105,7 +108,10 @@ function PanelEditorQueryBuilder({
 						<QueryBuilderV2
 							panelType={panelType}
 							fieldsConfig={panelDefinition.queryBuilderFields}
-							allowedDataSources={panelDefinition.supportedSignals}
+							allowedDataSources={getQueryModeSignals(
+								panelDefinition.supportedQueryModes,
+								QueryMode.QUERY_BUILDER,
+							)}
 							showTraceOperator={!isRawQuery}
 							version="v3"
 							isRawQuery={isRawQuery}

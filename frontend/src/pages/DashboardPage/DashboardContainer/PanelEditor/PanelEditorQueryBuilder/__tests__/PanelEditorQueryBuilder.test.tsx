@@ -288,7 +288,7 @@ describe('PanelEditorQueryBuilder signal dropdown (driven by the capabilities gu
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockUseQueryBuilder.mockReturnValue({
-			currentQuery: { queryType: EQueryType.QUERY_BUILDER },
+			currentQuery: BUILDER_QUERY,
 			redirectWithQueryBuilderData: jest.fn(),
 		});
 	});
