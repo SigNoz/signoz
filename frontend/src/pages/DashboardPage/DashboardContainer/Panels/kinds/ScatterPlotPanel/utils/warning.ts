@@ -2,6 +2,8 @@ import type { PanelStatusDetail } from 'pages/DashboardPage/DashboardContainer/P
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import type { PanelOfKind } from '../../../types/rendererProps';
+import { getBuilderQueries } from '../../../utils/getBuilderQueries';
+import { findGroupByMismatch } from './groupByMismatch';
 import { getScatterPlotWarning } from './messages';
 import { prepareScatterPlotData } from './prepareData';
 import { getScatterTable } from './scatterTable';
@@ -18,5 +20,6 @@ export function getScatterPlotDataWarning(
 			axes,
 			columnUnits: formatting?.columnUnits ?? {},
 		}),
+		findGroupByMismatch(getBuilderQueries(panel.spec.queries)),
 	);
 }

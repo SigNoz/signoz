@@ -30,6 +30,7 @@ import {
 	shouldSaveSelectionPreference,
 } from '../../utils/selectionPreferences';
 
+import { findGroupByMismatch } from './utils/groupByMismatch';
 import { getScatterPlotEmptyMessage } from './utils/messages';
 import { resolvePointOpacity, resolvePointSize } from './utils/points';
 import { prepareScatterPlotData } from './utils/prepareData';
@@ -80,7 +81,17 @@ function ScatterPlotPanelRenderer({
 		[spec.legend?.position],
 	);
 
-	const emptyMessage = getScatterPlotEmptyMessage(scatterData);
+	const builderQueries = useMemo(
+		() => getBuilderQueries(panel.spec.queries || []),
+		[panel.spec.queries],
+	);
+
+	const groupByMismatch = useMemo(
+		() => findGroupByMismatch(builderQueries),
+		[builderQueries],
+	);
+
+	const emptyMessage = getScatterPlotEmptyMessage(scatterData, groupByMismatch);
 
 	const readyData =
 		scatterData.status === ScatterPlotDataStatus.Ready &&
@@ -129,11 +140,6 @@ function ScatterPlotPanelRenderer({
 		(seriesIndex: number, dataIndex: number): ScatterPointLabel[] =>
 			readyData?.pointLabels[seriesIndex - 1]?.[dataIndex] ?? [],
 		[readyData],
-	);
-
-	const builderQueries = useMemo(
-		() => getBuilderQueries(panel.spec.queries || []),
-		[panel.spec.queries],
 	);
 
 	const handlePointClick = useCallback(
