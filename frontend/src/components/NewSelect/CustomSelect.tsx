@@ -21,7 +21,7 @@ import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { capitalize, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -238,7 +238,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					<div className="option-content">
 						<div>{highlightMatchedText(String(option.label || ''), searchText)}</div>
 						{option.type === 'custom' && (
-							<div className="option-badge">{capitalize(option.type)}</div>
+							<div className="option-badge">{option.type.charAt(0).toUpperCase() + option.type.slice(1).toLowerCase()}</div>
 						)}
 					</div>
 				</div>

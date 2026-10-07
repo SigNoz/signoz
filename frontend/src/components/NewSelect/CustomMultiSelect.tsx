@@ -26,7 +26,7 @@ import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { capitalize, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -767,7 +767,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								{highlightMatchedText(String(option.label || ''), searchText)}
 							</Typography.Text>
 							{(option.type === 'custom' || option.type === 'regex') && (
-								<div className="option-badge">{capitalize(option.type)}</div>
+								<div className="option-badge">{option.type.charAt(0).toUpperCase() + option.type.slice(1).toLowerCase()}</div>
 							)}
 							{option.value && ensureValidOption(option.value) && (
 								<Button

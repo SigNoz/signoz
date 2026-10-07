@@ -64,7 +64,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { cloneDeep, isEqual, omit } from 'lodash-es';
+import { cloneDeep, isEqual } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { FormattingOptions } from 'providers/preferences/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -417,7 +417,8 @@ function ExplorerOptions({
 		let backwardCompatibleOptions = options;
 
 		if (!extraData?.version) {
-			backwardCompatibleOptions = omit(options, 'version');
+			backwardCompatibleOptions = { ...options };
+			delete backwardCompatibleOptions.version;
 		}
 
 		// Use the correct default columns based on the current data source
