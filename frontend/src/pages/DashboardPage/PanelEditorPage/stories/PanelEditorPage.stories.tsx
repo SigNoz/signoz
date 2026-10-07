@@ -166,6 +166,12 @@ export const ConfigHistogram: Story = {
 	play: expandConfigSections,
 };
 
+/** A new heatmap panel's config pane, every section expanded. */
+export const ConfigHeatmap: Story = {
+	args: { panel: 'new', newPanelKind: 'heatmap' },
+	play: expandConfigSections,
+};
+
 /** A new list panel's config pane, every section expanded. */
 export const ConfigList: Story = {
 	args: { panel: 'new', newPanelKind: 'list' },
@@ -176,4 +182,22 @@ export const ConfigList: Story = {
 export const ConfigText: Story = {
 	args: { panel: 'new', newPanelKind: 'text' },
 	play: expandConfigSections,
+};
+
+/**
+ * A saved panel with settings changed: each changed setting and its section
+ * carry the unsaved-changes dot.
+ */
+export const ConfigChanged: Story = {
+	play: async (context) => {
+		const canvas = within(context.canvasElement);
+
+		await expandConfigSections(context);
+		await userEvent.click(
+			await canvas.findByTestId('panel-editor-v2-log-scale-log'),
+		);
+		await userEvent.click(
+			await canvas.findByTestId('panel-editor-v2-line-style-dashed'),
+		);
+	},
 };
