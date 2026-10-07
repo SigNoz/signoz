@@ -56,13 +56,19 @@ jest.mock('components/FieldsSelector', () => ({
 }));
 
 const baseProps = {
-	filterMetadata: {
-		startTime: 0,
-		endTime: 1,
-		traceId: 'trace-123',
-	},
 	onFilteredSpansChange: jest.fn(),
 	isDataLoaded: false,
+};
+
+const SUMMARY = {
+	startTimestampMillis: 1_700_000_000_000,
+	endTimestampMillis: 1_700_000_120_000,
+	rootServiceName: 'frontend',
+	rootServiceEntryPoint: 'GET /checkout',
+	rootSpanStatusCode: '200',
+	hasMissingSpans: false,
+	totalSpansCount: 3,
+	totalErrorSpansCount: 0,
 };
 
 describe('TraceDetailsHeader – back button', () => {
@@ -97,6 +103,26 @@ describe('TraceDetailsHeader – back button', () => {
 describe('TraceDetailsHeader – action cluster', () => {
 	beforeEach(() => {
 		mockReplace.mockClear();
+		jest
+			.mocked(useTraceSummary)
+			.mockReturnValue({ data: SUMMARY, isLoading: false });
+	});
+
+	afterEach(() => {
+		jest
+			.mocked(useTraceSummary)
+			.mockReturnValue({ data: undefined, isLoading: false });
+	});
+
+	it('does not render the action buttons until the summary loads', () => {
+		jest
+			.mocked(useTraceSummary)
+			.mockReturnValue({ data: undefined, isLoading: true });
+		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
+
+		expect(
+			screen.queryByRole('button', { name: /^analytics$/i }),
+		).not.toBeInTheDocument();
 	});
 
 	it('does not render the action buttons while data is still loading', () => {

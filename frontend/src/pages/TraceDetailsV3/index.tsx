@@ -322,19 +322,6 @@ function TraceDetailsV3(): JSX.Element {
 		[],
 	);
 
-	const filterMetadata = useMemo(
-		() => ({
-			startTime: (traceData?.payload?.startTimestampMillis || 0) / 1e3,
-			endTime: (traceData?.payload?.endTimestampMillis || 0) / 1e3,
-			traceId: traceId || '',
-		}),
-		[
-			traceData?.payload?.startTimestampMillis,
-			traceData?.payload?.endTimestampMillis,
-			traceId,
-		],
-	);
-
 	const showNoData =
 		!isFetchingTraceData &&
 		(!!errorFetchingTraceData || !traceData?.payload?.spans?.length);
@@ -373,7 +360,6 @@ function TraceDetailsV3(): JSX.Element {
 		<TraceStoreSync availableColorByFields={availableColorByFields}>
 			<div className={styles.root}>
 				<TraceDetailsHeader
-					filterMetadata={filterMetadata}
 					onFilteredSpansChange={handleFilteredSpansChange}
 					isDataLoaded={!!traceData?.payload?.spans?.length && !showNoData}
 				/>

@@ -32,14 +32,7 @@ import { useTraceSummary } from './useTraceSummary';
 import styles from './TraceDetailsHeader.module.scss';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
-interface FilterMetadata {
-	startTime: number;
-	endTime: number;
-	traceId: string;
-}
-
 interface TraceDetailsHeaderProps {
-	filterMetadata: FilterMetadata;
 	onFilteredSpansChange: (spanIds: string[], isFilterActive: boolean) => void;
 	isDataLoaded?: boolean;
 }
@@ -63,7 +56,6 @@ function DetailsLoader(): JSX.Element {
 }
 
 function TraceDetailsHeader({
-	filterMetadata,
 	onFilteredSpansChange,
 	isDataLoaded,
 }: TraceDetailsHeaderProps): JSX.Element {
@@ -108,6 +100,9 @@ function TraceDetailsHeader({
 		setShowTraceDetails((prev) => !prev);
 	}, []);
 
+	const startTime = (traceSummary?.startTimestampMillis ?? 0) / 1e3;
+	const endTime = (traceSummary?.endTimestampMillis ?? 0) / 1e3;
+
 	const durationMs = traceSummary
 		? traceSummary.endTimestampMillis - traceSummary.startTimestampMillis
 		: 0;
@@ -134,7 +129,7 @@ function TraceDetailsHeader({
 						/>
 					</div>
 				)}
-				{isDataLoaded && (
+				{isDataLoaded && traceSummary && (
 					<div
 						className={cx(
 							styles.filterSection,
@@ -163,9 +158,9 @@ function TraceDetailsHeader({
 										onToggleTraceDetails={handleToggleTraceDetails}
 										onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
 										traceId={traceID || ''}
-										startTime={filterMetadata.startTime}
-										endTime={filterMetadata.endTime}
-										totalSpansCount={traceSummary?.totalSpansCount || 0}
+										startTime={startTime}
+										endTime={endTime}
+										totalSpansCount={traceSummary.totalSpansCount}
 									/>
 								</div>
 							</TooltipProvider>
@@ -175,9 +170,9 @@ function TraceDetailsHeader({
 							className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}
 						>
 							<Filters
-								startTime={filterMetadata.startTime}
-								endTime={filterMetadata.endTime}
-								traceID={filterMetadata.traceId}
+								startTime={startTime}
+								endTime={endTime}
+								traceID={traceID || ''}
 								onFilteredSpansChange={onFilteredSpansChange}
 								isExpanded={isFilterExpanded}
 								onExpand={(): void => setIsFilterExpanded(true)}
