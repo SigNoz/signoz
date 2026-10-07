@@ -202,3 +202,43 @@ func TestGetSpanDurationByField(t *testing.T) {
 		})
 	}
 }
+
+func TestGetThreadSpans(t *testing.T) {
+	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, attributes_string, attributes_number, attributes_bool, events, links as references"
+	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND "
+	orderSQL := " ORDER BY timestamp ASC, span_id ASC LIMIT ?"
+	jsonInsideTrace := testStart.Add(500 * time.Second)
+
+	testCases := []struct {
+		name        string
+		jsonOn      bool
+		jsonRelease *time.Time
+		selectSQL   string
+		whereSQL    string
+	}{
+		{
+			name:        "FlagOff_ReadsAndFiltersLegacyMaps",
+			jsonRelease: &jsonInsideTrace,
+			selectSQL:   selectSQL,
+			whereSQL:    "(mapContains(attributes_string, 'gen_ai.input.messages') OR mapContains(attributes_string, 'gen_ai.output.messages'))",
+		},
+		{
+			name:        "FlagOn_ReleasedDuringTrace_ReadsJSONFiltersJSONThenMaps",
+			jsonOn:      true,
+			jsonRelease: &jsonInsideTrace,
+			selectSQL:   selectSQL + ", attributes",
+			whereSQL:    "(multiIf(attributes.`gen_ai.input.messages` IS NOT NULL, attributes.`gen_ai.input.messages`::String, mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.output.messages` IS NOT NULL, attributes.`gen_ai.output.messages`::String, mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL) IS NOT NULL)",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): testCase.jsonOn})
+			s := newTestStoreWithMetadata(sqlmock.QueryMatcherRegexp, genAIMetadataStore(testCase.jsonRelease), fl)
+			s.Mock().ExpectSelect(regexp.QuoteMeta(testCase.selectSQL + fromSQL + testCase.whereSQL + orderSQL)).
+				WillReturnRows(cmock.NewRows(nil, nil))
+			_, _ = s.Store().GetThreadSpans(context.Background(), valuer.GenerateUUID(), testTraceID, testBounds, spantypes.ThreadPage{Limit: 3})
+			assert.NoError(t, s.Mock().ExpectationsWereMet())
+		})
+	}
+}

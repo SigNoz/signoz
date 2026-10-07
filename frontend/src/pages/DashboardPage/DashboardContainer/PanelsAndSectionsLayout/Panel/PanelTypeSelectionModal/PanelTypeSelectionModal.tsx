@@ -1,19 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Color } from '@signozhq/design-tokens';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import cx from 'classnames';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper } from '@signozhq/ui/drawer';
 
 import { useDashboardSections } from '../../../hooks/useDashboardSections';
-import { PANEL_OPTIONS } from '../../../Panels/registry';
+import { releasePanelPickerTarget } from '../../../store/usePanelPickerTargetStore';
+import type { NewPanelTarget } from '../../../patchOps';
 import type { PanelKind } from '../../../Panels/types/panelKind';
-import PanelTypeSelectionModalFooter from './PanelTypeSelectionModalFooter';
+import AddPanelSplitButton from './AddPanelSplitButton';
+import NewSectionNameInput from './NewSectionNameInput';
+import PanelTypeBrowser from './PanelTypeBrowser';
+import { usePanelPickerDraftSection } from './usePanelPickerDraftSection';
+import { usePanelPickerTarget } from './usePanelPickerTarget';
 import { buildSectionOptions, resolveDefaultSectionValue } from './utils';
+
 import styles from './PanelTypeSelectionModal.module.scss';
+
+const DEFAULT_PANEL_KIND: PanelKind = 'signoz/TimeSeriesPanel';
 
 interface PanelTypeSelectionModalProps {
 	open: boolean;
 	onClose: () => void;
-	onSelect: (panelKind: PanelKind, layoutIndex?: number) => void;
+	onSelect: (panelKind: PanelKind, target?: NewPanelTarget) => void;
 	/** Section the picker opens on; omit → the first section. */
 	defaultLayoutIndex?: number;
 }
@@ -26,89 +33,112 @@ function PanelTypeSelectionModal({
 }: PanelTypeSelectionModalProps): JSX.Element {
 	const sections = useDashboardSections();
 	const options = useMemo(() => buildSectionOptions(sections), [sections]);
-
-	// With more than one section the user must pick a target section, so we keep
-	// the select-then-confirm flow. Otherwise there's nothing to choose: hide the
-	// footer and let a tile click create the panel outright.
 	const hasSectionPicker = options.length > 1;
 
 	const [selectedValue, setSelectedValue] = useState('');
-	const [selectedPanelKind, setSelectedPanelKind] = useState<PanelKind | null>(
-		null,
-	);
+	const [selectedKind, setSelectedKind] =
+		useState<PanelKind>(DEFAULT_PANEL_KIND);
+	const [newSectionTitle, setNewSectionTitle] = useState<string | null>(null);
+	const isCreatingSection = newSectionTitle !== null;
 
-	// Seed the target section on open.
 	useEffect(() => {
 		if (open) {
 			setSelectedValue(resolveDefaultSectionValue(options, defaultLayoutIndex));
-			setSelectedPanelKind(null);
+			setSelectedKind(DEFAULT_PANEL_KIND);
+			setNewSectionTitle(null);
 		}
 	}, [open, options, defaultLayoutIndex]);
 
-	const createPanel = (panelKind: PanelKind): void => {
-		const layoutIndex = selectedValue === '' ? undefined : Number(selectedValue);
-		onSelect(panelKind, layoutIndex);
+	const selectedOption = options.find((o) => o.value === selectedValue);
+	const selectedTarget = selectedOption?.target;
+	const selectedLayoutIndex =
+		selectedTarget?.type === 'section' ? selectedTarget.layoutIndex : undefined;
+	usePanelPickerTarget({
+		open: open && !isCreatingSection,
+		layoutIndex: selectedLayoutIndex,
+		panelKind: selectedKind,
+		outline: hasSectionPicker,
+	});
+	usePanelPickerDraftSection(newSectionTitle, selectedKind, open);
+
+	const handleClose = (): void => {
+		releasePanelPickerTarget(true);
+		onClose();
 	};
 
-	const handleTileClick = (panelKind: PanelKind): void => {
-		if (hasSectionPicker) {
-			setSelectedPanelKind(panelKind);
-			return;
-		}
-		createPanel(panelKind);
-	};
+	const sectionTitle = newSectionTitle?.trim() ?? '';
 
 	const handleConfirm = (): void => {
-		if (selectedPanelKind === null) {
+		if (isCreatingSection && !sectionTitle) {
 			return;
 		}
-		createPanel(selectedPanelKind);
+		releasePanelPickerTarget(false);
+		onSelect(
+			selectedKind,
+			isCreatingSection
+				? { type: 'newSection', title: sectionTitle }
+				: selectedTarget,
+		);
 	};
 
+	const handleSectionChange = (value: string): void => {
+		setSelectedValue(value);
+		setNewSectionTitle(null);
+	};
+
+	let confirmLabel = 'Add panel';
+	if (isCreatingSection) {
+		confirmLabel = 'Add to new section';
+	} else if (hasSectionPicker && selectedOption) {
+		confirmLabel = `Add to ${selectedOption.label}`;
+	}
+
 	return (
-		<DialogWrapper
+		<DrawerWrapper
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
-					onClose();
+					handleClose();
 				}
 			}}
-			title="New Panel"
+			title="New panel"
+			subTitle="Pick a visualization. You can change it later."
+			direction="right"
+			width="wide"
+			testId="panel-type-drawer"
+			drawerDescriptionProps={{ className: styles.body }}
 			footer={
-				hasSectionPicker ? (
-					<PanelTypeSelectionModalFooter
+				<div className={styles.footer}>
+					{isCreatingSection && (
+						<NewSectionNameInput
+							value={newSectionTitle}
+							onChange={setNewSectionTitle}
+							onCancel={(): void => setNewSectionTitle(null)}
+							onSubmit={handleConfirm}
+						/>
+					)}
+					<Button
+						variant="outlined"
+						color="secondary"
+						size="md"
+						onClick={handleClose}
+					>
+						Cancel
+					</Button>
+					<AddPanelSplitButton
+						label={confirmLabel}
 						options={options}
-						selectedValue={selectedValue}
-						onSectionChange={setSelectedValue}
-						isConfirmDisabled={selectedPanelKind === null}
+						value={isCreatingSection ? null : selectedValue}
+						onChange={handleSectionChange}
+						onCreate={(): void => setNewSectionTitle('')}
 						onConfirm={handleConfirm}
+						disabled={isCreatingSection && !sectionTitle}
 					/>
-				) : undefined
+				</div>
 			}
 		>
-			<div className={styles.panelTypeSection}>
-				{hasSectionPicker && (
-					<span className={styles.pickerLabel}>Select panel type</span>
-				)}
-				<div className={styles.grid}>
-					{PANEL_OPTIONS.map(({ kind, displayName, icon: Icon }) => (
-						<button
-							key={kind}
-							type="button"
-							className={cx(styles.panelTypeCard, {
-								[styles.panelTypeCardSelected]: kind === selectedPanelKind,
-							})}
-							data-testid={`panel-type-${kind}`}
-							aria-pressed={kind === selectedPanelKind}
-							onClick={(): void => handleTileClick(kind)}
-						>
-							<Icon size={24} color={Color.BG_ROBIN_400} />
-							{displayName}
-						</button>
-					))}
-				</div>
-			</div>
-		</DialogWrapper>
+			<PanelTypeBrowser selectedKind={selectedKind} onSelect={setSelectedKind} />
+		</DrawerWrapper>
 	);
 }
 
