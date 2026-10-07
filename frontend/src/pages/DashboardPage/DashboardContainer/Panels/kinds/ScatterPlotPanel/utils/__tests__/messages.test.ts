@@ -4,7 +4,7 @@ import {
 	type ScatterPlotData,
 	ScatterPlotDataStatus,
 	type StaleDimension,
-} from '../types';
+} from '../../types';
 
 function ready(counts: {
 	totalGroups: number;

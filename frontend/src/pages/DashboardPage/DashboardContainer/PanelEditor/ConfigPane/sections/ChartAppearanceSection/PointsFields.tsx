@@ -4,7 +4,7 @@ import {
 	POINT_SIZE_BOUNDS,
 	resolvePointOpacity,
 	resolvePointSize,
-} from 'pages/DashboardPage/DashboardContainer/Panels/kinds/ScatterPlotPanel/points';
+} from 'pages/DashboardPage/DashboardContainer/Panels/kinds/ScatterPlotPanel/utils/points';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
 import ConfigRangeSlider from '../../controls/ConfigRangeSlider/ConfigRangeSlider';

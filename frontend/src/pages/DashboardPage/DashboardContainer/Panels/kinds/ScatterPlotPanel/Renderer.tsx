@@ -30,13 +30,13 @@ import {
 	shouldSaveSelectionPreference,
 } from '../../utils/selectionPreferences';
 
-import { getScatterPlotEmptyMessage } from './messages';
-import { resolvePointOpacity, resolvePointSize } from './points';
-import { prepareScatterPlotData } from './prepareData';
-import { getScatterTable } from './scatterTable';
+import { getScatterPlotEmptyMessage } from './utils/messages';
+import { resolvePointOpacity, resolvePointSize } from './utils/points';
+import { prepareScatterPlotData } from './utils/prepareData';
+import { getScatterTable } from './utils/scatterTable';
 import styles from './Renderer.module.scss';
 import { ScatterPlotDataStatus } from './types';
-import { toScatterAxisOptions } from './utils';
+import { toScatterAxisOptions } from './utils/axisOptions';
 
 function ScatterPlotPanelRenderer({
 	panelId,

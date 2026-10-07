@@ -3,9 +3,9 @@ import { ChartScatter } from '@signozhq/icons';
 import type { PanelDefinition } from '../../types/panelDefinition';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
-import { MAX_PLOTTED_GROUPS } from './prepareData';
+import { MAX_PLOTTED_GROUPS } from './utils/prepareData';
 import { sections } from './sections';
-import { getScatterPlotDataWarning } from './warning';
+import { getScatterPlotDataWarning } from './utils/warning';
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
