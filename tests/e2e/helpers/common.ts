@@ -47,6 +47,8 @@ const HARNESS_CONSOLE_NOISE = [
 	'Request failed with status code 404',
 	'client never received a response, or request never left',
 	'ErrorResponseHandler: unclassified error',
+	// Google Fonts, which the chromium project fails at DNS (playwright.config.ts).
+	'Failed to load resource: net::ERR_NAME_NOT_RESOLVED',
 ];
 
 export interface ConsoleWatch {
