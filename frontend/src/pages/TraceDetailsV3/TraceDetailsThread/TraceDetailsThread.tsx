@@ -1,7 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Callout } from '@signozhq/ui/callout';
-import { MessagesSquare } from '@signozhq/icons';
 import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import { useToolCallLinks } from '../AIThreadMessage/useToolCallLinks';
@@ -11,7 +10,7 @@ import { useScrollToAnchorSpan } from './hooks/useScrollToAnchorSpan';
 import { useThreadSpanSelection } from './hooks/useThreadSpanSelection';
 import { useThreadView } from './hooks/useThreadView';
 import { useTraceThread } from './hooks/useTraceThread';
-import ThreadEmptyState from './ThreadEmptyState';
+import ThreadNoAiSpans from './ThreadNoAiSpans';
 import ThreadPageLoader from './ThreadPageLoader';
 import ThreadSpanCard from './ThreadSpanCard';
 import ThreadSpanDetails from './ThreadSpanDetails';
@@ -49,6 +48,10 @@ function TraceDetailsThread(): JSX.Element {
 	);
 
 	const selectedSpan = spans.find((span) => span.span_id === selectedSpanId);
+	const hasNoThread =
+		!isLoading &&
+		anchorStatus !== AnchorStatus.NotFound &&
+		(isError || spans.length === 0);
 
 	const renderBody = (): JSX.Element => {
 		if (isLoading) {
@@ -71,15 +74,8 @@ function TraceDetailsThread(): JSX.Element {
 				/>
 			);
 		}
-		if (isError || spans.length === 0) {
-			return (
-				<ThreadEmptyState
-					icon={<MessagesSquare size={32} />}
-					title="No AI thread for this trace"
-					description="Threads show the input and output messages of LLM spans. This trace has none."
-					testId="thread-empty"
-				/>
-			);
+		if (hasNoThread) {
+			return <ThreadNoAiSpans />;
 		}
 		return (
 			<>
@@ -121,15 +117,17 @@ function TraceDetailsThread(): JSX.Element {
 	return (
 		<div className={styles.root} data-testid="trace-details-thread">
 			<div className={styles.content}>
-				<div className={styles.toolbar}>
-					<ThreadViewToggle
-						value={view}
-						onChange={(next): void => {
-							void setView(next);
-						}}
-					/>
-					{spans.length > 0 && <span>Showing {spans.length} spans</span>}
-				</div>
+				{!hasNoThread && (
+					<div className={styles.toolbar}>
+						<ThreadViewToggle
+							value={view}
+							onChange={(next): void => {
+								void setView(next);
+							}}
+						/>
+						{spans.length > 0 && <span>Showing {spans.length} spans</span>}
+					</div>
+				)}
 				{renderBody()}
 			</div>
 			{panelState.isOpen && selectedSpan && (
