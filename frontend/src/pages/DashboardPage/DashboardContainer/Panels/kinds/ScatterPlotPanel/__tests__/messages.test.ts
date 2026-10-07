@@ -1,7 +1,4 @@
-import {
-	getScatterPlotEmptyMessage,
-	getScatterPlotFooterText,
-} from '../messages';
+import { getScatterPlotEmptyMessage, getScatterPlotWarning } from '../messages';
 import { type ScatterPlotData, ScatterPlotDataStatus } from '../types';
 
 function ready(counts: {
@@ -79,24 +76,24 @@ describe('getScatterPlotEmptyMessage', () => {
 	});
 });
 
-describe('getScatterPlotFooterText', () => {
-	it('is absent when every group plots', () => {
+describe('getScatterPlotWarning', () => {
+	it('is null when every group plots', () => {
 		expect(
-			getScatterPlotFooterText(ready({ totalGroups: 4, drawnGroups: 4 })),
-		).toBeUndefined();
+			getScatterPlotWarning(ready({ totalGroups: 4, drawnGroups: 4 })),
+		).toBeNull();
 	});
 
-	it('counts the groups shown', () => {
+	it('leaves a plot with no dots to the empty state', () => {
 		expect(
-			getScatterPlotFooterText(
-				ready({ totalGroups: 52, drawnGroups: 37, missingValueGroups: 15 }),
+			getScatterPlotWarning(
+				ready({ totalGroups: 4, drawnGroups: 0, missingValueGroups: 4 }),
 			),
-		).toBe('Showing 37 of 52 groups');
+		).toBeNull();
 	});
 
-	it('calls out the groups a log axis hid', () => {
+	it('counts the groups shown and why the rest are missing', () => {
 		expect(
-			getScatterPlotFooterText(
+			getScatterPlotWarning(
 				ready({
 					totalGroups: 52,
 					drawnGroups: 37,
@@ -104,22 +101,34 @@ describe('getScatterPlotFooterText', () => {
 					nonPositiveOnLogGroups: 3,
 				}),
 			),
-		).toBe(
-			"Showing 37 of 52 groups · 3 groups with a value ≤ 0 can't go on a log axis",
-		);
+		).toStrictEqual({
+			message: 'Showing 37 of 52 groups.',
+			messages: [
+				'12 groups missing an X or Y value.',
+				"3 groups with a value ≤ 0 can't go on a log axis. Switch the axis to symlog to show them.",
+			],
+		});
 	});
 
-	it('says when the cap left plottable groups out', () => {
+	it('flags a result at the cap', () => {
 		expect(
-			getScatterPlotFooterText(
+			getScatterPlotWarning(
 				ready({
 					totalGroups: 584393,
 					drawnGroups: 10000,
 					cappedGroups: 574393,
 				}),
 			),
-		).toBe(
-			'Showing 10,000 of 584,393 groups · Plots the first 10,000; filter or narrow the group by to see the rest',
-		);
+		).toStrictEqual({
+			message: 'Showing the first 10,000 groups.',
+			messages: ['Add a filter or narrow the group by to see the rest.'],
+		});
+	});
+
+	it('treats a result at the server limit as capped', () => {
+		expect(
+			getScatterPlotWarning(ready({ totalGroups: 10000, drawnGroups: 10000 }))
+				?.message,
+		).toBe('Showing the first 10,000 groups.');
 	});
 });
