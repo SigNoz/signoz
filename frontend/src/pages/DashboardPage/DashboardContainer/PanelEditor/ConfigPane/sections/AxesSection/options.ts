@@ -22,10 +22,10 @@ export function pickScaleOptions<T extends AxisScale>(
 
 export const SCALE_HELP: Record<AxisScale, string> = {
 	auto:
-		'Logarithmic when every value is positive and they span three or more orders of magnitude, otherwise linear.',
+		'Logarithmic when all values are positive and span three or more orders of magnitude; otherwise linear.',
 	linear: 'Evenly spaced values.',
 	log: 'Spreads out values that span several orders of magnitude.',
-	symlog: 'Logarithmic, but places zero and negative values too.',
+	symlog: 'Logarithmic, but also handles zero and negative values.',
 };
 
 export const LOG_SCALE_OPTIONS = pickScaleOptions(['linear', 'log'] as const);

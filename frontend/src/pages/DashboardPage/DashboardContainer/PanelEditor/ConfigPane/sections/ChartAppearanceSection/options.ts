@@ -54,9 +54,9 @@ export const LINE_INTERPOLATION_HELP: Record<
 	[DashboardtypesLineInterpolationDTO.spline]:
 		'Curves through each point. Can overshoot between points.',
 	[DashboardtypesLineInterpolationDTO.step_before]:
-		'Jumps to each new value before its timestamp.',
+		'Shows each value from the previous point up to its own timestamp.',
 	[DashboardtypesLineInterpolationDTO.step_after]:
-		'Holds each value until the next point arrives.',
+		'Holds each value until the next point.',
 };
 
 export const FILL_MODE_OPTIONS: ConfigTileItem<DashboardtypesFillModeDTO>[] = [

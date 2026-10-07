@@ -47,13 +47,13 @@ function HeatmapColorsField({
 			<HeatmapRampPreview colors={value} />
 
 			<ConfigField
-				label="Colour mode"
+				label="Color mode"
 				help={COLOR_MODE_HELP[mode]}
 				{...reset('mode')}
 			>
 				<ConfigTiles
 					testId="panel-editor-v2-heatmap-color-mode"
-					aria-label="Colour mode"
+					aria-label="Color mode"
 					value={mode}
 					items={COLOR_MODE_OPTIONS}
 					onChange={(next): void => onChange({ ...value, mode: next })}
@@ -76,13 +76,13 @@ function HeatmapColorsField({
 			)}
 
 			<ConfigField
-				label="Colour scale"
+				label="Color scale"
 				help={COLOR_SCALE_HELP[scale]}
 				{...reset('scale')}
 			>
 				<ConfigTiles
 					testId="panel-editor-v2-heatmap-color-scale"
-					aria-label="Colour scale"
+					aria-label="Color scale"
 					value={scale}
 					items={COLOR_SCALE_OPTIONS}
 					onChange={(next): void => onChange({ ...value, scale: next })}

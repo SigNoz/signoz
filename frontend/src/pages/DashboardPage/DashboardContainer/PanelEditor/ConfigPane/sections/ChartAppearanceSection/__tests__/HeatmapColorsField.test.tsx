@@ -66,7 +66,7 @@ describe('HeatmapColorsField', () => {
 		);
 
 		expect(screen.queryByTestId(PALETTE_CARD)).not.toBeInTheDocument();
-		expect(screen.getByText('Base colour')).toBeInTheDocument();
+		expect(screen.getByText('Base color')).toBeInTheDocument();
 		expect(
 			screen.getByTestId('panel-editor-v2-heatmap-fill-robin'),
 		).toBeInTheDocument();
@@ -279,7 +279,7 @@ describe('HeatmapColorsField', () => {
 			/>,
 		);
 
-		expect(screen.getByRole('radio', { name: 'Group colour' })).toBeChecked();
+		expect(screen.getByRole('radio', { name: 'Group color' })).toBeChecked();
 		expect(
 			screen.getByTestId('panel-editor-v2-heatmap-fill-custom'),
 		).toHaveAttribute('aria-pressed', 'false');

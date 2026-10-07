@@ -14,7 +14,7 @@ describe('BackgroundContrastNote', () => {
 	});
 
 	it('warns when no ink clears the floor', () => {
-		expect(renderNote('#808080')).toHaveTextContent('below 4.5:1');
+		expect(renderNote('#808080')).toHaveTextContent('below the 4.5:1 minimum');
 	});
 
 	it('says nothing about the floor when the colour clears it', () => {

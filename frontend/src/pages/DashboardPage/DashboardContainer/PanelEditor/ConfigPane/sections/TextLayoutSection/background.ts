@@ -45,7 +45,7 @@ export function backgroundTitle(background: ResolvedTextBackground): string {
 
 const BASE_TOOLTIPS: Record<BaseSelection, string> = {
 	none: 'Transparent — no card, border or title bar',
-	default: 'Default panel colour',
+	default: 'Default panel color',
 };
 
 export function backgroundOptions(

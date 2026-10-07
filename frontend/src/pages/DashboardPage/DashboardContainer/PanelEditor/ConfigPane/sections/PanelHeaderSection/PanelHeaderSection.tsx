@@ -17,7 +17,7 @@ function PanelHeaderSection({
 		<ConfigSwitch
 			testId="panel-header-hide"
 			title="Hide panel header"
-			description="Removes the title strip on the dashboard. Drag and actions appear on hover."
+			description="Removes the title strip on the dashboard. The drag handle and actions appear on hover."
 			sketch={SWITCH_SKETCHES.hideHeader}
 			changed={hide}
 			value={hide}

@@ -56,7 +56,7 @@ function BucketsSection({
 				<ConfigSwitch
 					testId="panel-editor-v2-merge-queries"
 					title="Combine queries"
-					description="Puts every active query into one distribution. Hides the legend."
+					description="Merges all active queries into one distribution. Hides the legend."
 					sketch={SWITCH_SKETCHES.combine}
 					changed={reset('mergeAllActiveQueries').changed}
 					value={value?.mergeAllActiveQueries ?? false}

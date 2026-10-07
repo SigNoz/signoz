@@ -52,8 +52,8 @@ export const COLOR_MODE_HELP: Record<
 	DashboardtypesHeatmapColorModeDTO,
 	string
 > = {
-	palette: 'Counts move along a multi-colour ramp.',
-	opacity: 'One colour fades from clear to solid.',
+	palette: 'Each count maps to a color on a multi-color ramp.',
+	opacity: 'One color fades from clear to solid.',
 };
 
 // Log first: bucket counts routinely span decades.
@@ -81,8 +81,8 @@ export const COLOR_SCALE_HELP: Record<
 	string
 > = {
 	log: 'Keeps sparse buckets visible next to busy ones.',
-	sqrt: 'Between Log and Linear.',
-	linear: 'Every count gets an equal share of the ramp.',
+	sqrt: 'A middle ground between Log and Linear.',
+	linear: 'Color changes evenly with count.',
 };
 
 /** The unset fill: each group ramps its own legend colour. */
@@ -93,8 +93,8 @@ export const FILL_OPTIONS: ColorSwatchOption<string>[] = [
 	{
 		value: GROUP_FILL,
 		id: 'group',
-		label: 'Group colour',
-		tooltip: 'Each group’s own colour',
+		label: 'Group color',
+		tooltip: 'Each group’s own color',
 		fill: `conic-gradient(${Color.BG_ROBIN_400}, ${Color.BG_AQUA_400}, ${Color.BG_FOREST_400}, ${Color.BG_SIENNA_400}, ${Color.BG_ROBIN_400})`,
 	},
 	...[

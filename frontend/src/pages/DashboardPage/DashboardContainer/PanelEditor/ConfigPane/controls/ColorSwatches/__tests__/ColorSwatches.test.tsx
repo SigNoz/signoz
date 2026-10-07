@@ -10,7 +10,7 @@ const OPTIONS: ColorSwatchOption<string>[] = [
 		value: 'default',
 		id: 'default',
 		label: 'Default panel',
-		tooltip: 'Default panel colour',
+		tooltip: 'Default panel color',
 		pattern: 'surface',
 	},
 	{ value: '#ff0000', id: 'red', label: 'Red', fill: '#ff0000' },
@@ -79,7 +79,7 @@ describe('ColorSwatches', () => {
 	});
 
 	it.each([
-		['color-default', 'Default panel colour'],
+		['color-default', 'Default panel color'],
 		['color-red', 'Red'],
 	])('explains %s on hover', async (swatchId, copy) => {
 		const user = userEvent.setup();

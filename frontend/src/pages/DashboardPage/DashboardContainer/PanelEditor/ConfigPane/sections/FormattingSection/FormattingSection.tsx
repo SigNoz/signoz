@@ -36,7 +36,7 @@ function FormattingSection({
 			{controls.unit && (
 				<ConfigField
 					label="Unit"
-					help="Labels values, axis ticks and tooltips. With milliseconds, 1500 shows as 1.5 s."
+					help="Formats values, axis ticks and tooltips. With milliseconds, 1500 shows as 1.5 s."
 					{...reset('unit')}
 				>
 					<YAxisUnitSelector

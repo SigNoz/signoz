@@ -23,7 +23,7 @@ export const BAR_LAYOUT_OPTIONS: ConfigTileItem<BarLayout>[] = [
 
 export const BAR_LAYOUT_HELP: Record<BarLayout, string> = {
 	[BarLayout.SIDE_BY_SIDE]:
-		'Bars for each series sit next to each other, for comparing series.',
+		'Each series gets its own bar, side by side, for easy comparison.',
 	[BarLayout.STACKED]:
 		'Bars sit on top of each other, so the height shows the total.',
 };
@@ -50,7 +50,7 @@ export const STACK_MODE_OPTIONS: ConfigTileItem<DashboardtypesStackModeDTO>[] =
 
 export const STACK_MODE_HELP: Record<DashboardtypesStackModeDTO, string> = {
 	[DashboardtypesStackModeDTO.none]:
-		'Each series is drawn from zero and may cover others.',
+		'Each series is drawn from zero and may hide others.',
 	[DashboardtypesStackModeDTO.normal]:
 		'Series sit on top of each other, so the top edge shows the total.',
 	[DashboardtypesStackModeDTO.percent]:

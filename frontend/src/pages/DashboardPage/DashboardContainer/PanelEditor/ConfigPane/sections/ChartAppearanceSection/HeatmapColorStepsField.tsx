@@ -30,7 +30,7 @@ function HeatmapColorStepsField({
 
 	return (
 		<ConfigField
-			label="Colour steps"
+			label="Color steps"
 			help="Fewer steps make bands easier to tell apart."
 			changed={changed}
 			onReset={onReset}

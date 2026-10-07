@@ -30,7 +30,7 @@ function BackgroundContrastNote({
 			<span className="translate-safe">
 				{isLegible
 					? `Contrast ${ratio.toFixed(1)}:1`
-					: `Contrast ${ratio.toFixed(1)}:1 — below ${MIN_CONTRAST_RATIO}:1`}
+					: `Contrast ${ratio.toFixed(1)}:1 — below the ${MIN_CONTRAST_RATIO}:1 minimum`}
 			</span>
 		</div>
 	);

@@ -96,7 +96,7 @@ function VisualizationSection({
 				<ConfigSwitch
 					testId="panel-editor-v2-fill-spans"
 					title="Treat missing data as 0"
-					description="Empty intervals plot as 0 instead of a gap. Pulls averages down."
+					description="Empty intervals plot as 0 instead of a gap, which lowers averages."
 					sketch={SWITCH_SKETCHES.fillGaps}
 					changed={reset('fillSpans').changed}
 					value={value?.fillSpans ?? false}

@@ -27,14 +27,14 @@ function HeatmapFillField({
 
 	return (
 		<ConfigField
-			label="Base colour"
-			help="Group colour gives each group its own."
+			label="Base color"
+			help="Group color gives each group its own color."
 			changed={changed}
 			onReset={onReset}
 		>
 			<ColorSwatches
 				testId="panel-editor-v2-heatmap-fill"
-				label="Base colour"
+				label="Base color"
 				value={selected}
 				options={FILL_OPTIONS}
 				dividerAfter={0}

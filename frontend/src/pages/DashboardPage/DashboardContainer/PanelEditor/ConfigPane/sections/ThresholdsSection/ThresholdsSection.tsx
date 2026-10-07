@@ -30,7 +30,7 @@ const HELP: Record<ThresholdVariant, string> = {
 		'Draws a dashed line across the chart at a value, so you can see when data crosses it.',
 	comparison:
 		'Changes the number’s color when it crosses a value. Useful for green / amber / red status.',
-	table: 'Colors cells in a column when their value crosses a limit.',
+	table: 'Colors cells in a column when they cross a value.',
 };
 
 // Add-button testId per variant — kept stable so existing E2E/unit selectors hold.
