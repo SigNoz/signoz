@@ -1,0 +1,48 @@
+.splitButton {
+	display: inline-flex;
+	min-width: 0;
+	max-width: 220px;
+
+	> .main {
+		min-width: 0;
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+
+	> .toggle {
+		flex-shrink: 0;
+		padding-inline: 10px;
+		border-left: 1px solid
+			color-mix(in srgb, var(--l1-foreground) 25%, transparent);
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+	}
+}
+
+.menu {
+	min-width: 240px;
+	max-width: 320px;
+
+	[data-slot='dropdown-menu-item'] {
+		box-sizing: border-box;
+	}
+}
+
+.menuLabel {
+	text-transform: uppercase;
+}
+
+.check {
+	margin-left: auto;
+	color: var(--bg-robin-400);
+}
+
+.createOption {
+	color: var(--bg-robin-400);
+}
+
+.ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

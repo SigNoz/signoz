@@ -267,8 +267,7 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 	}
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
-		"DISTINCT ON (span_id) timestamp",
-		"duration_nano", "span_id", "has_error", "kind",
+		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "has_error", "kind",
 		colServiceName, "name",
 		"attributes_string", "attributes_number", "attributes_bool", "resources_string",
 		"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
@@ -296,6 +295,119 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace spans by IDs")
 	}
 	return spans, nil
+}
+
+func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds, page spantypes.ThreadPage) ([]spantypes.StorableSpan, error) {
+	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano()))
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "parent_span_id", "has_error", "name", "kind_string",
+		"status_code_string", "status_message", "resources_string",
+		"attributes_string", "attributes_number", "attributes_bool",
+		"events", "links as references",
+	)
+	if q.TraceAttrsJSONOn {
+		sb.SelectMore("attributes")
+	}
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	hasMessages, err := s.messagesExistCondition(ctx, q, orgID, bounds, sb)
+	if err != nil {
+		return nil, err
+	}
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", bounds.End.Unix()),
+		hasMessages,
+	)
+	if cursor := page.Cursor; cursor != nil {
+		// ClickHouse can't use an index for a tuple comparison, so the separate timestamp and
+		// ts_bucket_start bounds are what skip the data on the far side of the cursor.
+		key := "(toUnixTimestamp64Nano(timestamp), span_id)"
+		bucket := int64(cursor.TimeUnixNano / uint64(time.Second))
+		timestamp := fmt.Sprintf("fromUnixTimestamp64Nano(toInt64(%s))", sb.Var(cursor.TimeUnixNano))
+		tuple := sqlbuilder.Tuple(cursor.TimeUnixNano, cursor.SpanID)
+		switch page.From {
+		case spantypes.ThreadBefore:
+			sb.Where(sb.LE("ts_bucket_start", bucket), "timestamp <= "+timestamp, sb.LT(key, tuple))
+		case spantypes.ThreadAt:
+			sb.Where(sb.GE("ts_bucket_start", bucket-1800), "timestamp >= "+timestamp, sb.GE(key, tuple))
+		default:
+			sb.Where(sb.GE("ts_bucket_start", bucket-1800), "timestamp >= "+timestamp, sb.GT(key, tuple))
+		}
+	}
+	// span_id breaks timestamp ties so the order matches the cursor key; otherwise tied spans
+	// can be skipped or repeated across pages.
+	if page.From == spantypes.ThreadBefore {
+		sb.OrderByDesc("timestamp")
+		sb.OrderByDesc("span_id")
+	} else {
+		sb.OrderByAsc("timestamp")
+		sb.OrderByAsc("span_id")
+	}
+	sb.Limit(page.Limit)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var spans []spantypes.StorableSpan
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &spans, query, args...); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying thread spans")
+	}
+	return spans, nil
+}
+
+// messagesExistCondition resolves the gen_ai message keys through the attribute evolution metadata
+// and the use_trace_attributes_json flag, so the filter reads the same columns the query builder does.
+func (s *traceStore) messagesExistCondition(ctx context.Context, q qbtypes.QueryInfo, orgID valuer.UUID, bounds *spantypes.TraceBounds, sb *sqlbuilder.SelectBuilder) (string, error) {
+	names := []string{aiobservabilitytypes.GenAIInputMessages, aiobservabilitytypes.GenAIOutputMessages}
+	selectors := make([]*telemetrytypes.FieldKeySelector, len(names))
+	for i, name := range names {
+		selectors[i] = &telemetrytypes.FieldKeySelector{
+			StartUnixMilli:    bounds.Start.UnixMilli(),
+			EndUnixMilli:      bounds.End.UnixMilli(),
+			Signal:            telemetrytypes.SignalTraces,
+			FieldContext:      telemetrytypes.FieldContextAttribute,
+			Name:              name,
+			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
+		}
+	}
+	fieldKeys, _, err := s.metadataStore.GetKeysMulti(ctx, orgID, selectors)
+	if err != nil {
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "error fetching thread field keys")
+	}
+
+	conds := make([]string, 0, len(names))
+	for _, name := range names {
+		key := &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute}
+		keyConds, _, err := querybuilder.Conditions(ctx, q, s.storage, key, qbtypes.FilterOperatorExists, nil, fieldKeys, false, sb)
+		if err != nil {
+			return "", err
+		}
+		conds = append(conds, keyConds...)
+	}
+	return sb.Or(conds...), nil
+}
+
+func (s *traceStore) GetThreadCursor(ctx context.Context, traceID string, bounds *spantypes.TraceBounds, spanID string) (*spantypes.ThreadCursor, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("toUnixTimestamp64Nano(timestamp)")
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", bounds.End.Unix()),
+		sb.E("span_id", spanID),
+	)
+	sb.Limit(1)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var timeUnixNano int64
+	if err := s.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&timeUnixNano); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.NewNotFoundf(spantypes.ErrCodeThreadSpanNotFound, "span %s not found in trace %s", spanID, traceID)
+		}
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying thread span")
+	}
+	return &spantypes.ThreadCursor{TimeUnixNano: uint64(timeUnixNano), SpanID: spanID}, nil
 }
 
 func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {

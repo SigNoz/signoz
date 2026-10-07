@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type {
@@ -7,6 +8,7 @@ import type {
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { SectionKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { getSupportedSignals } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import { buildPluginSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/buildPluginSpec';
 import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
 import type { EQueryType } from 'types/common/dashboard';
 
@@ -22,9 +24,12 @@ import { PanelKind } from '../../Panels/types/panelKind';
 interface ConfigPaneProps {
 	/** The panel spec — the single editing surface (title/description + section slices). */
 	spec: DashboardtypesPanelSpecDTO;
+	/** Last saved spec, the baseline for each section's changed marker. */
+	savedSpec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Switch the panel to another visualization kind. */
 	onChangePanelKind: (kind: PanelKind) => void;
+	originalPanelKind?: PanelKind;
 	/**
 	 * Active query type from the query-builder provider (the selected tab). Drives which
 	 * panel types the visualization switcher disables — read from the provider, not the
@@ -55,8 +60,10 @@ interface ConfigPaneProps {
  */
 function ConfigPane({
 	spec,
+	savedSpec,
 	onChangeSpec,
 	onChangePanelKind,
+	originalPanelKind,
 	queryType,
 	legendSeries,
 	tableColumns,
@@ -74,6 +81,11 @@ function ConfigPane({
 	);
 	const sections = definition.sections.filter(
 		(config) => config.kind !== SectionKind.PanelHeader,
+	);
+
+	const defaults = useMemo(
+		() => buildPluginSpec(definition.sections),
+		[definition],
 	);
 
 	const signal = resolveSignal(spec.queries, getSupportedSignals(panelKind)[0]);
@@ -119,12 +131,15 @@ function ConfigPane({
 						bare
 						config={headerSection}
 						spec={spec}
+						savedSpec={savedSpec}
 						onChangeSpec={onChangeSpec}
+						defaults={defaults}
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
 						signal={signal}
 						panelKind={panelKind}
 						onChangePanelKind={onChangePanelKind}
+						originalPanelKind={originalPanelKind}
 						queryType={queryType}
 						stepInterval={stepInterval}
 						metricUnit={metricUnit}
@@ -143,12 +158,15 @@ function ConfigPane({
 									key={config.kind}
 									config={config}
 									spec={spec}
+									savedSpec={savedSpec}
 									onChangeSpec={onChangeSpec}
+									defaults={defaults}
 									legendSeries={legendSeries}
 									tableColumns={tableColumns}
 									signal={signal}
 									panelKind={panelKind}
 									onChangePanelKind={onChangePanelKind}
+									originalPanelKind={originalPanelKind}
 									queryType={queryType}
 									stepInterval={stepInterval}
 									metricUnit={metricUnit}

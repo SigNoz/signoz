@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { Slider } from '@signozhq/ui/slider';
-import { Typography } from '@signozhq/ui/typography';
 import {
 	clampColorSteps,
 	DEFAULT_COLOR_STEPS,
@@ -8,11 +6,11 @@ import {
 	MIN_COLOR_STEPS,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
 
-import { singleSliderValue } from './heatmapColorOptions';
+import ConfigField from '../../controls/ConfigField/ConfigField';
+import ConfigSlider from '../../controls/ConfigSlider/ConfigSlider';
+import type { FieldResetProps } from '../../utils/changes';
 
-import styles from './HeatmapColorsField.module.scss';
-
-interface HeatmapColorStepsFieldProps {
+interface HeatmapColorStepsFieldProps extends Partial<FieldResetProps> {
 	/** Unset until the slider moves; the chart's default stands in. */
 	value: number | undefined;
 	onChange: (steps: number) => void;
@@ -25,35 +23,31 @@ interface HeatmapColorStepsFieldProps {
 function HeatmapColorStepsField({
 	value,
 	onChange,
+	changed,
+	onReset,
 }: HeatmapColorStepsFieldProps): JSX.Element {
 	const [dragging, setDragging] = useState<number | null>(null);
 
-	const steps = dragging ?? value ?? DEFAULT_COLOR_STEPS;
-
 	return (
-		<div className={styles.field}>
-			<div className={styles.fieldHeader}>
-				<Typography.Text>Color steps</Typography.Text>
-				<span className={styles.mono}>{steps}</span>
-			</div>
-			<Slider
+		<ConfigField
+			label="Color steps"
+			help="Fewer steps make bands easier to tell apart."
+			changed={changed}
+			onReset={onReset}
+		>
+			<ConfigSlider
 				testId="panel-editor-v2-heatmap-color-steps"
-				className={styles.slider}
-				value={steps}
+				value={dragging ?? value ?? DEFAULT_COLOR_STEPS}
 				min={MIN_COLOR_STEPS}
 				max={MAX_COLOR_STEPS}
 				step={1}
-				aria-label="Color steps"
-				onChange={(next): void => setDragging(singleSliderValue(next))}
-				onAfterChange={(next): void => {
+				onChange={setDragging}
+				onChangeEnd={(next): void => {
 					setDragging(null);
-					onChange(clampColorSteps(singleSliderValue(next)));
+					onChange(clampColorSteps(next));
 				}}
 			/>
-			<Typography.Text className={styles.help}>
-				How many colours the ramp is split into.
-			</Typography.Text>
-		</div>
+		</ConfigField>
 	);
 }
 

@@ -7,7 +7,7 @@ import { paletteGradient, PALETTE_OPTIONS } from './heatmapColorOptions';
 import styles from './HeatmapColorsField.module.scss';
 
 interface HeatmapPaletteGridProps {
-	value: DashboardtypesHeatmapPaletteDTO | undefined;
+	value: DashboardtypesHeatmapPaletteDTO;
 	onChange: (palette: DashboardtypesHeatmapPaletteDTO) => void;
 }
 
@@ -19,25 +19,27 @@ function HeatmapPaletteGrid({
 	const isDarkMode = useIsDarkMode();
 
 	return (
-		<div className={styles.paletteGrid}>
-			{PALETTE_OPTIONS.map((option) => (
-				<button
-					key={option.value}
-					type="button"
-					aria-pressed={option.value === value}
-					className={cx(styles.paletteCard, {
-						[styles.isSelected]: option.value === value,
-					})}
-					data-testid={`panel-editor-v2-heatmap-palette-${option.value}`}
-					onClick={(): void => onChange(option.value)}
-				>
-					<span
-						className={styles.paletteRamp}
-						style={{ background: paletteGradient(option.value, isDarkMode) }}
-					/>
-					<span className={styles.mono}>{option.label}</span>
-				</button>
-			))}
+		<div className={styles.cards}>
+			<div className={styles.cardGrid}>
+				{PALETTE_OPTIONS.map((option) => (
+					<button
+						key={option.value}
+						type="button"
+						aria-pressed={option.value === value}
+						className={cx(styles.card, {
+							[styles.isSelected]: option.value === value,
+						})}
+						data-testid={`panel-editor-v2-heatmap-palette-${option.value}`}
+						onClick={(): void => onChange(option.value)}
+					>
+						<span
+							className={styles.cardRamp}
+							style={{ background: paletteGradient(option.value, isDarkMode) }}
+						/>
+						<span className={styles.cardName}>{option.label}</span>
+					</button>
+				))}
+			</div>
 		</div>
 	);
 }

@@ -1,10 +1,11 @@
 import type { ReactElement } from 'react';
 import {
-	fireEvent,
 	render as rtlRender,
 	type RenderResult,
 	screen,
+	within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import {
 	DashboardtypesTextAlignDTO,
@@ -29,11 +30,12 @@ function render(ui: ReactElement): RenderResult {
 
 // The theme context defaults to dark, so the swatches paint the dark pairs.
 describe('TextLayoutSection', () => {
-	it('changes horizontal alignment', () => {
+	it('changes horizontal alignment', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
-		fireEvent.click(screen.getByText('Center'));
+		await user.click(screen.getByTestId('text-layout-align-top-center'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			...value,
@@ -41,11 +43,12 @@ describe('TextLayoutSection', () => {
 		});
 	});
 
-	it('changes vertical alignment', () => {
+	it('changes vertical alignment', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
-		fireEvent.click(screen.getByText('Bottom'));
+		await user.click(screen.getByTestId('text-layout-align-bottom-left'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			...value,
@@ -53,11 +56,12 @@ describe('TextLayoutSection', () => {
 		});
 	});
 
-	it('stores the surface of the theme a preset was picked in', () => {
+	it('stores the surface of the theme a preset was picked in', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
-		fireEvent.click(screen.getByRole('radio', { name: 'Amber' }));
+		await user.click(screen.getByRole('radio', { name: 'Amber' }));
 
 		expect(onChange).toHaveBeenCalledWith({
 			...value,
@@ -65,11 +69,12 @@ describe('TextLayoutSection', () => {
 		});
 	});
 
-	it('stores a zero-alpha colour for transparent', () => {
+	it('stores a zero-alpha colour for transparent', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
-		fireEvent.click(screen.getByRole('radio', { name: 'Transparent' }));
+		await user.click(screen.getByRole('radio', { name: 'Transparent' }));
 
 		expect(onChange).toHaveBeenCalledWith({
 			...value,
@@ -77,7 +82,8 @@ describe('TextLayoutSection', () => {
 		});
 	});
 
-	it('unsets the background for the default panel surface', () => {
+	it('unsets the background for the default panel surface', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<TextLayoutSection
@@ -86,7 +92,7 @@ describe('TextLayoutSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByRole('radio', { name: 'Default panel' }));
+		await user.click(screen.getByRole('radio', { name: 'Default panel' }));
 
 		expect(onChange).toHaveBeenCalledWith({ ...value, background: undefined });
 	});
@@ -102,14 +108,14 @@ describe('TextLayoutSection', () => {
 		expect(screen.getByRole('radio', { name: 'Sakura' })).toBeChecked();
 	});
 
-	it('stores a custom colour straight from the picker', () => {
+	it('stores a custom colour straight from the picker', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(<TextLayoutSection value={value} onChange={onChange} />);
 
-		fireEvent.click(screen.getByTestId('text-layout-background-custom'));
-		fireEvent.change(screen.getByRole('textbox'), {
-			target: { value: '3A2A64' },
-		});
+		await user.click(screen.getByTestId('text-layout-background-custom'));
+		await user.clear(screen.getByRole('textbox'));
+		await user.type(screen.getByRole('textbox'), '3A2A64');
 
 		expect(onChange).toHaveBeenCalledWith({
 			...value,
@@ -117,7 +123,7 @@ describe('TextLayoutSection', () => {
 		});
 	});
 
-	it('shows a stored custom colour on the custom row alone', () => {
+	it('shows a stored custom colour on the custom swatch alone', () => {
 		render(
 			<TextLayoutSection
 				value={{ ...value, background: '#3A2A64' }}
@@ -125,11 +131,12 @@ describe('TextLayoutSection', () => {
 			/>,
 		);
 
-		expect(screen.getByTestId('text-layout-background-custom')).toHaveTextContent(
-			'#3A2A64',
+		expect(screen.getByTestId('text-layout-background-custom')).toHaveAttribute(
+			'aria-label',
+			'Custom #3A2A64',
 		);
 		expect(
-			screen
+			within(screen.getByRole('radiogroup', { name: 'Panel background' }))
 				.getAllByRole<HTMLInputElement>('radio')
 				.filter((swatch) => swatch.checked),
 		).toHaveLength(0);
