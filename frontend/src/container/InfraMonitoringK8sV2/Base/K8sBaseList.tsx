@@ -39,6 +39,7 @@ import K8sOptionsSidePanel from './K8sOptionsSidePanel';
 import K8sHeader from './K8sHeader';
 import { K8sPaginationWarning } from './K8sPaginationWarning';
 import K8sTableToolbar from './K8sTableToolbar';
+import { resetDrawerHistory } from './useDrawerHistoryStore';
 import { K8sBaseFilters } from './types';
 import { getGroupedByMeta } from './utils';
 import { K8sInstrumentationChecksCallout } from './components/K8sInstrumentationChecksCallout/K8sInstrumentationChecksCallout';
@@ -301,6 +302,8 @@ export function K8sBaseList<
 					queryClient.setQueryData(detailQueryKey, { data: record });
 				}
 
+				// Opening from the list starts a fresh trail for the drawer's back control
+				resetDrawerHistory();
 				setSelectedItemParams(params);
 			}
 
