@@ -9883,6 +9883,40 @@ components:
       required:
       - aggregations
       type: object
+    SpantypesGettableTraceSummary:
+      properties:
+        ai:
+          $ref: '#/components/schemas/SpantypesTraceAISummary'
+        endTimestampMillis:
+          minimum: 0
+          type: integer
+        hasMissingSpans:
+          type: boolean
+        rootServiceEntryPoint:
+          type: string
+        rootServiceName:
+          type: string
+        rootSpanStatusCode:
+          type: string
+        startTimestampMillis:
+          minimum: 0
+          type: integer
+        totalErrorSpansCount:
+          minimum: 0
+          type: integer
+        totalSpansCount:
+          minimum: 0
+          type: integer
+      required:
+      - startTimestampMillis
+      - endTimestampMillis
+      - rootServiceName
+      - rootServiceEntryPoint
+      - rootSpanStatusCode
+      - totalSpansCount
+      - totalErrorSpansCount
+      - hasMissingSpans
+      type: object
     SpantypesGettableTraceThread:
       properties:
         nextCursor:
@@ -10272,6 +10306,39 @@ components:
       - attributes
       - events
       - references
+      type: object
+    SpantypesTraceAISummary:
+      properties:
+        tokens:
+          $ref: '#/components/schemas/SpantypesTraceAITokens'
+        totalCost:
+          type: number
+      required:
+      - tokens
+      type: object
+    SpantypesTraceAITokens:
+      properties:
+        cacheRead:
+          minimum: 0
+          type: integer
+        cacheWrite:
+          minimum: 0
+          type: integer
+        input:
+          minimum: 0
+          type: integer
+        output:
+          minimum: 0
+          type: integer
+        reasoning:
+          minimum: 0
+          type: integer
+      required:
+      - input
+      - output
+      - cacheRead
+      - cacheWrite
+      - reasoning
       type: object
     SpantypesUpdatableSpanMapper:
       properties:
@@ -15994,6 +16061,66 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get aggregations for a trace
+      tags:
+      - tracedetail
+      x-signoz-stability: alpha
+  /api/v1/traces/{traceID}/summary:
+    get:
+      deprecated: false
+      description: Returns the trace's time range, root span, span and error counts,
+        and whether any spans are missing. AI traces also include token and cost totals.
+      operationId: GetTraceSummary
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceSummary'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get summary for a trace
       tags:
       - tracedetail
       x-signoz-stability: alpha

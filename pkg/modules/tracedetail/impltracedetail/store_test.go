@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/aitelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
@@ -25,7 +27,7 @@ var (
 	testTraceID = "trace-abc123"
 	testStart   = time.Unix(1000, 0).UTC()
 	testEnd     = time.Unix(2000, 0).UTC()
-	testSummary = &spantypes.TraceSummary{
+	testBounds  = &spantypes.TraceBounds{
 		TraceID:  testTraceID,
 		Start:    testStart,
 		End:      testEnd,
@@ -42,20 +44,76 @@ var (
 )
 
 func newTestStore(matcher sqlmock.QueryMatcher) *spantypestest.TraceStoreTest {
-	ts := telemetrystoretest.New(telemetrystore.Config{}, matcher)
-	return spantypestest.New(impltracedetail.NewTraceStore(ts, telemetrytypestest.NewMockMetadataStore(), nil), ts.Mock())
+	return newTestStoreWithMetadata(matcher, telemetrytypestest.NewMockMetadataStore(), nil)
 }
 
-func TestGetTraceSummary(t *testing.T) {
+func newTestStoreWithMetadata(matcher sqlmock.QueryMatcher, metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *spantypestest.TraceStoreTest {
+	ts := telemetrystoretest.New(telemetrystore.Config{}, matcher)
+	return spantypestest.New(impltracedetail.NewTraceStore(ts, metadataStore, fl), ts.Mock())
+}
+
+func TestGetTraceBounds(t *testing.T) {
 	expectedSQL := "SELECT trace_id, min(start) AS start, max(end) AS end, sum(num_spans) AS num_spans FROM signoz_traces.distributed_trace_summary WHERE trace_id = ? GROUP BY trace_id"
 
 	t.Run("ValidTraceID_GeneratesExpectedSQL", func(t *testing.T) {
 		s := newTestStore(sqlmock.QueryMatcherRegexp)
 		s.Mock().ExpectQueryRow(regexp.QuoteMeta(expectedSQL)).
 			WillReturnRow(cmock.NewRow(nil, nil))
-		_, _ = s.Store().GetTraceSummary(context.Background(), testTraceID)
+		_, _ = s.Store().GetTraceBounds(context.Background(), testTraceID)
 		assert.NoError(t, s.Mock().ExpectationsWereMet())
 	})
+}
+
+// genAIMetadataStore seeds the gen_ai keys as ingested; with a release time the
+// JSON attributes column is registered as their newer home.
+func genAIMetadataStore(jsonRelease *time.Time) *telemetrytypestest.MockMetadataStore {
+	metadataStore := telemetrytypestest.NewMockMetadataStore()
+	for name, def := range aitelemetryschema.GenAIFields {
+		key := def
+		metadataStore.KeysMap[name] = []*telemetrytypes.TelemetryFieldKey{&key}
+	}
+	if jsonRelease != nil {
+		selector := telemetrytypes.EvolutionSelector{Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldName: "__all__"}
+		metadataStore.ColumnEvolutionMetadataMap[selector.QualifiedName()] = tracestelemetryschema.MockAttributeEvolutionData(*jsonRelease)
+	}
+	return metadataStore
+}
+
+func TestGetTraceStats(t *testing.T) {
+	jsonInsideTrace := testStart.Add(500 * time.Second)
+	jsonBeforeTrace := testStart.Add(-500 * time.Second)
+	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): true})
+
+	testCases := []struct {
+		name        string
+		jsonRelease *time.Time
+		expectedSQL string
+	}{
+		{
+			name:        "LegacyMaps",
+			expectedSQL: "SELECT toUInt64(min(span_start_ns)) AS start_ns, toUInt64(max(span_end_ns)) AS end_ns, count() AS total_spans, countIf(has_error) AS total_error_spans, countIf(has_missing_parent) > 0 AS has_missing_spans, argMinIf(root_service, (span_start_ns, root_name), is_root) AS root_service_name, argMinIf(root_name, (span_start_ns, root_name), is_root) AS root_entry_point, argMinIf(root_status_code, (span_start_ns, root_name), is_root) AS root_span_status_code, countIf(is_gen_ai) AS gen_ai_span_count, toUInt64(coalesce(sum(input_tokens_value), 0)) AS input_tokens, toUInt64(coalesce(sum(output_tokens_value), 0)) AS output_tokens, toUInt64(coalesce(sum(cache_read_tokens_value), 0)) AS cache_read_tokens, toUInt64(coalesce(sum(cache_write_tokens_value), 0)) AS cache_write_tokens, toUInt64(coalesce(sum(reasoning_tokens_value), 0)) AS reasoning_tokens, sum(total_cost_value) AS total_cost FROM (SELECT toUnixTimestamp64Nano(timestamp) AS span_start_ns, span_start_ns + duration_nano AS span_end_ns, span_id, has_error, (parent_span_id <> '' AND parent_span_id GLOBAL NOT IN (SELECT span_id FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?)) AS has_missing_parent, (parent_span_id = '' OR has_missing_parent) AS is_root, if(parent_span_id = '', name, 'Missing Span') AS root_name, if(parent_span_id = '', resource_string_service$$name, '') AS root_service, if(parent_span_id = '', response_status_code, '') AS root_status_code, (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name')) AS is_gen_ai, multiIf(mapContains(attributes_number, 'gen_ai.usage.input_tokens'), toFloat64(attributes_number['gen_ai.usage.input_tokens']), NULL) AS input_tokens_value, multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL) AS output_tokens_value, multiIf(mapContains(attributes_number, 'gen_ai.usage.cache_read.input_tokens'), toFloat64(attributes_number['gen_ai.usage.cache_read.input_tokens']), NULL) AS cache_read_tokens_value, multiIf(mapContains(attributes_number, 'gen_ai.usage.cache_creation.input_tokens'), toFloat64(attributes_number['gen_ai.usage.cache_creation.input_tokens']), NULL) AS cache_write_tokens_value, multiIf(mapContains(attributes_number, 'gen_ai.usage.reasoning.output_tokens'), toFloat64(attributes_number['gen_ai.usage.reasoning.output_tokens']), NULL) AS reasoning_tokens_value, multiIf(mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), toFloat64(attributes_number['signoz.gen_ai.usage.tokens.cost']), NULL) AS total_cost_value FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT 1 BY span_id) AS spans",
+		},
+		{
+			name:        "JSONEvolutionInsideTrace_ReadsBothColumns",
+			jsonRelease: &jsonInsideTrace,
+			expectedSQL: "SELECT toUInt64(min(span_start_ns)) AS start_ns, toUInt64(max(span_end_ns)) AS end_ns, count() AS total_spans, countIf(has_error) AS total_error_spans, countIf(has_missing_parent) > 0 AS has_missing_spans, argMinIf(root_service, (span_start_ns, root_name), is_root) AS root_service_name, argMinIf(root_name, (span_start_ns, root_name), is_root) AS root_entry_point, argMinIf(root_status_code, (span_start_ns, root_name), is_root) AS root_span_status_code, countIf(is_gen_ai) AS gen_ai_span_count, toUInt64(coalesce(sum(input_tokens_value), 0)) AS input_tokens, toUInt64(coalesce(sum(output_tokens_value), 0)) AS output_tokens, toUInt64(coalesce(sum(cache_read_tokens_value), 0)) AS cache_read_tokens, toUInt64(coalesce(sum(cache_write_tokens_value), 0)) AS cache_write_tokens, toUInt64(coalesce(sum(reasoning_tokens_value), 0)) AS reasoning_tokens, sum(total_cost_value) AS total_cost FROM (SELECT toUnixTimestamp64Nano(timestamp) AS span_start_ns, span_start_ns + duration_nano AS span_end_ns, span_id, has_error, (parent_span_id <> '' AND parent_span_id GLOBAL NOT IN (SELECT span_id FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?)) AS has_missing_parent, (parent_span_id = '' OR has_missing_parent) AS is_root, if(parent_span_id = '', name, 'Missing Span') AS root_name, if(parent_span_id = '', resource_string_service$$name, '') AS root_service, if(parent_span_id = '', response_status_code, '') AS root_status_code, (multiIf(attributes.`gen_ai.request.model` IS NOT NULL, attributes.`gen_ai.request.model`::String, mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.tool.name` IS NOT NULL, attributes.`gen_ai.tool.name`::String, mapContains(attributes_string, 'gen_ai.tool.name'), attributes_string['gen_ai.tool.name'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.agent.name` IS NOT NULL, attributes.`gen_ai.agent.name`::String, mapContains(attributes_string, 'gen_ai.agent.name'), attributes_string['gen_ai.agent.name'], NULL) IS NOT NULL) AS is_gen_ai, toFloat64(multiIf(if(dynamicType(attributes.`gen_ai.usage.input_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.input_tokens`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`gen_ai.usage.input_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.input_tokens`, 'Float64'), NULL), mapContains(attributes_number, 'gen_ai.usage.input_tokens'), attributes_number['gen_ai.usage.input_tokens'], NULL)) AS input_tokens_value, toFloat64(multiIf(if(dynamicType(attributes.`gen_ai.usage.output_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.output_tokens`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`gen_ai.usage.output_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.output_tokens`, 'Float64'), NULL), mapContains(attributes_number, 'gen_ai.usage.output_tokens'), attributes_number['gen_ai.usage.output_tokens'], NULL)) AS output_tokens_value, toFloat64(multiIf(if(dynamicType(attributes.`gen_ai.usage.cache_read.input_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.cache_read.input_tokens`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`gen_ai.usage.cache_read.input_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.cache_read.input_tokens`, 'Float64'), NULL), mapContains(attributes_number, 'gen_ai.usage.cache_read.input_tokens'), attributes_number['gen_ai.usage.cache_read.input_tokens'], NULL)) AS cache_read_tokens_value, toFloat64(multiIf(if(dynamicType(attributes.`gen_ai.usage.cache_creation.input_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.cache_creation.input_tokens`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`gen_ai.usage.cache_creation.input_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.cache_creation.input_tokens`, 'Float64'), NULL), mapContains(attributes_number, 'gen_ai.usage.cache_creation.input_tokens'), attributes_number['gen_ai.usage.cache_creation.input_tokens'], NULL)) AS cache_write_tokens_value, toFloat64(multiIf(if(dynamicType(attributes.`gen_ai.usage.reasoning.output_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.reasoning.output_tokens`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`gen_ai.usage.reasoning.output_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.reasoning.output_tokens`, 'Float64'), NULL), mapContains(attributes_number, 'gen_ai.usage.reasoning.output_tokens'), attributes_number['gen_ai.usage.reasoning.output_tokens'], NULL)) AS reasoning_tokens_value, toFloat64(multiIf(if(dynamicType(attributes.`signoz.gen_ai.usage.tokens.cost`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`signoz.gen_ai.usage.tokens.cost`, 'Float64'), NULL) IS NOT NULL, if(dynamicType(attributes.`signoz.gen_ai.usage.tokens.cost`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`signoz.gen_ai.usage.tokens.cost`, 'Float64'), NULL), mapContains(attributes_number, 'signoz.gen_ai.usage.tokens.cost'), attributes_number['signoz.gen_ai.usage.tokens.cost'], NULL)) AS total_cost_value FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT 1 BY span_id) AS spans",
+		},
+		{
+			name:        "JSONEvolutionBeforeTrace_ReadsJSONOnly",
+			jsonRelease: &jsonBeforeTrace,
+			expectedSQL: "SELECT toUInt64(min(span_start_ns)) AS start_ns, toUInt64(max(span_end_ns)) AS end_ns, count() AS total_spans, countIf(has_error) AS total_error_spans, countIf(has_missing_parent) > 0 AS has_missing_spans, argMinIf(root_service, (span_start_ns, root_name), is_root) AS root_service_name, argMinIf(root_name, (span_start_ns, root_name), is_root) AS root_entry_point, argMinIf(root_status_code, (span_start_ns, root_name), is_root) AS root_span_status_code, countIf(is_gen_ai) AS gen_ai_span_count, toUInt64(coalesce(sum(input_tokens_value), 0)) AS input_tokens, toUInt64(coalesce(sum(output_tokens_value), 0)) AS output_tokens, toUInt64(coalesce(sum(cache_read_tokens_value), 0)) AS cache_read_tokens, toUInt64(coalesce(sum(cache_write_tokens_value), 0)) AS cache_write_tokens, toUInt64(coalesce(sum(reasoning_tokens_value), 0)) AS reasoning_tokens, sum(total_cost_value) AS total_cost FROM (SELECT toUnixTimestamp64Nano(timestamp) AS span_start_ns, span_start_ns + duration_nano AS span_end_ns, span_id, has_error, (parent_span_id <> '' AND parent_span_id GLOBAL NOT IN (SELECT span_id FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?)) AS has_missing_parent, (parent_span_id = '' OR has_missing_parent) AS is_root, if(parent_span_id = '', name, 'Missing Span') AS root_name, if(parent_span_id = '', resource_string_service$$name, '') AS root_service, if(parent_span_id = '', response_status_code, '') AS root_status_code, (attributes.`gen_ai.request.model` IS NOT NULL OR attributes.`gen_ai.tool.name` IS NOT NULL OR attributes.`gen_ai.agent.name` IS NOT NULL) AS is_gen_ai, toFloat64(if(dynamicType(attributes.`gen_ai.usage.input_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.input_tokens`, 'Float64'), NULL)) AS input_tokens_value, toFloat64(if(dynamicType(attributes.`gen_ai.usage.output_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.output_tokens`, 'Float64'), NULL)) AS output_tokens_value, toFloat64(if(dynamicType(attributes.`gen_ai.usage.cache_read.input_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.cache_read.input_tokens`, 'Float64'), NULL)) AS cache_read_tokens_value, toFloat64(if(dynamicType(attributes.`gen_ai.usage.cache_creation.input_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.cache_creation.input_tokens`, 'Float64'), NULL)) AS cache_write_tokens_value, toFloat64(if(dynamicType(attributes.`gen_ai.usage.reasoning.output_tokens`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`gen_ai.usage.reasoning.output_tokens`, 'Float64'), NULL)) AS reasoning_tokens_value, toFloat64(if(dynamicType(attributes.`signoz.gen_ai.usage.tokens.cost`) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(attributes.`signoz.gen_ai.usage.tokens.cost`, 'Float64'), NULL)) AS total_cost_value FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT 1 BY span_id) AS spans",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			s := newTestStoreWithMetadata(sqlmock.QueryMatcherEqual, genAIMetadataStore(testCase.jsonRelease), fl)
+			s.Mock().ExpectQueryRow(testCase.expectedSQL).
+				WillReturnRow(cmock.NewRow(nil, nil))
+			_, _ = s.Store().GetTraceStats(context.Background(), valuer.GenerateUUID(), testTraceID, testBounds)
+			assert.NoError(t, s.Mock().ExpectationsWereMet())
+		})
+	}
 }
 
 func TestGetMinimalSpans(t *testing.T) {
@@ -89,7 +147,7 @@ func TestGetSpanCountByField(t *testing.T) {
 				s.Mock().ExpectSelect(regexp.QuoteMeta(expectedSQL)).
 					WillReturnRows(cmock.NewRows(nil, nil))
 			}
-			_, _ = s.Store().GetSpanCountByField(context.Background(), testTraceID, testSummary, tc.field)
+			_, _ = s.Store().GetSpanCountByField(context.Background(), testTraceID, testBounds, tc.field)
 			assert.NoError(t, s.Mock().ExpectationsWereMet())
 		})
 	}
@@ -139,7 +197,7 @@ func TestGetSpanDurationByField(t *testing.T) {
 				s.Mock().ExpectSelect(regexp.QuoteMeta(expectedSQL)).
 					WillReturnRows(cmock.NewRows(nil, nil))
 			}
-			_, _ = s.Store().GetSpanDurationByField(context.Background(), testTraceID, testSummary, tc.field)
+			_, _ = s.Store().GetSpanDurationByField(context.Background(), testTraceID, testBounds, tc.field)
 			assert.NoError(t, s.Mock().ExpectationsWereMet())
 		})
 	}
@@ -149,24 +207,25 @@ func TestGetThreadSpans(t *testing.T) {
 	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, attributes_string, attributes_number, attributes_bool, events, links as references"
 	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND "
 	orderSQL := " ORDER BY timestamp ASC, span_id ASC LIMIT ?"
+	jsonInsideTrace := testStart.Add(500 * time.Second)
 
 	testCases := []struct {
 		name        string
 		jsonOn      bool
-		jsonRelease time.Time
+		jsonRelease *time.Time
 		selectSQL   string
 		whereSQL    string
 	}{
 		{
 			name:        "FlagOff_ReadsAndFiltersLegacyMaps",
-			jsonRelease: testStart,
+			jsonRelease: &jsonInsideTrace,
 			selectSQL:   selectSQL,
 			whereSQL:    "(mapContains(attributes_string, 'gen_ai.input.messages') OR mapContains(attributes_string, 'gen_ai.output.messages'))",
 		},
 		{
 			name:        "FlagOn_ReleasedDuringTrace_ReadsJSONFiltersJSONThenMaps",
 			jsonOn:      true,
-			jsonRelease: testStart.Add(500 * time.Second),
+			jsonRelease: &jsonInsideTrace,
 			selectSQL:   selectSQL + ", attributes",
 			whereSQL:    "(multiIf(attributes.`gen_ai.input.messages` IS NOT NULL, attributes.`gen_ai.input.messages`::String, mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.output.messages` IS NOT NULL, attributes.`gen_ai.output.messages`::String, mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL) IS NOT NULL)",
 		},
@@ -174,23 +233,11 @@ func TestGetThreadSpans(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			metadataStore := telemetrytypestest.NewMockMetadataStore()
-			for _, name := range []string{"gen_ai.input.messages", "gen_ai.output.messages"} {
-				metadataStore.KeysMap[name] = []*telemetrytypes.TelemetryFieldKey{{
-					Name:          name,
-					Signal:        telemetrytypes.SignalTraces,
-					FieldContext:  telemetrytypes.FieldContextAttribute,
-					FieldDataType: telemetrytypes.FieldDataTypeString,
-					Evolutions:    []*telemetrytypes.EvolutionEntry{{Signal: telemetrytypes.SignalTraces, ColumnName: "attributes", FieldContext: telemetrytypes.FieldContextAttribute, FieldName: "__all__", ReleaseTime: testCase.jsonRelease}},
-				}}
-			}
 			fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): testCase.jsonOn})
-			ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
-			s := spantypestest.New(impltracedetail.NewTraceStore(ts, metadataStore, fl), ts.Mock())
-
+			s := newTestStoreWithMetadata(sqlmock.QueryMatcherRegexp, genAIMetadataStore(testCase.jsonRelease), fl)
 			s.Mock().ExpectSelect(regexp.QuoteMeta(testCase.selectSQL + fromSQL + testCase.whereSQL + orderSQL)).
 				WillReturnRows(cmock.NewRows(nil, nil))
-			_, _ = s.Store().GetThreadSpans(context.Background(), valuer.GenerateUUID(), testTraceID, testSummary, spantypes.ThreadPage{Limit: 3})
+			_, _ = s.Store().GetThreadSpans(context.Background(), valuer.GenerateUUID(), testTraceID, testBounds, spantypes.ThreadPage{Limit: 3})
 			assert.NoError(t, s.Mock().ExpectationsWereMet())
 		})
 	}
