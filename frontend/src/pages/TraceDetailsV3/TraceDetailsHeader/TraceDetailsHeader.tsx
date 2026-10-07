@@ -64,9 +64,7 @@ function TraceDetailsHeader({
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
-	const { data: traceSummary, isLoading: isSummaryLoading } = useTraceSummary(
-		traceID || '',
-	);
+	const { data: traceSummary } = useTraceSummary(traceID || '');
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
@@ -183,7 +181,7 @@ function TraceDetailsHeader({
 				)}
 			</div>
 
-			{showTraceDetails && (isSummaryLoading || traceSummary) && (
+			{showTraceDetails && (
 				<div className={styles.subHeader}>
 					{traceSummary ? (
 						<EntityMetadataRow

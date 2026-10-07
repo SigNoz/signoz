@@ -224,9 +224,12 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		expect(screen.getByText(/inventory-frontend/)).toBeInTheDocument();
 	});
 
-	it('does not render the metadata row when the summary is absent', () => {
-		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+	it('shows skeletons instead of the metadata when the summary is absent', () => {
+		const { container } = render(
+			<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />,
+		);
 
 		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
+		expect(container.querySelectorAll('.ant-skeleton-input')).toHaveLength(3);
 	});
 });
