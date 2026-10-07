@@ -27,9 +27,17 @@ const LLM_KEYS = [
 	GEN_AI_KEYS.reasoningTokens,
 ];
 
-function hasAttribute(span: SpanV3, key: string): boolean {
+/** Keeps numeric 0, which `getSpanAttribute`'s `||` chain drops. */
+export function getGenAiValue(
+	span: SpanV3,
+	key: string,
+): string | number | boolean | undefined {
 	const value = span.attributes?.[key] ?? span.resource?.[key];
-	return value !== undefined && value !== null && value !== '';
+	return value === '' ? undefined : value;
+}
+
+function hasAttribute(span: SpanV3, key: string): boolean {
+	return getGenAiValue(span, key) !== undefined;
 }
 
 /** Tool and agent spans may also carry model or usage keys, so they win over LLM. */
