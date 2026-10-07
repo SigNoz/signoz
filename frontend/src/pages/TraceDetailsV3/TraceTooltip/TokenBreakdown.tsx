@@ -22,12 +22,12 @@ function TokenBreakdown({
 		<>
 			{input !== undefined && (
 				<TooltipSection>
-					<TooltipRow label="Input" value={formatTokens(input)} />
+					<TooltipRow label="Input" value={formatTokens(input)} isHeading />
 				</TooltipSection>
 			)}
 			{(showCacheRead || showCacheWrite) && (
 				<TooltipSection>
-					<TooltipRow label="Cache" />
+					<TooltipRow label="Cache" isHeading />
 					{showCacheRead && (
 						<TooltipRow label="Cache read" value={formatTokens(cacheRead)} isNested />
 					)}
@@ -42,7 +42,7 @@ function TokenBreakdown({
 			)}
 			{output !== undefined && (
 				<TooltipSection>
-					<TooltipRow label="Output" value={formatTokens(output)} />
+					<TooltipRow label="Output" value={formatTokens(output)} isHeading />
 				</TooltipSection>
 			)}
 		</>

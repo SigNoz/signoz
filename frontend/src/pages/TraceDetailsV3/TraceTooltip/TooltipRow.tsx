@@ -7,6 +7,7 @@ interface TooltipRowProps {
 	label: string;
 	value?: string;
 	isNested?: boolean;
+	isHeading?: boolean;
 	testId?: string;
 }
 
@@ -14,6 +15,7 @@ function TooltipRow({
 	label,
 	value,
 	isNested,
+	isHeading,
 	testId,
 }: TooltipRowProps): JSX.Element {
 	return (
@@ -21,7 +23,11 @@ function TooltipRow({
 			className={cx(styles.row, isNested && styles.nestedRow)}
 			data-testid={testId}
 		>
-			<Typography.Text size="small" color="muted" truncate={1}>
+			<Typography.Text
+				size="small"
+				color={isHeading ? undefined : 'muted'}
+				truncate={1}
+			>
 				{label}
 			</Typography.Text>
 			{value !== undefined && (
