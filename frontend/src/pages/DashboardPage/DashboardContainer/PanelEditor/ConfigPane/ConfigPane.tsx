@@ -25,6 +25,7 @@ interface ConfigPaneProps {
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Switch the panel to another visualization kind. */
 	onChangePanelKind: (kind: PanelKind) => void;
+	originalPanelKind?: PanelKind;
 	/**
 	 * Active query type from the query-builder provider (the selected tab). Drives which
 	 * panel types the visualization switcher disables — read from the provider, not the
@@ -57,6 +58,7 @@ function ConfigPane({
 	spec,
 	onChangeSpec,
 	onChangePanelKind,
+	originalPanelKind,
 	queryType,
 	legendSeries,
 	tableColumns,
@@ -125,6 +127,7 @@ function ConfigPane({
 						signal={signal}
 						panelKind={panelKind}
 						onChangePanelKind={onChangePanelKind}
+						originalPanelKind={originalPanelKind}
 						queryType={queryType}
 						stepInterval={stepInterval}
 						metricUnit={metricUnit}
@@ -149,6 +152,7 @@ function ConfigPane({
 									signal={signal}
 									panelKind={panelKind}
 									onChangePanelKind={onChangePanelKind}
+									originalPanelKind={originalPanelKind}
 									queryType={queryType}
 									stepInterval={stepInterval}
 									metricUnit={metricUnit}

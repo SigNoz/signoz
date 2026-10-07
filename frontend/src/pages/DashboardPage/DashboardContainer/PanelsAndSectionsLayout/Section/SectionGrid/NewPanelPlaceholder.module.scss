@@ -1,0 +1,23 @@
+.placeholder {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	height: 100%;
+	box-sizing: border-box;
+	border: 1px dashed var(--bg-robin-500);
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--bg-robin-500) 6%, transparent);
+}
+
+.name {
+	color: var(--l1-foreground);
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.label {
+	color: var(--bg-robin-400);
+	font-size: 11px;
+}
