@@ -1,11 +1,13 @@
 import { Typography } from '@signozhq/ui/typography';
+import cx from 'classnames';
 
 import styles from './TraceTooltip.module.scss';
 
 interface TooltipRowProps {
 	label: string;
-	value: string;
+	value?: string;
 	isTotal?: boolean;
+	isNested?: boolean;
 	testId?: string;
 }
 
@@ -13,10 +15,14 @@ function TooltipRow({
 	label,
 	value,
 	isTotal,
+	isNested,
 	testId,
 }: TooltipRowProps): JSX.Element {
 	return (
-		<div className={styles.row} data-testid={testId}>
+		<div
+			className={cx(styles.row, isNested && styles.nestedRow)}
+			data-testid={testId}
+		>
 			<Typography.Text
 				size="small"
 				color={isTotal ? undefined : 'muted'}
@@ -24,9 +30,11 @@ function TooltipRow({
 			>
 				{label}
 			</Typography.Text>
-			<Typography.Text size="small" truncate={1} className={styles.rowValue}>
-				{value}
-			</Typography.Text>
+			{value !== undefined && (
+				<Typography.Text size="small" truncate={1} className={styles.rowValue}>
+					{value}
+				</Typography.Text>
+			)}
 		</div>
 	);
 }

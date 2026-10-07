@@ -1,9 +1,5 @@
-import {
-	formatCost,
-	formatTokens,
-	getUsageTotals,
-	SpanAiUsage,
-} from './aiUsage';
+import { formatCost, SpanAiUsage } from './aiUsage';
+import TokenBreakdown from '../TraceTooltip/TokenBreakdown';
 import TooltipRow from '../TraceTooltip/TooltipRow';
 import TooltipSection from '../TraceTooltip/TooltipSection';
 
@@ -12,34 +8,27 @@ interface SpanUsageBreakdownProps {
 }
 
 function SpanUsageBreakdown({ usage }: SpanUsageBreakdownProps): JSX.Element {
-	const { outputTokens = 0, cacheReadTokens, cacheCreationTokens, cost } = usage;
-	const { inputUsage, totalUsage } = getUsageTotals(usage);
+	const {
+		inputTokens,
+		outputTokens,
+		cacheReadTokens,
+		cacheCreationTokens,
+		cost,
+	} = usage;
 
 	return (
 		<>
-			<TooltipSection>
-				<TooltipRow label="Input usage" value={formatTokens(inputUsage)} isTotal />
-				{cacheReadTokens !== undefined && (
-					<TooltipRow label="cache read" value={formatTokens(cacheReadTokens)} />
-				)}
-				{cacheCreationTokens !== undefined && (
-					<TooltipRow
-						label="cache creation"
-						value={formatTokens(cacheCreationTokens)}
-					/>
-				)}
-			</TooltipSection>
-			<TooltipSection>
-				<TooltipRow
-					label="Output usage"
-					value={formatTokens(outputTokens)}
-					isTotal
-				/>
-			</TooltipSection>
-			<TooltipSection>
-				<TooltipRow label="Total usage" value={formatTokens(totalUsage)} isTotal />
-				{cost !== undefined && <TooltipRow label="cost" value={formatCost(cost)} />}
-			</TooltipSection>
+			<TokenBreakdown
+				input={inputTokens}
+				output={outputTokens}
+				cacheRead={cacheReadTokens}
+				cacheWrite={cacheCreationTokens}
+			/>
+			{cost !== undefined && (
+				<TooltipSection>
+					<TooltipRow label="cost" value={formatCost(cost)} />
+				</TooltipSection>
+			)}
 		</>
 	);
 }

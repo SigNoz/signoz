@@ -9,7 +9,6 @@ export interface SpanAiUsage {
 	cacheReadTokens?: number;
 	cacheCreationTokens?: number;
 	cost?: number;
-	isAnthropic: boolean;
 }
 
 export interface SpanAiDetails {
@@ -28,25 +27,6 @@ function getNumber(span: SpanV3, key: string): number | undefined {
 	return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function isAnthropicSpan(span: SpanV3): boolean {
-	const provider = (
-		getSpanAttribute(span, GEN_AI_KEYS.providerName) ??
-		getSpanAttribute(span, GEN_AI_KEYS.system) ??
-		''
-	).toLowerCase();
-	const model = (
-		getSpanAttribute(span, GEN_AI_KEYS.responseModel) ??
-		getSpanAttribute(span, GEN_AI_KEYS.requestModel) ??
-		''
-	).toLowerCase();
-
-	return (
-		provider === 'anthropic' ||
-		model.includes('claude') ||
-		model.includes('anthropic')
-	);
-}
-
 export function getSpanAiDetails(span: SpanV3): SpanAiDetails | undefined {
 	const usage: SpanAiUsage = {
 		inputTokens: getNumber(span, GEN_AI_KEYS.inputTokens),
@@ -54,7 +34,6 @@ export function getSpanAiDetails(span: SpanV3): SpanAiDetails | undefined {
 		cacheReadTokens: getNumber(span, GEN_AI_KEYS.cacheReadTokens),
 		cacheCreationTokens: getNumber(span, GEN_AI_KEYS.cacheCreationTokens),
 		cost: getNumber(span, GEN_AI_KEYS.cost),
-		isAnthropic: isAnthropicSpan(span),
 	};
 	const hasUsage =
 		usage.inputTokens !== undefined || usage.outputTokens !== undefined;
@@ -69,23 +48,6 @@ export function getSpanAiDetails(span: SpanV3): SpanAiDetails | undefined {
 	return details.model || details.toolName || details.agentName || hasUsage
 		? details
 		: undefined;
-}
-
-/**
- * Anthropic reports input_tokens without cached tokens; every other provider
- * (OpenAI, Azure OpenAI, Gemini, Mistral, DeepSeek, Groq, xAI) counts cached
- * tokens inside input_tokens.
- */
-export function getUsageTotals(usage: SpanAiUsage): {
-	inputUsage: number;
-	totalUsage: number;
-} {
-	const input = usage.inputTokens ?? 0;
-	const inputUsage = usage.isAnthropic
-		? input + (usage.cacheReadTokens ?? 0) + (usage.cacheCreationTokens ?? 0)
-		: input;
-
-	return { inputUsage, totalUsage: inputUsage + (usage.outputTokens ?? 0) };
 }
 
 export function formatTokens(value: number): string {

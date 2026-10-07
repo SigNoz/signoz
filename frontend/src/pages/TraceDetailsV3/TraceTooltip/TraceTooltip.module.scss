@@ -74,6 +74,10 @@ $surface-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 	min-width: 0;
 }
 
+.nestedRow {
+	padding-left: 12px;
+}
+
 .rowValue {
 	flex-shrink: 0;
 	max-width: 60%;
