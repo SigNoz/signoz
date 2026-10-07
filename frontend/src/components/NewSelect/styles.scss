@@ -223,6 +223,16 @@ $custom-border-color: #2c3044;
 	}
 }
 
+// Ellipsized option label.
+.option-label-text {
+	display: block;
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
 // Custom dropdown styles for single select
 .custom-select-dropdown {
 	padding: 8px 0 0 0;
