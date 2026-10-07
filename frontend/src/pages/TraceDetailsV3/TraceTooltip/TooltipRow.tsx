@@ -1,6 +1,6 @@
 import { Typography } from '@signozhq/ui/typography';
 
-import styles from './SpanHoverCard.module.scss';
+import styles from './TraceTooltip.module.scss';
 
 interface TooltipRowProps {
 	label: string;

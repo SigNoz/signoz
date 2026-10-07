@@ -5,6 +5,7 @@ import {
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
+import cx from 'classnames';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
@@ -15,8 +16,10 @@ import { toFixed } from 'utils/toFixed';
 
 import { getSpanAiDetails, SpanAiDetails } from './aiUsage';
 import SpanUsageBreakdown from './SpanUsageBreakdown';
-import TooltipRow from './TooltipRow';
+import TooltipRow from '../TraceTooltip/TooltipRow';
+import TooltipSection from '../TraceTooltip/TooltipSection';
 
+import tooltipStyles from '../TraceTooltip/TraceTooltip.module.scss';
 import styles from './SpanHoverCard.module.scss';
 
 /**
@@ -59,9 +62,9 @@ export function SpanTooltipContent({
 		convertTimeToRelevantUnit(durationMs);
 
 	return (
-		<div className={styles.content}>
+		<div className={cx(tooltipStyles.body, styles.content)}>
 			<div className={styles.header}>
-				<Typography.Text className={styles.name} style={{ color }}>
+				<Typography.Text className={tooltipStyles.title} style={{ color }}>
 					{spanName}
 				</Typography.Text>
 				{ai?.usage && (
@@ -71,7 +74,7 @@ export function SpanTooltipContent({
 				)}
 			</div>
 			{ai?.usage && <SpanUsageBreakdown usage={ai.usage} />}
-			<div className={styles.section}>
+			<TooltipSection>
 				{ai?.model && <TooltipRow label="model" value={ai.model} />}
 				{ai?.toolName && <TooltipRow label="tool" value={ai.toolName} />}
 				{ai?.agentName && <TooltipRow label="agent" value={ai.agentName} />}
@@ -81,9 +84,9 @@ export function SpanTooltipContent({
 					label="duration"
 					value={`${toFixed(formattedDuration, 2)} ${timeUnitName}`}
 				/>
-			</div>
+			</TooltipSection>
 			{previewRows && previewRows.length > 0 && (
-				<div className={styles.section}>
+				<TooltipSection>
 					{previewRows.map((row) => (
 						<TooltipRow
 							key={row.key}
@@ -92,7 +95,7 @@ export function SpanTooltipContent({
 							testId={`span-hover-card-preview-${row.key}`}
 						/>
 					))}
-				</div>
+				</TooltipSection>
 			)}
 		</div>
 	);
@@ -186,7 +189,7 @@ export function SpanHoverCard({
 					side="right"
 					align="start"
 					sideOffset={8}
-					className={styles.popover}
+					className={cx(tooltipStyles.tooltipContent, styles.popover)}
 				>
 					{hoverCardData && <SpanTooltipContent {...hoverCardData.tooltip} />}
 				</TooltipContent>

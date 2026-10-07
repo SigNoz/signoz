@@ -4,9 +4,8 @@ import {
 	getUsageTotals,
 	SpanAiUsage,
 } from './aiUsage';
-import TooltipRow from './TooltipRow';
-
-import styles from './SpanHoverCard.module.scss';
+import TooltipRow from '../TraceTooltip/TooltipRow';
+import TooltipSection from '../TraceTooltip/TooltipSection';
 
 interface SpanUsageBreakdownProps {
 	usage: SpanAiUsage;
@@ -18,7 +17,7 @@ function SpanUsageBreakdown({ usage }: SpanUsageBreakdownProps): JSX.Element {
 
 	return (
 		<>
-			<div className={styles.section}>
+			<TooltipSection>
 				<TooltipRow label="Input usage" value={formatTokens(inputUsage)} isTotal />
 				{cacheReadTokens !== undefined && (
 					<TooltipRow label="cache read" value={formatTokens(cacheReadTokens)} />
@@ -29,18 +28,18 @@ function SpanUsageBreakdown({ usage }: SpanUsageBreakdownProps): JSX.Element {
 						value={formatTokens(cacheCreationTokens)}
 					/>
 				)}
-			</div>
-			<div className={styles.section}>
+			</TooltipSection>
+			<TooltipSection>
 				<TooltipRow
 					label="Output usage"
 					value={formatTokens(outputTokens)}
 					isTotal
 				/>
-			</div>
-			<div className={styles.section}>
+			</TooltipSection>
+			<TooltipSection>
 				<TooltipRow label="Total usage" value={formatTokens(totalUsage)} isTotal />
 				{cost !== undefined && <TooltipRow label="cost" value={formatCost(cost)} />}
-			</div>
+			</TooltipSection>
 		</>
 	);
 }
