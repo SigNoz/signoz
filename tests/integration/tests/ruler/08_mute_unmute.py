@@ -84,7 +84,7 @@ def test_mute_lifecycle(
     assert mute["status"] == "active"
     first_end = mute["schedule"]["endTime"]
 
-    # the list API overlays muted + mutedBy while the adhoc mute is active
+    # the list API overlays muted while the adhoc mute is active
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v3/rules"),
         headers={"Authorization": f"Bearer {token}"},
@@ -93,9 +93,15 @@ def test_mute_lifecycle(
     assert response.status_code == HTTPStatus.OK
     listed = next(row for row in response.json()["data"]["rules"] if row["id"] == rule_id)
     assert listed["muted"] is True
-    assert [(source["id"], source["origin"]) for source in listed["mutedBy"]] == [(mute["id"], "adhoc")]
-    assert listed["mutedBy"][0]["name"] == "Mute: rule mute target"
-    assert listed["mutedBy"][0]["endTime"] == first_end
+
+    # the single-rule GET carries the same overlay for the detail page
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["data"]["muted"] is True
 
     # the adhoc mute is visible on the downtime list and filterable by origin
     response = requests.get(
@@ -168,7 +174,14 @@ def test_mute_lifecycle(
     assert response.status_code == HTTPStatus.OK
     listed = next(row for row in response.json()["data"]["rules"] if row["id"] == rule_id)
     assert listed["muted"] is False
-    assert "mutedBy" not in listed
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["data"]["muted"] is False
 
 
 def test_mute_leaves_maintenance_windows_alone(
@@ -201,12 +214,11 @@ def test_mute_leaves_maintenance_windows_alone(
     assert response.status_code == HTTPStatus.CREATED, response.text
     window_id = response.json()["data"]["id"]
 
-    # a mid-test failure must not leave the window attached: a rule pinned by a
-    # window blocks delete_all_rules for every later test on a reused stack
+    # a leaked window pins the rule and blocks delete_all_rules on reused stacks
     try:
         assert response.json()["data"]["origin"] == "maintenance"
 
-        # a maintenance window silences but does not mute: it only shows up in mutedBy
+        # a maintenance window silences but does not mute
         response = requests.get(
             signoz.self.host_configs["8080"].get("/api/v3/rules"),
             headers={"Authorization": f"Bearer {token}"},
@@ -215,7 +227,6 @@ def test_mute_leaves_maintenance_windows_alone(
         assert response.status_code == HTTPStatus.OK
         listed = next(row for row in response.json()["data"]["rules"] if row["id"] == rule_id)
         assert listed["muted"] is False
-        assert [(source["id"], source["origin"]) for source in listed["mutedBy"]] == [(window_id, "maintenance")]
 
         response = requests.post(
             signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/mute"),
@@ -225,7 +236,7 @@ def test_mute_leaves_maintenance_windows_alone(
         )
         assert response.status_code == HTTPStatus.OK, response.text
 
-        # with both active, the rule is muted and mutedBy carries both origins
+        # with both the window and the mute active, the rule is muted
         response = requests.get(
             signoz.self.host_configs["8080"].get("/api/v3/rules"),
             headers={"Authorization": f"Bearer {token}"},
@@ -234,7 +245,6 @@ def test_mute_leaves_maintenance_windows_alone(
         assert response.status_code == HTTPStatus.OK
         listed = next(row for row in response.json()["data"]["rules"] if row["id"] == rule_id)
         assert listed["muted"] is True
-        assert {source["origin"] for source in listed["mutedBy"]} == {"adhoc", "maintenance"}
 
         response = requests.post(
             signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/unmute"),
@@ -261,7 +271,6 @@ def test_mute_leaves_maintenance_windows_alone(
         assert response.status_code == HTTPStatus.OK
         listed = next(row for row in response.json()["data"]["rules"] if row["id"] == rule_id)
         assert listed["muted"] is False
-        assert [source["id"] for source in listed["mutedBy"]] == [window_id]
     finally:
         response = requests.put(
             signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{window_id}"),
@@ -280,6 +289,34 @@ def test_mute_leaves_maintenance_windows_alone(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_mute_chunked_body_honored(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    seed_alert_rules: Callable[[str, list[dict]], None],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    seed_alert_rules(SEED_CHANNEL_NAME, [MUTE_RULE])
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v3/rules"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    rule_id = response.json()["data"]["rules"][0]["id"]
+
+    # a generator body makes requests send Transfer-Encoding chunked (no Content-Length);
+    # the duration must still be honored, not silently become an indefinite mute
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/mute"),
+        data=(chunk for chunk in [b'{"duration": "1h"}']),
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["schedule"]["endTime"], response.text
 
 
 def test_delete_rule_cleans_up_mute(
@@ -361,7 +398,7 @@ def test_delete_rule_blocked_by_window_keeps_mute(
     assert response.status_code == HTTPStatus.CREATED, response.text
     window_id = response.json()["data"]["id"]
 
-    # same guard as above: never leave the window attached on a mid-test failure
+    # a leaked window pins the rule and blocks delete_all_rules on reused stacks
     try:
         # the real window blocks the delete; the rollback must keep the adhoc mute too
         response = requests.delete(

@@ -8,6 +8,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShouldSkipMaintenance(t *testing.T) {
@@ -1039,15 +1041,9 @@ func TestPlannedMaintenanceOrigin(t *testing.T) {
 			}
 
 			out, err := json.Marshal(m)
-			if err != nil {
-				t.Fatalf("marshal: %v", err)
-			}
-			if !strings.Contains(string(out), testCase.wantOrigin) {
-				t.Errorf("marshal output %s missing %s", out, testCase.wantOrigin)
-			}
-			if !strings.Contains(string(out), testCase.wantKind) {
-				t.Errorf("marshal output %s missing %s", out, testCase.wantKind)
-			}
+			require.NoError(t, err)
+			assert.Contains(t, string(out), testCase.wantOrigin)
+			assert.Contains(t, string(out), testCase.wantKind)
 		})
 	}
 }
@@ -1061,12 +1057,8 @@ func TestToPlannedMaintenanceCarriesOrigin(t *testing.T) {
 	}
 
 	m, err := withRules.ToPlannedMaintenance()
-	if err != nil {
-		t.Fatalf("convert: %v", err)
-	}
-	if m.Origin != MaintenanceOriginAdhoc {
-		t.Errorf("origin = %v, want adhoc", m.Origin)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, MaintenanceOriginAdhoc, m.Origin)
 }
 
 func TestNewAdhocStorablePlannedMaintenance(t *testing.T) {
@@ -1085,36 +1077,20 @@ func TestNewAdhocStorablePlannedMaintenance(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			storableMaintenance, storableMaintenanceRule, err := NewAdhocStorablePlannedMaintenance("org-1", "nikhil@signoz.io", ruleID, "payment latency high", start, testCase.endTime)
-			if err != nil {
-				t.Fatalf("build: %v", err)
-			}
+			require.NoError(t, err)
 
-			if storableMaintenance.Origin != MaintenanceOriginAdhoc {
-				t.Errorf("origin = %v, want adhoc", storableMaintenance.Origin)
-			}
-			if storableMaintenance.Name != "Mute: payment latency high" {
-				t.Errorf("name = %q", storableMaintenance.Name)
-			}
-			if storableMaintenance.CreatedBy != "nikhil@signoz.io" || storableMaintenance.UpdatedBy != "nikhil@signoz.io" {
-				t.Errorf("audit fields not stamped: %+v", storableMaintenance.UserAuditable)
-			}
-			if storableMaintenanceRule.PlannedMaintenanceID != storableMaintenance.ID || storableMaintenanceRule.RuleID != ruleID {
-				t.Errorf("join row mismatched: %+v", storableMaintenanceRule)
-			}
-			if got := strings.Contains(storableMaintenance.Schedule, "endTime"); got != testCase.wantEndJSON {
-				t.Errorf("schedule %s endTime presence = %v, want %v", storableMaintenance.Schedule, got, testCase.wantEndJSON)
-			}
+			assert.Equal(t, MaintenanceOriginAdhoc, storableMaintenance.Origin)
+			assert.Equal(t, "Mute: payment latency high", storableMaintenance.Name)
+			assert.Equal(t, "nikhil@signoz.io", storableMaintenance.CreatedBy)
+			assert.Equal(t, "nikhil@signoz.io", storableMaintenance.UpdatedBy)
+			assert.Equal(t, storableMaintenance.ID, storableMaintenanceRule.PlannedMaintenanceID)
+			assert.Equal(t, ruleID, storableMaintenanceRule.RuleID)
+			assert.Equal(t, testCase.wantEndJSON, strings.Contains(storableMaintenance.Schedule, "endTime"))
 
 			schedule := &Schedule{}
-			if err := json.Unmarshal([]byte(storableMaintenance.Schedule), schedule); err != nil {
-				t.Fatalf("schedule round-trip: %v", err)
-			}
-			if !schedule.StartTime.Equal(start) {
-				t.Errorf("start = %v, want %v", schedule.StartTime, start)
-			}
-			if schedule.EndTime.IsZero() == testCase.wantEndJSON {
-				t.Errorf("end zero = %v, want %v", schedule.EndTime.IsZero(), !testCase.wantEndJSON)
-			}
+			require.NoError(t, json.Unmarshal([]byte(storableMaintenance.Schedule), schedule))
+			assert.True(t, schedule.StartTime.Equal(start))
+			assert.Equal(t, !testCase.wantEndJSON, schedule.EndTime.IsZero())
 		})
 	}
 }

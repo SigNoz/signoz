@@ -10284,23 +10284,6 @@ export enum RuletypesListSortDTO {
 }
 export type RuletypesListableRuleDTOLabels = { [key: string]: string };
 
-export interface RuletypesRuleMuteSourceDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	endTime?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	origin: AlertmanagertypesMaintenanceOriginDTO;
-}
-
 export enum RuletypesRuleTypeDTO {
 	threshold_rule = 'threshold_rule',
 	promql_rule = 'promql_rule',
@@ -10341,10 +10324,6 @@ export interface RuletypesListableRuleDTO {
 	 * @type boolean
 	 */
 	muted?: boolean;
-	/**
-	 * @type array
-	 */
-	mutedBy?: RuletypesRuleMuteSourceDTO[];
 	ruleType: RuletypesRuleTypeDTO;
 	state: RuletypesAlertStateDTO;
 	/**
@@ -10645,6 +10624,10 @@ export interface RuletypesRuleDTO {
 	 * @type object
 	 */
 	labels?: RuletypesRuleDTOLabels;
+	/**
+	 * @type boolean
+	 */
+	muted?: boolean;
 	notificationSettings?: RuletypesNotificationSettingsDTO;
 	/**
 	 * @type array

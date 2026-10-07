@@ -489,8 +489,7 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return err
 	}
 
-	// One tx: the rule-owned adhoc mute goes first so it never blocks the delete, and a
-	// delete blocked by a real maintenance window rolls the mute back instead of dropping it.
+	// Adhoc rows are deleted first in the same tx; a delete blocked by a real maintenance window rolls the mute back.
 	return m.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		if _, err := m.maintenanceStore.DeleteAdhocPlannedMaintenanceByRule(ctx, claims.OrgID, id); err != nil {
 			return err
@@ -990,6 +989,12 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 	r.CreatedBy = &s.CreatedBy
 	r.UpdatedAt = s.UpdatedAt
 	r.UpdatedBy = &s.UpdatedBy
+
+	schedules, err := m.maintenanceStore.ListPlannedMaintenance(ctx, claims.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	r.Muted = ruletypes.ComputeRuleMuted(r.Id, schedules, time.Now().UTC())
 
 	return &r, nil
 }

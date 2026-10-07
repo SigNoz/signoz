@@ -339,6 +339,7 @@ func (r *maintenance) UpsertAdhocPlannedMaintenance(ctx context.Context, ruleID 
 
 		if _, err := db.NewUpdate().
 			Model((*alertmanagertypes.StorablePlannedMaintenance)(nil)).
+			Set("name = ?", alertmanagertypes.AdhocPlannedMaintenanceName(ruleName)).
 			Set("schedule = ?", string(schedule)).
 			Set("updated_at = ?", now).
 			Set("updated_by = ?", claims.Email).
@@ -347,7 +348,7 @@ func (r *maintenance) UpsertAdhocPlannedMaintenance(ctx context.Context, ruleID 
 			return err
 		}
 
-		// Self-heal duplicates that predate the single-adhoc-row invariant.
+		// Collapse duplicate adhoc rows to the latest; the invariant is one per rule.
 		if len(rows) > 1 {
 			extraIDs := make([]string, 0, len(rows)-1)
 			for _, row := range rows[1:] {
@@ -408,6 +409,9 @@ func (r *maintenance) listAdhocWithRules(ctx context.Context, db bun.IDB, orgID 
 		Where("?TableAlias.org_id = ?", orgID).
 		Where("?TableAlias.origin = ?", alertmanagertypes.MaintenanceOriginAdhoc).
 		Where("pmr.rule_id = ?", ruleID.StringValue()).
+		// Latest first: when self-healing duplicates the upsert keeps rows[0], which
+		// must be deterministic; id breaks created_at ties (uuid-v7 is time-ordered).
+		OrderExpr("?TableAlias.created_at DESC, ?TableAlias.id DESC").
 		Scan(ctx)
 	if err != nil {
 		return nil, err

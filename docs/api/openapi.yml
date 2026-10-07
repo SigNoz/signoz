@@ -9035,10 +9035,6 @@ components:
           type: object
         muted:
           type: boolean
-        mutedBy:
-          items:
-            $ref: '#/components/schemas/RuletypesRuleMuteSource'
-          type: array
         ruleType:
           $ref: '#/components/schemas/RuletypesRuleType'
         state:
@@ -9240,6 +9236,8 @@ components:
           additionalProperties:
             type: string
           type: object
+        muted:
+          type: boolean
         notificationSettings:
           $ref: '#/components/schemas/RuletypesNotificationSettings'
         preferredChannels:
@@ -9302,22 +9300,6 @@ components:
           $ref: '#/components/schemas/RuletypesRuleThresholdData'
       required:
       - compositeQuery
-      type: object
-    RuletypesRuleMuteSource:
-      properties:
-        endTime:
-          format: date-time
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        origin:
-          $ref: '#/components/schemas/AlertmanagertypesMaintenanceOrigin'
-      required:
-      - id
-      - name
-      - origin
       type: object
     RuletypesRuleThresholdData:
       discriminator:

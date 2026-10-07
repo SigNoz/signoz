@@ -118,10 +118,11 @@ func TestAdhocPlannedMaintenanceLifecycle(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, before, 1)
 
-		updated, err := maintenanceStore.UpsertAdhocPlannedMaintenance(ctx, ruleID, "payment latency high", time.Now().UTC().Add(4*time.Hour))
+		updated, err := maintenanceStore.UpsertAdhocPlannedMaintenance(ctx, ruleID, "payment latency sky high", time.Now().UTC().Add(4*time.Hour))
 		require.NoError(t, err)
 
 		assert.Equal(t, before[0].ID, updated.ID, "re-mute must reuse the row")
+		assert.Equal(t, "Mute: payment latency sky high", updated.Name, "re-mute refreshes the name after a rule rename")
 		assert.True(t, updated.Schedule.StartTime.Equal(before[0].Schedule.StartTime), "active re-mute keeps the original start")
 		assert.True(t, updated.Schedule.EndTime.After(before[0].Schedule.EndTime), "end time must move out")
 
@@ -156,8 +157,7 @@ func TestAdhocPlannedMaintenanceLifecycle(t *testing.T) {
 		require.NoError(t, err)
 		assert.Empty(t, remaining)
 
-		joinRows := 0
-		joinRows, err = store.BunDB().NewSelect().Model((*alertmanagertypes.StorablePlannedMaintenanceRule)(nil)).Count(t.Context())
+		joinRows, err := store.BunDB().NewSelect().Model((*alertmanagertypes.StorablePlannedMaintenanceRule)(nil)).Count(t.Context())
 		require.NoError(t, err)
 		assert.Zero(t, joinRows)
 	})
@@ -183,10 +183,34 @@ func TestAdhocPlannedMaintenanceLifecycle(t *testing.T) {
 		require.NoError(t, err)
 		assert.Empty(t, otherOrg)
 	})
+
+	t.Run("Upsert_DuplicateRowsExist_KeepsLatestDeletesRest", func(t *testing.T) {
+		dupeRuleID := valuer.GenerateUUID()
+		now := time.Now().UTC()
+
+		var newestID valuer.UUID
+		for _, start := range []time.Time{now.Add(-2 * time.Hour), now.Add(-time.Hour)} {
+			dupe, dupeRule, err := alertmanagertypes.NewAdhocStorablePlannedMaintenance(orgID, "nikhil@signoz.io", dupeRuleID, "dupe target", start, now.Add(time.Hour))
+			require.NoError(t, err)
+			_, err = store.BunDB().NewInsert().Model(dupe).Exec(t.Context())
+			require.NoError(t, err)
+			_, err = store.BunDB().NewInsert().Model(dupeRule).Exec(t.Context())
+			require.NoError(t, err)
+			newestID = dupe.ID
+		}
+
+		healed, err := maintenanceStore.UpsertAdhocPlannedMaintenance(ctx, dupeRuleID, "dupe target", now.Add(4*time.Hour))
+		require.NoError(t, err)
+
+		assert.Equal(t, newestID, healed.ID, "self-heal must keep the latest row")
+		assert.True(t, healed.Schedule.StartTime.Equal(now.Add(-time.Hour)), "active re-mute keeps the latest row's start")
+
+		remaining, err := maintenanceStore.ListAdhocPlannedMaintenanceByRule(ctx, orgID, dupeRuleID)
+		require.NoError(t, err)
+		assert.Len(t, remaining, 1)
+	})
 }
 
-// Pins the create-response carrying the stored origin; the integration suite
-// caught it missing while list/get had it.
 func TestCreatePlannedMaintenanceStampsOrigin(t *testing.T) {
 	store := newTestStore(t)
 	maintenanceStore := NewMaintenanceStore(store, factorytest.NewSettings())

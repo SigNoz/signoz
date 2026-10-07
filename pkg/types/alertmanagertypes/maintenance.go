@@ -171,7 +171,7 @@ func NewAdhocStorablePlannedMaintenance(orgID string, createdBy string, ruleID v
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: startTime, UpdatedAt: startTime},
 		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
-		Name:          fmt.Sprintf("Mute: %s", ruleName),
+		Name:          AdhocPlannedMaintenanceName(ruleName),
 		Schedule:      string(schedule),
 		OrgID:         orgID,
 		Origin:        MaintenanceOriginAdhoc,
@@ -184,6 +184,12 @@ func NewAdhocStorablePlannedMaintenance(orgID string, createdBy string, ruleID v
 	}
 
 	return storableMaintenance, storableMaintenanceRule, nil
+}
+
+// AdhocPlannedMaintenanceName builds the display name of a mute-created downtime; re-mutes
+// restamp it so a renamed rule's mute catches up.
+func AdhocPlannedMaintenanceName(ruleName string) string {
+	return fmt.Sprintf("Mute: %s", ruleName)
 }
 
 // AppliesTo reports whether this maintenance applies to the given rule.

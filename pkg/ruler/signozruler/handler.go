@@ -1,6 +1,7 @@
 package signozruler
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
@@ -95,9 +96,17 @@ func (handler *handler) MuteRuleByID(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	// ContentLength is -1 on chunked requests, so emptiness is decided on the read
+	// body itself: skipping the bind there would silently turn a timed mute indefinite.
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	postableMute := new(ruletypes.PostableRuleMute)
-	if req.ContentLength > 0 {
-		if err := binding.JSON.BindBody(req.Body, postableMute); err != nil {
+	if len(bytes.TrimSpace(body)) > 0 {
+		if err := binding.JSON.BindBody(bytes.NewReader(body), postableMute); err != nil {
 			render.Error(rw, err)
 			return
 		}

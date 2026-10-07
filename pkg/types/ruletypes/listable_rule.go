@@ -21,7 +21,6 @@ type ListableRule struct {
 	RuleType    RuleType          `json:"ruleType" required:"true"`
 	Disabled    bool              `json:"disabled"`
 	Muted       bool              `json:"muted"`
-	MutedBy     []RuleMuteSource  `json:"mutedBy,omitempty" nullable:"false"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	types.TimeAuditable
 	types.UserAuditable

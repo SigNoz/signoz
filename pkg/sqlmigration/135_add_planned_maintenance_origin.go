@@ -40,8 +40,8 @@ func (migration *addPlannedMaintenanceOrigin) Up(ctx context.Context, db *bun.DB
 		return err
 	}
 
-	// The NOT NULL column makes sqlite recreate the table; planned_maintenance_rule
-	// holds FKs into it, so enforcement is off for the duration, like migration 070.
+	// sqlite recreates the table for a NOT NULL add-column; planned_maintenance_rule
+	// holds FKs into it, so enforcement is off for the duration.
 	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
 		return err
 	}

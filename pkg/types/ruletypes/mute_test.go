@@ -40,83 +40,68 @@ func TestResolveEndTime(t *testing.T) {
 	}
 }
 
-func TestComputeRuleMuteSources(t *testing.T) {
+func TestComputeRuleMuted(t *testing.T) {
 	now := time.Date(2026, 10, 7, 10, 0, 0, 0, time.UTC)
 	ruleID := "0199a1b2-0000-7000-8000-000000000001"
 
-	schedule := func(id string, origin alertmanagertypes.MaintenanceOrigin, name string, ruleIDs []string, start, end time.Time) *alertmanagertypes.PlannedMaintenance {
+	schedule := func(origin alertmanagertypes.MaintenanceOrigin, ruleIDs []string, start, end time.Time) *alertmanagertypes.PlannedMaintenance {
 		return &alertmanagertypes.PlannedMaintenance{
-			ID:       valuer.MustNewUUID(id),
-			Name:     name,
+			ID:       valuer.GenerateUUID(),
 			Origin:   origin,
 			RuleIDs:  ruleIDs,
 			Schedule: &alertmanagertypes.Schedule{Timezone: "UTC", StartTime: start, EndTime: end},
 		}
 	}
 
-	adhocID := "0199a1b2-0000-7000-8000-00000000000a"
-	windowID := "0199a1b2-0000-7000-8000-00000000000b"
-
 	testCases := []struct {
-		name        string
-		schedules   []*alertmanagertypes.PlannedMaintenance
-		wantMuted   bool
-		wantSources []RuleMuteSource
+		name      string
+		schedules []*alertmanagertypes.PlannedMaintenance
+		wantMuted bool
 	}{
 		{name: "NoSchedules_NotMuted", schedules: nil, wantMuted: false},
 		{
-			name:        "ActiveAdhoc_MutedWithSource",
-			schedules:   []*alertmanagertypes.PlannedMaintenance{schedule(adhocID, alertmanagertypes.MaintenanceOriginAdhoc, "Mute: cpu", []string{ruleID}, now.Add(-time.Hour), now.Add(time.Hour))},
-			wantMuted:   true,
-			wantSources: []RuleMuteSource{{ID: valuer.MustNewUUID(adhocID), Name: "Mute: cpu", Origin: alertmanagertypes.MaintenanceOriginAdhoc, EndTime: now.Add(time.Hour)}},
+			name:      "ActiveAdhoc_Muted",
+			schedules: []*alertmanagertypes.PlannedMaintenance{schedule(alertmanagertypes.MaintenanceOriginAdhoc, []string{ruleID}, now.Add(-time.Hour), now.Add(time.Hour))},
+			wantMuted: true,
 		},
 		{
-			name:        "IndefiniteAdhoc_MutedWithZeroEndTime",
-			schedules:   []*alertmanagertypes.PlannedMaintenance{schedule(adhocID, alertmanagertypes.MaintenanceOriginAdhoc, "Mute: mem", []string{ruleID}, now.Add(-time.Hour), time.Time{})},
-			wantMuted:   true,
-			wantSources: []RuleMuteSource{{ID: valuer.MustNewUUID(adhocID), Name: "Mute: mem", Origin: alertmanagertypes.MaintenanceOriginAdhoc}},
+			name:      "IndefiniteAdhoc_Muted",
+			schedules: []*alertmanagertypes.PlannedMaintenance{schedule(alertmanagertypes.MaintenanceOriginAdhoc, []string{ruleID}, now.Add(-time.Hour), time.Time{})},
+			wantMuted: true,
 		},
 		{
-			name:      "ExpiredAdhoc_NotMutedNoSources",
-			schedules: []*alertmanagertypes.PlannedMaintenance{schedule(adhocID, alertmanagertypes.MaintenanceOriginAdhoc, "Mute: disk", []string{ruleID}, now.Add(-2*time.Hour), now.Add(-time.Hour))},
+			name:      "ExpiredAdhoc_NotMuted",
+			schedules: []*alertmanagertypes.PlannedMaintenance{schedule(alertmanagertypes.MaintenanceOriginAdhoc, []string{ruleID}, now.Add(-2*time.Hour), now.Add(-time.Hour))},
 			wantMuted: false,
 		},
 		{
-			name:        "ActiveMaintenanceWindow_NotMutedButListed",
-			schedules:   []*alertmanagertypes.PlannedMaintenance{schedule(windowID, alertmanagertypes.MaintenanceOriginMaintenance, "weekend window", []string{ruleID}, now.Add(-time.Hour), now.Add(time.Hour))},
-			wantMuted:   false,
-			wantSources: []RuleMuteSource{{ID: valuer.MustNewUUID(windowID), Name: "weekend window", Origin: alertmanagertypes.MaintenanceOriginMaintenance, EndTime: now.Add(time.Hour)}},
-		},
-		{
-			name:      "OtherRulesSchedule_NotListed",
-			schedules: []*alertmanagertypes.PlannedMaintenance{schedule(adhocID, alertmanagertypes.MaintenanceOriginAdhoc, "Mute: other", []string{"0199a1b2-0000-7000-8000-000000000002"}, now.Add(-time.Hour), now.Add(time.Hour))},
+			name:      "ActiveMaintenanceWindow_NotMuted",
+			schedules: []*alertmanagertypes.PlannedMaintenance{schedule(alertmanagertypes.MaintenanceOriginMaintenance, []string{ruleID}, now.Add(-time.Hour), now.Add(time.Hour))},
 			wantMuted: false,
 		},
 		{
-			name:        "EmptyRuleIDsWindow_AppliesToAllRules",
-			schedules:   []*alertmanagertypes.PlannedMaintenance{schedule(windowID, alertmanagertypes.MaintenanceOriginMaintenance, "global freeze", nil, now.Add(-time.Hour), now.Add(time.Hour))},
-			wantMuted:   false,
-			wantSources: []RuleMuteSource{{ID: valuer.MustNewUUID(windowID), Name: "global freeze", Origin: alertmanagertypes.MaintenanceOriginMaintenance, EndTime: now.Add(time.Hour)}},
+			name:      "OtherRulesAdhoc_NotMuted",
+			schedules: []*alertmanagertypes.PlannedMaintenance{schedule(alertmanagertypes.MaintenanceOriginAdhoc, []string{"0199a1b2-0000-7000-8000-000000000002"}, now.Add(-time.Hour), now.Add(time.Hour))},
+			wantMuted: false,
 		},
 		{
-			name: "AdhocAndWindowBothActive_MutedWithBothSources",
+			name:      "GlobalMaintenanceWindow_NotMuted",
+			schedules: []*alertmanagertypes.PlannedMaintenance{schedule(alertmanagertypes.MaintenanceOriginMaintenance, nil, now.Add(-time.Hour), now.Add(time.Hour))},
+			wantMuted: false,
+		},
+		{
+			name: "AdhocAndWindowBothActive_Muted",
 			schedules: []*alertmanagertypes.PlannedMaintenance{
-				schedule(adhocID, alertmanagertypes.MaintenanceOriginAdhoc, "Mute: api", []string{ruleID}, now.Add(-time.Hour), now.Add(time.Hour)),
-				schedule(windowID, alertmanagertypes.MaintenanceOriginMaintenance, "deploy window", []string{ruleID}, now.Add(-time.Hour), now.Add(2*time.Hour)),
+				schedule(alertmanagertypes.MaintenanceOriginMaintenance, []string{ruleID}, now.Add(-time.Hour), now.Add(2*time.Hour)),
+				schedule(alertmanagertypes.MaintenanceOriginAdhoc, []string{ruleID}, now.Add(-time.Hour), now.Add(time.Hour)),
 			},
 			wantMuted: true,
-			wantSources: []RuleMuteSource{
-				{ID: valuer.MustNewUUID(adhocID), Name: "Mute: api", Origin: alertmanagertypes.MaintenanceOriginAdhoc, EndTime: now.Add(time.Hour)},
-				{ID: valuer.MustNewUUID(windowID), Name: "deploy window", Origin: alertmanagertypes.MaintenanceOriginMaintenance, EndTime: now.Add(2 * time.Hour)},
-			},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			muted, sources := ComputeRuleMuteSources(ruleID, testCase.schedules, now)
-			assert.Equal(t, testCase.wantMuted, muted)
-			assert.Equal(t, testCase.wantSources, sources)
+			assert.Equal(t, testCase.wantMuted, ComputeRuleMuted(ruleID, testCase.schedules, now))
 		})
 	}
 }
@@ -136,8 +121,5 @@ func TestOverlayRuleMutes(t *testing.T) {
 	OverlayRuleMutes([]*ListableRule{mutedRule, otherRule}, schedules, now)
 
 	assert.True(t, mutedRule.Muted)
-	require.Len(t, mutedRule.MutedBy, 1)
-	assert.Equal(t, "Mute: cpu", mutedRule.MutedBy[0].Name)
 	assert.False(t, otherRule.Muted)
-	assert.Empty(t, otherRule.MutedBy)
 }
