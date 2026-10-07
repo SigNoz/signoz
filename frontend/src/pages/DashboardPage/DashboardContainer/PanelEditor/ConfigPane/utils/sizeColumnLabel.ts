@@ -13,7 +13,7 @@ export function getSizeColumnLabel(
 	if (spec.plugin.kind !== 'signoz/ScatterPlotPanel') {
 		return undefined;
 	}
-	const key = spec.plugin.spec.dimensions?.size;
+	const key = spec.plugin.spec.dimensions?.sizeBy;
 	if (!key) {
 		return undefined;
 	}

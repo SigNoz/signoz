@@ -91,7 +91,7 @@ describe('prepareScatterPlotData', () => {
 			dimensions: {
 				x: 'A.p99(duration_nano)',
 				y: 'A.count()',
-				size: 'A.countIf(has_error = true)',
+				sizeBy: 'A.countIf(has_error = true)',
 			},
 			columnUnits: { 'A.p99(duration_nano)': 'ns' },
 		});
@@ -115,7 +115,7 @@ describe('prepareScatterPlotData', () => {
 	it('falls back to the defaults when a dimension names a column that is gone', () => {
 		const result = prepareScatterPlotData({
 			table: tracesTable,
-			dimensions: { x: 'B', y: 'A.avg(duration_nano)', size: 'C' },
+			dimensions: { x: 'B', y: 'A.avg(duration_nano)', sizeBy: 'C' },
 			columnUnits: {},
 		});
 
@@ -145,7 +145,7 @@ describe('prepareScatterPlotData', () => {
 					},
 				],
 			),
-			dimensions: { size: 'B' },
+			dimensions: { sizeBy: 'B' },
 			columnUnits: {},
 		});
 
@@ -198,7 +198,7 @@ describe('prepareScatterPlotData', () => {
 
 		const result = prepareScatterPlotData({
 			table,
-			dimensions: { color: ['k8s.namespace.name'] },
+			dimensions: { colorBy: ['k8s.namespace.name'] },
 			columnUnits: {},
 		});
 
@@ -227,7 +227,7 @@ describe('prepareScatterPlotData', () => {
 		const seriesLabels = (color: string[] | null | undefined): string[] => {
 			const result = prepareScatterPlotData({
 				table,
-				dimensions: { color },
+				dimensions: { colorBy: color },
 				columnUnits: {},
 			});
 			return result.status === ScatterPlotDataStatus.Ready
@@ -367,7 +367,7 @@ describe('prepareScatterPlotData', () => {
 
 		const result = prepareScatterPlotData({
 			table,
-			dimensions: { size: 'C' },
+			dimensions: { sizeBy: 'C' },
 			columnUnits: {},
 		});
 
@@ -440,8 +440,8 @@ describe('prepareScatterPlotData', () => {
 			dimensions: {
 				x: 'A.count()',
 				y: 'B.gone',
-				size: 'C.gone',
-				color: ['service.name', 'host.name'],
+				sizeBy: 'C.gone',
+				colorBy: ['service.name', 'host.name'],
 			},
 			columnUnits: {},
 		});
@@ -452,7 +452,7 @@ describe('prepareScatterPlotData', () => {
 		expect(result.staleDimensions).toStrictEqual([
 			{ dimension: ScatterDimension.Y, key: 'B.gone' },
 			{ dimension: ScatterDimension.Size, key: 'C.gone' },
-			{ dimension: ScatterDimension.Colour, key: 'host.name' },
+			{ dimension: ScatterDimension.Color, key: 'host.name' },
 		]);
 	});
 });

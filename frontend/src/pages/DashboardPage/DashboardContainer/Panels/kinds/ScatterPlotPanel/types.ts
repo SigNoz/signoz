@@ -28,7 +28,7 @@ export enum ScatterDimension {
 	X = 'X',
 	Y = 'Y',
 	Size = 'Size',
-	Colour = 'Colour',
+	Color = 'Color',
 }
 
 /** A dimension bound to a column key the result doesn't have. */
