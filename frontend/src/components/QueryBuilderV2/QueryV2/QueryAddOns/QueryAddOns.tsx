@@ -518,7 +518,10 @@ function QueryAddOns({
 								type="number"
 								onChange={handleChangeLimit}
 								initialValue={query?.limit ?? undefined}
-								placeholder="Enter limit"
+								placeholder={
+									resolvedFields.get(QueryBuilderField.Limit)?.placeholder ??
+									'Enter limit'
+								}
 								onClose={(): void => handleRemoveView(QueryBuilderField.Limit)}
 								closeIcon={<ChevronUp size={16} />}
 							/>

@@ -9,6 +9,7 @@ import {
 } from 'tests/test-utils';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
+import { QueryBuilderField } from '../queryBuilderFields.types';
 import QueryAddOns from '../QueryV2/QueryAddOns/QueryAddOns';
 
 // Mocks: only what is required for this component to render and for us to assert handler calls
@@ -167,6 +168,33 @@ describe('QueryAddOns', () => {
 
 		fireEvent.change(input, { target: { value: '10' } });
 		expect(mockHandleChangeQueryData).toHaveBeenCalledWith('limit', 10);
+	});
+
+	it('shows the configured limit placeholder', () => {
+		render(
+			<QueryAddOns
+				query={baseQuery()}
+				version="v5"
+				isRawQuery={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.SCATTER}
+				index={0}
+				fieldsConfig={{
+					[QueryBuilderField.Limit]: {
+						state: 'defaulted',
+						placeholder: 'Default 10,000',
+					},
+				}}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		fireEvent.click(screen.getByTestId('query-add-on-limit'));
+
+		expect(screen.getByTestId('input-Limit')).toHaveAttribute(
+			'placeholder',
+			'Default 10,000',
+		);
 	});
 
 	it('auto-opens Order By and Limit when present in query', () => {

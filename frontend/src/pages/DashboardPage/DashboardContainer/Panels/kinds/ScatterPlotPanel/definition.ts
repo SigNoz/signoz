@@ -34,6 +34,10 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 		legend_format: {
 			state: 'hidden',
 		},
+		limit: {
+			state: 'defaulted',
+			placeholder: `Default ${MAX_PLOTTED_GROUPS.toLocaleString('en-US')} for Scatter Plot`,
+		},
 	},
 	// Same request as Table: one joined row per group, so x and y can come from
 	// different queries.

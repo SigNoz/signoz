@@ -10,6 +10,7 @@ export interface ResolvedQueryBuilderField {
 	reason?: string;
 	/** Rendered open, not dismissable, and kept out of the add-on toggle bar. */
 	pinned: boolean;
+	placeholder?: string;
 }
 
 const AVAILABLE: ResolvedQueryBuilderField = {
@@ -20,6 +21,8 @@ const AVAILABLE: ResolvedQueryBuilderField = {
 
 function fromRule(rule: QueryBuilderFieldRule): ResolvedQueryBuilderField {
 	switch (rule.state) {
+		case 'defaulted':
+			return { ...AVAILABLE, placeholder: rule.placeholder };
 		case 'hidden':
 			return { hidden: true, disabled: false, pinned: false };
 		case 'disabled':
