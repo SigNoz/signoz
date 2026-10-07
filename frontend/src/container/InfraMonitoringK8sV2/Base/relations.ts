@@ -162,6 +162,10 @@ function relationKey(
  * records (its node, its namespace) or is something its records belong to
  * (the pods on this node). Sharing only a cluster or a namespace is not a
  * relation: it would list everything alongside, not what this resource holds.
+ *
+ * Every kubernetes category relates to something, which is why each declares
+ * the overview tab. A host does not: its metadata carries no kubernetes
+ * attribute, so nothing here would match it.
  */
 export function getRelatedCategories(
 	source: InfraMonitoringEntity,

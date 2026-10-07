@@ -26,12 +26,22 @@
 		overflow-y: auto;
 		padding: var(--spacing-8);
 		margin: 0;
-		min-width: 900px;
+		// On a 13" screen the drawer itself is narrower than 900px, and a flat
+		// minimum there clips the right edge of every tab
+		box-sizing: border-box;
+		min-width: min(900px, 100%);
 	}
 }
 
 .closeButton {
 	--button-padding: var(--spacing-2);
+}
+
+// The resource name reads as an identifier, the way the drawer title does
+.backTarget {
+	font-family: var(--periscope-font-family-mono);
+	font-style: italic;
+	color: var(--l1-foreground);
 }
 
 .title {

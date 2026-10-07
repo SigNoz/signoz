@@ -41,6 +41,16 @@ describe('getRelatedCategories', () => {
 		).not.toContain(InfraMonitoringEntity.STATEFULSETS);
 	});
 
+	it('finds nothing for a host, which is not a kubernetes resource', () => {
+		// Host rows carry os.type and the host name, no kubernetes attribute
+		expect(
+			getRelatedCategories(InfraMonitoringEntity.HOSTS, {
+				'host.name': 'ip-10-0-0-1',
+				'os.type': 'linux',
+			}),
+		).toStrictEqual([]);
+	});
+
 	it('lists pods first, which makes them the default for a node', () => {
 		expect(
 			getRelatedCategories(InfraMonitoringEntity.NODES, NODE_ATTRIBUTES)[0],
