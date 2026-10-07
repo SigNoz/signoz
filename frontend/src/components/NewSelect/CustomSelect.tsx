@@ -709,20 +709,34 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	// ===== Final Processing =====
 
 	// Apply highlight to matched text in options
-	const optionsWithHighlight = useMemo(
-		() =>
-			options
-				?.filter((option) =>
-					String(option.label || '')
-						.toLowerCase()
-						.includes(searchText.toLowerCase()),
-				)
-				?.map((option) => ({
-					...option,
-					label: highlightMatchedText(String(option.label || ''), searchText),
-				})),
-		[options, searchText, highlightMatchedText],
-	);
+	const optionsWithHighlight = useMemo(() => {
+		const matching =
+			options?.filter((option) =>
+				String(option.label || '')
+					.toLowerCase()
+					.includes(searchText.toLowerCase()),
+			) ?? [];
+
+		// antd shows a value with no matching option as a bare string, so keep the
+		// selected value listed to render it through the tooltip label below.
+		return (
+			isEmpty(value)
+				? matching
+				: prioritizeOrAddOptionForSingleSelect(matching, value)
+		).map((option) => ({
+			...option,
+			// Rendered as the selected value in the closed control.
+			label: (
+				<TruncatedTooltip title={String(option.label || '')} side="bottom">
+					{(textRef): JSX.Element => (
+						<span ref={textRef} className="option-label-text">
+							{highlightMatchedText(String(option.label || ''), searchText)}
+						</span>
+					)}
+				</TruncatedTooltip>
+			),
+		}));
+	}, [options, searchText, value, highlightMatchedText]);
 
 	// ===== Component Rendering =====
 	return (
