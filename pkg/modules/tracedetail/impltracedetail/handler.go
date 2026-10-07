@@ -20,6 +20,22 @@ func NewHandler(module tracedetail.Module) tracedetail.Handler {
 	return &handler{module: module}
 }
 
+func (h *handler) GetTraceSummary(rw http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	stats, err := h.module.GetTraceSummary(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, spantypes.NewGettableTraceSummary(stats))
+}
+
 func (h *handler) GetWaterfallV4(rw http.ResponseWriter, r *http.Request) {
 	req := new(spantypes.PostableWaterfall)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {

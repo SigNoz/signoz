@@ -895,6 +895,7 @@ _TRACES_TABLES_TO_TRUNCATE = [
     "span_attributes_keys",
     "signoz_error_index_v2",
     "top_level_operations",
+    "trace_summary",
 ]
 
 
