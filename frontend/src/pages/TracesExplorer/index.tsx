@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
@@ -285,6 +286,7 @@ function TracesExplorer(): JSX.Element {
 			<QuickFiltersLayout
 				className="trace-explorer-page"
 				showFilters={isOpen}
+				savedViewProps={{ source: SavedviewtypesSourceDTO.traces }}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
 					source: QuickFiltersSource.TRACES_EXPLORER,
