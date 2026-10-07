@@ -1,0 +1,23 @@
+.list {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+	padding: var(--spacing-6) var(--spacing-8);
+	// Prepend compensation is manual; native anchoring would double-shift.
+	overflow-anchor: none;
+}
+
+.sentinel {
+	flex-shrink: 0;
+	height: 1px;
+}
+
+.pageLoader {
+	flex-shrink: 0;
+	padding: var(--spacing-4) var(--spacing-6);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+}

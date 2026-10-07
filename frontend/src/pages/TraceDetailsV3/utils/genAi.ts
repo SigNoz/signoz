@@ -13,6 +13,8 @@ export const GEN_AI_KEYS = {
 	cacheCreationTokens: 'gen_ai.usage.cache_creation.input_tokens',
 	reasoningTokens: 'gen_ai.usage.reasoning.output_tokens',
 	cost: 'signoz.gen_ai.usage.tokens.cost',
+	inputMessages: 'gen_ai.input.messages',
+	outputMessages: 'gen_ai.output.messages',
 } as const;
 
 export enum AiSpanKind {
