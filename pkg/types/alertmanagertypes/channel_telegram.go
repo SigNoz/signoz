@@ -1,34 +1,33 @@
 package alertmanagertypes
 
 import (
-	"slices"
-	"strings"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 )
 
 // Telegram renders the message with parse_mode HTML, which only accepts a small
-// tag set and requires every stray <, > and & to be escaped. The notifier is
-// upstream's and expands with text/template, so each interpolated value is piped
-// through html; an unescaped alert annotation would otherwise fail the whole
-// send with "can't parse entities".
+// tag set and requires every stray <, > and & to be escaped. Each interpolated
+// value is piped through html so the template renders identically under both
+// template engines; an unescaped alert annotation would otherwise fail the
+// whole send with "can't parse entities".
 // https://core.telegram.org/bots/api#html-style
 const DefaultTelegramMessageTemplate = `<b>[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname | html }}</b>
 
 {{ range .Alerts -}}
 <b>Alert:</b> {{ .Labels.alertname | html }}{{ if .Labels.severity }} ({{ .Labels.severity | html }}){{ end }}
 {{ if .Annotations.summary }}<b>Summary:</b> {{ .Annotations.summary | html }}
-{{ end }}{{ if .Annotations.description }}<b>Descriptionnn:</b> {{ .Annotations.description | html }}
+{{ end }}{{ if .Annotations.description }}<b>Description:</b> {{ .Annotations.description | html }}
 {{ end }}{{ if .GeneratorURL }}<a href="{{ .GeneratorURL | html }}">View in SigNoz</a>
 {{ end }}{{ if .Annotations.related_logs }}<a href="{{ .Annotations.related_logs | html }}">View related logs</a>
 {{ end }}{{ if .Annotations.related_traces }}<a href="{{ .Annotations.related_traces | html }}">View related traces</a>
 {{ end }}
 {{ end }}`
 
-// telegramParseModes mirrors the values upstream's TelegramConfig accepts.
-var telegramParseModes = []string{"Markdown", "MarkdownV2", "HTML"}
+// telegramParseMode is the only mode SigNoz renders for. Upstream also accepts
+// Markdown, MarkdownV2 and the empty string, but those carry per-mode escaping
+// rules that nothing renders to, so the spec does not offer them.
+const telegramParseMode = "HTML"
 
 // ChannelTelegramConfig configures delivery to a Telegram chat through a bot.
 // ChatID is the numeric chat the bot posts to, negative for groups and channels;
@@ -43,7 +42,6 @@ type ChannelTelegramConfig struct {
 	// MessageThreadID targets a topic inside a forum group.
 	MessageThreadID      int                          `json:"messageThreadId,omitempty"`
 	Message              valuer.UnsetOrNonEmptyString `json:"message,omitzero"`
-	ParseMode            string                       `json:"parseMode"`
 	DisableNotifications bool                         `json:"disableNotifications,omitempty"`
 }
 
@@ -55,9 +53,6 @@ func (c *ChannelTelegramConfig) UnmarshalJSON(data []byte) error {
 
 	fillSendResolved(&c.SendResolved, config.DefaultTelegramConfig.VSendResolved)
 	c.Message.SetIfUnset(DefaultTelegramMessageTemplate)
-	if c.ParseMode == "" {
-		c.ParseMode = config.DefaultTelegramConfig.ParseMode
-	}
 
 	return c.Validate()
 }
@@ -72,10 +67,6 @@ func (c ChannelTelegramConfig) Validate() error {
 
 	if c.ChatID == 0 {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.chatId is required for a telegram channel")
-	}
-
-	if c.ParseMode != "" && !slices.Contains(telegramParseModes, c.ParseMode) {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.parseMode for a telegram channel must be one of %s", strings.Join(telegramParseModes, ", "))
 	}
 
 	return nil
@@ -100,7 +91,7 @@ func (c ChannelTelegramConfig) toUndefaultedReceiver(displayName string) (*Recei
 			ChatID:               c.ChatID,
 			MessageThreadID:      c.MessageThreadID,
 			Message:              c.Message.StringValue(),
-			ParseMode:            c.ParseMode,
+			ParseMode:            telegramParseMode,
 			DisableNotifications: c.DisableNotifications,
 		}},
 	}}, nil
@@ -124,6 +115,12 @@ func newChannelTelegramConfigFromReceiver(name string, receiver *Receiver) (Chan
 		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets chat_id_file, which is not supported", name)
 	}
 
+	// Dropping a non-HTML parse_mode on the way out would silently rewrite the
+	// channel on the next write, so it is refused instead.
+	if telegram.ParseMode != telegramParseMode {
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets parse_mode %q, only %s is supported", name, telegram.ParseMode, telegramParseMode)
+	}
+
 	return &ChannelTelegramConfig{
 		SendResolved:         &sendResolved,
 		BotToken:             string(telegram.BotToken),
@@ -131,7 +128,6 @@ func newChannelTelegramConfigFromReceiver(name string, receiver *Receiver) (Chan
 		APIURL:               formatUpstreamURL(telegram.APIUrl),
 		MessageThreadID:      telegram.MessageThreadID,
 		Message:              valuer.UnsetIfEmpty(telegram.Message),
-		ParseMode:            telegram.ParseMode,
 		DisableNotifications: telegram.DisableNotifications,
 	}, nil
 }

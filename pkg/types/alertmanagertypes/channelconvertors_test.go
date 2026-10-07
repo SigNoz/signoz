@@ -268,7 +268,6 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				APIURL:               "https://bot-api.example.com",
 				MessageThreadID:      42,
 				Message:              valuer.MustNewUnsetOrNonEmptyString("telegram message"),
-				ParseMode:            "HTML",
 				DisableNotifications: true,
 			},
 			expectedRoundTrip: &ChannelTelegramConfig{
@@ -278,7 +277,6 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				APIURL:               "https://bot-api.example.com",
 				MessageThreadID:      42,
 				Message:              valuer.MustNewUnsetOrNonEmptyString("telegram message"),
-				ParseMode:            "HTML",
 				DisableNotifications: true,
 			},
 		},

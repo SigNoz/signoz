@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +19,6 @@ func TestChannelTelegramConfigDefaults(t *testing.T) {
 	require.NotNil(t, spec.SendResolved)
 	assert.True(t, *spec.SendResolved, "upstream defaults telegram send_resolved on")
 	assert.Equal(t, DefaultTelegramMessageTemplate, spec.Message.StringValue())
-	assert.Equal(t, config.DefaultTelegramConfig.ParseMode, spec.ParseMode)
 	assert.Empty(t, spec.APIURL, "the global telegram_api_url applies when none is given")
 }
 
@@ -32,7 +30,7 @@ func TestChannelTelegramConfigValidation(t *testing.T) {
 		{"BotToken_Missing", `{"chatId":1}`},
 		{"ChatID_Missing", `{"botToken":"123456:tok"}`},
 		{"ChatID_Username_Rejected", `{"botToken":"123456:tok","chatId":"@signoz"}`},
-		{"ParseMode_Unknown", `{"botToken":"123456:tok","chatId":1,"parseMode":"RST"}`},
+		{"ParseMode_NotAField", `{"botToken":"123456:tok","chatId":1,"parseMode":"HTML"}`},
 		{"BotTokenFile_NotAField", `{"botToken":"123456:tok","chatId":1,"botTokenFile":"/etc/token"}`},
 	}
 
@@ -44,16 +42,16 @@ func TestChannelTelegramConfigValidation(t *testing.T) {
 	}
 }
 
-// Credentials read off the server's filesystem are not representable in the
-// spec, and dropping them on read would unauthenticate the channel on the next
-// write, so the read fails instead.
-func TestDeriveChannelConfigRejectsTelegramFileCredentials(t *testing.T) {
+// Settings the spec cannot represent would be dropped on read and silently
+// rewrite the channel on the next write, so the read fails instead.
+func TestDeriveChannelConfigRejectsUnsupportedTelegramSettings(t *testing.T) {
 	testCases := []struct {
 		name string
 		data string
 	}{
 		{"BotTokenFile", `{"name":"tg","telegram_configs":[{"chat_id":1,"token_file":"/etc/token"}]}`},
 		{"ChatIDFile", `{"name":"tg","telegram_configs":[{"token":"123456:tok","chat_file":"/etc/chat"}]}`},
+		{"ParseMode_NotHTML", `{"name":"tg","telegram_configs":[{"token":"123456:tok","chat":1,"parse_mode":"MarkdownV2"}]}`},
 	}
 
 	for _, testCase := range testCases {
@@ -81,8 +79,8 @@ func TestDefaultTelegramMessageTemplateEscapesAlertContent(t *testing.T) {
 
 	data := tmpl.Data("__receiver", model.LabelSet{}, alert)
 
-	// Upstream renders with html/template when parse_mode is HTML and with
-	// text/template otherwise, so the template has to escape identically under
+	// The channel template is rendered with html/template under parse_mode HTML
+	// and with text/template otherwise, so it has to escape identically under
 	// both. html/template recognises the html pipeline and adds no second pass.
 	renderers := map[string]func(string, any) (string, error){
 		"Text": tmpl.ExecuteTextString,
@@ -104,9 +102,9 @@ func TestDefaultTelegramMessageTemplateEscapesAlertContent(t *testing.T) {
 	}
 }
 
-// Upstream's telegram notifier dereferences APIUrl and HTTPConfig without a nil
-// check, and both are filled from the global rather than the spec. A resolve
-// that leaves either nil panics at delivery instead of erroring.
+// APIUrl and HTTPConfig are filled from the global rather than the spec, and
+// the notifier refuses to start without them. A resolve that leaves either nil
+// fails the channel at delivery.
 func TestTelegramResolvesTheGlobalAPIURLAndHTTPConfig(t *testing.T) {
 	cfg, err := NewDefaultConfig(GlobalConfig{}, RouteConfig{GroupInterval: 1 * time.Minute, GroupWait: 1 * time.Minute, RepeatInterval: 1 * time.Minute}, "org-1")
 	require.NoError(t, err)
