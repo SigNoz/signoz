@@ -1,13 +1,12 @@
-import { formatTokens } from '../SpanHoverCard/aiUsage';
+import { formatTokens, TokenUsage } from '../SpanHoverCard/aiUsage';
 import TooltipRow from '../TraceTooltip/TooltipRow';
 import TooltipSection from '../TraceTooltip/TooltipSection';
-import type { SpantypesTraceAITokensDTO } from 'api/generated/services/sigNoz.schemas';
 
 import tooltipStyles from '../TraceTooltip/TraceTooltip.module.scss';
 import styles from './EntityMetadataRow.module.scss';
 
 interface TokenUsageTooltipProps {
-	tokens: SpantypesTraceAITokensDTO;
+	tokens: TokenUsage;
 }
 
 function TokenUsageTooltip({ tokens }: TokenUsageTooltipProps): JSX.Element {

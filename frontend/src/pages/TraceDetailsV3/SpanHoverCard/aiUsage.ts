@@ -1,8 +1,15 @@
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { TraceTokenUsage } from '../TraceDetailsHeader/types';
 import { GEN_AI_KEYS } from '../utils/genAi';
+
+export interface TokenUsage {
+	input: number;
+	output: number;
+	cacheRead?: number;
+	cacheWrite?: number;
+	reasoning?: number;
+}
 
 export interface SpanAiUsage {
 	inputTokens?: number;
@@ -97,7 +104,7 @@ export function formatCost(value: number): string {
 	return `$ ${value.toLocaleString('en-US', { maximumFractionDigits: 10 })}`;
 }
 
-export function getSpanTokenUsage(span: SpanV3): TraceTokenUsage | undefined {
+export function getSpanTokenUsage(span: SpanV3): TokenUsage | undefined {
 	const usage = getSpanAiDetails(span)?.usage;
 	if (!usage) {
 		return undefined;
