@@ -1,0 +1,12 @@
+.contrast {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 4px 2px;
+	font-size: 12px;
+	color: var(--l2-foreground);
+}
+
+.warning {
+	color: var(--callout-warning-description);
+}

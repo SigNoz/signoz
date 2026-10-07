@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
 	DashboardtypesStackModeDTO,
@@ -96,7 +96,8 @@ describe('VisualizationSection', () => {
 		expect(onChange).toHaveBeenCalledWith({ timePreference: 'last_1_hr' });
 	});
 
-	it('toggles bar stacking through onChange, preserving other fields', () => {
+	it('toggles bar stacking through onChange, preserving other fields', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<VisualizationSection
@@ -112,7 +113,9 @@ describe('VisualizationSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('panel-editor-v2-stacked-bar-chart'));
+		await user.click(
+			screen.getByTestId('panel-editor-v2-stacked-bar-chart-stacked'),
+		);
 
 		expect(onChange).toHaveBeenCalledWith({
 			timePreference: 'global_time',
@@ -120,7 +123,7 @@ describe('VisualizationSection', () => {
 		});
 	});
 
-	it('writes the chosen stack mode through the segmented control', async () => {
+	it('writes the chosen stack mode through the tiles', async () => {
 		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
@@ -132,7 +135,7 @@ describe('VisualizationSection', () => {
 		);
 
 		expect(screen.getByTestId('panel-editor-v2-stack-mode')).toBeInTheDocument();
-		await user.click(screen.getByText('Percent'));
+		await user.click(screen.getByTestId('panel-editor-v2-stack-mode-percent'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			fillSpans: true,
@@ -157,7 +160,8 @@ describe('VisualizationSection', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('toggles fill spans through onChange', () => {
+	it('toggles fill spans through onChange', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<VisualizationSection
@@ -170,7 +174,7 @@ describe('VisualizationSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByTestId('panel-editor-v2-fill-spans'));
+		await user.click(screen.getByTestId('panel-editor-v2-fill-spans'));
 
 		expect(onChange).toHaveBeenCalledWith({ fillSpans: true });
 	});

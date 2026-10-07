@@ -319,6 +319,7 @@ function QueryEditorBody({
 					panel={draft}
 					panelId={panelId}
 					spec={spec}
+					savedSpec={(savedPanel ?? panel).spec}
 					onChangeSpec={setSpec}
 					onChangePanelKind={onChangePanelKind}
 					originalPanelKind={originalPanelKind}
