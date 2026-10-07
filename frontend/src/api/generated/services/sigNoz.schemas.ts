@@ -10551,6 +10551,18 @@ export interface RuletypesPostableRuleDTO {
 	version?: string;
 }
 
+export interface RuletypesPostableRuleMuteDTO {
+	/**
+	 * @type string
+	 */
+	duration?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	endTime?: string;
+}
+
 export interface RuletypesPostableRuleViewDTO {
 	data: RuletypesRuleViewDataDTO;
 	/**
@@ -12360,6 +12372,10 @@ export type ListDowntimeSchedulesParams = {
 	 * @description undefined
 	 */
 	recurring?: boolean | null;
+	/**
+	 * @description undefined
+	 */
+	origin?: AlertmanagertypesMaintenanceOriginDTO;
 };
 
 export type ListDowntimeSchedules200 = {
@@ -14191,6 +14207,20 @@ export type GetRuleHistoryTopContributors200 = {
 	status: string;
 };
 
+export type MuteRuleByIDPathParameters = {
+	id: string;
+};
+export type MuteRuleByID200 = {
+	data: AlertmanagertypesPlannedMaintenanceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UnmuteRuleByIDPathParameters = {
+	id: string;
+};
 export type TestRule200 = {
 	data: RuletypesGettableTestRuleDTO;
 	/**
