@@ -7,8 +7,7 @@
 }
 
 .content {
-	// Leaves room on the right for the span details dock.
-	flex: 0 1 70%;
+	flex: 1;
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
