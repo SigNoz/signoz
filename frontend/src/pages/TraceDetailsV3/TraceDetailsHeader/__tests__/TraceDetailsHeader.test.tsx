@@ -204,14 +204,23 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 	});
 
 	it('omits AI tokens when input and output are both zero', () => {
-		mockSummary({
-			...traceMetadata,
-			ai: {
-				...traceMetadata.ai,
-				tokens: { ...traceMetadata.ai.tokens, input: 0, output: 0 },
+		jest.mocked(useTraceSummary).mockReturnValue({
+			data: {
+				...MOCK_TRACE_SUMMARY,
+				ai: {
+					totalCost: 0.0421,
+					tokens: {
+						input: 0,
+						output: 0,
+						cacheRead: 8000,
+						cacheWrite: 1200,
+						reasoning: 900,
+					},
+				},
 			},
+			isLoading: false,
 		});
-		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+		render(<TraceDetailsHeader {...baseProps} />);
 
 		expect(screen.queryByText(/^Tokens:/)).not.toBeInTheDocument();
 		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
