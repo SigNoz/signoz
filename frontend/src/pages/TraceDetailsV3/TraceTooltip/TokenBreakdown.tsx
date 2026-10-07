@@ -1,4 +1,4 @@
-import { formatTokens } from '../SpanHoverCard/aiUsage';
+import { formatTokens } from '../utils/genAi';
 import TooltipRow from './TooltipRow';
 import TooltipSection from './TooltipSection';
 

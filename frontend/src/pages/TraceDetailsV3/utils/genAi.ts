@@ -1,10 +1,7 @@
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 export const GEN_AI_KEYS = {
-	providerName: 'gen_ai.provider.name',
-	system: 'gen_ai.system',
 	requestModel: 'gen_ai.request.model',
-	responseModel: 'gen_ai.response.model',
 	toolName: 'gen_ai.tool.name',
 	agentName: 'gen_ai.agent.name',
 	inputTokens: 'gen_ai.usage.input_tokens',
@@ -51,4 +48,12 @@ export function getAiSpanKind(span: SpanV3): AiSpanKind | undefined {
 
 export function isAiSpan(span: SpanV3): boolean {
 	return getAiSpanKind(span) !== undefined;
+}
+
+export function formatTokens(value: number): string {
+	return value.toLocaleString('en-US');
+}
+
+export function formatCost(value: number): string {
+	return `$ ${value.toLocaleString('en-US', { maximumFractionDigits: 10 })}`;
 }

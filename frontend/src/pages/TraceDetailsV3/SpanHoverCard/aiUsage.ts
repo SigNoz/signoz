@@ -49,11 +49,3 @@ export function getSpanAiDetails(span: SpanV3): SpanAiDetails | undefined {
 		? details
 		: undefined;
 }
-
-export function formatTokens(value: number): string {
-	return value.toLocaleString('en-US');
-}
-
-export function formatCost(value: number): string {
-	return `$ ${value.toLocaleString('en-US', { maximumFractionDigits: 10 })}`;
-}

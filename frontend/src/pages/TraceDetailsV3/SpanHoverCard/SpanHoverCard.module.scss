@@ -9,19 +9,25 @@
 }
 
 .popover {
+	composes: tooltipContent from '../TraceTooltip/shared.module.scss';
 	// Hover card may be rendered while the SpanDetailsPanel is docked as
 	// a FloatingPanel (z-index 999); bump above the default tooltip z-index.
 	--tooltip-z-index: 1000;
 }
 
 .content {
+	composes: body from '../TraceTooltip/shared.module.scss';
 	min-width: 220px;
 	max-width: 320px;
+}
+
+.title {
+	composes: title from '../TraceTooltip/shared.module.scss';
 }
 
 .header {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
-	padding-bottom: 8px;
+	gap: var(--spacing-2);
+	padding-bottom: var(--spacing-4);
 }

@@ -217,7 +217,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
-		expect(screen.getByText('$ 0.0421')).toBeInTheDocument();
+		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
 	});
 
 	it('omits AI tokens and cost when the summary has no ai field', () => {
@@ -225,7 +225,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(screen.queryByText(/^Tokens:/)).not.toBeInTheDocument();
-		expect(screen.queryByText(/^\$ /)).not.toBeInTheDocument();
+		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
 	});
 
 	it('is shown by default and can be hidden / shown again via the Trace options menu', async () => {

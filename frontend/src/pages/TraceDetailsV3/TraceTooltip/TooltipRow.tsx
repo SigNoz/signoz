@@ -6,7 +6,6 @@ import styles from './TraceTooltip.module.scss';
 interface TooltipRowProps {
 	label: string;
 	value?: string;
-	isTotal?: boolean;
 	isNested?: boolean;
 	testId?: string;
 }
@@ -14,7 +13,6 @@ interface TooltipRowProps {
 function TooltipRow({
 	label,
 	value,
-	isTotal,
 	isNested,
 	testId,
 }: TooltipRowProps): JSX.Element {
@@ -23,11 +21,7 @@ function TooltipRow({
 			className={cx(styles.row, isNested && styles.nestedRow)}
 			data-testid={testId}
 		>
-			<Typography.Text
-				size="small"
-				color={isTotal ? undefined : 'muted'}
-				truncate={1}
-			>
+			<Typography.Text size="small" color="muted" truncate={1}>
 				{label}
 			</Typography.Text>
 			{value !== undefined && (
