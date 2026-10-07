@@ -417,7 +417,7 @@ for (const theme of themes.length ? themes : [null]) {
 						break;
 					}
 
-					height = needed;
+					height = Math.ceil(needed);
 					await page.setViewportSize({ width: Number(opts.width), height });
 					await page.waitForTimeout(Number(opts.settle));
 				}

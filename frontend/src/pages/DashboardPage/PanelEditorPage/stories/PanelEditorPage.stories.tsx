@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -22,6 +23,7 @@ const pageStory = storyMocks(panelEditorMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Dashboards/Panel Editor',
+	tags: ['play'],
 	// The page is wrapped in `withAuthZPage`, which types its props as an index
 	// signature; the story's args are what the controls resolve to.
 	component: PanelEditorPage as ComponentType<PanelEditorArgs>,
@@ -37,6 +39,25 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<PanelEditorArgs>;
+
+const expandConfigSections: Story['play'] = async ({ canvasElement }) => {
+	const canvas = within(canvasElement);
+
+	const headers = await canvas.findAllByTestId(
+		/^config-section-/,
+		{},
+		{ timeout: 10000 },
+	);
+	for (const header of headers) {
+		if (header.getAttribute('aria-expanded') === 'false') {
+			await userEvent.click(header);
+		}
+	}
+	(document.activeElement as HTMLElement | null)?.blur();
+	for (let el = headers[0].parentElement; el; el = el.parentElement) {
+		el.scrollTop = 0;
+	}
+};
 
 /**
  * Editing a saved time series panel: the live preview over the query builder on
@@ -85,4 +106,58 @@ export const ReadOnly: Story = {
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
+};
+
+/** A new time series panel's config pane, every section expanded. */
+export const ConfigTimeSeries: Story = {
+	args: { panel: 'new', newPanelKind: 'time-series' },
+	play: expandConfigSections,
+};
+
+/** A new number panel's config pane, every section expanded. */
+export const ConfigNumber: Story = {
+	args: { panel: 'new', newPanelKind: 'number' },
+	play: expandConfigSections,
+};
+
+/** A new table panel's config pane, every section expanded. */
+export const ConfigTable: Story = {
+	args: { panel: 'new', newPanelKind: 'table' },
+	play: expandConfigSections,
+};
+
+/** A new bar chart panel's config pane, every section expanded. */
+export const ConfigBarChart: Story = {
+	args: { panel: 'new', newPanelKind: 'bar-chart' },
+	play: expandConfigSections,
+};
+
+/** A new area chart panel's config pane, every section expanded. */
+export const ConfigAreaChart: Story = {
+	args: { panel: 'new', newPanelKind: 'area-chart' },
+	play: expandConfigSections,
+};
+
+/** A new pie chart panel's config pane, every section expanded. */
+export const ConfigPieChart: Story = {
+	args: { panel: 'new', newPanelKind: 'pie-chart' },
+	play: expandConfigSections,
+};
+
+/** A new histogram panel's config pane, every section expanded. */
+export const ConfigHistogram: Story = {
+	args: { panel: 'new', newPanelKind: 'histogram' },
+	play: expandConfigSections,
+};
+
+/** A new list panel's config pane, every section expanded. */
+export const ConfigList: Story = {
+	args: { panel: 'new', newPanelKind: 'list' },
+	play: expandConfigSections,
+};
+
+/** A new text panel's config pane, every section expanded. */
+export const ConfigText: Story = {
+	args: { panel: 'new', newPanelKind: 'text' },
+	play: expandConfigSections,
 };

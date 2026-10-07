@@ -286,6 +286,70 @@ export const SectionActionsMenu: Story = {
 };
 
 /**
+ * The new-panel picker opened from the toolbar: the panel kinds as tiles, with
+ * the target section to place the panel in.
+ */
+export const NewPanelPicker: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(
+			await canvas.findByTestId('add-panel-header', {}, { timeout: 10000 }),
+		);
+		await screen.findByTestId('panel-type-signoz/TimeSeriesPanel');
+	},
+};
+
+/** The new-panel picker with a kind picked, waiting on the section to confirm. */
+export const NewPanelPickerTypeSelected: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(
+			await canvas.findByTestId('add-panel-header', {}, { timeout: 10000 }),
+		);
+		await userEvent.click(
+			await screen.findByTestId('panel-type-signoz/TimeSeriesPanel'),
+		);
+	},
+};
+
+/**
+ * The new-panel picker on a dashboard without sections, where there is no
+ * section to choose.
+ */
+export const NewPanelPickerNoSections: Story = {
+	args: { sectioned: false },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(
+			await canvas.findByTestId('add-panel-header', {}, { timeout: 10000 }),
+		);
+		await screen.findByTestId('panel-type-signoz/TimeSeriesPanel');
+	},
+};
+
+/**
+ * The new-panel picker opened from the second section's menu, targeting that
+ * section.
+ */
+export const NewPanelPickerFromSection: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		const [, secondSection] = await canvas.findAllByRole(
+			'button',
+			{ name: 'Section actions' },
+			{ timeout: 10000 },
+		);
+		await userEvent.click(secondSection);
+		await userEvent.click(await screen.findByText('Add panel'));
+		await screen.findByTestId('panel-type-signoz/TimeSeriesPanel');
+	},
+};
+
+/**
  * A dashboard id nobody has, which is what a deleted or mistyped link opens on.
  *
  * Kept last: test-runner shares one page across a file's stories, and the 404
