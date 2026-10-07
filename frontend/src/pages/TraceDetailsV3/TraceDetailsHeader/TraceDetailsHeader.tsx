@@ -38,6 +38,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
 interface TraceDetailsHeaderProps {
 	onFilteredSpansChange?: (spanIds: string[], isFilterActive: boolean) => void;
+	showTraceDetailsHeaderOptions?: boolean;
 }
 
 const SKELETON_COUNT = 3;
@@ -60,13 +61,14 @@ function DetailsLoader(): JSX.Element {
 
 function TraceDetailsHeader({
 	onFilteredSpansChange,
+	showTraceDetailsHeaderOptions,
 }: TraceDetailsHeaderProps): JSX.Element {
 	const { id: traceID } = useParams<TraceDetailV3URLProps>();
-	const { data: summary } = useTraceSummary(traceID || '');
 	const [showTraceDetails, setShowTraceDetails] = useState(true);
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+	const { data: traceSummary } = useTraceSummary(traceID || '');
 	const [tab] = useTraceDetailsTab();
 	const isOverview = tab === TraceDetailsTab.Overview;
 
@@ -109,12 +111,12 @@ function TraceDetailsHeader({
 	}, []);
 
 	useTraceDetailsStripInfo({
-		totalSpansCount: summary?.totalSpansCount ?? 0,
-		totalErrorSpansCount: summary?.totalErrorSpansCount ?? 0,
+		totalSpansCount: traceSummary?.totalSpansCount ?? 0,
+		totalErrorSpansCount: traceSummary?.totalErrorSpansCount ?? 0,
 	});
 
-	const startTime = (summary?.startTimestampMillis ?? 0) / 1e3;
-	const endTime = (summary?.endTimestampMillis ?? 0) / 1e3;
+	const startTime = (traceSummary?.startTimestampMillis ?? 0) / 1e3;
+	const endTime = (traceSummary?.endTimestampMillis ?? 0) / 1e3;
 
 	return (
 		<div className={styles.wrapper}>
@@ -139,7 +141,7 @@ function TraceDetailsHeader({
 						<TraceDetailsTabs />
 					</div>
 				)}
-				{isOverview && onFilteredSpansChange && summary && (
+				{isOverview && showTraceDetailsHeaderOptions && traceSummary && (
 					<div
 						className={cx(
 							styles.filterSection,
@@ -170,7 +172,7 @@ function TraceDetailsHeader({
 										traceId={traceID || ''}
 										startTime={startTime}
 										endTime={endTime}
-										totalSpansCount={summary.totalSpansCount}
+										totalSpansCount={traceSummary.totalSpansCount}
 									/>
 								</div>
 							</TooltipProvider>
@@ -195,28 +197,30 @@ function TraceDetailsHeader({
 
 			{(showTraceDetails || !isOverview) && (
 				<div className={styles.subHeader}>
-					{!summary ? (
+					{!traceSummary ? (
 						<DetailsLoader />
 					) : (
 						<EntityMetadataRow
 							entity="trace"
 							service={{
-								name: summary.rootServiceName,
-								entryPoint: summary.rootServiceEntryPoint,
+								name: traceSummary.rootServiceName,
+								entryPoint: traceSummary.rootServiceEntryPoint,
 							}}
-							durationMs={summary.endTimestampMillis - summary.startTimestampMillis}
-							timestamp={dayjs(summary.startTimestampMillis).format(
+							durationMs={
+								traceSummary.endTimestampMillis - traceSummary.startTimestampMillis
+							}
+							timestamp={dayjs(traceSummary.startTimestampMillis).format(
 								DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
 							)}
-							statusCode={summary.rootSpanStatusCode}
-							tokens={summary.ai?.tokens}
-							cost={summary.ai?.totalCost}
+							statusCode={traceSummary.rootSpanStatusCode}
+							tokens={traceSummary.ai?.tokens}
+							cost={traceSummary.ai?.totalCost}
 						/>
 					)}
 				</div>
 			)}
 
-			{isOverview && summary?.hasMissingSpans && <MissingSpansBanner />}
+			{isOverview && traceSummary?.hasMissingSpans && <MissingSpansBanner />}
 
 			<FieldsSelector
 				isOpen={isPreviewFieldsOpen}

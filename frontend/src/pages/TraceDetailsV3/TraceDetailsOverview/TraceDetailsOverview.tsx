@@ -53,11 +53,13 @@ function renderPanelExpandIcon({
 interface TraceDetailsOverviewProps {
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
+	onHasTraceDataChange: (hasTraceData: boolean) => void;
 }
 
 function TraceDetailsOverview({
 	filteredSpanIds,
 	isFilterActive,
+	onHasTraceDataChange,
 }: TraceDetailsOverviewProps): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV3URLProps>();
 	const urlQuery = useUrlQuery();
@@ -324,6 +326,13 @@ function TraceDetailsOverview({
 	const showNoData =
 		!isFetchingTraceData &&
 		(!!errorFetchingTraceData || !traceData?.payload?.spans?.length);
+
+	const hasTraceData = !showNoData && allSpans.length > 0;
+
+	useEffect(() => {
+		onHasTraceDataChange(hasTraceData);
+		return (): void => onHasTraceDataChange(false);
+	}, [hasTraceData, onHasTraceDataChange]);
 
 	const isDocked = spanDetailVariant === SpanDetailVariant.DOCKED;
 	const isRightDocked = spanDetailVariant === SpanDetailVariant.DOCKED_RIGHT;
