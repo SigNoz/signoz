@@ -1,3 +1,5 @@
+import { Typography } from '@signozhq/ui/typography';
+
 import TokenBreakdown from '../TraceTooltip/TokenBreakdown';
 import type { SpantypesTraceAITokensDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -12,6 +14,13 @@ function TokenUsageTooltip({ tokens }: TokenUsageTooltipProps): JSX.Element {
 
 	return (
 		<div className={styles.tokenTooltip}>
+			<Typography.Text
+				size="small"
+				weight="medium"
+				className={styles.tokenTooltipTitle}
+			>
+				Usage Breakdown
+			</Typography.Text>
 			<TokenBreakdown
 				input={input}
 				output={output}
