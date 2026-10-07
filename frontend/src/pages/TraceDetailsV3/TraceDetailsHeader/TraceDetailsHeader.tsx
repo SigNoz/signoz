@@ -27,6 +27,7 @@ import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
 import MissingSpansBanner from './MissingSpansBanner';
 import TraceOptionsMenu from './TraceOptionsMenu';
+import { useTraceSummary } from './useTraceSummary';
 
 import styles from './TraceDetailsHeader.module.scss';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -37,21 +38,10 @@ interface FilterMetadata {
 	traceId: string;
 }
 
-export interface TraceMetadataForHeader {
-	startTimestampMillis: number;
-	endTimestampMillis: number;
-	rootServiceName: string;
-	rootServiceEntryPoint: string;
-	rootSpanStatusCode: string;
-	hasMissingSpans: boolean;
-	totalSpansCount: number;
-}
-
 interface TraceDetailsHeaderProps {
 	filterMetadata: FilterMetadata;
 	onFilteredSpansChange: (spanIds: string[], isFilterActive: boolean) => void;
 	isDataLoaded?: boolean;
-	traceMetadata?: TraceMetadataForHeader;
 }
 
 const SKELETON_COUNT = 3;
@@ -76,13 +66,15 @@ function TraceDetailsHeader({
 	filterMetadata,
 	onFilteredSpansChange,
 	isDataLoaded,
-	traceMetadata,
 }: TraceDetailsHeaderProps): JSX.Element {
 	const { id: traceID } = useParams<TraceDetailV3URLProps>();
 	const [showTraceDetails, setShowTraceDetails] = useState(true);
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+	const { data: traceSummary, isLoading: isSummaryLoading } = useTraceSummary(
+		traceID || '',
+	);
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
@@ -116,8 +108,8 @@ function TraceDetailsHeader({
 		setShowTraceDetails((prev) => !prev);
 	}, []);
 
-	const durationMs = traceMetadata
-		? traceMetadata.endTimestampMillis - traceMetadata.startTimestampMillis
+	const durationMs = traceSummary
+		? traceSummary.endTimestampMillis - traceSummary.startTimestampMillis
 		: 0;
 
 	return (
@@ -173,7 +165,7 @@ function TraceDetailsHeader({
 										traceId={traceID || ''}
 										startTime={filterMetadata.startTime}
 										endTime={filterMetadata.endTime}
-										totalSpansCount={traceMetadata?.totalSpansCount || 0}
+										totalSpansCount={traceSummary?.totalSpansCount || 0}
 									/>
 								</div>
 							</TooltipProvider>
@@ -196,20 +188,20 @@ function TraceDetailsHeader({
 				)}
 			</div>
 
-			{showTraceDetails && (
+			{showTraceDetails && (isSummaryLoading || traceSummary) && (
 				<div className={styles.subHeader}>
-					{traceMetadata ? (
+					{traceSummary ? (
 						<EntityMetadataRow
 							entity="trace"
 							service={{
-								name: traceMetadata.rootServiceName,
-								entryPoint: traceMetadata.rootServiceEntryPoint,
+								name: traceSummary.rootServiceName,
+								entryPoint: traceSummary.rootServiceEntryPoint,
 							}}
 							durationMs={durationMs}
-							timestamp={dayjs(traceMetadata.startTimestampMillis).format(
+							timestamp={dayjs(traceSummary.startTimestampMillis).format(
 								DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
 							)}
-							statusCode={traceMetadata.rootSpanStatusCode}
+							statusCode={traceSummary.rootSpanStatusCode}
 						/>
 					) : (
 						<DetailsLoader />
@@ -217,7 +209,7 @@ function TraceDetailsHeader({
 				</div>
 			)}
 
-			{traceMetadata?.hasMissingSpans && <MissingSpansBanner />}
+			{traceSummary?.hasMissingSpans && <MissingSpansBanner />}
 
 			<FieldsSelector
 				isOpen={isPreviewFieldsOpen}

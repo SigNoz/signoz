@@ -44,6 +44,7 @@ import {
 	traceDetailFieldKeys,
 	traceDetailFieldValues,
 	traceFlamegraphResponse,
+	traceSummaryResponse,
 	traceWaterfallResponse,
 } from './__story_mockdata__/traceDetails';
 
@@ -146,6 +147,13 @@ export const traceDetailsMocks = defineStoryMocks({
 				'http://localhost/api/v4/traces/:traceId/waterfall',
 				response.json(() =>
 					traceWaterfallResponse({ ...trace, missingSpans: values.missingSpans }),
+				),
+			),
+
+			rest.get(
+				'http://localhost/api/v1/traces/:traceId/summary',
+				response.json(() =>
+					traceSummaryResponse({ ...trace, missingSpans: values.missingSpans }),
 				),
 			),
 
