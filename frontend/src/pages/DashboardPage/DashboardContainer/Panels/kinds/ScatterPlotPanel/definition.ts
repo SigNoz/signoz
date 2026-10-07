@@ -11,6 +11,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
+import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 
 export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 	kind: 'signoz/ScatterPlotPanel',
@@ -49,6 +50,8 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 		serverPaginated: false,
 		defaultRowLimit: MAX_PLOTTED_GROUPS,
 	},
+	// One group by everywhere, so the queries' results join row for row.
+	syncedQueryBuilderFields: [QueryBuilderField.GroupBy],
 	getDataWarning: getScatterPlotDataWarning,
 	actions: {
 		view: true,
