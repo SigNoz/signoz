@@ -28,6 +28,11 @@ export interface PanelQueryCapabilities {
 	 * carries no explicit limit" — an explicit limit means the user asked for a fixed set.
 	 */
 	serverPaginated: boolean;
+	/**
+	 * `limit` for a lone builder query that sets none. Skipped with several queries,
+	 * where per-query limits can keep different groups and break the join.
+	 */
+	defaultRowLimit?: number;
 }
 
 /** Raw rows rather than an aggregated result — the single source for "is this raw?". */

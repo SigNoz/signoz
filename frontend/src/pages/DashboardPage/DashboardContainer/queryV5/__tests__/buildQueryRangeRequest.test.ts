@@ -71,6 +71,10 @@ const LIST_PANEL_CAPABILITIES = {
 	orderTiebreaker: true,
 	serverPaginated: true,
 };
+const SCATTER_CAPABILITIES = {
+	...TABLE_CAPABILITIES,
+	defaultRowLimit: 10_000,
+};
 
 describe('requestType', () => {
 	it.each([
@@ -352,6 +356,51 @@ describe('buildQueryRangeRequest', () => {
 			stepInterval?: number;
 		};
 		expect(spec.stepInterval).toBeUndefined();
+	});
+});
+
+describe('defaultRowLimit', () => {
+	function limits(queries: DashboardtypesQueryDTO[]): unknown[] {
+		const request = buildQueryRangeRequest({
+			queries,
+			queryCapabilities: SCATTER_CAPABILITIES,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+		});
+		return (request.compositeQuery?.queries ?? []).map(
+			(envelope) => (envelope.spec as { limit?: number }).limit,
+		);
+	}
+
+	it('limits a lone builder query', () => {
+		expect(limits(bareBuilderQuery({ name: 'A' }))).toStrictEqual([10_000]);
+	});
+
+	it('keeps a limit the user set', () => {
+		expect(limits(bareBuilderQuery({ name: 'A', limit: 50 }))).toStrictEqual([
+			50,
+		]);
+	});
+
+	it('leaves several queries unlimited so their join keeps every group', () => {
+		expect(
+			limits(
+				compositeQuery([
+					{ type: 'builder_query', spec: { name: 'A' } },
+					{ type: 'builder_query', spec: { name: 'B' } },
+				]),
+			),
+		).toStrictEqual([undefined, undefined]);
+	});
+
+	it('leaves a lone non-builder query alone', () => {
+		expect(
+			limits(
+				compositeQuery([
+					{ type: 'clickhouse_sql', spec: { name: 'A', query: 'SELECT 1' } },
+				]),
+			),
+		).toStrictEqual([undefined]);
 	});
 });
 

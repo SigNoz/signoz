@@ -3,6 +3,7 @@ import { ChartScatter } from '@signozhq/icons';
 import type { PanelDefinition } from '../../types/panelDefinition';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
+import { MAX_PLOTTED_GROUPS } from './prepareData';
 import { sections } from './sections';
 import {
 	Querybuildertypesv5RequestTypeDTO,
@@ -41,6 +42,7 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
+		defaultRowLimit: MAX_PLOTTED_GROUPS,
 	},
 	actions: {
 		view: true,

@@ -128,6 +128,7 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
+		defaultRowLimit: 10_000,
 	},
 	// Only List reads raw rows, pages them server-side, and needs an order tiebreaker.
 	'signoz/ListPanel': {
