@@ -1,3 +1,5 @@
+import type { PanelStatusDetail } from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelStatus/types';
+
 import { MAX_PLOTTED_GROUPS } from './prepareData';
 import { type ScatterPlotData, ScatterPlotDataStatus } from './types';
 
@@ -53,24 +55,31 @@ function formatCount(count: number): string {
 }
 
 /**
- * "Showing N of M groups", with the cap and the log-axis share called out.
- * Undefined when every group plots.
+ * Groups the plot left out: the cap, a missing X or Y, or a value a log axis
+ * can't place. Null when every group plots, or nothing does (the empty state
+ * explains that).
  */
-export function getScatterPlotFooterText(
+export function getScatterPlotWarning(
 	data: ScatterPlotData,
-): string | undefined {
-	if (
-		data.status !== ScatterPlotDataStatus.Ready ||
-		data.drawnGroups === data.totalGroups
-	) {
-		return undefined;
+): PanelStatusDetail | null {
+	if (data.status !== ScatterPlotDataStatus.Ready || data.drawnGroups === 0) {
+		return null;
 	}
-	return [
-		`Showing ${formatCount(data.drawnGroups)} of ${formatCount(data.totalGroups)} groups`,
-		data.cappedGroups > 0 &&
-			`Plots the first ${formatCount(MAX_PLOTTED_GROUPS)}; filter or narrow the group by to see the rest`,
-		data.nonPositiveOnLogGroups > 0 && logAxisNote(data.nonPositiveOnLogGroups),
-	]
-		.filter(Boolean)
-		.join(' · ');
+	const atCap = data.totalGroups >= MAX_PLOTTED_GROUPS;
+	const messages = [
+		atCap && 'Add a filter or narrow the group by to see the rest.',
+		data.missingValueGroups > 0 &&
+			`${formatCount(data.missingValueGroups)} ${pluralizeGroups(data.missingValueGroups)} missing an X or Y value.`,
+		data.nonPositiveOnLogGroups > 0 &&
+			`${logAxisNote(data.nonPositiveOnLogGroups)}. Switch the axis to symlog to show them.`,
+	].filter((message): message is string => Boolean(message));
+	if (messages.length === 0) {
+		return null;
+	}
+	return {
+		message: atCap
+			? `Showing the first ${formatCount(data.drawnGroups)} groups.`
+			: `Showing ${formatCount(data.drawnGroups)} of ${formatCount(data.totalGroups)} groups.`,
+		messages,
+	};
 }
