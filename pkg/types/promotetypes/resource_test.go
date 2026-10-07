@@ -51,9 +51,9 @@ func TestPromotePathsResources(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "MalformedBody_Rejected",
-			body:    `{"signal":"traces"}`,
-			wantErr: true,
+			name: "MalformedBody_NoResources",
+			body: `{"signal":"traces"}`,
+			want: []string{},
 		},
 	}
 
@@ -72,10 +72,9 @@ func TestPromotePathsResources(t *testing.T) {
 
 func TestListPromotedPathsResources(t *testing.T) {
 	testCases := []struct {
-		name    string
-		query   string
-		want    []string
-		wantErr bool
+		name  string
+		query string
+		want  []string
 	}{
 		{
 			name:  "NoFilters_EveryField",
@@ -98,9 +97,9 @@ func TestListPromotedPathsResources(t *testing.T) {
 			want:  []string{"logs-field", "traces-field"},
 		},
 		{
-			name:    "InvalidSignal_Rejected",
-			query:   "?signal=events",
-			wantErr: true,
+			name:  "InvalidSignal_EveryField",
+			query: "?signal=events",
+			want:  []string{"logs-field", "traces-field"},
 		},
 	}
 
@@ -108,10 +107,6 @@ func TestListPromotedPathsResources(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			request := httptest.NewRequest("GET", "/api/v1/promoted_path"+testCase.query, nil)
 			resources, err := ListPromotedPathsResources(coretypes.ExtractorContext{Request: request})
-			if testCase.wantErr {
-				assert.Error(t, err)
-				return
-			}
 			require.NoError(t, err)
 			assert.Equal(t, testCase.want, resourceKinds(resources))
 		})

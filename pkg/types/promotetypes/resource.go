@@ -1,7 +1,7 @@
 package promotetypes
 
 import (
-	"encoding/json"
+	"github.com/tidwall/gjson"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -10,16 +10,12 @@ import (
 
 // PromotePathsResources resolves the field resources of the signals in a promote request body.
 func PromotePathsResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
-	var paths []PromotePath
-	if err := json.Unmarshal(ec.RequestBody, &paths); err != nil {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promote paths request body")
-	}
-
-	signals := make([]telemetrytypes.Signal, 0, len(paths))
-	for _, path := range paths {
-		signal, ok := telemetrytypes.SignalFromText(path.Signal)
+	values := gjson.GetBytes(ec.RequestBody, "#.signal").Array()
+	signals := make([]telemetrytypes.Signal, 0, len(values))
+	for _, value := range values {
+		signal, ok := telemetrytypes.SignalFromText(value.String())
 		if !ok {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid signal: %s", path.Signal)
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid signal: %s", value.String())
 		}
 		signals = append(signals, signal)
 	}
@@ -33,9 +29,6 @@ func ListPromotedPathsResources(ec coretypes.ExtractorContext) ([]coretypes.Reso
 	if ec.Request != nil {
 		filters.Signal = ec.Request.URL.Query().Get("signal")
 		filters.Context = ec.Request.URL.Query().Get("context")
-	}
-	if err := filters.Validate(); err != nil {
-		return nil, err
 	}
 
 	signals := make([]telemetrytypes.Signal, 0)
