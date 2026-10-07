@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import {
+	type DashboardtypesPanelDTO,
 	type DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -16,9 +17,12 @@ import type {
 } from './panelCapabilities';
 import type {
 	BaseRendererProps,
+	PanelOfKind,
 	PanelRendererProps,
 	StaticRendererProps,
 } from './rendererProps';
+import type { PanelStatusDetail } from '../../PanelsAndSectionsLayout/Panel/PanelStatus/types';
+import type { PanelQueryData } from '../../queryV5/types';
 
 /** Export formats offered under the single "Download" action. */
 export enum DownloadFormat {
@@ -124,6 +128,11 @@ export interface QueryPanelDefinition<
 	queryCapabilities: PanelQueryCapabilities;
 	/** Builder fields kept equal across queries: an edit to one query copies to the rest. */
 	syncedQueryBuilderFields?: SyncedQueryBuilderField[];
+	/** Non-fatal problems read off the result, shown as the header's warning. */
+	getDataWarning?: (
+		panel: PanelOfKind<K>,
+		data: PanelQueryData,
+	) => PanelStatusDetail | null;
 }
 
 /**
@@ -151,9 +160,13 @@ export type PanelRegistry = { [K in PanelKind]: PanelDefinition<K> };
 // explicitly rather than via `Omit` over the union, which collapses to common keys.
 export interface RenderableQueryPanelDefinition extends Omit<
 	QueryPanelDefinition,
-	'Renderer'
+	'Renderer' | 'getDataWarning'
 > {
 	Renderer: ComponentType<BaseRendererProps & AnyPanelInteractionProps>;
+	getDataWarning?: (
+		panel: DashboardtypesPanelDTO,
+		data: PanelQueryData,
+	) => PanelStatusDetail | null;
 }
 export type RenderableStaticPanelDefinition = StaticPanelDefinition<PanelKind>;
 

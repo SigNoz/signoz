@@ -5,6 +5,7 @@ import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/Panel
 import Renderer from './Renderer';
 import { MAX_PLOTTED_GROUPS } from './prepareData';
 import { sections } from './sections';
+import { getScatterPlotDataWarning } from './warning';
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
@@ -44,6 +45,7 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 		serverPaginated: false,
 		defaultRowLimit: MAX_PLOTTED_GROUPS,
 	},
+	getDataWarning: getScatterPlotDataWarning,
 	actions: {
 		view: true,
 		edit: true,
