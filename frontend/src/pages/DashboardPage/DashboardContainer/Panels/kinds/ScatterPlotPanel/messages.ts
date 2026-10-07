@@ -1,7 +1,12 @@
 import type { PanelStatusDetail } from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelStatus/types';
 
 import { MAX_PLOTTED_GROUPS } from './prepareData';
-import { type ScatterPlotData, ScatterPlotDataStatus } from './types';
+import {
+	ScatterDimension,
+	type ScatterPlotData,
+	ScatterPlotDataStatus,
+	type StaleDimension,
+} from './types';
 
 export interface ScatterPlotMessage {
 	title: string;
@@ -50,14 +55,25 @@ export function getScatterPlotEmptyMessage(
 	};
 }
 
+const STALE_FALLBACK: Record<ScatterDimension, string> = {
+	[ScatterDimension.X]: 'X falls back to Auto',
+	[ScatterDimension.Y]: 'Y falls back to Auto',
+	[ScatterDimension.Size]: 'every dot is one size',
+	[ScatterDimension.Colour]: "it's left out of the colour",
+};
+
+function staleNote({ dimension, key }: StaleDimension): string {
+	return `${dimension} uses ${key}, which isn't in the results, so ${STALE_FALLBACK[dimension]}.`;
+}
+
 function formatCount(count: number): string {
 	return count.toLocaleString('en-US');
 }
 
 /**
- * Groups the plot left out: the cap, a missing X or Y, or a value a log axis
- * can't place. Null when every group plots, or nothing does (the empty state
- * explains that).
+ * Groups the plot left out (the cap, a missing X or Y, a value a log axis
+ * can't place) and dimensions bound to a column the result lacks. Null when
+ * nothing needs saying, or nothing plots (the empty state explains that).
  */
 export function getScatterPlotWarning(
 	data: ScatterPlotData,
@@ -66,7 +82,9 @@ export function getScatterPlotWarning(
 		return null;
 	}
 	const atCap = data.totalGroups >= MAX_PLOTTED_GROUPS;
+	const groupsLeftOut = atCap || data.drawnGroups < data.totalGroups;
 	const messages = [
+		...data.staleDimensions.map(staleNote),
 		atCap && 'Add a filter or narrow the group by to see the rest.',
 		data.missingValueGroups > 0 &&
 			`${formatCount(data.missingValueGroups)} ${pluralizeGroups(data.missingValueGroups)} missing an X or Y value.`,
@@ -79,7 +97,9 @@ export function getScatterPlotWarning(
 	return {
 		message: atCap
 			? `Showing the first ${formatCount(data.drawnGroups)} groups.`
-			: `Showing ${formatCount(data.drawnGroups)} of ${formatCount(data.totalGroups)} groups.`,
+			: groupsLeftOut
+				? `Showing ${formatCount(data.drawnGroups)} of ${formatCount(data.totalGroups)} groups.`
+				: "Some dimensions aren't in the results.",
 		messages,
 	};
 }
