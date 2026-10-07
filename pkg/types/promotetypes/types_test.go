@@ -124,7 +124,7 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 		{
 			name: "ValidTokenBFIndex_JSONDataTypeDefaulted",
 			path: &PromotePath{
-				Path: "body.user.name",
+				Path: "user.name",
 				Indexes: []WrappedIndex{
 					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "tokenbf_v1(1024, 2, 0)", Granularity: 1},
 				},
@@ -135,7 +135,7 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 		{
 			name: "IndexTypeWithAlterAction_Rejected",
 			path: &PromotePath{
-				Path:    "body.user.name",
+				Path:    "user.name",
 				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4,1024,2,0)\tGRANULARITY\t1,\tDROP\tINDEX\tidx\t--\t", Granularity: 1}},
 			},
 			wantErr: true,
@@ -143,7 +143,7 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 		{
 			name: "UnsupportedIndexType_Rejected",
 			path: &PromotePath{
-				Path:    "body.user.name",
+				Path:    "user.name",
 				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "bloom_filter(0.01)", Granularity: 1}},
 			},
 			wantErr: true,
@@ -151,7 +151,7 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 		{
 			name: "IndexTypeWrongArity_Rejected",
 			path: &PromotePath{
-				Path:    "body.user.name",
+				Path:    "user.name",
 				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024)", Granularity: 1}},
 			},
 			wantErr: true,
@@ -159,7 +159,7 @@ func TestValidateAndSetDefaultsLogsBody(t *testing.T) {
 		{
 			name: "IndexTypeOversizedBloomFilter_Rejected",
 			path: &PromotePath{
-				Path:    "body.user.name",
+				Path:    "user.name",
 				Indexes: []WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 9999999, 2, 0)", Granularity: 1}},
 			},
 			wantErr: true,
