@@ -10,10 +10,10 @@
 }
 
 .tokenTooltip {
-	composes: body from '../TraceTooltip/shared.module.scss';
+	composes: tooltipBody from '../shared.module.scss';
 	min-width: 160px;
 }
 
 .tokenTooltipContent {
-	composes: tooltipContent from '../TraceTooltip/shared.module.scss';
+	composes: tooltipContent from '../shared.module.scss';
 }

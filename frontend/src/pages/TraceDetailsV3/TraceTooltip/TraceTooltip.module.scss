@@ -2,7 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-2);
-	padding: var(--spacing-4) 0;
+	padding: var(--spacing-2) 0;
 	border-top: 1px solid;
 	border-image: linear-gradient(
 			90deg,
@@ -25,7 +25,7 @@
 .row {
 	display: flex;
 	justify-content: space-between;
-	gap: var(--spacing-8);
+	gap: var(--spacing-2);
 	min-width: 0;
 }
 

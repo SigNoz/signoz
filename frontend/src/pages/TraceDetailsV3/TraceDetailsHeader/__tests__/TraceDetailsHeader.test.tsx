@@ -228,6 +228,20 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
 	});
 
+	it('omits AI tokens when input and output are both zero', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: {
+				...traceMetadata.ai,
+				tokens: { ...traceMetadata.ai.tokens, input: 0, output: 0 },
+			},
+		});
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.queryByText(/^Tokens:/)).not.toBeInTheDocument();
+		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
+	});
+
 	it('is shown by default and can be hidden / shown again via the Trace options menu', async () => {
 		const user = userEvent.setup({ delay: null });
 		mockSummary(traceMetadata);

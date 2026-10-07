@@ -4,7 +4,7 @@
 /* Plain CSS only (no SCSS syntax): other modules `composes` from this file. */
 
 /* For plain elements, e.g. the flamegraph's cursor-following portal. */
-.surface {
+.tooltipSurface {
 	background-color: color-mix(in srgb, var(--l3-background) 60%, transparent);
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
@@ -28,14 +28,14 @@
 	backdrop-filter: blur(20px);
 }
 
-.body {
+.tooltipBody {
 	display: flex;
 	flex-direction: column;
 	letter-spacing: var(--paragraph-small-400-letter-spacing);
 	color: var(--l1-foreground-hover);
 }
 
-.title {
+.tooltipTitle {
 	--typography-font-family: var(--code-small-500-font-family);
 	--typography-font-size: var(--code-small-500-font-size);
 	--typography-font-weight: var(--code-small-500-font-weight);

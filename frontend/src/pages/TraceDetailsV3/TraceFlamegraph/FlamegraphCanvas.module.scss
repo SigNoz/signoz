@@ -30,7 +30,7 @@
 // lives here. Shares visual treatment with the waterfall hover popover
 // but is positioned `fixed` instead of anchored.
 .tooltip {
-	composes: surface from '../TraceTooltip/shared.module.scss';
+	composes: tooltipSurface from '../shared.module.scss';
 	position: fixed;
 	z-index: 1000;
 	pointer-events: none;

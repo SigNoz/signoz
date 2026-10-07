@@ -99,7 +99,7 @@ function EntityMetadataRow({
 				</EntityMetadataItem>
 			)}
 
-			{tokens && (
+			{tokens && (tokens.input > 0 || tokens.output > 0) && (
 				<EntityMetadataItem
 					tooltip={<TokenUsageTooltip tokens={tokens} />}
 					tooltipClassName={styles.tokenTooltipContent}
