@@ -1896,7 +1896,7 @@ func TestScatterPlotPanelDefaults(t *testing.T) {
 
 	assert.Empty(t, spec.Dimensions.X, "an omitted x stays empty so the renderer picks the first value column")
 	assert.Empty(t, spec.Dimensions.Y, "an omitted y stays empty so the renderer picks the second value column")
-	assert.Empty(t, spec.Dimensions.Color, "an omitted color stays empty so the renderer colours by every group-by label")
+	assert.Empty(t, spec.Dimensions.ColorBy, "an omitted colorBy stays empty so the renderer colours by every group-by label")
 	assert.Equal(t, "auto", spec.Axes.X.Scale.ValueOrDefault(), "expected x scale default auto")
 	assert.Equal(t, "auto", spec.Axes.Y.Scale.ValueOrDefault(), "expected y scale default auto")
 	assert.Nil(t, spec.Axes.X.SoftMin, "expected x softMin unset")
@@ -1907,7 +1907,7 @@ func TestScatterPlotPanelDefaults(t *testing.T) {
 	output, err := json.Marshal(d)
 	require.NoError(t, err, "marshal dashboard failed")
 	assert.Contains(t, string(output), `"axes":{"x":{"softMin":null,"softMax":null,"scale":"auto","label":""},"y":{"softMin":null,"softMax":null,"scale":"auto","label":""}}`, "expected default axes in stored/response JSON")
-	assert.Contains(t, string(output), `"dimensions":{"x":"","y":"","size":"","color":null}`, "expected empty dimensions in stored/response JSON")
+	assert.Contains(t, string(output), `"dimensions":{"x":"","y":"","sizeBy":"","colorBy":null}`, "expected empty dimensions in stored/response JSON")
 	assert.Contains(t, string(output), `"chartAppearance":{"points":{"size":null,"minSize":null,"maxSize":null,"opacity":null}}`, "omitted point settings stay null so the renderer applies its defaults")
 }
 
@@ -1923,7 +1923,7 @@ func TestScatterPlotPanelRoundTrip(t *testing.T) {
 						"kind": "signoz/ScatterPlotPanel",
 						"spec": {
 							"visualization": {"timePreference": "global_time"},
-							"dimensions": {"x": "A.count()", "y": "A.p99(duration_nano)", "size": "A.countIf(has_error = true)", "color": ["k8s.namespace.name", "k8s.pod.name"]},
+							"dimensions": {"x": "A.count()", "y": "A.p99(duration_nano)", "sizeBy": "A.countIf(has_error = true)", "colorBy": ["k8s.namespace.name", "k8s.pod.name"]},
 							"formatting": {"columnUnits": {"A.p99(duration_nano)": "ns"}, "decimalPrecision": "2"},
 							"axes": {"x": {"softMin": 0, "softMax": null, "scale": "log", "label": "Throughput"}, "y": {"softMin": null, "softMax": 1000, "scale": "symlog", "label": "p99 latency"}},
 							"chartAppearance": {"points": {"size": 8, "minSize": 4, "maxSize": 4, "opacity": 0.1}},
@@ -1948,7 +1948,7 @@ func TestScatterPlotPanelRoundTrip(t *testing.T) {
 	require.IsType(t, &ScatterPlotPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
 	spec := d.Panels["p1"].Spec.Plugin.Spec.(*ScatterPlotPanelSpec)
 
-	assert.Equal(t, ScatterPlotDimensions{X: "A.count()", Y: "A.p99(duration_nano)", Size: "A.countIf(has_error = true)", Color: []string{"k8s.namespace.name", "k8s.pod.name"}}, spec.Dimensions)
+	assert.Equal(t, ScatterPlotDimensions{X: "A.count()", Y: "A.p99(duration_nano)", SizeBy: "A.countIf(has_error = true)", ColorBy: []string{"k8s.namespace.name", "k8s.pod.name"}}, spec.Dimensions)
 	assert.Equal(t, "Throughput", spec.Axes.X.Label)
 	points := spec.ChartAppearance.Points
 	require.NotNil(t, points.Size)
@@ -1972,7 +1972,7 @@ func TestScatterPlotPanelRoundTrip(t *testing.T) {
 	output, err := json.Marshal(d)
 	require.NoError(t, err, "marshal dashboard failed")
 	for _, want := range []string{
-		`"dimensions":{"x":"A.count()","y":"A.p99(duration_nano)","size":"A.countIf(has_error = true)","color":["k8s.namespace.name","k8s.pod.name"]}`,
+		`"dimensions":{"x":"A.count()","y":"A.p99(duration_nano)","sizeBy":"A.countIf(has_error = true)","colorBy":["k8s.namespace.name","k8s.pod.name"]}`,
 		`"x":{"softMin":0,"softMax":null,"scale":"log","label":"Throughput"}`,
 		`"chartAppearance":{"points":{"size":8,"minSize":4,"maxSize":4,"opacity":0.1}}`,
 		`"y":{"softMin":null,"softMax":1000,"scale":"symlog","label":"p99 latency"}`,
@@ -2063,7 +2063,7 @@ func TestInvalidateScatterPlotPanelSpecValues(t *testing.T) {
 		{
 			scenario:               "a single colour key as a string",
 			panelKind:              "signoz/ScatterPlotPanel",
-			panelSpec:              `{"dimensions": {"color": "service.name"}}`,
+			panelSpec:              `{"dimensions": {"colorBy": "service.name"}}`,
 			expectedErrorSubstring: "cannot unmarshal string",
 		},
 		{

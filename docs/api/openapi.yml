@@ -4592,7 +4592,7 @@ components:
       type: object
     DashboardtypesScatterPlotDimensions:
       properties:
-        color:
+        colorBy:
           description: Group-by label names (e.g. k8s.namespace.name) whose combined
             values colour dots and drive the legend. Empty colours by every group-by
             label.
@@ -4600,7 +4600,7 @@ components:
             type: string
           nullable: true
           type: array
-        size:
+        sizeBy:
           description: Value column key that scales dot size. Empty draws every dot
             at the default size.
           type: string
