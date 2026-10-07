@@ -236,6 +236,11 @@
 			align-items: flex-start;
 			gap: 12px;
 			align-self: stretch;
+
+			[role='radiogroup'] {
+				width: 100%;
+				grid-template-columns: 1fr 1fr;
+			}
 		}
 
 		.slider-container {
