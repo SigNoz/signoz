@@ -1,20 +1,14 @@
-import {
-	CalendarClock,
-	CircleDollarSign,
-	Coins,
-	Server,
-	Timer,
-} from '@signozhq/icons';
+import { CalendarClock, Coins, Landmark, Server, Timer } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 
-import { formatCost, formatTokens, TokenUsage } from '../SpanHoverCard/aiUsage';
+import { formatCost, formatTokens } from '../utils/genAi';
+import { TokenUsage } from '../SpanHoverCard/aiUsage';
 import EntityMetadataItem from './EntityMetadataItem';
 import TokenUsageTooltip from './TokenUsageTooltip';
 
-import tooltipStyles from '../TraceTooltip/TraceTooltip.module.scss';
 import styles from './EntityMetadataRow.module.scss';
 
 interface EntityMetadataRowProps {
@@ -26,7 +20,7 @@ interface EntityMetadataRowProps {
 	timestamp?: string;
 	statusCode?: string | number;
 	tokens?: TokenUsage;
-	cost?: number | null;
+	cost?: number;
 }
 
 const ICON_SIZE = 14;
@@ -105,22 +99,22 @@ function EntityMetadataRow({
 				</EntityMetadataItem>
 			)}
 
-			{tokens && (
+			{tokens && (tokens.input > 0 || tokens.output > 0) && (
 				<EntityMetadataItem
 					tooltip={<TokenUsageTooltip tokens={tokens} />}
-					tooltipClassName={tooltipStyles.tooltipContent}
+					tooltipClassName={styles.tokenTooltipContent}
 					icon={<Coins size={ICON_SIZE} />}
 				>
 					Tokens: {formatTokens(tokens.input)} → {formatTokens(tokens.output)}
 				</EntityMetadataItem>
 			)}
 
-			{cost != null && (
+			{cost !== undefined && (
 				<EntityMetadataItem
 					tooltip="Total cost"
-					icon={<CircleDollarSign size={ICON_SIZE} />}
+					icon={<Landmark size={ICON_SIZE} />}
 				>
-					{formatCost(cost)}
+					Cost — {formatCost(cost)}
 				</EntityMetadataItem>
 			)}
 		</div>

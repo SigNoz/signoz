@@ -183,7 +183,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		expect(screen.getByText(metadataText)).toBeInTheDocument();
 		expect(screen.getByText(duration)).toBeInTheDocument();
 		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
-		expect(screen.getByText('$ 0.0421')).toBeInTheDocument();
+		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
 	});
 
 	it('renders the root span status code', () => {
@@ -200,7 +200,30 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		render(<TraceDetailsHeader {...baseProps} />);
 
 		expect(screen.queryByText(/^Tokens:/)).not.toBeInTheDocument();
-		expect(screen.queryByText(/^\$ /)).not.toBeInTheDocument();
+		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
+	});
+
+	it('omits AI tokens when input and output are both zero', () => {
+		jest.mocked(useTraceSummary).mockReturnValue({
+			data: {
+				...MOCK_TRACE_SUMMARY,
+				ai: {
+					totalCost: 0.0421,
+					tokens: {
+						input: 0,
+						output: 0,
+						cacheRead: 8000,
+						cacheWrite: 1200,
+						reasoning: 900,
+					},
+				},
+			},
+			isLoading: false,
+		});
+		render(<TraceDetailsHeader {...baseProps} />);
+
+		expect(screen.queryByText(/^Tokens:/)).not.toBeInTheDocument();
+		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
 	});
 
 	it('shows skeletons instead of the metadata when the summary is absent', () => {
