@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import { Skeleton } from 'antd';
 import useGetTraceFlamegraphV3 from 'hooks/trace/useGetTraceFlamegraphV3';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
@@ -30,7 +31,6 @@ function TraceFlamegraph({
 	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
-	const { search } = useLocation();
 	const [firstSpanAtFetchLevel, setFirstSpanAtFetchLevel] = useState<string>(
 		urlQuery.get('spanId') || '',
 	);
@@ -42,14 +42,14 @@ function TraceFlamegraph({
 	const handleSpanClick = useCallback(
 		(spanId: string): void => {
 			setFirstSpanAtFetchLevel(spanId);
-			const searchParams = new URLSearchParams(search);
+			const searchParams = getUnstableCurrentSearchParams();
 			//tood: use from query params constants
 			if (searchParams.get('spanId') !== spanId) {
 				searchParams.set('spanId', spanId);
 				history.replace({ search: searchParams.toString() });
 			}
 		},
-		[history, search],
+		[history],
 	);
 
 	const previewFields = useTraceStore((s) => s.previewFields);

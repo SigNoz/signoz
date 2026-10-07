@@ -3,6 +3,7 @@ import { useDetailsPanel } from 'components/DetailsPanel';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import { ThreadSpan } from '../types';
 
@@ -25,14 +26,15 @@ export function useThreadSpanSelection(): ThreadSpanSelection {
 
 	const setSpanIdParam = useCallback(
 		(spanId?: string): void => {
+			const params = getUnstableCurrentSearchParams();
 			if (spanId) {
-				urlQuery.set(SPAN_ID_PARAM, spanId);
+				params.set(SPAN_ID_PARAM, spanId);
 			} else {
-				urlQuery.delete(SPAN_ID_PARAM);
+				params.delete(SPAN_ID_PARAM);
 			}
-			safeNavigate({ search: urlQuery.toString() }, { replace: true });
+			safeNavigate({ search: params.toString() }, { replace: true });
 		},
-		[urlQuery, safeNavigate],
+		[safeNavigate],
 	);
 
 	const handleClose = useCallback(
