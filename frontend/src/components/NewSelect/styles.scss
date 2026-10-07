@@ -30,10 +30,11 @@ $custom-border-color: #2c3044;
 		color: color-mix(in srgb, var(--border) 70%, transparent);
 	}
 
-	// The search input overlays the selected value; let hovers reach the value's
-	// tooltip while closed. Clicks still open the select and focus the input.
-	&:not(.ant-select-open) .ant-select-selection-search {
-		pointer-events: none;
+	// The search input overlays the selected value; lift the value above it while
+	// closed so hovers reach its tooltip. Clicks still open the select and focus the input.
+	&:not(.ant-select-open) .ant-select-selection-item {
+		position: relative;
+		z-index: 1;
 	}
 }
 
