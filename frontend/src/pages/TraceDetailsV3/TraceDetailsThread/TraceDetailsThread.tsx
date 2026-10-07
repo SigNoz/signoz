@@ -5,7 +5,9 @@ import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import { useToolCallLinks } from '../AIThreadMessage/useToolCallLinks';
 import { TraceDetailsTab } from '../constants';
+import { useSpanDetailVariant } from '../hooks/useSpanDetailVariant';
 import { useTraceDetailsTab } from '../hooks/useTraceDetailsTab';
+import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
 import { useScrollToAnchorSpan } from './hooks/useScrollToAnchorSpan';
 import { useThreadSpanSelection } from './hooks/useThreadSpanSelection';
 import { useThreadView } from './hooks/useThreadView';
@@ -48,6 +50,17 @@ function TraceDetailsThread(): JSX.Element {
 	);
 
 	const selectedSpan = spans.find((span) => span.span_id === selectedSpanId);
+	const [spanDetailVariant, setSpanDetailVariant] = useSpanDetailVariant();
+	const isBottomDocked = spanDetailVariant === SpanDetailVariant.DOCKED;
+
+	const spanDetails = panelState.isOpen && selectedSpan && (
+		<ThreadSpanDetails
+			panelState={panelState}
+			span={selectedSpan}
+			variant={spanDetailVariant}
+			onVariantChange={setSpanDetailVariant}
+		/>
+	);
 	const hasNoThread =
 		!isLoading &&
 		anchorStatus !== AnchorStatus.NotFound &&
@@ -129,10 +142,9 @@ function TraceDetailsThread(): JSX.Element {
 					</div>
 				)}
 				{renderBody()}
+				{isBottomDocked && spanDetails}
 			</div>
-			{panelState.isOpen && selectedSpan && (
-				<ThreadSpanDetails panelState={panelState} span={selectedSpan} />
-			)}
+			{!isBottomDocked && spanDetails}
 		</div>
 	);
 }
