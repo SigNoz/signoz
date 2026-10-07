@@ -1,5 +1,10 @@
 import { getScatterPlotEmptyMessage, getScatterPlotWarning } from '../messages';
-import { type ScatterPlotData, ScatterPlotDataStatus } from '../types';
+import {
+	ScatterDimension,
+	type ScatterPlotData,
+	ScatterPlotDataStatus,
+	type StaleDimension,
+} from '../types';
 
 function ready(counts: {
 	totalGroups: number;
@@ -7,6 +12,7 @@ function ready(counts: {
 	missingValueGroups?: number;
 	nonPositiveOnLogGroups?: number;
 	cappedGroups?: number;
+	staleDimensions?: StaleDimension[];
 }): ScatterPlotData {
 	return {
 		status: ScatterPlotDataStatus.Ready,
@@ -17,6 +23,7 @@ function ready(counts: {
 		missingValueGroups: 0,
 		nonPositiveOnLogGroups: 0,
 		cappedGroups: 0,
+		staleDimensions: [],
 		...counts,
 	};
 }
@@ -130,5 +137,26 @@ describe('getScatterPlotWarning', () => {
 			getScatterPlotWarning(ready({ totalGroups: 10000, drawnGroups: 10000 }))
 				?.message,
 		).toBe('Showing the first 10,000 groups.');
+	});
+
+	it('names dimensions bound to columns the result lacks', () => {
+		expect(
+			getScatterPlotWarning(
+				ready({
+					totalGroups: 4,
+					drawnGroups: 4,
+					staleDimensions: [
+						{ dimension: ScatterDimension.X, key: 'A.count()' },
+						{ dimension: ScatterDimension.Colour, key: 'host.name' },
+					],
+				}),
+			),
+		).toStrictEqual({
+			message: "Some dimensions aren't in the results.",
+			messages: [
+				"X uses A.count(), which isn't in the results, so X falls back to Auto.",
+				"Colour uses host.name, which isn't in the results, so it's left out of the colour.",
+			],
+		});
 	});
 });

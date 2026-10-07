@@ -9,7 +9,7 @@ import {
 	prepareScatterPlotData,
 	UNGROUPED_SERIES_LABEL,
 } from '../prepareData';
-import { ScatterPlotDataStatus } from '../types';
+import { ScatterDimension, ScatterPlotDataStatus } from '../types';
 
 const group = (id: string): PanelTableColumn => ({
 	id,
@@ -432,5 +432,27 @@ describe('prepareScatterPlotData', () => {
 		expect(result.drawnGroups).toBe(MAX_PLOTTED_GROUPS);
 		expect(result.cappedGroups).toBe(5);
 		expect(result.series.at(-1)?.label).toBe(`svc-${MAX_PLOTTED_GROUPS - 1}`);
+	});
+
+	it('lists dimensions bound to columns the result lacks', () => {
+		const result = prepareScatterPlotData({
+			table: tracesTable,
+			dimensions: {
+				x: 'A.count()',
+				y: 'B.gone',
+				size: 'C.gone',
+				color: ['service.name', 'host.name'],
+			},
+			columnUnits: {},
+		});
+
+		if (result.status !== ScatterPlotDataStatus.Ready) {
+			throw new Error('expected a ready plot');
+		}
+		expect(result.staleDimensions).toStrictEqual([
+			{ dimension: ScatterDimension.Y, key: 'B.gone' },
+			{ dimension: ScatterDimension.Size, key: 'C.gone' },
+			{ dimension: ScatterDimension.Colour, key: 'host.name' },
+		]);
 	});
 });
