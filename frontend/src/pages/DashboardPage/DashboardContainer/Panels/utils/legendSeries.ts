@@ -6,7 +6,7 @@ import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { preparePieData } from '../kinds/PieChartPanel/prepareData';
-import { prepareScatterPlotData } from '../kinds/ScatterPlotPanel/prepareData';
+import { prepareScatterPlotData } from '../kinds/ScatterPlotPanel/utils/prepareData';
 import { ScatterPlotDataStatus } from '../kinds/ScatterPlotPanel/types';
 import { getBuilderQueries } from './getBuilderQueries';
 import { resolveSeriesLabelV5 } from './resolveSeriesLabel';

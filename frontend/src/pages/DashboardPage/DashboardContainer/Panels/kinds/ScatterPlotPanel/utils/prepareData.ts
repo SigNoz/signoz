@@ -9,8 +9,8 @@ import type {
 	PanelTableRow,
 } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
-import { getColumnUnit } from '../../utils/getColumnUnit';
-import { getValueColumnLabels } from '../../utils/getValueColumnLabels';
+import { getColumnUnit } from '../../../utils/getColumnUnit';
+import { getValueColumnLabels } from '../../../utils/getValueColumnLabels';
 
 import {
 	type PrepareScatterPlotDataArgs,
@@ -18,7 +18,7 @@ import {
 	type ScatterPlotData,
 	ScatterPlotDataStatus,
 	type StaleDimension,
-} from './types';
+} from '../types';
 
 /** Series label when the query has no group by to colour by. */
 export const UNGROUPED_SERIES_LABEL = 'All';
