@@ -101,14 +101,14 @@ function findStaleDimensions(
 	const valueKeys = [
 		{ dimension: ScatterDimension.X, key: dimensions?.x },
 		{ dimension: ScatterDimension.Y, key: dimensions?.y },
-		{ dimension: ScatterDimension.Size, key: dimensions?.size },
+		{ dimension: ScatterDimension.Size, key: dimensions?.sizeBy },
 	].filter(
 		(entry): entry is StaleDimension =>
 			!!entry.key && !findColumn(valueColumns, entry.key),
 	);
-	const colourKeys = (dimensions?.color ?? [])
+	const colourKeys = (dimensions?.colorBy ?? [])
 		.filter((key) => !findColumn(groupColumns, key))
-		.map((key) => ({ dimension: ScatterDimension.Colour, key }));
+		.map((key) => ({ dimension: ScatterDimension.Color, key }));
 	return [...valueKeys, ...colourKeys];
 }
 
@@ -137,8 +137,8 @@ export function prepareScatterPlotData({
 			totalGroups: rows.length,
 		};
 	}
-	const sizeColumn = findColumn(valueColumns, dimensions?.size);
-	const colorColumns = resolveColorColumns(groupColumns, dimensions?.color);
+	const sizeColumn = findColumn(valueColumns, dimensions?.sizeBy);
+	const colorColumns = resolveColorColumns(groupColumns, dimensions?.colorBy);
 
 	const seriesByLabel = new Map<
 		string,
