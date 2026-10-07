@@ -52,14 +52,6 @@ func TestPromotePaths(t *testing.T) {
 			wantPromoted: map[telemetrytypes.Signal]map[string]bool{},
 		},
 		{
-			name: "InvalidIndexTypeInLaterDomain_NothingRecorded",
-			paths: []*promotetypes.PromotePath{
-				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
-				{Signal: "logs", Context: "body", Path: "user.name", Promote: true, Indexes: []promotetypes.WrappedIndex{{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "unsupported", Granularity: 1}}},
-			},
-			wantErr: true,
-		},
-		{
 			name:    "InvalidSignal_Rejected",
 			paths:   []*promotetypes.PromotePath{{Signal: "events", Context: "attribute", Path: "http.method", Promote: true}},
 			wantErr: true,
