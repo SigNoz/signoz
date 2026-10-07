@@ -467,6 +467,7 @@ describe('Footer utils', () => {
 											timeAggregation: 'avg',
 										},
 									],
+									bucketOptions: undefined,
 									disabled: false,
 									filter: {
 										expression: '',

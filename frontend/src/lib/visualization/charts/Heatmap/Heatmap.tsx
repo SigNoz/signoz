@@ -1,0 +1,334 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
+import ColorBar from 'lib/uPlotV2/components/ColorBar/ColorBar';
+import Legend from 'lib/uPlotV2/components/Legend/Legend';
+import HeatmapTooltip from 'lib/uPlotV2/components/Tooltip/components/HeatmapTooltip/HeatmapTooltip';
+import {
+	LegendPosition,
+	TooltipRenderArgs,
+} from 'lib/uPlotV2/components/types';
+import {
+	createHeatmapColorResolver,
+	DEFAULT_HEATMAP_COLORS,
+	resolveCountDomain,
+	resolveExtremeColor,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
+import type { LegendItem } from 'lib/uPlotV2/config/types';
+import {
+	cropHeatmapYAxis,
+	resolveHeatmapYAxis,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
+import { resolveHeatmapGrid } from 'lib/uPlotV2/plugins/HeatmapPlugin/grid';
+import {
+	HeatmapAxisScale,
+	HeatmapCell,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+
+import { HeatmapChartProps } from 'lib/visualization/charts/types';
+import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
+import {
+	buildHeatmapConfig,
+	hasMissingCells,
+	prepareHeatmapChartData,
+	resolveBoundaryPrecision,
+	resolveGroupOrder,
+} from './utils';
+
+/** Vertical space the colour bar takes out of the container. */
+const COLOR_BAR_HEIGHT = 28;
+
+/** Row, column and count together: a refetch changes what the cell under a
+ *  stationary cursor means, while the row and column stay put. */
+function isSameCell(a: HeatmapCell | null, b: HeatmapCell | null): boolean {
+	if (a === null || b === null) {
+		return a === b;
+	}
+	return a.row === b.row && a.column === b.column && a.count === b.count;
+}
+
+/**
+ * Columns are time slices, rows are bucket ranges, cell colour is the observation
+ * count — so a distribution can be watched changing shape instead of collapsing to
+ * percentile lines. Drawn on canvas (see `createHeatmapHooks`): a 40 × 240 grid is
+ * ~9,600 cells, far past what per-cell DOM carries.
+ */
+export default function Heatmap(props: HeatmapChartProps): JSX.Element {
+	const {
+		id,
+		buckets,
+		step,
+		series,
+		width,
+		height,
+		isDarkMode,
+		axisScale = HeatmapAxisScale.Auto,
+		yAxisUnit,
+		decimalPrecision,
+		timezone,
+		showVisualMap = true,
+		showLegend = true,
+		legendPosition = LegendPosition.BOTTOM,
+		dimOnHover = true,
+		showTooltip = true,
+		canPinTooltip = false,
+		pinKey,
+		seriesColor,
+		minTimeScale,
+		maxTimeScale,
+		onDragSelect,
+		onCellClick,
+		renderTooltipFooter,
+		tooltipPortalRoot,
+		layoutChildren,
+		'data-testid': testId,
+	} = props;
+
+	const [hoveredCell, setHoveredCell] = useState<HeatmapCell | null>(null);
+	const hoveredCellRef = useRef<HeatmapCell | null>(null);
+	const hoverFrameRef = useRef<number | null>(null);
+	const onCellClickRef = useRef(onCellClick);
+	onCellClickRef.current = onCellClick;
+
+	const groups = useMemo(() => resolveGroupOrder(series), [series]);
+
+	const colors = useMemo(
+		() => ({ ...DEFAULT_HEATMAP_COLORS, ...props.colors }),
+		[props.colors],
+	);
+
+	// The opacity fill no longer follows a group colour: with several groups enabled
+	// at once there is no single one to follow.
+	const resolvedSeriesColor = seriesColor ?? DEFAULT_HEATMAP_COLORS.fill;
+
+	// Opacity mode keeps the solid fill; a partially transparent marker is hard to
+	// read against the panel.
+	const extremeColor = resolveExtremeColor({
+		options: colors,
+		isDarkMode,
+		seriesColor: resolvedSeriesColor,
+	});
+
+	const {
+		visibleKeys: visibleGroups,
+		focusedSeriesIndex,
+		onLegendAction,
+	} = useLegendVisibility({ keys: groups, indexOffset: 1, id });
+
+	const grid = useMemo(
+		() => resolveHeatmapGrid({ buckets, step, series, visibleGroups }),
+		[buckets, step, series, visibleGroups],
+	);
+
+	const yAxis = useMemo(
+		() =>
+			cropHeatmapYAxis(resolveHeatmapYAxis(grid.bounds, axisScale), grid.counts),
+		[grid.bounds, grid.counts, axisScale],
+	);
+
+	// The axis, the series labels and the tooltip all name rows by their boundaries,
+	// so they share one precision.
+	const boundaryPrecision = useMemo(
+		() => resolveBoundaryPrecision({ yAxis, yAxisUnit, decimalPrecision }),
+		[yAxis, yAxisUnit, decimalPrecision],
+	);
+
+	const hasGrid = yAxis.rows.length > 0 && grid.timestamps.length > 0;
+
+	const data = useMemo(
+		() =>
+			hasGrid
+				? prepareHeatmapChartData(grid, yAxis.rows.length)
+				: ([[]] as unknown as ReturnType<typeof prepareHeatmapChartData>),
+		[grid, yAxis.rows.length, hasGrid],
+	);
+
+	const colorResolver = useMemo(
+		() =>
+			createHeatmapColorResolver({
+				options: colors,
+				domain: resolveCountDomain(colors, grid.counts),
+				isDarkMode,
+				seriesColor: resolvedSeriesColor,
+			}),
+		[colors, grid.counts, isDarkMode, resolvedSeriesColor],
+	);
+
+	// Stable: the renderer captures it at config-build time, so a new identity would
+	// recreate the plot on every hover.
+	//
+	// The plot reports the cell from inside its own render path, which React can be
+	// driving — a resize or a data swap runs the plot's hooks during a commit, and a
+	// rebuilt plot re-reports the cell the cursor is still sitting on. Committing to
+	// state there nests an update inside the commit that caused it, so the two feed
+	// each other until React gives up at its depth limit. The frame takes the update
+	// out of that chain; the equality check drops a report that carries nothing new.
+	const handleHoverChange = useCallback((cell: HeatmapCell | null): void => {
+		hoveredCellRef.current = cell;
+		if (hoverFrameRef.current !== null) {
+			return;
+		}
+		hoverFrameRef.current = requestAnimationFrame(() => {
+			hoverFrameRef.current = null;
+			setHoveredCell((previous) =>
+				isSameCell(previous, hoveredCellRef.current)
+					? previous
+					: hoveredCellRef.current,
+			);
+		});
+	}, []);
+
+	useEffect(
+		() => (): void => {
+			if (hoverFrameRef.current !== null) {
+				cancelAnimationFrame(hoverFrameRef.current);
+			}
+		},
+		[],
+	);
+
+	const config = useMemo(
+		() =>
+			buildHeatmapConfig({
+				id,
+				grid,
+				yAxis,
+				colors,
+				isDarkMode,
+				seriesColor: resolvedSeriesColor,
+				dimOnHover,
+				onHoverChange: handleHoverChange,
+				yAxisUnit,
+				decimalPrecision: boundaryPrecision,
+				timezone,
+				minTimeScale,
+				maxTimeScale,
+				onDragSelect,
+			}),
+		[
+			id,
+			grid,
+			yAxis,
+			colors,
+			isDarkMode,
+			resolvedSeriesColor,
+			dimOnHover,
+			handleHoverChange,
+			yAxisUnit,
+			boundaryPrecision,
+			timezone,
+			minTimeScale,
+			maxTimeScale,
+			onDragSelect,
+		],
+	);
+
+	const legendItems = useMemo<LegendItem[]>(
+		() =>
+			groups.map((group, index) => ({
+				// +1 mirrors uPlot's 1-based data series, so the shared legend's index
+				// handling is identical across charts.
+				seriesIndex: index + 1,
+				label: group,
+				// Colour means count here, so a marker names its group rather than keying
+				// a colour — every one of them takes the top of the ramp.
+				color: extremeColor,
+				show: visibleGroups.includes(group),
+			})),
+		[groups, visibleGroups, extremeColor],
+	);
+
+	const renderTooltip = useCallback(
+		(args: TooltipRenderArgs): React.ReactNode => (
+			<HeatmapTooltip
+				{...args}
+				id={id}
+				yAxis={yAxis}
+				step={grid.step}
+				series={series}
+				visibleGroups={visibleGroups}
+				groupColor={extremeColor}
+				yAxisUnit={yAxisUnit}
+				decimalPrecision={boundaryPrecision}
+				timezone={timezone}
+				canPinTooltip={canPinTooltip}
+				renderTooltipFooter={renderTooltipFooter}
+			/>
+		),
+		[
+			id,
+			yAxis,
+			grid.step,
+			series,
+			visibleGroups,
+			extremeColor,
+			yAxisUnit,
+			boundaryPrecision,
+			timezone,
+			canPinTooltip,
+			renderTooltipFooter,
+		],
+	);
+
+	const handleClick = useCallback((clickData: ChartClickData): void => {
+		if (hoveredCellRef.current) {
+			onCellClickRef.current?.(hoveredCellRef.current, clickData);
+		}
+	}, []);
+
+	const groupLegend = useCallback(
+		(averageLegendWidth: number): React.ReactNode => (
+			<Legend
+				items={legendItems}
+				position={legendPosition}
+				averageLegendWidth={averageLegendWidth}
+				focusedSeriesIndex={focusedSeriesIndex}
+				onAction={onLegendAction}
+			/>
+		),
+		[legendItems, legendPosition, focusedSeriesIndex, onLegendAction],
+	);
+
+	const visualMap = useMemo(() => {
+		if (!showVisualMap || !hasGrid) {
+			return null;
+		}
+		return (
+			<ColorBar
+				label="count"
+				ramp={colorResolver.ramp}
+				minLabel={colorResolver.domain.min.toLocaleString()}
+				maxLabel={colorResolver.domain.max.toLocaleString()}
+				markerPosition={colorResolver.positionOf(hoveredCell?.count ?? null)}
+				showNoDataKey={hasMissingCells(grid.counts)}
+			/>
+		);
+	}, [showVisualMap, hasGrid, colorResolver, hoveredCell, grid.counts]);
+
+	return (
+		<ChartWrapper
+			config={config}
+			data={data}
+			width={width}
+			height={
+				showVisualMap && hasGrid ? Math.max(0, height - COLOR_BAR_HEIGHT) : height
+			}
+			legendConfig={{ position: legendPosition }}
+			showLegend={showLegend}
+			customLegend={groupLegend}
+			legendLabels={groups}
+			showTooltip={showTooltip}
+			canPinTooltip={canPinTooltip}
+			pinKey={pinKey}
+			onClick={onCellClick ? handleClick : undefined}
+			yAxisUnit={yAxisUnit}
+			decimalPrecision={decimalPrecision}
+			customTooltip={renderTooltip}
+			renderTooltipFooter={renderTooltipFooter}
+			tooltipPortalRoot={tooltipPortalRoot}
+			contentFooter={visualMap}
+			layoutChildren={layoutChildren}
+			data-testid={testId}
+		/>
+	);
+}
