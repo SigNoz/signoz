@@ -37,7 +37,7 @@ interface TraceStoreState {
 	availableColorByOptions: ColorByOption[];
 	previewFields: TelemetryFieldKey[];
 
-	// --- Setters used only by TraceStoreSync ---
+	// --- Setters used only by TraceStoreSync and TraceDetailsOverview ---
 	setAvailableColorByFields: (fieldNames: string[] | undefined) => void;
 	setUserPreferences: (userPreferences: UserPreference[] | null) => void;
 	setCallbacks: (callbacks: {

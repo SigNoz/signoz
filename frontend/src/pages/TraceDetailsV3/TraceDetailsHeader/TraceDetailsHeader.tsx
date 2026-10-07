@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import {
@@ -18,23 +18,26 @@ import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { TraceDetailsTab } from '../constants';
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
 import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
+import { useTraceDetailsTab } from '../hooks/useTraceDetailsTab';
 import { useTraceStore } from '../stores/traceStore';
 import TraceDownloadPanel from './TraceDownloadPanel';
 import EntityMetadataRow from '../EntityMetadata/EntityMetadataRow';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
+import { useTraceDetailsStripInfo } from '../useTraceDetailsStripInfo';
 import MissingSpansBanner from './MissingSpansBanner';
-import TraceOptionsMenu from './TraceOptionsMenu';
 import { useTraceSummary } from './useTraceSummary';
+import TraceDetailsTabs from './TraceDetailsTabs';
+import TraceOptionsMenu from './TraceOptionsMenu';
 
 import styles from './TraceDetailsHeader.module.scss';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
 interface TraceDetailsHeaderProps {
-	onFilteredSpansChange: (spanIds: string[], isFilterActive: boolean) => void;
-	showTraceDetailsHeaderOptions?: boolean;
+	onFilteredSpansChange?: (spanIds: string[], isFilterActive: boolean) => void;
 }
 
 const SKELETON_COUNT = 3;
@@ -57,14 +60,21 @@ function DetailsLoader(): JSX.Element {
 
 function TraceDetailsHeader({
 	onFilteredSpansChange,
-	showTraceDetailsHeaderOptions,
 }: TraceDetailsHeaderProps): JSX.Element {
 	const { id: traceID } = useParams<TraceDetailV3URLProps>();
+	const { data: summary } = useTraceSummary(traceID || '');
 	const [showTraceDetails, setShowTraceDetails] = useState(true);
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
-	const { data: traceSummary } = useTraceSummary(traceID || '');
+	const [tab] = useTraceDetailsTab();
+	const isOverview = tab === TraceDetailsTab.Overview;
+
+	// Overview-only panels must not linger over another tab.
+	useEffect(() => {
+		setIsPreviewFieldsOpen(false);
+		setIsAnalyticsOpen(false);
+	}, [tab]);
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
@@ -98,12 +108,13 @@ function TraceDetailsHeader({
 		setShowTraceDetails((prev) => !prev);
 	}, []);
 
-	const startTime = (traceSummary?.startTimestampMillis ?? 0) / 1e3;
-	const endTime = (traceSummary?.endTimestampMillis ?? 0) / 1e3;
+	useTraceDetailsStripInfo({
+		totalSpansCount: summary?.totalSpansCount ?? 0,
+		totalErrorSpansCount: summary?.totalErrorSpansCount ?? 0,
+	});
 
-	const durationMs = traceSummary
-		? traceSummary.endTimestampMillis - traceSummary.startTimestampMillis
-		: 0;
+	const startTime = (summary?.startTimestampMillis ?? 0) / 1e3;
+	const endTime = (summary?.endTimestampMillis ?? 0) / 1e3;
 
 	return (
 		<div className={styles.wrapper}>
@@ -125,9 +136,10 @@ function TraceDetailsHeader({
 							badgeValue={traceID || ''}
 							maxCharacters={100}
 						/>
+						<TraceDetailsTabs />
 					</div>
 				)}
-				{showTraceDetailsHeaderOptions && traceSummary && (
+				{isOverview && onFilteredSpansChange && summary && (
 					<div
 						className={cx(
 							styles.filterSection,
@@ -158,7 +170,7 @@ function TraceDetailsHeader({
 										traceId={traceID || ''}
 										startTime={startTime}
 										endTime={endTime}
-										totalSpansCount={traceSummary.totalSpansCount}
+										totalSpansCount={summary.totalSpansCount}
 									/>
 								</div>
 							</TooltipProvider>
@@ -181,30 +193,30 @@ function TraceDetailsHeader({
 				)}
 			</div>
 
-			{showTraceDetails && (
+			{(showTraceDetails || !isOverview) && (
 				<div className={styles.subHeader}>
-					{traceSummary ? (
+					{!summary ? (
+						<DetailsLoader />
+					) : (
 						<EntityMetadataRow
 							entity="trace"
 							service={{
-								name: traceSummary.rootServiceName,
-								entryPoint: traceSummary.rootServiceEntryPoint,
+								name: summary.rootServiceName,
+								entryPoint: summary.rootServiceEntryPoint,
 							}}
-							durationMs={durationMs}
-							timestamp={dayjs(traceSummary.startTimestampMillis).format(
+							durationMs={summary.endTimestampMillis - summary.startTimestampMillis}
+							timestamp={dayjs(summary.startTimestampMillis).format(
 								DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
 							)}
-							statusCode={traceSummary.rootSpanStatusCode}
-							tokens={traceSummary.ai?.tokens}
-							cost={traceSummary.ai?.totalCost}
+							statusCode={summary.rootSpanStatusCode}
+							tokens={summary.ai?.tokens}
+							cost={summary.ai?.totalCost}
 						/>
-					) : (
-						<DetailsLoader />
 					)}
 				</div>
 			)}
 
-			{traceSummary?.hasMissingSpans && <MissingSpansBanner />}
+			{isOverview && summary?.hasMissingSpans && <MissingSpansBanner />}
 
 			<FieldsSelector
 				isOpen={isPreviewFieldsOpen}
