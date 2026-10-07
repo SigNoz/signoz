@@ -21,12 +21,14 @@ import type { PanelKind } from '../../../DashboardContainer/Panels/types/panelKi
  */
 export const NEW_PANEL_KINDS = [
 	'time-series',
-	'bar-chart',
 	'number',
-	'pie-chart',
 	'table',
+	'bar-chart',
+	'area-chart',
+	'pie-chart',
 	'histogram',
 	'list',
+	'text',
 ] as const;
 
 export type NewPanelKind = (typeof NEW_PANEL_KINDS)[number];
@@ -34,11 +36,13 @@ export type NewPanelKind = (typeof NEW_PANEL_KINDS)[number];
 const KIND_BY_OPTION: Record<NewPanelKind, PanelKind> = {
 	'time-series': 'signoz/TimeSeriesPanel',
 	'bar-chart': 'signoz/BarChartPanel',
+	'area-chart': 'signoz/AreaChartPanel',
 	number: 'signoz/NumberPanel',
 	'pie-chart': 'signoz/PieChartPanel',
 	table: 'signoz/TablePanel',
 	histogram: 'signoz/HistogramPanel',
 	list: 'signoz/ListPanel',
+	text: 'signoz/TextPanel',
 };
 
 export const newPanelKindOf = (option: NewPanelKind): PanelKind =>
