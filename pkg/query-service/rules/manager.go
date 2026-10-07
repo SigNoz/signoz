@@ -919,6 +919,12 @@ func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesPara
 		m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", slog.String("rule.id", ruleID), errors.Attr(err))
 	}
 
+	schedules, err := m.maintenanceStore.ListPlannedMaintenance(ctx, claims.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	ruletypes.OverlayRuleMutes(listableRules, schedules, time.Now().UTC())
+
 	total := int64(len(listableRules))
 	ruletypes.SortListableRules(listableRules, params.Sort, params.Order)
 

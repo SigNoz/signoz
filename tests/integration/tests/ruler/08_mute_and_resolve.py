@@ -84,6 +84,19 @@ def test_mute_lifecycle(
     assert mute["status"] == "active"
     first_end = mute["schedule"]["endTime"]
 
+    # the list API overlays muted + mutedBy while the adhoc mute is active
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v3/rules"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    listed = next(row for row in response.json()["data"]["rules"] if row["id"] == rule_id)
+    assert listed["muted"] is True
+    assert [(source["id"], source["origin"]) for source in listed["mutedBy"]] == [(mute["id"], "adhoc")]
+    assert listed["mutedBy"][0]["name"] == "Mute: rule mute target"
+    assert listed["mutedBy"][0]["endTime"] == first_end
+
     # the adhoc mute is visible on the downtime list and filterable by origin
     response = requests.get(
         signoz.self.host_configs["8080"].get(DOWNTIME_URL),
@@ -146,6 +159,17 @@ def test_mute_lifecycle(
         assert response.status_code == HTTPStatus.OK
         assert len(response.json()["data"]) == expected_rows
 
+    # the overlay drops after unmute
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v3/rules"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    listed = next(row for row in response.json()["data"]["rules"] if row["id"] == rule_id)
+    assert listed["muted"] is False
+    assert "mutedBy" not in listed
+
 
 def test_mute_leaves_maintenance_windows_alone(
     signoz: SigNoz,
@@ -182,6 +206,17 @@ def test_mute_leaves_maintenance_windows_alone(
     try:
         assert response.json()["data"]["origin"] == "maintenance"
 
+        # a maintenance window silences but does not mute: it only shows up in mutedBy
+        response = requests.get(
+            signoz.self.host_configs["8080"].get("/api/v3/rules"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK
+        listed = next(row for row in response.json()["data"]["rules"] if row["id"] == rule_id)
+        assert listed["muted"] is False
+        assert [(source["id"], source["origin"]) for source in listed["mutedBy"]] == [(window_id, "maintenance")]
+
         response = requests.post(
             signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/mute"),
             json={"duration": "1h"},
@@ -190,6 +225,17 @@ def test_mute_leaves_maintenance_windows_alone(
         )
         assert response.status_code == HTTPStatus.OK, response.text
 
+        # with both active, the rule is muted and mutedBy carries both origins
+        response = requests.get(
+            signoz.self.host_configs["8080"].get("/api/v3/rules"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK
+        listed = next(row for row in response.json()["data"]["rules"] if row["id"] == rule_id)
+        assert listed["muted"] is True
+        assert {source["origin"] for source in listed["mutedBy"]} == {"adhoc", "maintenance"}
+
         response = requests.post(
             signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/unmute"),
             headers={"Authorization": f"Bearer {token}"},
@@ -197,7 +243,7 @@ def test_mute_leaves_maintenance_windows_alone(
         )
         assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-        # the real window survives unmute
+        # the real window survives unmute and keeps silencing without muting
         response = requests.get(
             signoz.self.host_configs["8080"].get(DOWNTIME_URL),
             headers={"Authorization": f"Bearer {token}"},
@@ -206,6 +252,16 @@ def test_mute_leaves_maintenance_windows_alone(
         assert response.status_code == HTTPStatus.OK
         remaining_ids = [row["id"] for row in response.json()["data"]]
         assert remaining_ids == [window_id]
+
+        response = requests.get(
+            signoz.self.host_configs["8080"].get("/api/v3/rules"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK
+        listed = next(row for row in response.json()["data"]["rules"] if row["id"] == rule_id)
+        assert listed["muted"] is False
+        assert [source["id"] for source in listed["mutedBy"]] == [window_id]
     finally:
         response = requests.put(
             signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{window_id}"),
