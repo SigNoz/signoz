@@ -24,6 +24,7 @@ import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDef
 import { toPanelType } from '../../Panels/types/panelKind';
 
 import styles from './PanelEditorQueryBuilder.module.scss';
+import { useSyncQueryBuilderFields } from './useSyncQueryBuilderFields';
 
 interface PanelEditorQueryBuilderProps {
 	/** The edited kind's definition — drives supported query types, the signals the
@@ -62,6 +63,7 @@ function PanelEditorQueryBuilder({
 	const isRawQuery = isRawRequest(panelDefinition.queryCapabilities);
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
+	useSyncQueryBuilderFields(panelDefinition.syncedQueryBuilderFields);
 
 	const handleQueryCategoryChange = useCallback(
 		(queryType: string): void => {

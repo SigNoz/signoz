@@ -14,6 +14,9 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
 jest.mock('hooks/useDarkMode', () => ({ useIsDarkMode: (): boolean => false }));
+jest.mock('../useSyncQueryBuilderFields', () => ({
+	useSyncQueryBuilderFields: jest.fn(),
+}));
 jest.mock('components/QueryBuilderV2/QueryBuilderV2', () => ({
 	QueryBuilderV2: (props: unknown): null => {
 		mockQueryBuilderV2(props);

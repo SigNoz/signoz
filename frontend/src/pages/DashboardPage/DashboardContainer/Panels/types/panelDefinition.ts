@@ -13,6 +13,7 @@ import type { PanelKind } from './panelKind';
 import type {
 	PanelQueryCapabilities,
 	QueryBuilderFieldsConfig,
+	SyncedQueryBuilderField,
 } from './panelCapabilities';
 import type {
 	BaseRendererProps,
@@ -125,6 +126,8 @@ export interface QueryPanelDefinition<
 	queryBuilderFields: QueryBuilderFieldsConfig;
 	/** How this kind's query-range request is shaped (request type, paging, result formatting). */
 	queryCapabilities: PanelQueryCapabilities;
+	/** Builder fields kept equal across queries: an edit to one query's copies to the rest. */
+	syncedQueryBuilderFields?: SyncedQueryBuilderField[];
 	/** Non-fatal problems read off the result, shown as the header's warning. */
 	getDataWarning?: (
 		panel: PanelOfKind<K>,
