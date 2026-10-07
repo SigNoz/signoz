@@ -37,11 +37,27 @@
 	--button-padding: var(--spacing-2);
 }
 
-// The resource name reads as an identifier, the way the drawer title does
-.backTarget {
-	font-family: var(--periscope-font-family-mono);
-	font-style: italic;
-	color: var(--l1-foreground);
+.backButton {
+	--button-padding: var(--spacing-2) var(--spacing-3);
+
+	flex: none;
+	white-space: nowrap;
+}
+
+// The kind reads as a label on the name, not as part of it
+.entityKind {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	flex: none;
+	padding: var(--spacing-1) var(--spacing-3);
+	border-radius: 2px;
+	background: var(--l3-background);
+	color: var(--l2-foreground);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
 }
 
 .title {

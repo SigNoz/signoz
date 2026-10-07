@@ -912,22 +912,25 @@ export const K8S_CATEGORY_LABELS: Record<InfraMonitoringEntity, string> = {
 	[InfraMonitoringEntity.VOLUMES]: 'Volumes',
 };
 
-/** Used where one record is named, like the drawer's back control. */
+/**
+ * Used where one record is named, like the drawer's back control. Cased the
+ * same way as the plural labels, so StatefulSet keeps its capital.
+ */
 export const K8S_CATEGORY_SINGULAR_LABELS: Record<
 	InfraMonitoringEntity,
 	string
 > = {
-	[InfraMonitoringEntity.HOSTS]: 'host',
-	[InfraMonitoringEntity.PODS]: 'pod',
-	[InfraMonitoringEntity.NODES]: 'node',
-	[InfraMonitoringEntity.NAMESPACES]: 'namespace',
-	[InfraMonitoringEntity.CLUSTERS]: 'cluster',
-	[InfraMonitoringEntity.DEPLOYMENTS]: 'deployment',
-	[InfraMonitoringEntity.STATEFULSETS]: 'statefulset',
-	[InfraMonitoringEntity.DAEMONSETS]: 'daemonset',
-	[InfraMonitoringEntity.CONTAINERS]: 'container',
-	[InfraMonitoringEntity.JOBS]: 'job',
-	[InfraMonitoringEntity.VOLUMES]: 'volume',
+	[InfraMonitoringEntity.HOSTS]: 'Host',
+	[InfraMonitoringEntity.PODS]: 'Pod',
+	[InfraMonitoringEntity.NODES]: 'Node',
+	[InfraMonitoringEntity.NAMESPACES]: 'Namespace',
+	[InfraMonitoringEntity.CLUSTERS]: 'Cluster',
+	[InfraMonitoringEntity.DEPLOYMENTS]: 'Deployment',
+	[InfraMonitoringEntity.STATEFULSETS]: 'StatefulSet',
+	[InfraMonitoringEntity.DAEMONSETS]: 'DaemonSet',
+	[InfraMonitoringEntity.CONTAINERS]: 'Container',
+	[InfraMonitoringEntity.JOBS]: 'Job',
+	[InfraMonitoringEntity.VOLUMES]: 'Volume',
 };
 
 export const ENTITY_FILTER_PLACEHOLDERS: Record<InfraMonitoringEntity, string> =

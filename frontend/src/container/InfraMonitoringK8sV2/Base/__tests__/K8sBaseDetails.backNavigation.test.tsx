@@ -95,9 +95,9 @@ describe('K8sBaseDetails - back navigation', () => {
 
 		const backButton = await screen.findByTestId('drawer-back-button');
 
-		// The control stays an icon, and names the resource it returns to
-		expect(backButton).toHaveTextContent('');
-		expect(backButton).toHaveAccessibleName('Back to node: node-1');
+		// The destination is text rather than a tooltip, which a click would dismiss
+		expect(backButton).toHaveTextContent('Back to Node');
+		expect(backButton).toHaveAccessibleName('Back to Node: node-1');
 		expect(screen.queryByTestId('close-drawer-button')).not.toBeInTheDocument();
 	});
 

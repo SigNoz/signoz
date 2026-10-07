@@ -12,23 +12,11 @@ import {
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import {
-	ArrowUpDown,
-	ArrowUpToLine,
-	Bolt,
-	Box,
-	Boxes,
-	Computer,
-	Container,
-	FilePenLine,
-	Filter,
-	Group,
-	HardDrive,
-	Workflow,
-} from '@signozhq/icons';
+import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { CategoryIcon } from './Base/categoryIcons';
 import { K8sDynamicList } from './Base/K8sDynamicList';
 import {
 	GetClustersQuickFiltersConfig,
@@ -158,61 +146,61 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			{
 				key: K8sCategories.CONTAINERS,
 				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.CONTAINERS],
-				icon: <Box size={14} />,
+				icon: <CategoryIcon category={InfraMonitoringEntity.CONTAINERS} />,
 				config: GetContainersQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.PODS,
 				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.PODS],
-				icon: <Container size={14} />,
+				icon: <CategoryIcon category={InfraMonitoringEntity.PODS} />,
 				config: GetPodsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NODES,
 				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.NODES],
-				icon: <Workflow size={14} />,
+				icon: <CategoryIcon category={InfraMonitoringEntity.NODES} />,
 				config: GetNodesQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NAMESPACES,
 				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.NAMESPACES],
-				icon: <FilePenLine size={14} />,
+				icon: <CategoryIcon category={InfraMonitoringEntity.NAMESPACES} />,
 				config: GetNamespaceQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.CLUSTERS,
 				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.CLUSTERS],
-				icon: <Boxes size={14} />,
+				icon: <CategoryIcon category={InfraMonitoringEntity.CLUSTERS} />,
 				config: GetClustersQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.DEPLOYMENTS,
 				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.DEPLOYMENTS],
-				icon: <Computer size={14} />,
+				icon: <CategoryIcon category={InfraMonitoringEntity.DEPLOYMENTS} />,
 				config: GetDeploymentsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.JOBS,
 				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.JOBS],
-				icon: <Bolt size={14} />,
+				icon: <CategoryIcon category={InfraMonitoringEntity.JOBS} />,
 				config: GetJobsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.DAEMONSETS,
 				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.DAEMONSETS],
-				icon: <Group size={14} />,
+				icon: <CategoryIcon category={InfraMonitoringEntity.DAEMONSETS} />,
 				config: GetDaemonsetsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.STATEFULSETS,
 				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.STATEFULSETS],
-				icon: <ArrowUpDown size={14} />,
+				icon: <CategoryIcon category={InfraMonitoringEntity.STATEFULSETS} />,
 				config: GetStatefulsetsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.VOLUMES,
 				label: K8S_CATEGORY_LABELS[InfraMonitoringEntity.VOLUMES],
-				icon: <HardDrive size={14} />,
+				icon: <CategoryIcon category={InfraMonitoringEntity.VOLUMES} />,
 				config: GetVolumesQuickFiltersConfig(),
 			},
 		],

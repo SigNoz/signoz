@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { ArrowLeft, X } from '@signozhq/icons';
 import { Divider } from '@signozhq/ui/divider';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper, DrawerWrapperProps } from '@signozhq/ui/drawer';
 import { toast } from '@signozhq/ui/sonner';
@@ -26,6 +25,7 @@ import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import LoadingContainer from '../LoadingContainer';
 
 import K8sBaseDetailsContent from './K8sBaseDetailsContent';
+import { CategoryIcon } from './categoryIcons';
 import { getEntityNameAttributeKey } from './relations';
 import { useDrawerHistoryStore } from './useDrawerHistoryStore';
 import { usePrimeEntityDetails } from './usePrimeEntityDetails';
@@ -205,8 +205,11 @@ export default function K8sBaseDetails<T>({
 	);
 
 	const handleCopyId = useCallback((): void => {
-		toast.success('ID copied to clipboard', { position: 'bottom-left' });
-	}, []);
+		toast.success(
+			`${K8S_CATEGORY_SINGULAR_LABELS[category]} name copied to clipboard`,
+			{ position: 'bottom-left' },
+		);
+	}, [category]);
 
 	const entityName = entity ? getEntityName(entity) : '';
 
@@ -242,29 +245,21 @@ export default function K8sBaseDetails<T>({
 	const drawerTitle = (
 		<>
 			{/* One control: step back where there is a trail, close otherwise.
-			    Clicking outside the drawer closes it either way. */}
+			    Clicking outside the drawer closes it either way. The label is text
+			    rather than a tooltip, which a click on the control would dismiss. */}
 			{previousEntry ? (
-				<TooltipSimple
-					title={
-						<>
-							{`${backTarget}: `}
-							<span className={styles.backTarget}>{previousEntry.label}</span>
-						</>
-					}
-					side="bottom"
-					arrow
+				<Button
+					variant="ghost"
+					size="sm"
+					color="secondary"
+					onClick={handleBack}
+					data-testid="drawer-back-button"
+					className={styles.backButton}
+					aria-label={backLabel}
+					prefix={<ArrowLeft size={14} />}
 				>
-					<Button
-						variant="ghost"
-						size="sm"
-						color="secondary"
-						onClick={handleBack}
-						data-testid="drawer-back-button"
-						className={styles.closeButton}
-						aria-label={backLabel}
-						prefix={<ArrowLeft />}
-					/>
-				</TooltipSimple>
+					{backTarget}
+				</Button>
 			) : (
 				<Button
 					variant="ghost"
@@ -277,6 +272,10 @@ export default function K8sBaseDetails<T>({
 				/>
 			)}
 			<Divider type="vertical" />
+			<span className={styles.entityKind} data-testid="drawer-entity-kind">
+				<CategoryIcon category={category} />
+				{K8S_CATEGORY_SINGULAR_LABELS[category]}
+			</span>
 			<Typography.Text className={styles.title}>
 				{entityName ||
 					((isEntityError || hasResponseError) && 'Failed to load entity details') ||
@@ -284,8 +283,8 @@ export default function K8sBaseDetails<T>({
 					'-'}
 			</Typography.Text>
 			<CopyButton
-				value={selectedItem ?? ''}
-				ariaLabel="Copy ID"
+				value={entityName || selectedItem || ''}
+				ariaLabel={`Copy ${K8S_CATEGORY_SINGULAR_LABELS[category]} name`}
 				className={styles.copyIdButton}
 				testId="copy-id-button"
 				onCopy={handleCopyId}

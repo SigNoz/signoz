@@ -48,3 +48,9 @@ export const useDrawerHistoryStore = create<IDrawerHistoryStore>()(
 
 export const resetDrawerHistory = (): void =>
 	useDrawerHistoryStore.getState().reset();
+
+export const pushDrawerHistory = (entry: DrawerHistoryEntry): void =>
+	useDrawerHistoryStore.getState().push(entry);
+
+export const getDrawerHistoryDepth = (): number =>
+	useDrawerHistoryStore.getState().entries.length;

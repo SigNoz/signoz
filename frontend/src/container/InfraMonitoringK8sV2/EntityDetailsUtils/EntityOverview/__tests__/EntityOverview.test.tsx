@@ -210,7 +210,7 @@ describe('EntityOverview', () => {
 		renderOverview({ attributes: { 'os.type': 'linux' } });
 
 		await expect(
-			screen.findByText(/Nothing related to this node/),
+			screen.findByText(/Nothing related to this Node/),
 		).resolves.toBeInTheDocument();
 		expect(mockFetchListData).not.toHaveBeenCalled();
 	});
