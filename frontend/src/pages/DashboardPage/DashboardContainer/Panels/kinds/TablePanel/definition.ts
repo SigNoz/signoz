@@ -1,6 +1,7 @@
 import { Table } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
+import { QueryModeKind } from '../../types/panelCapabilities';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
@@ -8,7 +9,7 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { EQueryType } from 'types/common/dashboard';
+import { QueryMode } from 'types/common/dashboard';
 
 export const definition: PanelDefinition<'signoz/TablePanel'> = {
 	kind: 'signoz/TablePanel',
@@ -18,12 +19,21 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	supportedSignals: [
-		TelemetrytypesSignalDTO.metrics,
-		TelemetrytypesSignalDTO.logs,
-		TelemetrytypesSignalDTO.traces,
-	],
-	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	supportedQueryModes: {
+		[QueryMode.QUERY_BUILDER]: {
+			kind: QueryModeKind.SIGNAL,
+			signals: [
+				TelemetrytypesSignalDTO.metrics,
+				TelemetrytypesSignalDTO.logs,
+				TelemetrytypesSignalDTO.traces,
+			],
+		},
+		[QueryMode.CLICKHOUSE]: { kind: QueryModeKind.SIGNAL_LESS },
+		[QueryMode.AI_QUERY_BUILDER]: {
+			kind: QueryModeKind.SIGNAL,
+			signals: [TelemetrytypesSignalDTO.traces],
+		},
+	},
 	queryBuilderFields: {},
 	// The only kind that asks the server to transpose its scalar result into UI rows.
 	queryCapabilities: {

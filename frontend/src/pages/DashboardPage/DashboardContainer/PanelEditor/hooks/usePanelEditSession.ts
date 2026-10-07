@@ -4,7 +4,10 @@ import type {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
-import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import {
+	getSupportedSignals,
+	requireQueryPanelDefinition,
+} from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { isPanelKindSupported } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
@@ -91,7 +94,7 @@ export function usePanelEditSession({
 	// View modal shells) — asserted rather than assumed.
 	const panelDefinition = requireQueryPanelDefinition(panelKind);
 	const panelType = toPanelType(panelKind);
-	const defaultSignal = panelDefinition.supportedSignals[0];
+	const defaultSignal = getSupportedSignals(panelKind)[0];
 
 	const query = usePanelQuery({
 		panel: draft,

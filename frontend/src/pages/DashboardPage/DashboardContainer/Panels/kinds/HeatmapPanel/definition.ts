@@ -3,6 +3,7 @@ import { LayoutGrid } from '@signozhq/icons';
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
+import { QueryModeKind } from '../../types/panelCapabilities';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
@@ -10,7 +11,7 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { EQueryType } from 'types/common/dashboard';
+import { QueryMode } from 'types/common/dashboard';
 
 export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 	kind: 'signoz/HeatmapPanel',
@@ -20,13 +21,15 @@ export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	// Only metrics carry a bucket axis; the request rejects the other signals.
-	supportedSignals: [TelemetrytypesSignalDTO.metrics],
-	supportedQueryTypes: [
-		EQueryType.QUERY_BUILDER,
-		EQueryType.CLICKHOUSE,
-		EQueryType.PROM,
-	],
+	supportedQueryModes: {
+		// Only metrics carry a bucket axis; the request rejects the other signals.
+		[QueryMode.QUERY_BUILDER]: {
+			kind: QueryModeKind.SIGNAL,
+			signals: [TelemetrytypesSignalDTO.metrics],
+		},
+		[QueryMode.CLICKHOUSE]: { kind: QueryModeKind.SIGNAL_LESS },
+		[QueryMode.PROM]: { kind: QueryModeKind.SIGNAL_LESS },
+	},
 	// The request rejects both: a point is a count per bucket, not a single value.
 	queryBuilderFields: {
 		[QueryBuilderField.Functions]: { state: 'hidden' },
