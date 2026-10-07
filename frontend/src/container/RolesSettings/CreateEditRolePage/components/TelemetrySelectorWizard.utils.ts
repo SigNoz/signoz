@@ -42,6 +42,16 @@ export function isSupportedGrantKey(key: string): boolean {
 	return SUPPORTED_GRANT_KEYS.includes(key);
 }
 
+const RESOURCE_PREFIX = 'resource.';
+
+// the backend folds resource.<key> to <key> when <key> is itself supported
+function foldGrantKey(key: string): string {
+	const stripped = key.startsWith(RESOURCE_PREFIX)
+		? key.slice(RESOURCE_PREFIX.length)
+		: key;
+	return isSupportedGrantKey(stripped) ? stripped : key;
+}
+
 function splitSelector(selector: string): string[] {
 	const parts = selector.split('/');
 
@@ -71,7 +81,7 @@ export function parseSelector(selector: string): ParsedSelector {
 
 	return {
 		queryType: getQueryTypeOption(parts[0])?.id,
-		key: parts.length >= 3 ? parts[1] : undefined,
+		key: parts.length >= 3 ? foldGrantKey(parts[1]) : undefined,
 		value: parts.length >= 3 ? parts[2] : '',
 	};
 }

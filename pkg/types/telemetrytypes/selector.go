@@ -17,11 +17,12 @@ var telemetryGrantQueryTypes = map[string]bool{
 	"clickhouse_sql":    false,
 }
 
-var telemetryGrantKeys = map[string]struct{}{
-	"signoz.workspace.key.id":     {},
-	"service.name":                {},
-	"deployment.environment":      {},
-	"deployment.environment.name": {},
+// signoz.workspace.key.id is stamped on the resource by ingestion and never arrives as an
+// attribute, so its bare spelling is unambiguous; customer-controlled keys must say resource.
+var telemetryGrantKeys = map[string]string{
+	"signoz.workspace.key.id":     "signoz.workspace.key.id",
+	"service.name":                "resource.service.name",
+	"deployment.environment.name": "resource.deployment.environment.name",
 }
 
 func NewTelemetryGrantKey(keyText string) (string, bool) {
@@ -30,11 +31,16 @@ func NewTelemetryGrantKey(keyText string) (string, bool) {
 		return "", false
 	}
 
-	if _, ok := telemetryGrantKeys[fieldKey.Name]; !ok {
+	canonical, ok := telemetryGrantKeys[fieldKey.Name]
+	if !ok {
 		return "", false
 	}
 
-	return fieldKey.Name, true
+	if fieldKey.FieldContext == FieldContextUnspecified && canonical != fieldKey.Name {
+		return "", false
+	}
+
+	return canonical, true
 }
 
 func NewTelemetryGrantSelector(input string) (string, error) {
@@ -108,8 +114,8 @@ func NewTelemetryGrantSelectors(selector string) []string {
 
 func telemetryGrantKeyNames() []string {
 	names := make([]string, 0, len(telemetryGrantKeys))
-	for name := range telemetryGrantKeys {
-		names = append(names, name)
+	for _, canonical := range telemetryGrantKeys {
+		names = append(names, canonical)
 	}
 	slices.Sort(names)
 	return names

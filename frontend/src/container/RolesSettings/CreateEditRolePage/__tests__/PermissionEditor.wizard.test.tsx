@@ -165,18 +165,42 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		);
 		await user.click(screen.getByTestId('wizard-key-select-logs-read'));
 		await user.click(
-			await screen.findByTestId('wizard-key-option-service.name-logs-read'),
+			await screen.findByTestId(
+				'wizard-key-option-resource.service.name-logs-read',
+			),
 		);
 
 		expect(screen.getByTestId('wizard-selector-input-logs-read')).toHaveValue(
-			'builder_query/service.name/checkout',
+			'builder_query/resource.service.name/checkout',
 		);
 
 		await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
 
 		await expect(
-			screen.findByText('builder_query/service.name/checkout'),
+			screen.findByText('builder_query/resource.service.name/checkout'),
 		).resolves.toBeInTheDocument();
+	});
+
+	it('folds the resource prefix of the workspace key from a typed selector', async () => {
+		const user = userEvent.setup();
+		await openLogsWizard(user);
+
+		const selectorInput = screen.getByTestId('wizard-selector-input-logs-read');
+		await user.clear(selectorInput);
+		await user.type(
+			selectorInput,
+			'builder_query/resource.signoz.workspace.key.id/key-a',
+		);
+
+		expect(screen.getByTestId('wizard-key-select-logs-read')).toHaveTextContent(
+			'signoz.workspace.key.id',
+		);
+
+		await user.type(screen.getByTestId('wizard-value-input-logs-read'), '2');
+
+		expect(selectorInput).toHaveValue(
+			'builder_query/signoz.workspace.key.id/key-a2',
+		);
 	});
 
 	it('selects the key from a typed selector', async () => {
@@ -185,10 +209,13 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 
 		const selectorInput = screen.getByTestId('wizard-selector-input-logs-read');
 		await user.clear(selectorInput);
-		await user.type(selectorInput, 'builder_query/deployment.environment/prod');
+		await user.type(
+			selectorInput,
+			'builder_query/resource.deployment.environment.name/prod',
+		);
 
 		expect(screen.getByTestId('wizard-key-select-logs-read')).toHaveTextContent(
-			'deployment.environment',
+			'resource.deployment.environment.name',
 		);
 		expect(screen.getByTestId('wizard-value-input-logs-read')).toHaveValue(
 			'prod',

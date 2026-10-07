@@ -52,25 +52,32 @@ func TestQueryRangeResources(t *testing.T) {
 		},
 		{
 			name: "atoms on different keys each require a grant",
-			body: builderQueryBody("logs", "service.name = 'checkout' AND deployment.environment = 'prod'"),
+			body: builderQueryBody("logs", "resource.service.name = 'checkout' AND resource.deployment.environment.name = 'prod'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/deployment.environment/prod"},
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.deployment.environment.name/prod"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name/checkout"},
 			},
 		},
 		{
-			name: "environment keys are independent",
-			body: builderQueryBody("traces", "deployment.environment.name = 'prod'"),
+			name: "old environment spelling does not scope",
+			body: builderQueryBody("traces", "resource.deployment.environment = 'prod'"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/deployment.environment.name/prod"},
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"},
 			},
 		},
 		{
-			name: "resource prefixed service in list",
+			name: "service values in list",
 			body: builderQueryBody("logs", "resource.service.name IN ('frontend', 'checkout')"),
 			expected: []coretypes.ResourceWithID{
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/checkout"},
-				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/service.name/frontend"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name/checkout"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/resource.service.name/frontend"},
+			},
+		},
+		{
+			name: "bare customer key does not scope",
+			body: builderQueryBody("logs", "service.name = 'checkout'"),
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
 			},
 		},
 		{

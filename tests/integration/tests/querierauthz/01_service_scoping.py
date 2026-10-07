@@ -50,6 +50,7 @@ def test_setup(
     [
         "signoz.workspace.key.id = 'key-a'",  # expression form, not the wire form
         "unknown_query_type/signoz.workspace.key.id/key-a",  # unsupported query type
+        "builder_query/service.name/frontend",  # customer keys must carry the resource prefix
         "builder_query/attribute.service.name/frontend",  # grant keys are resource attributes only
         "builder_query/host.name/frontend",  # host.name is not a supported grant key
         "*/signoz.workspace.key.id/key-a",  # non-prefix wildcard

@@ -33,9 +33,8 @@ export const DEFAULT_QUERY_TYPE: QueryTypeId = 'builder_query';
 // mirrors telemetryGrantKeys in pkg/types/telemetrytypes/selector.go
 export const SUPPORTED_GRANT_KEYS: readonly string[] = [
 	'signoz.workspace.key.id',
-	'service.name',
-	'deployment.environment',
-	'deployment.environment.name',
+	'resource.service.name',
+	'resource.deployment.environment.name',
 ];
 
 export const DEFAULT_GRANT_KEY = 'signoz.workspace.key.id';
