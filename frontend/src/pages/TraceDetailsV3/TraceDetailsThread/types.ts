@@ -40,13 +40,6 @@ export type ThreadSpan = SpanV3 & {
 	formatted_output?: ThreadMessage[];
 };
 
-/** Response of GET /api/v1/traces/{id}/thread. */
-export interface TraceThreadResponse {
-	spans: ThreadSpan[];
-	prevCursor?: string;
-	nextCursor?: string;
-}
-
 export enum ThreadView {
 	Formatted = 'formatted',
 	Json = 'json',

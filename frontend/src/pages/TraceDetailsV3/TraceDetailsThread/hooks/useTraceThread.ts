@@ -1,16 +1,18 @@
 import { useMemo } from 'react';
 import { useInfiniteQuery } from 'react-query';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import {
+	getGetTraceThreadQueryKey,
+	getTraceThread,
+} from 'api/generated/services/tracedetail';
+import type { GetTraceThreadParams } from 'api/generated/services/sigNoz.schemas';
 
-import { getTraceThread } from '../getTraceThread';
-import { ThreadSpan, TraceThreadResponse } from '../types';
+import { ThreadSpan } from '../types';
+import { isNotFoundError, toThreadSpan } from '../utils';
 
 const THREAD_PAGE_LIMIT = 100;
+const MAX_RETRIES = 3;
 
-interface PageParam {
-	after?: string;
-	before?: string;
-}
+type PageParam = Pick<GetTraceThreadParams, 'after' | 'before'>;
 
 interface UseTraceThreadResult {
 	spans: ThreadSpan[];
@@ -28,29 +30,41 @@ export function useTraceThread(
 	traceId: string,
 	anchorSpanId?: string,
 ): UseTraceThreadResult {
-	const query = useInfiniteQuery<TraceThreadResponse>({
-		queryKey: [REACT_QUERY_KEY.GET_TRACE_THREAD, traceId, anchorSpanId],
-		queryFn: ({ pageParam }) => {
+	const query = useInfiniteQuery({
+		queryKey: getGetTraceThreadQueryKey(
+			{ traceID: traceId },
+			{ spanId: anchorSpanId },
+		),
+		queryFn: ({ pageParam, signal }) => {
 			const { after, before } = (pageParam ?? {}) as PageParam;
-			return getTraceThread({
-				traceId,
-				limit: THREAD_PAGE_LIMIT,
-				after,
-				before,
-				// The anchor only shapes the first page; cursors drive the rest.
-				spanId: after || before ? undefined : anchorSpanId,
-			});
+			return getTraceThread(
+				{ traceID: traceId },
+				{
+					limit: THREAD_PAGE_LIMIT,
+					after,
+					before,
+					// The anchor only shapes the first page; cursors drive the rest.
+					spanId: after || before ? undefined : anchorSpanId,
+				},
+				signal,
+			);
 		},
 		getNextPageParam: (lastPage): PageParam | undefined =>
-			lastPage.nextCursor ? { after: lastPage.nextCursor } : undefined,
+			lastPage.data.nextCursor ? { after: lastPage.data.nextCursor } : undefined,
 		getPreviousPageParam: (firstPage): PageParam | undefined =>
-			firstPage.prevCursor ? { before: firstPage.prevCursor } : undefined,
+			firstPage.data.prevCursor
+				? { before: firstPage.data.prevCursor }
+				: undefined,
+		// An unknown anchor span is a 404; retrying won't find it.
+		retry: (failureCount, error): boolean =>
+			!isNotFoundError(error) && failureCount < MAX_RETRIES,
 		enabled: !!traceId,
 		refetchOnWindowFocus: false,
 	});
 
 	const spans = useMemo(
-		() => query.data?.pages.flatMap((page) => page.spans) ?? [],
+		() =>
+			query.data?.pages.flatMap((page) => page.data.spans.map(toThreadSpan)) ?? [],
 		[query.data],
 	);
 
