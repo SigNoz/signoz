@@ -9,7 +9,6 @@ import {
 	TriangleAlert,
 } from '@signozhq/icons';
 import getLocalStorageKey from 'api/browser/localstorage/get';
-import setLocalStorageKey from 'api/browser/localstorage/set';
 import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -21,6 +20,7 @@ import { ResizableBox } from 'periscope/components/ResizableBox';
 import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
+import { useSpanDetailVariant } from '../hooks/useSpanDetailVariant';
 import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import NoData from '../NoData/NoData';
 import {
@@ -301,27 +301,11 @@ function TraceDetailsOverview({
 		);
 	};
 
-	const [spanDetailVariant, setSpanDetailVariant] = useState<SpanDetailVariant>(
-		() =>
-			(getLocalStorageKey(
-				LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION,
-			) as SpanDetailVariant) || SpanDetailVariant.DOCKED_RIGHT,
-	);
+	const [spanDetailVariant, handleVariantChange] = useSpanDetailVariant();
 
 	const RIGHT_DOCK_MIN = 480;
 	const RIGHT_DOCK_MAX = 720;
 	const [rightDockWidth, setRightDockWidth] = useState(RIGHT_DOCK_MIN);
-
-	const handleVariantChange = useCallback(
-		(newVariant: SpanDetailVariant): void => {
-			setLocalStorageKey(
-				LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION,
-				newVariant,
-			);
-			setSpanDetailVariant(newVariant);
-		},
-		[],
-	);
 
 	const showNoData =
 		!isFetchingTraceData &&
