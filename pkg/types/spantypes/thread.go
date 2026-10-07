@@ -62,19 +62,19 @@ type GettableTraceThread struct {
 
 // ThreadSpan carries the fields the span details pane reads; snake_case keys match WaterfallSpan.
 type ThreadSpan struct {
-	SpanID           string            `json:"span_id"`
-	TraceID          string            `json:"trace_id"`
-	ParentSpanID     string            `json:"parent_span_id"`
-	Name             string            `json:"name"`
-	KindString       string            `json:"kind_string"`
-	TimeUnix         uint64            `json:"time_unix"`
-	DurationNano     uint64            `json:"duration_nano"`
-	HasError         bool              `json:"has_error"`
-	StatusCodeString string            `json:"status_code_string"`
-	StatusMessage    string            `json:"status_message"`
-	Resource         map[string]string `json:"resource"`
-	Attributes       map[string]any    `json:"attributes"`
-	Events           []Event           `json:"events"`
+	SpanID           string            `json:"span_id" required:"true"`
+	TraceID          string            `json:"trace_id" required:"true"`
+	ParentSpanID     string            `json:"parent_span_id" required:"true"`
+	Name             string            `json:"name" required:"true"`
+	KindString       string            `json:"kind_string" required:"true"`
+	TimeUnix         uint64            `json:"time_unix" required:"true"`
+	DurationNano     uint64            `json:"duration_nano" required:"true"`
+	HasError         bool              `json:"has_error" required:"true"`
+	StatusCodeString string            `json:"status_code_string" required:"true"`
+	StatusMessage    string            `json:"status_message" required:"true"`
+	Resource         map[string]string `json:"resource" required:"true" nullable:"false"`
+	Attributes       map[string]any    `json:"attributes" required:"true" nullable:"false"`
+	Events           []Event           `json:"events" required:"true" nullable:"false"`
 	References       []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
 
 	timeUnixNano uint64

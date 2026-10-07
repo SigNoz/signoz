@@ -146,24 +146,28 @@ func TestGetSpanDurationByField(t *testing.T) {
 }
 
 func TestGetThreadSpans(t *testing.T) {
-	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, attributes_string, attributes_number, attributes_bool, attributes, events, links as references FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND "
+	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, attributes_string, attributes_number, attributes_bool, events, links as references"
+	fromSQL := " FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND "
 	orderSQL := " ORDER BY timestamp ASC, span_id ASC LIMIT ?"
 
 	testCases := []struct {
 		name        string
 		jsonOn      bool
 		jsonRelease time.Time
+		selectSQL   string
 		whereSQL    string
 	}{
 		{
-			name:        "FlagOff_FiltersLegacyMaps",
+			name:        "FlagOff_ReadsAndFiltersLegacyMaps",
 			jsonRelease: testStart,
+			selectSQL:   selectSQL,
 			whereSQL:    "(mapContains(attributes_string, 'gen_ai.input.messages') OR mapContains(attributes_string, 'gen_ai.output.messages'))",
 		},
 		{
-			name:        "FlagOn_ReleasedDuringTrace_FiltersJSONThenMaps",
+			name:        "FlagOn_ReleasedDuringTrace_ReadsJSONFiltersJSONThenMaps",
 			jsonOn:      true,
 			jsonRelease: testStart.Add(500 * time.Second),
+			selectSQL:   selectSQL + ", attributes",
 			whereSQL:    "(multiIf(attributes.`gen_ai.input.messages` IS NOT NULL, attributes.`gen_ai.input.messages`::String, mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.output.messages` IS NOT NULL, attributes.`gen_ai.output.messages`::String, mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL) IS NOT NULL)",
 		},
 	}
@@ -184,7 +188,7 @@ func TestGetThreadSpans(t *testing.T) {
 			ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
 			s := spantypestest.New(impltracedetail.NewTraceStore(ts, metadataStore, fl), ts.Mock())
 
-			s.Mock().ExpectSelect(regexp.QuoteMeta(selectSQL + testCase.whereSQL + orderSQL)).
+			s.Mock().ExpectSelect(regexp.QuoteMeta(testCase.selectSQL + fromSQL + testCase.whereSQL + orderSQL)).
 				WillReturnRows(cmock.NewRows(nil, nil))
 			_, _ = s.Store().GetThreadSpans(context.Background(), valuer.GenerateUUID(), testTraceID, testSummary, spantypes.ThreadPage{Limit: 3})
 			assert.NoError(t, s.Mock().ExpectationsWereMet())

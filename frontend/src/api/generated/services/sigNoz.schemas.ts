@@ -11350,81 +11350,69 @@ export interface SpantypesOtelSpanRefDTO {
 	traceId?: string;
 }
 
-export type SpantypesThreadSpanDTOAttributesAnyOf = { [key: string]: unknown };
+export type SpantypesThreadSpanDTOAttributes = { [key: string]: unknown };
 
-/**
- * @nullable
- */
-export type SpantypesThreadSpanDTOAttributes =
-	SpantypesThreadSpanDTOAttributesAnyOf | null;
-
-export type SpantypesThreadSpanDTOResourceAnyOf = { [key: string]: string };
-
-/**
- * @nullable
- */
-export type SpantypesThreadSpanDTOResource =
-	SpantypesThreadSpanDTOResourceAnyOf | null;
+export type SpantypesThreadSpanDTOResource = { [key: string]: string };
 
 export interface SpantypesThreadSpanDTO {
 	/**
-	 * @type object,null
+	 * @type object
 	 */
-	attributes?: SpantypesThreadSpanDTOAttributes;
+	attributes: SpantypesThreadSpanDTOAttributes;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	duration_nano?: number;
+	duration_nano: number;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	events?: SpantypesEventDTO[] | null;
+	events: SpantypesEventDTO[];
 	/**
 	 * @type boolean
 	 */
-	has_error?: boolean;
+	has_error: boolean;
 	/**
 	 * @type string
 	 */
-	kind_string?: string;
+	kind_string: string;
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
-	parent_span_id?: string;
+	parent_span_id: string;
 	/**
 	 * @type array
 	 */
 	references: SpantypesOtelSpanRefDTO[];
 	/**
-	 * @type object,null
+	 * @type object
 	 */
-	resource?: SpantypesThreadSpanDTOResource;
+	resource: SpantypesThreadSpanDTOResource;
 	/**
 	 * @type string
 	 */
-	span_id?: string;
+	span_id: string;
 	/**
 	 * @type string
 	 */
-	status_code_string?: string;
+	status_code_string: string;
 	/**
 	 * @type string
 	 */
-	status_message?: string;
+	status_message: string;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	time_unix?: number;
+	time_unix: number;
 	/**
 	 * @type string
 	 */
-	trace_id?: string;
+	trace_id: string;
 }
 
 export interface SpantypesGettableTraceThreadDTO {

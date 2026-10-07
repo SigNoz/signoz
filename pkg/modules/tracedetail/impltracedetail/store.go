@@ -164,15 +164,19 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 }
 
 func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, traceID string, summary *spantypes.TraceSummary, page spantypes.ThreadPage) ([]spantypes.StorableSpan, error) {
+	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(summary.Start.UnixNano()), uint64(summary.End.UnixNano()))
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "parent_span_id", "has_error", "name", "kind_string",
 		"status_code_string", "status_message", "resources_string",
-		"attributes_string", "attributes_number", "attributes_bool", "attributes",
+		"attributes_string", "attributes_number", "attributes_bool",
 		"events", "links as references",
 	)
+	if q.TraceAttrsJSONOn {
+		sb.SelectMore("attributes")
+	}
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
-	hasMessages, err := s.messagesExistCondition(ctx, orgID, summary, sb)
+	hasMessages, err := s.messagesExistCondition(ctx, q, orgID, summary, sb)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +223,7 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, trac
 
 // messagesExistCondition resolves the gen_ai message keys through the attribute evolution metadata
 // and the use_trace_attributes_json flag, so the filter reads the same columns the query builder does.
-func (s *traceStore) messagesExistCondition(ctx context.Context, orgID valuer.UUID, summary *spantypes.TraceSummary, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (s *traceStore) messagesExistCondition(ctx context.Context, q qbtypes.QueryInfo, orgID valuer.UUID, summary *spantypes.TraceSummary, sb *sqlbuilder.SelectBuilder) (string, error) {
 	names := []string{aiobservabilitytypes.GenAIInputMessages, aiobservabilitytypes.GenAIOutputMessages}
 	selectors := make([]*telemetrytypes.FieldKeySelector, len(names))
 	for i, name := range names {
@@ -237,7 +241,6 @@ func (s *traceStore) messagesExistCondition(ctx context.Context, orgID valuer.UU
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "error fetching thread field keys")
 	}
 
-	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(summary.Start.UnixNano()), uint64(summary.End.UnixNano()))
 	conds := make([]string, 0, len(names))
 	for _, name := range names {
 		key := &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute}

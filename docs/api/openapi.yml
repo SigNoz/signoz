@@ -10175,7 +10175,6 @@ components:
       properties:
         attributes:
           additionalProperties: {}
-          nullable: true
           type: object
         duration_nano:
           minimum: 0
@@ -10183,7 +10182,6 @@ components:
         events:
           items:
             $ref: '#/components/schemas/SpantypesEvent'
-          nullable: true
           type: array
         has_error:
           type: boolean
@@ -10200,7 +10198,6 @@ components:
         resource:
           additionalProperties:
             type: string
-          nullable: true
           type: object
         span_id:
           type: string
@@ -10214,6 +10211,19 @@ components:
         trace_id:
           type: string
       required:
+      - span_id
+      - trace_id
+      - parent_span_id
+      - name
+      - kind_string
+      - time_unix
+      - duration_nano
+      - has_error
+      - status_code_string
+      - status_message
+      - resource
+      - attributes
+      - events
       - references
       type: object
     SpantypesUpdatableSpanMapper:
