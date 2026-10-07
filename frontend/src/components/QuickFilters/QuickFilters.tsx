@@ -57,6 +57,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		showFilterCollapse = true,
 		showQueryName = true,
 		useFieldApis,
+		savedViewsHeader,
 	} = props;
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [params, setParams] = useApiMonitoringParams();
@@ -379,6 +380,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	return (
 		<div className="quick-filters-container">
 			<div className="quick-filters">
+				{savedViewsHeader}
 				{source !== QuickFiltersSource.INFRA_MONITORING && (
 					<section className="header">
 						{renderLeftActions()}
