@@ -282,6 +282,139 @@ def test_mute_leaves_maintenance_windows_alone(
         assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
+def test_delete_rule_cleans_up_mute(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    seed_alert_rules: Callable[[str, list[dict]], None],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    seed_alert_rules(SEED_CHANNEL_NAME, [MUTE_RULE])
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v3/rules"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    rule_id = response.json()["data"]["rules"][0]["id"]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/mute"),
+        json={"duration": "1h"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    # the rule-owned adhoc row must not block the delete and dies with the rule
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(DOWNTIME_URL),
+        params={"origin": "adhoc"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["data"] == []
+
+
+def test_delete_rule_blocked_by_window_keeps_mute(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    seed_alert_rules: Callable[[str, list[dict]], None],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    seed_alert_rules(SEED_CHANNEL_NAME, [MUTE_RULE])
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v3/rules"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    rule_id = response.json()["data"]["rules"][0]["id"]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/mute"),
+        json={"duration": "1h"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(DOWNTIME_URL),
+        json={
+            "name": "rule-delete-window",
+            "schedule": {"timezone": "UTC", "startTime": "2020-01-01T00:00:00Z", "endTime": "2030-01-01T00:00:00Z"},
+            "alertIds": [rule_id],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    window_id = response.json()["data"]["id"]
+
+    # same guard as above: never leave the window attached on a mid-test failure
+    try:
+        # the real window blocks the delete; the rollback must keep the adhoc mute too
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule_id}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.CONFLICT, response.text
+
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(DOWNTIME_URL),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK
+        origins = sorted(row["origin"] for row in response.json()["data"])
+        assert origins == ["adhoc", "maintenance"]
+    finally:
+        response = requests.put(
+            signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{window_id}"),
+            json={
+                "name": "rule-delete-window",
+                "schedule": {"timezone": "UTC", "startTime": "2020-01-01T00:00:00Z", "endTime": "2030-01-01T00:00:00Z"},
+                "alertIds": [],
+            },
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"{DOWNTIME_URL}/{window_id}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    # window gone, the delete now succeeds and takes the surviving mute with it
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(DOWNTIME_URL),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["data"] == []
+
+
 def test_mute_error_contract(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument

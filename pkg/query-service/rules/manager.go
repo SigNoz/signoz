@@ -489,41 +489,49 @@ func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 		return err
 	}
 
-	return m.ruleStore.DeleteRule(ctx, orgID, id, func(ctx context.Context) error {
-		cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
-		if err != nil {
+	// One tx: the rule-owned adhoc mute goes first so it never blocks the delete, and a
+	// delete blocked by a real maintenance window rolls the mute back instead of dropping it.
+	return m.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		if _, err := m.maintenanceStore.DeleteAdhocPlannedMaintenanceByRule(ctx, claims.OrgID, id); err != nil {
 			return err
 		}
 
-		err = cfg.DeleteRuleIDMatcher(id.StringValue())
-		if err != nil {
-			return err
-		}
+		return m.ruleStore.DeleteRule(ctx, orgID, id, func(ctx context.Context) error {
+			cfg, err := m.alertmanager.GetConfig(ctx, claims.OrgID)
+			if err != nil {
+				return err
+			}
 
-		err = m.alertmanager.SetConfig(ctx, cfg)
-		if err != nil {
-			return err
-		}
+			err = cfg.DeleteRuleIDMatcher(id.StringValue())
+			if err != nil {
+				return err
+			}
 
-		err = m.alertmanager.DeleteNotificationConfig(ctx, orgID, id.String())
-		if err != nil {
-			return err
-		}
+			err = m.alertmanager.SetConfig(ctx, cfg)
+			if err != nil {
+				return err
+			}
 
-		err = m.alertmanager.DeleteAllRoutePoliciesByRuleId(ctx, id.String())
-		if err != nil {
-			return err
-		}
+			err = m.alertmanager.DeleteNotificationConfig(ctx, orgID, id.String())
+			if err != nil {
+				return err
+			}
 
-		err = m.alertmanager.DeleteAllInhibitRulesByRuleId(ctx, orgID, id.String())
-		if err != nil {
-			return err
-		}
+			err = m.alertmanager.DeleteAllRoutePoliciesByRuleId(ctx, id.String())
+			if err != nil {
+				return err
+			}
 
-		taskName := prepareTaskName(id.StringValue())
-		m.deleteTask(taskName)
+			err = m.alertmanager.DeleteAllInhibitRulesByRuleId(ctx, orgID, id.String())
+			if err != nil {
+				return err
+			}
 
-		return nil
+			taskName := prepareTaskName(id.StringValue())
+			m.deleteTask(taskName)
+
+			return nil
+		})
 	})
 }
 
