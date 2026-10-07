@@ -31,12 +31,13 @@ type SpanMapperStore interface {
 
 // TraceStore defines the data access interface for trace detail queries.
 type TraceStore interface {
-	GetTraceSummary(ctx context.Context, traceID string) (*TraceSummary, error)
-	GetTraceSpans(ctx context.Context, traceID string, summary *TraceSummary) ([]StorableSpan, error)
+	GetTraceBounds(ctx context.Context, traceID string) (*TraceBounds, error)
+	GetTraceStats(ctx context.Context, orgID valuer.UUID, traceID string, bounds *TraceBounds) (*TraceStats, error)
+	GetTraceSpans(ctx context.Context, traceID string, bounds *TraceBounds) ([]StorableSpan, error)
 	GetMinimalSpans(ctx context.Context, traceID string, start, end time.Time) ([]MinimalSpan, error)
 	GetTraceSpansByIDs(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]StorableSpan, error)
 	GetFlamegraphSpans(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]StorableSpan, error)
 
-	GetSpanCountByField(ctx context.Context, traceID string, summary *TraceSummary, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error)
-	GetSpanDurationByField(ctx context.Context, traceID string, summary *TraceSummary, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error)
+	GetSpanCountByField(ctx context.Context, traceID string, bounds *TraceBounds, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error)
+	GetSpanDurationByField(ctx context.Context, traceID string, bounds *TraceBounds, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error)
 }
