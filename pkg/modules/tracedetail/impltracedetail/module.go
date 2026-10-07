@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.opentelemetry.io/otel/metric"
 )
 
@@ -173,7 +174,7 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpan
 	), nil
 }
 
-func (m *module) GetThread(ctx context.Context, traceID string, query *spantypes.ThreadQuery) (*spantypes.GettableTraceThread, error) {
+func (m *module) GetThread(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.ThreadQuery) (*spantypes.GettableTraceThread, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
 		return nil, err
@@ -188,19 +189,19 @@ func (m *module) GetThread(ctx context.Context, traceID string, query *spantypes
 		if err != nil {
 			return nil, err
 		}
-		before, err := m.store.GetThreadSpans(ctx, traceID, summary, spantypes.ThreadPage{Cursor: anchor, From: spantypes.ThreadBefore, Limit: page.Limit})
+		before, err := m.store.GetThreadSpans(ctx, orgID, traceID, summary, spantypes.ThreadPage{Cursor: anchor, From: spantypes.ThreadBefore, Limit: page.Limit})
 		if err != nil {
 			return nil, err
 		}
 		// ThreadAt keeps the anchor when it carries messages; otherwise the filter drops it.
-		after, err := m.store.GetThreadSpans(ctx, traceID, summary, spantypes.ThreadPage{Cursor: anchor, From: spantypes.ThreadAt, Limit: page.Limit})
+		after, err := m.store.GetThreadSpans(ctx, orgID, traceID, summary, spantypes.ThreadPage{Cursor: anchor, From: spantypes.ThreadAt, Limit: page.Limit})
 		if err != nil {
 			return nil, err
 		}
 		return spantypes.NewGettableTraceThread(traceID, query, before, after), nil
 	case query.Before != nil:
 		page.Cursor, page.From = query.Before, spantypes.ThreadBefore
-		before, err := m.store.GetThreadSpans(ctx, traceID, summary, page)
+		before, err := m.store.GetThreadSpans(ctx, orgID, traceID, summary, page)
 		if err != nil {
 			return nil, err
 		}
@@ -208,7 +209,7 @@ func (m *module) GetThread(ctx context.Context, traceID string, query *spantypes
 	default:
 		// nil for the first page.
 		page.Cursor = query.After
-		after, err := m.store.GetThreadSpans(ctx, traceID, summary, page)
+		after, err := m.store.GetThreadSpans(ctx, orgID, traceID, summary, page)
 		if err != nil {
 			return nil, err
 		}

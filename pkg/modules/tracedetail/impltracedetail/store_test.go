@@ -8,12 +8,16 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes/spantypestest"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,7 +43,7 @@ var (
 
 func newTestStore(matcher sqlmock.QueryMatcher) *spantypestest.TraceStoreTest {
 	ts := telemetrystoretest.New(telemetrystore.Config{}, matcher)
-	return spantypestest.New(impltracedetail.NewTraceStore(ts), ts.Mock())
+	return spantypestest.New(impltracedetail.NewTraceStore(ts, telemetrytypestest.NewMockMetadataStore(), nil), ts.Mock())
 }
 
 func TestGetTraceSummary(t *testing.T) {
@@ -136,6 +140,53 @@ func TestGetSpanDurationByField(t *testing.T) {
 					WillReturnRows(cmock.NewRows(nil, nil))
 			}
 			_, _ = s.Store().GetSpanDurationByField(context.Background(), testTraceID, testSummary, tc.field)
+			assert.NoError(t, s.Mock().ExpectationsWereMet())
+		})
+	}
+}
+
+func TestGetThreadSpans(t *testing.T) {
+	selectSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, name, kind_string, status_code_string, status_message, resources_string, attributes_string, attributes_number, attributes_bool, attributes, events, links as references FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND "
+	orderSQL := " ORDER BY timestamp ASC, span_id ASC LIMIT ?"
+
+	testCases := []struct {
+		name        string
+		jsonOn      bool
+		jsonRelease time.Time
+		whereSQL    string
+	}{
+		{
+			name:        "FlagOff_FiltersLegacyMaps",
+			jsonRelease: testStart,
+			whereSQL:    "(mapContains(attributes_string, 'gen_ai.input.messages') OR mapContains(attributes_string, 'gen_ai.output.messages'))",
+		},
+		{
+			name:        "FlagOn_ReleasedDuringTrace_FiltersJSONThenMaps",
+			jsonOn:      true,
+			jsonRelease: testStart.Add(500 * time.Second),
+			whereSQL:    "(multiIf(attributes.`gen_ai.input.messages` IS NOT NULL, attributes.`gen_ai.input.messages`::String, mapContains(attributes_string, 'gen_ai.input.messages'), attributes_string['gen_ai.input.messages'], NULL) IS NOT NULL OR multiIf(attributes.`gen_ai.output.messages` IS NOT NULL, attributes.`gen_ai.output.messages`::String, mapContains(attributes_string, 'gen_ai.output.messages'), attributes_string['gen_ai.output.messages'], NULL) IS NOT NULL)",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			metadataStore := telemetrytypestest.NewMockMetadataStore()
+			for _, name := range []string{"gen_ai.input.messages", "gen_ai.output.messages"} {
+				metadataStore.KeysMap[name] = []*telemetrytypes.TelemetryFieldKey{{
+					Name:          name,
+					Signal:        telemetrytypes.SignalTraces,
+					FieldContext:  telemetrytypes.FieldContextAttribute,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+					Evolutions:    []*telemetrytypes.EvolutionEntry{{Signal: telemetrytypes.SignalTraces, ColumnName: "attributes", FieldContext: telemetrytypes.FieldContextAttribute, FieldName: "__all__", ReleaseTime: testCase.jsonRelease}},
+				}}
+			}
+			fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureUseTraceAttributesJSON.String(): testCase.jsonOn})
+			ts := telemetrystoretest.New(telemetrystore.Config{}, sqlmock.QueryMatcherRegexp)
+			s := spantypestest.New(impltracedetail.NewTraceStore(ts, metadataStore, fl), ts.Mock())
+
+			s.Mock().ExpectSelect(regexp.QuoteMeta(selectSQL + testCase.whereSQL + orderSQL)).
+				WillReturnRows(cmock.NewRows(nil, nil))
+			_, _ = s.Store().GetThreadSpans(context.Background(), valuer.GenerateUUID(), testTraceID, testSummary, spantypes.ThreadPage{Limit: 3})
 			assert.NoError(t, s.Mock().ExpectationsWereMet())
 		})
 	}

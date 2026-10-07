@@ -11231,14 +11231,6 @@ export interface SpantypesThreadSpanDTO {
 	 */
 	attributes?: SpantypesThreadSpanDTOAttributes;
 	/**
-	 * @type string
-	 */
-	db_name?: string;
-	/**
-	 * @type string
-	 */
-	db_operation?: string;
-	/**
 	 * @type integer
 	 * @minimum 0
 	 */
@@ -11248,51 +11240,13 @@ export interface SpantypesThreadSpanDTO {
 	 */
 	events?: SpantypesEventDTO[] | null;
 	/**
-	 * @type string
-	 */
-	external_http_method?: string;
-	/**
-	 * @type string
-	 */
-	external_http_url?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	flags?: number;
-	/**
-	 * @type boolean
-	 */
-	has_children?: boolean;
-	/**
 	 * @type boolean
 	 */
 	has_error?: boolean;
 	/**
 	 * @type string
 	 */
-	http_host?: string;
-	/**
-	 * @type string
-	 */
-	http_method?: string;
-	/**
-	 * @type string
-	 */
-	http_url?: string;
-	/**
-	 * @type string
-	 */
-	is_remote?: string;
-	/**
-	 * @type string
-	 */
 	kind_string?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	level?: number;
 	/**
 	 * @type string
 	 */
@@ -11312,15 +11266,7 @@ export interface SpantypesThreadSpanDTO {
 	/**
 	 * @type string
 	 */
-	response_status_code?: string;
-	/**
-	 * @type string
-	 */
 	span_id?: string;
-	/**
-	 * @type integer
-	 */
-	status_code?: number;
 	/**
 	 * @type string
 	 */
@@ -11333,20 +11279,11 @@ export interface SpantypesThreadSpanDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	sub_tree_node_count?: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
 	time_unix?: number;
 	/**
 	 * @type string
 	 */
 	trace_id?: string;
-	/**
-	 * @type string
-	 */
-	trace_state?: string;
 }
 
 export interface SpantypesGettableTraceThreadDTO {
@@ -13043,22 +12980,22 @@ export type GetTraceThreadPathParameters = {
 export type GetTraceThreadParams = {
 	/**
 	 * @type integer
-	 * @description undefined
+	 * @description Page size, at most 100. 0 means 20.
 	 */
 	limit?: number;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description The nextCursor of a page; returns the spans after it. Set only one of after, before and spanId.
 	 */
 	after?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description The prevCursor of a page; returns the spans before it. Set only one of after, before and spanId.
 	 */
 	before?: string;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Returns the page around this span. Set only one of after, before and spanId.
 	 */
 	spanId?: string;
 };

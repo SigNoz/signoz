@@ -10,23 +10,18 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
-
-var fullSpanColumns = []string{
-	"duration_nano", "span_id", "has_error", "kind",
-	colServiceName, "name",
-	"attributes_string", "attributes_number", "attributes_bool", "resources_string",
-	"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
-	"flags", "is_remote", "trace_state", "status_code",
-	"db_name", "db_operation", "http_method", "http_url", "http_host",
-	"external_http_method", "external_http_url", "response_status_code", "links as references",
-}
 
 func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
 	switch fieldKey.FieldContext {
@@ -49,10 +44,13 @@ type spanDurationRow struct {
 
 type traceStore struct {
 	telemetryStore telemetrystore.TelemetryStore
+	metadataStore  telemetrytypes.MetadataStore
+	flagger        flagger.Flagger
+	tracesStorage  qbtypes.Storage
 }
 
-func NewTraceStore(ts telemetrystore.TelemetryStore) *traceStore {
-	return &traceStore{telemetryStore: ts}
+func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *traceStore {
+	return &traceStore{telemetryStore: ts, metadataStore: metadataStore, flagger: fl, tracesStorage: tracestelemetryschema.NewStorage()}
 }
 
 func (s *traceStore) GetTraceSummary(ctx context.Context, traceID string) (*spantypes.TraceSummary, error) {
@@ -134,8 +132,15 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 		return []spantypes.StorableSpan{}, nil
 	}
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("DISTINCT ON (span_id) timestamp")
-	sb.SelectMore(fullSpanColumns...)
+	sb.Select(
+		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "has_error", "kind",
+		colServiceName, "name",
+		"attributes_string", "attributes_number", "attributes_bool", "resources_string",
+		"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
+		"flags", "is_remote", "trace_state", "status_code",
+		"db_name", "db_operation", "http_method", "http_url", "http_host",
+		"external_http_method", "external_http_url", "response_status_code", "links as references",
+	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	ids := make([]any, len(spanIDs))
 	for i, id := range spanIDs {
@@ -158,22 +163,24 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 	return spans, nil
 }
 
-func (s *traceStore) GetThreadSpans(ctx context.Context, traceID string, summary *spantypes.TraceSummary, page spantypes.ThreadPage) ([]spantypes.StorableSpan, error) {
+func (s *traceStore) GetThreadSpans(ctx context.Context, orgID valuer.UUID, traceID string, summary *spantypes.TraceSummary, page spantypes.ThreadPage) ([]spantypes.StorableSpan, error) {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("DISTINCT ON (span_id) timestamp")
-	sb.SelectMore(fullSpanColumns...)
-	sb.SelectMore("attributes")
+	sb.Select(
+		"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "parent_span_id", "has_error", "name", "kind_string",
+		"status_code_string", "status_message", "resources_string",
+		"attributes_string", "attributes_number", "attributes_bool", "attributes",
+		"events", "links as references",
+	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	hasMessages, err := s.messagesExistCondition(ctx, orgID, summary, sb)
+	if err != nil {
+		return nil, err
+	}
 	sb.Where(
 		sb.E("trace_id", traceID),
 		sb.GE("ts_bucket_start", summary.Start.Unix()-1800),
 		sb.LE("ts_bucket_start", summary.End.Unix()),
-		// Reads only the JSON column; spans with messages only in the legacy maps are skipped.
-		// todo(nitya): pick the column from the attribute evolution metadata.
-		sb.Or(
-			sqlbuilder.Escape(fmt.Sprintf("attributes.%s IS NOT NULL", clickhousesql.Identifier(aiobservabilitytypes.GenAIInputMessages))),
-			sqlbuilder.Escape(fmt.Sprintf("attributes.%s IS NOT NULL", clickhousesql.Identifier(aiobservabilitytypes.GenAIOutputMessages))),
-		),
+		hasMessages,
 	)
 	if cursor := page.Cursor; cursor != nil {
 		// ClickHouse can't use an index for a tuple comparison, so the separate timestamp and
@@ -208,6 +215,39 @@ func (s *traceStore) GetThreadSpans(ctx context.Context, traceID string, summary
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying thread spans")
 	}
 	return spans, nil
+}
+
+// messagesExistCondition resolves the gen_ai message keys through the attribute evolution metadata
+// and the use_trace_attributes_json flag, so the filter reads the same columns the query builder does.
+func (s *traceStore) messagesExistCondition(ctx context.Context, orgID valuer.UUID, summary *spantypes.TraceSummary, sb *sqlbuilder.SelectBuilder) (string, error) {
+	names := []string{aiobservabilitytypes.GenAIInputMessages, aiobservabilitytypes.GenAIOutputMessages}
+	selectors := make([]*telemetrytypes.FieldKeySelector, len(names))
+	for i, name := range names {
+		selectors[i] = &telemetrytypes.FieldKeySelector{
+			StartUnixMilli:    summary.Start.UnixMilli(),
+			EndUnixMilli:      summary.End.UnixMilli(),
+			Signal:            telemetrytypes.SignalTraces,
+			FieldContext:      telemetrytypes.FieldContextAttribute,
+			Name:              name,
+			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
+		}
+	}
+	fieldKeys, _, err := s.metadataStore.GetKeysMulti(ctx, orgID, selectors)
+	if err != nil {
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "error fetching thread field keys")
+	}
+
+	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(summary.Start.UnixNano()), uint64(summary.End.UnixNano()))
+	conds := make([]string, 0, len(names))
+	for _, name := range names {
+		key := &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute}
+		keyConds, _, err := querybuilder.Conditions(ctx, q, s.tracesStorage, key, qbtypes.FilterOperatorExists, nil, fieldKeys, false, sb)
+		if err != nil {
+			return "", err
+		}
+		conds = append(conds, keyConds...)
+	}
+	return sb.Or(conds...), nil
 }
 
 func (s *traceStore) GetThreadCursor(ctx context.Context, traceID string, summary *spantypes.TraceSummary, spanID string) (*spantypes.ThreadCursor, error) {

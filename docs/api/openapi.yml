@@ -10026,10 +10026,6 @@ components:
           additionalProperties: {}
           nullable: true
           type: object
-        db_name:
-          type: string
-        db_operation:
-          type: string
         duration_nano:
           minimum: 0
           type: integer
@@ -10038,30 +10034,10 @@ components:
             $ref: '#/components/schemas/SpantypesEvent'
           nullable: true
           type: array
-        external_http_method:
-          type: string
-        external_http_url:
-          type: string
-        flags:
-          minimum: 0
-          type: integer
-        has_children:
-          type: boolean
         has_error:
           type: boolean
-        http_host:
-          type: string
-        http_method:
-          type: string
-        http_url:
-          type: string
-        is_remote:
-          type: string
         kind_string:
           type: string
-        level:
-          minimum: 0
-          type: integer
         name:
           type: string
         parent_span_id:
@@ -10075,25 +10051,16 @@ components:
             type: string
           nullable: true
           type: object
-        response_status_code:
-          type: string
         span_id:
           type: string
-        status_code:
-          type: integer
         status_code_string:
           type: string
         status_message:
           type: string
-        sub_tree_node_count:
-          minimum: 0
-          type: integer
         time_unix:
           minimum: 0
           type: integer
         trace_id:
-          type: string
-        trace_state:
           type: string
       required:
       - references
@@ -15830,21 +15797,35 @@ paths:
         to open the page around a span.
       operationId: GetTraceThread
       parameters:
-      - in: query
+      - description: Page size, at most 100. 0 means 20.
+        in: query
         name: limit
         schema:
+          description: Page size, at most 100. 0 means 20.
           type: integer
-      - in: query
+      - description: The nextCursor of a page; returns the spans after it. Set only
+          one of after, before and spanId.
+        in: query
         name: after
         schema:
+          description: The nextCursor of a page; returns the spans after it. Set only
+            one of after, before and spanId.
           type: string
-      - in: query
+      - description: The prevCursor of a page; returns the spans before it. Set only
+          one of after, before and spanId.
+        in: query
         name: before
         schema:
+          description: The prevCursor of a page; returns the spans before it. Set
+            only one of after, before and spanId.
           type: string
-      - in: query
+      - description: Returns the page around this span. Set only one of after, before
+          and spanId.
+        in: query
         name: spanId
         schema:
+          description: Returns the page around this span. Set only one of after, before
+            and spanId.
           type: string
       - in: path
         name: traceID

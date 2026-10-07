@@ -6,7 +6,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
@@ -77,7 +79,13 @@ func (h *handler) GetFlamegraph(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetThread(rw http.ResponseWriter, r *http.Request) {
-	req := new(spantypes.QueryableThread)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(spantypes.GetTraceThreadParams)
 	if err := binding.Query.BindQuery(r.URL.Query(), req); err != nil {
 		render.Error(rw, err)
 		return
@@ -89,7 +97,7 @@ func (h *handler) GetThread(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.module.GetThread(r.Context(), mux.Vars(r)["traceID"], query)
+	result, err := h.module.GetThread(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
 	if err != nil {
 		render.Error(rw, err)
 		return
