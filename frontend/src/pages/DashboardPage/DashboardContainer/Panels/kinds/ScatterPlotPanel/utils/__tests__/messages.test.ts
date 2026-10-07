@@ -6,6 +6,13 @@ import {
 	type StaleDimension,
 } from '../../types';
 
+const MISMATCH = [
+	{ queryName: 'A', labels: ['service.name'] },
+	{ queryName: 'B', labels: ['host.name'] },
+];
+const MISMATCH_NOTE =
+	"Queries are grouped by different labels (A by service.name · B by host.name), so their groups don't line up. Change any query's group by to apply it to all.";
+
 function ready(counts: {
 	totalGroups: number;
 	drawnGroups: number;
@@ -158,5 +165,25 @@ describe('getScatterPlotWarning', () => {
 				"Colour uses host.name, which isn't in the results, so it's left out of the colour.",
 			],
 		});
+	});
+
+	it("explains missing values by the queries' differing group bys", () => {
+		expect(
+			getScatterPlotWarning(
+				ready({ totalGroups: 6, drawnGroups: 4, missingValueGroups: 2 }),
+				MISMATCH,
+			)?.messages,
+		).toStrictEqual(['2 groups missing an X or Y value.', MISMATCH_NOTE]);
+	});
+});
+
+describe('getScatterPlotEmptyMessage with differing group bys', () => {
+	it('names the queries instead of the generic advice', () => {
+		expect(
+			getScatterPlotEmptyMessage(
+				ready({ totalGroups: 4, drawnGroups: 0, missingValueGroups: 4 }),
+				MISMATCH,
+			)?.description,
+		).toBe(MISMATCH_NOTE);
 	});
 });
