@@ -14,8 +14,10 @@ import { getValueColumnLabels } from '../../utils/getValueColumnLabels';
 
 import {
 	type PrepareScatterPlotDataArgs,
+	ScatterDimension,
 	type ScatterPlotData,
 	ScatterPlotDataStatus,
+	type StaleDimension,
 } from './types';
 
 /** Series label when the query has no group by to colour by. */
@@ -89,6 +91,25 @@ function resolveColorColumns(
 ): PanelTableColumn[] {
 	const selected = groupColumns.filter((column) => keys?.includes(column.id));
 	return selected.length > 0 ? selected : groupColumns;
+}
+
+function findStaleDimensions(
+	valueColumns: PanelTableColumn[],
+	groupColumns: PanelTableColumn[],
+	dimensions: PrepareScatterPlotDataArgs['dimensions'],
+): StaleDimension[] {
+	const valueKeys = [
+		{ dimension: ScatterDimension.X, key: dimensions?.x },
+		{ dimension: ScatterDimension.Y, key: dimensions?.y },
+		{ dimension: ScatterDimension.Size, key: dimensions?.size },
+	].filter(
+		(entry): entry is StaleDimension =>
+			!!entry.key && !findColumn(valueColumns, entry.key),
+	);
+	const colourKeys = (dimensions?.color ?? [])
+		.filter((key) => !findColumn(groupColumns, key))
+		.map((key) => ({ dimension: ScatterDimension.Colour, key }));
+	return [...valueKeys, ...colourKeys];
 }
 
 /**
@@ -190,5 +211,6 @@ export function prepareScatterPlotData({
 		missingValueGroups,
 		nonPositiveOnLogGroups,
 		cappedGroups,
+		staleDimensions: findStaleDimensions(valueColumns, groupColumns, dimensions),
 	};
 }

@@ -24,6 +24,19 @@ export enum ScatterPlotDataStatus {
 	NeedsSecondValue = 'needsSecondValue',
 }
 
+export enum ScatterDimension {
+	X = 'X',
+	Y = 'Y',
+	Size = 'Size',
+	Colour = 'Colour',
+}
+
+/** A dimension bound to a column key the result doesn't have. */
+export interface StaleDimension {
+	dimension: ScatterDimension;
+	key: string;
+}
+
 export type ScatterPlotData =
 	| {
 			status: ScatterPlotDataStatus.NeedsSecondValue;
@@ -48,4 +61,5 @@ export type ScatterPlotData =
 			nonPositiveOnLogGroups: number;
 			/** Plottable rows left out past `MAX_PLOTTED_GROUPS`. */
 			cappedGroups: number;
+			staleDimensions: StaleDimension[];
 	  };
