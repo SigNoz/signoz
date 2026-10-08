@@ -277,7 +277,7 @@ var (
 		PanelKindText:        {},
 		PanelKindHeatmap:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
 		PanelKindScatterPlot: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
-		PanelKindTopList:     {QueryKindBuilder, QueryKindComposite, QueryKindClickHouseSQL},
+		PanelKindTopList:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
 	}
 )
 
