@@ -16,6 +16,7 @@ var lockLogsPipelineSpec sync.RWMutex
 
 var (
 	CodeCollectorConfigUnmarshalFailed        = errors.MustNewCode("collector_config_unmarshal_failed")
+	CodeCollectorConfigEmpty                  = errors.MustNewCode("collector_config_empty")
 	CodeCollectorConfigMarshalFailed          = errors.MustNewCode("collector_config_marshal_failed")
 	CodeCollectorConfigServiceNotFound        = errors.MustNewCode("collector_config_service_not_found")
 	CodeCollectorConfigServiceMarshalFailed   = errors.MustNewCode("collector_config_service_marshal_failed")
@@ -140,6 +141,10 @@ func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetyp
 	err := yaml.Unmarshal([]byte(config), &collectorConf)
 	if err != nil {
 		return nil, errors.WrapInvalidInputf(err, CodeCollectorConfigUnmarshalFailed, "could not unmarshal collector config")
+	}
+	// An empty document unmarshals to a nil map, which would panic on the writes below.
+	if collectorConf == nil {
+		return nil, errors.NewInvalidInputf(CodeCollectorConfigEmpty, "collector config is empty")
 	}
 
 	signozPipelineProcessors, signozPipelineProcNames, err := PreparePipelineProcessor(pipelines)
