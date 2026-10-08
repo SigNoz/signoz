@@ -1,9 +1,6 @@
 package telemetrytypes
 
-import (
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
-)
+import "github.com/SigNoz/signoz/pkg/valuer"
 
 type Signal struct {
 	valuer.String
@@ -23,18 +20,6 @@ func (Signal) Enum() []any {
 		SignalLogs,
 		SignalMetrics,
 		SignalUnspecified,
-	}
-}
-
-// FieldResource is the authz resource guarding the signal's field configuration.
-func (signal Signal) FieldResource() (coretypes.Resource, bool) {
-	switch signal {
-	case SignalLogs:
-		return coretypes.ResourceMetaResourceLogsField, true
-	case SignalTraces:
-		return coretypes.ResourceMetaResourceTracesField, true
-	default:
-		return nil, false
 	}
 }
 
