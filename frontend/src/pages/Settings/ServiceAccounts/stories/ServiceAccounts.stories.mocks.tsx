@@ -26,6 +26,11 @@ import {
 } from './__story_mockdata__/serviceAccounts';
 
 import {
+	MUTATION_OUTCOMES,
+	type MutationOutcome,
+	mutationResolver,
+} from '../../stories/__story_mockdata__/mutationOutcome';
+import {
 	CUSTOM_ROLE_MAX,
 	rolesListResponse,
 } from '../../stories/__story_mockdata__/roles';
@@ -81,6 +86,34 @@ export const serviceAccountsMocks = defineStoryMocks({
 			options: SAVE_OUTCOMES,
 			value: 'succeeds',
 		}),
+		accountCreate: choiceControl<MutationOutcome>('Creating an account', {
+			group: LIST,
+			description:
+				'How the POST behind "Create Service Account" answers. `success` raises the created toast, `loading` leaves the button spinning, `error` opens the error modal.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
+		accountDelete: choiceControl<MutationOutcome>('Deleting an account', {
+			group: DRAWER,
+			description:
+				'How the DELETE behind the confirmation answers. `success` raises the deleted toast, `loading` leaves the button spinning, `error` opens the error modal.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
+		keyUpdate: choiceControl<MutationOutcome>('Updating a key', {
+			group: KEYS,
+			description:
+				'How the PUT behind the key dialog’s Save Changes answers. `success` raises the updated toast, `loading` leaves the button spinning, `error` opens the error modal.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
+		keyRevoke: choiceControl<MutationOutcome>('Revoking a key', {
+			group: KEYS,
+			description:
+				'How the DELETE behind a key’s revoke confirmation answers. `success` raises the revoked toast, `loading` leaves the button spinning, `error` opens the error modal.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
 	},
 	handlers: (values, response) => [
 		rest.get(
@@ -92,7 +125,7 @@ export const serviceAccountsMocks = defineStoryMocks({
 
 		rest.post(
 			'http://localhost/api/v1/service_accounts',
-			response.json(() => createdServiceAccountResponse()),
+			mutationResolver(values.accountCreate, createdServiceAccountResponse()),
 		),
 
 		rest.get(
@@ -109,12 +142,12 @@ export const serviceAccountsMocks = defineStoryMocks({
 
 		rest.put(
 			'http://localhost/api/v1/service_accounts/:id/keys/:fid',
-			response.json(() => ({ status: 'success', data: null })),
+			mutationResolver(values.keyUpdate),
 		),
 
 		rest.delete(
 			'http://localhost/api/v1/service_accounts/:id/keys/:fid',
-			response.json(() => ({ status: 'success', data: null })),
+			mutationResolver(values.keyRevoke),
 		),
 
 		rest.get(
@@ -136,7 +169,7 @@ export const serviceAccountsMocks = defineStoryMocks({
 
 		rest.delete(
 			'http://localhost/api/v1/service_accounts/:id',
-			response.json(() => ({ status: 'success', data: null })),
+			mutationResolver(values.accountDelete),
 		),
 
 		rest.post(

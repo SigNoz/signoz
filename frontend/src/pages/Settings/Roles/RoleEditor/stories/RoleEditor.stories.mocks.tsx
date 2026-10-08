@@ -12,6 +12,11 @@ import { choiceControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
 import {
+	MUTATION_OUTCOMES,
+	type MutationOutcome,
+	mutationResolver,
+} from '../../../stories/__story_mockdata__/mutationOutcome';
+import {
 	CUSTOM_ROLE_ID,
 	PERMISSION_BREADTHS,
 	type PermissionBreadth,
@@ -64,6 +69,13 @@ export const roleEditorMocks = defineStoryMocks({
 			options: PERMISSION_BREADTHS,
 			value: 'broad',
 		}),
+		roleSave: choiceControl<MutationOutcome>('Saving the role', {
+			group: EDITOR,
+			description:
+				'How the request behind the save button answers. `success` raises the created or updated toast, `loading` leaves the button spinning, `error` shows the failure above the form.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
 	},
 	handlers: (values, response) => [
 		rest.get(
@@ -75,12 +87,15 @@ export const roleEditorMocks = defineStoryMocks({
 
 		rest.post(
 			'http://localhost/api/v1/roles',
-			response.json(() => ({ status: 'success', data: { id: CUSTOM_ROLE_ID } })),
+			mutationResolver(values.roleSave, {
+				status: 'success',
+				data: { id: CUSTOM_ROLE_ID },
+			}),
 		),
 
 		rest.put(
 			'http://localhost/api/v1/roles/:id',
-			response.json(() => ({ status: 'success', data: null })),
+			mutationResolver(values.roleSave),
 		),
 	],
 	config: (values) => ({ route: routeFor(values.mode, values.editor) }),

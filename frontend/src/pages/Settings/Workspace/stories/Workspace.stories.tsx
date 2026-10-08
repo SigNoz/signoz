@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -70,5 +70,47 @@ export const CustomDomainMenu: Story = {
 			),
 		);
 		await screen.findByRole('menu');
+	},
+};
+
+/**
+ * "Edit workspace link" applied: the toast announcing the new URL, raised once
+ * the PUT answers. Set Domain update to `error` or `loading` to see the modal
+ * instead.
+ */
+export const CustomDomainUpdatedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: /edit workspace link/i },
+				{ timeout: 10000 },
+			),
+		);
+		const input = await screen.findByRole('textbox');
+		await userEvent.clear(input);
+		await userEvent.type(input, 'watchers');
+		await userEvent.click(
+			await screen.findByRole('button', { name: /apply changes/i }),
+		);
+		if (args.domainUpdate === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/workspace url is being updated/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** The license key copied: the toast confirming it. */
+export const LicenseKeyCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByTestId(
+				'license-key-row-copy-btn',
+				{},
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByText(/license key copied to clipboard/i);
 	},
 };
