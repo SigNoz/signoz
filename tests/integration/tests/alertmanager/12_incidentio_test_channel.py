@@ -115,3 +115,31 @@ def test_incidentio_test_channel(  # pylint: disable=too-many-arguments,too-many
         assert re.search(r"\[FIRING:1\] Test Alert \(", event["title"]), f"unexpected title: {event['title']}"
         assert event["status"] == "firing"
         assert event["deduplication_key"], "expected a non-empty deduplication_key"
+
+
+def test_incidentio_test_channel_rejects_bearer_prefix(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    create_user_admin: None,  # pylint: disable=unused-argument
+    notification_channel: types.TestContainerDocker,
+) -> None:
+    path = incidentio_path("inc-tc-bearer")
+    receiver = update_raw_channel_config(incidentio_config("inc-tc-bearer"), str(uuid.uuid4()), notification_channel)
+    receiver["incidentio_configs"][0]["token"] = f"Bearer {INCIDENTIO_TEST_TOKEN}"
+
+    # rejected while parsing the receiver, before the org's alertmanager is looked up
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/channels/test"),
+        json=receiver,
+        headers={"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"},
+        timeout=30,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"expected 400, got {response.status_code}: {response.text}"
+    assert "without the Bearer prefix" in response.text, response.text
+
+    count = requests.post(
+        notification_channel.host_configs["8080"].get("/__admin/requests/count"),
+        json={"method": "POST", "urlPath": path},
+        timeout=10,
+    )
+    assert count.json()["count"] == 0, f"expected no delivery attempt, got {count.text}"
