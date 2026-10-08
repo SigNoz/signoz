@@ -61,11 +61,11 @@ function AllErrors(): JSX.Element {
 			className="all-errors-page"
 			contentClassName="all-errors-right-section"
 			showFilters={showFilters}
+			onToggleFilters={handleFilterVisibilityChange}
 			quickFilterProps={{
 				className: 'qf-exceptions',
 				source: QuickFiltersSource.EXCEPTIONS,
 				signal: SignalType.EXCEPTIONS,
-				handleFilterVisibilityChange,
 				useFieldApis: quickFilterFieldApis,
 			}}
 		>

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
 	ArrowUpToLine,
-	Filter,
 	Frown,
 	RefreshCw,
 	Settings2 as SettingsIcon,
@@ -14,8 +13,9 @@ import {
 	ComboboxList,
 	ComboboxTrigger,
 } from '@signozhq/ui/combobox';
-import { Skeleton, Tooltip } from 'antd';
+import { Skeleton } from 'antd';
 import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -180,7 +180,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	// Helpers to reduce cognitive complexity in main render
 	const renderLeftActions = (): JSX.Element => (
 		<section className="left-actions">
-			<Filter size="md" />
 			<Typography.Text className="text">
 				{displayedQueryName ? 'Filters for' : 'Filters'}
 			</Typography.Text>
@@ -217,13 +216,13 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				</Combobox>
 			) : (
 				displayedQueryName && (
-					<Tooltip
+					<TooltipSimple
 						title={`Filter currently in sync with query ${displayedQueryName}`}
 					>
 						<Typography.Text className="sync-tag">
 							{displayedQueryName}
 						</Typography.Text>
-					</Tooltip>
+					</TooltipSimple>
 				)
 			)}
 		</section>
@@ -231,51 +230,54 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	const renderRightActions = (): JSX.Element => (
 		<section className="right-actions">
-			<Tooltip title="Reset All">
+			<TooltipSimple title="Reset All">
 				<Button
-					variant="link"
+					variant="ghost"
 					color="secondary"
+					size="icon"
 					aria-label="Reset All"
-					className="right-action-icon-container"
 					onClick={handleReset}
-					prefix={<RefreshCw className="sync-icon" size="md" />}
+					prefix={<RefreshCw size={14} />}
 				/>
-			</Tooltip>
-			{showFilterCollapse && (
-				<Tooltip title="Collapse Filters">
+			</TooltipSimple>
+			{showFilterCollapse && handleFilterVisibilityChange && (
+				<TooltipSimple title="Collapse Filters">
 					<Button
-						variant="link"
+						variant="ghost"
 						color="secondary"
+						size="icon"
 						aria-label="Collapse Filters"
-						className="right-action-icon-container"
 						onClick={handleFilterVisibilityChange}
-						prefix={<ArrowUpToLine style={{ rotate: '270deg' }} size="md" />}
+						prefix={<ArrowUpToLine style={{ rotate: '270deg' }} size={14} />}
 					/>
-				</Tooltip>
+				</TooltipSimple>
 			)}
-			{isDynamicFilters && (
-				<AuthZButton
-					checks={QuickFilterManagePermissions}
-					variant="link"
-					color="secondary"
-					aria-label="Settings"
-					className={classNames('right-action-icon-container', {
-						active: isSettingsOpen,
-					})}
-					onClick={(): void => setIsSettingsOpen(true)}
-					testId="settings-icon-container"
-					prefix={
-						<Tooltip title="Settings" open={isSettingsDisabled ? false : undefined}>
-							<SettingsIcon
-								className="settings-icon"
-								data-testid="settings-icon"
-								width={14}
-								height={14}
-							/>
-						</Tooltip>
-					}
-				/>
-			)}
+			{isDynamicFilters &&
+				(isSettingsDisabled ? (
+					<AuthZButton
+						checks={QuickFilterManagePermissions}
+						variant="ghost"
+						color="secondary"
+						size="icon"
+						aria-label="Settings"
+						onClick={(): void => setIsSettingsOpen(true)}
+						testId="settings-icon-container"
+						prefix={<SettingsIcon data-testid="settings-icon" size={14} />}
+					/>
+				) : (
+					<TooltipSimple title="Settings">
+						<Button
+							variant="ghost"
+							color="secondary"
+							size="icon"
+							aria-label="Settings"
+							className={classNames({ active: isSettingsOpen })}
+							onClick={(): void => setIsSettingsOpen(true)}
+							data-testid="settings-icon-container"
+							prefix={<SettingsIcon data-testid="settings-icon" size={14} />}
+						/>
+					</TooltipSimple>
+				))}
 		</section>
 	);
 

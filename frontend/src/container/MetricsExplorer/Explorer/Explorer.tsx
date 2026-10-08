@@ -3,7 +3,10 @@ import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import { Tooltip } from 'antd';
+import { Filter } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Switch } from '@signozhq/ui/switch';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -25,6 +28,7 @@ import {
 } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import {
@@ -64,10 +68,12 @@ function Explorer(): JSX.Element {
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const isSavedViewEnabled = useSavedViewEnabled();
 	const getExportToDashboardLink = useGetExportToDashboardLink();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
+	const [showSidebar, setShowSidebar] = useState(true);
 
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
@@ -350,12 +356,26 @@ function Explorer(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<QuickFiltersLayout
-				showFilters
+				showFilters={showSidebar}
+				onToggleFilters={(): void => setShowSidebar(!showSidebar)}
 				savedViewProps={{ source: SavedviewtypesSourceDTO.metrics }}
 			>
 				<div className="metrics-explorer-explore-container">
 					<div className="explore-header">
 						<div className="explore-header-left-actions">
+							{!showSidebar && (
+								<TooltipSimple title="Show Views">
+									<Button
+										variant="outlined"
+										color="secondary"
+										size="icon"
+										aria-label="Show Views"
+										prefix={<Filter size={16} />}
+										onClick={(): void => setShowSidebar(true)}
+										data-testid="metrics-explorer-show-sidebar"
+									/>
+								</TooltipSimple>
+							)}
 							<span>1 chart/query</span>
 							<Tooltip
 								open={disableOneChartPerQuery ? undefined : false}
@@ -405,15 +425,17 @@ function Explorer(): JSX.Element {
 					</div>
 				</div>
 			</QuickFiltersLayout>
-			<ExplorerOptionWrapper
-				disabled={!stagedQuery}
-				query={exportDefaultQuery}
-				sourcepage={DataSource.METRICS}
-				onExport={handleExport}
-				isOneChartPerQuery={showOneChartPerQuery}
-				splitedQueries={splitedQueries}
-				handleChangeSelectedView={handleChangeSelectedView}
-			/>
+			{!isSavedViewEnabled && (
+				<ExplorerOptionWrapper
+					disabled={!stagedQuery}
+					query={exportDefaultQuery}
+					sourcepage={DataSource.METRICS}
+					onExport={handleExport}
+					isOneChartPerQuery={showOneChartPerQuery}
+					splitedQueries={splitedQueries}
+					handleChangeSelectedView={handleChangeSelectedView}
+				/>
+			)}
 			{isMetricDetailsOpen && selectedMetricName && (
 				<MetricDetails
 					metricName={selectedMetricName}

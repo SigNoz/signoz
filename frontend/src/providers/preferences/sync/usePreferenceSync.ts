@@ -1,14 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useEffect, useState } from 'react';
-import { useListSavedViews } from 'api/generated/services/saved-view';
+import { useGetSavedView } from 'api/generated/services/saved-view';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import {
-	defaultLogsSelectedColumns,
-	defaultTraceSelectedColumns,
-	ensureLogsRequiredColumns,
-} from 'container/OptionsMenu/constants';
-import { FontSize, LogViewMode } from 'container/OptionsMenu/types';
-import { findSavedView, toSavedViewSource } from 'container/SavedViews/utils';
+import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
@@ -30,52 +24,22 @@ export function usePreferenceSync({
 	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
-	const { data: viewsData } = useListSavedViews(
-		{ source: toSavedViewSource(dataSource) },
-		{ query: { enabled: mode === PreferenceMode.SAVED_VIEW } },
+	const isSavedViewMode = mode === PreferenceMode.SAVED_VIEW && !!savedViewId;
+	const { data: viewData, dataUpdatedAt } = useGetSavedView(
+		{ id: savedViewId ?? '' },
+		{ query: { enabled: isSavedViewMode } },
 	);
 
 	const [savedViewPreferences, setSavedViewPreferences] =
 		useState<Preferences | null>(null);
 
-	const withColumnNames = (
-		columns: TelemetryFieldKey[] | undefined,
-	): TelemetryFieldKey[] | null => {
-		if (!columns) {
-			return null;
-		}
-		return columns.map((column) => ({
-			...column,
-			name: column.name ?? column.key,
-		}));
-	};
-
+	// dataUpdatedAt re-runs this on a refetch that returns the same view, so
+	// discarding restores columns edited in memory.
 	useEffect(() => {
-		const spec = savedViewId
-			? findSavedView(viewsData?.data, savedViewId)?.spec
-			: undefined;
-		const selectedFields = spec?.selectedFields as
-			| TelemetryFieldKey[]
-			| undefined;
-
-		let columns: TelemetryFieldKey[] = [];
-		let formatting: FormattingOptions | undefined;
-		if (dataSource === DataSource.LOGS) {
-			columns = ensureLogsRequiredColumns(
-				withColumnNames(selectedFields) || defaultLogsSelectedColumns,
-			);
-			formatting = {
-				maxLines: spec?.display?.maxLines || 1,
-				format: (spec?.display?.format as LogViewMode) || 'table',
-				fontSize: (spec?.display?.fontSize as FontSize) || FontSize.SMALL,
-				version: 1,
-			};
-		}
-		if (dataSource === DataSource.TRACES) {
-			columns = selectedFields || defaultTraceSelectedColumns;
-		}
-		setSavedViewPreferences({ columns, formatting });
-	}, [viewsData, dataSource, savedViewId, mode]);
+		const view = viewData?.data;
+		const spec = view && view.id === savedViewId ? view.spec : undefined;
+		setSavedViewPreferences(getViewColumnsAndFormatting(spec, dataSource));
+	}, [viewData, dataUpdatedAt, dataSource, savedViewId, mode]);
 
 	// We are using a reSync state because we have URL updates as well as local storage updates
 	// and we want to make sure we are always using the latest preferences
