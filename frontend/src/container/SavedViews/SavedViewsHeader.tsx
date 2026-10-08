@@ -8,7 +8,6 @@ import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { MY_VIEW_NAME, SAVED_VIEW_TOAST_POSITION } from './constants';
 import { useActiveSavedView } from './hooks/useActiveSavedView';
-import { useRestoreLastUsedView } from './hooks/useRestoreLastUsedView';
 import { useSavedViewActions } from './hooks/useSavedViewActions';
 import SaveChangesMenu from './SaveChangesMenu';
 import SavedViewsIconButton from './SavedViewsIconButton';
@@ -26,9 +25,8 @@ function SavedViewsHeader({
 	onOpenViews?: () => void;
 }): JSX.Element {
 	const { view, isLoading, hasUnsavedChanges } = useActiveSavedView(source);
-	const { selectView, revertView, clearView, createView, updateView, isSaving } =
+	const { revertView, clearView, createView, updateView, isSaving } =
 		useSavedViewActions(source);
-	useRestoreLastUsedView({ source, selectView });
 
 	const [modalMode, setModalMode] = useState<SaveViewModalMode | null>(null);
 

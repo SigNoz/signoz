@@ -11,6 +11,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { useActiveSavedView } from '../hooks/useActiveSavedView';
 import SavedViewsHeader from '../SavedViewsHeader';
+import SavedViewsRestore from '../SavedViewsRestore';
 import {
 	explorerUrl,
 	makeView,
@@ -37,6 +38,7 @@ function renderHeader(
 ): ReturnType<typeof renderWithExplorerProviders> {
 	return renderWithExplorerProviders(
 		<>
+			<SavedViewsRestore source={SavedviewtypesSourceDTO.traces} />
 			<SavedViewsHeader
 				source={SavedviewtypesSourceDTO.traces}
 				onOpenViews={onOpenViews}

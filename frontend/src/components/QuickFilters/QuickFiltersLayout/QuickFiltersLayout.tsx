@@ -3,6 +3,7 @@ import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import SavedViewsHeader from 'container/SavedViews/SavedViewsHeader';
 import SavedViewsPanel from 'container/SavedViews/SavedViewsPanel';
+import SavedViewsRestore from 'container/SavedViews/SavedViewsRestore';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 
 import QuickFilters from '../QuickFilters';
@@ -64,6 +65,7 @@ function QuickFiltersLayout({
 
 	return (
 		<div className={cx(styles.layout, className)} data-testid={testId}>
+			{hasSavedViews && <SavedViewsRestore source={savedViewProps.source} />}
 			{showSidebar && (
 				<aside
 					className={cx(styles.sidebar, { [styles.isStatic]: !hasQuickFilters })}
