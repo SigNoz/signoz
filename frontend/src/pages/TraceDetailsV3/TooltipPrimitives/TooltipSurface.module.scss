@@ -1,9 +1,3 @@
-/* Figma `dark/shadow-dropdown` popover surface, shared by every trace-details
-   tooltip so they look the same. */
-
-/* Plain CSS only (no SCSS syntax): other modules `composes` from this file. */
-
-/* For plain elements, e.g. the flamegraph's cursor-following portal. */
 .surface {
 	background-color: color-mix(in srgb, var(--l3-background) 60%, transparent);
 	border: 1px solid var(--l2-border);
@@ -13,8 +7,6 @@
 	backdrop-filter: blur(20px);
 }
 
-/* For @signozhq/ui Tooltip content: it paints both the bubble and the arrow
-   from these variables. */
 .content {
 	--tooltip-background: color-mix(
 		in srgb,
