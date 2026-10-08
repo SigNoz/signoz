@@ -4,8 +4,6 @@ import { cloneDeep, set } from 'lodash-es';
 import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { parseListOrderBy } from 'utils/explorerUtils';
 
-// Without an order the caller gets none. The export path relies on that: a list
-// export becomes a time series panel, which cannot use a row field order.
 export const getListViewQuery = (
 	stagedQuery: Query,
 	orderBy?: string,
