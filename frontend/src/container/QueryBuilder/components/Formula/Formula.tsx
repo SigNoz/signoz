@@ -1,7 +1,9 @@
 import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { Col, Input, Row, Select } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
+import BucketOptions from 'components/QueryBuilderV2/QueryV2/QueryAddOns/BucketOptions/BucketOptions';
 import { LEGEND } from 'constants/global';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -24,8 +26,12 @@ export function Formula({
 	query,
 	isQBV2,
 }: FormulaProps): JSX.Element {
-	const { removeQueryBuilderEntityByIndex, handleSetFormulaData } =
-		useQueryBuilder();
+	const {
+		removeQueryBuilderEntityByIndex,
+		handleSetFormulaData,
+		panelType,
+		currentQuery,
+	} = useQueryBuilder();
 
 	const { handleChangeFormulaData } = useQueryOperations({
 		index,
@@ -69,6 +75,13 @@ export function Formula({
 	const handleChangeLimit = useCallback(
 		(value: IBuilderFormula['limit']) => {
 			handleChangeFormulaData('limit', value);
+		},
+		[handleChangeFormulaData],
+	);
+
+	const handleChangeBucketOptions = useCallback(
+		(value: IBuilderFormula['bucketOptions']) => {
+			handleChangeFormulaData('bucketOptions', value);
 		},
 		[handleChangeFormulaData],
 	);
@@ -161,6 +174,17 @@ export function Formula({
 									placeholder="Enter limit"
 								/>
 							</div>
+						</Col>
+					)}
+					{/* A heatmap draws its one enabled query, which is the formula when its
+					    inputs are disabled — so the formula states its own bucket axis. */}
+					{isQBV2 && panelType === PANEL_TYPES.HEATMAP && (
+						<Col span={24}>
+							<BucketOptions
+								bucketOptions={formula.bucketOptions}
+								unit={currentQuery.unit}
+								onChange={handleChangeBucketOptions}
+							/>
 						</Col>
 					)}
 				</Row>

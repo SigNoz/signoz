@@ -1,0 +1,19 @@
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-2);
+	padding: var(--spacing-2) var(--spacing-3);
+	border-bottom: 1px solid var(--l1-border);
+	color: var(--l1-foreground);
+	flex-shrink: 0;
+}
+
+.name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
+}
