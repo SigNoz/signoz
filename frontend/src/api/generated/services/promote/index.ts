@@ -146,7 +146,7 @@ export const invalidateListPromotedPaths = async (
 };
 
 /**
- * This endpoint promotes paths of JSON columns to their promoted columns. Each path names its promotion domain with its signal and context, e.g. traces/attribute.
+ * This endpoint promotes paths of JSON columns to their promoted columns. Each path names its promotion target with its signal and context, e.g. traces/attribute.
  * @summary Promote paths
  */
 export const promotePaths = (
