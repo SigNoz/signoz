@@ -1,0 +1,166 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	margin-top: var(--spacing-8);
+	min-width: 0;
+}
+
+.controls {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--spacing-3);
+	flex-wrap: wrap;
+}
+
+.tableHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	padding: var(--spacing-4) var(--spacing-8);
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.resourcePicker {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	flex: 0 0 auto;
+}
+
+.resourceTrigger {
+	--select-trigger-width: 240px;
+	--select-trigger-height: 2rem;
+}
+
+.resourceOptions {
+	// The drawer is a dialog at z-index 50 and select content ships without one,
+	// so without this the dropdown paints behind the drawer.
+	z-index: 60;
+
+	// Radix measures the trigger for us; without this the list is narrower than it
+	min-width: var(--radix-select-trigger-width);
+}
+
+.filterRow {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	padding-left: var(--spacing-3);
+	min-width: 0;
+	border: 1px solid var(--l2-border);
+	border-radius: 2px;
+	background: var(--l1-background);
+
+	// The row draws the field outline, so the editor inside it draws none
+	--query-builder-v2-border-color: transparent;
+	--query-builder-v2-background-color: transparent;
+}
+
+.scopeChip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: 420px;
+	padding: var(--spacing-1) var(--spacing-3);
+	border-radius: 2px;
+	background: var(--l3-background);
+	color: var(--l2-foreground);
+	font-size: 12px;
+	line-height: 20px;
+	cursor: default;
+}
+
+.scopeMore {
+	flex: none;
+	color: var(--l3-foreground);
+}
+
+// The editor beside it is CodeMirror on the copilot theme in dark and
+// githubLight in light; the chip borrows those token colours so one filter
+// does not read as two
+.scopeKey {
+	color: #939da5;
+}
+
+.scopeOperator {
+	color: #939da5;
+}
+
+.scopeValue {
+	color: #5bec95;
+}
+
+:global(.lightMode) {
+	.scopeKey,
+	.scopeOperator {
+		color: #005cc5;
+	}
+
+	.scopeValue {
+		color: #032f62;
+	}
+}
+
+.scopeExpression {
+	font-family: var(--font-mono, monospace);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.filterInput {
+	flex: 1 1 auto;
+	min-width: 0;
+
+	// The locked scope is already shown as a chip, so drop the editor's own
+	// scope marker and the room it reserves for it
+	:global(.query-search-initial-scope-label) {
+		display: none;
+	}
+
+	:global(
+		.query-where-clause-editor.hasInitialExpression .cm-editor .cm-content
+	) {
+		padding-left: 0 !important;
+	}
+
+	// Its page-width minimum would force the filter row to overflow the drawer
+	:global(.code-mirror-where-clause .query-where-clause-editor) {
+		min-width: 0;
+	}
+}
+
+.tableCard {
+	display: flex;
+	flex-direction: column;
+	min-height: 480px;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	overflow: hidden;
+	min-width: 0;
+}
+
+.table {
+	flex: 1 1 auto;
+	min-height: 0;
+	--typography-color: var(--l2-foreground);
+}
+
+.noRelations {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 240px;
+	margin-top: var(--spacing-8);
+}
+
+.emptyState {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 180px;
+}
