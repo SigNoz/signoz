@@ -2,7 +2,10 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { cloneDeep, set } from 'lodash-es';
 import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { parseListOrderBy } from 'utils/explorerUtils';
 
+// Without an order the caller gets none. The export path relies on that: a list
+// export becomes a time series panel, which cannot use a row field order.
 export const getListViewQuery = (
 	stagedQuery: Query,
 	orderBy?: string,
@@ -12,12 +15,7 @@ export const getListViewQuery = (
 		: cloneDeep(initialQueriesMap.traces);
 
 	const orderByPayload: OrderByPayload[] = orderBy
-		? [
-				{
-					columnName: orderBy.split(':')[0],
-					order: orderBy.split(':')[1] as 'asc' | 'desc',
-				},
-			]
+		? [parseListOrderBy(orderBy)]
 		: [];
 
 	for (let i = 0; i < query.builder.queryData.length; i++) {
