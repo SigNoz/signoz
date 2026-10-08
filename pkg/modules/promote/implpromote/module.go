@@ -58,16 +58,12 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 		response = append(response, promotetypes.PromotePath{
 			Signal:  target.Entry.Signal.StringValue(),
 			Context: target.Entry.FieldContext.StringValue(),
-			Path:    target.RequiredPathPrefix + path,
+			Path:    path,
 			Promote: true,
 		})
 	}
 
-	if !target.IndexesSupported {
-		return response, nil
-	}
-
-	indexes, err := m.metadataStore.ListLogsJSONIndexes(ctx)
+	indexes, err := m.metadataStore.ListJSONIndexes(ctx, target.JSONIndexLookup())
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +81,7 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 	}
 
 	for i := range response {
-		fullPath := target.PromotedColumnPrefix() + strings.TrimPrefix(response[i].Path, target.RequiredPathPrefix)
+		fullPath := target.PromotedColumnPrefix() + response[i].Path
 		if indexes, ok := aggr[fullPath]; ok {
 			response[i].Indexes = indexes
 			delete(aggr, fullPath)
@@ -95,7 +91,6 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 	for fullPath, indexes := range aggr {
 		path := strings.TrimPrefix(fullPath, target.BaseColumnPrefix())
 		path = strings.TrimPrefix(path, target.PromotedColumnPrefix())
-		path = target.RequiredPathPrefix + path
 		response = append(response, promotetypes.PromotePath{
 			Signal:  target.Entry.Signal.StringValue(),
 			Context: target.Entry.FieldContext.StringValue(),
@@ -107,18 +102,11 @@ func (m *module) listPromotedPaths(ctx context.Context, target promotetypes.Targ
 }
 
 func (m *module) PromotePaths(ctx context.Context, paths ...*promotetypes.PromotePath) error {
-	if len(paths) == 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "paths cannot be empty")
-	}
-
 	byTarget := map[promotetypes.Target][]*promotetypes.PromotePath{}
 	targets := []promotetypes.Target{}
 	for _, path := range paths {
 		target, err := path.Target()
 		if err != nil {
-			return err
-		}
-		if err := path.ValidateAndSetDefaults(target); err != nil {
 			return err
 		}
 		if _, ok := byTarget[target]; !ok {
@@ -195,12 +183,16 @@ func (m *module) promotePaths(ctx context.Context, target promotetypes.Target, p
 					typeIndex = schemamigrator.IndexTypeTokenBF
 				case strings.HasPrefix(index.Type, string(schemamigrator.IndexTypeMinMax)):
 					typeIndex = schemamigrator.IndexTypeMinMax
+				case strings.HasPrefix(index.Type, "bloom_filter"):
+					typeIndex = "bloom_filter"
+				case strings.HasPrefix(index.Type, "set"):
+					typeIndex = "set"
 				default:
 					return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid index type: %s", index.Type)
 				}
 				indexes = append(indexes, schemamigrator.Index{
 					Name:        schemamigrator.JSONSubColumnIndexName(parentColumn, it.Path, index.JSONDataType.StringValue(), typeIndex),
-					Expression:  schemamigrator.JSONSubColumnIndexExpr(parentColumn, it.Path, index.JSONDataType.StringValue()),
+					Expression:  target.IndexExpression(parentColumn, it.Path, index.JSONDataType.StringValue()),
 					Type:        index.Type,
 					Granularity: index.Granularity,
 				})

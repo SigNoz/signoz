@@ -35,10 +35,10 @@ func TestPromotePaths(t *testing.T) {
 			wantPromoted: []string{"http.method", "span.operation"},
 		},
 		{
-			name: "MixedDomains_RecordedPerTarget",
+			name: "MixedContexts_RecordedPerTarget",
 			paths: []*promotetypes.PromotePath{
 				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
-				{Signal: "logs", Context: "body", Path: "body.user.name", Promote: true},
+				{Signal: "logs", Context: "body", Path: "user.name", Promote: true},
 			},
 			wantPromoted: []string{"http.method", "user.name"},
 		},
@@ -52,27 +52,13 @@ func TestPromotePaths(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "UnsupportedDomain_Rejected",
+			name:    "UnsupportedTarget_Rejected",
 			paths:   []*promotetypes.PromotePath{{Signal: "metrics", Context: "attribute", Path: "http.method", Promote: true}},
 			wantErr: true,
 		},
 		{
-			name:    "ColumnPrefixedPath_Rejected",
-			paths:   []*promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "attributes.http.method", Promote: true}},
-			wantErr: true,
-		},
-		{
-			name:    "EmptyPath_Rejected",
-			paths:   []*promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "", Promote: true}},
-			wantErr: true,
-		},
-		{
-			name:    "EmptyRequest_Rejected",
-			wantErr: true,
-		},
-		{
-			name:         "PromotesBodyPath_PrefixStripped",
-			paths:        []*promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "body.user.name", Promote: true}},
+			name:         "PromotesBareBodyPath_AsIs",
+			paths:        []*promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "user.name", Promote: true}},
 			wantPromoted: []string{"user.name"},
 		},
 	}
@@ -113,42 +99,91 @@ func TestPromotePathsCreatesIndexes(t *testing.T) {
 		wantDDLColumn string
 	}{
 		{
-			name: "NewPromotion_IndexesPromotedColumn",
+			name: "LogsNewPromotion_IndexesPromotedColumn",
 			path: &promotetypes.PromotePath{
 				Signal:  "logs",
 				Context: "body",
-				Path:    "body.user.name",
+				Path:    "user.name",
 				Promote: true,
 				Indexes: []promotetypes.WrappedIndex{
-					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
 			wantDDLColumn: "dynamicElement(body_promoted.user.name",
 		},
 		{
-			name:     "AlreadyPromoted_IndexesPromotedColumn",
+			name:     "LogsAlreadyPromoted_IndexesPromotedColumn",
 			promoted: map[string]bool{"user.name": true},
 			path: &promotetypes.PromotePath{
 				Signal:  "logs",
 				Context: "body",
-				Path:    "body.user.name",
+				Path:    "user.name",
 				Indexes: []promotetypes.WrappedIndex{
-					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
 			wantDDLColumn: "dynamicElement(body_promoted.user.name",
 		},
 		{
-			name: "UnpromotedPath_IndexesBaseColumn",
+			name: "LogsUnpromotedPath_IndexesBaseColumn",
 			path: &promotetypes.PromotePath{
 				Signal:  "logs",
 				Context: "body",
-				Path:    "body.user.name",
+				Path:    "user.name",
 				Indexes: []promotetypes.WrappedIndex{
-					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
 				},
 			},
 			wantDDLColumn: "dynamicElement(body_v2.user.name",
+		},
+		{
+			name: "TracesNewPromotion_IndexesPromotedColumn",
+			path: &promotetypes.PromotePath{
+				Signal:  "traces",
+				Context: "attribute",
+				Path:    "http.method",
+				Promote: true,
+				Indexes: []promotetypes.WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
+				},
+			},
+			wantDDLColumn: "`attributes_promoted.http.method_String_ngrambf_v1` attributes_promoted.`http.method`::String",
+		},
+		{
+			name: "TracesUnpromotedPath_IndexesBaseColumn",
+			path: &promotetypes.PromotePath{
+				Signal:  "traces",
+				Context: "attribute",
+				Path:    "http.method",
+				Indexes: []promotetypes.WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1, JSONDataType: telemetrytypes.String},
+				},
+			},
+			wantDDLColumn: "`attributes.http.method_String_ngrambf_v1` attributes.`http.method`::String",
+		},
+		{
+			name: "BloomFilterIndex_FullTypeInDDL",
+			path: &promotetypes.PromotePath{
+				Signal:  "logs",
+				Context: "body",
+				Path:    "user.name",
+				Indexes: []promotetypes.WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "bloom_filter(0.01)", Granularity: 1, JSONDataType: telemetrytypes.String},
+				},
+			},
+			wantDDLColumn: "`body_v2.user.name_String_bloom_filter` lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) TYPE bloom_filter(0.01)",
+		},
+		{
+			name: "SetIndex_FullTypeInDDL",
+			path: &promotetypes.PromotePath{
+				Signal:  "logs",
+				Context: "body",
+				Path:    "user.name",
+				Indexes: []promotetypes.WrappedIndex{
+					{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "set(100)", Granularity: 1, JSONDataType: telemetrytypes.String},
+				},
+			},
+			wantDDLColumn: "`body_v2.user.name_String_set` lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) TYPE set(100)",
 		},
 	}
 
@@ -181,27 +216,27 @@ func TestListPromotedPaths(t *testing.T) {
 		wantPaths []promotetypes.PromotePath
 	}{
 		{
-			name:     "PromotedPaths_EveryDomainAnnotated",
+			name:     "PromotedPaths_EveryContextAnnotated",
 			promoted: map[string]bool{"http.method": true},
 			wantPaths: []promotetypes.PromotePath{
-				{Signal: "logs", Context: "body", Path: "body.http.method", Promote: true},
+				{Signal: "logs", Context: "body", Path: "http.method", Promote: true},
 				{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true},
 			},
 		},
 		{
-			name:      "SignalFilter_SkipsOtherDomains",
+			name:      "SignalFilter_SkipsOtherContexts",
 			filters:   promotetypes.ListPromotedPathsFilters{Signal: "traces"},
 			promoted:  map[string]bool{"http.method": true},
 			wantPaths: []promotetypes.PromotePath{{Signal: "traces", Context: "attribute", Path: "http.method", Promote: true}},
 		},
 		{
-			name:      "ContextFilter_SkipsOtherDomains",
+			name:      "ContextFilter_SkipsOtherContexts",
 			filters:   promotetypes.ListPromotedPathsFilters{Context: "body"},
 			promoted:  map[string]bool{"http.method": true},
-			wantPaths: []promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "body.http.method", Promote: true}},
+			wantPaths: []promotetypes.PromotePath{{Signal: "logs", Context: "body", Path: "http.method", Promote: true}},
 		},
 		{
-			name:     "IndexedPaths_MergedForSupportingDomains",
+			name:     "LogsIndexes_MergedWithLogsPaths",
 			promoted: map[string]bool{"user.name": true},
 			indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{
 				{
@@ -225,7 +260,7 @@ func TestListPromotedPaths(t *testing.T) {
 				{
 					Signal:  "logs",
 					Context: "body",
-					Path:    "body.user.name",
+					Path:    "user.name",
 					Promote: true,
 					Indexes: []promotetypes.WrappedIndex{
 						{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
@@ -234,7 +269,7 @@ func TestListPromotedPaths(t *testing.T) {
 				{
 					Signal:  "logs",
 					Context: "body",
-					Path:    "body.request.duration",
+					Path:    "request.duration",
 					Indexes: []promotetypes.WrappedIndex{
 						{FieldDataType: telemetrytypes.FieldDataTypeFloat64, Type: "minmax", Granularity: 1},
 					},
@@ -265,7 +300,7 @@ func TestListPromotedPaths(t *testing.T) {
 				{
 					Signal:  "logs",
 					Context: "body",
-					Path:    "body.request.duration",
+					Path:    "request.duration",
 					Indexes: []promotetypes.WrappedIndex{
 						{FieldDataType: telemetrytypes.FieldDataTypeFloat64, Type: "minmax", Granularity: 1},
 					},
@@ -290,10 +325,57 @@ func TestListPromotedPaths(t *testing.T) {
 				{
 					Signal:  "logs",
 					Context: "body",
-					Path:    "body.user.name",
+					Path:    "user.name",
 					Promote: true,
 					Indexes: []promotetypes.WrappedIndex{
 						{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+					},
+				},
+			},
+		},
+		{
+			name:     "TracesIndexes_MergedWithTracesPaths",
+			promoted: map[string]bool{"http.method": true},
+			indexes: []telemetrytypes.TelemetryFieldKeySkipIndex{
+				{
+					Name:          "http.method",
+					FieldContext:  telemetrytypes.FieldContextAttribute,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+					BaseColumn:    "attributes_promoted.",
+					IndexType:     "ngrambf_v1(4, 1024, 2, 0)",
+					Granularity:   1,
+				},
+				{
+					Name:          "http.status_code",
+					FieldContext:  telemetrytypes.FieldContextAttribute,
+					FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+					BaseColumn:    "attributes.",
+					IndexType:     "minmax",
+					Granularity:   1,
+				},
+			},
+			wantPaths: []promotetypes.PromotePath{
+				{
+					Signal:  "logs",
+					Context: "body",
+					Path:    "http.method",
+					Promote: true,
+				},
+				{
+					Signal:  "traces",
+					Context: "attribute",
+					Path:    "http.method",
+					Promote: true,
+					Indexes: []promotetypes.WrappedIndex{
+						{FieldDataType: telemetrytypes.FieldDataTypeString, Type: "ngrambf_v1(4, 1024, 2, 0)", Granularity: 1},
+					},
+				},
+				{
+					Signal:  "traces",
+					Context: "attribute",
+					Path:    "http.status_code",
+					Indexes: []promotetypes.WrappedIndex{
+						{FieldDataType: telemetrytypes.FieldDataTypeFloat64, Type: "minmax", Granularity: 1},
 					},
 				},
 			},
@@ -311,14 +393,14 @@ func TestListPromotedPaths(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, paths, len(testCase.wantPaths))
 
-			byDomainPath := map[string]promotetypes.PromotePath{}
+			byContextPath := map[string]promotetypes.PromotePath{}
 			for _, path := range paths {
-				byDomainPath[path.Signal+"/"+path.Context+"/"+path.Path] = path
+				byContextPath[path.Signal+"/"+path.Context+"/"+path.Path] = path
 			}
 			for _, want := range testCase.wantPaths {
 				key := want.Signal + "/" + want.Context + "/" + want.Path
-				require.Contains(t, byDomainPath, key)
-				assert.Equal(t, want, byDomainPath[key])
+				require.Contains(t, byContextPath, key)
+				assert.Equal(t, want, byContextPath[key])
 			}
 		})
 	}

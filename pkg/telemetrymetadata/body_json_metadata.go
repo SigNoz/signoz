@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
@@ -35,6 +35,24 @@ var (
 )
 
 var logsBodyPromotedEntry = promotetypes.NewLogsBodyTarget().Entry
+
+var logsBodyIndexLookup = promotetypes.NewLogsBodyTarget().JSONIndexLookup()
+
+// ClickHouse stores a `col.path::Type` skip index expression as CAST(col.path, 'Type').
+var simpleJSONSubColumnIndexExprRe = regexp.MustCompile(`^CAST\((?P<expr>[^()]+), '(?P<type>.+)'\)$`)
+
+// unfoldJSONSubColumnIndexExpr accepts both the folded (lower/assumeNotNull)
+// and the bare type-cast expression forms.
+func unfoldJSONSubColumnIndexExpr(expr string) (string, string, error) {
+	if columnExpr, columnType, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(expr); err == nil {
+		return columnExpr, columnType, nil
+	}
+	matches := simpleJSONSubColumnIndexExprRe.FindStringSubmatch(expr)
+	if matches == nil {
+		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid expression: %s", expr)
+	}
+	return matches[1], matches[2], nil
+}
 
 // enrichJSONKeys enriches body-context keys with promoted path info, indexes,
 // and JSON access plans. parentTypeCache contains parent array types (ArrayJSON/ArrayDynamic)
@@ -123,7 +141,7 @@ func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...st
 	}
 
 	// list indexes for the paths
-	indexes, err := t.ListLogsJSONIndexes(ctx, filteredPaths...)
+	indexes, err := t.ListJSONIndexes(ctx, logsBodyIndexLookup, filteredPaths...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to list JSON path indexes")
 	}
@@ -137,16 +155,16 @@ func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...st
 	return fieldPathToIndexes, nil
 }
 
-func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, []any) {
+func buildListJSONIndexesQuery(cluster string, lookup telemetrytypes.JSONIndexLookup, filters ...string) (string, []any) {
 	sb := sqlbuilder.Select(
 		"name", "type_full", "expr", "granularity",
 	).From(fmt.Sprintf("clusterAllReplicas('%s', %s)", cluster, SkipIndexTableName))
 
-	sb.Where(sb.Equal("database", logstelemetryschema.DBName))
-	sb.Where(sb.Equal("table", logstelemetryschema.LogsV2LocalTableName))
+	sb.Where(sb.Equal("database", lookup.DBName))
+	sb.Where(sb.Equal("table", lookup.LocalTableName))
 	sb.Where(sb.Or(
-		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyV2ColumnPrefix))),
-		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix))),
+		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(lookup.BaseColumnPrefix))),
+		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(lookup.PromotedColumnPrefix))),
 	))
 
 	filterExprs := []string{}
@@ -159,9 +177,9 @@ func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, [
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
-func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
-	ctx = withTelemetryContext(ctx, telemetrytypes.SignalLogs, "ListLogsJSONIndexes")
-	query, args := buildListLogsJSONIndexesQuery(t.telemetrystore.Cluster(), filters...)
+func (t *telemetryMetaStore) ListJSONIndexes(ctx context.Context, lookup telemetrytypes.JSONIndexLookup, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
+	ctx = withTelemetryContext(ctx, lookup.Signal, "ListJSONIndexes")
+	query, args := buildListJSONIndexesQuery(t.telemetrystore.Cluster(), lookup, filters...)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to load string indexed columns")
@@ -178,7 +196,7 @@ func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ..
 			return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to scan string indexed column")
 		}
 
-		columnExpr, columnType, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(expr)
+		columnExpr, columnType, err := unfoldJSONSubColumnIndexExpr(expr)
 		if err != nil {
 			return nil, errors.WrapInternalf(err, CodeFailLoadLogsJSONIndexes, "failed to unfold JSON sub column index expression: %s", expr)
 		}
@@ -192,18 +210,18 @@ func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ..
 		baseColumn := ""
 		fieldName := ""
 		switch {
-		case strings.HasPrefix(columnExpr, logstelemetryschema.BodyV2ColumnPrefix):
-			baseColumn = logstelemetryschema.BodyV2ColumnPrefix
-			fieldName = strings.TrimPrefix(columnExpr, logstelemetryschema.BodyV2ColumnPrefix)
-		case strings.HasPrefix(columnExpr, logstelemetryschema.BodyPromotedColumnPrefix):
-			baseColumn = logstelemetryschema.BodyPromotedColumnPrefix
-			fieldName = strings.TrimPrefix(columnExpr, logstelemetryschema.BodyPromotedColumnPrefix)
+		case strings.HasPrefix(columnExpr, lookup.BaseColumnPrefix):
+			baseColumn = lookup.BaseColumnPrefix
+			fieldName = strings.TrimPrefix(columnExpr, lookup.BaseColumnPrefix)
+		case strings.HasPrefix(columnExpr, lookup.PromotedColumnPrefix):
+			baseColumn = lookup.PromotedColumnPrefix
+			fieldName = strings.TrimPrefix(columnExpr, lookup.PromotedColumnPrefix)
 		}
 		fieldName = strings.ReplaceAll(fieldName, "`", "")
 
 		indexes = append(indexes, telemetrytypes.TelemetryFieldKeySkipIndex{
 			Name:            fieldName,
-			FieldContext:    telemetrytypes.FieldContextBody,
+			FieldContext:    lookup.FieldContext,
 			FieldDataType:   fdt,
 			BaseColumn:      baseColumn,
 			IndexName:       name,
