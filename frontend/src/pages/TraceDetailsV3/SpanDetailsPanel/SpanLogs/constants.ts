@@ -9,8 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Creates a query payload for fetching logs related to a specific span
- * @param start - Start time in milliseconds
- * @param end - End time in milliseconds
+ * @param start - Start time in milliseconds (will be converted to seconds internally)
+ * @param end - End time in milliseconds (will be converted to seconds internally)
  * @param filter - V5 filter expression for trace_id and span_id
  * @param order - Timestamp ordering ('desc' for newest first, 'asc' for oldest first)
  * @returns Query payload for logs API
@@ -66,8 +66,12 @@ export const getSpanLogsQueryPayload = (
 		id: uuidv4(),
 		queryType: EQueryType.QUERY_BUILDER,
 	},
-	start,
-	end,
+	// prepareQueryRangePayloadV5 expects seconds and multiplies by 1e3 internally.
+	// The callers pass milliseconds, so we convert here to honour that contract.
+	// Passing ms directly would produce 16-digit µs timestamps → backend returns no data.
+	// See: https://github.com/SigNoz/signoz/issues/11843
+	start: Math.floor(start / 1000),
+	end: Math.ceil(end / 1000),
 });
 
 /**
