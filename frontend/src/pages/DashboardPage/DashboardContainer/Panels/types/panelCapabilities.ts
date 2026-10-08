@@ -1,6 +1,17 @@
 import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
 
+import type { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
+
 export type { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
+
+/** Per-query builder fields that can be kept equal across a panel's queries. */
+export type SyncedQueryBuilderField =
+	| QueryBuilderField.GroupBy
+	| QueryBuilderField.OrderBy
+	| QueryBuilderField.Having
+	| QueryBuilderField.Limit
+	| QueryBuilderField.StepInterval
+	| QueryBuilderField.ReduceTo;
 
 /**
  * How a kind's query-range request is shaped. Declared per-kind in
@@ -28,6 +39,11 @@ export interface PanelQueryCapabilities {
 	 * carries no explicit limit" — an explicit limit means the user asked for a fixed set.
 	 */
 	serverPaginated: boolean;
+	/**
+	 * `limit` for a lone builder query that sets none. Skipped with several queries,
+	 * where per-query limits can keep different groups and break the join.
+	 */
+	defaultRowLimit?: number;
 }
 
 /** Raw rows rather than an aggregated result — the single source for "is this raw?". */

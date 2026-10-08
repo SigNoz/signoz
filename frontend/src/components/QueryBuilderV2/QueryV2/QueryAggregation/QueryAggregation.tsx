@@ -43,7 +43,9 @@ function QueryAggregationOptions({
 
 		if (
 			isNonMetricSource &&
-			(panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.PIE)
+			(panelType === PANEL_TYPES.TABLE ||
+				panelType === PANEL_TYPES.SCATTER ||
+				panelType === PANEL_TYPES.PIE)
 		) {
 			return { hidden: true, disabled: false, reason: undefined };
 		}

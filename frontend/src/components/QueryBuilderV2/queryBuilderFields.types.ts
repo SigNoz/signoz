@@ -22,8 +22,12 @@ export enum QueryBuilderField {
 	AdditionalQueries = 'additional_queries',
 }
 
-/** `reason` is required on `disabled`: an inert control the user can see has to explain itself. */
+/**
+ * `reason` is required on `disabled`: an inert control the user can see has to explain itself.
+ * `defaulted` leaves the field as is; its placeholder names the value an empty field falls back to.
+ */
 export type QueryBuilderFieldRule =
+	| { state: 'defaulted'; placeholder: string }
 	| { state: 'hidden' }
 	| { state: 'disabled'; reason: string }
 	| { state: 'pinned' };

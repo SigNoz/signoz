@@ -25,7 +25,7 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 	],
 	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
 	queryBuilderFields: {},
-	// The only kind that asks the server to transpose its scalar result into UI rows.
+	// Asks the server to transpose its scalar result into UI rows (as does Scatter Plot).
 	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.scalar,
 		formatTableResultForUI: true,

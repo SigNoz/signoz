@@ -1,0 +1,30 @@
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.labelWithInfo {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.info {
+	display: inline-flex;
+	color: var(--l3-foreground);
+	cursor: help;
+}
+
+.infoTooltip {
+	max-width: 240px;
+	white-space: normal;
+	word-break: break-word;
+}
+
+.description {
+	margin: 0;
+	color: var(--l2-foreground);
+	font-size: 12px;
+	line-height: 17px;
+}

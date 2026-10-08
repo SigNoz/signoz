@@ -52,7 +52,10 @@ export default function ScatterTooltip({
 			data-testid="scatter-tooltip"
 		>
 			<div className={Styles.header}>
-				<span className={Styles.marker} style={{ backgroundColor: point.color }} />
+				<span
+					className={Styles.marker}
+					style={{ backgroundColor: point.color, borderColor: point.color }}
+				/>
 				<span
 					className={Styles.title}
 					title={point.label}

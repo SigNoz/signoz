@@ -81,10 +81,18 @@ export function buildChannelRows(
 		},
 	];
 	if (channels.size && point.size != null) {
-		rows.push({
+		const sizeRow = {
 			label: channels.size.label,
 			value: formatChannel(point.size, channels.size, decimalPrecision),
-		});
+		};
+		// Size bound to the X or Y column would only repeat that row.
+		if (
+			!rows.some(
+				(row) => row.label === sizeRow.label && row.value === sizeRow.value,
+			)
+		) {
+			rows.push(sizeRow);
+		}
 	}
 	return rows;
 }

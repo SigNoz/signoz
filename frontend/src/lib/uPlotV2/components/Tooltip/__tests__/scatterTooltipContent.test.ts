@@ -91,4 +91,17 @@ describe('buildChannelRows', () => {
 		expect(buildChannelRows(point, channels)).toHaveLength(3);
 		expect(buildChannelRows({ ...point, size: null }, channels)).toHaveLength(2);
 	});
+
+	it('leaves out a size row that repeats the x row', () => {
+		const rows = buildChannelRows(
+			{ ...point, size: point.x },
+			{
+				x: { label: 'A.count()' },
+				y: { label: 'p99' },
+				size: { label: 'A.count()' },
+			},
+		);
+
+		expect(rows.map((row) => row.label)).toStrictEqual(['A.count()', 'p99']);
+	});
 });
