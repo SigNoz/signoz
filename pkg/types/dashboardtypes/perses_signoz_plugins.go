@@ -178,10 +178,11 @@ const (
 	PanelKindText        PanelPluginKind = "signoz/TextPanel"
 	PanelKindHeatmap     PanelPluginKind = "signoz/HeatmapPanel"
 	PanelKindScatterPlot PanelPluginKind = "signoz/ScatterPlotPanel"
+	PanelKindTopList     PanelPluginKind = "signoz/TopListPanel"
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap, PanelKindScatterPlot}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap, PanelKindScatterPlot, PanelKindTopList}
 }
 
 func (k PanelPluginKind) rendersWithoutQuery() bool {
@@ -247,6 +248,12 @@ type PieChartPanelSpec struct {
 	Visualization BasicVisualization `json:"visualization"`
 	Formatting    PanelFormatting    `json:"formatting"`
 	Legend        Legend             `json:"legend"`
+}
+
+type TopListPanelSpec struct {
+	Visualization BasicVisualization    `json:"visualization"`
+	Formatting    PanelFormatting       `json:"formatting"`
+	Thresholds    []ComparisonThreshold `json:"thresholds" validate:"dive"`
 }
 
 type TablePanelSpec struct {
