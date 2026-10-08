@@ -13616,8 +13616,7 @@ paths:
       deprecated: false
       description: This endpoint lists the promoted paths of every JSON column, each
         annotated with its signal and context. The signal, context, promoted and indexes
-        query parameters filter the listing. Requires the list scope of each signal
-        the filters select, or of every signal when none match.
+        query parameters filter the listing.
       operationId: ListPromotedPaths
       parameters:
       - in: query
@@ -13695,7 +13694,7 @@ paths:
       deprecated: false
       description: This endpoint promotes paths of JSON columns to their promoted
         columns. Each path names its promotion target with its signal and context,
-        e.g. traces/attribute. Requires the update scope of each signal in the request.
+        e.g. traces/attribute.
       operationId: PromotePaths
       requestBody:
         content:
