@@ -6,6 +6,7 @@ import ROUTES from 'constants/routes';
 import { DataSource } from 'types/common/queryBuilder';
 
 import SavedViewsHeader from '../SavedViewsHeader';
+import SavedViewsRestore from '../SavedViewsRestore';
 import { mockSavedViewsApi } from './savedViewsApiMock';
 import {
 	explorerUrl,
@@ -23,10 +24,13 @@ function renderHeader(
 	url: string,
 ): ReturnType<typeof renderWithExplorerProviders> {
 	return renderWithExplorerProviders(
-		<SavedViewsHeader
-			source={SavedviewtypesSourceDTO.traces}
-			onOpenViews={jest.fn()}
-		/>,
+		<>
+			<SavedViewsRestore source={SavedviewtypesSourceDTO.traces} />
+			<SavedViewsHeader
+				source={SavedviewtypesSourceDTO.traces}
+				onOpenViews={jest.fn()}
+			/>
+		</>,
 		url,
 	);
 }
