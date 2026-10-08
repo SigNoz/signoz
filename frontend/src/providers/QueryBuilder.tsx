@@ -207,7 +207,8 @@ export function QueryBuilderProvider({
 				// Explorer pages: sanitize stale orderBy before first query
 				const isExplorer =
 					(location.pathname === ROUTES.LOGS_EXPLORER ||
-						location.pathname === ROUTES.TRACES_EXPLORER) &&
+						location.pathname === ROUTES.TRACES_EXPLORER ||
+						location.pathname === ROUTES.AI_OBSERVABILITY_EXPLORER) &&
 					!isRawPanel;
 				if (isExplorer) {
 					const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
@@ -1047,7 +1048,8 @@ export function QueryBuilderProvider({
 	const handleRunQuery = useCallback(() => {
 		const isExplorer =
 			location.pathname === ROUTES.LOGS_EXPLORER ||
-			location.pathname === ROUTES.TRACES_EXPLORER;
+			location.pathname === ROUTES.TRACES_EXPLORER ||
+			location.pathname === ROUTES.AI_OBSERVABILITY_EXPLORER;
 		if (isExplorer) {
 			setCalledFromHandleRunQuery(true);
 		}

@@ -109,6 +109,26 @@ describe('explorer orderBy sanitizing by panel type', () => {
 		expect(staged?.builder.queryData[0].orderBy).toStrictEqual([]);
 	});
 
+	it('keeps the order on the LLM observability list panel', () => {
+		const staged = initOn(
+			ROUTES.AI_OBSERVABILITY_EXPLORER,
+			PANEL_TYPES.LIST,
+			queryWithTimestampOrder(initialQueriesMap.traces),
+		);
+
+		expect(staged?.builder.queryData[0].orderBy).toStrictEqual(timestampOrderBy);
+	});
+
+	it('drops the order on the LLM observability time series panel', () => {
+		const staged = initOn(
+			ROUTES.AI_OBSERVABILITY_EXPLORER,
+			PANEL_TYPES.TIME_SERIES,
+			queryWithTimestampOrder(initialQueriesMap.traces),
+		);
+
+		expect(staged?.builder.queryData[0].orderBy).toStrictEqual([]);
+	});
+
 	it('drops the order on the table panel', () => {
 		const staged = initOn(
 			ROUTES.TRACES_EXPLORER,
