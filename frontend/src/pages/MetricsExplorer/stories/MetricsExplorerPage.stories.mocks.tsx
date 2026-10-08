@@ -331,6 +331,19 @@ export const metricsMocks = defineStoryMocks({
 			value: 4,
 			max: SERIES_SERVICES.length,
 		}),
+		metricUnit: choiceControl<'saved' | 'unset'>('Explorer metric unit', {
+			group: EXPLORER,
+			description:
+				'Whether the metadata carries a unit. Unset, the explorer offers to save the unit picked in the selector.',
+			options: ['saved', 'unset'],
+			value: 'saved',
+		}),
+		unitSave: choiceControl<'success' | 'error'>('Unit save', {
+			group: EXPLORER,
+			description: 'How the metadata write answers when the unit is saved.',
+			options: ['success', 'error'],
+			value: 'success',
+		}),
 		savedViews: countControl('Saved views', {
 			group: EXPLORER,
 			description: 'Fills the explorer views dropdown and the Views tab.',
@@ -385,16 +398,24 @@ export const metricsMocks = defineStoryMocks({
 
 		rest.get(
 			'http://localhost/api/v2/metrics/metadata',
-			response.json((req) =>
-				metricMetadataResponse(req.url.searchParams.get('metricName') ?? ''),
-			),
+			response.json((req) => {
+				const metadata = metricMetadataResponse(
+					req.url.searchParams.get('metricName') ?? '',
+				);
+
+				return values.metricUnit === 'unset'
+					? { ...metadata, data: { ...metadata.data, unit: '' } }
+					: metadata;
+			}),
 		),
 
 		// The drawer writes description, unit and type back. The metadata a story
 		// answers with comes from the catalogue, so the save succeeds and the
 		// refetch reads the metric as it was.
 		rest.post('http://localhost/api/v2/metrics/metadata', (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json({ status: 'success', data: null })),
+			values.unitSave === 'error'
+				? res(ctx.status(500), ctx.json({ status: 'error', error: 'forced' }))
+				: res(ctx.status(200), ctx.json({ status: 'success', data: null })),
 		),
 
 		rest.get(

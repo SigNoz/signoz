@@ -50,6 +50,12 @@ import {
 const TRACE = 'Trace · trace';
 const PANEL = 'Trace · span panel';
 
+const EXPORT = 'Trace · export';
+
+const EXPORT_STATES = ['success', 'loading', 'error'] as const;
+
+type ExportState = (typeof EXPORT_STATES)[number];
+
 const PANEL_POSITIONS = [
 	SpanDetailVariant.DOCKED_RIGHT,
 	SpanDetailVariant.DOCKED,
@@ -133,6 +139,13 @@ export const traceDetailsMocks = defineStoryMocks({
 			value: 8,
 			max: 20,
 		}),
+		exportState: choiceControl<ExportState>('Trace export', {
+			group: EXPORT,
+			description:
+				'How export_raw_data answers behind Download trace. `success` raises "Export completed successfully", `loading` never answers so the download panel stays open (cancelling it raises "Export cancelled"), `error` raises "Failed to download trace".',
+			options: EXPORT_STATES,
+			value: 'success',
+		}),
 	},
 	handlers: (values, response) => {
 		const trace = {
@@ -142,6 +155,20 @@ export const traceDetailsMocks = defineStoryMocks({
 		};
 
 		return [
+			rest.post('http://localhost/api/v1/export_raw_data', (_req, res, ctx) => {
+				if (values.exportState === 'loading') {
+					return res(ctx.delay('infinite'));
+				}
+
+				return values.exportState === 'error'
+					? res(ctx.status(500), ctx.json({ status: 'error' }))
+					: res(
+							ctx.status(200),
+							ctx.set('Content-Type', 'text/csv'),
+							ctx.body('trace_id,span_id\n'),
+						);
+			}),
+
 			rest.post(
 				'http://localhost/api/v4/traces/:traceId/waterfall',
 				response.json(() =>

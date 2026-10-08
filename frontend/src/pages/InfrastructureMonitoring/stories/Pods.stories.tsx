@@ -61,6 +61,28 @@ export const DetailsDrawerLogsTab: StoryObj<PodsArgs> = {
 	},
 };
 
+/** The copy button beside the pod name in the drawer, which toasts the copy. */
+export const PodNameCopiedToast: StoryObj<PodsArgs> = {
+	args: { drawer: true },
+	play: async () => {
+		await userEvent.click(
+			await screen.findByTestId('copy-id-button', {}, { timeout: 10000 }),
+		);
+		await screen.findByText('Pod name copied to clipboard');
+	},
+};
+
+/** A metadata value's copy button in the drawer, which toasts the label it copied. */
+export const PodMetadataCopiedToast: StoryObj<PodsArgs> = {
+	args: { drawer: true },
+	play: async () => {
+		await userEvent.click(
+			await screen.findByTestId('copy-metadata-namespace', {}, { timeout: 10000 }),
+		);
+		await screen.findByText('NAMESPACE copied to clipboard');
+	},
+};
+
 /**
  * Every tooltip the pod list carries, held open: Collapse Filters beside the
  * quick filters, Options above the table, the Pod Name, Status, Age and Restarts

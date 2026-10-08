@@ -1,11 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { fireEvent, screen, userEvent, waitFor, within } from 'storybook/test';
+import {
+	expect,
+	fireEvent,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import { STORY_TRACE_ID } from './__story_mockdata__/traceDetails';
 import { traceDetailsMocks } from './TraceDetailsV3.stories.mocks';
 import TraceDetailsV3 from '../index';
 
@@ -216,5 +224,128 @@ export const SpanPercentileOpen: Story = {
 			),
 		);
 		await screen.findByText(/This span duration is/);
+	},
+};
+
+/** Opens the pretty view's action menu on the first row that offers `item`. */
+const openRowMenu = async (
+	canvasElement: HTMLElement,
+	item: string,
+): Promise<void> => {
+	await within(canvasElement).findAllByText(
+		/rpc\.method/,
+		undefined,
+		untilLoaded,
+	);
+
+	const triggers = Array.from(
+		canvasElement.querySelectorAll<HTMLElement>('.pretty-view__actions'),
+	);
+
+	for (const trigger of triggers) {
+		// eslint-disable-next-line no-await-in-loop
+		await userEvent.click(trigger);
+
+		// eslint-disable-next-line no-await-in-loop
+		const match = await screen
+			.findByRole('menuitem', { name: item })
+			.catch(() => null);
+
+		if (match) {
+			await userEvent.click(match);
+			return;
+		}
+
+		// eslint-disable-next-line no-await-in-loop
+		await userEvent.keyboard('{Escape}');
+	}
+
+	throw new Error(`no row offers "${item}"`);
+};
+
+/** The span's trace id clicked in the panel, which copies it. */
+export const TraceIdCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: STORY_TRACE_ID },
+				untilLoaded,
+			),
+		);
+		await expect(
+			await screen.findByText('Trace ID copied to clipboard'),
+		).toBeVisible();
+	},
+};
+
+/** "Copy Value" picked from a row of the span panel's pretty view. */
+export const PrettyViewValueCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openRowMenu(canvasElement, 'Copy Value');
+		await expect(await screen.findByText('Copied to clipboard')).toBeVisible();
+	},
+};
+
+/** The copy-link button on a waterfall row, which copies the span's URL. */
+export const SpanLinkCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const [row] = await within(canvasElement).findAllByTestId(
+			/^cell-0-/,
+			undefined,
+			untilLoaded,
+		);
+
+		await fireEvent.mouseOver(row);
+		// The hover re-renders the row, so the button has to be looked up after it settles.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 300);
+		});
+		const [hovered] = within(canvasElement).getAllByTestId(/^cell-0-/);
+		// The row's hover actions have no accessible name; copy link comes first.
+		const [link] = within(hovered).getAllByRole('button');
+
+		await fireEvent.click(link);
+		await waitFor(() =>
+			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
+		);
+	},
+};
+
+const startDownload = async (canvasElement: HTMLElement): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByRole(
+			'button',
+			{ name: 'Trace options' },
+			untilLoaded,
+		),
+	);
+	await userEvent.click(await screen.findByTestId('download-trace-submenu'));
+	await userEvent.click(await screen.findByTestId('download-trace-csv'));
+};
+
+/** "Download trace" as CSV, finished. */
+export const TraceExportedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await startDownload(canvasElement);
+	},
+};
+
+/** "Download trace" whose export request fails. */
+export const TraceExportErrorToast: Story = {
+	args: { exportState: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await startDownload(canvasElement);
+	},
+};
+
+/** "Download trace" cancelled from the download panel while the export runs. */
+export const TraceExportCancelledToast: Story = {
+	args: { exportState: 'loading' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await startDownload(canvasElement);
+		await userEvent.click(await screen.findByTestId('trace-download-cancel'));
 	},
 };

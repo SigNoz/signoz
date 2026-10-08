@@ -4,7 +4,7 @@ import {
 	openKeySuggestions,
 	typeFilter,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
-import { screen, userEvent } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -132,5 +132,54 @@ export const FilterValueSuggestions: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await typeFilter(canvasElement, 'service.name = ');
 		await findSuggestion(canvasElement, 'checkout');
+	},
+};
+
+const saveUnit = async (
+	canvasElement: HTMLElement,
+	expected: string | false,
+): Promise<void> => {
+	const selector = await within(canvasElement).findByTestId(
+		'y-axis-unit-selector',
+		{},
+		{ timeout: 15000 },
+	);
+
+	await userEvent.click(within(selector).getByRole('combobox'));
+	await userEvent.keyboard('bytes');
+	const bytes = await screen.findByText('Bytes (B)');
+
+	await userEvent.click(
+		(bytes.closest('.ant-select-item-option') as HTMLElement | null) ?? bytes,
+	);
+	await userEvent.click(await screen.findByRole('button', { name: 'Yes' }));
+	if (expected) {
+		await waitFor(() => expect(screen.getByText(expected)).toBeVisible());
+	}
+};
+
+/**
+ * "Set the selected unit as the metric unit?" answered Yes: the toast raised
+ * once the metadata write lands. Set Unit save to `error` for the failure.
+ */
+export const UnitSavedToast: Story = {
+	args: { tab: 'explorer', metricUnit: 'unset' },
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await saveUnit(
+			canvasElement,
+			args.unitSave === 'success'
+				? 'Unit saved successfully'
+				: 'Failed to save unit',
+		);
+	},
+};
+
+/** The same save with the metadata write failing. */
+export const UnitSaveErrorToast: Story = {
+	args: { tab: 'explorer', metricUnit: 'unset', unitSave: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await saveUnit(canvasElement, 'Failed to save unit');
 	},
 };

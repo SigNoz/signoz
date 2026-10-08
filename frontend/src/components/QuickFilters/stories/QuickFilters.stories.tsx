@@ -117,3 +117,38 @@ export const Tooltips: TooltipsStory = {
 		msw: { handlers: [attributeValuesHandler(LONG_FILTER_VALUES), ...handlers] },
 	},
 };
+
+const [firstQuery] = queryBuilder.currentQuery.builder.queryData;
+
+/** Interaction: the query picker lists every query the filters can follow. */
+export const QueryPickerOpen: Story = {
+	parameters: {
+		signoz: {
+			queryBuilder: {
+				...queryBuilder,
+				currentQuery: {
+					builder: {
+						queryData: [
+							{ ...firstQuery, queryName: 'A' },
+							{ ...firstQuery, queryName: 'B' },
+						],
+					},
+				},
+			},
+		},
+	},
+	play: async ({ canvasElement }): Promise<void> => {
+		const trigger = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'[data-slot="combobox-trigger"]',
+			);
+
+			expect(element).toBeInTheDocument();
+
+			return element as HTMLElement;
+		});
+
+		await userEvent.click(trigger);
+		await screen.findByRole('listbox');
+	},
+};

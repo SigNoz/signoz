@@ -352,3 +352,55 @@ export const FilterRecentSearches: Story = {
 		);
 	},
 };
+
+/** Row actions render on hover, so the first row is hovered before the copy link is pressed. */
+export const LogLinkCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const [row] = await within(canvasElement).findAllByTestId(
+			/^logs-table-row-/,
+			undefined,
+			untilLoaded,
+		);
+		const [, timestamp] = within(row).getAllByRole('cell');
+
+		await userEvent.hover(timestamp);
+		await userEvent.click(
+			await waitFor(() => {
+				const button = canvasElement.querySelector<HTMLElement>('.copy-log-btn');
+
+				if (!button) {
+					throw new Error('Row actions did not render');
+				}
+
+				return button;
+			}, untilLoaded),
+		);
+		await waitFor(() =>
+			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
+		);
+	},
+};
+
+/** "Copy log" in the log detail drawer's actions menu. */
+export const LogCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openFirstLog(canvasElement);
+		await userEvent.click(await screen.findByTestId('log-details-header-menu'));
+		await userEvent.click(await screen.findByText('Copy log'));
+		await waitFor(() =>
+			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
+		);
+	},
+};
+
+/** "Copy link to log" in the log detail drawer's actions menu. */
+export const LogDetailsLinkCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openFirstLog(canvasElement);
+		await userEvent.click(await screen.findByTestId('log-details-header-menu'));
+		await userEvent.click(await screen.findByText('Copy link to log'));
+		await waitFor(() =>
+			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
+		);
+	},
+};
