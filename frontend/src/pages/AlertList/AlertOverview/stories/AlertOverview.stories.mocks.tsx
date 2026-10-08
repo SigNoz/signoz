@@ -33,6 +33,9 @@ const STORY_RELATIVE_TIME = '6h';
 const RULE = 'Alert overview · rule';
 const PREVIEW = 'Alert overview · preview';
 
+const TEST_NOTIFICATIONS = ['sent', 'no-alerts'] as const;
+type TestNotification = (typeof TEST_NOTIFICATIONS)[number];
+
 export const alertOverviewMocks = defineStoryMocks({
 	controls: {
 		alertSchema: choiceControl<AlertSchema>('Alert schema', {
@@ -66,6 +69,13 @@ export const alertOverviewMocks = defineStoryMocks({
 			value: 3,
 			max: 6,
 		}),
+		testNotification: choiceControl<TestNotification>('Test notification', {
+			group: 'Alert overview · rule',
+			description:
+				'What the test run finds. `sent` raises the success toast, `no-alerts` the error toast saying the condition was not met.',
+			options: TEST_NOTIFICATIONS,
+			value: 'sent',
+		}),
 	},
 	handlers: (values, response) => [
 		rest.get(
@@ -96,7 +106,10 @@ export const alertOverviewMocks = defineStoryMocks({
 				ctx.status(200),
 				ctx.json({
 					status: 'success',
-					data: { alertCount: 2, message: 'Rule tested against the last 6 hours' },
+					data: {
+						alertCount: values.testNotification === 'no-alerts' ? 0 : 2,
+						message: 'Rule tested against the last 6 hours',
+					},
 				}),
 			),
 		),

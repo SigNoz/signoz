@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -86,4 +86,66 @@ export const Tooltips: Story = {
 		);
 		await screen.findByText('Example:', undefined, { timeout: 15_000 });
 	},
+};
+
+const untilLoaded = { timeout: 15_000 };
+
+const fillValidAlert = async (canvasElement: HTMLElement): Promise<void> => {
+	const canvas = within(canvasElement);
+
+	await userEvent.type(
+		await canvas.findByTestId('alert-name-input', undefined, untilLoaded),
+		'Toast alert',
+	);
+	const channels = await canvas.findByTestId(
+		'threshold-notification-channel-select',
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(within(channels).getByRole('combobox'));
+	await userEvent.click(await screen.findByTitle('ops-slack'));
+	await userEvent.keyboard('{Escape}');
+};
+
+const clickFooterButton = async (
+	canvasElement: HTMLElement,
+	testId: string,
+): Promise<void> => {
+	const button = await within(canvasElement).findByTestId(testId);
+
+	await waitFor(() => expect(button).toBeEnabled());
+	await userEvent.click(button);
+};
+
+/** A valid rule saved from the footer: the toast raised once the POST answers. */
+export const AlertRuleCreatedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await fillValidAlert(canvasElement);
+		await clickFooterButton(canvasElement, 'save-alert-rule-button');
+		await waitFor(() =>
+			expect(screen.getByText(/alert rule created successfully/i)).toBeVisible(),
+		);
+	},
+};
+
+/** Test Notification on a rule whose condition fires: the success toast. */
+export const TestNotificationSentToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await fillValidAlert(canvasElement);
+		await clickFooterButton(canvasElement, 'test-notification-button');
+		if (args.testNotification === 'sent') {
+			await waitFor(() =>
+				expect(
+					screen.getByText(/test notification sent successfully/i),
+				).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** Test Notification on a rule that finds nothing to alert on: the error toast. */
+export const TestNotificationNoAlertsToast: Story = {
+	args: { testNotification: 'no-alerts' },
+	play: TestNotificationSentToast.play,
 };

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -136,4 +136,107 @@ export const FormValidationError: Story = {
 		);
 		await screen.findByText('Please provide a name for the routing policy');
 	},
+};
+
+const fillNewPolicy = async (): Promise<void> => {
+	await userEvent.type(
+		await screen.findByPlaceholderText('e.g. Base routing policy...'),
+		'Toast policy',
+	);
+	await userEvent.type(
+		await screen.findByPlaceholderText(/e\.g\. service\.name/),
+		'severity = "critical"',
+	);
+	await userEvent.click(await screen.findByRole('combobox'));
+	await userEvent.click(await screen.findByTitle('ops-slack'));
+	await userEvent.keyboard('{Escape}');
+	await userEvent.click(
+		await screen.findByRole('button', { name: 'Save Routing Policy' }),
+	);
+};
+
+const openEditPolicy = async (canvasElement: HTMLElement): Promise<void> => {
+	await userEvent.click(
+		(
+			await within(canvasElement).findAllByTestId(
+				'edit-routing-policy',
+				undefined,
+				untilLoaded,
+			)
+		)[0],
+	);
+	await userEvent.click(
+		await screen.findByRole('button', { name: 'Save Routing Policy' }),
+	);
+};
+
+const confirmDelete = async (canvasElement: HTMLElement): Promise<void> => {
+	await DeletePolicyConfirm.play?.({ canvasElement } as never);
+	await userEvent.click(
+		await screen.findByRole('button', { name: 'Delete Routing Policy' }),
+	);
+};
+
+/** A new policy saved: the toast raised once the POST answers. */
+export const CreatePolicyToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await NewPolicy.play?.({ canvasElement } as never);
+		await fillNewPolicy();
+		if (args.createState === 'success') {
+			await waitFor(() =>
+				expect(
+					screen.getByText(/routing policy created successfully/i),
+				).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** The POST failed: the error toast carries the server message. */
+export const CreatePolicyErrorToast: Story = {
+	args: { createState: 'error' },
+	parameters: { allowConsoleErrors: true },
+	play: CreatePolicyToast.play,
+};
+
+/** An existing policy saved unchanged from its edit form. */
+export const UpdatePolicyToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await openEditPolicy(canvasElement);
+		if (args.updateState === 'success') {
+			await waitFor(() =>
+				expect(
+					screen.getByText(/routing policy updated successfully/i),
+				).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** The PUT failed. */
+export const UpdatePolicyErrorToast: Story = {
+	args: { updateState: 'error' },
+	parameters: { allowConsoleErrors: true },
+	play: UpdatePolicyToast.play,
+};
+
+/** The first policy deleted from its confirmation. */
+export const DeletePolicyToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await confirmDelete(canvasElement);
+		if (args.deleteState === 'success') {
+			await waitFor(() =>
+				expect(
+					screen.getByText(/routing policy deleted successfully/i),
+				).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** The DELETE failed. */
+export const DeletePolicyErrorToast: Story = {
+	args: { deleteState: 'error' },
+	parameters: { allowConsoleErrors: true },
+	play: DeletePolicyToast.play,
 };

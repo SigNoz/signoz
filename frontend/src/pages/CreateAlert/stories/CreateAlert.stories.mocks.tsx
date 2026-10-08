@@ -76,6 +76,9 @@ const routeFor = (mode: AlertMode): string => {
 
 const FORM = 'Create alert · form';
 
+const TEST_NOTIFICATIONS = ['sent', 'no-alerts'] as const;
+type TestNotification = (typeof TEST_NOTIFICATIONS)[number];
+
 export const createAlertMocks = defineStoryMocks({
 	controls: {
 		alertMode: choiceControl<AlertMode>('Alert being created', {
@@ -96,6 +99,13 @@ export const createAlertMocks = defineStoryMocks({
 			value: 3,
 			max: 6,
 		}),
+		testNotification: choiceControl<TestNotification>('Test notification', {
+			group: 'Create alert · form',
+			description:
+				'What the test run finds. `sent` raises the success toast, `no-alerts` the error toast saying the condition was not met.',
+			options: TEST_NOTIFICATIONS,
+			value: 'sent',
+		}),
 	},
 	handlers: (values, response) => [
 		rest.post('http://localhost/api/v2/rules', (_req, res, ctx) =>
@@ -107,7 +117,10 @@ export const createAlertMocks = defineStoryMocks({
 				ctx.status(200),
 				ctx.json({
 					status: 'success',
-					data: { alertCount: 2, message: 'Rule tested against the last 6 hours' },
+					data: {
+						alertCount: values.testNotification === 'no-alerts' ? 0 : 2,
+						message: 'Rule tested against the last 6 hours',
+					},
 				}),
 			),
 		),
