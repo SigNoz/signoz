@@ -67,7 +67,9 @@ function QueryAggregationOptions({
 					onChange={onChange}
 					queryData={queryData}
 					maxAggregations={
-						panelType === PANEL_TYPES.VALUE || panelType === PANEL_TYPES.PIE
+						panelType === PANEL_TYPES.VALUE ||
+						panelType === PANEL_TYPES.PIE ||
+						panelType === PANEL_TYPES.TOP_LIST
 							? 1
 							: undefined
 					}
