@@ -284,6 +284,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 				position={legendPosition}
 				averageLegendWidth={averageLegendWidth}
 				showSearch={showSearch}
+				itemLabel="groups"
 				focusedSeriesIndex={focusedSeriesIndex}
 				onAction={onLegendAction}
 			/>
