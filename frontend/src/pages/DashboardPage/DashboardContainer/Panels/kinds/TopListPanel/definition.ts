@@ -6,6 +6,7 @@ import type { PanelDefinition } from '../../types/panelDefinition';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
+import { getTopListDataWarning } from './warnings';
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
@@ -38,6 +39,7 @@ export const definition: PanelDefinition<'signoz/TopListPanel'> = {
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
+	getDataWarning: getTopListDataWarning,
 	actions: {
 		view: true,
 		edit: true,
