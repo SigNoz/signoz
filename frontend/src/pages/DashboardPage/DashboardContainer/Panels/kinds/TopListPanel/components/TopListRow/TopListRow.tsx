@@ -1,4 +1,5 @@
 import {
+	type CSSProperties,
 	memo,
 	useMemo,
 	type KeyboardEvent as ReactKeyboardEvent,
@@ -16,7 +17,7 @@ import styles from './TopListRow.module.scss';
 
 interface TopListRowProps {
 	row: TopListRowData;
-	/** Position in the ranked list; the rank shown is one more. */
+	/** Position in the ranked list. */
 	index: number;
 	unit?: string;
 	precision?: PrecisionOption;
@@ -28,8 +29,6 @@ interface TopListRowProps {
 	) => void;
 	/** Handles a navigation key; returns whether it moved focus. */
 	onNavigate: (index: number, key: string) => boolean;
-	/** Lets the virtualized list measure the row's real height. */
-	measureRef: (element: Element | null) => void;
 }
 
 function TopListRow({
@@ -40,7 +39,6 @@ function TopListRow({
 	thresholds,
 	onSelect,
 	onNavigate,
-	measureRef,
 }: TopListRowProps): JSX.Element {
 	const displayValue = useMemo(
 		() => formatRowValue(row, unit, precision),
@@ -71,7 +69,7 @@ function TopListRow({
 	};
 
 	return (
-		<li ref={measureRef} data-index={index} className={styles.item}>
+		<li className={styles.item}>
 			<button
 				type="button"
 				aria-haspopup={onSelect ? 'menu' : undefined}
@@ -82,24 +80,6 @@ function TopListRow({
 				onClick={handleClick}
 				onKeyDown={handleKeyDown}
 			>
-				<span className={styles.rank}>{index + 1}</span>
-				<TooltipSimple title={row.label} arrow delayDuration={1000}>
-					<span
-						className={cx(styles.label, { [styles.isEmptyLabel]: row.isEmptyLabel })}
-					>
-						{row.label}
-					</span>
-				</TooltipSimple>
-				<span className={styles.track}>
-					<span
-						data-testid="top-list-row-fill"
-						className={styles.fill}
-						style={{
-							width: `${row.ratio * 100}%`,
-							backgroundColor: colors.barColor,
-						}}
-					/>
-				</span>
 				<span
 					data-testid="top-list-row-value"
 					className={cx(styles.value, {
@@ -108,6 +88,27 @@ function TopListRow({
 					style={{ color: colors.valueColor }}
 				>
 					{displayValue}
+				</span>
+				<span className={styles.bar}>
+					<span
+						data-testid="top-list-row-fill"
+						className={cx(styles.fill, {
+							[styles.hasThresholdColor]: !!colors.barColor,
+						})}
+						style={
+							{
+								width: `${row.ratio * 100}%`,
+								'--fill-color': colors.barColor,
+							} as CSSProperties
+						}
+					/>
+					<TooltipSimple title={row.label} arrow delayDuration={1000}>
+						<span
+							className={cx(styles.label, { [styles.isEmptyLabel]: row.isEmptyLabel })}
+						>
+							{row.label}
+						</span>
+					</TooltipSimple>
 				</span>
 			</button>
 		</li>
