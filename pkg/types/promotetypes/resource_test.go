@@ -112,3 +112,46 @@ func TestListPromotedPathsResources(t *testing.T) {
 		})
 	}
 }
+
+func TestIndexMaterializedPathsResources(t *testing.T) {
+	testCases := []struct {
+		name    string
+		query   string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:  "TracesSignal_TracesField",
+			query: "?signal=traces",
+			want:  []string{"traces-field"},
+		},
+		{
+			name:  "LogsSignal_LogsField",
+			query: "?signal=logs",
+			want:  []string{"logs-field"},
+		},
+		{
+			name:    "MissingSignal_Rejected",
+			query:   "",
+			wantErr: true,
+		},
+		{
+			name:    "UnsupportedSignal_Rejected",
+			query:   "?signal=metrics",
+			wantErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			request := httptest.NewRequest("POST", "/api/v1/promoted_path/materialized"+testCase.query, nil)
+			resources, err := IndexMaterializedPathsResources(coretypes.ExtractorContext{Request: request})
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, testCase.want, resourceKinds(resources))
+		})
+	}
+}

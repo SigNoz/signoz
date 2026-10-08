@@ -55,5 +55,27 @@ func (provider *provider) addPromoteRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/promoted_path/materialized", handler.New(provider.authzMiddleware.CheckResources(provider.promoteHandler.IndexMaterializedPaths, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName), handler.OpenAPIDef{
+		ID:                  "IndexMaterializedPaths",
+		Tags:                []string{"promote"},
+		Summary:             "Index materialized paths",
+		Description:         "This endpoint indexes the JSON sub-columns of materialized paths whose columns are indexed and returns the indexed and skipped paths.",
+		Request:             nil,
+		RequestQuery:        new(promotetypes.IndexMaterializedPathsParams),
+		RequestContentType:  "",
+		Response:            new(promotetypes.IndexMaterializedPathsResult),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLogsField.Scope(coretypes.VerbUpdate), coretypes.ResourceMetaResourceTracesField.Scope(coretypes.VerbUpdate)}),
+	}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+		Verb:      coretypes.VerbUpdate,
+		Category:  coretypes.ActionCategoryConfigurationChange,
+		Selector:  coretypes.WildcardSelector,
+		Resources: promotetypes.IndexMaterializedPathsResources,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }
