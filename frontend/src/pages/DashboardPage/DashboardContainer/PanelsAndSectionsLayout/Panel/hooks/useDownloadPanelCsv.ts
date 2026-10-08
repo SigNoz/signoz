@@ -3,6 +3,7 @@ import logEvent from 'api/common/logEvent';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { getTableCsvRows } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TablePanel/tableCsv';
+import { getTopListCsvRows } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TopListPanel/csv';
 import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import type { PanelOfKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
 import { downloadCsv } from 'pages/DashboardPage/DashboardContainer/Panels/utils/downloadCsv';
@@ -15,10 +16,9 @@ interface UseDownloadPanelCsvArgs {
 	data: PanelQueryData;
 	/**
 	 * Whether the kind's definition declares CSV as a downloadable format
-	 * (`actions.download.csv`). Only kinds drawn from a joined scalar table
-	 * (Table, Scatter Plot) carry tabular data, so this is the same gate the menu
-	 * uses — kept here so the callback stays a no-op when invoked for a kind that
-	 * can't produce CSV.
+	 * (`actions.download.csv`). Only Table, Scatter Plot and Top List carry tabular
+	 * data, so this is the same gate the menu uses — kept here so the callback stays a
+	 * no-op when invoked for a kind that can't produce CSV.
 	 */
 	canDownloadCsv: boolean;
 }
@@ -38,10 +38,13 @@ export function useDownloadPanelCsv({
 		if (!canDownloadCsv) {
 			return;
 		}
-		const rows = getTableCsvRows(
-			panel as PanelOfKind<'signoz/TablePanel' | 'signoz/ScatterPlotPanel'>,
-			data,
-		);
+		const rows =
+			panel.spec.plugin.kind === 'signoz/TopListPanel'
+				? getTopListCsvRows(panel as PanelOfKind<'signoz/TopListPanel'>, data)
+				: getTableCsvRows(
+						panel as PanelOfKind<'signoz/TablePanel' | 'signoz/ScatterPlotPanel'>,
+						data,
+					);
 		if (rows.length === 0) {
 			return;
 		}
