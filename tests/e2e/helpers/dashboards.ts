@@ -11,6 +11,8 @@ import apmMetricsTemplate from '../testdata/apm-metrics.json';
 import chartDataTemplate from '../testdata/chart-data-dashboard.json';
 import variablesTemplate from '../testdata/variables-dashboard.json';
 
+import { storageKey } from './base-path';
+
 // ─── Constants ───────────────────────────────────────────────────────────
 //
 // UI strings and well-known values referenced both within this file and by
@@ -45,7 +47,8 @@ export async function authToken(page: Page): Promise<string> {
 	}
 	return page.evaluate(
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		() => (globalThis as any).localStorage.getItem('AUTH_TOKEN') || '',
+		(key) => (globalThis as any).localStorage.getItem(key) || '',
+		storageKey('AUTH_TOKEN'),
 	);
 }
 
