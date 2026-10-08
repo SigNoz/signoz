@@ -1,6 +1,6 @@
 import { Typography } from '@signozhq/ui/typography';
 
-import TokenBreakdown from '../TraceTooltip/TokenBreakdown';
+import TokenBreakdown from '../TooltipPrimitives/TokenBreakdown';
 import type { SpantypesTraceAITokensDTO } from 'api/generated/services/sigNoz.schemas';
 
 import styles from './EntityMetadataRow.module.scss';

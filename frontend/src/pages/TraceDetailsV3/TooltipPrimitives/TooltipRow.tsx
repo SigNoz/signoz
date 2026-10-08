@@ -1,7 +1,7 @@
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
-import styles from './TraceTooltip.module.scss';
+import styles from './TooltipPrimitives.module.scss';
 
 interface TooltipRowProps {
 	label: string;

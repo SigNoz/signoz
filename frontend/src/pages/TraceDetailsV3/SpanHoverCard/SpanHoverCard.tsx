@@ -15,8 +15,8 @@ import { toFixed } from 'utils/toFixed';
 
 import { getAIUsageDetails, SpanAiDetails } from './aiUsage';
 import SpanUsageBreakdown from './SpanUsageBreakdown';
-import TooltipRow from '../TraceTooltip/TooltipRow';
-import TooltipSection from '../TraceTooltip/TooltipSection';
+import TooltipRow from '../TooltipPrimitives/TooltipRow';
+import TooltipSection from '../TooltipPrimitives/TooltipSection';
 
 import styles from './SpanHoverCard.module.scss';
 
