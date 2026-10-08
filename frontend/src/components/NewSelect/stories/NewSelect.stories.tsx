@@ -135,6 +135,51 @@ const LONG_LABEL_OPTION = {
 	value: 'checkout-payment-authorisation',
 };
 
+/** Truncation: hovering a cut-off option reveals its full label beside the row. */
+export const TruncatedOption: Story = {
+	args: { options: [LONG_LABEL_OPTION, ...options] },
+	play: async (): Promise<void> => {
+		await userEvent.click(
+			await screen.findByRole('combobox', { name: 'Service' }),
+		);
+		await userEvent.hover(
+			await screen.findByRole('option', { name: LONG_LABEL_OPTION.label }),
+		);
+		await screen.findByRole('tooltip', { name: LONG_LABEL_OPTION.label });
+	},
+};
+
+/** Truncation: hovering a cut-off selected value reveals it in full. */
+export const TruncatedValue: Story = {
+	args: {
+		options: [LONG_LABEL_OPTION, ...options],
+		value: LONG_LABEL_OPTION.value,
+	},
+	play: async (): Promise<void> => {
+		await userEvent.hover(await screen.findByText(LONG_LABEL_OPTION.label));
+		await screen.findByRole('tooltip', { name: LONG_LABEL_OPTION.label });
+	},
+};
+
+/** Truncation: a multi-select option reveals its full label the same way. */
+export const MultiTruncatedOption: Story = {
+	render: (): JSX.Element => (
+		<CustomMultiSelect
+			aria-label="Services"
+			options={[LONG_LABEL_OPTION, ...options]}
+		/>
+	),
+	play: async (): Promise<void> => {
+		await userEvent.click(
+			await screen.findByRole('combobox', { name: 'Services' }),
+		);
+		await userEvent.hover(
+			await screen.findByRole('option', { name: LONG_LABEL_OPTION.label }),
+		);
+		await screen.findByRole('tooltip', { name: LONG_LABEL_OPTION.label });
+	},
+};
+
 /**
  * Every tooltip the select renders, held open: the selected chip revealing the
  * option label it was cut from. Nothing bounds that label, so the chip is given

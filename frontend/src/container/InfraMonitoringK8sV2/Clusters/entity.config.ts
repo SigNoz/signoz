@@ -123,6 +123,7 @@ export const clusterEntityConfig: K8sEntityConfig<InframonitoringtypesClusterRec
 		details: {
 			category: InfraMonitoringEntity.CLUSTERS,
 			eventCategory: InfraMonitoringEvents.Cluster,
+			tabsConfig: { showOverview: true },
 			queryKeyPrefix: 'cluster',
 			getSelectedItemExpression: k8sClusterGetSelectedItemExpression,
 			fetchEntityData,

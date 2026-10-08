@@ -4,26 +4,33 @@ import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import type { NewPanelTarget } from '../patchOps';
 import { PANELS } from '../Panels/registry';
 import {
 	PANEL_TYPE_TO_PANEL_KIND,
 	type PanelKind,
 } from '../Panels/types/panelKind';
 
-// New (unsaved) panels use a fixed id segment, carrying kind + target section in the
-// query (`/panel/new?panelKind=…&layoutIndex=…`); the real id is generated on save.
+// New (unsaved) panels use a fixed id segment, carrying kind + target in the query
+// (`/panel/new?panelKind=…&layoutIndex=<index|root>` or `&newSection=<title>`).
 export const NEW_PANEL_ID = 'new';
 const PANEL_KIND_PARAM = 'panelKind';
 const LAYOUT_INDEX_PARAM = 'layoutIndex';
+const NEW_SECTION_PARAM = 'newSection';
+const ROOT_LAYOUT = 'root';
 
 /** Query string (incl. leading `?`) for the new-panel editor route. */
 export function newPanelSearch(
 	panelKind: PanelKind,
-	layoutIndex?: number,
+	target?: NewPanelTarget,
 ): string {
 	const params = new URLSearchParams({ [PANEL_KIND_PARAM]: panelKind });
-	if (layoutIndex !== undefined) {
-		params.set(LAYOUT_INDEX_PARAM, String(layoutIndex));
+	if (target?.type === 'section') {
+		params.set(LAYOUT_INDEX_PARAM, String(target.layoutIndex));
+	} else if (target?.type === 'root') {
+		params.set(LAYOUT_INDEX_PARAM, ROOT_LAYOUT);
+	} else if (target?.type === 'newSection') {
+		params.set(NEW_SECTION_PARAM, target.title);
 	}
 	return `?${params.toString()}`;
 }
@@ -75,12 +82,21 @@ export function buildExportPanelLink({
 	}=${encodeURIComponent(encodeURIComponent(JSON.stringify(query)))}`;
 }
 
-/** Target section index for a new panel, or undefined when unset/invalid. */
-export function parseNewPanelLayoutIndex(search: string): number | undefined {
-	const raw = new URLSearchParams(search).get(LAYOUT_INDEX_PARAM);
+export function parseNewPanelTarget(
+	search: string,
+): NewPanelTarget | undefined {
+	const params = new URLSearchParams(search);
+	const title = params.get(NEW_SECTION_PARAM)?.trim();
+	if (title) {
+		return { type: 'newSection', title };
+	}
+	const raw = params.get(LAYOUT_INDEX_PARAM);
+	if (raw === ROOT_LAYOUT) {
+		return { type: 'root' };
+	}
 	if (raw === null || raw === '') {
 		return undefined;
 	}
 	const n = Number(raw);
-	return Number.isNaN(n) ? undefined : n;
+	return Number.isNaN(n) ? undefined : { type: 'section', layoutIndex: n };
 }

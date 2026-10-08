@@ -26,6 +26,7 @@ import {
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 import { HeatmapChartProps } from 'lib/visualization/charts/types';
+import type { LegendLayout } from 'lib/visualization/layout/ChartLayout/ChartLayout';
 import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
 import {
 	buildHeatmapConfig,
@@ -277,11 +278,13 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 	}, []);
 
 	const groupLegend = useCallback(
-		(averageLegendWidth: number): React.ReactNode => (
+		({ averageLegendWidth, showSearch }: LegendLayout): React.ReactNode => (
 			<Legend
 				items={legendItems}
 				position={legendPosition}
 				averageLegendWidth={averageLegendWidth}
+				showSearch={showSearch}
+				itemLabel="groups"
 				focusedSeriesIndex={focusedSeriesIndex}
 				onAction={onLegendAction}
 			/>

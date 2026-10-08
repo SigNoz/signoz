@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { newPanelSearch, NEW_PANEL_ID } from '../PanelEditor/newPanelRoute';
+import type { NewPanelTarget } from '../patchOps';
 import type { PanelKind } from '../Panels/types/panelKind';
 import { clearColumnWidths } from '../Panels/utils/columnWidthStorage';
 import { useOpenPanelEditor } from './useOpenPanelEditor';
@@ -12,8 +13,8 @@ interface UseCreatePanelResult {
 	closePicker: () => void;
 	/** The section the picker was opened against — seeds its section dropdown. */
 	targetLayoutIndex: number | undefined;
-	/** `layoutIndex` overrides the opened-against target (the dropdown's choice). */
-	createPanel: (panelKind: PanelKind, layoutIndex?: number) => void;
+	/** `target` overrides the opened-against section (the picker's choice). */
+	createPanel: (panelKind: PanelKind, target?: NewPanelTarget) => void;
 }
 
 /**
@@ -38,9 +39,13 @@ export function useCreatePanel(): UseCreatePanelResult {
 	}, []);
 
 	const createPanel = useCallback(
-		(panelKind: PanelKind, targetIndex?: number): void => {
+		(panelKind: PanelKind, pickedTarget?: NewPanelTarget): void => {
 			setIsPickerOpen(false);
-			const target = targetIndex ?? layoutIndex;
+			const target =
+				pickedTarget ??
+				(layoutIndex === undefined
+					? undefined
+					: { type: 'section' as const, layoutIndex });
 			// Every draft shares the sentinel id, so an abandoned draft's column widths
 			// would otherwise seed this one.
 			clearColumnWidths(NEW_PANEL_ID);
