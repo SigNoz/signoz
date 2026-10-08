@@ -118,6 +118,77 @@ func NewTelemetryMetaStore(
 	return t
 }
 
+// GetMaterializedKeys sets each key's Indexes to the skip indexes built on its column alone.
+func (t *telemetryMetaStore) GetMaterializedKeys(ctx context.Context, signal telemetrytypes.Signal) ([]*telemetrytypes.TelemetryFieldKey, error) {
+	var keys []*telemetrytypes.TelemetryFieldKey
+	var dbName, localTableName string
+	var err error
+	switch signal {
+	case telemetrytypes.SignalTraces:
+		keys, err = t.tracesTblStatementToFieldKeys(ctx)
+		dbName, localTableName = t.tracesDBName, tracestelemetryschema.SpanIndexV3LocalTableName
+	case telemetrytypes.SignalLogs:
+		keys, err = t.logsTblStatementToFieldKeys(ctx)
+		dbName, localTableName = t.logsDBName, logstelemetryschema.LogsV2LocalTableName
+	default:
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "materialized keys are not supported for signal %s", signal.StringValue())
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	indexes, err := t.listColumnSkipIndexes(ctx, signal, dbName, localTableName)
+	if err != nil {
+		return nil, err
+	}
+	for _, key := range keys {
+		for _, index := range indexes[strings.Trim(telemetrytypes.FieldKeyToMaterializedColumnName(key), "`")] {
+			index.Name = key.Name
+			index.FieldContext = key.FieldContext
+			index.FieldDataType = key.FieldDataType
+			key.Indexes = append(key.Indexes, index)
+		}
+	}
+
+	return keys, nil
+}
+
+// listColumnSkipIndexes leaves out indexes on expressions or multiple columns.
+func (t *telemetryMetaStore) listColumnSkipIndexes(ctx context.Context, signal telemetrytypes.Signal, dbName, localTableName string) (map[string][]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
+	ctx = withTelemetryContext(ctx, signal, "listColumnSkipIndexes")
+	sb := sqlbuilder.Select("name", "type_full", "expr", "granularity").From(SkipIndexTableName)
+	sb.Where(sb.Equal("database", dbName), sb.Equal("table", localTableName))
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to load skip indexes of %s.%s", dbName, localTableName)
+	}
+	defer rows.Close()
+
+	indexes := map[string][]telemetrytypes.TelemetryFieldKeySkipIndex{}
+	for rows.Next() {
+		var name, typeFull, expr string
+		var granularity uint64
+		if err := rows.Scan(&name, &typeFull, &expr, &granularity); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan skip index")
+		}
+		column := strings.Trim(expr, "`")
+		if strings.ContainsAny(column, "`,( ") {
+			continue
+		}
+		indexes[column] = append(indexes[column], telemetrytypes.TelemetryFieldKeySkipIndex{
+			BaseColumn:      column,
+			IndexName:       name,
+			IndexType:       typeFull,
+			IndexExpression: expr,
+			Granularity:     int(granularity),
+		})
+	}
+
+	return indexes, rows.Err()
+}
+
 // tracesTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the traces table.
 func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{

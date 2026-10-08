@@ -72,3 +72,23 @@ func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
 
 	render.Success(w, http.StatusOK, paths)
 }
+
+func (h *handler) IndexMaterializedPaths(w http.ResponseWriter, r *http.Request) {
+	var params promotetypes.IndexMaterializedPathsParams
+	if err := binding.Query.BindQuery(r.URL.Query(), &params); err != nil {
+		render.Error(w, err)
+		return
+	}
+	if err := params.Validate(); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	paths, err := h.module.IndexMaterializedPaths(r.Context(), params)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, paths)
+}
