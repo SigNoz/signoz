@@ -2147,6 +2147,52 @@ func TestNumberPanelDefaults(t *testing.T) {
 	assert.Contains(t, outputStr, `"operator":"above"`, "expected stored/response JSON to contain operator:above")
 }
 
+func TestTopListPanelSpec(t *testing.T) {
+	data := []byte(`{
+		"variables": [],
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"links": [],
+					"plugin": {
+						"kind": "signoz/TopListPanel",
+						"spec": {
+							"formatting": {"unit": "ms", "decimalPrecision": 2},
+							"thresholds": [{"value": 500, "operator": "above", "format": "background", "color": "Red"}]
+						}
+					},
+					"queries": [{"kind": "scalar", "spec": {"plugin": {"kind": "signoz/ClickHouseSQL", "spec": {"name": "A", "query": "SELECT 1"}}}}]
+				}
+			}
+		},
+		"links": [],
+		"layouts": []
+	}`)
+	d, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &TopListPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+	spec := d.Panels["p1"].Spec.Plugin.Spec.(*TopListPanelSpec)
+	assert.Equal(t, "ms", spec.Formatting.Unit)
+	require.Len(t, spec.Thresholds, 1)
+	assert.Equal(t, "background", spec.Thresholds[0].Format.ValueOrDefault())
+
+	output, err := json.Marshal(d)
+	require.NoError(t, err, "marshal dashboard failed")
+	roundTripped, err := unmarshalDashboard(output)
+	require.NoError(t, err, "round trip failed")
+	require.IsType(t, &TopListPanelSpec{}, roundTripped.Panels["p1"].Spec.Plugin.Spec)
+	roundTrippedSpec := roundTripped.Panels["p1"].Spec.Plugin.Spec.(*TopListPanelSpec)
+	assert.Equal(t, spec.Formatting, roundTrippedSpec.Formatting)
+	assert.Equal(t, spec.Thresholds, roundTrippedSpec.Thresholds)
+
+	t.Run("UnknownField_Rejected", func(t *testing.T) {
+		_, err := unmarshalDashboard([]byte(strings.Replace(string(data), `"formatting"`, `"legend": {}, "formatting"`, 1)))
+		assert.Error(t, err)
+	})
+}
+
 // TestPersesFixtureStorageRoundTrip exercises the typed → map[string]any →
 // typed cycle that the create/get path performs against the kitchen-sink
 // fixture. Catches plugin specs whose UnmarshalJSON expects a different shape
@@ -2431,7 +2477,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		switch panelKind {
 		case "signoz/ListPanel":
 			return "raw"
-		case "signoz/TablePanel", "signoz/NumberPanel", "signoz/PieChartPanel", "signoz/HistogramPanel":
+		case "signoz/TablePanel", "signoz/NumberPanel", "signoz/PieChartPanel", "signoz/HistogramPanel", "signoz/TopListPanel":
 			return "scalar"
 		default:
 			return "time_series"
@@ -2482,6 +2528,13 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		// Composite sub-queries
 		{"Table+Composite(promql)", mkComposite("signoz/TablePanel", "promql", `{"name":"A","query":"up"}`), true},
 		{"Table+Composite(clickhouse)", mkComposite("signoz/TablePanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
+		{"TopList+ClickHouse", mkQuery("signoz/TopListPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
+		{"TopList+PromQL", mkQuery("signoz/TopListPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"TopList+Formula", mkQuery("signoz/TopListPanel", "signoz/Formula", `{"name":"F1","expression":"A+B"}`), false},
+		{"TopList+TraceOperator", mkQuery("signoz/TopListPanel", "signoz/TraceOperator", `{"name":"T1","expression":"A => B"}`), false},
+		{"TopList+Composite(clickhouse)", mkComposite("signoz/TopListPanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
+		{"TopList+Composite(formula)", mkComposite("signoz/TopListPanel", "builder_formula", `{"name":"F1","expression":"A+B"}`), false},
+		{"TopList+Composite(promql)", mkComposite("signoz/TopListPanel", "promql", `{"name":"A","query":"up"}`), true},
 	}
 
 	for _, tc := range cases {
