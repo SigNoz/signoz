@@ -103,13 +103,12 @@ function EntityMetadataRow({
 				</EntityMetadataItem>
 			)}
 
-			{hasValue(tokens?.totalInput) && (
+			{tokens && (hasValue(tokens.totalInput) || hasValue(tokens.output)) && (
 				<EntityMetadataItem
 					tooltip={<TokenUsageTooltip tokens={tokens} />}
 					icon={<Coins size={ICON_SIZE} />}
 				>
-					Tokens: {formatTokens(tokens.totalInput)}
-					{hasValue(tokens.output) && ` → ${formatTokens(tokens.output)}`}
+					Tokens: {formatTokens(tokens.totalInput)} → {formatTokens(tokens.output)}
 				</EntityMetadataItem>
 			)}
 

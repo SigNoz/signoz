@@ -74,8 +74,9 @@ export function hasValue(value: number | null | undefined): value is number {
 	return value !== undefined && value !== null;
 }
 
-export function formatTokens(value: number): string {
-	return value.toLocaleString('en-US');
+/** Missing values render as `-`. */
+export function formatTokens(value: number | null | undefined): string {
+	return hasValue(value) ? value.toLocaleString('en-US') : '-';
 }
 
 export function formatCost(value: number): string {
