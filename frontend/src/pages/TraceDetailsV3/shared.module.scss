@@ -36,10 +36,6 @@
 }
 
 .tooltipTitle {
-	--typography-font-family: var(--code-small-500-font-family);
-	--typography-font-size: var(--code-small-500-font-size);
-	--typography-font-weight: var(--code-small-500-font-weight);
-	--typography-line-height: var(--code-small-500-line-height);
-	letter-spacing: var(--code-small-500-letter-spacing);
+	font-family: 'SF Mono', monospace;
 	word-break: break-all;
 }

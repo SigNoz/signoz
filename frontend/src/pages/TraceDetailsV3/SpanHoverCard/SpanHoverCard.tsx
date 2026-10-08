@@ -62,7 +62,12 @@ export function SpanTooltipContent({
 	return (
 		<div className={styles.content}>
 			<div className={styles.header}>
-				<Typography.Text className={styles.title} style={{ color }}>
+				<Typography.Text
+					className={styles.title}
+					size="small"
+					weight="medium"
+					style={{ color }}
+				>
 					{spanName}
 				</Typography.Text>
 				{ai?.usage && (
