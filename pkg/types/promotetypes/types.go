@@ -11,6 +11,20 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+// maxPromotePathsPerRequest caps a promote batch so one request cannot flood
+// the cluster with index DDL.
+const maxPromotePathsPerRequest = 100
+
+const (
+	maxIndexNGramLength      = 64
+	maxIndexBloomFilterBytes = 1 << 20
+	maxIndexHashFunctions    = 64
+)
+
+// indexTypeRe anchors the whole index type string, so only a whitelisted type
+// with bounded numeric parameters can reach the index DDL.
+var indexTypeRe = regexp.MustCompile(`^(?:minmax|set\(\s*(\d{1,7})\s*\)|bloom_filter(?:\(\s*(\d+(?:\.\d+)?|\.\d+)\s*\))?|tokenbf_v1\(\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\)|ngrambf_v1\(\s*(\d{1,2})\s*,\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\))$`)
+
 type WrappedIndex struct {
 	JSONDataType  telemetrytypes.JSONDataType  `json:"-"`
 	FieldDataType telemetrytypes.FieldDataType `json:"fieldDataType"`
@@ -142,10 +156,6 @@ func (index WrappedIndex) SkipIndexType() (schemamigrator.IndexType, error) {
 	}
 }
 
-// maxPromotePathsPerRequest caps a promote batch so one request cannot flood
-// the cluster with index DDL.
-const maxPromotePathsPerRequest = 100
-
 func ValidatePromotePaths(paths []*PromotePath) error {
 	if len(paths) == 0 {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "paths cannot be empty")
@@ -167,16 +177,6 @@ func ValidatePromotePaths(paths []*PromotePath) error {
 	}
 	return nil
 }
-
-// indexTypeRe anchors the whole index type string, so only a whitelisted type
-// with bounded numeric parameters can reach the index DDL.
-var indexTypeRe = regexp.MustCompile(`^(?:minmax|set\(\s*(\d{1,7})\s*\)|bloom_filter(?:\(\s*(\d+(?:\.\d+)?|\.\d+)\s*\))?|tokenbf_v1\(\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\)|ngrambf_v1\(\s*(\d{1,2})\s*,\s*(\d{1,7})\s*,\s*(\d{1,2})\s*,\s*(\d{1,10})\s*\))$`)
-
-const (
-	maxIndexNGramLength      = 64
-	maxIndexBloomFilterBytes = 1 << 20
-	maxIndexHashFunctions    = 64
-)
 
 func validateIndexType(indexType string) error {
 	matches := indexTypeRe.FindStringSubmatch(indexType)
