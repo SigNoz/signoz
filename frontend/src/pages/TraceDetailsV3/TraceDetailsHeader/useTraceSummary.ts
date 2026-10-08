@@ -9,7 +9,7 @@ interface UseTraceSummaryResult {
 export function useTraceSummary(traceId: string): UseTraceSummaryResult {
 	const { data, isLoading } = useGetTraceSummary(
 		{ traceID: traceId },
-		{ query: { enabled: !!traceId } },
+		{ query: { enabled: !!traceId, keepPreviousData: true } },
 	);
 
 	return { data: data?.data, isLoading };
