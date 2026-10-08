@@ -6,7 +6,7 @@ import { isCustomTimeRange } from 'store/globalTime';
 
 export function logInfraFilterCustomizedEvent(
 	entityType: InfraMonitoringEntity,
-	source: 'quick_filter' | 'search' | 'host_status_toggle',
+	source: 'quick_filter' | 'search' | 'host_status_toggle' | 'status_filter',
 	expression: string,
 	extraKeys?: string[],
 ): void {
