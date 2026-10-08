@@ -45,7 +45,8 @@ function QueryAggregationOptions({
 			isNonMetricSource &&
 			(panelType === PANEL_TYPES.TABLE ||
 				panelType === PANEL_TYPES.SCATTER ||
-				panelType === PANEL_TYPES.PIE)
+				panelType === PANEL_TYPES.PIE ||
+				panelType === PANEL_TYPES.TOP_LIST)
 		) {
 			return { hidden: true, disabled: false, reason: undefined };
 		}
@@ -67,7 +68,9 @@ function QueryAggregationOptions({
 					onChange={onChange}
 					queryData={queryData}
 					maxAggregations={
-						panelType === PANEL_TYPES.VALUE || panelType === PANEL_TYPES.PIE
+						panelType === PANEL_TYPES.VALUE ||
+						panelType === PANEL_TYPES.PIE ||
+						panelType === PANEL_TYPES.TOP_LIST
 							? 1
 							: undefined
 					}

@@ -10,6 +10,8 @@ const AREA_FILL = { fill: 'var(--bg-robin-500)', fillOpacity: 0.22 };
 const RING_TRACK = { stroke: 'var(--l3-background)' };
 const RING_PRIMARY = { stroke: 'var(--bg-robin-500)' };
 const RING_SECONDARY = { stroke: 'var(--bg-robin-400)', strokeOpacity: 0.55 };
+const RING_TRACK_FILL = { fill: 'var(--l3-background)' };
+const BAR_FILL = { fill: 'var(--bg-robin-500)' };
 const DOT_FILL = { fill: 'var(--bg-robin-500)', fillOpacity: 0.55 };
 
 /** `[cx, cy, r]`: a loose up-and-right cloud with one large outlier. */
@@ -55,6 +57,8 @@ const HEATMAP_CELLS = [
 	[0.4, 0.85, 0.7, 0.2],
 	[0.3, 0.65, 0.9, 0.45],
 ];
+// Bar lengths (% of the track) for the top-list sketch, longest first.
+const TOP_LIST_BARS = [100, 76, 54, 34];
 const TEXT_ROWS = [45, 100, 92, 64].map((width, i) => [
 	{ ...(i === 0 ? HEAD : CELL), width },
 ]);
@@ -87,6 +91,30 @@ export const PANEL_TYPE_PREVIEWS: Record<PanelKind, JSX.Element> = {
 	),
 	'signoz/BarChartPanel': (
 		<PreviewBars heights={[80, 58, 44, 30, 18]} fade className={styles.bars} />
+	),
+	'signoz/TopListPanel': (
+		<svg viewBox="0 0 120 44" preserveAspectRatio="none" className={styles.svg}>
+			{TOP_LIST_BARS.map((width, row) => (
+				<g key={width}>
+					<rect
+						x={0}
+						y={row * 11 + 2}
+						width={120}
+						height={7}
+						rx={1.5}
+						style={RING_TRACK_FILL}
+					/>
+					<rect
+						x={0}
+						y={row * 11 + 2}
+						width={(width / 100) * 120}
+						height={7}
+						rx={1.5}
+						style={BAR_FILL}
+					/>
+				</g>
+			))}
+		</svg>
 	),
 	'signoz/HistogramPanel': (
 		<PreviewBars
