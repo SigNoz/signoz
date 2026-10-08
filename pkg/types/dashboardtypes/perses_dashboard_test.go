@@ -2530,10 +2530,11 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		{"Table+Composite(clickhouse)", mkComposite("signoz/TablePanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
 		{"TopList+ClickHouse", mkQuery("signoz/TopListPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
 		{"TopList+PromQL", mkQuery("signoz/TopListPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
-		{"TopList+Formula", mkQuery("signoz/TopListPanel", "signoz/Formula", `{"name":"F1","expression":"A+B"}`), true},
-		{"TopList+TraceOperator", mkQuery("signoz/TopListPanel", "signoz/TraceOperator", `{"name":"T1","expression":"A => B"}`), true},
+		{"TopList+Formula", mkQuery("signoz/TopListPanel", "signoz/Formula", `{"name":"F1","expression":"A+B"}`), false},
+		{"TopList+TraceOperator", mkQuery("signoz/TopListPanel", "signoz/TraceOperator", `{"name":"T1","expression":"A => B"}`), false},
 		{"TopList+Composite(clickhouse)", mkComposite("signoz/TopListPanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
-		{"TopList+Composite(formula)", mkComposite("signoz/TopListPanel", "builder_formula", `{"name":"F1","expression":"A+B"}`), true},
+		{"TopList+Composite(formula)", mkComposite("signoz/TopListPanel", "builder_formula", `{"name":"F1","expression":"A+B"}`), false},
+		{"TopList+Composite(promql)", mkComposite("signoz/TopListPanel", "promql", `{"name":"A","query":"up"}`), true},
 	}
 
 	for _, tc := range cases {
