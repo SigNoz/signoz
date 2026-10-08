@@ -179,7 +179,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		totalErrorSpansCount: 0,
 		ai: {
 			tokens: {
-				totalInput: 12040,
+				totalInput: 15150,
 				input: 12040,
 				output: 3110,
 				cacheRead: 0,
@@ -217,7 +217,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		mockSummary(traceMetadata);
 		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
-		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
+		expect(screen.getByText('Tokens: 15,150 → 3,110')).toBeInTheDocument();
 		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
 	});
 
@@ -241,19 +241,6 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 
 		expect(screen.getByText('Tokens: 0 → 0')).toBeInTheDocument();
 		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
-	});
-
-	it('uses totalInput as the input count when the summary sends it', () => {
-		mockSummary({
-			...traceMetadata,
-			ai: {
-				...traceMetadata.ai,
-				tokens: { ...traceMetadata.ai.tokens, totalInput: 15150 },
-			},
-		} as SpantypesGettableTraceSummaryDTO);
-		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
-
-		expect(screen.getByText('Tokens: 15,150 → 3,110')).toBeInTheDocument();
 	});
 
 	it('shows a dash for a missing totalInput', () => {
@@ -293,7 +280,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		} as unknown as SpantypesGettableTraceSummaryDTO);
 		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
-		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
+		expect(screen.getByText('Tokens: 15,150 → 3,110')).toBeInTheDocument();
 		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
 	});
 
