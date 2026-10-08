@@ -1,0 +1,13 @@
+/* Plain CSS only (no SCSS syntax): other modules `composes` from this file. */
+
+.tooltipBody {
+	display: flex;
+	flex-direction: column;
+	letter-spacing: var(--paragraph-small-400-letter-spacing);
+	color: var(--l1-foreground-hover);
+}
+
+.tooltipTitle {
+	font-family: 'SF Mono', monospace;
+	word-break: break-all;
+}

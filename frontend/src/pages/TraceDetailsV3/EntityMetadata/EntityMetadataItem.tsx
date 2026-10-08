@@ -1,11 +1,12 @@
 import { ReactNode } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
+
+import TraceTooltip from '../TooltipPrimitives/TraceTooltip';
 
 import styles from './EntityMetadataItem.module.scss';
 
 interface EntityMetadataItemProps {
-	tooltip: string;
+	tooltip: ReactNode;
 	icon?: ReactNode;
 	children: ReactNode;
 }
@@ -16,12 +17,12 @@ function EntityMetadataItem({
 	children,
 }: EntityMetadataItemProps): JSX.Element {
 	return (
-		<TooltipSimple title={tooltip}>
+		<TraceTooltip title={tooltip}>
 			<span className={styles.item}>
 				{icon}
 				<Typography.Text as="span">{children}</Typography.Text>
 			</span>
-		</TooltipSimple>
+		</TraceTooltip>
 	);
 }
 

@@ -195,6 +195,8 @@ function TraceDetailsHeader({
 								DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
 							)}
 							statusCode={traceSummary.rootSpanStatusCode}
+							tokens={traceSummary.ai?.tokens}
+							cost={traceSummary.ai?.totalCost}
 						/>
 					) : (
 						<DetailsLoader />
