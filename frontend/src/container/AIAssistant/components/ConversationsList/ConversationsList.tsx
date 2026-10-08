@@ -193,7 +193,6 @@ export default function ConversationsList({
 					onChange={(e): void => setSearchQuery(e.target.value)}
 					placeholder="Search conversations…"
 					prefix={<Search size={12} />}
-					className={styles.search}
 				/>
 			</div>
 

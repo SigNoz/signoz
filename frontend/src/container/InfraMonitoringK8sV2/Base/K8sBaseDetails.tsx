@@ -202,7 +202,7 @@ export default function K8sBaseDetails<T>({
 			>
 				<X />
 			</Button>
-			<Divider type="vertical" />
+			<Divider orientation="vertical" />
 			<Typography.Text className={styles.title}>
 				{entityName ||
 					((isEntityError || hasResponseError) && 'Failed to load entity details') ||

@@ -62,19 +62,20 @@ function SearchBar({
 					<div className="search__sort-btn-text">Sort</div>
 				</Button>
 			</Popover>
-			<Input
-				className="search__input"
-				placeholder="Search by name, description, or tags..."
-				prefix={
-					<Search
-						size={12}
-						color={Color.BG_VANILLA_400}
-						style={{ opacity: '0.4' }}
-					/>
-				}
-				value={searchQuery}
-				onChange={onSearch}
-			/>
+			<div className="search__input">
+				<Input
+					placeholder="Search by name, description, or tags..."
+					prefix={
+						<Search
+							size={12}
+							color={Color.BG_VANILLA_400}
+							style={{ opacity: '0.4' }}
+						/>
+					}
+					value={searchQuery}
+					onChange={onSearch}
+				/>
+			</div>
 			<Tooltip
 				title={
 					!hasEditPermission

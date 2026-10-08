@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { SolidAlertCircle } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
-import { ComboboxSimple } from '@signozhq/ui/combobox';
+import { Combobox } from '@signozhq/ui/combobox';
+import type { ComboboxItemType } from '@signozhq/ui/combobox';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
@@ -21,7 +23,8 @@ import { GcpSetupFormValues, SetupFlow } from './types';
 
 import styles from './CloudAccountSetupDrawer.module.scss';
 
-const REGION_ITEMS = GCP_REGIONS.map((region) => ({
+const REGION_ITEMS: ComboboxItemType[] = GCP_REGIONS.map((region) => ({
+	type: 'item',
 	value: region.value,
 	label: `${region.label} (${region.value})`,
 }));
@@ -70,17 +73,16 @@ function CloudAccountSetupDrawer({
 	const footer = (
 		<div className={styles.footerContainer}>
 			{submitError && (
-				<Callout
-					type="error"
-					size="small"
-					showIcon
-					action="dismissible"
-					onClick={clearSubmitError}
-					title="Failed to connect GCP account"
+				<Callout.Closeable
+					color="danger"
+					size="sm"
+					icon={<SolidAlertCircle />}
+					closed={false}
+					onClose={clearSubmitError}
 					testId="gcp-connect-error"
 				>
-					{submitError}
-				</Callout>
+					Failed to connect GCP account. {submitError}
+				</Callout.Closeable>
 			)}
 			<div className={styles.footer}>
 				<Button
@@ -139,7 +141,6 @@ function CloudAccountSetupDrawer({
 						<>
 							<Input
 								id="gcp-account-name-input"
-								className={styles.fullWidth}
 								placeholder="e.g. my-org or billing@company.com"
 								value={field.value}
 								onChange={(e): void => field.onChange(e.target.value)}
@@ -159,7 +160,7 @@ function CloudAccountSetupDrawer({
 					)}
 				/>
 			</div>
-			<div className={styles.drawerSection}>
+			<div className={cx(styles.drawerSection, styles.monoInput)}>
 				<FieldLabel
 					htmlFor="gcp-deployment-project-id-input"
 					label="Deployment Project ID"
@@ -174,7 +175,6 @@ function CloudAccountSetupDrawer({
 						<>
 							<Input
 								id="gcp-deployment-project-id-input"
-								className={cx(styles.fullWidth, styles.mono)}
 								placeholder="e.g. my-deployment-project-123"
 								value={field.value}
 								onChange={(e): void => field.onChange(e.target.value)}
@@ -207,17 +207,13 @@ function CloudAccountSetupDrawer({
 					rules={{ required: 'Please select a region' }}
 					render={({ field, fieldState }): JSX.Element => (
 						<>
-							<ComboboxSimple
+							<Combobox
 								id="gcp-deployment-region-select"
-								className={cx(styles.fullWidth, {
-									[styles.regionEmpty]: !field.value,
-								})}
 								items={REGION_ITEMS}
-								value={field.value}
-								onChange={(value): void => field.onChange(value as string)}
+								value={field.value || undefined}
+								onChange={(value): void => field.onChange(value ?? '')}
 								placeholder="Select a region..."
-								inputPlaceholder="Search regions…"
-								withPortal={false}
+								searchInputProps={{ placeholder: 'Search regions…' }}
 								testId="gcp-deployment-region-select"
 							/>
 							{fieldState.error && (

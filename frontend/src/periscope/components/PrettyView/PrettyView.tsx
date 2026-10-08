@@ -324,13 +324,15 @@ function PrettyView({
 		<div className="pretty-view">
 			{searchable && (
 				<div className="pretty-view__search-wrapper">
-					<Input
-						className="pretty-view__search-input"
-						type="text"
-						placeholder="Search for a field..."
-						value={searchQuery}
-						onChange={(e): void => setSearchQuery(e.target.value)}
-					/>
+					<div className="pretty-view__search-input">
+						<Input
+							variant="unstyled"
+							type="text"
+							placeholder="Search for a field..."
+							value={searchQuery}
+							onChange={(e): void => setSearchQuery(e.target.value)}
+						/>
+					</div>
 				</div>
 			)}
 

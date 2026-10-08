@@ -93,7 +93,7 @@ export const pickVariableType = async (type: VariableType): Promise<void> => {
 };
 
 export const typeVariableName = async (name: string): Promise<void> => {
-	const input = await screen.findByTestId('variable-name');
+	const input = await screen.findByTestId('variable-name-field');
 
 	await userEvent.clear(input);
 	await userEvent.type(input, name);

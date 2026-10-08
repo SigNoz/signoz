@@ -264,7 +264,7 @@ function CreateEditRolePageContent(): JSX.Element {
 											value={formData.name}
 											onChange={(e): void => handleFormChange('name', e.target.value)}
 											placeholder="my-custom-role"
-											data-testid="role-name-input"
+											testId="role-name-input"
 										/>
 									</div>
 								) : null}
@@ -279,7 +279,7 @@ function CreateEditRolePageContent(): JSX.Element {
 											handleFormChange('description', e.target.value)
 										}
 										placeholder="Custom role for the support team"
-										data-testid="role-description-input"
+										testId="role-description-input"
 									/>
 								</div>
 							</div>

@@ -5,24 +5,14 @@
 
 	&__input {
 		flex: 1;
-		padding: 6px 8px;
-		.ant-input-prefix {
-			margin-inline-end: 6px;
-		}
 
-		&,
-		input {
-			font-family: Inter;
-			font-size: 14px;
-			line-height: 18px;
-			font-style: normal;
-			letter-spacing: -0.07px;
-			font-weight: 400;
-		}
-		input::placeholder {
-			color: var(--l2-foreground);
-			opacity: 0.4;
-		}
+		// Restyle the @signozhq/ui Input through its CSS tokens.
+		--input-font-family: Inter;
+		--input-font-size: 14px;
+		--input-line-height: 18px;
+		--input-letter-spacing: -0.07px;
+		--input-placeholder: var(--l2-foreground);
+		--input-placeholder-opacity: 0.4;
 	}
 
 	&__new-btn {

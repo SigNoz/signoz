@@ -52,7 +52,10 @@ describe('ModelCostDrawer (integration)', () => {
 			'true',
 		);
 
-		await user.type(screen.getByTestId('drawer-model-id-input'), 'openai:gpt-4o');
+		await user.type(
+			screen.getByTestId('drawer-model-id-input-field'),
+			'openai:gpt-4o',
+		);
 
 		await waitFor(() =>
 			expect(screen.getByTestId('drawer-save-btn')).not.toHaveAttribute(
@@ -80,7 +83,7 @@ describe('ModelCostDrawer (integration)', () => {
 
 		// Make the form dirty without touching the model id: add a pattern, which
 		// mutates the `patterns` form field while leaving the name empty.
-		await user.type(screen.getByTestId('drawer-pattern-input'), 'gpt');
+		await user.type(screen.getByTestId('drawer-pattern-input-field'), 'gpt');
 		await user.click(screen.getByTestId('drawer-pattern-add-btn'));
 
 		await waitFor(() =>
@@ -112,9 +115,12 @@ describe('ModelCostDrawer (integration)', () => {
 			/>,
 		);
 
-		await user.type(screen.getByTestId('drawer-model-id-input'), 'openai:gpt-4o');
-		await user.type(screen.getByTestId('drawer-input-cost'), '3');
-		await user.type(screen.getByTestId('drawer-output-cost'), '9');
+		await user.type(
+			screen.getByTestId('drawer-model-id-input-field'),
+			'openai:gpt-4o',
+		);
+		await user.type(screen.getByTestId('drawer-input-cost-field'), '3');
+		await user.type(screen.getByTestId('drawer-output-cost-field'), '9');
 
 		await user.click(screen.getByTestId('drawer-save-btn'));
 
@@ -137,11 +143,16 @@ describe('ModelCostDrawer (integration)', () => {
 
 		expect(screen.getByText('Edit model cost')).toBeInTheDocument();
 		const modelInput = screen.getByTestId(
-			'drawer-model-id-input',
+			'drawer-model-id-input-field',
 		) as HTMLInputElement;
 		expect(modelInput.value).toBe('gpt-4o');
 		expect(modelInput).toBeDisabled();
-		expect(screen.getByTestId('drawer-provider-select')).toBeDisabled();
+		// The new Select trigger is aria-disabled rather than natively disabled,
+		// so it stays focusable and its tooltip reachable.
+		expect(screen.getByTestId('drawer-provider-select')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('renders a read-only view with a Close button and no save for a viewer', () => {
@@ -195,7 +206,7 @@ describe('ModelCostDrawer (integration)', () => {
 			/>,
 		);
 
-		await user.type(screen.getByTestId('drawer-pattern-input'), 'gpt-5');
+		await user.type(screen.getByTestId('drawer-pattern-input-field'), 'gpt-5');
 		await user.click(screen.getByTestId('drawer-pattern-add-btn'));
 		// The added pattern renders as a removable chip.
 		const removeChip = screen.getByRole('button', {
@@ -255,8 +266,11 @@ describe('ModelCostDrawer (integration)', () => {
 
 		// EMPTY_DRAFT defaults to an override with empty pricing. Fill only the
 		// model id + output cost so the form is dirty but the input cost is missing.
-		await user.type(screen.getByTestId('drawer-model-id-input'), 'openai:gpt-4o');
-		await user.type(screen.getByTestId('drawer-output-cost'), '9');
+		await user.type(
+			screen.getByTestId('drawer-model-id-input-field'),
+			'openai:gpt-4o',
+		);
+		await user.type(screen.getByTestId('drawer-output-cost-field'), '9');
 		await user.click(screen.getByTestId('drawer-save-btn'));
 
 		await expect(
@@ -281,12 +295,12 @@ describe('ModelCostDrawer (integration)', () => {
 		);
 
 		// Pricing is editable while the rule is an override.
-		expect(screen.getByTestId('drawer-input-cost')).toBeEnabled();
+		expect(screen.getByTestId('drawer-input-cost-field')).toBeEnabled();
 
 		// Picking "auto" surfaces a confirm step instead of applying immediately.
 		await user.click(screen.getByTestId('drawer-source-auto'));
 		expect(screen.getByTestId('drawer-reset-confirm-btn')).toBeInTheDocument();
-		expect(screen.getByTestId('drawer-input-cost')).toBeEnabled();
+		expect(screen.getByTestId('drawer-input-cost-field')).toBeEnabled();
 
 		// Keep backs out of the reset.
 		await user.click(screen.getByTestId('drawer-reset-keep-btn'));
@@ -298,7 +312,7 @@ describe('ModelCostDrawer (integration)', () => {
 		await user.click(screen.getByTestId('drawer-source-auto'));
 		await user.click(screen.getByTestId('drawer-reset-confirm-btn'));
 		await waitFor(() =>
-			expect(screen.getByTestId('drawer-input-cost')).toBeDisabled(),
+			expect(screen.getByTestId('drawer-input-cost-field')).toBeDisabled(),
 		);
 	});
 });

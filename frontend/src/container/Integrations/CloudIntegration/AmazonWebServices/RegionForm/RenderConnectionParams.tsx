@@ -29,7 +29,11 @@ function RenderConnectionFields({
 					label="Ingestion URL"
 					rules={[{ required: true, message: 'Please enter ingestion URL' }]}
 				>
-					<Input placeholder="Enter ingestion URL" disabled={isFormDisabled} />
+					<Input
+						placeholder="Enter ingestion URL"
+						disabled={isFormDisabled}
+						disabledTooltip={undefined}
+					/>
 				</Form.Item>
 			)}
 			{!connectionParams?.ingestionKey && (
@@ -38,7 +42,11 @@ function RenderConnectionFields({
 					label="Ingestion Key"
 					rules={[{ required: true, message: 'Please enter ingestion key' }]}
 				>
-					<Input placeholder="Enter ingestion key" disabled={isFormDisabled} />
+					<Input
+						placeholder="Enter ingestion key"
+						disabled={isFormDisabled}
+						disabledTooltip={undefined}
+					/>
 				</Form.Item>
 			)}
 			{!connectionParams?.sigNozApiUrl && (
@@ -47,7 +55,11 @@ function RenderConnectionFields({
 					label="SigNoz API URL"
 					rules={[{ required: true, message: 'Please enter SigNoz API URL' }]}
 				>
-					<Input placeholder="Enter SigNoz API URL" disabled={isFormDisabled} />
+					<Input
+						placeholder="Enter SigNoz API URL"
+						disabled={isFormDisabled}
+						disabledTooltip={undefined}
+					/>
 				</Form.Item>
 			)}
 			{!connectionParams?.sigNozApiKey && (
@@ -56,7 +68,11 @@ function RenderConnectionFields({
 					label="SigNoz API KEY"
 					rules={[{ required: true, message: 'Please enter SigNoz API Key' }]}
 				>
-					<Input placeholder="Enter SigNoz API Key" disabled={isFormDisabled} />
+					<Input
+						placeholder="Enter SigNoz API Key"
+						disabled={isFormDisabled}
+						disabledTooltip={undefined}
+					/>
 				</Form.Item>
 			)}
 		</Form.Item>

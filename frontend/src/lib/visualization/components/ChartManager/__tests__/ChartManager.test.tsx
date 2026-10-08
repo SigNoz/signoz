@@ -137,7 +137,7 @@ describe('ChartManager', () => {
 		expect(screen.getByTestId('row-1')).toBeInTheDocument();
 		expect(screen.getByTestId('row-2')).toBeInTheDocument();
 
-		const filterInput = screen.getByTestId('filter-input');
+		const filterInput = screen.getByTestId('filter-input-field');
 		await userEvent.type(filterInput, 'Series 1');
 
 		// After filter: only Series 1 row is visible, Series 2 row is filtered out

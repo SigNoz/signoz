@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 
 import { RowKeyData, TableColumnDef } from './types';
-import { ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import type { ComboboxItemType } from '@signozhq/ui/combobox';
 
 export const getColumnId = <TData>(column: TableColumnDef<TData>): string =>
 	column.id;
@@ -151,11 +151,12 @@ const DEFAULT_PAGE_SIZES = [10, 20, 30, 50, 100];
 
 export function buildPageSizeItems(
 	calculatedSize?: number | null,
-): ComboboxSimpleItem[] {
-	const items: ComboboxSimpleItem[] = [];
+): ComboboxItemType[] {
+	const items: ComboboxItemType[] = [];
 
 	if (calculatedSize) {
 		items.push({
+			type: 'item',
 			value: calculatedSize.toString(),
 			label: `Auto (${calculatedSize})`,
 			displayValue: calculatedSize.toString(),
@@ -165,6 +166,7 @@ export function buildPageSizeItems(
 	for (const size of DEFAULT_PAGE_SIZES) {
 		if (size !== calculatedSize) {
 			items.push({
+				type: 'item',
 				value: size.toString(),
 				label: size.toString(),
 				displayValue: size.toString(),

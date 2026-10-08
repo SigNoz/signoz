@@ -10,24 +10,20 @@
 		background: var(--l1-background);
 	}
 
+	// Wrapper around the unstyled @signozhq/ui Input: the box is drawn here,
+	// the text is restyled through the Input's CSS tokens.
 	&__search-input {
 		width: 100%;
-		border: 0 !important;
-		border-top: 1px solid var(--l2-border) !important;
-		border-bottom: 1px solid var(--l2-border) !important;
-		border-radius: 0 !important;
-		font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace !important;
-		font-size: var(--data-viewer-font-size, 12px) !important;
-		line-height: 18px !important;
-		background: var(--l1-background) !important;
-		outline: none !important;
-		box-shadow: none !important;
+		border-top: 1px solid var(--l2-border);
+		border-bottom: 1px solid var(--l2-border);
+		background: var(--l1-background);
 
-		&:focus {
-			border: 1px solid var(--l2-border) !important;
-			border-color: var(--primary) !important;
-			outline: none !important;
-			box-shadow: none !important;
+		--input-font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace;
+		--input-font-size: var(--data-viewer-font-size, 12px);
+		--input-line-height: 18px;
+
+		&:focus-within {
+			border-color: var(--primary);
 		}
 	}
 

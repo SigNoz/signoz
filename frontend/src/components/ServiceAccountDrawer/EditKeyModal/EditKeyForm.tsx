@@ -70,7 +70,6 @@ function EditKeyForm({
 					) : (
 						<Input
 							id="edit-key-name"
-							className="edit-key-modal__input"
 							placeholder="Enter key name"
 							{...register('name')}
 						/>

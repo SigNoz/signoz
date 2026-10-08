@@ -1,5 +1,6 @@
 import { type ChangeEvent, useEffect, useState } from 'react';
 import { rangeUtil } from '@grafana/data';
+import { CircleAlert } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { Input } from 'antd';
 
@@ -99,7 +100,7 @@ function DisconnectValuesThresholdInput({
 				}}
 			/>
 			{error && (
-				<Callout type="error" size="small" showIcon>
+				<Callout color="danger" size="sm" icon={<CircleAlert />}>
 					{error}
 				</Callout>
 			)}

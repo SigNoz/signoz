@@ -163,7 +163,9 @@ describe('EditRolePage', () => {
 			renderEditPage();
 
 			await waitFor(() => {
-				expect(screen.queryByTestId('role-name-input')).not.toBeInTheDocument();
+				expect(
+					screen.queryByTestId('role-name-input-field'),
+				).not.toBeInTheDocument();
 			});
 		});
 
@@ -171,7 +173,7 @@ describe('EditRolePage', () => {
 			renderEditPage();
 
 			await waitFor(async () => {
-				const descInput = await screen.findByTestId('role-description-input');
+				const descInput = await screen.findByTestId('role-description-input-field');
 				expect(descInput).toHaveValue(
 					'Custom role for managing billing and invoices.',
 				);
@@ -181,7 +183,7 @@ describe('EditRolePage', () => {
 		it('description input is enabled in edit mode', async () => {
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			expect(descInput).not.toBeDisabled();
 		});
 
@@ -196,7 +198,7 @@ describe('EditRolePage', () => {
 			renderEditPage();
 
 			await waitFor(async () => {
-				const descInput = await screen.findByTestId('role-description-input');
+				const descInput = await screen.findByTestId('role-description-input-field');
 				expect(descInput).toHaveValue(
 					'Custom role for managing billing and invoices.',
 				);
@@ -212,7 +214,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.clear(descInput);
 			await user.type(descInput, 'New description');
 
@@ -224,7 +226,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.type(descInput, ' updated');
 
 			await expect(
@@ -236,7 +238,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			const originalValue = 'Custom role for managing billing and invoices.';
 
 			await user.clear(descInput);
@@ -263,7 +265,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			await screen.findByTestId('role-description-input');
+			await screen.findByTestId('role-description-input-field');
 
 			const cancelBtn = screen.getByTestId('cancel-button');
 			await user.click(cancelBtn);
@@ -285,7 +287,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.clear(descInput);
 			await user.type(descInput, 'Updated description');
 
@@ -310,7 +312,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.type(descInput, ' edited');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -331,7 +333,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.type(descInput, ' changed');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -350,7 +352,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.type(descInput, ' test');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -369,7 +371,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.type(descInput, ' x');
 
 			const saveBtn = screen.getByTestId('save-button');

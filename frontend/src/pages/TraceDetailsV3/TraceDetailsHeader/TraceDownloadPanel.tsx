@@ -50,7 +50,12 @@ function TraceDownloadPanel(): JSX.Element {
 						<X size={16} />
 					</Button>
 				</div>
-				<Progress percent={displayProgress} status="active" showInfo={false} />
+				<Progress
+					percent={displayProgress}
+					active
+					showInfo={false}
+					color="primary"
+				/>
 			</div>
 		</FloatingPanel>
 	);

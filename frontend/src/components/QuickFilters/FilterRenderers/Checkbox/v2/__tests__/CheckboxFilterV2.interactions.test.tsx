@@ -61,7 +61,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(screen.getByTestId('checkbox-value-row-staging')).toBeInTheDocument();
 
 			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'prod');
 
 			await waitFor(() => {
@@ -145,7 +145,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(screen.getByTestId('section-divider-related')).toBeInTheDocument();
 
 			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'prod');
 
 			await waitFor(() => {
@@ -195,7 +195,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			await screen.findByTestId('checkbox-value-row-prod');
 
 			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'prod');
 
 			await waitFor(() => {
@@ -240,7 +240,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			await screen.findByTestId('checkbox-value-row-prod');
 
 			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'xyz-no-match');
 
 			await waitFor(() => {
@@ -348,7 +348,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			await screen.findByTestId('checkbox-value-row-pod-a-v1');
 
 			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'pod-a');
 
 			// After search, both sections should still appear with filtered results

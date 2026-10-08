@@ -175,6 +175,6 @@ describe('UnpricedModelsTab (integration)', () => {
 		// The shared add-cost drawer opens with the model name prefilled.
 		const drawerTitle = await screen.findByText('Add model cost');
 		expect(drawerTitle).toBeInTheDocument();
-		expect(screen.getByTestId('drawer-model-id-input')).toHaveValue(MODEL);
+		expect(screen.getByTestId('drawer-model-id-input-field')).toHaveValue(MODEL);
 	});
 });

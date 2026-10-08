@@ -46,25 +46,19 @@
 	flex-direction: column;
 	gap: 8px;
 
+	// Restyle the @signozhq/ui Input through its CSS tokens.
+	// The error tint comes from the Input's `status="danger"` prop.
+	--input-border-radius: 2px;
+	--input-foreground: var(--l2-foreground);
+	--input-font-size: 14px;
+	--input-line-height: 18px;
+	--input-letter-spacing: -0.07px;
+
 	&__label {
 		color: var(--l1-foreground);
 		font-size: 14px;
 		font-weight: 500;
 		line-height: 20px;
-	}
-
-	&__input {
-		border-radius: 2px;
-		padding: 6px 8px;
-		color: var(--l2-foreground);
-		font-size: 14px;
-		font-weight: 400;
-		line-height: 18px;
-		letter-spacing: -0.07px;
-
-		&--error {
-			border-color: var(--danger-background);
-		}
 	}
 
 	&__error {

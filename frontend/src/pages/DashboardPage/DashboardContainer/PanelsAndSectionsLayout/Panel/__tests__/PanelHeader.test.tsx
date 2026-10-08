@@ -201,7 +201,7 @@ describe('PanelHeader search', () => {
 
 		// Input is controlled to a fixed `searchTerm`, so each keystroke reports a
 		// single character — one is enough to confirm changes propagate.
-		const input = screen.getByTestId('panel-header-search-input');
+		const input = screen.getByTestId('panel-header-search-input-field');
 		await user.type(input, 'f');
 		expect(onSearchChange).toHaveBeenCalledWith('f');
 	});

@@ -1,3 +1,4 @@
+import { SolidInfoCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import ClickHouseQueryBuilder from 'container/QueryBuilder/rawQueryEditors/ClickHouse/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -32,25 +33,21 @@ function ChQuerySection({ alertType }: ChQuerySectionProps): JSX.Element {
 		<>
 			{docLink && (
 				<div className="info-banner-wrapper">
-					<Callout
-						type="info"
-						showIcon
-						title={
-							<span>
-								<a href={docLink} target="_blank" rel="noopener">
-									Learn to write faster, optimized queries
-								</a>
-								{showAgentSkill && (
-									<>
-										{' · Using AI? '}
-										<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
-											Install the SigNoz ClickHouse query agent skill
-										</a>
-									</>
-								)}
-							</span>
-						}
-					/>
+					<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+						<span>
+							<a href={docLink} target="_blank" rel="noopener">
+								Learn to write faster, optimized queries
+							</a>
+							{showAgentSkill && (
+								<>
+									{' · Using AI? '}
+									<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
+										Install the SigNoz ClickHouse query agent skill
+									</a>
+								</>
+							)}
+						</span>
+					</Callout>
 				</div>
 			)}
 			<ClickHouseQueryBuilder

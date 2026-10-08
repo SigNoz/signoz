@@ -73,20 +73,21 @@ function CreateAlertHeader(): JSX.Element {
 				</div>
 			)}
 			<div className="alert-header__content">
-				<Input
-					type="text"
-					value={alertState.name}
-					onChange={(e): void => {
-						const newName = e.target.value;
-						setAlertState({ type: 'SET_ALERT_NAME', payload: newName });
-						if (isEditMode && alertRuleContext?.setAlertRuleName) {
-							alertRuleContext.setAlertRuleName(newName);
-						}
-					}}
-					className="alert-header__input title"
-					placeholder="Enter alert rule name"
-					data-testid="alert-name-input"
-				/>
+				<div className="alert-header__input title">
+					<Input
+						type="text"
+						value={alertState.name}
+						onChange={(e): void => {
+							const newName = e.target.value;
+							setAlertState({ type: 'SET_ALERT_NAME', payload: newName });
+							if (isEditMode && alertRuleContext?.setAlertRuleName) {
+								alertRuleContext.setAlertRuleName(newName);
+							}
+						}}
+						placeholder="Enter alert rule name"
+						testId="alert-name-input"
+					/>
+				</div>
 				<LabelsInput
 					labels={alertState.labels}
 					onLabelsChange={(labels: Labels): void =>

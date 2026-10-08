@@ -1,4 +1,4 @@
-import { Plus } from '@signozhq/icons';
+import { Plus, SolidInfoCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { EQueryType } from 'types/common/dashboard';
@@ -18,25 +18,17 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 	return (
 		<>
 			<div className="info-banner-wrapper">
-				<Callout
-					type="info"
-					showIcon
-					title={
-						<span>
-							<a
-								href={DOCLINKS.QUERY_CLICKHOUSE_TRACES}
-								target="_blank"
-								rel="noopener"
-							>
-								Learn to write faster, optimized queries
-							</a>
-							{' · Using AI? '}
-							<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
-								Install the SigNoz ClickHouse query agent skill
-							</a>
-						</span>
-					}
-				/>
+				<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+					<span>
+						<a href={DOCLINKS.QUERY_CLICKHOUSE_TRACES} target="_blank" rel="noopener">
+							Learn to write faster, optimized queries
+						</a>
+						{' · Using AI? '}
+						<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
+							Install the SigNoz ClickHouse query agent skill
+						</a>
+					</span>
+				</Callout>
 			</div>
 
 			{currentQuery.clickhouse_sql.map((q, idx) => (

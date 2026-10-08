@@ -53,7 +53,6 @@ function KeyFormPhase({
 							<Input
 								id="key-name"
 								placeholder="Enter key name e.g.: Service Owner"
-								className="add-key-modal__input"
 								testId="add-key-name-input"
 								{...register('keyName', {
 									required: true,

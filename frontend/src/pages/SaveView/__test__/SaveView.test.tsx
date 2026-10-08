@@ -117,7 +117,7 @@ describe('SaveView', () => {
 		const editButton = await screen.findAllByTestId('edit-view');
 		fireEvent.click(editButton[0]);
 
-		const viewName = await screen.findByTestId('view-name');
+		const viewName = await screen.findByTestId('view-name-field');
 		expect(viewName).toBeInTheDocument();
 		expect(viewName).toHaveValue('Table View');
 

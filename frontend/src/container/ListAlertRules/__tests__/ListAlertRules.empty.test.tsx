@@ -71,7 +71,7 @@ describe('ListAlertRules — empty states', () => {
 
 		await screen.findByText('High CPU Alert');
 
-		const searchInput = screen.getByTestId('list-alerts-search-input');
+		const searchInput = screen.getByTestId('list-alerts-search-input-field');
 		await user.clear(searchInput);
 		await user.type(searchInput, 'totally-not-found');
 

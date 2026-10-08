@@ -202,15 +202,29 @@ describe('Quick Filters', () => {
 			expect(screen.getByRole('option', { name: 'Query C' })).toBeInTheDocument();
 		});
 
-		// Select Query B
-		const queryBOption = screen.getByRole('option', { name: 'Query B' });
-		await user.click(queryBOption);
+		// Select Query B with the keyboard: jsdom cannot deliver the pointer
+		// click Base UI expects, so filter through the search row and pick with
+		// Enter instead
+		await waitFor(() => {
+			expect(
+				screen.getByRole('combobox', { name: 'Search queries' }),
+			).toHaveFocus();
+		});
+		await user.keyboard('Query B');
+		await waitFor(() => {
+			expect(
+				screen.queryByRole('option', { name: 'Query A' }),
+			).not.toBeInTheDocument();
+		});
+		await user.keyboard('{ArrowDown}{Enter}');
 
 		// Verify setLastUsedQuery was called with index 1
 		await waitFor(() => {
 			expect(setLastUsedQuery).toHaveBeenCalledWith(1);
 		});
-	});
+		// filtering and picking through the search row takes Base UI past the
+		// default 5s under jsdom
+	}, 20000);
 
 	it('should not display query dropdown in ListView', () => {
 		(useQueryBuilder as jest.Mock).mockReturnValue({

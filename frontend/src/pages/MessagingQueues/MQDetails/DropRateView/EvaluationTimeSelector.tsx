@@ -25,14 +25,15 @@ function SelectDropdownRender({
 	return (
 		<>
 			{menu}
-			<Input
-				placeholder="Enter custom time (ms)"
-				value={inputValue}
-				onChange={handleInputChange}
-				onKeyDown={handleKeyDown}
-				onBlur={handleAddCustomValue}
-				className="select-dropdown-render"
-			/>
+			<div className="select-dropdown-render">
+				<Input
+					placeholder="Enter custom time (ms)"
+					value={inputValue}
+					onChange={handleInputChange}
+					onKeyDown={handleKeyDown}
+					onBlur={handleAddCustomValue}
+				/>
+			</div>
 		</>
 	);
 }

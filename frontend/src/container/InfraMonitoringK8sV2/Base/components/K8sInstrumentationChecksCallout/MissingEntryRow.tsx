@@ -60,7 +60,7 @@ export function MissingEntryRow({
 					<ExternalLink size={12} />
 				</Typography.Link>
 			)}
-			<Divider className={styles.divider} />
+			<Divider />
 		</div>
 	);
 }

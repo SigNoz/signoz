@@ -116,6 +116,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 								placeholder="Filter values"
 								onChange={(e): void => setSearchTextDebounced(e.target.value)}
 								disabled={isFilterDisabled}
+								disabledTooltip={FILTER_DISABLED_REASON}
 							/>
 						</section>
 					)}

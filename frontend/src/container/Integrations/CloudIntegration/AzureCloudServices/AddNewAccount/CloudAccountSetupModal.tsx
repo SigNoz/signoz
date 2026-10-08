@@ -4,6 +4,8 @@ import {
 	ChevronDown,
 	ChevronRight,
 	LoaderCircle,
+	SolidAlertCircle,
+	SolidInfoCircle,
 	SquareArrowOutUpRight,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
@@ -93,24 +95,20 @@ function CloudAccountSetupModal({
 		if (modalState === ModalStateEnum.WAITING) {
 			return (
 				<div className="cloud-account-setup-form__alert">
-					<Callout
-						title={
-							<div className="cloud-account-setup-form__alert-message">
-								<Spin
-									indicator={
-										<LoaderCircle
-											size={14}
-											className="anticon anticon-loading anticon-spin ant-spin-dot"
-										/>
-									}
-								/>
-								Waiting for Azure account connection, retrying in{' '}
-								<span className="retry-time">10</span> secs...
-							</div>
-						}
-						type="info"
-						showIcon={false}
-					/>
+					<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+						<div className="cloud-account-setup-form__alert-message">
+							<Spin
+								indicator={
+									<LoaderCircle
+										size={14}
+										className="anticon anticon-loading anticon-spin ant-spin-dot"
+									/>
+								}
+							/>
+							Waiting for Azure account connection, retrying in{' '}
+							<span className="retry-time">10</span> secs...
+						</div>
+					</Callout>
 				</div>
 			);
 		}
@@ -118,15 +116,12 @@ function CloudAccountSetupModal({
 		if (modalState === ModalStateEnum.ERROR) {
 			return (
 				<div className="cloud-account-setup-form__alert">
-					<Callout
-						title={
-							<div className="cloud-account-setup-form__alert-message">
-								We couldn&apos;t establish a connection to your Azure account. Please
-								try again
-							</div>
-						}
-						type="error"
-					/>
+					<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
+						<div className="cloud-account-setup-form__alert-message">
+							We couldn&apos;t establish a connection to your Azure account. Please try
+							again
+						</div>
+					</Callout>
 				</div>
 			);
 		}

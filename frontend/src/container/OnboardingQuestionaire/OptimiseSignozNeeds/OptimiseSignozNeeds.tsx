@@ -207,21 +207,14 @@ function OptimiseSignozNeeds({
 						<div className="slider-container">
 							<div>
 								<Slider
+									color="primary"
 									min={0}
 									max={100}
 									value={sliderValues.logsPerDay}
 									marks={marks}
-									onChange={(value): void =>
-										handleSliderChange('logsPerDay', value as number)
-									}
-									styles={{
-										range: {
-											backgroundColor: '#4E74F8',
-										},
-									}}
-									tooltip={{
-										formatter: (): string => `${logsPerDayValue.toLocaleString()} GB`,
-									}}
+									tooltip
+									formatValue={(): string => `${logsPerDayValue.toLocaleString()} GB`}
+									onChange={(value): void => handleSliderChange('logsPerDay', value)}
 								/>
 							</div>
 						</div>
@@ -234,21 +227,14 @@ function OptimiseSignozNeeds({
 						<div className="slider-container">
 							<div>
 								<Slider
+									color="primary"
 									min={0}
 									max={100}
 									value={sliderValues.hostsPerDay}
 									marks={hostMarks}
-									onChange={(value): void =>
-										handleSliderChange('hostsPerDay', value as number)
-									}
-									styles={{
-										range: {
-											backgroundColor: '#4E74F8',
-										},
-									}}
-									tooltip={{
-										formatter: (): string => `${hostsPerDayValue.toLocaleString()}`,
-									}}
+									tooltip
+									formatValue={(): string => `${hostsPerDayValue.toLocaleString()}`}
+									onChange={(value): void => handleSliderChange('hostsPerDay', value)}
 								/>
 							</div>
 						</div>
@@ -261,21 +247,14 @@ function OptimiseSignozNeeds({
 						<div className="slider-container">
 							<div>
 								<Slider
+									color="primary"
 									min={0}
 									max={100}
 									value={sliderValues.services}
 									marks={serviceMarks}
-									onChange={(value): void =>
-										handleSliderChange('services', value as number)
-									}
-									styles={{
-										range: {
-											backgroundColor: '#4E74F8',
-										},
-									}}
-									tooltip={{
-										formatter: (): string => `${servicesValue.toLocaleString()}`,
-									}}
+									tooltip
+									formatValue={(): string => `${servicesValue.toLocaleString()}`}
+									onChange={(value): void => handleSliderChange('services', value)}
 								/>
 							</div>
 						</div>

@@ -88,7 +88,20 @@
 	margin-left: 2px;
 }
 
-.input,
+// The free-text Inputs inside .field / .multiSelectFieldset pick up the old
+// `.input` look through the Input component's CSS tokens.
+.field,
+.multiSelectFieldset {
+	--input-background: var(--l2-background);
+	--input-border: var(--l2-border);
+	--input-border-radius: var(--radius-2);
+	--input-height: 28px;
+	--input-padding: 5px 8px;
+	--input-font-size: 13px;
+	--input-foreground: var(--l1-foreground);
+	--input-focus-ring: var(--accent-primary);
+}
+
 .select {
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
@@ -106,14 +119,6 @@
 
 .select {
 	cursor: pointer;
-}
-
-// Constrain the Radix-based SelectContent popover so it never grows wider
-// than the trigger button. `--radix-select-trigger-width` is set by Radix
-// at the popper layer when `position: 'popper'` (the default).
-.selectContent {
-	width: var(--radix-select-trigger-width);
-	min-width: var(--radix-select-trigger-width);
 }
 
 .radioGroup,
