@@ -25,10 +25,10 @@ interface StatusFilterSpec {
 	label: string;
 }
 
-const POD_STATUS_SPEC: StatusFilterSpec = { kind: 'pod', label: 'Pod status' };
+const POD_STATUS_SPEC: StatusFilterSpec = { kind: 'pod', label: 'Pod Status' };
 const NODE_READINESS_SPEC: StatusFilterSpec = {
 	kind: 'node',
-	label: 'Node readiness',
+	label: 'Node Readiness',
 };
 
 /**
