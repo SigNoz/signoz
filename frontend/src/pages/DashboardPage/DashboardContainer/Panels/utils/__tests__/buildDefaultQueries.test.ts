@@ -21,6 +21,14 @@ describe('buildDefaultQueries', () => {
 		expect(spec.limit).toBeUndefined();
 	});
 
+	it('seeds a top list panel capped to its top 10 groups', () => {
+		const queries = buildDefaultQueries('signoz/TopListPanel');
+
+		expect(queries).toHaveLength(1);
+		expect(queries[0].kind).toBe('scalar');
+		expect(JSON.stringify(queries)).toContain('"limit":10');
+	});
+
 	it('seeds no query for plotted kinds (they seed from the builder)', () => {
 		expect(buildDefaultQueries('signoz/TimeSeriesPanel')).toStrictEqual([]);
 		expect(buildDefaultQueries('signoz/NumberPanel')).toStrictEqual([]);
