@@ -100,7 +100,8 @@ describe('SpanSummary', () => {
 		const span = {
 			...createMockSpan(),
 			attributes: {
-				'gen_ai.usage.input_tokens': 1200,
+				'signoz.gen_ai.usage.total_input_tokens': 1200,
+				'gen_ai.usage.input_tokens': 1000,
 				'gen_ai.usage.output_tokens': 9,
 				'signoz.gen_ai.usage.tokens.cost': 0.000009,
 			},

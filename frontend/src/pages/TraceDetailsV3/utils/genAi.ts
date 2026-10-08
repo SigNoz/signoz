@@ -9,6 +9,7 @@ export const GEN_AI_KEYS = {
 	cacheReadTokens: 'gen_ai.usage.cache_read.input_tokens',
 	cacheCreationTokens: 'gen_ai.usage.cache_creation.input_tokens',
 	reasoningTokens: 'gen_ai.usage.reasoning.output_tokens',
+	totalInputTokens: 'signoz.gen_ai.usage.total_input_tokens',
 	cost: 'signoz.gen_ai.usage.tokens.cost',
 } as const;
 
@@ -56,6 +57,21 @@ export function getAiSpanKind(span: SpanV3): AiSpanKind | undefined {
 
 export function isAiSpan(span: SpanV3): boolean {
 	return getAiSpanKind(span) !== undefined;
+}
+
+/** Token counts; `null` or missing means the backend did not send the value. */
+export interface AiTokenCounts {
+	/** Input incl. cache read/write, counted once. Only set when the model's cache mode is known. */
+	totalInput?: number | null;
+	input?: number | null;
+	output?: number | null;
+	cacheRead?: number | null;
+	cacheWrite?: number | null;
+	reasoning?: number | null;
+}
+
+export function hasValue(value: number | null | undefined): value is number {
+	return value !== undefined && value !== null;
 }
 
 export function formatTokens(value: number): string {

@@ -4,8 +4,12 @@ import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 
-import { formatCost, formatTokens } from '../utils/genAi';
-import type { SpantypesTraceAITokensDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	AiTokenCounts,
+	formatCost,
+	formatTokens,
+	hasValue,
+} from '../utils/genAi';
 import EntityMetadataItem from './EntityMetadataItem';
 import TokenUsageTooltip from './TokenUsageTooltip';
 
@@ -19,8 +23,8 @@ interface EntityMetadataRowProps {
 	execTimePercent?: number;
 	timestamp?: string;
 	statusCode?: string | number;
-	tokens?: SpantypesTraceAITokensDTO;
-	cost?: number;
+	tokens?: AiTokenCounts;
+	cost?: number | null;
 }
 
 const ICON_SIZE = 14;
@@ -99,16 +103,17 @@ function EntityMetadataRow({
 				</EntityMetadataItem>
 			)}
 
-			{tokens && (tokens.input > 0 || tokens.output > 0) && (
+			{hasValue(tokens?.totalInput) && (
 				<EntityMetadataItem
 					tooltip={<TokenUsageTooltip tokens={tokens} />}
 					icon={<Coins size={ICON_SIZE} />}
 				>
-					Tokens: {formatTokens(tokens.input)} → {formatTokens(tokens.output)}
+					Tokens: {formatTokens(tokens.totalInput)}
+					{hasValue(tokens.output) && ` → ${formatTokens(tokens.output)}`}
 				</EntityMetadataItem>
 			)}
 
-			{cost !== undefined && (
+			{hasValue(cost) && (
 				<EntityMetadataItem
 					tooltip="Total cost"
 					icon={<Landmark size={ICON_SIZE} />}

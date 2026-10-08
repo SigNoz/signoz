@@ -1,48 +1,71 @@
-import { formatTokens } from '../utils/genAi';
+import { AiTokenCounts, formatTokens, hasValue } from '../utils/genAi';
 import TooltipRow from './TooltipRow';
 import TooltipSection from './TooltipSection';
 
-interface TokenBreakdownProps {
-	input?: number;
-	output?: number;
-	cacheRead?: number;
-	cacheWrite?: number;
-}
+type TokenBreakdownProps = Omit<AiTokenCounts, 'reasoning'>;
 
 function TokenBreakdown({
+	totalInput,
 	input,
 	output,
 	cacheRead,
 	cacheWrite,
 }: TokenBreakdownProps): JSX.Element {
-	const showCacheRead = !!cacheRead;
-	const showCacheWrite = !!cacheWrite;
+	const showCacheRead = hasValue(cacheRead);
+	const showCacheWrite = hasValue(cacheWrite);
+	const cacheRows = (
+		<>
+			{showCacheRead && (
+				<TooltipRow label="Cache Read" value={formatTokens(cacheRead)} isNested />
+			)}
+			{showCacheWrite && (
+				<TooltipRow label="Cache Write" value={formatTokens(cacheWrite)} isNested />
+			)}
+		</>
+	);
+	const outputSection = hasValue(output) && (
+		<TooltipSection>
+			<TooltipRow label="Output" value={formatTokens(output)} isHeading />
+		</TooltipSection>
+	);
+
+	// Without totalInput the cache mode is unknown, so cache can't be shown as part of input.
+	if (!hasValue(totalInput)) {
+		return (
+			<>
+				{hasValue(input) && (
+					<TooltipSection>
+						<TooltipRow label="Input" value={formatTokens(input)} isHeading />
+					</TooltipSection>
+				)}
+				{(showCacheRead || showCacheWrite) && (
+					<TooltipSection>
+						<TooltipRow label="Cache" isHeading />
+						{cacheRows}
+					</TooltipSection>
+				)}
+				{outputSection}
+			</>
+		);
+	}
 
 	return (
 		<>
-			{input !== undefined && (
+			<TooltipSection>
+				<TooltipRow label="Input" value={formatTokens(totalInput)} isHeading />
+				{cacheRows}
+				{hasValue(input) && (
+					<TooltipRow label="Input" value={formatTokens(input)} isNested />
+				)}
+			</TooltipSection>
+			{outputSection}
+			{hasValue(output) && (
 				<TooltipSection>
-					<TooltipRow label="Input" value={formatTokens(input)} isHeading />
-				</TooltipSection>
-			)}
-			{(showCacheRead || showCacheWrite) && (
-				<TooltipSection>
-					<TooltipRow label="Cache" isHeading />
-					{showCacheRead && (
-						<TooltipRow label="Cache read" value={formatTokens(cacheRead)} isNested />
-					)}
-					{showCacheWrite && (
-						<TooltipRow
-							label="Cache write"
-							value={formatTokens(cacheWrite)}
-							isNested
-						/>
-					)}
-				</TooltipSection>
-			)}
-			{output !== undefined && (
-				<TooltipSection>
-					<TooltipRow label="Output" value={formatTokens(output)} isHeading />
+					<TooltipRow
+						label="Total"
+						value={formatTokens(totalInput + output)}
+						isHeading
+					/>
 				</TooltipSection>
 			)}
 		</>
@@ -50,6 +73,7 @@ function TokenBreakdown({
 }
 
 TokenBreakdown.defaultProps = {
+	totalInput: undefined,
 	input: undefined,
 	output: undefined,
 	cacheRead: undefined,

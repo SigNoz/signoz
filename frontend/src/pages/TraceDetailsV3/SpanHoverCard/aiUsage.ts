@@ -1,9 +1,9 @@
-import type { SpantypesTraceAITokensDTO } from 'api/generated/services/sigNoz.schemas';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { GEN_AI_KEYS, getGenAiValue } from '../utils/genAi';
+import { AiTokenCounts, GEN_AI_KEYS, getGenAiValue } from '../utils/genAi';
 
 export interface SpanAiUsage {
+	totalInputTokens?: number;
 	inputTokens?: number;
 	outputTokens?: number;
 	cacheReadTokens?: number;
@@ -41,6 +41,10 @@ function getGenAiAttributeAsNumber(
 
 export function getAIUsageDetails(span: SpanV3): SpanAiDetails | undefined {
 	const usage: SpanAiUsage = {
+		totalInputTokens: getGenAiAttributeAsNumber(
+			span,
+			GEN_AI_KEYS.totalInputTokens,
+		),
 		inputTokens: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.inputTokens),
 		outputTokens: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.outputTokens),
 		cacheReadTokens: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.cacheReadTokens),
@@ -51,8 +55,7 @@ export function getAIUsageDetails(span: SpanV3): SpanAiDetails | undefined {
 		reasoningTokens: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.reasoningTokens),
 		cost: getGenAiAttributeAsNumber(span, GEN_AI_KEYS.cost),
 	};
-	const hasUsage =
-		usage.inputTokens !== undefined || usage.outputTokens !== undefined;
+	const hasUsage = Object.values(usage).some((value) => value !== undefined);
 
 	const details: SpanAiDetails = {
 		model: getGenAiAttributeAsString(span, GEN_AI_KEYS.requestModel),
@@ -66,14 +69,13 @@ export function getAIUsageDetails(span: SpanV3): SpanAiDetails | undefined {
 		: undefined;
 }
 
-export function convertToAiTokens(
-	usage: SpanAiUsage,
-): SpantypesTraceAITokensDTO {
+export function convertToAiTokens(usage: SpanAiUsage): AiTokenCounts {
 	return {
-		input: usage.inputTokens ?? 0,
-		output: usage.outputTokens ?? 0,
-		cacheRead: usage.cacheReadTokens ?? 0,
-		cacheWrite: usage.cacheCreationTokens ?? 0,
-		reasoning: usage.reasoningTokens ?? 0,
+		totalInput: usage.totalInputTokens,
+		input: usage.inputTokens,
+		output: usage.outputTokens,
+		cacheRead: usage.cacheReadTokens,
+		cacheWrite: usage.cacheCreationTokens,
+		reasoning: usage.reasoningTokens,
 	};
 }

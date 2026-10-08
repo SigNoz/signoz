@@ -179,6 +179,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		totalErrorSpansCount: 0,
 		ai: {
 			tokens: {
+				totalInput: 12040,
 				input: 12040,
 				output: 3110,
 				cacheRead: 0,
@@ -228,18 +229,55 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
 	});
 
-	it('omits AI tokens when input and output are both zero', () => {
+	it('shows AI tokens when totalInput and output are both zero', () => {
 		mockSummary({
 			...traceMetadata,
 			ai: {
 				...traceMetadata.ai,
-				tokens: { ...traceMetadata.ai.tokens, input: 0, output: 0 },
+				tokens: { ...traceMetadata.ai.tokens, totalInput: 0, output: 0 },
 			},
-		});
+		} as SpantypesGettableTraceSummaryDTO);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 0 → 0')).toBeInTheDocument();
+		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
+	});
+
+	it('uses totalInput as the input count when the summary sends it', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: {
+				...traceMetadata.ai,
+				tokens: { ...traceMetadata.ai.tokens, totalInput: 15150 },
+			},
+		} as SpantypesGettableTraceSummaryDTO);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 15,150 → 3,110')).toBeInTheDocument();
+	});
+
+	it('omits AI tokens when totalInput is missing', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: {
+				...traceMetadata.ai,
+				tokens: { ...traceMetadata.ai.tokens, totalInput: undefined },
+			},
+		} as SpantypesGettableTraceSummaryDTO);
 		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(screen.queryByText(/^Tokens:/)).not.toBeInTheDocument();
-		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
+	});
+
+	it('omits the cost when the summary sends null', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: { ...traceMetadata.ai, totalCost: null },
+		} as unknown as SpantypesGettableTraceSummaryDTO);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
+		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
 	});
 
 	it('is shown by default and can be hidden / shown again via the Trace options menu', async () => {

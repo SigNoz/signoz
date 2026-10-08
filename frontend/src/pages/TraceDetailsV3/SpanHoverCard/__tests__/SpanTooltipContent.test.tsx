@@ -37,6 +37,7 @@ describe('getAIUsageDetails', () => {
 			toolName: 'search',
 			agentName: 'planner',
 			usage: {
+				totalInputTokens: undefined,
 				inputTokens: 120,
 				outputTokens: 30,
 				cacheReadTokens: undefined,
@@ -80,9 +81,9 @@ describe('SpanTooltipContent', () => {
 		expect(screen.getByText('Input')).toBeInTheDocument();
 		expect(screen.getByText('1,000')).toBeInTheDocument();
 		expect(screen.getByText('Cache')).toBeInTheDocument();
-		expect(screen.getByText('Cache read')).toBeInTheDocument();
+		expect(screen.getByText('Cache Read')).toBeInTheDocument();
 		expect(screen.getByText('600')).toBeInTheDocument();
-		expect(screen.getByText('Cache write')).toBeInTheDocument();
+		expect(screen.getByText('Cache Write')).toBeInTheDocument();
 		expect(screen.getByText('100')).toBeInTheDocument();
 		expect(screen.getByText('Output')).toBeInTheDocument();
 		expect(screen.getByText('200')).toBeInTheDocument();
@@ -92,25 +93,8 @@ describe('SpanTooltipContent', () => {
 		expect(screen.getByText('$ 0.00000056')).toBeInTheDocument();
 	});
 
-	it('hides a zero cache row, and the cache group when both are zero', () => {
-		const { rerender } = render(
-			<SpanTooltipContent
-				{...baseProps}
-				ai={{
-					usage: {
-						inputTokens: 194,
-						outputTokens: 32,
-						cacheReadTokens: 50,
-						cacheCreationTokens: 0,
-					},
-				}}
-			/>,
-		);
-
-		expect(screen.getByText('Cache read')).toBeInTheDocument();
-		expect(screen.queryByText('Cache write')).not.toBeInTheDocument();
-
-		rerender(
+	it('shows cache rows whose value is zero', () => {
+		render(
 			<SpanTooltipContent
 				{...baseProps}
 				ai={{
@@ -124,8 +108,46 @@ describe('SpanTooltipContent', () => {
 			/>,
 		);
 
+		expect(screen.getByText('Cache')).toBeInTheDocument();
+		expect(screen.getByText('Cache Read')).toBeInTheDocument();
+		expect(screen.getByText('Cache Write')).toBeInTheDocument();
+	});
+
+	it('nests cache and raw input under total input, and adds a total', () => {
+		render(
+			<SpanTooltipContent
+				{...baseProps}
+				ai={{
+					usage: {
+						totalInputTokens: 1250,
+						inputTokens: 1000,
+						cacheReadTokens: 200,
+						cacheCreationTokens: 50,
+						outputTokens: 30,
+					},
+				}}
+			/>,
+		);
+
+		expect(screen.getAllByText('Input')).toHaveLength(2);
+		expect(screen.getByText('1,250')).toBeInTheDocument();
+		expect(screen.getByText('1,000')).toBeInTheDocument();
+		expect(screen.getByText('Cache Read')).toBeInTheDocument();
+		expect(screen.getByText('Cache Write')).toBeInTheDocument();
 		expect(screen.queryByText('Cache')).not.toBeInTheDocument();
-		expect(screen.queryByText('Cache read')).not.toBeInTheDocument();
+		expect(screen.getByText('Total')).toBeInTheDocument();
+		expect(screen.getByText('1,280')).toBeInTheDocument();
+	});
+
+	it('shows no total without totalInputTokens', () => {
+		render(
+			<SpanTooltipContent
+				{...baseProps}
+				ai={{ usage: { inputTokens: 10, outputTokens: 5 } }}
+			/>,
+		);
+
+		expect(screen.queryByText('Total')).not.toBeInTheDocument();
 	});
 
 	it('hides cache rows and cost when the attributes are absent', () => {
@@ -137,8 +159,8 @@ describe('SpanTooltipContent', () => {
 		);
 
 		expect(screen.queryByText('Cache')).not.toBeInTheDocument();
-		expect(screen.queryByText('Cache read')).not.toBeInTheDocument();
-		expect(screen.queryByText('Cache write')).not.toBeInTheDocument();
+		expect(screen.queryByText('Cache Read')).not.toBeInTheDocument();
+		expect(screen.queryByText('Cache Write')).not.toBeInTheDocument();
 		expect(screen.queryByText('cost')).not.toBeInTheDocument();
 	});
 });
