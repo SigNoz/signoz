@@ -19,7 +19,7 @@ func NewHandler(module promote.Module) promote.Handler {
 	return &handler{module: module}
 }
 
-func (h *handler) HandlePromoteAndIndexPaths(w http.ResponseWriter, r *http.Request) {
+func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 	// TODO(Nitya): Use in multi tenant setup
 	_, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
@@ -33,7 +33,7 @@ func (h *handler) HandlePromoteAndIndexPaths(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = h.module.PromoteAndIndexPaths(r.Context(), req...)
+	err = h.module.PromotePaths(r.Context(), req...)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -42,7 +42,7 @@ func (h *handler) HandlePromoteAndIndexPaths(w http.ResponseWriter, r *http.Requ
 	render.Success(w, http.StatusCreated, nil)
 }
 
-func (h *handler) ListPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Request) {
+func (h *handler) ListPromotedPaths(w http.ResponseWriter, r *http.Request) {
 	// TODO(Nitya): Use in multi tenant setup
 	_, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
@@ -50,7 +50,17 @@ func (h *handler) ListPromotedAndIndexedPaths(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	paths, err := h.module.ListPromotedAndIndexedPaths(r.Context())
+	var filters promotetypes.ListPromotedPathsFilters
+	if err := binding.Query.BindQuery(r.URL.Query(), &filters); err != nil {
+		render.Error(w, err)
+		return
+	}
+	if err := filters.Validate(); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	paths, err := h.module.ListPromotedPaths(r.Context(), filters)
 	if err != nil {
 		render.Error(w, err)
 		return
