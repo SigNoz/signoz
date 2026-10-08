@@ -135,6 +135,13 @@ func ValidatePromotePaths(paths []*PromotePath) error {
 		if path == nil {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "path cannot be null")
 		}
+		target, err := path.Target()
+		if err != nil {
+			return err
+		}
+		if err := path.ValidateAndSetDefaults(target); err != nil {
+			return err
+		}
 	}
 	return nil
 }

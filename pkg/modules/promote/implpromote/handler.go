@@ -36,17 +36,6 @@ func (h *handler) PromotePaths(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
-	for _, path := range req {
-		target, err := path.Target()
-		if err != nil {
-			render.Error(w, err)
-			return
-		}
-		if err := path.ValidateAndSetDefaults(target); err != nil {
-			render.Error(w, err)
-			return
-		}
-	}
 
 	err = h.module.PromotePaths(r.Context(), req...)
 	if err != nil {
