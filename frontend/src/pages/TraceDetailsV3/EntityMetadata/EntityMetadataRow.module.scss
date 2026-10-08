@@ -17,7 +17,3 @@
 .tokenTooltipTitle {
 	padding-bottom: var(--spacing-4);
 }
-
-.tokenTooltipContent {
-	composes: tooltipContent from '../shared.module.scss';
-}

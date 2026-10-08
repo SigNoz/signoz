@@ -102,7 +102,6 @@ function EntityMetadataRow({
 			{tokens && (tokens.input > 0 || tokens.output > 0) && (
 				<EntityMetadataItem
 					tooltip={<TokenUsageTooltip tokens={tokens} />}
-					tooltipClassName={styles.tokenTooltipContent}
 					icon={<Coins size={ICON_SIZE} />}
 				>
 					Tokens: {formatTokens(tokens.input)} → {formatTokens(tokens.output)}

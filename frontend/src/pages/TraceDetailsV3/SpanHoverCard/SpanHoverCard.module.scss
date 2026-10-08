@@ -9,7 +9,7 @@
 }
 
 .popover {
-	composes: tooltipContent from '../shared.module.scss';
+	composes: content from '../TooltipPrimitives/TooltipSurface.module.scss';
 	// Hover card may be rendered while the SpanDetailsPanel is docked as
 	// a FloatingPanel (z-index 999); bump above the default tooltip z-index.
 	--tooltip-z-index: 1000;
