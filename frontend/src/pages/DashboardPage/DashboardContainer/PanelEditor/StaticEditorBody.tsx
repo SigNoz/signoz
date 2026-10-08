@@ -23,6 +23,7 @@ interface StaticEditorBodyProps extends PanelEditorContainerProps {
 	draftApi: PanelEditorDraftApi;
 	panelDefinition: RenderableStaticPanelDefinition;
 	onChangePanelKind: (kind: PanelKind) => void;
+	originalPanelKind?: PanelKind;
 }
 
 /**
@@ -34,13 +35,16 @@ interface StaticEditorBodyProps extends PanelEditorContainerProps {
 function StaticEditorBody({
 	dashboardId,
 	panelId,
+	panel,
+	savedPanel,
 	isNew = false,
-	layoutIndex,
+	target,
 	onClose,
 	onSaved,
 	draftApi,
 	panelDefinition,
 	onChangePanelKind,
+	originalPanelKind,
 }: StaticEditorBodyProps): JSX.Element {
 	// Read here rather than taken as props: this renders inside a loaded dashboard
 	// subtree, so it resolves the same context every other consumer does.
@@ -54,7 +58,7 @@ function StaticEditorBody({
 		dashboardId,
 		panelId,
 		isNew,
-		layoutIndex,
+		target,
 	});
 
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
@@ -120,8 +124,10 @@ function StaticEditorBody({
 					panel={draft}
 					panelId={panelId}
 					spec={spec}
+					savedSpec={(savedPanel ?? panel).spec}
 					onChangeSpec={setSpec}
 					onChangePanelKind={onChangePanelKind}
+					originalPanelKind={originalPanelKind}
 					queryType={EQueryType.QUERY_BUILDER}
 					legendSeries={[]}
 					tableColumns={[]}

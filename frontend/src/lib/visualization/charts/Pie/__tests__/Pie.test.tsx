@@ -111,6 +111,18 @@ describe('Pie', () => {
 		expect(svg.querySelectorAll('path')).toHaveLength(1);
 	});
 
+	it('recomputes the centre total from the slices left showing', () => {
+		renderPie();
+		// The arcs carry leader labels of their own, so read the centre text.
+		const centreTotal = (): string | null =>
+			screen.getByTestId('pie').querySelector('text > tspan')?.textContent ?? null;
+		expect(centreTotal()).toBe('200');
+
+		fireEvent.click(screen.getByTestId('legend-item-0'));
+
+		expect(centreTotal()).toBe('100');
+	});
+
 	it('excludes a slice when its legend row is clicked with others already hidden', () => {
 		renderPie();
 		const svg = screen.getByTestId('pie').querySelector('svg') as SVGElement;

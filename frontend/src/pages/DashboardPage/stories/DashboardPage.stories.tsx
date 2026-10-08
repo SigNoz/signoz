@@ -285,6 +285,111 @@ export const SectionActionsMenu: Story = {
 	},
 };
 
+const openNewPanelPicker = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	const canvas = within(canvasElement);
+
+	await userEvent.click(
+		await canvas.findByTestId('add-panel-header', {}, { timeout: 10000 }),
+	);
+	await screen.findByTestId('panel-type-signoz/TimeSeriesPanel');
+};
+
+/**
+ * The new-panel drawer opened from the toolbar: the panel kinds grouped by
+ * category, Time Series preselected, and the target section on the split
+ * button.
+ */
+export const NewPanelPicker: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+	},
+};
+
+/** The drawer with another kind picked, previewed where it will be added. */
+export const NewPanelPickerTypeSelected: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByTestId('panel-type-signoz/BarChartPanel'),
+		);
+	},
+};
+
+/** The drawer filtered by a search that matches one kind. */
+export const NewPanelPickerSearch: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.type(await screen.findByTestId('panel-type-search'), 'heat');
+	},
+};
+
+/** The drawer narrowed to one category. */
+export const NewPanelPickerCategory: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: /Distributions/ }),
+		);
+	},
+};
+
+/** The split button's menu: the sections to add to, and "New section". */
+export const NewPanelPickerSectionMenu: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Choose section' }),
+		);
+		await screen.findByTestId('panel-section-create');
+	},
+};
+
+/** Naming a new section, previewed on the dashboard behind the drawer. */
+export const NewPanelPickerNewSection: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Choose section' }),
+		);
+		await userEvent.click(await screen.findByTestId('panel-section-create'));
+		await userEvent.type(
+			await screen.findByTestId('panel-section-name'),
+			'Errors',
+		);
+	},
+};
+
+/**
+ * The drawer on a dashboard without sections: the panel goes to the root, and
+ * the split button can still start a section.
+ */
+export const NewPanelPickerNoSections: Story = {
+	args: { sectioned: false },
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+	},
+};
+
+/**
+ * The drawer opened from the second section's menu, targeting that section.
+ */
+export const NewPanelPickerFromSection: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		const [, secondSection] = await canvas.findAllByRole(
+			'button',
+			{ name: 'Section actions' },
+			{ timeout: 10000 },
+		);
+		await userEvent.click(secondSection);
+		await userEvent.click(await screen.findByText('Add panel'));
+		await screen.findByTestId('panel-type-signoz/TimeSeriesPanel');
+	},
+};
+
 /**
  * A dashboard id nobody has, which is what a deleted or mistyped link opens on.
  *

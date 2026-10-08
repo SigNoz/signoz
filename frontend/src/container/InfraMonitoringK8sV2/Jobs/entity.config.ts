@@ -132,6 +132,7 @@ export const jobEntityConfig: K8sEntityConfig<
 	details: {
 		category: InfraMonitoringEntity.JOBS,
 		eventCategory: InfraMonitoringEvents.Job,
+		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'job',
 		getSelectedItemExpression: k8sJobGetSelectedItemExpression,
 		fetchEntityData,

@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas';
 
 import LegendSection from '../LegendSection';
@@ -16,8 +17,8 @@ describe('LegendSection', () => {
 		expect(
 			screen.getByTestId('panel-editor-v2-legend-position'),
 		).toBeInTheDocument();
-		expect(screen.getByText('Bottom')).toBeInTheDocument();
-		expect(screen.getByText('Right')).toBeInTheDocument();
+		expect(screen.getByText('Below chart')).toBeInTheDocument();
+		expect(screen.getByText('Right of chart')).toBeInTheDocument();
 	});
 
 	it('renders nothing when position is not enabled', () => {
@@ -30,7 +31,8 @@ describe('LegendSection', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('writes the chosen position through onChange', () => {
+	it('writes the chosen position through onChange', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<LegendSection
@@ -40,12 +42,13 @@ describe('LegendSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByText('Right'));
+		await user.click(screen.getByTestId('panel-editor-v2-legend-position-right'));
 
 		expect(onChange).toHaveBeenCalledWith({ position: 'right' });
 	});
 
-	it('preserves other legend fields when changing position', () => {
+	it('preserves other legend fields when changing position', async () => {
+		const user = userEvent.setup();
 		const onChange = jest.fn();
 		render(
 			<LegendSection
@@ -58,7 +61,7 @@ describe('LegendSection', () => {
 			/>,
 		);
 
-		fireEvent.click(screen.getByText('Right'));
+		await user.click(screen.getByTestId('panel-editor-v2-legend-position-right'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			position: 'right',

@@ -1,22 +1,30 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import PanelTypeSwitcher from '../PanelTypeSwitcher';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
+const OPTIONS = [
+	{ kind: 'signoz/TimeSeriesPanel', displayName: 'Time Series' },
+	{ kind: 'signoz/NumberPanel', displayName: 'Number' },
+	{ kind: 'signoz/TablePanel', displayName: 'Table' },
+	{ kind: 'signoz/BarChartPanel', displayName: 'Bar Chart' },
+	{ kind: 'signoz/AreaChartPanel', displayName: 'Area' },
+	{ kind: 'signoz/PieChartPanel', displayName: 'Pie Chart' },
+	{ kind: 'signoz/HistogramPanel', displayName: 'Histogram' },
+	{ kind: 'signoz/ListPanel', displayName: 'List' },
+	{ kind: 'signoz/TextPanel', displayName: 'Text' },
+].map((option) => ({ ...option, icon: (): null => null }));
+
 // Stub the registry so the test doesn't pull in the real renderers and chart libs.
 jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: jest.fn(),
-	PANEL_OPTIONS: [
-		{ kind: 'signoz/TimeSeriesPanel', displayName: 'Time Series' },
-		{ kind: 'signoz/NumberPanel', displayName: 'Number' },
-		{ kind: 'signoz/TablePanel', displayName: 'Table' },
-		{ kind: 'signoz/BarChartPanel', displayName: 'Bar Chart' },
-		{ kind: 'signoz/PieChartPanel', displayName: 'Pie Chart' },
-		{ kind: 'signoz/HistogramPanel', displayName: 'Histogram' },
-		{ kind: 'signoz/ListPanel', displayName: 'List' },
-	].map((option) => ({ ...option, icon: (): null => null })),
+	get PANEL_OPTIONS(): unknown {
+		return OPTIONS;
+	},
 }));
 
 const mockGetPanelDefinition = getPanelDefinition as unknown as jest.Mock;
@@ -28,14 +36,34 @@ const SUPPORTED_QUERY_TYPES: Record<string, EQueryType[]> = {
 	'signoz/PieChartPanel': [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
 };
 
-function disabledLabels(): (string | null)[] {
-	return Array.from(
-		document.querySelectorAll('.ant-select-item-option-disabled'),
-	).map((el) => el.textContent);
+type User = ReturnType<typeof userEvent.setup>;
+
+async function renderSwitcher(
+	props: Partial<Parameters<typeof PanelTypeSwitcher>[0]> = {},
+): Promise<{ onChange: jest.Mock; user: User }> {
+	// The open drawer sets `pointer-events: none` on the body.
+	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const onChange = jest.fn();
+	render(
+		<TooltipProvider>
+			<PanelTypeSwitcher
+				panelKind="signoz/TimeSeriesPanel"
+				queryType={EQueryType.QUERY_BUILDER}
+				onChange={onChange}
+				{...props}
+			/>
+		</TooltipProvider>,
+	);
+	await user.click(screen.getByTestId('panel-editor-v2-type-switcher'));
+	return { onChange, user };
 }
 
-function openDropdown(): void {
-	fireEvent.mouseDown(screen.getByRole('combobox'));
+function disabledKinds(): (string | undefined)[] {
+	return Array.from(
+		document.querySelectorAll('[data-testid^="panel-type-signoz/"]'),
+	)
+		.filter((el) => el.getAttribute('aria-disabled') === 'true')
+		.map((el) => el.getAttribute('data-testid')?.replace('panel-type-', ''));
 }
 
 describe('PanelTypeSwitcher', () => {
@@ -44,7 +72,8 @@ describe('PanelTypeSwitcher', () => {
 		// List supports only logs/traces; every other kind also supports metrics.
 		// Query-type support comes from SUPPORTED_QUERY_TYPES (all three by default).
 		mockGetPanelDefinition.mockImplementation((kind: string) => ({
-			mode: 'query',
+			...OPTIONS.find((option) => option.kind === kind),
+			mode: kind === 'signoz/TextPanel' ? 'static' : 'query',
 			supportedSignals:
 				kind === 'signoz/ListPanel'
 					? ['logs', 'traces']
@@ -57,83 +86,94 @@ describe('PanelTypeSwitcher', () => {
 		}));
 	});
 
-	it('fires onChange with the chosen plugin kind', () => {
-		const onChange = jest.fn();
-		render(
-			<PanelTypeSwitcher
-				panelKind="signoz/TimeSeriesPanel"
-				queryType={EQueryType.QUERY_BUILDER}
-				onChange={onChange}
-			/>,
-		);
+	it('shows the current type and switches to the chosen one', async () => {
+		const { onChange, user } = await renderSwitcher();
 
-		openDropdown();
-		fireEvent.click(screen.getByText('List'));
+		expect(screen.getByTestId('panel-editor-v2-type-switcher')).toHaveTextContent(
+			'Time SeriesChange',
+		);
+		await user.click(screen.getByTestId('panel-type-signoz/ListPanel'));
 
 		expect(onChange).toHaveBeenCalledWith('signoz/ListPanel');
 	});
 
-	it('disables types whose supported signals exclude the current signal', () => {
-		render(
-			<PanelTypeSwitcher
-				panelKind="signoz/TimeSeriesPanel"
-				queryType={EQueryType.QUERY_BUILDER}
-				signal={TelemetrytypesSignalDTO.metrics}
-				onChange={jest.fn()}
-			/>,
-		);
+	it('does not fire onChange when the current type is picked again', async () => {
+		const { onChange, user } = await renderSwitcher();
 
-		openDropdown();
-		// List can't render a metrics query, so it's disabled; Time Series stays enabled.
-		expect(disabledLabels()).toContain('List');
-		expect(disabledLabels()).not.toContain('Time Series');
+		await user.click(screen.getByTestId('panel-type-signoz/TimeSeriesPanel'));
+
+		expect(onChange).not.toHaveBeenCalled();
 	});
 
-	it('does not disable any type when the signal is unknown (builder, no signal)', () => {
-		render(
-			<PanelTypeSwitcher
-				panelKind="signoz/TimeSeriesPanel"
-				queryType={EQueryType.QUERY_BUILDER}
-				onChange={jest.fn()}
-			/>,
-		);
+	it('disables types whose supported signals exclude the current signal', async () => {
+		const { onChange, user } = await renderSwitcher({
+			signal: TelemetrytypesSignalDTO.metrics,
+		});
 
-		openDropdown();
-		expect(
-			document.querySelectorAll('.ant-select-item-option-disabled'),
-		).toHaveLength(0);
+		expect(disabledKinds()).toStrictEqual(['signoz/ListPanel']);
+		await user.click(screen.getByTestId('panel-type-signoz/ListPanel'));
+		expect(onChange).not.toHaveBeenCalled();
 	});
 
-	it('disables Query-Builder-only kinds under PromQL even without a signal', () => {
-		render(
-			<PanelTypeSwitcher
-				panelKind="signoz/TimeSeriesPanel"
-				queryType={EQueryType.PROM}
-				onChange={jest.fn()}
-			/>,
-		);
+	it('does not disable any type when the signal is unknown (builder, no signal)', async () => {
+		await renderSwitcher();
 
-		openDropdown();
-		// List/Table/Pie can't be authored in PromQL; Time Series can.
-		expect(disabledLabels()).toContain('List');
-		expect(disabledLabels()).toContain('Table');
-		expect(disabledLabels()).toContain('Pie Chart');
-		expect(disabledLabels()).not.toContain('Time Series');
+		expect(disabledKinds()).toHaveLength(0);
 	});
 
-	it('disables List under ClickHouse while Table/Pie stay enabled', () => {
-		render(
-			<PanelTypeSwitcher
-				panelKind="signoz/TablePanel"
-				queryType={EQueryType.CLICKHOUSE}
-				onChange={jest.fn()}
-			/>,
-		);
+	it('disables Query-Builder-only kinds under PromQL even without a signal', async () => {
+		await renderSwitcher({ queryType: EQueryType.PROM });
 
-		openDropdown();
-		expect(disabledLabels()).toContain('List');
-		expect(disabledLabels()).not.toContain('Table');
-		expect(disabledLabels()).not.toContain('Pie Chart');
-		expect(disabledLabels()).not.toContain('Time Series');
+		expect(disabledKinds()).toStrictEqual(
+			expect.arrayContaining([
+				'signoz/ListPanel',
+				'signoz/TablePanel',
+				'signoz/PieChartPanel',
+			]),
+		);
+		expect(disabledKinds()).not.toContain('signoz/TimeSeriesPanel');
+		expect(disabledKinds()).not.toContain('signoz/TextPanel');
+	});
+
+	it('disables List under ClickHouse while Table/Pie stay enabled', async () => {
+		await renderSwitcher({
+			panelKind: 'signoz/TablePanel',
+			queryType: EQueryType.CLICKHOUSE,
+		});
+
+		expect(disabledKinds()).toStrictEqual(['signoz/ListPanel']);
+	});
+
+	describe('revert', () => {
+		it('is hidden while the type is the original one', async () => {
+			await renderSwitcher({ originalPanelKind: 'signoz/TimeSeriesPanel' });
+
+			expect(
+				screen.queryByTestId('panel-editor-v2-type-revert'),
+			).not.toBeInTheDocument();
+		});
+
+		it('switches back to the original type', async () => {
+			const { onChange, user } = await renderSwitcher({
+				panelKind: 'signoz/TablePanel',
+				originalPanelKind: 'signoz/TimeSeriesPanel',
+			});
+
+			const revert = screen.getByTestId('panel-editor-v2-type-revert');
+			expect(revert).toHaveTextContent('Revert to Time Series');
+			await user.click(revert);
+
+			expect(onChange).toHaveBeenCalledWith('signoz/TimeSeriesPanel');
+		});
+
+		it('is disabled when the original type no longer fits the query', async () => {
+			await renderSwitcher({
+				panelKind: 'signoz/TimeSeriesPanel',
+				originalPanelKind: 'signoz/ListPanel',
+				queryType: EQueryType.PROM,
+			});
+
+			expect(screen.getByTestId('panel-editor-v2-type-revert')).toBeDisabled();
+		});
 	});
 });
