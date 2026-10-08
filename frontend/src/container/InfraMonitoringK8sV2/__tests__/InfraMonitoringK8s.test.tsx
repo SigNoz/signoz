@@ -69,6 +69,42 @@ function renderPage(
 }
 
 describe('InfraMonitoringK8s', () => {
+	describe('when the category changes with a status filter applied', () => {
+		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
+
+		beforeEach(async () => {
+			onUrlUpdateMock.mockClear();
+
+			renderPage(
+				{
+					category: K8sCategories.CLUSTERS,
+					podStatus: 'crashloopbackoff',
+					nodeReadiness: 'not_ready',
+				},
+				onUrlUpdateMock,
+			);
+
+			await screen.findByTestId(`category-${K8sCategories.CONTAINERS}`);
+		});
+
+		it('should drop the status filters the new category cannot apply', async () => {
+			fireEvent.click(screen.getByTestId(`category-${K8sCategories.CONTAINERS}`));
+
+			// Containers filter on their own statuses, so a pod status carried over from
+			// clusters would sit in the toolbar looking applied while matching nothing.
+			await waitFor(() => {
+				const categorySwitch = onUrlUpdateMock.mock.calls.find(
+					(call) =>
+						call[0].searchParams.get('category') === K8sCategories.CONTAINERS,
+				);
+
+				expect(categorySwitch).toBeDefined();
+				expect(categorySwitch?.[0].searchParams.get('podStatus')).toBeNull();
+				expect(categorySwitch?.[0].searchParams.get('nodeReadiness')).toBeNull();
+			});
+		});
+	});
+
 	describe('when the category changes from a page other than the first', () => {
 		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
 
